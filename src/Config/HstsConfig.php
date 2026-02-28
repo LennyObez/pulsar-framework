@@ -20,7 +20,7 @@ readonly class HstsConfig
 {
     public function __construct(
         public bool $enabled = true,
-        public int $maxAge = 31536000,
+        public int $maxAge = 63072000,
         public bool $includeSubDomains = true,
         public bool $preload = false,
     ) {}
@@ -47,8 +47,8 @@ readonly class HstsConfig
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $rawMaxAge = $data['max_age'] ?? 31536000;
-        $maxAge = is_int($rawMaxAge) ? $rawMaxAge : (int) (is_numeric($rawMaxAge) ? $rawMaxAge : 31536000);
+        $rawMaxAge = $data['max_age'] ?? 63072000;
+        $maxAge = is_int($rawMaxAge) ? $rawMaxAge : (int) (is_numeric($rawMaxAge) ? $rawMaxAge : 63072000);
 
         return new self(
             enabled: (bool) ($data['enabled'] ?? true),

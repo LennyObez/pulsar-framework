@@ -17,6 +17,9 @@ use Pulsar\Auth\Authorization\RoleRegistryInterface;
 use Pulsar\Auth\Guard\SessionGuard;
 use Pulsar\Auth\Guard\TokenGuard;
 use Pulsar\Auth\Guard\TokenResolverInterface;
+use Pulsar\Auth\Internal\Persistence\DatabaseRecoveryCodeStore;
+use Pulsar\Auth\Internal\Persistence\DatabaseTotpReplayGuard;
+use Pulsar\Auth\Internal\Persistence\DatabaseTotpSecretStore;
 use Pulsar\Auth\Middleware\AuthenticationMiddleware;
 use Pulsar\Auth\Middleware\AuthorizationMiddleware;
 use Pulsar\Auth\Middleware\StepUpMiddleware;
@@ -42,6 +45,7 @@ use Pulsar\Config\ConfigManager;
 use Pulsar\Config\SecurityConfig;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Context\RequestContextHolder;
+use Pulsar\Database\ConnectionManagerInterface;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Routing\Router;
@@ -116,7 +120,7 @@ final readonly class AuthWiring implements ServiceWiringInterface
         $container->instance(Gate::class, $gate);
         $container->instance(GateInterface::class, $gate);
 
-        // Audit logger (resolve early — used by 2FA and middleware)
+        // Audit logger (resolve early; used by 2FA and middleware)
         // Resolve interface for 2FA manager; concrete class for auth middleware
         $auditLoggerInterface = $container->has(AuditLoggerInterface::class)
             ? $container->get(AuditLoggerInterface::class)
@@ -152,28 +156,47 @@ final readonly class AuthWiring implements ServiceWiringInterface
             );
             $recoveryCodeVerifier = new RecoveryCodeVerifier();
 
-            // Replay guard — use app-provided or fall back to in-memory
+            // Replay guard: use app-provided, database-backed, or fall back to in-memory
             if ($container->has(TotpReplayGuardInterface::class)) {
                 /** @var TotpReplayGuardInterface $replayGuard */
                 $replayGuard = $container->get(TotpReplayGuardInterface::class);
+            } elseif ($container->has(ConnectionManagerInterface::class)) {
+                /** @var ConnectionManagerInterface $connManager */
+                $connManager = $container->get(ConnectionManagerInterface::class);
+                $replayGuard = new DatabaseTotpReplayGuard(
+                    $connManager->connection(),
+                    $authConfig->twoFactor->codePeriod,
+                );
+                $container->instance(DatabaseTotpReplayGuard::class, $replayGuard);
+                $container->instance(TotpReplayGuardInterface::class, $replayGuard);
             } else {
                 $replayGuard = new InMemoryTotpReplayGuard();
                 $container->instance(InMemoryTotpReplayGuard::class, $replayGuard);
                 $container->instance(TotpReplayGuardInterface::class, $replayGuard);
             }
 
-            // Secret store
+            // Secret store: use app-provided, database-backed, or fall back to in-memory
+            $totpEncryptor = null;
+            if ($container->has(MasterKey::class)) {
+                /** @var MasterKey $masterKey */
+                $masterKey = $container->get(MasterKey::class);
+                $totpEncryptor = Encryptor::fromDerivedKey($masterKey, 4, 'totpscrt');
+            }
+
             if ($container->has(TotpSecretStoreInterface::class)) {
                 /** @var TotpSecretStoreInterface $secretStore */
                 $secretStore = $container->get(TotpSecretStoreInterface::class);
+            } elseif ($container->has(ConnectionManagerInterface::class) && $totpEncryptor !== null) {
+                /** @var ConnectionManagerInterface $connManager */
+                $connManager = $container->get(ConnectionManagerInterface::class);
+                $secretStore = new DatabaseTotpSecretStore(
+                    $connManager->connection(),
+                    $totpEncryptor,
+                );
+                $container->instance(DatabaseTotpSecretStore::class, $secretStore);
+                $container->instance(TotpSecretStoreInterface::class, $secretStore);
             } else {
-                $encryptor = null;
-                if ($container->has(MasterKey::class)) {
-                    /** @var MasterKey $masterKey */
-                    $masterKey = $container->get(MasterKey::class);
-                    $encryptor = Encryptor::fromDerivedKey($masterKey, 4, 'totpscrt');
-                }
-                $secretStore = new InMemoryTotpSecretStore($encryptor);
+                $secretStore = new InMemoryTotpSecretStore($totpEncryptor);
                 $container->instance(InMemoryTotpSecretStore::class, $secretStore);
                 $container->instance(TotpSecretStoreInterface::class, $secretStore);
             }
@@ -191,6 +214,12 @@ final readonly class AuthWiring implements ServiceWiringInterface
             if ($container->has(RecoveryCodeStoreInterface::class)) {
                 /** @var RecoveryCodeStoreInterface $recoveryCodeStore */
                 $recoveryCodeStore = $container->get(RecoveryCodeStoreInterface::class);
+            } elseif ($container->has(ConnectionManagerInterface::class)) {
+                /** @var ConnectionManagerInterface $connManager */
+                $connManager = $container->get(ConnectionManagerInterface::class);
+                $recoveryCodeStore = new DatabaseRecoveryCodeStore($connManager->connection());
+                $container->instance(DatabaseRecoveryCodeStore::class, $recoveryCodeStore);
+                $container->instance(RecoveryCodeStoreInterface::class, $recoveryCodeStore);
             } else {
                 $recoveryCodeStore = new InMemoryRecoveryCodeStore();
                 $container->instance(InMemoryRecoveryCodeStore::class, $recoveryCodeStore);
@@ -203,7 +232,7 @@ final readonly class AuthWiring implements ServiceWiringInterface
                 : null;
             /** @var TwoFactorRateLimiterInterface|null $rateLimiter */
 
-            // Event collector (only if bound — e.g., by Studio)
+            // Event collector (only if bound; e.g., by Studio)
             $eventCollector = $container->has(AuthEventCollectorInterface::class)
                 ? $container->get(AuthEventCollectorInterface::class)
                 : null;
@@ -248,7 +277,7 @@ final readonly class AuthWiring implements ServiceWiringInterface
 
                 foreach ($inMemoryStores as $store) {
                     $logger->warning(
-                        "In-memory 2FA store [$store] is active — data will not persist across restarts. Bind a persistent implementation.",
+                        "In-memory 2FA store [$store] is active: data will not persist across restarts. Bind a persistent implementation.",
                     );
                 }
             }
@@ -283,7 +312,7 @@ final readonly class AuthWiring implements ServiceWiringInterface
         $middlewareRegistry->alias('auth', $authorizationMiddleware);
         $middlewareRegistry->alias('2fa', $twoFactorMiddleware);
 
-        // Add AuthenticationMiddleware as global middleware (lightweight — only attaches SecurityContext)
+        // Add AuthenticationMiddleware as global middleware (lightweight; only attaches SecurityContext)
         $middleware->pipe($authenticationMiddleware);
     }
 }

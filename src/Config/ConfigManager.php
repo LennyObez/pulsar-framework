@@ -6,9 +6,14 @@ namespace Pulsar\Config;
 
 use Override;
 use Pulsar\Api\Internal;
+use Pulsar\Cloud\CloudConfig;
 use Pulsar\Config\Exception\ConfigException;
+use Pulsar\Config\Exception\MissingConfigException;
 use Pulsar\View\ViewConfig;
 
+use function array_filter;
+use function array_values;
+use function dirname;
 use function is_array;
 use function is_file;
 
@@ -17,7 +22,7 @@ use function is_file;
  *
  * Manages the full config loading pipeline:
  * 1. OS env vars (always present)
- * 2. `.env` file (if provided) — file values never override existing OS vars
+ * 2. `.env` file (if provided): file values never override existing OS vars
  * 3. Config PHP files (return raw arrays)
  * 4. Runtime overrides (applied via array_replace_recursive)
  * 5. Typed DTO construction (env vars override array values inside factories)
@@ -25,6 +30,17 @@ use function is_file;
 #[Internal]
 final class ConfigManager implements ConfigManagerInterface
 {
+    /**
+     * Configuration files that must exist when a config path is set.
+     *
+     * These are loaded unconditionally by {@see load()} and have no
+     * optional-existence check, so missing files would cause a confusing
+     * {@see ConfigException}. Validating upfront gives a clear message.
+     *
+     * @var list<string>
+     */
+    public const array REQUIRED_CONFIGS = ['app', 'security', 'observability'];
+
     private ?Environment $environment = null;
     private ?ConfigRepository $repository = null;
 
@@ -56,13 +72,46 @@ final class ConfigManager implements ConfigManagerInterface
     }
 
     /**
+     * Validate that all required configuration files exist.
+     *
+     * Called automatically at the start of {@see load()}. Can also be
+     * called independently to check config completeness before boot.
+     *
+     * @param list<string>|null $required Override the default required list (for testing)
+     *
+     * @throws MissingConfigException If any required config files are missing
+     */
+    public function validateRequiredConfigs(?array $required = null): void
+    {
+        if ($this->configPath === null) {
+            return;
+        }
+
+        $requiredNames = $required ?? self::REQUIRED_CONFIGS;
+        $missing = array_values(array_filter(
+            $requiredNames,
+            fn(string $name): bool => !is_file(
+                $this->configPath . DIRECTORY_SEPARATOR . $name . '.php',
+            ),
+        ));
+
+        if ($missing !== []) {
+            throw MissingConfigException::forFiles($missing);
+        }
+    }
+
+    /**
      * Load all configuration.
      *
      * Creates Environment, reads config files, applies overrides,
      * and builds typed DTOs into the ConfigRepository.
+     *
+     * @throws MissingConfigException If required config files are missing
      */
     public function load(): void
     {
+        $this->validateRequiredConfigs();
+
         $this->environment = Environment::load($this->envFilePath);
         $this->repository = new ConfigRepository();
 
@@ -81,133 +130,149 @@ final class ConfigManager implements ConfigManagerInterface
         $securityConfig = SecurityConfig::fromArray($securityData, $this->environment);
         $this->repository->set($securityConfig);
 
-        // Load i18n config (optional — only if config/i18n.php exists)
+        // Load i18n config (optional; only if config/i18n.php exists)
         if ($this->configPath !== null && is_file($this->configPath . DIRECTORY_SEPARATOR . 'i18n.php')) {
             $i18nData = $this->loadConfigFile('i18n');
             $i18nConfig = I18nConfig::fromArray($i18nData, $this->environment);
             $this->repository->set($i18nConfig);
         }
 
-        // Load event config (optional — only if config/event.php exists)
+        // Load event config (optional; only if config/event.php exists)
         if ($this->configPath !== null && is_file($this->configPath . DIRECTORY_SEPARATOR . 'event.php')) {
             $eventData = $this->loadConfigFile('event');
             $eventConfig = EventConfig::fromArray($eventData, $this->environment);
             $this->repository->set($eventConfig);
         }
 
-        // Load database config (optional — only if config/database.php exists)
+        // Load database config (optional; only if config/database.php exists)
         if ($this->configPath !== null && is_file($this->configPath . DIRECTORY_SEPARATOR . 'database.php')) {
             $databaseData = $this->loadConfigFile('database');
-            $databaseConfig = DatabaseConfig::fromArray($databaseData, $this->environment);
+            // Pass project root (parent of config/) so SQLite relative paths resolve correctly
+            $projectRoot = dirname($this->configPath);
+            $databaseConfig = DatabaseConfig::fromArray($databaseData, $this->environment, $projectRoot);
             $this->repository->set($databaseConfig);
         }
 
-        // Load tenancy config (optional — only if config/tenancy.php exists)
+        // Load tenancy config (optional; only if config/tenancy.php exists)
         if ($this->configPath !== null && is_file($this->configPath . DIRECTORY_SEPARATOR . 'tenancy.php')) {
             $tenancyData = $this->loadConfigFile('tenancy');
             $tenancyConfig = TenancyConfig::fromArray($tenancyData, $this->environment);
             $this->repository->set($tenancyConfig);
         }
 
-        // Load feature flags config (optional — only if config/features.php exists)
+        // Load feature flags config (optional; only if config/features.php exists)
         if ($this->configPath !== null && is_file($this->configPath . DIRECTORY_SEPARATOR . 'features.php')) {
             $featuresData = $this->loadConfigFile('features');
             $featureFlagConfig = FeatureFlagConfig::fromArray($featuresData, $this->environment);
             $this->repository->set($featureFlagConfig);
         }
 
-        // Load scheduler config (optional — only if config/scheduler.php exists)
+        // Load scheduler config (optional; only if config/scheduler.php exists)
         if ($this->configPath !== null && is_file($this->configPath . DIRECTORY_SEPARATOR . 'scheduler.php')) {
             $schedulerData = $this->loadConfigFile('scheduler');
             $schedulerConfig = SchedulerConfig::fromArray($schedulerData, $this->environment);
             $this->repository->set($schedulerConfig);
         }
 
-        // Load resilience config (optional — only if config/resilience.php exists)
+        // Load resilience config (optional; only if config/resilience.php exists)
         if ($this->configPath !== null && is_file($this->configPath . DIRECTORY_SEPARATOR . 'resilience.php')) {
             $resilienceData = $this->loadConfigFile('resilience');
             $resilienceConfig = ResilienceConfig::fromArray($resilienceData, $this->environment);
             $this->repository->set($resilienceConfig);
         }
 
-        // Load queue config (optional — only if config/queue.php exists)
+        // Load queue config (optional; only if config/queue.php exists)
         if ($this->configPath !== null && is_file($this->configPath . DIRECTORY_SEPARATOR . 'queue.php')) {
             $queueData = $this->loadConfigFile('queue');
             $queueConfig = QueueConfig::fromArray($queueData, $this->environment);
             $this->repository->set($queueConfig);
         }
 
-        // Load storage config (optional — only if config/storage.php exists)
+        // Load storage config (optional; only if config/storage.php exists)
         if ($this->configPath !== null && is_file($this->configPath . DIRECTORY_SEPARATOR . 'storage.php')) {
             $storageData = $this->loadConfigFile('storage');
             $storageConfig = StorageConfig::fromArray($storageData, $this->environment);
             $this->repository->set($storageConfig);
         }
 
-        // Load supervisor config (optional — only if config/supervisor.php exists)
+        // Load supervisor config (optional; only if config/supervisor.php exists)
         if ($this->configPath !== null && is_file($this->configPath . DIRECTORY_SEPARATOR . 'supervisor.php')) {
             $supervisorData = $this->loadConfigFile('supervisor');
             $supervisorConfig = SupervisorConfig::fromArray($supervisorData, $this->environment);
             $this->repository->set($supervisorConfig);
         }
 
-        // Load integrity config (optional — only if config/integrity.php exists)
+        // Load integrity config (optional; only if config/integrity.php exists)
         if ($this->configPath !== null && is_file($this->configPath . DIRECTORY_SEPARATOR . 'integrity.php')) {
             $integrityData = $this->loadConfigFile('integrity');
             $integrityConfig = IntegrityConfig::fromArray($integrityData, $this->environment);
             $this->repository->set($integrityConfig);
         }
 
-        // Load deploy config (optional — only if config/deploy.php exists)
+        // Load deploy config (optional; only if config/deploy.php exists)
         if ($this->configPath !== null && is_file($this->configPath . DIRECTORY_SEPARATOR . 'deploy.php')) {
             $deployData = $this->loadConfigFile('deploy');
             $deployConfig = DeployConfig::fromArray($deployData, $this->environment);
             $this->repository->set($deployConfig);
         }
 
-        // Load runtime config (optional — only if config/runtime.php exists)
+        // Load runtime config (optional; only if config/runtime.php exists)
         if ($this->configPath !== null && is_file($this->configPath . DIRECTORY_SEPARATOR . 'runtime.php')) {
             $runtimeData = $this->loadConfigFile('runtime');
             $runtimeConfig = RuntimeConfig::fromArray($runtimeData, $this->environment);
             $this->repository->set($runtimeConfig);
         }
 
-        // Load cache config (optional — only if config/cache.php exists)
+        // Load cache config (optional; only if config/cache.php exists)
         if ($this->configPath !== null && is_file($this->configPath . DIRECTORY_SEPARATOR . 'cache.php')) {
             $cacheData = $this->loadConfigFile('cache');
             $cacheConfig = CacheConfig::fromArray($cacheData, $this->environment);
             $this->repository->set($cacheConfig);
         }
 
-        // Load mail config (optional — only if config/mail.php exists)
+        // Load mail config (optional; only if config/mail.php exists)
         if ($this->configPath !== null && is_file($this->configPath . DIRECTORY_SEPARATOR . 'mail.php')) {
             $mailData = $this->loadConfigFile('mail');
             $mailConfig = MailConfig::fromArray($mailData, $this->environment);
             $this->repository->set($mailConfig);
         }
 
-        // Load notification config (optional — only if config/notification.php exists)
+        // Load notification config (optional; only if config/notification.php exists)
         if ($this->configPath !== null && is_file($this->configPath . DIRECTORY_SEPARATOR . 'notification.php')) {
             $notificationData = $this->loadConfigFile('notification');
             $notificationConfig = NotificationConfig::fromArray($notificationData, $this->environment);
             $this->repository->set($notificationConfig);
         }
 
-        // Load API config (optional — only if config/api.php exists)
+        // Load API config (optional; only if config/api.php exists)
         if ($this->configPath !== null && is_file($this->configPath . DIRECTORY_SEPARATOR . 'api.php')) {
             $apiData = $this->loadConfigFile('api');
             $apiConfig = ApiConfig::fromArray($apiData);
             $this->repository->set($apiConfig);
         }
 
-        // Load view config (optional — only if config/view.php exists)
+        // Load view config (optional; only if config/view.php exists)
         if ($this->configPath !== null && is_file($this->configPath . DIRECTORY_SEPARATOR . 'view.php')) {
             $viewData = $this->loadConfigFile('view');
             $viewConfig = ViewConfig::fromArray($viewData);
             $this->repository->set($viewConfig);
         }
 
-        // Studio config is NOT loaded here — it is loaded directly by Kernel::studioPreboot()
+        // Load cloud config (optional; only if config/cloud.php exists)
+        if ($this->configPath !== null && is_file($this->configPath . DIRECTORY_SEPARATOR . 'cloud.php')) {
+            $cloudData = $this->loadConfigFile('cloud');
+            $cloudConfig = CloudConfig::fromArray($cloudData);
+            $this->repository->set($cloudConfig);
+        }
+
+        // Load business profile config (optional; only if config/business.php exists)
+        if ($this->configPath !== null && is_file($this->configPath . DIRECTORY_SEPARATOR . 'business.php')) {
+            $businessData = $this->loadConfigFile('business');
+            $businessConfig = BusinessProfileConfig::fromArray($businessData, $this->environment);
+            $this->repository->set($businessConfig);
+        }
+
+        // Studio config is NOT loaded here; it is loaded directly by Kernel::studioPreboot()
         // to avoid introducing a StudioConfig dependency in ConfigManager.
     }
 

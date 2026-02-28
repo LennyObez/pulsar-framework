@@ -10,13 +10,15 @@ use Pulsar\Config\AppConfig;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\ErrorHandling\DevelopmentRenderer;
+use Pulsar\ErrorHandling\ErrorPageRenderer;
 use Pulsar\ErrorHandling\ExceptionHandler;
-use Pulsar\ErrorHandling\ProductionRenderer;
+use Pulsar\ErrorHandling\ExceptionRendererInterface;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Observability\ErrorTracking\ErrorAggregator;
 use Pulsar\Observability\ErrorTracking\SensitiveDataScrubber;
 use Pulsar\Routing\Router;
+use Pulsar\View\Engine\TemplateEngineInterface;
 
 #[Internal]
 final readonly class ExceptionHandlerWiring implements ServiceWiringInterface
@@ -36,9 +38,19 @@ final readonly class ExceptionHandlerWiring implements ServiceWiringInterface
             : null;
 
         /** @var SensitiveDataScrubber|null $scrubber */
-        $renderer = $appConfig->debug
-            ? new DevelopmentRenderer($scrubber ?? new SensitiveDataScrubber())
-            : new ProductionRenderer();
+        $devRenderer = new DevelopmentRenderer($scrubber ?? new SensitiveDataScrubber());
+
+        $templateEngine = $container->has(TemplateEngineInterface::class)
+            ? $container->get(TemplateEngineInterface::class)
+            : null;
+
+        /** @var TemplateEngineInterface|null $templateEngine */
+        $renderer = new ErrorPageRenderer(
+            templateEngine: $templateEngine,
+            devRenderer: $devRenderer,
+            debug: $appConfig->debug,
+        );
+        $container->instance(ExceptionRendererInterface::class, $renderer);
 
         $logger = $container->has(LoggerInterface::class)
             ? $container->get(LoggerInterface::class)

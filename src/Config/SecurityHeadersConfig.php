@@ -25,6 +25,7 @@ readonly class SecurityHeadersConfig
         'Referrer-Policy' => 'strict-origin-when-cross-origin',
         'X-XSS-Protection' => '0',
         'Permissions-Policy' => 'camera=(), microphone=(), geolocation=()',
+        'X-Permitted-Cross-Domain-Policies' => 'none',
     ];
 
     /**
@@ -35,6 +36,9 @@ readonly class SecurityHeadersConfig
         public CspConfig $csp = new CspConfig(),
         public HstsConfig $hsts = new HstsConfig(),
         public CrossOriginConfig $crossOrigin = new CrossOriginConfig(),
+        public PermissionsPolicyConfig $permissionsPolicy = new PermissionsPolicyConfig(),
+        public NelConfig $nel = new NelConfig(),
+        public string $nelEndpointUrl = '',
     ) {}
 
     /**
@@ -70,6 +74,23 @@ readonly class SecurityHeadersConfig
             $headers['Cross-Origin-Resource-Policy'] = $this->crossOrigin->resourcePolicy;
         }
 
+        $permissionsPolicyValue = $this->permissionsPolicy->toHeaderValue();
+        if ($permissionsPolicyValue !== '') {
+            $headers['Permissions-Policy'] = $permissionsPolicyValue;
+        }
+
+        if ($this->nel->enabled) {
+            $nelValue = $this->nel->toHeaderValue();
+            if ($nelValue !== '') {
+                $headers['NEL'] = $nelValue;
+            }
+
+            $reportToValue = $this->nel->toReportToHeaderValue($this->nelEndpointUrl);
+            if ($reportToValue !== '') {
+                $headers['Report-To'] = $reportToValue;
+            }
+        }
+
         return $headers;
     }
 
@@ -90,8 +111,17 @@ readonly class SecurityHeadersConfig
         /** @var array<string, mixed> $crossOriginData */
         $crossOriginData = is_array($data['cross_origin'] ?? null) ? $data['cross_origin'] : [];
 
+        /** @var array<string, mixed> $permissionsPolicyData */
+        $permissionsPolicyData = is_array($data['permissions_policy'] ?? null) ? $data['permissions_policy'] : [];
+
+        /** @var array<string, mixed> $nelData */
+        $nelData = is_array($data['nel'] ?? null) ? $data['nel'] : [];
+
+        $rawNelEndpoint = $data['nel_endpoint_url'] ?? '';
+        $nelEndpointUrl = is_string($rawNelEndpoint) ? $rawNelEndpoint : '';
+
         // Remove sub-config keys before flattening scalar headers
-        unset($data['csp'], $data['hsts'], $data['cross_origin']);
+        unset($data['csp'], $data['hsts'], $data['cross_origin'], $data['permissions_policy'], $data['nel'], $data['nel_endpoint_url']);
 
         /** @var array<string, string> $headers */
         $headers = array_map(
@@ -104,6 +134,9 @@ readonly class SecurityHeadersConfig
             csp: CspConfig::fromArray($cspData),
             hsts: HstsConfig::fromArray($hstsData),
             crossOrigin: CrossOriginConfig::fromArray($crossOriginData),
+            permissionsPolicy: PermissionsPolicyConfig::fromArray($permissionsPolicyData),
+            nel: NelConfig::fromArray($nelData),
+            nelEndpointUrl: $nelEndpointUrl,
         );
     }
 }

@@ -14,9 +14,11 @@ use Pulsar\Event\EventDispatcherInterface;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Mail\MailManagerInterface;
+use Pulsar\Notification\Channel\BroadcastChannel;
 use Pulsar\Notification\Channel\DatabaseChannel;
 use Pulsar\Notification\Channel\LogChannel;
 use Pulsar\Notification\Channel\MailChannel;
+use Pulsar\Notification\Channel\PushChannel;
 use Pulsar\Notification\Channel\SlackChannel;
 use Pulsar\Notification\Channel\SmsChannel;
 use Pulsar\Notification\Channel\WebhookChannel;
@@ -30,6 +32,7 @@ use Pulsar\Notification\NotificationManager;
 use Pulsar\Notification\NotificationManagerInterface;
 use Pulsar\Notification\SmsGatewayInterface;
 use Pulsar\Routing\Router;
+use Pulsar\WebSocket\BroadcastManagerInterface as WebSocketBroadcastManagerInterface;
 
 #[Internal]
 final readonly class NotificationWiring implements ServiceWiringInterface
@@ -118,6 +121,22 @@ final readonly class NotificationWiring implements ServiceWiringInterface
             $httpClient = $container->get(NotificationHttpClientInterface::class);
             $channels['slack'] = new SlackChannel($httpClient);
             $channels['webhook'] = new WebhookChannel($httpClient);
+        }
+
+        // Broadcast channel (requires WebSocket broadcast manager)
+        if ($container->has(WebSocketBroadcastManagerInterface::class)) {
+            /** @var WebSocketBroadcastManagerInterface $broadcastManager */
+            $broadcastManager = $container->get(WebSocketBroadcastManagerInterface::class);
+            $channels['broadcast'] = new BroadcastChannel($broadcastManager);
+        }
+
+        // Push channel (requires HTTP client + FCM project ID + OAuth token)
+        $fcmProjectId = $notificationConfig->fcmProjectId ?? null;
+        $fcmOAuthToken = $notificationConfig->fcmOAuthToken ?? null;
+        if ($container->has(NotificationHttpClientInterface::class) && $fcmProjectId !== null && $fcmProjectId !== '' && $fcmOAuthToken !== null && $fcmOAuthToken !== '') {
+            /** @var NotificationHttpClientInterface $pushHttpClient */
+            $pushHttpClient = $container->get(NotificationHttpClientInterface::class);
+            $channels['push'] = new PushChannel($pushHttpClient, $fcmProjectId, $fcmOAuthToken);
         }
 
         // Log channel (requires logger)

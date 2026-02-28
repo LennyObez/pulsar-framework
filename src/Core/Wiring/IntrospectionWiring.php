@@ -79,7 +79,7 @@ final readonly class IntrospectionWiring implements ServiceWiringInterface
             : new SensitiveDataScrubber();
         /** @var SensitiveDataScrubber $scrubber */
 
-        // CoreRuntimeProbe — closures decouple from #[Internal] cross-module types
+        // CoreRuntimeProbe: closures decouple from #[Internal] cross-module types
         $extensionProber = $container->has(ExtensionRegistry::class)
             ? $this->buildExtensionProber($container)
             : null;
@@ -150,7 +150,7 @@ final readonly class IntrospectionWiring implements ServiceWiringInterface
                 try {
                     $state = $registry->getState($name)->value;
                 } catch (Throwable) {
-                    // Swallow — state unavailable
+                    // Swallow: state unavailable
                 }
 
                 $provides = [];
