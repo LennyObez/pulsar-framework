@@ -12,6 +12,9 @@ use function is_string;
 
 /**
  * Parsed theme manifest (theme.json) with all declared metadata.
+ *
+ * @psalm-api Public DTO produced from theme.json parsing; consumed by
+ *            ThemeManager and ThemeManifestValidator.
  */
 #[Api(since: '1.0.0')]
 final readonly class ThemeManifest

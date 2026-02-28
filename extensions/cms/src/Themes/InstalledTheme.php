@@ -9,6 +9,9 @@ use Pulsar\Api\Api;
 
 /**
  * Installed theme entity: represents a theme package installed in the CMS.
+ *
+ * @psalm-api Public DTO returned from ThemeRepositoryInterface; consumed
+ *            by ThemeManager and admin theme views.
  */
 #[Api(since: '1.0.0')]
 final readonly class InstalledTheme
