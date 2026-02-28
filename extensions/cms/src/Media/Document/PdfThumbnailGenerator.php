@@ -159,6 +159,10 @@ final readonly class PdfThumbnailGenerator
             2 => ['pipe', 'w'],
         ];
 
+        // proc_open() receives an argv array (PHP 7.4+), so the shell is never
+        // involved -- no metacharacter expansion, no command-injection surface.
+        // $this->ghostscriptPath is server config; $pdfPath is validated upstream.
+        // nosemgrep: php.lang.security.exec-use.exec-use
         $process = @proc_open($args, $descriptors, $pipes);
 
         if (!is_resource($process)) {
@@ -203,7 +207,10 @@ final readonly class PdfThumbnailGenerator
 
     /**
      * Safely remove a temporary file after verifying it resides inside the
-     * system temp directory. Guards against path-traversal.
+     * system temp directory. Guards against path-traversal: only files whose
+     * resolved real path starts with sys_get_temp_dir() (with an explicit
+     * trailing separator) are deleted, so a directory whose name shares a
+     * prefix with the temp dir cannot escape the boundary.
      */
     private static function cleanupTempFile(string $path): void
     {
@@ -218,7 +225,9 @@ final readonly class PdfThumbnailGenerator
             return;
         }
 
-        if (!str_starts_with($realPath, $tempDir)) {
+        $tempDirWithSep = rtrim($tempDir, '/\\') . DIRECTORY_SEPARATOR;
+
+        if (!str_starts_with($realPath, $tempDirWithSep)) {
             return;
         }
 

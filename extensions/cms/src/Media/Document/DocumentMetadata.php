@@ -13,6 +13,9 @@ use function sprintf;
 
 /**
  * Structured metadata extracted from a PDF or document file.
+ *
+ * @psalm-api Public DTO returned from DocumentMetadataExtractor; consumed by
+ *            media services and admin views.
  */
 #[Api(since: '1.0.0')]
 final readonly class DocumentMetadata
