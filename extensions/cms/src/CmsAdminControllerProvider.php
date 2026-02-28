@@ -108,6 +108,9 @@ use Pulsar\View\Engine\TemplateEngineInterface;
 
 /**
  * Binds all admin (back-office) controllers for the CMS.
+ *
+ * @psalm-api Instantiated by name from CmsServiceProvider::register() to wire
+ *            the admin controller bindings into the DI container.
  */
 #[Internal(reason: 'CMS service wiring; use interfaces for public API')]
 final readonly class CmsAdminControllerProvider

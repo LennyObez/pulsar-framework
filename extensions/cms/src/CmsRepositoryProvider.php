@@ -84,6 +84,9 @@ use Pulsar\Extension\Cms\Users\CmsUserRepositoryInterface;
 
 /**
  * Binds all CMS repository interfaces to their database-backed implementations.
+ *
+ * @psalm-api Instantiated by name from CmsServiceProvider::register() to wire
+ *            repository bindings into the DI container.
  */
 #[Internal(reason: 'CMS service wiring; use interfaces for public API')]
 final readonly class CmsRepositoryProvider

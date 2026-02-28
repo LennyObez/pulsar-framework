@@ -59,6 +59,9 @@ use Pulsar\Security\Waf\WafMiddleware;
  * - cms.security.admin  : WAF + hijack detection + justified access
  * - cms.security.forms  : WAF + threat detection + bot detection
  * - cms.security.auth   : WAF + threat detection + adaptive rate limiting
+ *
+ * @psalm-api Instantiated by name from the CMS extension boot routine to
+ *            register the CMS security middleware groups.
  */
 #[Internal(reason: 'CMS integration wiring; not part of the public API')]
 final readonly class CmsSecurityIntegration

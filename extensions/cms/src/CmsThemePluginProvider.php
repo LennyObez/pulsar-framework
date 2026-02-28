@@ -51,6 +51,9 @@ use function rtrim;
 
 /**
  * Binds theme manager, plugin manager, hook engine, and live CSS services.
+ *
+ * @psalm-api Instantiated by name from CmsServiceProvider::register() to wire
+ *            the theme/plugin service bindings into the DI container.
  */
 #[Internal(reason: 'CMS service wiring; use interfaces for public API')]
 final readonly class CmsThemePluginProvider

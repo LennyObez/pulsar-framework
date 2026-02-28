@@ -145,6 +145,9 @@ use function getcwd;
  *  - CmsThemePluginProvider     : theme manager, plugin manager, hook engine, live CSS
  *  - CmsCommerceProvider        : checkout, tax, promotions, invoicing, digital delivery
  *  - CmsAdminControllerProvider : all admin controller bindings
+ *
+ * @psalm-api Discovered by the framework's ServiceProviderInterface contract
+ *            and instantiated by name from the CMS extension manifest.
  */
 #[Internal(reason: 'CMS service wiring; use interfaces for public API')]
 final class CmsServiceProvider implements ServiceProviderInterface
