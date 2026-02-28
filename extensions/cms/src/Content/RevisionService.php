@@ -16,6 +16,9 @@ use function sodium_crypto_generichash;
  *
  * Each revision captures a point-in-time snapshot of a content translation,
  * with an evidence hash (BLAKE2b) proving data integrity.
+ *
+ * @psalm-api Resolved from the DI container by content services and admin
+ *            revision controllers; not instantiated by name.
  */
 #[Internal]
 final readonly class RevisionService

@@ -16,6 +16,9 @@ use const SODIUM_CRYPTO_GENERICHASH_BYTES;
  *
  * Every status transition creates a revision. The evidence hash proves
  * the exact state of the translation at the moment of the transition.
+ *
+ * @psalm-api Public DTO returned from ContentRevisionRepositoryInterface;
+ *            consumed by RevisionService and admin revision history views.
  */
 #[Api(since: '1.0.0')]
 final readonly class ContentRevision

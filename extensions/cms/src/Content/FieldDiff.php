@@ -8,6 +8,9 @@ use Pulsar\Api\Api;
 
 /**
  * Represents a single field-level change between two revisions.
+ *
+ * @psalm-api Public DTO contained in RevisionDiff::changes; consumed by
+ *            admin revision-history templates.
  */
 #[Api(since: '1.0.0')]
 final readonly class FieldDiff
