@@ -8,6 +8,9 @@ use Pulsar\Api\Api;
 
 /**
  * Dispatched when content is submitted for editorial review.
+ *
+ * @psalm-api Public event class dispatched by EditorialWorkflowService and
+ *            consumed by CmsNotificationDispatcher.
  */
 #[Api(since: '1.0.0')]
 final readonly class ReviewRequested

@@ -12,6 +12,9 @@ use Pulsar\Extension\Cms\Exception\CmsException;
 /**
  * Content aggregate root: represents any publishable content unit
  * (article, page, or custom type registered by CMS plugins).
+ *
+ * @psalm-api Public DTO returned from ContentRepositoryInterface; consumed by
+ *            services, controllers, templates, and user-land code.
  */
 #[Api(since: '1.0.0')]
 final readonly class Content

@@ -16,6 +16,9 @@ use function is_int;
  *
  * Used by RevisionRetentionJob to determine which revisions to keep
  * and which to delete. Supports both count-based and age-based retention.
+ *
+ * @psalm-api Public configuration DTO loaded from config/cms.php and passed
+ *            to RevisionRetentionJob.
  */
 #[Api(since: '1.0.0')]
 final readonly class RevisionRetentionPolicy

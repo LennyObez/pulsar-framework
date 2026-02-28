@@ -14,6 +14,10 @@ use function strlen;
  *
  * Each content item has one translation per supported locale.
  * The slug_segment and path are used for URL resolution.
+ *
+ * @psalm-api Public DTO returned from ContentTranslationRepositoryInterface;
+ *            consumed by content services, URL resolution, and template
+ *            rendering.
  */
 #[Api(since: '1.0.0')]
 final readonly class ContentTranslation
