@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Webhook\Exception\WebhookException;
 use Pulsar\Webhook\HmacWebhookVerifier;
 use Pulsar\Webhook\InMemoryWebhookEventLog;
 use Pulsar\Webhook\WebhookHandlerInterface;
@@ -133,6 +134,33 @@ final class WebhookProcessorTest extends TestCase
 
         self::assertSame(WebhookProcessingStatus::HandlerError, $result->status);
         self::assertSame('Invalid JSON payload', $result->error);
+    }
+
+    #[Test]
+    public function constructorRejectsEmptySecret(): void
+    {
+        $handler = $this->createStub(WebhookHandlerInterface::class);
+
+        $this->expectException(WebhookException::class);
+        $this->expectExceptionMessage('Webhook secret cannot be empty');
+
+        new WebhookProcessor(
+            verifier: new HmacWebhookVerifier($this->now),
+            eventLog: new InMemoryWebhookEventLog(),
+            handler: $handler,
+            secret: '',
+        );
+    }
+
+    #[Test]
+    public function verifierRejectsEmptySecret(): void
+    {
+        $verifier = new HmacWebhookVerifier($this->now);
+
+        $this->expectException(WebhookException::class);
+        $this->expectExceptionMessage('Webhook secret cannot be empty');
+
+        $verifier->verify('payload', 't=1,v1=deadbeef', '', 300);
     }
 
     private function createProcessor(

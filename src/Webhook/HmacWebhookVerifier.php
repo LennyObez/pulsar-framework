@@ -31,6 +31,10 @@ final readonly class HmacWebhookVerifier implements WebhookVerifierInterface
         string $secret,
         int $toleranceSeconds,
     ): void {
+        if ($secret === '') {
+            throw WebhookException::emptySecret();
+        }
+
         $parsed = self::parseHeader($signatureHeader);
         $timestamp = $parsed['timestamp'];
         $signatures = $parsed['signatures'];

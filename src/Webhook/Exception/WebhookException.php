@@ -56,4 +56,12 @@ final class WebhookException extends RuntimeException
             $reason,
         ));
     }
+
+    #[NoDiscard]
+    public static function emptySecret(): self
+    {
+        return new self(
+            'Webhook secret cannot be empty: refusing to construct a processor that would accept any signature',
+        );
+    }
 }
