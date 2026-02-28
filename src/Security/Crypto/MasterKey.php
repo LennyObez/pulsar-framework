@@ -67,7 +67,7 @@ final class MasterKey implements KeyProviderInterface
         try {
             sodium_memzero($key);
         } catch (SodiumException) {
-            // Best-effort zeroing — nothing to do if it fails
+            // Best-effort zeroing: nothing to do if it fails
         }
 
         if ($this->previousRawKey !== null) {
@@ -133,6 +133,12 @@ final class MasterKey implements KeyProviderInterface
     /**
      * Load master key from the PULSAR_MASTER_KEY environment variable.
      * Optionally reads PULSAR_MASTER_KEY_PREVIOUS for key rotation support.
+     *
+     * WARNING: In persistent worker processes (RoadRunner, FrankenPHP, Swoole)
+     * and long-running PHP-FPM pools, `getenv()` reads from the process-level
+     * environment which persists across requests. Pass the key explicitly via
+     * `$envValue` parameter or use `fromHex()` with a secrets manager instead
+     * of relying on `getenv()` in these contexts.
      *
      * @throws SecurityException If the variable is missing or invalid
      * @throws SodiumException

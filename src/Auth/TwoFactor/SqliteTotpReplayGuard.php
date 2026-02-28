@@ -38,7 +38,7 @@ final readonly class SqliteTotpReplayGuard implements TotpReplayGuardInterface
 
     public function markUsed(string $identityId, TwoFactorPurpose $purpose, int $timeStep, int $timestamp): bool
     {
-        // Probabilistic pruning — entries older than 90 seconds
+        // Probabilistic pruning: entries older than 90 seconds
         if (random_int(1, 20) === 1) {
             $this->prune($timestamp - 90);
         }
@@ -50,7 +50,7 @@ final readonly class SqliteTotpReplayGuard implements TotpReplayGuardInterface
 
             return true;
         } catch (PDOException) {
-            // PRIMARY KEY constraint violation — time step already used
+            // PRIMARY KEY constraint violation: time step already used
             return false;
         }
     }

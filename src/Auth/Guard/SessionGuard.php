@@ -6,6 +6,7 @@ namespace Pulsar\Auth\Guard;
 
 use Override;
 use Psr\Http\Message\ServerRequestInterface;
+use Pulsar\Api\Api;
 use Pulsar\Auth\Identity\Identity;
 use Pulsar\Auth\Identity\IdentityInterface;
 use Pulsar\Security\Session\SessionInterface;
@@ -15,6 +16,7 @@ use Pulsar\Security\Session\SessionInterface;
  *
  * Stores and retrieves identity data from the session.
  */
+#[Api(since: '1.0.0')]
 final class SessionGuard implements GuardInterface
 {
     private const string SESSION_KEY = '_pulsar_identity';
