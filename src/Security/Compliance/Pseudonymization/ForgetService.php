@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use DateTimeZone;
 use Override;
 use Pulsar\Api\Internal;
+use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditOutcome;
@@ -51,7 +52,7 @@ final readonly class ForgetService implements ForgetServiceInterface
         $auditEntry = $this->auditLogger->log(
             event: AuditEvent::DataModification,
             outcome: AuditOutcome::Success,
-            actor: null,
+            actor: AuditActor::system('compliance.forget'),
             action: 'pseudonym.forget',
             resource: $confirmationHash,
             metadata: ['confirmation_hash' => $confirmationHash],

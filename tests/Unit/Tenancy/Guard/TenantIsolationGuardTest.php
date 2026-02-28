@@ -7,6 +7,7 @@ namespace Pulsar\Tests\Unit\Tenancy\Guard;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Tenancy\Exception\TenantContextMismatchException;
 use Pulsar\Tenancy\Exception\TenantContextMissingException;
@@ -88,7 +89,7 @@ final class TenantIsolationGuardTest extends TestCase
             ->with(
                 self::anything(),
                 self::anything(),
-                null,
+                self::callback(static fn(mixed $actor): bool => $actor instanceof AuditActor && $actor->id === 'system:tenancy.isolation'),
                 'tenant_context_mismatch',
                 'acme',
                 self::callback(static fn(array $metadata): bool => $metadata['expected'] === 'acme' && $metadata['actual'] === 'other'),

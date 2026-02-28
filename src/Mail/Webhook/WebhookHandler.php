@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Mail\Webhook;
 
 use Pulsar\Api\Internal;
+use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditOutcome;
@@ -118,7 +119,7 @@ final readonly class WebhookHandler implements WebhookHandlerInterface
         $this->auditLogger?->log(
             event: AuditEvent::Communication,
             outcome: $outcome,
-            actor: null,
+            actor: AuditActor::system('mail.webhook'),
             action: $action,
             resource: $request->provider,
             metadata: [

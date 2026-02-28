@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Mail\Webhook;
 
 use Pulsar\Api\Internal;
+use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Mail\Audit\DeliveryStatus;
 use Pulsar\Security\Audit\AuditEvent;
@@ -46,7 +47,7 @@ final readonly class BounceHandler
         $this->auditLogger?->log(
             event: AuditEvent::Communication,
             outcome: AuditOutcome::Failure,
-            actor: null,
+            actor: AuditActor::system('mail.webhook.bounce'),
             action: 'mail.bounce',
             resource: $messageId ?? '',
             metadata: [

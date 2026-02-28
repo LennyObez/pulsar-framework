@@ -13,6 +13,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Api\Pagination\PaginationResult;
+use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Cache\Application\TaggedCacheInterface;
 use Pulsar\Extension\Cms\Comments\Comment;
@@ -593,15 +594,20 @@ final class StubAuditLogger implements AuditLoggerInterface
     public function log(
         AuditEvent $event,
         AuditOutcome $outcome,
-        ?string $actor,
+        AuditActor|string|null $actor,
         string $action,
         string $resource = '',
         array $metadata = [],
     ): AuditEntry {
+        $resolved = match (true) {
+            $actor instanceof AuditActor => $actor->id,
+            $actor === null || $actor === '' => '',
+            default => $actor,
+        };
         $this->entries[] = [
             'event' => $event,
             'outcome' => $outcome,
-            'actor' => $actor,
+            'actor' => $resolved,
             'action' => $action,
             'resource' => $resource,
             'metadata' => $metadata,
@@ -611,7 +617,7 @@ final class StubAuditLogger implements AuditLoggerInterface
             id: 'audit-' . count($this->entries),
             event: $event,
             outcome: $outcome,
-            actor: $actor ?? '',
+            actor: $resolved,
             action: $action,
             resource: $resource,
             timestamp: new DateTimeImmutable(),

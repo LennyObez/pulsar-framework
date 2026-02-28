@@ -6,6 +6,7 @@ namespace Pulsar\Tests\Benchmark\Cms\Support;
 
 use DateTimeImmutable;
 use Override;
+use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Security\Audit\AuditEntry;
 use Pulsar\Security\Audit\AuditEvent;
@@ -23,16 +24,22 @@ final readonly class NullAuditLogger implements AuditLoggerInterface
     public function log(
         AuditEvent $event,
         AuditOutcome $outcome,
-        ?string $actor,
+        AuditActor|string|null $actor,
         string $action,
         string $resource = '',
         array $metadata = [],
     ): AuditEntry {
+        $resolved = match (true) {
+            $actor instanceof AuditActor => $actor->id,
+            $actor === null || $actor === '' => 'system',
+            default => $actor,
+        };
+
         return new AuditEntry(
             id: 'bench-audit-noop',
             event: $event,
             outcome: $outcome,
-            actor: $actor ?? 'system',
+            actor: $resolved,
             action: $action,
             resource: $resource,
             timestamp: new DateTimeImmutable(),

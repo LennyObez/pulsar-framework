@@ -9,6 +9,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Api\Api;
+use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Http\Message\Response;
 use Pulsar\Http\Middleware\MiddlewareInterface;
@@ -70,7 +71,7 @@ final readonly class HoneypotMiddleware implements MiddlewareInterface
         $this->auditLogger?->log(
             event: AuditEvent::SecurityEvent,
             outcome: AuditOutcome::Denied,
-            actor: null,
+            actor: AuditActor::anonymous(),
             action: 'honeypot.triggered',
             resource: $path,
             metadata: [

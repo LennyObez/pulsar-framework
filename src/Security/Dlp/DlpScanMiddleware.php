@@ -9,6 +9,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Api\Api;
+use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Http\Message\Response;
 use Pulsar\Http\Message\Stream;
@@ -62,7 +63,7 @@ final readonly class DlpScanMiddleware implements MiddlewareInterface
         $this->auditLogger->log(
             event: AuditEvent::SecurityEvent,
             outcome: AuditOutcome::Denied,
-            actor: null,
+            actor: AuditActor::system('security.dlp'),
             action: 'dlp.sensitive_data_detected',
             resource: $request->getUri()->getPath(),
             metadata: [

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Tenancy\Guard;
 
 use Pulsar\Api\Api;
+use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditOutcome;
@@ -70,7 +71,7 @@ final readonly class TenantIsolationGuard
             $this->auditLogger?->log(
                 event: AuditEvent::SecurityEvent,
                 outcome: AuditOutcome::Denied,
-                actor: null,
+                actor: AuditActor::system('tenancy.isolation'),
                 action: 'tenant_context_mismatch',
                 resource: $expected->toString(),
                 metadata: [
@@ -95,7 +96,7 @@ final readonly class TenantIsolationGuard
         $this->auditLogger?->log(
             event: AuditEvent::SystemEvent,
             outcome: AuditOutcome::Success,
-            actor: null,
+            actor: AuditActor::system('tenancy.isolation'),
             action: 'tenant_guard_bypassed_system_context',
         );
 

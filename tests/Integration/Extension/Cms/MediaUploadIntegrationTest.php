@@ -13,6 +13,7 @@ use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\UploadedFileInterface;
 use Psr\Log\LoggerInterface;
 use Pulsar\Api\Pagination\PaginationResult;
+use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Extension\Cms\Config\MediaConfig;
 use Pulsar\Extension\Cms\Exception\CmsException;
@@ -916,15 +917,20 @@ final class MediaUploadStubAuditLogger implements AuditLoggerInterface
     public function log(
         AuditEvent $event,
         AuditOutcome $outcome,
-        ?string $actor,
+        AuditActor|string|null $actor,
         string $action,
         string $resource = '',
         array $metadata = [],
     ): AuditEntry {
+        $resolved = match (true) {
+            $actor instanceof AuditActor => $actor->id,
+            $actor === null || $actor === '' => '',
+            default => $actor,
+        };
         $this->entries[] = [
             'event' => $event,
             'outcome' => $outcome,
-            'actor' => $actor,
+            'actor' => $resolved,
             'action' => $action,
             'resource' => $resource,
             'metadata' => $metadata,
@@ -934,7 +940,7 @@ final class MediaUploadStubAuditLogger implements AuditLoggerInterface
             id: 'audit-' . count($this->entries),
             event: $event,
             outcome: $outcome,
-            actor: $actor ?? '',
+            actor: $resolved,
             action: $action,
             resource: $resource,
             timestamp: new DateTimeImmutable(),

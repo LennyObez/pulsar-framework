@@ -6,6 +6,7 @@ namespace Pulsar\Mail;
 
 use Psr\Log\LoggerInterface;
 use Pulsar\Api\Api;
+use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Config\MailConfig;
 use Pulsar\Config\MailDriverType;
@@ -206,7 +207,7 @@ final class MailManager implements MailManagerInterface
         $this->auditLogger->log(
             event: AuditEvent::Communication,
             outcome: $success ? AuditOutcome::Success : AuditOutcome::Error,
-            actor: null,
+            actor: AuditActor::system('mail.manager'),
             action: 'mail.send',
             resource: $messageId,
             metadata: [

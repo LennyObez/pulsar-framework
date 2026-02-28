@@ -6,6 +6,7 @@ namespace Pulsar\Extension\AiGovernance\Internal;
 
 use Override;
 use Pulsar\Api\Internal;
+use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Extension\AiGovernance\Contracts\AiAuditLoggerInterface;
 use Pulsar\Extension\AiGovernance\Enum\AiAuditEvent;
@@ -39,7 +40,7 @@ final readonly class AiAuditLogger implements AiAuditLoggerInterface
         $this->auditLogger->log(
             event: AuditEvent::SystemEvent,
             outcome: AuditOutcome::Success,
-            actor: null,
+            actor: AuditActor::system('ai-governance'),
             action: $action,
             resource: $resource,
             metadata: $metadata,

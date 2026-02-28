@@ -7,6 +7,7 @@ namespace Pulsar\Scheduler\Tenant;
 use DateTimeImmutable;
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Queue\QueueManager;
 use Pulsar\Security\Audit\AuditEvent;
@@ -61,7 +62,7 @@ final readonly class TenantFanOutSchedule
                 $this->auditLogger?->log(
                     event: AuditEvent::SystemEvent,
                     outcome: AuditOutcome::Success,
-                    actor: null,
+                    actor: AuditActor::system('scheduler.tenant_fanout'),
                     action: 'tenant_schedule_skipped_maintenance',
                     resource: $tenantId->toString(),
                 );
@@ -101,7 +102,7 @@ final readonly class TenantFanOutSchedule
                     $this->auditLogger?->log(
                         event: AuditEvent::SystemEvent,
                         outcome: AuditOutcome::Error,
-                        actor: null,
+                        actor: AuditActor::system('scheduler.tenant_fanout'),
                         action: 'tenant_schedule_dispatch_failed',
                         resource: $tenantId->toString(),
                         metadata: [
@@ -116,7 +117,7 @@ final readonly class TenantFanOutSchedule
         $this->auditLogger?->log(
             event: AuditEvent::SystemEvent,
             outcome: $jobsFailed === 0 ? AuditOutcome::Success : AuditOutcome::Error,
-            actor: null,
+            actor: AuditActor::system('scheduler.tenant_fanout'),
             action: 'tenant_schedule_tick_completed',
             metadata: [
                 'totalTenants' => count($tenants),

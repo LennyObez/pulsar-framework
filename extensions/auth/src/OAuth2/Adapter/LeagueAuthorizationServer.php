@@ -9,6 +9,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\StreamFactoryInterface;
 use Pulsar\Api\Internal;
+use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Extension\Auth\OAuth2\Client\OAuthClient;
 use Pulsar\Extension\Auth\OAuth2\Contract\AccessTokenRepositoryInterface;
@@ -338,7 +339,7 @@ final readonly class LeagueAuthorizationServer implements AuthorizationServerInt
                 $this->auditLogger->log(
                     event: AuditEvent::Authentication,
                     outcome: AuditOutcome::Failure,
-                    actor: null,
+                    actor: AuditActor::anonymous(),
                     action: 'oauth2.client.authentication_failed',
                     resource: 'oauth2.client',
                     metadata: ['reason' => 'Missing client_id'],

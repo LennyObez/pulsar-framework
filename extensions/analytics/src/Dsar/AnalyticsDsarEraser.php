@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Analytics\Dsar;
 
 use Pulsar\Api\Internal;
+use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Extension\Analytics\Contracts\EventRepositoryInterface;
 use Pulsar\Extension\Analytics\Contracts\PageViewRepositoryInterface;
@@ -50,7 +51,7 @@ final readonly class AnalyticsDsarEraser
         $this->auditLogger->log(
             event: AuditEvent::DataModification,
             outcome: AuditOutcome::Success,
-            actor: null,
+            actor: AuditActor::system('dsar.analytics'),
             action: 'analytics.dsar.erasure',
             resource: 'analytics_visitor:' . $visitorId,
             metadata: [

@@ -13,6 +13,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Auth\Identity\TwoFactorStatus;
 use Pulsar\Auth\TwoFactor\TotpGenerator;
@@ -525,16 +526,22 @@ final class SecurityVerificationTest extends TestCase
             public function log(
                 AuditEvent $event,
                 AuditOutcome $outcome,
-                ?string $actor,
+                AuditActor|string|null $actor,
                 string $action,
                 string $resource = '',
                 array $metadata = [],
             ): AuditEntry {
+                $resolved = match (true) {
+                    $actor instanceof AuditActor => $actor->id,
+                    $actor === null || $actor === '' => '',
+                    default => $actor,
+                };
+
                 return new AuditEntry(
                     id: 'audit-' . bin2hex(random_bytes(4)),
                     event: $event,
                     outcome: $outcome,
-                    actor: $actor ?? '',
+                    actor: $resolved,
                     action: $action,
                     resource: $resource,
                     timestamp: new DateTimeImmutable(),
