@@ -109,7 +109,7 @@ final class OptimizeValidateCommand extends Command
             $loaded = $this->frameworkCache->load($configPath);
 
             if ($loaded === null) {
-                $output->errorln('  Cache load returned null — invalidation key mismatch or corruption.');
+                $output->errorln('  Cache load returned null: invalidation key mismatch or corruption.');
 
                 return ExitCode::Error->value;
             }
@@ -137,7 +137,7 @@ final class OptimizeValidateCommand extends Command
             $this->frameworkCache->clear();
         } catch (Throwable $e) {
             $output->errorln(sprintf('  Cache clear failed: %s', $e->getMessage()));
-            // Non-fatal — validation succeeded, cleanup failure is a warning
+            // Non-fatal: validation succeeded, cleanup failure is a warning
         }
 
         $output->writeln();

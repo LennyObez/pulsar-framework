@@ -16,7 +16,7 @@ use Pulsar\Testing\Fake\StorageFake;
  * Automatically resets all registered fakes after each test case.
  *
  * Use this trait in your TestCase subclass to guarantee no state leaks
- * between tests — even if a test throws an exception.
+ * between tests: even if a test throws an exception.
  *
  * Fakes are scoped to the current test instance (no shared static state),
  * making them safe for parallel test execution.
@@ -87,7 +87,7 @@ trait ResetsTestState
     /**
      * Reset all registered fakes.
      *
-     * Called automatically via tearDown() — no manual cleanup needed.
+     * Called automatically via tearDown(): no manual cleanup needed.
      */
     protected function resetTestState(): void
     {

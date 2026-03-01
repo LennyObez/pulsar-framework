@@ -16,7 +16,7 @@ use Pulsar\Tenancy\TenantContext;
  * Enforces that tenant context is present and correct before operations proceed.
  *
  * When a {@see SystemContext} is provided and active, assertions are bypassed
- * with audit logging — this allows system-level operations (migrations, global
+ * with audit logging: this allows system-level operations (migrations, global
  * maintenance) to operate without tenant scope.
  */
 #[Api(since: '1.0.0')]

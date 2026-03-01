@@ -17,7 +17,7 @@ use function implode;
 use function sprintf;
 
 /**
- * Fake cache driver for testing — in-memory store with operation tracking.
+ * Fake cache driver for testing: in-memory store with operation tracking.
  *
  * Records all get/set/delete operations for assertion, enabling tests to
  * verify caching behavior without a real cache backend.

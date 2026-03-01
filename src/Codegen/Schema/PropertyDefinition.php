@@ -120,7 +120,7 @@ final readonly class PropertyDefinition
     public static function extractLength(string $columnType): ?int
     {
         if (preg_match('/\((\d+)\)/', $columnType, $matches) === 1) {
-            // Don't return length for tinyint(1) — that's a boolean indicator
+            // Don't return length for tinyint(1): that's a boolean indicator
             if (strtolower($columnType) === 'tinyint(1)') {
                 return null;
             }

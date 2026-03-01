@@ -113,7 +113,7 @@ final readonly class FieldAllowlist
 
     /**
      * Filter the requested fields to only those that are in the allowlist.
-     * Unlike validate(), this does not throw on unknown fields — it silently ignores them.
+     * Unlike validate(), this does not throw on unknown fields; it silently ignores them.
      *
      * @param list<string> $requestedFields
      * @return list<string>

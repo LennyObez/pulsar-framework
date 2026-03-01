@@ -10,7 +10,7 @@ use Pulsar\Api\Api;
  * Immutable correlation context DTO.
  *
  * Carries correlation identity for tracing events across subsystems.
- * Note: tenantHash is deliberately excluded — tenant identity is resolved
+ * Note: tenantHash is deliberately excluded; tenant identity is resolved
  * exclusively by StudioManager::ingest() via TenantContext::tryGet().
  */
 #[Api(since: '1.0.0')]

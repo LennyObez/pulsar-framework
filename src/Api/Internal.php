@@ -9,7 +9,7 @@ use Attribute;
 /**
  * Marks a class, method, or class constant as explicitly internal.
  *
- * This attribute is optional — everything without #[Api] is internal by default.
+ * This attribute is optional; everything without #[Api] is internal by default.
  * Use this for emphasis on classes that users might mistakenly depend on
  * (e.g., types exposed via public properties that are implementation details).
  */

@@ -105,7 +105,7 @@ final readonly class ConfigSchemaReflector
         }
 
         if ($property->isPromoted()) {
-            // Promoted properties — check constructor parameters
+            // Promoted properties: check constructor parameters
             $constructor = $property->getDeclaringClass()->getConstructor();
 
             if ($constructor !== null) {

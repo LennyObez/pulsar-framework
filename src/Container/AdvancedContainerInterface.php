@@ -76,12 +76,12 @@ interface AdvancedContainerInterface extends ContainerInterface
     public function addContextualBinding(string $consumer, string $abstract, callable|string $concrete): void;
 
     /**
-     * Begin request scope — enables RequestScope lifetime resolution.
+     * Begin request scope: enables RequestScope lifetime resolution.
      */
     public function beginRequestScope(): void;
 
     /**
-     * End request scope — evicts all RequestScope instances.
+     * End request scope: evicts all RequestScope instances.
      */
     public function endRequestScope(): void;
 
@@ -93,7 +93,7 @@ interface AdvancedContainerInterface extends ContainerInterface
     public function beginTenantScope(string $tenantId): void;
 
     /**
-     * End tenant scope — evicts all TenantScope instances.
+     * End tenant scope: evicts all TenantScope instances.
      */
     public function endTenantScope(): void;
 

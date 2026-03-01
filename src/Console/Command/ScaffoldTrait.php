@@ -299,7 +299,7 @@ trait ScaffoldTrait
             clearstatcache(true, $dir);
         }
 
-        // Final attempt — let the warning through if it still fails
+        // Final attempt: let the warning through if it still fails
         @rmdir($dir);
     }
 

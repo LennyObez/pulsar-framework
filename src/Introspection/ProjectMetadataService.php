@@ -47,7 +47,7 @@ final class ProjectMetadataService
     /**
      * Get the project metadata snapshot.
      *
-     * Memoized per-process — returns the cached snapshot after the first call.
+     * Memoized per-process: returns the cached snapshot after the first call.
      */
     public function snapshot(): ProjectMetadataSnapshot
     {

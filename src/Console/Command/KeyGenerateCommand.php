@@ -116,7 +116,7 @@ final class KeyGenerateCommand extends Command
             return ExitCode::Error->value;
         }
 
-        // Key exists with a non-empty value — confirm before overwriting
+        // Key exists with a non-empty value: confirm before overwriting
         if (preg_match('/^PULSAR_MASTER_KEY=.+$/m', $content) === 1) {
             if (!$force && !$this->confirm($output)) {
                 $output->writeln('Aborted.');
@@ -142,7 +142,7 @@ final class KeyGenerateCommand extends Command
             return ExitCode::Success->value;
         }
 
-        // Key not present at all — append
+        // Key not present at all; append
         $content = rtrim($content, "\n") . "\n" . $line . "\n";
         AtomicFileWriter::write($envFile, $content);
         $output->writeln(sprintf('PULSAR_MASTER_KEY appended to %s', $envFile));

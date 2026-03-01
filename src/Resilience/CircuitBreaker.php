@@ -76,6 +76,37 @@ final class CircuitBreaker
     }
 
     /**
+     * Execute the given closure, falling back to a fallback closure when the circuit is open.
+     *
+     * Unlike {@see execute()}, this method never throws when the circuit is open.
+     * Instead, it invokes the fallback closure and returns its result.
+     *
+     * @template T
+     * @param Closure(): T $operation
+     * @param Closure(): T $fallback
+     * @return T
+     *
+     * @throws Throwable If the operation or fallback throws.
+     */
+    public function executeWithFallback(Closure $operation, Closure $fallback): mixed
+    {
+        if (!$this->isAvailable()) {
+            return $fallback();
+        }
+
+        try {
+            $result = $operation();
+            $this->recordSuccess();
+
+            return $result;
+        } catch (Throwable $e) {
+            $this->recordFailure();
+
+            throw $e;
+        }
+    }
+
+    /**
      * Get the current circuit state.
      */
     public function state(): CircuitBreakerState

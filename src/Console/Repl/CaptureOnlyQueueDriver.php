@@ -32,7 +32,7 @@ final class CaptureOnlyQueueDriver implements QueueDriverInterface
     ) {}
 
     /**
-     * @throws ReplSafeModeException Never thrown — captures the push without dispatching
+     * @throws ReplSafeModeException Never thrown: captures the push without dispatching
      */
     #[Override]
     public function push(string $queue, string $jobClass, string $payload, int $delay = 0): string
@@ -50,7 +50,7 @@ final class CaptureOnlyQueueDriver implements QueueDriverInterface
     }
 
     /**
-     * @throws ReplSafeModeException Always — pop is a destructive read (removes the job from the queue)
+     * @throws ReplSafeModeException Always: pop is a destructive read (removes the job from the queue)
      */
     #[Override]
     public function pop(string $queue): ?JobRecord
@@ -59,7 +59,7 @@ final class CaptureOnlyQueueDriver implements QueueDriverInterface
     }
 
     /**
-     * @throws ReplSafeModeException Always — blocked in safe mode
+     * @throws ReplSafeModeException Always: blocked in safe mode
      */
     #[Override]
     public function acknowledge(string $jobId): void
@@ -68,7 +68,7 @@ final class CaptureOnlyQueueDriver implements QueueDriverInterface
     }
 
     /**
-     * @throws ReplSafeModeException Always — blocked in safe mode
+     * @throws ReplSafeModeException Always: blocked in safe mode
      */
     #[Override]
     public function reject(string $jobId, string $reason): void
@@ -83,7 +83,7 @@ final class CaptureOnlyQueueDriver implements QueueDriverInterface
     }
 
     /**
-     * @throws ReplSafeModeException Always — blocked in safe mode
+     * @throws ReplSafeModeException Always: blocked in safe mode
      */
     #[Override]
     public function purge(string $queue): int

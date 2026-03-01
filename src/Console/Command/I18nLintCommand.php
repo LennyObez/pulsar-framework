@@ -52,7 +52,7 @@ final class I18nLintCommand extends Command
             $prefix = strtoupper($issue['severity']->value);
 
             $output->writeln(sprintf(
-                '  [%s] %s:%s (%s) — %s',
+                '  [%s] %s:%s (%s): %s',
                 $prefix,
                 $issue['locale'],
                 $issue['domain'],
