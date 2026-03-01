@@ -34,7 +34,7 @@ interface WorkflowStorageInterface
      * The update succeeds only if the stored version matches expectedVersion.
      * On success, the version is incremented atomically and the updated
      * instance is returned. On version mismatch, a ConcurrentTransitionException
-     * is thrown — the caller may retry.
+     * is thrown: the caller may retry.
      *
      * @throws ConcurrentTransitionException If the stored version does not match expectedVersion.
      */

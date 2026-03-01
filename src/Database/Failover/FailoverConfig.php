@@ -11,7 +11,7 @@ use Pulsar\Api\Api;
  * Configuration for connection failover management.
  *
  * Failover handles detection and switching to a standby endpoint.
- * It does NOT handle promotion — that is the responsibility of the
+ * It does NOT handle promotion: that is the responsibility of the
  * database cluster itself.
  */
 #[Api(since: '1.0.0')]

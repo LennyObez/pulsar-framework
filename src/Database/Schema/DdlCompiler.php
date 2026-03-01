@@ -210,7 +210,7 @@ final readonly class DdlCompiler
      *
      * PostgreSQL: gen_random_uuid()
      * MySQL 8.0+: (UUID())
-     * SQLite: no native UUID — returns null (application must provide UUIDs)
+     * SQLite: no native UUID: returns null (application must provide UUIDs)
      */
     public function uuidDefaultExpression(): ?SchemaDefaultExpression
     {

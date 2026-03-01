@@ -8,7 +8,9 @@ use Pulsar\Api\Api;
 use Pulsar\Database\Exception\DatabaseException;
 
 use function array_keys;
+use function array_values;
 use function is_dir;
+use function is_string;
 use function ksort;
 use function preg_match;
 use function scandir;
@@ -18,62 +20,134 @@ use function substr;
 /**
  * Discovers migration files from disk.
  *
+ * Supports multiple migration directories (project + extensions).
  * Migration filenames must follow the convention:
  * {YYYYMMDDHHMMSS}_description_snake_case.php
  */
 #[Api(since: '1.0.0')]
-final readonly class MigrationRepository
+final class MigrationRepository
 {
-    public function __construct(
-        private string $migrationsPath,
-    ) {}
+    /** @var list<string> */
+    private readonly array $migrationsPaths;
+
+    /** @var array<string, MigrationFile>|null */
+    private ?array $discoveryCache = null;
 
     /**
-     * Discover all migration files, sorted by version (ascending).
+     * @param list<string>|string $migrationsPaths One or more directories to scan
+     */
+    public function __construct(array|string $migrationsPaths)
+    {
+        $this->migrationsPaths = is_string($migrationsPaths) ? [$migrationsPaths] : array_values($migrationsPaths);
+    }
+
+    /**
+     * Discover all migration files across all paths, sorted by version (ascending).
+     *
+     * Results are cached in memory so repeated calls within the same process
+     * return instantly without re-scanning the filesystem. Call
+     * {@see clearCache()} to force a fresh scan.
      *
      * @return array<string, MigrationFile> Keyed by version string
      * @throws DatabaseException On duplicate versions
      */
     public function discover(): array
     {
-        if (!is_dir($this->migrationsPath)) {
-            return [];
-        }
-
-        $files = scandir($this->migrationsPath);
-        if ($files === false) {
-            return [];
+        if ($this->discoveryCache !== null) {
+            return $this->discoveryCache;
         }
 
         $migrations = [];
 
-        foreach ($files as $file) {
-            if (!str_ends_with($file, '.php')) {
+        foreach ($this->migrationsPaths as $migrationsPath) {
+            if (!is_dir($migrationsPath)) {
                 continue;
             }
 
-            $version = $this->extractVersion($file);
-            if ($version === null) {
+            $files = scandir($migrationsPath);
+            if ($files === false) {
                 continue;
             }
 
-            if (isset($migrations[$version])) {
-                throw DatabaseException::duplicateMigrationVersion($version);
+            // Compute a path prefix for sequential versions to prevent
+            // collisions across extensions (e.g., CMS 001_ vs Forum 001_).
+            // Timestamp versions are globally unique and need no prefix.
+            $pathPrefix = $this->computePathPrefix($migrationsPath);
+
+            foreach ($files as $file) {
+                if (!str_ends_with($file, '.php')) {
+                    continue;
+                }
+
+                $rawVersion = $this->extractVersion($file);
+                if ($rawVersion === null) {
+                    continue;
+                }
+
+                // Sequential versions get a path-scoped prefix to avoid
+                // collisions: "a3f2_00000000000001" vs "7b1c_00000000000001"
+                $version = $this->isSequentialVersion($file)
+                    ? $pathPrefix . '_' . $rawVersion
+                    : $rawVersion;
+
+                if (isset($migrations[$version])) {
+                    throw DatabaseException::duplicateMigrationVersion($version);
+                }
+
+                $name = $this->extractName($file);
+                $path = $migrationsPath . DIRECTORY_SEPARATOR . $file;
+
+                $migrations[$version] = new MigrationFile(
+                    version: $version,
+                    name: $name,
+                    path: $path,
+                );
             }
-
-            $name = $this->extractName($file);
-            $path = $this->migrationsPath . DIRECTORY_SEPARATOR . $file;
-
-            $migrations[$version] = new MigrationFile(
-                version: $version,
-                name: $name,
-                path: $path,
-            );
         }
 
         ksort($migrations);
 
+        $this->discoveryCache = $migrations;
+
         return $migrations;
+    }
+
+    /**
+     * Clear the in-memory discovery cache.
+     *
+     * Subsequent calls to {@see discover()} will re-scan the filesystem.
+     */
+    public function clearCache(): void
+    {
+        $this->discoveryCache = null;
+    }
+
+    /**
+     * Check if a filename uses sequential numbering (1-13 digits, not a timestamp).
+     */
+    private function isSequentialVersion(string $filename): bool
+    {
+        // Timestamp formats start with 14 digits or YYYY_MM_DD pattern
+        if (preg_match('/^\d{14}_/', $filename) === 1) {
+            return false;
+        }
+        if (preg_match('/^\d{4}_\d{2}_\d{2}_\d{6}_/', $filename) === 1) {
+            return false;
+        }
+
+        // Sequential: 1-13 digits followed by underscore
+        return preg_match('/^\d{1,13}_/', $filename) === 1;
+    }
+
+    /**
+     * Compute a short deterministic prefix from a directory path.
+     *
+     * Uses the first 4 hex chars of a CRC32 hash, giving 65,536 buckets.
+     * Collisions are astronomically unlikely for < 100 extensions.
+     */
+    private function computePathPrefix(string $path): string
+    {
+        return substr(hash('crc32b', $path), 0, 4);
     }
 
     /**
@@ -96,14 +170,33 @@ final readonly class MigrationRepository
     }
 
     /**
-     * Extract the version timestamp from a filename.
+     * Extract the version from a filename.
+     *
+     * Accepts three formats:
+     *   - Compact:     YYYYMMDDHHMMSS_description.php    (e.g. 20260203153000_create_users.php)
+     *   - Separated:   YYYY_MM_DD_HHMMSS_description.php (e.g. 2026_02_03_153000_create_users.php)
+     *   - Sequential:  NNN_description.php                (e.g. 001_create_table.php)
+     *
+     * Compact and separated formats normalize to a 14-digit version string.
+     * Sequential format zero-pads to 14 digits for consistent ordering.
      *
      * @return string|null The 14-digit version, or null if not a valid migration filename.
      */
     public function extractVersion(string $filename): ?string
     {
+        // Compact format: 14 consecutive digits followed by underscore
         if (preg_match('/^(\d{14})_/', $filename, $matches) === 1) {
             return $matches[1];
+        }
+
+        // Separated format: YYYY_MM_DD_HHMMSS followed by underscore
+        if (preg_match('/^(\d{4})_(\d{2})_(\d{2})_(\d{6})_/', $filename, $matches) === 1) {
+            return $matches[1] . $matches[2] . $matches[3] . $matches[4];
+        }
+
+        // Sequential format: 1-13 digits followed by underscore (e.g. 001_create_table.php)
+        if (preg_match('/^(\d{1,13})_/', $filename, $matches) === 1) {
+            return str_pad($matches[1], 14, '0', STR_PAD_LEFT);
         }
 
         return null;
@@ -117,8 +210,18 @@ final readonly class MigrationRepository
         // Remove .php extension
         $withoutExt = substr($filename, 0, -4);
 
-        // Remove the version prefix (14 digits + underscore)
+        // Compact format: 14 digits + underscore
         if (preg_match('/^\d{14}_(.+)$/', $withoutExt, $matches) === 1) {
+            return $matches[1];
+        }
+
+        // Separated format: YYYY_MM_DD_HHMMSS + underscore
+        if (preg_match('/^\d{4}_\d{2}_\d{2}_\d{6}_(.+)$/', $withoutExt, $matches) === 1) {
+            return $matches[1];
+        }
+
+        // Sequential format: 1-13 digits + underscore
+        if (preg_match('/^\d{1,13}_(.+)$/', $withoutExt, $matches) === 1) {
             return $matches[1];
         }
 
@@ -132,6 +235,6 @@ final readonly class MigrationRepository
      */
     public function versions(): array
     {
-        return array_keys($this->discover());
+        return array_map(strval(...), array_keys($this->discover()));
     }
 }

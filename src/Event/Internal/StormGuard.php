@@ -15,7 +15,7 @@ use function array_pop;
  *
  * Provides two protection mechanisms:
  * 1. maxDepth: hard ceiling on total dispatch chain length (regardless of event types)
- * 2. Loop detection: count-based — if the same event FQCN appears maxRepeatsPerEvent
+ * 2. Loop detection: count-based: if the same event FQCN appears maxRepeatsPerEvent
  *    times anywhere in the current chain, throws EventException
  */
 #[Internal]

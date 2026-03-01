@@ -90,11 +90,11 @@ final class ConnectionPool implements ConnectionPoolInterface
     {
         $this->activeCount = $this->activeCount > 0 ? $this->activeCount - 1 : 0;
 
-        $createdAt = time();
-
         if ($connection instanceof PooledConnection) {
             $createdAt = $connection->createdAt();
             $connection = $connection->unwrap();
+        } else {
+            $createdAt = time();
         }
 
         $entry = new PooledEntry(

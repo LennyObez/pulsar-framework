@@ -125,7 +125,9 @@ final class PdoConnection implements ConnectionInterface
 
         $this->transactionDepth++;
 
-        return new Transaction($pdo, $depth);
+        return new Transaction($pdo, $depth, function (): void {
+            $this->transactionDepth--;
+        });
     }
 
     /**
@@ -140,14 +142,12 @@ final class PdoConnection implements ConnectionInterface
         try {
             $result = $callback($this);
             $transaction->commit();
-            $this->transactionDepth--;
 
             return $result;
         } catch (Throwable $e) {
             if ($transaction->active) {
                 $transaction->rollback();
             }
-            $this->transactionDepth--;
 
             throw $e;
         }

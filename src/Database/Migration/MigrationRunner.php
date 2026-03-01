@@ -14,8 +14,16 @@ use Throwable;
 use function array_diff_key;
 use function array_filter;
 use function array_values;
+use function fclose;
+use function flock;
+use function fopen;
 use function sprintf;
+use function sys_get_temp_dir;
 use function usort;
+
+use const DIRECTORY_SEPARATOR;
+use const LOCK_EX;
+use const LOCK_UN;
 
 /**
  * Orchestrates running and rolling back migrations.
@@ -23,15 +31,28 @@ use function usort;
  * Tracks migration state in a database table. Each `runPending()` call
  * assigns one batch number; `rollbackLastBatch()` rolls back all
  * migrations in the highest batch in reverse version order.
+ *
+ * All mutation methods acquire a database-level advisory lock (PostgreSQL
+ * and MySQL) or a filesystem flock (SQLite) to prevent concurrent migration
+ * runs from corrupting state.
  */
 #[Api(since: '1.0.0')]
-final readonly class MigrationRunner
+final readonly class MigrationRunner implements MigrationRunnerInterface
 {
+    /**
+     * Advisory lock key derived from CRC32 of the table name.
+     * Deterministic across processes for the same migration table.
+     */
+    private int $advisoryLockKey;
+
     public function __construct(
         private ConnectionInterface $connection,
         private MigrationRepository $repository,
         private string $tableName,
-    ) {}
+    ) {
+        // Use a positive 31-bit integer for MySQL GET_LOCK / pg_advisory_lock compatibility
+        $this->advisoryLockKey = crc32('pulsar_migrate:' . $this->tableName) & 0x7FFF_FFFF;
+    }
 
     /**
      * Ensure the migration tracking table exists.
@@ -52,6 +73,8 @@ final readonly class MigrationRunner
     /**
      * Run all pending migrations.
      *
+     * Acquires a database-level advisory lock to prevent concurrent runs.
+     *
      * @return list<string> List of applied version strings.
      * @throws DatabaseException
      */
@@ -59,34 +82,40 @@ final readonly class MigrationRunner
     {
         $this->ensureMigrationTable();
 
-        $pending = $this->getPending();
-        if ($pending === []) {
-            return [];
-        }
+        $this->acquireAdvisoryLock();
 
-        $batch = $this->getCurrentBatch() + 1;
-        $applied = [];
-
-        foreach ($pending as $file) {
-            $migration = $this->repository->load($file->path);
-
-            try {
-                $this->connection->transaction(function (ConnectionInterface $conn) use ($migration): void {
-                    $migration->up($conn);
-                });
-            } catch (Throwable $e) {
-                throw DatabaseException::migrationFailed($file->version, 'up', $e);
+        try {
+            $pending = $this->getPending();
+            if ($pending === []) {
+                return [];
             }
 
-            $this->recordMigration($file, $batch);
-            $applied[] = $file->version;
-        }
+            $batch = $this->getCurrentBatch() + 1;
+            $applied = [];
 
-        return $applied;
+            foreach ($pending as $file) {
+                $migration = $this->repository->load($file->path);
+
+                try {
+                    $this->executeMigrationSafely($migration, 'up');
+                } catch (Throwable $e) {
+                    throw DatabaseException::migrationFailed($file->version, 'up', $e);
+                }
+
+                $this->recordMigration($file, $batch);
+                $applied[] = $file->version;
+            }
+
+            return $applied;
+        } finally {
+            $this->releaseAdvisoryLock();
+        }
     }
 
     /**
      * Rollback the last batch of migrations.
+     *
+     * Acquires a database-level advisory lock to prevent concurrent runs.
      *
      * @return list<string> List of rolled-back version strings.
      * @throws DatabaseException
@@ -95,16 +124,24 @@ final readonly class MigrationRunner
     {
         $this->ensureMigrationTable();
 
-        $currentBatch = $this->getCurrentBatch();
-        if ($currentBatch === 0) {
-            return [];
-        }
+        $this->acquireAdvisoryLock();
 
-        return $this->rollbackBatch($currentBatch);
+        try {
+            $currentBatch = $this->getCurrentBatch();
+            if ($currentBatch === 0) {
+                return [];
+            }
+
+            return $this->rollbackBatch($currentBatch);
+        } finally {
+            $this->releaseAdvisoryLock();
+        }
     }
 
     /**
      * Rollback all migrations down to (and including) a target version.
+     *
+     * Acquires a database-level advisory lock to prevent concurrent runs.
      *
      * @return list<string> List of rolled-back version strings.
      * @throws DatabaseException
@@ -113,23 +150,31 @@ final readonly class MigrationRunner
     {
         $this->ensureMigrationTable();
 
-        $applied = $this->getApplied();
-        $toRollback = [];
+        $this->acquireAdvisoryLock();
 
-        foreach ($applied as $record) {
-            if ($record->version >= $targetVersion) {
-                $toRollback[] = $record;
+        try {
+            $applied = $this->getApplied();
+            $toRollback = [];
+
+            foreach ($applied as $record) {
+                if ($record->version >= $targetVersion) {
+                    $toRollback[] = $record;
+                }
             }
+
+            // Sort in reverse version order
+            usort($toRollback, static fn(MigrationRecord $a, MigrationRecord $b): int => $b->version <=> $a->version);
+
+            return $this->rollbackRecords($toRollback);
+        } finally {
+            $this->releaseAdvisoryLock();
         }
-
-        // Sort in reverse version order
-        usort($toRollback, static fn(MigrationRecord $a, MigrationRecord $b): int => $b->version <=> $a->version);
-
-        return $this->rollbackRecords($toRollback);
     }
 
     /**
      * Reset all migrations (rollback everything).
+     *
+     * Acquires a database-level advisory lock to prevent concurrent runs.
      *
      * @return list<string> List of rolled-back version strings.
      * @throws DatabaseException
@@ -138,16 +183,22 @@ final readonly class MigrationRunner
     {
         $this->ensureMigrationTable();
 
-        $applied = $this->getApplied();
-        if ($applied === []) {
-            return [];
+        $this->acquireAdvisoryLock();
+
+        try {
+            $applied = $this->getApplied();
+            if ($applied === []) {
+                return [];
+            }
+
+            // Sort in reverse version order
+            $sorted = $applied;
+            usort($sorted, static fn(MigrationRecord $a, MigrationRecord $b): int => $b->version <=> $a->version);
+
+            return $this->rollbackRecords($sorted);
+        } finally {
+            $this->releaseAdvisoryLock();
         }
-
-        // Sort in reverse version order
-        $sorted = $applied;
-        usort($sorted, static fn(MigrationRecord $a, MigrationRecord $b): int => $b->version <=> $a->version);
-
-        return $this->rollbackRecords($sorted);
     }
 
     /**
@@ -247,9 +298,7 @@ final readonly class MigrationRunner
             $migration = $this->repository->load($file->path);
 
             try {
-                $this->connection->transaction(function (ConnectionInterface $conn) use ($migration): void {
-                    $migration->down($conn);
-                });
+                $this->executeMigrationSafely($migration, 'down');
             } catch (Throwable $e) {
                 throw DatabaseException::migrationFailed($record->version, 'down', $e);
             }
@@ -291,7 +340,33 @@ final readonly class MigrationRunner
     }
 
     /**
+     * Execute a migration safely, avoiding nested transaction crashes on SQLite.
+     *
+     * If the connection already has an active transaction, the migration runs
+     * without wrapping. Otherwise, the runner wraps it in a transaction for
+     * atomicity. This prevents "cannot start a transaction within a transaction"
+     * errors when CMS migrations manage their own transactions internally.
+     */
+    private function executeMigrationSafely(MigrationInterface $migration, string $direction): void
+    {
+        if ($this->connection->inTransaction()) {
+            // Already in a transaction (e.g., migration manages its own).
+            // Run directly without wrapping.
+            $direction === 'up' ? $migration->up($this->connection) : $migration->down($this->connection);
+
+            return;
+        }
+
+        $this->connection->transaction(function (ConnectionInterface $conn) use ($migration, $direction): void {
+            $direction === 'up' ? $migration->up($conn) : $migration->down($conn);
+        });
+    }
+
+    /**
      * Generate driver-aware DDL for the migration tracking table.
+     *
+     * Version column uses VARCHAR(30) to accommodate path-prefixed
+     * sequential versions (e.g., "f827_00000000000042").
      */
     private function createTableDdl(): string
     {
@@ -302,7 +377,7 @@ final readonly class MigrationRunner
             Driver::SQLite => sprintf(
                 'CREATE TABLE IF NOT EXISTS %s ('
                 . 'id INTEGER PRIMARY KEY AUTOINCREMENT, '
-                . 'version VARCHAR(14) NOT NULL UNIQUE, '
+                . 'version VARCHAR(30) NOT NULL UNIQUE, '
                 . 'name VARCHAR(255) NOT NULL, '
                 . 'batch INTEGER NOT NULL, '
                 . 'applied_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP'
@@ -312,7 +387,7 @@ final readonly class MigrationRunner
             Driver::MySQL => sprintf(
                 'CREATE TABLE IF NOT EXISTS %s ('
                 . 'id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, '
-                . 'version VARCHAR(14) NOT NULL UNIQUE, '
+                . 'version VARCHAR(30) NOT NULL UNIQUE, '
                 . 'name VARCHAR(255) NOT NULL, '
                 . 'batch INT UNSIGNED NOT NULL, '
                 . 'applied_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP'
@@ -322,7 +397,7 @@ final readonly class MigrationRunner
             Driver::PostgreSQL => sprintf(
                 'CREATE TABLE IF NOT EXISTS %s ('
                 . 'id SERIAL PRIMARY KEY, '
-                . 'version VARCHAR(14) NOT NULL UNIQUE, '
+                . 'version VARCHAR(30) NOT NULL UNIQUE, '
                 . 'name VARCHAR(255) NOT NULL, '
                 . 'batch INTEGER NOT NULL, '
                 . 'applied_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP'
@@ -330,5 +405,117 @@ final readonly class MigrationRunner
                 $table,
             ),
         };
+    }
+
+    // ------------------------------------------------------------------
+    // Advisory locking
+    // ------------------------------------------------------------------
+
+    /**
+     * Acquire a database-level advisory lock to prevent concurrent migration runs.
+     *
+     * PostgreSQL: pg_advisory_lock (session-level, blocks until acquired).
+     * MySQL: GET_LOCK with a 30-second timeout.
+     * SQLite: File-based flock (exclusive) since SQLite has no advisory lock primitive.
+     *
+     * @throws DatabaseException When the lock cannot be acquired
+     */
+    private function acquireAdvisoryLock(): void
+    {
+        $driver = $this->connection->driver();
+
+        match ($driver) {
+            Driver::PostgreSQL => $this->connection->execute(
+                sprintf('SELECT pg_advisory_lock(%d)', $this->advisoryLockKey),
+            ),
+            Driver::MySQL => $this->acquireMysqlLock(),
+            Driver::SQLite => $this->acquireSqliteFlock(),
+        };
+    }
+
+    /**
+     * Release the advisory lock acquired by {@see acquireAdvisoryLock()}.
+     */
+    private function releaseAdvisoryLock(): void
+    {
+        $driver = $this->connection->driver();
+
+        match ($driver) {
+            Driver::PostgreSQL => $this->connection->execute(
+                sprintf('SELECT pg_advisory_unlock(%d)', $this->advisoryLockKey),
+            ),
+            Driver::MySQL => $this->connection->execute(
+                sprintf("SELECT RELEASE_LOCK('pulsar_migrate_%s')", $this->tableName),
+            ),
+            Driver::SQLite => $this->releaseSqliteFlock(),
+        };
+    }
+
+    /**
+     * Acquire a MySQL named lock with a 30-second timeout.
+     *
+     * @throws DatabaseException When the lock cannot be acquired
+     */
+    private function acquireMysqlLock(): void
+    {
+        $result = $this->connection->query(
+            sprintf("SELECT GET_LOCK('pulsar_migrate_%s', 30) AS acquired", $this->tableName),
+        );
+
+        $row = $result->first();
+        $acquired = $row?->getOrDefault('acquired', 0);
+
+        if ((int) $acquired !== 1) {
+            throw DatabaseException::migrationTableError(
+                'Could not acquire migration lock; another migration may be running',
+                null,
+            );
+        }
+    }
+
+    /**
+     * Acquire a file-based exclusive lock for SQLite.
+     *
+     * Uses a function-scoped static variable to hold the file handle across
+     * acquire/release calls, since the class is readonly and cannot hold
+     * mutable instance or static properties.
+     *
+     * @throws DatabaseException When the lock file cannot be opened or locked
+     */
+    private function acquireSqliteFlock(): void
+    {
+        $lockPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'pulsar_migrate_' . $this->tableName . '.lock';
+        $handle = fopen($lockPath, 'cb');
+
+        if ($handle === false) {
+            throw DatabaseException::migrationTableError(
+                'Could not open migration lock file: ' . $lockPath,
+                null,
+            );
+        }
+
+        if (!flock($handle, LOCK_EX)) {
+            fclose($handle);
+            throw DatabaseException::migrationTableError(
+                'Could not acquire migration file lock',
+                null,
+            );
+        }
+
+        MigrationFlockHolder::set($handle);
+    }
+
+    /**
+     * Release the SQLite file-based lock.
+     */
+    private function releaseSqliteFlock(): void
+    {
+        $handle = MigrationFlockHolder::get();
+
+        if ($handle !== null) {
+            flock($handle, LOCK_UN);
+            fclose($handle);
+            MigrationFlockHolder::clear();
+        }
     }
 }

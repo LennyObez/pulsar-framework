@@ -14,7 +14,7 @@ use Pulsar\Workflow\Storage\WorkflowInstance;
  *
  * Guards receive the actor context and transition details, and must return
  * a deterministic result based solely on these inputs. Guards MUST NOT
- * perform hidden I/O — any required data must be available through the
+ * perform hidden I/O: any required data must be available through the
  * actor context or workflow instance.
  *
  * Guard evaluation results are logged for audit purposes.

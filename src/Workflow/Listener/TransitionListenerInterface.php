@@ -13,7 +13,7 @@ use Pulsar\Workflow\Storage\WorkflowInstance;
  * Listener for workflow transition lifecycle events.
  *
  * Each hook is called at its respective phase of the transition process.
- * Implementations should be fast and side-effect-aware — heavy work should
+ * Implementations should be fast and side-effect-aware; heavy work should
  * be deferred to async handlers via the event dispatcher.
  */
 #[Api(since: '1.0.0')]

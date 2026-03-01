@@ -148,7 +148,7 @@ final class EventMapCompiler
             return ['class' => $listener::class, 'method' => '__invoke'];
         }
 
-        // Closures cannot be compiled — fail hard
+        // Closures cannot be compiled; fail hard
         throw EventException::invalidListener('closures cannot be compiled; use an invokable class or [class, method] array');
     }
 }
