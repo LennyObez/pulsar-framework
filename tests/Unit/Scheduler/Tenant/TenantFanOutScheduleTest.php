@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Scheduler\Tenant;
+namespace Pulsar\Tests\Unit\Scheduler\Tenant;
 
 use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;

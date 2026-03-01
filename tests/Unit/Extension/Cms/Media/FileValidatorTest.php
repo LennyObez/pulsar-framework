@@ -147,8 +147,8 @@ final class FileValidatorTest extends TestCase
 
         $this->expectException(CmsException::class);
         $this->expectExceptionMessage('exceeds maximum');
-        // Fake a file size > 10MB
-        $this->validator->validate($path, 'photo.jpg', 'image/jpeg', 20_000_000);
+        // Fake a file size > 50MB (default maxUploadSize)
+        $this->validator->validate($path, 'photo.jpg', 'image/jpeg', 60_000_000);
     }
 
     // -- Oversized dimensions ---------------------------------------------

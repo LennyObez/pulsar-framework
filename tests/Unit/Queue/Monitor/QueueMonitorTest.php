@@ -7,9 +7,9 @@ namespace Pulsar\Tests\Unit\Queue\Monitor;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Queue\Monitor\HealthStatus;
 use Pulsar\Queue\Monitor\MetricsCollector;
 use Pulsar\Queue\Monitor\QueueHealthCheck;
+use Pulsar\Queue\Monitor\QueueHealthStatus;
 use Pulsar\Queue\Monitor\QueueMonitor;
 use Pulsar\Queue\QueueDriverInterface;
 
@@ -39,6 +39,6 @@ final class QueueMonitorTest extends TestCase
 
         $monitor = new QueueMonitor($collector, $healthCheck);
 
-        self::assertSame(HealthStatus::Healthy, $monitor->healthCheck('default'));
+        self::assertSame(QueueHealthStatus::Healthy, $monitor->healthCheck('default'));
     }
 }

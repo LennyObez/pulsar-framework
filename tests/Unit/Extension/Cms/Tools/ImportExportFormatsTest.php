@@ -8,11 +8,13 @@ use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Extension\Cms\Content\Content;
 use Pulsar\Extension\Cms\Content\ContentBlock;
 use Pulsar\Extension\Cms\Content\ContentTranslation;
 use Pulsar\Extension\Cms\Content\ContentType;
 use Pulsar\Extension\Cms\Content\PublishingStatus;
+use Pulsar\Extension\Cms\Content\SafeHtmlPolicy;
 use Pulsar\Extension\Cms\Internal\Tools\CsvContentExporter;
 use Pulsar\Extension\Cms\Internal\Tools\CsvContentImporter;
 use Pulsar\Extension\Cms\Internal\Tools\MarkdownExporter;
@@ -34,7 +36,8 @@ final class ImportExportFormatsTest extends TestCase
         $this->mdExporter = new MarkdownExporter();
         $this->mdImporter = new MarkdownImporter();
         $this->csvExporter = new CsvContentExporter();
-        $this->csvImporter = new CsvContentImporter();
+        $auditLogger = $this->createStub(AuditLoggerInterface::class);
+        $this->csvImporter = new CsvContentImporter(new SafeHtmlPolicy($auditLogger));
     }
 
     #[Test]

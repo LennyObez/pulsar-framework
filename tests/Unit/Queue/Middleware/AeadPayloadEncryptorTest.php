@@ -36,7 +36,7 @@ final class AeadPayloadEncryptorTest extends TestCase
     public function encryption_round_trip_succeeds(): void
     {
         $plaintext = '{"user_id":42,"action":"transfer","amount":1000}';
-        $aad = AeadPayloadEncryptor::composeAad('tenant-1', 'payments', 'App\\Jobs\\Transfer', 1, 'corr-abc', 1);
+        $aad = AeadPayloadEncryptor::composeAad('tenant-1', 'payments', 'App\\Jobs\\Transfer', 1, 'corr-abc');
 
         $result = $this->encryptor->encrypt($plaintext, $aad);
 
@@ -52,7 +52,7 @@ final class AeadPayloadEncryptorTest extends TestCase
     public function encryption_produces_different_ciphertext_each_time(): void
     {
         $plaintext = '{"data":"same_data"}';
-        $aad = AeadPayloadEncryptor::composeAad('t1', 'q1', 'Job', 1, 'c1', 1);
+        $aad = AeadPayloadEncryptor::composeAad('t1', 'q1', 'Job', 1, 'c1');
 
         $result1 = $this->encryptor->encrypt($plaintext, $aad);
         $result2 = $this->encryptor->encrypt($plaintext, $aad);
@@ -64,10 +64,10 @@ final class AeadPayloadEncryptorTest extends TestCase
     public function tampering_with_tenant_id_in_aad_causes_decryption_failure(): void
     {
         $plaintext = '{"secret":"data"}';
-        $aad = AeadPayloadEncryptor::composeAad('tenant-1', 'default', 'App\\Jobs\\Foo', 1, 'corr-1', 1);
+        $aad = AeadPayloadEncryptor::composeAad('tenant-1', 'default', 'App\\Jobs\\Foo', 1, 'corr-1');
         $result = $this->encryptor->encrypt($plaintext, $aad);
 
-        $tamperedAad = AeadPayloadEncryptor::composeAad('tenant-EVIL', 'default', 'App\\Jobs\\Foo', 1, 'corr-1', 1);
+        $tamperedAad = AeadPayloadEncryptor::composeAad('tenant-EVIL', 'default', 'App\\Jobs\\Foo', 1, 'corr-1');
 
         $this->expectException(QueueException::class);
         $this->expectExceptionMessage('authentication tag mismatch');
@@ -78,10 +78,10 @@ final class AeadPayloadEncryptorTest extends TestCase
     public function tampering_with_queue_name_in_aad_causes_decryption_failure(): void
     {
         $plaintext = '{"secret":"data"}';
-        $aad = AeadPayloadEncryptor::composeAad('t1', 'payments', 'App\\Jobs\\Foo', 1, 'corr-1', 1);
+        $aad = AeadPayloadEncryptor::composeAad('t1', 'payments', 'App\\Jobs\\Foo', 1, 'corr-1');
         $result = $this->encryptor->encrypt($plaintext, $aad);
 
-        $tamperedAad = AeadPayloadEncryptor::composeAad('t1', 'hacked-queue', 'App\\Jobs\\Foo', 1, 'corr-1', 1);
+        $tamperedAad = AeadPayloadEncryptor::composeAad('t1', 'hacked-queue', 'App\\Jobs\\Foo', 1, 'corr-1');
 
         $this->expectException(QueueException::class);
         $this->encryptor->decrypt($result['ciphertext'], $tamperedAad, $result['keyId']);
@@ -91,10 +91,10 @@ final class AeadPayloadEncryptorTest extends TestCase
     public function tampering_with_job_class_in_aad_causes_decryption_failure(): void
     {
         $plaintext = '{"secret":"data"}';
-        $aad = AeadPayloadEncryptor::composeAad('t1', 'q1', 'App\\Jobs\\Legit', 1, 'corr-1', 1);
+        $aad = AeadPayloadEncryptor::composeAad('t1', 'q1', 'App\\Jobs\\Legit', 1, 'corr-1');
         $result = $this->encryptor->encrypt($plaintext, $aad);
 
-        $tamperedAad = AeadPayloadEncryptor::composeAad('t1', 'q1', 'App\\Jobs\\Evil', 1, 'corr-1', 1);
+        $tamperedAad = AeadPayloadEncryptor::composeAad('t1', 'q1', 'App\\Jobs\\Evil', 1, 'corr-1');
 
         $this->expectException(QueueException::class);
         $this->encryptor->decrypt($result['ciphertext'], $tamperedAad, $result['keyId']);
@@ -104,10 +104,10 @@ final class AeadPayloadEncryptorTest extends TestCase
     public function tampering_with_schema_version_in_aad_causes_decryption_failure(): void
     {
         $plaintext = '{"secret":"data"}';
-        $aad = AeadPayloadEncryptor::composeAad('t1', 'q1', 'Job', 1, 'corr-1', 1);
+        $aad = AeadPayloadEncryptor::composeAad('t1', 'q1', 'Job', 1, 'corr-1');
         $result = $this->encryptor->encrypt($plaintext, $aad);
 
-        $tamperedAad = AeadPayloadEncryptor::composeAad('t1', 'q1', 'Job', 999, 'corr-1', 1);
+        $tamperedAad = AeadPayloadEncryptor::composeAad('t1', 'q1', 'Job', 999, 'corr-1');
 
         $this->expectException(QueueException::class);
         $this->encryptor->decrypt($result['ciphertext'], $tamperedAad, $result['keyId']);
@@ -117,26 +117,27 @@ final class AeadPayloadEncryptorTest extends TestCase
     public function tampering_with_correlation_id_in_aad_causes_decryption_failure(): void
     {
         $plaintext = '{"secret":"data"}';
-        $aad = AeadPayloadEncryptor::composeAad('t1', 'q1', 'Job', 1, 'corr-real', 1);
+        $aad = AeadPayloadEncryptor::composeAad('t1', 'q1', 'Job', 1, 'corr-real');
         $result = $this->encryptor->encrypt($plaintext, $aad);
 
-        $tamperedAad = AeadPayloadEncryptor::composeAad('t1', 'q1', 'Job', 1, 'corr-fake', 1);
+        $tamperedAad = AeadPayloadEncryptor::composeAad('t1', 'q1', 'Job', 1, 'corr-fake');
 
         $this->expectException(QueueException::class);
         $this->encryptor->decrypt($result['ciphertext'], $tamperedAad, $result['keyId']);
     }
 
     #[Test]
-    public function tampering_with_attempt_number_in_aad_causes_decryption_failure(): void
+    public function decryption_succeeds_across_retry_attempts(): void
     {
+        // Encrypt at dispatch time (attempt 1)
         $plaintext = '{"secret":"data"}';
-        $aad = AeadPayloadEncryptor::composeAad('t1', 'q1', 'Job', 1, 'corr-1', 1);
+        $aad = AeadPayloadEncryptor::composeAad('t1', 'q1', 'Job', 1, 'corr-1');
         $result = $this->encryptor->encrypt($plaintext, $aad);
 
-        $tamperedAad = AeadPayloadEncryptor::composeAad('t1', 'q1', 'Job', 1, 'corr-1', 5);
+        // Attempt is NOT in AAD, so decryption with same AAD must succeed on retry
+        $decrypted = $this->encryptor->decrypt($result['ciphertext'], $aad, $result['keyId']);
 
-        $this->expectException(QueueException::class);
-        $this->encryptor->decrypt($result['ciphertext'], $tamperedAad, $result['keyId']);
+        self::assertSame($plaintext, $decrypted);
     }
 
     #[Test]
@@ -151,7 +152,7 @@ final class AeadPayloadEncryptorTest extends TestCase
         $oldEncryptor = new AeadPayloadEncryptor($oldMasterKey, $oldKeyRing);
 
         $plaintext = '{"rotation":"test"}';
-        $aad = AeadPayloadEncryptor::composeAad('t1', 'q1', 'Job', 1, 'corr-1', 1);
+        $aad = AeadPayloadEncryptor::composeAad('t1', 'q1', 'Job', 1, 'corr-1');
         $result = $oldEncryptor->encrypt($plaintext, $aad);
 
         // Create a new master key with old key as previous (simulating rotation)
@@ -172,7 +173,7 @@ final class AeadPayloadEncryptorTest extends TestCase
     public function decryption_fails_with_completely_wrong_key(): void
     {
         $plaintext = '{"secret":"data"}';
-        $aad = AeadPayloadEncryptor::composeAad('t1', 'q1', 'Job', 1, 'corr-1', 1);
+        $aad = AeadPayloadEncryptor::composeAad('t1', 'q1', 'Job', 1, 'corr-1');
         $result = $this->encryptor->encrypt($plaintext, $aad);
 
         // Create encryptor with a completely different key
@@ -187,7 +188,7 @@ final class AeadPayloadEncryptorTest extends TestCase
     #[Test]
     public function decryption_fails_with_invalid_ciphertext_format(): void
     {
-        $aad = AeadPayloadEncryptor::composeAad('t1', 'q1', 'Job', 1, 'corr-1', 1);
+        $aad = AeadPayloadEncryptor::composeAad('t1', 'q1', 'Job', 1, 'corr-1');
 
         $this->expectException(QueueException::class);
         $this->expectExceptionMessage('invalid ciphertext format');
@@ -197,7 +198,7 @@ final class AeadPayloadEncryptorTest extends TestCase
     #[Test]
     public function decryption_fails_with_truncated_ciphertext(): void
     {
-        $aad = AeadPayloadEncryptor::composeAad('t1', 'q1', 'Job', 1, 'corr-1', 1);
+        $aad = AeadPayloadEncryptor::composeAad('t1', 'q1', 'Job', 1, 'corr-1');
 
         // Base64 of just a few bytes (too short for nonce + tag)
         $this->expectException(QueueException::class);
@@ -207,18 +208,28 @@ final class AeadPayloadEncryptorTest extends TestCase
     #[Test]
     public function compose_aad_produces_deterministic_output(): void
     {
-        $aad1 = AeadPayloadEncryptor::composeAad('t1', 'q1', 'Job', 1, 'corr', 3);
-        $aad2 = AeadPayloadEncryptor::composeAad('t1', 'q1', 'Job', 1, 'corr', 3);
+        $aad1 = AeadPayloadEncryptor::composeAad('t1', 'q1', 'Job', 1, 'corr');
+        $aad2 = AeadPayloadEncryptor::composeAad('t1', 'q1', 'Job', 1, 'corr');
 
         self::assertSame($aad1, $aad2);
-        self::assertSame('t1|q1|Job|1|corr|3', $aad1);
+        self::assertSame('t1|q1|Job|1|corr', $aad1);
     }
 
     #[Test]
     public function compose_aad_handles_null_tenant_id(): void
     {
-        $aad = AeadPayloadEncryptor::composeAad(null, 'q1', 'Job', 1, 'corr', 1);
+        $aad = AeadPayloadEncryptor::composeAad(null, 'q1', 'Job', 1, 'corr');
 
-        self::assertSame('|q1|Job|1|corr|1', $aad);
+        self::assertSame('|q1|Job|1|corr', $aad);
+    }
+
+    #[Test]
+    public function compose_aad_excludes_attempt_number(): void
+    {
+        // The AAD must NOT include attempt number so retries can decrypt
+        $aad = AeadPayloadEncryptor::composeAad('t1', 'q1', 'Job', 1, 'corr');
+
+        self::assertStringNotContainsString('|1|1', $aad . '|END');
+        self::assertSame('t1|q1|Job|1|corr', $aad);
     }
 }

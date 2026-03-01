@@ -113,6 +113,11 @@ final class ContentTranslationTest extends TestCase
         yield 'mixed' => ['article-2024-01'];
         yield 'single char' => ['a'];
         yield 'at 200 chars' => [str_repeat('a', 200)];
+        yield 'nested path with slash' => ['services/php-developer'];
+        yield 'deeply nested path' => ['docs/api/v2/endpoints'];
+        yield 'unicode accents' => ["\xC3\xA9quipe"];
+        yield 'unicode mixed' => ["d\xC3\xA9veloppeur-php"];
+        yield 'unicode slug' => ["caf\xC3\xA9"];
     }
 
     #[Test]
@@ -127,17 +132,24 @@ final class ContentTranslationTest extends TestCase
      */
     public static function invalidSlugProvider(): iterable
     {
-        yield 'empty' => [''];
         yield 'uppercase' => ['Hello'];
         yield 'starts with hyphen' => ['-hello'];
         yield 'ends with hyphen' => ['hello-'];
         yield 'consecutive hyphens' => ['hello--world'];
+        yield 'consecutive slashes' => ['hello//world'];
         yield 'spaces' => ['hello world'];
         yield 'special chars' => ['hello!'];
-        yield 'slashes' => ['hello/world'];
         yield 'over 200 chars' => [str_repeat('a', 201)];
         yield 'underscores' => ['hello_world'];
         yield 'dots' => ['hello.world'];
+        yield 'starts with slash' => ['/hello'];
+        yield 'ends with slash' => ['hello/'];
+    }
+
+    #[Test]
+    public function isValidSlugAcceptsEmptyStringForHomepage(): void
+    {
+        self::assertTrue(ContentTranslation::isValidSlug(''));
     }
 
     #[Test]

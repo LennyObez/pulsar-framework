@@ -10,6 +10,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Mail\Address;
 use Pulsar\Mail\Attachment;
+use Pulsar\Mail\Exception\MailException;
 use Pulsar\Mail\Message;
 use Pulsar\Mail\Transport\Config\SmtpTransportConfig;
 use Pulsar\Mail\Transport\SmtpTransport;
@@ -328,6 +329,86 @@ final class SmtpTransportTest extends TestCase
         self::assertStringNotContainsString("\nBcc:", $raw);
         // The subject line has the injection collapsed into a single line
         self::assertStringContainsString('Subject: InjectedBcc: evil@attacker.com', $raw);
+    }
+
+    // --- ehlo() hostname ---
+
+    #[Test]
+    public function ehloHostnameCanBeConfigured(): void
+    {
+        $config = new SmtpTransportConfig(ehloHostname: 'mail.example.com');
+
+        self::assertSame('mail.example.com', $config->ehloHostname);
+    }
+
+    #[Test]
+    public function ehloHostnameDefaultsToNull(): void
+    {
+        $config = new SmtpTransportConfig();
+
+        self::assertNull($config->ehloHostname);
+    }
+
+    #[Test]
+    public function ehloHostnameFromArray(): void
+    {
+        $config = SmtpTransportConfig::fromArray(['ehlo_hostname' => 'custom.host.com']);
+
+        self::assertSame('custom.host.com', $config->ehloHostname);
+    }
+
+    #[Test]
+    public function ehloHostnameFromArrayDefaultsToNull(): void
+    {
+        $config = SmtpTransportConfig::fromArray([]);
+
+        self::assertNull($config->ehloHostname);
+    }
+
+    // --- authenticate() security ---
+
+    #[Test]
+    public function authenticateThrowsWhenEncryptionIsEmpty(): void
+    {
+        $config = new SmtpTransportConfig(
+            username: 'user',
+            password: 'pass',
+            encryption: '',
+        );
+        $transport = new SmtpTransport($config);
+
+        $this->expectException(MailException::class);
+        $this->expectExceptionMessage('Cannot authenticate over unencrypted connection');
+
+        $this->callPrivateMethod($transport, 'authenticate');
+    }
+
+    #[Test]
+    public function authenticateThrowsWhenEncryptionIsNone(): void
+    {
+        $config = new SmtpTransportConfig(
+            username: 'user',
+            password: 'pass',
+            encryption: 'none',
+        );
+        $transport = new SmtpTransport($config);
+
+        $this->expectException(MailException::class);
+        $this->expectExceptionMessage('Cannot authenticate over unencrypted connection');
+
+        $this->callPrivateMethod($transport, 'authenticate');
+    }
+
+    #[Test]
+    public function authenticateSkipsWhenNoCredentials(): void
+    {
+        $config = new SmtpTransportConfig(encryption: '');
+        $transport = new SmtpTransport($config);
+
+        // No credentials => should not throw, returns without action
+        $this->callPrivateMethod($transport, 'authenticate');
+
+        $this->addToAssertionCount(1); // authenticate() completes without exception when no credentials set
     }
 
     // --- name() ---

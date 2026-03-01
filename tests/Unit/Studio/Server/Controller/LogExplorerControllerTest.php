@@ -7,14 +7,37 @@ namespace Pulsar\Tests\Unit\Studio\Server\Controller;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Config\I18nConfig;
 use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
 use Pulsar\Extension\Studio\Server\Controller\LogExplorerController;
 use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\ResponseStatus;
+use Pulsar\I18n\CatalogInterface;
+use Pulsar\I18n\Translator;
 
 #[CoversClass(LogExplorerController::class)]
 final class LogExplorerControllerTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        $catalog = $this->createStub(CatalogInterface::class);
+        $catalog->method('get')->willReturn(null);
+        $catalog->method('has')->willReturn(false);
+        Translator::setGlobalInstance(new Translator($catalog, new I18nConfig(
+            defaultLocale: 'en',
+            supportedLocales: ['en'],
+            fallbackLocales: [],
+            catalogPath: null,
+            regulated: false,
+            maxSupportedLocales: 50,
+            strictMode: false,
+        )));
+    }
+
+    protected function tearDown(): void
+    {
+        Translator::resetGlobalInstance();
+    }
     private function createRequest(): ServerRequest
     {
         return new ServerRequest(
@@ -177,7 +200,7 @@ final class LogExplorerControllerTest extends TestCase
 
         $response = $controller->handle($this->createRequest());
 
-        self::assertStringContainsString('data-payload="', (string) $response->getBody());
+        self::assertStringContainsString("data-payload='", (string) $response->getBody());
     }
 
     #[Test]

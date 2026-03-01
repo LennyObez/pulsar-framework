@@ -87,7 +87,10 @@ final class ImageBlockTest extends TestCase
             'alt' => '<script>xss</script>',
         ]);
 
-        self::assertStringNotContainsString('<script>', $html);
+        // JSON-LD <script type="application/ld+json"> is safe (not executed as JS)
+        $htmlWithoutJsonLd = preg_replace('/<script type="application\/ld\+json">.*?<\/script>/s', '', $html);
+        self::assertIsString($htmlWithoutJsonLd);
+        self::assertStringNotContainsString('<script>', $htmlWithoutJsonLd);
         self::assertStringContainsString('&lt;script&gt;', $html);
     }
 

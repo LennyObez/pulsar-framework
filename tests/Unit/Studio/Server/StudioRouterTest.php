@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Config\EnvironmentMode;
+use Pulsar\Config\I18nConfig;
 use Pulsar\Extension\Studio\Config\StudioCollectorConfig;
 use Pulsar\Extension\Studio\Config\StudioConfig;
 use Pulsar\Extension\Studio\Config\StudioRetentionConfig;
@@ -16,12 +17,15 @@ use Pulsar\Extension\Studio\Console\Aggregation\TimelineBuilder;
 use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
 use Pulsar\Extension\Studio\Console\Storage\SqliteEventStore;
 use Pulsar\Extension\Studio\Security\ProductionSafetyMode;
+use Pulsar\Extension\Studio\Server\Controller\ActivityLogController;
 use Pulsar\Extension\Studio\Server\Controller\ApiController;
 use Pulsar\Extension\Studio\Server\Controller\BenchmarkApiController;
 use Pulsar\Extension\Studio\Server\Controller\BenchmarkController;
 use Pulsar\Extension\Studio\Server\Controller\ConsoleOverviewController;
 use Pulsar\Extension\Studio\Server\Controller\DatabaseExplorerController;
+use Pulsar\Extension\Studio\Server\Controller\DeploymentController;
 use Pulsar\Extension\Studio\Server\Controller\ExceptionExplorerController;
+use Pulsar\Extension\Studio\Server\Controller\HealthDashboardController;
 use Pulsar\Extension\Studio\Server\Controller\LandingController;
 use Pulsar\Extension\Studio\Server\Controller\LogExplorerController;
 use Pulsar\Extension\Studio\Server\Controller\RequestExplorerController;
@@ -29,6 +33,8 @@ use Pulsar\Extension\Studio\Server\Controller\TimelineController;
 use Pulsar\Extension\Studio\Server\StudioRouter;
 use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\ResponseStatus;
+use Pulsar\I18n\CatalogInterface;
+use Pulsar\I18n\Translator;
 
 #[CoversClass(StudioRouter::class)]
 final class StudioRouterTest extends TestCase
@@ -40,10 +46,27 @@ final class StudioRouterTest extends TestCase
 
     protected function setUp(): void
     {
+        $catalog = $this->createStub(CatalogInterface::class);
+        $catalog->method('get')->willReturn(null);
+        $catalog->method('has')->willReturn(false);
+        Translator::setGlobalInstance(new Translator($catalog, new I18nConfig(
+            defaultLocale: 'en',
+            supportedLocales: ['en'],
+            fallbackLocales: [],
+            catalogPath: null,
+            regulated: false,
+            maxSupportedLocales: 50,
+            strictMode: false,
+        )));
         $this->store = SqliteEventStore::inMemory();
         $this->localSafetyMode = new ProductionSafetyMode(EnvironmentMode::Local);
         $this->productionSafetyMode = new ProductionSafetyMode(EnvironmentMode::Production);
         $this->stagingSafetyMode = new ProductionSafetyMode(EnvironmentMode::Staging);
+    }
+
+    protected function tearDown(): void
+    {
+        Translator::resetGlobalInstance();
     }
 
     #[Test]
@@ -500,6 +523,9 @@ final class StudioRouterTest extends TestCase
             api: new ApiController($this->store),
             benchmark: new BenchmarkController($aggregator),
             benchmarkApi: new BenchmarkApiController($this->store, $aggregator, __DIR__),
+            activityLog: new ActivityLogController($this->store),
+            healthDashboard: new HealthDashboardController($this->store),
+            deployment: new DeploymentController($this->createStub(\Pulsar\Extension\Studio\Internal\Diagnostics\GitLogReader::class)),
             safetyMode: $safetyMode,
         );
     }

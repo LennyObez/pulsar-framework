@@ -27,4 +27,13 @@ final class I18nDirectiveTest extends TestCase
         self::assertStringContainsString('__(', $output);
         self::assertStringContainsString("'messages.welcome'", $output);
     }
+
+    #[Test]
+    public function compileIncludesEntSubstituteFlag(): void
+    {
+        $output = new I18nDirective()->compile("'key'");
+
+        self::assertStringContainsString('ENT_QUOTES | ENT_SUBSTITUTE', $output);
+        self::assertStringContainsString("'UTF-8'", $output);
+    }
 }

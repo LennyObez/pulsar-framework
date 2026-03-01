@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Extension\Devices;
+namespace Pulsar\Tests\Unit\Extension\Devices;
 
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\Test;

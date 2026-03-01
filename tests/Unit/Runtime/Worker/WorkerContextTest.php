@@ -9,8 +9,8 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Config\RuntimeConfig;
 use Pulsar\Runtime\RuntimeType;
-use Pulsar\Runtime\Worker\HealthStatus;
 use Pulsar\Runtime\Worker\WorkerContext;
+use Pulsar\Runtime\Worker\WorkerHealthStatus;
 use Pulsar\Runtime\Worker\WorkerInfo;
 use Pulsar\Runtime\Worker\WorkerState;
 
@@ -158,13 +158,13 @@ final class WorkerContextTest extends TestCase
         $ctx = new WorkerContext(RuntimeType::Persistent);
 
         $ctx->boot();
-        self::assertSame(HealthStatus::Healthy, $ctx->healthStatus());
+        self::assertSame(WorkerHealthStatus::Healthy, $ctx->healthStatus());
 
         $ctx->ready();
-        self::assertSame(HealthStatus::Healthy, $ctx->healthStatus());
+        self::assertSame(WorkerHealthStatus::Healthy, $ctx->healthStatus());
 
         $ctx->beginRequest();
-        self::assertSame(HealthStatus::Healthy, $ctx->healthStatus());
+        self::assertSame(WorkerHealthStatus::Healthy, $ctx->healthStatus());
     }
 
     #[Test]
@@ -175,7 +175,7 @@ final class WorkerContextTest extends TestCase
         $ctx->ready();
 
         $ctx->drain();
-        self::assertSame(HealthStatus::Draining, $ctx->healthStatus());
+        self::assertSame(WorkerHealthStatus::Draining, $ctx->healthStatus());
     }
 
     #[Test]
@@ -186,10 +186,10 @@ final class WorkerContextTest extends TestCase
         $ctx->ready();
 
         $ctx->recycle();
-        self::assertSame(HealthStatus::ShuttingDown, $ctx->healthStatus());
+        self::assertSame(WorkerHealthStatus::ShuttingDown, $ctx->healthStatus());
 
         $ctx->stop();
-        self::assertSame(HealthStatus::ShuttingDown, $ctx->healthStatus());
+        self::assertSame(WorkerHealthStatus::ShuttingDown, $ctx->healthStatus());
     }
 
     #[Test]

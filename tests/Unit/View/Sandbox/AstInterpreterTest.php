@@ -337,4 +337,38 @@ final class AstInterpreterTest extends TestCase
         $this->expectException(ViewException::class);
         $interpreter->interpret($ast, []);
     }
+
+    #[Test]
+    public function outputEscapesWithEntSubstitute(): void
+    {
+        // Verify that invalid UTF-8 byte sequences are replaced with the
+        // Unicode replacement character (U+FFFD) via ENT_SUBSTITUTE,
+        // rather than producing empty output or errors.
+        $interpreter = new AstInterpreter(new SandboxConfig());
+        $ast = $this->parser->parse('{{ $value }}');
+
+        // \x80 is an invalid UTF-8 byte — without ENT_SUBSTITUTE, htmlspecialchars
+        // would return an empty string for the entire input.
+        $result = $interpreter->interpret($ast, ['value' => "hello\x80world"]);
+
+        // With ENT_SUBSTITUTE, the invalid byte becomes U+FFFD
+        self::assertStringContainsString('hello', $result);
+        self::assertStringContainsString('world', $result);
+    }
+
+    #[Test]
+    public function i18nEscapesWithEntSubstitute(): void
+    {
+        $callback = new TranslationCallback(
+            static fn(string $key, array $data): string => "translated\x80text",
+        );
+        $interpreter = new AstInterpreter(new SandboxConfig(), $callback);
+        $ast = $this->parser->parse('@i18n(greeting)');
+
+        $result = $interpreter->interpret($ast, []);
+
+        // ENT_SUBSTITUTE replaces invalid bytes instead of returning empty string
+        self::assertStringContainsString('translated', $result);
+        self::assertStringContainsString('text', $result);
+    }
 }

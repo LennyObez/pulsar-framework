@@ -179,12 +179,13 @@ final class TemplateEngineTest extends TestCase
         self::assertStringContainsString('&quot;quotes&quot;', $result);
         self::assertStringContainsString('&amp;', $result);
         self::assertStringContainsString('&lt;tags&gt;', $result);
-        self::assertStringContainsString('&#039;apostrophes&#039;', $result);
+        // ContextEscaper::html() uses ENT_HTML5 which produces &apos; (modern HTML5 entity)
+        self::assertStringContainsString('&apos;apostrophes&apos;', $result);
     }
 
     private function writeTemplate(string $name, string $content): void
     {
-        $relativePath = str_replace('.', DIRECTORY_SEPARATOR, $name) . '.pulsar.php';
+        $relativePath = str_replace('.', DIRECTORY_SEPARATOR, $name) . '.pulse.php';
         $fullPath = $this->templateDir . DIRECTORY_SEPARATOR . $relativePath;
         $dir = dirname($fullPath);
 

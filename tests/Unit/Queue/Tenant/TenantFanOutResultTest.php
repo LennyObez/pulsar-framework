@@ -7,15 +7,15 @@ namespace Pulsar\Tests\Unit\Queue\Tenant;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Queue\Tenant\FanOutResult;
+use Pulsar\Queue\Tenant\TenantFanOutResult;
 
-#[CoversClass(FanOutResult::class)]
-final class FanOutResultTest extends TestCase
+#[CoversClass(TenantFanOutResult::class)]
+final class TenantFanOutResultTest extends TestCase
 {
     #[Test]
     public function constructionAndAccessors(): void
     {
-        $result = new FanOutResult(
+        $result = new TenantFanOutResult(
             dispatched: 5,
             failed: 2,
             failedTenantIds: ['bad-tenant-1', 'bad-tenant-2'],

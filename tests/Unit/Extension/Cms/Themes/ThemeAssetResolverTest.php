@@ -93,7 +93,7 @@ final class ThemeAssetResolverTest extends TestCase
     {
         $templatesDir = $this->tmpDir . '/templates';
         mkdir($templatesDir, 0o777, true);
-        file_put_contents($templatesDir . '/article.pulsar.php', '<?php // template');
+        file_put_contents($templatesDir . '/article.pulse.php', '<?php // template');
 
         $theme = $this->createInstalledTheme(storagePath: $this->tmpDir);
         $repo = $this->createRepository(byId: $theme, active: $theme);
@@ -101,7 +101,7 @@ final class ThemeAssetResolverTest extends TestCase
 
         $result = $resolver->resolveTemplate('article', $theme->id);
 
-        self::assertSame($templatesDir . '/article.pulsar.php', $result);
+        self::assertSame($templatesDir . '/article.pulse.php', $result);
     }
 
     #[Test]
@@ -125,7 +125,7 @@ final class ThemeAssetResolverTest extends TestCase
     {
         $templatesDir = $this->tmpDir . '/templates';
         mkdir($templatesDir, 0o777, true);
-        file_put_contents($templatesDir . '/page.pulsar.php', '<?php // page');
+        file_put_contents($templatesDir . '/page.pulse.php', '<?php // page');
 
         $theme = $this->createInstalledTheme(storagePath: $this->tmpDir);
         $repo = $this->createRepository(byId: null, active: $theme);
@@ -133,7 +133,7 @@ final class ThemeAssetResolverTest extends TestCase
 
         $result = $resolver->resolveTemplate('page');
 
-        self::assertSame($templatesDir . '/page.pulsar.php', $result);
+        self::assertSame($templatesDir . '/page.pulse.php', $result);
     }
 
     #[Test]

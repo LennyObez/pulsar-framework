@@ -97,6 +97,63 @@ final class SlackChannelTest extends TestCase
     }
 
     #[Test]
+    public function sendRejectsPrivateNetworkWebhookUrl(): void
+    {
+        $httpClient = $this->createStub(NotificationHttpClientInterface::class);
+
+        $notifiable = $this->createStub(NotifiableInterface::class);
+        $notifiable->method('getNotifiableId')->willReturn('user-005');
+        $notifiable->method('routeNotificationFor')->willReturn('http://10.0.0.1/webhook');
+
+        $notification = $this->createSlackNotification('#general', 'SSRF test');
+
+        $channel = new SlackChannel($httpClient);
+
+        $this->expectException(NotificationException::class);
+        $this->expectExceptionMessage('private');
+
+        $channel->send($notifiable, $notification);
+    }
+
+    #[Test]
+    public function sendRejectsLocalhostWebhookUrl(): void
+    {
+        $httpClient = $this->createStub(NotificationHttpClientInterface::class);
+
+        $notifiable = $this->createStub(NotifiableInterface::class);
+        $notifiable->method('getNotifiableId')->willReturn('user-006');
+        $notifiable->method('routeNotificationFor')->willReturn('http://127.0.0.1/webhook');
+
+        $notification = $this->createSlackNotification('#general', 'SSRF test');
+
+        $channel = new SlackChannel($httpClient);
+
+        $this->expectException(NotificationException::class);
+        $this->expectExceptionMessage('private');
+
+        $channel->send($notifiable, $notification);
+    }
+
+    #[Test]
+    public function sendRejectsCloudMetadataWebhookUrl(): void
+    {
+        $httpClient = $this->createStub(NotificationHttpClientInterface::class);
+
+        $notifiable = $this->createStub(NotifiableInterface::class);
+        $notifiable->method('getNotifiableId')->willReturn('user-007');
+        $notifiable->method('routeNotificationFor')->willReturn('http://169.254.169.254/latest/meta-data');
+
+        $notification = $this->createSlackNotification('#general', 'SSRF test');
+
+        $channel = new SlackChannel($httpClient);
+
+        $this->expectException(NotificationException::class);
+        $this->expectExceptionMessage('blocked');
+
+        $channel->send($notifiable, $notification);
+    }
+
+    #[Test]
     public function nameReturnsSlack(): void
     {
         $httpClient = $this->createStub(NotificationHttpClientInterface::class);

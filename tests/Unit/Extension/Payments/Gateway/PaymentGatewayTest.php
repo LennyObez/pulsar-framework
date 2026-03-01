@@ -9,8 +9,16 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
+use Pulsar\Extension\Payments\Config\BancontactConfig;
+use Pulsar\Extension\Payments\Config\IdealConfig;
 use Pulsar\Extension\Payments\Config\IdempotencyConfig;
+use Pulsar\Extension\Payments\Config\KlarnaConfig;
+use Pulsar\Extension\Payments\Config\MobileConfig;
+use Pulsar\Extension\Payments\Config\PayconiqConfig;
 use Pulsar\Extension\Payments\Config\PaymentsConfig;
+use Pulsar\Extension\Payments\Config\PayPalConfig;
+use Pulsar\Extension\Payments\Config\SepaConfig;
+use Pulsar\Extension\Payments\Config\StripeConfig;
 use Pulsar\Extension\Payments\Config\WebhookConfig;
 use Pulsar\Extension\Payments\Config\WebhookLogConfig;
 use Pulsar\Extension\Payments\Contracts\PaymentProviderInterface;
@@ -477,6 +485,29 @@ final class PaymentGatewayTest extends TestCase
                 ttlSeconds: 259200,
                 store: 'memory',
             ),
+            stripe: new StripeConfig(
+                secretKey: '',
+                publishableKey: '',
+                webhookSecret: '',
+                apiVersion: '2024-12-18.acacia',
+                testMode: true,
+            ),
+            paypal: new PayPalConfig(
+                clientId: '',
+                clientSecret: '',
+                webhookId: '',
+                sandbox: true,
+            ),
+            sepa: SepaConfig::fromArray([]),
+            mobile: MobileConfig::fromArray([]),
+            payconiq: PayconiqConfig::fromArray([]),
+            bancontact: BancontactConfig::fromArray([]),
+            ideal: IdealConfig::fromArray([]),
+            klarna: KlarnaConfig::fromArray([]),
+            subscriptionsEnabled: false,
+            invoiceRetentionDays: 3650,
+            dunningMaxRetries: 4,
+            trialMaxDays: 30,
         );
     }
 }
