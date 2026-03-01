@@ -13,18 +13,21 @@ use Pulsar\Auth\Authorization\GateInterface;
 use Pulsar\Auth\Identity\IdentityInterface;
 use Pulsar\Auth\Identity\TwoFactorStatus;
 use Pulsar\Extension\Forum\Config\ForumConfig;
+use Pulsar\Extension\Forum\Content\ForumBodyPolicy;
 use Pulsar\Extension\Forum\Content\MarkdownRendererInterface;
 use Pulsar\Extension\Forum\Exception\ForumException;
 use Pulsar\Extension\Forum\Http\Controller\Api\PostApiController;
 use Pulsar\Extension\Forum\Post\Post;
 use Pulsar\Extension\Forum\Post\PostRepositoryInterface;
 use Pulsar\Extension\Forum\Service\ForumServiceInterface;
+use Pulsar\Extension\Forum\Thread\ThreadRepositoryInterface;
 use Pulsar\Http\Message\ServerRequest;
 
 #[CoversClass(PostApiController::class)]
 final class PostApiControllerTest extends TestCase
 {
     private PostRepositoryInterface&Stub $postRepository;
+    private ThreadRepositoryInterface&Stub $threadRepository;
     private ForumServiceInterface&Stub $forumService;
     private MarkdownRendererInterface&Stub $markdown;
     private ForumConfig $config;
@@ -33,6 +36,7 @@ final class PostApiControllerTest extends TestCase
     protected function setUp(): void
     {
         $this->postRepository = $this->createStub(PostRepositoryInterface::class);
+        $this->threadRepository = $this->createStub(ThreadRepositoryInterface::class);
         $this->forumService = $this->createStub(ForumServiceInterface::class);
         $this->markdown = $this->createStub(MarkdownRendererInterface::class);
         $this->markdown->method('render')->willReturnCallback(static fn(string $md) => "<p>{$md}</p>");
@@ -42,7 +46,9 @@ final class PostApiControllerTest extends TestCase
             $this->postRepository,
             $this->forumService,
             $this->markdown,
+            new ForumBodyPolicy(),
             $this->config,
+            $this->threadRepository,
         );
     }
 
@@ -178,7 +184,9 @@ final class PostApiControllerTest extends TestCase
             $this->postRepository,
             $this->forumService,
             $this->markdown,
+            new ForumBodyPolicy(),
             $this->config,
+            $this->createStub(ThreadRepositoryInterface::class),
             $gate,
         );
 
@@ -229,6 +237,7 @@ final class PostApiControllerTest extends TestCase
             ipHash: 'h',
             userAgentHash: 'h',
         );
+        $this->threadRepository->method('findById')->willReturn($thread);
         $this->forumService->method('acceptSolution')->willReturn($thread);
 
         $request = new ServerRequest(

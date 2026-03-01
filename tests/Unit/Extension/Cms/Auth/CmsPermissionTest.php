@@ -47,6 +47,6 @@ final class CmsPermissionTest extends TestCase
     #[Test]
     public function allCasesCount(): void
     {
-        self::assertCount(17, CmsPermission::cases());
+        self::assertCount(19, CmsPermission::cases());
     }
 }

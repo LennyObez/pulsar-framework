@@ -12,6 +12,7 @@ use Pulsar\Config\ConfigManager;
 use Pulsar\Config\ConfigOverrides;
 use Pulsar\Config\Environment;
 use Pulsar\Config\Exception\ConfigException;
+use Pulsar\Config\Exception\MissingConfigException;
 use Pulsar\Config\ObservabilityConfig;
 
 #[CoversClass(ConfigManager::class)]
@@ -173,10 +174,10 @@ final class ConfigManagerTest extends TestCase
     #[Test]
     public function throwsForMissingConfigFile(): void
     {
-        // Directory exists but no files
+        // Directory exists but no files — validation catches this before loadConfigFile
         $manager = new ConfigManager(configPath: $this->tempDir);
 
-        $this->expectException(ConfigException::class);
+        $this->expectException(MissingConfigException::class);
         $manager->load();
     }
 

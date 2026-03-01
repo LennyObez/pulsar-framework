@@ -1054,6 +1054,12 @@ final class ScalarCapableContainer implements ContainerInterface
     }
 
     #[Override]
+    public function singleton(string $id, callable|string $concrete): void
+    {
+        $this->inner->singleton($id, $concrete);
+    }
+
+    #[Override]
     public function instance(string $id, object $instance): void
     {
         $this->inner->instance($id, $instance);
@@ -1097,5 +1103,11 @@ final class ScalarCapableContainer implements ContainerInterface
     public function getInstances(): array
     {
         return $this->inner->getInstances();
+    }
+
+    #[Override]
+    public function call(callable $callable, array $params = []): mixed
+    {
+        return $this->inner->call($callable, $params);
     }
 }

@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Config\CorsConfig;
+use Pulsar\Config\Exception\ConfigException;
 
 #[CoversClass(CorsConfig::class)]
 final class CorsConfigTest extends TestCase
@@ -67,11 +68,12 @@ final class CorsConfigTest extends TestCase
     }
 
     #[Test]
-    public function isOriginAllowedWithEmptyList(): void
+    public function isOriginAllowedWithEmptyListDeniesAll(): void
     {
         $config = new CorsConfig(enabled: true, allowedOrigins: []);
 
-        self::assertTrue($config->isOriginAllowed('https://anything.com'));
+        // Empty allowedOrigins means deny all — explicit origins required
+        self::assertFalse($config->isOriginAllowed('https://anything.com'));
     }
 
     #[Test]
@@ -93,5 +95,61 @@ final class CorsConfigTest extends TestCase
         self::assertTrue($config->isOriginAllowed('https://example.com'));
         self::assertTrue($config->isOriginAllowed('https://app.example.com'));
         self::assertFalse($config->isOriginAllowed('https://evil.com'));
+    }
+
+    #[Test]
+    public function fromArrayThrowsForWildcardWithCredentials(): void
+    {
+        $this->expectException(ConfigException::class);
+        $this->expectExceptionMessage('allowedOrigins cannot be ["*"]');
+
+        (void) CorsConfig::fromArray([
+            'enabled' => true,
+            'allowed_origins' => ['*'],
+            'allow_credentials' => true,
+        ]);
+    }
+
+    #[Test]
+    public function fromArrayAllowsWildcardWithoutCredentials(): void
+    {
+        $config = CorsConfig::fromArray([
+            'enabled' => true,
+            'allowed_origins' => ['*'],
+            'allow_credentials' => false,
+        ]);
+
+        self::assertTrue($config->enabled);
+        self::assertSame(['*'], $config->allowedOrigins);
+        self::assertFalse($config->allowCredentials);
+    }
+
+    #[Test]
+    public function fromArrayAllowsCredentialsWithExplicitOrigins(): void
+    {
+        $config = CorsConfig::fromArray([
+            'enabled' => true,
+            'allowed_origins' => ['https://example.com'],
+            'allow_credentials' => true,
+        ]);
+
+        self::assertTrue($config->enabled);
+        self::assertTrue($config->allowCredentials);
+        self::assertSame(['https://example.com'], $config->allowedOrigins);
+    }
+
+    #[Test]
+    public function fromArraySkipsValidationWhenDisabled(): void
+    {
+        // When CORS is disabled, wildcard + credentials should not throw
+        $config = CorsConfig::fromArray([
+            'enabled' => false,
+            'allowed_origins' => ['*'],
+            'allow_credentials' => true,
+        ]);
+
+        self::assertFalse($config->enabled);
+        self::assertSame(['*'], $config->allowedOrigins);
+        self::assertTrue($config->allowCredentials);
     }
 }

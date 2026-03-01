@@ -89,17 +89,18 @@ final class AnalyticsConfigTest extends TestCase
         self::assertSame('direct', $config->collectionDriver);
         // (array) 'not-array' = ['not-array'], is_string passes -> kept as proxy entry
         self::assertSame(['not-array'], $config->trustedProxies);
-        self::assertFalse($config->privacy->respectDnt);
+        // Non-array privacy value falls back to default PrivacyConfig (respectDnt=true)
+        self::assertTrue($config->privacy->respectDnt);
     }
 
     #[Test]
-    public function fromArrayCastsNonStringDriverToString(): void
+    public function fromArrayRejectsNonStringDriverAndFallsBackToDefault(): void
     {
         $config = AnalyticsConfig::fromArray([
             'collection' => ['driver' => 123],
         ]);
 
-        // (string) 123 = '123', no type-guarded fallback to 'direct'
-        self::assertSame('123', $config->collectionDriver);
+        // is_string(123) = false → falls back to 'direct'
+        self::assertSame('direct', $config->collectionDriver);
     }
 }

@@ -7,16 +7,16 @@ namespace Pulsar\Tests\Unit\Codegen;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Codegen\EntityDefinition;
+use Pulsar\Codegen\EntityTemplate;
 use Pulsar\Codegen\FieldDefinition;
 
-#[CoversClass(EntityDefinition::class)]
-final class EntityDefinitionTest extends TestCase
+#[CoversClass(EntityTemplate::class)]
+final class EntityTemplateTest extends TestCase
 {
     #[Test]
     public function fieldsDefaultToEmpty(): void
     {
-        $entity = new EntityDefinition(name: 'Post', namespace: 'App\\Models');
+        $entity = new EntityTemplate(name: 'Post', namespace: 'App\\Models');
 
         self::assertSame([], $entity->fields);
     }
@@ -30,7 +30,7 @@ final class EntityDefinitionTest extends TestCase
             new FieldDefinition('body', 'string', nullable: true),
         ];
 
-        $entity = new EntityDefinition(
+        $entity = new EntityTemplate(
             name: 'Post',
             namespace: 'App\\Models',
             fields: $fields,
@@ -46,7 +46,7 @@ final class EntityDefinitionTest extends TestCase
     #[Test]
     public function entityWithBackslashNamespace(): void
     {
-        $entity = new EntityDefinition(
+        $entity = new EntityTemplate(
             name: 'Invoice',
             namespace: 'App\\Billing\\Models',
         );

@@ -68,7 +68,7 @@ final class EventWiringTest extends TestCase
     }
 
     #[Test]
-    public function wireSkipsWhenNoEventConfig(): void
+    public function wireRegistersDefaultsWhenNoEventConfig(): void
     {
         $container = new Container();
         $router = new Router();
@@ -81,8 +81,13 @@ final class EventWiringTest extends TestCase
         $wiring = new EventWiring();
         $wiring->wire($container, $configManager, $middleware, $middlewareRegistry, $router);
 
-        self::assertFalse($container->has(EventConfig::class));
-        self::assertFalse($container->has(EventDispatcher::class));
+        // Even without a config/event.php file, the event dispatcher should
+        // be registered with defaults so extensions can depend on it.
+        self::assertTrue($container->has(EventConfig::class));
+        self::assertTrue($container->has(EventDispatcherInterface::class));
+        self::assertTrue($container->has(ListenerProviderInterface::class));
+        self::assertTrue($container->has(PsrEventDispatcherInterface::class));
+        self::assertTrue($container->has(PsrListenerProviderInterface::class));
     }
 
     private function createConfigManager(bool $enabled): ConfigManager

@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Database\Driver;
 use Pulsar\Database\Migration\MigrationFile;
+use Pulsar\Database\Migration\MigrationFlockHolder;
 use Pulsar\Database\Migration\MigrationRecord;
 use Pulsar\Database\Migration\MigrationRepository;
 use Pulsar\Database\Migration\MigrationRunner;
@@ -27,6 +28,7 @@ use function unlink;
 #[CoversClass(MigrationRecord::class)]
 #[CoversClass(MigrationFile::class)]
 #[CoversClass(MigrationRepository::class)]
+#[CoversClass(MigrationFlockHolder::class)]
 final class MigrationRunnerTest extends TestCase
 {
     private PdoConnection $connection;
@@ -319,6 +321,9 @@ final class MigrationRunnerTest extends TestCase
             };
             PHP);
 
+        // Clear the discovery cache so the new file is picked up
+        $this->repository->clearCache();
+
         $this->runner->runPending();
 
         self::assertSame(2, $this->runner->getCurrentBatch());
@@ -349,6 +354,110 @@ final class MigrationRunnerTest extends TestCase
 
         self::assertCount(1, $pending);
         self::assertSame('20240101120000', $pending[0]->version);
+    }
+
+    // ------------------------------------------------------------------
+    // Advisory locking tests
+    // ------------------------------------------------------------------
+
+    #[Test]
+    public function runPendingAcquiresAndReleasesFlockForSqlite(): void
+    {
+        // Before running, the flock holder should be empty
+        self::assertNull(MigrationFlockHolder::get());
+
+        $this->writeMigrationFile('20240101120000', 'create_items_table', <<<'PHP'
+            <?php
+            return new class implements \Pulsar\Database\Migration\MigrationInterface {
+                public function up(\Pulsar\Database\ConnectionInterface $conn): void {
+                    $conn->execute('CREATE TABLE items (id INTEGER PRIMARY KEY)');
+                }
+                public function down(\Pulsar\Database\ConnectionInterface $conn): void {
+                    $conn->execute('DROP TABLE IF EXISTS items');
+                }
+            };
+            PHP);
+
+        $this->runner->runPending();
+
+        // After runPending completes, the flock must be released
+        self::assertNull(MigrationFlockHolder::get());
+
+        // Verify the migration actually ran
+        $result = $this->connection->query("SELECT name FROM sqlite_master WHERE type='table' AND name='items'");
+        self::assertCount(1, $result->rows);
+    }
+
+    #[Test]
+    public function rollbackReleasesFlockEvenOnSuccess(): void
+    {
+        $this->writeMigrationFile('20240101120000', 'create_widgets_table', <<<'PHP'
+            <?php
+            return new class implements \Pulsar\Database\Migration\MigrationInterface {
+                public function up(\Pulsar\Database\ConnectionInterface $conn): void {
+                    $conn->execute('CREATE TABLE widgets (id INTEGER PRIMARY KEY)');
+                }
+                public function down(\Pulsar\Database\ConnectionInterface $conn): void {
+                    $conn->execute('DROP TABLE IF EXISTS widgets');
+                }
+            };
+            PHP);
+
+        $this->runner->runPending();
+        $this->runner->rollbackLastBatch();
+
+        // Flock released after rollback
+        self::assertNull(MigrationFlockHolder::get());
+
+        // Table should be dropped
+        $result = $this->connection->query("SELECT name FROM sqlite_master WHERE type='table' AND name='widgets'");
+        self::assertCount(0, $result->rows);
+    }
+
+    #[Test]
+    public function resetReleasesFlockAfterCompletion(): void
+    {
+        $this->writeMigrationFile('20240101120000', 'create_gadgets_table', <<<'PHP'
+            <?php
+            return new class implements \Pulsar\Database\Migration\MigrationInterface {
+                public function up(\Pulsar\Database\ConnectionInterface $conn): void {
+                    $conn->execute('CREATE TABLE gadgets (id INTEGER PRIMARY KEY)');
+                }
+                public function down(\Pulsar\Database\ConnectionInterface $conn): void {
+                    $conn->execute('DROP TABLE IF EXISTS gadgets');
+                }
+            };
+            PHP);
+
+        $this->runner->runPending();
+        $this->runner->reset();
+
+        self::assertNull(MigrationFlockHolder::get());
+    }
+
+    #[Test]
+    public function consecutiveRunPendingCallsDoNotDeadlock(): void
+    {
+        // Two sequential runPending calls should both succeed without deadlock.
+        // The first acquires and releases the lock, then the second does the same.
+        $this->writeMigrationFile('20240101120000', 'create_first_table', <<<'PHP'
+            <?php
+            return new class implements \Pulsar\Database\Migration\MigrationInterface {
+                public function up(\Pulsar\Database\ConnectionInterface $conn): void {
+                    $conn->execute('CREATE TABLE first_table (id INTEGER PRIMARY KEY)');
+                }
+                public function down(\Pulsar\Database\ConnectionInterface $conn): void {
+                    $conn->execute('DROP TABLE IF EXISTS first_table');
+                }
+            };
+            PHP);
+
+        $firstRun = $this->runner->runPending();
+        self::assertSame(['20240101120000'], $firstRun);
+
+        // Second run should succeed (no pending migrations, but lock cycle still works)
+        $secondRun = $this->runner->runPending();
+        self::assertSame([], $secondRun);
     }
 
     private function writeMigrationFile(string $version, string $name, string $content): void

@@ -128,6 +128,15 @@ final class SecureEnvGeneratorTest extends TestCase
     }
 
     #[Test]
+    public function it_uses_db_connection_not_db_driver(): void
+    {
+        $content = $this->generator->generate('test-app', EnvironmentPreset::Local);
+
+        self::assertStringContainsString('DB_CONNECTION=', $content);
+        self::assertStringNotContainsString('DB_DRIVER=', $content);
+    }
+
+    #[Test]
     public function it_preserves_the_app_name_verbatim(): void
     {
         $content = $this->generator->generate('My Complex App Name', EnvironmentPreset::Local);

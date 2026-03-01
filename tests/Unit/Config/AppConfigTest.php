@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Config\AppConfig;
 use Pulsar\Config\Environment;
 use Pulsar\Config\EnvironmentMode;
+use ReflectionClass;
 
 #[CoversClass(AppConfig::class)]
 final class AppConfigTest extends TestCase
@@ -142,5 +143,12 @@ final class AppConfigTest extends TestCase
         ], $env);
 
         self::assertFalse($config->debug);
+    }
+
+    #[Test]
+    public function classIsFinal(): void
+    {
+        $reflection = new ReflectionClass(AppConfig::class);
+        self::assertTrue($reflection->isFinal(), 'AppConfig must be final to prevent config DTO subclassing');
     }
 }

@@ -38,6 +38,7 @@ final class DbCustomerRepositoryTest extends TestCase
                 display_name VARCHAR(200) DEFAULT NULL,
                 billing_address TEXT DEFAULT NULL,
                 shipping_address TEXT DEFAULT NULL,
+                notes TEXT DEFAULT NULL,
                 created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
             )
@@ -58,6 +59,7 @@ final class DbCustomerRepositoryTest extends TestCase
             displayName: 'Alice',
             billingAddress: ['street' => '123 Main St', 'city' => 'Springfield'],
             shippingAddress: null,
+            notes: null,
             createdAt: $now,
             updatedAt: $now,
         );
@@ -95,6 +97,7 @@ final class DbCustomerRepositoryTest extends TestCase
             displayName: 'Bob',
             billingAddress: null,
             shippingAddress: null,
+            notes: null,
             createdAt: $now,
             updatedAt: $now,
         );
@@ -125,6 +128,7 @@ final class DbCustomerRepositoryTest extends TestCase
             displayName: 'Linked User',
             billingAddress: null,
             shippingAddress: null,
+            notes: null,
             createdAt: $now,
             updatedAt: $now,
         );
@@ -155,6 +159,7 @@ final class DbCustomerRepositoryTest extends TestCase
             displayName: 'Original',
             billingAddress: null,
             shippingAddress: null,
+            notes: null,
             createdAt: $now,
             updatedAt: $now,
         );
@@ -168,6 +173,7 @@ final class DbCustomerRepositoryTest extends TestCase
             displayName: 'Updated Name',
             billingAddress: ['street' => '456 Oak Ave'],
             shippingAddress: ['street' => '789 Pine Rd'],
+            notes: null,
             createdAt: $now,
             updatedAt: new DateTimeImmutable(),
         );
@@ -208,6 +214,7 @@ final class DbCustomerRepositoryTest extends TestCase
             displayName: 'Addr User',
             billingAddress: $billing,
             shippingAddress: $shipping,
+            notes: null,
             createdAt: $now,
             updatedAt: $now,
         );
@@ -235,6 +242,7 @@ final class DbCustomerRepositoryTest extends TestCase
             displayName: null,
             billingAddress: null,
             shippingAddress: null,
+            notes: null,
             createdAt: $now,
             updatedAt: $now,
         );

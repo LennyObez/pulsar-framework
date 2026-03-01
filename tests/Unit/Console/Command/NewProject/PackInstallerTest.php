@@ -94,7 +94,7 @@ final class PackInstallerTest extends TestCase
             'files' => [],
         ], JSON_PRETTY_PRINT));
 
-        file_put_contents($packDir . DIRECTORY_SEPARATOR . 'CONTROLS.md', '# Controls');
+        file_put_contents($packDir . DIRECTORY_SEPARATOR . 'SCAFFOLDING.md', '# Scaffolding');
         file_put_contents($packDir . DIRECTORY_SEPARATOR . 'NOT-CERTIFIED.md', '# Not Certified');
 
         $docsDir = $packDir . DIRECTORY_SEPARATOR . 'docs';
@@ -107,7 +107,7 @@ final class PackInstallerTest extends TestCase
 
         $installer->install('doc-pack', 'my-app', $this->tempDir, $output);
 
-        self::assertFileExists($this->tempDir . DIRECTORY_SEPARATOR . 'CONTROLS.md');
+        self::assertFileExists($this->tempDir . DIRECTORY_SEPARATOR . 'SCAFFOLDING.md');
         self::assertFileExists($this->tempDir . DIRECTORY_SEPARATOR . 'NOT-CERTIFIED.md');
         self::assertFileExists($this->tempDir . DIRECTORY_SEPARATOR . 'docs' . DIRECTORY_SEPARATOR . 'setup.md');
     }
@@ -145,7 +145,7 @@ final class PackInstallerTest extends TestCase
 
         $allOutput = implode("\n", $writtenLines);
 
-        self::assertStringContainsString('Installing control pack: progress-pack', $allOutput);
+        self::assertStringContainsString('Installing scaffolding pack: progress-pack', $allOutput);
         self::assertStringContainsString('Pack files:', $allOutput);
         self::assertStringContainsString('Created src/Test.php', $allOutput);
     }

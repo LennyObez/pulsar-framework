@@ -60,6 +60,17 @@ final class BoundaryGuardTest extends TestCase
     }
 
     #[Test]
+    public function it_delegates_singleton_to_inner_container(): void
+    {
+        $inner = $this->createMock(ContainerInterface::class);
+        $inner->expects(self::once())->method('singleton')->with('id', 'ConcreteClass');
+        $logger = $this->createStub(LoggerInterface::class);
+
+        $guard = new BoundaryGuard($inner, $logger);
+        $guard->singleton('id', self::classString('ConcreteClass'));
+    }
+
+    #[Test]
     public function it_delegates_instance_to_inner_container(): void
     {
         $instance = new stdClass();

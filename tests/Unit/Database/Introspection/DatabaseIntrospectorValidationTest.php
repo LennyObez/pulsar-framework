@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Database\Introspection;
 
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Database\Driver;
-use Pulsar\Database\Exception\DatabaseException;
 use Pulsar\Database\Introspection\ColumnInfo;
 use Pulsar\Database\Introspection\DatabaseIntrospector;
 use Pulsar\Database\PdoConnection;
@@ -38,7 +39,8 @@ final class DatabaseIntrospectorValidationTest extends TestCase
     #[Test]
     public function columnsThrowsForEmptyTableName(): void
     {
-        $this->expectException(DatabaseException::class);
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid database identifier');
 
         $this->introspector->columns('');
     }
@@ -46,7 +48,8 @@ final class DatabaseIntrospectorValidationTest extends TestCase
     #[Test]
     public function columnsThrowsForTableNameStartingWithDigit(): void
     {
-        $this->expectException(DatabaseException::class);
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid database identifier');
 
         $this->introspector->columns('123table');
     }
@@ -54,7 +57,8 @@ final class DatabaseIntrospectorValidationTest extends TestCase
     #[Test]
     public function columnsThrowsForTableNameWithSpecialCharacters(): void
     {
-        $this->expectException(DatabaseException::class);
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid database identifier');
 
         $this->introspector->columns('table; DROP TABLE users--');
     }
@@ -62,9 +66,36 @@ final class DatabaseIntrospectorValidationTest extends TestCase
     #[Test]
     public function columnsThrowsForTableNameWithSpaces(): void
     {
-        $this->expectException(DatabaseException::class);
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid database identifier');
 
         $this->introspector->columns('my table');
+    }
+
+    #[Test]
+    #[DataProvider('sqlInjectionPayloads')]
+    public function columnsRejectsSqlInjectionPayloads(string $payload): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid database identifier');
+
+        $this->introspector->columns($payload);
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function sqlInjectionPayloads(): iterable
+    {
+        yield 'semicolon injection' => ['users; DROP TABLE users'];
+        yield 'comment injection' => ['users--'];
+        yield 'quote escape' => ["users' OR '1'='1"];
+        yield 'parentheses' => ['users)'];
+        yield 'union select' => ['users UNION SELECT'];
+        yield 'backtick' => ['`users`'];
+        yield 'dot notation' => ['schema.users'];
+        yield 'newline' => ["users\n"];
+        yield 'null byte' => ["users\0"];
     }
 
     #[Test]
@@ -105,10 +136,19 @@ final class DatabaseIntrospectorValidationTest extends TestCase
     }
 
     #[Test]
-    public function primaryKeyReturnsNullForInvalidTableName(): void
+    public function primaryKeyReturnsNullForNonexistentTable(): void
     {
         $pk = $this->introspector->primaryKey('nonexistent_table');
 
         self::assertNull($pk);
+    }
+
+    #[Test]
+    public function primaryKeyRejectsInvalidIdentifier(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid database identifier');
+
+        $this->introspector->primaryKey('table; DROP TABLE users--');
     }
 }

@@ -58,6 +58,17 @@ final class CompiledContainerTest extends TestCase
     }
 
     #[Test]
+    public function singletonThrowsOnCompiledContainer(): void
+    {
+        $container = new TestCompiledContainer();
+
+        $this->expectException(ContainerException::class);
+        $this->expectExceptionMessage('Cannot modify a compiled container');
+
+        $container->singleton('foo', stdClass::class);
+    }
+
+    #[Test]
     public function bindWithLifetimeThrowsOnCompiledContainer(): void
     {
         $container = new TestCompiledContainer();

@@ -7,12 +7,13 @@ namespace Pulsar\Tests\Unit\Extension\Cms\AI;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\AI\AiClientInterface;
+use Pulsar\AI\AiResponse;
+use Pulsar\AI\Config\AiRequestOptions;
 use Pulsar\Extension\Cms\AI\ContentAssistant;
-use Pulsar\Extension\Cms\AI\LlmOptions;
-use Pulsar\Extension\Cms\AI\LlmProviderInterface;
-use Pulsar\Extension\Cms\AI\LlmResponse;
 use Pulsar\Extension\Cms\AI\PromptTemplate;
 use Pulsar\Extension\Cms\AI\PromptTemplateRegistry;
+use RuntimeException;
 
 /**
  * Tests the template-based code paths in ContentAssistant.
@@ -22,9 +23,9 @@ use Pulsar\Extension\Cms\AI\PromptTemplateRegistry;
 final class ContentAssistantTemplateTest extends TestCase
 {
     public string $capturedPrompt;
-    public ?LlmOptions $capturedOptions;
+    public ?AiRequestOptions $capturedOptions;
     private PromptTemplateRegistry $registry;
-    private LlmProviderInterface $provider;
+    private AiClientInterface $provider;
 
     protected function setUp(): void
     {
@@ -316,22 +317,37 @@ final class ContentAssistantTemplateTest extends TestCase
         ));
     }
 
-    private function createCapturingProvider(): LlmProviderInterface
+    private function createCapturingProvider(): AiClientInterface
     {
         $test = $this;
 
-        return new class ($test) implements LlmProviderInterface {
+        return new class ($test) implements AiClientInterface {
             public function __construct(private readonly ContentAssistantTemplateTest $test) {}
 
-            public function complete(string $prompt, LlmOptions $options = new LlmOptions()): LlmResponse
+            public function chat(array $messages, AiRequestOptions $options = new AiRequestOptions()): AiResponse
+            {
+                return new AiResponse('template response', 10, 20, 'stop');
+            }
+
+            public function complete(string $prompt, AiRequestOptions $options = new AiRequestOptions()): AiResponse
             {
                 $this->test->capturedPrompt = $prompt;
                 $this->test->capturedOptions = $options;
 
-                return new LlmResponse('template response', 10, 20, 'stop');
+                return new AiResponse('template response', 10, 20, 'stop');
             }
 
-            public function name(): string
+            public function embed(array $inputs, AiRequestOptions $options = new AiRequestOptions()): \Pulsar\AI\Embedding\EmbeddingResult
+            {
+                throw new RuntimeException('Not implemented');
+            }
+
+            public function structuredOutput(string $prompt, array $schema, AiRequestOptions $options = new AiRequestOptions()): AiResponse
+            {
+                return new AiResponse('template response', 10, 20, 'stop');
+            }
+
+            public function providerName(): string
             {
                 return 'test-template';
             }

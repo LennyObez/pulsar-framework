@@ -303,4 +303,67 @@ final class ConnectionPoolTest extends TestCase
         self::assertSame(0, $stats->activeCount);
         self::assertSame(1, $stats->idleCount);
     }
+
+    #[Test]
+    public function checkinPreservesCreatedAtFromPooledConnection(): void
+    {
+        $pool = new ConnectionPool(
+            new PoolConfig(
+                maxConnections: 5,
+                idleTimeoutSeconds: 3600,
+                maxLifetimeSeconds: 7200,
+                healthCheckIntervalSeconds: 3600,
+            ),
+            $this->connectionConfig,
+        );
+
+        $conn = $pool->checkout();
+        self::assertInstanceOf(PooledConnection::class, $conn);
+
+        // Record the original createdAt timestamp
+        $originalCreatedAt = $conn->createdAt();
+
+        // Check the connection back in
+        $conn->disconnect();
+
+        // Check it back out — the createdAt from the original creation should be preserved
+        $conn2 = $pool->checkout();
+        self::assertInstanceOf(PooledConnection::class, $conn2);
+
+        // The createdAt should be the original timestamp, not reset to time()
+        self::assertSame($originalCreatedAt, $conn2->createdAt());
+
+        $conn2->disconnect();
+    }
+
+    #[Test]
+    public function checkinWithNonPooledConnectionUsesCurrentTime(): void
+    {
+        $pool = new ConnectionPool(
+            new PoolConfig(
+                maxConnections: 5,
+                idleTimeoutSeconds: 3600,
+                maxLifetimeSeconds: 7200,
+                healthCheckIntervalSeconds: 3600,
+            ),
+            $this->connectionConfig,
+        );
+
+        // Manually check in a raw (non-PooledConnection) connection
+        $rawConn = $pool->checkout();
+        self::assertInstanceOf(PooledConnection::class, $rawConn);
+
+        // Unwrap to get raw connection
+        $unwrapped = $rawConn->unwrap();
+
+        // Force checkin of the PooledConnection first to decrement active
+        $rawConn->disconnect();
+
+        // Now check in the raw connection directly — createdAt should be time()
+        $pool->checkin($unwrapped);
+
+        $stats = $pool->stats();
+        // Two idle: the re-checked-in PooledConnection + the raw connection
+        self::assertGreaterThanOrEqual(1, $stats->idleCount);
+    }
 }

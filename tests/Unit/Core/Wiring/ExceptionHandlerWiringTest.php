@@ -10,7 +10,9 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Container\Container;
 use Pulsar\Core\Wiring\ExceptionHandlerWiring;
+use Pulsar\ErrorHandling\ErrorPageRenderer;
 use Pulsar\ErrorHandling\ExceptionHandler;
+use Pulsar\ErrorHandling\ExceptionRendererInterface;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Routing\Router;
@@ -50,6 +52,42 @@ final class ExceptionHandlerWiringTest extends TestCase
         $wiring->wire($container, $configManager, $middleware, $middlewareRegistry, $router);
 
         self::assertTrue($container->has(ExceptionHandler::class));
+    }
+
+    #[Test]
+    public function wireRegistersErrorPageRendererAsRendererInterface(): void
+    {
+        $container = new Container();
+        $router = new Router();
+        $middleware = new MiddlewarePipeline($container);
+        $middlewareRegistry = new MiddlewareRegistry();
+
+        $configManager = $this->createConfigManager(debug: false);
+        $configManager->load();
+
+        $wiring = new ExceptionHandlerWiring();
+        $wiring->wire($container, $configManager, $middleware, $middlewareRegistry, $router);
+
+        self::assertTrue($container->has(ExceptionRendererInterface::class));
+        self::assertInstanceOf(ErrorPageRenderer::class, $container->get(ExceptionRendererInterface::class));
+    }
+
+    #[Test]
+    public function wireRegistersErrorPageRendererInDebugMode(): void
+    {
+        $container = new Container();
+        $router = new Router();
+        $middleware = new MiddlewarePipeline($container);
+        $middlewareRegistry = new MiddlewareRegistry();
+
+        $configManager = $this->createConfigManager(debug: true);
+        $configManager->load();
+
+        $wiring = new ExceptionHandlerWiring();
+        $wiring->wire($container, $configManager, $middleware, $middlewareRegistry, $router);
+
+        self::assertTrue($container->has(ExceptionRendererInterface::class));
+        self::assertInstanceOf(ErrorPageRenderer::class, $container->get(ExceptionRendererInterface::class));
     }
 
     private function createConfigManager(bool $debug): ConfigManager

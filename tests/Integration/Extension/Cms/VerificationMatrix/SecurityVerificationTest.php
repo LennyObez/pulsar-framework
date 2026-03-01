@@ -20,7 +20,6 @@ use Pulsar\Auth\TwoFactor\TotpVerifier;
 use Pulsar\Auth\TwoFactor\TwoFactorManager;
 use Pulsar\Cache\Application\TaggedCacheInterface;
 use Pulsar\Config\CsrfConfig;
-use Pulsar\Extension\Cms\Comments\AntiAbuseHeuristics;
 use Pulsar\Extension\Cms\Config\MediaConfig;
 use Pulsar\Extension\Cms\Content\SafeHtmlPolicy;
 use Pulsar\Extension\Cms\Exception\CmsException;
@@ -37,6 +36,9 @@ use Pulsar\Extension\Cms\Themes\ProvenanceResult;
 use Pulsar\Extension\Cms\Users\CmsUser;
 use Pulsar\Http\Message\Response;
 use Pulsar\Http\Message\Stream;
+use Pulsar\Security\AntiSpam\AntiSpamPipeline;
+use Pulsar\Security\AntiSpam\DuplicateDetector;
+use Pulsar\Security\AntiSpam\LinkDensityChecker;
 use Pulsar\Security\Audit\AuditEntry;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditOutcome;
@@ -216,8 +218,9 @@ final class SecurityVerificationTest extends TestCase
     public function s6DuplicateCommentDetection(): void
     {
         $cache = new VerificationTaggedCache();
-        $heuristics = new AntiAbuseHeuristics($cache);
-        $middleware = new CommentAntiAbuseMiddleware($heuristics);
+        $duplicateDetector = new DuplicateDetector($cache);
+        $pipeline = new AntiSpamPipeline(checks: [$duplicateDetector]);
+        $middleware = new CommentAntiAbuseMiddleware($pipeline);
 
         $request = $this->createCommentRequest('10.0.0.2', ['body' => 'Same exact text']);
         $handler = new VerificationPassThrough();
@@ -234,12 +237,12 @@ final class SecurityVerificationTest extends TestCase
     #[Test]
     public function s7ExcessiveLinksRejected(): void
     {
-        $cache = new VerificationTaggedCache();
-        $heuristics = new AntiAbuseHeuristics($cache);
-        $middleware = new CommentAntiAbuseMiddleware($heuristics, maxLinks: 2);
+        $linkChecker = new LinkDensityChecker(maxDensity: 0.1);
+        $pipeline = new AntiSpamPipeline(checks: [$linkChecker]);
+        $middleware = new CommentAntiAbuseMiddleware($pipeline);
 
         $request = $this->createCommentRequest('10.0.0.3', [
-            'body' => 'Visit https://a.com https://b.com https://c.com',
+            'body' => 'https://a.com https://b.com https://c.com',
         ]);
         $handler = new VerificationPassThrough();
 
