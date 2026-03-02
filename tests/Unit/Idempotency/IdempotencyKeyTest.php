@@ -31,7 +31,7 @@ final class IdempotencyKeyTest extends TestCase
         $key2 = IdempotencyKey::fromParts('user-123', 'create_payment', 'amount=100');
 
         self::assertSame($key1->value, $key2->value);
-        self::assertSame(64, strlen($key1->value)); // SHA-256 hex
+        self::assertSame(64, strlen($key1->value)); // 32-byte BLAKE2b hex.
     }
 
     #[Test]
@@ -50,5 +50,31 @@ final class IdempotencyKeyTest extends TestCase
         $key2 = IdempotencyKey::fromParts('b', 'a');
 
         self::assertNotSame($key1->value, $key2->value);
+    }
+
+    #[Test]
+    public function fromPartsLengthPrefixingPreventsBoundaryCollision(): void
+    {
+        // Without length prefixing the two would collapse onto the same
+        // joined string ('ab|c' / 'a|bc' both parse as 'abc' under naive
+        // concatenation); length-prefixing keeps them distinct.
+        $key1 = IdempotencyKey::fromParts('ab', 'c');
+        $key2 = IdempotencyKey::fromParts('a', 'bc');
+
+        self::assertNotSame($key1->value, $key2->value);
+    }
+
+    #[Test]
+    public function fromPartsRejectsDelimiterCollisionAttempt(): void
+    {
+        // A naive `implode('|', $parts)` collapses these inputs to the same
+        // string ('a|b|c'). Length prefixing keeps them separate.
+        $key1 = IdempotencyKey::fromParts('a|b', 'c');
+        $key2 = IdempotencyKey::fromParts('a', 'b', 'c');
+        $key3 = IdempotencyKey::fromParts('a', 'b|c');
+
+        self::assertNotSame($key1->value, $key2->value);
+        self::assertNotSame($key2->value, $key3->value);
+        self::assertNotSame($key1->value, $key3->value);
     }
 }
