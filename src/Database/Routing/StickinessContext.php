@@ -4,63 +4,95 @@ declare(strict_types=1);
 
 namespace Pulsar\Database\Routing;
 
+use Fiber;
 use Pulsar\Api\Api;
+use stdClass;
+use WeakMap;
 
 use function hrtime;
 
 /**
- * Request-scoped context for write-then-read primary stickiness.
+ * Request-scoped context for write-then-read primary stickiness, isolated
+ * per Fiber.
  *
- * Tracks when the last write occurred and whether the connection
- * should remain pinned to the primary. Supports both request-scoped
- * (until explicit reset) and timed stickiness (auto-expires).
+ * Tracks when the last write occurred and whether the connection should
+ * remain pinned to the primary. Supports both request-scoped (until
+ * explicit reset) and timed stickiness (auto-expires).
+ *
+ * Persistent-runtime workers (RoadRunner, FrankenPHP, Swoole) interleave
+ * Fiber-suspended HTTP requests on the same worker process. A naive shared
+ * field would cause request A's write to pin request B's reads to the
+ * primary (or, worse, request B's expiry to release request A's pin
+ * prematurely), producing non-deterministic read-your-write semantics
+ * across tenants. State is now keyed by `Fiber::getCurrent()` via a
+ * `WeakMap`, with a stable `$rootKey` for non-Fiber callers (F29.2
+ * follow-up of F13.1 / F25.2 / F24.2).
  */
 #[Api(since: '1.0.0')]
 final class StickinessContext
 {
-    private bool $writeOccurred = false;
-    private ?int $pinExpiresAtNs = null;
-    private bool $requestScoped = false;
+    /**
+     * @var WeakMap<object, array{writeOccurred: bool, pinExpiresAtNs: ?int, requestScoped: bool}>
+     */
+    private WeakMap $slots;
+
+    private readonly stdClass $rootKey;
+
+    public function __construct()
+    {
+        /** @var WeakMap<object, array{writeOccurred: bool, pinExpiresAtNs: ?int, requestScoped: bool}> $map */
+        $map = new WeakMap();
+        $this->slots = $map;
+        $this->rootKey = new stdClass();
+    }
 
     /**
-     * Record that a write operation occurred, activating stickiness.
+     * Record that a write operation occurred, activating stickiness for
+     * the current Fiber only.
      *
      * @param string|int $duration 'request' for request-scoped, or milliseconds
      */
     public function markWrite(string|int $duration = 'request'): void
     {
-        $this->writeOccurred = true;
+        $key = $this->currentKey();
+
+        $slot = ['writeOccurred' => true, 'pinExpiresAtNs' => null, 'requestScoped' => false];
 
         if ($duration === 'request') {
-            $this->requestScoped = true;
-            $this->pinExpiresAtNs = null;
+            $slot['requestScoped'] = true;
         } else {
-            $this->requestScoped = false;
             $durationMs = (int) $duration;
-            $this->pinExpiresAtNs = hrtime(true) + ($durationMs * 1_000_000);
+            $slot['pinExpiresAtNs'] = hrtime(true) + ($durationMs * 1_000_000);
         }
+
+        $this->slots[$key] = $slot;
     }
 
     /**
-     * Check if the connection should use the primary.
+     * Check if the connection should use the primary for the current Fiber.
      */
     public function shouldUsePrimary(): bool
     {
-        if (!$this->writeOccurred) {
+        $key = $this->currentKey();
+        $slot = $this->slots[$key] ?? null;
+
+        if ($slot === null || !$slot['writeOccurred']) {
             return false;
         }
 
-        if ($this->requestScoped) {
+        if ($slot['requestScoped']) {
             return true;
         }
 
-        if ($this->pinExpiresAtNs !== null && hrtime(true) < $this->pinExpiresAtNs) {
+        $expiry = $slot['pinExpiresAtNs'];
+
+        if ($expiry !== null && hrtime(true) < $expiry) {
             return true;
         }
 
-        if ($this->pinExpiresAtNs !== null && hrtime(true) >= $this->pinExpiresAtNs) {
-            $this->writeOccurred = false;
-            $this->pinExpiresAtNs = null;
+        if ($expiry !== null && hrtime(true) >= $expiry) {
+            // Expiry passed — clear the slot so subsequent reads return false fast.
+            unset($this->slots[$key]);
 
             return false;
         }
@@ -69,12 +101,15 @@ final class StickinessContext
     }
 
     /**
-     * Reset all stickiness state for a new request cycle.
+     * Reset stickiness state for the current Fiber's request cycle.
      */
     public function reset(): void
     {
-        $this->writeOccurred = false;
-        $this->pinExpiresAtNs = null;
-        $this->requestScoped = false;
+        unset($this->slots[$this->currentKey()]);
+    }
+
+    private function currentKey(): object
+    {
+        return Fiber::getCurrent() ?? $this->rootKey;
     }
 }
