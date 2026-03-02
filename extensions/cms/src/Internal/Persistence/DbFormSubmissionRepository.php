@@ -22,7 +22,7 @@ use const JSON_THROW_ON_ERROR;
 /**
  * Database-backed form submission repository.
  */
-#[Internal(reason: 'Raw-DB repository — use FormSubmissionRepositoryInterface for public API')]
+#[Internal(reason: 'Raw-DB repository; use FormSubmissionRepositoryInterface for public API')]
 final readonly class DbFormSubmissionRepository implements FormSubmissionRepositoryInterface
 {
     private const array UPSERT_COLUMNS = [

@@ -22,7 +22,7 @@ use function trim;
  * Checks for: excessive URLs, repeated characters, all-caps text,
  * and empty required fields.
  */
-#[Internal(reason: 'Spam detector — use SpamDetectorInterface')]
+#[Internal(reason: 'Spam detector; use SpamDetectorInterface')]
 final readonly class ContentHeuristicScorer implements SpamDetectorInterface
 {
     /** @var list<string> */

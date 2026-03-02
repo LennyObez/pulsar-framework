@@ -23,7 +23,7 @@ use function random_bytes;
  * full state snapshot and coordinates awareness (cursors/selections) between
  * connected clients via REST polling.
  */
-#[Internal(reason: 'Collaboration service — use CollaborationRepositoryInterface for persistence API')]
+#[Internal(reason: 'Collaboration service; use CollaborationRepositoryInterface for persistence API')]
 final readonly class CollaborationService
 {
     public function __construct(

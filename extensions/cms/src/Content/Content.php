@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Cms\Content;
 
 use DateTimeImmutable;
+use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Extension\Cms\Exception\CmsException;
 
 /**
- * Content aggregate root — represents any publishable content unit
+ * Content aggregate root: represents any publishable content unit
  * (article, page, or custom type registered by CMS plugins).
  */
 #[Api(since: '1.0.0')]
@@ -225,6 +226,34 @@ final readonly class Content
     {
         return clone($this, [
             'parentId' => $parentId,
+            'updatedAt' => new DateTimeImmutable(),
+        ]);
+    }
+
+    /**
+     * Set the publishing status directly, bypassing transition validation.
+     *
+     * Used by the import system where content arrives with a predetermined
+     * status from the export source. For normal workflows, use the named
+     * transition methods (publish(), archive(), schedule(), etc.) which
+     * enforce the state machine rules.
+     */
+    #[NoDiscard]
+    public function withStatus(PublishingStatus $status): self
+    {
+        if ($status === $this->status) {
+            return $this;
+        }
+
+        $publishedAt = $this->publishedAt;
+
+        if ($status === PublishingStatus::Published && $publishedAt === null) {
+            $publishedAt = new DateTimeImmutable();
+        }
+
+        return clone($this, [
+            'status' => $status,
+            'publishedAt' => $publishedAt,
             'updatedAt' => new DateTimeImmutable(),
         ]);
     }

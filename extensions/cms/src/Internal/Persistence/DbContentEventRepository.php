@@ -16,7 +16,7 @@ use function json_encode;
 
 use const JSON_THROW_ON_ERROR;
 
-#[Internal(reason: 'Raw-DB repository — use ContentEventStoreInterface for public API')]
+#[Internal(reason: 'Raw-DB repository; use ContentEventStoreInterface for public API')]
 final readonly class DbContentEventRepository implements ContentEventStoreInterface
 {
     private const string SQL_APPEND = <<<'SQL'

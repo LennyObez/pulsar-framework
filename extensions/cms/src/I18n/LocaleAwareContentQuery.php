@@ -20,7 +20,7 @@ use function in_array;
  * falls back to the default locale. Also provides locale availability
  * introspection for admin UI locale tab support.
  */
-#[Internal(reason: 'CMS i18n query helper — implementation detail')]
+#[Internal(reason: 'CMS i18n query helper; implementation detail')]
 final readonly class LocaleAwareContentQuery
 {
     public function __construct(

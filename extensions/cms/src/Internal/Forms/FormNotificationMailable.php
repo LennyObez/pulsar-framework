@@ -15,6 +15,7 @@ use Pulsar\Mail\Mailable;
 use function array_map;
 use function htmlspecialchars;
 use function implode;
+use function is_scalar;
 use function is_string;
 
 use const ENT_QUOTES;
@@ -22,7 +23,7 @@ use const ENT_QUOTES;
 /**
  * Email notification sent when a new form submission is received.
  */
-#[Internal(reason: 'Form notification mailable — implementation detail')]
+#[Internal(reason: 'Form notification mailable; implementation detail')]
 final class FormNotificationMailable extends Mailable
 {
     /**
@@ -57,7 +58,7 @@ final class FormNotificationMailable extends Mailable
             }
 
             $escapedKey = htmlspecialchars($key, ENT_QUOTES, 'UTF-8');
-            $escapedValue = htmlspecialchars(is_string($value) ? $value : (string) $value, ENT_QUOTES, 'UTF-8');
+            $escapedValue = htmlspecialchars(is_string($value) ? $value : (is_scalar($value) ? (string) $value : ''), ENT_QUOTES, 'UTF-8');
 
             $rows[] = "<tr><td style=\"padding:8px;border:1px solid #ddd;font-weight:bold;vertical-align:top\">$escapedKey</td>"
                 . "<td style=\"padding:8px;border:1px solid #ddd\">$escapedValue</td></tr>";
@@ -97,7 +98,7 @@ final class FormNotificationMailable extends Mailable
                 continue;
             }
 
-            $textLines[] = $key . ': ' . (is_string($value) ? $value : (string) $value);
+            $textLines[] = $key . ': ' . (is_string($value) ? $value : (is_scalar($value) ? (string) $value : ''));
         }
 
         $textLines[] = '';

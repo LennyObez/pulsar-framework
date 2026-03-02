@@ -14,8 +14,11 @@ use Pulsar\Extension\Cms\Media\ResponsiveImageRenderer;
 use function htmlspecialchars;
 use function in_array;
 use function is_string;
+use function json_encode;
 
 use const ENT_QUOTES;
+use const JSON_UNESCAPED_SLASHES;
+use const JSON_UNESCAPED_UNICODE;
 
 #[Internal]
 final readonly class ImageBlock implements BlockTypeInterface
@@ -50,8 +53,8 @@ final readonly class ImageBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
-        $src = htmlspecialchars((string) ($data['src'] ?? ''), ENT_QUOTES, 'UTF-8');
-        $alt = htmlspecialchars((string) ($data['alt'] ?? ''), ENT_QUOTES, 'UTF-8');
+        $src = htmlspecialchars(is_string($data['src'] ?? null) ? $data['src'] : '', ENT_QUOTES, 'UTF-8');
+        $alt = htmlspecialchars(is_string($data['alt'] ?? null) ? $data['alt'] : '', ENT_QUOTES, 'UTF-8');
         $caption = $data['caption'] ?? null;
         $alignment = $data['alignment'] ?? null;
 
@@ -73,13 +76,43 @@ final readonly class ImageBlock implements BlockTypeInterface
             $imgHtml = "<img src=\"$src\" alt=\"$alt\" loading=\"lazy\">";
         }
 
-        $html = "<figure$figureStyle>$imgHtml";
+        $anchor = isset($data['anchor']) && is_string($data['anchor']) ? ' id="' . htmlspecialchars($data['anchor'], ENT_QUOTES, 'UTF-8') . '"' : '';
+        $className = isset($data['className']) && is_string($data['className']) ? ' ' . htmlspecialchars($data['className'], ENT_QUOTES, 'UTF-8') : '';
+
+        if ($className !== '') {
+            $figureStyle .= ($figureStyle !== '' ? '' : '') . " class=\"image-block$className\"";
+        }
+
+        $html = "<figure$figureStyle$anchor>$imgHtml";
 
         if (is_string($caption) && $caption !== '') {
             $html .= '<figcaption>' . htmlspecialchars($caption, ENT_QUOTES, 'UTF-8') . '</figcaption>';
         }
 
-        return $html . '</figure>';
+        $html .= '</figure>';
+
+        // ImageObject structured data for SEO
+        $rawSrc = is_string($data['src'] ?? null) ? $data['src'] : '';
+        $rawAlt = is_string($data['alt'] ?? null) ? $data['alt'] : '';
+
+        if ($rawSrc !== '') {
+            $structuredData = [
+                '@context' => 'https://schema.org',
+                '@type' => 'ImageObject',
+                'contentUrl' => $rawSrc,
+                'description' => $rawAlt,
+            ];
+
+            if (is_string($caption) && $caption !== '') {
+                $structuredData['caption'] = $caption;
+            }
+
+            $html .= '<script type="application/ld+json">';
+            $html .= json_encode($structuredData, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+            $html .= '</script>';
+        }
+
+        return $html;
     }
 
     #[Override]

@@ -21,7 +21,7 @@ use function str_contains;
  * feeds so that browsers and feed readers can auto-discover available feeds.
  * Only applies to HTML responses (Content-Type: text/html).
  */
-#[Internal(reason: 'CMS HTTP middleware — implementation detail')]
+#[Internal(reason: 'CMS HTTP middleware; implementation detail')]
 final readonly class FeedDiscoveryMiddleware implements MiddlewareInterface
 {
     public function __construct(

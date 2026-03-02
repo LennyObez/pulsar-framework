@@ -27,7 +27,7 @@ use function ltrim;
  * When a translation is not found in the requested locale, optionally
  * falls back to the default locale translation (configurable).
  */
-#[Internal(reason: 'CMS i18n slug resolution — implementation detail')]
+#[Internal(reason: 'CMS i18n slug resolution; implementation detail')]
 final readonly class LocaleSlugResolver
 {
     public function __construct(

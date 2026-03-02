@@ -62,7 +62,7 @@ class CmsException extends RuntimeException
 
     public static function sanitizerBypassDetected(): self
     {
-        return new self('SafeHtmlPolicy bypass detected — input was escaped as plaintext');
+        return new self('SafeHtmlPolicy bypass detected: input was escaped as plaintext');
     }
 
     public static function disallowedExtension(string $extension): self
@@ -152,7 +152,7 @@ class CmsException extends RuntimeException
 
     public static function openRedirectBlocked(string $url): self
     {
-        return new self("Open redirect blocked — unsafe target URL: $url");
+        return new self("Open redirect blocked: unsafe target URL: $url");
     }
 
     public static function redirectChainDetected(string $fromPath): self
@@ -262,7 +262,7 @@ class CmsException extends RuntimeException
 
     public static function backupTampered(string $id): self
     {
-        return new self("Backup integrity check failed — hash mismatch for backup: $id");
+        return new self("Backup integrity check failed: hash mismatch for backup: $id");
     }
 
     public static function importSizeLimitExceeded(int $size, int $maxSize): self

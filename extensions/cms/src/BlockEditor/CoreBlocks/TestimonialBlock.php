@@ -43,8 +43,8 @@ final readonly class TestimonialBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
-        $quote = htmlspecialchars((string) ($data['quote'] ?? ''), ENT_QUOTES, 'UTF-8');
-        $author = htmlspecialchars((string) ($data['author'] ?? ''), ENT_QUOTES, 'UTF-8');
+        $quote = htmlspecialchars(is_string($data['quote'] ?? null) ? $data['quote'] : '', ENT_QUOTES, 'UTF-8');
+        $author = htmlspecialchars(is_string($data['author'] ?? null) ? $data['author'] : '', ENT_QUOTES, 'UTF-8');
 
         $html = '<blockquote class="testimonial">';
 

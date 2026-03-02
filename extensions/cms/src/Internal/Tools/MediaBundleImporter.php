@@ -22,6 +22,7 @@ use function count;
 use function file_exists;
 use function file_put_contents;
 use function is_array;
+use function is_string;
 use function json_decode;
 use function strlen;
 use function substr;
@@ -37,7 +38,7 @@ use const JSON_THROW_ON_ERROR;
  * Supports duplicate resolution policies and transactional import
  * with rollback on failure.
  */
-#[Internal(reason: 'Media bundle import internals — use ImportController')]
+#[Internal(reason: 'Media bundle import internals; use ImportController')]
 final readonly class MediaBundleImporter
 {
     /** ZIP magic bytes (PK header). */
@@ -132,7 +133,7 @@ final readonly class MediaBundleImporter
             }
 
             // Import the data portion via the existing import parser.
-            // Note: ImportParser does not yet support DuplicateResolutionPolicy —
+            // Note: ImportParser does not yet support DuplicateResolutionPolicy --
             // the $policy parameter is only applied to media files below.
             // When ImportParser is extended to accept a policy, pass $policy here.
             $importResult = $this->importParser->importBundle($dataJson, $dryRun);
@@ -155,8 +156,8 @@ final readonly class MediaBundleImporter
                     }
 
                     /** @var array<string, mixed> $mediaRef */
-                    $filename = isset($mediaRef['filename']) ? (string) $mediaRef['filename'] : null;
-                    $storagePath = isset($mediaRef['storage_path']) ? (string) $mediaRef['storage_path'] : null;
+                    $filename = isset($mediaRef['filename']) ? (is_string($mediaRef['filename']) ? $mediaRef['filename'] : '') : null;
+                    $storagePath = isset($mediaRef['storage_path']) ? (is_string($mediaRef['storage_path']) ? $mediaRef['storage_path'] : '') : null;
 
                     if ($filename === null || $storagePath === null) {
                         $mediaSkipped++;
@@ -178,8 +179,9 @@ final readonly class MediaBundleImporter
                         continue;
                     }
 
-                    $existingAsset = isset($mediaRef['id'])
-                        ? $this->mediaRepository->findById($mediaRef['id'])
+                    $mediaId = $mediaRef['id'] ?? null;
+                    $existingAsset = is_string($mediaId)
+                        ? $this->mediaRepository->findById($mediaId)
                         : null;
 
                     if ($existingAsset !== null) {

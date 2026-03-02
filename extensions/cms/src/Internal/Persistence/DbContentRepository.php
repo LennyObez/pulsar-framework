@@ -29,7 +29,7 @@ use function preg_match;
 use function range;
 use function sprintf;
 
-#[Internal(reason: 'Raw-DB repository — use ContentRepositoryInterface for public API')]
+#[Internal(reason: 'Raw-DB repository; use ContentRepositoryInterface for public API')]
 final readonly class DbContentRepository implements ContentRepositoryInterface
 {
     private const string SQL_FIND_BY_ID = <<<'SQL'
@@ -46,7 +46,7 @@ final readonly class DbContentRepository implements ContentRepositoryInterface
         INNER JOIN cms_content_translations ct ON ct.content_id = c.id
         WHERE ct.locale = :locale
             AND ct.path = :path
-            AND ct.tenant_key = COALESCE(:tenant_id, '00000000-0000-0000-0000-000000000000')
+            AND COALESCE(ct.tenant_id, '00000000-0000-0000-0000-000000000000') = COALESCE(:tenant_id, '00000000-0000-0000-0000-000000000000')
             AND c.deleted_at IS NULL
         SQL;
 
@@ -56,7 +56,7 @@ final readonly class DbContentRepository implements ContentRepositoryInterface
         INNER JOIN cms_content_translations ct ON ct.content_id = c.id
         WHERE c.status = 'published'
             AND ct.locale = :locale
-            AND ct.tenant_key = COALESCE(:tenant_id, '00000000-0000-0000-0000-000000000000')
+            AND COALESCE(ct.tenant_id, '00000000-0000-0000-0000-000000000000') = COALESCE(:tenant_id, '00000000-0000-0000-0000-000000000000')
             AND c.deleted_at IS NULL
         SQL;
 
@@ -66,7 +66,7 @@ final readonly class DbContentRepository implements ContentRepositoryInterface
         INNER JOIN cms_content_translations ct ON ct.content_id = c.id
         WHERE c.status = 'published'
             AND ct.locale = :locale
-            AND ct.tenant_key = COALESCE(:tenant_id, '00000000-0000-0000-0000-000000000000')
+            AND COALESCE(ct.tenant_id, '00000000-0000-0000-0000-000000000000') = COALESCE(:tenant_id, '00000000-0000-0000-0000-000000000000')
             AND c.deleted_at IS NULL
         SQL;
 
@@ -160,6 +160,17 @@ final readonly class DbContentRepository implements ContentRepositoryInterface
         }
 
         return self::hydrate($row);
+    }
+
+    public function findByImportId(string $importId): ?Content
+    {
+        $result = $this->connection->query(
+            'SELECT * FROM cms_contents WHERE import_id = :import_id LIMIT 1',
+            ['import_id' => $importId],
+        );
+        $row = $result->first();
+
+        return $row !== null ? self::hydrate($row) : null;
     }
 
     public function findByPath(string $locale, string $path, ?string $tenantId = null): ?Content

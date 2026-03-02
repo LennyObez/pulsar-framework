@@ -10,12 +10,16 @@ use Pulsar\Auth\Authorization\GateInterface;
 use Pulsar\Auth\TwoFactor\RecoveryCodeGenerator;
 use Pulsar\Auth\TwoFactor\TotpGenerator;
 use Pulsar\Auth\TwoFactor\TotpVerifier;
+use Pulsar\Cache\Application\CacheManagerInterface;
 use Pulsar\Cache\Application\TaggedCacheInterface;
+use Pulsar\Config\BusinessProfileProviderInterface;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Extension\Cms\Account\AccountSectionRegistry;
 use Pulsar\Extension\Cms\Comments\CommentRepositoryInterface;
 use Pulsar\Extension\Cms\Comments\CommentServiceInterface;
 use Pulsar\Extension\Cms\Commerce\CouponRepositoryInterface;
+use Pulsar\Extension\Cms\Commerce\CustomerRepositoryInterface;
 use Pulsar\Extension\Cms\Commerce\DigitalAssetRepositoryInterface;
 use Pulsar\Extension\Cms\Commerce\InvoiceServiceInterface;
 use Pulsar\Extension\Cms\Commerce\OrderExportServiceInterface;
@@ -37,8 +41,10 @@ use Pulsar\Extension\Cms\Forms\FormSubmissionRepositoryInterface;
 use Pulsar\Extension\Cms\Forms\FormSubmissionServiceInterface;
 use Pulsar\Extension\Cms\Http\Controller\Admin\BackupController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\BulkOperationsController;
+use Pulsar\Extension\Cms\Http\Controller\Admin\BusinessProfileSettingsController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\CommentController as AdminCommentController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\ContentController as AdminContentController;
+use Pulsar\Extension\Cms\Http\Controller\Admin\CustomerController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\DashboardController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\DigitalAssetController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\ExperimentController;
@@ -71,7 +77,7 @@ use Pulsar\Extension\Cms\Http\Controller\Admin\UserController;
 use Pulsar\Extension\Cms\Internal\ABTest\ExperimentService;
 use Pulsar\Extension\Cms\Internal\Commerce\OrderService;
 use Pulsar\Extension\Cms\Internal\Security\CmsRateLimiter;
-use Pulsar\Extension\Cms\Internal\Security\QrCodeEncoder;
+use Pulsar\Extension\Cms\Internal\Tools\CsvContentImporter;
 use Pulsar\Extension\Cms\Internal\Tools\MediaBundleImporter;
 use Pulsar\Extension\Cms\LiveCss\CssValidatorInterface;
 use Pulsar\Extension\Cms\LiveCss\LiveCssServiceInterface;
@@ -82,6 +88,7 @@ use Pulsar\Extension\Cms\Media\MediaServiceInterface;
 use Pulsar\Extension\Cms\Navigation\MenuRepositoryInterface;
 use Pulsar\Extension\Cms\Plugins\CmsPluginManagerInterface;
 use Pulsar\Extension\Cms\Search\SearchServiceInterface;
+use Pulsar\Extension\Cms\Security\QrCodeEncoder;
 use Pulsar\Extension\Cms\Seo\LinkHealthServiceInterface;
 use Pulsar\Extension\Cms\Seo\RedirectManagerInterface;
 use Pulsar\Extension\Cms\Seo\SitemapGeneratorInterface;
@@ -102,7 +109,7 @@ use Pulsar\View\Engine\TemplateEngineInterface;
 /**
  * Binds all admin (back-office) controllers for the CMS.
  */
-#[Internal(reason: 'CMS service wiring — use interfaces for public API')]
+#[Internal(reason: 'CMS service wiring; use interfaces for public API')]
 final readonly class CmsAdminControllerProvider
 {
     public function register(
@@ -123,10 +130,13 @@ final readonly class CmsAdminControllerProvider
             ? $container->get(TemplateEngineInterface::class)
             : null;
 
-        // Rate limiter (optional — only when cache is available)
+        // Rate limiter (optional; only when cache is available)
         /** @var CmsRateLimiter|null $rateLimiter */
-        $rateLimiter = $container->has(TaggedCacheInterface::class)
-            ? new CmsRateLimiter($container->get(TaggedCacheInterface::class))
+        $rateLimiter = $container->has(TaggedCacheInterface::class) && $container->has(CacheManagerInterface::class)
+            ? new CmsRateLimiter(
+                $container->get(TaggedCacheInterface::class),
+                $container->get(CacheManagerInterface::class)->lock(),
+            )
             : null;
 
         // DashboardService (always available)
@@ -141,7 +151,7 @@ final readonly class CmsAdminControllerProvider
         $totpVerifier = new TotpVerifier($totpGenerator);
         $recoveryCodeGenerator = new RecoveryCodeGenerator();
 
-        // === DashboardController (all params nullable — always registrable) ===
+        // === DashboardController (all params nullable; always registrable) ===
 
         /** @var EditorialWorkflowServiceInterface|null $workflowService */
         $workflowService = $container->has(EditorialWorkflowServiceInterface::class)
@@ -178,8 +188,8 @@ final readonly class CmsAdminControllerProvider
             AdminMenuController::class,
             new AdminMenuController(
                 $container->get(MenuRepositoryInterface::class),
-                $gate,
                 $config,
+                $gate,
                 $templateEngine,
             ),
         );
@@ -294,8 +304,21 @@ final readonly class CmsAdminControllerProvider
             UserController::class,
             new UserController(
                 $container->get(CmsUserRepositoryInterface::class),
-                $gate,
                 $auditLogger,
+                $container->has(AccountSectionRegistry::class) ? $container->get(AccountSectionRegistry::class) : null,
+                $gate,
+                $templateEngine,
+            ),
+        );
+
+        $container->instance(
+            CustomerController::class,
+            new CustomerController(
+                $container->get(CustomerRepositoryInterface::class),
+                $container->get(AccountSectionRegistry::class),
+                $container->has(OrderRepositoryInterface::class) ? $container->get(OrderRepositoryInterface::class) : null,
+                $auditLogger,
+                $gate,
                 $templateEngine,
             ),
         );
@@ -308,8 +331,8 @@ final readonly class CmsAdminControllerProvider
                 $recoveryCodeGenerator,
                 $container->get(QrCodeEncoder::class),
                 $rateLimiter,
-                $gate,
                 $auditLogger,
+                $gate,
                 $templateEngine,
             ),
         );
@@ -319,13 +342,31 @@ final readonly class CmsAdminControllerProvider
         if ($settingsService !== null) {
             $container->instance(
                 SettingsController::class,
-                new SettingsController($settingsService, $gate, $config, $templateEngine),
+                new SettingsController($settingsService, $config, $gate, $templateEngine),
             );
 
             $container->instance(
                 RobotsController::class,
                 new RobotsController($settingsService, $gate, $templateEngine),
             );
+
+            // Business profile settings controller (needs SettingsService + BusinessProfileProvider)
+            /** @var BusinessProfileProviderInterface|null $businessProfileProvider */
+            $businessProfileProvider = $container->has(BusinessProfileProviderInterface::class)
+                ? $container->get(BusinessProfileProviderInterface::class)
+                : null;
+
+            if ($businessProfileProvider !== null) {
+                $container->instance(
+                    BusinessProfileSettingsController::class,
+                    new BusinessProfileSettingsController(
+                        $settingsService,
+                        $businessProfileProvider,
+                        $gate,
+                        $templateEngine,
+                    ),
+                );
+            }
         }
 
         if ($container->has(CommentServiceInterface::class)) {
@@ -399,10 +440,10 @@ final readonly class CmsAdminControllerProvider
                 ExportController::class,
                 new ExportController(
                     $importExport,
-                    $gate,
                     $container->get(ContentRepositoryInterface::class),
                     $container->get(ContentTranslationRepositoryInterface::class),
                     $container->get(ContentBlockRepositoryInterface::class),
+                    $gate,
                     $mediaBundleExporter,
                     $templateEngine,
                 ),
@@ -418,13 +459,18 @@ final readonly class CmsAdminControllerProvider
                 ? $container->get(MediaBundleImporter::class)
                 : null;
 
+            /** @var SafeHtmlPolicy $safeHtmlPolicy */
+            $safeHtmlPolicy = $container->get(SafeHtmlPolicy::class);
+            $csvImporter = new CsvContentImporter($safeHtmlPolicy);
+
             $container->instance(
                 ImportController::class,
                 new ImportController(
                     $importExport,
-                    $gate,
                     $container->get(ContentRepositoryInterface::class),
                     $container->get(ContentTranslationRepositoryInterface::class),
+                    $csvImporter,
+                    $gate,
                     $importAnalyzer,
                     $mediaBundleImporter,
                     $templateEngine,
@@ -469,7 +515,7 @@ final readonly class CmsAdminControllerProvider
             );
         }
 
-        // AdminContentController — needs many conditional deps
+        // AdminContentController: needs many conditional deps
         if (
             $container->has(ContentLockServiceInterface::class)
             && $container->has(EditorialWorkflowServiceInterface::class)
@@ -486,8 +532,8 @@ final readonly class CmsAdminControllerProvider
                     $container->get(ContentLockServiceInterface::class),
                     $container->get(EditorialWorkflowServiceInterface::class),
                     $container->get(SafeHtmlPolicy::class),
-                    $gate,
                     $config,
+                    $gate,
                     $templateEngine,
                 ),
             );
@@ -501,8 +547,8 @@ final readonly class CmsAdminControllerProvider
                     $container->get(ContentRepositoryInterface::class),
                     $container->get(ContentRevisionRepositoryInterface::class),
                     $container->get(RevisionService::class),
-                    $gate,
                     $config,
+                    $gate,
                     $templateEngine,
                 ),
             );

@@ -23,7 +23,7 @@ use function stream_get_contents;
  * and the ContentTranslation. Uses php://memory streams for efficient
  * in-memory CSV generation.
  */
-#[Internal(reason: 'Import/export internals — use ImportExportServiceInterface')]
+#[Internal(reason: 'Import/export internals; use ImportExportServiceInterface')]
 final readonly class CsvContentExporter
 {
     private const array COLUMNS = [

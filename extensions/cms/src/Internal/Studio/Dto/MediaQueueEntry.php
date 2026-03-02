@@ -7,7 +7,7 @@ namespace Pulsar\Extension\Cms\Internal\Studio\Dto;
 use Pulsar\Api\Internal;
 
 /**
- * Row in the media processing queue panel — a single derivative generation job.
+ * Row in the media processing queue panel: a single derivative generation job.
  */
 #[Internal]
 final readonly class MediaQueueEntry

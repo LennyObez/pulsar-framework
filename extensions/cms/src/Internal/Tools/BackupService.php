@@ -30,6 +30,8 @@ use function hash_equals;
 use function implode;
 use function in_array;
 use function is_array;
+use function is_int;
+use function is_string;
 use function json_decode;
 use function json_encode;
 use function preg_match;
@@ -46,7 +48,7 @@ use const SODIUM_CRYPTO_GENERICHASH_BYTES;
  * Dumps CMS database tables to JSON with BLAKE2b integrity hashes,
  * stored in private media disk. Restore validates hash before applying.
  */
-#[Internal(reason: 'Backup internals — use BackupServiceInterface')]
+#[Internal(reason: 'Backup internals; use BackupServiceInterface')]
 final readonly class BackupService implements BackupServiceInterface
 {
     private const string BACKUP_DIR = 'backups/cms';
@@ -108,8 +110,9 @@ final readonly class BackupService implements BackupServiceInterface
                 $bindings['tenant_id'] = $scope->tenantId;
             }
 
+            $quotedTable = '"' . $table . '"';
             $result = $this->connection->query(
-                "SELECT * FROM $table$tenantFilter",
+                "SELECT * FROM $quotedTable$tenantFilter",
                 $bindings,
             );
 
@@ -182,8 +185,8 @@ final readonly class BackupService implements BackupServiceInterface
         /** @var array<string, mixed> $meta */
         $meta = json_decode($metaJson, true, flags: JSON_THROW_ON_ERROR);
 
-        $storagePath = (string) $meta['storage_path'];
-        $expectedHash = (string) $meta['hash'];
+        $storagePath = is_string($meta['storage_path'] ?? null) ? $meta['storage_path'] : '';
+        $expectedHash = is_string($meta['hash'] ?? null) ? $meta['hash'] : '';
 
         if (!$this->disk->exists($storagePath)) {
             throw CmsException::backupNotFound($backupId);
@@ -200,7 +203,7 @@ final readonly class BackupService implements BackupServiceInterface
         $backupData = json_decode($json, true, flags: JSON_THROW_ON_ERROR);
         /** @var array<string, mixed> $tables */
         $tables = $backupData['tables'] ?? [];
-        /** @var array<string, mixed> $scopeData */
+        /** @var array{include_content?: bool, include_media?: bool, include_taxonomies?: bool, include_menus?: bool, include_settings?: bool, include_commerce?: bool, tenant_id?: string|null} $scopeData */
         $scopeData = $backupData['scope'] ?? [];
         $scope = BackupScope::fromArray($scopeData);
         $warnings = [];
@@ -251,7 +254,7 @@ final readonly class BackupService implements BackupServiceInterface
                     $columns = array_keys($row);
 
                     foreach ($columns as $col) {
-                        $colName = (string) $col;
+                        $colName = $col;
 
                         if (!$this->validateColumnName($colName)) {
                             throw CmsException::invalidBackupData(sprintf('Invalid column name: %s', $colName));
@@ -307,7 +310,7 @@ final readonly class BackupService implements BackupServiceInterface
                 continue;
             }
 
-            /** @var array<string, mixed> $scopeArr */
+            /** @var array{include_content?: bool, include_media?: bool, include_taxonomies?: bool, include_menus?: bool, include_settings?: bool, include_commerce?: bool, tenant_id?: string|null} $scopeArr */
             $scopeArr = $meta['scope'] ?? [];
             $scope = BackupScope::fromArray($scopeArr);
 
@@ -316,13 +319,13 @@ final readonly class BackupService implements BackupServiceInterface
             }
 
             $backups[] = new Backup(
-                id: (string) $meta['id'],
+                id: is_string($meta['id']) ? $meta['id'] : '',
                 scope: $scope,
-                storagePath: (string) $meta['storage_path'],
-                hash: (string) $meta['hash'],
-                size: (int) $meta['size'],
-                createdAt: new DateTimeImmutable((string) $meta['created_at']),
-                createdBy: (string) $meta['created_by'],
+                storagePath: is_string($meta['storage_path'] ?? null) ? $meta['storage_path'] : '',
+                hash: is_string($meta['hash'] ?? null) ? $meta['hash'] : '',
+                size: is_int($meta['size'] ?? null) ? $meta['size'] : 0,
+                createdAt: new DateTimeImmutable(is_string($meta['created_at'] ?? null) ? $meta['created_at'] : 'now'),
+                createdBy: is_string($meta['created_by'] ?? null) ? $meta['created_by'] : '',
             );
         }
 
@@ -341,7 +344,7 @@ final readonly class BackupService implements BackupServiceInterface
         /** @var array<string, mixed> $meta */
         $meta = json_decode($metaJson, true, flags: JSON_THROW_ON_ERROR);
 
-        $storagePath = isset($meta['storage_path']) ? (string) $meta['storage_path'] : null;
+        $storagePath = is_string($meta['storage_path'] ?? null) ? $meta['storage_path'] : null;
 
         if ($storagePath !== null && $this->disk->exists($storagePath)) {
             $this->disk->delete($storagePath);
@@ -453,7 +456,7 @@ final readonly class BackupService implements BackupServiceInterface
     {
         $paths = [];
 
-        // Use the backup index approach — list known metadata files
+        // Use the backup index approach: list known metadata files
         // The disk may not support directory listing, so we maintain an index
         $indexPath = self::BACKUP_DIR . '/index.json';
 
@@ -463,7 +466,7 @@ final readonly class BackupService implements BackupServiceInterface
 
             if (is_array($index)) {
                 foreach ($index as $id) {
-                    $metaPath = self::BACKUP_DIR . '/' . (string) $id . '.meta.json';
+                    $metaPath = self::BACKUP_DIR . '/' . (is_string($id) ? $id : '') . '.meta.json';
 
                     if ($this->disk->exists($metaPath)) {
                         $paths[] = $metaPath;
@@ -493,7 +496,7 @@ final readonly class BackupService implements BackupServiceInterface
         }
 
         if ($remove) {
-            $index = array_values(array_filter($index, static fn(string $id): bool => $id !== $backupId));
+            $index = array_values(array_filter($index, static fn(mixed $id): bool => $id !== $backupId));
         } else {
             $index[] = $backupId;
         }

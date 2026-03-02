@@ -11,6 +11,8 @@ use Pulsar\Queue\JobRecord;
 use Pulsar\Queue\JobRecordStatus;
 use Pulsar\Queue\QueueDriverInterface;
 
+use function is_int;
+use function is_string;
 use function json_decode;
 
 use const JSON_THROW_ON_ERROR;
@@ -93,18 +95,20 @@ final readonly class MediaProcessingQueuePanel
             }
 
             $payload = $this->decodePayload($record->payload);
-            $mediaAssetId = $payload['asset_id'] ?? '';
-            $derivativeType = $payload['variant'] ?? '';
+            $mediaAssetId = is_string($payload['asset_id'] ?? null) ? $payload['asset_id'] : '';
+            $derivativeType = is_string($payload['variant'] ?? null) ? $payload['variant'] : '';
 
             $completedAt = null;
             $failedAt = null;
 
             if ($record->status === JobRecordStatus::Completed) {
-                $completedAt = $payload['completed_at'] ?? null;
+                $rawCompleted = $payload['completed_at'] ?? null;
+                $completedAt = is_int($rawCompleted) ? $rawCompleted : null;
             }
 
             if ($record->status === JobRecordStatus::Failed) {
-                $failedAt = $payload['failed_at'] ?? null;
+                $rawFailed = $payload['failed_at'] ?? null;
+                $failedAt = is_int($rawFailed) ? $rawFailed : null;
             }
 
             $entries[] = new MediaQueueEntry(

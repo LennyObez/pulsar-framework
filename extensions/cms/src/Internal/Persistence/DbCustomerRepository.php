@@ -6,6 +6,7 @@ namespace Pulsar\Extension\Cms\Internal\Persistence;
 
 use DateTimeImmutable;
 use Pulsar\Api\Internal;
+use Pulsar\Api\Pagination\PaginationResult;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Portable\UpsertBuilder;
 use Pulsar\Database\Row;
@@ -37,11 +38,11 @@ final readonly class DbCustomerRepository implements CustomerRepositoryInterface
 
     private const array UPSERT_COLUMNS = [
         'id', 'tenant_id', 'user_id', 'email', 'display_name',
-        'billing_address', 'shipping_address', 'created_at', 'updated_at',
+        'billing_address', 'shipping_address', 'notes', 'created_at', 'updated_at',
     ];
 
     private const array UPSERT_UPDATE = [
-        'user_id', 'email', 'display_name', 'billing_address', 'shipping_address', 'updated_at',
+        'user_id', 'email', 'display_name', 'billing_address', 'shipping_address', 'notes', 'updated_at',
     ];
 
     public function __construct(
@@ -101,6 +102,7 @@ final readonly class DbCustomerRepository implements CustomerRepositoryInterface
             'shipping_address' => $customer->shippingAddress !== null
                 ? json_encode($customer->shippingAddress, JSON_THROW_ON_ERROR)
                 : null,
+            'notes' => $customer->notes,
             'created_at' => $customer->createdAt->format('c'),
             'updated_at' => $customer->updatedAt->format('c'),
         ]);
@@ -128,8 +130,62 @@ final readonly class DbCustomerRepository implements CustomerRepositoryInterface
             displayName: $row->getNullableString('display_name'),
             billingAddress: $billingAddress,
             shippingAddress: $shippingAddress,
+            notes: $row->getNullableString('notes'),
             createdAt: new DateTimeImmutable($row->getString('created_at')),
             updatedAt: new DateTimeImmutable($row->getString('updated_at')),
+        );
+    }
+
+    /**
+     * @return PaginationResult<Customer>
+     */
+    public function listCustomers(
+        ?string $tenantId = null,
+        ?string $search = null,
+        int $page = 1,
+        int $perPage = 20,
+    ): PaginationResult {
+        $conditions = [];
+        $bindings = [];
+        $effectiveTenantId = $tenantId ?? $this->tenantId;
+
+        if ($effectiveTenantId !== null) {
+            $conditions[] = 'tenant_id = :tenant_id';
+            $bindings['tenant_id'] = $effectiveTenantId;
+        }
+
+        if ($search !== null && $search !== '') {
+            $conditions[] = '(email LIKE :search OR display_name LIKE :search)';
+            $bindings['search'] = '%' . $search . '%';
+        }
+
+        $where = $conditions !== [] ? 'WHERE ' . implode(' AND ', $conditions) : '';
+
+        // Count total
+        $countSql = "SELECT COUNT(*) AS cnt FROM cms_customers {$where}";
+        $countRow = $this->db->query($countSql, $bindings)->first();
+        $total = $countRow !== null ? (int) $countRow->getString('cnt') : 0;
+
+        // Fetch page
+        $offset = ($page - 1) * $perPage;
+        $sql = "SELECT * FROM cms_customers {$where} ORDER BY created_at DESC LIMIT {$perPage} OFFSET {$offset}";
+        $rows = $this->db->query($sql, $bindings);
+
+        $items = [];
+
+        foreach ($rows->rows as $row) {
+            $items[] = self::hydrate($row);
+        }
+
+        $lastPage = $perPage > 0 ? (int) ceil($total / $perPage) : 1;
+
+        return new PaginationResult(
+            items: $items,
+            total: $total,
+            hasMore: $page < $lastPage,
+            perPage: $perPage,
+            currentPage: $page,
+            lastPage: $lastPage,
         );
     }
 }

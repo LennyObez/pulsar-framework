@@ -26,7 +26,7 @@ use const JSON_UNESCAPED_UNICODE;
  * header and the body content as Markdown text. Content blocks are appended as
  * sections delimited by HTML comments.
  */
-#[Internal(reason: 'Import/export internals — use ImportExportServiceInterface')]
+#[Internal(reason: 'Import/export internals; use ImportExportServiceInterface')]
 final readonly class MarkdownExporter
 {
     /**

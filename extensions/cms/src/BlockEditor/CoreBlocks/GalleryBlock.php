@@ -60,7 +60,7 @@ final readonly class GalleryBlock implements BlockTypeInterface
     {
         /** @var list<mixed> $images */
         $images = $data['images'] ?? [];
-        $columns = (int) ($data['columns'] ?? 3);
+        $columns = is_int($data['columns'] ?? null) ? $data['columns'] : 3;
 
         if ($columns < 1) {
             $columns = 3;
@@ -73,8 +73,8 @@ final readonly class GalleryBlock implements BlockTypeInterface
                 continue;
             }
 
-            $src = htmlspecialchars((string) ($image['src'] ?? ''), ENT_QUOTES, 'UTF-8');
-            $alt = htmlspecialchars((string) ($image['alt'] ?? ''), ENT_QUOTES, 'UTF-8');
+            $src = htmlspecialchars(is_string($image['src'] ?? null) ? $image['src'] : '', ENT_QUOTES, 'UTF-8');
+            $alt = htmlspecialchars(is_string($image['alt'] ?? null) ? $image['alt'] : '', ENT_QUOTES, 'UTF-8');
             $caption = $image['caption'] ?? null;
             $category = $image['category'] ?? null;
 

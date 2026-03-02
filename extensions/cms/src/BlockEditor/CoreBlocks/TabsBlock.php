@@ -53,9 +53,12 @@ final readonly class TabsBlock implements BlockTypeInterface
     {
         /** @var list<mixed> $tabs */
         $tabs = $data['tabs'] ?? [];
-        $defaultActive = (int) ($data['defaultActive'] ?? 0);
+        $defaultActive = is_int($data['defaultActive'] ?? null) ? $data['defaultActive'] : 0;
 
-        $html = '<div class="tabs">';
+        $anchor = isset($data['anchor']) && is_string($data['anchor']) ? ' id="' . htmlspecialchars($data['anchor'], ENT_QUOTES, 'UTF-8') . '"' : '';
+        $className = isset($data['className']) && is_string($data['className']) ? ' ' . htmlspecialchars($data['className'], ENT_QUOTES, 'UTF-8') : '';
+
+        $html = "<div class=\"tabs$className\"$anchor>";
         $html .= '<div role="tablist" class="tabs__list">';
 
         foreach ($tabs as $i => $tab) {
@@ -63,7 +66,7 @@ final readonly class TabsBlock implements BlockTypeInterface
                 continue;
             }
 
-            $title = htmlspecialchars((string) ($tab['title'] ?? ''), ENT_QUOTES, 'UTF-8');
+            $title = htmlspecialchars(is_string($tab['title'] ?? null) ? $tab['title'] : '', ENT_QUOTES, 'UTF-8');
             $selected = $i === $defaultActive ? 'true' : 'false';
 
             $html .= "<button role=\"tab\" id=\"tab-$i\" aria-controls=\"panel-$i\" aria-selected=\"$selected\" class=\"tabs__tab\">$title</button>";
@@ -76,7 +79,7 @@ final readonly class TabsBlock implements BlockTypeInterface
                 continue;
             }
 
-            $content = htmlspecialchars((string) ($tab['content'] ?? ''), ENT_QUOTES, 'UTF-8');
+            $content = htmlspecialchars(is_string($tab['content'] ?? null) ? $tab['content'] : '', ENT_QUOTES, 'UTF-8');
             $hidden = $i !== $defaultActive ? ' hidden' : '';
 
             $html .= "<div role=\"tabpanel\" id=\"panel-$i\" aria-labelledby=\"tab-$i\" class=\"tabs__panel\"$hidden>$content</div>";

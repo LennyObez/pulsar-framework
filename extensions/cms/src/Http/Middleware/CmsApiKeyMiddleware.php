@@ -24,7 +24,7 @@ use function is_string;
  * If a key is present it must be valid; if absent, behavior depends
  * on the apiKeyRequired config flag.
  */
-#[Internal(reason: 'CMS API key middleware — implementation detail')]
+#[Internal(reason: 'CMS API key middleware; implementation detail')]
 final readonly class CmsApiKeyMiddleware implements MiddlewareInterface
 {
     public function __construct(

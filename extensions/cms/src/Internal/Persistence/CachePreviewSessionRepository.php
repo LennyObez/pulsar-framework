@@ -10,6 +10,7 @@ use Pulsar\Cache\Application\TaggedCacheInterface;
 use Pulsar\Extension\Cms\Themes\PreviewSession;
 use Pulsar\Extension\Cms\Themes\PreviewSessionRepositoryInterface;
 
+use function is_string;
 use function json_decode;
 use function json_encode;
 
@@ -55,7 +56,7 @@ final readonly class CachePreviewSessionRepository implements PreviewSessionRepo
         }
 
         /** @var array{themeId: string, token: string, userId: string, expiresAt: string} $decoded */
-        $decoded = json_decode((string) $data, true, 512, JSON_THROW_ON_ERROR);
+        $decoded = json_decode(is_string($data) ? $data : '', true, 512, JSON_THROW_ON_ERROR);
 
         $session = new PreviewSession(
             themeId: $decoded['themeId'],

@@ -175,9 +175,9 @@ final readonly class RedirectManager implements RedirectManagerInterface
                 continue;
             }
 
-            $fromPath = trim($parts[0]);
-            $toPath = trim($parts[1]);
-            $statusCode = isset($parts[2]) ? (int) trim($parts[2]) : 301;
+            $fromPath = trim($parts[0] ?? '');
+            $toPath = trim($parts[1] ?? '');
+            $statusCode = isset($parts[2]) ? (int) trim($parts[2] ?? '') : 301;
 
             if ($fromPath === '' || $toPath === '') {
                 $errors[] = sprintf('Line %d: empty from_path or to_path', $lineNumber + 1);

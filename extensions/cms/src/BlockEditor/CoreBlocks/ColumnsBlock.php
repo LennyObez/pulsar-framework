@@ -80,6 +80,7 @@ final readonly class ColumnsBlock implements BlockTypeInterface
             $blocks = $column['blocks'] ?? [];
 
             if (is_array($blocks)) {
+                /** @var list<mixed> $blocks */
                 $html .= $this->renderer->renderRawBlocks($blocks);
             }
 

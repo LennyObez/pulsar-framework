@@ -6,8 +6,12 @@ namespace Pulsar\Extension\Cms;
 
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Pulsar\AI\AiClientInterface;
+use Pulsar\AI\Provider\AnthropicProvider as CoreAnthropicProvider;
+use Pulsar\AI\Provider\OpenAiProvider as CoreOpenAiProvider;
 use Pulsar\Api\Internal;
 use Pulsar\Audit\AuditLoggerInterface;
+use Pulsar\Audit\NullAuditLogger;
 use Pulsar\Cache\Application\CacheManagerInterface;
 use Pulsar\Cache\Application\TaggedCacheInterface;
 use Pulsar\Container\ContainerInterface;
@@ -15,7 +19,6 @@ use Pulsar\Database\ConnectionInterface;
 use Pulsar\Event\EventDispatcherInterface;
 use Pulsar\Extension\Cms\ABTest\ExperimentRepositoryInterface;
 use Pulsar\Extension\Cms\AI\ContentAssistant;
-use Pulsar\Extension\Cms\AI\LlmProviderInterface;
 use Pulsar\Extension\Cms\BlockEditor\BlockRenderer;
 use Pulsar\Extension\Cms\BlockEditor\BlockTypeRegistry;
 use Pulsar\Extension\Cms\Collaboration\CollaborationRepositoryInterface;
@@ -38,13 +41,12 @@ use Pulsar\Extension\Cms\Forms\FormSubmissionServiceInterface;
 use Pulsar\Extension\Cms\Forms\SpamDetection\SpamScorer;
 use Pulsar\Extension\Cms\Http\Controller\Api\CollaborationApiController;
 use Pulsar\Extension\Cms\Http\Controller\FormSubmissionController as PublicFormSubmissionController;
+use Pulsar\Extension\Cms\Http\Middleware\CmsLocaleMiddleware;
 use Pulsar\Extension\Cms\I18n\HreflangGenerator;
 use Pulsar\Extension\Cms\I18n\LocaleResolver;
 use Pulsar\Extension\Cms\Internal\ABTest\ExperimentService;
 use Pulsar\Extension\Cms\Internal\ABTest\TrafficSplitter;
-use Pulsar\Extension\Cms\Internal\AI\AnthropicProvider;
 use Pulsar\Extension\Cms\Internal\AI\CmsPromptTemplates;
-use Pulsar\Extension\Cms\Internal\AI\OpenAiProvider;
 use Pulsar\Extension\Cms\Internal\Cache\CachedContentRepository;
 use Pulsar\Extension\Cms\Internal\Cache\CachedMenuRepository;
 use Pulsar\Extension\Cms\Internal\Cache\CachedSettingsService;
@@ -69,7 +71,6 @@ use Pulsar\Extension\Cms\Internal\Publishing\WebChannel;
 use Pulsar\Extension\Cms\Internal\Search\SearchServiceFactory;
 use Pulsar\Extension\Cms\Internal\Security\ClientFingerprintResolver;
 use Pulsar\Extension\Cms\Internal\Security\CmsKeyManager;
-use Pulsar\Extension\Cms\Internal\Security\QrCodeEncoder;
 use Pulsar\Extension\Cms\Internal\Security\SafeHttpClient;
 use Pulsar\Extension\Cms\Internal\Seo\ArticleStructuredDataGenerator;
 use Pulsar\Extension\Cms\Internal\Seo\FeedGenerator;
@@ -92,16 +93,21 @@ use Pulsar\Extension\Cms\Internal\Tools\ToolsService;
 use Pulsar\Extension\Cms\Media\ImageProcessor;
 use Pulsar\Extension\Cms\Media\ImageProcessorInterface;
 use Pulsar\Extension\Cms\Media\ImageVariantGenerator;
+use Pulsar\Extension\Cms\Media\License\LicenseBadgeRenderer;
 use Pulsar\Extension\Cms\Media\LocalDisk;
 use Pulsar\Extension\Cms\Media\MediaDiskInterface;
 use Pulsar\Extension\Cms\Media\MediaRepositoryInterface;
 use Pulsar\Extension\Cms\Media\MediaService;
 use Pulsar\Extension\Cms\Media\MediaServiceInterface;
+use Pulsar\Extension\Cms\Media\Metadata\ExifExtractor;
+use Pulsar\Extension\Cms\Media\Processing\ImagickImageProcessor;
 use Pulsar\Extension\Cms\Media\ResponsiveImageRenderer;
 use Pulsar\Extension\Cms\Media\Security\FilenameSanitizer;
 use Pulsar\Extension\Cms\Media\Security\FileValidator;
+use Pulsar\Extension\Cms\Media\Security\HotlinkProtectionMiddleware;
 use Pulsar\Extension\Cms\Media\Security\PdfValidator;
 use Pulsar\Extension\Cms\Media\Security\SvgSanitizer;
+use Pulsar\Extension\Cms\Media\Watermark\WatermarkService;
 use Pulsar\Extension\Cms\Navigation\BreadcrumbGenerator;
 use Pulsar\Extension\Cms\Navigation\BreadcrumbGeneratorInterface;
 use Pulsar\Extension\Cms\Navigation\MenuRepositoryInterface;
@@ -112,6 +118,7 @@ use Pulsar\Extension\Cms\Newsletter\NewsletterSubscriptionServiceInterface;
 use Pulsar\Extension\Cms\Publishing\ChannelRegistry;
 use Pulsar\Extension\Cms\Search\SearchAnalyticsRepositoryInterface;
 use Pulsar\Extension\Cms\Search\SearchServiceInterface;
+use Pulsar\Extension\Cms\Security\QrCodeEncoder;
 use Pulsar\Extension\Cms\Seo\FeedGeneratorInterface;
 use Pulsar\Extension\Cms\Seo\LinkHealthRepositoryInterface;
 use Pulsar\Extension\Cms\Seo\LinkHealthServiceInterface;
@@ -141,13 +148,16 @@ use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Queue\QueueDriverInterface;
 use Pulsar\Security\Crypto\MasterKey;
 use Pulsar\Security\Csrf\CsrfTokenManagerInterface;
+use RuntimeException;
+
+use function extension_loaded;
 
 /**
  * Binds CMS core services: settings, taxonomy, media, comments, search, SEO,
  * navigation, i18n, editorial workflow, tools/backup, security, block editor,
  * and content controller.
  */
-#[Internal(reason: 'CMS service wiring — use interfaces for public API')]
+#[Internal(reason: 'CMS service wiring; use interfaces for public API')]
 final readonly class CmsCoreServiceProvider
 {
     public function register(ContainerInterface $container): void
@@ -188,7 +198,7 @@ final readonly class CmsCoreServiceProvider
             new TaxonomyService($connection),
         );
 
-        // Block editor registry and renderer (mutable singleton — blocks registered during boot)
+        // Block editor registry and renderer (mutable singleton; blocks registered during boot)
         $blockTypeRegistry = new BlockTypeRegistry();
         $container->instance(BlockTypeRegistry::class, $blockTypeRegistry);
         $container->instance(BlockRenderer::class, new BlockRenderer($blockTypeRegistry));
@@ -197,8 +207,34 @@ final readonly class CmsCoreServiceProvider
         $disk = new LocalDisk($config->media->storagePath);
         $container->instance(MediaDiskInterface::class, $disk);
 
-        $imageProcessor = new ImageProcessor($config->media);
+        // Image processor: prefer Imagick when available for higher quality (Lanczos, ICC profiles)
+        $imageProcessor = extension_loaded('imagick')
+            ? new ImagickImageProcessor($config->media)
+            : new ImageProcessor($config->media);
         $container->instance(ImageProcessorInterface::class, $imageProcessor);
+
+        // EXIF metadata extraction
+        $exifExtractor = new ExifExtractor($logger);
+        $container->instance(ExifExtractor::class, $exifExtractor);
+
+        // Watermark service (config from WatermarkConfig; always registered, no-ops when disabled)
+        $watermarkConfig = new Config\WatermarkConfig();
+        $watermarkService = new WatermarkService($watermarkConfig, $logger);
+        $container->instance(WatermarkService::class, $watermarkService);
+
+        // License badge renderer
+        $container->instance(LicenseBadgeRenderer::class, new LicenseBadgeRenderer());
+
+        // Hotlink protection middleware (reads config from CmsSecurityConfig)
+        $hotlinkDomains = $config->security->hotlinkAllowedDomains;
+        $hotlinkEnabled = $config->security->hotlinkProtection;
+        $container->instance(
+            HotlinkProtectionMiddleware::class,
+            new HotlinkProtectionMiddleware(
+                allowedDomains: $hotlinkDomains,
+                enabled: $hotlinkEnabled,
+            ),
+        );
 
         $fileValidator = new FileValidator($config->media);
         $filenameSanitizer = new FilenameSanitizer();
@@ -235,8 +271,11 @@ final readonly class CmsCoreServiceProvider
         /** @var ContentRepositoryInterface $contentRepository */
         $contentRepository = $container->get(ContentRepositoryInterface::class);
 
-        if (!$container->has(SafeHtmlPolicy::class) && $auditLogger !== null) {
-            $container->instance(SafeHtmlPolicy::class, new SafeHtmlPolicy($auditLogger));
+        if (!$container->has(SafeHtmlPolicy::class)) {
+            $container->instance(
+                SafeHtmlPolicy::class,
+                new SafeHtmlPolicy($auditLogger ?? new NullAuditLogger()),
+            );
         }
 
         /** @var SafeHtmlPolicy $safeHtmlPolicy */
@@ -271,7 +310,7 @@ final readonly class CmsCoreServiceProvider
         /** @var ContentTranslationRepositoryInterface $translationRepository */
         $translationRepository = $container->get(ContentTranslationRepositoryInterface::class);
 
-        // SEO stack — structured data generators
+        // SEO stack: structured data generators
         $structuredDataGenerators = [
             new ArticleStructuredDataGenerator(),
             new WebPageStructuredDataGenerator(),
@@ -448,6 +487,19 @@ final readonly class CmsCoreServiceProvider
         $urlPrefixExtractor = new UrlPrefixExtractor();
         $localeResolver = new LocaleResolver($urlPrefixExtractor);
         $container->instance(LocaleResolver::class, $localeResolver);
+
+        // Register CmsLocaleMiddleware as a lazy factory. The middleware needs the final
+        // CmsConfig which is only loaded during preBoot() (after register()). Binding eagerly
+        // here would capture the default config with only 'en' as supported locale. The factory
+        // resolves CmsConfig from the container at first access, getting the project's config.
+        $container->bind(
+            CmsLocaleMiddleware::class,
+            static fn() => new CmsLocaleMiddleware(
+                $localeResolver,
+                $container->get(CmsConfig::class),
+            ),
+        );
+
         $hreflangGenerator = new HreflangGenerator(
             $translationRepository,
             $urlPrefixExtractor,
@@ -461,15 +513,59 @@ final readonly class CmsCoreServiceProvider
         /** @var FieldRegistryRepositoryInterface $fieldRepository */
         $fieldRepository = $container->get(FieldRegistryRepositoryInterface::class);
 
+        if (!$container->has(CmsKeyManager::class)) {
+            throw new RuntimeException(
+                'CmsKeyManager is not registered. Ensure PULSAR_MASTER_KEY is set in your .env file. '
+                . 'Run `pulsar key:generate` to create one.',
+            );
+        }
+
         /** @var CmsKeyManager $cmsKeyManager */
         $cmsKeyManager = $container->get(CmsKeyManager::class);
 
         /** @var SeoServiceInterface $seoService */
         $seoService = $container->get(SeoServiceInterface::class);
 
-        $container->instance(
+        // Defer template engine resolution: the Kernel rebuilds it after extensions boot
+        // to include extension view paths. Resolve lazily via a closure that captures $container.
+        // At this point the engine exists but has no extension paths yet; we pass null and
+        // let ContentController fall back to Response::getTemplateEngine() which is always
+        // updated by the Kernel's registerExtensionViewPaths().
+        $templateEngine = null;
+
+        $projectViewsPath = '';
+        if ($container->has('app.base_path')) {
+            /** @var string $appBasePath */
+            $appBasePath = $container->get('app.base_path');
+            $candidatePath = $appBasePath . DIRECTORY_SEPARATOR . 'resources' . DIRECTORY_SEPARATOR . 'views';
+            if (is_dir($candidatePath)) {
+                $projectViewsPath = $candidatePath;
+            }
+        } elseif (is_dir(base_path('resources/views'))) {
+            $projectViewsPath = base_path('resources/views');
+        }
+
+        // Resolve block renderer
+        $blockRenderer = $container->has(BlockRenderer::class)
+            ? $container->get(BlockRenderer::class)
+            : null;
+
+        // Resolve menu repository for navigation
+        $menuRepository = $container->has(MenuRepositoryInterface::class)
+            ? $container->get(MenuRepositoryInterface::class)
+            : null;
+
+        // Resolve theme repository for template resolution
+        $themeRepository = $container->has(\Pulsar\Extension\Cms\Themes\ThemeRepositoryInterface::class)
+            ? $container->get(\Pulsar\Extension\Cms\Themes\ThemeRepositoryInterface::class)
+            : null;
+
+        // Lazy binding: CmsConfig is loaded during preBoot() with the project's
+        // config/cms.php. At register() time, only the default config (['en']) exists.
+        // Lazy binding ensures the ContentController gets the final CmsConfig.
+        $container->bind(
             Http\Controller\ContentController::class,
-            new Http\Controller\ContentController(
+            static fn() => new Http\Controller\ContentController(
                 $contentRepository,
                 $translationRepository,
                 $blockRepository,
@@ -479,8 +575,25 @@ final readonly class CmsCoreServiceProvider
                 $hreflangGenerator,
                 $cmsKeyManager,
                 $safeHtmlPolicy,
-                $config,
+                $container->get(CmsConfig::class),
                 $seoService,
+                $templateEngine,
+                $blockRenderer,
+                $menuRepository,
+                $themeRepository,
+                $projectViewsPath,
+            ),
+        );
+
+        // Front-office account controller
+        $container->instance(
+            Http\Controller\AccountController::class,
+            new Http\Controller\AccountController(
+                $container->get(Commerce\CustomerRepositoryInterface::class),
+                $container->get(Account\AccountSectionRegistry::class),
+                $container->has(\Pulsar\View\Engine\TemplateEngineInterface::class)
+                    ? $container->get(\Pulsar\View\Engine\TemplateEngineInterface::class)
+                    : null,
             ),
         );
 
@@ -572,7 +685,7 @@ final readonly class CmsCoreServiceProvider
             new ResponsiveImageRenderer(),
         );
 
-        // Cache decorators — wrap repository/service bindings when cache is available
+        // Cache decorators: wrap repository/service bindings when cache is available
         $this->bindCacheDecorators($container);
     }
 
@@ -630,26 +743,33 @@ final readonly class CmsCoreServiceProvider
 
         $aiConfig = $config->ai;
 
-        $provider = match ($aiConfig->provider) {
-            'anthropic' => new AnthropicProvider(
-                apiKey: $aiConfig->apiKey,
-                model: $aiConfig->model !== '' ? $aiConfig->model : 'claude-sonnet-4-6',
-                baseUrl: $aiConfig->baseUrl !== '' ? $aiConfig->baseUrl : 'https://api.anthropic.com/v1',
-            ),
-            default => new OpenAiProvider(
-                apiKey: $aiConfig->apiKey,
-                model: $aiConfig->model !== '' ? $aiConfig->model : 'gpt-4o',
-                baseUrl: $aiConfig->baseUrl !== '' ? $aiConfig->baseUrl : 'https://api.openai.com/v1',
-            ),
-        };
+        // Use the core AI SDK client if already registered, otherwise create one
+        // from CMS config for backward compatibility.
+        if ($container->has(AiClientInterface::class)) {
+            /** @var AiClientInterface $aiClient */
+            $aiClient = $container->get(AiClientInterface::class);
+        } else {
+            $aiClient = match ($aiConfig->provider) {
+                'anthropic' => new CoreAnthropicProvider(
+                    apiKey: $aiConfig->apiKey,
+                    model: $aiConfig->model !== '' ? $aiConfig->model : 'claude-sonnet-4-6',
+                    baseUrl: $aiConfig->baseUrl !== '' ? $aiConfig->baseUrl : 'https://api.anthropic.com/v1',
+                ),
+                default => new CoreOpenAiProvider(
+                    apiKey: $aiConfig->apiKey,
+                    model: $aiConfig->model !== '' ? $aiConfig->model : 'gpt-4o',
+                    baseUrl: $aiConfig->baseUrl !== '' ? $aiConfig->baseUrl : 'https://api.openai.com/v1',
+                ),
+            };
 
-        $container->instance(LlmProviderInterface::class, $provider);
+            $container->instance(AiClientInterface::class, $aiClient);
+        }
 
         $promptRegistry = new AI\PromptTemplateRegistry();
         CmsPromptTemplates::registerDefaults($promptRegistry);
         $container->instance(AI\PromptTemplateRegistry::class, $promptRegistry);
 
-        $assistant = new ContentAssistant($provider, $promptRegistry);
+        $assistant = new ContentAssistant($aiClient, $promptRegistry);
         $container->instance(ContentAssistant::class, $assistant);
 
         $parser = new AiRequestParser($config);
@@ -669,7 +789,7 @@ final readonly class CmsCoreServiceProvider
     ): void {
         $publishingConfig = $config->publishing;
 
-        // Channel registry (mutable — extensions can add channels during boot)
+        // Channel registry (mutable; extensions can add channels during boot)
         $channelRegistry = new ChannelRegistry();
         $container->instance(ChannelRegistry::class, $channelRegistry);
 
@@ -695,7 +815,7 @@ final readonly class CmsCoreServiceProvider
             $publishingConfig->staticSiteEnabled,
         ));
 
-        // Queue driver (optional — enables async publishing)
+        // Queue driver (optional; enables async publishing)
         /** @var QueueDriverInterface|null $queueDriver */
         $queueDriver = $container->has(QueueDriverInterface::class)
             ? $container->get(QueueDriverInterface::class)
@@ -784,23 +904,36 @@ final readonly class CmsCoreServiceProvider
             /** @var SafeHttpClient $httpClient */
             $httpClient = $container->get(SafeHttpClient::class);
 
-            $siteDefinitionParser = new SiteDefinitionParser(
-                $contentRepository,
-                $taxonomyService,
-                $taxonomyRepository,
-                $menuRepository,
-                $mediaService,
-                $settingsService,
-                $redirectRepository,
-                $sitemapGenerator,
-                $httpClient,
-                $importConfig,
-                $auditLogger,
-            );
-
-            $container->instance(
+            // Use lazy binding so ImportExportRegistry (created after register phase)
+            // is resolved at first use rather than at construction time.
+            // Both SiteDefinitionParser and ImportExportService need the registry:
+            // SiteDefinitionParser delegates forum data to the forum import provider.
+            $container->bind(
                 ImportExportServiceInterface::class,
-                new ImportExportService($exportGenerator, $importParser, $siteDefinitionParser),
+                static function () use ($container, $contentRepository, $translationRepository, $taxonomyService, $taxonomyRepository, $menuRepository, $mediaService, $settingsService, $redirectRepository, $sitemapGenerator, $httpClient, $importConfig, $auditLogger, $exportGenerator, $importParser): ImportExportService {
+                    /** @var \Pulsar\ImportExport\ImportExportRegistry|null $registry */
+                    $registry = $container->has(\Pulsar\ImportExport\ImportExportRegistry::class)
+                        ? $container->get(\Pulsar\ImportExport\ImportExportRegistry::class)
+                        : null;
+
+                    $siteDefinitionParser = new SiteDefinitionParser(
+                        $contentRepository,
+                        $taxonomyService,
+                        $taxonomyRepository,
+                        $menuRepository,
+                        $mediaService,
+                        $settingsService,
+                        $redirectRepository,
+                        $sitemapGenerator,
+                        $httpClient,
+                        $importConfig,
+                        $auditLogger,
+                        $registry,
+                        $translationRepository,
+                    );
+
+                    return new ImportExportService($exportGenerator, $importParser, $siteDefinitionParser, $registry);
+                },
             );
 
             // Media bundle exporter (ZIP with media files)

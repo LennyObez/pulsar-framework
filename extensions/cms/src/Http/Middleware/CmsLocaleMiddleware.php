@@ -24,7 +24,7 @@ use function in_array;
  * for downstream controllers and middleware. Returns 404 if the
  * locale extracted from the URL prefix is not in the supported list.
  */
-#[Internal(reason: 'CMS middleware — not a public API surface')]
+#[Internal(reason: 'CMS middleware; not a public API surface')]
 final readonly class CmsLocaleMiddleware implements MiddlewareInterface
 {
     public function __construct(

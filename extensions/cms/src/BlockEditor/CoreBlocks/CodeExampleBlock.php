@@ -20,7 +20,7 @@ use const ENT_QUOTES;
  * Extends the basic code block with UI affordances commonly needed in
  * documentation and tutorial content types.
  */
-#[Internal(reason: 'CMS block type — implementation detail')]
+#[Internal(reason: 'CMS block type; implementation detail')]
 final readonly class CodeExampleBlock implements BlockTypeInterface
 {
     #[Override]

@@ -19,10 +19,16 @@ use function strlen;
 final readonly class ContentTranslation
 {
     /**
-     * Slug validation pattern: lowercase alphanumeric with hyphens,
-     * must start and end with alphanumeric, no consecutive hyphens.
+     * Slug validation pattern: lowercase alphanumeric (including Unicode letters)
+     * with hyphens and forward slashes for nested paths. Each segment must start
+     * and end with an alphanumeric character, no consecutive hyphens or slashes.
+     *
+     * Examples of valid slugs:
+     *   - "about-us"
+     *   - "services/php-developer"
+     *   - "developpeur-php" (Unicode accents)
      */
-    public const string SLUG_PATTERN = '/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/';
+    public const string SLUG_PATTERN = '/^[\p{Ll}\p{N}](?:[\p{Ll}\p{N}\-\/]*[\p{Ll}\p{N}])?$/u';
 
     /**
      * @param string $id UUIDv7
@@ -120,9 +126,15 @@ final readonly class ContentTranslation
      */
     public static function isValidSlug(string $slug): bool
     {
+        // Empty slug is valid for the homepage (site root page)
+        if ($slug === '') {
+            return true;
+        }
+
         return preg_match(self::SLUG_PATTERN, $slug) === 1
             && strlen($slug) <= 200
-            && !str_contains($slug, '--');
+            && !str_contains($slug, '--')
+            && !str_contains($slug, '//');
     }
 
     /**

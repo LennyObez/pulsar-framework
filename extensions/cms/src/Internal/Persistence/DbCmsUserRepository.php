@@ -25,7 +25,7 @@ use function str_replace;
  * Queries the auth_users table joined with content/comment counts
  * and filtered to users who hold at least one CMS role.
  */
-#[Internal(reason: 'Database persistence — use CmsUserRepositoryInterface')]
+#[Internal(reason: 'Database persistence; use CmsUserRepositoryInterface')]
 final readonly class DbCmsUserRepository implements CmsUserRepositoryInterface
 {
     private const string SQL_SELECT_USER = <<<'SQL'

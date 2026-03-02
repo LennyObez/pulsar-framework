@@ -41,6 +41,8 @@ use function array_filter;
 use function array_map;
 use function array_unique;
 use function array_values;
+use function implode;
+use function is_string;
 use function sprintf;
 
 /**
@@ -176,7 +178,7 @@ final readonly class CheckoutService implements CheckoutServiceInterface
         ): Order {
             // Batch-load all products for this order
             $productIds = array_unique(array_column($cartItems, 'productId'));
-            $products = $this->products->findByIds($productIds);
+            $products = $this->products->findByIds(array_values($productIds));
 
             // Batch-load all variants for this order
             /** @var list<string> $variantIds */
@@ -293,7 +295,7 @@ final readonly class CheckoutService implements CheckoutServiceInterface
                     static fn(OrderItem $oi): array => [
                         'productId' => $oi->productId,
                         'amount' => $oi->totalPrice,
-                        'taxCategory' => isset($oi->productSnapshot['taxCategory']) ? (string) $oi->productSnapshot['taxCategory'] : null,
+                        'taxCategory' => isset($oi->productSnapshot['taxCategory']) && is_string($oi->productSnapshot['taxCategory']) ? $oi->productSnapshot['taxCategory'] : null,
                         'quantity' => $oi->quantity,
                     ],
                     $orderItemsList,
@@ -362,7 +364,7 @@ final readonly class CheckoutService implements CheckoutServiceInterface
         }
 
         if ($this->paymentGateway === null) {
-            // No payment gateway configured — auto-confirm for free/test orders
+            // No payment gateway configured; auto-confirm for free/test orders
             $this->confirmOrder($order);
 
             return new PaymentResult(
@@ -390,7 +392,7 @@ final readonly class CheckoutService implements CheckoutServiceInterface
         return $result;
     }
 
-    public function cancelCheckout(string $orderId): void
+    public function cancelCheckout(string $orderId, ?string $actorId = null): void
     {
         $order = $this->orders->findById($orderId);
 
@@ -421,7 +423,7 @@ final readonly class CheckoutService implements CheckoutServiceInterface
         $this->auditLogger?->log(
             AuditEvent::DataModification,
             AuditOutcome::Success,
-            null,
+            $actorId,
             'cms.commerce.checkout.cancelled',
             "order:$orderId",
             ['orderNumber' => $order->orderNumber],

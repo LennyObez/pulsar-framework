@@ -6,6 +6,8 @@ namespace Pulsar\Extension\Cms\Config;
 
 use Pulsar\Api\Api;
 
+use function is_array;
+
 /**
  * CMS workflow notification configuration.
  */
@@ -34,7 +36,7 @@ final readonly class NotificationConfig
     {
         return new self(
             enabled: (bool) ($data['enabled'] ?? false),
-            channels: (array) ($data['channels'] ?? ['log']),
+            channels: is_array($data['channels'] ?? null) ? array_values(array_filter($data['channels'], 'is_string')) : ['log'],
             notifyOnPublish: (bool) ($data['notify_on_publish'] ?? true),
             notifyOnReview: (bool) ($data['notify_on_review'] ?? true),
             notifyOnComment: (bool) ($data['notify_on_comment'] ?? true),

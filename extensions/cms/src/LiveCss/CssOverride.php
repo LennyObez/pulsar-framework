@@ -8,7 +8,7 @@ use DateTimeImmutable;
 use Pulsar\Api\Api;
 
 /**
- * CSS override entity — represents a versioned set of custom CSS and token
+ * CSS override entity: represents a versioned set of custom CSS and token
  * overrides applied on top of an installed theme.
  */
 #[Api(since: '1.0.0')]

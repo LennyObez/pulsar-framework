@@ -32,7 +32,7 @@ use function time;
  * Returns 429 Too Many Requests with Retry-After and X-RateLimit-* headers
  * when the per-minute limit is exceeded.
  */
-#[Internal(reason: 'CMS public rate limiting — middleware implementation')]
+#[Internal(reason: 'CMS public rate limiting; middleware implementation')]
 final readonly class CmsPublicRateLimitMiddleware implements MiddlewareInterface
 {
     private const int WINDOW_SECONDS = 60;
@@ -94,7 +94,7 @@ final readonly class CmsPublicRateLimitMiddleware implements MiddlewareInterface
     /**
      * Resolve a stable hash of the client IP address.
      *
-     * Uses REMOTE_ADDR only — never trusts X-Forwarded-For or similar
+     * Uses REMOTE_ADDR only: never trusts X-Forwarded-For or similar
      * headers which are trivially spoofable.
      */
     private function resolveIpHash(ServerRequestInterface $request): string
@@ -108,7 +108,7 @@ final readonly class CmsPublicRateLimitMiddleware implements MiddlewareInterface
     private function incrementCounter(string $key): int
     {
         $current = $this->cache->get($key);
-        $count = ($current !== null) ? ((int) $current + 1) : 1;
+        $count = ($current !== null && is_numeric($current)) ? ((int) $current + 1) : 1;
 
         $this->cache->set($key, (string) $count, ['cms_public_rate'], self::WINDOW_SECONDS);
 

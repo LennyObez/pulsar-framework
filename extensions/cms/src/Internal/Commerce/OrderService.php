@@ -25,7 +25,7 @@ use function sprintf;
 /**
  * Order lifecycle management: payment confirmation, failure, refunds, and fulfillment.
  */
-#[Internal(reason: 'Order lifecycle service — not part of public API')]
+#[Internal(reason: 'Order lifecycle service; not part of public API')]
 final readonly class OrderService
 {
     public function __construct(
@@ -39,7 +39,7 @@ final readonly class OrderService
     ) {}
 
     /**
-     * Confirm payment for an order (idempotent — skips if already Confirmed).
+     * Confirm payment for an order (idempotent; skips if already Confirmed).
      */
     public function confirmPayment(string $orderId, string $paymentIntentId): void
     {
