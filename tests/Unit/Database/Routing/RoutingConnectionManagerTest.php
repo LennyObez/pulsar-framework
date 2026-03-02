@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\ConnectionManagerInterface;
@@ -190,7 +191,7 @@ final class RoutingConnectionManagerTest extends TestCase
             ->with(
                 AuditEvent::DataAccess,
                 AuditOutcome::Success,
-                null,
+                self::callback(static fn(mixed $actor): bool => $actor instanceof AuditActor && $actor->id === 'system:db.routing'),
                 'database.replica_override',
                 'connection',
                 ['reason' => 'manual_override'],
