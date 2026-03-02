@@ -12,6 +12,7 @@ use Pulsar\Http\Message\Response;
 use function array_filter;
 use function array_map;
 use function is_array;
+use function is_int;
 use function is_string;
 use function max;
 use function min;
@@ -23,7 +24,7 @@ use function trim;
  * Handles search queries from the frontend, returns ranked results
  * with suggestions for zero-result queries.
  */
-#[Internal(reason: 'CMS HTTP controller — implementation detail')]
+#[Internal(reason: 'CMS HTTP controller; implementation detail')]
 final readonly class SearchController
 {
     public function __construct(
@@ -34,7 +35,7 @@ final readonly class SearchController
     {
         $params = $request->getQueryParams();
 
-        $query = trim((string) ($params['q'] ?? ''));
+        $query = trim(is_string($params['q'] ?? null) ? $params['q'] : '');
 
         if ($query === '') {
             return Response::json([
@@ -66,8 +67,8 @@ final readonly class SearchController
             }
         }
 
-        $page = max(1, (int) ($params['page'] ?? 1));
-        $perPage = min(100, max(1, (int) ($params['per_page'] ?? 20)));
+        $page = max(1, is_int($params['page'] ?? null) ? $params['page'] : 1);
+        $perPage = min(100, max(1, is_int($params['per_page'] ?? null) ? $params['per_page'] : 20));
 
         $result = $this->searchService->search(
             query: $query,
@@ -101,8 +102,8 @@ final readonly class SearchController
     public function suggest(ServerRequestInterface $request, string $locale): Response
     {
         $params = $request->getQueryParams();
-        $query = trim((string) ($params['q'] ?? ''));
-        $limit = min(20, max(1, (int) ($params['limit'] ?? 5)));
+        $query = trim(is_string($params['q'] ?? null) ? $params['q'] : '');
+        $limit = min(20, max(1, is_int($params['limit'] ?? null) ? $params['limit'] : 5));
 
         $suggestions = $this->searchService->suggest($query, $locale, $limit);
 

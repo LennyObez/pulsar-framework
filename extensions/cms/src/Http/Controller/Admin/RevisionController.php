@@ -21,7 +21,7 @@ use function is_string;
 /**
  * Admin controller for content revision history, diff, and restoration.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
+#[Internal(reason: 'CMS admin controller; implementation detail')]
 final readonly class RevisionController
 {
     use RendersAdminView;
@@ -30,8 +30,8 @@ final readonly class RevisionController
         private ContentRepositoryInterface $contentRepository,
         private ContentRevisionRepositoryInterface $revisionRepository,
         private RevisionService $revisionService,
-        private GateInterface $gate,
         private CmsConfig $config,
+        private ?GateInterface $gate = null,
         private ?TemplateEngineInterface $templateEngine = null,
     ) {}
 

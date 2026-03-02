@@ -23,6 +23,7 @@ final readonly class TaxonomyTerm
      * @param string|null $parentId UUIDv7 self-referential (hierarchical only)
      * @param int $sortOrder Position among siblings
      * @param DateTimeImmutable $createdAt Immutable creation timestamp
+     * @param string|null $importId Stable import identifier for idempotent imports
      */
     public function __construct(
         public string $id,
@@ -31,5 +32,6 @@ final readonly class TaxonomyTerm
         public ?string $parentId,
         public int $sortOrder,
         public DateTimeImmutable $createdAt,
+        public ?string $importId = null,
     ) {}
 }

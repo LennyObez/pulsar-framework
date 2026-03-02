@@ -17,6 +17,7 @@ use Pulsar\Http\Message\Response;
 use Pulsar\View\Engine\TemplateEngineInterface;
 
 use function array_map;
+use function is_int;
 use function is_string;
 
 /**
@@ -25,7 +26,7 @@ use function is_string;
  * All actions require CMS commerce permissions checked via GateInterface.
  * Refund operations require step-up authentication.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
+#[Internal(reason: 'CMS admin controller; implementation detail')]
 final readonly class OrderController
 {
     use RendersAdminView;
@@ -35,7 +36,7 @@ final readonly class OrderController
         private OrderItemRepositoryInterface $orderItems,
         private OrderService $orderService,
         private OrderExportServiceInterface $exportService,
-        private GateInterface $gate,
+        private ?GateInterface $gate = null,
         private ?TemplateEngineInterface $templateEngine = null,
     ) {}
 
@@ -45,8 +46,8 @@ final readonly class OrderController
         $this->authorize($identity, 'cms.commerce.orders.view');
 
         $params = $request->getQueryParams();
-        $page = max(1, (int) ($params['page'] ?? 1));
-        $perPage = min(100, max(1, (int) ($params['per_page'] ?? 20)));
+        $page = max(1, is_int($params['page'] ?? null) ? $params['page'] : 1);
+        $perPage = min(100, max(1, is_int($params['per_page'] ?? null) ? $params['per_page'] : 20));
 
         /** @var array<string, mixed> $filters */
         $filters = [];
@@ -152,7 +153,7 @@ final readonly class OrderController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $amount = (int) ($body['amount'] ?? 0);
+        $amount = is_int($body['amount'] ?? null) ? $body['amount'] : 0;
         $reason = is_string($body['reason'] ?? null) ? $body['reason'] : '';
 
         if ($amount <= 0) {
@@ -183,7 +184,7 @@ final readonly class OrderController
 
         /** @var array<string, mixed> $params */
         $params = $request->getQueryParams();
-        $format = (string) ($params['format'] ?? '');
+        $format = is_string($params['format'] ?? null) ? $params['format'] : '';
 
         // GET with no format renders the export form data
         if ($format === '') {

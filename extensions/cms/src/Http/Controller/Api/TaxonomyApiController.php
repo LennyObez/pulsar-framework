@@ -19,7 +19,7 @@ use function is_string;
  *
  * Provides read-only JSON endpoints for taxonomy and term retrieval.
  */
-#[Internal(reason: 'CMS REST API controller — implementation detail')]
+#[Internal(reason: 'CMS REST API controller; implementation detail')]
 final readonly class TaxonomyApiController
 {
     public function __construct(
@@ -28,7 +28,7 @@ final readonly class TaxonomyApiController
     ) {}
 
     /**
-     * GET /api/v1/taxonomies/{slug} — Show a single taxonomy by slug.
+     * GET /api/v1/taxonomies/{slug}: Show a single taxonomy by slug.
      */
     public function show(ServerRequestInterface $request, string $slug): Response
     {
@@ -52,7 +52,7 @@ final readonly class TaxonomyApiController
     }
 
     /**
-     * GET /api/v1/taxonomies/{slug}/terms — List terms for a taxonomy.
+     * GET /api/v1/taxonomies/{slug}/terms: List terms for a taxonomy.
      */
     public function terms(ServerRequestInterface $request, string $slug): Response
     {

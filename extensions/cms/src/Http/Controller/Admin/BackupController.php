@@ -15,6 +15,7 @@ use Pulsar\Http\Message\Response;
 use Pulsar\View\Engine\TemplateEngineInterface;
 
 use function array_map;
+use function is_bool;
 use function is_string;
 use function strlen;
 
@@ -23,7 +24,7 @@ use function strlen;
  *
  * Restore and delete operations require step-up authentication and a mandatory reason.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
+#[Internal(reason: 'CMS admin controller; implementation detail')]
 final readonly class BackupController
 {
     use RendersAdminView;
@@ -33,7 +34,7 @@ final readonly class BackupController
     public function __construct(
         private BackupServiceInterface $backupService,
         private ?CmsRateLimiter $rateLimiter,
-        private GateInterface $gate,
+        private ?GateInterface $gate = null,
         private ?TemplateEngineInterface $templateEngine = null,
     ) {}
 
@@ -73,11 +74,11 @@ final readonly class BackupController
         $tenantId = $this->validateTenantAccess($request);
 
         $scope = BackupScope::fromArray([
-            'include_content' => (bool) ($body['include_content'] ?? true),
-            'include_media' => (bool) ($body['include_media'] ?? false),
-            'include_taxonomies' => (bool) ($body['include_taxonomies'] ?? true),
-            'include_menus' => (bool) ($body['include_menus'] ?? true),
-            'include_settings' => (bool) ($body['include_settings'] ?? true),
+            'include_content' => is_bool($body['include_content'] ?? null) ? $body['include_content'] : true,
+            'include_media' => is_bool($body['include_media'] ?? null) ? $body['include_media'] : false,
+            'include_taxonomies' => is_bool($body['include_taxonomies'] ?? null) ? $body['include_taxonomies'] : true,
+            'include_menus' => is_bool($body['include_menus'] ?? null) ? $body['include_menus'] : true,
+            'include_settings' => is_bool($body['include_settings'] ?? null) ? $body['include_settings'] : true,
             'tenant_id' => $tenantId,
         ]);
 

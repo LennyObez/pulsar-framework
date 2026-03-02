@@ -25,6 +25,7 @@ use Pulsar\Extension\Cms\Content\Event\CommentReceived;
 use Pulsar\Extension\Cms\Content\Event\ContentPublished;
 use Pulsar\Extension\Cms\Content\Event\ReviewRequested;
 use Pulsar\Extension\Cms\Content\SafeHtmlPolicy;
+use Pulsar\Extension\Cms\Http\Controller\AccountController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\AssetController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\BackupController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\BulkOperationsController;
@@ -71,16 +72,22 @@ use Pulsar\Extension\Cms\Http\Controller\Api\DocFeedbackController;
 use Pulsar\Extension\Cms\Http\Controller\Api\FeedController;
 use Pulsar\Extension\Cms\Http\Controller\Api\MediaApiController;
 use Pulsar\Extension\Cms\Http\Controller\Api\NewsletterApiController;
+use Pulsar\Extension\Cms\Http\Controller\Api\NewsletterFeedController;
 use Pulsar\Extension\Cms\Http\Controller\Api\TaxonomyApiController;
 use Pulsar\Extension\Cms\Http\Controller\CheckoutController;
 use Pulsar\Extension\Cms\Http\Controller\ContentController;
 use Pulsar\Extension\Cms\Http\Controller\DigitalDownloadController;
 use Pulsar\Extension\Cms\Http\Controller\FormSubmissionController;
+use Pulsar\Extension\Cms\Http\Controller\MediaController;
 use Pulsar\Extension\Cms\Http\Controller\Newsletter\BounceWebhookController;
 use Pulsar\Extension\Cms\Http\Controller\Newsletter\TrackingController;
 use Pulsar\Extension\Cms\Http\Controller\Newsletter\UnsubscribeController;
 use Pulsar\Extension\Cms\Http\Controller\ResumePdfController;
+use Pulsar\Extension\Cms\Http\Controller\SeoController;
+use Pulsar\Extension\Cms\Http\Controller\SitemapController;
 use Pulsar\Extension\Cms\Http\Controller\WebhookController;
+use Pulsar\Extension\Cms\Http\Middleware\CmsLocaleMiddleware;
+use Pulsar\Extension\Cms\ImportExport\CmsImportExportProvider;
 use Pulsar\Extension\Cms\Internal\Notification\CmsNotificationDispatcher;
 use Pulsar\Extension\Cms\Internal\Scheduler\BackupRetentionJob;
 use Pulsar\Extension\Cms\Internal\Scheduler\ExpiredSessionCleanupJob;
@@ -93,6 +100,7 @@ use Pulsar\Extension\Cms\Internal\Studio\CmsStudioModule;
 use Pulsar\Extension\Cms\Internal\Studio\ContentCacheInspectorPanel;
 use Pulsar\Extension\Cms\Internal\Studio\MediaProcessingQueuePanel;
 use Pulsar\Extension\Cms\Internal\Studio\SeoHealthReportPanel;
+use Pulsar\Extension\Cms\Media\Security\HotlinkProtectionMiddleware;
 use Pulsar\Extension\Cms\Navigation\BreadcrumbGenerator;
 use Pulsar\Extension\Cms\Navigation\BreadcrumbGeneratorInterface;
 use Pulsar\Extension\Cms\Search\SearchAnalyticsRepositoryInterface;
@@ -100,10 +108,15 @@ use Pulsar\Extension\Cms\Seo\LinkHealthServiceInterface;
 use Pulsar\Extension\Cms\Settings\SettingsServiceInterface;
 use Pulsar\Extension\Cms\Themes\PreviewSessionRepositoryInterface;
 use Pulsar\Extension\Cms\Tools\BackupServiceInterface;
+use Pulsar\Extension\Cms\Tools\ImportExportServiceInterface;
 use Pulsar\Extension\Cms\Workflow\ContentLockServiceInterface;
 use Pulsar\Extension\Studio\Contracts\StudioModuleRegistryInterface;
+use Pulsar\Http\Method;
+use Pulsar\Http\Middleware\MiddlewareRegistry;
+use Pulsar\ImportExport\ImportExportRegistry;
 use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Queue\QueueDriverInterface;
+use Pulsar\Routing\Route;
 use Pulsar\Routing\RouterInterface;
 use Pulsar\Scheduler\JobRegistry;
 use Pulsar\Security\Audit\AuditChainVerifier;
@@ -230,6 +243,13 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
         /** @var CmsConfig $config */
         $config = $container->get(CmsConfig::class);
 
+        // Wire all framework security, performance, and detection middleware
+        if ($container->has(MiddlewareRegistry::class)) {
+            /** @var MiddlewareRegistry $middlewareRegistry */
+            $middlewareRegistry = $container->get(MiddlewareRegistry::class);
+            new CmsSecurityIntegration()->register($container, $middlewareRegistry);
+        }
+
         $this->registerCoreBlockTypes($container);
         $this->registerApiRoutes($router, $config);
         $this->registerPublicRoutes($router, $config);
@@ -298,10 +318,13 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
             /** @var CsrfTokenManagerInterface $csrfManager */
             $csrfManager = $container->get(CsrfTokenManagerInterface::class);
             $registry->register(new BlockEditor\CoreBlocks\ContactFormBlock($csrfManager));
+            $registry->register(new BlockEditor\CoreBlocks\LoginFormBlock($csrfManager));
+            $registry->register(new BlockEditor\CoreBlocks\CommentsBlock($csrfManager));
         }
 
         // Comparison
         $registry->register(new BlockEditor\CoreBlocks\CompareBlock());
+        $registry->register(new BlockEditor\CoreBlocks\CodeComparisonBlock());
 
         // Newsletter
         $registry->register(new BlockEditor\CoreBlocks\NewsletterBlock());
@@ -317,7 +340,24 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
         // Resume
         $registry->register(new BlockEditor\CoreBlocks\ResumeBlock());
 
-        // Columns (registered last — depends on BlockRenderer which uses the registry)
+        // Dynamic Content
+        $registry->register(new BlockEditor\CoreBlocks\SearchBlock());
+        $registry->register(new BlockEditor\CoreBlocks\TagCloudBlock());
+        $registry->register(new BlockEditor\CoreBlocks\CategoriesBlock());
+        $registry->register(new BlockEditor\CoreBlocks\LatestPostsBlock());
+        $registry->register(new BlockEditor\CoreBlocks\ArchivesBlock());
+        $registry->register(new BlockEditor\CoreBlocks\RssBlock());
+        $registry->register(new BlockEditor\CoreBlocks\PageListBlock());
+        $registry->register(new BlockEditor\CoreBlocks\CalendarBlock());
+
+        // Site & Navigation
+        $registry->register(new BlockEditor\CoreBlocks\SiteTitleBlock());
+        $registry->register(new BlockEditor\CoreBlocks\NavigationBlock());
+        $registry->register(new BlockEditor\CoreBlocks\AvatarBlock());
+        $registry->register(new BlockEditor\CoreBlocks\ComplianceBadgeBlock());
+        $registry->register(new BlockEditor\CoreBlocks\BenchmarkBlock());
+
+        // Columns (registered last; depends on BlockRenderer which uses the registry)
         if ($container->has(BlockEditor\BlockRenderer::class)) {
             /** @var BlockEditor\BlockRenderer $blockRenderer */
             $blockRenderer = $container->get(BlockEditor\BlockRenderer::class);
@@ -328,6 +368,9 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
     #[Override]
     public function postBoot(ContainerInterface $container): void
     {
+        // Register CMS import/export provider
+        $this->registerImportExportProvider($container);
+
         // Warm critical caches: settings
         if ($container->has(SettingsServiceInterface::class) && $container->has(TaggedCacheInterface::class)) {
             /** @var SettingsServiceInterface $settings */
@@ -431,6 +474,10 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
         // Newsletter API
         $router->post('/api/cms/newsletter/subscribe', [NewsletterApiController::class, 'subscribe'], 'cms.api.newsletter.subscribe');
 
+        // Content type feeds (RSS/Atom per content type)
+        $router->get('/api/cms/feed/{contentType}/rss', [NewsletterFeedController::class, 'rss'], 'cms.api.feed.rss');
+        $router->get('/api/cms/feed/{contentType}/atom', [NewsletterFeedController::class, 'atom'], 'cms.api.feed.atom');
+
         // Documentation feedback API
         $router->post("$prefix/docs/feedback", [DocFeedbackController::class, 'submit'], 'cms.api.docs.feedback.submit');
         $router->get("$prefix/docs/{docPageId}/feedback", [DocFeedbackController::class, 'summary'], 'cms.api.docs.feedback.summary');
@@ -438,6 +485,13 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
 
     private function registerPublicRoutes(RouterInterface $router, CmsConfig $config): void
     {
+        // Customer account (front-office)
+        $router->get('/account', [AccountController::class, 'dashboard'], 'cms.account.dashboard');
+        $router->get('/account/profile', [AccountController::class, 'profile'], 'cms.account.profile');
+        $router->post('/account/profile', [AccountController::class, 'updateProfile'], 'cms.account.profile.update');
+        $router->get('/account/settings', [AccountController::class, 'settings'], 'cms.account.settings');
+        $router->get('/account/section/{sectionId}', [AccountController::class, 'section'], 'cms.account.section');
+
         // Commerce public routes
         if ($config->commerce !== null) {
             foreach ($config->supportedLocales as $locale) {
@@ -451,6 +505,35 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
 
             // Payment webhook endpoint
             $router->post('/webhooks/cms-payment', [WebhookController::class, 'handle'], 'cms.webhook.payment');
+        }
+
+        // Public media delivery (derivatives and originals) with hotlink protection
+        $router->add(new Route(
+            methods: [Method::GET, Method::HEAD],
+            path: '/media/{variant}/{hash}/{filename}.{format}',
+            handler: [MediaController::class, 'serve'],
+            name: 'cms.media.serve',
+            middleware: [HotlinkProtectionMiddleware::class],
+        ));
+        $router->add(new Route(
+            methods: [Method::GET, Method::HEAD],
+            path: '/media/original/{hash}/{filename}',
+            handler: [MediaController::class, 'serveOriginal'],
+            name: 'cms.media.serve_original',
+            middleware: [HotlinkProtectionMiddleware::class],
+        ));
+
+        // SEO public endpoints: sitemap.xml and robots.txt
+        $router->get('/sitemap.xml', [SitemapController::class, 'index'], 'cms.sitemap.index');
+        $router->get('/sitemap/{contentType}.xml', [SitemapController::class, 'forType'], 'cms.sitemap.type');
+        $router->get('/robots.txt', [SeoController::class, 'robotsTxt'], 'cms.robots_txt');
+
+        // Search engine verification file routes
+        if ($config->seo->googleSiteVerification !== null) {
+            $router->get('/google' . $config->seo->googleSiteVerification . '.html', [SeoController::class, 'googleVerification'], 'cms.seo.google_verification');
+        }
+        if ($config->seo->bingSiteVerification !== null) {
+            $router->get('/BingSiteAuth.xml', [SeoController::class, 'bingVerification'], 'cms.seo.bing_verification');
         }
 
         // Form submissions (public POST endpoint)
@@ -476,20 +559,61 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
         // Resume print-to-PDF view
         $router->get('/resume/{slug}/print', [ResumePdfController::class, 'printView'], 'cms.resume.print');
 
-        // Public content rendering — catch-all route for locale-prefixed and default paths
+        // Public content rendering: catch-all route for locale-prefixed and default paths
         // Locale-aware routing: /{locale}/{path} or /{path} for default locale
+        $localeMiddleware = [CmsLocaleMiddleware::class];
+
+        // Register locale-prefixed routes FIRST so they take priority over the
+        // default locale's catch-all /{path}. The radix tree router checks pattern
+        // routes in insertion order; /fr/{path} must be registered before /{path}
+        // to prevent the catch-all from swallowing locale-prefixed requests.
         foreach ($config->supportedLocales as $locale) {
             if ($locale === $config->defaultLocale && !$config->defaultLocaleInUrl) {
-                // Root path for default locale (/{path} requires at least one segment)
-                $router->get('/', [ContentController::class, 'show'], 'cms.content.show.root');
-                // Default locale served without prefix: /{path}
-                $router->get('/{path}', [ContentController::class, 'show'], 'cms.content.show');
-            } else {
-                // Locale root: /{locale}
-                $router->get("/$locale", [ContentController::class, 'show'], "cms.content.show.$locale.root");
-                // Other locales served with prefix: /{locale}/{path}
-                $router->get("/$locale/{path}", [ContentController::class, 'show'], "cms.content.show.$locale");
+                continue; // Default locale routes registered below
             }
+
+            // Locale root: /{locale}
+            $router->add(new Route(
+                methods: [Method::GET, Method::HEAD],
+                path: "/$locale",
+                handler: [ContentController::class, 'show'],
+                name: "cms.content.show.$locale.root",
+                middleware: $localeMiddleware,
+            ));
+            // Locale paths: /{locale}/{path} (allows multi-segment paths)
+            $router->add(new Route(
+                methods: [Method::GET, Method::HEAD],
+                path: "/$locale/{path}",
+                handler: [ContentController::class, 'show'],
+                name: "cms.content.show.$locale",
+                constraints: ['path' => '.+'],
+                middleware: $localeMiddleware,
+            ));
+        }
+
+        // Catch-all /{path} route — registered LAST so locale-specific routes
+        // take priority. Serves two purposes:
+        // 1. Default locale without prefix (defaultLocaleInUrl=false): /about → EN
+        // 2. Stripped paths (defaultLocaleInUrl=true + global LocalePrefixMiddleware):
+        //    /fr/a-propos is stripped to /a-propos, matched here, locale from _locale attr
+        {
+            // Root path for default locale
+            $router->add(new Route(
+                methods: [Method::GET, Method::HEAD],
+                path: '/',
+                handler: [ContentController::class, 'show'],
+                name: 'cms.content.show.root',
+                middleware: $localeMiddleware,
+            ));
+            // Default locale served without prefix: /{path}
+            $router->add(new Route(
+                methods: [Method::GET, Method::HEAD],
+                path: '/{path}',
+                handler: [ContentController::class, 'show'],
+                name: 'cms.content.show',
+                constraints: ['path' => '.+'],
+                middleware: $localeMiddleware,
+            ));
         }
     }
 
@@ -497,8 +621,14 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
     {
         $prefix = '/admin/cms';
 
-        // Static assets
-        $router->get("$prefix/assets/{path}", [AssetController::class, 'serve'], 'cms.admin.assets');
+        // Static assets (path may contain subdirectories like css/admin.css)
+        $router->add(new Route(
+            methods: [Method::GET, Method::HEAD],
+            path: "$prefix/assets/{path}",
+            handler: [AssetController::class, 'serve'],
+            name: 'cms.admin.assets',
+            constraints: ['path' => '.+'],
+        ));
 
         // Dashboard
         $router->get($prefix, [AdminDashboardController::class, 'index'], 'cms.admin.dashboard');
@@ -526,6 +656,11 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
         $router->post("$prefix/content/{id}/lock", [AdminContentController::class, 'acquireLock'], 'cms.admin.content.lock');
         $router->delete("$prefix/content/{id}/lock", [AdminContentController::class, 'releaseLock'], 'cms.admin.content.unlock');
         $router->post("$prefix/content/{id}/break-lock", [AdminContentController::class, 'breakLock'], 'cms.admin.content.break_lock');
+
+        // Live preview
+        $router->get("$prefix/content/{id}/preview", [Http\Controller\Admin\PreviewController::class, 'show'], 'cms.admin.content.preview');
+        $router->get("$prefix/content/{id}/preview/render", [Http\Controller\Admin\PreviewController::class, 'render'], 'cms.admin.content.preview.render');
+        $router->post("$prefix/content/{id}/preview/render", [Http\Controller\Admin\PreviewController::class, 'render'], 'cms.admin.content.preview.render.post');
 
         // Revisions
         $router->get("$prefix/content/{contentId}/revisions", [RevisionController::class, 'index'], 'cms.admin.revisions.index');
@@ -575,12 +710,16 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
         $router->put("$prefix/fields/{contentType}/{fieldId}", [FieldController::class, 'update'], 'cms.admin.fields.update');
         $router->delete("$prefix/fields/{contentType}/{fieldId}", [FieldController::class, 'delete'], 'cms.admin.fields.delete');
 
+        // Business profile settings (must precede /settings/{group} to avoid route conflict)
+        $router->get("$prefix/settings/business", [Http\Controller\Admin\BusinessProfileSettingsController::class, 'edit'], 'cms.admin.settings.business');
+        $router->post("$prefix/settings/business", [Http\Controller\Admin\BusinessProfileSettingsController::class, 'update'], 'cms.admin.settings.business.update');
+
         // Settings
         $router->get("$prefix/settings/{group}", [SettingsController::class, 'show'], 'cms.admin.settings.show');
         $router->post("$prefix/settings/{group}", [SettingsController::class, 'update'], 'cms.admin.settings.update_post');
         $router->put("$prefix/settings/{group}", [SettingsController::class, 'update'], 'cms.admin.settings.update');
 
-        // Themes (conditional — requires ThemeManagerInterface to be bound)
+        // Themes (conditional; requires ThemeManagerInterface to be bound)
         if ($container->has(ThemeController::class)) {
             $router->get("$prefix/themes", [ThemeController::class, 'index'], 'cms.admin.themes.index');
             $router->post("$prefix/themes", [ThemeController::class, 'install'], 'cms.admin.themes.install');
@@ -661,7 +800,7 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
         $router->put("$prefix/promotions/{id}", [PromotionController::class, 'update'], 'cms.admin.promotions.update');
         $router->delete("$prefix/promotions/{id}", [PromotionController::class, 'delete'], 'cms.admin.promotions.delete');
 
-        // Digital assets (commerce) — nested under products since assets belong to a product
+        // Digital assets (commerce): nested under products since assets belong to a product
         $router->get("$prefix/products/{productId}/digital-assets", [DigitalAssetController::class, 'index'], 'cms.admin.digital_assets.index');
         $router->post("$prefix/products/{productId}/digital-assets", [DigitalAssetController::class, 'upload'], 'cms.admin.digital_assets.upload');
         $router->delete("$prefix/products/{productId}/digital-assets/{assetId}", [DigitalAssetController::class, 'delete'], 'cms.admin.digital_assets.delete');
@@ -670,7 +809,7 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
         $router->get("$prefix/invoices/{id}", [InvoiceController::class, 'show'], 'cms.admin.invoices.show');
         $router->get("$prefix/invoices/{id}/download", [InvoiceController::class, 'download'], 'cms.admin.invoices.download');
 
-        // Live CSS editor (conditional — requires ThemeManagerInterface to be bound)
+        // Live CSS editor (conditional; requires ThemeManagerInterface to be bound)
         if ($container->has(LiveCssController::class)) {
             $router->get("$prefix/live-css", [LiveCssController::class, 'editor'], 'cms.admin.livecss.editor');
             $router->post("$prefix/live-css", [LiveCssController::class, 'save'], 'cms.admin.livecss.save');
@@ -755,6 +894,25 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
         $router->post("$prefix/forms/bulk-delete", [AdminFormSubmissionController::class, 'bulkDelete'], 'cms.admin.forms.bulk_delete');
     }
 
+    private function registerImportExportProvider(ContainerInterface $container): void
+    {
+        if (!$container->has(ImportExportRegistry::class)) {
+            return;
+        }
+
+        if (!$container->has(ImportExportServiceInterface::class)) {
+            return;
+        }
+
+        /** @var ImportExportRegistry $registry */
+        $registry = $container->get(ImportExportRegistry::class);
+
+        /** @var ImportExportServiceInterface $importExportService */
+        $importExportService = $container->get(ImportExportServiceInterface::class);
+
+        $registry->register(new CmsImportExportProvider($importExportService));
+    }
+
     private function registerSchedulerJobs(ContainerInterface $container): void
     {
         if (!$container->has(JobRegistry::class)) {
@@ -764,28 +922,28 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
         /** @var JobRegistry $jobRegistry */
         $jobRegistry = $container->get(JobRegistry::class);
 
-        // Scheduled publishing — every minute
+        // Scheduled publishing: every minute
         if ($container->has(ContentRepositoryInterface::class)) {
             /** @var ContentRepositoryInterface $contentRepository */
             $contentRepository = $container->get(ContentRepositoryInterface::class);
             $jobRegistry->register(new ScheduledPublishingJob($contentRepository));
         }
 
-        // Link health check — daily at 3 AM
+        // Link health check: daily at 3 AM
         if ($container->has(LinkHealthServiceInterface::class)) {
             /** @var LinkHealthServiceInterface $linkHealthService */
             $linkHealthService = $container->get(LinkHealthServiceInterface::class);
             $jobRegistry->register(new LinkHealthCheckJob($linkHealthService));
         }
 
-        // Search analytics summary — daily at 4 AM
+        // Search analytics summary: daily at 4 AM
         if ($container->has(SearchAnalyticsRepositoryInterface::class)) {
             /** @var SearchAnalyticsRepositoryInterface $analyticsRepo */
             $analyticsRepo = $container->get(SearchAnalyticsRepositoryInterface::class);
             $jobRegistry->register(new SearchAnalyticsCleanupJob($analyticsRepo));
         }
 
-        // Expired session and lock cleanup — every 30 minutes
+        // Expired session and lock cleanup: every 30 minutes
         if (
             $container->has(PreviewSessionRepositoryInterface::class)
             && $container->has(ContentLockServiceInterface::class)
@@ -799,14 +957,14 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
             $jobRegistry->register(new ExpiredSessionCleanupJob($previewRepo, $lockService));
         }
 
-        // Backup retention — weekly on Sundays at 2 AM
+        // Backup retention: weekly on Sundays at 2 AM
         if ($container->has(BackupServiceInterface::class)) {
             /** @var BackupServiceInterface $backupService */
             $backupService = $container->get(BackupServiceInterface::class);
             $jobRegistry->register(new BackupRetentionJob($backupService));
         }
 
-        // Webhook retry cleanup — daily at 2 AM, purge events older than 30 days
+        // Webhook retry cleanup: daily at 2 AM, purge events older than 30 days
         if ($container->has(ConnectionInterface::class)) {
             /** @var ConnectionInterface $connection */
             $connection = $container->get(ConnectionInterface::class);

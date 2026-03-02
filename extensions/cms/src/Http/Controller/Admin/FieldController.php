@@ -14,19 +14,21 @@ use Pulsar\Extension\Cms\Support\UuidGenerator;
 use Pulsar\Http\Message\Response;
 use Pulsar\View\Engine\TemplateEngineInterface;
 
+use function is_bool;
+use function is_int;
 use function is_string;
 
 /**
  * Admin controller for custom field definition management.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
+#[Internal(reason: 'CMS admin controller; implementation detail')]
 final readonly class FieldController
 {
     use RendersAdminView;
 
     public function __construct(
         private FieldRegistryRepositoryInterface $fieldRepository,
-        private GateInterface $gate,
+        private ?GateInterface $gate = null,
         private ?TemplateEngineInterface $templateEngine = null,
     ) {}
 
@@ -63,8 +65,8 @@ final readonly class FieldController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $fieldKey = (string) ($body['field_key'] ?? '');
-        $fieldTypeStr = (string) ($body['field_type'] ?? '');
+        $fieldKey = is_string($body['field_key'] ?? null) ? $body['field_key'] : '';
+        $fieldTypeStr = is_string($body['field_type'] ?? null) ? $body['field_type'] : '';
 
         if ($fieldKey === '' || $fieldTypeStr === '') {
             return Response::json(['error' => 'field_key and field_type are required'], 400);
@@ -81,14 +83,14 @@ final readonly class FieldController
             contentType: $contentType,
             fieldKey: $fieldKey,
             fieldType: $fieldType,
-            required: (bool) ($body['required'] ?? false),
-            translatable: (bool) ($body['translatable'] ?? false),
-            searchable: (bool) ($body['searchable'] ?? false),
-            filterable: (bool) ($body['filterable'] ?? false),
-            sortable: (bool) ($body['sortable'] ?? false),
+            required: is_bool($body['required'] ?? null) ? $body['required'] : false,
+            translatable: is_bool($body['translatable'] ?? null) ? $body['translatable'] : false,
+            searchable: is_bool($body['searchable'] ?? null) ? $body['searchable'] : false,
+            filterable: is_bool($body['filterable'] ?? null) ? $body['filterable'] : false,
+            sortable: is_bool($body['sortable'] ?? null) ? $body['sortable'] : false,
             validationRules: self::toStringKeyedArray($body['validation_rules'] ?? []),
             defaultValue: $body['default_value'] ?? null,
-            sortOrder: (int) ($body['sort_order'] ?? 0),
+            sortOrder: is_int($body['sort_order'] ?? null) ? $body['sort_order'] : 0,
         );
 
         $this->fieldRepository->saveField($field);
@@ -128,14 +130,14 @@ final readonly class FieldController
             contentType: $contentType,
             fieldKey: is_string($body['field_key'] ?? null) ? $body['field_key'] : $existing->fieldKey,
             fieldType: $existing->fieldType,
-            required: (bool) ($body['required'] ?? $existing->required),
-            translatable: (bool) ($body['translatable'] ?? $existing->translatable),
-            searchable: (bool) ($body['searchable'] ?? $existing->searchable),
-            filterable: (bool) ($body['filterable'] ?? $existing->filterable),
-            sortable: (bool) ($body['sortable'] ?? $existing->sortable),
+            required: is_bool($body['required'] ?? null) ? $body['required'] : $existing->required,
+            translatable: is_bool($body['translatable'] ?? null) ? $body['translatable'] : $existing->translatable,
+            searchable: is_bool($body['searchable'] ?? null) ? $body['searchable'] : $existing->searchable,
+            filterable: is_bool($body['filterable'] ?? null) ? $body['filterable'] : $existing->filterable,
+            sortable: is_bool($body['sortable'] ?? null) ? $body['sortable'] : $existing->sortable,
             validationRules: self::toStringKeyedArray($body['validation_rules'] ?? $existing->validationRules),
             defaultValue: $body['default_value'] ?? $existing->defaultValue,
-            sortOrder: (int) ($body['sort_order'] ?? $existing->sortOrder),
+            sortOrder: is_int($body['sort_order'] ?? null) ? $body['sort_order'] : $existing->sortOrder,
         );
 
         $this->fieldRepository->saveField($updated);

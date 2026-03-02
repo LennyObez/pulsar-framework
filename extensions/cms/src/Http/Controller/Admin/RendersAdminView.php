@@ -5,16 +5,19 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Cms\Http\Controller\Admin;
 
 use Psr\Http\Message\ServerRequestInterface;
+use Pulsar\Auth\Authorization\GateInterface;
 use Pulsar\Auth\Exception\AuthenticationException;
 use Pulsar\Auth\Exception\AuthorizationException;
 use Pulsar\Auth\Identity\IdentityInterface;
 use Pulsar\Http\Message\Response;
 use Pulsar\View\Engine\TemplateAuthHelper;
+use Pulsar\View\Engine\TemplateEngineInterface;
 use RuntimeException;
 
 use function in_array;
+use function is_int;
+use function is_string;
 use function method_exists;
-use function property_exists;
 use function str_contains;
 
 /**
@@ -26,7 +29,10 @@ use function str_contains;
  *
  * Expects the using class to have:
  *  - `$this->templateEngine` (nullable TemplateEngineInterface)
- *  - `$this->gate` (GateInterface, optional — for @can directive support)
+ *  - `$this->gate` (GateInterface; for @can directive support)
+ *
+ * @property TemplateEngineInterface|null $templateEngine
+ * @property GateInterface|null $gate
  */
 trait RendersAdminView
 {
@@ -54,9 +60,8 @@ trait RendersAdminView
         // Inject auth context so @can/@auth/@guest directives work in templates
         /** @var IdentityInterface|null $identity */
         $identity = $request->getAttribute('identity');
-        $gate = property_exists($this, 'gate') ? $this->gate : null;
 
-        $data['__auth'] = new TemplateAuthHelper($gate, $identity);
+        $data['__auth'] = new TemplateAuthHelper($this->gate, $identity);
 
         $html = $this->templateEngine->render($template, $data);
 
@@ -101,9 +106,11 @@ trait RendersAdminView
      */
     private function authorize(IdentityInterface $identity, string $permission): void
     {
-        $gate = property_exists($this, 'gate') ? $this->gate : null;
+        if ($this->gate === null) {
+            return;
+        }
 
-        if ($gate !== null && $gate->denies($identity, $permission)) {
+        if ($this->gate->denies($identity, $permission)) {
             throw AuthorizationException::permissionDenied($permission);
         }
     }
@@ -120,13 +127,17 @@ trait RendersAdminView
      */
     protected function validateTenantAccess(ServerRequestInterface $request): ?string
     {
-        $tenantId = $request->getAttribute('tenant_id');
+        $rawTenantId = $request->getAttribute('tenant_id');
 
-        if ($tenantId === null) {
+        if ($rawTenantId === null) {
             return null;
         }
 
-        $tenantId = (string) $tenantId;
+        if (!is_string($rawTenantId) && !is_int($rawTenantId)) {
+            return null;
+        }
+
+        $tenantId = (string) $rawTenantId;
 
         /** @var IdentityInterface|null $identity */
         $identity = $request->getAttribute('identity');
@@ -135,8 +146,13 @@ trait RendersAdminView
             throw new RuntimeException('Authentication required for tenant-scoped operations');
         }
 
-        if (method_exists($identity, 'tenantIds') && !in_array($tenantId, $identity->tenantIds(), true)) {
-            throw new RuntimeException('Access denied: identity does not belong to tenant');
+        if (method_exists($identity, 'tenantIds')) {
+            /** @var list<string> $ids */
+            $ids = $identity->tenantIds();
+
+            if (!in_array($tenantId, $ids, true)) {
+                throw new RuntimeException('Access denied: identity does not belong to tenant');
+            }
         }
 
         return $tenantId;

@@ -21,7 +21,7 @@ use function mb_strlen;
  * Allows users to submit helpfulness feedback on doc pages
  * and retrieve aggregate feedback summaries.
  */
-#[Internal(reason: 'CMS API controller — implementation detail')]
+#[Internal(reason: 'CMS API controller; implementation detail')]
 final readonly class DocFeedbackController
 {
     public function __construct(
@@ -29,7 +29,7 @@ final readonly class DocFeedbackController
     ) {}
 
     /**
-     * POST /api/v1/cms/docs/feedback — Submit feedback for a doc page.
+     * POST /api/v1/cms/docs/feedback: Submit feedback for a doc page.
      */
     public function submit(ServerRequestInterface $request): Response
     {
@@ -77,7 +77,7 @@ final readonly class DocFeedbackController
     }
 
     /**
-     * GET /api/v1/cms/docs/{docPageId}/feedback — Feedback summary for a doc page.
+     * GET /api/v1/cms/docs/{docPageId}/feedback: Feedback summary for a doc page.
      */
     public function summary(ServerRequestInterface $request, string $docPageId): Response
     {

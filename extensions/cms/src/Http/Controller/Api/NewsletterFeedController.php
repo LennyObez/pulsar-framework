@@ -19,7 +19,7 @@ use function min;
  * Generates feeds for a given content type slug with configurable
  * locale, limit, and format. Responses are cached with a 60-minute TTL.
  */
-#[Internal(reason: 'CMS REST API controller — implementation detail')]
+#[Internal(reason: 'CMS REST API controller; implementation detail')]
 final readonly class NewsletterFeedController
 {
     private const int CACHE_TTL_SECONDS = 3600;

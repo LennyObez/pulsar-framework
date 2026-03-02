@@ -39,7 +39,7 @@ use function strlen;
  * All actions require appropriate CMS permissions checked via GateInterface.
  * State-changing operations require CSRF token validation.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
+#[Internal(reason: 'CMS admin controller; implementation detail')]
 final readonly class ContentController
 {
     use RendersAdminView;
@@ -53,8 +53,8 @@ final readonly class ContentController
         private ContentLockServiceInterface $lockService,
         private EditorialWorkflowServiceInterface $workflowService,
         private SafeHtmlPolicy $safeHtmlPolicy,
-        private GateInterface $gate,
         private CmsConfig $config,
+        private ?GateInterface $gate = null,
         private ?TemplateEngineInterface $templateEngine = null,
     ) {}
 
@@ -65,8 +65,10 @@ final readonly class ContentController
 
         $locale = $this->resolveLocale($request);
         $contentType = $request->getQueryParams()['type'] ?? null;
-        $page = max(1, (int) ($request->getQueryParams()['page'] ?? 1));
-        $perPage = min(100, max(1, (int) ($request->getQueryParams()['per_page'] ?? 20)));
+        $pageParam = $request->getQueryParams()['page'] ?? 1;
+        $page = max(1, is_numeric($pageParam) ? (int) $pageParam : 1);
+        $perPageParam = $request->getQueryParams()['per_page'] ?? 20;
+        $perPage = min(100, max(1, is_numeric($perPageParam) ? (int) $perPageParam : 20));
 
         $tenantId = $this->validateTenantAccess($request);
 
@@ -106,16 +108,16 @@ final readonly class ContentController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $contentType = ContentType::tryFrom((string) ($body['content_type'] ?? 'page'));
+        $contentType = ContentType::tryFrom(is_string($body['content_type'] ?? null) ? $body['content_type'] : 'page');
 
         if ($contentType === null) {
             return Response::json(['error' => 'Invalid content type'], 400);
         }
 
-        $locale = (string) ($body['locale'] ?? $this->config->defaultLocale);
-        $title = (string) ($body['title'] ?? '');
-        $slugSegment = (string) ($body['slug'] ?? '');
-        $rawBody = (string) ($body['body'] ?? '');
+        $locale = is_string($body['locale'] ?? null) ? $body['locale'] : $this->config->defaultLocale;
+        $title = is_string($body['title'] ?? null) ? $body['title'] : '';
+        $slugSegment = is_string($body['slug'] ?? null) ? $body['slug'] : '';
+        $rawBody = is_string($body['body'] ?? null) ? $body['body'] : '';
 
         if ($title === '' || $slugSegment === '') {
             return Response::json(['error' => 'Title and slug are required'], 400);
@@ -132,8 +134,8 @@ final readonly class ContentController
             tenantId: $tenantId,
             template: is_string($body['template'] ?? null) ? $body['template'] : null,
             parentId: is_string($body['parent_id'] ?? null) ? $body['parent_id'] : null,
-            commentPolicy: CommentPolicy::tryFrom((string) ($body['comment_policy'] ?? '')) ?? CommentPolicy::Inherit,
-            dataClassification: DataClassification::tryFrom((string) ($body['data_classification'] ?? '')) ?? DataClassification::Public,
+            commentPolicy: CommentPolicy::tryFrom(is_string($body['comment_policy'] ?? null) ? $body['comment_policy'] : '') ?? CommentPolicy::Inherit,
+            dataClassification: DataClassification::tryFrom(is_string($body['data_classification'] ?? null) ? $body['data_classification'] : '') ?? DataClassification::Public,
         );
 
         $this->contentRepository->save($content);
@@ -258,17 +260,17 @@ final readonly class ContentController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $locale = (string) ($body['locale'] ?? $this->config->defaultLocale);
+        $locale = is_string($body['locale'] ?? null) ? $body['locale'] : $this->config->defaultLocale;
         $translation = $this->translationRepository->findByContentAndLocale($id, $locale);
 
         if ($translation === null) {
             return Response::json(['error' => 'Translation not found for locale'], 404);
         }
 
-        $title = (string) ($body['title'] ?? $translation->title);
-        $rawBody = (string) ($body['body'] ?? $translation->body);
+        $title = is_string($body['title'] ?? null) ? $body['title'] : $translation->title;
+        $rawBody = is_string($body['body'] ?? null) ? $body['body'] : $translation->body;
         $sanitizedBody = $this->safeHtmlPolicy->sanitize($rawBody);
-        $slugSegment = (string) ($body['slug'] ?? $translation->slugSegment);
+        $slugSegment = is_string($body['slug'] ?? null) ? $body['slug'] : $translation->slugSegment;
 
         $path = $translation->path;
 
@@ -322,7 +324,7 @@ final readonly class ContentController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $locale = (string) ($body['locale'] ?? '');
+        $locale = is_string($body['locale'] ?? null) ? $body['locale'] : '';
 
         if ($locale === '' || !in_array($locale, $this->config->supportedLocales, true)) {
             return Response::json(['error' => 'Invalid or unsupported locale'], 400);
@@ -335,9 +337,9 @@ final readonly class ContentController
             return Response::json(['error' => 'Translation already exists for this locale'], 409);
         }
 
-        $title = (string) ($body['title'] ?? '');
-        $slugSegment = (string) ($body['slug'] ?? '');
-        $rawBody = (string) ($body['body'] ?? '');
+        $title = is_string($body['title'] ?? null) ? $body['title'] : '';
+        $slugSegment = is_string($body['slug'] ?? null) ? $body['slug'] : '';
+        $rawBody = is_string($body['body'] ?? null) ? $body['body'] : '';
 
         if ($title === '' || $slugSegment === '') {
             return Response::json(['error' => 'Title and slug are required'], 400);
@@ -486,7 +488,7 @@ final readonly class ContentController
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
-        $publishAtStr = (string) ($body['publish_at'] ?? '');
+        $publishAtStr = is_string($body['publish_at'] ?? null) ? $body['publish_at'] : '';
 
         if ($publishAtStr === '') {
             return Response::json(['error' => 'publish_at is required'], 400);
@@ -549,7 +551,7 @@ final readonly class ContentController
 
             $this->contentRepository->save($updated);
         } catch (CmsException) {
-            // Content may already be in review — the review record still stands
+            // Content may already be in review: the review record still stands
         }
 
         return Response::json([

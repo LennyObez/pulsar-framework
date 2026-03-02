@@ -8,7 +8,7 @@ use DateTimeImmutable;
 use Pulsar\Api\Api;
 
 /**
- * Installed plugin entity — represents a plugin package installed in the CMS.
+ * Installed plugin entity: represents a plugin package installed in the CMS.
  */
 #[Api(since: '1.0.0')]
 final readonly class InstalledCmsPlugin

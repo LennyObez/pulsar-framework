@@ -16,6 +16,8 @@ use Pulsar\Extension\Cms\Support\UuidGenerator;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditOutcome;
 
+use function is_string;
+
 /**
  * Manages the editorial review workflow lifecycle.
  *
@@ -215,16 +217,16 @@ final readonly class EditorialWorkflowService implements EditorialWorkflowServic
             $decidedAt = $row->get('decided_at');
 
             $reviews[] = new EditorialReview(
-                id: (string) $row->get('id'),
-                contentId: (string) $row->get('content_id'),
-                locale: $row->get('locale') !== null ? (string) $row->get('locale') : null,
-                requestedBy: (string) $row->get('requested_by'),
-                reviewerId: $row->get('reviewer_id') !== null ? (string) $row->get('reviewer_id') : null,
-                status: ReviewStatus::from((string) $row->get('status')),
-                comment: $row->get('comment') !== null ? (string) $row->get('comment') : null,
-                decisionReason: $row->get('decision_reason') !== null ? (string) $row->get('decision_reason') : null,
-                createdAt: new DateTimeImmutable((string) $row->get('created_at')),
-                decidedAt: $decidedAt !== null ? new DateTimeImmutable((string) $decidedAt) : null,
+                id: $row->getString('id'),
+                contentId: $row->getString('content_id'),
+                locale: $row->get('locale') !== null ? $row->getString('locale') : null,
+                requestedBy: $row->getString('requested_by'),
+                reviewerId: $row->get('reviewer_id') !== null ? $row->getString('reviewer_id') : null,
+                status: ReviewStatus::from($row->getString('status')),
+                comment: $row->get('comment') !== null ? $row->getString('comment') : null,
+                decisionReason: $row->get('decision_reason') !== null ? $row->getString('decision_reason') : null,
+                createdAt: new DateTimeImmutable($row->getString('created_at')),
+                decidedAt: $decidedAt !== null ? new DateTimeImmutable(is_string($decidedAt) ? $decidedAt : '') : null,
             );
         }
 
@@ -294,16 +296,16 @@ final readonly class EditorialWorkflowService implements EditorialWorkflowServic
         $decidedAt = $row->get('decided_at');
 
         return new EditorialReview(
-            id: (string) $row->get('id'),
-            contentId: (string) $row->get('content_id'),
-            locale: $row->get('locale') !== null ? (string) $row->get('locale') : null,
-            requestedBy: (string) $row->get('requested_by'),
-            reviewerId: $row->get('reviewer_id') !== null ? (string) $row->get('reviewer_id') : null,
-            status: ReviewStatus::from((string) $row->get('status')),
-            comment: $row->get('comment') !== null ? (string) $row->get('comment') : null,
-            decisionReason: $row->get('decision_reason') !== null ? (string) $row->get('decision_reason') : null,
-            createdAt: new DateTimeImmutable((string) $row->get('created_at')),
-            decidedAt: $decidedAt !== null ? new DateTimeImmutable((string) $decidedAt) : null,
+            id: $row->getString('id'),
+            contentId: $row->getString('content_id'),
+            locale: $row->get('locale') !== null ? $row->getString('locale') : null,
+            requestedBy: $row->getString('requested_by'),
+            reviewerId: $row->get('reviewer_id') !== null ? $row->getString('reviewer_id') : null,
+            status: ReviewStatus::from($row->getString('status')),
+            comment: $row->get('comment') !== null ? $row->getString('comment') : null,
+            decisionReason: $row->get('decision_reason') !== null ? $row->getString('decision_reason') : null,
+            createdAt: new DateTimeImmutable($row->getString('created_at')),
+            decidedAt: $decidedAt !== null ? new DateTimeImmutable(is_string($decidedAt) ? $decidedAt : '') : null,
         );
     }
 

@@ -23,7 +23,7 @@ use const ENT_QUOTES;
  * Contains a confirmation link with the raw token. The subscriber must
  * click the link to confirm their subscription.
  */
-#[Internal(reason: 'Newsletter confirmation mailable — implementation detail')]
+#[Internal(reason: 'Newsletter confirmation mailable; implementation detail')]
 final class SubscriberConfirmationMailable extends Mailable
 {
     public function __construct(

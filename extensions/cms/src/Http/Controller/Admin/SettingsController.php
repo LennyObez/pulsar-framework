@@ -13,20 +13,21 @@ use Pulsar\Http\Message\Response;
 use Pulsar\View\Engine\TemplateEngineInterface;
 
 use function count;
+use function is_array;
 use function is_string;
 
 /**
  * Admin controller for CMS site settings management.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
+#[Internal(reason: 'CMS admin controller; implementation detail')]
 final readonly class SettingsController
 {
     use RendersAdminView;
 
     public function __construct(
         private SettingsServiceInterface $settingsService,
-        private GateInterface $gate,
         private CmsConfig $config,
+        private ?GateInterface $gate = null,
         private ?TemplateEngineInterface $templateEngine = null,
     ) {}
 
@@ -59,7 +60,7 @@ final readonly class SettingsController
         $reason = is_string($body['reason'] ?? null) ? $body['reason'] : null;
 
         /** @var array<string, mixed> $settings */
-        $settings = (array) ($body['settings'] ?? []);
+        $settings = is_array($body['settings'] ?? null) ? $body['settings'] : [];
 
         foreach ($settings as $key => $value) {
             $this->settingsService->set($group, $key, $value, $locale, $reason);

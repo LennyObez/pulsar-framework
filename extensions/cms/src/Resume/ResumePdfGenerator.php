@@ -145,7 +145,7 @@ final class ResumePdfGenerator
                 $language = $e(is_string($rawLanguage) ? $rawLanguage : '');
                 $rawLevel = $lang['level'] ?? '';
                 $level = $e(is_string($rawLevel) ? $rawLevel : '');
-                $items[] = "<li>$language" . ($level !== '' ? " — $level" : '') . '</li>';
+                $items[] = "<li>$language" . ($level !== '' ? ": $level" : '') . '</li>';
             }
 
             if ($items !== []) {
@@ -170,7 +170,7 @@ final class ResumePdfGenerator
                 $rawCertYear = $cert['year'] ?? '';
                 $year = $e(is_string($rawCertYear) ? $rawCertYear : '');
                 $items[] = "<li>$certName"
-                    . ($issuer !== '' ? " — $issuer" : '')
+                    . ($issuer !== '' ? ": $issuer" : '')
                     . ($year !== '' ? " ($year)" : '')
                     . '</li>';
             }
@@ -215,7 +215,7 @@ final class ResumePdfGenerator
             <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>$escapedName — Resume</title>
+            <title>$escapedName | Resume</title>
             <style>
             * { margin: 0; padding: 0; box-sizing: border-box; }
             body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: #1a1a1a; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 40px 24px; }

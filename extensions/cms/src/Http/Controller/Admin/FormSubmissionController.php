@@ -17,6 +17,8 @@ use RuntimeException;
 use function array_map;
 use function count;
 use function is_array;
+use function is_int;
+use function is_scalar;
 use function is_string;
 use function max;
 use function min;
@@ -27,7 +29,7 @@ use function min;
  * Provides listing, detail view, moderation (read/spam), export,
  * and bulk delete operations.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
+#[Internal(reason: 'CMS admin controller; implementation detail')]
 final readonly class FormSubmissionController
 {
     use RendersAdminView;
@@ -35,7 +37,7 @@ final readonly class FormSubmissionController
     public function __construct(
         private FormSubmissionRepositoryInterface $repository,
         private FormSubmissionServiceInterface $formService,
-        private GateInterface $gate,
+        private ?GateInterface $gate = null,
         private ?TemplateEngineInterface $templateEngine = null,
     ) {}
 
@@ -51,8 +53,8 @@ final readonly class FormSubmissionController
         $params = $request->getQueryParams();
 
         $filter = is_string($params['filter'] ?? null) ? $params['filter'] : 'all';
-        $page = max(1, (int) ($params['page'] ?? 1));
-        $perPage = min(100, max(1, (int) ($params['per_page'] ?? 20)));
+        $page = max(1, is_int($params['page'] ?? null) ? $params['page'] : 1);
+        $perPage = min(100, max(1, is_int($params['per_page'] ?? null) ? $params['per_page'] : 20));
         $offset = ($page - 1) * $perPage;
 
         // Push all filtering to the repository query instead of fetching then filtering in PHP
@@ -246,7 +248,7 @@ final readonly class FormSubmissionController
                 continue;
             }
 
-            $parts[] = $key . ': ' . (is_string($value) ? mb_strimwidth($value, 0, 50, '...') : (string) $value);
+            $parts[] = $key . ': ' . (is_string($value) ? mb_strimwidth($value, 0, 50, '...') : (is_scalar($value) ? (string) $value : ''));
 
             if (count($parts) >= 3) {
                 break;

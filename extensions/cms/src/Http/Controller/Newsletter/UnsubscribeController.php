@@ -22,7 +22,7 @@ use function time;
  * Validates HMAC signatures on unsubscribe URLs to prevent unauthorized
  * unsubscription. Links expire after 90 days.
  */
-#[Internal(reason: 'CMS newsletter controller — implementation detail')]
+#[Internal(reason: 'CMS newsletter controller; implementation detail')]
 final readonly class UnsubscribeController
 {
     private const int SIGNATURE_TTL_SECONDS = 7_776_000; // 90 days

@@ -23,10 +23,10 @@ use function sodium_crypto_generichash;
  * via redirect links. Both endpoints are guard-checked against a tracking
  * configuration flag.
  */
-#[Internal(reason: 'CMS newsletter controller — implementation detail')]
+#[Internal(reason: 'CMS newsletter controller; implementation detail')]
 final readonly class TrackingController
 {
-    /** 1x1 transparent GIF — 43 bytes */
+    /** 1x1 transparent GIF: 43 bytes */
     private const string TRACKING_PIXEL = 'R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 
     public function __construct(

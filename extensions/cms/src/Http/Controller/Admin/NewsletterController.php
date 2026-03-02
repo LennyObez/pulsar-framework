@@ -32,7 +32,7 @@ use function round;
  * Provides subscriber listing, campaign CRUD, scheduling, sending,
  * and analytics views for the CMS admin panel.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
+#[Internal(reason: 'CMS admin controller; implementation detail')]
 final readonly class NewsletterController
 {
     use RendersAdminView;
@@ -42,12 +42,12 @@ final readonly class NewsletterController
         private NewsletterCampaignRepositoryInterface $campaignRepository,
         private NewsletterSendRepositoryInterface $sendRepository,
         private CampaignEditorServiceInterface $campaignEditorService,
-        private GateInterface $gate,
+        private ?GateInterface $gate = null,
         private ?TemplateEngineInterface $templateEngine = null,
     ) {}
 
     /**
-     * GET /admin/cms/newsletter/subscribers — List subscribers with status filter.
+     * GET /admin/cms/newsletter/subscribers: List subscribers with status filter.
      */
     public function subscribers(ServerRequestInterface $request): Response
     {
@@ -111,7 +111,7 @@ final readonly class NewsletterController
     }
 
     /**
-     * GET /admin/cms/newsletter/subscribers/{id} — Subscriber detail.
+     * GET /admin/cms/newsletter/subscribers/{id}: Subscriber detail.
      */
     public function subscriberDetail(ServerRequestInterface $request, string $id): Response
     {
@@ -151,7 +151,7 @@ final readonly class NewsletterController
     }
 
     /**
-     * GET /admin/cms/newsletter/campaigns — List campaigns.
+     * GET /admin/cms/newsletter/campaigns: List campaigns.
      */
     public function campaigns(ServerRequestInterface $request): Response
     {
@@ -194,8 +194,8 @@ final readonly class NewsletterController
     }
 
     /**
-     * GET /admin/cms/newsletter/campaigns/create — Show campaign creation form.
-     * GET /admin/cms/newsletter/campaigns/{id}/edit — Show campaign edit form.
+     * GET /admin/cms/newsletter/campaigns/create: Show campaign creation form.
+     * GET /admin/cms/newsletter/campaigns/{id}/edit: Show campaign edit form.
      */
     public function campaignForm(ServerRequestInterface $request, ?string $id = null): Response
     {
@@ -228,7 +228,7 @@ final readonly class NewsletterController
     }
 
     /**
-     * POST /admin/cms/newsletter/campaigns — Create a new campaign.
+     * POST /admin/cms/newsletter/campaigns: Create a new campaign.
      */
     public function createCampaign(ServerRequestInterface $request): Response
     {
@@ -266,7 +266,7 @@ final readonly class NewsletterController
     }
 
     /**
-     * PUT /admin/cms/newsletter/campaigns/{id} — Update a campaign.
+     * PUT /admin/cms/newsletter/campaigns/{id}: Update a campaign.
      */
     public function updateCampaign(ServerRequestInterface $request, string $id): Response
     {
@@ -298,7 +298,7 @@ final readonly class NewsletterController
     }
 
     /**
-     * DELETE /admin/cms/newsletter/campaigns/{id} — Delete a campaign.
+     * DELETE /admin/cms/newsletter/campaigns/{id}: Delete a campaign.
      */
     public function deleteCampaign(ServerRequestInterface $request, string $id): Response
     {
@@ -315,7 +315,7 @@ final readonly class NewsletterController
     }
 
     /**
-     * POST /admin/cms/newsletter/campaigns/{id}/send — Send a campaign immediately.
+     * POST /admin/cms/newsletter/campaigns/{id}/send: Send a campaign immediately.
      */
     public function sendCampaign(ServerRequestInterface $request, string $id): Response
     {
@@ -349,7 +349,7 @@ final readonly class NewsletterController
     }
 
     /**
-     * GET /admin/cms/newsletter/campaigns/{id}/analytics — Campaign analytics.
+     * GET /admin/cms/newsletter/campaigns/{id}/analytics: Campaign analytics.
      */
     public function campaignAnalytics(ServerRequestInterface $request, string $id): Response
     {

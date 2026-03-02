@@ -30,7 +30,7 @@ use function unlink;
  *
  * Handles listing, uploading, and deleting downloadable files for digital products.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
+#[Internal(reason: 'CMS admin controller; implementation detail')]
 final readonly class DigitalAssetController
 {
     use RendersAdminView;
@@ -39,7 +39,7 @@ final readonly class DigitalAssetController
         private DigitalAssetRepositoryInterface $assets,
         private ProductRepositoryInterface $products,
         private MediaDiskInterface $disk,
-        private GateInterface $gate,
+        private ?GateInterface $gate = null,
         private ?TemplateEngineInterface $templateEngine = null,
     ) {}
 

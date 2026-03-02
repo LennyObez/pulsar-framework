@@ -26,7 +26,7 @@ use function round;
  * Displays request/rejection counts per endpoint, top IPs hitting limits,
  * and allows inline editing of rate limit configuration stored in CMS settings.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
+#[Internal(reason: 'CMS admin controller; implementation detail')]
 final readonly class RateLimitDashboardController
 {
     use RendersAdminView;
@@ -50,7 +50,7 @@ final readonly class RateLimitDashboardController
 
     public function __construct(
         private SettingsServiceInterface $settings,
-        private GateInterface $gate,
+        private ?GateInterface $gate = null,
         private ?MetricRegistry $metricRegistry = null,
         private ?TemplateEngineInterface $templateEngine = null,
     ) {}

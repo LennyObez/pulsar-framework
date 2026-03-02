@@ -24,7 +24,7 @@ use const FILTER_VALIDATE_EMAIL;
  * Provides JSON API for subscribing, confirming, and querying subscriber stats.
  * CSRF and honeypot validation are performed inline.
  */
-#[Internal(reason: 'CMS REST API controller — implementation detail')]
+#[Internal(reason: 'CMS REST API controller; implementation detail')]
 final readonly class NewsletterApiController
 {
     public function __construct(
@@ -42,7 +42,7 @@ final readonly class NewsletterApiController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        // Honeypot check — if the hidden field has content, it is a bot
+        // Honeypot check: if the hidden field has content, it is a bot
         /** @var string $honeypot */
         $honeypot = $body['_hp_field'] ?? '';
 

@@ -24,14 +24,14 @@ use function round;
  * Provides aggregated search analytics data for a configurable date range:
  * top queries, zero-result queries, click-through rates, and totals.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
+#[Internal(reason: 'CMS admin controller; implementation detail')]
 final readonly class SearchAnalyticsController
 {
     use RendersAdminView;
 
     public function __construct(
         private SearchServiceInterface $searchService,
-        private GateInterface $gate,
+        private ?GateInterface $gate = null,
         private ?TemplateEngineInterface $templateEngine = null,
     ) {}
 

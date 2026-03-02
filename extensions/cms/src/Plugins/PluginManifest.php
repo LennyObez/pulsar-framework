@@ -7,6 +7,8 @@ namespace Pulsar\Extension\Cms\Plugins;
 use Pulsar\Api\Api;
 
 use function is_array;
+use function is_scalar;
+use function is_string;
 
 /**
  * Parsed plugin manifest (plugin.json) with all declared metadata.
@@ -51,17 +53,17 @@ final readonly class PluginManifest
     public static function fromArray(array $data): self
     {
         return new self(
-            slug: (string) ($data['slug'] ?? ''),
-            displayName: (string) ($data['display_name'] ?? $data['name'] ?? ''),
-            version: (string) ($data['version'] ?? '0.0.0'),
-            description: isset($data['description']) ? (string) $data['description'] : null,
-            authorName: isset($data['author_name']) ? (string) $data['author_name'] : null,
-            authorUrl: isset($data['author_url']) ? (string) $data['author_url'] : null,
-            license: isset($data['license']) ? (string) $data['license'] : null,
-            pulsarVersionConstraint: isset($data['pulsar_version']) ? (string) $data['pulsar_version'] : null,
+            slug: is_string($data['slug'] ?? null) ? $data['slug'] : '',
+            displayName: is_string($data['display_name'] ?? null) ? $data['display_name'] : (is_string($data['name'] ?? null) ? $data['name'] : ''),
+            version: is_string($data['version'] ?? null) ? $data['version'] : '0.0.0',
+            description: isset($data['description']) ? (is_string($data['description']) ? $data['description'] : '') : null,
+            authorName: isset($data['author_name']) ? (is_string($data['author_name']) ? $data['author_name'] : '') : null,
+            authorUrl: isset($data['author_url']) ? (is_string($data['author_url']) ? $data['author_url'] : '') : null,
+            license: isset($data['license']) ? (is_string($data['license']) ? $data['license'] : '') : null,
+            pulsarVersionConstraint: isset($data['pulsar_version']) ? (is_string($data['pulsar_version']) ? $data['pulsar_version'] : '') : null,
             capabilities: self::toStringList($data['capabilities'] ?? []),
             dependencies: self::toStringMap($data['dependencies'] ?? []),
-            entryPoint: isset($data['entry_point']) ? (string) $data['entry_point'] : null,
+            entryPoint: isset($data['entry_point']) ? (is_string($data['entry_point']) ? $data['entry_point'] : '') : null,
             settings: self::toStringKeyedArray($data['settings'] ?? []),
             autoload: isset($data['autoload']) ? self::toStringKeyedStringMap($data['autoload']) : null,
         );
@@ -79,7 +81,7 @@ final readonly class PluginManifest
         $result = [];
 
         foreach ($value as $item) {
-            $result[] = (string) $item;
+            $result[] = is_string($item) ? $item : (is_scalar($item) ? (string) $item : '');
         }
 
         return $result;
@@ -97,7 +99,8 @@ final readonly class PluginManifest
         $result = [];
 
         foreach ($value as $key => $item) {
-            $result[(string) $key] = (string) $item;
+            $strKey = is_string($key) ? $key : (string) $key;
+            $result[$strKey] = is_string($item) ? $item : (is_scalar($item) ? (string) $item : '');
         }
 
         return $result;
@@ -115,7 +118,8 @@ final readonly class PluginManifest
         $result = [];
 
         foreach ($value as $key => $item) {
-            $result[(string) $key] = $item;
+            $strKey = is_string($key) ? $key : (string) $key;
+            $result[$strKey] = $item;
         }
 
         return $result;
@@ -140,10 +144,12 @@ final readonly class PluginManifest
             $inner = [];
 
             foreach ($item as $k => $v) {
-                $inner[(string) $k] = (string) $v;
+                $innerKey = is_string($k) ? $k : (string) $k;
+                $inner[$innerKey] = is_string($v) ? $v : (is_scalar($v) ? (string) $v : '');
             }
 
-            $result[(string) $key] = $inner;
+            $outerKey = is_string($key) ? $key : (string) $key;
+            $result[$outerKey] = $inner;
         }
 
         return $result;

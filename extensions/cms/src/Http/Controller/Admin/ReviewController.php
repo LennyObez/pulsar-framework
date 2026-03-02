@@ -21,7 +21,7 @@ use function is_string;
 /**
  * Admin controller for editorial review workflow.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
+#[Internal(reason: 'CMS admin controller; implementation detail')]
 final readonly class ReviewController
 {
     use RendersAdminView;
@@ -30,7 +30,7 @@ final readonly class ReviewController
         private EditorialWorkflowServiceInterface $workflowService,
         private ContentRepositoryInterface $contentRepository,
         private PublishingStateMachine $publishingStateMachine,
-        private GateInterface $gate,
+        private ?GateInterface $gate = null,
         private ?TemplateEngineInterface $templateEngine = null,
     ) {}
 
@@ -66,7 +66,7 @@ final readonly class ReviewController
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
-        $reason = (string) ($body['reason'] ?? 'Approved');
+        $reason = is_string($body['reason'] ?? null) ? $body['reason'] : 'Approved';
 
         $review = $this->workflowService->approve($reviewId, $reason);
 
@@ -103,7 +103,7 @@ final readonly class ReviewController
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
-        $reason = (string) ($body['reason'] ?? 'Rejected');
+        $reason = is_string($body['reason'] ?? null) ? $body['reason'] : 'Rejected';
         $comment = is_string($body['comment'] ?? null) ? $body['comment'] : null;
 
         $review = $this->workflowService->reject($reviewId, $reason, $comment);

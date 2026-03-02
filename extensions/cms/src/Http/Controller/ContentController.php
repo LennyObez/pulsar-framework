@@ -7,6 +7,7 @@ namespace Pulsar\Extension\Cms\Http\Controller;
 use DateTimeImmutable;
 use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
+use Pulsar\Extension\Cms\BlockEditor\BlockRenderer;
 use Pulsar\Extension\Cms\Config\CmsConfig;
 use Pulsar\Extension\Cms\Content\Content;
 use Pulsar\Extension\Cms\Content\ContentBlockRepositoryInterface;
@@ -19,13 +20,18 @@ use Pulsar\Extension\Cms\FieldRegistry\FieldRegistryRepositoryInterface;
 use Pulsar\Extension\Cms\I18n\HreflangGenerator;
 use Pulsar\Extension\Cms\Internal\Security\CmsKeyManager;
 use Pulsar\Extension\Cms\Navigation\BreadcrumbGeneratorInterface;
+use Pulsar\Extension\Cms\Navigation\MenuRepositoryInterface;
 use Pulsar\Extension\Cms\Seo\SeoServiceInterface;
+use Pulsar\Extension\Cms\Themes\ThemeRepositoryInterface;
 use Pulsar\Http\Message\Response;
+use Pulsar\View\Engine\TemplateEngineInterface;
 
 use function array_map;
+use function assert;
 use function count;
 use function dirname;
 use function explode;
+use function file_exists;
 use function file_get_contents;
 use function hash;
 use function hash_equals;
@@ -36,6 +42,7 @@ use function is_string;
 use function json_encode;
 use function ltrim;
 use function preg_match;
+use function rtrim;
 use function str_contains;
 use function str_starts_with;
 use function strlen;
@@ -55,7 +62,7 @@ use const JSON_UNESCAPED_UNICODE;
  * loads the full aggregate (translations, blocks, custom fields,
  * taxonomy terms), resolves the template, and returns the rendered response.
  */
-#[Internal(reason: 'CMS HTTP controller — implementation detail')]
+#[Internal(reason: 'CMS HTTP controller; implementation detail')]
 final readonly class ContentController
 {
     public function __construct(
@@ -70,38 +77,55 @@ final readonly class ContentController
         private SafeHtmlPolicy $safeHtmlPolicy,
         private CmsConfig $config,
         private ?SeoServiceInterface $seoService = null,
+        private ?TemplateEngineInterface $templateEngine = null,
+        private ?BlockRenderer $blockRenderer = null,
+        private ?MenuRepositoryInterface $menuRepository = null,
+        private ?ThemeRepositoryInterface $themeRepository = null,
+        private string $projectViewsPath = '',
     ) {}
 
     public function show(ServerRequestInterface $request): Response
     {
         $rawPath = ltrim($request->getUri()->getPath(), '/');
 
-        // Use locale from CmsLocaleMiddleware if available, otherwise extract from URL
-        /** @var string|null $middlewareLocale */
-        $middlewareLocale = $request->getAttribute('cms_locale');
-        $locale = $middlewareLocale ?? $this->config->defaultLocale;
+        // Resolve locale from middleware attributes.
+        //
+        // The core LocalePrefixMiddleware (global) extracts the locale from the
+        // full URI and strips the prefix BEFORE route matching. It sets `_locale`.
+        // The CMS route middleware then sees the stripped path, finds no prefix,
+        // and defaults to the default locale in `cms_locale`.
+        //
+        // Priority: _locale (global, from full URI) > cms_locale (route) > config default
+        /** @var string|null $coreLocale */
+        $coreLocale = $request->getAttribute('_locale');
+
+        /** @var string|null $cmsLocale */
+        $cmsLocale = $request->getAttribute('cms_locale');
+
+        $locale = $coreLocale ?? $cmsLocale ?? $this->config->defaultLocale;
+
+        if (!in_array($locale, $this->config->supportedLocales, true)) {
+            $locale = $this->config->defaultLocale;
+        }
+
         $contentPath = $rawPath;
 
-        if ($middlewareLocale !== null) {
-            // Middleware already resolved locale; strip prefix from path
-            if ($locale !== $this->config->defaultLocale || $this->config->defaultLocaleInUrl) {
-                $prefix = $locale . '/';
+        // Strip locale prefix from path if still present (when global middleware didn't strip it)
+        if ($rawPath !== '') {
+            $prefix = $locale . '/';
 
-                if (str_starts_with($contentPath, $prefix)) {
-                    $contentPath = substr($contentPath, strlen($prefix));
-                } elseif ($contentPath === $locale) {
-                    $contentPath = '';
-                }
+            if (str_starts_with($contentPath, $prefix)) {
+                $contentPath = substr($contentPath, strlen($prefix));
+            } elseif ($contentPath === $locale) {
+                $contentPath = '';
             }
-        } elseif ($rawPath !== '' && preg_match('#^([a-z]{2}(?:-[A-Z]{2})?)(?:/(.*))?$#', $rawPath, $matches) === 1) {
-            $candidateLocale = $matches[1];
+        }
 
-            if (in_array($candidateLocale, $this->config->supportedLocales, true)) {
-                if ($candidateLocale !== $this->config->defaultLocale || $this->config->defaultLocaleInUrl) {
-                    $locale = $candidateLocale;
-                    $contentPath = $matches[2] ?? '';
-                }
-            }
+        // When all locales are in the URL (default_locale_in_url=true) and the user
+        // hits bare /, redirect to /{defaultLocale}/. This only applies when no global
+        // middleware has already extracted a locale (which would mean the path was stripped).
+        if ($contentPath === '' && $this->config->defaultLocaleInUrl && $coreLocale === null && $cmsLocale === null) {
+            return Response::redirect('/' . $this->config->defaultLocale . '/', 302);
         }
 
         /** @var string|null $tenantId */
@@ -137,35 +161,33 @@ final readonly class ContentController
             $translation = $this->translationRepository->findByPath($locale, $contentPath, $tenantId);
         }
 
+        // For root path: try empty-path lookup before falling back to the welcome page.
+        // This ensures that content with an empty slug (homepage) is served even when
+        // no explicit homepage_content_id is configured.
+        if ($translation === null && $contentPath === '') {
+            $translation = $this->translationRepository->findByPath($locale, '', $tenantId);
+        }
+
         if ($translation === null) {
-            // Show a styled welcome page for the root path
+            // Show a styled welcome page for the root path when no content exists at all
             if ($contentPath === '') {
                 return Response::html($this->renderWelcomePage());
             }
 
-            return Response::json(
-                ['error' => 'Content not found', 'status' => 404],
-                404,
-            );
+            return $this->respondNotFound($request);
         }
 
         $content = $this->contentRepository->findById($translation->contentId);
 
         if ($content === null || $content->isDeleted()) {
-            return Response::json(
-                ['error' => 'Content not found', 'status' => 404],
-                404,
-            );
+            return $this->respondNotFound($request);
         }
 
         // Verify content is published (or preview token is valid)
         $previewToken = $request->getQueryParams()['preview_token'] ?? null;
 
         if (!$content->isPublished() && !$this->isValidPreviewToken($previewToken, $content->id)) {
-            return Response::json(
-                ['error' => 'Content not found', 'status' => 404],
-                404,
-            );
+            return $this->respondNotFound($request);
         }
 
         // Load aggregate
@@ -330,9 +352,90 @@ final readonly class ContentController
         return hash_equals($expectedSignature, $signature);
     }
 
+    /**
+     * Return an appropriate 404 response based on content negotiation.
+     */
+    private function respondNotFound(ServerRequestInterface $request): Response
+    {
+        $accept = $request->getHeaderLine('Accept');
+
+        if ($accept === 'application/json' || str_contains($accept, 'application/json')) {
+            return Response::json(
+                ['error' => 'Content not found', 'status' => 404],
+                404,
+            );
+        }
+
+        // Render HTML 404 page via template engine when available
+        $engine = $this->templateEngine ?? Response::getTemplateEngine();
+
+        if ($engine !== null) {
+            $locale = 'en';
+            $menuItems = [];
+
+            if ($this->menuRepository !== null) {
+                $menu = $this->menuRepository->findByLocation('primary', $locale);
+
+                if ($menu !== null) {
+                    $items = $this->menuRepository->findItemsByMenu($menu->id, $locale);
+
+                    foreach ($items as $item) {
+                        $menuItems[] = [
+                            'label' => $item->label,
+                            'url' => $item->url ?? ($item->contentPath !== null ? '/' . ltrim($item->contentPath, '/') : '#'),
+                            'children' => [],
+                        ];
+                    }
+                }
+            }
+
+            $html = $engine->render('cms::public.pages.not-found', [
+                'menuItems' => $menuItems,
+                'config' => $this->config,
+                'locale' => $locale,
+                'siteName' => $this->config->siteName,
+            ]);
+
+            return Response::html($html, 404);
+        }
+
+        // Inline HTML fallback when no template engine is available
+        return Response::html(
+            <<<'HTML'
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="utf-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1">
+                    <meta name="robots" content="noindex">
+                    <title>Page Not Found</title>
+                    <style>
+                        body{font-family:system-ui,-apple-system,sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;background:#f8fafc;color:#1e293b}
+                        .error{text-align:center;max-width:480px;padding:2rem}
+                        h1{font-size:3rem;margin:0 0 .5rem}
+                        p{color:#64748b;margin:0 0 1.5rem}
+                        a{color:#2563eb;text-decoration:none;font-weight:600}
+                        a:hover{text-decoration:underline}
+                        a:focus-visible{outline:2px solid #2563eb;outline-offset:2px;border-radius:0.25rem}
+                    </style>
+                </head>
+                <body>
+                    <a href="#main-content" class="sr-only sr-only--focusable" style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden">Skip to main content</a>
+                    <main id="main-content" class="error" role="main">
+                        <h1>404</h1>
+                        <p>The page you are looking for does not exist or has been moved.</p>
+                        <a href="/">Back to Homepage</a>
+                    </main>
+                </body>
+                </html>
+                HTML,
+            404,
+        );
+    }
+
     private function renderWelcomePage(): string
     {
-        $templatePath = dirname(__DIR__, 3) . '/resources/views/welcome.pulsar.php';
+        $templatePath = dirname(__DIR__, 3) . '/resources/views/welcome.pulse.php';
         $content = file_get_contents($templatePath);
 
         if ($content === false) {
@@ -352,12 +455,22 @@ final readonly class ContentController
         ?ContentTranslation $translationObj = null,
         string $baseUrl = '',
     ): string {
+        // Use Pulse template engine when available.
+        // Prefer the constructor-injected engine, but fall back to the static engine
+        // on Response (which the Kernel updates after extensions boot with all view paths).
+        $engine = $this->templateEngine ?? \Pulsar\Http\Message\Response::getTemplateEngine();
+
+        if ($engine !== null) {
+            return $this->renderWithPulse($data, $template, $content, $translationObj, $baseUrl, $engine);
+        }
+
+        // Fallback to inline HTML when no template engine is available
         /** @var array<string, mixed> $translation */
         $translation = $data['translation'] ?? [];
-        $title = htmlspecialchars((string) ($translation['title'] ?? ''), ENT_QUOTES | ENT_HTML5, 'UTF-8');
-        $body = $this->safeHtmlPolicy->sanitize((string) ($translation['body'] ?? ''));
-        $metaTitle = htmlspecialchars((string) ($translation['meta_title'] ?? $title), ENT_QUOTES | ENT_HTML5, 'UTF-8');
-        $metaDescription = htmlspecialchars((string) ($translation['meta_description'] ?? ''), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $title = htmlspecialchars(is_string($translation['title'] ?? null) ? $translation['title'] : '', ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $body = $this->safeHtmlPolicy->sanitize(is_string($translation['body'] ?? null) ? $translation['body'] : '');
+        $metaTitle = htmlspecialchars(is_string($translation['meta_title'] ?? null) ? $translation['meta_title'] : $title, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $metaDescription = htmlspecialchars(is_string($translation['meta_description'] ?? null) ? $translation['meta_description'] : '', ENT_QUOTES | ENT_HTML5, 'UTF-8');
 
         // Build hreflang link tags
         /** @var list<array{locale: string, href: string}> $hreflangLinks */
@@ -397,7 +510,17 @@ final readonly class ContentController
             }
         }
 
-        $locale = htmlspecialchars((string) ($translation['locale'] ?? 'en'), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $locale = htmlspecialchars(is_string($translation['locale'] ?? null) ? $translation['locale'] : 'en', ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+        // Build canonical URL and Open Graph tags
+        $path = is_string($translation['path'] ?? null) ? $translation['path'] : '';
+        $canonicalUrl = htmlspecialchars($baseUrl . '/' . ltrim($path, '/'), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $ogTitle = $metaTitle;
+        $ogDescription = $metaDescription;
+        $ogSiteName = htmlspecialchars($this->config->siteName, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+        // Build RSS feed discovery link
+        $feedDiscovery = "\n        <link rel=\"alternate\" type=\"application/rss+xml\" title=\"$ogSiteName RSS Feed\" href=\"$baseUrl/feed/rss\">";
 
         return <<<HTML
             <!DOCTYPE html>
@@ -406,7 +529,13 @@ final readonly class ContentController
                 <meta charset="utf-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1">
                 <title>$metaTitle</title>
-                <meta name="description" content="$metaDescription">$hreflangHtml$jsonLdHtml
+                <meta name="description" content="$metaDescription">
+                <link rel="canonical" href="$canonicalUrl">
+                <meta property="og:type" content="article">
+                <meta property="og:title" content="$ogTitle">
+                <meta property="og:description" content="$ogDescription">
+                <meta property="og:url" content="$canonicalUrl">
+                <meta property="og:site_name" content="$ogSiteName">$hreflangHtml$jsonLdHtml$feedDiscovery
             </head>
             <body>
                 <a href="#main-content" class="sr-only sr-only--focusable">Skip to main content</a>
@@ -420,5 +549,183 @@ final readonly class ContentController
             </body>
             </html>
             HTML;
+    }
+
+    /**
+     * Render content using the Pulse template engine with front-office templates.
+     *
+     * @param array<string, mixed> $data
+     */
+    private function renderWithPulse(
+        array $data,
+        string $template,
+        ?Content $content = null,
+        ?ContentTranslation $translationObj = null,
+        string $baseUrl = '',
+        ?TemplateEngineInterface $engine = null,
+    ): string {
+        // Render blocks to HTML
+        $renderedBlocks = '';
+
+        /** @var list<mixed> $blockList */
+        $blockList = $data['blocks'] ?? [];
+
+        if ($this->blockRenderer !== null && $blockList !== []) {
+            $renderedBlocks = $this->blockRenderer->renderRawBlocks($blockList);
+        }
+
+        // Load navigation menu items for the layout
+        $menuItems = [];
+        $locale = $translationObj !== null ? $translationObj->locale : 'en';
+
+        if ($this->menuRepository !== null) {
+            $menu = $this->menuRepository->findByLocation('primary', $locale);
+
+            if ($menu !== null) {
+                $items = $this->menuRepository->findItemsByMenu($menu->id, $locale);
+                $isDefaultLocale = $locale === $this->config->defaultLocale && !$this->config->defaultLocaleInUrl;
+
+                foreach ($items as $item) {
+                    $href = $item->url;
+
+                    if ($href === null && $item->contentPath !== null) {
+                        $path = '/' . ltrim($item->contentPath, '/');
+                        $href = $isDefaultLocale ? $path : '/' . $locale . $path;
+                    }
+
+                    $menuItems[] = [
+                        'label' => $item->label,
+                        'url' => $href ?? '#',
+                        'children' => [],
+                    ];
+                }
+            }
+        }
+
+        // Resolve the Pulse template with priority: project > active theme > CMS defaults.
+        //
+        // 1. If the project has resources/views/{template}.pulse.php, use it
+        // 2. If the active theme provides the template, use it
+        // 3. Fall back to the CMS default template mapping
+        $templateName = $this->resolveTemplateName($template);
+
+        // Build SEO data
+        $seoData = [];
+
+        if ($this->seoService !== null && $content !== null && $translationObj !== null) {
+            $structuredData = $this->seoService->generateStructuredData($content, $translationObj, $baseUrl);
+            $seoData['jsonLd'] = $structuredData->toScript();
+        }
+
+        $renderEngine = $engine ?? $this->templateEngine;
+        assert($renderEngine !== null);
+
+        return $renderEngine->render($templateName, [
+            'content' => $content,
+            'translation' => $translationObj,
+            'blocks' => $data['blocks'] ?? [],
+            'renderedBlocks' => $renderedBlocks,
+            'customFields' => $data['custom_fields'] ?? [],
+            'breadcrumbs' => $data['breadcrumbs'] ?? [],
+            'hreflang' => $data['hreflang'] ?? [],
+            'menuItems' => $menuItems,
+            'seo' => $seoData,
+            'config' => $this->config,
+            'locale' => $translationObj !== null ? $translationObj->locale : 'en',
+            'siteName' => $this->config->siteName,
+            'baseUrl' => $baseUrl,
+            'canonicalUrl' => $baseUrl . '/' . ltrim($translationObj !== null ? $translationObj->path : '', '/'),
+            'jsonLd' => $seoData['jsonLd'] ?? '',
+        ]);
+    }
+
+    /**
+     * Resolve a template name with priority: project > active theme > CMS defaults.
+     *
+     * If the template contains "::" it is already fully qualified and is returned
+     * as-is. Otherwise the resolver checks the project views directory for a
+     * matching .pulse.php file, then the active theme templates directory, and
+     * finally falls back to CMS default template mapping.
+     */
+    private function resolveTemplateName(string $template): string
+    {
+        // Fully-qualified Pulse template reference (e.g., "cms::public.pages.landing")
+        if (str_contains($template, '::')) {
+            return $template;
+        }
+
+        // 1. Project override: search multiple path patterns in resources/views/
+        if ($this->projectViewsPath !== '') {
+            $viewsRoot = rtrim($this->projectViewsPath, '/\\');
+
+            // Try exact path: resources/views/{template}.pulse.php
+            // e.g., template="pages/home" -> resources/views/pages/home.pulse.php
+            $candidates = [
+                $viewsRoot . '/' . $template . '.pulse.php',
+                $viewsRoot . '/theme/' . $template . '.pulse.php',
+                $viewsRoot . '/' . $template . '/index.pulse.php',
+                $viewsRoot . '/theme/' . $template . '/index.pulse.php',
+            ];
+
+            // Also try with the last segment only (strip path prefix)
+            // e.g., template="pages/about" -> resources/views/about.pulse.php
+            $lastSegment = basename($template);
+            if ($lastSegment !== $template) {
+                $candidates[] = $viewsRoot . '/' . $lastSegment . '.pulse.php';
+                $candidates[] = $viewsRoot . '/theme/' . $lastSegment . '.pulse.php';
+                $candidates[] = $viewsRoot . '/' . $lastSegment . '/index.pulse.php';
+                $candidates[] = $viewsRoot . '/theme/' . $lastSegment . '/index.pulse.php';
+            }
+
+            foreach ($candidates as $candidate) {
+                if (file_exists($candidate)) {
+                    return $candidate;
+                }
+            }
+        }
+
+        // 2. Active theme override: {theme_storage}/templates/{template}.pulse.php
+        if ($this->themeRepository !== null) {
+            $activeTheme = $this->themeRepository->findActive();
+
+            if ($activeTheme !== null) {
+                $themePath = rtrim($activeTheme->storagePath, '/\\');
+                $themeFile = $themePath . '/templates/' . $template . '.pulse.php';
+
+                if (file_exists($themeFile)) {
+                    return $themeFile;
+                }
+
+                // Try last segment only
+                $lastSegment = basename($template);
+                if ($lastSegment !== $template) {
+                    $themeFile = $themePath . '/templates/' . $lastSegment . '.pulse.php';
+                    if (file_exists($themeFile)) {
+                        return $themeFile;
+                    }
+                }
+            }
+        }
+
+        // 3. CMS default mapping: use content type for known types, fall back gracefully
+        $templateMap = [
+            'article' => 'cms::public.pages.article',
+            'page' => 'cms::public.pages.page',
+            'home' => 'cms::public.pages.home',
+        ];
+
+        // If the template matches a known type exactly, use the CMS default
+        if (isset($templateMap[$template])) {
+            return $templateMap[$template];
+        }
+
+        // For path-style templates (e.g., "pages/about"), try the last segment
+        $lastSegment = basename($template);
+        if (isset($templateMap[$lastSegment])) {
+            return $templateMap[$lastSegment];
+        }
+
+        // Ultimate fallback: the generic page template
+        return 'cms::public.pages.page';
     }
 }

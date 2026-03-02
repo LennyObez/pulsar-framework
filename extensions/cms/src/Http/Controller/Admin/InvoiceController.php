@@ -18,14 +18,14 @@ use Pulsar\View\Engine\TemplateEngineInterface;
  * Invoices are generated automatically on order confirmation.
  * This controller provides read-only access for administrative review.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
+#[Internal(reason: 'CMS admin controller; implementation detail')]
 final readonly class InvoiceController
 {
     use RendersAdminView;
 
     public function __construct(
         private InvoiceServiceInterface $invoiceService,
-        private GateInterface $gate,
+        private ?GateInterface $gate = null,
         private ?TemplateEngineInterface $templateEngine = null,
     ) {}
 
