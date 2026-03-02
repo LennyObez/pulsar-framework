@@ -9,6 +9,12 @@
 #   semgrep --config=.semgrep.yml
 #
 # The CI pipeline and the MCP scanner also honour this file.
+#
+# Pulsar-specific custom rules (e.g. ADR-0006 libsodium-only enforcement)
+# live in `tools/security/semgrep-pulsar-rules.yml` and are wired up via
+# the `composer security:lint` and `composer security:lint:strict` scripts.
+# Run together:
+#   semgrep --config=.semgrep.yml --config=tools/security/semgrep-pulsar-rules.yml
 
 # Paths completely excluded from Semgrep scanning.
 # Vendor code is scanned by the supply-chain audit job separately.
