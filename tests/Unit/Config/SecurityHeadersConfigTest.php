@@ -32,6 +32,25 @@ final class SecurityHeadersConfigTest extends TestCase
     }
 
     #[Test]
+    public function effectiveHeadersAlwaysIncludesBaselineCspAndCrossOrigin(): void
+    {
+        // Defense-in-depth (F30.4 / F1.3): even with default config, CSP and
+        // Cross-Origin isolation headers must be present so a misconfigured
+        // CspConfig / CrossOriginConfig cannot silently strip these protections.
+        $config = new SecurityHeadersConfig(headers: []);
+
+        $headers = $config->effectiveHeaders();
+
+        self::assertArrayHasKey('Content-Security-Policy', $headers);
+        self::assertStringContainsString("default-src 'self'", $headers['Content-Security-Policy']);
+        self::assertStringContainsString("object-src 'none'", $headers['Content-Security-Policy']);
+        self::assertStringContainsString("frame-ancestors 'self'", $headers['Content-Security-Policy']);
+        self::assertSame('same-origin', $headers['Cross-Origin-Opener-Policy']);
+        self::assertSame('require-corp', $headers['Cross-Origin-Embedder-Policy']);
+        self::assertSame('same-origin', $headers['Cross-Origin-Resource-Policy']);
+    }
+
+    #[Test]
     public function userHeadersOverrideDefaults(): void
     {
         $config = new SecurityHeadersConfig(headers: [
@@ -62,8 +81,10 @@ final class SecurityHeadersConfigTest extends TestCase
     }
 
     #[Test]
-    public function effectiveHeadersExcludesCspWhenDisabled(): void
+    public function effectiveHeadersKeepsBaselineCspWhenCspConfigDisabled(): void
     {
+        // F30.4: disabling CspConfig must not silently drop the CSP header.
+        // The MINIMUM_HEADERS baseline keeps a restrictive default in place.
         $config = new SecurityHeadersConfig(
             headers: [],
             csp: new CspConfig(enabled: false),
@@ -71,7 +92,8 @@ final class SecurityHeadersConfigTest extends TestCase
 
         $headers = $config->effectiveHeaders();
 
-        self::assertArrayNotHasKey('Content-Security-Policy', $headers);
+        self::assertArrayHasKey('Content-Security-Policy', $headers);
+        self::assertStringContainsString("default-src 'self'", $headers['Content-Security-Policy']);
         self::assertArrayNotHasKey('Content-Security-Policy-Report-Only', $headers);
     }
 
@@ -109,8 +131,11 @@ final class SecurityHeadersConfigTest extends TestCase
     }
 
     #[Test]
-    public function effectiveHeadersExcludesEmptyCrossOriginPolicies(): void
+    public function effectiveHeadersKeepsBaselineCrossOriginWhenConfigEmpty(): void
     {
+        // F30.4: empty CrossOriginConfig values must not silently drop the
+        // Cross-Origin isolation headers; baseline values from MINIMUM_HEADERS
+        // remain in place.
         $config = new SecurityHeadersConfig(
             headers: [],
             crossOrigin: new CrossOriginConfig(
@@ -122,9 +147,9 @@ final class SecurityHeadersConfigTest extends TestCase
 
         $headers = $config->effectiveHeaders();
 
-        self::assertArrayNotHasKey('Cross-Origin-Opener-Policy', $headers);
-        self::assertArrayNotHasKey('Cross-Origin-Embedder-Policy', $headers);
-        self::assertArrayNotHasKey('Cross-Origin-Resource-Policy', $headers);
+        self::assertSame('same-origin', $headers['Cross-Origin-Opener-Policy']);
+        self::assertSame('require-corp', $headers['Cross-Origin-Embedder-Policy']);
+        self::assertSame('same-origin', $headers['Cross-Origin-Resource-Policy']);
     }
 
     #[Test]

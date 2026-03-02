@@ -19,6 +19,19 @@ use function is_string;
 #[Api(since: '1.0.0')]
 readonly class SecurityHeadersConfig
 {
+    /**
+     * Baseline headers always present on every response.
+     *
+     * Includes a restrictive default Content-Security-Policy and the three
+     * Cross-Origin isolation headers so that a misconfigured `CspConfig` /
+     * `CrossOriginConfig` can never silently strip these protections (F1.3,
+     * F30.4). When a richer `CspConfig` is enabled, `effectiveHeaders()`
+     * overrides the baseline `Content-Security-Policy` value with the
+     * configured one. HSTS is intentionally NOT in the baseline because
+     * RFC 6797 §7.2 forbids emitting it over plaintext HTTP — the
+     * `SecurityHeadersMiddleware` adds it conditionally on HTTPS requests
+     * using the (always-enabled-by-default) `HstsConfig`.
+     */
     private const array MINIMUM_HEADERS = [
         'X-Content-Type-Options' => 'nosniff',
         'X-Frame-Options' => 'DENY',
@@ -26,6 +39,10 @@ readonly class SecurityHeadersConfig
         'X-XSS-Protection' => '0',
         'Permissions-Policy' => 'camera=(), microphone=(), geolocation=()',
         'X-Permitted-Cross-Domain-Policies' => 'none',
+        'Content-Security-Policy' => "default-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'self'; form-action 'self'",
+        'Cross-Origin-Opener-Policy' => 'same-origin',
+        'Cross-Origin-Embedder-Policy' => 'require-corp',
+        'Cross-Origin-Resource-Policy' => 'same-origin',
     ];
 
     /**
@@ -45,8 +62,9 @@ readonly class SecurityHeadersConfig
      * Return the effective headers: minimum defaults merged with user config,
      * plus CSP and Cross-Origin headers when enabled.
      *
-     * HSTS is intentionally excluded here because it requires request context
-     * (must only be sent over HTTPS). The middleware handles HSTS separately.
+     * HSTS is intentionally excluded here because RFC 6797 §7.2 forbids
+     * emitting `Strict-Transport-Security` over plaintext HTTP. The middleware
+     * handles HSTS separately, conditional on a secure request.
      *
      * @return array<string, string>
      */
@@ -58,6 +76,11 @@ readonly class SecurityHeadersConfig
         if ($this->csp->enabled) {
             $cspValue = $this->csp->toHeaderValue();
             if ($cspValue !== '') {
+                if ($this->csp->reportOnly) {
+                    // Report-only mode replaces the enforcing baseline so we never
+                    // emit both an enforcing and a report-only CSP at once.
+                    unset($headers['Content-Security-Policy']);
+                }
                 $headers[$this->csp->headerName()] = $cspValue;
             }
         }
