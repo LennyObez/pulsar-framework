@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Database\Routing;
 
+use Fiber;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -94,5 +95,49 @@ final class StickinessContextTest extends TestCase
         $this->context->reset();
 
         self::assertFalse($this->context->shouldUsePrimary());
+    }
+
+    #[Test]
+    public function fiberWriteDoesNotPinRoot(): void
+    {
+        $fiber = new Fiber(function (): void {
+            $this->context->markWrite('request');
+        });
+
+        $fiber->start();
+
+        // Root must NOT be pinned to primary because of the Fiber's write.
+        self::assertFalse($this->context->shouldUsePrimary());
+    }
+
+    #[Test]
+    public function rootWriteDoesNotPinFiber(): void
+    {
+        $this->context->markWrite('request');
+
+        $observed = null;
+        $fiber = new Fiber(function () use (&$observed): void {
+            $observed = $this->context->shouldUsePrimary();
+        });
+
+        $fiber->start();
+
+        self::assertFalse($observed);
+        self::assertTrue($this->context->shouldUsePrimary());
+    }
+
+    #[Test]
+    public function fiberResetDoesNotClearRoot(): void
+    {
+        $this->context->markWrite('request');
+
+        $fiber = new Fiber(function (): void {
+            $this->context->markWrite('request');
+            $this->context->reset();
+        });
+
+        $fiber->start();
+
+        self::assertTrue($this->context->shouldUsePrimary());
     }
 }
