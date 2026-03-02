@@ -18,6 +18,7 @@
       "GoalServiceInterface",
       "SiteServiceInterface"
     ],
-    "routes": true
+    "routes": true,
+    "migrations": ["src/Migration"]
   }
 }

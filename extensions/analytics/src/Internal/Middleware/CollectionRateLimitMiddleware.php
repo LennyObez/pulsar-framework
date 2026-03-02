@@ -14,6 +14,7 @@ use Pulsar\Extension\Analytics\Config\AnalyticsConfig;
 use Pulsar\Http\Message\Response;
 
 use function in_array;
+use function is_string;
 
 /**
  * Rate limits the analytics collection endpoint by client IP.
@@ -21,7 +22,7 @@ use function in_array;
  * Trusts X-Forwarded-For only when the direct connection comes from a
  * configured trusted proxy. Without this, attackers can spoof their IP.
  */
-#[Internal(reason: 'Analytics middleware — rate limiting')]
+#[Internal(reason: 'Analytics middleware; rate limiting')]
 final readonly class CollectionRateLimitMiddleware implements MiddlewareInterface
 {
     /** @var list<string> */
@@ -41,7 +42,7 @@ final readonly class CollectionRateLimitMiddleware implements MiddlewareInterfac
         }
 
         $ip = $this->getClientIp($request);
-        $key = 'analytics:rate:' . md5($ip);
+        $key = 'analytics:rate:' . hash('xxh128', $ip);
         $maxPerMinute = $this->config->rateLimit->maxEventsPerIpPerMinute + $this->config->rateLimit->burst;
 
         $current = (int) $this->cache->get($key);
@@ -62,7 +63,8 @@ final readonly class CollectionRateLimitMiddleware implements MiddlewareInterfac
     private function getClientIp(ServerRequestInterface $request): string
     {
         $serverParams = $request->getServerParams();
-        $remoteAddr = (string) ($serverParams['REMOTE_ADDR'] ?? '127.0.0.1');
+        $rawAddr = $serverParams['REMOTE_ADDR'] ?? '127.0.0.1';
+        $remoteAddr = is_string($rawAddr) ? $rawAddr : '127.0.0.1';
 
         $forwardedFor = $request->getHeaderLine('X-Forwarded-For');
 

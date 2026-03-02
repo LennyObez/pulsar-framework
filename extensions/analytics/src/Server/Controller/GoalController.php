@@ -11,6 +11,8 @@ use Pulsar\Extension\Analytics\Domain\GoalType;
 use Pulsar\Extension\Analytics\Exception\AnalyticsException;
 use Pulsar\Http\Message\Response;
 
+use function is_string;
+
 /**
  * Goal CRUD API controller.
  */
@@ -24,7 +26,8 @@ final readonly class GoalController
     public function index(ServerRequestInterface $request): Response
     {
         $params = $request->getQueryParams();
-        $siteId = (string) ($params['site_id'] ?? '');
+        $rawSiteId = $params['site_id'] ?? null;
+        $siteId = is_string($rawSiteId) ? $rawSiteId : '';
 
         if ($siteId === '') {
             return Response::json(['error' => 'site_id is required'], 400);
@@ -49,10 +52,10 @@ final readonly class GoalController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $siteId = (string) ($body['site_id'] ?? '');
-        $name = (string) ($body['name'] ?? '');
-        $goalTypeStr = (string) ($body['goal_type'] ?? '');
-        $targetValue = (string) ($body['target_value'] ?? '');
+        $siteId = is_string($body['site_id'] ?? null) ? $body['site_id'] : '';
+        $name = is_string($body['name'] ?? null) ? $body['name'] : '';
+        $goalTypeStr = is_string($body['goal_type'] ?? null) ? $body['goal_type'] : '';
+        $targetValue = is_string($body['target_value'] ?? null) ? $body['target_value'] : '';
 
         if ($siteId === '' || $name === '' || $goalTypeStr === '' || $targetValue === '') {
             return Response::json(['error' => 'site_id, name, goal_type, and target_value are required'], 400);
@@ -99,9 +102,9 @@ final readonly class GoalController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $name = (string) ($body['name'] ?? '');
-        $goalTypeStr = (string) ($body['goal_type'] ?? '');
-        $targetValue = (string) ($body['target_value'] ?? '');
+        $name = is_string($body['name'] ?? null) ? $body['name'] : '';
+        $goalTypeStr = is_string($body['goal_type'] ?? null) ? $body['goal_type'] : '';
+        $targetValue = is_string($body['target_value'] ?? null) ? $body['target_value'] : '';
 
         if ($name === '' || $goalTypeStr === '' || $targetValue === '') {
             return Response::json(['error' => 'name, goal_type, and target_value are required'], 400);

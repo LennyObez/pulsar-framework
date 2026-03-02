@@ -12,7 +12,7 @@ use Pulsar\Database\Row;
 use Pulsar\Extension\Analytics\Contracts\DailyStatsRepositoryInterface;
 use Pulsar\Extension\Analytics\Domain\DailyStats;
 
-#[Internal(reason: 'Raw-DB repository — use DailyStatsRepositoryInterface for public API')]
+#[Internal(reason: 'Raw-DB repository; use DailyStatsRepositoryInterface for public API')]
 final readonly class DbDailyStatsRepository implements DailyStatsRepositoryInterface
 {
     private const string SQL_UPSERT_PGSQL = <<<'SQL'

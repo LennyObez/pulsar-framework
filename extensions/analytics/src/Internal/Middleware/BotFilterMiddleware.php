@@ -9,17 +9,17 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Api\Internal;
-use Pulsar\Extension\Analytics\Internal\Bot\BotDetector;
+use Pulsar\Extension\Analytics\Contracts\BotDetectorInterface;
 use Pulsar\Http\Message\Response;
 
 /**
- * Early 204 response for known bots — saves processing resources.
+ * Early 204 response for known bots: saves processing resources.
  */
-#[Internal(reason: 'Analytics middleware — bot filtering')]
+#[Internal(reason: 'Analytics middleware; bot filtering')]
 final readonly class BotFilterMiddleware implements MiddlewareInterface
 {
     public function __construct(
-        private BotDetector $botDetector,
+        private BotDetectorInterface $botDetector,
     ) {}
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface

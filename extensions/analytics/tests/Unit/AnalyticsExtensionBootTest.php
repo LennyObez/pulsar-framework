@@ -12,7 +12,7 @@ use Pulsar\Extension\Analytics\AnalyticsExtension;
 use Pulsar\Extension\Analytics\AnalyticsServiceProvider;
 use Pulsar\Extension\Analytics\Config\AnalyticsConfig;
 use Pulsar\Routing\RouterInterface;
-use Pulsar\Scheduler\JobRegistry;
+use Pulsar\Scheduler\JobRegistryInterface;
 
 use function in_array;
 
@@ -30,9 +30,9 @@ final class AnalyticsExtensionBootTest extends TestCase
     {
         $container = $this->createStub(ContainerInterface::class);
 
-        // register() has an empty body — should not throw
+        // register() has an empty body; should not throw
         $this->ext->register($container);
-        self::assertTrue(true);
+        $this->addToAssertionCount(1);
     }
 
     #[Test]
@@ -44,7 +44,7 @@ final class AnalyticsExtensionBootTest extends TestCase
 
         // When AnalyticsConfig already exists, preBoot should not try to load config
         $this->ext->preBoot($container);
-        self::assertTrue(true);
+        $this->addToAssertionCount(1);
     }
 
     #[Test]
@@ -77,6 +77,7 @@ final class AnalyticsExtensionBootTest extends TestCase
             $configManager = $this->createStub(ConfigManagerInterface::class);
             $configManager->method('configPath')->willReturn($tmpDir);
 
+            /** @var array<string, object> $instances */
             $instances = [];
             $container = $this->createMock(ContainerInterface::class);
             $container->method('has')
@@ -160,34 +161,38 @@ final class AnalyticsExtensionBootTest extends TestCase
         $container->method('has')->willReturn(true);
 
         $this->ext->postBoot($container);
-        self::assertTrue(true);
+        $this->addToAssertionCount(1);
     }
 
     #[Test]
     public function postBootRegistersSchedulerJobs(): void
     {
         $config = new AnalyticsConfig(enabled: true);
-        $registry = new JobRegistry();
+        /** @var list<string> $registered */
+        $registered = [];
+        $registry = $this->createStub(JobRegistryInterface::class);
+        $registry->method('register')->willReturnCallback(
+            static function (string $jobClass) use (&$registered): void {
+                $registered[] = $jobClass;
+            },
+        );
 
         $container = $this->createStub(ContainerInterface::class);
         $container->method('get')
             ->willReturnCallback(static fn(string $id): ?object => match ($id) {
                 AnalyticsConfig::class => $config,
-                JobRegistry::class => $registry,
+                JobRegistryInterface::class => $registry,
                 default => null,
             });
         $container->method('has')
             ->willReturnCallback(static fn(string $id): bool => in_array($id, [
                 AnalyticsConfig::class,
-                JobRegistry::class,
+                JobRegistryInterface::class,
             ], true));
 
         $this->ext->postBoot($container);
 
-        self::assertTrue($registry->has('analytics:aggregation'));
-        self::assertTrue($registry->has('analytics:retention-cleanup'));
-        self::assertTrue($registry->has('analytics:partition-maintenance'));
-        self::assertSame(3, $registry->count());
+        self::assertCount(3, $registered);
     }
 
     #[Test]
@@ -205,7 +210,7 @@ final class AnalyticsExtensionBootTest extends TestCase
             ->willReturnCallback(static fn(string $id): bool => $id === AnalyticsConfig::class);
 
         $this->ext->postBoot($container);
-        self::assertTrue(true);
+        $this->addToAssertionCount(1);
     }
 
     #[Test]

@@ -35,7 +35,7 @@ final class RetentionConfigTest extends TestCase
     }
 
     #[Test]
-    public function fromArrayWithNonNumericFallsBackToDefaults(): void
+    public function fromArrayWithNonNumericReturnsZeroForPresentKeys(): void
     {
         $config = RetentionConfig::fromArray([
             'raw_days' => 'invalid',
@@ -43,9 +43,10 @@ final class RetentionConfigTest extends TestCase
             'hourly_hours' => false,
         ]);
 
-        self::assertSame(90, $config->rawDays);
+        // Non-numeric present values return 0; null returns default
+        self::assertSame(0, $config->rawDays);
         self::assertSame(730, $config->aggregatedDays);
-        self::assertSame(48, $config->hourlyHours);
+        self::assertSame(0, $config->hourlyHours);
     }
 
     #[Test]

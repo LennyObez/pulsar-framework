@@ -21,7 +21,7 @@ use Pulsar\Extension\Analytics\Domain\VisitorId;
  * New sessions are persisted immediately via the repository to prevent
  * duplicate session creation under concurrent requests (TOCTOU).
  */
-#[Internal(reason: 'Session resolution internals — use via service binding')]
+#[Internal(reason: 'Session resolution internals; use via service binding')]
 final readonly class SessionResolver
 {
     /**
@@ -83,7 +83,7 @@ final readonly class SessionResolver
             }
         }
 
-        // No active session found — create and persist immediately to prevent TOCTOU
+        // No active session found: create and persist immediately to prevent TOCTOU
         $sessionId = SessionId::generate($visitorId, $now->getTimestamp(), $visitorKey);
 
         $newSession = new Session(

@@ -15,10 +15,12 @@ final readonly class PrivacyConfig
     /**
      * @param bool $respectDnt When true, skip tracking for visitors with DNT header set
      * @param bool $anonymizeReferrer When true, strip query strings from referrer URLs
+     * @param bool $requireConsent When true, check ConsentManagerInterface before tracking
      */
     public function __construct(
-        public bool $respectDnt = false,
-        public bool $anonymizeReferrer = false,
+        public bool $respectDnt = true,
+        public bool $anonymizeReferrer = true,
+        public bool $requireConsent = false,
     ) {}
 
     /**
@@ -27,8 +29,9 @@ final readonly class PrivacyConfig
     public static function fromArray(array $data): self
     {
         return new self(
-            respectDnt: (bool) ($data['respect_dnt'] ?? false),
-            anonymizeReferrer: (bool) ($data['anonymize_referrer'] ?? false),
+            respectDnt: (bool) ($data['respect_dnt'] ?? true),
+            anonymizeReferrer: (bool) ($data['anonymize_referrer'] ?? true),
+            requireConsent: (bool) ($data['require_consent'] ?? false),
         );
     }
 }

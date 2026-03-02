@@ -11,6 +11,8 @@ use Pulsar\Extension\Analytics\Contracts\StatsServiceInterface;
 use Pulsar\Extension\Analytics\Domain\BreakdownDimension;
 use Pulsar\Http\Message\Response;
 
+use function is_string;
+
 /**
  * Breakdown statistics API endpoint (top-N by dimension).
  */
@@ -24,22 +26,27 @@ final readonly class BreakdownController
     public function breakdown(ServerRequestInterface $request): Response
     {
         $params = $request->getQueryParams();
-        $siteId = (string) ($params['site_id'] ?? '');
+        $rawSiteId = $params['site_id'] ?? null;
+        $siteId = is_string($rawSiteId) ? $rawSiteId : '';
 
         if ($siteId === '') {
             return Response::json(['error' => 'site_id is required'], 400);
         }
 
-        $dimensionStr = (string) ($params['dimension'] ?? 'page');
+        $rawDimension = $params['dimension'] ?? null;
+        $dimensionStr = is_string($rawDimension) ? $rawDimension : 'page';
         $dimension = BreakdownDimension::tryFrom($dimensionStr);
 
         if ($dimension === null) {
             return Response::json(['error' => 'Invalid dimension: ' . $dimensionStr], 400);
         }
 
-        $from = new DateTimeImmutable((string) ($params['from'] ?? '-30 days'));
-        $to = new DateTimeImmutable((string) ($params['to'] ?? 'now'));
-        $limit = max(1, min(100, (int) ($params['limit'] ?? 10)));
+        $rawFrom = $params['from'] ?? null;
+        $rawTo = $params['to'] ?? null;
+        $from = new DateTimeImmutable(is_string($rawFrom) ? $rawFrom : '-30 days');
+        $to = new DateTimeImmutable(is_string($rawTo) ? $rawTo : 'now');
+        $rawLimit = $params['limit'] ?? 10;
+        $limit = max(1, min(100, is_numeric($rawLimit) ? (int) $rawLimit : 10));
 
         $data = $this->statsService->getBreakdown($siteId, $from, $to, $dimension, $limit);
 
