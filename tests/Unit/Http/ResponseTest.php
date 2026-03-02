@@ -7,6 +7,7 @@ namespace Pulsar\Tests\Unit\Http;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Http\Exception\UnsafeRedirectException;
 use Pulsar\Http\HeaderBag;
 use Pulsar\Http\Response;
 use Pulsar\Http\ResponseStatus;
@@ -192,6 +193,94 @@ final class ResponseTest extends TestCase
         $response = Response::redirect('/permanent', ResponseStatus::MovedPermanently);
 
         self::assertSame(ResponseStatus::MovedPermanently, $response->status);
+    }
+
+    #[Test]
+    public function redirectAcceptsAbsoluteHttpUrl(): void
+    {
+        $response = Response::redirect('https://example.com/landing');
+
+        self::assertSame('https://example.com/landing', $response->headers->first('Location'));
+    }
+
+    #[Test]
+    public function redirectRejectsJavascriptScheme(): void
+    {
+        $this->expectException(UnsafeRedirectException::class);
+
+        (void) Response::redirect('javascript:alert(1)');
+    }
+
+    #[Test]
+    public function redirectRejectsDataScheme(): void
+    {
+        $this->expectException(UnsafeRedirectException::class);
+
+        (void) Response::redirect('data:text/html,<script>alert(1)</script>');
+    }
+
+    #[Test]
+    public function redirectRejectsCrlfInjection(): void
+    {
+        $this->expectException(UnsafeRedirectException::class);
+
+        (void) Response::redirect("/safe\r\nSet-Cookie: forged=1");
+    }
+
+    #[Test]
+    public function redirectRejectsProtocolRelativeUrl(): void
+    {
+        $this->expectException(UnsafeRedirectException::class);
+
+        (void) Response::redirect('//evil.example.com/phish');
+    }
+
+    #[Test]
+    public function redirectRejectsEmptyUrl(): void
+    {
+        $this->expectException(UnsafeRedirectException::class);
+
+        (void) Response::redirect('');
+    }
+
+    #[Test]
+    public function redirectAllowlistAcceptsListedHost(): void
+    {
+        $response = Response::redirect(
+            'https://app.example.com/dashboard',
+            allowedHosts: ['app.example.com', 'admin.example.com'],
+        );
+
+        self::assertSame('https://app.example.com/dashboard', $response->headers->first('Location'));
+    }
+
+    #[Test]
+    public function redirectAllowlistRejectsForeignHost(): void
+    {
+        $this->expectException(UnsafeRedirectException::class);
+
+        (void) Response::redirect(
+            'https://attacker.example.org/phish',
+            allowedHosts: ['app.example.com'],
+        );
+    }
+
+    #[Test]
+    public function redirectRelativeOnlyModeAcceptsPath(): void
+    {
+        // Empty allowlist forbids ALL absolute URLs but still permits
+        // path-relative redirects, which are guaranteed same-origin.
+        $response = Response::redirect('/profile', allowedHosts: []);
+
+        self::assertSame('/profile', $response->headers->first('Location'));
+    }
+
+    #[Test]
+    public function redirectRelativeOnlyModeRejectsAbsolute(): void
+    {
+        $this->expectException(UnsafeRedirectException::class);
+
+        (void) Response::redirect('https://example.com/anywhere', allowedHosts: []);
     }
 
     #[Test]
