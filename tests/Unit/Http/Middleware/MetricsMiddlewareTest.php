@@ -45,8 +45,8 @@ final class MetricsMiddlewareTest extends TestCase
 
             public function handle(ServerRequestInterface $request): ResponseInterface
             {
-                $this->routeContext->pattern = '/users/{id}';
-                $this->routeContext->name = 'users.show';
+                $this->routeContext->setPattern('/users/{id}');
+                $this->routeContext->setName('users.show');
 
                 return Response::text('OK');
             }
@@ -125,7 +125,7 @@ final class MetricsMiddlewareTest extends TestCase
 
             public function handle(ServerRequestInterface $request): ResponseInterface
             {
-                $this->routeContext->name = 'error.route';
+                $this->routeContext->setName('error.route');
 
                 return new Response(statusCode: 503);
             }
@@ -154,7 +154,7 @@ final class MetricsMiddlewareTest extends TestCase
 
             public function handle(ServerRequestInterface $request): ResponseInterface
             {
-                $this->routeContext->name = 'notfound.route';
+                $this->routeContext->setName('notfound.route');
 
                 return new Response(statusCode: 404);
             }
@@ -198,8 +198,8 @@ final class MetricsMiddlewareTest extends TestCase
     {
         $registry = new MetricRegistry();
         $routeContext = new RouteContext();
-        $routeContext->name = 'stale.route';
-        $routeContext->pattern = '/stale/{id}';
+        $routeContext->setName('stale.route');
+        $routeContext->setPattern('/stale/{id}');
 
         $middleware = new MetricsMiddleware($registry, $routeContext);
 
@@ -212,7 +212,7 @@ final class MetricsMiddlewareTest extends TestCase
             {
                 // Verify context was reset before handler runs
                 // We set a new route after reset
-                $this->routeContext->name = 'fresh.route';
+                $this->routeContext->setName('fresh.route');
 
                 return Response::text('OK');
             }
@@ -240,7 +240,7 @@ final class MetricsMiddlewareTest extends TestCase
 
             public function handle(ServerRequestInterface $request): ResponseInterface
             {
-                $this->routeContext->pattern = '/users/{id}';
+                $this->routeContext->setPattern('/users/{id}');
                 // Name stays null
 
                 return Response::text('OK');
