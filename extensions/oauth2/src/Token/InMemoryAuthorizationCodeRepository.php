@@ -6,15 +6,29 @@ namespace Pulsar\Extension\OAuth2\Token;
 
 use Pulsar\Api\Internal;
 use Pulsar\Extension\OAuth2\Contract\AuthorizationCodeRepositoryInterface;
+use SodiumException;
+
+use function bin2hex;
+use function sodium_crypto_generichash;
 
 /**
  * In-memory authorization code repository.
  *
- * Codes are stored hashed (SHA-256) and are one-time use with atomic consumption.
+ * Codes are stored hashed with libsodium BLAKE2b (per ADR-0006) and are
+ * one-time use with atomic consumption.
  */
 #[Internal(reason: 'In-memory implementation for testing; not for production use')]
 final class InMemoryAuthorizationCodeRepository implements AuthorizationCodeRepositoryInterface
 {
+    /**
+     * BLAKE2b context for OAuth2 authorisation-code lookup hashing.
+     *
+     * Domain-bound key keeps this hash table from sharing namespace with any
+     * other BLAKE2b consumer in the framework: a leaked entry from another
+     * subsystem cannot be replayed against the OAuth2 code store.
+     */
+    private const string HASH_CONTEXT = 'pulsar.oauth2.authcode';
+
     /** @var array<string, AuthorizationCode> Keyed by code ID */
     private array $codesById = [];
 
@@ -27,19 +41,24 @@ final class InMemoryAuthorizationCodeRepository implements AuthorizationCodeRepo
     /** @var array<string, bool> Code IDs that have been consumed */
     private array $consumed = [];
 
+    /**
+     * @throws SodiumException
+     */
     public function persist(AuthorizationCode $code): void
     {
         $this->codesById[$code->id] = $code;
 
         if ($code->codeValue !== null) {
-            $hash = hash('sha256', $code->codeValue);
-            $this->hashIndex[$hash] = $code->id;
+            $this->hashIndex[$this->hashCode($code->codeValue)] = $code->id;
         }
     }
 
+    /**
+     * @throws SodiumException
+     */
     public function consume(string $codeValue): ?AuthorizationCode
     {
-        $hash = hash('sha256', $codeValue);
+        $hash = $this->hashCode($codeValue);
         $codeId = $this->hashIndex[$hash] ?? null;
 
         if ($codeId === null) {
@@ -89,5 +108,15 @@ final class InMemoryAuthorizationCodeRepository implements AuthorizationCodeRepo
     public function isRevoked(string $codeId): bool
     {
         return isset($this->revoked[$codeId]) || isset($this->consumed[$codeId]);
+    }
+
+    /**
+     * Domain-bound BLAKE2b digest of a raw authorisation-code value.
+     *
+     * @throws SodiumException
+     */
+    private function hashCode(string $codeValue): string
+    {
+        return bin2hex(sodium_crypto_generichash($codeValue, self::HASH_CONTEXT, 32));
     }
 }
