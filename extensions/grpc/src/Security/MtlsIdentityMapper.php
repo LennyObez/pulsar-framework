@@ -13,7 +13,7 @@ use Pulsar\Security\Audit\AuditOutcome;
 /**
  * Maps certificate SANs to service identities using a compiled mapping.
  *
- * The mapping is built from configuration at boot time — no runtime
+ * The mapping is built from configuration at boot time: no runtime
  * interpretation or dynamic evaluation. Same SAN always resolves to the
  * same identity (deterministic).
  */

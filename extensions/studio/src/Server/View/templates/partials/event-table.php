@@ -10,12 +10,12 @@ $showCorrelationFlag = $showCorrelation ?? true;
 <table class="data-table">
     <thead>
         <tr>
-            <th>Time</th>
-            <th>Type</th>
+            <th data-t="studio.timestamp"><?= __('studio.timestamp') ?></th>
+            <th data-t="studio.event_type"><?= __('studio.event_type') ?></th>
             <?php if ($showCorrelationFlag): ?>
-                <th>Request ID</th>
+                <th data-t="studio.request_id"><?= __('studio.request_id') ?></th>
             <?php endif; ?>
-            <th>Details</th>
+            <th data-t="studio.details"><?= __('studio.details') ?></th>
         </tr>
     </thead>
     <tbody>

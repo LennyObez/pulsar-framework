@@ -14,7 +14,7 @@ use function count;
 /**
  * Aggregated results from an accessibility audit.
  *
- * Reports check results honestly — never claims "WCAG compliant".
+ * Reports check results honestly: never claims "WCAG compliant".
  * Only reports "X automated checks passed, Y issues found, Z items require manual review".
  */
 #[Api(since: '1.0.0')]

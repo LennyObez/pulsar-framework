@@ -50,7 +50,7 @@ return [
     | mTLS Service Identity Mapping
     |--------------------------------------------------------------------------
     | Maps certificate SANs to service identities and permissions.
-    | Compiled at build time — no runtime certificate field interpretation.
+    | Compiled at build time; no runtime certificate field interpretation.
     */
     'identity_map' => [
         // 'service-a.internal' => [
@@ -90,7 +90,7 @@ return [
     | Reflection
     |--------------------------------------------------------------------------
     | Server reflection allows tools like grpcurl to discover services.
-    | Disabled by default in production — enabling emits a security event.
+    | Disabled by default in production; enabling emits a security event.
     */
     'reflection' => [
         'enabled' => false,

@@ -10,6 +10,7 @@
   "provides": {
     "services": ["StudioManager", "EventStoreInterface", "DashboardAggregator"],
     "routes": true,
+    "migrations": ["database/migrations"],
     "commands": []
   },
   "frontend": {

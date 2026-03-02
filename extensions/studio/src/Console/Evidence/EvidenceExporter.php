@@ -26,7 +26,7 @@ use const JSON_UNESCAPED_UNICODE;
  * Exports Studio events and evidence chain as a verifiable archive.
  *
  * Refuses export when encryption-at-rest is enabled but the
- * decryption key is not available — exported archives must contain
+ * decryption key is not available; exported archives must contain
  * decrypted plaintext for external auditor verification.
  */
 #[Internal]

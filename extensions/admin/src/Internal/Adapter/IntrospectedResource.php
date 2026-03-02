@@ -96,10 +96,10 @@ final readonly class IntrospectedResource implements DataResourceInterface
     #[Override]
     public function exportableFields(): array
     {
-        return array_map(
+        return array_values(array_map(
             static fn(FieldDefinition $f): string => $f->name,
             array_filter($this->fields, static fn(FieldDefinition $f): bool => $f->exportable),
-        );
+        ));
     }
 
     #[Override]

@@ -12,7 +12,7 @@ use Pulsar\Extension\Grpc\Server\ServiceRegistryInterface;
  * Simplified gRPC server reflection service.
  *
  * Lists registered services and their method descriptors for tooling
- * (grpcurl, grpcui, etc.). Does NOT include proto file descriptors —
+ * (grpcurl, grpcui, etc.). Does NOT include proto file descriptors --
  * only service/method metadata from the compiled service registry.
  */
 #[Api(since: '1.0.0')]

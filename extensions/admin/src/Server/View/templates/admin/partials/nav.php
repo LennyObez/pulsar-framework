@@ -7,25 +7,26 @@ declare(strict_types=1);
  * @var string $title
  */
 $e = static fn(string $val): string => htmlspecialchars($val);
-$currentPath = $_SERVER['REQUEST_URI'] ?? '/admin';
-$currentPath = strtok($currentPath, '?') ?: '/admin';
+$currentPathRaw = $_SERVER['REQUEST_URI'] ?? '/admin';
+$currentPath = is_string($currentPathRaw) ? (strtok($currentPathRaw, '?') ?: '/admin') : '/admin';
 
 $schemaEnabled = ($templateData['schema_enabled'] ?? false) === true;
 
+/** @var list<array{href: string, label: string, exact: bool}> $navItems */
 $navItems = [
-    ['href' => '/admin', 'label' => 'Dashboard', 'exact' => true],
-    ['href' => '/admin/resources', 'label' => 'Resources', 'exact' => false],
-    ...($schemaEnabled ? [['href' => '/admin/schema', 'label' => 'Database', 'exact' => false]] : []),
-    ['href' => '/admin/activity', 'label' => 'Activity', 'exact' => false],
+    ['href' => '/admin', 'label' => __('admin.nav.dashboard'), 'exact' => true],
+    ['href' => '/admin/resources', 'label' => __('admin.nav.resources'), 'exact' => false],
+    ...($schemaEnabled ? [['href' => '/admin/schema', 'label' => __('admin.nav.database'), 'exact' => false]] : []),
+    ['href' => '/admin/activity', 'label' => __('admin.nav.activity'), 'exact' => false],
 ];
 ?>
-<nav class="admin-nav" role="navigation" aria-label="Admin navigation">
+<nav class="admin-nav" role="navigation" aria-label="<?= __('admin.nav.nav_label') ?>">
     <div class="admin-nav__brand">
-        <a href="/admin"><?= $e('Pulsar Admin') ?></a>
+        <a href="/admin" data-t="admin.nav.brand"><?= __('admin.nav.brand') ?></a>
     </div>
     <div class="admin-nav__search">
         <form action="/admin/search" method="get">
-            <input type="search" name="q" placeholder="Search resources..." aria-label="Global search" autocomplete="off">
+            <input type="search" name="q" placeholder="<?= __('admin.nav.search_placeholder') ?>" aria-label="<?= __('admin.nav.search_label') ?>" data-t-placeholder="admin.nav.search_placeholder" autocomplete="off">
         </form>
     </div>
     <ul class="admin-nav__links">
@@ -38,4 +39,5 @@ $navItems = [
         <li><a href="<?= $e($item['href']) ?>"<?= $isActive ? ' class="active"' : '' ?>><?= $e($item['label']) ?></a></li>
         <?php endforeach; ?>
     </ul>
+    <div data-language-selector data-locales="en,fr,nl,de,es,it,pt,pl,ro,cs,el,hu,sv,da,fi,sk,bg,hr,sl,lt,lv,et,ga,mt,lb" data-current="<?= htmlspecialchars(is_string($locale ?? null) ? $locale : 'en') ?>"></div>
 </nav>

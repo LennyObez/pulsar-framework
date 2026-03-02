@@ -104,7 +104,7 @@ final class BackpressureControllerTest extends TestCase
     {
         $controller = new BackpressureController(highWatermark: 4, lowWatermark: 2);
 
-        // Start at 0 — resumed
+        // Start at 0: resumed
         self::assertTrue($controller->isResumed());
 
         // Fill to high watermark
@@ -113,14 +113,14 @@ final class BackpressureControllerTest extends TestCase
         $controller->onMessageSent();
         $controller->onMessageSent();
 
-        // At high watermark — not resumed
+        // At high watermark: not resumed
         self::assertFalse($controller->isResumed());
 
         // Drain to low watermark
         $controller->onMessageReceived();
         $controller->onMessageReceived();
 
-        // At low watermark — resumed
+        // At low watermark: resumed
         self::assertTrue($controller->isResumed());
     }
 

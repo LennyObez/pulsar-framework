@@ -65,7 +65,7 @@ use function is_file;
 use const DIRECTORY_SEPARATOR;
 
 /**
- * Studio extension — development console with event collection,
+ * Studio extension: development console with event collection,
  * evidence chain, and diagnostics UI.
  *
  * Uses lifecycle hooks to integrate without privileged Kernel access:
@@ -174,7 +174,7 @@ final class StudioExtension implements ExtensionInterface, PreBootExtensionInter
             $masterKey = $container->get(KeyProviderInterface::class);
             $hasDecryptionKey = true;
 
-            // Encryption at rest — dedicated subkey 3 (separate from main Encryptor's subkey 1)
+            // Encryption at rest: dedicated subkey 3 (separate from main Encryptor's subkey 1)
             /** @var EncryptorInterface $baseEncryptor */
             $baseEncryptor = $container->get(EncryptorInterface::class);
             $studioEncryptor = $baseEncryptor->withDerivedKey($masterKey, 3, 'stud_enc');
@@ -183,20 +183,20 @@ final class StudioExtension implements ExtensionInterface, PreBootExtensionInter
             $isEncrypted = true;
             $container->instance(EncryptedEventStore::class, $encryptedStore);
 
-            // Archive MAC key — subkey 4
+            // Archive MAC key: subkey 4
             $archiveMacKey = $masterKey->deriveSubKey(4, 'stud_mac');
 
-            // Chain MAC key — subkey 5
+            // Chain MAC key: subkey 5
             $chainMacKey = $masterKey->deriveSubKey(5, 'stud_chn');
         } elseif ($container->has(KeyProviderInterface::class)) {
             /** @var MasterKey $masterKey */
             $masterKey = $container->get(KeyProviderInterface::class);
             $hasDecryptionKey = true;
 
-            // Archive MAC key — subkey 4
+            // Archive MAC key: subkey 4
             $archiveMacKey = $masterKey->deriveSubKey(4, 'stud_mac');
 
-            // Chain MAC key — subkey 5
+            // Chain MAC key: subkey 5
             $chainMacKey = $masterKey->deriveSubKey(5, 'stud_chn');
         }
 
@@ -336,7 +336,7 @@ final class StudioExtension implements ExtensionInterface, PreBootExtensionInter
         /** @var Randomizer $randomizer */
         $randomizer = $container->get(Randomizer::class);
 
-        // 1. HTTP collector (global middleware — piped last = innermost)
+        // 1. HTTP collector (global middleware; piped last = innermost)
         if ($collectorConfig->http && $container->has(MiddlewarePipelineInterface::class)) {
             $httpCollector = new HttpCollector($contextProvider, $emit, $randomizer);
             $container->instance(HttpCollector::class, $httpCollector);

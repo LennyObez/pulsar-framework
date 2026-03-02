@@ -17,7 +17,7 @@ use Pulsar\Observability\Tracing\TraceContextParserInterface;
  * Extracts W3C Trace Context from the "traceparent" metadata header,
  * creates a child span for the call, and sets standard RPC attributes.
  */
-#[Internal(reason: 'Pipeline implementation detail — use InterceptorPipeline')]
+#[Internal(reason: 'Pipeline implementation detail; use InterceptorPipeline')]
 final readonly class TracingInterceptor implements InterceptorInterface
 {
     public function __construct(
@@ -65,7 +65,7 @@ final readonly class TracingInterceptor implements InterceptorInterface
 
     private function extractServiceName(string $fullMethodName): string
     {
-        // Format: "/package.Service/Method" — extract "package.Service"
+        // Format: "/package.Service/Method": extract "package.Service"
         $trimmed = ltrim($fullMethodName, '/');
         $slashPos = strpos($trimmed, '/');
 

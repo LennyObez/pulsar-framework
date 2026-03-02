@@ -8,6 +8,8 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Orm\Exception\EntityNotFoundException;
 use Pulsar\Extension\Orm\Exception\OrmException;
+use Pulsar\Extension\Orm\Tests\Unit\Fixtures\OrderEntity;
+use Pulsar\Extension\Orm\Tests\Unit\Fixtures\UserEntity;
 
 final class EntityNotFoundExceptionTest extends TestCase
 {
@@ -22,18 +24,18 @@ final class EntityNotFoundExceptionTest extends TestCase
     #[Test]
     public function notFoundIncludesClassAndId(): void
     {
-        $e = EntityNotFoundException::notFound('App\\Entity\\User', 42);
+        $e = EntityNotFoundException::notFound(UserEntity::class, 42);
 
-        self::assertStringContainsString('App\\Entity\\User', $e->getMessage());
+        self::assertStringContainsString('UserEntity', $e->getMessage());
         self::assertStringContainsString('42', $e->getMessage());
     }
 
     #[Test]
     public function notFoundByCriteriaIncludesDetails(): void
     {
-        $e = EntityNotFoundException::notFoundByCriteria('App\\Entity\\Order', 'status=pending');
+        $e = EntityNotFoundException::notFoundByCriteria(OrderEntity::class, 'status=pending');
 
-        self::assertStringContainsString('App\\Entity\\Order', $e->getMessage());
+        self::assertStringContainsString('OrderEntity', $e->getMessage());
         self::assertStringContainsString('status=pending', $e->getMessage());
     }
 }

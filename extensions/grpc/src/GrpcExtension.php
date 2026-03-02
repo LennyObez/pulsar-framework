@@ -16,7 +16,7 @@ use Pulsar\Routing\RouterInterface;
  *
  * Provides gRPC service hosting with interceptor pipeline, mTLS,
  * streaming, health checks, and server reflection. Requires a
- * persistent runtime (RoadRunner or FrankenPHP) — incompatible with PHP-FPM.
+ * persistent runtime (RoadRunner or FrankenPHP): incompatible with PHP-FPM.
  */
 #[Api(since: '1.0.0')]
 final readonly class GrpcExtension implements ExtensionInterface

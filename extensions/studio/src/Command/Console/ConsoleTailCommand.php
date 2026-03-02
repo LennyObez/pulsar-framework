@@ -44,7 +44,7 @@ final class ConsoleTailCommand extends Command
         $this->addOption('lines', 'Number of past events to show', 'n', '20');
     }
 
-    /** @psalm-suppress InvalidReturnType Infinite poll loop — exits only via SIGINT */
+    /** @psalm-suppress InvalidReturnType Infinite poll loop; exits only via SIGINT */
     #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
@@ -81,7 +81,7 @@ final class ConsoleTailCommand extends Command
             $output->writeln('--- Watching for new events (Ctrl+C to stop) ---');
         }
 
-        // Poll for new events (intentional infinite loop — exits via Ctrl+C / signal)
+        // Poll for new events (intentional infinite loop; exits via Ctrl+C / signal)
         for (;;) {
             $pollFilters = $filters;
             if ($lastId > 0) {

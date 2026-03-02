@@ -99,6 +99,7 @@ final class AccessibilityAuditCommandExecuteTest extends TestCase
 
             $exitCode = $this->command->execute($input, $output);
 
+            /** @var array<string, mixed> $data */
             $data = json_decode($jsonOutput, true, flags: JSON_THROW_ON_ERROR);
             self::assertArrayHasKey('summary', $data);
             self::assertArrayHasKey('violations', $data);
@@ -213,8 +214,11 @@ final class AccessibilityAuditCommandExecuteTest extends TestCase
 
             $exitCode = $this->command->execute($input, $output);
 
+            /** @var array<string, mixed> $data */
             $data = json_decode($jsonOutput, true, flags: JSON_THROW_ON_ERROR);
-            self::assertSame(0, $data['summary']['errors']);
+            /** @var array<string, mixed> $summary */
+            $summary = $data['summary'];
+            self::assertSame(0, $summary['errors']);
             self::assertSame(ExitCode::Success->value, $exitCode);
         } finally {
             @unlink($tmpFile);

@@ -166,7 +166,7 @@ final readonly class IntrospectedResourceFactory
 
         if (str_contains($lower, 'ies') && str_contains($word, 'ies')) {
             return rtrim($word, 's');
-            // "Categories" → "Categorie" — not perfect, but better
+            // "Categories" → "Categorie": not perfect, but better
             // Actually let's do it properly
         }
 

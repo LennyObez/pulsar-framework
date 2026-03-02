@@ -29,7 +29,7 @@ use function trim;
  * are additionally checked for method-level authorization. Unauthorized
  * calls are rejected with PERMISSION_DENIED.
  */
-#[Internal(reason: 'Pipeline implementation detail — use InterceptorPipeline')]
+#[Internal(reason: 'Pipeline implementation detail; use InterceptorPipeline')]
 final readonly class AuthInterceptor implements InterceptorInterface
 {
     private const string BEARER_PREFIX = 'Bearer ';

@@ -10,19 +10,19 @@ use Pulsar\Api\Internal;
 use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
 use Pulsar\Http\Message\Response;
 
-use function htmlspecialchars;
 use function json_encode;
 
-use const ENT_QUOTES;
 use const JSON_THROW_ON_ERROR;
 use const JSON_UNESCAPED_SLASHES;
 
 /**
- * Handles GET /studio/console/logs — log entry explorer.
+ * Handles GET /studio/console/logs; log entry explorer.
  */
 #[Internal]
 final readonly class LogExplorerController
 {
+    use RendersStudioView;
+
     public function __construct(
         private EventStoreInterface $store,
     ) {}
@@ -37,24 +37,11 @@ final readonly class LogExplorerController
             limit: 100,
         );
 
-        $data = json_encode(['events' => $events], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
-        $safePayload = htmlspecialchars($data, ENT_QUOTES, 'UTF-8');
+        $dataJson = json_encode(['events' => $events], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
 
-        $html = <<<HTML
-            <!DOCTYPE html>
-            <html lang="en">
-            <head>
-                <meta charset="utf-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1">
-                <title>Logs - Pulsar Studio</title>
-                <link rel="stylesheet" href="/studio/assets/studio.css">
-            </head>
-            <body>
-                <div id="app" data-page="log-explorer" data-payload="$safePayload"></div>
-                <script type="module" src="/studio/assets/main.js"></script>
-            </body>
-            </html>
-            HTML;
+        $html = $this->renderStudioView('Logs - Pulsar Studio', 'console/logs', [
+            'dataJson' => $dataJson,
+        ]);
 
         return Response::html($html);
     }

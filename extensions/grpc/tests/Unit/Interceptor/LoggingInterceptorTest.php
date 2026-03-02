@@ -17,6 +17,8 @@ use Pulsar\Extension\Grpc\Interceptor\InterceptorResult;
 use Pulsar\Extension\Grpc\Interceptor\LoggingInterceptor;
 use Stringable;
 
+use function is_string;
+
 #[CoversClass(LoggingInterceptor::class)]
 final class LoggingInterceptorTest extends TestCase
 {
@@ -310,10 +312,13 @@ final class InMemoryLogger implements LoggerInterface
 
     public function log(mixed $level, string|Stringable $message, array $context = []): void
     {
+        $levelStr = is_string($level) ? $level : '';
+        /** @var array<string, mixed> $ctx */
+        $ctx = $context;
         $this->logs[] = [
-            'level' => (string) $level,
+            'level' => $levelStr,
             'message' => (string) $message,
-            'context' => $context,
+            'context' => $ctx,
         ];
     }
 }

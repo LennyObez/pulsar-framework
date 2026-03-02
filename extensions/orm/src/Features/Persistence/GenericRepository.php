@@ -33,6 +33,7 @@ final readonly class GenericRepository implements RepositoryInterface
         private string $entityClass,
     ) {}
 
+    /** @return T|null */
     #[Override]
     public function find(string|int $id, ?FetchPlan $fetchPlan = null): ?object
     {
@@ -45,6 +46,7 @@ final readonly class GenericRepository implements RepositoryInterface
 
         $builder->where($metadata->primaryKey->columnName, $id);
 
+        /** @var T|null */
         return $builder->firstEntity();
     }
 
@@ -60,6 +62,7 @@ final readonly class GenericRepository implements RepositoryInterface
         return $entity;
     }
 
+    /** @return list<T> */
     #[Override]
     public function findBy(array $criteria = [], ?FetchPlan $fetchPlan = null): array
     {
@@ -73,9 +76,11 @@ final readonly class GenericRepository implements RepositoryInterface
             $builder->where($column, $value);
         }
 
+        /** @var list<T> */
         return $builder->getEntities();
     }
 
+    /** @return T|null */
     #[Override]
     public function findOneBy(array $criteria, ?FetchPlan $fetchPlan = null): ?object
     {
@@ -89,6 +94,7 @@ final readonly class GenericRepository implements RepositoryInterface
             $builder->where($column, $value);
         }
 
+        /** @var T|null */
         return $builder->firstEntity();
     }
 
@@ -118,6 +124,34 @@ final readonly class GenericRepository implements RepositoryInterface
     public function delete(object $entity, MutationContext $context): void
     {
         $this->persister->delete($entity, $context);
+    }
+
+    #[Override]
+    public function bulkInsert(array $entities, MutationContext $context): void
+    {
+        if ($entities === []) {
+            return;
+        }
+
+        $this->connection->transaction(function () use ($entities, $context): void {
+            foreach ($entities as $entity) {
+                $this->persister->insert($entity, $context);
+            }
+        });
+    }
+
+    #[Override]
+    public function bulkUpdate(array $entities, MutationContext $context): void
+    {
+        if ($entities === []) {
+            return;
+        }
+
+        $this->connection->transaction(function () use ($entities, $context): void {
+            foreach ($entities as $entity) {
+                $this->persister->update($entity, $context);
+            }
+        });
     }
 
     #[Override]

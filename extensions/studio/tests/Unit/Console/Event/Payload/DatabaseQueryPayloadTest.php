@@ -57,6 +57,64 @@ final class DatabaseQueryPayloadTest extends TestCase
         self::assertSame('SELECT * FROM users WHERE id = 42', $payload->toArray()['sql_raw']);
     }
 
+    #[Test]
+    public function toArrayIncludesCallSiteFieldsWhenProvided(): void
+    {
+        $payload = new DatabaseQueryPayload(
+            sql: 'select * from users where id = ?',
+            sqlFingerprint: 'fp123',
+            connectionName: 'default',
+            durationMs: 2.5,
+            rowCount: 1,
+            queryType: 'SELECT',
+            callSiteFile: '/app/src/Repository/UserRepository.php',
+            callSiteLine: 42,
+            callSiteClass: 'App\\Repository\\UserRepository',
+            callSiteMethod: 'findById',
+        );
+
+        $arr = $payload->toArray();
+
+        self::assertSame('/app/src/Repository/UserRepository.php', $arr['call_site_file']);
+        self::assertSame(42, $arr['call_site_line']);
+        self::assertSame('App\\Repository\\UserRepository', $arr['call_site_class']);
+        self::assertSame('findById', $arr['call_site_method']);
+    }
+
+    #[Test]
+    public function toArrayDefaultsCallSiteToNull(): void
+    {
+        $payload = $this->createPayload();
+        $arr = $payload->toArray();
+
+        self::assertNull($arr['call_site_file']);
+        self::assertNull($arr['call_site_line']);
+        self::assertNull($arr['call_site_class']);
+        self::assertNull($arr['call_site_method']);
+    }
+
+    #[Test]
+    public function callSitePropertiesAreReadable(): void
+    {
+        $payload = new DatabaseQueryPayload(
+            sql: 'INSERT INTO logs VALUES (?)',
+            sqlFingerprint: 'ghi789',
+            connectionName: 'default',
+            durationMs: 1.0,
+            rowCount: 1,
+            queryType: 'INSERT',
+            callSiteFile: '/app/src/Service/LogService.php',
+            callSiteLine: 15,
+            callSiteClass: 'App\\Service\\LogService',
+            callSiteMethod: 'append',
+        );
+
+        self::assertSame('/app/src/Service/LogService.php', $payload->callSiteFile);
+        self::assertSame(15, $payload->callSiteLine);
+        self::assertSame('App\\Service\\LogService', $payload->callSiteClass);
+        self::assertSame('append', $payload->callSiteMethod);
+    }
+
     private function createPayload(): DatabaseQueryPayload
     {
         return new DatabaseQueryPayload(

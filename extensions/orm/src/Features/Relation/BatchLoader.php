@@ -42,7 +42,9 @@ final readonly class BatchLoader
         }
 
         $metadata = $this->metadataRegistry->get($entityClass);
-        $chunks = array_chunk($ids, $this->batchSize);
+        /** @var int<1, max> $batchSize */
+        $batchSize = $this->batchSize;
+        $chunks = array_chunk($ids, $batchSize);
         $results = [];
 
         foreach ($chunks as $chunk) {

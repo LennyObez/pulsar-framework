@@ -107,6 +107,90 @@ export interface BenchmarkDashboardData {
   latest_profiles: BenchmarkProfile[];
 }
 
+export interface ActivityLogData {
+  events: StudioEvent[];
+  total: number;
+  page: number;
+  limit: number;
+  type_filter: string;
+  available_types: string[];
+}
+
+export interface HealthDashboardData {
+  system: {
+    php_version: string;
+    os: string;
+    architecture: string;
+    hostname: string;
+    server_time: number;
+  };
+  memory: {
+    usage_bytes: number;
+    peak_bytes: number;
+    limit: string;
+  };
+  disk: {
+    free_bytes: number;
+    total_bytes: number;
+    used_percent: number;
+  };
+  queue: {
+    pending: number;
+    failed: number;
+    completed: number;
+  };
+  memory_snapshots: MemorySnapshotEntry[];
+  leak_report: LeakReportData | null;
+  event_store: {
+    total_events: number;
+    size_bytes: number;
+  };
+}
+
+export interface MemorySnapshotEntry {
+  usage_bytes: number;
+  peak_bytes: number;
+  request_number: number;
+  timestamp: number;
+}
+
+export interface LeakReportData {
+  suspected: boolean;
+  growth_per_request_bytes: number;
+  total_growth_bytes: number;
+  sample_count: number;
+  first_usage_bytes: number;
+  last_usage_bytes: number;
+  peak_bytes: number;
+}
+
+export interface DeploymentViewerData {
+  deployments: DeploymentEntry[];
+  current_ref: string;
+  tag_count: number;
+}
+
+export interface DeploymentEntry {
+  tag: string;
+  previous_tag: string | null;
+  commits: DeploymentCommit[];
+  stats: DeploymentStats | null;
+}
+
+export interface DeploymentCommit {
+  hash: string;
+  short_hash: string;
+  subject: string;
+  author: string;
+  date: string;
+}
+
+export interface DeploymentStats {
+  files_changed: number;
+  insertions: number;
+  deletions: number;
+}
+
 export type PageType =
   | 'console-overview'
   | 'request-explorer'
@@ -114,4 +198,7 @@ export type PageType =
   | 'log-explorer'
   | 'exception-explorer'
   | 'timeline'
-  | 'benchmark-dashboard';
+  | 'benchmark-dashboard'
+  | 'activity-log'
+  | 'health-dashboard'
+  | 'deployment-viewer';

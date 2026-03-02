@@ -20,7 +20,7 @@ use Throwable;
  * the resolved service handler. GrpcExceptions are caught and mapped to
  * InterceptorResult with the appropriate status code.
  */
-#[Internal(reason: 'Request dispatch orchestration — not part of public API')]
+#[Internal(reason: 'Request dispatch orchestration; not part of public API')]
 final readonly class RequestDispatcher
 {
     public function __construct(
