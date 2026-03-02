@@ -10,7 +10,7 @@ use Pulsar\Extension\Forum\Post\Post;
 use Pulsar\Extension\Forum\Thread\Thread;
 
 /**
- * Primary forum service — thread and post CRUD with lifecycle operations.
+ * Primary forum service: thread and post CRUD with lifecycle operations.
  */
 #[Api(since: '1.0.0')]
 interface ForumServiceInterface
@@ -42,17 +42,17 @@ interface ForumServiceInterface
 
     public function editPost(string $postId, string $newBody, string $newBodyHtml, string $editedBy, bool $isModerator = false): Post;
 
-    public function deletePost(string $postId): void;
+    public function deletePost(string $postId, string $deletedBy = ''): void;
 
-    public function deleteThread(string $threadId): void;
+    public function deleteThread(string $threadId, string $deletedBy = ''): void;
 
     public function acceptSolution(string $threadId, string $postId): Thread;
 
-    public function lockThread(string $threadId): Thread;
+    public function lockThread(string $threadId, string $actorId = ''): Thread;
 
-    public function unlockThread(string $threadId): Thread;
+    public function unlockThread(string $threadId, string $actorId = ''): Thread;
 
-    public function pinThread(string $threadId): Thread;
+    public function pinThread(string $threadId, string $actorId = ''): Thread;
 
-    public function unpinThread(string $threadId): Thread;
+    public function unpinThread(string $threadId, string $actorId = ''): Thread;
 }

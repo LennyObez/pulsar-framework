@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Extension\ObservabilityExport\Tests\Unit\Schema;
+namespace Pulsar\Extension\OpenTelemetry\Export\JsonLines\Tests\Unit\Schema;
 
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Extension\ObservabilityExport\Schema\MetricSchema;
+use Pulsar\Extension\OpenTelemetry\Export\JsonLines\Schema\MetricSchema;
 use Pulsar\Observability\Metrics\MetricSnapshot;
 use Pulsar\Observability\Metrics\MetricType;
 
@@ -59,6 +59,7 @@ final class MetricSchemaTest extends TestCase
         $snapshot = $this->createSnapshot();
         $json = MetricSchema::toJson($snapshot);
 
+        /** @var array<string, mixed> $decoded */
         $decoded = json_decode($json, true, flags: JSON_THROW_ON_ERROR);
         self::assertSame('http_requests_total', $decoded['name']);
     }

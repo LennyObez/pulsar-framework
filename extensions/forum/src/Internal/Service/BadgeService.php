@@ -20,7 +20,7 @@ use Pulsar\Extension\Forum\Support\UuidGenerator;
 use Pulsar\Extension\Forum\Thread\ThreadRepositoryInterface;
 
 /**
- * Badge service — evaluates badge criteria, awards and revokes badges.
+ * Badge service: evaluates badge criteria, awards and revokes badges.
  */
 #[Internal(reason: 'Use BadgeServiceInterface for public API')]
 final readonly class BadgeService implements BadgeServiceInterface
@@ -62,7 +62,7 @@ final readonly class BadgeService implements BadgeServiceInterface
             return null;
         }
 
-        // Idempotent — skip if already awarded
+        // Idempotent: skip if already awarded
         if ($this->userBadges->hasBadge($userId, $badge, $tenantId)) {
             return null;
         }

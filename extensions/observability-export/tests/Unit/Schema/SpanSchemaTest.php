@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Extension\ObservabilityExport\Tests\Unit\Schema;
+namespace Pulsar\Extension\OpenTelemetry\Export\JsonLines\Tests\Unit\Schema;
 
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Extension\ObservabilityExport\Schema\SpanSchema;
+use Pulsar\Extension\OpenTelemetry\Export\JsonLines\Schema\SpanSchema;
 use Pulsar\Observability\Tracing\Span;
 use Pulsar\Observability\Tracing\SpanId;
 use Pulsar\Observability\Tracing\SpanStatus;
@@ -95,6 +95,7 @@ final class SpanSchemaTest extends TestCase
         $span->end();
         $json = SpanSchema::toJson($span);
 
+        /** @var array<string, mixed> $decoded */
         $decoded = json_decode($json, true, flags: JSON_THROW_ON_ERROR);
         self::assertSame('test.operation', $decoded['name']);
         self::assertSame('1.0.0', $decoded['schema_version']);

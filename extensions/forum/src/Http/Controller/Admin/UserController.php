@@ -22,9 +22,9 @@ use function array_map;
 use function is_string;
 
 /**
- * Admin controller for user management — ban, unban, promote, view profile.
+ * Admin controller for user management: ban, unban, promote, view profile.
  */
-#[Internal(reason: 'Forum admin controller — implementation detail')]
+#[Internal(reason: 'Forum admin controller; implementation detail')]
 final readonly class UserController
 {
     use RendersAdminView;
@@ -39,7 +39,7 @@ final readonly class UserController
     ) {}
 
     /**
-     * GET /admin/forum/users/{userId} — View a user's forum profile.
+     * GET /admin/forum/users/{userId}: View a user's forum profile.
      */
     public function show(ServerRequestInterface $request, string $userId): Response
     {
@@ -71,7 +71,7 @@ final readonly class UserController
     }
 
     /**
-     * POST /admin/forum/users/{userId}/ban — Ban a user.
+     * POST /admin/forum/users/{userId}/ban: Ban a user.
      */
     public function ban(ServerRequestInterface $request, string $userId): Response
     {
@@ -101,7 +101,7 @@ final readonly class UserController
     }
 
     /**
-     * POST /admin/forum/users/{userId}/unban — Unban a user.
+     * POST /admin/forum/users/{userId}/unban: Unban a user.
      */
     public function unban(ServerRequestInterface $request, string $userId): Response
     {
@@ -118,7 +118,7 @@ final readonly class UserController
     }
 
     /**
-     * POST /admin/forum/users/{userId}/promote — Add reputation points.
+     * POST /admin/forum/users/{userId}/promote: Add reputation points.
      */
     public function promote(ServerRequestInterface $request, string $userId): Response
     {

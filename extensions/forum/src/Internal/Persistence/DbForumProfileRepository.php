@@ -17,7 +17,7 @@ use function ceil;
 use function max;
 use function min;
 
-#[Internal(reason: 'Raw-DB repository — use ForumProfileRepositoryInterface for public API')]
+#[Internal(reason: 'Raw-DB repository; use ForumProfileRepositoryInterface for public API')]
 final readonly class DbForumProfileRepository implements ForumProfileRepositoryInterface
 {
     private const string SENTINEL_TENANT = '00000000-0000-0000-0000-000000000000';
@@ -79,6 +79,17 @@ final readonly class DbForumProfileRepository implements ForumProfileRepositoryI
     private const string SQL_INCREMENT_THREAD_COUNT = <<<'SQL'
         UPDATE forum_profiles
         SET thread_count = GREATEST(0, thread_count + :delta),
+            updated_at = :updated_at
+        WHERE user_id = :user_id
+            AND COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key
+        SQL;
+
+    private const string SQL_CLEAR_BAN_FLAG = <<<'SQL'
+        UPDATE forum_profiles
+        SET is_banned = 0,
+            ban_reason = NULL,
+            banned_at = NULL,
+            ban_expires_at = NULL,
             updated_at = :updated_at
         WHERE user_id = :user_id
             AND COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key
@@ -216,6 +227,17 @@ final readonly class DbForumProfileRepository implements ForumProfileRepositoryI
             'user_id' => $userId,
             'tenant_key' => $tenantId ?? $this->tenantId ?? self::SENTINEL_TENANT,
             'delta' => $delta,
+            'updated_at' => $now->format('c'),
+        ]);
+    }
+
+    public function clearBanFlag(string $userId, ?string $tenantId = null): void
+    {
+        $now = new DateTimeImmutable();
+
+        $this->connection->execute(self::SQL_CLEAR_BAN_FLAG, [
+            'user_id' => $userId,
+            'tenant_key' => $tenantId ?? $this->tenantId ?? self::SENTINEL_TENANT,
             'updated_at' => $now->format('c'),
         ]);
     }

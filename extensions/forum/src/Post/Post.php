@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 use Pulsar\Extension\Forum\Exception\ForumException;
 
 /**
- * Forum post entity — represents a reply within a thread.
+ * Forum post entity: represents a reply within a thread.
  *
  * Supports threaded replies via parentId, time-limited editing, solution
  * marking, and vote scoring. Stores both Markdown source and pre-rendered

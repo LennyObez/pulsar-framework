@@ -36,10 +36,10 @@ use Pulsar\Extension\Forum\Vote\ThreadVoteRepositoryInterface;
  * Orchestrator that delegates to focused sub-providers for forum service wiring.
  *
  * Sub-providers:
- *  - ForumRepositoryProvider      — all repository interface → implementation bindings
- *  - ForumCoreServiceProvider     — services, content rendering, anti-abuse, notifications
+ *  - ForumRepositoryProvider     : all repository interface → implementation bindings
+ *  - ForumCoreServiceProvider    : services, content rendering, anti-abuse, notifications
  */
-#[Internal(reason: 'Forum service wiring — use interfaces for public API')]
+#[Internal(reason: 'Forum service wiring; use interfaces for public API')]
 final class ForumServiceProvider implements ServiceProviderInterface
 {
     public function register(ContainerInterface $container): void

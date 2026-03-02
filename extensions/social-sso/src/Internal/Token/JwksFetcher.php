@@ -12,6 +12,7 @@ use function array_find;
 use function array_key_exists;
 use function file_get_contents;
 use function is_array;
+use function is_string;
 use function json_decode;
 use function stream_context_create;
 
@@ -77,13 +78,21 @@ final class JwksFetcher
                 continue;
             }
 
-            $kty = (string) $keyData['kty'];
+            /** @var string $kty */
+            $kty = is_string($keyData['kty']) ? $keyData['kty'] : '';
+
+            /** @var string|null $kid */
+            $kid = isset($keyData['kid']) && is_string($keyData['kid']) ? $keyData['kid'] : null;
+            /** @var string|null $alg */
+            $alg = isset($keyData['alg']) && is_string($keyData['alg']) ? $keyData['alg'] : null;
+            /** @var string|null $use */
+            $use = isset($keyData['use']) && is_string($keyData['use']) ? $keyData['use'] : null;
 
             $keys[] = new JwkKey(
                 kty: $kty,
-                kid: isset($keyData['kid']) ? (string) $keyData['kid'] : null,
-                alg: isset($keyData['alg']) ? (string) $keyData['alg'] : null,
-                use: isset($keyData['use']) ? (string) $keyData['use'] : null,
+                kid: $kid,
+                alg: $alg,
+                use: $use,
                 parameters: $keyData,
             );
         }
@@ -109,7 +118,7 @@ final class JwksFetcher
             return $found;
         }
 
-        // Key not found — clear cache and re-fetch for rotation support
+        // Key not found: clear cache and re-fetch for rotation support
         unset($this->cache[$jwksUri]);
 
         $keys = $this->fetchKeys($jwksUri);

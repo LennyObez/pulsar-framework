@@ -18,7 +18,7 @@ use function ceil;
 use function max;
 use function min;
 
-#[Internal(reason: 'Raw-DB repository — use ThreadReportRepositoryInterface for public API')]
+#[Internal(reason: 'Raw-DB repository; use ThreadReportRepositoryInterface for public API')]
 final readonly class DbThreadReportRepository implements ThreadReportRepositoryInterface
 {
     private const string SENTINEL_TENANT = '00000000-0000-0000-0000-000000000000';

@@ -18,7 +18,7 @@ use function min;
 /**
  * Public REST API controller for forum leaderboard.
  */
-#[Internal(reason: 'Forum REST API controller — implementation detail')]
+#[Internal(reason: 'Forum REST API controller; implementation detail')]
 final readonly class LeaderboardController
 {
     public function __construct(
@@ -26,7 +26,7 @@ final readonly class LeaderboardController
     ) {}
 
     /**
-     * GET /api/v1/forum/leaderboard — Get top users by reputation.
+     * GET /api/v1/forum/leaderboard: Get top users by reputation.
      */
     public function index(ServerRequestInterface $request): Response
     {

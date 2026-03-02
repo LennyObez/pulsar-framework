@@ -56,7 +56,7 @@ final class McpServeCommand extends Command
             $line = $this->transport->readLine();
 
             if ($line === null) {
-                // EOF — client disconnected
+                // EOF: client disconnected
                 break;
             }
 
@@ -76,7 +76,7 @@ final class McpServeCommand extends Command
                 $errorResponse = $codec->encodeError(null, $e->getCode(), $e->getMessage());
                 $this->transport->writeLine($errorResponse);
             } catch (Throwable $e) {
-                // Unexpected errors — log to stderr, send generic error to client
+                // Unexpected errors; log to stderr, send generic error to client
                 $this->transport->writeError('Internal error: ' . $e->getMessage());
                 $errorResponse = $codec->encodeError(null, -32603, 'Internal error');
                 $this->transport->writeLine($errorResponse);

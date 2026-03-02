@@ -23,7 +23,7 @@ final class ThreadSubscriptionTest extends TestCase
         self::assertNull($sub->tenantId);
         self::assertSame('user-1', $sub->userId);
         self::assertSame('thread-1', $sub->threadId);
-        self::assertNotNull($sub->createdAt);
+        self::assertEqualsWithDelta(time(), $sub->createdAt->getTimestamp(), 2);
     }
 
     #[Test]

@@ -9,6 +9,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Api\Internal;
+use Pulsar\Cache\Application\Driver\CacheDriverInterface;
 use Pulsar\Cache\Application\TaggedCacheInterface;
 use Pulsar\Http\Message\Response;
 use Pulsar\Http\Middleware\MiddlewareInterface;
@@ -31,7 +32,7 @@ use function time;
  * Returns 429 Too Many Requests with Retry-After and X-RateLimit-* headers
  * when the per-hour limit is exceeded.
  */
-#[Internal(reason: 'Forum rate limiting middleware — implementation detail')]
+#[Internal(reason: 'Forum rate limiting middleware; implementation detail')]
 final readonly class ForumRateLimitMiddleware implements MiddlewareInterface
 {
     private const int WINDOW_SECONDS = 3600;
@@ -41,8 +42,13 @@ final readonly class ForumRateLimitMiddleware implements MiddlewareInterface
     private const int LIMIT_VOTES = 60;
     private const int LIMIT_DEFAULT = 120;
 
+    /**
+     * @param TaggedCacheInterface $cache Fallback for tagged get/set
+     * @param CacheDriverInterface|null $driver When available, uses atomic increment to avoid TOCTOU race
+     */
     public function __construct(
         private TaggedCacheInterface $cache,
+        private ?CacheDriverInterface $driver = null,
     ) {}
 
     #[Override]
@@ -124,8 +130,26 @@ final readonly class ForumRateLimitMiddleware implements MiddlewareInterface
         return hash('xxh3', $raw);
     }
 
+    /**
+     * Increment the rate-limit counter atomically when a CacheDriverInterface
+     * is available (Redis, APCu, Memcached all support atomic increment).
+     * Falls back to non-atomic get/set when only TaggedCacheInterface is
+     * available; acceptable for advisory rate limiting but not security-critical.
+     */
     private function incrementCounter(string $key): int
     {
+        if ($this->driver !== null) {
+            $result = $this->driver->increment($key);
+
+            if ($result !== false) {
+                if ($result === 1) {
+                    $this->driver->set($key, '1', self::WINDOW_SECONDS);
+                }
+
+                return $result;
+            }
+        }
+
         $current = $this->cache->get($key);
         $count = is_numeric($current) ? ((int) $current + 1) : 1;
 

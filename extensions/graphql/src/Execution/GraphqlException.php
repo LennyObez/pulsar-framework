@@ -27,4 +27,9 @@ final class GraphqlException extends RuntimeException
     {
         return new self("GraphQL execution error: $message");
     }
+
+    public static function queryTooComplex(string $message): self
+    {
+        return new self("GraphQL query too complex: $message");
+    }
 }

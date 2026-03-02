@@ -9,6 +9,9 @@ use Pulsar\Api\Api;
 use Pulsar\Extension\SocialSso\Exception\SsoException;
 use SensitiveParameter;
 
+use function is_int;
+use function is_string;
+
 #[Api(since: '1.0.0')]
 final readonly class ProviderConfig
 {
@@ -36,7 +39,8 @@ final readonly class ProviderConfig
     #[NoDiscard]
     public static function fromArray(string $name, array $data): self
     {
-        $jwksUri = isset($data['jwks_uri']) ? (string) $data['jwks_uri'] : null;
+        /** @var string|null $jwksUri */
+        $jwksUri = isset($data['jwks_uri']) && is_string($data['jwks_uri']) ? $data['jwks_uri'] : null;
 
         if ($jwksUri !== null && !str_starts_with($jwksUri, 'https://')) {
             throw SsoException::invalidIdToken('jwksUri must use HTTPS');
@@ -45,19 +49,36 @@ final readonly class ProviderConfig
         $scopes = (array) ($data['scopes'] ?? []);
         /** @var list<string> $scopes */
 
+        /** @var string $type */
+        $type = isset($data['type']) && is_string($data['type']) ? $data['type'] : 'oidc';
+        /** @var string $clientId */
+        $clientId = isset($data['client_id']) && is_string($data['client_id']) ? $data['client_id'] : '';
+        /** @var string $clientSecret */
+        $clientSecret = isset($data['client_secret']) && is_string($data['client_secret']) ? $data['client_secret'] : '';
+        /** @var string $authUrl */
+        $authUrl = isset($data['authorization_url']) && is_string($data['authorization_url']) ? $data['authorization_url'] : '';
+        /** @var string $tokenUrl */
+        $tokenUrl = isset($data['token_url']) && is_string($data['token_url']) ? $data['token_url'] : '';
+        /** @var string|null $issuer */
+        $issuer = isset($data['issuer']) && is_string($data['issuer']) ? $data['issuer'] : null;
+        /** @var string|null $redirectUri */
+        $redirectUri = isset($data['redirect_uri']) && is_string($data['redirect_uri']) ? $data['redirect_uri'] : null;
+        /** @var int $clockSkew */
+        $clockSkew = isset($data['max_clock_skew_seconds']) && is_int($data['max_clock_skew_seconds']) ? $data['max_clock_skew_seconds'] : 120;
+
         return new self(
             name: $name,
-            type: (string) ($data['type'] ?? 'oidc'),
-            clientId: (string) ($data['client_id'] ?? ''),
-            clientSecret: (string) ($data['client_secret'] ?? ''),
-            authorizationUrl: (string) ($data['authorization_url'] ?? ''),
-            tokenUrl: (string) ($data['token_url'] ?? ''),
+            type: $type,
+            clientId: $clientId,
+            clientSecret: $clientSecret,
+            authorizationUrl: $authUrl,
+            tokenUrl: $tokenUrl,
             jwksUri: $jwksUri,
-            issuer: isset($data['issuer']) ? (string) $data['issuer'] : null,
+            issuer: $issuer,
             scopes: $scopes,
-            redirectUri: isset($data['redirect_uri']) ? (string) $data['redirect_uri'] : null,
+            redirectUri: $redirectUri,
             allowUnverifiedIdToken: (bool) ($data['allow_unverified_id_token'] ?? false),
-            maxClockSkewSeconds: (int) ($data['max_clock_skew_seconds'] ?? 120),
+            maxClockSkewSeconds: $clockSkew,
         );
     }
 

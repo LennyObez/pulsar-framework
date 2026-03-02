@@ -7,7 +7,7 @@ namespace Pulsar\Extension\Forum\Domain;
 use Pulsar\Api\Api;
 
 /**
- * Thread content type — categorizes the purpose of a discussion thread.
+ * Thread content type: categorizes the purpose of a discussion thread.
  */
 #[Api(since: '1.0.0')]
 enum ThreadType: string

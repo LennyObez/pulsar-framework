@@ -9,11 +9,13 @@ use Pulsar\Api\Internal;
 use Pulsar\Auth\Authorization\GateInterface;
 use Pulsar\Auth\Identity\IdentityInterface;
 use Pulsar\Extension\Forum\Config\ForumConfig;
+use Pulsar\Extension\Forum\Content\ForumBodyPolicy;
 use Pulsar\Extension\Forum\Content\MarkdownRendererInterface;
 use Pulsar\Extension\Forum\Exception\ForumException;
 use Pulsar\Extension\Forum\Post\Post;
 use Pulsar\Extension\Forum\Post\PostRepositoryInterface;
 use Pulsar\Extension\Forum\Service\ForumServiceInterface;
+use Pulsar\Extension\Forum\Thread\ThreadRepositoryInterface;
 use Pulsar\Http\Message\Response;
 
 use function array_map;
@@ -26,19 +28,21 @@ use function min;
 /**
  * Public REST API controller for forum posts.
  */
-#[Internal(reason: 'Forum REST API controller — implementation detail')]
+#[Internal(reason: 'Forum REST API controller; implementation detail')]
 final readonly class PostApiController
 {
     public function __construct(
         private PostRepositoryInterface $postRepository,
         private ForumServiceInterface $forumService,
         private MarkdownRendererInterface $markdown,
+        private ForumBodyPolicy $bodyPolicy,
         private ForumConfig $config,
+        private ThreadRepositoryInterface $threadRepository,
         private ?GateInterface $gate = null,
     ) {}
 
     /**
-     * GET /api/v1/forum/threads/{threadId}/posts — List posts in a thread.
+     * GET /api/v1/forum/threads/{threadId}/posts: List posts in a thread.
      */
     public function index(ServerRequestInterface $request, string $threadId): Response
     {
@@ -56,7 +60,7 @@ final readonly class PostApiController
     }
 
     /**
-     * POST /api/v1/forum/threads/{threadId}/posts — Create a new post.
+     * POST /api/v1/forum/threads/{threadId}/posts: Create a new post.
      */
     public function create(ServerRequestInterface $request, string $threadId): Response
     {
@@ -94,7 +98,7 @@ final readonly class PostApiController
                 threadId: $threadId,
                 authorId: $identity->id(),
                 body: $rawBody,
-                bodyHtml: $this->markdown->render($rawBody),
+                bodyHtml: $this->bodyPolicy->sanitize($this->markdown->render($rawBody)),
                 ipHash: $ipHash,
                 userAgentHash: $userAgentHash,
                 tenantId: $tenantId,
@@ -108,7 +112,7 @@ final readonly class PostApiController
     }
 
     /**
-     * GET /api/v1/forum/posts/{id} — Show a single post.
+     * GET /api/v1/forum/posts/{id}: Show a single post.
      */
     public function show(ServerRequestInterface $request, string $id): Response
     {
@@ -122,7 +126,7 @@ final readonly class PostApiController
     }
 
     /**
-     * PUT /api/v1/forum/posts/{id} — Edit a post.
+     * PUT /api/v1/forum/posts/{id}: Edit a post.
      */
     public function update(ServerRequestInterface $request, string $id): Response
     {
@@ -150,7 +154,7 @@ final readonly class PostApiController
         $isModerator = $this->gate !== null && $this->gate->allows($identity, 'forum.moderate');
 
         try {
-            $post = $this->forumService->editPost($id, $rawBody, $this->markdown->render($rawBody), $identity->id(), $isModerator);
+            $post = $this->forumService->editPost($id, $rawBody, $this->bodyPolicy->sanitize($this->markdown->render($rawBody)), $identity->id(), $isModerator);
 
             return Response::json(['data' => self::serializePost($post)]);
         } catch (ForumException $e) {
@@ -159,7 +163,7 @@ final readonly class PostApiController
     }
 
     /**
-     * DELETE /api/v1/forum/posts/{id} — Soft delete a post.
+     * DELETE /api/v1/forum/posts/{id}: Soft delete a post.
      */
     public function delete(ServerRequestInterface $request, string $id): Response
     {
@@ -179,7 +183,7 @@ final readonly class PostApiController
         }
 
         try {
-            $this->forumService->deletePost($id);
+            $this->forumService->deletePost($id, $identity->id());
 
             return Response::json(['data' => ['id' => $id, 'status' => 'deleted']]);
         } catch (ForumException $e) {
@@ -188,11 +192,13 @@ final readonly class PostApiController
     }
 
     /**
-     * POST /api/v1/forum/posts/{id}/accept — Mark a post as the accepted solution.
+     * POST /api/v1/forum/posts/{id}/accept: Mark a post as the accepted solution.
+     *
+     * Only the thread author may accept a solution.
      */
     public function accept(ServerRequestInterface $request, string $id): Response
     {
-        $this->requireIdentity($request);
+        $identity = $this->requireIdentity($request);
 
         $post = $this->postRepository->findById($id);
 
@@ -200,13 +206,23 @@ final readonly class PostApiController
             return Response::json(['error' => 'Post not found', 'status' => 404], 404);
         }
 
+        $thread = $this->threadRepository->findById($post->threadId);
+
+        if ($thread === null) {
+            return Response::json(['error' => 'Thread not found', 'status' => 404], 404);
+        }
+
+        if ($thread->authorId !== $identity->id()) {
+            return Response::json(['error' => 'Forbidden', 'status' => 403], 403);
+        }
+
         try {
-            $thread = $this->forumService->acceptSolution($post->threadId, $id);
+            $solvedThread = $this->forumService->acceptSolution($thread->id, $id);
 
             return Response::json([
                 'data' => [
-                    'thread_id' => $thread->id,
-                    'solved_post_id' => $thread->solvedPostId,
+                    'thread_id' => $solvedThread->id,
+                    'solved_post_id' => $solvedThread->solvedPostId,
                     'status' => 'accepted',
                 ],
             ]);

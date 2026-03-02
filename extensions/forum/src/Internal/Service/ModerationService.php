@@ -25,7 +25,7 @@ use Pulsar\Extension\Forum\Service\ModerationServiceInterface;
 use Pulsar\Extension\Forum\Support\UuidGenerator;
 
 /**
- * Moderation service — reporting, review, and user ban management.
+ * Moderation service; reporting, review, and user ban management.
  */
 #[Internal(reason: 'Use ModerationServiceInterface for public API')]
 final readonly class ModerationService implements ModerationServiceInterface

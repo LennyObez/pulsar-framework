@@ -26,7 +26,7 @@ final class PostVoteTest extends TestCase
         self::assertSame('user-1', $vote->userId);
         self::assertSame('post-1', $vote->postId);
         self::assertSame(VoteDirection::Up, $vote->value);
-        self::assertNotNull($vote->createdAt);
+        self::assertEqualsWithDelta(time(), $vote->createdAt->getTimestamp(), 2);
     }
 
     #[Test]

@@ -17,7 +17,7 @@ use Pulsar\View\Engine\TemplateEngineInterface;
  * Displays the current forum configuration. Settings are read-only via
  * the HTTP layer; changes are applied via the config file (config/forum.php).
  */
-#[Internal(reason: 'Forum admin controller — implementation detail')]
+#[Internal(reason: 'Forum admin controller; implementation detail')]
 final readonly class SettingsController
 {
     use RendersAdminView;
@@ -29,7 +29,7 @@ final readonly class SettingsController
     ) {}
 
     /**
-     * GET /admin/forum/settings — View forum settings.
+     * GET /admin/forum/settings: View forum settings.
      */
     public function index(ServerRequestInterface $request): Response
     {

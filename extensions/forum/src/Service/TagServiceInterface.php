@@ -8,7 +8,7 @@ use Pulsar\Api\Api;
 use Pulsar\Extension\Forum\Tag\Tag;
 
 /**
- * Tag service — CRUD and thread association for forum tags.
+ * Tag service: CRUD and thread association for forum tags.
  */
 #[Api(since: '1.0.0')]
 interface TagServiceInterface

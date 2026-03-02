@@ -12,7 +12,7 @@ use Pulsar\Database\Row;
 use Pulsar\Extension\Forum\Category\Category;
 use Pulsar\Extension\Forum\Category\CategoryRepositoryInterface;
 
-#[Internal(reason: 'Raw-DB repository — use CategoryRepositoryInterface for public API')]
+#[Internal(reason: 'Raw-DB repository; use CategoryRepositoryInterface for public API')]
 final readonly class DbCategoryRepository implements CategoryRepositoryInterface
 {
     private const string SENTINEL_TENANT = '00000000-0000-0000-0000-000000000000';
@@ -46,12 +46,12 @@ final readonly class DbCategoryRepository implements CategoryRepositoryInterface
         SQL;
 
     private const array UPSERT_COLUMNS = [
-        'id', 'tenant_id', 'parent_id', 'slug', 'sort_order',
+        'id', 'tenant_id', 'parent_id', 'name', 'slug', 'sort_order',
         'is_locked', 'created_at', 'updated_at',
     ];
 
     private const array UPSERT_UPDATE = [
-        'parent_id', 'slug', 'sort_order', 'is_locked', 'updated_at',
+        'parent_id', 'name', 'slug', 'sort_order', 'is_locked', 'updated_at',
     ];
 
     private const string SQL_DELETE = <<<'SQL'
@@ -122,6 +122,7 @@ final readonly class DbCategoryRepository implements CategoryRepositoryInterface
             'id' => $category->id,
             'tenant_id' => $category->tenantId,
             'parent_id' => $category->parentId,
+            'name' => $category->slug, // Fallback name from slug; translated names are in forum_category_translations
             'slug' => $category->slug,
             'sort_order' => $category->sortOrder,
             'is_locked' => $category->isLocked,

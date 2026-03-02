@@ -21,7 +21,7 @@ use function is_string;
 /**
  * Controller for user notification preferences management.
  */
-#[Internal(reason: 'Forum controller — implementation detail')]
+#[Internal(reason: 'Forum controller; implementation detail')]
 final readonly class NotificationPreferencesController
 {
     private const array VALID_FREQUENCIES = ['immediate', 'daily', 'weekly'];
@@ -31,7 +31,7 @@ final readonly class NotificationPreferencesController
     ) {}
 
     /**
-     * GET /forum/settings/notifications — List current user's notification preferences.
+     * GET /forum/settings/notifications: List current user's notification preferences.
      */
     public function index(ServerRequestInterface $request): Response
     {
@@ -50,7 +50,7 @@ final readonly class NotificationPreferencesController
     }
 
     /**
-     * PUT /forum/settings/notifications — Batch-update notification preferences.
+     * PUT /forum/settings/notifications: Batch-update notification preferences.
      *
      * Expects a JSON body:
      * ```json

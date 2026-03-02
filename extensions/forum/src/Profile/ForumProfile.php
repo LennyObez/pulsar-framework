@@ -10,7 +10,7 @@ use Pulsar\Extension\Forum\Domain\ReputationLevel;
 use Pulsar\Extension\Forum\Exception\ForumException;
 
 /**
- * Forum profile — per-user forum metadata including reputation, activity counts, and ban state.
+ * Forum profile: per-user forum metadata including reputation, activity counts, and ban state.
  *
  * Linked to the shared auth_users table via userId. Each user has at most
  * one forum profile per tenant.

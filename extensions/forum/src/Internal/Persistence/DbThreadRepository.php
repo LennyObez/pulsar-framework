@@ -19,8 +19,9 @@ use Pulsar\Extension\Forum\Thread\ThreadRepositoryInterface;
 use function ceil;
 use function max;
 use function min;
+use function str_replace;
 
-#[Internal(reason: 'Raw-DB repository — use ThreadRepositoryInterface for public API')]
+#[Internal(reason: 'Raw-DB repository; use ThreadRepositoryInterface for public API')]
 final readonly class DbThreadRepository implements ThreadRepositoryInterface
 {
     private const string SENTINEL_TENANT = '00000000-0000-0000-0000-000000000000';
@@ -448,6 +449,54 @@ final readonly class DbThreadRepository implements ThreadRepositoryInterface
             updatedAt: new DateTimeImmutable($row->getString('updated_at')),
             deletedAt: self::toDateTime($row->getNullableString('deleted_at')),
             version: $row->getInt('version'),
+        );
+    }
+
+    /**
+     * @return PaginationResult<Thread>
+     */
+    public function search(
+        string $query,
+        int $page = 1,
+        int $perPage = 25,
+        ?string $tenantId = null,
+    ): PaginationResult {
+        $effectiveTenant = $tenantId ?? self::SENTINEL_TENANT;
+        $page = max(1, $page);
+        $perPage = min(100, max(1, $perPage));
+        $offset = ($page - 1) * $perPage;
+        $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $query);
+        $likeQuery = '%' . $escaped . '%';
+
+        $countResult = $this->connection->query(
+            <<<'SQL'
+                SELECT COUNT(*) AS cnt FROM forum_threads
+                WHERE tenant_id = :tid AND (title LIKE :q OR body LIKE :q2)
+                SQL,
+            ['tid' => $effectiveTenant, 'q' => $likeQuery, 'q2' => $likeQuery],
+        );
+        $total = $countResult->rows[0]->getInt('cnt');
+
+        $result = $this->connection->query(
+            <<<'SQL'
+                SELECT t.* FROM forum_threads t
+                WHERE t.tenant_id = :tid AND (t.title LIKE :q OR t.body LIKE :q2)
+                ORDER BY t.created_at DESC
+                LIMIT :limit OFFSET :offset
+                SQL,
+            ['tid' => $effectiveTenant, 'q' => $likeQuery, 'q2' => $likeQuery, 'limit' => $perPage, 'offset' => $offset],
+        );
+
+        $items = $result->map(self::hydrate(...));
+        $lastPage = $total > 0 ? (int) ceil($total / $perPage) : 1;
+
+        return new PaginationResult(
+            items: $items,
+            total: $total,
+            hasMore: $page < $lastPage,
+            perPage: $perPage,
+            currentPage: $page,
+            lastPage: $lastPage,
         );
     }
 

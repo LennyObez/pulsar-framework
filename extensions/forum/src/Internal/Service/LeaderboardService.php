@@ -16,7 +16,7 @@ use function max;
 use function min;
 
 /**
- * Leaderboard service — ranks forum users by reputation for various time periods.
+ * Leaderboard service: ranks forum users by reputation for various time periods.
  *
  * For 'all' periods, delegates to ForumProfileRepository::findTopContributors().
  * For 'month' and 'week' periods, queries reputation change data directly

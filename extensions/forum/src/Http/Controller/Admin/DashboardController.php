@@ -19,9 +19,9 @@ use Pulsar\View\Engine\TemplateEngineInterface;
 use function array_map;
 
 /**
- * Admin dashboard controller — overview stats and recent activity.
+ * Admin dashboard controller: overview stats and recent activity.
  */
-#[Internal(reason: 'Forum admin controller — implementation detail')]
+#[Internal(reason: 'Forum admin controller; implementation detail')]
 final readonly class DashboardController
 {
     use RendersAdminView;
@@ -35,7 +35,7 @@ final readonly class DashboardController
     ) {}
 
     /**
-     * GET /admin/forum — Forum dashboard with overview stats.
+     * GET /admin/forum: Forum dashboard with overview stats.
      */
     public function index(ServerRequestInterface $request): Response
     {

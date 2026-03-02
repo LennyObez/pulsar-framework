@@ -26,7 +26,7 @@ final class ThreadVoteTest extends TestCase
         self::assertSame('user-1', $vote->userId);
         self::assertSame('thread-1', $vote->threadId);
         self::assertSame(VoteDirection::Up, $vote->value);
-        self::assertNotNull($vote->createdAt);
+        self::assertEqualsWithDelta(time(), $vote->createdAt->getTimestamp(), 2);
     }
 
     #[Test]

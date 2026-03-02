@@ -12,7 +12,7 @@ use Pulsar\Database\Row;
 use Pulsar\Extension\Forum\Tag\Tag;
 use Pulsar\Extension\Forum\Tag\TagRepositoryInterface;
 
-#[Internal(reason: 'Raw-DB repository — use TagRepositoryInterface for public API')]
+#[Internal(reason: 'Raw-DB repository; use TagRepositoryInterface for public API')]
 final readonly class DbTagRepository implements TagRepositoryInterface
 {
     private const string SQL_FIND_BY_ID = <<<'SQL'
