@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Context;
 
+use Fiber;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -12,6 +13,8 @@ use Pulsar\Context\CorrelationId;
 use Pulsar\Context\Exception\ContextException;
 use Pulsar\Context\RequestContext;
 use Pulsar\Context\RequestContextHolder;
+
+use function str_repeat;
 
 #[CoversClass(RequestContextHolder::class)]
 final class RequestContextHolderTest extends TestCase
@@ -89,10 +92,86 @@ final class RequestContextHolderTest extends TestCase
         self::assertFalse($holder->isAvailable());
     }
 
-    private function createContext(): RequestContext
+    #[Test]
+    public function fibersDoNotShareContext(): void
+    {
+        $holder = new RequestContextHolder();
+        $rootContext = $this->createContext('cc');
+        $holder->set($rootContext);
+
+        $fiberContext = $this->createContext('dd');
+        $observed = null;
+
+        $fiber = new Fiber(function () use ($holder, $fiberContext, &$observed): void {
+            // Fiber starts with no inherited context.
+            $observed = ['initial' => $holder->tryGet()];
+            $holder->set($fiberContext);
+            $observed['fiber_set'] = $holder->tryGet();
+        });
+
+        $fiber->start();
+
+        // After the Fiber returns, the root holder must still hold the root context.
+        self::assertSame($rootContext, $holder->tryGet());
+        self::assertNull($observed['initial']);
+        self::assertSame($fiberContext, $observed['fiber_set']);
+    }
+
+    #[Test]
+    public function clearOnlyAffectsCurrentFiber(): void
+    {
+        $holder = new RequestContextHolder();
+        $rootContext = $this->createContext('cc');
+        $holder->set($rootContext);
+
+        $fiber = new Fiber(function () use ($holder): void {
+            $holder->set($this->createContext('dd'));
+            $holder->clear();
+        });
+
+        $fiber->start();
+
+        // Fiber's clear() must NOT have wiped the root context.
+        self::assertSame($rootContext, $holder->tryGet());
+    }
+
+    #[Test]
+    public function twoFibersSeeIndependentContexts(): void
+    {
+        $holder = new RequestContextHolder();
+        $contextA = $this->createContext('aa');
+        $contextB = $this->createContext('bb');
+
+        $fiberA = new Fiber(function () use ($holder, $contextA): mixed {
+            $holder->set($contextA);
+            Fiber::suspend();
+
+            return $holder->tryGet();
+        });
+
+        $fiberB = new Fiber(function () use ($holder, $contextB): mixed {
+            $holder->set($contextB);
+            Fiber::suspend();
+
+            return $holder->tryGet();
+        });
+
+        $fiberA->start();
+        $fiberB->start();
+        $fiberA->resume();
+        $fiberB->resume();
+
+        // After both Fibers terminate, fetch the values they observed at
+        // their final `tryGet()` call. `Fiber::resume()` returns the next
+        // suspended value, so the actual return value is read via getReturn().
+        self::assertSame($contextA, $fiberA->getReturn());
+        self::assertSame($contextB, $fiberB->getReturn());
+    }
+
+    private function createContext(string $byte = 'aa'): RequestContext
     {
         return new RequestContext(
-            correlationId: CorrelationId::fromString(str_repeat('aa', 16)),
+            correlationId: CorrelationId::fromString(str_repeat($byte, 16)),
             causationId: CausationId::fromString(str_repeat('bb', 16)),
         );
     }
