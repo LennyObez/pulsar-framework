@@ -47,8 +47,8 @@ final class TracingMiddlewareTest extends TestCase
 
             public function handle(ServerRequestInterface $request): ResponseInterface
             {
-                $this->routeContext->pattern = '/users/{id}';
-                $this->routeContext->name = 'users.show';
+                $this->routeContext->setPattern('/users/{id}');
+                $this->routeContext->setName('users.show');
 
                 return Response::text('OK');
             }

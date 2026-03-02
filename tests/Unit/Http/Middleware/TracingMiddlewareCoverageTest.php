@@ -304,7 +304,7 @@ final class TracingMiddlewareCoverageTest extends TestCase
 
             public function handle(\Psr\Http\Message\ServerRequestInterface $request): ResponseInterface
             {
-                $this->rc->pattern = '/items/{id}';
+                $this->rc->setPattern('/items/{id}');
                 // name stays null - label() returns pattern
 
                 return Response::text('OK');

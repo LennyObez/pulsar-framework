@@ -529,8 +529,8 @@ final class Kernel implements KernelInterface
 
         // Populate RouteContext for observability middleware (metrics/tracing)
         if ($this->routeContext !== null) {
-            $this->routeContext->pattern = $matched->route->path;
-            $this->routeContext->name = $matched->getName();
+            $this->routeContext->setPattern($matched->route->path);
+            $this->routeContext->setName($matched->getName());
         }
 
         // Add route parameters to request attributes
