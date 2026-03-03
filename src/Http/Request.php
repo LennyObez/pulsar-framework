@@ -7,17 +7,24 @@ namespace Pulsar\Http;
 use JsonException;
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Http\Exception\BodyTooLargeException;
 use WeakMap;
 
 use function array_diff_key;
 use function array_flip;
 use function array_intersect_key;
 use function array_key_exists;
+use function fclose;
+use function feof;
+use function fopen;
+use function fread;
 use function is_array;
+use function is_int;
 use function is_string;
 use function json_decode;
 use function json_validate;
 use function str_contains;
+use function strlen;
 
 use const JSON_THROW_ON_ERROR;
 
@@ -330,12 +337,34 @@ readonly class Request
     }
 
     /**
+     * Default upper bound on the request body size that `fromGlobals` will
+     * read from `php://input` (8 MiB).
+     *
+     * Without a ceiling, an attacker can post an arbitrarily large body
+     * and exhaust worker memory before the application even begins to
+     * parse the request — a cheap DoS vector. The default matches the
+     * common `post_max_size` ini value of 8 MiB and can be raised or
+     * lowered explicitly per call (F2.8).
+     */
+    public const int DEFAULT_MAX_BODY_BYTES = 8_388_608;
+
+    /**
      * Create a Request from PHP superglobals.
+     *
+     * Reads `php://input` with an explicit upper bound: anything larger
+     * than `$maxBodyBytes` raises `BodyTooLargeException` so the kernel
+     * can reply with 413 Payload Too Large. Pass `0` to disable the cap
+     * (rarely safe — typically only useful for trusted internal jobs).
      *
      * @param array<string, mixed>|null $get
      * @param array<string, mixed>|null $post
      * @param array<string, mixed>|null $cookies
      * @param array<string, mixed>|null $server
+     * @param int $maxBodyBytes Upper bound on the body size; 0 disables.
+     *
+     * @throws BodyTooLargeException When `php://input` exceeds the cap or
+     *                               when the declared `Content-Length`
+     *                               already exceeds the cap.
      */
     #[NoDiscard]
     public static function fromGlobals(
@@ -343,6 +372,7 @@ readonly class Request
         ?array $post = null,
         ?array $cookies = null,
         ?array $server = null,
+        int $maxBodyBytes = self::DEFAULT_MAX_BODY_BYTES,
     ): self {
         /** @var array<string, mixed> $serverData */
         $serverData = $server ?? $_SERVER;
@@ -376,7 +406,16 @@ readonly class Request
         $path = rawurldecode($path);
 
         $headers = HeaderBag::fromServer($serverData);
-        $body = file_get_contents('php://input') ?: '';
+
+        $declaredLength = self::resolveContentLength($serverData);
+
+        if ($maxBodyBytes > 0 && $declaredLength > $maxBodyBytes) {
+            // Fail fast on Content-Length: no point allocating a stream
+            // for a body the application is going to refuse anyway.
+            throw new BodyTooLargeException($maxBodyBytes, $declaredLength);
+        }
+
+        $body = self::readBoundedBody('php://input', $maxBodyBytes, $declaredLength);
 
         return new self(
             method: $method,
@@ -391,5 +430,87 @@ readonly class Request
             server: $serverData,
             protocolVersion: $protocolVersion,
         );
+    }
+
+    /**
+     * @param array<string, mixed> $serverData
+     */
+    private static function resolveContentLength(array $serverData): int
+    {
+        $raw = $serverData['CONTENT_LENGTH'] ?? $serverData['HTTP_CONTENT_LENGTH'] ?? null;
+
+        if (is_string($raw) && ctype_digit($raw)) {
+            return (int) $raw;
+        }
+
+        if (is_int($raw) && $raw >= 0) {
+            return $raw;
+        }
+
+        return 0;
+    }
+
+    /**
+     * Read a request-body stream, refusing anything past `$maxBodyBytes`.
+     *
+     * Streaming the body in chunks (rather than `file_get_contents`) keeps
+     * the failure mode loud: as soon as the cumulative read exceeds the
+     * cap we raise — we never allocate space for the over-sized payload.
+     *
+     * Visible to tests so the bounded-read logic can be exercised against
+     * arbitrary stream URLs (a temp file, a memory stream, …) without
+     * relying on `php://input` being writable from PHP test code.
+     *
+     * @throws BodyTooLargeException
+     *
+     * @internal
+     */
+    public static function readBoundedBody(string $stream, int $maxBodyBytes, int $declaredLength): string
+    {
+        $handle = @fopen($stream, 'rb');
+
+        if ($handle === false) {
+            return '';
+        }
+
+        try {
+            if ($maxBodyBytes <= 0) {
+                $body = '';
+
+                while (!feof($handle)) {
+                    $chunk = fread($handle, 8_192);
+                    if ($chunk === false) {
+                        break;
+                    }
+                    $body .= $chunk;
+                }
+
+                return $body;
+            }
+
+            // Read at most $maxBodyBytes + 1 to detect overflow without
+            // allocating the entire over-sized payload.
+            $body = '';
+            $remaining = $maxBodyBytes + 1;
+
+            while ($remaining > 0 && !feof($handle)) {
+                $chunk = fread($handle, $remaining < 8_192 ? $remaining : 8_192);
+
+                if ($chunk === false || $chunk === '') {
+                    break;
+                }
+
+                $body .= $chunk;
+                $remaining = $maxBodyBytes + 1 - strlen($body);
+            }
+
+            if (strlen($body) > $maxBodyBytes) {
+                throw new BodyTooLargeException($maxBodyBytes, $declaredLength);
+            }
+
+            return $body;
+        } finally {
+            fclose($handle);
+        }
     }
 }

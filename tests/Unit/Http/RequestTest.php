@@ -7,9 +7,14 @@ namespace Pulsar\Tests\Unit\Http;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Http\Exception\BodyTooLargeException;
 use Pulsar\Http\HeaderBag;
 use Pulsar\Http\Method;
 use Pulsar\Http\Request;
+
+use function base64_encode;
+use function str_repeat;
+use function strlen;
 
 #[CoversClass(Request::class)]
 #[CoversClass(Method::class)]
@@ -730,6 +735,73 @@ final class RequestTest extends TestCase
 
         self::assertSame(['key' => 'one'], $request1->json());
         self::assertSame(['key' => 'two'], $request2->json());
+    }
+
+    #[Test]
+    public function fromGlobalsRejectsContentLengthExceedingCap(): void
+    {
+        // The Content-Length fast path lets us reject without ever touching
+        // the body stream — no need to fabricate a real over-sized payload.
+        $this->expectException(BodyTooLargeException::class);
+
+        (void) Request::fromGlobals(
+            server: [
+                'REQUEST_METHOD' => 'POST',
+                'REQUEST_URI' => '/upload',
+                'CONTENT_LENGTH' => '20000',
+            ],
+            maxBodyBytes: 1024,
+        );
+    }
+
+    #[Test]
+    public function readBoundedBodyAcceptsBodyAtExactlyTheCap(): void
+    {
+        $body = Request::readBoundedBody($this->dataStream(str_repeat('x', 1024)), 1024, 1024);
+
+        self::assertSame(1024, strlen($body));
+    }
+
+    #[Test]
+    public function readBoundedBodyRejectsBodyOneByteOverTheCap(): void
+    {
+        $this->expectException(BodyTooLargeException::class);
+
+        Request::readBoundedBody($this->dataStream(str_repeat('x', 1025)), 1024, 1025);
+    }
+
+    #[Test]
+    public function readBoundedBodyHandlesZeroLimitAsUnlimited(): void
+    {
+        $body = Request::readBoundedBody($this->dataStream(str_repeat('y', 16_384)), 0, 0);
+
+        self::assertSame(16_384, strlen($body));
+    }
+
+    #[Test]
+    public function readBoundedBodyReturnsEmptyForUnreadableStream(): void
+    {
+        $body = Request::readBoundedBody(
+            '/this/path/does/not/exist/anywhere/' . uniqid(),
+            1024,
+            0,
+        );
+
+        self::assertSame('', $body);
+    }
+
+    /**
+     * Build a `data://` stream URL whose contents are exactly `$contents`.
+     *
+     * `data://` is a static, in-memory stream wrapper: PHP can `fopen` it
+     * like any other file and read it via `fread`, but there is no temp
+     * file to clean up afterwards. That keeps the test hermetic and
+     * sidesteps the `unlink()`-in-tests path-traversal heuristic from the
+     * security scanner — there is simply nothing to delete.
+     */
+    private function dataStream(string $contents): string
+    {
+        return 'data://application/octet-stream;base64,' . base64_encode($contents);
     }
 }
 
