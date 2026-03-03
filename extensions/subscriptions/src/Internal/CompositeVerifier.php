@@ -16,7 +16,7 @@ use Pulsar\Extension\Subscriptions\VerificationResult;
  * Routes Google requests to GooglePlayVerifier and Apple requests
  * to AppStoreVerifier. Returns an invalid result for unknown stores.
  */
-#[Internal(reason: 'Routing verifier — use SubscriptionVerifierInterface')]
+#[Internal(reason: 'Routing verifier; use SubscriptionVerifierInterface')]
 final readonly class CompositeVerifier implements SubscriptionVerifierInterface
 {
     public function __construct(

@@ -148,8 +148,9 @@ final readonly class LeagueAuthorizationServer implements AuthorizationServerInt
         }
 
         // Parse and resolve scopes
-        $scopeString = $params['scope'] ?? '';
-        $requestedScopeIds = $scopeString !== '' ? explode(' ', (string) $scopeString) : [];
+        /** @var string $scopeString */
+        $scopeString = isset($params['scope']) && is_string($params['scope']) ? $params['scope'] : '';
+        $requestedScopeIds = $scopeString !== '' ? explode(' ', $scopeString) : [];
         $resolvedScopes = $this->scopeRepository->resolveScopes($requestedScopeIds, 'authorization_code', $clientId);
         $scopeIds = array_map(static fn($s) => $s->id, $resolvedScopes);
 
@@ -157,12 +158,12 @@ final readonly class LeagueAuthorizationServer implements AuthorizationServerInt
         $subjectId = $this->extractSubjectFromRequest($request);
 
         if ($subjectId === null) {
-            // No authenticated user — return 401
+            // No authenticated user; return 401
             throw OAuth2Exception::accessDenied('User authentication required');
         }
 
         if (!$this->consentRepository->hasConsent($subjectId, $clientId, $scopeIds)) {
-            // Consent needed — for now, we auto-deny. A real implementation would
+            // Consent needed; for now, we auto-deny. A real implementation would
             // render a consent screen. The consent flow is out of scope for the
             // authorization server adapter; it is handled by application middleware.
             throw OAuth2Exception::accessDenied('User consent required');
@@ -380,7 +381,7 @@ final readonly class LeagueAuthorizationServer implements AuthorizationServerInt
      *
      * Consumes the token (marking it one-time-used), then revokes it by ID.
      * If the token was already consumed or revoked, consume() returns null
-     * and we cannot identify the token — this is fine per RFC 7009 (best-effort).
+     * and we cannot identify the token: this is fine per RFC 7009 (best-effort).
      */
     private function tryRevokeRefreshToken(string $tokenValue, OAuthClient $client): bool
     {

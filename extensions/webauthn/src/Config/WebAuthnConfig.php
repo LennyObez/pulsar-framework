@@ -6,6 +6,9 @@ namespace Pulsar\Extension\WebAuthn\Config;
 
 use Pulsar\Api\Api;
 
+use function is_int;
+use function is_string;
+
 /**
  * Configuration for the WebAuthn extension.
  */
@@ -38,17 +41,42 @@ final readonly class WebAuthnConfig
      */
     public static function fromArray(array $data): self
     {
+        $str = static fn(mixed $v, string $default): string => is_string($v) ? $v : $default;
+        $int = static fn(mixed $v, int $default): int => is_int($v) ? $v : $default;
+
+        /** @var string $rpName */
+        $rpName = $str($data['rp_name'] ?? $data['rpName'] ?? null, '');
+        /** @var string $rpId */
+        $rpId = $str($data['rp_id'] ?? $data['rpId'] ?? null, '');
+        /** @var string $origin */
+        $origin = $str($data['origin'] ?? null, '');
+        /** @var string $uv */
+        $uv = $str($data['user_verification'] ?? $data['userVerification'] ?? null, 'preferred');
+        /** @var string $attestation */
+        $attestation = $str($data['attestation'] ?? null, 'none');
+        /** @var int $challengeTtl */
+        $challengeTtl = $int($data['challenge_ttl_seconds'] ?? $data['challengeTtlSeconds'] ?? null, 300);
+        /** @var int $timeout */
+        $timeout = $int($data['timeout'] ?? null, 60000);
+
+        $allowedFormats = ['none', 'packed'];
+        if (isset($data['allowed_formats']) || isset($data['allowedFormats'])) {
+            $rawFormats = (array) ($data['allowed_formats'] ?? $data['allowedFormats'] ?? []);
+            $allowedFormats = array_values(array_map(
+                static fn(mixed $v): string => is_string($v) ? $v : '',
+                $rawFormats,
+            ));
+        }
+
         return new self(
-            rpName: (string) ($data['rp_name'] ?? $data['rpName'] ?? ''),
-            rpId: (string) ($data['rp_id'] ?? $data['rpId'] ?? ''),
-            origin: (string) ($data['origin'] ?? ''),
-            userVerification: (string) ($data['user_verification'] ?? $data['userVerification'] ?? 'preferred'),
-            attestation: (string) ($data['attestation'] ?? 'none'),
-            allowedFormats: isset($data['allowed_formats']) || isset($data['allowedFormats'])
-                ? array_values(array_map(strval(...), (array) ($data['allowed_formats'] ?? $data['allowedFormats'])))
-                : ['none', 'packed'],
-            challengeTtlSeconds: (int) ($data['challenge_ttl_seconds'] ?? $data['challengeTtlSeconds'] ?? 300),
-            timeout: (int) ($data['timeout'] ?? 60000),
+            rpName: $rpName,
+            rpId: $rpId,
+            origin: $origin,
+            userVerification: $uv,
+            attestation: $attestation,
+            allowedFormats: $allowedFormats,
+            challengeTtlSeconds: $challengeTtl,
+            timeout: $timeout,
         );
     }
 }

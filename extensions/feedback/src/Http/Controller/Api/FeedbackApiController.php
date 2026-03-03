@@ -27,7 +27,7 @@ use function min;
  * Users can submit feedback, list their own submissions, and view
  * individual feedback items they own.
  */
-#[Internal(reason: 'Feedback HTTP controller — implementation detail')]
+#[Internal(reason: 'Feedback HTTP controller; implementation detail')]
 final readonly class FeedbackApiController
 {
     public function __construct(
@@ -36,7 +36,7 @@ final readonly class FeedbackApiController
     ) {}
 
     /**
-     * POST /api/v1/feedback — Submit new feedback.
+     * POST /api/v1/feedback: Submit new feedback.
      *
      * Request body:
      * - category: string (required, valid FeedbackCategory value)
@@ -104,7 +104,7 @@ final readonly class FeedbackApiController
     }
 
     /**
-     * GET /api/v1/feedback — List the authenticated user's feedback, paginated.
+     * GET /api/v1/feedback: List the authenticated user's feedback, paginated.
      */
     public function index(ServerRequestInterface $request): Response
     {
@@ -134,7 +134,7 @@ final readonly class FeedbackApiController
     }
 
     /**
-     * GET /api/v1/feedback/{id} — Show a single feedback item (own only).
+     * GET /api/v1/feedback/{id}: Show a single feedback item (own only).
      */
     public function show(ServerRequestInterface $request, string $id): Response
     {

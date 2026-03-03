@@ -2,8 +2,11 @@
   "name": "pulsar/feedback",
   "version": "1.0.0",
   "description": "User feedback collection with admin triage and GitHub integration",
-  "type": "extension",
+  "type": "extension_class",
   "namespace": "Pulsar\\Extension\\Feedback",
-  "extension": "Pulsar\\Extension\\Feedback\\FeedbackExtension",
-  "providers": ["Pulsar\\Extension\\Feedback\\FeedbackServiceProvider"]
+  "extension_class": "Pulsar\\Extension\\Feedback\\FeedbackExtension",
+  "providers": ["Pulsar\\Extension\\Feedback\\FeedbackServiceProvider"],
+  "provides": {
+    "migrations": ["src/Migration"]
+  }
 }

@@ -15,7 +15,7 @@ use Pulsar\Extension\WebAuthn\Exception\WebAuthnException;
  * Initially supports `none` and `packed` formats, with additional formats
  * (fido-u2f, android-key, apple) added based on demand.
  *
- * Attestation format policy is configurable — disallowed formats are rejected.
+ * Attestation format policy is configurable; disallowed formats are rejected.
  */
 #[Api(since: '1.0.0')]
 interface AttestationVerifierInterface

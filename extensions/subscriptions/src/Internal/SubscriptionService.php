@@ -22,10 +22,10 @@ use function hash;
  *
  * Coordinates between the store verifiers, the subscription repository,
  * and webhook event storage. All public methods are idempotent and safe
- * for concurrent access — duplicate purchase tokens resolve to the same
+ * for concurrent access: duplicate purchase tokens resolve to the same
  * subscription via the purchase_token_hash unique constraint.
  */
-#[Internal(reason: 'Orchestration service — wire via SubscriptionsServiceProvider')]
+#[Internal(reason: 'Orchestration service; wire via SubscriptionsServiceProvider')]
 final readonly class SubscriptionService
 {
     public function __construct(

@@ -41,5 +41,57 @@ final class PaymentsConfigTest extends TestCase
         self::assertSame('/webhooks/payments', $config->webhook->path);
         self::assertSame(86400, $config->idempotency->ttlSeconds);
         self::assertSame('memory', $config->idempotency->store);
+        self::assertSame([], $config->countryPaymentMethods);
+    }
+
+    #[Test]
+    public function fromArrayParsesCountryPaymentMethods(): void
+    {
+        $config = PaymentsConfig::fromArray([
+            'country_payment_methods' => [
+                'BE' => ['card', 'bancontact', 'payconiq'],
+                'NL' => ['card', 'ideal'],
+            ],
+        ]);
+
+        self::assertSame(['card', 'bancontact', 'payconiq'], $config->countryPaymentMethods['BE']);
+        self::assertSame(['card', 'ideal'], $config->countryPaymentMethods['NL']);
+    }
+
+    #[Test]
+    public function fromArrayCountryPaymentMethodsDefaultsToEmpty(): void
+    {
+        $config = PaymentsConfig::fromArray([]);
+
+        self::assertSame([], $config->countryPaymentMethods);
+    }
+
+    #[Test]
+    public function fromArrayIgnoresInvalidCountryPaymentMethodEntries(): void
+    {
+        $config = PaymentsConfig::fromArray([
+            'country_payment_methods' => [
+                'BE' => ['card', 42, null, 'bancontact'],
+                123 => ['card'],  // non-string key
+                'NL' => 'not-an-array',  // non-array value
+            ],
+        ]);
+
+        // Only valid entries survive
+        self::assertArrayHasKey('BE', $config->countryPaymentMethods);
+        self::assertSame(['card', 'bancontact'], $config->countryPaymentMethods['BE']);
+        self::assertArrayNotHasKey('NL', $config->countryPaymentMethods);
+    }
+
+    #[Test]
+    public function fromArrayCountryCodesAreUppercased(): void
+    {
+        $config = PaymentsConfig::fromArray([
+            'country_payment_methods' => [
+                'be' => ['card', 'bancontact'],
+            ],
+        ]);
+
+        self::assertArrayHasKey('BE', $config->countryPaymentMethods);
     }
 }

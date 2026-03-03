@@ -14,7 +14,7 @@ use Pulsar\Extension\Payments\Exception\PaymentProviderException;
 use Pulsar\Idempotency\Exception\IdempotencyException;
 
 /**
- * Payment gateway port — orchestrates provider calls with cross-cutting concerns.
+ * Payment gateway port: orchestrates provider calls with cross-cutting concerns.
  */
 #[Api(since: '1.0.0')]
 interface PaymentGatewayInterface

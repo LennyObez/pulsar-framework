@@ -14,7 +14,7 @@ use function random_bytes;
  * Immutable entity representing a user feedback submission.
  *
  * Supports lifecycle transitions (status updates, admin responses, GitHub
- * issue linking) via clone-with semantics — each mutation returns a new
+ * issue linking) via clone-with semantics: each mutation returns a new
  * instance, preserving the original.
  */
 #[Api(since: '1.0.0')]
@@ -22,7 +22,7 @@ final readonly class Feedback
 {
     /**
      * @param string $id Hex-encoded random identifier (32 chars)
-     * @param string $userId FK auth_users — the submitting user
+     * @param string $userId FK auth_users: the submitting user
      * @param FeedbackCategory $category Classification of the feedback
      * @param string $description User-provided feedback text (10-5000 chars)
      * @param array<string, mixed> $context Arbitrary contextual data (page URL, browser, etc.)

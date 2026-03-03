@@ -5,51 +5,55 @@ declare(strict_types=1);
 namespace Pulsar\Extension\OAuth2\Oidc;
 
 use Pulsar\Api\Internal;
-use Pulsar\Security\Crypto\KeyRingInterface;
 use RuntimeException;
 
 use function base64_encode;
 use function count;
+use function in_array;
+use function is_array;
+use function is_int;
+use function is_string;
 use function json_encode;
 use function rtrim;
 use function str_replace;
+use function time;
 
 use const JSON_THROW_ON_ERROR;
 use const JSON_UNESCAPED_SLASHES;
+use const OPENSSL_ALGO_SHA256;
 
 /**
- * JWT signing using Keyring-managed keys.
+ * JWT signing using RS256 (RSA + SHA-256) for OIDC ID tokens.
  *
- * Signs JWT payloads using HMAC-SHA256 with Keyring-managed symmetric keys.
- * For RSA/EC signing with the JOSE library, this class would be replaced
- * by a JoseLibrarySigner adapter. This implementation provides a working
- * baseline using symmetric signing.
+ * OIDC ID tokens MUST use asymmetric signing. This implementation uses
+ * RS256 via OpenSSL, which is the mandatory-to-implement algorithm per
+ * the OpenID Connect Core specification (Section 3.1.3.7).
  */
-#[Internal(reason: 'Implementation detail — adapter for JOSE library')]
+#[Internal(reason: 'Implementation detail; adapter for JOSE library')]
 final readonly class JwtSigner
 {
     public function __construct(
-        private KeyRingInterface $keyRing,
+        private OidcConfig $config,
     ) {}
 
     /**
-     * Sign claims as a JWT.
+     * Sign claims as a JWT using RS256.
      *
      * @param array<string, mixed> $claims The JWT payload claims
-     * @param string $keyId The Keyring key identifier for signing
+     * @param string $keyId The key identifier for the JWT header (kid)
      * @return string The signed JWT string (header.payload.signature)
      */
     public function sign(array $claims, string $keyId): string
     {
-        $key = $this->keyRing->keyFor($keyId);
+        $privateKey = openssl_pkey_get_private($this->config->signingKey);
 
-        if ($key === null) {
-            throw new RuntimeException("Signing key '$keyId' not found in Keyring");
+        if ($privateKey === false) {
+            throw new RuntimeException('Invalid RSA private key in OidcConfig::signingKey');
         }
 
         $header = [
             'typ' => 'JWT',
-            'alg' => 'HS256',
+            'alg' => 'RS256',
             'kid' => $keyId,
         ];
 
@@ -57,19 +61,25 @@ final readonly class JwtSigner
         $payloadEncoded = self::base64UrlEncode(json_encode($claims, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES));
 
         $signingInput = $headerEncoded . '.' . $payloadEncoded;
-        $signature = hash_hmac('sha256', $signingInput, $key, true);
 
+        $signature = '';
+        $signed = openssl_sign($signingInput, $signature, $privateKey, OPENSSL_ALGO_SHA256);
+
+        if (!$signed) {
+            throw new RuntimeException('RSA signing failed');
+        }
+
+        /** @var string $signature */
         return $signingInput . '.' . self::base64UrlEncode($signature);
     }
 
     /**
-     * Verify a JWT signature.
+     * Verify a JWT signature using the public key derived from the configured private key.
      *
      * @param string $jwt The JWT string to verify
-     * @param string $keyId The Keyring key identifier for verification
      * @return array<string, mixed>|null The decoded claims, or null if verification fails
      */
-    public function verify(string $jwt, string $keyId): ?array
+    public function verify(string $jwt): ?array
     {
         $parts = explode('.', $jwt);
 
@@ -79,17 +89,30 @@ final readonly class JwtSigner
 
         [$headerEncoded, $payloadEncoded, $signatureEncoded] = $parts;
 
-        $key = $this->keyRing->keyFor($keyId);
+        $privateKey = openssl_pkey_get_private($this->config->signingKey);
 
-        if ($key === null) {
+        if ($privateKey === false) {
+            return null;
+        }
+
+        $keyDetails = openssl_pkey_get_details($privateKey);
+
+        if ($keyDetails === false || !isset($keyDetails['key']) || !is_string($keyDetails['key'])) {
+            return null;
+        }
+
+        $publicKey = openssl_pkey_get_public($keyDetails['key']);
+
+        if ($publicKey === false) {
             return null;
         }
 
         $signingInput = $headerEncoded . '.' . $payloadEncoded;
-        $expectedSignature = hash_hmac('sha256', $signingInput, $key, true);
         $actualSignature = self::base64UrlDecode($signatureEncoded);
 
-        if (!hash_equals($expectedSignature, $actualSignature)) {
+        $valid = openssl_verify($signingInput, $actualSignature, $publicKey, OPENSSL_ALGO_SHA256);
+
+        if ($valid !== 1) {
             return null;
         }
 
@@ -97,7 +120,69 @@ final readonly class JwtSigner
         /** @var array<string, mixed>|null $claims */
         $claims = json_decode($payload, true);
 
+        if ($claims === null) {
+            return null;
+        }
+
+        // Validate standard JWT claims
+        if (!$this->validateClaims($claims)) {
+            return null;
+        }
+
         return $claims;
+    }
+
+    /**
+     * Validate standard JWT claims: exp, nbf, iss, aud.
+     *
+     * @param array<string, mixed> $claims
+     */
+    private function validateClaims(array $claims): bool
+    {
+        $now = time();
+
+        // Reject expired tokens
+        if (isset($claims['exp'])) {
+            $exp = is_int($claims['exp']) ? $claims['exp'] : (int) $claims['exp'];
+
+            if ($now >= $exp) {
+                return false;
+            }
+        }
+
+        // Reject tokens not yet valid
+        if (isset($claims['nbf'])) {
+            $nbf = is_int($claims['nbf']) ? $claims['nbf'] : (int) $claims['nbf'];
+
+            if ($now < $nbf) {
+                return false;
+            }
+        }
+
+        // Validate issuer matches configured issuer
+        if ($this->config->issuer !== '' && isset($claims['iss'])) {
+            if (!is_string($claims['iss']) || $claims['iss'] !== $this->config->issuer) {
+                return false;
+            }
+        }
+
+        // Validate audience contains the configured issuer (OIDC self-issued tokens)
+        if ($this->config->issuer !== '' && isset($claims['aud'])) {
+            $aud = $claims['aud'];
+
+            if (is_string($aud)) {
+                if ($aud !== $this->config->issuer) {
+                    return false;
+                }
+            } elseif (is_array($aud)) {
+                /** @var list<string> $aud */
+                if (!in_array($this->config->issuer, $aud, true)) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     private static function base64UrlEncode(string $data): string

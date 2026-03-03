@@ -35,7 +35,7 @@ use function sodium_crypto_secretbox_keygen;
  *  - SubscriptionController, WebhookController
  *  - SubscriptionTokenGuard middleware
  */
-#[Internal(reason: 'Subscription service wiring — use interfaces for public API')]
+#[Internal(reason: 'Subscription service wiring; use interfaces for public API')]
 final class SubscriptionsServiceProvider implements ServiceProviderInterface
 {
     #[Override]
@@ -93,11 +93,11 @@ final class SubscriptionsServiceProvider implements ServiceProviderInterface
             new WebhookController($subscriptionService, $encryptionKey),
         );
 
-        // Token guard middleware (uses a no-op resolver by default — override in app)
+        // Token guard middleware (uses empty key by default; override in app)
         if (!$container->has(SubscriptionTokenGuard::class)) {
             $container->instance(
                 SubscriptionTokenGuard::class,
-                new SubscriptionTokenGuard(static fn(string $token): ?string => null),
+                new SubscriptionTokenGuard(''),
             );
         }
     }

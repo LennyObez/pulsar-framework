@@ -71,7 +71,7 @@ final class OAuth2ServiceProvider implements ServiceProviderInterface
             );
         });
 
-        // Repositories (in-memory defaults — applications override with persistent implementations)
+        // Repositories (in-memory defaults; applications override with persistent implementations)
         $container->bind(ClientRepositoryInterface::class, InMemoryClientRepository::class);
         $container->bind(ScopeRepositoryInterface::class, InMemoryScopeRepository::class);
         $container->bind(ConsentRepositoryInterface::class, InMemoryConsentRepository::class);
@@ -81,10 +81,10 @@ final class OAuth2ServiceProvider implements ServiceProviderInterface
 
         // JWT signing
         $container->bind(JwtSigner::class, static function () use ($container): JwtSigner {
-            /** @var KeyRingInterface $keyRing */
-            $keyRing = $container->get(KeyRingInterface::class);
+            /** @var OidcConfig $oidcConfig */
+            $oidcConfig = $container->get(OidcConfig::class);
 
-            return new JwtSigner($keyRing);
+            return new JwtSigner($oidcConfig);
         });
 
         // Grant handlers
