@@ -27,6 +27,7 @@ use Pulsar\Extension\Payments\Internal\Support\ParametersHasher;
 use Pulsar\Idempotency\Exception\IdempotencyException;
 use Pulsar\Idempotency\IdempotencyClaimStatus;
 use Pulsar\Idempotency\IdempotencyStoreInterface;
+use Pulsar\Idempotency\SignedIdempotencyEnvelope;
 use Pulsar\Observability\Metrics\LabelSet;
 use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Security\Audit\AuditEvent;
@@ -55,6 +56,11 @@ final readonly class PaymentGateway implements PaymentGatewayInterface
         private LoggerInterface $logger,
         private ClockInterface $clock,
         private PaymentsConfig $config,
+        // F21.3: signs/verifies idempotency-cache payloads with a
+        // master-key-derived HMAC. Required: a compromised store row
+        // must not be replay-able as a forged response, so the gateway
+        // refuses to construct without an envelope signer.
+        private SignedIdempotencyEnvelope $envelope,
         private ?CreatePaymentIntentHandler $createHandler = null,
         // F13.9: when a `TenantContext` is wired, the gateway stamps the
         // tenant id on every audit record so a multi-tenant audit trail
@@ -86,6 +92,7 @@ final readonly class PaymentGateway implements PaymentGatewayInterface
             $this->logger,
             $this->clock,
             $this->config,
+            $this->envelope,
         );
 
         return $handler->execute(
@@ -128,7 +135,7 @@ final readonly class PaymentGateway implements PaymentGatewayInterface
             /** @var string $payload */
             $payload = $claim->resultPayload;
 
-            return $this->deserializeCharge($payload);
+            return $this->deserializeCharge($idempotencyKey, $payload);
         }
 
         try {
@@ -182,7 +189,7 @@ final readonly class PaymentGateway implements PaymentGatewayInterface
             /** @var string $payload */
             $payload = $claim->resultPayload;
 
-            return $this->deserializeIntent($payload);
+            return $this->deserializeIntent($idempotencyKey, $payload);
         }
 
         try {
@@ -238,7 +245,7 @@ final readonly class PaymentGateway implements PaymentGatewayInterface
             /** @var string $payload */
             $payload = $claim->resultPayload;
 
-            return $this->deserializeRefund($payload);
+            return $this->deserializeRefund($idempotencyKey, $payload);
         }
 
         try {
@@ -333,8 +340,12 @@ final readonly class PaymentGateway implements PaymentGatewayInterface
             'data' => $this->serializeResult($result),
         ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
 
+        // F21.3: bind the payload to the idempotency key with a HMAC
+        // envelope so a tampered store row cannot replay a forged result.
+        $sealed = $this->envelope->seal($key, $payload);
+
         try {
-            $this->idempotencyStore->commit($key, $payload);
+            $this->idempotencyStore->commit($key, $sealed);
         } catch (Throwable $e) {
             $this->logger->critical('Failed to commit idempotency result', [
                 'key' => $key,
@@ -387,8 +398,10 @@ final readonly class PaymentGateway implements PaymentGatewayInterface
         };
     }
 
-    private function deserializeIntent(string $payload): PaymentIntent
+    private function deserializeIntent(string $idempotencyKey, string $sealed): PaymentIntent
     {
+        $payload = $this->envelope->open($idempotencyKey, $sealed);
+
         /** @var array{data: array{id: string, amount: int, currency: string, status: string, provider: string, idempotency_key: string, created_at: int, metadata?: array<string, mixed>}} $envelope */
         $envelope = json_decode($payload, true, flags: JSON_THROW_ON_ERROR);
         $data = $envelope['data'];
@@ -407,8 +420,10 @@ final readonly class PaymentGateway implements PaymentGatewayInterface
         );
     }
 
-    private function deserializeCharge(string $payload): Charge
+    private function deserializeCharge(string $idempotencyKey, string $sealed): Charge
     {
+        $payload = $this->envelope->open($idempotencyKey, $sealed);
+
         /** @var array{data: array{id: string, intent_id: string, amount: int, currency: string, status: string, provider: string, created_at: int, failure_reason: string|null, metadata?: array<string, mixed>}} $envelope */
         $envelope = json_decode($payload, true, flags: JSON_THROW_ON_ERROR);
         $data = $envelope['data'];
@@ -428,8 +443,10 @@ final readonly class PaymentGateway implements PaymentGatewayInterface
         );
     }
 
-    private function deserializeRefund(string $payload): Refund
+    private function deserializeRefund(string $idempotencyKey, string $sealed): Refund
     {
+        $payload = $this->envelope->open($idempotencyKey, $sealed);
+
         /** @var array{data: array{id: string, charge_id: string, amount: int, currency: string, status: string, provider: string, created_at: int, failure_reason: string|null, metadata?: array<string, mixed>}} $envelope */
         $envelope = json_decode($payload, true, flags: JSON_THROW_ON_ERROR);
         $data = $envelope['data'];

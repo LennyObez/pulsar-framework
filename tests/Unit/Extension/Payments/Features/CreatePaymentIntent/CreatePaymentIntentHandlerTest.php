@@ -33,11 +33,16 @@ use Pulsar\Extension\Payments\Internal\Infrastructure\Provider\NullProvider;
 use Pulsar\Extension\Payments\Internal\Infrastructure\Provider\SimulatorProvider;
 use Pulsar\Idempotency\Exception\IdempotencyException;
 use Pulsar\Idempotency\InMemoryIdempotencyStore;
+use Pulsar\Idempotency\SignedIdempotencyEnvelope;
 use Pulsar\Observability\Metrics\LabelSet;
 use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Security\Audit\AuditEntry;
 use Pulsar\Security\Audit\AuditLogger;
 use Pulsar\Security\Audit\AuditSinkInterface;
+use Pulsar\Security\Crypto\MasterKey;
+
+use function random_bytes;
+use function sodium_bin2hex;
 
 #[CoversClass(CreatePaymentIntentHandler::class)]
 final class CreatePaymentIntentHandlerTest extends TestCase
@@ -45,12 +50,16 @@ final class CreatePaymentIntentHandlerTest extends TestCase
     private FixedClock $clock;
     private MetricRegistry $metricRegistry;
     private InMemoryIdempotencyStore $idempotencyStore;
+    private SignedIdempotencyEnvelope $envelope;
 
     protected function setUp(): void
     {
         $this->clock = new FixedClock(new DateTimeImmutable('2025-01-01T00:00:00Z'));
         $this->metricRegistry = new MetricRegistry();
         $this->idempotencyStore = new InMemoryIdempotencyStore();
+        $this->envelope = new SignedIdempotencyEnvelope(
+            MasterKey::fromHex(sodium_bin2hex(random_bytes(32))),
+        );
     }
 
     #[Test]
@@ -198,6 +207,7 @@ final class CreatePaymentIntentHandlerTest extends TestCase
             logger: new NullLogger(),
             clock: $this->clock,
             config: $this->createConfig(),
+            envelope: $this->envelope,
         );
     }
 
