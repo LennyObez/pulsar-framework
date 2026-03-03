@@ -90,11 +90,26 @@ final readonly class CorsMiddleware implements MiddlewareInterface
 
     private function addCorsHeaders(ResponseInterface $response, string $origin): ResponseInterface
     {
-        // Even when wildcard is configured, echo the actual origin so
-        // shared caches do not pollute responses across origins. Caches
-        // see different `Access-Control-Allow-Origin` per origin and
-        // honor the `Vary: Origin` directive below.
-        $response = $response->withHeader('Access-Control-Allow-Origin', $origin);
+        $isPublicWildcard = in_array('*', $this->config->allowedOrigins, true);
+
+        // Public wildcard mode (`allowedOrigins: ['*']`) — emit the literal
+        // `*` so shared caches can serve one cached response to every
+        // origin. The constructor rules out `*` + `allowCredentials`, so
+        // there is no risk of echoing a credentialed response to a
+        // mismatched origin. `Vary: Origin` is intentionally omitted in
+        // this mode because the response is the same for every origin.
+        //
+        // Per-origin allowlist mode — echo the actual request origin and
+        // add `Vary: Origin` so an upstream cache honours per-origin
+        // scoping (without it one origin's response would leak across,
+        // CWE-942).
+        if ($isPublicWildcard) {
+            $response = $response->withHeader('Access-Control-Allow-Origin', '*');
+        } else {
+            $response = $response
+                ->withHeader('Access-Control-Allow-Origin', $origin)
+                ->withAddedHeader('Vary', 'Origin');
+        }
 
         if ($this->config->allowCredentials) {
             $response = $response->withHeader('Access-Control-Allow-Credentials', 'true');
@@ -107,10 +122,6 @@ final readonly class CorsMiddleware implements MiddlewareInterface
             );
         }
 
-        // Vary: Origin is mandatory whenever Access-Control-Allow-Origin
-        // is computed from the request. Without it, an upstream cache
-        // would happily serve one origin's response to another origin
-        // (HIGH-5 / CWE-942).
-        return $response->withAddedHeader('Vary', 'Origin');
+        return $response;
     }
 }
