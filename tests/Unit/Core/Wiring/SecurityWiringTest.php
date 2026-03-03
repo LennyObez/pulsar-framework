@@ -191,6 +191,44 @@ final class SecurityWiringTest extends TestCase
         self::assertCount(1, $apiMiddleware);
     }
 
+    #[Test]
+    public function wirePipesSecurityHeadersMiddlewareGlobally(): void
+    {
+        // F9.1: SecurityHeadersMiddleware must be in the global pipeline so
+        // every response — including routes that do not opt into the
+        // `web` / `api` middleware groups (diagnostics endpoints, ad-hoc
+        // JSON APIs, error pages) — carries the baseline security headers.
+        $container = new Container();
+        $container->instance(Randomizer::class, new Randomizer());
+        $router = new Router();
+        $middleware = new MiddlewarePipeline($container);
+        $middlewareRegistry = new MiddlewareRegistry();
+
+        $configManager = $this->createConfigManager();
+        $configManager->load();
+
+        $wiring = new SecurityWiring();
+        $wiring->wire($container, $configManager, $middleware, $middlewareRegistry, $router);
+
+        // Send a request through the pipeline with a no-op handler and
+        // verify the response received the SecurityHeadersMiddleware
+        // baseline. This is a behavioural assertion — independent of how
+        // many middlewares the pipeline holds.
+        $handler = new class implements \Psr\Http\Server\RequestHandlerInterface {
+            public function handle(\Psr\Http\Message\ServerRequestInterface $request): \Psr\Http\Message\ResponseInterface
+            {
+                return new \Pulsar\Http\Message\Response();
+            }
+        };
+
+        $request = new \Pulsar\Http\Message\ServerRequest(method: 'GET', uri: '/no-group');
+        $response = $middleware->process($request, $handler);
+
+        self::assertSame('nosniff', $response->getHeaderLine('X-Content-Type-Options'));
+        self::assertSame('DENY', $response->getHeaderLine('X-Frame-Options'));
+        self::assertNotSame('', $response->getHeaderLine('Content-Security-Policy'));
+    }
+
     private function createConfigManager(?string $masterKeyHex = null, string $sessionHandler = 'file'): ConfigManager
     {
         $configPath = sys_get_temp_dir() . '/pulsar_security_wiring_' . bin2hex(random_bytes(4));
