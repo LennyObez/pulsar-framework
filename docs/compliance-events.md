@@ -1,4 +1,4 @@
-# Compliance Events
+# Compliance events
 
 ## Overview
 

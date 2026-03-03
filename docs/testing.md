@@ -315,7 +315,7 @@ final class FullRequestLifecycleTest extends TestCase
 
 Key patterns:
 
-- No mocks -- real kernel, real router, real container
+- No mocks: real kernel, real router, real container
 - Full HTTP lifecycle: kernel boot, route registration, request handling, response verification
 - Tests cover status codes, response bodies, and headers
 
@@ -658,7 +658,7 @@ class OrderServiceTest extends TestCase
 }
 ```
 
-Fakes are automatically reset after each test — no manual cleanup needed. All fakes are scoped to the test instance (no shared static state), making them parallel-safe.
+Fakes are automatically reset after each test: no manual cleanup needed. All fakes are scoped to the test instance (no shared static state), making them parallel-safe.
 
 ### Fakes
 

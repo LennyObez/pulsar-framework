@@ -61,23 +61,50 @@ final readonly class DashboardController
 }
 ```
 
-Templates use the `.pulsar.php` extension. A render call to `'dashboard.index'` resolves to `resources/views/dashboard/index.pulsar.php` (dot notation maps to directory separators).
+Templates use the `.pulse.php` extension. A render call to `'dashboard.index'` resolves to `resources/views/dashboard/index.pulse.php` (dot notation maps to directory separators).
 
 ### Template file structure
 
 ```
 resources/views/
   layouts/
-    app.pulsar.php
+    app.pulse.php
   dashboard/
-    index.pulsar.php
+    index.pulse.php
   partials/
-    header.pulsar.php
-    footer.pulsar.php
+    header.pulse.php
+    footer.pulse.php
   components/
-    alert.pulsar.php
-    card.pulsar.php
+    alert.pulse.php
+    card.pulse.php
 ```
+
+### Template name resolution
+
+Template names use dot notation. Each dot becomes a directory separator, and the engine appends `.pulse.php` automatically. The engine searches the directories listed in `template_paths` (from `config/view.php`) in order, returning the first match.
+
+| Template name        | Resolved file path                             |
+| -------------------- | ---------------------------------------------- |
+| `dashboard.index`    | `resources/views/dashboard/index.pulse.php`    |
+| `layouts.app`        | `resources/views/layouts/app.pulse.php`        |
+| `theme.layouts.main` | `resources/views/theme/layouts/main.pulse.php` |
+| `partials.header`    | `resources/views/partials/header.pulse.php`    |
+| `components.card`    | `resources/views/components/card.pulse.php`    |
+
+If a template name contains a namespace prefix with `::` (e.g., `cms::admin.layout`), the prefix is stripped before resolution. Extensions use this convention, but it resolves against the same `template_paths` directories.
+
+To make project templates resolvable, ensure your `config/view.php` includes the project's `resources/views` directory:
+
+```php
+return [
+    'template_paths' => [
+        'resources/views',
+    ],
+    // ...
+];
+```
+
+The engine throws a `ViewException` if the template cannot be found in any configured path.
 
 ## Template syntax
 
@@ -170,7 +197,7 @@ Template comments are stripped entirely from compiled output:
 Define a layout with `@yield` placeholders:
 
 ```html
-{{-- layouts/app.pulsar.php --}}
+{{-- layouts/app.pulse.php --}}
 <!doctype html>
 <html lang="en">
   <head>
@@ -190,7 +217,7 @@ Define a layout with `@yield` placeholders:
 Extend the layout and fill sections:
 
 ```html
-{{-- dashboard/index.pulsar.php --}} @extends('layouts.app') @section('title') Dashboard @endsection
+{{-- dashboard/index.pulse.php --}} @extends('layouts.app') @section('title') Dashboard @endsection
 @section('content')
 <h1>Welcome, {{ $user->name }}</h1>
 <p>You have {{ $notifications }} new notifications.</p>
@@ -220,7 +247,7 @@ Include another template inline with optional scoped data:
 Define reusable components with named slots:
 
 ```html
-{{-- components/card.pulsar.php --}}
+{{-- components/card.pulse.php --}}
 <div class="card">
   <div class="card-header">@yield('header')</div>
   <div class="card-body">@yield('body')</div>
@@ -310,16 +337,63 @@ Renders: `<input type="hidden" name="_method" value="DELETE">`.
 
 ### Internationalization
 
-#### @i18n
+#### @t (preferred) / @i18n
 
-Outputs a translated string (HTML-escaped):
+Outputs a translated string (HTML-escaped). Use `@t()` as the primary translation directive:
 
 ```html
-<h1>@i18n('messages.welcome')</h1>
-<p>@i18n('messages.greeting', ['name' => $user->name])</p>
+<h1>@t('messages.welcome')</h1>
+<p>@t('messages.greeting', ['name' => $user->name])</p>
 ```
 
-Integrates with the `__()` translation helper from the i18n module.
+`@i18n()` is an alias that works identically but `@t()` is the recommended form used throughout the framework's templates and extensions. Both integrate with the `__()` translation helper from the i18n module.
+
+#### Translation key format
+
+Translation keys use dot notation for nesting. The dots represent nested array keys in your language files, not translation domains:
+
+```html
+@t('navigation.home') {{-- Key: navigation.home --}} @t('errors.validation.required') {{-- Key:
+errors.validation.required --}}
+```
+
+These keys correspond to nested arrays in your language files:
+
+```php
+// resources/lang/en/messages.php
+return [
+    'navigation' => [
+        'home' => 'Home',
+        'about' => 'About',
+    ],
+    'errors' => [
+        'validation' => [
+            'required' => 'This field is required.',
+        ],
+    ],
+];
+```
+
+#### Translation domains
+
+The `@t()` directive uses the default `messages` domain. To use a different domain, pass it as the fourth argument to the `__()` helper in PHP code or use the translator directly in a controller:
+
+```php
+// In a controller, using the __() helper with an explicit domain:
+$label = __('field.name', [], null, 'forms');
+```
+
+Domains map to separate language files. The `messages` domain loads from `resources/lang/{locale}/messages.php`, while a `forms` domain loads from `resources/lang/{locale}/forms.php`.
+
+#### Passing parameters
+
+Use the second argument to pass interpolation parameters:
+
+```html
+@t('greeting', ['name' => $user->name])
+```
+
+Parameters are formatted using ICU MessageFormat when the message formatter is configured, or simple `{name}` replacement otherwise.
 
 ### Inline PHP
 
@@ -461,7 +535,7 @@ Options:
 | --------- | ----- | -------------------------------------- |
 | `--force` | `-f`  | Recompile all templates even if cached |
 
-The command scans all configured `template_paths` for `.pulsar.php` files, compiles them, and writes the artifacts to the `cache_path` directory. Deploy this directory as a build artifact.
+The command scans all configured `template_paths` for `.pulse.php` files, compiles them, and writes the artifacts to the `cache_path` directory. Deploy this directory as a build artifact.
 
 Output example:
 

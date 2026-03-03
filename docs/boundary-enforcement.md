@@ -289,7 +289,7 @@ if ($config->isDebug()) {
     $guard = new BoundaryGuard(
         inner: $container,
         logger: $logger,
-        throwOnViolation: false, // Log only (default) — set true for strict mode
+        throwOnViolation: false, // Log only (default): set true for strict mode
     );
     // Use $guard as the container for downstream consumers
 }

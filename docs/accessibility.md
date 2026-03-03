@@ -166,7 +166,7 @@ echo $live->polite('status-message');
 // With initial content
 echo $live->polite('status-message', 'Form saved successfully.');
 
-// Assertive announcement (interrupts current speech — use sparingly)
+// Assertive announcement (interrupts current speech, use sparingly)
 echo $live->assertive('error-alert');
 // <div id="error-alert" aria-live="assertive" aria-atomic="true"></div>
 
@@ -200,23 +200,23 @@ use Pulsar\Extension\Accessibility\Helper\FocusManager;
 
 $focus = new FocusManager();
 
-// Focus trap — keeps focus within a container (for modals, dialogs)
+// Focus trap, keeps focus within a container (for modals, dialogs)
 echo '<div ' . $focus->trapAttributes('modal-1') . '>';
 // <div data-focus-trap="modal-1" tabindex="-1">
 
-// Focus restore — returns focus to trigger element when container closes
+// Focus restore, returns focus to trigger element when container closes
 echo '<button ' . $focus->restoreFocusAttributes() . '>';
 // <button data-focus-restore="true">
 
-// Skip-to — programmatic focus jump to a target element
+// Skip-to, programmatic focus jump to a target element
 echo '<a ' . $focus->skipToAttributes('search-results') . '>';
 // <a data-skip-to="search-results">
 
-// Auto-focus — focus this element when its container becomes visible
+// Auto-focus, focus this element when its container becomes visible
 echo '<input ' . $focus->autofocusAttributes() . '>';
 // <input data-focus-auto="true">
 
-// Roving tabindex — arrow key navigation within a group (tab panels, toolbars)
+// Roving tabindex, arrow key navigation within a group (tab panels, toolbars)
 echo '<button ' . $focus->rovingtabAttributes('toolbar-1') . '>';
 // <button data-roving-tab="toolbar-1" tabindex="-1">
 ```
@@ -281,7 +281,7 @@ use Pulsar\Extension\Accessibility\Validator\FormLabelValidator;
 
 $validator = new FormLabelValidator();
 
-// This will produce a violation — input has no label
+// This will produce a violation, input has no label
 $violations = $validator->validate('<input type="text" name="email">');
 
 // These are all valid and produce no violations:
@@ -308,19 +308,19 @@ use Pulsar\Extension\Accessibility\Validator\AltTextValidator;
 
 $validator = new AltTextValidator();
 
-// Error — missing alt attribute
+// Error, missing alt attribute
 $validator->validate('<img src="photo.jpg">');
 
-// Warning — generic alt text
+// Warning, generic alt text
 $validator->validate('<img src="photo.jpg" alt="image">');
 
-// Valid — descriptive alt text
+// Valid, descriptive alt text
 $validator->validate('<img src="team.jpg" alt="Engineering team at the 2025 company retreat">');
 
-// Valid — decorative image
+// Valid, decorative image
 $validator->validate('<img src="divider.png" alt="">');
 
-// Valid — presentational image
+// Valid, presentational image
 $validator->validate('<img src="bg.png" role="presentation">');
 ```
 
@@ -352,7 +352,7 @@ $html = <<<'HTML'
 HTML;
 
 $violations = $validator->validate($html);
-// No violations — landmarks are properly labeled
+// No violations, landmarks are properly labeled
 ```
 
 ### Running all validators together

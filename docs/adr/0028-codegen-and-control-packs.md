@@ -10,10 +10,10 @@ Pulsar targets regulated, mission-critical domains (banking, healthcare, legal).
 
 Existing PHP frameworks offer code generation (Symfony MakerBundle, Laravel generators) but lack:
 
-1. **Security-first generation** — no directory traversal protection, no overwrite safeguards, no path allowlisting.
-2. **Domain-specific starter kits** — no starter templates for regulated domains with honest compliance framing.
-3. **Safe template rendering** — many use eval() or unconstrained string interpolation for code generation.
-4. **Schema-aware generation** — few offer diff-based migration generation from entity snapshots.
+1. **Security-first generation**: no directory traversal protection, no overwrite safeguards, no path allowlisting.
+2. **Domain-specific starter kits**: no starter templates for regulated domains with honest compliance framing.
+3. **Safe template rendering**: many use eval() or unconstrained string interpolation for code generation.
+4. **Schema-aware generation**: few offer diff-based migration generation from entity snapshots.
 
 Pulsar needs a codegen engine that is safe, deterministic, and extensible, paired with a control pack system for regulated domain scaffolding.
 
@@ -73,15 +73,15 @@ public function generate(EntityDefinition $entity, GeneratorConfig $config): Gen
 
 ### Control pack system
 
-Control packs are domain-specific starter kits stored in `resources/packs/{name}/`. Each pack contains:
+Scaffolding packs are domain-specific starter kits stored in `resources/packs/{name}/`. Each pack contains:
 
-- `pack.json` — Manifest DTO (`PackManifest`) with name, description, version, required Pulsar version, compliance presets, file mappings, and post-install commands.
-- `config/` — Configuration stubs for the domain (encryption, audit, logging, etc.)
-- `src/` — Entity stubs with `{{project_name}}`, `{{namespace}}`, `{{project_slug}}` placeholders.
-- `tests/` — Test stubs for the entity scaffolds.
-- `docs/setup-guide.md` — Getting started documentation.
-- `CONTROLS.md` — Controls coverage report using "supports controls for" language.
-- `NOT-CERTIFIED.md` — Prominent disclaimer that the pack is not a compliance certification.
+- `pack.json`: Manifest DTO (`PackManifest`) with name, description, version, required Pulsar version, compliance presets, file mappings, and post-install commands.
+- `config/`: Configuration stubs for the domain (encryption, audit, logging, etc.)
+- `src/`: Entity stubs with `{{project_name}}`, `{{namespace}}`, `{{project_slug}}` placeholders.
+- `tests/`: Test stubs for the entity scaffolds.
+- `docs/setup-guide.md`: Getting started documentation.
+- `SCAFFOLDING.md`: Scaffolding coverage report using "supports controls for" language.
+- `NOT-CERTIFIED.md`: Prominent disclaimer that the pack is not a compliance certification.
 
 `PackLoader` discovers and validates packs. `PackInstaller` copies and processes template files with safe variable substitution (str_replace, no eval). Integration via `pulsar new --pack={name}`.
 
@@ -91,7 +91,7 @@ All compliance-related language follows strict framing rules:
 
 - Use "supports controls for", never "ensures compliance with" or "guarantees"
 - NOT-CERTIFIED.md is mandatory and prominent in every pack
-- CONTROLS.md distinguishes framework scaffolding from organizational controls
+- SCAFFOLDING.md distinguishes framework scaffolding from organizational controls
 - "Additional Steps Needed" section lists requirements for actual certification
 - Pack descriptions are honest about what is a scaffold vs. what is production-ready
 
@@ -145,7 +145,7 @@ Rejected. Pack templates are scaffolds intended for the user's project, not fram
 - **PathValidator** eliminates directory traversal and arbitrary file write vulnerabilities in code generation
 - **TemplateRenderer** eliminates code injection via template variables (no eval, no dynamic code execution)
 - **OverwritePolicy** prevents accidental destruction of security-sensitive files (e.g., existing auth configurations)
-- **Control packs** include configuration stubs for encryption-at-rest, audit logging, and access controls — but these are scaffolds, not production implementations
+- **Control packs** include configuration stubs for encryption-at-rest, audit logging, and access controls: but these are scaffolds, not production implementations
 
 ## Performance impact
 

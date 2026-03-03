@@ -39,10 +39,10 @@ Introduce a four-tier trust model with capability-gated proxies for container an
 
 ### Requested vs. effective tier
 
-Extensions declare a `requested_trust_tier` in `pulsar.json` - this is **metadata only**, not a security boundary. The **effective tier** is resolved by the host application via `TrustedExtensionsConfig`:
+Extensions declare a `trust_tier` in `pulsar.json` - this is **metadata only**, not a security boundary. The **effective tier** is resolved by the host application via `TrustedExtensionsConfig`:
 
 ```
-pulsar.json: requested_trust_tier = "verified"
+pulsar.json: trust_tier = "verified"
 Host config:  allowed_tier = "community"
 ───────────────────────────────────────────
 Effective tier = min(requested, allowed) = "community"

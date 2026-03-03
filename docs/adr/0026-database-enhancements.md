@@ -1,4 +1,4 @@
-# ADR-0023: Database Enhancements
+# ADR-0026: Database Enhancements
 
 - **Status**: Accepted
 - **Date**: 2026-02-12
