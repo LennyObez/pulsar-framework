@@ -11,12 +11,39 @@ parameters:
     level: max
     paths:
         - ../../src
-        - ../../extensions/studio/src
+        - ../../extensions/accessibility/src
+        - ../../extensions/admin/src
+        - ../../extensions/ai-governance/src
+        - ../../extensions/analytics/src
+        - ../../extensions/auth/src
+        - ../../extensions/cms/src
+        - ../../extensions/compliance/dora/src
+        - ../../extensions/compliance/eidas/src
+        - ../../extensions/compliance/fhir/src
+        - ../../extensions/compliance/medical-devices/src
+        - ../../extensions/compliance/psd2/src
+        - ../../extensions/compliance/dsa/src
+        - ../../extensions/compliance/data-act/src
+        - ../../extensions/devices/src
+        - ../../extensions/example/src
+        - ../../extensions/feedback/src
+        - ../../extensions/form/src
+        - ../../extensions/forum/src
+        - ../../extensions/graphql/src
+        - ../../extensions/grpc/src
+        - ../../extensions/mcp-server/src
+        - ../../extensions/oauth2/src
+        - ../../extensions/observability-export/src
+        - ../../extensions/observability/src
+        - ../../extensions/opentelemetry/src
+        - ../../extensions/orm/src
         - ../../extensions/payments/src
         - ../../extensions/psr7-bridge/src
-        - ../../extensions/observability-export/src
-        - ../../extensions/opentelemetry/src
-        - ../../extensions/form/src
+        - ../../extensions/releases/src
+        - ../../extensions/social-sso/src
+        - ../../extensions/studio/src
+        - ../../extensions/subscriptions/src
+        - ../../extensions/webauthn/src
         - ../../tests
     excludePaths:
         - ../../vendor
@@ -25,5 +52,7 @@ parameters:
     scanFiles:
         - stubs/AwsSqs.php
         - stubs/GooglePubSub.php
+        - stubs/Grpc.php
+        - stubs/RoadRunner.php
     treatPhpDocTypesAsCertain: false
     reportUnmatchedIgnoredErrors: true

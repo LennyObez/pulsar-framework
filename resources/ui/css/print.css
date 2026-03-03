@@ -171,25 +171,21 @@
    * 7. Hide Interactive / Non-print Elements
    * ---------------------------------------------------------------------- */
 
+  /* Pulsar UI components */
+  .pui-sidebar,
+  .pui-sidebar-nav,
+  .pui-navbar,
+  .pui-toast-container,
+  .pui-modal-backdrop,
+  .pui-tabs__list,
+  .pui-breadcrumbs,
+  .pui-pagination,
+  .pui-dropdown,
+  .pui-tooltip,
+  .pui-skeleton,
+  .pui-progress,
+  /* Generic elements */
   nav,
-  .navbar,
-  .sidebar-nav,
-  .sidebar,
-  .breadcrumbs,
-  .pagination,
-  .tabs,
-  .modal,
-  .dialog,
-  .toast,
-  .tooltip,
-  .dropdown,
-  .menu,
-  .btn,
-  .button,
-  .toggle,
-  .file-upload,
-  .skeleton,
-  .progress,
   button,
   [role='navigation'],
   [role='banner'],
@@ -198,6 +194,14 @@
   .d-print-none,
   .no-print {
     display: none !important;
+  }
+
+  /* Full content area for print */
+  .pui-main,
+  .pui-shell__content {
+    margin: 0;
+    padding: 0;
+    max-width: none;
   }
 
   /* -------------------------------------------------------------------------

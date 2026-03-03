@@ -48,4 +48,20 @@ return [
     |--------------------------------------------------------------------------
     */
     'locale' => 'en',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Enabled Extensions
+    |--------------------------------------------------------------------------
+    |
+    | When set, only extensions whose names appear in this list will be loaded.
+    | If this key is absent or null, all discovered extensions are loaded
+    | (backward compatible default). Extension names use the format defined
+    | in pulsar.json manifests (e.g., 'pulsar/cms', 'pulsar/forum').
+    |
+    | Example:
+    |   'extensions' => ['enabled' => ['pulsar/cms', 'pulsar/analytics']],
+    |
+    */
+    // 'extensions' => ['enabled' => null],
 ];

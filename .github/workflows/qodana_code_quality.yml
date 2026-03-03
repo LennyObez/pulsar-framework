@@ -18,19 +18,19 @@ jobs:
       pull-requests: write
       checks: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
 
-      - uses: shivammathur/setup-php@v2
+      - uses: shivammathur/setup-php@accd6127cb78bee3e8082180cb391013d204ef9f # v2
         with:
           php-version: '8.5'
           extensions: pdo_sqlite, fileinfo, openssl, intl, apcu, pcntl
           coverage: none
 
       - name: 'Qodana Scan'
-        uses: JetBrains/qodana-action@v2025.3.1
+        uses: JetBrains/qodana-action@b65b8d3f9068e0406e0b35d0454fb6b0a7dbb6c4 # v2025.3.1
         with:
           args: --image,jetbrains/qodana-php:2025.3
           pr-mode: false

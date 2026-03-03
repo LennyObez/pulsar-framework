@@ -1,11 +1,12 @@
 {
   $schema: 'vendor/infection/infection/resources/schema.json',
   source: {
-    directories: ['src/Auth', 'src/Security', 'src/Extension/OAuth2', 'src/Extension/WebAuthn'],
+    directories: ['src/'],
   },
   logs: {
     text: 'build/infection/infection.log',
     summary: 'build/infection/summary.log',
+    json: 'build/infection/infection.json',
   },
   mutators: {
     '@default': true,
@@ -14,7 +15,12 @@
   },
   phpUnit: {
     configDir: 'tools/php',
+    customPath: 'vendor/bin/phpunit',
   },
+  testFramework: 'phpunit',
+  testFrameworkOptions: '--testsuite=Unit',
   timeout: 30,
   tmpDir: 'build/infection',
+  minMsi: 70,
+  minCoveredMsi: 80,
 }

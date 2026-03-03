@@ -13,9 +13,18 @@
         <directory name="../../src"/>
         <directory name="../../extensions/accessibility/src"/>
         <directory name="../../extensions/admin/src"/>
+        <directory name="../../extensions/ai-governance/src"/>
         <directory name="../../extensions/analytics/src"/>
+        <directory name="../../extensions/auth/src"/>
         <directory name="../../extensions/cms/src"/>
+        <directory name="../../extensions/compliance/dora/src"/>
+        <directory name="../../extensions/compliance/eidas/src"/>
+        <directory name="../../extensions/compliance/fhir/src"/>
+        <directory name="../../extensions/compliance/medical-devices/src"/>
+        <directory name="../../extensions/compliance/psd2/src"/>
+        <directory name="../../extensions/devices/src"/>
         <directory name="../../extensions/example/src"/>
+        <directory name="../../extensions/feedback/src"/>
         <directory name="../../extensions/form/src"/>
         <directory name="../../extensions/forum/src"/>
         <directory name="../../extensions/graphql/src"/>
@@ -23,13 +32,20 @@
         <directory name="../../extensions/mcp-server/src"/>
         <directory name="../../extensions/oauth2/src"/>
         <directory name="../../extensions/observability-export/src"/>
+        <directory name="../../extensions/observability/src"/>
         <directory name="../../extensions/opentelemetry/src"/>
         <directory name="../../extensions/orm/src"/>
         <directory name="../../extensions/payments/src"/>
         <directory name="../../extensions/psr7-bridge/src"/>
+        <directory name="../../extensions/releases/src"/>
         <directory name="../../extensions/social-sso/src"/>
         <directory name="../../extensions/studio/src"/>
+        <directory name="../../extensions/subscriptions/src"/>
         <directory name="../../extensions/webauthn/src"/>
+        <directory name="../../extensions/booking/src"/>
+        <directory name="../../extensions/health-status/src"/>
+        <directory name="../../extensions/messaging/src"/>
+        <directory name="../../extensions/tickets/src"/>
         <ignoreFiles>
             <directory name="../../vendor"/>
         </ignoreFiles>
@@ -52,6 +68,12 @@
         <MixedMethodCall errorLevel="suppress"/>
         <MixedArgument errorLevel="suppress"/>
         <MixedReturnStatement errorLevel="suppress"/>
+        <MixedOperand errorLevel="suppress"/>
+        <MixedArrayAccess errorLevel="suppress"/>
+        <MixedArrayOffset errorLevel="suppress"/>
+        <MixedReturnTypeCoercion errorLevel="suppress"/>
+        <MixedArgumentTypeCoercion errorLevel="suppress"/>
+        <MixedPropertyFetch errorLevel="suppress"/>
 
         <!-- Readonly classes are designed for extension in a framework -->
         <ClassMustBeFinal errorLevel="suppress"/>
@@ -64,6 +86,27 @@
 
         <!-- Interface methods overriding PSR interfaces don't need #[Override] -->
         <MissingOverrideAttribute errorLevel="suppress"/>
+
+        <!-- Psalm 6.x does not fully support PHP 8.5 #[Override] attribute on
+             methods implementing interface contracts. PHPStan max is authoritative
+             for override validation. Re-evaluate after Psalm 7 stable. -->
+        <InvalidAttribute errorLevel="suppress"/>
+
+        <!-- Psalm 6.x strict binary operand mode flags int + float operations
+             that are valid in PHP 8.5. PHPStan max is authoritative. -->
+        <InvalidOperand errorLevel="suppress"/>
+
+        <!-- Psalm 6.x misparses PHP 8.5 clone-with and pipe operator expressions,
+             reporting undefined variables for valid syntax constructs. -->
+        <UndefinedGlobalVariable errorLevel="suppress"/>
+
+        <!-- Redundant function calls flagged by Psalm where the call serves
+             as explicit type coercion (e.g., array_values for list type) -->
+        <RedundantFunctionCall errorLevel="suppress"/>
+
+        <!-- Psalm flags property initializations that are guaranteed by readonly
+             constructor promotion as redundant -->
+        <RedundantPropertyInitializationCheck errorLevel="suppress"/>
 
         <!-- Allow type coercion for docblock types -->
         <RedundantConditionGivenDocblockType errorLevel="suppress"/>

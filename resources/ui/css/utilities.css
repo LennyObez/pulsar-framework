@@ -810,6 +810,9 @@
 }
 
 /* Font family */
+.font-heading {
+  font-family: var(--font-heading);
+}
 .font-sans {
   font-family: var(--font-sans);
 }
@@ -1154,6 +1157,9 @@
 }
 .shadow-none {
   box-shadow: var(--shadow-none);
+}
+.shadow-glow {
+  box-shadow: var(--shadow-glow);
 }
 
 /* ===========================================================================

@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Legal control pack provides a starting point for legal practice management applications built on Pulsar. It includes entity scaffolds, configuration stubs, and test templates for common legal domain objects.
+The Legal scaffolding pack provides a starting point for legal practice management applications built on Pulsar. It includes entity scaffolds, configuration stubs, and test templates for common legal domain objects.
 
 ## Getting Started
 
@@ -30,7 +30,7 @@ my-legal-app/
       Entity/
         LegalCaseTest.php
         DocumentTest.php
-  CONTROLS.md       # Controls coverage report
+  SCAFFOLDING.md    # Scaffolding coverage report
   NOT-CERTIFIED.md  # Compliance disclaimer
 ```
 
@@ -50,4 +50,4 @@ composer test
 
 ## Next Steps
 
-See `CONTROLS.md` for controls coverage details and `NOT-CERTIFIED.md` for important disclaimers.
+See `SCAFFOLDING.md` for scaffolding coverage details and `NOT-CERTIFIED.md` for important disclaimers.

@@ -2,7 +2,7 @@
 
 ## This Pack Is NOT a Compliance Certification
 
-This control pack provides a **starting point** for building healthcare applications. It is **NOT** certified compliant with any regulation, standard, or framework, including but not limited to:
+This scaffolding pack provides a **starting point** for building healthcare applications. It is **NOT** certified compliant with any regulation, standard, or framework, including but not limited to:
 
 - **HIPAA** (Health Insurance Portability and Accountability Act)
 - **HITECH** (Health Information Technology for Economic and Clinical Health Act)

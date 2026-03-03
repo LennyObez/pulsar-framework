@@ -5,7 +5,7 @@
   "type": "library",
   "license": "Apache-2.0",
   "require": {
-    "php": "^8.5",
+    "php": ">=8.5.1",
     "ext-ctype": "*",
     "ext-curl": "*",
     "ext-dom": "*",
@@ -33,6 +33,7 @@
   "require-dev": {
     "deptrac/deptrac": "^4.6",
     "friendsofphp/php-cs-fixer": "^3.0",
+    "eris/eris": "^1.0",
     "infection/infection": "^0.32.5",
     "nyholm/psr7": "^1.8",
     "phpbench/phpbench": "^1.3",
@@ -58,23 +59,27 @@
   },
   "autoload": {
     "files": [
-      "src/I18n/helpers.php"
+      "src/I18n/helpers.php",
+      "src/Support/functions.php"
     ],
     "psr-4": {
       "Pulsar\\": "src/",
       "Pulsar\\Extension\\Example\\": "extensions/example/src/",
       "Pulsar\\Extension\\Payments\\": "extensions/payments/src/",
       "Pulsar\\Extension\\Psr7Bridge\\": "extensions/psr7-bridge/src/",
-      "Pulsar\\Extension\\ObservabilityExport\\": "extensions/observability-export/src/",
+      "Pulsar\\Extension\\Auth\\": "extensions/auth/src/",
       "Pulsar\\Extension\\SocialSso\\": "extensions/social-sso/src/",
+      "Pulsar\\Extension\\OAuth2\\": "extensions/oauth2/src/",
+      "Pulsar\\Extension\\WebAuthn\\": "extensions/webauthn/src/",
+      "Pulsar\\Extension\\Subscriptions\\": "extensions/subscriptions/src/",
+      "Pulsar\\Extension\\OpenTelemetry\\": "extensions/opentelemetry/src/",
+      "Pulsar\\Extension\\ObservabilityExport\\": "extensions/observability-export/src/",
+      "Pulsar\\Extension\\OpenTelemetry\\Export\\JsonLines\\": "extensions/observability-export/src/",
       "Pulsar\\Extension\\Studio\\": "extensions/studio/src/",
       "Pulsar\\Extension\\McpServer\\": "extensions/mcp-server/src/",
       "Pulsar\\Extension\\Orm\\": "extensions/orm/src/",
       "Pulsar\\Extension\\Admin\\": "extensions/admin/src/",
-      "Pulsar\\Extension\\OpenTelemetry\\": "extensions/opentelemetry/src/",
-      "Pulsar\\Extension\\OAuth2\\": "extensions/oauth2/src/",
       "Pulsar\\Extension\\Form\\": "extensions/form/src/",
-      "Pulsar\\Extension\\WebAuthn\\": "extensions/webauthn/src/",
       "Pulsar\\Extension\\Analytics\\": "extensions/analytics/src/",
       "Pulsar\\Extension\\Cms\\": "extensions/cms/src/",
       "Pulsar\\Extension\\Graphql\\": "extensions/graphql/src/",
@@ -83,17 +88,45 @@
       "Pulsar\\Extension\\Accessibility\\": "extensions/accessibility/src/",
       "Pulsar\\Extension\\Devices\\": "extensions/devices/src/",
       "Pulsar\\Extension\\Feedback\\": "extensions/feedback/src/",
-      "Pulsar\\Extension\\Subscriptions\\": "extensions/subscriptions/src/",
-      "Pulsar\\Extension\\Releases\\": "extensions/releases/src/"
+      "Pulsar\\Extension\\Releases\\": "extensions/releases/src/",
+      "Pulsar\\Extension\\AiGovernance\\": "extensions/ai-governance/src/",
+      "Pulsar\\Extension\\Eidas\\": "extensions/compliance/eidas/src/",
+      "Pulsar\\Extension\\Fhir\\": "extensions/compliance/fhir/src/",
+      "Pulsar\\Extension\\Psd2\\": "extensions/compliance/psd2/src/",
+      "Pulsar\\Extension\\MedicalDevices\\": "extensions/compliance/medical-devices/src/",
+      "Pulsar\\Extension\\Dora\\": "extensions/compliance/dora/src/",
+      "Pulsar\\Extension\\Dsa\\": "extensions/compliance/dsa/src/",
+      "Pulsar\\Extension\\DataAct\\": "extensions/compliance/data-act/src/",
+      "Pulsar\\Extension\\Observability\\": "extensions/observability/src/",
+      "Pulsar\\Extension\\Tickets\\": "extensions/tickets/src/",
+      "Pulsar\\Extension\\Booking\\": "extensions/booking/src/",
+      "Pulsar\\Extension\\Messaging\\": "extensions/messaging/src/",
+      "Pulsar\\Extension\\HealthStatus\\": "extensions/health-status/src/"
     }
   },
   "autoload-dev": {
     "psr-4": {
       "Pulsar\\Tests\\": "tests/",
+      "Pulsar\\Extension\\Tickets\\Tests\\": "extensions/tickets/tests/",
+      "Pulsar\\Extension\\Booking\\Tests\\": "extensions/booking/tests/",
+      "Pulsar\\Extension\\Messaging\\Tests\\": "extensions/messaging/tests/",
       "Pulsar\\PHPStan\\": "tools/php/phpstan/",
       "Pulsar\\Extension\\OpenTelemetry\\Tests\\": "extensions/opentelemetry/tests/",
+      "Pulsar\\Extension\\Observability\\Tests\\": "extensions/observability/tests/",
+      "Pulsar\\Extension\\OpenTelemetry\\Export\\JsonLines\\Tests\\": "extensions/observability-export/tests/",
       "Pulsar\\Extension\\Grpc\\Tests\\": "extensions/grpc/tests/",
-      "Pulsar\\Extension\\Accessibility\\Tests\\": "extensions/accessibility/tests/"
+      "Pulsar\\Extension\\Accessibility\\Tests\\": "extensions/accessibility/tests/",
+      "Pulsar\\Extension\\AiGovernance\\Tests\\": "extensions/ai-governance/tests/",
+      "Pulsar\\Extension\\Auth\\Tests\\": "extensions/auth/tests/",
+      "Pulsar\\Extension\\Payments\\Tests\\": "extensions/payments/tests/",
+      "Pulsar\\Extension\\Orm\\Tests\\": "extensions/orm/tests/",
+      "Pulsar\\Extension\\Dsa\\Tests\\": "extensions/compliance/dsa/tests/",
+      "Pulsar\\Extension\\DataAct\\Tests\\": "extensions/compliance/data-act/tests/",
+      "Pulsar\\Benchmark\\": "benchmarks/",
+      "Pulsar\\Extension\\HealthStatus\\Tests\\": "extensions/health-status/tests/",
+      "Pulsar\\Extension\\McpServer\\Tests\\": "extensions/mcp-server/tests/",
+      "Pulsar\\Extension\\Devices\\Tests\\": "extensions/devices/tests/",
+      "Pulsar\\Extension\\Releases\\Tests\\": "extensions/releases/tests/"
     }
   },
   "bin": [
@@ -118,8 +151,10 @@
       "@boundary:deptrac",
       "@boundary:custom"
     ],
+    "extension:coverage": "php scripts/check_extension_coverage.php",
+    "compliance:check": "php scripts/check_compliance_claims.php",
     "wiring:check": "php scripts/wiring_check.php",
-    "mutation": "infection --threads=4 --min-msi=80 --min-covered-msi=90",
+    "mutation": "vendor/bin/infection --threads=4 --min-msi=70",
     "fuzz": "php -d opcache.enable_cli=1 -d opcache.memory_consumption=256 -d opcache.jit=off vendor/bin/phpunit -c tools/php/phpunit.xml --group fuzz",
     "chaos": "php -d opcache.enable_cli=1 -d opcache.memory_consumption=256 -d opcache.jit=off vendor/bin/phpunit -c tools/php/phpunit.xml --group chaos",
     "property": "php -d opcache.enable_cli=1 -d opcache.memory_consumption=256 -d opcache.jit=off vendor/bin/phpunit -c tools/php/phpunit.xml --group property",

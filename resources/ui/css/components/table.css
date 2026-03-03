@@ -8,22 +8,28 @@
   font-size: var(--text-sm);
 }
 
+/* Charter §7.3: td padding --space-2 --space-4 */
 .pui-table th,
 .pui-table td {
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-2) var(--space-4);
   text-align: start;
   vertical-align: middle;
 }
 
+/* Charter §7.3: sticky header enabled by default */
 .pui-table thead th {
+  font-family: var(--font-sans);
   font-weight: var(--font-semibold);
   font-size: var(--text-xs);
   text-transform: uppercase;
-  letter-spacing: var(--tracking-wide);
+  letter-spacing: 0.04em;
   color: var(--color-text-muted);
   background-color: var(--color-bg-secondary);
   border-block-end: 2px solid var(--table-border);
   white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .pui-table tbody td {
