@@ -25,7 +25,9 @@ use Pulsar\Extension\Payments\Tax\TaxProviderInterface;
 use Pulsar\Extension\Payments\Webhook\WebhookProcessor;
 use Pulsar\Idempotency\IdempotencyStoreInterface;
 use Pulsar\Idempotency\InMemoryIdempotencyStore;
+use Pulsar\Idempotency\SignedIdempotencyEnvelope;
 use Pulsar\Idempotency\TenantAwareIdempotencyStore;
+use Pulsar\Security\Crypto\KeyProviderInterface;
 use Pulsar\Tenancy\TenantContext;
 use Pulsar\Webhook\InMemoryWebhookEventLog;
 use Pulsar\Webhook\WebhookEventLogInterface;
@@ -129,6 +131,15 @@ final class PaymentsServiceProvider implements ServiceProviderInterface
             };
         });
 
+        // F21.3: signs idempotency-cache payloads with a master-key-derived
+        // HMAC so a tampered store row cannot replay as a forged response.
+        $container->bind(SignedIdempotencyEnvelope::class, static function () use ($container): SignedIdempotencyEnvelope {
+            /** @var KeyProviderInterface $keyProvider */
+            $keyProvider = $container->get(KeyProviderInterface::class);
+
+            return new SignedIdempotencyEnvelope($keyProvider);
+        });
+
         // Tax provider
         $container->bind(TaxProviderInterface::class, DefaultTaxProvider::class);
 
@@ -161,6 +172,7 @@ final class PaymentsServiceProvider implements ServiceProviderInterface
             WebhookEventLogInterface::class,
             WebhookVerifierInterface::class,
             TaxProviderInterface::class,
+            SignedIdempotencyEnvelope::class,
             CreatePaymentIntentHandler::class,
             ProcessWebhookHandler::class,
             PaymentGateway::class,

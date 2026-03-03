@@ -48,4 +48,20 @@ final class IdempotencyException extends RuntimeException
             $key,
         ));
     }
+
+    /**
+     * F21.3: a stored idempotency payload failed signature verification.
+     * Always treated as tampering rather than a transient error: a
+     * compromised store (forged row, replayed envelope, key-rotation
+     * mismatch) cannot be safely served back to the caller.
+     */
+    #[NoDiscard]
+    public static function tamperedPayload(string $key, string $reason): self
+    {
+        return new self(sprintf(
+            'Idempotency payload for key "%s" failed integrity check: %s',
+            $key,
+            $reason,
+        ));
+    }
 }
