@@ -308,6 +308,16 @@ final readonly class SecurityWiring implements ServiceWiringInterface
         $headersMiddleware = new SecurityHeadersMiddleware($securityConfig->headers, $trustedProxies);
         $container->instance(SecurityHeadersMiddleware::class, $headersMiddleware);
 
+        // Pipe globally (F9.1): every response — including routes that do
+        // not opt into the `web` / `api` middleware groups — must carry the
+        // X-Content-Type-Options, X-Frame-Options, Referrer-Policy, CSP,
+        // and Cross-Origin baseline. Relying on per-route opt-in left
+        // diagnostics endpoints, JSON APIs declared outside groups, error
+        // pages, and ad-hoc routes exposed with no headers at all. The
+        // middleware is idempotent (it sets `withHeader`, which replaces
+        // existing values) so groups that include it again are a no-op.
+        $middleware->pipe($headersMiddleware);
+
         // Incident Reporter: default to in-memory, override with FileIncidentReporter via config
         if (!$container->has(IncidentReporterInterface::class)) {
             $incidentReporter = new InMemoryIncidentReporter();
