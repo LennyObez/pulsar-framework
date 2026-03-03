@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\AiGovernance\Exception;
 
+use InvalidArgumentException;
 use Pulsar\Api\Api;
-use RuntimeException;
 
 use function implode;
 use function sprintf;
@@ -16,9 +16,16 @@ use function sprintf;
  * Static factories expose the exact failure mode so callers can pattern-match
  * on semantic intent (model not found, deployment gate rejection, invalid
  * state transition) without string-parsing exception messages.
+ *
+ * Extends `InvalidArgumentException` because every failure mode below
+ * represents a caller bug — referencing a model id that does not exist,
+ * attempting an illegal state transition, deploying without satisfying
+ * the configured gates. None of these are runtime failures of the AI
+ * subsystem itself, so consumers handle them like any other PHP
+ * argument-shape exception.
  */
 #[Api(since: '1.0.0')]
-final class AiGovernanceException extends RuntimeException
+final class AiGovernanceException extends InvalidArgumentException
 {
     public static function modelNotFound(string $modelId): self
     {
