@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Pulsar\Database\Portable;
 
+use InvalidArgumentException;
 use Pulsar\Api\Api;
 use Pulsar\Database\Driver;
-use Pulsar\Database\Exception\DatabaseException;
 
 use function implode;
 use function sprintf;
@@ -31,7 +31,13 @@ final class InListBuilder
     public static function compile(Driver $driver, string $column, string $paramName, int $count): string
     {
         if ($count <= 0) {
-            throw DatabaseException::emptyValueList('InListBuilder::compile()');
+            // SQL semantics: `column IN ()` is invalid in every supported
+            // backend. The caller asked for an empty IN-list, so this is
+            // an argument-shape error (caller bug), not a database failure;
+            // PHP's `InvalidArgumentException` is the conventional carrier.
+            throw new InvalidArgumentException(
+                'InListBuilder::compile() requires at least one value to bind into the IN clause.',
+            );
         }
 
         return match ($driver) {
@@ -55,7 +61,11 @@ final class InListBuilder
     public static function expandParams(Driver $driver, string $paramName, array $values): array
     {
         if ($values === []) {
-            throw DatabaseException::emptyValueList('InListBuilder::expandParams()');
+            // Same rationale as `compile()`: the caller passed an empty
+            // value list, which is an argument-shape error.
+            throw new InvalidArgumentException(
+                'InListBuilder::expandParams() requires at least one value to bind into the IN clause.',
+            );
         }
 
         if ($driver === Driver::PostgreSQL) {
