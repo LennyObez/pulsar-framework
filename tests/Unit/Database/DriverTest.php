@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Database\Driver;
+use Pulsar\Database\Exception\InvalidDsnComponentException;
 
 #[CoversClass(Driver::class)]
 final class DriverTest extends TestCase
@@ -108,5 +109,58 @@ final class DriverTest extends TestCase
         $dsn = Driver::SQLite->buildDsn('', 0, '/tmp/test.sqlite', 'utf8');
 
         self::assertSame('sqlite:/tmp/test.sqlite', $dsn);
+    }
+
+    #[Test]
+    public function buildDsnRejectsSemicolonInHost(): void
+    {
+        $this->expectException(InvalidDsnComponentException::class);
+        $this->expectExceptionMessageMatches('/host/');
+
+        Driver::MySQL->buildDsn('attacker.example.com;dbname=evil', 3306, 'app', 'utf8mb4');
+    }
+
+    #[Test]
+    public function buildDsnRejectsEqualsInHost(): void
+    {
+        $this->expectException(InvalidDsnComponentException::class);
+
+        Driver::PostgreSQL->buildDsn('host=evil', 5432, 'app');
+    }
+
+    #[Test]
+    public function buildDsnRejectsSemicolonInDatabase(): void
+    {
+        $this->expectException(InvalidDsnComponentException::class);
+        $this->expectExceptionMessageMatches('/database/');
+
+        Driver::MySQL->buildDsn('localhost', 3306, 'app;charset=evil', 'utf8mb4');
+    }
+
+    #[Test]
+    public function buildDsnRejectsNulInDatabase(): void
+    {
+        $this->expectException(InvalidDsnComponentException::class);
+
+        Driver::MySQL->buildDsn('localhost', 3306, "app\x00malicious", null);
+    }
+
+    #[Test]
+    public function buildDsnRejectsCrlfInCharset(): void
+    {
+        $this->expectException(InvalidDsnComponentException::class);
+
+        Driver::MySQL->buildDsn('localhost', 3306, 'app', "utf8mb4\r\nunix_socket=/tmp/evil");
+    }
+
+    #[Test]
+    public function buildDsnAllowsColonInSqlitePath(): void
+    {
+        // SQLite paths can legitimately contain `:` (Windows drive letters
+        // and the `:memory:` sentinel). Only the structural DSN delimiters
+        // are forbidden.
+        $dsn = Driver::SQLite->buildDsn('', 0, ':memory:', null);
+
+        self::assertSame('sqlite::memory:', $dsn);
     }
 }
