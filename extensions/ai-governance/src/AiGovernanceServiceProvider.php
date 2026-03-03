@@ -8,6 +8,7 @@ use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Container\ContainerInterface;
+use Pulsar\Container\Resolution\TypedServiceResolver;
 use Pulsar\Extensibility\ServiceProviderInterface;
 use Pulsar\Extension\AiGovernance\Config\AiGovernanceConfig;
 use Pulsar\Extension\AiGovernance\Contracts\AiAuditLoggerInterface;
@@ -56,8 +57,12 @@ final class AiGovernanceServiceProvider implements ServiceProviderInterface
                 return new InMemoryModelRegistry();
             }
 
-            /** @var AiModelRegistryInterface */
-            return $container->get($config->registryStore);
+            return TypedServiceResolver::resolve(
+                $container,
+                $config->registryStore,
+                AiModelRegistryInterface::class,
+                'ai_governance.registry_store',
+            );
         });
 
         // Impact Assessment
@@ -82,8 +87,12 @@ final class AiGovernanceServiceProvider implements ServiceProviderInterface
                 return new InMemoryDataGovernanceStore();
             }
 
-            /** @var AiDataGovernanceInterface */
-            return $container->get($config->dataGovernanceStore);
+            return TypedServiceResolver::resolve(
+                $container,
+                $config->dataGovernanceStore,
+                AiDataGovernanceInterface::class,
+                'ai_governance.data_governance_store',
+            );
         });
 
         // Explainability
@@ -95,8 +104,12 @@ final class AiGovernanceServiceProvider implements ServiceProviderInterface
                 return new InMemoryExplainabilityStore();
             }
 
-            /** @var ExplainabilityInterface */
-            return $container->get($config->explainabilityStore);
+            return TypedServiceResolver::resolve(
+                $container,
+                $config->explainabilityStore,
+                ExplainabilityInterface::class,
+                'ai_governance.explainability_store',
+            );
         });
 
         // Lifecycle Manager

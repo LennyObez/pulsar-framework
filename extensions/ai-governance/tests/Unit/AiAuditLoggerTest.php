@@ -7,6 +7,7 @@ namespace Pulsar\Extension\AiGovernance\Tests\Unit;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Extension\AiGovernance\Enum\AiAuditEvent;
 use Pulsar\Extension\AiGovernance\Internal\AiAuditLogger;
@@ -32,7 +33,7 @@ final class AiAuditLoggerTest extends TestCase
             ->with(
                 AuditEvent::SystemEvent,
                 AuditOutcome::Success,
-                null,
+                self::callback(static fn(mixed $actor): bool => $actor instanceof AuditActor && $actor->id === 'system:ai-governance'),
                 'ai.test_action',
                 'test-resource',
                 self::callback(static function (array $metadata): bool {
@@ -81,7 +82,7 @@ final class AiAuditLoggerTest extends TestCase
             ->with(
                 AuditEvent::SystemEvent,
                 AuditOutcome::Success,
-                null,
+                self::callback(static fn(mixed $actor): bool => $actor instanceof AuditActor && $actor->id === 'system:ai-governance'),
                 'ai.invoke',
                 'model-1',
                 self::callback(static function (array $metadata): bool {
@@ -107,7 +108,7 @@ final class AiAuditLoggerTest extends TestCase
             ->with(
                 AuditEvent::SystemEvent,
                 AuditOutcome::Success,
-                null,
+                self::callback(static fn(mixed $actor): bool => $actor instanceof AuditActor && $actor->id === 'system:ai-governance'),
                 'ai.human_override',
                 'decision-42',
                 self::callback(static function (array $metadata): bool {

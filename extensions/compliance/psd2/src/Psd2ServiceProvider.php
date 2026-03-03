@@ -7,6 +7,7 @@ namespace Pulsar\Extension\Psd2;
 use Pulsar\Api\Internal;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Container\ContainerInterface;
+use Pulsar\Container\Resolution\TypedServiceResolver;
 use Pulsar\Extensibility\ServiceProviderInterface;
 use Pulsar\Extension\Psd2\Config\Psd2Config;
 use Pulsar\Extension\Psd2\Contracts\CertificateValidatorInterface;
@@ -51,7 +52,12 @@ final class Psd2ServiceProvider implements ServiceProviderInterface
             /** @var ScaChallengeStoreInterface */
             return match ($config->sca->challengeStore) {
                 'memory' => new InMemoryScaChallengeStore(),
-                default => $container->get($config->sca->challengeStore),
+                default => TypedServiceResolver::resolve(
+                    $container,
+                    $config->sca->challengeStore,
+                    ScaChallengeStoreInterface::class,
+                    'psd2.sca.challenge_store',
+                ),
             };
         });
 
@@ -63,7 +69,12 @@ final class Psd2ServiceProvider implements ServiceProviderInterface
             /** @var VelocityTrackerInterface */
             return match ($config->risk->velocityTracker) {
                 'memory' => new InMemoryVelocityTracker(),
-                default => $container->get($config->risk->velocityTracker),
+                default => TypedServiceResolver::resolve(
+                    $container,
+                    $config->risk->velocityTracker,
+                    VelocityTrackerInterface::class,
+                    'psd2.risk.velocity_tracker',
+                ),
             };
         });
 

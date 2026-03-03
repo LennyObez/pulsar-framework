@@ -7,6 +7,7 @@ namespace Pulsar\Extension\Eidas;
 use Pulsar\Api\Internal;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Container\ContainerInterface;
+use Pulsar\Container\Resolution\TypedServiceResolver;
 use Pulsar\Extensibility\ServiceProviderInterface;
 use Pulsar\Extension\Eidas\Config\EidasConfig;
 use Pulsar\Extension\Eidas\Contracts\DigitalSignatureServiceInterface;
@@ -53,7 +54,12 @@ final class EidasServiceProvider implements ServiceProviderInterface
             /** @var DigitalSignatureServiceInterface */
             return match ($config->signatureService) {
                 'hmac' => new HmacSignatureService(auditLogger: $auditLogger),
-                default => $container->get($config->signatureService),
+                default => TypedServiceResolver::resolve(
+                    $container,
+                    $config->signatureService,
+                    DigitalSignatureServiceInterface::class,
+                    'eidas.signature_service',
+                ),
             };
         });
 
@@ -65,7 +71,12 @@ final class EidasServiceProvider implements ServiceProviderInterface
             /** @var ElectronicSealServiceInterface */
             return match ($config->sealService) {
                 'hmac' => new HmacSealService(),
-                default => $container->get($config->sealService),
+                default => TypedServiceResolver::resolve(
+                    $container,
+                    $config->sealService,
+                    ElectronicSealServiceInterface::class,
+                    'eidas.seal_service',
+                ),
             };
         });
 
@@ -77,7 +88,12 @@ final class EidasServiceProvider implements ServiceProviderInterface
             /** @var TimestampServiceInterface */
             return match ($config->timestampService) {
                 'local' => new LocalTimestampService($config->tsaName),
-                default => $container->get($config->timestampService),
+                default => TypedServiceResolver::resolve(
+                    $container,
+                    $config->timestampService,
+                    TimestampServiceInterface::class,
+                    'eidas.timestamp_service',
+                ),
             };
         });
 
@@ -89,7 +105,12 @@ final class EidasServiceProvider implements ServiceProviderInterface
             /** @var RegisteredDeliveryServiceInterface */
             return match ($config->deliveryService) {
                 'memory' => new InMemoryDeliveryService(),
-                default => $container->get($config->deliveryService),
+                default => TypedServiceResolver::resolve(
+                    $container,
+                    $config->deliveryService,
+                    RegisteredDeliveryServiceInterface::class,
+                    'eidas.delivery_service',
+                ),
             };
         });
     }
