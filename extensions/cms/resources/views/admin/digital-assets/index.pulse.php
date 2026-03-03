@@ -5,7 +5,7 @@
 @section('cms-content')
 <div class="cms-content-list">
     <header class="cms-content-list__header">
-        <h1 class="cms-content-list__title">Digital Assets — {{ $productName ?? 'Product' }}</h1>
+        <h1 class="cms-content-list__title">Digital Assets | {{ $productName ?? 'Product' }}</h1>
         <div class="cms-content-list__actions">
             <a href="/admin/cms/products/{{ $productId }}/edit" class="cms-btn cms-btn--outline">Back to Product</a>
         </div>
@@ -66,19 +66,21 @@
             @endif
 
             @foreach ($assets as $asset)
+                <?php /** @var array{file_name: string, file_size: int, file_hash: string, max_downloads: int} $asset */ ?>
                 <tr class="cms-table__row">
                     <td class="cms-table__td">{{ $asset['file_name'] ?? '' }}</td>
                     <td class="cms-table__td">
                         <?php
+                        /** @var int $__size */
                         $__size = $asset['file_size'] ?? 0;
-                        if ($__size >= 1048576) {
-                            echo htmlspecialchars(number_format($__size / 1048576, 2), ENT_QUOTES, 'UTF-8') . ' MB';
-                        } elseif ($__size >= 1024) {
-                            echo htmlspecialchars(number_format($__size / 1024, 1), ENT_QUOTES, 'UTF-8') . ' KB';
-                        } else {
-                            echo htmlspecialchars((string) $__size, ENT_QUOTES, 'UTF-8') . ' B';
-                        }
-                        ?>
+                if ($__size >= 1048576) {
+                    echo htmlspecialchars(number_format($__size / 1048576, 2), ENT_QUOTES, 'UTF-8') . ' MB';
+                } elseif ($__size >= 1024) {
+                    echo htmlspecialchars(number_format($__size / 1024, 1), ENT_QUOTES, 'UTF-8') . ' KB';
+                } else {
+                    echo htmlspecialchars((string) $__size, ENT_QUOTES, 'UTF-8') . ' B';
+                }
+                ?>
                     </td>
                     <td class="cms-table__td" title="{{ $asset['file_hash'] ?? '' }}">
                         <code>{{ substr($asset['file_hash'] ?? '', 0, 12) }}...</code>

@@ -5,7 +5,7 @@
 @section('cms-content')
 <div class="cms-livecss-editor" data-cms-livecss-editor>
     <header class="cms-content-list__header">
-        <h1 class="cms-content-list__title">Live CSS Editor — {{ $theme['display_name'] ?? 'Theme' }}</h1>
+        <h1 class="cms-content-list__title">Live CSS Editor | {{ $theme['display_name'] ?? 'Theme' }}</h1>
     </header>
 
     <form method="POST" action="/admin/cms/live-css/save" class="cms-livecss-editor__form" data-cms-livecss-form>
@@ -17,25 +17,28 @@
             <div class="cms-livecss-editor__panel" style="flex: 1; overflow-y: auto;">
                 {{-- Token Groups --}}
                 @if (!empty($tokens))
+                    <?php /** @var list<array{name: string, group: string, type: string, default: string, label?: string}> $tokens */ /** @var array{token_overrides: array<string, string>} $currentOverrides */ ?>
                     <fieldset class="cms-fieldset">
                         <legend class="cms-fieldset__legend">Theme Tokens</legend>
                         <?php
+                        /** @var array<string, list<array{name: string, group: string, type: string, default: string, label?: string}>> $__groups */
                         $__groups = [];
-                        foreach ($tokens as $token) {
-                            $group = $token['group'] ?? 'General';
-                            $__groups[$group][] = $token;
-                        }
-                        ?>
+                    foreach ($tokens as $token) {
+                        $group = $token['group'] ?? 'General';
+                        $__groups[$group][] = $token;
+                    }
+                    ?>
                         @foreach ($__groups as $groupName => $groupTokens)
                             <div class="cms-livecss-editor__token-group">
                                 <h3 class="cms-livecss-editor__group-title">{{ $groupName }}</h3>
                                 @foreach ($groupTokens as $token)
+                                    <?php /** @var array{name: string, group: string, type: string, default: string, label?: string} $token */ ?>
                                     <div class="cms-form-group">
                                         <label for="token-{{ $token['name'] }}" class="cms-form-group__label">{{ $token['label'] ?? $token['name'] }}</label>
                                         <?php
-                                        $__tokenType = $token['type'] ?? 'text';
-                        $__tokenValue = $currentOverrides['token_overrides'][$token['name']] ?? $token['default'] ?? '';
-                        ?>
+                                    $__tokenType = $token['type'] ?? 'text';
+                    $__tokenValue = $currentOverrides['token_overrides'][$token['name']] ?? $token['default'] ?? '';
+                    ?>
                                         @if ($__tokenType === 'color')
                                             <input type="color"
                                                    id="token-{{ $token['name'] }}"

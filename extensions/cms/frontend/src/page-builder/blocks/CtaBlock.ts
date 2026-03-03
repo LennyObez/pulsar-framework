@@ -6,6 +6,7 @@
  */
 
 import { InlineEditor } from '../InlineEditor.js';
+import { sanitizeHtml } from '../../utils/sanitizeHtml.js';
 
 const CTA_VARIANTS = ['default', 'primary', 'dark', 'gradient'] as const;
 
@@ -56,7 +57,8 @@ export class CmsPbCta extends HTMLElement {
     // Editable heading
     const h2 = document.createElement('h2');
     h2.className = 'pb-block-cta__heading';
-    h2.innerHTML = typeof heading === 'string' ? heading : 'Your Call to Action';
+    // Sanitized to prevent XSS from stored data
+    h2.innerHTML = typeof heading === 'string' ? sanitizeHtml(heading) : 'Your Call to Action';
     this.headingEl = h2;
     section.appendChild(h2);
 

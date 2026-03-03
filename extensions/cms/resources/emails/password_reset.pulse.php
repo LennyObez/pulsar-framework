@@ -1,4 +1,16 @@
 <?php
+/**
+ * Password reset email template.
+ *
+ * @var string $user_name
+ * @var string $reset_url
+ * @var int|string $expiry_minutes
+ */
+
+use function htmlspecialchars;
+
+use const ENT_QUOTES;
+
 /*
 PLAIN TEXT VERSION:
 
@@ -37,12 +49,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; m
         <h1>Password Reset Requested</h1>
     </div>
     <div class="content">
-        <p>Hello <?php echo $this->escape($user_name); ?>,</p>
+        <p>Hello <?php echo htmlspecialchars($user_name, ENT_QUOTES, 'UTF-8'); ?>,</p>
         <p>A password reset was requested for your account. Click the button below to set a new password:</p>
 
-        <a href="<?php echo $this->escape($reset_url); ?>" class="btn">Reset Password</a>
+        <a href="<?php echo htmlspecialchars($reset_url, ENT_QUOTES, 'UTF-8'); ?>" class="btn">Reset Password</a>
 
-        <p class="notice">This link will expire in <?php echo $this->escape((string) $expiry_minutes); ?> minutes.</p>
+        <p class="notice">This link will expire in <?php echo htmlspecialchars((string) $expiry_minutes, ENT_QUOTES, 'UTF-8'); ?> minutes.</p>
 
         <p>If you did not request a password reset, please ignore this email. Your account remains secure.</p>
     </div>

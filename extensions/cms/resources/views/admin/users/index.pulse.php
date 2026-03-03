@@ -49,7 +49,7 @@
                     <td class="cms-table__td">
                         <div class="cms-tag-list cms-tag-list--inline">
                             @foreach ($user['roles'] ?? [] as $role)
-                                <?php
+                                <?php /** @var string $role */
                                 $__roleBadge = match ($role) {
                                     'admin', 'administrator' => 'cms-badge cms-badge--published',
                                     'editor' => 'cms-badge cms-badge--approved',

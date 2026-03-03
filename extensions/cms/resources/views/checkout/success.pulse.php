@@ -1,9 +1,24 @@
+<?php
+/**
+ * Checkout success page template.
+ *
+ * @var string $locale
+ * @var string $siteName
+ * @var string $orderNumber
+ * @var string $orderEmail
+ * @var int $orderTotal
+ * @var string $currency
+ * @var string $invoiceUrl
+ * @var list<array{url: string, file_name: string}> $digitalDownloads
+ * @var string $shopUrl
+ */
+?>
 <!DOCTYPE html>
 <html lang="{{ $locale ?? 'en' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Order Confirmed — {{ $siteName ?? 'Store' }}</title>
+    <title>Order Confirmed | {{ $siteName ?? 'Store' }}</title>
 </head>
 <body>
 <main class="cms-checkout-success">
@@ -44,6 +59,7 @@
                 <h2 class="cms-checkout-success__section-title">Your Downloads</h2>
                 <ul class="cms-checkout-success__downloads">
                     @foreach ($digitalDownloads as $download)
+                        <?php /** @var array{url: string, file_name: string} $download */ ?>
                         <li class="cms-checkout-success__download-item">
                             <a href="<?php echo htmlspecialchars($download['url'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" class="cms-checkout-success__download-link">
                                 <?php echo htmlspecialchars($download['file_name'] ?? 'Download', ENT_QUOTES, 'UTF-8'); ?>

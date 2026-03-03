@@ -6,6 +6,7 @@
  */
 
 import { InlineEditor } from '../InlineEditor.js';
+import { sanitizeHtml } from '../../utils/sanitizeHtml.js';
 
 export class CmsPbQuote extends HTMLElement {
   private editor: InlineEditor | null = null;
@@ -45,7 +46,8 @@ export class CmsPbQuote extends HTMLElement {
 
     const quoteText = document.createElement('div');
     quoteText.className = 'pb-block-quote__text';
-    quoteText.innerHTML = typeof text === 'string' ? text : '';
+    // Sanitized to prevent XSS from stored data
+    quoteText.innerHTML = typeof text === 'string' ? sanitizeHtml(text) : '';
     this.quoteEl = quoteText;
     blockquote.appendChild(quoteText);
 

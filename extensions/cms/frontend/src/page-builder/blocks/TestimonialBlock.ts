@@ -6,6 +6,7 @@
  */
 
 import { InlineEditor } from '../InlineEditor.js';
+import { sanitizeHtml } from '../../utils/sanitizeHtml.js';
 
 export class CmsPbTestimonial extends HTMLElement {
   private editor: InlineEditor | null = null;
@@ -55,7 +56,8 @@ export class CmsPbTestimonial extends HTMLElement {
     // Editable quote
     const quoteEl = document.createElement('blockquote');
     quoteEl.className = 'pb-block-testimonial__quote';
-    quoteEl.innerHTML = typeof quote === 'string' ? quote : 'Enter testimonial...';
+    // Sanitized to prevent XSS from stored data
+    quoteEl.innerHTML = typeof quote === 'string' ? sanitizeHtml(quote) : 'Enter testimonial...';
     this.quoteEl = quoteEl;
     card.appendChild(quoteEl);
 

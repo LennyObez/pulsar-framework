@@ -6,7 +6,19 @@
  * Sanitizes output to prevent XSS.
  */
 
-const ALLOWED_TAGS = new Set(['B', 'STRONG', 'I', 'EM', 'A', 'BR', 'SPAN', 'U']);
+const ALLOWED_TAGS = new Set([
+  'B',
+  'STRONG',
+  'I',
+  'EM',
+  'A',
+  'BR',
+  'SPAN',
+  'U',
+  'S',
+  'DEL',
+  'CODE',
+]);
 
 export class InlineEditor {
   private readonly element: HTMLElement;
@@ -19,6 +31,7 @@ export class InlineEditor {
   private readonly boundOnBlur: () => void;
   private readonly boundOnInput: () => void;
   private readonly boundOnPaste: (e: ClipboardEvent) => void;
+  private readonly boundOnKeydown: (e: KeyboardEvent) => void;
   private readonly boundHideOnOutsideClick: (e: MouseEvent) => void;
 
   constructor(element: HTMLElement, onUpdate: (html: string) => void) {
@@ -30,6 +43,7 @@ export class InlineEditor {
     this.boundOnBlur = this.onBlur.bind(this);
     this.boundOnInput = this.onInput.bind(this);
     this.boundOnPaste = this.onPaste.bind(this);
+    this.boundOnKeydown = this.onKeydown.bind(this);
     this.boundHideOnOutsideClick = this.hideOnOutsideClick.bind(this);
   }
 
@@ -46,6 +60,7 @@ export class InlineEditor {
     this.element.addEventListener('blur', this.boundOnBlur);
     this.element.addEventListener('input', this.boundOnInput);
     this.element.addEventListener('paste', this.boundOnPaste);
+    this.element.addEventListener('keydown', this.boundOnKeydown);
   }
 
   disable(): void {
@@ -61,6 +76,7 @@ export class InlineEditor {
     this.element.removeEventListener('blur', this.boundOnBlur);
     this.element.removeEventListener('input', this.boundOnInput);
     this.element.removeEventListener('paste', this.boundOnPaste);
+    this.element.removeEventListener('keydown', this.boundOnKeydown);
     this.hideToolbar();
   }
 
@@ -127,6 +143,30 @@ export class InlineEditor {
     this.emitUpdate();
   }
 
+  private onKeydown(e: KeyboardEvent): void {
+    const isCtrl = e.ctrlKey || e.metaKey;
+
+    if (isCtrl) {
+      switch (e.key.toLowerCase()) {
+        case 'b':
+          e.preventDefault();
+          this.execFormat('bold');
+          this.emitUpdate();
+          break;
+        case 'i':
+          e.preventDefault();
+          this.execFormat('italic');
+          this.emitUpdate();
+          break;
+        case 'k':
+          e.preventDefault();
+          this.insertLink();
+          this.emitUpdate();
+          break;
+      }
+    }
+  }
+
   private onInput(): void {
     this.emitUpdate();
   }
@@ -166,6 +206,18 @@ export class InlineEditor {
         label: '\u{1F517}',
         title: 'Insert link',
         action: () => this.insertLink(),
+      },
+      {
+        label: 'S',
+        title: 'Strikethrough',
+        action: () => this.execFormat('strikethrough'),
+        className: 'pb-inline-toolbar__btn--strikethrough',
+      },
+      {
+        label: '<>',
+        title: 'Inline code',
+        action: () => this.execFormat('code'),
+        className: 'pb-inline-toolbar__btn--code',
       },
       {
         label: '\u{2715}',
@@ -242,7 +294,13 @@ export class InlineEditor {
       range.insertNode(document.createTextNode(text));
       selection.collapseToEnd();
     } else {
-      const tagName = command === 'bold' ? 'strong' : command === 'italic' ? 'em' : null;
+      const tagMap: Record<string, string> = {
+        bold: 'strong',
+        italic: 'em',
+        strikethrough: 's',
+        code: 'code',
+      };
+      const tagName = tagMap[command] ?? null;
       if (tagName) {
         this.wrapSelection(selection, range, tagName);
       }

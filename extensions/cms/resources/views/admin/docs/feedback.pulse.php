@@ -55,7 +55,7 @@
             @endif
 
             @foreach ($pages ?? [] as $page)
-                <?php
+                <?php /** @var array{id: string, helpful_count: int, unhelpful_count: int, feedback_entries: list<mixed>} $page */
                 $__totalVotes = ($page['helpful_count'] ?? 0) + ($page['unhelpful_count'] ?? 0);
                 $__helpfulPct = $__totalVotes > 0
                     ? round(($page['helpful_count'] ?? 0) / $__totalVotes * 100, 1)

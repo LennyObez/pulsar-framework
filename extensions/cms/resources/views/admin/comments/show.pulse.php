@@ -3,6 +3,7 @@
 @section('title', 'Comment Detail')
 
 @section('content')
+<?php /** @var array<string, mixed> $comment */ ?>
 <div class="cms-comment-detail">
     <header class="cms-comment-detail__header">
         <div class="cms-comment-detail__meta">
@@ -15,7 +16,7 @@
                 'spam' => 'cms-badge cms-badge--spam',
                 default => 'cms-badge',
             };
-            ?>
+?>
             <span class="{{ $__commentStatusClass }}" role="status">{{ ucfirst($comment['status'] ?? '') }}</span>
         </div>
         <div class="cms-comment-detail__actions">

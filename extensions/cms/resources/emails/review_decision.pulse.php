@@ -1,4 +1,20 @@
 <?php
+/**
+ * Review decision email template.
+ *
+ * @var string $decision
+ * @var string $author_name
+ * @var string $title
+ * @var string $reviewer_name
+ * @var string $comment
+ * @var string $content_url
+ */
+
+use function htmlspecialchars;
+use function ucfirst;
+
+use const ENT_QUOTES;
+
 /*
 PLAIN TEXT VERSION:
 
@@ -35,24 +51,24 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; m
 </head>
 <body>
 <div class="container">
-    <div class="header-<?php echo $this->escape($decision); ?>">
-        <h1>Content <?php echo $this->escape(ucfirst($decision)); ?></h1>
+    <div class="header-<?php echo htmlspecialchars($decision, ENT_QUOTES, 'UTF-8'); ?>">
+        <h1>Content <?php echo htmlspecialchars(ucfirst($decision), ENT_QUOTES, 'UTF-8'); ?></h1>
     </div>
     <div class="content">
-        <p>Hello <?php echo $this->escape($author_name); ?>,</p>
+        <p>Hello <?php echo htmlspecialchars($author_name, ENT_QUOTES, 'UTF-8'); ?>,</p>
 
-        <div class="decision-box decision-<?php echo $this->escape($decision); ?>">
-            <p>Your content <strong>&ldquo;<?php echo $this->escape($title); ?>&rdquo;</strong> has been <strong><?php echo $this->escape($decision); ?></strong> by <?php echo $this->escape($reviewer_name); ?>.</p>
+        <div class="decision-box decision-<?php echo htmlspecialchars($decision, ENT_QUOTES, 'UTF-8'); ?>">
+            <p>Your content <strong>&ldquo;<?php echo htmlspecialchars($title, ENT_QUOTES, 'UTF-8'); ?>&rdquo;</strong> has been <strong><?php echo htmlspecialchars($decision, ENT_QUOTES, 'UTF-8'); ?></strong> by <?php echo htmlspecialchars($reviewer_name, ENT_QUOTES, 'UTF-8'); ?>.</p>
         </div>
 
         <?php if (isset($comment) && $comment !== ''): ?>
         <div class="comment">
-            <p><?php echo $this->escape($comment); ?></p>
+            <p><?php echo htmlspecialchars($comment, ENT_QUOTES, 'UTF-8'); ?></p>
         </div>
         <?php endif; ?>
 
         <?php if (isset($content_url)): ?>
-        <a href="<?php echo $this->escape($content_url); ?>" class="btn">View Content</a>
+        <a href="<?php echo htmlspecialchars($content_url, ENT_QUOTES, 'UTF-8'); ?>" class="btn">View Content</a>
         <?php endif; ?>
     </div>
     <div class="footer">

@@ -33,6 +33,7 @@
             @endif
 
             @foreach ($promotions as $promotion)
+                <?php /** @var array{id: string, code: string, type: string, value: int|float, status: string, starts_at?: string, ends_at?: string, usage_count?: int, max_uses?: int} $promotion */ ?>
                 <tr class="cms-table__row">
                     <td class="cms-table__td cms-table__td--title">
                         <a href="/admin/cms/promotions/{{ $promotion['id'] }}/edit" class="cms-content-list__link">
@@ -45,17 +46,17 @@
                     <td class="cms-table__td">
                         <?php
                         $__type = $promotion['type'] ?? '';
-                        $__value = $promotion['value'] ?? 0;
-                        if ($__type === 'percentage') {
-                            echo htmlspecialchars((string) $__value, ENT_QUOTES, 'UTF-8') . '%';
-                        } elseif ($__type === 'fixed_amount') {
-                            echo htmlspecialchars(number_format($__value / 100, 2), ENT_QUOTES, 'UTF-8');
-                        } elseif ($__type === 'buy_x_get_y') {
-                            echo 'Buy ' . htmlspecialchars((string) $__value, ENT_QUOTES, 'UTF-8') . ' get 1';
-                        } else {
-                            echo htmlspecialchars((string) $__value, ENT_QUOTES, 'UTF-8');
-                        }
-                        ?>
+                $__value = $promotion['value'] ?? 0;
+                if ($__type === 'percentage') {
+                    echo htmlspecialchars((string) $__value, ENT_QUOTES, 'UTF-8') . '%';
+                } elseif ($__type === 'fixed_amount') {
+                    echo htmlspecialchars(number_format($__value / 100, 2), ENT_QUOTES, 'UTF-8');
+                } elseif ($__type === 'buy_x_get_y') {
+                    echo 'Buy ' . htmlspecialchars((string) $__value, ENT_QUOTES, 'UTF-8') . ' get 1';
+                } else {
+                    echo htmlspecialchars((string) $__value, ENT_QUOTES, 'UTF-8');
+                }
+                ?>
                     </td>
                     <td class="cms-table__td">
                         @if ($promotion['starts_at'] ?? null)

@@ -34,6 +34,7 @@
             @endif
 
             @foreach ($reviews as $review)
+                <?php /** @var array<string, mixed> $review */ ?>
                 <tr class="cms-table__row">
                     <td class="cms-table__td cms-table__td--title">
                         <a href="/admin/cms/content/{{ $review['content_id'] }}">{{ $review['content_title'] ?? 'Untitled' }}</a>
@@ -50,7 +51,7 @@
                             'rejected' => 'cms-badge cms-badge--archived',
                             default => 'cms-badge',
                         };
-                        ?>
+                ?>
                         <span class="{{ $__reviewBadgeClass }}" role="status">{{ ucfirst(str_replace('_', ' ', $review['status'] ?? '')) }}</span>
                     </td>
                     <td class="cms-table__td">
