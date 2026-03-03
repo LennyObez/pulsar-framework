@@ -24,6 +24,8 @@ use Pulsar\Extension\Payments\Tax\TaxProviderInterface;
 use Pulsar\Extension\Payments\Webhook\WebhookProcessor;
 use Pulsar\Idempotency\IdempotencyStoreInterface;
 use Pulsar\Idempotency\InMemoryIdempotencyStore;
+use Pulsar\Idempotency\TenantAwareIdempotencyStore;
+use Pulsar\Tenancy\TenantContext;
 use Pulsar\Webhook\InMemoryWebhookEventLog;
 use Pulsar\Webhook\WebhookEventLogInterface;
 use Pulsar\Webhook\WebhookVerifierInterface;
@@ -74,11 +76,26 @@ final class PaymentsServiceProvider implements ServiceProviderInterface
             /** @var PaymentsConfig $config */
             $config = $container->get(PaymentsConfig::class);
 
-            /** @var IdempotencyStoreInterface */
-            return match ($config->idempotency->store) {
+            /** @var IdempotencyStoreInterface $base */
+            $base = match ($config->idempotency->store) {
                 'memory' => new InMemoryIdempotencyStore(),
                 default => $container->get($config->idempotency->store),
             };
+
+            // F21.16: when a `TenantContext` is wired (multi-tenant
+            // deployment), wrap the store in a per-tenant namespacing
+            // decorator so two tenants who pick the same logical
+            // idempotency key cannot collide on a single store row.
+            // Single-tenant deployments leave `TenantContext` unwired
+            // and continue to see the raw key.
+            if ($container->has(TenantContext::class)) {
+                /** @var TenantContext $tenantContext */
+                $tenantContext = $container->get(TenantContext::class);
+
+                return new TenantAwareIdempotencyStore($base, $tenantContext);
+            }
+
+            return $base;
         });
 
         // Webhook event log
