@@ -45,9 +45,29 @@ final class ContentTranslationTest extends TestCase
     }
 
     #[Test]
-    public function is_valid_slug_rejects_empty_string(): void
+    public function is_valid_slug_accepts_empty_string_for_homepage(): void
     {
-        self::assertFalse(ContentTranslation::isValidSlug(''));
+        self::assertTrue(ContentTranslation::isValidSlug(''));
+    }
+
+    #[Test]
+    public function is_valid_slug_accepts_nested_paths(): void
+    {
+        self::assertTrue(ContentTranslation::isValidSlug('services/php-developer'));
+        self::assertTrue(ContentTranslation::isValidSlug('docs/api/endpoints'));
+    }
+
+    #[Test]
+    public function is_valid_slug_accepts_unicode_accents(): void
+    {
+        self::assertTrue(ContentTranslation::isValidSlug("d\xC3\xA9veloppeur-php"));
+        self::assertTrue(ContentTranslation::isValidSlug("caf\xC3\xA9"));
+    }
+
+    #[Test]
+    public function is_valid_slug_rejects_consecutive_slashes(): void
+    {
+        self::assertFalse(ContentTranslation::isValidSlug('hello//world'));
     }
 
     #[Test]

@@ -81,8 +81,8 @@ final class ContentBlockTest extends TestCase
     {
         $block = ContentBlock::text('b1', 'c1', 'en', 0, ['content' => 'test']);
 
-        self::assertNotNull($block->createdAt);
-        self::assertNotNull($block->updatedAt);
+        self::assertEqualsWithDelta(time(), $block->createdAt->getTimestamp(), 2);
+        self::assertEqualsWithDelta(time(), $block->updatedAt->getTimestamp(), 2);
     }
 
     #[Test]
