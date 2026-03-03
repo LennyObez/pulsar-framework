@@ -27,6 +27,7 @@ use Pulsar\Extension\Payments\Domain\Currency;
 use Pulsar\Extension\Payments\Domain\Money;
 use Pulsar\Extension\Payments\Domain\PaymentIntentStatus;
 use Pulsar\Extension\Payments\Domain\RefundStatus;
+use Pulsar\Extension\Payments\Exception\PaymentException;
 use Pulsar\Extension\Payments\Exception\PaymentProviderException;
 use Pulsar\Extension\Payments\Gateway\PaymentGateway;
 use Pulsar\Extension\Payments\Internal\Infrastructure\Clock\FixedClock;
@@ -433,6 +434,63 @@ final class PaymentGatewayTest extends TestCase
         ])));
     }
 
+    #[Test]
+    public function refusesMutatingOpWhenRequireTenantContextIsTrueAndNoTenant(): void
+    {
+        // F13.10: with require_tenant_context = true, every mutating
+        // payment operation must run inside a tenant scope. Calling
+        // captureIntent() without a TenantContext (or with one that
+        // resolves to no tenant) must surface as PaymentException.
+        $gateway = $this->createGatewayWith(
+            new NullProvider($this->clock),
+            requireTenantContext: true,
+        );
+
+        $this->expectException(PaymentException::class);
+        $this->expectExceptionMessageMatches('/captureIntent.*active TenantContext/s');
+
+        $gateway->captureIntent('intent-123', 'idempotency-key-123');
+    }
+
+    #[Test]
+    public function readOnlyGetIntentSkipsTenantContextRequirement(): void
+    {
+        // Read-only paths intentionally skip the tenant scope check so
+        // health checks and admin tooling can introspect resources.
+        // Verifying via the SimulatorProvider which stores intents
+        // by id and replays them back from getIntent().
+        $provider = new SimulatorProvider($this->clock);
+        $gateway = $this->createGatewayWith($provider, requireTenantContext: true);
+
+        // Pre-seed an intent through the provider directly (bypasses
+        // gateway entry checks; the provider knows nothing about tenants).
+        $intent = $provider->createIntent(Money::of(100, Currency::USD), 'idem-readonly');
+
+        // No tenant context — would throw on captureIntent — but
+        // getIntent() must return cleanly because read paths are unguarded.
+        $fetched = $gateway->getIntent($intent->id);
+
+        self::assertSame($intent->id, $fetched->id);
+    }
+
+    #[Test]
+    public function acceptsMutatingOpWhenTenantIsResolved(): void
+    {
+        $tenantContext = new \Pulsar\Tenancy\TenantContext();
+        $tenantContext->set(new \Pulsar\Tenancy\Tenant(id: 'acme', name: 'Acme'));
+
+        $gateway = $this->createGatewayWith(
+            new NullProvider($this->clock),
+            requireTenantContext: true,
+            tenantContext: $tenantContext,
+        );
+
+        // Should NOT throw — sufficient context is present.
+        $charge = $gateway->captureIntent('intent-123', 'idempotency-key-123');
+
+        self::assertSame('intent-123', $charge->intentId);
+    }
+
     private function createGateway(): PaymentGateway
     {
         $provider = new NullProvider($this->clock);
@@ -440,8 +498,11 @@ final class PaymentGatewayTest extends TestCase
         return $this->createGatewayWith($provider);
     }
 
-    private function createGatewayWith(PaymentProviderInterface $provider): PaymentGateway
-    {
+    private function createGatewayWith(
+        PaymentProviderInterface $provider,
+        bool $requireTenantContext = false,
+        ?\Pulsar\Tenancy\TenantContext $tenantContext = null,
+    ): PaymentGateway {
         $sink = new class implements AuditSinkInterface {
             /** @var list<AuditEntry> */
             public array $entries = [];
@@ -461,11 +522,13 @@ final class PaymentGatewayTest extends TestCase
             metricRegistry: $this->metricRegistry,
             logger: new NullLogger(),
             clock: $this->clock,
-            config: $this->createConfig(),
+            config: $this->createConfig($requireTenantContext),
+            createHandler: null,
+            tenantContext: $tenantContext,
         );
     }
 
-    private function createConfig(): PaymentsConfig
+    private function createConfig(bool $requireTenantContext = false): PaymentsConfig
     {
         return new PaymentsConfig(
             provider: 'null',
@@ -508,6 +571,7 @@ final class PaymentGatewayTest extends TestCase
             invoiceRetentionDays: 3650,
             dunningMaxRetries: 4,
             trialMaxDays: 30,
+            requireTenantContext: $requireTenantContext,
         );
     }
 }

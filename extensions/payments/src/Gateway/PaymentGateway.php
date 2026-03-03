@@ -19,6 +19,7 @@ use Pulsar\Extension\Payments\Domain\PaymentIntent;
 use Pulsar\Extension\Payments\Domain\PaymentIntentStatus;
 use Pulsar\Extension\Payments\Domain\Refund;
 use Pulsar\Extension\Payments\Domain\RefundStatus;
+use Pulsar\Extension\Payments\Exception\PaymentException;
 use Pulsar\Extension\Payments\Exception\PaymentProviderException;
 use Pulsar\Extension\Payments\Features\CreatePaymentIntent\CreatePaymentIntentHandler;
 use Pulsar\Extension\Payments\Features\CreatePaymentIntent\CreatePaymentIntentRequest;
@@ -75,6 +76,8 @@ final readonly class PaymentGateway implements PaymentGatewayInterface
      */
     public function createIntent(Money $amount, string $idempotencyKey, array $metadata = []): PaymentIntent
     {
+        $this->assertTenantScope('createIntent');
+
         $handler = $this->createHandler ?? new CreatePaymentIntentHandler(
             $this->provider,
             $this->idempotencyStore,
@@ -99,6 +102,7 @@ final readonly class PaymentGateway implements PaymentGatewayInterface
      */
     public function captureIntent(string $intentId, string $idempotencyKey): Charge
     {
+        $this->assertTenantScope('captureIntent');
         $this->validateIdempotencyKey($idempotencyKey);
 
         $parametersHash = ParametersHasher::hash('captureIntent', [
@@ -152,6 +156,7 @@ final readonly class PaymentGateway implements PaymentGatewayInterface
      */
     public function cancelIntent(string $intentId, string $idempotencyKey): PaymentIntent
     {
+        $this->assertTenantScope('cancelIntent');
         $this->validateIdempotencyKey($idempotencyKey);
 
         $parametersHash = ParametersHasher::hash('cancelIntent', [
@@ -205,6 +210,7 @@ final readonly class PaymentGateway implements PaymentGatewayInterface
      */
     public function refund(string $chargeId, ?Money $amount, string $idempotencyKey): Refund
     {
+        $this->assertTenantScope('refund');
         $this->validateIdempotencyKey($idempotencyKey);
 
         $parametersHash = ParametersHasher::hash('refund', [
@@ -279,6 +285,28 @@ final readonly class PaymentGateway implements PaymentGatewayInterface
     public function getRefund(string $refundId): Refund
     {
         return $this->provider->getRefund($refundId);
+    }
+
+    /**
+     * F13.10: refuse mutating payment operations that run outside a
+     * tenant scope when the deployment is configured to require one.
+     *
+     * Read-only `getIntent` / `getCharge` / `getRefund` are intentionally
+     * unguarded — they are safe to invoke from health checks / admin
+     * tooling that may legitimately operate without a tenant context.
+     *
+     * @throws PaymentException When `requireTenantContext` is true and
+     *                          no tenant is currently resolved.
+     */
+    private function assertTenantScope(string $operation): void
+    {
+        if (!$this->config->requireTenantContext) {
+            return;
+        }
+
+        if ($this->tenantContext === null || $this->tenantContext->tryGet() === null) {
+            throw PaymentException::missingTenantContext($operation);
+        }
     }
 
     /**
