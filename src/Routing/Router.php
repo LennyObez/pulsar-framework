@@ -13,7 +13,11 @@ use Pulsar\Routing\Binding\ExplicitBinding;
 use function array_values;
 use function count;
 use function is_string;
+use function preg_replace;
+use function rawurlencode;
 use function sprintf;
+use function str_replace;
+use function trim;
 
 /**
  * HTTP router for route registration and matching.
@@ -333,10 +337,19 @@ final class Router implements RouterInterface
             $replace = [];
 
             foreach ($parameters as $key => $value) {
+                // RFC 3986 §2 path-segment encoding (F2.7): a raw value
+                // containing `/`, `?`, `#`, `..`, ` `, or any reserved
+                // byte would otherwise punch out of its segment and
+                // either change the route taken or become a path-
+                // traversal vector against routes downstream of this URL.
+                // `rawurlencode` percent-encodes everything outside the
+                // unreserved set so a parameter like `'../admin'` is
+                // rendered as `%2E%2E%2Fadmin` and stays inside its slot.
+                $encoded = rawurlencode($value);
                 $search[] = '{' . $key . '}';
                 $search[] = '{' . $key . '?}';
-                $replace[] = $value;
-                $replace[] = $value;
+                $replace[] = $encoded;
+                $replace[] = $encoded;
             }
 
             $path = str_replace($search, $replace, $path);
