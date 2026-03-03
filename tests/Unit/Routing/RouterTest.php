@@ -244,6 +244,68 @@ final class RouterTest extends TestCase
     }
 
     #[Test]
+    public function urlPercentEncodesPathSeparators(): void
+    {
+        // F2.7: a raw `/` in a parameter value would punch out of the
+        // segment and change which route the URL points at.
+        $router = new Router();
+        $router->get('/users/{id}', fn() => null, 'users.show');
+
+        $url = $router->url('users.show', ['id' => 'a/b']);
+
+        self::assertSame('/users/a%2Fb', $url);
+    }
+
+    #[Test]
+    public function urlPercentEncodesTraversalSequence(): void
+    {
+        // F2.7: `..` in a parameter value would let the URL refer to
+        // a parent path. Encoding renders it inert.
+        $router = new Router();
+        $router->get('/users/{id}', fn() => null, 'users.show');
+
+        $url = $router->url('users.show', ['id' => '../admin']);
+
+        self::assertSame('/users/..%2Fadmin', $url);
+    }
+
+    #[Test]
+    public function urlPercentEncodesQueryAndFragmentDelimiters(): void
+    {
+        $router = new Router();
+        $router->get('/posts/{slug}', fn() => null, 'posts.show');
+
+        $url = $router->url('posts.show', ['slug' => 'a?b#c']);
+
+        self::assertSame('/posts/a%3Fb%23c', $url);
+    }
+
+    #[Test]
+    public function urlPercentEncodesSpacesAndUnicode(): void
+    {
+        $router = new Router();
+        $router->get('/search/{term}', fn() => null, 'search');
+
+        $url = $router->url('search', ['term' => 'jane doé']);
+
+        // rawurlencode produces %20 (not '+') for spaces and percent-
+        // encodes UTF-8 bytes individually.
+        self::assertSame('/search/jane%20do%C3%A9', $url);
+    }
+
+    #[Test]
+    public function urlPreservesUnreservedCharacters(): void
+    {
+        $router = new Router();
+        $router->get('/items/{id}', fn() => null, 'items.show');
+
+        // RFC 3986 unreserved set: ALPHA, DIGIT, '-', '.', '_', '~'.
+        $url = $router->url('items.show', ['id' => 'A-Z_0.9~end']);
+
+        self::assertSame('/items/A-Z_0.9~end', $url);
+    }
+
+    #[Test]
     public function countReturnsNumberOfRoutes(): void
     {
         $router = new Router();
