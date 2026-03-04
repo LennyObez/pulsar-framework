@@ -1,0 +1,163 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pulsar\Extension\Cms\BlockEditor\CoreBlocks;
+
+use Override;
+use Pulsar\Api\Internal;
+use Pulsar\Extension\Cms\BlockEditor\BlockTypeInterface;
+
+use function htmlspecialchars;
+use function is_array;
+use function is_bool;
+use function is_int;
+use function is_string;
+
+use const ENT_QUOTES;
+
+#[Internal]
+final readonly class LatestPostsBlock implements BlockTypeInterface
+{
+    #[Override]
+    public function type(): string
+    {
+        return 'latest-posts';
+    }
+
+    #[Override]
+    public function schema(): array
+    {
+        return [
+            'type' => 'object',
+            'properties' => [
+                'posts' => [
+                    'type' => 'array',
+                    'items' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'title' => ['type' => 'string'],
+                            'url' => ['type' => 'string', 'format' => 'uri'],
+                            'excerpt' => ['type' => 'string'],
+                            'thumbnail' => ['type' => 'string', 'format' => 'uri'],
+                            'date' => ['type' => 'string'],
+                            'author' => ['type' => 'string'],
+                        ],
+                        'required' => ['title', 'url'],
+                    ],
+                ],
+                'count' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 50],
+                'showExcerpt' => ['type' => 'boolean'],
+                'showThumbnail' => ['type' => 'boolean'],
+                'showDate' => ['type' => 'boolean'],
+                'showAuthor' => ['type' => 'boolean'],
+                'category' => ['type' => 'string'],
+            ],
+            'required' => ['posts'],
+        ];
+    }
+
+    #[Override]
+    public function render(array $data): string
+    {
+        /** @var list<mixed> $posts */
+        $posts = $data['posts'] ?? [];
+        $showExcerpt = is_bool($data['showExcerpt'] ?? null) ? $data['showExcerpt'] : true;
+        $showThumbnail = is_bool($data['showThumbnail'] ?? null) ? $data['showThumbnail'] : false;
+        $showDate = is_bool($data['showDate'] ?? null) ? $data['showDate'] : true;
+        $showAuthor = is_bool($data['showAuthor'] ?? null) ? $data['showAuthor'] : false;
+
+        $html = '<div class="latest-posts">';
+
+        foreach ($posts as $post) {
+            if (!is_array($post)) {
+                continue;
+            }
+
+            $title = htmlspecialchars(is_string($post['title'] ?? null) ? $post['title'] : '', ENT_QUOTES, 'UTF-8');
+            $url = htmlspecialchars(is_string($post['url'] ?? null) ? $post['url'] : '#', ENT_QUOTES, 'UTF-8');
+
+            $html .= '<article class="latest-posts__item">';
+
+            if ($showThumbnail && is_string($post['thumbnail'] ?? null) && $post['thumbnail'] !== '') {
+                $thumb = htmlspecialchars($post['thumbnail'], ENT_QUOTES, 'UTF-8');
+                $html .= "<img src=\"$thumb\" alt=\"\" class=\"latest-posts__thumbnail\" loading=\"lazy\">";
+            }
+
+            $html .= "<h3 class=\"latest-posts__title\"><a href=\"$url\">$title</a></h3>";
+
+            if ($showDate && is_string($post['date'] ?? null) && $post['date'] !== '') {
+                $date = htmlspecialchars($post['date'], ENT_QUOTES, 'UTF-8');
+                $html .= "<time class=\"latest-posts__date\">$date</time>";
+            }
+
+            if ($showAuthor && is_string($post['author'] ?? null) && $post['author'] !== '') {
+                $author = htmlspecialchars($post['author'], ENT_QUOTES, 'UTF-8');
+                $html .= "<span class=\"latest-posts__author\">$author</span>";
+            }
+
+            if ($showExcerpt && is_string($post['excerpt'] ?? null) && $post['excerpt'] !== '') {
+                $excerpt = htmlspecialchars($post['excerpt'], ENT_QUOTES, 'UTF-8');
+                $html .= "<p class=\"latest-posts__excerpt\">$excerpt</p>";
+            }
+
+            $html .= '</article>';
+        }
+
+        return $html . '</div>';
+    }
+
+    #[Override]
+    public function validate(array $data): array
+    {
+        $errors = [];
+
+        if (!isset($data['posts']) || !is_array($data['posts'])) {
+            $errors[] = 'posts is required and must be an array';
+
+            return $errors;
+        }
+
+        foreach ($data['posts'] as $index => $post) {
+            if (!is_array($post)) {
+                $errors[] = "posts[$index] must be an object";
+
+                continue;
+            }
+
+            if (!isset($post['title']) || !is_string($post['title'])) {
+                $errors[] = "posts[$index].title is required and must be a string";
+            }
+
+            if (!isset($post['url']) || !is_string($post['url'])) {
+                $errors[] = "posts[$index].url is required and must be a string";
+            }
+        }
+
+        if (isset($data['count']) && (!is_int($data['count']) || $data['count'] < 1 || $data['count'] > 50)) {
+            $errors[] = 'count must be an integer between 1 and 50';
+        }
+
+        if (isset($data['showExcerpt']) && !is_bool($data['showExcerpt'])) {
+            $errors[] = 'showExcerpt must be a boolean';
+        }
+
+        if (isset($data['showThumbnail']) && !is_bool($data['showThumbnail'])) {
+            $errors[] = 'showThumbnail must be a boolean';
+        }
+
+        if (isset($data['showDate']) && !is_bool($data['showDate'])) {
+            $errors[] = 'showDate must be a boolean';
+        }
+
+        if (isset($data['showAuthor']) && !is_bool($data['showAuthor'])) {
+            $errors[] = 'showAuthor must be a boolean';
+        }
+
+        if (isset($data['category']) && !is_string($data['category'])) {
+            $errors[] = 'category must be a string';
+        }
+
+        return $errors;
+    }
+}

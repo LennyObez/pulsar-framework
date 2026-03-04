@@ -1,0 +1,150 @@
+<?php
+
+declare(strict_types=1);
+
+return [
+    // Navigation
+    'nav.tickets' => 'Tickets',
+    'nav.dashboard' => 'Dashboard',
+    'nav.all_tickets' => 'All Tickets',
+    'nav.categories' => 'Categories',
+    'nav.settings' => 'Settings',
+    'nav.new_ticket' => 'New Ticket',
+
+    // Dashboard
+    'dashboard.title' => 'Ticket Dashboard',
+    'dashboard.open' => 'Open',
+    'dashboard.in_progress' => 'In Progress',
+    'dashboard.resolved' => 'Resolved',
+    'dashboard.resolved_today' => 'Resolved Today',
+    'dashboard.sla_compliance' => 'SLA Compliance',
+    'dashboard.total_active' => 'Total Active',
+
+    // Status labels
+    'status.open' => 'Open',
+    'status.in_progress' => 'In Progress',
+    'status.waiting_on_customer' => 'Waiting on Customer',
+    'status.waiting_on_agent' => 'Waiting on Agent',
+    'status.resolved' => 'Resolved',
+    'status.closed' => 'Closed',
+    'status.reopened' => 'Reopened',
+
+    // Priority labels
+    'priority.low' => 'Low',
+    'priority.normal' => 'Normal',
+    'priority.high' => 'High',
+    'priority.urgent' => 'Urgent',
+    'priority.critical' => 'Critical',
+
+    // Ticket list
+    'list.title' => 'All Tickets',
+    'list.ticket_number' => 'Ticket #',
+    'list.subject' => 'Subject',
+    'list.status' => 'Status',
+    'list.priority' => 'Priority',
+    'list.assignee' => 'Assignee',
+    'list.reporter' => 'Reporter',
+    'list.created' => 'Created',
+    'list.updated' => 'Updated',
+    'list.no_tickets' => 'No tickets found.',
+    'list.filter_status' => 'Filter by status',
+    'list.filter_priority' => 'Filter by priority',
+    'list.filter_category' => 'Filter by category',
+    'list.filter_assignee' => 'Filter by assignee',
+    'list.clear_filters' => 'Clear filters',
+
+    // Ticket detail
+    'detail.title' => 'Ticket Details',
+    'detail.description' => 'Description',
+    'detail.conversation' => 'Conversation',
+    'detail.internal_notes' => 'Internal Notes',
+    'detail.assign' => 'Assign',
+    'detail.escalate' => 'Escalate',
+    'detail.resolve' => 'Resolve',
+    'detail.close' => 'Close',
+    'detail.reopen' => 'Reopen',
+    'detail.change_status' => 'Change Status',
+    'detail.change_priority' => 'Change Priority',
+    'detail.add_reply' => 'Add Reply',
+    'detail.add_note' => 'Add Internal Note',
+    'detail.note_placeholder' => 'Write an internal note (only visible to agents)...',
+    'detail.reply_placeholder' => 'Write a reply...',
+    'detail.reporter_info' => 'Reporter Information',
+    'detail.ticket_info' => 'Ticket Information',
+    'detail.tags' => 'Tags',
+    'detail.category' => 'Category',
+    'detail.created_at' => 'Created',
+    'detail.updated_at' => 'Last Updated',
+    'detail.resolved_at' => 'Resolved',
+    'detail.closed_at' => 'Closed',
+
+    // Categories
+    'categories.title' => 'Ticket Categories',
+    'categories.name' => 'Name',
+    'categories.slug' => 'Slug',
+    'categories.description' => 'Description',
+    'categories.parent' => 'Parent Category',
+    'categories.sort_order' => 'Sort Order',
+    'categories.create' => 'Create Category',
+    'categories.edit' => 'Edit Category',
+    'categories.delete' => 'Delete Category',
+    'categories.delete_confirm' => 'Are you sure you want to delete this category?',
+    'categories.no_categories' => 'No categories defined.',
+
+    // Settings
+    'settings.title' => 'Ticket Settings',
+    'settings.auto_assign' => 'Auto-Assignment',
+    'settings.auto_assign_enabled' => 'Enable auto-assignment',
+    'settings.auto_assign_strategy' => 'Assignment strategy',
+    'settings.strategy_round_robin' => 'Round Robin',
+    'settings.strategy_load_balanced' => 'Load Balanced',
+    'settings.email_notifications' => 'Email Notifications',
+    'settings.email_notifications_enabled' => 'Enable email notifications',
+    'settings.contact_form' => 'Contact Form Integration',
+    'settings.contact_form_enabled' => 'Create tickets from contact form submissions',
+    'settings.auto_close' => 'Auto-Close',
+    'settings.auto_close_days' => 'Days after resolution to auto-close',
+    'settings.sla' => 'SLA Rules',
+    'settings.sla_first_response' => 'First Response Time (minutes)',
+    'settings.sla_resolution' => 'Resolution Time (minutes)',
+
+    // Front-office
+    'submit.title' => 'Submit a Support Ticket',
+    'submit.subject' => 'Subject',
+    'submit.description' => 'Description',
+    'submit.email' => 'Your Email',
+    'submit.name' => 'Your Name',
+    'submit.priority' => 'Priority',
+    'submit.category' => 'Category',
+    'submit.submit' => 'Submit Ticket',
+    'submit.success' => 'Your ticket has been submitted successfully.',
+    'submit.reference' => 'Your ticket reference is: {ticket_number}',
+
+    // Ticket view (public)
+    'view.title' => 'Ticket Status',
+    'view.lookup' => 'Look up your ticket',
+    'view.ticket_number' => 'Ticket Number',
+    'view.reply' => 'Add Reply',
+    'view.reply_placeholder' => 'Write your reply...',
+    'view.reply_success' => 'Your reply has been added.',
+    'view.not_found' => 'Ticket not found.',
+
+    // Events
+    'event.created' => 'Ticket created',
+    'event.assigned' => 'Ticket assigned to {agent}',
+    'event.status_changed' => 'Status changed from {from} to {to}',
+    'event.priority_changed' => 'Priority changed from {from} to {to}',
+    'event.message_added' => 'New message from {author}',
+    'event.resolved' => 'Ticket resolved',
+    'event.closed' => 'Ticket closed',
+    'event.reopened' => 'Ticket reopened',
+    'event.escalated' => 'Ticket escalated',
+
+    // Validation
+    'validation.subject_required' => 'Subject is required.',
+    'validation.description_required' => 'Description is required.',
+    'validation.email_required' => 'Email is required.',
+    'validation.name_required' => 'Name is required.',
+    'validation.body_required' => 'Message body is required.',
+    'validation.assignee_required' => 'Assignee is required.',
+];
