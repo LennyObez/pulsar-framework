@@ -15,7 +15,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\StreamFactoryInterface;
 use Psr\Http\Message\StreamInterface;
 use Pulsar\Audit\AuditLoggerInterface;
-use Pulsar\Extension\Auth\OAuth2\Adapter\LeagueAuthorizationServer;
+use Pulsar\Extension\Auth\OAuth2\Adapter\OAuth2AuthorizationServer;
 use Pulsar\Extension\Auth\OAuth2\Client\OAuthClient;
 use Pulsar\Extension\Auth\OAuth2\Contract\AccessTokenRepositoryInterface;
 use Pulsar\Extension\Auth\OAuth2\Contract\AuthorizationCodeRepositoryInterface;
@@ -30,8 +30,8 @@ use Pulsar\Extension\Auth\OAuth2\Token\AccessToken;
 use Pulsar\Extension\Auth\OAuth2\Token\RefreshToken;
 use Pulsar\Extension\Auth\OAuth2\Token\Scope;
 
-#[CoversClass(LeagueAuthorizationServer::class)]
-final class LeagueAuthorizationServerTest extends TestCase
+#[CoversClass(OAuth2AuthorizationServer::class)]
+final class OAuth2AuthorizationServerTest extends TestCase
 {
     private ClientRepositoryInterface&Stub $clientRepo;
     private ScopeRepositoryInterface&Stub $scopeRepo;
@@ -66,9 +66,9 @@ final class LeagueAuthorizationServerTest extends TestCase
     /**
      * @param list<GrantInterface> $grants
      */
-    private function createServer(array $grants = []): LeagueAuthorizationServer
+    private function createServer(array $grants = []): OAuth2AuthorizationServer
     {
-        return new LeagueAuthorizationServer(
+        return new OAuth2AuthorizationServer(
             clientRepository: $this->clientRepo,
             scopeRepository: $this->scopeRepo,
             consentRepository: $this->consentRepo,
@@ -565,7 +565,7 @@ final class LeagueAuthorizationServerTest extends TestCase
             'client_secret' => 'secret',
         ]);
 
-        $server = new LeagueAuthorizationServer(
+        $server = new OAuth2AuthorizationServer(
             clientRepository: $this->clientRepo,
             scopeRepository: $this->scopeRepo,
             consentRepository: $this->consentRepo,
@@ -677,7 +677,7 @@ final class LeagueAuthorizationServerTest extends TestCase
             'client_secret' => 'secret',
         ]);
 
-        $server = new LeagueAuthorizationServer(
+        $server = new OAuth2AuthorizationServer(
             clientRepository: $this->clientRepo,
             scopeRepository: $this->scopeRepo,
             consentRepository: $this->consentRepo,

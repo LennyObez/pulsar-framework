@@ -10,7 +10,7 @@ use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Extensibility\ServiceProviderInterface;
 use Pulsar\Extension\Auth\Config\AuthConfig;
-use Pulsar\Extension\Auth\OAuth2\Adapter\LeagueAuthorizationServer;
+use Pulsar\Extension\Auth\OAuth2\Adapter\OAuth2AuthorizationServer;
 use Pulsar\Extension\Auth\OAuth2\Client\InMemoryClientRepository;
 use Pulsar\Extension\Auth\OAuth2\Config\OAuth2Config;
 use Pulsar\Extension\Auth\OAuth2\Consent\InMemoryConsentRepository;
@@ -265,7 +265,7 @@ final class AuthServiceProvider implements ServiceProviderInterface
 
         // Authorization server
         $container->bind(AuthorizationServerInterface::class, static function () use ($container): AuthorizationServerInterface {
-            return new LeagueAuthorizationServer(
+            return new OAuth2AuthorizationServer(
                 $container->get(ClientRepositoryInterface::class),
                 $container->get(ScopeRepositoryInterface::class),
                 $container->get(ConsentRepositoryInterface::class),

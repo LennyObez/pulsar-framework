@@ -39,9 +39,18 @@ use function substr;
  *
  * Handles the authorization, token, introspection, and revocation endpoints
  * per RFC 6749, RFC 7662, and RFC 7009.
+ *
+ * Note on naming (F385.11): the class was previously called
+ * `LeagueAuthorizationServer` despite never importing `league/oauth2-server`.
+ * The "League" prefix gave reviewers and auditors the impression that the
+ * implementation was a thin adapter over the battle-tested upstream library
+ * - it is in fact a homegrown implementation. ADR-0025 mandates the
+ * `league/oauth2-server` swap before 1.0.0 GA; until that refactor lands
+ * the class keeps the neutral name `OAuth2AuthorizationServer` so its
+ * homegrown status is not obscured.
  */
 #[Internal(reason: 'Adapter implementation; use AuthorizationServerInterface contract')]
-final readonly class LeagueAuthorizationServer implements AuthorizationServerInterface
+final readonly class OAuth2AuthorizationServer implements AuthorizationServerInterface
 {
     /** @var array<string, GrantInterface> */
     private array $grants;
