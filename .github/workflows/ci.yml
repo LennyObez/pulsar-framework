@@ -34,6 +34,12 @@ jobs:
 
       - run: composer install --no-interaction --no-progress
 
+      # F23.1 / F385.1 / F385.M2 / F387.1 / F387.M3: assert that the
+      # version reported by Pulsar\Core\Version matches composer.json,
+      # so a release PR cannot bump one without bumping the other.
+      - name: Version constants consistency
+        run: bash tools/ci/check-version-consistency.sh
+
       - run: composer cs:check
 
       - run: composer phpstan
@@ -42,14 +48,18 @@ jobs:
 
       - name: Fetch base ref for boundary diff
         if: github.event_name == 'pull_request'
-        run: git fetch origin ${{ github.base_ref }} --depth=1
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: git fetch origin "$BASE_REF" --depth=1
 
       - name: Boundary enforcement (Deptrac)
         run: composer boundary:deptrac
 
       - name: Boundary enforcement (API targeting)
         if: github.event_name == 'pull_request'
-        run: php scripts/boundary_check.php --diff-base=origin/${{ github.base_ref }}
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: php scripts/boundary_check.php --diff-base="origin/$BASE_REF"
 
       - name: Boundary enforcement (API targeting, full scan)
         if: github.event_name != 'pull_request'
@@ -375,7 +385,9 @@ jobs:
           fetch-depth: 0
 
       - name: Fetch base ref (fork-safe)
-        run: git fetch origin ${{ github.event.pull_request.base.sha }} --depth=1
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: git fetch origin "$BASE_SHA" --depth=1
 
       - name: Check ADR governance
         env:
