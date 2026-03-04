@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Auth\Identity\TwoFactorStatus;
 use Pulsar\Extension\OAuth2\Adapter\OAuth2TokenResolver;
 use Pulsar\Extension\OAuth2\Contract\AccessTokenRepositoryInterface;
 use Pulsar\Extension\OAuth2\Contract\UserClaimsProviderInterface;
@@ -177,5 +178,120 @@ final class OAuth2TokenResolverTest extends TestCase
 
         $resolver = new OAuth2TokenResolver($this->tokenRepo, $claimsProvider);
         $resolver->resolve('token-val');
+    }
+
+    #[Test]
+    public function resolveDefaultsTwoFactorDisabledWhenNoMfaClaims(): void
+    {
+        // F385.7: when the IdP omits both `amr` and `acr`, the resolver
+        // must NOT silently grant 2FA bypass — fall back to Disabled so
+        // step-up middleware refuses the token.
+        $identity = $this->resolveWithClaims(['name' => 'No MFA User']);
+
+        self::assertNotNull($identity);
+        self::assertSame(TwoFactorStatus::Disabled, $identity->twoFactorStatus());
+    }
+
+    #[Test]
+    public function resolveMarksVerifiedWhenAmrContainsMfa(): void
+    {
+        $identity = $this->resolveWithClaims(['amr' => ['pwd', 'mfa']]);
+
+        self::assertNotNull($identity);
+        self::assertSame(TwoFactorStatus::Verified, $identity->twoFactorStatus());
+    }
+
+    #[Test]
+    public function resolveMarksVerifiedWhenAmrContainsOtp(): void
+    {
+        $identity = $this->resolveWithClaims(['amr' => ['otp']]);
+
+        self::assertNotNull($identity);
+        self::assertSame(TwoFactorStatus::Verified, $identity->twoFactorStatus());
+    }
+
+    #[Test]
+    public function resolveMarksVerifiedWhenAmrContainsFido(): void
+    {
+        $identity = $this->resolveWithClaims(['amr' => ['fido']]);
+
+        self::assertNotNull($identity);
+        self::assertSame(TwoFactorStatus::Verified, $identity->twoFactorStatus());
+    }
+
+    #[Test]
+    public function resolveStaysDisabledWhenAmrOnlyHasPasswordFactor(): void
+    {
+        // `pwd` alone is single-factor; not a step-up qualifier.
+        $identity = $this->resolveWithClaims(['amr' => ['pwd']]);
+
+        self::assertNotNull($identity);
+        self::assertSame(TwoFactorStatus::Disabled, $identity->twoFactorStatus());
+    }
+
+    #[Test]
+    public function resolveStaysDisabledWhenAmrIsNotAList(): void
+    {
+        // Defensive: a malformed `amr` (string instead of list) must
+        // not be misinterpreted as MFA.
+        $identity = $this->resolveWithClaims(['amr' => 'mfa']);
+
+        self::assertNotNull($identity);
+        self::assertSame(TwoFactorStatus::Disabled, $identity->twoFactorStatus());
+    }
+
+    #[Test]
+    public function resolveMarksVerifiedWhenAcrIsLevel2OrHigher(): void
+    {
+        $identity = $this->resolveWithClaims(['acr' => '2']);
+
+        self::assertNotNull($identity);
+        self::assertSame(TwoFactorStatus::Verified, $identity->twoFactorStatus());
+    }
+
+    #[Test]
+    public function resolveMarksVerifiedWhenAcrIsIncommonSilver(): void
+    {
+        $identity = $this->resolveWithClaims(['acr' => 'urn:mace:incommon:iap:silver']);
+
+        self::assertNotNull($identity);
+        self::assertSame(TwoFactorStatus::Verified, $identity->twoFactorStatus());
+    }
+
+    #[Test]
+    public function resolveStaysDisabledForLevel1Acr(): void
+    {
+        $identity = $this->resolveWithClaims(['acr' => '1']);
+
+        self::assertNotNull($identity);
+        self::assertSame(TwoFactorStatus::Disabled, $identity->twoFactorStatus());
+    }
+
+    #[Test]
+    public function resolveStaysDisabledForUnknownAcrUrn(): void
+    {
+        $identity = $this->resolveWithClaims(['acr' => 'urn:example:custom:level']);
+
+        self::assertNotNull($identity);
+        self::assertSame(TwoFactorStatus::Disabled, $identity->twoFactorStatus());
+    }
+
+    /**
+     * @param array<string, mixed> $claims
+     */
+    private function resolveWithClaims(array $claims): ?\Pulsar\Auth\Identity\IdentityInterface
+    {
+        $token = new AccessToken(
+            id: 'tok-mfa',
+            clientId: 'client-1',
+            subjectId: 'user-mfa',
+            scopes: ['openid'],
+            expiresAt: new DateTimeImmutable('+1 hour'),
+            issuedAt: new DateTimeImmutable(),
+        );
+        $this->tokenRepo->method('introspect')->willReturn($token);
+        $this->claimsProvider->method('getClaims')->willReturn($claims);
+
+        return $this->resolver->resolve('mfa-token');
     }
 }
