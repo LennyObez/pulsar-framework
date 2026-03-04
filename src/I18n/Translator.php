@@ -162,7 +162,28 @@ final class Translator implements TranslatorInterface
      */
     private function formatMessage(string $message, array $parameters, string $locale): string
     {
-        if ($parameters === [] || $this->formatter === null) {
+        if ($parameters === []) {
+            return $message;
+        }
+
+        // Support colon-prefixed :param placeholders alongside ICU {param} syntax.
+        // Replace :key with the parameter value before passing to the ICU formatter.
+        // This allows translation strings like "© :year Author" to work with
+        // @t('messages.copyright', ['year' => 2026]).
+        if (str_contains($message, ':')) {
+            foreach ($parameters as $key => $value) {
+                if (is_scalar($value)) {
+                    $message = str_replace(':' . $key, (string) $value, $message);
+                }
+            }
+
+            // If all placeholders were resolved, skip the ICU formatter
+            if (!str_contains($message, '{')) {
+                return $message;
+            }
+        }
+
+        if ($this->formatter === null) {
             return $message;
         }
 

@@ -199,6 +199,19 @@ final class TranslatorTest extends TestCase
      * @param list<string> $fallbackLocales
      */
     #[Test]
+    public function translateReplacesColonPlaceholders(): void
+    {
+        $catalog = $this->createStub(CatalogInterface::class);
+        $catalog->method('get')->willReturn(
+            new TranslationEntry(key: 'copyright', message: '© :year Author'),
+        );
+
+        $translator = new Translator($catalog, $this->makeConfig());
+
+        self::assertSame('© 2026 Author', $translator->translate('copyright', ['year' => 2026]));
+    }
+
+    #[Test]
     public function translateSplitsDotNotationIntoDomainAndKey(): void
     {
         $catalog = $this->createStub(CatalogInterface::class);
