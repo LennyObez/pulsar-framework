@@ -84,12 +84,30 @@ final class CacheAllowedClasses
      *
      * @return list<class-string>
      *
+     * @throws CacheException When an `ALWAYS_ALLOWED` class fails the
+     *                       magic-method or Serializable safety check
+     *                       (F26.2). Failing closed protects the cache
+     *                       deserialization sink from gaining a gadget
+     *                       chain via a future maintainer adding a
+     *                       dangerous magic method to a whitelisted
+     *                       class.
      * @throws ReflectionException
      */
     #[NoDiscard]
     public static function scan(string $vendorPath, string $srcPath): array
     {
         $candidates = self::discoverCandidates($vendorPath, $srcPath);
+
+        // F26.2: ALWAYS_ALLOWED bypassed the eligibility check entirely,
+        // so a future PR adding `__wakeup`, `__destruct`, `__serialize`,
+        // or `__unserialize` to one of these classes (e.g.
+        // ConfigRepository) would silently turn it into a deserialization
+        // gadget. Re-apply the magic-method and Serializable checks
+        // here — only the readonly-class restriction is waived.
+        foreach (self::ALWAYS_ALLOWED as $alwaysAllowedClass) {
+            self::assertAlwaysAllowedSafe($alwaysAllowedClass);
+        }
+
         $allowed = self::ALWAYS_ALLOWED;
 
         foreach ($candidates as $className) {
@@ -101,6 +119,41 @@ final class CacheAllowedClasses
         sort($allowed);
 
         return $allowed;
+    }
+
+    /**
+     * Verify that an `ALWAYS_ALLOWED` class is still safe for cache
+     * deserialization. Mirrors `isEligible()` minus the readonly /
+     * backed-enum check — those classes are explicitly waived from
+     * the readonly requirement, but every other guard still applies.
+     *
+     * @throws CacheException If the class implements Serializable or
+     *                       defines a dangerous magic method.
+     */
+    private static function assertAlwaysAllowedSafe(string $className): void
+    {
+        if (!class_exists($className)) {
+            throw CacheException::alwaysAllowedClassMissing($className);
+        }
+
+        // class_exists() above guarantees ReflectionClass cannot throw,
+        // so no try/catch is needed.
+        /** @var ReflectionClass<object> $ref */
+        $ref = new ReflectionClass($className);
+
+        if ($ref->implementsInterface(Serializable::class)) {
+            throw CacheException::alwaysAllowedClassUnsafe(
+                $className,
+                'class implements Serializable, which exposes a custom unserialize() codepath outside the allowed-classes guard',
+            );
+        }
+
+        if (self::hasDangerousMethods($ref)) {
+            throw CacheException::alwaysAllowedClassUnsafe(
+                $className,
+                'class defines one of __wakeup, __destruct, __serialize, __unserialize — these run on every unserialize() even with allowed_classes set, so the class can be turned into a deserialization gadget',
+            );
+        }
     }
 
     /**

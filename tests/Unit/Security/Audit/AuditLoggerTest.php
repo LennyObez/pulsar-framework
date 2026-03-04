@@ -13,6 +13,8 @@ use Pulsar\Context\CausationId;
 use Pulsar\Context\CorrelationId;
 use Pulsar\Context\RequestContext;
 use Pulsar\Context\RequestContextHolder;
+use Pulsar\Security\Audit\AuditChainState;
+use Pulsar\Security\Audit\AuditChainStateAware;
 use Pulsar\Security\Audit\AuditEntry;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditLogger;
@@ -20,6 +22,7 @@ use Pulsar\Security\Audit\AuditOutcome;
 use Pulsar\Security\Audit\AuditSinkInterface;
 use Pulsar\Security\Audit\ChainableAuditSinkInterface;
 use Pulsar\Security\Crypto\Hmac;
+use Pulsar\Security\Exception\SecurityException;
 
 #[CoversClass(AuditLogger::class)]
 final class AuditLoggerTest extends TestCase
@@ -351,5 +354,45 @@ final class AuditLoggerTest extends TestCase
 
         self::assertSame('system:test', $entry->actor);
         self::assertArrayNotHasKey('correlation_id', $entry->metadata);
+    }
+
+    #[Test]
+    public function resumesFromStateAwareSinkWhenHealthy(): void
+    {
+        $resumedHmac = 'abc123resumed';
+        $sink = $this->createStub(AuditChainStateAware::class);
+        $sink->method('chainState')->willReturn(AuditChainState::Healthy);
+        $sink->method('lastHmac')->willReturn($resumedHmac);
+
+        $logger = new AuditLogger($sink, $this->auditKey);
+
+        self::assertSame($resumedHmac, $logger->previousHmac());
+    }
+
+    #[Test]
+    public function usesSeedFromStateAwareSinkWhenEmpty(): void
+    {
+        $sink = $this->createStub(AuditChainStateAware::class);
+        $sink->method('chainState')->willReturn(AuditChainState::Empty);
+
+        $logger = new AuditLogger($sink, $this->auditKey);
+
+        $expected = Hmac::computeHex('PULSAR_AUDIT_SEED', $this->auditKey);
+        self::assertSame($expected, $logger->previousHmac());
+    }
+
+    #[Test]
+    public function throwsWhenStateAwareSinkReportsCorrupted(): void
+    {
+        // F24.3: a sink that detects an unreadable last entry must not
+        // be silently re-seeded — refuse to construct the logger so
+        // operators investigate before more entries pile up.
+        $sink = $this->createStub(AuditChainStateAware::class);
+        $sink->method('chainState')->willReturn(AuditChainState::Corrupted);
+
+        $this->expectException(SecurityException::class);
+        $this->expectExceptionMessage('Audit chain integrity check failed');
+
+        new AuditLogger($sink, $this->auditKey);
     }
 }

@@ -100,6 +100,26 @@ final class SecurityException extends RuntimeException
     }
 
     /**
+     * Audit chain state on disk is unverifiable (F24.3).
+     *
+     * Raised when an audit sink reports {@see \Pulsar\Security\Audit\AuditChainState::Corrupted}
+     * — the file holds at least one entry but the last record cannot
+     * be parsed, the `hmac` field is missing, or an IO failure
+     * prevented the lookup. Continuing would silently break the
+     * tamper-evidence chain by re-seeding over corrupt state, so the
+     * logger refuses to write any further entries until the chain is
+     * either rotated or restored.
+     */
+    #[NoDiscard]
+    public static function auditChainCorrupted(string $reason): self
+    {
+        return new self(sprintf(
+            'Audit chain integrity check failed: %s. Refusing to append further entries until the chain is rotated or restored.',
+            $reason,
+        ));
+    }
+
+    /**
      * Audit sink write failure.
      */
     #[NoDiscard]

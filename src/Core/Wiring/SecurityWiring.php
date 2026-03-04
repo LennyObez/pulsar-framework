@@ -175,7 +175,24 @@ final readonly class SecurityWiring implements ServiceWiringInterface
 
                 if ($obsConfig->audit->enabled) {
                     $auditKey = $masterKey->deriveSubKey(2, 'audit___');
-                    $auditSink = new AuditFileSink($obsConfig->audit->logPath);
+
+                    // F24.3: route AuditFileSink corruption diagnostics
+                    // through the application logger when one is wired,
+                    // so operators see them in the same structured
+                    // pipeline as other security warnings. Falls back to
+                    // NullLogger when no logger is registered yet —
+                    // SecurityException::auditChainCorrupted() still
+                    // surfaces the failure synchronously regardless.
+                    $auditSinkLogger = $container->has(LoggerInterface::class)
+                        ? $container->get(LoggerInterface::class)
+                        : null;
+
+                    /** @var LoggerInterface|null $auditSinkLogger */
+                    $auditSink = new AuditFileSink(
+                        $obsConfig->audit->logPath,
+                        false,
+                        $auditSinkLogger,
+                    );
                     $container->instance(AuditSinkInterface::class, $auditSink);
                     $container->instance(AuditFileSink::class, $auditSink);
 

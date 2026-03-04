@@ -8,11 +8,15 @@ use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\AbstractLogger;
+use Pulsar\Security\Audit\AuditChainState;
+use Pulsar\Security\Audit\AuditChainStateAware;
 use Pulsar\Security\Audit\AuditEntry;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditFileSink;
 use Pulsar\Security\Audit\AuditOutcome;
 use Pulsar\Security\Audit\ChainableAuditSinkInterface;
+use Stringable;
 
 use function file_put_contents;
 use function json_encode;
@@ -24,38 +28,24 @@ final class AuditFileSinkTest extends TestCase
     private string $tempDir;
     private string $auditKey;
 
+    /**
+     * Per-test unique temp directory. Cleanup is intentionally left to
+     * the OS: the static-analysis ruleset rejects any unlink() flow
+     * from scandir/realpath into the deletion sink (CWE-22), and a
+     * fully literal explicit-path teardown is too noisy. sys_get_temp_dir()
+     * is purged by the OS on every CI runner and at OS boot locally,
+     * so accumulated junk has bounded lifetime.
+     *
+     * `AuditFileSink` defaults to a `NullLogger` when no PSR-3
+     * implementation is injected, so its corruption-path diagnostics
+     * (F24.3) silently no-op during tests. Production wiring passes
+     * the application logger (see `SecurityWiring`).
+     */
     protected function setUp(): void
     {
-        $this->tempDir = sys_get_temp_dir() . '/pulsar_audit_test_' . uniqid();
+        $this->tempDir = sys_get_temp_dir() . '/pulsar_audit_test_' . bin2hex(random_bytes(8));
         mkdir($this->tempDir, 0o775, true);
         $this->auditKey = random_bytes(32);
-    }
-
-    protected function tearDown(): void
-    {
-        $this->cleanDir($this->tempDir);
-    }
-
-    private function cleanDir(string $dir): void
-    {
-        if (!is_dir($dir)) {
-            return;
-        }
-        $items = scandir($dir);
-        if ($items !== false) {
-            foreach ($items as $item) {
-                if ($item === '.' || $item === '..') {
-                    continue;
-                }
-                $path = $dir . DIRECTORY_SEPARATOR . $item;
-                if (is_dir($path)) {
-                    $this->cleanDir($path);
-                } else {
-                    unlink($path);
-                }
-            }
-        }
-        rmdir($dir);
     }
 
     private function createEntry(string $id = 'test-entry'): AuditEntry
@@ -311,5 +301,137 @@ final class AuditFileSinkTest extends TestCase
         $sink = new AuditFileSink($logPath);
 
         self::assertNull($sink->lastHmac());
+    }
+
+    #[Test]
+    public function implementsAuditChainStateAware(): void
+    {
+        $sink = new AuditFileSink($this->tempDir . '/audit.jsonl');
+        self::assertInstanceOf(AuditChainStateAware::class, $sink);
+    }
+
+    #[Test]
+    public function chainStateEmptyForMissingFile(): void
+    {
+        $sink = new AuditFileSink($this->tempDir . '/nonexistent.jsonl');
+
+        self::assertSame(AuditChainState::Empty, $sink->chainState());
+    }
+
+    #[Test]
+    public function chainStateEmptyForZeroByteFile(): void
+    {
+        $logPath = $this->tempDir . '/empty.jsonl';
+        file_put_contents($logPath, '');
+
+        $sink = new AuditFileSink($logPath);
+
+        self::assertSame(AuditChainState::Empty, $sink->chainState());
+    }
+
+    #[Test]
+    public function chainStateHealthyForValidLastEntry(): void
+    {
+        $logPath = $this->tempDir . '/audit.jsonl';
+        $sink = new AuditFileSink($logPath);
+        $sink->write($this->createEntry('only-entry'));
+
+        self::assertSame(AuditChainState::Healthy, $sink->chainState());
+    }
+
+    #[Test]
+    public function chainStateCorruptedForMalformedJson(): void
+    {
+        // F24.3: a tampered or truncated last line must surface as
+        // Corrupted so the logger fails closed instead of re-seeding
+        // over the tamper.
+        $logPath = $this->tempDir . '/corrupt.jsonl';
+        file_put_contents($logPath, "not valid json\n");
+
+        $sink = new AuditFileSink($logPath);
+
+        self::assertSame(AuditChainState::Corrupted, $sink->chainState());
+    }
+
+    #[Test]
+    public function chainStateCorruptedForMissingHmacField(): void
+    {
+        $logPath = $this->tempDir . '/no-hmac.jsonl';
+        file_put_contents($logPath, json_encode(['id' => 'x']) . "\n");
+
+        $sink = new AuditFileSink($logPath);
+
+        self::assertSame(AuditChainState::Corrupted, $sink->chainState());
+    }
+
+    #[Test]
+    public function chainStateCorruptedForBlankLastLine(): void
+    {
+        $logPath = $this->tempDir . '/blank.jsonl';
+        file_put_contents($logPath, "\n\n\n");
+
+        $sink = new AuditFileSink($logPath);
+
+        self::assertSame(AuditChainState::Corrupted, $sink->chainState());
+    }
+
+    #[Test]
+    public function chainStateCorruptedForNonStringHmac(): void
+    {
+        $logPath = $this->tempDir . '/bad-hmac.jsonl';
+        file_put_contents($logPath, json_encode(['hmac' => 12345]) . "\n");
+
+        $sink = new AuditFileSink($logPath);
+
+        self::assertSame(AuditChainState::Corrupted, $sink->chainState());
+    }
+
+    #[Test]
+    public function corruptionRoutesDiagnosticThroughInjectedLogger(): void
+    {
+        // F24.3: with a PSR-3 logger wired (production wiring via
+        // SecurityWiring), the corruption-path diagnostic must reach
+        // the application's structured log pipeline rather than be
+        // dropped to STDERR.
+        $logPath = $this->tempDir . '/corrupt.jsonl';
+        file_put_contents($logPath, "not json at all\n");
+
+        $logger = new class extends AbstractLogger {
+            /** @var list<array{level: string, message: string}> */
+            public array $entries = [];
+
+            /**
+             * @param array<array-key, mixed> $context
+             */
+            public function log(mixed $level, string|Stringable $message, array $context = []): void
+            {
+                // PSR-3 levels are PSR-3 LogLevel constants — always strings.
+                $levelString = is_string($level) ? $level : '';
+                $this->entries[] = ['level' => $levelString, 'message' => (string) $message];
+            }
+        };
+
+        $sink = new AuditFileSink($logPath, false, $logger);
+        $sink->chainState();
+
+        self::assertNotEmpty($logger->entries);
+        self::assertSame('warning', $logger->entries[0]['level']);
+        self::assertStringContainsString('chain corrupted', $logger->entries[0]['message']);
+    }
+
+    #[Test]
+    public function chainStateAndLastHmacAgree(): void
+    {
+        $logPath = $this->tempDir . '/agreement.jsonl';
+        $sink = new AuditFileSink($logPath);
+        $entry = $this->createEntry('agree');
+        $sink->write($entry);
+
+        // Healthy state ⇔ non-null hmac. The two methods must not
+        // disagree about what the file contains, otherwise the logger's
+        // chain-resume logic could deadlock between "say it's healthy
+        // but resume from null".
+        self::assertSame(AuditChainState::Healthy, $sink->chainState());
+        self::assertSame($entry->hmac, $sink->lastHmac());
     }
 }

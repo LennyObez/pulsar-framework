@@ -95,8 +95,9 @@ final class SignedIdempotencyEnvelopeTest extends TestCase
 
         $envelope = json_decode($sealed, true);
         self::assertIsArray($envelope);
+        self::assertIsString($envelope['h']);
         // Flip the HMAC bytes (still right length, wrong value).
-        $envelope['h'] = strrev((string) $envelope['h']);
+        $envelope['h'] = strrev($envelope['h']);
         $tampered = json_encode($envelope);
         self::assertNotFalse($tampered);
 
@@ -188,6 +189,7 @@ final class SignedIdempotencyEnvelopeTest extends TestCase
 
         $envelope = json_decode($sealed, true);
         self::assertIsArray($envelope);
-        self::assertSame($payload, base64_decode((string) $envelope['p'], true));
+        self::assertIsString($envelope['p']);
+        self::assertSame($payload, base64_decode($envelope['p'], true));
     }
 }

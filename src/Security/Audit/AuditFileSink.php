@@ -6,11 +6,12 @@ namespace Pulsar\Security\Audit;
 
 use JsonException;
 use Override;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use Pulsar\Security\Exception\SecurityException;
 use Throwable;
 
 use function dirname;
-use function error_log;
 use function fclose;
 use function fflush;
 use function file_put_contents;
@@ -46,17 +47,37 @@ use const SEEK_END;
  * concurrent write safety. The log directory is created with 0750
  * permissions if it does not exist.
  */
-final class AuditFileSink implements ChainableAuditSinkInterface
+final class AuditFileSink implements ChainableAuditSinkInterface, AuditChainStateAware
 {
     /**
      * Directory permissions for auto-created directories.
      */
     private const int DIR_PERMISSIONS = 0o750;
 
+    /**
+     * Bytes read from the tail of the file when looking up the last
+     * entry. Sized at 64 KiB so a single audit record cannot legitimately
+     * exceed it (entries are JSON Lines, well under that limit) and so
+     * the read window cannot truncate the last line into something the
+     * parser would read as malformed (F24.3 fix-2). The legacy 8 KiB
+     * window made truncation possible on large metadata payloads.
+     */
+    private const int TAIL_READ_SIZE = 65_536;
+
+    private readonly LoggerInterface $logger;
+
     public function __construct(
         private readonly string $logPath,
         private readonly bool $fsync = false,
-    ) {}
+        ?LoggerInterface $logger = null,
+    ) {
+        // F24.3 fix-1: corruption diagnostics flow through PSR-3 so
+        // operators can route them to the same structured pipeline as
+        // every other security warning (incident reporter, ELK, etc.)
+        // instead of being dumped to STDERR. NullLogger by default keeps
+        // existing wiring working unchanged.
+        $this->logger = $logger ?? new NullLogger();
+    }
 
     /**
      * @throws JsonException
@@ -91,49 +112,95 @@ final class AuditFileSink implements ChainableAuditSinkInterface
      *
      * Uses backward seek to efficiently read only the last line without
      * scanning the entire file. Returns null for empty, missing, or
-     * corrupt files: never throws, per `ChainableAuditSinkInterface`
-     * contract — the caller re-seeds the chain on null.
+     * corrupt files — never throws, per `ChainableAuditSinkInterface`
+     * contract.
      *
-     * Silently returning null for a corrupt non-empty file would break
-     * the tamper-evidence guarantee of the chain (the next write would
-     * start a fresh chain instead of extending the broken one), so any
-     * unexpected exception is logged via `error_log()` before falling
-     * back to null. That gives operators a chance to react before the
-     * regulated audit backlog piles up (H-4 audit response).
+     * Note: callers that hold tamper-evidence guarantees should consume
+     * {@see chainState()} instead of `lastHmac()` alone — the legacy
+     * `null` shape collapses "empty, fresh chain" and "non-empty,
+     * corrupted chain" together, but `chainState()` distinguishes them
+     * so the logger can fail closed on the second case (F24.3).
      */
     #[Override]
     public function lastHmac(): ?string
     {
+        return $this->readLastEntry()['hmac'];
+    }
+
+    /**
+     * F24.3: report whether the chain is empty, healthy, or corrupted.
+     * `lastHmac()` collapses the last two into `null`; this method
+     * separates them so `AuditLogger` can refuse to append to an
+     * unverifiable chain instead of silently re-seeding over corruption.
+     */
+    #[Override]
+    public function chainState(): AuditChainState
+    {
+        return $this->readLastEntry()['state'];
+    }
+
+    /**
+     * Read the last entry from the log file in a single pass and return
+     * both its HMAC and the discriminated chain state. Used by
+     * {@see lastHmac()} and {@see chainState()} so the two methods
+     * cannot disagree about what the file contains.
+     *
+     * @return array{hmac: ?string, state: AuditChainState}
+     */
+    private function readLastEntry(): array
+    {
         if (!is_file($this->logPath)) {
-            return null;
+            return ['hmac' => null, 'state' => AuditChainState::Empty];
         }
 
         try {
             $handle = fopen($this->logPath, 'rb');
 
             if ($handle === false) {
-                return null;
+                $this->logger->warning(sprintf(
+                    '[pulsar.AuditFileSink] could not open %s for chain-state read — refusing to append.',
+                    $this->logPath,
+                ));
+
+                return ['hmac' => null, 'state' => AuditChainState::Corrupted];
             }
 
             $stat = fstat($handle);
 
-            if ($stat === false || $stat['size'] === 0) {
+            if ($stat === false) {
+                fclose($handle);
+                $this->logger->warning(sprintf(
+                    '[pulsar.AuditFileSink] fstat() failed on %s — refusing to append.',
+                    $this->logPath,
+                ));
+
+                return ['hmac' => null, 'state' => AuditChainState::Corrupted];
+            }
+
+            if ($stat['size'] === 0) {
                 fclose($handle);
 
-                return null;
+                return ['hmac' => null, 'state' => AuditChainState::Empty];
             }
 
             $fileSize = $stat['size'];
 
-            // Read up to 8KB from the end: enough for one JSONL audit entry
+            // 64 KiB tail window: well above the size of any single
+            // legitimate JSON-Lines audit entry, so a malformed read
+            // here always means corruption rather than truncation.
             /** @var positive-int $readSize */
-            $readSize = min($fileSize, 8192);
+            $readSize = min($fileSize, self::TAIL_READ_SIZE);
             fseek($handle, -$readSize, SEEK_END);
             $chunk = fread($handle, $readSize);
             fclose($handle);
 
             if (!is_string($chunk) || $chunk === '') {
-                return null;
+                $this->logger->warning(sprintf(
+                    '[pulsar.AuditFileSink] tail read of %s returned empty chunk — file may be unreadable.',
+                    $this->logPath,
+                ));
+
+                return ['hmac' => null, 'state' => AuditChainState::Corrupted];
             }
 
             // Trim trailing newline(s), then find the last complete line
@@ -143,25 +210,35 @@ final class AuditFileSink implements ChainableAuditSinkInterface
             $lastLine = trim($lastLine);
 
             if ($lastLine === '') {
-                return null;
+                $this->logger->warning(sprintf(
+                    '[pulsar.AuditFileSink] last line of %s is blank — chain corrupted.',
+                    $this->logPath,
+                ));
+
+                return ['hmac' => null, 'state' => AuditChainState::Corrupted];
             }
 
             /** @var array<string, mixed>|null $data */
             $data = json_decode($lastLine, true);
 
             if (!is_array($data) || !isset($data['hmac']) || !is_string($data['hmac'])) {
-                return null;
+                $this->logger->warning(sprintf(
+                    '[pulsar.AuditFileSink] last entry of %s is malformed or missing hmac — chain corrupted.',
+                    $this->logPath,
+                ));
+
+                return ['hmac' => null, 'state' => AuditChainState::Corrupted];
             }
 
-            return $data['hmac'];
+            return ['hmac' => $data['hmac'], 'state' => AuditChainState::Healthy];
         } catch (Throwable $e) {
-            error_log(sprintf(
-                '[pulsar.AuditFileSink] lastHmac() failed for %s: %s — audit chain will be re-seeded.',
+            $this->logger->warning(sprintf(
+                '[pulsar.AuditFileSink] chain-state read failed for %s: %s — refusing to append.',
                 $this->logPath,
                 $e->getMessage(),
             ));
 
-            return null;
+            return ['hmac' => null, 'state' => AuditChainState::Corrupted];
         }
     }
 
