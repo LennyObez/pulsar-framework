@@ -48,10 +48,15 @@ final readonly class WebAuthnServer implements WebAuthnServerInterface
         return $this->authenticationCeremony->generateOptions($userId);
     }
 
+    /**
+     * F385.16: `$expectedUserId` has no default — see the interface
+     * docblock for the rationale (preventing silent "any user"
+     * authentication via the discoverable-credentials default).
+     */
     public function verifyAuthentication(
         string $credentialJson,
         string $expectedChallenge,
-        ?string $expectedUserId = null,
+        ?string $expectedUserId,
     ): AuthenticationResult {
         return $this->authenticationCeremony->verify($credentialJson, $expectedChallenge, $expectedUserId);
     }
