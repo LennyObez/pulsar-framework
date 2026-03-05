@@ -28,10 +28,13 @@ use function array_map;
 use function base64_decode;
 use function explode;
 use function http_build_query;
+use function in_array;
 use function is_array;
 use function is_string;
 use function json_encode;
+use function parse_url;
 use function str_contains;
+use function strtolower;
 use function substr;
 
 /**
@@ -151,6 +154,15 @@ final readonly class OAuth2AuthorizationServer implements AuthorizationServerInt
         if (!$client->hasGrantType('authorization_code')) {
             throw OAuth2Exception::unauthorizedClient('Client is not authorized for authorization_code grant');
         }
+
+        // F385.14: validate the redirect_uri before delegating to the
+        // client-registered allowlist. Even though `hasRedirectUri()`
+        // does a strict in_array() exact match, an admin who
+        // accidentally registers an unsafe URI (fragment present,
+        // `javascript:` scheme, etc.) would still match. Reject those
+        // shapes at request time so the misconfiguration cannot reach
+        // the redirect helper that builds the response.
+        self::assertSafeRedirectUri($redirectUri);
 
         // Validate redirect URI (strict exact match)
         if (!$client->hasRedirectUri($redirectUri)) {
@@ -497,6 +509,47 @@ final readonly class OAuth2AuthorizationServer implements AuthorizationServerInt
         }
 
         return $value;
+    }
+
+    /**
+     * F385.14: defense-in-depth redirect_uri validation.
+     *
+     * RFC 6749 §3.1.2 forbids fragments in redirect URIs because the
+     * authorization-server-issued query parameters (`code`, `state`,
+     * `error`) round-trip through the user-agent — a fragment on the
+     * registered URI would either confuse the agent or, in worst case,
+     * leak the auth code into the URL fragment portion that some
+     * intermediaries log.
+     *
+     * Dangerous schemes (`javascript:`, `data:`, `vbscript:`, `file:`,
+     * empty / whitespace) are rejected outright: even if a misguided
+     * admin registers one of these, the auth code redirect would
+     * execute arbitrary JS in the user-agent context.
+     *
+     * @throws OAuth2Exception When the URI carries a fragment or uses
+     *                        a denylisted scheme.
+     */
+    private static function assertSafeRedirectUri(string $redirectUri): void
+    {
+        if (str_contains($redirectUri, '#')) {
+            throw OAuth2Exception::invalidRequest(
+                'redirect_uri must not contain a fragment (RFC 6749 §3.1.2)',
+            );
+        }
+
+        $scheme = strtolower((string) parse_url($redirectUri, PHP_URL_SCHEME));
+
+        if ($scheme === '') {
+            throw OAuth2Exception::invalidRequest('redirect_uri must include a scheme');
+        }
+
+        $denylisted = ['javascript', 'data', 'vbscript', 'file', 'about'];
+
+        if (in_array($scheme, $denylisted, true)) {
+            throw OAuth2Exception::invalidRequest(
+                'redirect_uri scheme is not allowed',
+            );
+        }
     }
 
     /**
