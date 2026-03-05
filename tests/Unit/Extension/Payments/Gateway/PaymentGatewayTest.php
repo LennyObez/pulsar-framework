@@ -29,6 +29,7 @@ use Pulsar\Extension\Payments\Domain\PaymentIntentStatus;
 use Pulsar\Extension\Payments\Domain\RefundStatus;
 use Pulsar\Extension\Payments\Exception\PaymentException;
 use Pulsar\Extension\Payments\Exception\PaymentProviderException;
+use Pulsar\Extension\Payments\Features\CreatePaymentIntent\CreatePaymentIntentHandler;
 use Pulsar\Extension\Payments\Gateway\PaymentGateway;
 use Pulsar\Extension\Payments\Internal\Infrastructure\Clock\FixedClock;
 use Pulsar\Extension\Payments\Internal\Infrastructure\Provider\NullProvider;
@@ -524,6 +525,18 @@ final class PaymentGatewayTest extends TestCase
 
         $auditLogger = new AuditLogger($sink, 'test-audit-key-1234');
 
+        $config = $this->createConfig($requireTenantContext);
+        $createHandler = new CreatePaymentIntentHandler(
+            provider: $provider,
+            idempotencyStore: $this->idempotencyStore,
+            auditLogger: $auditLogger,
+            metricRegistry: $this->metricRegistry,
+            logger: new NullLogger(),
+            clock: $this->clock,
+            config: $config,
+            envelope: $this->envelope,
+        );
+
         return new PaymentGateway(
             provider: $provider,
             idempotencyStore: $this->idempotencyStore,
@@ -531,9 +544,9 @@ final class PaymentGatewayTest extends TestCase
             metricRegistry: $this->metricRegistry,
             logger: new NullLogger(),
             clock: $this->clock,
-            config: $this->createConfig($requireTenantContext),
+            config: $config,
             envelope: $this->envelope,
-            createHandler: null,
+            createHandler: $createHandler,
             tenantContext: $tenantContext,
         );
     }
