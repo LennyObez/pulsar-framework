@@ -10,6 +10,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Extension\Auth\WebAuthn\Adapter\CborDecoder;
 use Pulsar\Extension\Auth\WebAuthn\Ceremony\RegistrationCeremony;
@@ -526,7 +527,11 @@ final class RegistrationCeremonyTest extends TestCase
             ->with(
                 AuditEvent::Authentication,
                 AuditOutcome::Failure,
-                null,
+                // F25.10 carry-over: production code passes
+                // AuditActor::anonymous() (the explicit-actor pattern
+                // mandated since rc.10) instead of null. Match the
+                // typed actor object the framework actually emits.
+                self::callback(fn(mixed $actor): bool => $actor instanceof AuditActor && $actor->id === 'anonymous'),
                 'webauthn.registration.failed',
                 'webauthn:registration',
                 self::callback(fn(array $meta): bool => isset($meta['error']) && isset($meta['error_code'])),
