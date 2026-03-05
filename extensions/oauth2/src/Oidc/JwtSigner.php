@@ -9,8 +9,6 @@ use RuntimeException;
 
 use function base64_encode;
 use function count;
-use function in_array;
-use function is_array;
 use function is_int;
 use function is_numeric;
 use function is_string;
@@ -177,21 +175,15 @@ final readonly class JwtSigner
             }
         }
 
-        // Validate audience contains the configured issuer (OIDC self-issued tokens)
-        if ($this->config->issuer !== '' && isset($claims['aud'])) {
-            $aud = $claims['aud'];
-
-            if (is_string($aud)) {
-                if ($aud !== $this->config->issuer) {
-                    return false;
-                }
-            } elseif (is_array($aud)) {
-                /** @var list<string> $aud */
-                if (!in_array($this->config->issuer, $aud, true)) {
-                    return false;
-                }
-            }
-        }
+        // Audience (aud) is intentionally NOT validated here. OIDC Core
+        // 3.1.3.7 specifies that the *relying party* validates aud
+        // against its own client_id; the issuing OIDC server (this
+        // class) does not know which RP a re-introspected token was
+        // minted for. Earlier revisions tried to assert
+        // `aud === iss` ("OIDC self-issued tokens"), which rejected
+        // every regular ID token where aud is the client_id and not
+        // the issuer URL. Audience validation, if needed, belongs in
+        // the calling code that knows the expected audience.
 
         return true;
     }
