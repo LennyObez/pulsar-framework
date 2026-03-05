@@ -393,7 +393,14 @@ jobs:
       - name: Fetch base ref (fork-safe)
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: git fetch origin "$BASE_SHA" --depth=1
+        # F28.8: depth=1 only fetches the base SHA. The downstream
+        # `check-adr.sh` does `git diff "${BASE_SHA}...HEAD"`, which
+        # requires a reachable common ancestor — for PRs with multiple
+        # commits this either fails with "fatal: object not in fetch"
+        # or silently produces an incomplete diff. depth=50 fits the
+        # typical PR-size cap (ADR-0031 hard cap is 1500 LOC) with
+        # margin and keeps the fetch cheap.
+        run: git fetch origin "$BASE_SHA" --depth=50
 
       - name: Check ADR governance
         env:

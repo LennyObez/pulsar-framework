@@ -40,7 +40,11 @@ for path in "${CORE_PATHS[@]}"; do
 done
 
 if [ "$CORE_CHANGED" = true ]; then
-  ADR_COUNT=$(echo "$CHANGED" | grep -c "^docs/adr/.*\.md$" || true)
+  # F28.6: count only numbered ADRs (NNNN-...). The previous pattern
+  # `^docs/adr/.*\.md$` matched the template (`0000-template.md`) and
+  # any unrelated `.md` under adr/ — a typo fix on the template alone
+  # was enough to satisfy the gate without writing an actual ADR.
+  ADR_COUNT=$(echo "$CHANGED" | grep -E "^docs/adr/0*[1-9][0-9]*-.*\.md$" | grep -v "^docs/adr/0000-" | wc -l)
   if [ "$ADR_COUNT" -eq 0 ]; then
     echo "FAIL: Core architecture paths changed without an ADR."
     echo ""
