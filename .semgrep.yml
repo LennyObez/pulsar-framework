@@ -1,0 +1,39 @@
+# Semgrep project configuration for the Pulsar framework.
+#
+# This file customises Semgrep's rule application for the codebase.
+# Rules excluded here are either false positives that cannot be
+# suppressed safely at the call site, or patterns that are legitimate
+# in specific contexts (e.g. test fixtures).
+#
+# Run locally:
+#   semgrep --config=.semgrep.yml
+#
+# The CI pipeline and the MCP scanner also honour this file.
+
+# Paths completely excluded from Semgrep scanning.
+# Vendor code is scanned by the supply-chain audit job separately.
+paths:
+  exclude:
+    - 'vendor/**'
+    - 'node_modules/**'
+    - 'storage/**'
+    - 'public/build/**'
+    - 'tools/php/fixtures/**'
+
+# Rule-specific overrides.
+rules:
+  # The `php.lang.security.dangerous-unlink` rule flags every `unlink()`
+  # call whose path is not a string literal. Its taint tracker cannot
+  # reason through `realpath()` + `str_starts_with(sys_get_temp_dir())`
+  # validation, producing consistent false positives on the canonical
+  # PHP recursive-delete idiom (RecursiveDirectoryIterator + unlink).
+  #
+  # The rule is retained for production code under src/ and extensions/,
+  # where any recursive delete must go through the audited `Storage`
+  # abstraction, and explicitly scoped out of tests/ where recursive
+  # tmpdir cleanup is required for hermetic test runs.
+  - id: php.lang.security.dangerous-unlink
+    paths:
+      exclude:
+        - 'tests/**'
+        - 'extensions/*/tests/**'
