@@ -32,6 +32,25 @@ final readonly class AccessToken
         return $this->expiresAt < new DateTimeImmutable();
     }
 
+    /**
+     * Token-intrinsic activeness check: not revoked and not expired.
+     *
+     * F385.15: this method intentionally does NOT inspect the issuing
+     * client's active flag, the granted-scope set, or the subject's
+     * account status. Those are external attributes the token cannot
+     * reach without a circular dependency on the client / scope /
+     * subject repositories. Callers that need a full RFC 7662
+     * introspection-grade "active" decision must compose:
+     *
+     *   $token->isActive()
+     *       && $clientRepository->findById($token->clientId)?->active === true
+     *       && $scopeRepository->stillGranted($token->scopes, $token->clientId)
+     *       && $subjectRepository->isAccountActive($token->subjectId)
+     *
+     * The OAuth2 introspection endpoint
+     * (`OAuth2AuthorizationServer::processIntrospectionRequest()`)
+     * is the canonical place to apply that composition.
+     */
     public function isActive(): bool
     {
         return !$this->revoked && !$this->isExpired();
