@@ -95,7 +95,10 @@ jobs:
         with:
           php-version: '8.5'
           extensions: pdo_mysql, pdo_pgsql, pdo_sqlite
-          coverage: pcov
+          # Xdebug 3.x required for branch + path coverage (PCOV only measures
+          # lines). The mandate targets 100 % line + branch + condition coverage
+          # so Xdebug is the only production-capable choice today.
+          coverage: xdebug
 
       - name: Cache Composer dependencies
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
@@ -106,23 +109,47 @@ jobs:
 
       - run: composer install --no-interaction --no-progress
 
-      - name: Run all tests with coverage
-        run: php -d memory_limit=3G -d pcov.directory=. vendor/bin/phpunit -c tools/php/phpunit.xml --coverage-clover coverage/clover.xml
+      - name: Run all tests with line + branch + path coverage
+        env:
+          XDEBUG_MODE: coverage
+        run: |
+          php -d memory_limit=4G \
+              -d xdebug.mode=coverage \
+              vendor/bin/phpunit \
+                -c tools/php/phpunit.xml \
+                --coverage-clover coverage/clover.xml \
+                --path-coverage
 
-      - name: Enforce coverage threshold
+      - name: Enforce coverage threshold (lines + branches + paths)
         run: |
           php -r '
             $xml = simplexml_load_file("coverage/clover.xml");
             $metrics = $xml->project->metrics;
             $stmts = (int) $metrics["statements"];
-            $covered = (int) $metrics["coveredstatements"];
-            $pct = $stmts > 0 ? round(($covered / $stmts) * 100, 2) : 0;
-            echo "Coverage: {$pct}% ({$covered}/{$stmts} statements)\n";
-            if ($pct < 70) {
-                echo "FAIL: Coverage {$pct}% is below the 70% threshold.\n";
-                exit(1);
+            $stmtsCov = (int) $metrics["coveredstatements"];
+            $stmtPct = $stmts > 0 ? round(($stmtsCov / $stmts) * 100, 2) : 0;
+
+            $conds = (int) ($metrics["conditionals"] ?? 0);
+            $condsCov = (int) ($metrics["coveredconditionals"] ?? 0);
+            $condPct = $conds > 0 ? round(($condsCov / $conds) * 100, 2) : 0;
+
+            $methods = (int) ($metrics["methods"] ?? 0);
+            $methodsCov = (int) ($metrics["coveredmethods"] ?? 0);
+            $methodPct = $methods > 0 ? round(($methodsCov / $methods) * 100, 2) : 0;
+
+            echo "Statements : {$stmtPct}% ({$stmtsCov}/{$stmts})\n";
+            echo "Conditions : {$condPct}% ({$condsCov}/{$conds})\n";
+            echo "Methods    : {$methodPct}% ({$methodsCov}/{$methods})\n";
+
+            $threshold = 70; // TODO TD-006: ramp 70 -> 90 -> 95 -> 100
+            $failed = false;
+            foreach (["Statements" => $stmtPct, "Conditions" => $condPct, "Methods" => $methodPct] as $name => $pct) {
+                if ($pct < $threshold) {
+                    echo "FAIL: {$name} coverage {$pct}% is below the {$threshold}% threshold.\n";
+                    $failed = true;
+                }
             }
-            echo "PASS: Coverage meets the 70% threshold.\n";
+            exit($failed ? 1 : 0);
           '
 
       - name: Upload coverage artifact
