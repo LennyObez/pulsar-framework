@@ -169,6 +169,24 @@ final class SecurityException extends RuntimeException
     }
 
     /**
+     * Session payload could not be JSON-encoded for storage.
+     *
+     * Pulsar 1.0.0-rc.12 stores sessions as JSON to eliminate the
+     * unserialize() attack surface (HIGH-4 / CWE-502). Application
+     * code that puts non-encodable values (resources, raw object
+     * instances, closures) into the session triggers this exception
+     * at save() time.
+     */
+    #[NoDiscard]
+    public static function sessionEncodingFailed(string $reason): self
+    {
+        return new self(sprintf(
+            'Failed to encode session payload as JSON: %s. Session values must be scalars, arrays, or JsonSerializable instances.',
+            $reason,
+        ));
+    }
+
+    /**
      * Secret vault key not found.
      */
     #[NoDiscard]
