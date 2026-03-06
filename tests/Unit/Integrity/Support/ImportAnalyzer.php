@@ -10,8 +10,11 @@ use function count;
 use function file_get_contents;
 use function is_array;
 use function ltrim;
+use function preg_match;
 use function str_starts_with;
+use function substr;
 use function token_get_all;
+use function trim;
 
 /**
  * Extracts all Pulsar class references from a PHP file using token_get_all().
@@ -79,6 +82,71 @@ final class ImportAnalyzer
                         $references[] = $fqcn;
                     }
                 }
+            }
+        }
+
+        return array_values(array_unique($references));
+    }
+
+    /**
+     * Extract Pulsar FQCNs that appear as quoted strings in the file.
+     *
+     * F23.4: the static-import scan in {@see extractReferences()} sees
+     * `T_USE` and `T_NAME_FULLY_QUALIFIED` tokens, but PHP code that
+     * routes through `$container->get('Pulsar\Foo\Bar')` or
+     * `class_exists('Pulsar\Foo\Bar')` keeps the FQCN inside a
+     * `T_CONSTANT_ENCAPSED_STRING` — invisible to import analysis,
+     * which is precisely the arbitrary-class-instantiation pattern
+     * this audit infrastructure exists to surface (carry-over
+     * F21.2 / F17.1 / F22.3 / F22.14).
+     *
+     * Scans `T_CONSTANT_ENCAPSED_STRING` for substrings matching
+     * `Pulsar\<UpperCaseSegment>...` and returns the deduplicated
+     * FQCNs. Handles single- and double-quoted PHP literals, both
+     * with leading backslash (`\\Pulsar\\...`) and without.
+     *
+     * @return list<string>
+     */
+    public static function extractClassStringReferences(string $filePath): array
+    {
+        $code = file_get_contents($filePath);
+
+        if ($code === false) {
+            return [];
+        }
+
+        $tokens = token_get_all($code);
+        $references = [];
+
+        foreach ($tokens as $token) {
+            if (!is_array($token) || $token[0] !== T_CONSTANT_ENCAPSED_STRING) {
+                continue;
+            }
+
+            $literal = $token[1];
+
+            if ($literal === '') {
+                continue;
+            }
+
+            // Strip the surrounding quote pair. Single-quoted strings
+            // do not need escape decoding; double-quoted ones with a
+            // backslash-escaped namespace separator look like
+            // "\\Pulsar\\Foo" in source, which token_get_all already
+            // decodes to a single backslash.
+            $first = $literal[0];
+
+            if ($first !== "'" && $first !== '"') {
+                continue;
+            }
+
+            $inner = trim(substr($literal, 1, -1));
+            $candidate = ltrim($inner, '\\');
+
+            if (
+                preg_match('/^Pulsar(\\\\[A-Z][A-Za-z0-9_]*)+$/', $candidate) === 1
+            ) {
+                $references[] = $candidate;
             }
         }
 
