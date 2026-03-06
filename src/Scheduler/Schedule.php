@@ -58,6 +58,27 @@ readonly class Schedule
     }
 
     /**
+     * Every N minutes, where N divides 60 evenly (1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30).
+     *
+     * Cron step syntax only produces a regular schedule when N divides
+     * 60 — otherwise the intervals drift at the hour boundary. The
+     * argument is validated against that constraint to catch misuse at
+     * call time instead of silently producing an uneven schedule.
+     *
+     * @throws SchedulerException If $minutes does not divide 60 evenly
+     *                            or is outside the inclusive range [1, 30].
+     */
+    #[NoDiscard]
+    public static function everyMinutes(int $minutes, string $timezone = 'UTC'): self
+    {
+        if ($minutes < 1 || $minutes > 30 || 60 % $minutes !== 0) {
+            throw SchedulerException::invalidEveryMinutesInterval($minutes);
+        }
+
+        return new self(sprintf('*/%d * * * *', $minutes), $timezone);
+    }
+
+    /**
      * Every hour at minute 0.
      */
     #[NoDiscard]
