@@ -9,6 +9,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Config\CorsConfig;
+use Pulsar\Http\Exception\CorsConfigurationException;
 use Pulsar\Http\Message\Response;
 
 use function implode;
@@ -18,12 +19,23 @@ use function strtoupper;
 /**
  * CORS middleware that handles preflight OPTIONS requests and adds
  * Access-Control-* headers to all responses based on CorsConfig.
+ *
+ * Refuses the credentials-with-wildcard combination at construction
+ * time. The CORS spec forbids `Access-Control-Allow-Origin: *` together
+ * with `Access-Control-Allow-Credentials: true`, because the wildcard
+ * defeats the per-origin scoping that credentials require. A
+ * misconfigured app would otherwise leak authenticated responses to
+ * any origin (HIGH-5 / CWE-942).
  */
 final readonly class CorsMiddleware implements MiddlewareInterface
 {
     public function __construct(
         private CorsConfig $config,
-    ) {}
+    ) {
+        if ($this->config->allowCredentials && in_array('*', $this->config->allowedOrigins, true)) {
+            throw CorsConfigurationException::credentialsWithWildcard();
+        }
+    }
 
     #[Override]
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
@@ -78,8 +90,11 @@ final readonly class CorsMiddleware implements MiddlewareInterface
 
     private function addCorsHeaders(ResponseInterface $response, string $origin): ResponseInterface
     {
-        $allowOrigin = in_array('*', $this->config->allowedOrigins, true) ? '*' : $origin;
-        $response = $response->withHeader('Access-Control-Allow-Origin', $allowOrigin);
+        // Even when wildcard is configured, echo the actual origin so
+        // shared caches do not pollute responses across origins. Caches
+        // see different `Access-Control-Allow-Origin` per origin and
+        // honor the `Vary: Origin` directive below.
+        $response = $response->withHeader('Access-Control-Allow-Origin', $origin);
 
         if ($this->config->allowCredentials) {
             $response = $response->withHeader('Access-Control-Allow-Credentials', 'true');
@@ -92,11 +107,10 @@ final readonly class CorsMiddleware implements MiddlewareInterface
             );
         }
 
-        // Vary by Origin so caches distinguish per-origin responses
-        if (!in_array('*', $this->config->allowedOrigins, true)) {
-            $response = $response->withAddedHeader('Vary', 'Origin');
-        }
-
-        return $response;
+        // Vary: Origin is mandatory whenever Access-Control-Allow-Origin
+        // is computed from the request. Without it, an upstream cache
+        // would happily serve one origin's response to another origin
+        // (HIGH-5 / CWE-942).
+        return $response->withAddedHeader('Vary', 'Origin');
     }
 }
