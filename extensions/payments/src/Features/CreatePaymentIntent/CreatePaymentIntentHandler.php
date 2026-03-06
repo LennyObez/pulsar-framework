@@ -21,6 +21,7 @@ use Pulsar\Idempotency\IdempotencyClaimStatus;
 use Pulsar\Idempotency\IdempotencyStoreInterface;
 use Pulsar\Idempotency\SignedIdempotencyEnvelope;
 use Pulsar\Observability\Metrics\LabelSet;
+use SodiumException;
 use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditLogger;
@@ -54,7 +55,6 @@ final readonly class CreatePaymentIntentHandler
     /**
      * @throws IdempotencyException
      * @throws PaymentProviderException
-     * @throws JsonException
      */
     public function execute(CreatePaymentIntentRequest $request): CreatePaymentIntentResult
     {
@@ -128,24 +128,31 @@ final readonly class CreatePaymentIntentHandler
 
     private function commitResult(string $key, PaymentIntent $intent): void
     {
-        $payload = json_encode([
-            'schema_version' => 1,
-            'type' => 'payment_intent',
-            'data' => [
-                'id' => $intent->id,
-                'amount' => $intent->amount->amount,
-                'currency' => $intent->amount->currency->value,
-                'status' => $intent->status->value,
-                'provider' => $intent->provider,
-                'idempotency_key' => $intent->idempotencyKey,
-                'created_at' => $intent->createdAt->getTimestamp(),
-                'metadata' => $intent->metadata,
-            ],
-        ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
+        // F22.6: encode + seal can throw JsonException / SodiumException
+        // — wrap into the domain exception so the handler's contract
+        // matches PaymentGatewayInterface's reduced @throws set.
+        try {
+            $payload = json_encode([
+                'schema_version' => 1,
+                'type' => 'payment_intent',
+                'data' => [
+                    'id' => $intent->id,
+                    'amount' => $intent->amount->amount,
+                    'currency' => $intent->amount->currency->value,
+                    'status' => $intent->status->value,
+                    'provider' => $intent->provider,
+                    'idempotency_key' => $intent->idempotencyKey,
+                    'created_at' => $intent->createdAt->getTimestamp(),
+                    'metadata' => $intent->metadata,
+                ],
+            ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
 
-        // F21.3: bind the payload to the idempotency key with a HMAC
-        // envelope so a tampered store row cannot replay a forged intent.
-        $sealed = $this->envelope->seal($key, $payload);
+            // F21.3: bind the payload to the idempotency key with a HMAC
+            // envelope so a tampered store row cannot replay a forged intent.
+            $sealed = $this->envelope->seal($key, $payload);
+        } catch (JsonException | SodiumException $e) {
+            throw IdempotencyException::serializationFailed($key, $e);
+        }
 
         try {
             $this->idempotencyStore->commit($key, $sealed);
@@ -162,10 +169,15 @@ final readonly class CreatePaymentIntentHandler
 
     private function deserializeIntent(string $idempotencyKey, string $sealed): PaymentIntent
     {
-        $payload = $this->envelope->open($idempotencyKey, $sealed);
+        try {
+            $payload = $this->envelope->open($idempotencyKey, $sealed);
 
-        /** @var array{data: array{id: string, amount: int, currency: string, status: string, provider: string, idempotency_key: string, created_at: int, metadata?: array<string, mixed>}} $envelope */
-        $envelope = json_decode($payload, true, flags: JSON_THROW_ON_ERROR);
+            /** @var array{data: array{id: string, amount: int, currency: string, status: string, provider: string, idempotency_key: string, created_at: int, metadata?: array<string, mixed>}} $envelope */
+            $envelope = json_decode($payload, true, flags: JSON_THROW_ON_ERROR);
+        } catch (JsonException | SodiumException $e) {
+            throw IdempotencyException::serializationFailed($idempotencyKey, $e);
+        }
+
         $data = $envelope['data'];
 
         /** @var array<string, mixed> $metadata */
