@@ -58,11 +58,16 @@ final class HmacWebhookVerifierExtendedTest extends TestCase
     #[Test]
     public function verifyRejectsWrongSignature(): void
     {
+        // F25.8: use a well-formed hex (64 chars) that just doesn't
+        // match the computed HMAC. The previous fixture
+        // ('deadbeef1234567890', 18 chars) would now be rejected by
+        // the format check before hash_equals — we want the mismatch
+        // path here.
         $now = new DateTimeImmutable('@1700000000');
         $verifier = new HmacWebhookVerifier($now);
 
         $payload = '{"test":1}';
-        $header = sprintf('t=%d,v1=%s', $now->getTimestamp(), 'deadbeef1234567890');
+        $header = sprintf('t=%d,v1=%s', $now->getTimestamp(), str_repeat('0', 64));
 
         $this->expectException(WebhookException::class);
         $this->expectExceptionMessage('signature');

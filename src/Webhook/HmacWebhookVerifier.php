@@ -9,7 +9,10 @@ use Override;
 use Pulsar\Webhook\Exception\WebhookException;
 
 use function abs;
+use function ctype_xdigit;
+use function strlen;
 use function str_starts_with;
+use function strtolower;
 use function substr;
 
 /**
@@ -20,6 +23,16 @@ use function substr;
  */
 final readonly class HmacWebhookVerifier implements WebhookVerifierInterface
 {
+    /**
+     * F25.8: HMAC-SHA256 produces 32 bytes = 64 hex chars. Any v1=
+     * value with a different length is malformed and must be
+     * rejected before reaching `hash_equals` (defence-in-depth — an
+     * attacker who can submit any non-empty v1= forced the verifier
+     * to compare against arbitrary attacker-supplied bytes, even
+     * though the constant-time guarantee holds).
+     */
+    private const int HMAC_HEX_LENGTH = 64;
+
     public function __construct(
         private ?DateTimeImmutable $now = null,
     ) {}
@@ -87,9 +100,24 @@ final readonly class HmacWebhookVerifier implements WebhookVerifierInterface
                 $timestamp = (int) $value;
             } elseif (str_starts_with($part, 'v1=')) {
                 $value = substr($part, 3);
-                if ($value !== '') {
-                    $signatures[] = $value;
+
+                if ($value === '') {
+                    continue;
                 }
+
+                // F25.8: reject anything that isn't exactly 64 lowercase
+                // hex chars. The HMAC comparison further down uses
+                // hash_equals (constant time), but only on values that
+                // first pass through this filter — denying junk early
+                // keeps the audit trail clean and the verification path
+                // free of attacker-controlled length / charset.
+                $value = strtolower($value);
+
+                if (strlen($value) !== self::HMAC_HEX_LENGTH || !ctype_xdigit($value)) {
+                    throw WebhookException::malformedHeader('non-hex v1 signature');
+                }
+
+                $signatures[] = $value;
             }
         }
 
