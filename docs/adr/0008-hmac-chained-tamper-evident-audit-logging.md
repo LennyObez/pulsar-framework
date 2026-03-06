@@ -24,7 +24,11 @@ Implement a separate audit logging subsystem with keyed BLAKE2b hash chaining. A
 
 - **Structured entries.** Each `AuditEntry` is a readonly value object with fields: `id`, `event` (enum: authentication, authorization, data_access, configuration_change, system), `outcome` (enum: success, failure, denied), `actor`, `action`, `resource`, `timestamp`, and `metadata`.
 - **HMAC chain with deterministic seed.** The chain starts from a seed HMAC computed as `keyed BLAKE2b("PULSAR_AUDIT_SEED", auditKey)`. This is not a zero value - it is a deterministic, key-dependent seed that verification tools can reconstruct from the audit key alone. Each subsequent entry's HMAC is computed over all its fields plus the previous entry's HMAC.
-- **Restart continuity.** If the sink implements `ChainableAuditSinkInterface`, the `AuditLogger` reads the last entry's HMAC via `lastHmac()` on construction and resumes the chain from that point. If the sink does not support chaining or the file is empty/corrupt, the chain falls back to the seed HMAC. This ensures the chain is continuous across process restarts.
+- **Restart continuity, fail-closed on corruption (F24.3).** If the sink implements `AuditChainStateAware`, the `AuditLogger` reads `chainState()` on construction and:
+  - on `AuditChainState::Empty` (the sink has no prior entries), seeds the chain — a legitimate fresh start;
+  - on `AuditChainState::Healthy`, resumes from `lastHmac()`;
+  - on `AuditChainState::Corrupted` (the sink holds entries but the last one cannot be parsed — truncation, malformed JSON, missing `hmac` field, IO failure), the logger throws `SecurityException::auditChainCorrupted()` and refuses to append further entries. Falling back to the seed in this case would silently start a new chain on top of corrupt state and break tamper-evidence.
+  Sinks that only implement the older `ChainableAuditSinkInterface` retain the legacy seed-on-null fallback for back-compat, but lose the fail-closed guarantee — production deployments should use a state-aware sink (`AuditFileSink` is one).
 - **Verification.** `AuditEntry::verify(auditKey)` validates a single entry's HMAC. Walking the chain from the seed detects any tampering - modifying any entry invalidates all subsequent entries.
 - **Append-only sink.** `AuditFileSink` writes JSON Lines with `LOCK_EX` for safe concurrent appends. The sink interface (`AuditSinkInterface`) allows alternative backends.
 - **Derived audit key.** The HMAC key is derived from the master key via KDF with the `pulsar__audit_hmac` context (see ADR-0006). It is never stored in configuration files.
@@ -50,7 +54,7 @@ Implement a separate audit logging subsystem with keyed BLAKE2b hash chaining. A
 
 ### Negative
 
-- **Chain fragility.** If the audit file is corrupted (partial write, disk failure), the chain breaks from the corruption point forward. Mitigation: `LOCK_EX` and fsync reduce the risk but cannot eliminate it.
+- **Chain fragility.** If the audit file is corrupted (partial write, disk failure), the chain breaks from the corruption point forward. Mitigation: `LOCK_EX` and fsync reduce the risk but cannot eliminate it. Post-F24.3, the corrupted state surfaces as `SecurityException::auditChainCorrupted()` at logger construction, which forces the operator to rotate or restore the chain explicitly rather than silently shipping a new chain segment.
 - **Single-node guarantee.** The HMAC chain provides integrity on a single node. Distributed systems with multiple audit writers need additional coordination (not provided by the framework).
 - **Key dependency.** If the master key is lost, historical audit entries cannot be verified. The key must be backed up and managed operationally.
 
