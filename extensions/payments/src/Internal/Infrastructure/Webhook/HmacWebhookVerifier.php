@@ -11,7 +11,10 @@ use Pulsar\Webhook\Exception\WebhookException;
 use Pulsar\Webhook\WebhookVerifierInterface;
 
 use function abs;
+use function ctype_xdigit;
+use function strlen;
 use function str_starts_with;
+use function strtolower;
 use function substr;
 
 /**
@@ -23,6 +26,9 @@ use function substr;
 #[Internal]
 final readonly class HmacWebhookVerifier implements WebhookVerifierInterface
 {
+    /** F25.8: HMAC-SHA256 produces 32 bytes = 64 hex chars. */
+    private const int HMAC_HEX_LENGTH = 64;
+
     public function __construct(
         private ClockInterface $clock,
     ) {}
@@ -90,9 +96,20 @@ final readonly class HmacWebhookVerifier implements WebhookVerifierInterface
                 $timestamp = (int) $value;
             } elseif (str_starts_with($part, 'v1=')) {
                 $value = substr($part, 3);
-                if ($value !== '') {
-                    $signatures[] = $value;
+
+                if ($value === '') {
+                    continue;
                 }
+
+                // F25.8: reject anything that isn't exactly 64
+                // lowercase hex chars before reaching hash_equals.
+                $value = strtolower($value);
+
+                if (strlen($value) !== self::HMAC_HEX_LENGTH || !ctype_xdigit($value)) {
+                    throw WebhookException::malformedHeader('non-hex v1 signature');
+                }
+
+                $signatures[] = $value;
             }
         }
 
