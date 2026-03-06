@@ -57,9 +57,12 @@ final class CapabilityPolicyTest extends TestCase
     #[Test]
     public function communityHasLimitedCapabilities(): void
     {
+        // Community tier explicitly excludes ContainerWrite so that a
+        // community extension cannot silently override core services
+        // (Session, Auth, CsrfGuard...). Community extensions that need to
+        // register services must use RouteRegister/CommandRegister.
         $allowed = [
             ExtensionCapability::ContainerRead,
-            ExtensionCapability::ContainerWrite,
             ExtensionCapability::RouteRegister,
             ExtensionCapability::CryptoOperations,
             ExtensionCapability::CommandRegister,
@@ -79,6 +82,18 @@ final class CapabilityPolicyTest extends TestCase
                 );
             }
         }
+    }
+
+    #[Test]
+    public function communityCannotWriteContainer(): void
+    {
+        // Regression guard for MED-2 (2026-04-08): ContainerWrite was
+        // dropped from the Community tier because it allowed arbitrary
+        // service replacement. Do not re-add without revisiting the
+        // threat model documented in docs/audit/consolidated-findings-register.md.
+        self::assertFalse(
+            $this->policy->allows(TrustTier::Community, ExtensionCapability::ContainerWrite),
+        );
     }
 
     #[Test]
@@ -110,13 +125,13 @@ final class CapabilityPolicyTest extends TestCase
     {
         $granted = $this->policy->grantedCapabilities(TrustTier::Community);
 
-        self::assertCount(6, $granted);
+        self::assertCount(5, $granted);
         self::assertContains(ExtensionCapability::ContainerRead, $granted);
-        self::assertContains(ExtensionCapability::ContainerWrite, $granted);
         self::assertContains(ExtensionCapability::RouteRegister, $granted);
         self::assertContains(ExtensionCapability::CryptoOperations, $granted);
         self::assertContains(ExtensionCapability::CommandRegister, $granted);
         self::assertContains(ExtensionCapability::AuditWrite, $granted);
+        self::assertNotContains(ExtensionCapability::ContainerWrite, $granted);
     }
 
     #[Test]

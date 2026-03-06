@@ -40,9 +40,15 @@ readonly class CapabilityPolicy
                     ExtensionCapability::ProcessExec,
                 ], true),
             )),
+            // Community extensions get read-only container access.
+            // ContainerWrite was removed in 1.0.0-rc.12: it allowed arbitrary
+            // service replacement, letting a community extension silently
+            // override core security services (Session, Auth, CsrfGuard...).
+            // Community extensions that need to register services must now
+            // use RouteRegister or CommandRegister, which go through the
+            // ScopedContainerProxy write-allowlist.
             TrustTier::Community->value => [
                 ExtensionCapability::ContainerRead,
-                ExtensionCapability::ContainerWrite,
                 ExtensionCapability::RouteRegister,
                 ExtensionCapability::CryptoOperations,
                 ExtensionCapability::CommandRegister,
