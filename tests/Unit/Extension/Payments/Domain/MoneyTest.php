@@ -311,7 +311,7 @@ final class MoneyTest extends TestCase
         $this->expectException(MoneyException::class);
         $this->expectExceptionMessage('overflow');
 
-        $a->add($b);
+        (void) $a->add($b);
     }
 
     #[Test]
@@ -334,7 +334,7 @@ final class MoneyTest extends TestCase
         $this->expectException(MoneyException::class);
         $this->expectExceptionMessage('overflow');
 
-        $a->multiply(2);
+        (void) $a->multiply(2);
     }
 
     #[Test]
@@ -360,6 +360,6 @@ final class MoneyTest extends TestCase
         $this->expectException(MoneyException::class);
         $this->expectExceptionMessage('overflow');
 
-        $a->percentage(20000); // 200% — would multiply, then divide
+        (void) $a->percentage(20000); // 200% — would multiply, then divide
     }
 }
