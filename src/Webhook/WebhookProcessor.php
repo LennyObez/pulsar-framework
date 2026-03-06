@@ -13,6 +13,7 @@ use Throwable;
 
 use function is_string;
 use function json_decode;
+use function strlen;
 
 use const JSON_THROW_ON_ERROR;
 
@@ -25,6 +26,30 @@ use const JSON_THROW_ON_ERROR;
 #[Api(since: '1.0.0')]
 final readonly class WebhookProcessor
 {
+    /**
+     * F25.6: webhook endpoints are forward-facing and a natural DoS
+     * target — a 10 GB POST against `process()` would happily flow
+     * into `json_decode()` on the worker thread and OOM. Cap the
+     * raw body size before any further processing.
+     *
+     * 1 MiB is a deliberate compromise: large enough to accept every
+     * documented webhook payload from Stripe / Mailgun / etc., small
+     * enough that a 100 % DoS-load worker still has headroom to log
+     * + reject. Operators who genuinely need larger payloads pass a
+     * different value via constructor.
+     */
+    public const int DEFAULT_MAX_BODY_BYTES = 1_048_576; // 1 MiB
+
+    /**
+     * F25.6: webhook events are flat objects with one or two levels
+     * of nesting in vendor specs. PHP's `json_decode` default depth
+     * of 512 lets an attacker submit a deeply-nested JSON bomb that
+     * stays under the 1 MiB body cap but still consumes excessive
+     * stack / memory parsing it. 32 is more than enough for every
+     * documented webhook shape.
+     */
+    private const int JSON_DECODE_MAX_DEPTH = 32;
+
     public function __construct(
         private WebhookVerifierInterface $verifier,
         private WebhookEventLogInterface $eventLog,
@@ -34,6 +59,7 @@ final readonly class WebhookProcessor
         private int $deduplicationTtlSeconds = 259200,
         private string $eventIdKey = 'id',
         private string $eventTypeKey = 'type',
+        private int $maxBodyBytes = self::DEFAULT_MAX_BODY_BYTES,
     ) {
         if ($this->secret === '') {
             throw WebhookException::emptySecret();
@@ -54,6 +80,17 @@ final readonly class WebhookProcessor
     ): WebhookProcessingResult {
         $now ??= new DateTimeImmutable();
 
+        // F25.6: enforce the body cap BEFORE signature verification.
+        // A 10 GB body that happens to ship a valid HMAC would still
+        // OOM the worker; the cap also short-circuits cheap DoS that
+        // doesn't bother forging a signature.
+        if (strlen($rawBody) > $this->maxBodyBytes) {
+            return new WebhookProcessingResult(
+                status: WebhookProcessingStatus::HandlerError,
+                error: 'Webhook payload exceeds size limit',
+            );
+        }
+
         // Step 1: Verify signature
         try {
             $this->verifier->verify($rawBody, $signatureHeader, $this->secret, $this->toleranceSeconds);
@@ -61,10 +98,10 @@ final readonly class WebhookProcessor
             return new WebhookProcessingResult(WebhookProcessingStatus::InvalidSignature);
         }
 
-        // Step 2: Decode payload
+        // Step 2: Decode payload (capped depth — F25.6).
         try {
             /** @var array<string, mixed> $payload */
-            $payload = json_decode($rawBody, true, flags: JSON_THROW_ON_ERROR);
+            $payload = json_decode($rawBody, true, self::JSON_DECODE_MAX_DEPTH, JSON_THROW_ON_ERROR);
         } catch (JsonException) {
             return new WebhookProcessingResult(
                 status: WebhookProcessingStatus::HandlerError,
