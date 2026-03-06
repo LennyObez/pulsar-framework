@@ -7,6 +7,7 @@ namespace Pulsar\Idempotency\Exception;
 use NoDiscard;
 use Pulsar\Api\Api;
 use RuntimeException;
+use Throwable;
 
 use function sprintf;
 
@@ -63,5 +64,23 @@ final class IdempotencyException extends RuntimeException
             $key,
             $reason,
         ));
+    }
+
+    /**
+     * F22.6: serialisation of an idempotency payload (or deserialisation
+     * of a previously-stored one) raised a low-level error such as
+     * `JsonException`. The interface contract should not leak the
+     * concrete `JsonException` to consumers — they have no business
+     * reasoning about JSON encode/decode internals — so handlers wrap
+     * it in this domain exception and chain the original via
+     * `previous` for diagnostic visibility.
+     */
+    #[NoDiscard]
+    public static function serializationFailed(string $key, Throwable $previous): self
+    {
+        return new self(
+            sprintf('Failed to (de)serialise idempotency payload for key "%s": %s', $key, $previous->getMessage()),
+            previous: $previous,
+        );
     }
 }
