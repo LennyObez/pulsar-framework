@@ -208,4 +208,42 @@ A PR must include:
 Do **not** open public issues for vulnerabilities.
 Follow `SECURITY.md` to report privately.
 
+## Branch protection requirements (maintainers)
+
+The CI gates documented above are advisory until the repository's
+branch protection rules enforce them. For this framework's banking /
+healthcare / legal positioning, the following protections MUST be
+applied to `main` (and to any release branch tracking an `rc.x` /
+`1.0.0` milestone). They close audit finding F28.5 by making the
+ADR check, quality gate, and test suite into hard merge gates rather
+than CI signal that can be force-pushed past.
+
+Required GitHub branch protection rules for `main`:
+
+- **Require pull request before merging** with at least 1 approving
+  review from a CODEOWNERS-listed reviewer.
+- **Require status checks to pass** — selected checks:
+  - `php-quality` (CS, PHPStan, Psalm, boundaries, version
+    consistency)
+  - `php-tests` (unit + integration + E2E suites)
+  - `cache-warmup` (artefact-pipeline smoke check)
+  - `adr-check` (governance, see ADR-0001)
+  - `pr-size` (size cap per ADR-0031, when CI workflow lands)
+- **Require branches to be up to date** before merging.
+- **Require signed commits** (matches the project rule that all
+  commits are GPG-signed).
+- **Restrict who can push to matching branches** — administrators
+  only, no force-push, no deletion.
+- **Require linear history** (squash-merge or rebase only) so
+  `git bisect` granularity is preserved per ADR-0031.
+
+The `adr-exempt` label MUST be restricted to maintainers via
+repo-level label settings (not editable by contributors). Each
+exemption MUST be recorded in `docs/adr/exemptions.md` with the PR
+number, date, applying maintainer, and justification (F28.3).
+
+Without these protections, the CI workflow alone is signal — any
+admin can force-push to bypass it. The gates only become controls
+once branch protection enforces them.
+
 Thanks for helping build Pulsar.
