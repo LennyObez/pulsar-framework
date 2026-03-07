@@ -16,8 +16,9 @@ use RuntimeException;
 use Throwable;
 
 use function array_reverse;
-use function assert;
+use function class_exists;
 use function count;
+use function get_debug_type;
 use function sprintf;
 
 /**
@@ -177,7 +178,21 @@ final class MiddlewarePipeline implements MiddlewarePipelineInterface, PsrReques
 
         if ($this->container !== null && $this->container->has($middleware)) {
             $resolved = $this->container->get($middleware);
-            assert($resolved instanceof PsrMiddlewareInterface);
+
+            // F2.15: prefer an explicit type guard over `assert()`. With
+            // `zend.assertions=-1` (typical prod) the assertion compiles
+            // out and a non-conforming binding would silently slip into
+            // the pipeline, exploding deeper inside `process()`. A real
+            // throw guarantees the failure surfaces with a precise
+            // diagnostic regardless of assertion mode.
+            if (!$resolved instanceof PsrMiddlewareInterface) {
+                throw new InvalidArgumentException(sprintf(
+                    'Container binding "%s" resolved to %s, expected %s.',
+                    $middleware,
+                    get_debug_type($resolved),
+                    PsrMiddlewareInterface::class,
+                ));
+            }
 
             return $resolved;
         }

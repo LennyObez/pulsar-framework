@@ -43,16 +43,25 @@ final class ConsoleOutput implements OutputInterface
 
     /**
      * Check if the terminal supports colors.
+     *
+     * F3.7: the previous Windows Terminal probe used
+     * `str_starts_with((string) getenv('WT_SESSION'), '')`, which is always
+     * true (every string starts with the empty string). The branch made
+     * the entire Windows colour-detection always succeed regardless of
+     * whether Windows Terminal was actually present. The fix is to test
+     * `WT_SESSION !== false && WT_SESSION !== ''` — Windows Terminal
+     * sets that env to a GUID, so a non-empty value is the right signal.
      */
     private function hasColorSupport(): bool
     {
-        // Windows 10+ supports ANSI codes
         if (DIRECTORY_SEPARATOR === '\\') {
+            $wtSession = getenv('WT_SESSION');
+
             return str_contains(PHP_OS, 'WIN')
                 && (getenv('ANSICON') !== false
                     || getenv('ConEmuANSI') === 'ON'
                     || getenv('TERM') === 'xterm'
-                    || str_starts_with((string) getenv('WT_SESSION'), ''));
+                    || ($wtSession !== false && $wtSession !== ''));
         }
 
         return function_exists('posix_isatty') && @posix_isatty($this->stdout);
