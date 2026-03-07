@@ -48,11 +48,13 @@ final class CsrfMiddlewareTest extends TestCase
         string $path = '/',
         array $headers = [],
         ?array $parsedBody = null,
+        string $body = '',
     ): ServerRequest {
         return new ServerRequest(
             method: $method,
             uri: $path,
             headers: $headers,
+            body: $body,
             parsedBody: $parsedBody,
         );
     }
@@ -409,5 +411,105 @@ final class CsrfMiddlewareTest extends TestCase
 
         // In optional mode, absent origin falls through to token validation
         self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
+    }
+
+    /**
+     * F9.7: a SPA POSTing `Content-Type: application/json` with the CSRF
+     * token in the JSON body must be accepted. Previously the middleware
+     * only inspected `getParsedBody()` (form-encoded), so JSON callers
+     * were rejected with `CSRF token is missing`.
+     */
+    #[Test]
+    public function postWithValidJsonBodyTokenPasses(): void
+    {
+        $this->tokenManager->method('validate')->willReturn(true);
+
+        $middleware = new CsrfMiddleware($this->tokenManager, $this->config);
+
+        $request = $this->createRequest(
+            'POST',
+            '/submit',
+            headers: ['Content-Type' => 'application/json'],
+            body: json_encode(['_csrf_token' => $this->validToken], JSON_THROW_ON_ERROR),
+        );
+
+        $response = $middleware->process($request, $this->successHandler());
+
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
+    }
+
+    #[Test]
+    public function postWithJsonBodyMissingTokenIsRejected(): void
+    {
+        $middleware = new CsrfMiddleware($this->tokenManager, $this->config);
+
+        $request = $this->createRequest(
+            'POST',
+            '/submit',
+            headers: ['Content-Type' => 'application/json'],
+            body: json_encode(['payload' => 'no-token'], JSON_THROW_ON_ERROR),
+        );
+
+        $response = $middleware->process($request, $this->successHandler());
+
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
+    }
+
+    #[Test]
+    public function postWithMalformedJsonBodyIsRejected(): void
+    {
+        $middleware = new CsrfMiddleware($this->tokenManager, $this->config);
+
+        $request = $this->createRequest(
+            'POST',
+            '/submit',
+            headers: ['Content-Type' => 'application/json'],
+            body: '{malformed',
+        );
+
+        $response = $middleware->process($request, $this->successHandler());
+
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
+    }
+
+    #[Test]
+    public function postWithJsonContentTypeContainingCharsetParsesBody(): void
+    {
+        $this->tokenManager->method('validate')->willReturn(true);
+
+        $middleware = new CsrfMiddleware($this->tokenManager, $this->config);
+
+        $request = $this->createRequest(
+            'POST',
+            '/submit',
+            headers: ['Content-Type' => 'application/json; charset=utf-8'],
+            body: json_encode(['_csrf_token' => $this->validToken], JSON_THROW_ON_ERROR),
+        );
+
+        $response = $middleware->process($request, $this->successHandler());
+
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
+    }
+
+    #[Test]
+    public function postWithOversizedJsonBodyDoesNotParse(): void
+    {
+        $middleware = new CsrfMiddleware($this->tokenManager, $this->config);
+
+        // 300 KiB body — over the 256 KiB inspection cap.
+        $padding = str_repeat('a', 300_000);
+        $request = $this->createRequest(
+            'POST',
+            '/submit',
+            headers: ['Content-Type' => 'application/json'],
+            body: json_encode(
+                ['_csrf_token' => $this->validToken, 'padding' => $padding],
+                JSON_THROW_ON_ERROR,
+            ),
+        );
+
+        $response = $middleware->process($request, $this->successHandler());
+
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
     }
 }
