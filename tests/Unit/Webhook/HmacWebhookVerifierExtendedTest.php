@@ -111,12 +111,16 @@ final class HmacWebhookVerifierExtendedTest extends TestCase
     #[Test]
     public function verifyAcceptsMultipleV1SignaturesWithRotation(): void
     {
+        // F25.8: previous fixture used 'wrong_signature_here' which
+        // would now be rejected at parse time. Use a well-formed but-
+        // non-matching hex sig so the multi-signature acceptance path
+        // is still exercised.
         $now = new DateTimeImmutable('@1700000000');
         $verifier = new HmacWebhookVerifier($now);
 
         $payload = '{"ok":true}';
         $timestamp = $now->getTimestamp();
-        $wrongSig = 'wrong_signature_here';
+        $wrongSig = str_repeat('0', 64);
         $correctSig = hash_hmac('sha256', $timestamp . '.' . $payload, self::SECRET);
         $header = sprintf('t=%d,v1=%s,v1=%s', $timestamp, $wrongSig, $correctSig);
 
