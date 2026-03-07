@@ -97,19 +97,12 @@ final readonly class HmacWebhookVerifier implements WebhookVerifierInterface
             } elseif (str_starts_with($part, 'v1=')) {
                 $value = substr($part, 3);
 
-                if ($value === '') {
-                    continue;
+                if ($value !== '') {
+                    // Buffer raw v1; validate after timestamp /
+                    // signatures-present checks so error priority
+                    // is stable.
+                    $signatures[] = $value;
                 }
-
-                // F25.8: reject anything that isn't exactly 64
-                // lowercase hex chars before reaching hash_equals.
-                $value = strtolower($value);
-
-                if (strlen($value) !== self::HMAC_HEX_LENGTH || !ctype_xdigit($value)) {
-                    throw WebhookException::malformedHeader('non-hex v1 signature');
-                }
-
-                $signatures[] = $value;
             }
         }
 
@@ -121,6 +114,21 @@ final readonly class HmacWebhookVerifier implements WebhookVerifierInterface
             throw WebhookException::malformedHeader('no v1 signatures');
         }
 
-        return ['timestamp' => $timestamp, 'signatures' => $signatures];
+        // F25.8: validate each v1 is 64 lowercase hex AFTER the
+        // timestamp / signatures-present checks so error priority
+        // is consistent with the parser's lexical order.
+        $validated = [];
+
+        foreach ($signatures as $signature) {
+            $signature = strtolower($signature);
+
+            if (strlen($signature) !== self::HMAC_HEX_LENGTH || !ctype_xdigit($signature)) {
+                throw WebhookException::malformedHeader('non-hex v1 signature');
+            }
+
+            $validated[] = $signature;
+        }
+
+        return ['timestamp' => $timestamp, 'signatures' => $validated];
     }
 }
