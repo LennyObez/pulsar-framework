@@ -42,9 +42,20 @@ interface ForumServiceInterface
 
     public function editPost(string $postId, string $newBody, string $newBodyHtml, string $editedBy, bool $isModerator = false): Post;
 
-    public function deletePost(string $postId, string $deletedBy = ''): void;
+    /**
+     * Delete a post.
+     *
+     * Authorization (MED-4): only the original author or a moderator
+     * may delete a post. `$deletedBy` MUST be a non-empty actor identifier.
+     */
+    public function deletePost(string $postId, string $deletedBy, bool $isModerator = false): void;
 
-    public function deleteThread(string $threadId, string $deletedBy = ''): void;
+    /**
+     * Delete a thread.
+     *
+     * Same authorization rule as deletePost.
+     */
+    public function deleteThread(string $threadId, string $deletedBy, bool $isModerator = false): void;
 
     public function acceptSolution(string $threadId, string $postId): Thread;
 

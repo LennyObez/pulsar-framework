@@ -115,7 +115,11 @@ final readonly class PostController
         $this->authorize($identity, 'forum.admin.posts.delete');
 
         try {
-            $this->forumService->deletePost($id, $identity->id());
+            // Admin endpoint: passing isModerator=true bypasses the
+            // author check inside ForumService::deletePost (MED-4).
+            // The admin permission was already validated by authorize()
+            // above, so this caller is allowed to delete any post.
+            $this->forumService->deletePost($id, $identity->id(), isModerator: true);
 
             return Response::json(['data' => ['id' => $id, 'status' => 'deleted']]);
         } catch (ForumException $e) {

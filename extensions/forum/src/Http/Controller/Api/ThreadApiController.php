@@ -192,7 +192,9 @@ final readonly class ThreadApiController
         }
 
         try {
-            $this->forumService->deleteThread($id, $identity->id());
+            // Forward the moderator flag computed above so the service
+            // can run its own author-check (defense in depth, MED-4).
+            $this->forumService->deleteThread($id, $identity->id(), $isModerator);
 
             return Response::json(['data' => ['id' => $id, 'status' => 'deleted']]);
         } catch (ForumException $e) {
