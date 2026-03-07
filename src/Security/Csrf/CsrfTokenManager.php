@@ -90,15 +90,28 @@ final class CsrfTokenManager implements CsrfTokenManagerInterface
     }
 
     /**
-     * Rotate the CSRF token (generate a new one, invalidating the old).
+     * Rotate the CSRF token (generate a new one, invalidating the old)
+     * AND regenerate the underlying session ID.
      *
-     * Call after successful form submission to prevent replay.
+     * F9.6: rotating only the CSRF token without regenerating the session
+     * ID is a half measure. The canonical anti-fixation flow on a state
+     * boundary (post-login, privilege change, password reset) requires
+     * `Session::regenerate(true)` so any session ID an attacker may have
+     * fixated is destroyed alongside the old token. Skipping the session
+     * regeneration left a viable session-fixation window.
+     *
+     * Order matters: regenerate the session first so the new token is
+     * stored under the new session id; otherwise the freshly stored
+     * token would be tied to the old (potentially compromised) session
+     * before the regenerate call swept it.
      *
      * @throws RandomException
      */
     #[Override]
     public function rotate(): string
     {
+        $this->session->regenerate(true);
+
         return $this->generate();
     }
 }

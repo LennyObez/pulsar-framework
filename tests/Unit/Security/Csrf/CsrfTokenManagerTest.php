@@ -144,6 +144,33 @@ final class CsrfTokenManagerTest extends TestCase
     }
 
     /**
+     * F9.6: rotate() must regenerate the underlying session id (with the
+     * old session destroyed) so any session-fixation attempt is swept
+     * along with the old token. A mock-style assertion on the regenerate
+     * call confirms the contract.
+     */
+    #[Test]
+    public function rotateRegeneratesSessionIdDeletingOldSession(): void
+    {
+        $session = $this->createMock(SessionInterface::class);
+        $session->method('isStarted')->willReturn(true);
+        $session->method('get')->willReturn(null);
+        $session->expects(self::once())
+            ->method('regenerate')
+            ->with(self::isTrue());
+
+        $csrfConfig = new CsrfConfig(
+            enabled: true,
+            tokenLength: 32,
+            headerName: 'X-CSRF-Token',
+            formFieldName: '_csrf_token',
+        );
+
+        $manager = new CsrfTokenManager($session, $csrfConfig);
+        $manager->rotate();
+    }
+
+    /**
      * Create a mock SessionInterface that returns the given token for the CSRF session key.
      */
     private function createSessionMock(?string $storedToken = 'default'): SessionInterface
