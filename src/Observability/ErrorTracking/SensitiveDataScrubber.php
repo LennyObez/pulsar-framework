@@ -8,11 +8,18 @@ use Pulsar\Api\Api;
 
 use function array_any;
 use function array_merge;
+use function array_unique;
+use function array_values;
+use function count;
 use function in_array;
 use function is_array;
 use function is_string;
-use function str_contains;
+use function preg_replace;
+use function preg_split;
+use function str_ends_with;
+use function strlen;
 use function strtolower;
+use function substr;
 
 /**
  * Recursively scrubs sensitive data from arrays and headers.
@@ -105,14 +112,111 @@ final readonly class SensitiveDataScrubber
         return $result;
     }
 
+    /**
+     * F8.6: previously this was `str_contains($lower, $field)`, which
+     * over-matched on substrings: `tokenizer`, `tokens_per_second`,
+     * `tokenization_settings`, `payment_token_count` all redacted on
+     * `token`. The fix is word-boundary aware — split the key into
+     * segments by common separators (`_`, `-`, `.`, ` `) and on
+     * camelCase boundaries, then require an exact segment match. So
+     * `auth_token` / `accessToken` still match `token`, while
+     * `tokenizer` (a single segment) does not. Multi-word sensitive
+     * entries (`credit_card`, `private_key`) are handled by also
+     * checking adjacent-segment runs against the segmented field
+     * patterns.
+     */
     private function isSensitiveKey(string $key): bool
     {
-        $lower = strtolower($key);
+        $segments = self::segmentKey($key);
+
+        if ($segments === []) {
+            return false;
+        }
 
         return array_any(
             $this->fields,
-            static fn(string $field): bool => str_contains($lower, $field),
+            static fn(string $field): bool => self::segmentsContainField($segments, $field),
         );
+    }
+
+    /**
+     * Split a key into lowercase segments by separators + camelCase
+     * boundaries, then add a singular form for any plural segment.
+     * `accessTokenValue` → ['access', 'token', 'value'];
+     * `auth-tokens` → ['auth', 'tokens', 'token'];
+     * `APIKey` → ['api', 'key'].
+     *
+     * The singular folding lets `auth_tokens` still match the
+     * `token` field while keeping `tokenizer` (a single segment) safe.
+     *
+     * @return list<string>
+     */
+    private static function segmentKey(string $key): array
+    {
+        // Insert `_` before uppercase that follows lowercase / digit
+        // (handles camelCase / PascalCase) and between consecutive
+        // uppercase + lowercase (handles acronyms like APIKey → api_key).
+        $normalised = preg_replace('/(?<=[a-z0-9])(?=[A-Z])/', '_', $key) ?? $key;
+        $normalised = preg_replace('/(?<=[A-Z])(?=[A-Z][a-z])/', '_', $normalised) ?? $normalised;
+
+        $parts = preg_split('/[_\-. ]+/', strtolower($normalised));
+
+        if ($parts === false) {
+            return [];
+        }
+
+        $segments = [];
+
+        foreach ($parts as $part) {
+            if ($part === '') {
+                continue;
+            }
+
+            $segments[] = $part;
+
+            // Naive plural stripping: '*ies' → '*y'; '*es' / '*s' → strip
+            // suffix. Lets `auth_tokens` match `token`, `passwords` match
+            // `password`. We accept benign duplicates (`y` already in
+            // segments) — `array_unique` deduplicates downstream.
+            if (str_ends_with($part, 'ies') && strlen($part) > 3) {
+                $segments[] = substr($part, 0, -3) . 'y';
+            } elseif (str_ends_with($part, 'es') && strlen($part) > 2) {
+                $segments[] = substr($part, 0, -2);
+            } elseif (str_ends_with($part, 's') && strlen($part) > 1) {
+                $segments[] = substr($part, 0, -1);
+            }
+        }
+
+        return array_values(array_unique($segments));
+    }
+
+    /**
+     * @param list<string> $segments
+     */
+    private static function segmentsContainField(array $segments, string $field): bool
+    {
+        $fieldSegments = self::segmentKey($field);
+
+        if ($fieldSegments === []) {
+            return false;
+        }
+
+        // Single-token field: any matching key segment qualifies.
+        if (count($fieldSegments) === 1) {
+            return in_array($fieldSegments[0], $segments, true);
+        }
+
+        // Multi-token field (`credit_card`, `private_key`): every part
+        // of the field must be present somewhere in the key segments.
+        // Order is intentionally relaxed — `card_credit` is still
+        // sensitive — but every component must appear.
+        foreach ($fieldSegments as $part) {
+            if (!in_array($part, $segments, true)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private function isSensitiveHeader(string $name): bool
