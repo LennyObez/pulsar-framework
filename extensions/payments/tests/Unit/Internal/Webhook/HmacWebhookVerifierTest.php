@@ -36,10 +36,13 @@ final class HmacWebhookVerifierTest extends TestCase
     #[Test]
     public function verifyRejectsInvalidSignature(): void
     {
+        // F25.8: 64 hex chars (well-formed) but does not match the
+        // computed HMAC — exercises the hash_equals mismatch path
+        // rather than the format-rejection path.
         $now = new DateTimeImmutable('@1700000000');
         $verifier = new HmacWebhookVerifier($this->buildClock($now));
 
-        $header = 't=1700000000,v1=invalid_sig';
+        $header = 't=1700000000,v1=' . str_repeat('0', 64);
 
         $this->expectException(WebhookException::class);
         $verifier->verify('{"event":"test"}', $header, self::SECRET, 300);
@@ -90,13 +93,18 @@ final class HmacWebhookVerifierTest extends TestCase
     #[Test]
     public function verifyAcceptsMultipleV1SignaturesWithOneValid(): void
     {
+        // F25.8: previous fixture used 'invalid_old_sig' which now
+        // gets rejected at parse-time. Use a well-formed but-
+        // non-matching hex sig to keep the secret-rotation
+        // scenario exercised.
         $now = new DateTimeImmutable('@1700000000');
         $verifier = new HmacWebhookVerifier($this->buildClock($now));
 
         $payload = '{"rotated":"true"}';
         $ts = $now->getTimestamp();
         $validSig = hash_hmac('sha256', $ts . '.' . $payload, self::SECRET);
-        $header = "t={$ts},v1=invalid_old_sig,v1={$validSig}";
+        $oldSig = str_repeat('a', 64);
+        $header = "t={$ts},v1={$oldSig},v1={$validSig}";
 
         $verifier->verify($payload, $header, self::SECRET, 300);
 
