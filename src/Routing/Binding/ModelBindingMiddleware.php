@@ -40,10 +40,23 @@ use function str_contains;
  * Runs after authentication and routing, before the controller.
  * Resolves bound models, enforces authorization based on the
  * configured preset, and attaches resolved models to the request.
+ *
+ * The per-handler `#[PublicRoute]` attribute lookup is cached in a
+ * static map: route handlers are immutable once registered, so the
+ * cache is safe for the entire process lifetime and eliminates the
+ * per-request `new ReflectionMethod()` + `new ReflectionClass()`
+ * cost (M-2 audit response).
  */
 #[Internal(reason: 'Middleware wiring; registered in the middleware pipeline by the composition root')]
-final readonly class ModelBindingMiddleware implements MiddlewareInterface
+final class ModelBindingMiddleware implements MiddlewareInterface
 {
+    /**
+     * Per-handler `#[PublicRoute]` lookup cache keyed by `"Class::method"`.
+     *
+     * @var array<string, bool>
+     */
+    private static array $publicRouteCache = [];
+
     /**
      * @param (Closure(ServerRequestInterface): ?IdentityInterface)|null $identityResolver
      *        Resolves the authenticated identity from the request. Provided by
@@ -51,13 +64,13 @@ final readonly class ModelBindingMiddleware implements MiddlewareInterface
      *        no identity resolution is available.
      */
     public function __construct(
-        private ModelBinder $binder,
-        private ModelBindingConfig $config,
-        private AuthorizationHookInterface $authHook,
-        private ?TenantContext $tenantContext = null,
-        private ?Closure $identityResolver = null,
-        private ?LoggerInterface $logger = null,
-        private ?AuditLoggerInterface $auditLogger = null,
+        private readonly ModelBinder $binder,
+        private readonly ModelBindingConfig $config,
+        private readonly AuthorizationHookInterface $authHook,
+        private readonly ?TenantContext $tenantContext = null,
+        private readonly ?Closure $identityResolver = null,
+        private readonly ?LoggerInterface $logger = null,
+        private readonly ?AuditLoggerInterface $auditLogger = null,
     ) {}
 
     #[Override]
@@ -209,19 +222,25 @@ final readonly class ModelBindingMiddleware implements MiddlewareInterface
         }
 
         [$class, $method] = $handlerInfo;
+        $cacheKey = $class . '::' . $method;
+
+        if (isset(self::$publicRouteCache[$cacheKey])) {
+            return self::$publicRouteCache[$cacheKey];
+        }
 
         try {
             // Check method-level attribute first
             $reflectionMethod = new ReflectionMethod($class, $method);
             if ($reflectionMethod->getAttributes(PublicRoute::class) !== []) {
-                return true;
+                return self::$publicRouteCache[$cacheKey] = true;
             }
 
             // Check class-level attribute
             $reflectionClass = new ReflectionClass($class);
-            return $reflectionClass->getAttributes(PublicRoute::class) !== [];
+
+            return self::$publicRouteCache[$cacheKey] = $reflectionClass->getAttributes(PublicRoute::class) !== [];
         } catch (ReflectionException) {
-            return false;
+            return self::$publicRouteCache[$cacheKey] = false;
         }
     }
 
