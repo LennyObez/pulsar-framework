@@ -19,6 +19,7 @@ use function array_map;
 use function htmlspecialchars;
 use function is_string;
 use function json_decode;
+use function sprintf;
 use function trim;
 
 use const ENT_HTML5;
@@ -34,19 +35,19 @@ use const JSON_THROW_ON_ERROR;
  *     appear on the public front-office, suitable for loading in an iframe
  */
 #[Internal(reason: 'CMS admin controller - implementation detail')]
-final readonly class PreviewController
+final readonly class PreviewController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     public function __construct(
         private ContentRepositoryInterface $contentRepository,
         private ContentTranslationRepositoryInterface $translationRepository,
         private ContentBlockRepositoryInterface $blockRepository,
         private SafeHtmlPolicy $safeHtmlPolicy,
         private ?BlockRenderer $blockRenderer = null,
-        private ?TemplateEngineInterface $templateEngine = null,
-        private ?GateInterface $gate = null,
-    ) {}
+        ?TemplateEngineInterface $templateEngine = null,
+        ?GateInterface $gate = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     /**
      * Show the split-pane preview page (admin side).
@@ -60,7 +61,7 @@ final readonly class PreviewController
         $this->authorize($identity, 'cms.content.edit');
 
         $params = $request->getQueryParams();
-        $locale = is_string($params['locale'] ?? null) ? $params['locale'] : 'en';
+        $locale = self::sanitizeLocale(is_string($params['locale'] ?? null) ? $params['locale'] : 'en');
 
         $content = $this->contentRepository->findById($id);
 
@@ -70,6 +71,15 @@ final readonly class PreviewController
 
         $translation = $this->translationRepository->findByContentAndLocale($id, $locale);
         $blocks = $this->blockRepository->findByContentAndLocale($id, $locale);
+
+        // Build the preview iframe URL with URL-encoded parameters.
+        // The `$id` comes from the route, but URL-encoding here prevents any
+        // future refactor from accidentally allowing special characters through.
+        $previewUrl = sprintf(
+            '/admin/cms/content/%s/preview/render?locale=%s',
+            rawurlencode($id),
+            rawurlencode($locale),
+        );
 
         return $this->respondWithView($request, 'admin.content.preview', [
             'content' => [
@@ -91,7 +101,7 @@ final readonly class PreviewController
                 'data' => $block->data,
             ], $blocks),
             'locale' => $locale,
-            'previewUrl' => "/admin/cms/content/$id/preview/render?locale=$locale",
+            'previewUrl' => $previewUrl,
         ]);
     }
 
@@ -103,8 +113,15 @@ final readonly class PreviewController
      */
     public function render(ServerRequestInterface $request, string $id): Response
     {
+        // Require an authenticated admin identity to prevent unauthenticated
+        // access to the sanitizer input/output surface. Even though the preview
+        // endpoint is mounted under /admin/ (which typically has global auth),
+        // we enforce at the controller level as defence in depth.
+        $identity = $this->requireIdentity($request);
+        $this->authorize($identity, 'cms.content.edit');
+
         $params = $request->getQueryParams();
-        $locale = is_string($params['locale'] ?? null) ? $params['locale'] : 'en';
+        $locale = self::sanitizeLocale(is_string($params['locale'] ?? null) ? $params['locale'] : 'en');
 
         // For POST requests (live preview), use the submitted body
         $method = $request->getMethod();
@@ -156,10 +173,42 @@ final readonly class PreviewController
 
         $previewHtml = $this->buildPreviewHtml($escapedTitle, $sanitizedBody, $escapedExcerpt, $renderedBlocksHtml, $locale);
 
+        // Strict CSP for the preview document: no scripts, no remote anything.
+        // Inline styles are allowed so the preview page's minimal CSS (and any
+        // scoped theme overrides) render correctly. Images allowed from same
+        // origin and data: URIs to support embedded editor previews.
+        $csp = "default-src 'none'; "
+            . "style-src 'self' 'unsafe-inline'; "
+            . "img-src 'self' data: https:; "
+            . "font-src 'self'; "
+            . "frame-ancestors 'self'; "
+            . "base-uri 'none'; "
+            . "form-action 'none'";
+
         return new Response(body: $previewHtml)
             ->withHeader('Content-Type', 'text/html; charset=utf-8')
             ->withHeader('Cache-Control', 'no-store, no-cache, must-revalidate')
-            ->withHeader('X-Robots-Tag', 'noindex');
+            ->withHeader('X-Robots-Tag', 'noindex, nofollow')
+            ->withHeader('X-Content-Type-Options', 'nosniff')
+            ->withHeader('X-Frame-Options', 'SAMEORIGIN')
+            ->withHeader('Content-Security-Policy', $csp)
+            ->withHeader('Referrer-Policy', 'no-referrer');
+    }
+
+    /**
+     * Validate a locale string against BCP-47 shape.
+     *
+     * Returns the locale if it matches ([a-z]{2,3}(-[A-Z]{2})?), otherwise
+     * returns the default 'en'. Refusing arbitrary input prevents attribute
+     * injection via the locale field (e.g., `en" onmouseover="alert(1)`).
+     */
+    private static function sanitizeLocale(string $locale): string
+    {
+        if (preg_match('/\A[a-z]{2,3}(-[A-Z]{2})?\z/', $locale) === 1) {
+            return $locale;
+        }
+
+        return 'en';
     }
 
     private function buildPreviewHtml(
@@ -171,9 +220,15 @@ final readonly class PreviewController
     ): string {
         $content = $renderedBlocks !== '' ? $renderedBlocks : $body;
 
+        // Defence in depth: even though `sanitizeLocale()` already restricts
+        // locale to BCP-47 shape, escape it again at the point of HTML
+        // interpolation. If `sanitizeLocale()` is ever loosened, this
+        // second layer prevents attribute injection.
+        $safeLocale = htmlspecialchars($locale, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
         return <<<HTML
             <!DOCTYPE html>
-            <html lang="{$locale}" data-theme="light" data-extension="cms">
+            <html lang="{$safeLocale}" data-theme="light" data-extension="cms">
             <head>
                 <meta charset="utf-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1">

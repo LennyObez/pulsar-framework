@@ -27,10 +27,8 @@ use function is_string;
  * actions on multiple content items in a single request.
  */
 #[Internal(reason: 'CMS admin controller; implementation detail')]
-final readonly class BulkOperationsController
+final readonly class BulkOperationsController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     private const int MAX_IDS_PER_REQUEST = 100;
 
     private const array VALID_ACTIONS = ['publish', 'unpublish', 'archive', 'delete', 'tag', 'untag'];
@@ -38,9 +36,11 @@ final readonly class BulkOperationsController
     public function __construct(
         private ContentRepositoryInterface $contentRepository,
         private TaxonomyServiceInterface $taxonomyService,
-        private ?GateInterface $gate = null,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     public function execute(ServerRequestInterface $request): Response
     {

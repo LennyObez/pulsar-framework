@@ -29,16 +29,16 @@ use function is_string;
  * All actions require CMS commerce permissions checked via GateInterface.
  */
 #[Internal(reason: 'CMS admin controller; implementation detail')]
-final readonly class PromotionController
+final readonly class PromotionController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     public function __construct(
         private PromotionRepositoryInterface $promotions,
         private CouponRepositoryInterface $coupons,
-        private ?GateInterface $gate = null,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     public function index(ServerRequestInterface $request): Response
     {

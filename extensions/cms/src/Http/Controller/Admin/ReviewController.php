@@ -22,17 +22,17 @@ use function is_string;
  * Admin controller for editorial review workflow.
  */
 #[Internal(reason: 'CMS admin controller; implementation detail')]
-final readonly class ReviewController
+final readonly class ReviewController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     public function __construct(
         private EditorialWorkflowServiceInterface $workflowService,
         private ContentRepositoryInterface $contentRepository,
         private PublishingStateMachine $publishingStateMachine,
-        private ?GateInterface $gate = null,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     public function index(ServerRequestInterface $request): Response
     {

@@ -37,20 +37,20 @@ use function json_decode;
  * Accepts JSON bundles, Markdown (with YAML frontmatter), and CSV formats.
  */
 #[Internal(reason: 'CMS admin controller; implementation detail')]
-final readonly class ImportController
+final readonly class ImportController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     public function __construct(
         private ImportExportServiceInterface $importExport,
         private ContentRepositoryInterface $contentRepository,
         private ContentTranslationRepositoryInterface $translationRepository,
         private CsvContentImporter $csvImporter,
-        private ?GateInterface $gate = null,
+        ?GateInterface $gate = null,
         private ?ImportAnalyzer $importAnalyzer = null,
         private ?MediaBundleImporter $mediaBundleImporter = null,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     public function form(ServerRequestInterface $request): Response
     {
