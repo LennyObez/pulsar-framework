@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Grpc\Codegen;
 
 use Pulsar\Api\Internal;
-use RuntimeException;
+use Pulsar\Extension\Grpc\Exception\GrpcException;
 
 use function dirname;
 use function file_exists;
@@ -17,7 +17,6 @@ use function is_string;
 use function json_decode;
 use function json_encode;
 use function mkdir;
-use function sprintf;
 
 use const JSON_PRETTY_PRINT;
 use const JSON_THROW_ON_ERROR;
@@ -110,7 +109,7 @@ final class ProtocVersionPinner
         $dir = dirname($manifestPath);
 
         if (!is_dir($dir) && !mkdir($dir, 0o755, true)) {
-            throw new RuntimeException(sprintf('Cannot create directory: %s', $dir));
+            throw GrpcException::cannotCreateDirectory($dir);
         }
 
         $json = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);

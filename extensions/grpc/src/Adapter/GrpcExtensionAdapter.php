@@ -8,7 +8,7 @@ use Grpc\Server as GrpcServer;
 use Grpc\ServerCredentials;
 use Override;
 use Pulsar\Api\Internal;
-use RuntimeException;
+use Pulsar\Extension\Grpc\Exception\GrpcException;
 
 use function extension_loaded;
 use function is_array;
@@ -49,9 +49,7 @@ final class GrpcExtensionAdapter implements GrpcTransportAdapterInterface
     public function listen(string $host, int $port, GrpcRequestHandler $handler): void
     {
         if (!$this->isAvailable()) {
-            throw new RuntimeException(
-                'The grpc PHP extension is not loaded. Install it via: pecl install grpc',
-            );
+            throw GrpcException::extensionNotLoaded('grpc');
         }
 
         $server = new GrpcServer([]);
@@ -91,11 +89,13 @@ final class GrpcExtensionAdapter implements GrpcTransportAdapterInterface
     {
         $this->running = false;
 
-        if ($this->server !== null) {
-            /** @phpstan-ignore method.notFound */
-            $this->server->shutdown();
-            $this->server = null;
-        }
+        // The grpc PECL extension's \Grpc\Server does not expose an
+        // explicit shutdown method; releasing the last PHP reference
+        // triggers the C-level `grpc_server_destroy` in the extension's
+        // internal destructor, which drains in-flight RPCs and closes
+        // the HTTP/2 listener. Setting the field to null is therefore
+        // the idiomatic way to stop the server.
+        $this->server = null;
     }
 
     #[Override]
