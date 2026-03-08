@@ -26,6 +26,7 @@ use Pulsar\Extension\Cms\Comments\CommentBodyPolicy;
 use Pulsar\Extension\Cms\Comments\CommentRepositoryInterface;
 use Pulsar\Extension\Cms\Comments\CommentService;
 use Pulsar\Extension\Cms\Comments\CommentServiceInterface;
+use Pulsar\Extension\Cms\Commerce\ApiKeyRepositoryInterface;
 use Pulsar\Extension\Cms\Config\CmsConfig;
 use Pulsar\Extension\Cms\Content\ContentBlockRepositoryInterface;
 use Pulsar\Extension\Cms\Content\ContentRepositoryInterface;
@@ -41,6 +42,7 @@ use Pulsar\Extension\Cms\Forms\FormSubmissionServiceInterface;
 use Pulsar\Extension\Cms\Forms\SpamDetection\SpamScorer;
 use Pulsar\Extension\Cms\Http\Controller\Api\CollaborationApiController;
 use Pulsar\Extension\Cms\Http\Controller\FormSubmissionController as PublicFormSubmissionController;
+use Pulsar\Extension\Cms\Http\Middleware\CmsApiKeyMiddleware;
 use Pulsar\Extension\Cms\Http\Middleware\CmsLocaleMiddleware;
 use Pulsar\Extension\Cms\I18n\HreflangGenerator;
 use Pulsar\Extension\Cms\I18n\LocaleResolver;
@@ -146,6 +148,7 @@ use Pulsar\Mail\MailManager;
 use Pulsar\Mail\MailManagerInterface;
 use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Queue\QueueDriverInterface;
+use Pulsar\Security\Crypto\HmacInterface;
 use Pulsar\Security\Crypto\MasterKey;
 use Pulsar\Security\Csrf\CsrfTokenManagerInterface;
 use RuntimeException;
@@ -406,6 +409,29 @@ final readonly class CmsCoreServiceProvider
                 ClientFingerprintResolver::class,
                 new ClientFingerprintResolver($securityConfig, $hmacKey),
             );
+
+            // CmsApiKeyMiddleware: keyed BLAKE2b hash for API key storage
+            // (MED-5). Pepper is derived from the master key via subkey 15
+            // so the on-disk hash cannot be brute-forced offline.
+            if (
+                $container->has(HmacInterface::class)
+                && $container->has(ApiKeyRepositoryInterface::class)
+            ) {
+                /** @var HmacInterface $hmac */
+                $hmac = $container->get(HmacInterface::class);
+                /** @var ApiKeyRepositoryInterface $apiKeyRepository */
+                $apiKeyRepository = $container->get(ApiKeyRepositoryInterface::class);
+
+                $container->instance(
+                    CmsApiKeyMiddleware::class,
+                    new CmsApiKeyMiddleware(
+                        $apiKeyRepository,
+                        $config,
+                        $hmac,
+                        $cmsKeyManager->apiKeyHashKey(),
+                    ),
+                );
+            }
         }
 
         // Editorial workflow service
