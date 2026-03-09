@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace Pulsar\Http\Middleware;
 
 use Pulsar\Api\Api;
+use Pulsar\Http\Middleware\Exception\MiddlewareNotFoundException;
 use RuntimeException;
 
 use function array_key_exists;
+use function class_exists;
 use function is_string;
 use function sprintf;
 
@@ -110,7 +112,14 @@ final class MiddlewareRegistry
                 return $result;
             }
 
-            // Assume it's a class-string and return as-is
+            // F7.11: previously the registry blindly returned `[$name]`
+            // tagged as a class-string, which let typos slip through to
+            // crash later inside the pipeline. Reject any name that is
+            // neither a registered alias / group nor an existing class.
+            if (!class_exists($name)) {
+                throw MiddlewareNotFoundException::unknownReference($name);
+            }
+
             /** @var class-string<MiddlewareInterface> $name */
             return [$name];
         } finally {
