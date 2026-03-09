@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Tickets\Domain;
 
 use DateTimeImmutable;
+use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Extension\Tickets\Exception\TicketException;
 
@@ -98,10 +99,9 @@ final readonly class Ticket
 
     /**
      * Assign the ticket to an agent.
-     *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
-    public function assign(string $assigneeId): self
+    #[NoDiscard]
+    public function assign(string $assigneeId): static
     {
         return clone($this, [
             'assigneeId' => $assigneeId,
@@ -114,9 +114,9 @@ final readonly class Ticket
      * Change the ticket status.
      *
      * @throws TicketException If the transition is invalid
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
-    public function changeStatus(TicketStatus $newStatus): self
+    #[NoDiscard]
+    public function changeStatus(TicketStatus $newStatus): static
     {
         if (!$this->status->canTransitionTo($newStatus)) {
             throw TicketException::invalidTransition($this->status->value, $newStatus->value);
@@ -142,10 +142,9 @@ final readonly class Ticket
 
     /**
      * Change the ticket priority.
-     *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
-    public function changePriority(TicketPriority $newPriority): self
+    #[NoDiscard]
+    public function changePriority(TicketPriority $newPriority): static
     {
         return clone($this, [
             'priority' => $newPriority,
@@ -155,10 +154,9 @@ final readonly class Ticket
 
     /**
      * Move the ticket to a different category.
-     *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
-    public function changeCategory(?string $categoryId): self
+    #[NoDiscard]
+    public function changeCategory(?string $categoryId): static
     {
         return clone($this, [
             'categoryId' => $categoryId,
@@ -170,9 +168,9 @@ final readonly class Ticket
      * Replace the ticket tags.
      *
      * @param list<string> $tags
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
-    public function setTags(array $tags): self
+    #[NoDiscard]
+    public function setTags(array $tags): static
     {
         return clone($this, [
             'tags' => $tags,
@@ -185,7 +183,8 @@ final readonly class Ticket
      *
      * @throws TicketException If the transition is invalid
      */
-    public function resolve(): self
+    #[NoDiscard]
+    public function resolve(): static
     {
         return $this->changeStatus(TicketStatus::Resolved);
     }
@@ -195,7 +194,8 @@ final readonly class Ticket
      *
      * @throws TicketException If the transition is invalid
      */
-    public function close(): self
+    #[NoDiscard]
+    public function close(): static
     {
         return $this->changeStatus(TicketStatus::Closed);
     }
@@ -205,7 +205,8 @@ final readonly class Ticket
      *
      * @throws TicketException If the transition is invalid
      */
-    public function reopen(): self
+    #[NoDiscard]
+    public function reopen(): static
     {
         return $this->changeStatus(TicketStatus::Reopened);
     }
