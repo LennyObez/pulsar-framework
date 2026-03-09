@@ -31,6 +31,13 @@ readonly class Route
     public ?string $compiledPattern;
 
     /**
+     * F2.13 (host parity): pre-compiled regex pattern for parameterised
+     * hosts. Null for static / unset hosts. Computed eagerly so
+     * `matchesHost()` never recomputes it on the dispatch hot path.
+     */
+    public ?string $compiledHostPattern;
+
+    /**
      * @param list<Method> $methods Allowed HTTP methods
      * @param string $path The route path pattern
      * @param mixed $handler The route handler
@@ -53,6 +60,10 @@ readonly class Route
         $normalizedPath = '/' . trim($this->path, '/');
         $this->compiledPattern = str_contains($normalizedPath, '{')
             ? $this->pathToPattern($normalizedPath)
+            : null;
+
+        $this->compiledHostPattern = $this->host !== null && str_contains($this->host, '{')
+            ? $this->hostToPattern($this->host)
             : null;
     }
 
@@ -147,12 +158,23 @@ readonly class Route
         }
 
         // Exact match (no parameters)
-        if (!str_contains($this->host, '{')) {
+        if ($this->compiledHostPattern === null) {
             return strtolower($this->host) === strtolower($host) ? [] : null;
         }
 
-        // Build regex from host pattern
-        $pattern = preg_quote($this->host, '#');
+        if (preg_match($this->compiledHostPattern, $host, $matches)) {
+            return $this->extractNamedParameters($matches);
+        }
+
+        return null;
+    }
+
+    /**
+     * Pre-compile a parameterised host pattern.
+     */
+    private function hostToPattern(string $host): string
+    {
+        $pattern = preg_quote($host, '#');
         $pattern = str_replace(['\{', '\}'], ['{', '}'], $pattern);
 
         $replaced = preg_replace(
@@ -160,13 +182,8 @@ readonly class Route
             '(?P<$1>[^.]+)',
             $pattern,
         );
-        $pattern = '#^' . ($replaced ?? $pattern) . '$#i';
 
-        if (preg_match($pattern, $host, $matches)) {
-            return $this->extractNamedParameters($matches);
-        }
-
-        return null;
+        return '#^' . ($replaced ?? $pattern) . '$#i';
     }
 
     /**
