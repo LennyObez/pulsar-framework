@@ -163,9 +163,14 @@ final readonly class LeagueAuthorizationServer implements AuthorizationServerInt
         }
 
         if (!$this->consentRepository->hasConsent($subjectId, $clientId, $scopeIds)) {
-            // Consent needed; for now, we auto-deny. A real implementation would
-            // render a consent screen. The consent flow is out of scope for the
-            // authorization server adapter; it is handled by application middleware.
+            // Consent required — deny by default, delegate the UX to the
+            // application layer. The authorization-server adapter is
+            // protocol-focused and intentionally does not render HTML.
+            // The consent screen is implemented by application middleware
+            // that catches `OAuth2Exception::accessDenied('User consent
+            // required')`, renders the approval UI, and on submission
+            // stores the approval via `ConsentRepository::grant()` before
+            // re-dispatching the original authorization request.
             throw OAuth2Exception::accessDenied('User consent required');
         }
 
