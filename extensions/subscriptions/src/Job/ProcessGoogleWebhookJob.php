@@ -43,10 +43,14 @@ final readonly class ProcessGoogleWebhookJob implements QueueableInterface
                 encryptedPayload: $this->encryptedPayload,
                 signatureVerified: true,
             );
-        } catch (Throwable) {
-            // Retries are handled by the queue infrastructure
+        } catch (Throwable $e) {
+            // Retries are handled by the queue infrastructure. Preserve the
+            // original exception chain so production logs retain the root
+            // cause (Google API error, signature mismatch, store error, etc.)
+            // instead of a generic "Failed to process" message.
             throw new RuntimeException(
                 "Failed to process Google webhook: $this->eventType",
+                previous: $e,
             );
         }
     }

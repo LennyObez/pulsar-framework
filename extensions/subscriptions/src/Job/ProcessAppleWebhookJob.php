@@ -43,9 +43,13 @@ final readonly class ProcessAppleWebhookJob implements QueueableInterface
                 encryptedPayload: $this->encryptedPayload,
                 signatureVerified: true,
             );
-        } catch (Throwable) {
+        } catch (Throwable $e) {
+            // Preserve the original exception chain so logs retain the
+            // root cause (Apple API error, signature mismatch, store error)
+            // instead of a generic "Failed to process" message.
             throw new RuntimeException(
                 "Failed to process Apple webhook: $this->notificationType",
+                previous: $e,
             );
         }
     }
