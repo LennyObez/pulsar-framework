@@ -527,4 +527,44 @@ final class AuditEntryTest extends TestCase
         self::assertSame($entry1->hmac, $entry2->previousHmac);
         self::assertSame($entry2->hmac, $entry3->previousHmac);
     }
+
+    /**
+     * F9.13: when metadata cannot be JSON-encoded (resources, closures,
+     * recursive structures), `create()` must not propagate the
+     * underlying `JsonException`. The previous behaviour broke the
+     * audit chain — caller's mutex released without advance, audit
+     * record lost, downstream logic continued unaware. The fix
+     * substitutes a sentinel metadata bag so the chain stays
+     * consistent and the incident is itself auditable.
+     *
+     * Resource handles are the cleanest trigger because PHP's
+     * `json_encode` rejects them unconditionally regardless of
+     * version-specific Closure-encoding behaviour.
+     */
+    #[Test]
+    public function createWithUnencodableMetadataDoesNotThrow(): void
+    {
+        $resource = fopen('php://memory', 'rb');
+        self::assertNotFalse($resource);
+
+        $entry = AuditEntry::create(
+            id: 'unencodable',
+            event: AuditEvent::DataModification,
+            outcome: AuditOutcome::Success,
+            actor: 'service',
+            action: 'write',
+            resource: '/x',
+            timestamp: new DateTimeImmutable('2025-03-07T08:00:00.000000+00:00', new DateTimeZone('UTC')),
+            metadata: ['handle' => $resource],
+            previousHmac: 'seed',
+            auditKey: $this->auditKey,
+        );
+
+        fclose($resource);
+
+        self::assertArrayHasKey(AuditEntry::SERIALIZATION_ERROR_KEY, $entry->metadata);
+        self::assertNotEmpty($entry->hmac);
+        // Verify the sentinel-substituted entry is still self-consistent.
+        self::assertTrue($entry->verify($this->auditKey));
+    }
 }
