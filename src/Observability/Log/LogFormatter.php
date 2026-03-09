@@ -9,6 +9,9 @@ use Throwable;
 use function is_int;
 use function is_object;
 use function is_string;
+use function str_replace;
+use function strrpos;
+use function substr;
 
 /**
  * Formats LogEntry instances as JSON lines.
@@ -87,6 +90,10 @@ final class LogFormatter
      * Uses getTrace() and strips function arguments from each frame to prevent
      * PII leaks (passwords, tokens, secrets) that getTraceAsString() would include.
      *
+     * F4.6: file paths from `getFile()` and trace frames are normalised to
+     * project-relative form so absolute paths (`/var/www/.../src/Foo.php`,
+     * `D:\dev\...`) do not leak deployment topology to log aggregators.
+     *
      * @return array<string, mixed>
      */
     private function serializeThrowable(Throwable $throwable): array
@@ -95,7 +102,7 @@ final class LogFormatter
             'class' => $throwable::class,
             'message' => $throwable->getMessage(),
             'code' => $throwable->getCode(),
-            'file' => $throwable->getFile(),
+            'file' => self::redactPath($throwable->getFile()),
             'line' => $throwable->getLine(),
             'trace' => $this->sanitizeTrace($throwable->getTrace()),
         ];
@@ -115,7 +122,7 @@ final class LogFormatter
             $clean = [];
 
             if (isset($frame['file']) && is_string($frame['file'])) {
-                $clean['file'] = $frame['file'];
+                $clean['file'] = self::redactPath($frame['file']);
             }
 
             if (isset($frame['line']) && is_int($frame['line'])) {
@@ -138,5 +145,29 @@ final class LogFormatter
         }
 
         return $sanitized;
+    }
+
+    /**
+     * F4.6: collapse an absolute path to project-relative form so trace
+     * frames do not advertise the deployment root. Anchors on the
+     * standard repository directories. Mirrors the same trick used by
+     * ErrorFingerprint::normaliseFile so a fingerprint and its trace
+     * frames stay consistent.
+     */
+    private static function redactPath(string $file): string
+    {
+        $unixPath = str_replace('\\', '/', $file);
+
+        $anchors = ['/src/', '/tests/', '/extensions/', '/vendor/'];
+
+        foreach ($anchors as $anchor) {
+            $position = strrpos($unixPath, $anchor);
+
+            if ($position !== false) {
+                return substr($unixPath, $position + 1);
+            }
+        }
+
+        return $unixPath;
     }
 }
