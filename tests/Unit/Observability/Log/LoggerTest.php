@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Observability\Log;
 
+use Closure;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -19,6 +20,28 @@ use RuntimeException;
 #[CoversClass(Logger::class)]
 final class LoggerTest extends TestCase
 {
+    /** @var list<string> */
+    private array $fallbackBuffer = [];
+
+    /** @var Closure(string):void */
+    private Closure $fallbackEmitter;
+
+    /**
+     * F4.2: the logger now invokes a last-resort fallback emitter on
+     * sink failures (PHP `error_log` by default). PHPUnit treats any
+     * unexpected output as a Risky-test signal, so the test suite
+     * substitutes the fallback with an in-memory buffer for every
+     * test — individual tests that need to assert on the content
+     * read `$this->fallbackBuffer`.
+     */
+    protected function setUp(): void
+    {
+        $this->fallbackBuffer = [];
+        $this->fallbackEmitter = function (string $message): void {
+            $this->fallbackBuffer[] = $message;
+        };
+    }
+
     #[Test]
     public function logsAtThreshold(): void
     {
@@ -116,7 +139,11 @@ final class LoggerTest extends TestCase
     {
         $failingSink = new FailingSink();
         $collectingSink = new CollectingSink();
-        $logger = new Logger([$failingSink, $collectingSink], LogLevel::Debug);
+        $logger = new Logger(
+            sinks: [$failingSink, $collectingSink],
+            threshold: LogLevel::Debug,
+            fallbackEmitter: $this->fallbackEmitter,
+        );
 
         // Should not throw
         $logger->error('test');
@@ -246,6 +273,7 @@ final class LoggerTest extends TestCase
             threshold: LogLevel::Debug,
             debug: true,
             stderr: $stderr,
+            fallbackEmitter: $this->fallbackEmitter,
         );
 
         $logger->error('test');
@@ -273,6 +301,7 @@ final class LoggerTest extends TestCase
             threshold: LogLevel::Debug,
             debug: false,
             stderr: $stderr,
+            fallbackEmitter: $this->fallbackEmitter,
         );
 
         $logger->error('test');
@@ -282,6 +311,55 @@ final class LoggerTest extends TestCase
         fclose($stderr);
 
         self::assertSame('', $output);
+    }
+
+    /**
+     * F4.2: when every sink fails, the entry must still reach the
+     * fallback emitter so it is not dropped silently.
+     */
+    #[Test]
+    public function fallsBackToErrorLogWhenAllSinksFail(): void
+    {
+        $logger = new Logger(
+            sinks: [new FailingSink(), new FailingSink()],
+            threshold: LogLevel::Debug,
+            fallbackEmitter: $this->fallbackEmitter,
+        );
+
+        $logger->error('chain dropped — must surface');
+
+        $combined = implode("\n", $this->fallbackBuffer);
+        self::assertStringContainsString('Pulsar Logger fallback', $combined);
+        self::assertStringContainsString('chain dropped — must surface', $combined);
+        // Sink failure announce line is also emitted (twice, once per
+        // failing sink).
+        self::assertStringContainsString('sink failure', strtolower($combined));
+    }
+
+    /**
+     * F4.2: when at least one sink succeeds, the fallback path is NOT
+     * triggered — the emitter is for the all-failed scenario, not a
+     * nice-to-have duplicate write.
+     */
+    #[Test]
+    public function noFallbackWhenAtLeastOneSinkSucceeds(): void
+    {
+        $logger = new Logger(
+            sinks: [new FailingSink(), new CollectingSink()],
+            threshold: LogLevel::Debug,
+            fallbackEmitter: $this->fallbackEmitter,
+        );
+
+        $logger->error('partial failure — second sink absorbs');
+
+        // The sink-failure announce still fires (operators need to
+        // know the channel is broken), but the fallback content
+        // does not — the entry is already preserved by the
+        // surviving sink.
+        $combined = implode("\n", $this->fallbackBuffer);
+        self::assertStringNotContainsString('Pulsar Logger fallback', $combined);
+        // The announce-failure path still fires.
+        self::assertStringContainsString('sink failure', strtolower($combined));
     }
 }
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Observability\Log\Sink;
 
 use Override;
+use Pulsar\Observability\Log\Exception\LogException;
 use Pulsar\Observability\Log\LogEntry;
 use Pulsar\Observability\Log\LogFormatter;
 use Pulsar\Observability\Log\LogSinkInterface;
@@ -13,6 +14,8 @@ use function chmod;
 use function dirname;
 use function file_exists;
 use function is_dir;
+use function mkdir;
+use function sprintf;
 
 /**
  * Log sink that appends JSON lines to a file.
@@ -42,22 +45,44 @@ final readonly class FileSink implements LogSinkInterface
         $this->formatter = $formatter ?? new LogFormatter();
     }
 
+    /**
+     * @throws LogException When the directory cannot be created or
+     *                      the entry cannot be appended.
+     */
     #[Override]
     public function write(LogEntry $entry): void
     {
         $directory = dirname($this->path);
 
         if (!is_dir($directory)) {
-            // Trailing `@` swallows the inner mkdir warnings — caller
-            // sees the failure via the subsequent file_put_contents
-            // path-check exception (Logger::log catches and falls back).
-            @mkdir($directory, self::DIRECTORY_MODE, true);
+            // F4.4: previously the mkdir return was ignored, so a
+            // sink configured with an unwritable parent silently
+            // dropped every entry. Throw so Logger::log can hit its
+            // fallback path (F4.2).
+            if (!@mkdir($directory, self::DIRECTORY_MODE, true) && !is_dir($directory)) {
+                throw LogException::sinkWriteFailed(
+                    self::class,
+                    sprintf('could not create directory "%s"', $directory),
+                );
+            }
         }
 
         $isNewFile = !file_exists($this->path);
 
         $line = $this->formatter->format($entry);
-        file_put_contents($this->path, $line, FILE_APPEND | LOCK_EX);
+
+        // F4.4: file_put_contents returns false on any I/O failure
+        // (disk full, permission denied, locked by another process
+        // beyond our LOCK_EX wait, etc.). Surface the failure rather
+        // than silently dropping the entry.
+        $bytes = @file_put_contents($this->path, $line, FILE_APPEND | LOCK_EX);
+
+        if ($bytes === false) {
+            throw LogException::sinkWriteFailed(
+                self::class,
+                sprintf('could not write to "%s"', $this->path),
+            );
+        }
 
         // Apply restrictive permissions on first write. Subsequent
         // writes inherit them; an operator that explicitly tightens

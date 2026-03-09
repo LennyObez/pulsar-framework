@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Observability\Log;
 
+use Closure;
 use NoDiscard;
 use Psr\Log\LoggerInterface;
 use Pulsar\Api\Api;
@@ -14,16 +15,31 @@ use Pulsar\Observability\Log\Sink\StreamSink;
 use Stringable;
 use Throwable;
 
+use function error_log;
 use function fwrite;
 use function is_string;
+use function rtrim;
 use function sprintf;
 
 /**
  * PSR-3 compliant logger.
  *
  * Dispatches log entries to one or more sinks. Level filtering is applied
- * via the configured threshold. Sink failures are silently swallowed --
- * logging must never crash a request.
+ * via the configured threshold.
+ *
+ * F4.2: sink-write failures used to be swallowed silently — a misconfigured
+ * file path or unwritable disk simply dropped every entry. For a regulated
+ * deployment (PSD2 / GDPR / PCI), silent log loss is itself a compliance
+ * incident: the audit trail looks intact when it isn't. The logger now
+ * uses `error_log()` (PHP's bottom-of-stack diagnostic channel, configured
+ * via `error_log` ini) as a last-resort fallback when no sink can accept
+ * the entry, and emits a separate `error_log` line announcing which sink
+ * failed so operators see the incident even when the primary log file is
+ * unreachable. Logging still never crashes a request.
+ *
+ * F4.3: sink construction failures are routed through the same channel —
+ * `createSink()` no longer returns null when the constructor throws; the
+ * failure is announced via `error_log` and the channel is dropped.
  */
 #[Api(since: '1.0.0')]
 final readonly class Logger implements LoggerInterface
@@ -31,6 +47,9 @@ final readonly class Logger implements LoggerInterface
     /**
      * @param list<LogSinkInterface> $sinks
      * @param resource|null $stderr Stream to write sink failure notices to (when debug is true)
+     * @param Closure(string):void|null $fallbackEmitter Last-resort sink-failure emitter.
+     *                                                   Defaults to PHP's `error_log()`. Tests pass an
+     *                                                   in-memory buffer; CI / prod leaves it null.
      */
     public function __construct(
         private array $sinks,
@@ -38,6 +57,7 @@ final readonly class Logger implements LoggerInterface
         private string $channel = 'app',
         private bool $debug = false,
         private mixed $stderr = null,
+        private ?Closure $fallbackEmitter = null,
     ) {}
 
     /**
@@ -141,15 +161,50 @@ final readonly class Logger implements LoggerInterface
             return;
         }
 
+        $atLeastOneSucceeded = false;
+
         foreach ($this->sinks as $sink) {
             try {
                 $sink->write($entry);
+                $atLeastOneSucceeded = true;
             } catch (Throwable $e) {
-                if ($this->debug && $this->stderr !== null) {
-                    @fwrite($this->stderr, sprintf("[Pulsar Logger] Sink failure: %s\n", $e->getMessage()));
-                }
+                $this->reportSinkFailure($sink, $e);
             }
         }
+
+        // F4.2: when every sink dropped the entry (or none were
+        // configured), persist it through the fallback emitter so
+        // the record is not lost. This is the last-resort durability
+        // path — operators should still investigate the sink
+        // failures, but a banking-grade audit trail must not vanish.
+        if (!$atLeastOneSucceeded) {
+            $line = (new LogFormatter())->format($entry);
+            $this->emitFallback('[Pulsar Logger fallback] ' . rtrim($line, "\n"));
+        }
+    }
+
+    private function reportSinkFailure(LogSinkInterface $sink, Throwable $e): void
+    {
+        if ($this->debug && $this->stderr !== null) {
+            @fwrite($this->stderr, sprintf("[Pulsar Logger] Sink failure: %s\n", $e->getMessage()));
+        }
+
+        // F4.2: surface the failure on PHP's bottom-of-stack diagnostic
+        // channel even outside debug mode. Production operators rely
+        // on `error_log` for fatal-tier signals; silent sink failures
+        // were previously invisible.
+        $this->emitFallback(sprintf('[Pulsar Logger] sink %s failure: %s', $sink::class, $e->getMessage()));
+    }
+
+    private function emitFallback(string $message): void
+    {
+        if ($this->fallbackEmitter !== null) {
+            ($this->fallbackEmitter)($message);
+
+            return;
+        }
+
+        @error_log($message);
     }
 
     private static function createSink(LoggingChannelConfig $config): ?LogSinkInterface
@@ -160,7 +215,18 @@ final readonly class Logger implements LoggerInterface
                 'stream' => new StreamSink($config->stream ?? 'php://stderr'),
                 default => null,
             };
-        } catch (Throwable) {
+        } catch (Throwable $e) {
+            // F4.3: a sink that fails to construct is dropped from
+            // the channel list, but operators must know — otherwise
+            // a typo in `path` or a missing `stream` resource
+            // silently kills the whole channel and the rest of the
+            // app keeps logging into the void.
+            @error_log(sprintf(
+                '[Pulsar Logger] sink driver "%s" failed to construct: %s',
+                $config->driver,
+                $e->getMessage(),
+            ));
+
             return null;
         }
     }
