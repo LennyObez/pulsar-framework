@@ -11,9 +11,11 @@ use Psr\Log\NullLogger;
 use Pulsar\Security\Exception\SecurityException;
 use Throwable;
 
+use function chmod;
 use function dirname;
 use function fclose;
 use function fflush;
+use function file_exists;
 use function file_put_contents;
 use function flock;
 use function fopen;
@@ -55,6 +57,17 @@ final class AuditFileSink implements ChainableAuditSinkInterface, AuditChainStat
     private const int DIR_PERMISSIONS = 0o750;
 
     /**
+     * F9.14: audit logs are forensic records — only the application
+     * user (and a security-team operator with sudo) should be able to
+     * read them. The file is chmod'd to `0o600` on first write,
+     * tighter than the log-aggregator-friendly `0o640` used by
+     * `FileSink`. Recommend operators also `chattr +a` the directory
+     * on Linux to enforce append-only at the kernel level (out of
+     * PHP's reach).
+     */
+    private const int FILE_PERMISSIONS = 0o600;
+
+    /**
      * Bytes read from the tail of the file when looking up the last
      * entry. Sized at 64 KiB so a single audit record cannot legitimately
      * exceed it (entries are JSON Lines, well under that limit) and so
@@ -92,18 +105,25 @@ final class AuditFileSink implements ChainableAuditSinkInterface, AuditChainStat
             JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE,
         ) . "\n";
 
+        $isNewFile = !file_exists($this->logPath);
+
         if ($this->fsync) {
             $this->writeWithFsync($line);
+        } else {
+            $result = file_put_contents($this->logPath, $line, FILE_APPEND | LOCK_EX);
 
-            return;
+            if ($result === false) {
+                throw SecurityException::auditWriteFailed(
+                    sprintf('Could not write to audit log at "%s"', $this->logPath),
+                );
+            }
         }
 
-        $result = file_put_contents($this->logPath, $line, FILE_APPEND | LOCK_EX);
-
-        if ($result === false) {
-            throw SecurityException::auditWriteFailed(
-                sprintf('Could not write to audit log at "%s"', $this->logPath),
-            );
+        // F9.14: clamp permissions on first write so the audit log is
+        // not world-readable under default umask. `@` swallows the
+        // chmod warning on systems where the call is no-op (Windows).
+        if ($isNewFile) {
+            @chmod($this->logPath, self::FILE_PERMISSIONS);
         }
     }
 
