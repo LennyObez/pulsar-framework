@@ -13,8 +13,6 @@ use SensitiveParameter;
  * All token material is marked as sensitive to prevent accidental
  * exposure in stack traces, var_dump output, and error reports.
  * The __debugInfo() method redacts every token field.
- *
- * @phpstan-type UnverifiedClaims array<string, mixed>
  */
 #[Api(since: '1.0.0')]
 final readonly class OAuthTokenSet
