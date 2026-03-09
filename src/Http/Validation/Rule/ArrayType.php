@@ -6,7 +6,7 @@ namespace Pulsar\Http\Validation\Rule;
 
 use Override;
 use Pulsar\Api\Api;
-use Pulsar\Http\Validation\RuleInterface;
+use Pulsar\Http\Validation\TypeRuleInterface;
 use Pulsar\Http\Validation\Violation;
 
 use function is_array;
@@ -16,7 +16,7 @@ use function sprintf;
  * Value must be an array. Skips null values.
  */
 #[Api(since: '1.0.0')]
-readonly class ArrayType implements RuleInterface
+readonly class ArrayType implements TypeRuleInterface
 {
     public function __construct(
         private string $message = '',
