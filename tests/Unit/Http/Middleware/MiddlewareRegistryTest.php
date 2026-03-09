@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Pulsar\Http\Middleware\Exception\MiddlewareNotFoundException;
 use Pulsar\Http\Middleware\MiddlewareInterface;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use RuntimeException;
@@ -38,12 +39,30 @@ final class MiddlewareRegistryTest extends TestCase
     }
 
     #[Test]
-    public function unknownNameFallsToClassString(): void
+    public function existingClassFallsToClassString(): void
     {
         $registry = new MiddlewareRegistry();
 
         $resolved = $registry->resolve(StubAuthMiddleware::class);
         self::assertSame([StubAuthMiddleware::class], $resolved);
+    }
+
+    /**
+     * F7.11: an unknown reference (typo, missing alias) used to slip
+     * through and crash later inside the pipeline. The registry now
+     * fails fast with `MiddlewareNotFoundException` naming the bad
+     * reference.
+     */
+    #[Test]
+    public function unknownReferenceThrowsMiddlewareNotFound(): void
+    {
+        $registry = new MiddlewareRegistry();
+
+        $this->expectException(MiddlewareNotFoundException::class);
+        $this->expectExceptionMessage('Middleware reference "auth-typo" could not be resolved');
+
+        // @phpstan-ignore argument.type (intentional: testing typo path)
+        $registry->resolve('auth-typo');
     }
 
     #[Test]
