@@ -253,4 +253,51 @@ final class MetricsMiddlewareTest extends TestCase
         $value = $counter->value(new LabelSet(['method' => 'GET', 'route' => '/users/{id}', 'status' => '200']));
         self::assertSame(1.0, $value);
     }
+
+    /**
+     * F8.18: the metrics scrape endpoint must not auto-monitor itself.
+     * If a Prometheus server scrapes `/metrics` every 15s, every scrape
+     * would otherwise emit a `pulsar_http_requests_total{route="/metrics"}`
+     * sample, dwarfing the real request signal and rebuilding the
+     * histogram on every cycle. The middleware short-circuits before
+     * recording.
+     */
+    #[Test]
+    public function metricsEndpointIsExcludedFromRecording(): void
+    {
+        $registry = new MetricRegistry();
+
+        $middleware = new MetricsMiddleware($registry, null);
+
+        $request = $this->createRequest('/metrics');
+
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(Response::text('# HELP ...'));
+
+        $middleware->process($request, $handler);
+
+        $counter = $registry->counter('pulsar_http_requests_total', '');
+        $value = $counter->value(new LabelSet(['method' => 'GET', 'route' => '/metrics', 'status' => '200']));
+        self::assertSame(0.0, $value, 'Metrics endpoint must not record itself');
+    }
+
+    #[Test]
+    public function diagnosticsAndHealthEndpointsAreExcludedFromRecording(): void
+    {
+        $registry = new MetricRegistry();
+
+        $middleware = new MetricsMiddleware($registry, null);
+
+        foreach (['/_pulsar/metrics', '/_pulsar/diagnostics', '/_pulsar/health'] as $path) {
+            $request = $this->createRequest($path);
+            $handler = $this->createStub(RequestHandlerInterface::class);
+            $handler->method('handle')->willReturn(Response::text('OK'));
+
+            $middleware->process($request, $handler);
+
+            $counter = $registry->counter('pulsar_http_requests_total', '');
+            $value = $counter->value(new LabelSet(['method' => 'GET', 'route' => $path, 'status' => '200']));
+            self::assertSame(0.0, $value, "Path {$path} must not record");
+        }
+    }
 }

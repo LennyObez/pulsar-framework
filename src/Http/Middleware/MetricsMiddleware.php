@@ -14,6 +14,7 @@ use Pulsar\Observability\Metrics\MetricRegistry;
 use Throwable;
 
 use function hrtime;
+use function in_array;
 
 /**
  * Middleware that records HTTP request metrics.
@@ -28,6 +29,21 @@ use function hrtime;
  */
 final readonly class MetricsMiddleware implements MiddlewareInterface
 {
+    /**
+     * F8.18: paths the middleware refuses to record metrics for. The
+     * scrape endpoint itself (`/metrics`) and the related diagnostics
+     * endpoints would otherwise auto-monitor every Prometheus pull,
+     * producing recursive `pulsar_http_requests_total{route="/metrics"}`
+     * counters that grow once per scrape interval and dwarf real
+     * request signal. Excluding them keeps the time series clean.
+     */
+    private const array EXCLUDED_PATHS = [
+        '/metrics',
+        '/_pulsar/metrics',
+        '/_pulsar/diagnostics',
+        '/_pulsar/health',
+    ];
+
     public function __construct(
         private MetricRegistry $registry,
         private ?RouteContext $routeContext = null,
@@ -36,6 +52,13 @@ final readonly class MetricsMiddleware implements MiddlewareInterface
     #[Override]
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
+        // F8.18: short-circuit before resetting RouteContext + capturing
+        // the start time so the excluded path round-trip is genuinely
+        // metric-free, not just absent from the registry.
+        if (in_array($request->getUri()->getPath(), self::EXCLUDED_PATHS, true)) {
+            return $handler->handle($request);
+        }
+
         $this->routeContext?->reset();
         $start = hrtime(true);
 
