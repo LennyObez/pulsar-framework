@@ -178,7 +178,7 @@ final readonly class Logger implements LoggerInterface
         // path — operators should still investigate the sink
         // failures, but a banking-grade audit trail must not vanish.
         if (!$atLeastOneSucceeded) {
-            $line = (new LogFormatter())->format($entry);
+            $line = new LogFormatter()->format($entry);
             $this->emitFallback('[Pulsar Logger fallback] ' . rtrim($line, "\n"));
         }
     }
