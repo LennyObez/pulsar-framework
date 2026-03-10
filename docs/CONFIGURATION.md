@@ -110,6 +110,8 @@ Overrides merge recursively via `array_replace_recursive`.
 
 ## ConfigManager
 
+The Kernel accepts an optional `ConfigManager` in its constructor. When provided, the boot pipeline loads configuration as its first step. When omitted, the Kernel boots without config-file loading and relies on manually registered DTOs or hardcoded defaults. For a fully functional application (database connections, logging channels, security settings), pass a `ConfigManager` to the Kernel.
+
 Orchestrates the full pipeline:
 
 ```php
