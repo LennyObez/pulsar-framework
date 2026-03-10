@@ -16,6 +16,7 @@ use Pulsar\Http\ResponseStatus;
 
 use JsonException;
 
+use function array_key_exists;
 use function htmlspecialchars;
 use function in_array;
 use function is_array;
@@ -119,10 +120,14 @@ final readonly class CsrfMiddleware implements MiddlewareInterface
         // Form-encoded body (parsedBody is populated by PSR-7 itself
         // for `application/x-www-form-urlencoded` and `multipart/form-data`).
         $parsedBody = $request->getParsedBody();
-        $fieldToken = is_array($parsedBody) ? ($parsedBody[$this->config->formFieldName] ?? null) : null;
 
-        if (is_string($fieldToken) && $fieldToken !== '') {
-            return $fieldToken;
+        if (is_array($parsedBody) && array_key_exists($this->config->formFieldName, $parsedBody)) {
+            /** @var mixed $fieldToken */
+            $fieldToken = $parsedBody[$this->config->formFieldName];
+
+            if (is_string($fieldToken) && $fieldToken !== '') {
+                return $fieldToken;
+            }
         }
 
         // JSON body fallback. Only inspected when the request advertises
@@ -172,11 +177,12 @@ final readonly class CsrfMiddleware implements MiddlewareInterface
             return null;
         }
 
-        if (!is_array($decoded)) {
+        if (!is_array($decoded) || !array_key_exists($this->config->formFieldName, $decoded)) {
             return null;
         }
 
-        $field = $decoded[$this->config->formFieldName] ?? null;
+        /** @var mixed $field */
+        $field = $decoded[$this->config->formFieldName];
 
         return is_string($field) && $field !== '' ? $field : null;
     }
