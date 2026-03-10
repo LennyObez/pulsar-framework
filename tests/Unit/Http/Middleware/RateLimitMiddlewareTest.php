@@ -90,21 +90,62 @@ final class RateLimitMiddlewareTest extends TestCase
         self::assertArrayHasKey('retry_after', $body);
     }
 
+    /**
+     * F7.2: previously every request without REMOTE_ADDR landed in a
+     * shared `'unknown'` bucket, effectively disabling the rate limit
+     * (fail-open) under partial-info conditions. The fallback now
+     * uses a User-Agent hash so distinct clients still get distinct
+     * buckets — the limiter keeps working under partial info.
+     */
     #[Test]
-    public function usesUnknownKeyWhenNoRemoteAddr(): void
+    public function distinctUserAgentsGetDistinctBucketsWithoutRemoteAddr(): void
     {
         $limiter = new RateLimiter(maxAttempts: 1, windowSeconds: 60);
         $middleware = new RateLimitMiddleware($limiter);
 
-        $request = new ServerRequest(
+        $alice = new ServerRequest(
             method: 'GET',
             uri: '/',
+            headers: ['User-Agent' => 'AliceBrowser/1.0'],
+        );
+        $bob = new ServerRequest(
+            method: 'GET',
+            uri: '/',
+            headers: ['User-Agent' => 'BobBrowser/2.0'],
         );
 
         $handler = $this->createStub(RequestHandlerInterface::class);
         $handler->method('handle')->willReturn(Response::text('OK'));
-        $response = $middleware->process($request, $handler);
 
-        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
+        $aliceResponse = $middleware->process($alice, $handler);
+        $bobResponse = $middleware->process($bob, $handler);
+
+        // Both clients pass on their first request — distinct buckets.
+        self::assertSame(ResponseStatus::OK->value, $aliceResponse->getStatusCode());
+        self::assertSame(ResponseStatus::OK->value, $bobResponse->getStatusCode());
+
+        // A second hit on Alice's UA exceeds her limit; Bob remains
+        // unaffected (proves the buckets do not collide).
+        $aliceSecondResponse = $middleware->process($alice, $handler);
+        self::assertSame(ResponseStatus::TooManyRequests->value, $aliceSecondResponse->getStatusCode());
+    }
+
+    #[Test]
+    public function fallsBackToMethodUriHashWhenNoIpNoUa(): void
+    {
+        $limiter = new RateLimiter(maxAttempts: 1, windowSeconds: 60);
+        $middleware = new RateLimitMiddleware($limiter);
+
+        $request = new ServerRequest(method: 'GET', uri: '/');
+
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(Response::text('OK'));
+
+        $first = $middleware->process($request, $handler);
+        self::assertSame(ResponseStatus::OK->value, $first->getStatusCode());
+
+        // Same method + URI lands in the same bucket → second is rejected.
+        $second = $middleware->process($request, $handler);
+        self::assertSame(ResponseStatus::TooManyRequests->value, $second->getStatusCode());
     }
 }
