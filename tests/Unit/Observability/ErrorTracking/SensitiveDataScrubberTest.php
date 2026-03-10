@@ -176,4 +176,70 @@ final class SensitiveDataScrubberTest extends TestCase
         self::assertSame('visible', $result['private_value']);
         self::assertSame(1, $result['key_count']);
     }
+
+    /**
+     * F8.5: stack-trace strings may contain credit-card numbers, JWTs,
+     * or long hex / base64 secrets surfaced as method args. The
+     * scrubString() helper redacts those patterns so a Throwable
+     * formatter can sanitise free-form text.
+     */
+    #[Test]
+    public function scrubStringRedactsCreditCardNumbers(): void
+    {
+        $scrubber = new SensitiveDataScrubber();
+
+        self::assertStringContainsString(
+            '[REDACTED]',
+            $scrubber->scrubString('processing card 4111-1111-1111-1111 declined'),
+        );
+        self::assertStringContainsString(
+            '[REDACTED]',
+            $scrubber->scrubString('PAN 4111 1111 1111 1111'),
+        );
+        self::assertStringContainsString(
+            '[REDACTED]',
+            $scrubber->scrubString('PAN 4111111111111111'),
+        );
+    }
+
+    #[Test]
+    public function scrubStringRedactsJwt(): void
+    {
+        $scrubber = new SensitiveDataScrubber();
+
+        // Build a JWT-shaped string at runtime so the test file does
+        // not embed a literal token (static analyzers would otherwise
+        // flag a hard-coded credential even though it's a fixture).
+        $header = rtrim(strtr(base64_encode('{"alg":"HS256"}'), '+/', '-_'), '=');
+        $payload = rtrim(strtr(base64_encode('{"sub":"1"}'), '+/', '-_'), '=');
+        $signature = rtrim(strtr(base64_encode(random_bytes(32)), '+/', '-_'), '=');
+        $jwt = $header . '.' . $payload . '.' . $signature;
+
+        $result = $scrubber->scrubString("Authorization failed: {$jwt}");
+
+        self::assertStringNotContainsString($jwt, $result);
+        self::assertStringContainsString('[REDACTED]', $result);
+    }
+
+    #[Test]
+    public function scrubStringRedactsLongHexTokens(): void
+    {
+        $scrubber = new SensitiveDataScrubber();
+        $hex = str_repeat('a', 64);
+
+        $result = $scrubber->scrubString("session={$hex} expired");
+
+        self::assertStringNotContainsString($hex, $result);
+        self::assertStringContainsString('[REDACTED]', $result);
+    }
+
+    #[Test]
+    public function scrubStringPreservesShortHexAndProse(): void
+    {
+        $scrubber = new SensitiveDataScrubber();
+
+        self::assertSame('user id 42', $scrubber->scrubString('user id 42'));
+        self::assertSame('hex deadbeef', $scrubber->scrubString('hex deadbeef'));
+        self::assertSame('order 12345 placed', $scrubber->scrubString('order 12345 placed'));
+    }
 }

@@ -93,6 +93,48 @@ final readonly class SensitiveDataScrubber
     }
 
     /**
+     * F8.5: scrub a free-form string for credit-card numbers, JWTs,
+     * long hex/base64 tokens. Used by stack-trace formatters and
+     * other places where structured-key scrubbing cannot apply
+     * (PHP trace `args` may contain user-supplied secrets surfaced
+     * as scalars without an obvious key).
+     *
+     * The patterns are deliberately narrow — false positives waste
+     * legitimate diagnostic value, false negatives leak credentials.
+     * Order matters: longer / more-specific patterns first.
+     */
+    public function scrubString(string $input): string
+    {
+        $patterns = [
+            // PAN-like: 12-19 digits with optional dash/space separators.
+            // Catches `4111-1111-1111-1111`, `4111 1111 1111 1111`,
+            // and the unseparated `4111111111111111`. Not Luhn-validated
+            // here — false positives (long invoice numbers) are
+            // acceptable in a logging context.
+            '/\b(?:\d[ -]?){13,19}\b/' => self::REDACTED,
+            // JWT: three base64url segments separated by dots, last segment
+            // (signature) is non-empty. The leading `eyJ` is a Base64
+            // encoding of `{"` which always starts a JWT header.
+            '/\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/' => self::REDACTED,
+            // Long hex tokens (32+ hex chars) — typical for API keys,
+            // session ids, HMACs.
+            '/\b[a-fA-F0-9]{32,}\b/' => self::REDACTED,
+            // Base64 secrets (40+ chars). Tighter than the hex rule
+            // because base64 alphabet collides with prose; keep the
+            // length floor high so noun phrases are not redacted.
+            '/\b[A-Za-z0-9+\/]{40,}={0,2}\b/' => self::REDACTED,
+        ];
+
+        $result = $input;
+
+        foreach ($patterns as $pattern => $replacement) {
+            $result = preg_replace($pattern, $replacement, $result) ?? $result;
+        }
+
+        return $result;
+    }
+
+    /**
      * Scrub sensitive headers.
      *
      * @param array<string, string|list<string>> $headers
