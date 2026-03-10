@@ -105,9 +105,9 @@
                 @if (isset($config) && is_object($config) && count($config->supportedLocales) > 1)
                     <?php
                         $localeNames = ['en' => 'English', 'fr' => 'Français', 'nl' => 'Nederlands', 'de' => 'Deutsch', 'es' => 'Español', 'it' => 'Italiano', 'pt' => 'Português', 'pl' => 'Polski', 'ro' => 'Română', 'cs' => 'Čeština', 'el' => 'Ελληνικά', 'hu' => 'Magyar', 'sv' => 'Svenska', 'da' => 'Dansk', 'fi' => 'Suomi', 'sk' => 'Slovenčina', 'bg' => 'Български', 'hr' => 'Hrvatski', 'sl' => 'Slovenščina', 'lt' => 'Lietuvių', 'lv' => 'Latviešu', 'et' => 'Eesti', 'ga' => 'Gaeilge', 'mt' => 'Malti', 'lb' => 'Lëtzebuergesch'];
-                        $currentLocale = $locale ?? 'en';
-                        $currentName = $localeNames[$currentLocale] ?? strtoupper($currentLocale);
-                    ?>
+                            $currentLocale = $locale ?? 'en';
+                            $currentName = $localeNames[$currentLocale] ?? strtoupper($currentLocale);
+                            ?>
                     <nav class="cms-locale-switcher" aria-label="Language">
                         <details>
                             <summary class="cms-locale-switcher__trigger">
@@ -120,11 +120,11 @@
                             <ul class="cms-locale-switcher__dropdown">
                                 @foreach ($config->supportedLocales as $loc)
                                     <?php
-                                        $locName = $localeNames[$loc] ?? strtoupper($loc);
-                                        $isDefault = ($config->defaultLocale === $loc && !$config->defaultLocaleInUrl);
-                                        $locHref = $isDefault ? '/' : '/' . $loc . '/';
-                                        $isCurrent = $currentLocale === $loc;
-                                    ?>
+                                                $locName = $localeNames[$loc] ?? strtoupper($loc);
+                            $isDefault = ($config->defaultLocale === $loc && !$config->defaultLocaleInUrl);
+                            $locHref = $isDefault ? '/' : '/' . $loc . '/';
+                            $isCurrent = $currentLocale === $loc;
+                            ?>
                                     @if (!$isCurrent)
                                         <li class="cms-locale-switcher__item">
                                             <a href="{{ $locHref }}" class="cms-locale-switcher__link" hreflang="{{ $loc }}" lang="{{ $loc }}">
