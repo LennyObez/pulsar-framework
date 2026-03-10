@@ -186,21 +186,23 @@ if (!function_exists('base_path')) {
     /**
      * Resolve an absolute path relative to the project root.
      *
-     * The base path is detected once and cached. Detection order:
-     * 1. PULSAR_BASE_PATH environment variable (explicit override)
-     * 2. getcwd() (standard CLI usage)
+     * Detection order (re-evaluated on every call):
+     *  1. PULSAR_BASE_PATH environment variable (explicit override)
+     *  2. `getcwd()` (standard CLI and FPM usage)
+     *
+     * No caching. In persistent runtimes (Swoole, FrankenPHP,
+     * RoadRunner) a process-lifetime static would leak state
+     * across requests if the worker ever rebases its CWD — the
+     * overhead of one `getenv()` + `getcwd()` per call is
+     * negligible vs the correctness guarantee (Mi-5 audit
+     * response).
      *
      * @param string $path Optional path segment to append
      */
     function base_path(string $path = ''): string
     {
-        /** @var string|null $basePath */
-        static $basePath = null;
-
-        if ($basePath === null) {
-            $envBase = getenv('PULSAR_BASE_PATH');
-            $basePath = ($envBase !== false && $envBase !== '') ? $envBase : (string) getcwd();
-        }
+        $envBase = getenv('PULSAR_BASE_PATH');
+        $basePath = ($envBase !== false && $envBase !== '') ? $envBase : (string) getcwd();
 
         return $basePath . ($path !== '' ? DIRECTORY_SEPARATOR . $path : '');
     }
