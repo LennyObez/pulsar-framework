@@ -294,7 +294,16 @@ final class AuditFileSink implements ChainableAuditSinkInterface, AuditChainStat
             }
 
             fflush($handle);
-            fsync($handle);
+
+            // fsync forces OS buffers to disk — the side effect is the
+            // whole point. Psalm's UnusedFunctionCall sees only the
+            // bool return; we check it so the durability guarantee is
+            // not silently lost on a kernel-level fsync failure.
+            if (!fsync($handle)) {
+                throw SecurityException::auditWriteFailed(
+                    sprintf('fsync failed on audit log at "%s"', $this->logPath),
+                );
+            }
         } finally {
             flock($handle, LOCK_UN);
             fclose($handle);

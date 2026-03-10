@@ -54,6 +54,7 @@ final class LogFormatter
     {
         $replacements = [];
 
+        /** @var mixed $value */
         foreach ($context as $key => $value) {
             if (is_string($value) || (is_object($value) && method_exists($value, '__toString'))) {
                 $replacements['{' . $key . '}'] = (string) $value;
@@ -73,10 +74,12 @@ final class LogFormatter
     {
         $normalized = [];
 
+        /** @var mixed $value */
         foreach ($context as $key => $value) {
             if ($value instanceof Throwable) {
                 $normalized[$key] = $this->serializeThrowable($value);
             } else {
+                /** @var mixed */
                 $normalized[$key] = $value;
             }
         }
