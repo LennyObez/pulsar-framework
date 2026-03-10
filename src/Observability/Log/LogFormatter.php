@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Observability\Log;
 
+use Pulsar\Observability\ErrorTracking\SensitiveDataScrubber;
 use Throwable;
 
 use function is_int;
@@ -21,6 +22,13 @@ use function substr;
  */
 final class LogFormatter
 {
+    private readonly SensitiveDataScrubber $stringScrubber;
+
+    public function __construct(?SensitiveDataScrubber $stringScrubber = null)
+    {
+        $this->stringScrubber = $stringScrubber ?? new SensitiveDataScrubber();
+    }
+
     /**
      * Format a log entry as a JSON line.
      */
@@ -103,7 +111,12 @@ final class LogFormatter
     {
         return [
             'class' => $throwable::class,
-            'message' => $throwable->getMessage(),
+            // F8.5: Throwable messages frequently embed user-supplied
+            // values (record ids, URLs, free text). When that includes
+            // a credit-card number, JWT, or long token, the message
+            // surfaces the secret to log aggregators. The scrubber's
+            // string-pattern pass redacts those before serialisation.
+            'message' => $this->stringScrubber->scrubString($throwable->getMessage()),
             'code' => $throwable->getCode(),
             'file' => self::redactPath($throwable->getFile()),
             'line' => $throwable->getLine(),
