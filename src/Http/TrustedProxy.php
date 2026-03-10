@@ -53,6 +53,7 @@ final readonly class TrustedProxy
      */
     public function resolveClientIp(ServerRequestInterface $request): string
     {
+        /** @var mixed $remoteAddrRaw */
         $remoteAddrRaw = $request->getServerParams()['REMOTE_ADDR'] ?? null;
 
         // Missing / non-string REMOTE_ADDR: fall back to loopback so the
@@ -96,6 +97,26 @@ final readonly class TrustedProxy
         }
 
         return $remoteAddr;
+    }
+
+    /**
+     * F8.7: public predicate exposing the same trust evaluation that
+     * drives `resolveClientIp()`. `TracingMiddleware` consults this
+     * to decide whether an inbound `traceparent` header is honoured
+     * (only from a trusted upstream) or discarded (untrusted client
+     * trying to spoof trace topology / sampling).
+     *
+     * Malformed inputs (non-IP strings) return `false` so the caller
+     * fails closed: an unparseable REMOTE_ADDR cannot accidentally
+     * be classified as trusted.
+     */
+    public function isTrustedSource(string $ip): bool
+    {
+        if (filter_var($ip, FILTER_VALIDATE_IP) === false) {
+            return false;
+        }
+
+        return $this->isTrusted($ip);
     }
 
     private function isTrusted(string $ip): bool

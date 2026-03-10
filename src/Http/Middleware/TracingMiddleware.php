@@ -9,6 +9,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Http\RouteContext;
+use Pulsar\Http\TrustedProxy;
 use Pulsar\Observability\Tracing\Span;
 use Pulsar\Observability\Tracing\SpanProcessorInterface;
 use Pulsar\Observability\Tracing\SpanStatus;
@@ -18,6 +19,7 @@ use Random\Engine\Secure;
 use Random\RandomException;
 use Random\Randomizer;
 
+use function is_string;
 use function sprintf;
 
 /**
@@ -26,6 +28,16 @@ use function sprintf;
  * Parses incoming `traceparent` header for distributed trace propagation.
  * Attaches trace context and root span to request attributes. Sets span
  * status from response status code and adds `traceparent` to response.
+ *
+ * F8.7: incoming `traceparent` from anywhere is dangerous — a hostile
+ * client can spoof trace ids into the topology, force `sampled=01` to
+ * bypass our sampling rate (collector memory exhaustion), or attempt
+ * to correlate with internal trace ids leaked elsewhere. The middleware
+ * accepts the inbound header only when (a) no TrustedProxy is wired
+ * (single-tenant deployments behind their own auth), or (b) the request
+ * arrives from a trusted proxy in the configured chain. Any other
+ * source has its `traceparent` discarded and a fresh root span is
+ * minted.
  */
 final readonly class TracingMiddleware implements MiddlewareInterface
 {
@@ -37,6 +49,7 @@ final readonly class TracingMiddleware implements MiddlewareInterface
         private float $samplingRate = 1.0,
         ?Randomizer $randomizer = null,
         private ?RouteContext $routeContext = null,
+        private ?TrustedProxy $trustedProxy = null,
     ) {
         $this->randomizer = $randomizer ?? new Randomizer(new Secure());
     }
@@ -47,12 +60,18 @@ final readonly class TracingMiddleware implements MiddlewareInterface
     #[Override]
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        // Parse incoming traceparent or create new context
+        // F8.7: only honour `traceparent` from a trusted upstream.
+        // Untrusted clients get a fresh root span — their inbound
+        // header is silently discarded so trace topology and
+        // sampling decisions stay under our control.
         $parentContext = null;
-        $traceparent = $request->getHeaderLine('traceparent');
 
-        if ($traceparent !== '') {
-            $parentContext = $this->traceContextParser->parse($traceparent);
+        if ($this->shouldHonourInboundTraceparent($request)) {
+            $traceparent = $request->getHeaderLine('traceparent');
+
+            if ($traceparent !== '') {
+                $parentContext = $this->traceContextParser->parse($traceparent);
+            }
         }
 
         // Determine if this request should be sampled
@@ -108,6 +127,28 @@ final readonly class TracingMiddleware implements MiddlewareInterface
             $span->end();
             $this->collector->onEnd($span);
         }
+    }
+
+    /**
+     * F8.7: traceparent is honoured only when the request comes from a
+     * trusted proxy (or no TrustedProxy was wired, in which case we
+     * trust every direct caller — single-tenant / behind-own-auth
+     * deployments). The TrustedProxy class already validates remote
+     * IP against a configurable proxy chain.
+     */
+    private function shouldHonourInboundTraceparent(ServerRequestInterface $request): bool
+    {
+        if ($this->trustedProxy === null) {
+            return true;
+        }
+
+        $remoteAddr = $request->getServerParams()['REMOTE_ADDR'] ?? null;
+
+        if (!is_string($remoteAddr) || $remoteAddr === '') {
+            return false;
+        }
+
+        return $this->trustedProxy->isTrustedSource($remoteAddr);
     }
 
     /**
