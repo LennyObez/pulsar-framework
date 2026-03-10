@@ -150,6 +150,7 @@ final readonly class DevelopmentRenderer implements ExceptionRendererInterface
 
         $html = '';
 
+        /** @var mixed $value */
         foreach ($data as $key => $value) {
             $escapedKey = $this->escape($key);
             $escapedValue = $this->escape(is_string($value) ? $value : (is_scalar($value) ? (string) $value : ''));

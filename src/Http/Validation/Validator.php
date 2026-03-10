@@ -46,6 +46,7 @@ final class Validator
                 throw new InvalidArgumentException(sprintf('Rules for field "%s" must be a list', $field));
             }
 
+            /** @var mixed $value */
             $value = $data[$field] ?? null;
 
             foreach ($fieldRules as $rule) {
