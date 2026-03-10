@@ -32,13 +32,27 @@ return [
     |--------------------------------------------------------------------------
     | Session Security
     |--------------------------------------------------------------------------
+    |
+    | F1.4: `cookie_secure` defaults to `true` (the secure-by-default
+    | choice for production), but is environment-aware:
+    |   - `SESSION_COOKIE_SECURE` env var, when set, wins explicitly
+    |     (accepts "true"/"false"/"1"/"0").
+    |   - Otherwise, when `APP_ENV` is `local` or `development`, the
+    |     default flips to `false` so a developer running on plain
+    |     HTTP is not locked out of the session cookie.
+    |   - Otherwise, defaults to `true` (production / staging /
+    |     unspecified env all stay secure).
+    |
     */
     'session' => [
         'handler' => 'file',
         'cookie_name' => 'PULSAR_SESSION',
         'lifetime' => 7200,
         'cookie_httponly' => true,
-        'cookie_secure' => true,
+        'cookie_secure' => env(
+            'SESSION_COOKIE_SECURE',
+            in_array(env('APP_ENV', 'production'), ['local', 'development'], true) ? false : true,
+        ),
         'cookie_samesite' => 'Strict',
         'cookie_path' => '/',
         'cookie_domain' => '',
