@@ -395,8 +395,32 @@ exclude:
   # ── Composer ────────────────────────────────────────────────────────────────
   # Dependencies managed externally, not always installed in CI scan
   - name: PhpNoninstalledComposerPackagesInspection
-  # Unused parameters with underscore prefix are intentionally unused (PHP convention)
+  # F7.6: PhpUnusedParameterInspection now runs globally. The
+  # underscore-prefix convention (interface contract requires the
+  # parameter even if the implementation does not use it) lives only
+  # in the path list below — anywhere else, an unused parameter is
+  # a real signal worth fixing. Re-evaluate the file list when
+  # Qodana ships a built-in `m_allowedParameterPrefix=_` setting.
   - name: PhpUnusedParameterInspection
+    paths:
+      - extensions/example/src/Controller/ExampleController.php
+      - extensions/studio/src/Server/Controller/BenchmarkApiController.php
+      - extensions/studio/src/Server/Controller/BenchmarkController.php
+      - extensions/studio/src/Server/Controller/DatabaseExplorerController.php
+      - extensions/studio/src/Server/Controller/DeploymentController.php
+      - extensions/studio/src/Server/Controller/ExceptionExplorerController.php
+      - extensions/studio/src/Server/Controller/HealthDashboardController.php
+      - extensions/studio/src/Server/Controller/LandingController.php
+      - extensions/studio/src/Server/Controller/LogExplorerController.php
+      - extensions/studio/src/Server/Controller/RequestExplorerController.php
+      - extensions/studio/src/Server/Controller/TimelineController.php
+      - extensions/studio/src/Server/StudioRouter.php
+      - extensions/studio/src/Server/View/ViewRenderer.php
+      - src/Dev/Mail/MailPreviewController.php
+      - src/ErrorHandling/ExceptionHandler.php
+      - src/View/Engine/ProgressiveStreamingEngine.php
+      - src/View/Engine/StreamingTemplateEngine.php
+      - src/View/Engine/TemplateEngine.php
   # ext-pcntl, ext-apcu, ext-memcached, ext-intl are in `suggest` —
   # optional, guarded by extension_loaded() / function_exists() at runtime
   - name: PhpComposerExtensionStubsInspection
