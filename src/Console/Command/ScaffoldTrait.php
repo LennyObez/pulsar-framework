@@ -7,15 +7,24 @@ namespace Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
+use Pulsar\Filesystem\SafeFilesystem;
+use Pulsar\Filesystem\SafePath;
 
 use function array_filter;
 use function array_map;
 use function array_values;
 use function explode;
+use function getcwd;
 use function is_dir;
+use function is_file;
 use function is_int;
 use function is_string;
+use function ltrim;
+use function realpath;
 use function sprintf;
+use function str_starts_with;
+use function strlen;
+use function substr;
 use function trim;
 
 /**
@@ -192,7 +201,13 @@ trait ScaffoldTrait
     /**
      * Resolve a base path from an option, falling back to a default relative to cwd.
      *
-     * @return string|false The resolved absolute path, or false if cwd is unavailable
+     * F3.3: rejects path-traversal (`..`), absolute paths, and NUL
+     * truncation by routing through {@see SafePath::resolveUnderCwd()}.
+     * The returned string is guaranteed to live under the project's
+     * current working directory.
+     *
+     * @return string|false The resolved absolute path, or false if
+     *                      cwd is unavailable or the path is rejected
      */
     private function resolveBasePath(
         string $optionValue,
@@ -200,12 +215,12 @@ trait ScaffoldTrait
     ): string|false {
         $path = $optionValue !== '' ? $optionValue : $default;
 
-        $cwd = getcwd();
-        if ($cwd === false) {
+        $safePath = SafePath::resolveUnderCwd($path);
+        if ($safePath === null) {
             return false;
         }
 
-        return $cwd . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $path);
+        return $safePath->absolute;
     }
 
     /**
@@ -248,63 +263,27 @@ trait ScaffoldTrait
     /**
      * Recursively remove a directory and all its contents.
      *
-     * Includes retry logic for environments (e.g. Windows/OneDrive) where
-     * file handles may not be released immediately after unlink()/rmdir().
+     * F3.3: delegates to {@see SafeFilesystem::removeDirectoryRecursive()}
+     * via a {@see SafePath} chokepoint. The destructive primitives
+     * (file remove, directory remove) live behind Symfony's
+     * Filesystem component (a secure-by-default library) and the
+     * SafePath value object guarantees no path can escape the cwd
+     * trust boundary via `..`, absolute prefix, or mid-tree symlink.
      */
     private function removeDirectoryRecursive(string $dir): void
     {
-        if (!is_dir($dir)) {
+        $safe = SafePath::resolveUnderCwd(self::relativeFromCwd($dir));
+        if ($safe === null) {
             return;
         }
 
-        $items = scandir($dir);
-        if ($items === false) {
-            return;
-        }
-
-        foreach ($items as $item) {
-            if ($item === '.' || $item === '..') {
-                continue;
-            }
-
-            $path = $dir . DIRECTORY_SEPARATOR . $item;
-            if (is_dir($path)) {
-                $this->removeDirectoryRecursive($path);
-            } else {
-                @unlink($path);
-            }
-        }
-
-        // Release scandir handle references so Windows can free the directory
-        unset($items);
-        gc_collect_cycles();
-        clearstatcache(true, $dir);
-
-        $this->rmdirWithRetry($dir);
-    }
-
-    /**
-     * Remove a directory with retry logic for Windows/OneDrive handle locking.
-     */
-    private function rmdirWithRetry(string $dir): void
-    {
-        // Escalating delays: 100ms, 200ms, 400ms, 800ms, 1600ms (~3.1s total)
-        $delays = [100_000, 200_000, 400_000, 800_000, 1_600_000];
-
-        foreach ($delays as $delay) {
-            if (@rmdir($dir)) {
-                return;
-            }
-            usleep($delay);
-            clearstatcache(true, $dir);
-        }
-
-        // Final attempt: let the warning through if it still fails
-        @rmdir($dir);
+        (new SafeFilesystem())->removeDirectoryRecursive($safe);
     }
 
     /**
      * Remove a single file and report it.
+     *
+     * F3.3: delegates to {@see SafeFilesystem::removeFile()}.
      */
     private function removeFileWithOutput(string $path, OutputInterface $output): void
     {
@@ -312,7 +291,13 @@ trait ScaffoldTrait
             return;
         }
 
-        unlink($path);
+        $safe = SafePath::resolveUnderCwd(self::relativeFromCwd($path));
+        if ($safe === null) {
+            $output->errorln(sprintf('  Refused to remove %s (outside project root)', $path));
+            return;
+        }
+
+        (new SafeFilesystem())->removeFile($safe);
         $output->writeln(sprintf('  Removed %s', $path));
     }
 
@@ -323,29 +308,50 @@ trait ScaffoldTrait
      */
     private function listFilesRecursive(string $dir): array
     {
-        if (!is_dir($dir)) {
+        $safe = SafePath::resolveUnderCwd(self::relativeFromCwd($dir));
+        if ($safe === null) {
             return [];
         }
 
         $files = [];
-        $items = scandir($dir);
-        if ($items === false) {
-            return [];
-        }
-
-        foreach ($items as $item) {
-            if ($item === '.' || $item === '..') {
-                continue;
-            }
-
-            $path = $dir . DIRECTORY_SEPARATOR . $item;
-            if (is_dir($path)) {
-                $files = [...$files, ...$this->listFilesRecursive($path)];
-            } else {
-                $files[] = $path;
-            }
+        foreach ((new SafeFilesystem())->listFilesRecursive($safe) as $file) {
+            $files[] = $file->absolute;
         }
 
         return $files;
+    }
+
+    /**
+     * F3.3: convert an absolute path back to a cwd-relative form so
+     * {@see SafePath::resolveUnderCwd()} can re-validate it. Callers
+     * already pass paths derived from `resolveBasePath()` (which
+     * itself goes through SafePath), so this strip-and-revalidate
+     * is defence-in-depth — any caller bypassing the canonical
+     * factory still hits the validation chokepoint.
+     */
+    private static function relativeFromCwd(string $absolutePath): string
+    {
+        $cwd = getcwd();
+        if ($cwd === false) {
+            return $absolutePath;
+        }
+
+        $cwdReal = realpath($cwd);
+        $pathReal = realpath($absolutePath);
+
+        if ($cwdReal !== false && $pathReal !== false && str_starts_with($pathReal, $cwdReal)) {
+            $stripped = substr($pathReal, strlen($cwdReal));
+            return ltrim($stripped, '/\\');
+        }
+
+        // realpath fails on non-existent paths — fall back to a
+        // string strip when the prefix matches naively. SafePath
+        // re-validates, so an unsafe path here still gets rejected.
+        if (str_starts_with($absolutePath, $cwd)) {
+            $stripped = substr($absolutePath, strlen($cwd));
+            return ltrim($stripped, '/\\');
+        }
+
+        return $absolutePath;
     }
 }
