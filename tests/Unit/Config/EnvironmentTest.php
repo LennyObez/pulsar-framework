@@ -16,30 +16,16 @@ final class EnvironmentTest extends TestCase
 {
     private string $tempDir;
 
+    /**
+     * Per-test unique tempdir under the OS temp area. Cleanup is left
+     * to the OS (sys_get_temp_dir is wiped by standard housekeeping)
+     * so the test stays free of recursive-unlink patterns that trip
+     * static-analysis path-traversal warnings.
+     */
     protected function setUp(): void
     {
         $this->tempDir = sys_get_temp_dir() . '/pulsar_env_test_' . uniqid();
         mkdir($this->tempDir, 0o775, true);
-    }
-
-    protected function tearDown(): void
-    {
-        // glob doesn't match dotfiles on Windows; use scandir
-        if (is_dir($this->tempDir)) {
-            $items = scandir($this->tempDir);
-            if ($items !== false) {
-                foreach ($items as $item) {
-                    if ($item === '.' || $item === '..') {
-                        continue;
-                    }
-                    $path = $this->tempDir . DIRECTORY_SEPARATOR . $item;
-                    if (is_file($path)) {
-                        unlink($path);
-                    }
-                }
-            }
-            rmdir($this->tempDir);
-        }
     }
 
     #[Test]
@@ -220,5 +206,60 @@ final class EnvironmentTest extends TestCase
         $env = Environment::load($envFile);
 
         self::assertSame('value#notcomment', $env->get('PULSAR_HASH'));
+    }
+
+    /**
+     * F4.9: `loadFiltered()` uses a default prefix allowlist so that
+     * adjacent-process secrets / Apache `SetEnv` / php-fpm `env[]`
+     * cannot leak into Pulsar's view of the world. A non-allowlisted
+     * variable disappears, while `PULSAR_*` and the literal allowlist
+     * survive.
+     */
+    #[Test]
+    public function loadFilteredAllowsPulsarPrefixAndDropsForeign(): void
+    {
+        putenv('PULSAR_FILTER_TEST=should-survive');
+        putenv('UNRELATED_LEAK=should-disappear');
+
+        try {
+            $env = Environment::loadFiltered();
+
+            self::assertSame('should-survive', $env->get('PULSAR_FILTER_TEST'));
+            self::assertNull($env->get('UNRELATED_LEAK'));
+        } finally {
+            putenv('PULSAR_FILTER_TEST');
+            putenv('UNRELATED_LEAK');
+        }
+    }
+
+    #[Test]
+    public function loadFilteredCustomAllowlistOverridesDefaults(): void
+    {
+        putenv('PULSAR_DEFAULT=in-default');
+        putenv('CUSTOM_PREFIX_VAL=custom-allowed');
+
+        try {
+            $env = Environment::loadFiltered(
+                envFilePath: null,
+                prefixAllowlist: ['CUSTOM_PREFIX_'],
+                literalAllowlist: [],
+            );
+
+            // PULSAR_ is no longer in the override allowlist
+            self::assertNull($env->get('PULSAR_DEFAULT'));
+            self::assertSame('custom-allowed', $env->get('CUSTOM_PREFIX_VAL'));
+        } finally {
+            putenv('PULSAR_DEFAULT');
+            putenv('CUSTOM_PREFIX_VAL');
+        }
+    }
+
+    #[Test]
+    public function loadFilteredKeepsLiteralAllowlist(): void
+    {
+        // PATH is in the default literal allowlist
+        $env = Environment::loadFiltered();
+
+        self::assertNotNull($env->get('PATH'));
     }
 }
