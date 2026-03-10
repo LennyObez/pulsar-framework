@@ -13,7 +13,9 @@ use Pulsar\Http\RateLimit\RateLimiterInterface;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Http\TrustedProxy;
 
+use function hash;
 use function is_string;
+use function substr;
 
 /**
  * Middleware that enforces rate limiting on incoming requests.
@@ -68,16 +70,21 @@ final readonly class RateLimitMiddleware implements MiddlewareInterface
      * the authenticated user ID (from the `rate_limit.user_id` request
      * attribute). This prevents a single user from exhausting the
      * IP-based quota on shared networks (e.g., corporate NAT).
+     *
+     * F7.2: when neither a TrustedProxy chain nor REMOTE_ADDR can
+     * yield an IP, the resolver previously fell back to the literal
+     * string `unknown` — every client without an identifiable IP
+     * shared one bucket and the rate limiter degraded to no limit
+     * at all (fail-open). The fallback now hashes the User-Agent
+     * (truncated SHA-256) so distinct clients still get distinct
+     * buckets, and ultimately falls back to a hash of the request
+     * URI + method as a last-resort distinct key. Both paths keep
+     * the limiter working under partial-info conditions instead of
+     * silently disabling itself.
      */
     private function resolveKey(ServerRequestInterface $request): string
     {
-        if ($this->trustedProxy !== null) {
-            $ip = $this->trustedProxy->resolveClientIp($request);
-        } else {
-            $raw = $request->getServerParams()['REMOTE_ADDR'] ?? null;
-            $ip = is_string($raw) ? $raw : 'unknown';
-        }
-
+        $ip = $this->resolveClientIp($request);
         $userId = $request->getAttribute('rate_limit.user_id');
 
         if (is_string($userId) && $userId !== '') {
@@ -85,5 +92,38 @@ final readonly class RateLimitMiddleware implements MiddlewareInterface
         }
 
         return 'rate_limit:' . $ip;
+    }
+
+    private function resolveClientIp(ServerRequestInterface $request): string
+    {
+        if ($this->trustedProxy !== null) {
+            return $this->trustedProxy->resolveClientIp($request);
+        }
+
+        $raw = $request->getServerParams()['REMOTE_ADDR'] ?? null;
+
+        if (is_string($raw) && $raw !== '') {
+            return $raw;
+        }
+
+        // F7.2 fallback 1: hash of User-Agent. Distinct clients usually
+        // ship distinct UAs, so this gives the limiter a per-client
+        // bucket even without an IP. 16 hex chars = 64 bits of
+        // collision resistance — adequate for a per-client bucket key.
+        $userAgent = $request->getHeaderLine('User-Agent');
+
+        if ($userAgent !== '') {
+            return 'ua-' . substr(hash('sha256', $userAgent), 0, 16);
+        }
+
+        // F7.2 fallback 2: hash of method + URI. Same client, different
+        // endpoints, no UA → at least the buckets differ per endpoint.
+        // This is the floor: a request truly without REMOTE_ADDR /
+        // X-Forwarded-For / User-Agent is exotic enough that giving
+        // it its own per-endpoint bucket is acceptable.
+        return 'req-' . substr(hash(
+            'sha256',
+            $request->getMethod() . '|' . (string) $request->getUri(),
+        ), 0, 16);
     }
 }
