@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Security\Csrf;
 
+use JsonException;
 use Override;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -13,8 +14,6 @@ use Pulsar\Config\CsrfConfig;
 use Pulsar\Http\Message\Response;
 use Pulsar\Http\Middleware\MiddlewareInterface;
 use Pulsar\Http\ResponseStatus;
-
-use JsonException;
 
 use function array_key_exists;
 use function htmlspecialchars;
