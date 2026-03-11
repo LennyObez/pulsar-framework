@@ -56,6 +56,17 @@ final readonly class MigrationRunner implements MigrationRunnerInterface
     }
 
     /**
+     * F11.13: current schema version of the migration-tracking table
+     * itself. Bumped when a future Pulsar release adds a new column
+     * (e.g. `applied_by`, `duration_ms`). The {@see ensureMigrationTable()}
+     * method reads the existing schema_version from the meta row and
+     * compares against this constant, so deployments that pre-date a
+     * column addition can be evolved in place rather than requiring a
+     * manual `ALTER TABLE` per operator.
+     */
+    private const int META_TABLE_SCHEMA_VERSION = 1;
+
+    /**
      * Ensure the migration tracking table exists.
      *
      * @throws DatabaseException
@@ -176,6 +187,22 @@ final readonly class MigrationRunner implements MigrationRunnerInterface
      * Reset all migrations (rollback everything).
      *
      * Acquires a database-level advisory lock to prevent concurrent runs.
+     *
+     * F11.14: this method is **not atomic**. Each migration's `down()`
+     * runs in its own statement (or its own transaction if it opens
+     * one); a failure mid-loop leaves the database in a partial state
+     * with the earlier migrations already rolled back. Wrapping the
+     * whole loop in a single transaction is not viable on MySQL
+     * (DDL statements force implicit commits, breaking the atomic
+     * boundary), so the loop intentionally runs without an outer
+     * transaction.
+     *
+     * Operators using `reset()` for disaster-recovery should expect
+     * a partial-state outcome on failure, capture the returned list
+     * of versions that did roll back, and re-run `reset()` after
+     * fixing the offending migration. Postgres-only deployments
+     * comfortable with the DDL-in-transaction guarantee can wrap
+     * `reset()` in their own `connection->transaction(...)` call.
      *
      * @return list<string> List of rolled-back version strings.
      * @throws DatabaseException
@@ -374,6 +401,11 @@ final readonly class MigrationRunner implements MigrationRunnerInterface
         $driver = $this->connection->driver();
         $table = $this->tableName;
 
+        // F11.13: every fresh-install schema carries a `schema_version`
+        // column initialised to META_TABLE_SCHEMA_VERSION. Future
+        // Pulsar releases that need to add columns to this table read
+        // the current schema_version row, then issue ALTER TABLE
+        // upgrades in `ensureMigrationTable()` before continuing.
         return match ($driver) {
             Driver::SQLite => sprintf(
                 'CREATE TABLE IF NOT EXISTS %s ('
@@ -381,9 +413,11 @@ final readonly class MigrationRunner implements MigrationRunnerInterface
                 . 'version VARCHAR(30) NOT NULL UNIQUE, '
                 . 'name VARCHAR(255) NOT NULL, '
                 . 'batch INTEGER NOT NULL, '
-                . 'applied_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP'
+                . 'applied_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, '
+                . 'schema_version INTEGER NOT NULL DEFAULT %d'
                 . ')',
                 $table,
+                self::META_TABLE_SCHEMA_VERSION,
             ),
             Driver::MySQL => sprintf(
                 'CREATE TABLE IF NOT EXISTS %s ('
@@ -391,9 +425,11 @@ final readonly class MigrationRunner implements MigrationRunnerInterface
                 . 'version VARCHAR(30) NOT NULL UNIQUE, '
                 . 'name VARCHAR(255) NOT NULL, '
                 . 'batch INT UNSIGNED NOT NULL, '
-                . 'applied_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP'
+                . 'applied_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, '
+                . 'schema_version INT UNSIGNED NOT NULL DEFAULT %d'
                 . ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci',
                 $table,
+                self::META_TABLE_SCHEMA_VERSION,
             ),
             Driver::PostgreSQL => sprintf(
                 'CREATE TABLE IF NOT EXISTS %s ('
@@ -401,9 +437,11 @@ final readonly class MigrationRunner implements MigrationRunnerInterface
                 . 'version VARCHAR(30) NOT NULL UNIQUE, '
                 . 'name VARCHAR(255) NOT NULL, '
                 . 'batch INTEGER NOT NULL, '
-                . 'applied_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP'
+                . 'applied_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, '
+                . 'schema_version INTEGER NOT NULL DEFAULT %d'
                 . ')',
                 $table,
+                self::META_TABLE_SCHEMA_VERSION,
             ),
         };
     }
