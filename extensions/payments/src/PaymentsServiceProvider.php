@@ -12,8 +12,11 @@ use Pulsar\Extension\Payments\Contracts\ClockInterface;
 use Pulsar\Extension\Payments\Contracts\PaymentGatewayInterface;
 use Pulsar\Extension\Payments\Contracts\PaymentProviderInterface;
 use Pulsar\Extension\Payments\Contracts\WebhookProcessorInterface;
+use Pulsar\Extension\Payments\Features\CancelPaymentIntent\CancelPaymentIntentHandler;
+use Pulsar\Extension\Payments\Features\CapturePaymentIntent\CapturePaymentIntentHandler;
 use Pulsar\Extension\Payments\Features\CreatePaymentIntent\CreatePaymentIntentHandler;
 use Pulsar\Extension\Payments\Features\ProcessWebhook\ProcessWebhookHandler;
+use Pulsar\Extension\Payments\Features\RefundCharge\RefundChargeHandler;
 use Pulsar\Extension\Payments\Features\ProcessWebhook\WebhookController;
 use Pulsar\Extension\Payments\Gateway\PaymentGateway;
 use Pulsar\Extension\Payments\Internal\Infrastructure\Clock\SystemClock;
@@ -146,8 +149,11 @@ final class PaymentsServiceProvider implements ServiceProviderInterface
         // Webhook verifier
         $container->bind(WebhookVerifierInterface::class, HmacWebhookVerifier::class);
 
-        // Feature handlers
+        // Feature handlers (F22.1: each mutating operation has its own slice)
         $container->bind(CreatePaymentIntentHandler::class, CreatePaymentIntentHandler::class);
+        $container->bind(CapturePaymentIntentHandler::class, CapturePaymentIntentHandler::class);
+        $container->bind(CancelPaymentIntentHandler::class, CancelPaymentIntentHandler::class);
+        $container->bind(RefundChargeHandler::class, RefundChargeHandler::class);
         $container->bind(ProcessWebhookHandler::class, ProcessWebhookHandler::class);
 
         // Gateway
@@ -174,6 +180,9 @@ final class PaymentsServiceProvider implements ServiceProviderInterface
             TaxProviderInterface::class,
             SignedIdempotencyEnvelope::class,
             CreatePaymentIntentHandler::class,
+            CapturePaymentIntentHandler::class,
+            CancelPaymentIntentHandler::class,
+            RefundChargeHandler::class,
             ProcessWebhookHandler::class,
             PaymentGateway::class,
             PaymentGatewayInterface::class,

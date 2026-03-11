@@ -526,27 +526,63 @@ final class PaymentGatewayTest extends TestCase
         $auditLogger = new AuditLogger($sink, 'test-audit-key-1234');
 
         $config = $this->createConfig($requireTenantContext);
+        $logger = new NullLogger();
+
         $createHandler = new CreatePaymentIntentHandler(
             provider: $provider,
             idempotencyStore: $this->idempotencyStore,
             auditLogger: $auditLogger,
             metricRegistry: $this->metricRegistry,
-            logger: new NullLogger(),
+            logger: $logger,
             clock: $this->clock,
             config: $config,
             envelope: $this->envelope,
         );
 
-        return new PaymentGateway(
+        // F22.1: each mutating operation now has its own slice handler.
+        $captureHandler = new \Pulsar\Extension\Payments\Features\CapturePaymentIntent\CapturePaymentIntentHandler(
             provider: $provider,
             idempotencyStore: $this->idempotencyStore,
             auditLogger: $auditLogger,
             metricRegistry: $this->metricRegistry,
-            logger: new NullLogger(),
+            logger: $logger,
             clock: $this->clock,
             config: $config,
             envelope: $this->envelope,
+            tenantContext: $tenantContext,
+        );
+
+        $cancelHandler = new \Pulsar\Extension\Payments\Features\CancelPaymentIntent\CancelPaymentIntentHandler(
+            provider: $provider,
+            idempotencyStore: $this->idempotencyStore,
+            auditLogger: $auditLogger,
+            metricRegistry: $this->metricRegistry,
+            logger: $logger,
+            clock: $this->clock,
+            config: $config,
+            envelope: $this->envelope,
+            tenantContext: $tenantContext,
+        );
+
+        $refundHandler = new \Pulsar\Extension\Payments\Features\RefundCharge\RefundChargeHandler(
+            provider: $provider,
+            idempotencyStore: $this->idempotencyStore,
+            auditLogger: $auditLogger,
+            metricRegistry: $this->metricRegistry,
+            logger: $logger,
+            clock: $this->clock,
+            config: $config,
+            envelope: $this->envelope,
+            tenantContext: $tenantContext,
+        );
+
+        return new PaymentGateway(
             createHandler: $createHandler,
+            captureHandler: $captureHandler,
+            cancelHandler: $cancelHandler,
+            refundHandler: $refundHandler,
+            provider: $provider,
+            config: $config,
             tenantContext: $tenantContext,
         );
     }
