@@ -1002,12 +1002,10 @@ final readonly class ImportParser
      *
      * Creates one menu and one MenuTranslation per locale in the translations map.
      *
-     * @param array<string, mixed> $menuData
+     * @param array<string, mixed>  $menuData
+     * @param array<string, string> $contentRefMap
      *
      * @return array{created: int, updated: int, skipped: int, warnings: list<string>}
-     */
-    /**
-     * @param array<string, string> $contentRefMap
      */
     private function processMultilocaleMenu(
         array $menuData,
