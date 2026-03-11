@@ -12,6 +12,7 @@ use function count;
 use function in_array;
 use function is_array;
 use function is_int;
+use function is_numeric;
 use function is_string;
 use function json_encode;
 use function rtrim;
@@ -141,20 +142,30 @@ final readonly class JwtSigner
     {
         $now = time();
 
-        // Reject expired tokens
+        // Reject expired tokens. RFC 7519 §4.1.4 mandates a NumericDate
+        // (seconds since epoch). Anything that is not int|numeric-string
+        // is malformed and the token must be rejected.
         if (isset($claims['exp'])) {
-            $exp = is_int($claims['exp']) ? $claims['exp'] : (int) $claims['exp'];
+            $expRaw = $claims['exp'];
 
-            if ($now >= $exp) {
+            if (!is_int($expRaw) && !(is_string($expRaw) && is_numeric($expRaw))) {
+                return false;
+            }
+
+            if ($now >= (int) $expRaw) {
                 return false;
             }
         }
 
-        // Reject tokens not yet valid
+        // Reject tokens not yet valid (RFC 7519 §4.1.5).
         if (isset($claims['nbf'])) {
-            $nbf = is_int($claims['nbf']) ? $claims['nbf'] : (int) $claims['nbf'];
+            $nbfRaw = $claims['nbf'];
 
-            if ($now < $nbf) {
+            if (!is_int($nbfRaw) && !(is_string($nbfRaw) && is_numeric($nbfRaw))) {
+                return false;
+            }
+
+            if ($now < (int) $nbfRaw) {
                 return false;
             }
         }
