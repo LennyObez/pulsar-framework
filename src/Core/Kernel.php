@@ -64,6 +64,7 @@ use Pulsar\Core\Wiring\TenancyWiring;
 use Pulsar\Core\Wiring\TracingWiring;
 use Pulsar\Core\Wiring\ViewWiring;
 use Pulsar\ErrorHandling\ExceptionHandler;
+use Pulsar\ErrorHandling\ProductionRenderer;
 use Pulsar\Event\EventDispatcherInterface;
 use Pulsar\Extensibility\Exception\ExtensionException;
 use Pulsar\Extensibility\ExtensionBootstrap;
@@ -76,6 +77,7 @@ use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewarePipelineInterface;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Http\ResponseEmitter;
+use Pulsar\Http\ResponseStatus;
 use Pulsar\Http\RouteContext;
 use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Routing\MatchedRoute;
@@ -98,6 +100,7 @@ use function dirname;
 use function is_array;
 use function is_callable;
 use function is_string;
+use function str_contains;
 
 /**
  * Pulsar Kernel
@@ -478,8 +481,35 @@ final class Kernel implements KernelInterface
                 return $this->exceptionHandler->handle($e, $request);
             }
 
-            throw $e;
+            // F4.11: previously a missing exceptionHandler re-threw the
+            // exception, letting the SAPI emit a default error page
+            // with file paths + stack trace — a leak vector when an
+            // application boots before its production exception
+            // handler has been wired. Fall back to a minimal
+            // ProductionRenderer so the response is a generic 500
+            // with no internals exposed.
+            return $this->renderFallbackError($e, $request);
         }
+    }
+
+    /**
+     * F4.11: minimum-leak fallback when no `ExceptionHandler` is
+     * registered. ProductionRenderer emits a generic 5xx page with
+     * neither stack trace nor request internals. The caller is
+     * expected to wire a real handler in normal app boot — this
+     * branch only protects pre-bootstrap and misconfigured paths.
+     */
+    private function renderFallbackError(Throwable $e, ServerRequestInterface $request): ResponseInterface
+    {
+        $renderer = new ProductionRenderer();
+        $status = $e instanceof RoutingException && str_contains($e->getMessage(), 'No route')
+            ? ResponseStatus::NotFound
+            : ResponseStatus::InternalServerError;
+
+        return Response::html(
+            $renderer->render($e, $request, $status),
+            $status->value,
+        );
     }
 
     /**

@@ -82,16 +82,22 @@ final class KernelHandlerTest extends TestCase
         self::assertSame('Hello World', (string) $response->getBody());
     }
 
+    /**
+     * F4.11: with no `ExceptionHandler` registered the kernel used to
+     * re-throw and let the SAPI emit a default error page (file paths
+     * and stack trace leak). The fallback now renders a generic 404
+     * via `ProductionRenderer` so the response is leak-free.
+     */
     #[Test]
-    public function handleThrowsOnNoRouteMatch(): void
+    public function handleReturns404OnNoRouteMatchWithoutExceptionHandler(): void
     {
         $kernel = new Kernel();
 
         $request = $this->createRequest('GET', '/nonexistent');
 
-        $this->expectException(RoutingException::class);
+        $response = $kernel->handle($request);
 
-        $kernel->handle($request);
+        self::assertSame(404, $response->getStatusCode());
     }
 
     #[Test]
@@ -300,8 +306,13 @@ final class KernelHandlerTest extends TestCase
         self::assertSame(200, $response->getStatusCode());
     }
 
+    /**
+     * F4.11: non-callable handler used to bubble RoutingException
+     * out of handle(); now the fallback ProductionRenderer renders
+     * a 500 response instead.
+     */
     #[Test]
-    public function handleNonCallableHandlerThrows(): void
+    public function handleNonCallableHandlerReturns500WithoutExceptionHandler(): void
     {
         $kernel = new Kernel();
 
@@ -316,9 +327,9 @@ final class KernelHandlerTest extends TestCase
 
         $request = $this->createRequest('GET', '/bad');
 
-        $this->expectException(RoutingException::class);
+        $response = $kernel->handle($request);
 
-        $kernel->handle($request);
+        self::assertSame(500, $response->getStatusCode());
     }
 
     private function createRequest(string $method, string $path): ServerRequestInterface
@@ -345,33 +356,32 @@ final class KernelHandlerTest extends TestCase
         );
     }
 
+    /**
+     * F3.3: route cleanup through SafeFilesystem so the test fixture
+     * does not depend on bare `unlink()` (static-analysis flag) and
+     * benefits from the same path-traversal guards as production.
+     */
     private function removeDirectory(string $dir): void
     {
         if (!is_dir($dir)) {
             return;
         }
 
-        $items = scandir($dir);
-
-        if ($items === false) {
+        $cwd = getcwd();
+        if ($cwd === false) {
             return;
         }
 
-        foreach ($items as $item) {
-            if ($item === '.' || $item === '..') {
-                continue;
-            }
+        $relative = str_starts_with($dir, $cwd)
+            ? ltrim(substr($dir, strlen($cwd)), '/\\')
+            : $dir;
 
-            $path = $dir . DIRECTORY_SEPARATOR . $item;
-
-            if (is_dir($path)) {
-                $this->removeDirectory($path);
-            } else {
-                unlink($path);
-            }
+        $safe = \Pulsar\Filesystem\SafePath::resolveUnderCwd($relative);
+        if ($safe === null) {
+            return;
         }
 
-        rmdir($dir);
+        new \Pulsar\Filesystem\SafeFilesystem()->removeDirectoryRecursive($safe);
     }
 }
 
