@@ -113,14 +113,4 @@ enum Driver: string
             self::SQLite => 0,
         };
     }
-
-    /**
-     * Whether this driver supports savepoints for nested transactions.
-     */
-    public function supportsSavepoints(): bool
-    {
-        return match ($this) {
-            self::MySQL, self::PostgreSQL, self::SQLite => true,
-        };
-    }
 }
