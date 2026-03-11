@@ -140,6 +140,12 @@ final class MasterKey implements KeyProviderInterface
      * `$envValue` parameter or use `fromHex()` with a secrets manager instead
      * of relying on `getenv()` in these contexts.
      *
+     * F9.8: this method calls `getenv()` directly, bypassing
+     * {@see Environment::loadFiltered()}'s allowlist. Production
+     * deployments that hardened the environment loader should use
+     * {@see fromConfigEnvironment()} instead so master-key access
+     * goes through the same allowlist as every other secret.
+     *
      * @throws SecurityException If the variable is missing or invalid
      * @throws SodiumException
      */
@@ -154,6 +160,33 @@ final class MasterKey implements KeyProviderInterface
 
         $previousHex = getenv('PULSAR_MASTER_KEY_PREVIOUS');
         if ($previousHex === false || $previousHex === '') {
+            $previousHex = null;
+        }
+
+        return self::fromHex($hex, $previousHex);
+    }
+
+    /**
+     * F9.8: load master key through a {@see Environment} instance so
+     * the access goes through the same allowlist (and any other
+     * filtering) the operator has wired. Preferred over
+     * {@see fromEnvironment()} in production deployments because the
+     * `getenv()` global pollution path is bypassed entirely.
+     *
+     * @throws SecurityException If the variable is missing or invalid
+     * @throws SodiumException
+     */
+    #[NoDiscard]
+    public static function fromConfigEnvironment(\Pulsar\Config\Environment $env): self
+    {
+        $hex = $env->get('PULSAR_MASTER_KEY');
+
+        if ($hex === null || $hex === '') {
+            throw SecurityException::masterKeyMissing();
+        }
+
+        $previousHex = $env->get('PULSAR_MASTER_KEY_PREVIOUS');
+        if ($previousHex === '') {
             $previousHex = null;
         }
 

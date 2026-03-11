@@ -81,6 +81,22 @@ enum Driver: string
      * resolved against the current working directory. For production use,
      * prefer passing absolute paths via ConnectionConfig to avoid
      * working-directory ambiguity in symlinked projects.
+     *
+     * F11.4: this method does NOT confine absolute paths to a base
+     * directory. A `DB_DATABASE` env var pointing to `/etc/passwd`
+     * would resolve there. Multi-tenant deployments that pass user-
+     * derived strings into ConnectionConfig MUST validate the path
+     * before construction (e.g. via {@see Pulsar\Filesystem\SafePath}
+     * with a tenant-rooted boundary). The framework cannot impose a
+     * base dir at this layer because legitimate single-tenant
+     * deployments place their SQLite file at arbitrary FS locations
+     * (e.g. `/var/lib/pulsar/db.sqlite`); enforcing a fixed root
+     * here would break them.
+     *
+     * Defence against the env-var injection path itself is at
+     * {@see assertSafeDsnComponent()} (F11.1), which rejects `;`,
+     * `=`, NUL, CR, LF in the database string before it reaches
+     * the DSN. The remaining attack surface is operator-controlled.
      */
     private static function resolveSqlitePath(string $database): string
     {
