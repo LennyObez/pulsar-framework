@@ -186,7 +186,12 @@ final class ObservabilityPipelineTest extends TestCase
         $spans = $collector->spans();
         $span = $spans[0];
 
-        self::assertSame('HTTP GET /api/items', $span->name);
+        // F24.6: span name is `HTTP <method> unmatched` when no
+        // RouteContext is wired (this E2E pipeline does not exercise
+        // the router); raw path is no longer used as the cardinality
+        // would be unbounded for any request that throws pre-routing.
+        self::assertSame('HTTP GET unmatched', $span->name);
+        self::assertSame('/api/items', $span->attributes()['http.path'] ?? null);
         self::assertTrue($span->hasEnded());
         self::assertSame(SpanStatus::Ok, $span->status);
 
@@ -401,8 +406,12 @@ final class ObservabilityPipelineTest extends TestCase
         // Each collector must hold exactly its own span, not the other's
         self::assertSame(1, $collector1->count());
         self::assertSame(1, $collector2->count());
-        self::assertSame('HTTP GET /req-one', $collector1->spans()[0]->name);
-        self::assertSame('HTTP GET /req-two', $collector2->spans()[0]->name);
+        // F24.6: span name is `HTTP <method> unmatched` when no
+        // RouteContext is wired. The raw path lives in `http.path` attr.
+        self::assertSame('HTTP GET unmatched', $collector1->spans()[0]->name);
+        self::assertSame('HTTP GET unmatched', $collector2->spans()[0]->name);
+        self::assertSame('/req-one', $collector1->spans()[0]->attributes()['http.path'] ?? null);
+        self::assertSame('/req-two', $collector2->spans()[0]->attributes()['http.path'] ?? null);
     }
 
     #[Test]
@@ -475,10 +484,13 @@ final class ObservabilityPipelineTest extends TestCase
         $labels = new LabelSet(['method' => 'POST', 'route' => '/api/orders', 'status' => '200']);
         self::assertSame(1.0, $counter->value($labels));
 
-        // Verify tracing captured the span
+        // Verify tracing captured the span (F24.6: name uses route
+        // label when RouteContext is wired, falls back to `unmatched`
+        // when not — this E2E pipeline has no router.
         self::assertSame(1, $collector->count());
         $span = $collector->spans()[0];
-        self::assertSame('HTTP POST /api/orders', $span->name);
+        self::assertSame('HTTP POST unmatched', $span->name);
+        self::assertSame('/api/orders', $span->attributes()['http.path'] ?? null);
         self::assertSame(SpanStatus::Ok, $span->status);
 
         // Verify traceparent header was propagated
