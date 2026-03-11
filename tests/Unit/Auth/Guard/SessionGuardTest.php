@@ -161,15 +161,24 @@ final class SessionGuardTest extends TestCase
         self::assertNull($guard->authenticate($request));
     }
 
+    /**
+     * F12.9: previously the guard silently dropped non-Identity
+     * implementations (AnonymousIdentity, custom domain identities)
+     * — `login()` succeeded but the session stayed empty, breaking
+     * the next request invisibly. The guard now throws LogicException
+     * with a precise diagnostic.
+     */
     #[Test]
-    public function storeIdentityIgnoresNonIdentityImplementation(): void
+    public function storeIdentityRejectsNonIdentityImplementation(): void
     {
         $session = $this->createMock(SessionInterface::class);
-        $session->expects(self::never())->method('set');
+        $session->method('isStarted')->willReturn(false);
 
         $guard = new SessionGuard($session);
 
-        // AnonymousIdentity is not an instance of Identity (the concrete class)
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('SessionGuard::storeIdentity expected');
+
         $guard->updateIdentity(new AnonymousIdentity());
     }
 }
