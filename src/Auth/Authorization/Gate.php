@@ -63,13 +63,25 @@ final class Gate implements GateInterface
 
         $context ??= new PolicyContext(permission: $permission);
 
-        // 2. ABAC: check for explicit deny
+        // F12.6: previously the policy list was walked twice — once
+        // for explicit-deny (phase 2) and once for explicit-allow
+        // (phase 4). For N policies that's 2N evaluations even when
+        // most of the time the same evaluator could decide both
+        // outcomes. Walk once and capture every policy's verdict;
+        // an explicit deny still short-circuits, but an explicit
+        // allow is remembered until after the RBAC check runs (so
+        // RBAC remains the primary grant path).
+        $explicitAllow = false;
         foreach ($this->policies as $policy) {
             $result = $policy->evaluate($identity, $context);
 
             if ($result === false) {
                 $this->dispatchDenied($identity, $permission, $context->resource, 'ABAC-deny');
                 return false;
+            }
+
+            if ($result === true) {
+                $explicitAllow = true;
             }
         }
 
@@ -86,14 +98,10 @@ final class Gate implements GateInterface
             return true;
         }
 
-        // 4. ABAC: check for explicit allow (can grant without RBAC)
-        foreach ($this->policies as $policy) {
-            $result = $policy->evaluate($identity, $context);
-
-            if ($result === true) {
-                $this->dispatchGranted($identity, $permission, $context->resource, 'ABAC');
-                return true;
-            }
+        // 4. ABAC explicit allow (granted without RBAC match).
+        if ($explicitAllow) {
+            $this->dispatchGranted($identity, $permission, $context->resource, 'ABAC');
+            return true;
         }
 
         // 5. Default: deny
