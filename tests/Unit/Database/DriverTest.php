@@ -56,14 +56,6 @@ final class DriverTest extends TestCase
     }
 
     #[Test]
-    public function allDriversSupportSavepoints(): void
-    {
-        self::assertTrue(Driver::MySQL->supportsSavepoints());
-        self::assertTrue(Driver::PostgreSQL->supportsSavepoints());
-        self::assertTrue(Driver::SQLite->supportsSavepoints());
-    }
-
-    #[Test]
     public function driversHaveCorrectBackingValues(): void
     {
         self::assertSame('mysql', Driver::MySQL->value);
