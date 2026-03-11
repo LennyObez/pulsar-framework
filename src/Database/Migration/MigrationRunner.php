@@ -17,6 +17,7 @@ use function array_values;
 use function fclose;
 use function flock;
 use function fopen;
+use function is_scalar;
 use function sprintf;
 use function sys_get_temp_dir;
 use function usort;
@@ -465,7 +466,12 @@ final readonly class MigrationRunner implements MigrationRunnerInterface
         $row = $result->first();
         $acquired = $row?->getOrDefault('acquired', 0);
 
-        if ((int) $acquired !== 1) {
+        // GET_LOCK returns 1 (acquired), 0 (timeout), or NULL (error).
+        // Coerce only the numeric/scalar shapes we expect; any other
+        // shape from a misbehaving driver falls through to the throw.
+        $value = is_scalar($acquired) ? (int) $acquired : 0;
+
+        if ($value !== 1) {
             throw DatabaseException::migrationTableError(
                 'Could not acquire migration lock; another migration may be running',
                 null,
