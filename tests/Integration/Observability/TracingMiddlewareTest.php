@@ -34,7 +34,12 @@ final class TracingMiddlewareTest extends TestCase
         self::assertSame(1, $collector->count());
 
         $span = $collector->spans()[0];
-        self::assertSame('HTTP GET /test', $span->name);
+        // F24.6: span name is method + route label, not raw path. With
+        // no RouteContext wired, the post-route logic falls back to
+        // `unmatched` instead of leaking the raw path (which would
+        // make span cardinality unbounded).
+        self::assertSame('HTTP GET unmatched', $span->name);
+        self::assertSame('/test', $span->attributes()['http.path'] ?? null);
         self::assertSame(SpanStatus::Ok, $span->status);
         self::assertTrue($span->hasEnded());
     }
