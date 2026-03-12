@@ -40,8 +40,11 @@ final class TrackingServiceMultiHopXffTest extends TestCase
     private function invokeGetClientIp(TrackingService $service, ServerRequestInterface $request): string
     {
         $method = new ReflectionMethod($service, 'getClientIp');
+        $result = $method->invoke($service, $request);
 
-        return $method->invoke($service, $request);
+        self::assertIsString($result, 'TrackingService::getClientIp() must return a string');
+
+        return $result;
     }
 
     private function makeRequest(string $remoteAddr, string $xff): ServerRequestInterface

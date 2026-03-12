@@ -145,6 +145,8 @@ final class BroadcastAuthControllerTest extends TestCase
         $body = json_decode((string) $response->getBody(), true);
 
         self::assertSame(400, $response->getStatusCode());
+        self::assertArrayHasKey('error', $body);
+        self::assertIsString($body['error']);
         self::assertStringContainsString('Missing', $body['error']);
     }
 

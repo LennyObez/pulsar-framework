@@ -130,7 +130,7 @@ final class ExcludingSenderEvent implements BroadcastEventInterface, ExcludesCon
         return ['msg' => 'hi'];
     }
 
-    public function excludeConnectionId(): ?string
+    public function excludeConnectionId(): string
     {
         return 'conn-99';
     }
