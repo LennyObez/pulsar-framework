@@ -262,8 +262,22 @@ foreach ($extensionPaths as $path) {
     try {
       $extensionBootstrap->loadFromPaths([$path]);
     } catch (Throwable $e) {
-      // Extension loading errors are non-fatal for CLI
-      fwrite(STDERR, "Warning: Failed to load extensions: {$e->getMessage()}\n");
+      // F3.5: regulated deployments must fail-fast on extension
+      // load errors — auth / audit / payment extensions failing
+      // silently is a security incident. Pass `--continue-on-error`
+      // explicitly to opt back into the warning-only behaviour
+      // (developer convenience for an environment with one broken
+      // extension among many).
+      $continueOnError = in_array('--continue-on-error', $argv, true);
+
+      fwrite(STDERR, "Error: Failed to load extensions: {$e->getMessage()}\n");
+
+      if (!$continueOnError) {
+        fwrite(STDERR, "Re-run with --continue-on-error to ignore extension load failures.\n");
+        exit(1);
+      }
+
+      fwrite(STDERR, "Warning: continuing despite extension load failures (--continue-on-error).\n");
     }
     break;
   }
@@ -883,7 +897,19 @@ if ($extensionBootstrap !== null) {
         $application->add($command);
       }
     } catch (Throwable $e) {
-      fwrite(STDERR, "Warning: Failed to register command $commandClass: {$e->getMessage()}\n");
+      // F3.5: command registration failures are fail-fast by
+      // default (a missing command typically means a misconfigured
+      // extension that pulled the rest of the dependency graph
+      // along with it). `--continue-on-error` opts into the legacy
+      // warning-only behaviour.
+      $continueOnError = in_array('--continue-on-error', $argv, true);
+
+      fwrite(STDERR, "Error: Failed to register command $commandClass: {$e->getMessage()}\n");
+
+      if (!$continueOnError) {
+        fwrite(STDERR, "Re-run with --continue-on-error to ignore command registration failures.\n");
+        exit(1);
+      }
     }
   }
 }

@@ -153,7 +153,14 @@ final class ExtensionLoader
             $byName[$manifest->name] = $manifest;
         }
 
-        // Validate dependencies: skip extensions with unsatisfied deps
+        // F3.11: validate every dependency twice — first that the
+        // required extension is present, then that its version
+        // satisfies the constraint declared in the requiring
+        // manifest's `requires.extensions` map. Without the version
+        // check, an extension declaring `requires: { auth: ^1.0 }`
+        // happily loads against `auth: 2.0` (BC-breaking changes
+        // sneak through). Composer's Semver is the standard parser
+        // used by every PHP package manager + Composer itself.
         $skipped = [];
         $manifests = array_filter($manifests, function (ExtensionManifest $manifest) use ($byName, &$skipped): bool {
             foreach ($manifest->getDependencies() as $dependency) {
@@ -161,6 +168,24 @@ final class ExtensionLoader
                     $skipped[] = $manifest->name . ' (requires ' . $dependency . ')';
 
                     return false;
+                }
+
+                $constraint = $manifest->getDependencyVersionConstraint($dependency);
+
+                if ($constraint !== null && $constraint !== '*' && $constraint !== '') {
+                    $providedVersion = $byName[$dependency]->version;
+
+                    if (!\Composer\Semver\Semver::satisfies($providedVersion, $constraint)) {
+                        $skipped[] = sprintf(
+                            '%s (requires %s %s, found %s)',
+                            $manifest->name,
+                            $dependency,
+                            $constraint,
+                            $providedVersion,
+                        );
+
+                        return false;
+                    }
                 }
             }
 
