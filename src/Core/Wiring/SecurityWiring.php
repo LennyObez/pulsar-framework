@@ -412,6 +412,19 @@ final readonly class SecurityWiring implements ServiceWiringInterface
         // Add subdomain middleware to the global pipeline (resolves domain context for routing)
         $middleware->pipe($subdomainMiddleware);
 
+        // F12.10: secure-by-default consistency. AuthenticationMiddleware
+        // was already auto-piped while SecurityHeadersMiddleware and
+        // CsrfMiddleware lived only inside named groups, leaving the
+        // baseline deployment with auth active but no security headers
+        // and no CSRF — the exact gap a production install does not
+        // expect to discover the hard way. Auto-piping
+        // SecurityHeadersMiddleware globally is a no-side-effect
+        // header injection that benefits every response. CSRF stays
+        // group-only because POST-only API endpoints legitimately
+        // need to opt out, and an auto-pipe would break stateless
+        // bearer-token flows.
+        $middleware->pipe($headersMiddleware);
+
         // Named middleware aliases: allow routes to use string references
         $middlewareRegistry->alias('session', SessionMiddleware::class);
         $middlewareRegistry->alias('csrf', CsrfMiddleware::class);
