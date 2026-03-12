@@ -17,10 +17,9 @@ final class CacheKeyValidatorExtendedTest extends TestCase
     #[Test]
     public function validateAcceptsValidKey(): void
     {
-        CacheKeyValidator::validate('valid-key_name.123');
+        $this->expectNotToPerformAssertions();
 
-        // No exception means success
-        self::assertTrue(true, 'Valid key should not throw');
+        CacheKeyValidator::validate('valid-key_name.123');
     }
 
     #[Test]
@@ -46,11 +45,11 @@ final class CacheKeyValidatorExtendedTest extends TestCase
     #[Test]
     public function validateAcceptsKeyOfExactly250Characters(): void
     {
+        $this->expectNotToPerformAssertions();
+
         $key = str_repeat('a', 250);
 
         CacheKeyValidator::validate($key);
-
-        self::assertTrue(true, 'Key of exactly 250 chars should be valid');
     }
 
     #[Test]
@@ -81,9 +80,9 @@ final class CacheKeyValidatorExtendedTest extends TestCase
     #[Test]
     public function validateMultipleAcceptsValidKeys(): void
     {
-        CacheKeyValidator::validateMultiple(['key-a', 'key-b', 'key-c']);
+        $this->expectNotToPerformAssertions();
 
-        self::assertTrue(true, 'All valid keys should pass');
+        CacheKeyValidator::validateMultiple(['key-a', 'key-b', 'key-c']);
     }
 
     #[Test]
