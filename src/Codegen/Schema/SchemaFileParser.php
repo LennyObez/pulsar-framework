@@ -13,7 +13,10 @@ use function is_array;
 use function is_int;
 use function is_string;
 use function json_decode;
+use function realpath;
 use function sprintf;
+use function str_ends_with;
+use function str_starts_with;
 
 use const JSON_THROW_ON_ERROR;
 
@@ -45,8 +48,26 @@ use const JSON_THROW_ON_ERROR;
 #[Api(since: '1.0.0')]
 final readonly class SchemaFileParser
 {
+    /**
+     * F387.8 / ADR-0028: codegen takes external schema files as
+     * input. A schema source compromised by a malicious or
+     * accidental write becomes a supply-chain risk: the generator
+     * runs the parser at build time, the parser influences what
+     * gets emitted, and the emitted code lands inside the repo.
+     * Constraining the schema-file extension and the path prefix
+     * limits the blast radius — codegen no longer reads from
+     * arbitrary disk locations or arbitrary file types.
+     */
+    private const string ALLOWED_SUFFIX = '.pulsar.json';
+
+    /**
+     * @param string $defaultNamespace Namespace used when a schema file omits the `namespace` key.
+     * @param string|null $allowedRoot Project-root prefix that schema paths must resolve under.
+     *                                 Pass `null` only in trusted unit tests.
+     */
     public function __construct(
         private string $defaultNamespace = 'App\\Entity',
+        private ?string $allowedRoot = null,
     ) {}
 
     /**
@@ -54,11 +75,14 @@ final readonly class SchemaFileParser
      *
      * @return list<EntityDefinition>
      *
-     * @throws RuntimeException If the file cannot be read or parsed
+     * @throws RuntimeException If the file cannot be read, parsed,
+     *                          or violates the source-allowlist.
      */
     #[NoDiscard]
     public function parseFile(string $path): array
     {
+        $this->assertAllowedSource($path);
+
         $content = file_get_contents($path);
 
         if ($content === false) {
@@ -66,6 +90,48 @@ final readonly class SchemaFileParser
         }
 
         return $this->parseJson($content);
+    }
+
+    /**
+     * Reject schema paths that:
+     *   - do not end in `.pulsar.json` (limits the input format);
+     *   - resolve outside the configured project root (limits the
+     *     directories the parser is willing to read from).
+     */
+    private function assertAllowedSource(string $path): void
+    {
+        if (!str_ends_with($path, self::ALLOWED_SUFFIX)) {
+            throw new RuntimeException(sprintf(
+                'Schema file rejected: only %s files are accepted (got "%s")',
+                self::ALLOWED_SUFFIX,
+                $path,
+            ));
+        }
+
+        if ($this->allowedRoot === null) {
+            return;
+        }
+
+        $realPath = realpath($path);
+        $realRoot = realpath($this->allowedRoot);
+
+        if ($realPath === false || $realRoot === false) {
+            throw new RuntimeException(sprintf(
+                'Schema file rejected: path does not exist or is unreadable ("%s")',
+                $path,
+            ));
+        }
+
+        $normalizedPath = str_replace('\\', '/', $realPath);
+        $normalizedRoot = str_replace('\\', '/', $realRoot);
+
+        if (!str_starts_with($normalizedPath, $normalizedRoot)) {
+            throw new RuntimeException(sprintf(
+                'Schema file rejected: "%s" is outside the allowed root "%s"',
+                $path,
+                $this->allowedRoot,
+            ));
+        }
     }
 
     /**

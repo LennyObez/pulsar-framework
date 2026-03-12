@@ -186,4 +186,76 @@ final class SchemaFileParserTest extends TestCase
 
         self::assertCount(1, $entities);
     }
+
+    /**
+     * F387.8: schema files outside the `.pulsar.json` extension
+     * are rejected before any disk read happens.
+     */
+    #[Test]
+    public function rejectsNonPulsarJsonExtension(): void
+    {
+        $parser = new SchemaFileParser();
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('only .pulsar.json files are accepted');
+
+        (void) $parser->parseFile(__DIR__ . '/fixture.json');
+    }
+
+    /**
+     * F387.8: when an `allowedRoot` is configured, schema paths
+     * that resolve outside that root are rejected.
+     */
+    #[Test]
+    public function rejectsPathOutsideAllowedRoot(): void
+    {
+        $tempFile = sys_get_temp_dir() . '/pulsar-codegen-rejected.pulsar.json';
+        file_put_contents($tempFile, '{"entities":{}}');
+
+        try {
+            $parser = new SchemaFileParser(
+                defaultNamespace: 'App\\Entity',
+                allowedRoot: __DIR__,
+            );
+
+            $this->expectException(\RuntimeException::class);
+            $this->expectExceptionMessage('outside the allowed root');
+
+            (void) $parser->parseFile($tempFile);
+        } finally {
+            (new \Symfony\Component\Filesystem\Filesystem())->remove($tempFile);
+        }
+    }
+
+    /**
+     * F387.8: paths with `.pulsar.json` suffix and inside the
+     * allowed root parse normally.
+     */
+    #[Test]
+    public function acceptsPulsarJsonInsideAllowedRoot(): void
+    {
+        $dir = sys_get_temp_dir() . '/pulsar-codegen-accept';
+        $fs = new \Symfony\Component\Filesystem\Filesystem();
+        $fs->mkdir($dir, 0o775);
+        $file = $dir . '/sample.pulsar.json';
+        file_put_contents($file, json_encode([
+            'entities' => [
+                'Sample' => ['table' => 'samples', 'properties' => []],
+            ],
+        ], JSON_THROW_ON_ERROR));
+
+        try {
+            $parser = new SchemaFileParser(
+                defaultNamespace: 'App\\Entity',
+                allowedRoot: $dir,
+            );
+
+            $entities = $parser->parseFile($file);
+
+            self::assertCount(1, $entities);
+            self::assertSame('Sample', $entities[0]->className);
+        } finally {
+            $fs->remove($dir);
+        }
+    }
 }
