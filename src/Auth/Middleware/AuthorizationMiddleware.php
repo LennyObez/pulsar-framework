@@ -81,9 +81,33 @@ final readonly class AuthorizationMiddleware implements MiddlewareInterface
             /** @var list<string> $permissions */
             $permissions = $attributes['permissions'] ?? [];
 
+            // F12.7: a route guarded by the `auth` middleware alias but
+            // declaring no permissions used to fall through to
+            // default-allow — every authenticated user passed without
+            // any authorization check. Default-deny instead, with an
+            // explicit `_authenticated` sentinel as the operator's
+            // opt-in for "any authenticated user". This mirrors the
+            // explicit-allow contract used by every modern policy
+            // framework (Spring, Laravel post-12.x, ASP.NET).
+            if ($permissions === []) {
+                try {
+                    $this->auditAuthzDenied($request, $identity->id(), 'no_permissions_declared');
+                } catch (RandomException | JsonException | SodiumException) {
+                    // Audit logging failure must not disrupt authorization flow
+                }
+                return $this->forbiddenResponse($request);
+            }
+
             $path = $request->getUri()->getPath();
 
             foreach ($permissions as $permission) {
+                // F12.7: `_authenticated` is the explicit "any
+                // authenticated user" marker — caller opted in to
+                // RBAC bypass and we honour it here.
+                if ($permission === '_authenticated') {
+                    continue;
+                }
+
                 $context = new PolicyContext(
                     permission: $permission,
                     resource: $path,
