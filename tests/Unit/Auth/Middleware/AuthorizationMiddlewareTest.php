@@ -412,8 +412,15 @@ final class AuthorizationMiddlewareTest extends TestCase
         self::assertNull($contextHolder->get()->actor);
     }
 
+    /**
+     * F12.7: previously an empty permissions list fell through to
+     * default-allow — every authenticated user passed without any
+     * authorization check. The middleware now default-denies on an
+     * empty list and demands an explicit `_authenticated` sentinel
+     * for the "any authenticated user" case.
+     */
     #[Test]
-    public function passesWithEmptyPermissionsList(): void
+    public function rejectsEmptyPermissionsListAsDefaultDeny(): void
     {
         $identity = new Identity(
             id: 'user-empty-perms',
@@ -434,6 +441,36 @@ final class AuthorizationMiddlewareTest extends TestCase
             path: '/page',
             handler: fn(): Response => new Response(),
             attributes: ['permissions' => []],
+        );
+        $request = $request->withAttribute('_route', new MatchedRoute(route: $route));
+
+        $response = $middleware->process($request, $this->passHandler());
+
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
+    }
+
+    #[Test]
+    public function passesWithExplicitAnyAuthenticatedSentinel(): void
+    {
+        $identity = new Identity(
+            id: 'user-any-auth',
+            displayName: 'User',
+            roles: ['user'],
+            twoFactorStatus: TwoFactorStatus::Disabled,
+        );
+
+        $gate = $this->createStub(GateInterface::class);
+        $middleware = new AuthorizationMiddleware($gate);
+
+        $request = $this->createHtmlRequest('/page');
+        $securityContext = $this->createSecurityContext($identity, $request);
+        $request = $request->withAttribute('_security_context', $securityContext);
+
+        $route = new Route(
+            methods: [Method::GET],
+            path: '/page',
+            handler: fn(): Response => new Response(),
+            attributes: ['permissions' => ['_authenticated']],
         );
         $request = $request->withAttribute('_route', new MatchedRoute(route: $route));
 
