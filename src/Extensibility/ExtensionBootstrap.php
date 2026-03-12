@@ -252,10 +252,18 @@ final class ExtensionBootstrap
             $scopedContainer = $this->scopeContainer($container, $name);
 
             try {
-                // Register service providers first
+                // F3.4: prefer container resolution so service
+                // providers can declare constructor dependencies
+                // (logger, config, clock). The previous `new
+                // $providerClass()` direct call hardcoded the
+                // zero-argument-constructor convention into the
+                // bootstrap layer. We fall back to direct instantiation
+                // when the container cannot resolve the class — that
+                // covers extensions whose providers genuinely take
+                // no dependencies + the bootstrap path that runs
+                // before the container is fully wired.
                 foreach ($extension->providers() as $providerClass) {
-                    /** @var ServiceProviderInterface $provider */
-                    $provider = new $providerClass();
+                    $provider = self::instantiateProvider($providerClass, $container);
 
                     // Defer registration for deferred providers
                     if ($provider instanceof DeferredServiceProviderInterface && $provider->isDeferred()) {
@@ -381,6 +389,35 @@ final class ExtensionBootstrap
         }
 
         return $commands;
+    }
+
+    /**
+     * F3.4: instantiate an extension service provider via the
+     * container when possible so it can declare constructor
+     * dependencies. Falls back to `new $providerClass()` for
+     * extensions whose providers take no arguments (the historical
+     * convention) and for cases where the container cannot yet
+     * resolve the class. This keeps every existing extension working
+     * unchanged while letting new extensions use real DI.
+     *
+     * @param class-string<ServiceProviderInterface> $providerClass
+     */
+    private static function instantiateProvider(
+        string $providerClass,
+        ContainerInterface $container,
+    ): ServiceProviderInterface {
+        try {
+            $resolved = $container->get($providerClass);
+
+            if ($resolved instanceof ServiceProviderInterface) {
+                return $resolved;
+            }
+        } catch (Throwable) {
+            // Container couldn't resolve — fall through to the
+            // zero-argument constructor path used historically.
+        }
+
+        return new $providerClass();
     }
 
     /**
