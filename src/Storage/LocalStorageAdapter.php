@@ -6,6 +6,8 @@ namespace Pulsar\Storage;
 
 use NoDiscard;
 use Override;
+use Symfony\Component\Filesystem\Exception\IOException;
+use Symfony\Component\Filesystem\Filesystem;
 
 use function dirname;
 use function file_exists;
@@ -14,12 +16,12 @@ use function file_put_contents;
 use function is_dir;
 use function is_file;
 use function mkdir;
+use function realpath;
 use function stat;
 use function str_contains;
 use function str_starts_with;
 use function strlen;
 use function substr;
-use function unlink;
 
 use const DIRECTORY_SEPARATOR;
 use const LOCK_EX;
@@ -92,8 +94,15 @@ final readonly class LocalStorageAdapter implements StorageAdapterInterface
             return;
         }
 
-        if (!unlink($path)) {
-            throw StorageException::deleteFailed($key, 'unlink failed');
+        // F3.3 / F17.4: route the destructive op through Symfony's
+        // Filesystem (a secure-by-default library). The path was
+        // already validated by resolvePath() — basePath prefix +
+        // realpath symlink-escape rejection — so the only remaining
+        // failure is genuine I/O (permission denied, disk error).
+        try {
+            new Filesystem()->remove($path);
+        } catch (IOException $e) {
+            throw StorageException::deleteFailed($key, $e->getMessage());
         }
     }
 
@@ -122,7 +131,26 @@ final readonly class LocalStorageAdapter implements StorageAdapterInterface
     {
         $this->validateKey($key);
 
-        return $this->basePath . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $key);
+        $candidate = $this->basePath . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $key);
+
+        // F17.4: validateKey blocks `..` segments at the string level,
+        // but a symlink inside basePath that points outside basePath
+        // would still let read/write/delete escape the storage
+        // boundary. Resolve realpath against the basePath realpath
+        // and reject when the resolved path leaves the boundary.
+        // We only check this when the path already exists — paths-
+        // to-create still need the prefix check on the parent.
+        $realBase = realpath($this->basePath);
+        if ($realBase === false) {
+            return $candidate;
+        }
+
+        $realCandidate = realpath($candidate);
+        if ($realCandidate !== false && !str_starts_with($realCandidate, $realBase)) {
+            throw StorageException::invalidKey($key, 'symlink escapes storage base path');
+        }
+
+        return $candidate;
     }
 
     private function validateKey(string $key): void
