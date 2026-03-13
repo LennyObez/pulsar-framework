@@ -182,9 +182,16 @@ final readonly class TracingMiddleware implements MiddlewareInterface
             return false;
         }
 
-        $random = $this->randomizer->getInt(0, 999);
-
-        $threshold = (int) ($this->samplingRate * 1000.0);
+        // F8.8: scale to 1_000_000 so the smallest representable
+        // sampling rate is 1 in a million (1e-6). The previous
+        // `getInt(0, 999)` clamped any rate < 1e-3 to threshold 0,
+        // silently disabling sampling for legitimate operator
+        // values like `samplingRate = 1e-4` (one in 10K). The
+        // wider range covers production traffic from low-volume
+        // services up to multi-million-rps fleets without
+        // introducing a 64-bit codepath.
+        $random = $this->randomizer->getInt(0, 999_999);
+        $threshold = (int) ($this->samplingRate * 1_000_000.0);
 
         return $random < $threshold;
     }
