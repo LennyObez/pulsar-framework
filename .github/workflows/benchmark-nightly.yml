@@ -37,7 +37,6 @@ jobs:
       DB_USERNAME: postgres
       DB_PASSWORD: password
       DB_DATABASE: pulsar_bench
-      PULSAR_MASTER_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
 
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
@@ -56,6 +55,15 @@ jobs:
           restore-keys: composer-
 
       - run: composer install --no-interaction --no-progress
+
+      # F28.4: generate a per-run master key instead of baking a
+      # public hex value into the workflow file. Otherwise any
+      # cache / preload / migration artefact encrypted under the
+      # baked key is decryptable by anyone reading the repo, and
+      # the key value itself drifts into staging deployments via
+      # copy-paste.
+      - name: Generate ephemeral master key
+        run: echo "PULSAR_MASTER_KEY=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
 
       - name: 'Tier B: Run all benchmarks (broader tolerance)'
         continue-on-error: true
