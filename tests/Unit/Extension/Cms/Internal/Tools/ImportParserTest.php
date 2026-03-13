@@ -366,6 +366,9 @@ final class ImportParserTest extends TestCase
         yield 'flat format' => [['logo' => 'logo.png']];
     }
 
+    /**
+     * @param array<string, mixed> $settingsPayload
+     */
     #[Test]
     #[DataProvider('mixedSettingsFormatProvider')]
     public function settingsImportHandlesBothFormats(array $settingsPayload): void

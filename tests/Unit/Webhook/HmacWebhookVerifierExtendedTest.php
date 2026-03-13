@@ -31,11 +31,11 @@ final class HmacWebhookVerifierExtendedTest extends TestCase
         $signature = hash_hmac('sha256', $timestamp . '.' . $payload, self::SECRET);
         $header = sprintf('t=%d,v1=%s', $timestamp, $signature);
 
-        // Should not throw
-        $verifier->verify($payload, $header, self::SECRET, 300);
+        $this->expectNotToPerformAssertions();
 
-        // If we get here, verification passed
-        self::assertTrue(true, 'Verification should succeed for valid signature');
+        // verify() throws on failure; reaching the end of the test means
+        // a valid signature was accepted.
+        $verifier->verify($payload, $header, self::SECRET, 300);
     }
 
     #[Test]
@@ -115,10 +115,12 @@ final class HmacWebhookVerifierExtendedTest extends TestCase
         $correctSig = hash_hmac('sha256', $timestamp . '.' . $payload, self::SECRET);
         $header = sprintf('t=%d,v1=%s,v1=%s', $timestamp, $wrongSig, $correctSig);
 
-        // Should succeed because at least one v1 matches
-        $verifier->verify($payload, $header, self::SECRET, 300);
+        $this->expectNotToPerformAssertions();
 
-        self::assertTrue(true, 'Verification should succeed when any v1 signature matches');
+        // verify() iterates v1 signatures and accepts on the first match;
+        // reaching the end of the test means the second v1 (correct one)
+        // matched, validating the multi-signature acceptance path.
+        $verifier->verify($payload, $header, self::SECRET, 300);
     }
 
     #[Test]
