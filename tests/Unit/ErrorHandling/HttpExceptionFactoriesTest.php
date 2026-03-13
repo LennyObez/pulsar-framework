@@ -125,6 +125,7 @@ final class HttpExceptionFactoriesTest extends TestCase
         );
 
         self::assertSame($middle, $top->getPrevious());
-        self::assertSame($root, $top->getPrevious()?->getPrevious());
+        // We just asserted $top->getPrevious() === $middle, so it is non-null.
+        self::assertSame($root, $middle->getPrevious());
     }
 }
