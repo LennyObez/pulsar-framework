@@ -85,6 +85,7 @@ final class CmsContentRouteMiddlewareTest extends TestCase
         // Assert
         self::assertNotEmpty($rootRoutes, 'Expected cms.content.show.root route');
         $rootRoute = reset($rootRoutes);
+        self::assertNotFalse($rootRoute);
         self::assertContains(
             CmsLocaleMiddleware::class,
             $rootRoute->middleware,
