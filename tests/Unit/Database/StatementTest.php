@@ -139,4 +139,45 @@ final class StatementTest extends TestCase
 
         self::assertSame(1, $affected);
     }
+
+    /**
+     * F11.16: streaming variant yields rows lazily so a query
+     * over a million-row table doesn't materialise the whole
+     * result set in PHP memory.
+     */
+    #[Test]
+    public function executeStreamingYieldsRowsLazily(): void
+    {
+        $stmt = $this->connection->prepare('SELECT name FROM items ORDER BY id ASC');
+
+        $names = [];
+        foreach ($stmt->executeStreaming() as $row) {
+            self::assertIsString($row['name']);
+            $names[] = $row['name'];
+        }
+
+        self::assertSame(['alpha', 'beta'], $names);
+    }
+
+    /**
+     * F11.16: closing the cursor partway through must not
+     * corrupt subsequent statements on the same connection.
+     */
+    #[Test]
+    public function executeStreamingPartialDrainDoesNotPinResources(): void
+    {
+        $stmt = $this->connection->prepare('SELECT name FROM items ORDER BY id ASC');
+
+        $generator = $stmt->executeStreaming();
+        $first = $generator->current();
+        self::assertSame('alpha', $first['name']);
+
+        // Bail out without draining the rest.
+        unset($generator);
+
+        // Subsequent query on the same connection must still work.
+        $stmt2 = $this->connection->prepare('SELECT COUNT(*) AS n FROM items');
+        $count = $stmt2->execute()->rows[0]->getInt('n');
+        self::assertSame(2, $count);
+    }
 }
