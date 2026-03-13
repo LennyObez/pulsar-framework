@@ -71,6 +71,43 @@ final class SeverityOverrideCheckTest extends TestCase
         self::assertSame('Inner check description', $check->getDescription());
     }
 
+    /**
+     * F26.4: every result that comes out of the override decorator
+     * carries the `overridden` flag and the `originalSeverity` so
+     * the operator's report shows "PASS (overridden, originally
+     * ERROR)" instead of a bare "PASS".
+     */
+    #[Test]
+    public function overriddenResultStampsOriginalSeverity(): void
+    {
+        $inner = $this->createInnerCheck(CheckResult::error('test', 'Boom'));
+        $check = new SeverityOverrideCheck($inner, DeploySeverity::Warn);
+
+        $result = $check->check('production');
+
+        self::assertTrue($result->overridden);
+        self::assertSame(CheckSeverity::Error, $result->originalSeverity);
+        self::assertSame(CheckSeverity::Warning, $result->severity);
+    }
+
+    /**
+     * F26.4: when the override would not change the severity (or
+     * the result already passed), the override flag is NOT set.
+     * The flag is reserved for genuine downgrades / upgrades so
+     * the report never raises false alarms.
+     */
+    #[Test]
+    public function unchangedResultLeavesOverriddenFalse(): void
+    {
+        $inner = $this->createInnerCheck(CheckResult::pass('test', 'OK'));
+        $check = new SeverityOverrideCheck($inner, DeploySeverity::Warn);
+
+        $result = $check->check('production');
+
+        self::assertFalse($result->overridden);
+        self::assertNull($result->originalSeverity);
+    }
+
     private function createInnerCheck(CheckResult $result): DeployCheckInterface
     {
         return new class ($result) implements DeployCheckInterface {
