@@ -265,4 +265,32 @@ final class DeployConfigTest extends TestCase
             putenv('DEPLOY_CHECK_DEBUG_MODE_SEVERITY');
         }
     }
+
+    /**
+     * F26.5 / F26.24: extensions and custom org gates can register
+     * a deploy check under any name they choose; their config
+     * entry must survive `parseChecks()` instead of being silently
+     * dropped because it isn't in `DEFAULT_CHECKS`.
+     */
+    #[Test]
+    public function userDefinedCheckNamesArePreserved(): void
+    {
+        $config = DeployConfig::fromArray([
+            'checks' => [
+                'my-custom-check' => ['enabled' => true, 'severity' => 'fail'],
+                'org-payments-webhook-secret' => ['enabled' => false, 'severity' => 'warn'],
+            ],
+        ], $this->environment);
+
+        $custom = $config->checkConfig('my-custom-check');
+        self::assertTrue($custom['enabled']);
+        self::assertSame('fail', $custom['severity']);
+
+        $org = $config->checkConfig('org-payments-webhook-secret');
+        self::assertFalse($org['enabled']);
+        self::assertSame('warn', $org['severity']);
+
+        // Defaults still present alongside the custom entries.
+        self::assertSame('fail', $config->checkConfig('debug-mode')['severity']);
+    }
 }
