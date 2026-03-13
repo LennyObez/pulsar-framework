@@ -772,10 +772,43 @@ class ServerRequest implements ServerRequestInterface
 
     /**
      * Check if the request is over HTTPS.
+     *
+     * F2.9: a load balancer that terminates TLS rewrites the
+     * scheme to plain HTTP before the request reaches PHP, so
+     * `$this->uri->getScheme()` reads `http` even though the
+     * client connection was encrypted. Honour `X-Forwarded-Proto`
+     * (and `Forwarded` per RFC 7239) when a trusted proxy
+     * delivered the request — but only then. Without the trust
+     * gate, any client could inject the header and trick the
+     * framework into thinking a plaintext request was secure.
      */
-    public function isSecure(): bool
+    public function isSecure(?\Pulsar\Http\TrustedProxy $trustedProxy = null): bool
     {
-        return $this->uri->getScheme() === 'https';
+        if ($this->uri->getScheme() === 'https') {
+            return true;
+        }
+
+        if ($trustedProxy === null) {
+            return false;
+        }
+
+        $remoteAddr = $this->server('REMOTE_ADDR');
+        if (!is_string($remoteAddr) || !$trustedProxy->isTrustedSource($remoteAddr)) {
+            return false;
+        }
+
+        $forwardedProto = $this->header('X-Forwarded-Proto');
+        if (is_string($forwardedProto) && strtolower(trim($forwardedProto)) === 'https') {
+            return true;
+        }
+
+        // RFC 7239: `Forwarded: proto=https;...`
+        $forwarded = $this->header('Forwarded');
+        if (is_string($forwarded) && preg_match('/(?:^|;|\s)proto=("?)https\1/i', $forwarded) === 1) {
+            return true;
+        }
+
+        return false;
     }
 
     /**

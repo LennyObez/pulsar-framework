@@ -798,6 +798,83 @@ final class ServerRequestTest extends TestCase
         self::assertFalse($request->isSecure());
     }
 
+    /**
+     * F2.9: a load balancer that terminates TLS leaves PHP with a
+     * plain `http://` scheme. The framework only honours
+     * `X-Forwarded-Proto: https` when the immediate hop is a
+     * trusted proxy; an arbitrary client cannot smuggle the
+     * header in to fake a secure request.
+     */
+    #[Test]
+    public function isSecureHonorsXForwardedProtoFromTrustedProxy(): void
+    {
+        $request = new ServerRequest(
+            uri: 'http://example.com/',
+            headers: ['X-Forwarded-Proto' => 'https'],
+            serverParams: ['REMOTE_ADDR' => '10.0.0.1'],
+        );
+
+        $proxy = new \Pulsar\Http\TrustedProxy(['10.0.0.0/8']);
+
+        self::assertTrue($request->isSecure($proxy));
+    }
+
+    /**
+     * F2.9: without a trusted-proxy chain, the X-Forwarded-Proto
+     * header is ignored — the framework will not promote a
+     * plaintext request to "secure" based on a client-supplied
+     * header.
+     */
+    #[Test]
+    public function isSecureIgnoresXForwardedProtoWithoutTrustedProxy(): void
+    {
+        $request = new ServerRequest(
+            uri: 'http://example.com/',
+            headers: ['X-Forwarded-Proto' => 'https'],
+            serverParams: ['REMOTE_ADDR' => '10.0.0.1'],
+        );
+
+        self::assertFalse($request->isSecure());
+    }
+
+    /**
+     * F2.9: when REMOTE_ADDR is outside the trusted-proxy CIDR,
+     * the forwarded header is rejected. A real client behind a
+     * legitimate LB cannot impersonate the LB's `proto=https`
+     * by talking directly to PHP-FPM.
+     */
+    #[Test]
+    public function isSecureRejectsXForwardedProtoFromUntrustedSource(): void
+    {
+        $request = new ServerRequest(
+            uri: 'http://example.com/',
+            headers: ['X-Forwarded-Proto' => 'https'],
+            serverParams: ['REMOTE_ADDR' => '198.51.100.5'],
+        );
+
+        $proxy = new \Pulsar\Http\TrustedProxy(['10.0.0.0/8']);
+
+        self::assertFalse($request->isSecure($proxy));
+    }
+
+    /**
+     * F2.9: RFC 7239 `Forwarded: proto=https` is honoured under
+     * the same trusted-proxy gate as `X-Forwarded-Proto`.
+     */
+    #[Test]
+    public function isSecureHonorsRfc7239ForwardedHeader(): void
+    {
+        $request = new ServerRequest(
+            uri: 'http://example.com/',
+            headers: ['Forwarded' => 'for=192.0.2.43;proto=https;by=10.0.0.1'],
+            serverParams: ['REMOTE_ADDR' => '10.0.0.1'],
+        );
+
+        $proxy = new \Pulsar\Http\TrustedProxy(['10.0.0.0/8']);
+
+        self::assertTrue($request->isSecure($proxy));
+    }
+
     #[Test]
     public function preferredContentTypeReturnsFirstType(): void
     {
