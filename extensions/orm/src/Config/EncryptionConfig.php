@@ -6,6 +6,7 @@ namespace Pulsar\Extension\Orm\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Security\Crypto\SubKeyId;
 
 /**
  * Encryption configuration DTO for ORM encrypted columns.
@@ -29,8 +30,14 @@ final readonly class EncryptionConfig
         /** @var bool $enabled */
         $enabled = $data['enabled'] ?? false;
 
+        // F33.6: prefer the framework's central SubKeyId enum to
+        // make the subsystem assignment visible at review time.
+        // The fallback to the integer is kept for back-compat with
+        // configs already shipped, but new code should pass the
+        // enum case via `subKeyId: SubKeyId::Orm->value` in the
+        // raw config array.
         /** @var int $subKeyId */
-        $subKeyId = $data['sub_key_id'] ?? 5;
+        $subKeyId = $data['sub_key_id'] ?? SubKeyId::Orm->value;
 
         /** @var string $context */
         $context = $data['context'] ?? 'orm__enc';
