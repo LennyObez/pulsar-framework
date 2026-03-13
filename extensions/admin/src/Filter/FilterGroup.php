@@ -57,14 +57,15 @@ final readonly class FilterGroup
      */
     public static function fromArray(array $data): self
     {
-        $rawLogic = $data['logic'] ?? 'and';
-        $logic = FilterLogic::tryFrom(is_string($rawLogic) ? $rawLogic : 'and') ?? FilterLogic::And;
+        $logicRaw = isset($data['logic']) && is_string($data['logic']) ? $data['logic'] : 'and';
+        $logic = FilterLogic::tryFrom($logicRaw) ?? FilterLogic::And;
 
         $conditions = [];
-        $rawConditions = $data['conditions'] ?? [];
+        $conditionsRaw = $data['conditions'] ?? null;
 
-        if (is_array($rawConditions)) {
-            foreach ($rawConditions as $condData) {
+        if (is_array($conditionsRaw)) {
+            /** @var mixed $condData */
+            foreach ($conditionsRaw as $condData) {
                 if (is_array($condData)) {
                     /** @var array<string, mixed> $condData */
                     $conditions[] = FilterCondition::fromArray($condData);
@@ -73,10 +74,11 @@ final readonly class FilterGroup
         }
 
         $groups = [];
-        $rawGroups = $data['groups'] ?? [];
+        $groupsRaw = $data['groups'] ?? null;
 
-        if (is_array($rawGroups)) {
-            foreach ($rawGroups as $groupData) {
+        if (is_array($groupsRaw)) {
+            /** @var mixed $groupData */
+            foreach ($groupsRaw as $groupData) {
                 if (is_array($groupData)) {
                     /** @var array<string, mixed> $groupData */
                     $groups[] = self::fromArray($groupData);
