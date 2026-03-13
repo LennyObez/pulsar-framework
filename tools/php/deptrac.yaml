@@ -1524,6 +1524,25 @@ deptrac:
         - type: classLike
           value: ^Pulsar\\Extension\\Releases\\Internal\\
 
+    # --- Health Status Extension (Pulsar\\Extension\\HealthStatus) ---
+
+    # --- HealthStatus: public surface (excludes \Internal\ namespace) ---
+    - name: HealthStatusExtension
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Extension\\HealthStatus\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Extension\\HealthStatus\\Internal\\
+
+    # --- HealthStatus: internal implementation (\Internal\ only) ---
+    - name: HealthStatusExtension_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\HealthStatus\\Internal\\
+
     # --- Booking Extension (Pulsar\\Extension\\Booking) ---
 
     # --- Booking: public surface (excludes \Internal\ namespace) ---
@@ -1990,6 +2009,8 @@ deptrac:
       - FeedbackExtension_Internal
       - ReleasesExtension
       - ReleasesExtension_Internal
+      - HealthStatusExtension
+      - HealthStatusExtension_Internal
       - BookingExtension
       - BookingExtension_Internal
       - MessagingExtension
@@ -3059,6 +3080,7 @@ deptrac:
     BookingExtension: *public_deps
     MessagingExtension: *public_deps
     TicketsExtension: *public_deps
+    HealthStatusExtension: *public_deps
 
     SubscriptionsExtension:
       - CompositionRoot
@@ -3106,6 +3128,19 @@ deptrac:
 
     ReleasesExtension_Internal:
       - ReleasesExtension
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Database
+      - Http
+      - Routing
+      - Extensibility
+
+    HealthStatusExtension_Internal:
+      - HealthStatusExtension
       - Api
       - Support
       - Container
