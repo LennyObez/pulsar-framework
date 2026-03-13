@@ -51,11 +51,17 @@ final readonly class SeverityOverrideCheck implements DeployCheckInterface
             return $result;
         }
 
+        // F26.4: stamp the override on the result so it shows up in
+        // every report renderer and downstream audit. Operator now
+        // sees "PASS (overridden, originally ERROR)" instead of a
+        // bare "PASS" that hides the original failure.
         return new CheckResult(
             name: $result->name,
             severity: $targetSeverity,
             message: $result->message,
             recommendations: $result->recommendations,
+            overridden: true,
+            originalSeverity: $result->severity,
         );
     }
 }
