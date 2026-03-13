@@ -30,8 +30,10 @@ final class MetricsMiddlewareTest extends TestCase
 
         $middleware->process($request, $handler);
 
+        // F8.3: no RouteContext wired → label binds to bounded
+        // sentinel `unmatched` (no unbounded series from raw paths).
         $counter = $registry->counter('pulsar_http_requests_total');
-        $labels = new LabelSet(['method' => 'GET', 'route' => '/users', 'status' => '200']);
+        $labels = new LabelSet(['method' => 'GET', 'route' => 'unmatched', 'status' => '200']);
 
         self::assertSame(1.0, $counter->value($labels));
     }
@@ -49,7 +51,7 @@ final class MetricsMiddlewareTest extends TestCase
         $middleware->process($request, $handler);
 
         $histogram = $registry->histogram('pulsar_http_request_duration_seconds');
-        $labels = new LabelSet(['method' => 'POST', 'route' => '/api']);
+        $labels = new LabelSet(['method' => 'POST', 'route' => 'unmatched']);
 
         self::assertSame(1, $histogram->count($labels));
         self::assertGreaterThan(0.0, $histogram->sum($labels));
@@ -70,7 +72,7 @@ final class MetricsMiddlewareTest extends TestCase
         $middleware->process($request, $handler);
 
         $errorCounter = $registry->counter('pulsar_http_errors_total');
-        $labels = new LabelSet(['method' => 'GET', 'route' => '/fail', 'status' => '500']);
+        $labels = new LabelSet(['method' => 'GET', 'route' => 'unmatched', 'status' => '500']);
 
         self::assertSame(1.0, $errorCounter->value($labels));
     }

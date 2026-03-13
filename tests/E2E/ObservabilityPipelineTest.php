@@ -117,13 +117,13 @@ final class ObservabilityPipelineTest extends TestCase
         // Verify request counter was incremented
         self::assertTrue($registry->has('pulsar_http_requests_total'));
         $counter = $registry->counter('pulsar_http_requests_total');
-        $labels = new LabelSet(['method' => 'GET', 'route' => '/api/users', 'status' => '200']);
+        $labels = new LabelSet(['method' => 'GET', 'route' => 'unmatched', 'status' => '200']);
         self::assertSame(1.0, $counter->value($labels));
 
         // Verify duration histogram was recorded
         self::assertTrue($registry->has('pulsar_http_request_duration_seconds'));
         $histogram = $registry->histogram('pulsar_http_request_duration_seconds');
-        $durationLabels = new LabelSet(['method' => 'GET', 'route' => '/api/users']);
+        $durationLabels = new LabelSet(['method' => 'GET', 'route' => 'unmatched']);
         self::assertSame(1, $histogram->count($durationLabels));
         self::assertGreaterThan(0.0, $histogram->sum($durationLabels));
     }
@@ -143,7 +143,7 @@ final class ObservabilityPipelineTest extends TestCase
         }
 
         $counter = $registry->counter('pulsar_http_requests_total');
-        $labels = new LabelSet(['method' => 'GET', 'route' => '/health', 'status' => '200']);
+        $labels = new LabelSet(['method' => 'GET', 'route' => 'unmatched', 'status' => '200']);
         self::assertSame(3.0, $counter->value($labels));
     }
 
@@ -479,9 +479,12 @@ final class ObservabilityPipelineTest extends TestCase
 
         self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
 
-        // Verify metrics were recorded
+        // Verify metrics were recorded — F8.3: when no RouteContext
+        // is wired, the label binds to the bounded sentinel
+        // `unmatched` to prevent unbounded label cardinality from
+        // dynamic-id paths.
         $counter = $registry->counter('pulsar_http_requests_total');
-        $labels = new LabelSet(['method' => 'POST', 'route' => '/api/orders', 'status' => '200']);
+        $labels = new LabelSet(['method' => 'POST', 'route' => 'unmatched', 'status' => '200']);
         self::assertSame(1.0, $counter->value($labels));
 
         // Verify tracing captured the span (F24.6: name uses route
