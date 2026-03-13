@@ -70,7 +70,14 @@ final readonly class MetricsMiddleware implements MiddlewareInterface
             try {
                 $durationSeconds = (hrtime(true) - $start) / 1_000_000_000;
 
-                $label = $this->routeContext?->label() ?? $request->getUri()->getPath();
+                // F8.3: when no route was matched (404 path, fall-through, or
+                // routeContext not wired), do NOT emit the raw URI as the
+                // metric label. Routes like `/users/{id}` carry an UUID per
+                // request, so the raw path explodes the metric registry's
+                // series count — Prometheus failure mode #1. Bind to the
+                // sentinel `unmatched` instead so unmatched traffic is
+                // visible but bounded.
+                $label = $this->routeContext?->label() ?? 'unmatched';
                 $method = $request->getMethod();
                 $status = (string) (isset($response) ? $response->getStatusCode() : 500);
 
