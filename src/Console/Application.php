@@ -13,7 +13,9 @@ use Pulsar\Core\Kernel;
 use Pulsar\Core\Version;
 use Throwable;
 
+use function mb_strlen;
 use function sprintf;
+use function str_repeat;
 
 /**
  * Console application orchestrator.
@@ -204,11 +206,14 @@ final class Application
                 }
 
                 foreach ($commands as $command) {
-                    $output->writeln(sprintf(
-                        '  %-20s %s',
-                        $command->name,
-                        $command->description,
-                    ));
+                    // F3.17: pad against the multi-byte character
+                    // count so UTF-8 names (accents, CJK) align
+                    // visually instead of by raw byte length —
+                    // sprintf's `%-20s` counts bytes, which off-sets
+                    // every extended-ASCII grapheme by one column.
+                    $output->writeln(
+                        '  ' . self::padNameForHelp($command->name, 20) . ' ' . $command->description,
+                    );
                 }
             }
         }
@@ -237,7 +242,10 @@ final class Application
                 $output->writeln('Arguments:');
                 foreach ($arguments as $arg) {
                     $required = $arg['required'] ? '(required)' : '(optional)';
-                    $output->writeln(sprintf('  %-20s %s %s', $arg['name'], $arg['description'], $required));
+                    // F3.17: see renderHelp for the rationale.
+                    $output->writeln(
+                        '  ' . self::padNameForHelp($arg['name'], 20) . ' ' . $arg['description'] . ' ' . $required,
+                    );
                 }
                 $output->newLine();
             }
@@ -277,6 +285,27 @@ final class Application
         }
 
         return $grouped;
+    }
+
+    /**
+     * F3.17: pad a name to a target visual width using the
+     * multi-byte character count, not byte count. `sprintf`'s
+     * `%-20s` counts bytes, so a name with accents or CJK
+     * characters off-sets every multi-byte grapheme by one or
+     * more columns and the description column wraps mid-line.
+     * `mb_strlen` reports the visual character count under
+     * UTF-8, and we top up with spaces — equivalent to PHP 8.3's
+     * `mb_str_pad` but without the version-floor dependency.
+     */
+    private static function padNameForHelp(string $name, int $width): string
+    {
+        $visibleLength = mb_strlen($name, 'UTF-8');
+
+        if ($visibleLength >= $width) {
+            return $name;
+        }
+
+        return $name . str_repeat(' ', $width - $visibleLength);
     }
 
     /**
