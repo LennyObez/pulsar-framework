@@ -59,15 +59,25 @@ final class AdminServeCommand extends Command
             return ExitCode::Error->value;
         }
 
-        $hostOption = $input->getOption('host');
-        $host = $input->hasOption('host') && is_string($hostOption)
-            ? $hostOption
-            : '127.0.0.1';
+        $host = '127.0.0.1';
 
-        $portOption = $input->getOption('port');
-        $port = $input->hasOption('port') && (is_int($portOption) || is_string($portOption))
-            ? (int) $portOption
-            : 8686;
+        if ($input->hasOption('host')) {
+            $hostOption = $input->getOption('host');
+
+            if (is_string($hostOption)) {
+                $host = $hostOption;
+            }
+        }
+
+        $port = 8686;
+
+        if ($input->hasOption('port')) {
+            $portOption = $input->getOption('port');
+
+            if (is_int($portOption) || is_string($portOption)) {
+                $port = (int) $portOption;
+            }
+        }
 
         $routerScript = $this->basePath . '/extensions/admin/dev/router.php';
         if (!file_exists($routerScript)) {
