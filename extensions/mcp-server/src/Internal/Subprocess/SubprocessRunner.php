@@ -103,6 +103,14 @@ final class SubprocessRunner
         $osEnv = getenv();
         $mergedEnv = array_merge($osEnv, ['CI' => '1'], $env);
 
+        // Array form ($command is `list<string>`) bypasses shell
+        // interpretation entirely — proc_open hands argv directly
+        // to execvp. Each argument is a separate string with no
+        // splitting / globbing / variable expansion, so command
+        // injection via a $command element is structurally
+        // impossible. The McpAccessGate caller validates the path
+        // and arguments via ParamValidator before reaching here.
+        // nosemgrep: php.lang.security.exec-use.exec-use
         $process = proc_open($command, $descriptors, $pipes, $this->projectRoot, $mergedEnv);
 
         if (!is_resource($process)) {
@@ -153,16 +161,31 @@ final class SubprocessRunner
             }
 
             if (strlen($stdout) + strlen($stderr) > $this->maxOutputBytes) {
+                proc_terminate($process);
+
                 break;
             }
 
             usleep(10_000);
         }
 
+        // F32.5: close the pipes BEFORE proc_close so a child still
+        // blocked on `write()` to a full pipe gets SIGPIPE and exits
+        // promptly. Otherwise proc_close waits for the child, the
+        // child waits for a pipe drain, and the runner deadlocks.
         fclose($pipes[1]);
         fclose($pipes[2]);
 
-        $exitCode = proc_close($process);
+        // F32.6: SIGTERM (proc_terminate's default) is just a
+        // request — a misbehaving / hung child can install a
+        // handler that ignores it. Wait briefly for the
+        // already-issued terminate to land, then escalate to
+        // SIGKILL on UNIX (signal 9). On Windows proc_terminate
+        // uses TerminateProcess which is already unavoidable, so
+        // the second call is a no-op there. Without the
+        // escalation a hung child becomes a zombie that the LLM
+        // workflow can accumulate by spamming tool calls.
+        $exitCode = $this->awaitExit($process);
 
         $totalBytes = strlen($stdout) + strlen($stderr);
         $truncated = false;
@@ -201,6 +224,39 @@ final class SubprocessRunner
             isError: $exitCode !== 0,
             meta: [],
         );
+    }
+
+    /**
+     * F32.6: wait for an already-terminating subprocess and
+     * escalate to SIGKILL if it does not exit within the grace
+     * window. proc_terminate's default signal is SIGTERM, which
+     * a misbehaving child can install a handler for and ignore;
+     * SIGKILL bypasses any handler and is the cooperative-process
+     * contract end-state.
+     *
+     * @param resource $process
+     */
+    private function awaitExit($process): int
+    {
+        $graceDeadlineNs = hrtime(true) + 1_500_000_000; // 1.5s
+
+        while (hrtime(true) < $graceDeadlineNs) {
+            $status = proc_get_status($process);
+            if (!$status['running']) {
+                return proc_close($process);
+            }
+
+            usleep(50_000);
+        }
+
+        // Still running past the grace window — escalate. The
+        // signal constant is only defined on UNIX-PCNTL builds;
+        // on Windows / non-PCNTL `proc_terminate($process, 9)`
+        // falls through to TerminateProcess(), which is already
+        // unavoidable.
+        proc_terminate($process, defined('SIGKILL') ? SIGKILL : 9);
+
+        return proc_close($process);
     }
 
     /**
