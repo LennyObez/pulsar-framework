@@ -8,7 +8,11 @@ use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Core\Version;
 
+use function is_string;
 use function sprintf;
+use function trigger_error;
+
+use const E_USER_DEPRECATED;
 
 /**
  * Version constraint configuration for Pulsar framework compatibility.
@@ -24,13 +28,43 @@ readonly class PulsarVersionConfig
     /**
      * Create from manifest array data.
      *
+     * F3.12: `min_version` SHOULD be declared. The previous
+     * default of `'0.0.0'` (= "any version") allowed a manifest
+     * authored against rc.7 to silently keep loading on rc.10
+     * after a breaking API change. For a banking framework
+     * where extension compatibility is a stability contract,
+     * the missing-key case is now flagged via
+     * `E_USER_DEPRECATED` so the operator's deprecation
+     * collector or PHP error log surfaces every manifest that
+     * still relies on the implicit default. The next major
+     * release will turn this into a hard
+     * `InvalidArgumentException`. All shipped extension
+     * manifests now declare an explicit `pulsar.min_version`,
+     * so only third-party manifests should ever trip the
+     * notice.
+     *
      * @param array{min_version?: string, max_version?: string} $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
+        $rawMinVersion = $data['min_version'] ?? null;
+
+        if (!is_string($rawMinVersion) || $rawMinVersion === '') {
+            trigger_error(
+                'Extension manifest is missing pulsar.min_version (F3.12). '
+                . 'Declare the minimum framework version your extension targets, '
+                . 'e.g. "pulsar": {"min_version": "1.0.0-rc.11"}. '
+                . 'A future release will reject the missing key.',
+                E_USER_DEPRECATED,
+            );
+            $minVersion = '0.0.0';
+        } else {
+            $minVersion = $rawMinVersion;
+        }
+
         return new self(
-            minVersion: $data['min_version'] ?? '0.0.0',
+            minVersion: $minVersion,
             maxVersion: $data['max_version'] ?? null,
         );
     }

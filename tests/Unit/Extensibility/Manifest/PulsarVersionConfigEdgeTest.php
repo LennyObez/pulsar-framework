@@ -71,13 +71,24 @@ final class PulsarVersionConfigEdgeTest extends TestCase
         self::assertFalse($config->isSatisfiedByCurrent());
     }
 
+    /**
+     * F3.12: empty manifest input falls back to '0.0.0' but
+     * emits an E_USER_DEPRECATED notice. The
+     * `PulsarVersionConfigTest::fromArrayWithMissingMinVersionEmitsDeprecation`
+     * test owns the deprecation assertion shape; this edge
+     * test just keeps the fallback value pinned.
+     */
     #[Test]
-    public function fromArrayWithDefaults(): void
+    public function fromArrayWithEmptyDataFallsBackToZero(): void
     {
-        $config = PulsarVersionConfig::fromArray([]);
-
-        self::assertSame('0.0.0', $config->minVersion);
-        self::assertNull($config->maxVersion);
+        $previous = set_error_handler(static fn(): bool => true);
+        try {
+            $config = PulsarVersionConfig::fromArray([]);
+            self::assertSame('0.0.0', $config->minVersion);
+            self::assertNull($config->maxVersion);
+        } finally {
+            restore_error_handler();
+        }
     }
 
     #[Test]
