@@ -8,6 +8,10 @@ php:
   version: '8.5'
 profile:
   name: qodana.recommended
+# F1.6: any inspection failure must block the build. Without
+# `failThreshold: 0` Qodana would still run but never gate
+# anything, turning the report into advisory noise.
+failThreshold: 0
 include:
   - name: CheckDependencyLicenses
   # ── CSS ─────────────────────────────────────────────────────────────────────
