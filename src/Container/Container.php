@@ -61,6 +61,19 @@ final class Container implements AdvancedContainerInterface
     private array $resolving = [];
 
     /**
+     * F2.20: maximum autowiring depth. A pathological dependency
+     * graph (or a malformed annotation) could otherwise drive
+     * the recursion past PHP's stack limit and crash the SAPI
+     * worker before any circular-dependency detection fires.
+     * 64 levels is comfortably above any realistic application
+     * graph (the Pulsar core boots with depth ~12) while leaving
+     * headroom for PHP's own ~8 MB / 256-frame stack budget.
+     */
+    private const int MAX_BUILD_DEPTH = 64;
+
+    private int $buildDepth = 0;
+
+    /**
      * Cached constructor parameter type maps (optimization hints).
      *
      * @var array<class-string, list<array{name: string, type: class-string}>>
@@ -389,16 +402,35 @@ final class Container implements AdvancedContainerInterface
             );
         }
 
-        // Try cached resolution hints first
-        if (isset($this->resolutionHints[$className])) {
-            try {
-                return $this->buildFromHints($className, $this->resolutionHints[$className]);
-            } catch (Throwable) {
-                // Fallback to reflection
-            }
+        // F2.20: bound the autowiring stack so a malformed graph
+        // cannot crash the SAPI worker. The resolving-set already
+        // catches direct cycles; this guards against deep but
+        // acyclic chains that would otherwise blow the PHP stack.
+        if ($this->buildDepth >= self::MAX_BUILD_DEPTH) {
+            throw ContainerException::unresolvable(
+                $className,
+                sprintf(
+                    'Autowiring depth limit reached (%d). The dependency graph rooted at this class is too deep — review the chain for accidental recursion or restructure the offending services.',
+                    self::MAX_BUILD_DEPTH,
+                ),
+            );
         }
+        $this->buildDepth++;
 
-        return $this->buildFromReflection($className);
+        try {
+            // Try cached resolution hints first
+            if (isset($this->resolutionHints[$className])) {
+                try {
+                    return $this->buildFromHints($className, $this->resolutionHints[$className]);
+                } catch (Throwable) {
+                    // Fallback to reflection
+                }
+            }
+
+            return $this->buildFromReflection($className);
+        } finally {
+            $this->buildDepth--;
+        }
     }
 
     /**
