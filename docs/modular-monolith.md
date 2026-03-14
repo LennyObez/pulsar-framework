@@ -188,7 +188,17 @@ The service provider wires all components:
 $container->bind(PaymentProviderInterface::class, fn () => match ($config->provider) {
     'null' => new NullProvider($clock),
     'simulator' => new SimulatorProvider($clock),
-    default => $container->get($config->provider),
+    // F22.3 / F3.1: NEVER `$container->get($config->provider)` directly —
+    // the operator-controlled config string would let any class registered
+    // in the container be instantiated by name (the F3.1 / F17.1 / F21.2
+    // arbitrary-class-instantiation vector). Pipe the config through
+    // `TypedServiceResolver::resolve()` so the container call is
+    // type-narrowed to a subtype of the expected interface.
+    default => TypedServiceResolver::resolve(
+        $container,
+        $config->provider,
+        PaymentProviderInterface::class,
+    ),
 });
 
 // Slice handlers
@@ -197,6 +207,32 @@ $container->bind(CreatePaymentIntentHandler::class, CreatePaymentIntentHandler::
 // Public facades
 $container->bind(PaymentGatewayInterface::class, PaymentGateway::class);
 ```
+
+### Adapter resolution security
+
+The `default =>` arm above is the canonical pattern for letting an
+operator pick an alternate implementation by writing a class string
+into config. The naive form,
+`$container->get($config->provider)`, behaves as a generic class
+instantiator — any class registered in the container can be reached
+by name, and if the config value reaches the code path through an
+env var (e.g. `PAYMENTS_PROVIDER=Pulsar\Some\InternalAdmin`), an
+attacker who controls that env controls which service is built.
+
+`TypedServiceResolver::resolve()` narrows the call-site contract:
+
+  1. The configured value must name a class that currently exists in
+     the autoloader.
+  2. The class must be a subtype of the slot's expected interface
+     (`PaymentProviderInterface` here). Anything else — even other
+     services registered in the container — is refused with a
+     precise diagnostic.
+  3. Only after both checks does the container resolve the FQCN.
+
+Service providers that allow adapter selection through configuration
+**MUST** route the dynamic lookup through `TypedServiceResolver` (or
+an equivalent allowlist) — never `$container->get($userControlledString)`
+directly.
 
 ## Migration guide for extensions
 
