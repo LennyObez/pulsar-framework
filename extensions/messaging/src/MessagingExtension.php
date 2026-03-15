@@ -29,6 +29,9 @@ use const DIRECTORY_SEPARATOR;
  * real-time delivery, presence tracking, typing indicators, and WebRTC
  * signaling for peer-to-peer audio/video calls. Designed for regulated,
  * mission-critical domains requiring zero-knowledge message privacy.
+ *
+ * @psalm-api Loaded by the framework's ExtensionLoader at boot time
+ *            via the pulsar.json manifest, never instantiated by name.
  */
 #[Api(since: '1.0.0')]
 final readonly class MessagingExtension implements ExtensionInterface, PreBootExtensionInterface

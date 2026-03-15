@@ -18,6 +18,9 @@ use Pulsar\Routing\RoutingException;
  * - Registers a service provider
  * - Binds the ExampleService
  * - Registers routes
+ *
+ * @psalm-api Loaded by the framework's ExtensionLoader at boot time
+ *            via the pulsar.json manifest, never instantiated by name.
  */
 final class ExampleExtension implements ExtensionInterface
 {

@@ -19,6 +19,9 @@ use Pulsar\Routing\RouterInterface;
  * Provides a public API for authenticated users to submit and view their
  * feedback, and an admin panel for triaging, responding, and linking
  * feedback to GitHub issues.
+ *
+ * @psalm-api Loaded by the framework's ExtensionLoader at boot time
+ *            via the pulsar.json manifest, never instantiated by name.
  */
 #[Api(since: '1.0.0')]
 final readonly class FeedbackExtension implements ExtensionInterface
