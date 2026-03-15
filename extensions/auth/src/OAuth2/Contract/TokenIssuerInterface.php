@@ -14,6 +14,9 @@ use Pulsar\Extension\Auth\OAuth2\Token\TokenPair;
  *
  * All token signing uses Keyring-managed keys (Finding B).
  * All issuance events are audit-logged (Finding D).
+ *
+ * @psalm-api Resolved from the DI container by OAuth2 grant handlers;
+ *            implementation is the LeagueTokenIssuer adapter.
  */
 #[Api(since: '1.0.0')]
 interface TokenIssuerInterface
