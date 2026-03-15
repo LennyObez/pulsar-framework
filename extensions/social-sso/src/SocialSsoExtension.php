@@ -14,6 +14,9 @@ use Pulsar\Routing\RouterInterface;
  *
  * Provides vendor-agnostic social authentication with PKCE, nonce verification,
  * JWKS-based ID token validation, and pluggable identity linking.
+ *
+ * @psalm-api Loaded by the framework's ExtensionLoader at boot time
+ *            via the pulsar.json manifest, never instantiated by name.
  */
 final class SocialSsoExtension implements ExtensionInterface
 {

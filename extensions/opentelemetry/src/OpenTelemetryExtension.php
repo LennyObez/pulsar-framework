@@ -67,6 +67,9 @@ use const DIRECTORY_SEPARATOR;
  * encoding with two transport options: HTTP/protobuf and gRPC.
  *
  * When disabled, registers no-op processors with zero overhead.
+ *
+ * @psalm-api Loaded by the framework's ExtensionLoader at boot time
+ *            via the pulsar.json manifest, never instantiated by name.
  */
 #[Api(since: '1.0.0')]
 final class OpenTelemetryExtension implements ExtensionInterface, PreBootExtensionInterface, PostBootExtensionInterface

@@ -23,6 +23,9 @@ use Pulsar\Routing\RouterInterface;
  * Registers JSON Lines exporters for spans, metrics, and errors.
  * All exporters write to configurable file paths with buffered,
  * multi-process-safe I/O.
+ *
+ * @psalm-api Loaded by the framework's ExtensionLoader at boot time
+ *            via the pulsar.json manifest, never instantiated by name.
  */
 #[Api(since: '1.0.0')]
 final class ObservabilityExportExtension implements ExtensionInterface

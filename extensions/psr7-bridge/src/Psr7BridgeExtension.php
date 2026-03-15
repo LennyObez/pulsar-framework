@@ -18,6 +18,9 @@ use Pulsar\Routing\RouterInterface;
  *
  * @deprecated Since 1.0.0-rc.11. Pulsar now uses PSR-7/PSR-15 natively.
  *             This entire extension is no longer needed.
+ *
+ * @psalm-api Loaded by the framework's ExtensionLoader at boot time
+ *            via the pulsar.json manifest, never instantiated by name.
  */
 final class Psr7BridgeExtension implements ExtensionInterface
 {

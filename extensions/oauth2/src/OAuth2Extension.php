@@ -15,6 +15,9 @@ use Pulsar\Routing\RouterInterface;
  * Provides server-side OAuth2 authorization code, client credentials, and
  * refresh token flows with PKCE enforcement, OpenID Connect provider
  * capability, and token introspection/revocation endpoints.
+ *
+ * @psalm-api Loaded by the framework's ExtensionLoader at boot time
+ *            via the pulsar.json manifest, never instantiated by name.
  */
 final class OAuth2Extension implements ExtensionInterface
 {

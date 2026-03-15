@@ -15,6 +15,9 @@ use Pulsar\Routing\RouterInterface;
  * Provides WebAuthn registration and authentication ceremonies,
  * passkey (resident credential) support, authenticator management,
  * and integration with the framework's 2FA system.
+ *
+ * @psalm-api Loaded by the framework's ExtensionLoader at boot time
+ *            via the pulsar.json manifest, never instantiated by name.
  */
 final class WebAuthnExtension implements ExtensionInterface
 {
