@@ -1,4 +1,18 @@
 <?xml version="1.0"?>
+<!--
+    F1.11: `findUnusedBaselineEntry="true"` + `findUnusedCode="true"`
+    are intentionally aggressive at errorLevel=1. The combination
+    keeps the baseline pruned (any baseline entry that no longer
+    matches a real Psalm error fails CI) and forces unused private
+    methods / dead code to surface in review.
+
+    DO NOT switch to per-file suppression via `psalm --alter` when
+    Unused* / PossiblyUnused* / InvalidReturnType issues fire —
+    that pass has been observed to delete legitimate methods
+    (incident 2026-04-28). Either suppress at the call site with
+    a precise `@psalm-suppress UnusedMethod reason: ...` tag, or
+    restructure the code so the dead path is genuinely removed.
+-->
 <psalm
     errorLevel="1"
     resolveFromConfigFile="true"

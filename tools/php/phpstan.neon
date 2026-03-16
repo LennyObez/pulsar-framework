@@ -54,5 +54,18 @@ parameters:
         - stubs/GooglePubSub.php
         - stubs/Grpc.php
         - stubs/RoadRunner.php
+    # F1.10: at level=max, `treatPhpDocTypesAsCertain: false`
+    # tells PHPStan to treat PHPDoc type declarations as
+    # advisory rather than authoritative. We intentionally
+    # keep this off because the codebase blends inferred PHP
+    # types (param/return types on the language level) with
+    # PHPDoc generics, and at max-level the strict mode
+    # surfaces hundreds of "PHPDoc claims X but inference
+    # says Y" hits in code that is provably correct (e.g.
+    # `array<string, mixed>` from json_decode that PHP infers
+    # as `mixed`). Flipping to true would require a
+    # multi-week sweep through generic-heavy files; the
+    # current setting captures the genuine type safety wins
+    # without the false-positive flood.
     treatPhpDocTypesAsCertain: false
     reportUnmatchedIgnoredErrors: true
