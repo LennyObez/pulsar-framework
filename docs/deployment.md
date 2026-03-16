@@ -87,6 +87,26 @@ Individual check severity can be configured in `config/deploy.php` or via enviro
 ],
 ```
 
+#### F26.3 / F26.4: hardened override semantics
+
+The override mechanism is part of the regulated-deploy contract (PCI-DSS 6.4, SOX ITGC). Pulsar enforces three rules to keep it from becoming a placebo:
+
+1. **`severity=off` via env is REFUSED in production.** The `DEPLOY_CHECK_*_SEVERITY=off` environment variable is honoured in `local` and `staging`, but ignored when `APP_ENV=production`. An attacker who controls the orchestration env (the F11.1 family) cannot silently neutralise a deploy gate. The `fail` and `warn` overrides remain available because they can only tighten, never weaken, the gate.
+2. **Every override stamps the result.** A `SeverityOverrideCheck`-wrapped result carries `overridden: true` and `originalSeverity: <inner severity>` whenever it changes the severity. Reports that previously printed `PASS` for a downgraded `ERROR` now print `PASS (overridden, originally ERROR)`, so the operator can see which gates were softened.
+3. **Custom checks survive `parseChecks`.** Extension- or org-defined checks (e.g., `payments-webhook-secret`, `internal-tax-rules-loaded`) are preserved alongside the framework defaults — `provides()`-style drift between the registered check and its config entry is impossible.
+
+Operator policy SHOULD pair these guarantees with a signed-config / audit-log trail: any `severity=off` in `config/deploy.php` is a git-tracked change reviewable in the PR history, and a CI rule can refuse PRs whose diff downgrades a default `fail` check without an accompanying ADR or compliance approval.
+
+##### Banking / healthcare deployments
+
+For PCI-DSS / HIPAA-scope systems, treat `severity=off` as a privileged operation. Establish:
+
+- a maintainer-only review on any PR that adds an `'off'` entry,
+- an `AuditEvent::SecurityConfigChange` log entry when the change ships, and
+- a periodic audit of every `'off'` entry to confirm it still has a documented reason.
+
+The framework refuses env-driven `off` in production (rule 1) so the policy above is the only path that actually lands the override — exactly what the audit trail wants to capture.
+
 ### Writing custom checks
 
 Implement `DeployCheckInterface` to add custom deploy checks:
