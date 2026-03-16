@@ -271,7 +271,7 @@ final class ServeCommand extends Command
         $cmsTarget = $docroot . DIRECTORY_SEPARATOR . 'cms' . DIRECTORY_SEPARATOR . 'assets';
 
         if (is_dir($cmsSource) && !file_exists($cmsTarget)) {
-            @mkdir(dirname($cmsTarget), 0o755, true);
+            @mkdir(dirname($cmsTarget), 0o750, true);
 
             if (@symlink($cmsSource, $cmsTarget)) {
                 $output->writeln('  Published: /cms/assets/ -> extensions/cms/frontend/styles/');

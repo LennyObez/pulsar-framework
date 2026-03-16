@@ -56,7 +56,7 @@ final class MakePortCommand extends Command
 
         $contractsDir = $modulePath . DIRECTORY_SEPARATOR . 'Contracts';
         if (!is_dir($contractsDir)) {
-            mkdir($contractsDir, 0o755, true);
+            mkdir($contractsDir, 0o750, true);
         }
         $fileName = $name . 'Interface.php';
 

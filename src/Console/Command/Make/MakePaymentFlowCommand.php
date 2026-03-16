@@ -58,7 +58,7 @@ final class MakePaymentFlowCommand extends Command
         foreach (['Contracts', 'Internal' . DIRECTORY_SEPARATOR . 'Infrastructure', 'Gateway', 'Config', 'Domain', 'Exception'] as $dir) {
             $fullDir = $modulePath . DIRECTORY_SEPARATOR . $dir;
             if (!is_dir($fullDir)) {
-                mkdir($fullDir, 0o755, true);
+                mkdir($fullDir, 0o750, true);
                 $output->writeln(sprintf('  Created %s/', $dir));
             }
         }

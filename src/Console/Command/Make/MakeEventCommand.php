@@ -49,7 +49,7 @@ final class MakeEventCommand extends Command
         $eventDir = $modulePath . DIRECTORY_SEPARATOR . 'Event';
 
         if (!is_dir($eventDir)) {
-            mkdir($eventDir, 0o755, true);
+            mkdir($eventDir, 0o750, true);
         }
 
         $filePath = $eventDir . DIRECTORY_SEPARATOR . $name . '.php';

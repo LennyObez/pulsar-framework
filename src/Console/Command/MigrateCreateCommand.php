@@ -55,7 +55,7 @@ final class MigrateCreateCommand extends Command
 
         // Ensure migrations directory exists
         if (!is_dir($this->migrationsPath)) {
-            if (!mkdir($this->migrationsPath, 0o755, true)) {
+            if (!mkdir($this->migrationsPath, 0o750, true)) {
                 $output->errorln(sprintf('Failed to create migrations directory: %s', $this->migrationsPath));
                 return ExitCode::Error->value;
             }

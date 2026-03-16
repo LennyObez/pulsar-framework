@@ -107,7 +107,7 @@ final class MakeAdapterCommand extends Command
         // Ensure Internal/Infrastructure directory exists
         $infraDir = $modulePath . DIRECTORY_SEPARATOR . 'Internal' . DIRECTORY_SEPARATOR . 'Infrastructure';
         if (!is_dir($infraDir)) {
-            mkdir($infraDir, 0o755, true);
+            mkdir($infraDir, 0o750, true);
         }
 
         $output->writeln(sprintf('Creating adapter: %s in %s', $name, $module));
@@ -125,7 +125,7 @@ final class MakeAdapterCommand extends Command
                 . DIRECTORY_SEPARATOR . 'Internal' . DIRECTORY_SEPARATOR . 'Infrastructure';
 
             if (!is_dir($testDir)) {
-                mkdir($testDir, 0o755, true);
+                mkdir($testDir, 0o750, true);
             }
 
             $this->writeFiles($testDir, [

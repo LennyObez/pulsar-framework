@@ -106,7 +106,7 @@ final class IntegrityRepairCommand extends Command
         $dir = dirname($outputPath);
 
         if (!is_dir($dir)) {
-            mkdir($dir, 0o755, true);
+            mkdir($dir, 0o750, true);
         }
 
         $written = file_put_contents($outputPath, $json);

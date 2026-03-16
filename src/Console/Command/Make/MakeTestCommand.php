@@ -91,7 +91,7 @@ final class MakeTestCommand extends Command
         $dir = dirname($testPath);
 
         if (!is_dir($dir)) {
-            mkdir($dir, 0o755, true);
+            mkdir($dir, 0o750, true);
         }
 
         file_put_contents($testPath, $testContent);
