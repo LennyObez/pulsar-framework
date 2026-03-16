@@ -72,4 +72,51 @@ final class WebhookEventTest extends TestCase
             'type' => 'invalid.type',
         ]);
     }
+
+    /**
+     * F22.20 / F22.7: a non-numeric `created_at` (`"abc"`,
+     * `"1700-01-01"`, attacker-controlled garbage) MUST NOT
+     * raise `DateMalformedStringException` from the inner
+     * `new DateTimeImmutable('@<value>')`. The (int) cast in
+     * the factory normalises everything non-numeric to 0,
+     * which renders as `1970-01-01` — recognisable as the
+     * "malformed timestamp" sentinel and safely caught by the
+     * upstream handler's `Throwable` clause.
+     */
+    #[Test]
+    public function fromArrayCoercesNonNumericCreatedAtToEpoch(): void
+    {
+        $event = WebhookEvent::fromArray([
+            'id' => 'evt_garbage',
+            'type' => 'charge.failed',
+            'created_at' => 'abc',
+            'data' => [],
+        ]);
+
+        self::assertSame(0, $event->createdAt->getTimestamp());
+    }
+
+    /**
+     * F22.20: same coercion for an outright wrong type
+     * (`true`, `array`, `null` after early-key-missing). PHP
+     * casts these to 0 / 1 — neither produces a
+     * DateMalformedStringException, but the boundary contract
+     * still has to keep them in the sentinel-timestamp range
+     * (epoch ± 1 second) so the upstream handler classifies
+     * them as malformed.
+     */
+    #[Test]
+    public function fromArrayCoercesArrayCreatedAtToSentinelEpoch(): void
+    {
+        $event = WebhookEvent::fromArray([
+            'id' => 'evt_garbage',
+            'type' => 'charge.failed',
+            'created_at' => ['nested' => 'garbage'],
+            'data' => [],
+        ]);
+
+        // PHP `(int)` of an array is 1; a real timestamp is far
+        // beyond that. Pin to the sentinel-range upper bound.
+        self::assertLessThanOrEqual(1, $event->createdAt->getTimestamp());
+    }
 }
