@@ -8,6 +8,9 @@ use Pulsar\Api\Api;
 
 /**
  * Dispatched when a new content revision is created.
+ *
+ * @psalm-api Event class — dispatched by the revision service through
+ *            the EventDispatcher.
  */
 #[Api(since: '1.0.0')]
 final readonly class RevisionCreated
