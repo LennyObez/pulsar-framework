@@ -133,14 +133,14 @@ final class SubprocessRunner
             $nowNs = hrtime(true);
 
             if ($this->isCancelled()) {
-                proc_terminate($process);
+                $this->forceTerminate($process, $status);
 
                 break;
             }
 
             if ($nowNs >= $deadline) {
                 $timedOut = true;
-                proc_terminate($process);
+                $this->forceTerminate($process, $status);
 
                 break;
             }
@@ -161,7 +161,7 @@ final class SubprocessRunner
             }
 
             if (strlen($stdout) + strlen($stderr) > $this->maxOutputBytes) {
-                proc_terminate($process);
+                $this->forceTerminate($process, $status);
 
                 break;
             }
@@ -234,6 +234,16 @@ final class SubprocessRunner
      * SIGKILL bypasses any handler and is the cooperative-process
      * contract end-state.
      *
+     * F32.17: on Windows, `proc_open` wraps every command through
+     * `cmd.exe /c`. `proc_terminate` then kills the cmd.exe
+     * wrapper but the actual child PHP process can keep running
+     * to completion — a `sleep(10)` survives a 1s timeout. Walk
+     * the process tree via `taskkill /T /F /PID` (called through
+     * proc_open in array form so the PID flows in as a separate
+     * argv entry and never touches a shell). On UNIX,
+     * `proc_terminate` already targets the right pgid, so the
+     * standard path is sufficient.
+     *
      * @param resource $process
      */
     private function awaitExit($process): int
@@ -249,14 +259,82 @@ final class SubprocessRunner
             usleep(50_000);
         }
 
-        // Still running past the grace window — escalate. The
-        // signal constant is only defined on UNIX-PCNTL builds;
-        // on Windows / non-PCNTL `proc_terminate($process, 9)`
-        // falls through to TerminateProcess(), which is already
-        // unavoidable.
-        proc_terminate($process, defined('SIGKILL') ? SIGKILL : 9);
+        $status = proc_get_status($process);
+        $pid = is_array($status) && isset($status['pid']) && is_int($status['pid'])
+            ? $status['pid']
+            : 0;
+
+        if (PHP_OS_FAMILY === 'Windows' && $pid > 0) {
+            $this->windowsForceKillTree($pid);
+        } else {
+            proc_terminate($process, defined('SIGKILL') ? SIGKILL : 9);
+        }
 
         return proc_close($process);
+    }
+
+    /**
+     * F32.17: terminate the subprocess unconditionally,
+     * walking the tree on Windows so the cmd.exe wrapper
+     * AND the actual child both die. On UNIX, proc_terminate
+     * already targets the right pgid.
+     *
+     * This is the fast-path used by the timeout / cancel /
+     * cap-exceeded branches; awaitExit() handles the slow-path
+     * grace+escalate sequence for cooperative shutdowns.
+     *
+     * @param resource $process
+     * @param array<string, mixed>|false $status proc_get_status() snapshot
+     */
+    private function forceTerminate($process, array|false $status): void
+    {
+        $pid = is_array($status) && isset($status['pid']) && is_int($status['pid'])
+            ? $status['pid']
+            : 0;
+
+        if (PHP_OS_FAMILY === 'Windows' && $pid > 0) {
+            $this->windowsForceKillTree($pid);
+            return;
+        }
+
+        proc_terminate($process);
+    }
+
+    /**
+     * F32.17: force-kill the cmd.exe wrapper PHP gave us AND
+     * its descendants on Windows. Uses proc_open array form so
+     * the PID flows as a separate argv entry — taskkill receives
+     * it positionally, never via shell expansion. Output is
+     * discarded; the call is best-effort because the most common
+     * case is "child already died from the earlier SIGTERM" and
+     * taskkill's "process not found" exit is expected.
+     */
+    private function windowsForceKillTree(int $pid): void
+    {
+        $descriptors = [
+            0 => ['pipe', 'r'],
+            1 => ['pipe', 'w'],
+            2 => ['pipe', 'w'],
+        ];
+
+        // nosemgrep: php.lang.security.exec-use.exec-use
+        $handle = proc_open(
+            ['taskkill', '/T', '/F', '/PID', (string) $pid],
+            $descriptors,
+            $pipes,
+        );
+
+        if (!is_resource($handle)) {
+            return;
+        }
+
+        foreach ($pipes as $pipe) {
+            if (is_resource($pipe)) {
+                fclose($pipe);
+            }
+        }
+
+        proc_close($handle);
     }
 
     /**
