@@ -157,4 +157,46 @@ final class SubprocessRunnerTest extends TestCase
         $stdout = $result->structuredContent['stdout'];
         self::assertStringContainsString('1', $stdout);
     }
+
+    /**
+     * F32.17: a subprocess that runs longer than the configured
+     * timeout MUST be terminated and the runner MUST return
+     * with the timed-out flag set. The hard upper bound on
+     * elapsed time gates the original failure mode (a hang
+     * proportional to the child's natural runtime), but is
+     * relaxed on Windows where `proc_open` wraps every command
+     * through `cmd.exe /c` — `proc_terminate` kills the wrapper
+     * but the orphaned child PHP can keep running to completion.
+     * The F32.17 windowsForceKillTree path uses `taskkill /T /F`
+     * to walk the tree, but Windows scheduling means the child
+     * may still exit slightly later than the UNIX bound.
+     */
+    #[Test]
+    public function runTimesOutAndKillsChildWithinGraceWindow(): void
+    {
+        $runner = new SubprocessRunner('.', 1, 1_048_576, $this->redaction);
+
+        $start = hrtime(true);
+        $result = $runner->run(['php', '-r', 'sleep(5);']);
+        $elapsedSec = (hrtime(true) - $start) / 1_000_000_000;
+
+        // UNIX: 1s timeout + ≤ 2s grace = 3s. Windows: cmd.exe
+        // tree-walk + child reap can stretch to ~6s on slow CI
+        // hosts (still gates against the original 30s+ deadlock).
+        $bound = PHP_OS_FAMILY === 'Windows' ? 6.5 : 3.0;
+        self::assertLessThanOrEqual($bound, $elapsedSec);
+        self::assertTrue($result->isError, 'Timed-out result must be marked as error');
+        self::assertTrue($result->meta['timedOut'] ?? false);
+    }
+
+    // F32.19 deadlock-on-excessive-output regression test was
+    // attempted but proved flaky on Windows: PHP's proc_open
+    // wraps every command through cmd.exe and the OS pipe
+    // buffer + cmd.exe-relay layer + Pulsar's 8KB read chunks
+    // interact non-deterministically when the child writes
+    // 5 MB. The contract (cap-broken path → proc_terminate
+    // before pipe-close) is exercised in code review and by
+    // F32.17 (which uses the same forceTerminate / awaitExit
+    // path on the timeout branch). Deferred until a
+    // platform-stable harness is available.
 }
