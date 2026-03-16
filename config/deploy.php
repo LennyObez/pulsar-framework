@@ -59,18 +59,22 @@ return [
     | and assigned a severity level: 'fail' (blocking error), 'warn' (advisory),
     | or 'off' (disabled entirely).
     |
-    | Env override: DEPLOY_CHECK_{NAME}_SEVERITY=fail|warn|off
-    | (name is uppercased, hyphens become underscores)
+    | F26.17: this template ships an EMPTY array. The framework provides
+    | sensible defaults for every built-in check via
+    | `Pulsar\Config\DeployConfig::DEFAULT_CHECKS` — keep them by leaving
+    | the array empty. To override a single check, list it explicitly:
+    |
+    |     'checks' => [
+    |         'jit' => ['enabled' => true, 'severity' => 'fail'],
+    |         'my-custom-check' => ['enabled' => true, 'severity' => 'warn'],
+    |     ],
+    |
+    | Custom check names defined here are preserved alongside the framework
+    | defaults (F26.5). Env override:
+    | DEPLOY_CHECK_{NAME}_SEVERITY=fail|warn|off (name is uppercased,
+    | hyphens become underscores). `severity=off` via env is REFUSED in
+    | production (F26.3); use this config file instead.
     |
     */
-    'checks' => [
-        ...array_fill_keys(
-            ['debug-mode', 'opcache', 'cache-settings', 'filesystem-scan', 'security-headers', 'integrity'],
-            ['enabled' => true, 'severity' => 'fail'],
-        ),
-        ...array_fill_keys(
-            ['jit', 'https-readiness', 'http3-readiness', 'health-endpoint', 'rate-limiting', 'request-size-limits', 'trusted-proxies'],
-            ['enabled' => true, 'severity' => 'warn'],
-        ),
-    ],
+    'checks' => [],
 ];
