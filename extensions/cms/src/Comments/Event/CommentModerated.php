@@ -8,6 +8,10 @@ use Pulsar\Api\Api;
 
 /**
  * Dispatched when a comment is moderated (approved, rejected, or marked as spam).
+ *
+ * @psalm-api Event class — instantiated by the moderation service and
+ *            dispatched through the EventDispatcher; user-land
+ *            listeners type-hint the class to subscribe.
  */
 #[Api(since: '1.0.0')]
 final readonly class CommentModerated
