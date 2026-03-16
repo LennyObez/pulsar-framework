@@ -8,6 +8,9 @@ use Pulsar\Api\Api;
 
 /**
  * Service category for organizing bookable services.
+ *
+ * @psalm-api Domain DTO; instantiated by repositories from database
+ *            rows and returned to user-land code.
  */
 #[Api(since: '1.0.0')]
 final readonly class ServiceCategory
