@@ -1159,9 +1159,39 @@ final class Kernel implements KernelInterface
      * Shutdown the kernel.
      *
      * Performs cleanup and releases resources.
+     *
+     * F3.14: every loaded extension that implements
+     * `ShutdownAwareExtensionInterface` gets a `shutdown()`
+     * call before the kernel marks itself unbooted. Required
+     * for long-running SAPIs (RoadRunner, FrankenPHP, Swoole,
+     * queue worker, supervised process) that recycle workers
+     * without tearing the process down — without the hook
+     * extensions cannot release database / redis / grpc
+     * connections, log buffers, or in-flight worker pools.
+     * Errors during an extension shutdown are caught and
+     * logged but never block the shutdown of the rest:
+     * leaving one extension stuck would prevent the others
+     * from cleaning up at all.
      */
     public function shutdown(): void
     {
+        if ($this->extensionBootstrap !== null) {
+            foreach ($this->extensionBootstrap->registry->all() as $extension) {
+                if (!$extension instanceof \Pulsar\Extensibility\ShutdownAwareExtensionInterface) {
+                    continue;
+                }
+                try {
+                    $extension->shutdown($this->container);
+                } catch (\Throwable $e) {
+                    error_log(sprintf(
+                        '[Pulsar] Extension shutdown failed for "%s": %s',
+                        $extension->name(),
+                        $e->getMessage(),
+                    ));
+                }
+            }
+        }
+
         $this->booted = false;
     }
 }
