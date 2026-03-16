@@ -341,4 +341,74 @@ final class TracingMiddlewareCoverageTest extends TestCase
         self::assertCount(1, $this->collector->spans());
         self::assertNotEmpty($response->getHeaderLine('traceparent'));
     }
+
+    /**
+     * F8.7: when a TrustedProxy is wired AND the immediate hop
+     * (REMOTE_ADDR) is NOT in the proxy CIDR, the inbound
+     * traceparent header MUST be ignored — otherwise an
+     * untrusted client could inject itself into the trace
+     * topology, force a sampling decision, or correlate with
+     * internal traces.
+     */
+    #[Test]
+    public function inboundTraceparentRejectedFromUntrustedSource(): void
+    {
+        $proxy = new \Pulsar\Http\TrustedProxy(['10.0.0.0/8']);
+
+        $middleware = new TracingMiddleware(
+            collector: $this->collector,
+            traceContextParser: $this->parser,
+            samplingRate: 0.0, // Would normally skip — sampled flag below should NOT bypass.
+            trustedProxy: $proxy,
+        );
+
+        $request = new ServerRequest(
+            method: 'GET',
+            uri: '/api',
+            headers: ['traceparent' => '00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01'],
+            serverParams: ['REMOTE_ADDR' => '198.51.100.5'], // outside 10.0.0.0/8
+        );
+
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(Response::text('OK'));
+
+        $middleware->process($request, $handler);
+
+        // The inbound sampled flag (01) was rejected by the trust
+        // gate, so the 0% sampling rate stays in force and no
+        // span was recorded.
+        self::assertCount(0, $this->collector->spans());
+    }
+
+    /**
+     * F8.7: when a TrustedProxy is wired AND the immediate hop
+     * IS in the proxy CIDR, the inbound traceparent is honoured.
+     */
+    #[Test]
+    public function inboundTraceparentHonoredFromTrustedProxy(): void
+    {
+        $proxy = new \Pulsar\Http\TrustedProxy(['10.0.0.0/8']);
+
+        $middleware = new TracingMiddleware(
+            collector: $this->collector,
+            traceContextParser: $this->parser,
+            samplingRate: 0.0,
+            trustedProxy: $proxy,
+        );
+
+        $request = new ServerRequest(
+            method: 'GET',
+            uri: '/api',
+            headers: ['traceparent' => '00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01'],
+            serverParams: ['REMOTE_ADDR' => '10.0.0.7'], // inside 10.0.0.0/8
+        );
+
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(Response::text('OK'));
+
+        $middleware->process($request, $handler);
+
+        // Trusted source → parent sampled flag honoured → span recorded.
+        self::assertCount(1, $this->collector->spans());
+    }
 }
