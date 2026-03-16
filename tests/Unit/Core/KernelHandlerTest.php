@@ -289,6 +289,25 @@ final class KernelHandlerTest extends TestCase
         self::assertFalse($kernel->booted);
     }
 
+    /**
+     * F2.18: once boot() runs the middleware pipeline is cached;
+     * a post-boot addMiddleware() call would mutate the cached
+     * pipeline silently and only the next request would observe
+     * the new middleware. Refuse the mutation explicitly so the
+     * caller sees the issue at the call site.
+     */
+    #[Test]
+    public function addMiddlewareAfterBootThrows(): void
+    {
+        $kernel = new Kernel();
+        $kernel->boot();
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('addMiddleware() cannot be called after the kernel has booted');
+
+        $kernel->addMiddleware(new HandlerPassthroughMiddleware());
+    }
+
     #[Test]
     public function handleWithRouteMiddleware(): void
     {
