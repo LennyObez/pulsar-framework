@@ -85,7 +85,7 @@ final class DevStartCommand extends Command
             $dbDir = $this->projectRoot . '/database';
 
             if (!is_dir($dbDir)) {
-                mkdir($dbDir, 0o755, true);
+                mkdir($dbDir, 0o750, true);
             }
         }
 

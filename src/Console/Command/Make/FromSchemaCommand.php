@@ -106,7 +106,7 @@ final class FromSchemaCommand extends Command
 
         $entityDir = $basePath . DIRECTORY_SEPARATOR . 'Entity';
         if (!is_dir($entityDir)) {
-            mkdir($entityDir, 0o755, true);
+            mkdir($entityDir, 0o750, true);
         }
 
         /** @var array<string, EntityDefinition> $entities */

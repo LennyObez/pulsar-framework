@@ -112,7 +112,7 @@ final readonly class PackInstaller
             $targetDir = dirname($targetFile);
 
             if (!is_dir($targetDir)) {
-                mkdir($targetDir, 0o755, true);
+                mkdir($targetDir, 0o750, true);
             }
 
             file_put_contents($targetFile, $processedContent);
@@ -165,7 +165,7 @@ final readonly class PackInstaller
         OutputInterface $output,
     ): void {
         if (!is_dir($target)) {
-            mkdir($target, 0o755, true);
+            mkdir($target, 0o750, true);
         }
 
         $entries = scandir($source);

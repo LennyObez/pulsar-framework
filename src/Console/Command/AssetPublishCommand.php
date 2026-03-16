@@ -76,7 +76,7 @@ final class AssetPublishCommand extends Command
 
         // Ensure public/assets/ exists
         if (!is_dir($targetDir)) {
-            if (!mkdir($targetDir, 0o755, true)) {
+            if (!mkdir($targetDir, 0o750, true)) {
                 $output->errorln('Failed to create target directory: ' . $targetDir);
                 return ExitCode::Error->value;
             }
@@ -203,7 +203,7 @@ final class AssetPublishCommand extends Command
      */
     private static function copyDirectory(string $source, string $target): void
     {
-        mkdir($target, 0o755, true);
+        mkdir($target, 0o750, true);
 
         $entries = scandir($source);
         if ($entries === false) {

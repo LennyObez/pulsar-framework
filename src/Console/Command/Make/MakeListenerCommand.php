@@ -58,7 +58,7 @@ final class MakeListenerCommand extends Command
         $listenerDir = $modulePath . DIRECTORY_SEPARATOR . 'Listener';
 
         if (!is_dir($listenerDir)) {
-            mkdir($listenerDir, 0o755, true);
+            mkdir($listenerDir, 0o750, true);
         }
 
         $filePath = $listenerDir . DIRECTORY_SEPARATOR . $name . '.php';

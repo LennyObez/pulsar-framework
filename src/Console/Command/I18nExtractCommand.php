@@ -59,7 +59,7 @@ final class I18nExtractCommand extends Command
         $dir = dirname($absoluteOutput);
 
         if (!is_dir($dir)) {
-            mkdir($dir, 0o755, true);
+            mkdir($dir, 0o750, true);
         }
 
         $json = json_encode(
