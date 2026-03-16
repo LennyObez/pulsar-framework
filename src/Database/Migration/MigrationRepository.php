@@ -15,6 +15,7 @@ use function ksort;
 use function preg_match;
 use function scandir;
 use function str_ends_with;
+use function str_pad;
 use function substr;
 
 /**
@@ -79,14 +80,22 @@ final class MigrationRepository
                     continue;
                 }
 
-                $rawVersion = $this->extractVersion($file);
-                if ($rawVersion === null) {
+                // F11.17: parse name + version + sequentiality in
+                // a single pass instead of three separate regex
+                // sweeps. Each filename hits at most one match
+                // attempt per format on the way in, vs the
+                // previous up-to-7 sweeps via extractVersion +
+                // extractName + isSequentialVersion.
+                $parsed = $this->parseFilename($file);
+                if ($parsed === null) {
                     continue;
                 }
 
+                [$rawVersion, $name, $isSequential] = $parsed;
+
                 // Sequential versions get a path-scoped prefix to avoid
                 // collisions: "a3f2_00000000000001" vs "7b1c_00000000000001"
-                $version = $this->isSequentialVersion($file)
+                $version = $isSequential
                     ? $pathPrefix . '_' . $rawVersion
                     : $rawVersion;
 
@@ -94,7 +103,6 @@ final class MigrationRepository
                     throw DatabaseException::duplicateMigrationVersion($version);
                 }
 
-                $name = $this->extractName($file);
                 $path = $migrationsPath . DIRECTORY_SEPARATOR . $file;
 
                 $migrations[$version] = new MigrationFile(
@@ -120,6 +128,43 @@ final class MigrationRepository
     public function clearCache(): void
     {
         $this->discoveryCache = null;
+    }
+
+    /**
+     * F11.17: parse a filename into (version, name, isSequential)
+     * in a single regex pass per format. Replaces the
+     * `extractVersion` + `extractName` + `isSequentialVersion`
+     * triple-sweep that was up to 7 regex calls per file during
+     * `discover()`.
+     *
+     * @return array{0: string, 1: string, 2: bool}|null
+     *          [version, name, isSequential] or null when the
+     *          filename does not match any known format.
+     */
+    private function parseFilename(string $filename): ?array
+    {
+        // Strip the .php suffix once for both name extraction and
+        // the trailing-pattern matches below.
+        $withoutExt = str_ends_with($filename, '.php')
+            ? substr($filename, 0, -4)
+            : $filename;
+
+        // Compact: YYYYMMDDHHMMSS_description
+        if (preg_match('/^(\d{14})_(.+)$/', $withoutExt, $matches) === 1) {
+            return [$matches[1], $matches[2], false];
+        }
+
+        // Separated: YYYY_MM_DD_HHMMSS_description
+        if (preg_match('/^(\d{4})_(\d{2})_(\d{2})_(\d{6})_(.+)$/', $withoutExt, $matches) === 1) {
+            return [$matches[1] . $matches[2] . $matches[3] . $matches[4], $matches[5], false];
+        }
+
+        // Sequential: 1-13 digits + description
+        if (preg_match('/^(\d{1,13})_(.+)$/', $withoutExt, $matches) === 1) {
+            return [str_pad($matches[1], 14, '0', STR_PAD_LEFT), $matches[2], true];
+        }
+
+        return null;
     }
 
     /**
