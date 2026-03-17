@@ -63,6 +63,24 @@ jobs:
           BASE_REF: ${{ github.base_ref }}
         run: bash tools/ci/check-pr-title-scope.sh
 
+      # F387.M1 / ADR-0031: enforce the 1500-line PR cap. Mega-PRs
+      # that bundle whole release cycles into single squash-merge
+      # diffs are review-resistant and break git-bisect granularity.
+      # Hard cap at 1500 lines of substantive diff (excluding
+      # lockfiles + generated code per .size-limit-ignore); above
+      # that, the PR needs the `oversize-pr-acknowledged` label
+      # AND a `/oversize-pr-approved` comment from a CODEOWNER
+      # other than the PR author.
+      - name: PR size limit (ADR-0031)
+        if: github.event_name == 'pull_request'
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          BASE_REF: ${{ github.base_ref }}
+          REPO_FULL: ${{ github.repository }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash tools/ci/check-pr-size.sh
+
       - name: Boundary enforcement (Deptrac)
         run: composer boundary:deptrac
 
