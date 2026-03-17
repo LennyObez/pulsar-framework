@@ -18,6 +18,9 @@ use function hash_equals;
  *
  * Manages event creation with monotonic sequence numbers and evidence hash computation.
  * Only active when CmsConfig.eventSourcing is enabled.
+ *
+ * @psalm-api Resolved by content service when event sourcing is enabled;
+ *            not new'd by name.
  */
 #[Internal]
 final readonly class ContentEventService

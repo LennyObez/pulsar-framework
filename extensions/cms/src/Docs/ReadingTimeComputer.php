@@ -13,6 +13,9 @@ use function strip_tags;
 
 /**
  * Computes estimated reading time for documentation content.
+ *
+ * @psalm-api Resolved by content controllers from the DI container;
+ *            not new'd by name.
  */
 #[Api(since: '1.0.0')]
 final class ReadingTimeComputer
