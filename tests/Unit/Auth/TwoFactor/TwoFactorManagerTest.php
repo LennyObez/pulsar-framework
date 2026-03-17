@@ -61,6 +61,11 @@ final class TwoFactorManagerTest extends TestCase
         $this->recoveryCodeVerifier = new RecoveryCodeVerifier();
         $this->replayGuard = new InMemoryTotpReplayGuard();
 
+        // SEC-2FA-01: verifyCode/verifyCodeWithSecret are fail-closed when no
+        // rate limiter is wired. The test exercises the verification path, so
+        // wire AllowAllTwoFactorRateLimiter explicitly to make the absence of
+        // rate limiting visible in the test (production refuses this binding
+        // via TwoFactorRateLimiterReadinessCheck).
         $this->manager = new TwoFactorManager(
             generator: $this->generator,
             verifier: $this->verifier,
@@ -69,6 +74,7 @@ final class TwoFactorManagerTest extends TestCase
             issuer: 'TestApp',
             recoveryCodeCount: 8,
             replayGuard: $this->replayGuard,
+            rateLimiter: new \Pulsar\Auth\TwoFactor\AllowAllTwoFactorRateLimiter(),
         );
     }
 
@@ -206,6 +212,7 @@ final class TwoFactorManagerTest extends TestCase
             recoveryCodeVerifier: $this->recoveryCodeVerifier,
             replayGuard: $this->replayGuard,
             secretStore: $secretStore,
+            rateLimiter: new \Pulsar\Auth\TwoFactor\AllowAllTwoFactorRateLimiter(),
         );
 
         $secret = $this->generator->generateSecret();
@@ -228,6 +235,7 @@ final class TwoFactorManagerTest extends TestCase
             recoveryCodeGenerator: $this->recoveryCodeGenerator,
             recoveryCodeVerifier: $this->recoveryCodeVerifier,
             secretStore: $secretStore,
+            rateLimiter: new \Pulsar\Auth\TwoFactor\AllowAllTwoFactorRateLimiter(),
         );
 
         $result = $manager->verifyCode('user-1', '123456');
