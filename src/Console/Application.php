@@ -13,8 +13,11 @@ use Pulsar\Core\Kernel;
 use Pulsar\Core\Version;
 use Throwable;
 
+use function explode;
+use function ksort;
 use function mb_strlen;
 use function sprintf;
+use function str_contains;
 use function str_repeat;
 
 /**
@@ -27,6 +30,19 @@ final class Application
 
     /** @var array<string, CommandInterface> */
     private array $commands = [];
+
+    /**
+     * F3.16: lazily-resolvable commands. Each entry is a
+     * (name, description, factory) triple. The command is built
+     * only when `get($name)` matches its name — never at
+     * registration time. Cuts CLI cold-start cost from O(N
+     * constructors + dependency walks) to O(1) when running a
+     * single command, while keeping help / list output complete
+     * via the metadata pair.
+     *
+     * @var array<string, array{description: string, factory: callable(): CommandInterface}>
+     */
+    private array $lazyCommands = [];
 
     public function __construct(
         private readonly Kernel $kernel,
@@ -55,36 +71,96 @@ final class Application
     }
 
     /**
+     * F3.16: register a command lazily — the factory closure
+     * runs only when the command is actually invoked. Pass
+     * `$name` and `$description` so help / list output can
+     * include the command without instantiating it.
+     *
+     * @param callable(): CommandInterface $factory
+     */
+    public function addLazy(string $name, string $description, callable $factory): self
+    {
+        $this->lazyCommands[$name] = [
+            'description' => $description,
+            'factory' => $factory,
+        ];
+        return $this;
+    }
+
+    /**
      * Check if a command exists.
      */
     public function has(string $name): bool
     {
-        return isset($this->commands[$name]);
+        return isset($this->commands[$name]) || isset($this->lazyCommands[$name]);
     }
 
     /**
      * Get a command by name.
+     *
+     * F3.16: when a name is registered lazily and not yet
+     * materialised, the factory runs here, the result is
+     * memoised in `$this->commands`, and the lazy entry is
+     * cleared so a second `get()` call does not double-build.
      *
      * @throws CommandNotFoundException If command not found
      */
     #[NoDiscard]
     public function get(string $name): CommandInterface
     {
-        if (!$this->has($name)) {
-            throw CommandNotFoundException::forCommand($name, $this->findAlternatives($name));
+        if (isset($this->commands[$name])) {
+            return $this->commands[$name];
         }
 
-        return $this->commands[$name];
+        if (isset($this->lazyCommands[$name])) {
+            $factory = $this->lazyCommands[$name]['factory'];
+            $command = $factory();
+            $this->commands[$command->name] = $command;
+            unset($this->lazyCommands[$name]);
+            return $command;
+        }
+
+        throw CommandNotFoundException::forCommand($name, $this->findAlternatives($name));
     }
 
     /**
      * Get all registered commands.
+     *
+     * F3.16: this only returns commands that have been
+     * materialised — either eagerly via `add()` or because
+     * `get($name)` already triggered their factory. Lazy-but-
+     * unbuilt entries do NOT appear here, since callers of
+     * `all()` (CoreRuntimeProbe, tests) iterate the values as
+     * full `CommandInterface` objects and do not tolerate the
+     * stub shape. Help / list rendering uses `allDescriptions()`
+     * instead so lazy entries still surface to the operator
+     * without paying instantiation cost.
      *
      * @return array<string, CommandInterface>
      */
     public function all(): array
     {
         return $this->commands;
+    }
+
+    /**
+     * F3.16: name → description mapping for every registered
+     * command, lazy or eager. Used by `renderHelp()` and the
+     * list command to render the catalogue without
+     * materialising every lazy factory.
+     *
+     * @return array<string, string>
+     */
+    public function allDescriptions(): array
+    {
+        $descriptions = [];
+        foreach ($this->commands as $name => $command) {
+            $descriptions[$name] = $command->description;
+        }
+        foreach ($this->lazyCommands as $name => $entry) {
+            $descriptions[$name] ??= $entry['description'];
+        }
+        return $descriptions;
     }
 
     /**
@@ -194,25 +270,28 @@ final class Application
         $output->writeln('  -v, --verbose    Increase verbosity (-v, -vv, -vvv)');
         $output->newLine();
 
-        if ($this->commands !== []) {
+        $descriptions = $this->allDescriptions();
+        if ($descriptions !== []) {
             $output->writeln('Available commands:');
 
-            // Group commands by namespace
-            $grouped = $this->groupCommands();
+            // F3.16: group by namespace using descriptions
+            // (covers both eager and lazy commands without
+            // materialising lazy factories).
+            $grouped = $this->groupDescriptions($descriptions);
 
             foreach ($grouped as $namespace => $commands) {
                 if ($namespace !== '') {
                     $output->writeln(' ' . $namespace);
                 }
 
-                foreach ($commands as $command) {
+                foreach ($commands as $name => $description) {
                     // F3.17: pad against the multi-byte character
                     // count so UTF-8 names (accents, CJK) align
                     // visually instead of by raw byte length —
                     // sprintf's `%-20s` counts bytes, which off-sets
                     // every extended-ASCII grapheme by one column.
                     $output->writeln(
-                        '  ' . self::padNameForHelp($command->name, 20) . ' ' . $command->description,
+                        '  ' . self::padNameForHelp($name, 20) . ' ' . $description,
                     );
                 }
             }
@@ -260,6 +339,29 @@ final class Application
                 $output->newLine();
             }
         }
+    }
+
+    /**
+     * F3.16: group a flat name → description map into namespace
+     * buckets. Used by `renderHelp()` to render every command
+     * (lazy or eager) without materialising lazy factories.
+     *
+     * @param array<string, string> $descriptions
+     * @return array<string, array<string, string>> namespace → name → description
+     */
+    private function groupDescriptions(array $descriptions): array
+    {
+        $grouped = ['' => []];
+        foreach ($descriptions as $name => $description) {
+            $namespace = str_contains($name, ':') ? explode(':', $name)[0] : '';
+            $grouped[$namespace] ??= [];
+            $grouped[$namespace][$name] = $description;
+        }
+        foreach ($grouped as &$bucket) {
+            ksort($bucket);
+        }
+        unset($bucket);
+        return $grouped;
     }
 
     /**
