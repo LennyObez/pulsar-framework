@@ -44,11 +44,51 @@ final class ConfigManager implements ConfigManagerInterface
     private ?Environment $environment = null;
     private ?ConfigRepository $repository = null;
 
+    /**
+     * F4.10: extension-registered config loaders. Each entry is
+     * `(basename, optional, loader)`. After the framework's
+     * hardcoded sections are loaded, `load()` walks this list
+     * and resolves each registered loader against
+     * `<configPath>/<basename>.php` — present-file gets parsed
+     * and passed to the loader, missing-file throws when
+     * `optional === false`. Extensions register via
+     * `registerLoader()` during their wiring step.
+     *
+     * @var list<array{basename: string, optional: bool, loader: ConfigLoaderInterface}>
+     */
+    private array $extensionLoaders = [];
+
     public function __construct(
         private readonly ?string $configPath = null,
         private readonly ?string $envFilePath = null,
         private readonly ?ConfigOverrides $overrides = null,
     ) {}
+
+    /**
+     * F4.10: register a typed-config loader for an extension's
+     * own `config/<basename>.php` file. The loader's
+     * `configClass()` declares which DTO it produces, and its
+     * `load()` builds that DTO from the parsed array. The
+     * resulting object is stored in the repository keyed by
+     * the DTO's class-string — extensions can resolve it via
+     * `repository()->get(MyExtensionConfig::class)`.
+     *
+     * Loaders are invoked AFTER the framework's hardcoded
+     * sections, so an extension loader can depend on
+     * `AppConfig`, `SecurityConfig`, etc. being already
+     * resolved in the repository. The order of registration
+     * defines the order of activation within the extension
+     * tier — wire dependencies accordingly.
+     */
+    public function registerLoader(string $basename, ConfigLoaderInterface $loader, bool $optional = true): self
+    {
+        $this->extensionLoaders[] = [
+            'basename' => $basename,
+            'optional' => $optional,
+            'loader' => $loader,
+        ];
+        return $this;
+    }
 
     /**
      * Load configuration from a cached ConfigRepository.
@@ -274,6 +314,37 @@ final class ConfigManager implements ConfigManagerInterface
 
         // Studio config is NOT loaded here; it is loaded directly by Kernel::studioPreboot()
         // to avoid introducing a StudioConfig dependency in ConfigManager.
+
+        // F4.10: walk extension-registered loaders. Each builds
+        // its DTO from the corresponding config file (or skips
+        // when optional + missing) and stores it in the
+        // repository keyed by the DTO class-string. Extensions
+        // can rely on every framework-shipped config already
+        // being in the repository at this point.
+        foreach ($this->extensionLoaders as $entry) {
+            $basename = $entry['basename'];
+            $optional = $entry['optional'];
+            $loader = $entry['loader'];
+
+            if ($this->configPath === null) {
+                if ($optional) {
+                    continue;
+                }
+                throw MissingConfigException::forFile($basename . '.php');
+            }
+
+            $filePath = $this->configPath . DIRECTORY_SEPARATOR . $basename . '.php';
+            if (!is_file($filePath)) {
+                if ($optional) {
+                    continue;
+                }
+                throw MissingConfigException::forFile($basename . '.php');
+            }
+
+            $data = $this->loadConfigFile($basename);
+            $config = $loader->load($data, $this->environment);
+            $this->repository->set($config);
+        }
     }
 
     /**
