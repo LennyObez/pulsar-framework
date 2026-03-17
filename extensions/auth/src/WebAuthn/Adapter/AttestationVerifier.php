@@ -144,7 +144,7 @@ final readonly class AttestationVerifier implements AttestationVerifierInterface
             throw WebAuthnException::invalidAttestation('Cannot extract public key from attestation certificate');
         }
 
-        $opensslAlg = $this->coseAlgToOpenSsl($alg);
+        $opensslAlg = self::coseAlgToOpenSsl($alg);
         $valid = openssl_verify($signedData, $sig, $publicKey, $opensslAlg);
 
         if ($valid !== 1) {
@@ -181,7 +181,7 @@ final readonly class AttestationVerifier implements AttestationVerifierInterface
             throw WebAuthnException::invalidAttestation('Invalid credential public key for self-attestation');
         }
 
-        $opensslAlg = $this->coseAlgToOpenSsl($alg);
+        $opensslAlg = self::coseAlgToOpenSsl($alg);
         $valid = openssl_verify($signedData, $sig, $publicKey, $opensslAlg);
 
         if ($valid !== 1) {
@@ -362,7 +362,7 @@ final readonly class AttestationVerifier implements AttestationVerifierInterface
     /**
      * Map COSE algorithm identifier to OpenSSL algorithm constant.
      */
-    private function coseAlgToOpenSsl(int $alg): int
+    public static function coseAlgToOpenSsl(int $alg): int
     {
         return match ($alg) {
             -7, -257, -37 => OPENSSL_ALGO_SHA256,   // ES256, RS256, PS256

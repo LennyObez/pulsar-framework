@@ -20,9 +20,6 @@ use function array_keys;
  * - email: email, email_verified
  * - address: address
  * - phone: phone_number, phone_number_verified
- *
- * @psalm-api Resolved from the DI container by the OIDC userinfo
- *            endpoint and ID token claims builder; never new'd directly.
  */
 #[Internal(reason: 'Implementation detail')]
 final class ScopeClaimsMapper

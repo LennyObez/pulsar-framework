@@ -140,8 +140,12 @@ final class CborDecoder
     private function readUint16(): int
     {
         $this->ensureAvailable(2);
+        // F385.18: `unpack('n', ...)` returns a 1-indexed map
+        // (no `value` key). Use the named-format prefix
+        // `nvalue/` so the key is predictable instead of relying
+        // on PHP's positional default.
         /** @var array{value: int} $unpacked */
-        $unpacked = unpack('n', $this->data, $this->offset);
+        $unpacked = unpack('nvalue', $this->data, $this->offset);
         $this->offset += 2;
         return $unpacked['value'];
     }
@@ -149,8 +153,11 @@ final class CborDecoder
     private function readUint32(): int
     {
         $this->ensureAvailable(4);
+        // F385.18: same fix as readUint16 — named format
+        // produces the `value` key the @var annotation
+        // promises.
         /** @var array{value: int} $unpacked */
-        $unpacked = unpack('N', $this->data, $this->offset);
+        $unpacked = unpack('Nvalue', $this->data, $this->offset);
         $this->offset += 4;
         return $unpacked['value'];
     }

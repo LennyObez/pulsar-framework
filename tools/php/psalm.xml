@@ -44,7 +44,6 @@
         <directory name="../../extensions/graphql/src"/>
         <directory name="../../extensions/grpc/src"/>
         <directory name="../../extensions/mcp-server/src"/>
-        <directory name="../../extensions/oauth2/src"/>
         <directory name="../../extensions/observability-export/src"/>
         <directory name="../../extensions/observability/src"/>
         <directory name="../../extensions/opentelemetry/src"/>
@@ -52,10 +51,8 @@
         <directory name="../../extensions/payments/src"/>
         <directory name="../../extensions/psr7-bridge/src"/>
         <directory name="../../extensions/releases/src"/>
-        <directory name="../../extensions/social-sso/src"/>
         <directory name="../../extensions/studio/src"/>
         <directory name="../../extensions/subscriptions/src"/>
-        <directory name="../../extensions/webauthn/src"/>
         <directory name="../../extensions/booking/src"/>
         <directory name="../../extensions/health-status/src"/>
         <directory name="../../extensions/messaging/src"/>

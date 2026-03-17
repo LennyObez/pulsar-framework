@@ -32,7 +32,6 @@ parameters:
         - ../../extensions/graphql/src
         - ../../extensions/grpc/src
         - ../../extensions/mcp-server/src
-        - ../../extensions/oauth2/src
         - ../../extensions/observability-export/src
         - ../../extensions/observability/src
         - ../../extensions/opentelemetry/src
@@ -40,10 +39,8 @@ parameters:
         - ../../extensions/payments/src
         - ../../extensions/psr7-bridge/src
         - ../../extensions/releases/src
-        - ../../extensions/social-sso/src
         - ../../extensions/studio/src
         - ../../extensions/subscriptions/src
-        - ../../extensions/webauthn/src
         - ../../tests
     excludePaths:
         - ../../vendor
