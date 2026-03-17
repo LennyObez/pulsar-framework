@@ -14,6 +14,9 @@ use function strlen;
  *
  * Slugs are single path segments (no slashes) used in content URLs.
  * Transliteration converts non-ASCII characters to ASCII equivalents.
+ *
+ * @psalm-api Resolved by content/translation services from the DI
+ *            container; not new'd by name.
  */
 #[Api(since: '1.0.0')]
 final readonly class SlugGenerator

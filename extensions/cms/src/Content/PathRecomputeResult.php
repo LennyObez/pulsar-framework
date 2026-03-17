@@ -8,6 +8,8 @@ use Pulsar\Api\Api;
 
 /**
  * Result of a cascading path recomputation operation.
+ *
+ * @psalm-api Returned by PathComputer::recompute() to user-land callers.
  */
 #[Api(since: '1.0.0')]
 final readonly class PathRecomputeResult

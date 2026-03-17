@@ -16,6 +16,8 @@ use function count;
  *
  * Content blocks are reusable components (text, image, gallery, etc.)
  * that compose a content item's body within a specific locale.
+ *
+ * @psalm-api Resolved by content controllers from the DI container; not new'd by name.
  */
 #[Internal]
 final readonly class ContentBlockService
