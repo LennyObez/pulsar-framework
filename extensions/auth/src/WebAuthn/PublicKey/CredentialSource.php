@@ -17,6 +17,7 @@ final readonly class CredentialSource
 {
     /**
      * @param list<string> $transports Supported authenticator transports (usb, nfc, ble, internal)
+     * @param int $algorithmId COSE algorithm identifier (e.g., -7 for ES256, -257 for RS256)
      */
     public function __construct(
         public string $credentialId,
@@ -28,5 +29,6 @@ final readonly class CredentialSource
         public bool $discoverable,
         public string $aaguid,
         public DateTimeImmutable $createdAt,
+        public int $algorithmId = -7,
     ) {}
 }

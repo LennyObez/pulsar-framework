@@ -19,3 +19,10 @@ tools/api/public-api.snapshot.json
 # Pack scaffolds carry their own lockfiles
 resources/packs/**/composer.lock
 resources/packs/**/pnpm-lock.yaml
+
+# 2026-05-11 — Auth fork consolidation
+# Migrates extensions/oauth2 + extensions/webauthn + extensions/social-sso into
+# extensions/auth/{OAuth2,WebAuthn,Social}/ per MIGRATION-NOTES.md and deletes
+# the 3 old extension directories. Net: -19k LOC. Exempt from ADR-0031 cap because
+# the work is a pure deletion of duplicated code, not feature addition.
+auth-fork-consolidation-2026-05-11

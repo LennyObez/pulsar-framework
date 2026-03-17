@@ -24,7 +24,8 @@ final class InMemoryAuthorizationCodeRepository implements AuthorizationCodeRepo
      * BLAKE2b context for OAuth2 authorisation-code lookup hashing.
      *
      * Domain-bound key keeps this hash table from sharing namespace with any
-     * other BLAKE2b consumer in the framework.
+     * other BLAKE2b consumer in the framework: a leaked entry from another
+     * subsystem cannot be replayed against the OAuth2 code store.
      */
     private const string HASH_CONTEXT = 'pulsar.oauth2.authcode';
 

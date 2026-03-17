@@ -19,7 +19,6 @@ use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditOutcome;
 
 use function is_array;
-use function is_string;
 use function ord;
 use function strlen;
 
@@ -110,8 +109,9 @@ final readonly class RegistrationCeremony
      *
      * @param string $credentialJson JSON-encoded AuthenticatorAttestationResponse
      * @param string $expectedChallenge The base64url-encoded challenge that was sent
+     * @param string $userId Authenticated user ID from the server session (never from client JSON)
      */
-    public function verify(string $credentialJson, string $expectedChallenge): RegistrationResult
+    public function verify(string $credentialJson, string $expectedChallenge, string $userId = ''): RegistrationResult
     {
         try {
             /** @var array<string, mixed> $credential */
@@ -141,7 +141,7 @@ final readonly class RegistrationCeremony
 
             $attestationResult = $this->attestationVerifier->verify($format, $attestationObject, $clientDataJson);
 
-            $credentialSource = $this->extractCredentialSource($authData, $credential, $format, $attestationResult->aaguid ?? '');
+            $credentialSource = $this->extractCredentialSource($authData, $credential, $format, $attestationResult->aaguid ?? '', $userId);
 
             $this->credentialRepository->persist($credentialSource);
 
@@ -167,7 +167,7 @@ final readonly class RegistrationCeremony
             $this->auditLogger->log(
                 event: AuditEvent::Authentication,
                 outcome: AuditOutcome::Failure,
-                actor: AuditActor::anonymous(),
+                actor: $userId !== '' ? AuditActor::user($userId) : AuditActor::anonymous(),
                 action: 'webauthn.registration.failed',
                 resource: 'webauthn:registration',
                 metadata: ['error' => $e->getMessage(), 'error_code' => $e->errorCode()],
@@ -253,12 +253,14 @@ final readonly class RegistrationCeremony
      * Extract the credential source from authenticator data.
      *
      * @param array<string, mixed> $credential The parsed credential JSON
+     * @param string $serverUserId User ID from the server session
      */
     private function extractCredentialSource(
         string $authData,
         array $credential,
         string $format,
         string $aaguid,
+        string $serverUserId,
     ): CredentialSource {
         // Parse counter from authData (bytes 33-36, big-endian uint32)
         /** @var array{counter: int} $counterData */
@@ -276,6 +278,12 @@ final readonly class RegistrationCeremony
         // COSE key starts after credential ID
         $coseKeyOffset = 55 + $credIdLen;
         $coseKeyBytes = substr($authData, $coseKeyOffset);
+
+        // Extract the COSE algorithm ID from the key (key 3 in the COSE_Key map)
+        /** @var array<int, mixed> $coseKeyMap */
+        $coseKeyMap = CborDecoder::decode($coseKeyBytes);
+        /** @var int $algorithmId */
+        $algorithmId = $coseKeyMap[3] ?? -7; // Default ES256
 
         $publicKeyPem = AttestationVerifier::coseKeyBytesToPem($coseKeyBytes);
 
@@ -300,19 +308,9 @@ final readonly class RegistrationCeremony
         // Use rawId from credential if available, otherwise use the one from authData
         $finalCredentialId = $decodedRawId !== '' ? $decodedRawId : $credentialId;
 
-        // Extract user ID from the stored state (the credential JSON doesn't contain it for security)
-        // The user ID is encoded in the options we sent; we need it from context
-        /** @var string $userId */
-        $userId = $credential['userId'] ?? '';
-
-        if ($userId === '') {
-            // Decode from the user handle in the registration options
-            $userIdB64 = $credResponse['userHandle'] ?? '';
-
-            if (is_string($userIdB64) && $userIdB64 !== '') {
-                $userId = $this->base64UrlDecode($userIdB64);
-            }
-        }
+        // Use the server-provided userId (from the authenticated session),
+        // never from client-controlled JSON to prevent user ID spoofing.
+        $userId = $serverUserId;
 
         if ($aaguid === '') {
             $aaguid = AttestationVerifier::aaguidFromAuthData($authData);
@@ -328,6 +326,7 @@ final readonly class RegistrationCeremony
             discoverable: $discoverable,
             aaguid: $aaguid,
             createdAt: new DateTimeImmutable(),
+            algorithmId: $algorithmId,
         );
     }
 

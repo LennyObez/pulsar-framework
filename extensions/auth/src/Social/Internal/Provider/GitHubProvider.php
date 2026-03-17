@@ -22,10 +22,6 @@ use function json_decode;
 
 use const JSON_THROW_ON_ERROR;
 
-/**
- * @psalm-api Registered with the OAuthProviderRegistry by the
- *            social-sso service provider; never new'd by name.
- */
 #[Internal]
 final readonly class GitHubProvider implements OAuthProviderInterface
 {
