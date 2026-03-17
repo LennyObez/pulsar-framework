@@ -13,6 +13,9 @@ use function ltrim;
 use function preg_match;
 use function str_replace;
 use function str_starts_with;
+use function explode;
+use function strlen;
+use function strrpos;
 use function substr;
 use function token_get_all;
 use function trim;
@@ -49,6 +52,17 @@ final class ImportAnalyzer
         $references = [];
         $nestingLevel = 0;
 
+        // F23.16: collect use → FQCN mappings on the way through
+        // so we can resolve `T_NAME_QUALIFIED` tokens (relative
+        // qualified names like `Cache\FrameworkCache` after
+        // `use Pulsar\Cache;`) against the file's use list. Without
+        // this, the analyzer counted only fully-qualified inline
+        // names and missed the common shape where an extension
+        // imports the parent namespace and uses a child class
+        // through it.
+        /** @var array<string, string> $useMap localPrefix => fqcn */
+        $useMap = [];
+
         for ($i = 0; $i < $count; $i++) {
             $token = $tokens[$i];
 
@@ -79,14 +93,50 @@ final class ImportAnalyzer
             if (is_array($token) && $token[0] === T_USE && $nestingLevel <= 1) {
                 $parsed = self::parseUseStatement($tokens, $i, $count);
                 foreach ($parsed as $fqcn) {
+                    // F23.16: index every parsed use FQCN by its
+                    // last segment so a later T_NAME_QUALIFIED
+                    // token like `Cache\FrameworkCache` (where
+                    // `Cache` is the local prefix) can be
+                    // expanded back to `Pulsar\Cache\FrameworkCache`.
+                    $localName = self::lastSegment($fqcn);
+                    if ($localName !== '') {
+                        $useMap[$localName] = $fqcn;
+                    }
+
                     if (str_starts_with($fqcn, 'Pulsar\\')) {
                         $references[] = $fqcn;
                     }
                 }
+                continue;
+            }
+
+            // F23.16: relative qualified name (`Cache\FrameworkCache`)
+            // resolved through the collected use map.
+            if (is_array($token) && $token[0] === T_NAME_QUALIFIED) {
+                $segments = explode('\\', $token[1]);
+                $first = $segments[0] ?? '';
+                if ($first !== '' && isset($useMap[$first])) {
+                    $resolved = $useMap[$first] . substr($token[1], strlen($first));
+                    if (str_starts_with($resolved, 'Pulsar\\')) {
+                        $references[] = $resolved;
+                    }
+                }
+                continue;
             }
         }
 
         return array_values(array_unique($references));
+    }
+
+    /**
+     * F23.16 helper: return the last segment of a backslash-separated
+     * FQCN. `Pulsar\Cache\FrameworkCache` → `FrameworkCache`,
+     * `Pulsar\Cache` → `Cache`, `''` → `''`.
+     */
+    private static function lastSegment(string $fqcn): string
+    {
+        $pos = strrpos($fqcn, '\\');
+        return $pos === false ? $fqcn : substr($fqcn, $pos + 1);
     }
 
     /**
