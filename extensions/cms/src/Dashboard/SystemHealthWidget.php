@@ -12,6 +12,8 @@ use function count;
 /**
  * Dashboard widget showing system health: cache hit rate, queue depth,
  * storage usage (media disk), and failed job count.
+ *
+ * @psalm-api Resolved by the admin DashboardWidget registry; not new'd by name.
  */
 #[Internal(reason: 'CMS dashboard widget; implementation detail')]
 final readonly class SystemHealthWidget implements DashboardWidgetInterface

@@ -14,6 +14,8 @@ use function count;
  * Dashboard widget showing pending comment moderation count with urgency badge.
  *
  * Comments pending longer than 24 hours are flagged as urgent.
+ *
+ * @psalm-api Resolved by the admin DashboardWidget registry; not new'd by name.
  */
 #[Internal(reason: 'CMS dashboard widget; implementation detail')]
 final readonly class ModerationQueueWidget implements DashboardWidgetInterface
