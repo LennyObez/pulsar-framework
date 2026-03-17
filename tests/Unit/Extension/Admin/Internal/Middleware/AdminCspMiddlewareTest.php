@@ -127,8 +127,13 @@ final class AdminCspMiddlewareTest extends TestCase
         self::assertNull($receivedNonce);
     }
 
+    /**
+     * F33.5: when csp_nonce is enabled the style-src binds to the
+     * generated nonce, not `'unsafe-inline'`. The previous
+     * assertion was the pre-F33.5 less-strict shape.
+     */
     #[Test]
-    public function cspIncludesStyleSrcUnsafeInline(): void
+    public function cspBindsStyleSrcToNonceWhenEnabled(): void
     {
         $config = AdminConfig::fromArray([
             'enabled' => true,
@@ -142,7 +147,11 @@ final class AdminCspMiddlewareTest extends TestCase
 
         $csp = $response->getHeaderLine('Content-Security-Policy');
         self::assertNotEmpty($csp);
-        self::assertStringContainsString("style-src 'self' 'unsafe-inline'", $csp);
+        self::assertMatchesRegularExpression(
+            "/style-src 'self' 'nonce-[a-f0-9]+'/",
+            $csp,
+        );
+        self::assertStringNotContainsString("'unsafe-inline'", $csp);
     }
 
     #[Test]
