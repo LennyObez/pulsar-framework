@@ -140,13 +140,21 @@ final readonly class TwoFactorManager implements TwoFactorManagerInterface
     ): Verify2faResult {
         assert($identityId !== '', 'identityId must not be empty');
 
-        if ($this->rateLimiter !== null && !$this->rateLimiter->attempt($identityId, $purpose)) {
+        // SEC-2FA-01: fail-closed. A missing rate limiter must DENY the attempt,
+        // not allow unlimited tries. Production deployments wire a real limiter
+        // (token bucket, leaky bucket, identity+IP+timeframe). Dev/test wire
+        // `AllowAllTwoFactorRateLimiter` explicitly so the lack of rate limiting
+        // is visible in code rather than masked by a null default.
+        if ($this->rateLimiter === null || !$this->rateLimiter->attempt($identityId, $purpose)) {
             $this->emitAudit(
                 AuditEvent::Authentication,
                 AuditOutcome::Denied,
                 $identityId,
                 '2fa_code_verification_failed',
-                ['purpose' => $purpose->value, 'reason' => 'rate_limited'],
+                [
+                    'purpose' => $purpose->value,
+                    'reason' => $this->rateLimiter === null ? 'rate_limiter_not_configured' : 'rate_limited',
+                ],
             );
 
             return Verify2faResult::failure(VerifyReason::RateLimited, $purpose);
@@ -176,13 +184,17 @@ final readonly class TwoFactorManager implements TwoFactorManagerInterface
     ): Verify2faResult {
         assert($identityId !== '', 'identityId must not be empty');
 
-        if ($this->rateLimiter !== null && !$this->rateLimiter->attempt($identityId, $purpose)) {
+        // SEC-2FA-01: see verifyCode() — missing rate limiter denies fail-closed.
+        if ($this->rateLimiter === null || !$this->rateLimiter->attempt($identityId, $purpose)) {
             $this->emitAudit(
                 AuditEvent::Authentication,
                 AuditOutcome::Denied,
                 $identityId,
                 '2fa_code_verification_failed',
-                ['purpose' => $purpose->value, 'reason' => 'rate_limited'],
+                [
+                    'purpose' => $purpose->value,
+                    'reason' => $this->rateLimiter === null ? 'rate_limiter_not_configured' : 'rate_limited',
+                ],
             );
 
             return Verify2faResult::failure(VerifyReason::RateLimited, $purpose);

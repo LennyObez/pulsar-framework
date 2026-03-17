@@ -59,7 +59,18 @@ final readonly class TotpVerifier
             if (hash_equals($expected, $code)) {
                 $timeStep = intdiv($checkTime, $period);
 
-                if ($replayGuard !== null && $identityId !== null) {
+                // SEC-2FA-01: fail-closed on replay protection. When the caller
+                // identifies the identity, a replay guard MUST be provided —
+                // otherwise the same TOTP code can be replayed within the time
+                // window. Pass `null` for `identityId` to bypass replay checks
+                // for non-identity-bound flows (one-shot bootstrap secrets),
+                // which is explicit and visible in code instead of masked by a
+                // null guard.
+                if ($identityId !== null) {
+                    if ($replayGuard === null) {
+                        return null;
+                    }
+
                     if (!$replayGuard->markUsed($identityId, $purpose, $timeStep, $timestamp)) {
                         return null;
                     }
