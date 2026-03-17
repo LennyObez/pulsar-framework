@@ -17,6 +17,7 @@ use function preg_replace;
 use function rawurlencode;
 use function sprintf;
 use function str_replace;
+use function strstr;
 use function trim;
 
 /**
@@ -55,6 +56,28 @@ final class Router implements RouterInterface
      * @var array<string, array<string, Route>>
      */
     private array $staticRoutes = [];
+
+    /**
+     * F2.21: first-segment bucket index for dynamic routes.
+     *
+     * Maps `method => firstStaticSegment => list<Route>` so the
+     * dynamic-route scan for `/users/{id}` requests only walks
+     * routes whose pattern begins with the `users` segment,
+     * instead of every dynamic route registered for that
+     * method. For a typical REST API with N entities × ~5
+     * routes each, the bucket narrows the scan from O(5N) to
+     * O(5) — a partial-trie win without the full trie's
+     * implementation surface.
+     *
+     * The catch-all bucket `''` holds routes whose pattern
+     * starts with a dynamic segment (e.g. `/{lang}/posts`) —
+     * those still walk the full bucket because we can't pre-
+     * partition by an unknown first segment. They are
+     * comparatively rare in practice.
+     *
+     * @var array<string, array<string, list<Route>>>
+     */
+    private array $dynamicRouteBuckets = [];
 
     /**
      * Explicit parameter-to-model bindings registered via model().
@@ -106,7 +129,45 @@ final class Router implements RouterInterface
             foreach ($route->methods as $method) {
                 $this->staticRoutes[$method->value][$normalizedPath] = $route;
             }
+            return;
         }
+
+        // F2.21: bucket dynamic routes by their first static
+        // segment. A pattern like `/users/{id}` buckets under
+        // `users`; `/{lang}/posts` buckets under `''` (catch-
+        // all). At match() time we scan only the bucket that
+        // matches the request path's first segment plus the
+        // catch-all — narrows the dynamic scan from O(N) to
+        // O(per-bucket) for the typical REST shape.
+        $firstSegment = $this->firstStaticSegment($route->path);
+        foreach ($route->methods as $method) {
+            $this->dynamicRouteBuckets[$method->value][$firstSegment][] = $route;
+        }
+    }
+
+    /**
+     * F2.21: extract the first static (non-`{...}`) path segment
+     * of a route pattern. `/users/{id}` → `users`,
+     * `/api/v1/users/{id}` → `api`, `/{lang}/posts` → `''`,
+     * `/` → `''`.
+     */
+    private function firstStaticSegment(string $path): string
+    {
+        $normalized = trim($path, '/');
+        if ($normalized === '') {
+            return '';
+        }
+
+        $first = strstr($normalized, '/', true);
+        $first = $first === false ? $normalized : $first;
+
+        // A `{...}` first segment can't be pre-partitioned; the
+        // route lives in the catch-all bucket.
+        if ($first === '' || $first[0] === '{') {
+            return '';
+        }
+
+        return $first;
     }
 
     /**
@@ -241,8 +302,32 @@ final class Router implements RouterInterface
             return new MatchedRoute($this->staticRoutes[$method->value][$normalizedPath], []);
         }
 
-        // Hot path: only scan routes that accept the requested method
-        $candidates = $this->routesByMethod[$method->value] ?? [];
+        // F2.21: narrow the dynamic-route scan to the first-
+        // segment bucket of the request path + the catch-all
+        // bucket (routes whose pattern starts with `{...}`).
+        // For an API with N entities × ~5 routes each, this
+        // typically cuts the scan from O(5N) to O(5 + |catch-all|).
+        $requestFirstSegment = $this->firstStaticSegment($normalizedPath);
+        $methodBuckets = $this->dynamicRouteBuckets[$method->value] ?? [];
+
+        /** @var list<Route> $candidates */
+        $candidates = [];
+        if (isset($methodBuckets[$requestFirstSegment])) {
+            $candidates = $methodBuckets[$requestFirstSegment];
+        }
+        if ($requestFirstSegment !== '' && isset($methodBuckets[''])) {
+            $candidates = [...$candidates, ...$methodBuckets['']];
+        }
+
+        // F2.21: when the request carries a host header, the
+        // static-route fast path was skipped above — but a
+        // host-less static route can still be a legitimate
+        // fallback for the host. Append the matching static
+        // route to the candidates so the host-aware scan can
+        // find it.
+        if ($host !== null && isset($this->staticRoutes[$method->value][$normalizedPath])) {
+            $candidates[] = $this->staticRoutes[$method->value][$normalizedPath];
+        }
 
         foreach ($candidates as $route) {
             $matchResult = $this->matchRouteAgainstHostAndPath($route, $path, $host);
