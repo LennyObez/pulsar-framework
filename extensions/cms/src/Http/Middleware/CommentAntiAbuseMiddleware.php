@@ -26,6 +26,9 @@ use function time;
  * Delegates all spam checks to the shared AntiSpamPipeline,
  * which runs honeypot, duplicate detection, link density,
  * content quality, proof-of-work, and CAPTCHA checks.
+ *
+ * @psalm-api Registered with the router middleware pipeline by the
+ *            CmsCoreServiceProvider; not new'd by name.
  */
 #[Internal(reason: 'CMS middleware; not a public API surface')]
 final readonly class CommentAntiAbuseMiddleware implements MiddlewareInterface

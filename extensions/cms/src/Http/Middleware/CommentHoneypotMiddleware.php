@@ -25,6 +25,9 @@ use function is_string;
  * Checks for a hidden honeypot field in POST data. If the field is filled in
  * (only bots would fill a hidden field), the request is silently rejected
  * with a fake 200 success response to avoid tipping off the bot.
+ *
+ * @psalm-api Registered with the router middleware pipeline by the
+ *            CmsCoreServiceProvider; not new'd by name.
  */
 #[Internal(reason: 'CMS middleware; not a public API surface')]
 final readonly class CommentHoneypotMiddleware implements MiddlewareInterface
