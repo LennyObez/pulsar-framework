@@ -152,12 +152,16 @@ class ServerRequest implements ServerRequestInterface
 
     /**
      * Create a ServerRequest from PHP superglobals.
+     * Default body cap applied by {@see self::fromGlobals()} — SEC-HTTP-01.
      *
      * @param array<string, mixed>|null $server
      * @param array<string, mixed>|null $get
      * @param array<string, mixed>|null $post
      * @param array<string, mixed>|null $cookies
      * @param array<string, mixed>|null $files
+     * @param int $maxBodyBytes SEC-HTTP-01: hard cap on bytes read from
+     *                          php://input; a request exceeding this throws
+     *                          {@see BodyTooLargeException}.
      */
     #[NoDiscard]
     public static function fromGlobals(
@@ -166,6 +170,7 @@ class ServerRequest implements ServerRequestInterface
         ?array $post = null,
         ?array $cookies = null,
         ?array $files = null,
+        int $maxBodyBytes = self::DEFAULT_MAX_BODY_BYTES,
     ): self {
         /** @var array<string, mixed> $serverData */
         $serverData = $server ?? $_SERVER;
@@ -230,8 +235,11 @@ class ServerRequest implements ServerRequestInterface
         // Extract headers from $_SERVER
         $headers = self::extractHeadersFromServer($serverData);
 
-        // Read body from php://input
-        $body = Stream::fromFile('php://input', 'rb');
+        // SEC-HTTP-01: read php://input with a hard cap. stream_get_contents
+        // with $length+1 lets us detect overflow without buffering megabytes
+        // we are about to reject anyway. Chunked transfer is handled
+        // transparently — fgets/fread on php://input return decoded bytes.
+        $body = self::readLimitedInputBody($maxBodyBytes);
 
         /** @var array<UploadedFileInterface> $uploadedFiles */
         $uploadedFiles = self::normalizeFiles($fileData);
@@ -315,6 +323,10 @@ class ServerRequest implements ServerRequestInterface
     #[Override]
     public function withHeader(string $name, $value): static
     {
+        // SEC-IN-01: validate RFC 7230 token name + CRLF/NUL-free value.
+        HeaderValidator::assertValidName($name);
+        HeaderValidator::assertValidValue($value);
+
         /** @var list<string> $values */
         $values = is_array($value) ? $value : [$value];
         $lowered = strtolower($name);
@@ -330,6 +342,10 @@ class ServerRequest implements ServerRequestInterface
     #[Override]
     public function withAddedHeader(string $name, $value): static
     {
+        // SEC-IN-01: same validation as withHeader for the additive variant.
+        HeaderValidator::assertValidName($name);
+        HeaderValidator::assertValidValue($value);
+
         /** @var list<string> $values */
         $values = is_array($value) ? $value : [$value];
         $lowered = strtolower($name);
@@ -922,6 +938,49 @@ class ServerRequest implements ServerRequestInterface
      *
      * @return array<string, string>
      */
+    /**
+     * SEC-HTTP-01: read php://input up to maxBodyBytes, throw on overflow.
+     *
+     * Reads `$maxBodyBytes + 1` so the overflow path is distinguishable from
+     * an exactly-at-limit request. Returns a StringStream for compatibility
+     * with the existing fromGlobals contract; downstream code that needs
+     * streaming semantics for very large bodies must use a dedicated runtime
+     * adapter rather than fromGlobals.
+     */
+    private static function readLimitedInputBody(int $maxBodyBytes): StreamInterface
+    {
+        if ($maxBodyBytes <= 0) {
+            return new StringStream('');
+        }
+
+        $fp = @fopen('php://input', 'rb');
+
+        if (!is_resource($fp)) {
+            return new StringStream('');
+        }
+
+        try {
+            $contents = stream_get_contents($fp, $maxBodyBytes + 1);
+        } finally {
+            fclose($fp);
+        }
+
+        if (!is_string($contents)) {
+            return new StringStream('');
+        }
+
+        $size = strlen($contents);
+
+        if ($size > $maxBodyBytes) {
+            throw BodyTooLargeException::exceedsLimit($size, $maxBodyBytes);
+        }
+
+        return new StringStream($contents);
+    }
+
+    /** SEC-HTTP-01: default body cap (10 MB). */
+    public const int DEFAULT_MAX_BODY_BYTES = 10_485_760;
+
     private static function extractHeadersFromServer(array $server): array
     {
         $headers = [];

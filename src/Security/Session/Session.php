@@ -121,7 +121,20 @@ final class Session implements SessionInterface
     {
         $this->ensureStarted();
 
-        session_regenerate_id($deleteOldSession);
+        // SEC-HTTP-02: session_regenerate_id() returns false when the session
+        // handler refuses the rotation (permissions on the session save_path,
+        // a redis backend that lost its connection, etc). The previous code
+        // ignored the failure and let the caller continue with the OLD ID —
+        // exactly the fixation vector that regenerate() exists to close. Now
+        // we destroy the session and raise so the caller cannot mistake a
+        // failed rotation for a successful one.
+        if (!@session_regenerate_id($deleteOldSession)) {
+            $this->destroy();
+
+            throw new SecurityException(
+                'session_regenerate_id() failed; session destroyed to close the fixation window.',
+            );
+        }
     }
 
     #[Override]
