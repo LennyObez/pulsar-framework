@@ -2,6 +2,17 @@
 
 ## Status
 
+**Superseded by [ADR-0032](0032-homegrown-auth-with-conformance-vectors-gate.md)
+(2026-05-12).** The mandate to swap the WebAuthn extension onto
+`web-auth/webauthn-lib` was retracted. The homegrown implementation stays;
+1.0.0 GA gates instead on the W3C WebAuthn conformance vector suite landing
+green in CI. External security audit moves from "1.0.0 blocker" to "1.1.0
+blocker". See ADR-0032 for the full rationale.
+
+The original decision history below is preserved for the record.
+
+## Original status
+
 Accepted (blocks 1.0.0 GA on the WebAuthn extension)
 
 ## Context
