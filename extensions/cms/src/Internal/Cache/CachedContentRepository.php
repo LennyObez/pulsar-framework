@@ -15,6 +15,10 @@ use Pulsar\Extension\Cms\Content\PublishingStatus;
 
 use function sprintf;
 
+/**
+ * @psalm-api Caching decorator wrapping the underlying ContentRepositoryInterface
+ *            implementation; bound by the CMS service provider, not instantiated by name.
+ */
 #[Internal(reason: 'Caching decorator for content; use ContentRepositoryInterface')]
 final readonly class CachedContentRepository implements ContentRepositoryInterface
 {
