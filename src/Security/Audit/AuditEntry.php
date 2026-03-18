@@ -101,6 +101,25 @@ readonly class AuditEntry
             // failure so the entry can still be written. The HMAC is
             // computed over the sentinel, so verification on a future
             // read sees a self-consistent entry.
+            //
+            // SEC-AUDIT-02: the previous code swallowed the JsonException
+            // silently, leaving the operator with no signal that an audit
+            // entry was emitted with degraded metadata. Trigger a
+            // user-warning so log scrapers, set_error_handler hooks, and
+            // observability sinks (Pulsar Studio, Sentry, Datadog) all see
+            // a measurable event each time metadata is dropped on the
+            // floor. This is observability, not failure — the audit chain
+            // remains self-consistent because the HMAC covers the sentinel.
+            @trigger_error(
+                sprintf(
+                    'AuditEntry::create() metadata serialization failed for action "%s" (event=%s): %s',
+                    $action,
+                    $event->value,
+                    $e->getMessage(),
+                ),
+                E_USER_WARNING,
+            );
+
             $metadata = [self::SERIALIZATION_ERROR_KEY => $e->getMessage()];
             $metadataJson = json_encode($metadata, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
