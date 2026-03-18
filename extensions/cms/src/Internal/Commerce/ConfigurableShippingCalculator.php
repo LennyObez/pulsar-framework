@@ -20,6 +20,9 @@ use function is_string;
 /**
  * Config-driven shipping calculator. Reads rates from CommerceConfig.
  * Digital-only orders receive free shipping with the Digital method.
+ *
+ * @psalm-api Bound to ShippingCalculatorInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use ShippingCalculatorInterface for public API')]
 final readonly class ConfigurableShippingCalculator implements ShippingCalculatorInterface

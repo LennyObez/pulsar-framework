@@ -27,6 +27,9 @@ use function usort;
 
 /**
  * Promotion validation, discount calculation, and usage tracking engine.
+ *
+ * @psalm-api Bound to PromotionServiceInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use PromotionServiceInterface for public API')]
 final readonly class PromotionEngine implements PromotionServiceInterface
