@@ -96,3 +96,30 @@ rules:
         # key concatenated with the magic GUID. SHA-1 is required by the
         # spec; a BLAKE2b replacement would break browser interoperability.
         - 'src/WebSocket/**'
+
+  # SEC-DB-01 (external audit): the Database\Statement::execute() default path
+  # materialises results via PDOStatement::fetchAll(), which OOMs on
+  # exports / reporting / tenant-wide dumps. The framework already exposes a
+  # streaming variant (Statement::executeStreaming()) that yields rows lazily.
+  # Repository classes whose names contain `Export`, `Report`, or `Backfill`
+  # MUST NOT call ->execute() on a statement (use ->executeStreaming() and a
+  # generator instead). New non-streaming code in those classes is rejected
+  # by this rule.
+  - id: pulsar.security.export-fetchall-forbidden
+    languages: [php]
+    severity: WARNING
+    message: >
+      `Statement::execute()` materialises the full result set via fetchAll()
+      and will OOM on export / report / backfill paths. Use
+      `executeStreaming()` and iterate the returned generator instead.
+    patterns:
+      - pattern: $STMT->execute(...)
+      - metavariable-regex:
+          metavariable: $STMT
+          regex: .*(export|report|backfill).*
+    paths:
+      exclude:
+        - 'vendor/**'
+        - 'node_modules/**'
+        - 'tests/**'
+        - 'extensions/*/tests/**'
