@@ -11,10 +11,24 @@ use function is_string;
 
 /**
  * eIDAS extension configuration.
+ *
+ * EIDAS-DEFAULT (external audit): defaults below are dev/test only — `hmac`
+ * for signature/seal, `local` for timestamp, `memory` for delivery.
+ * These are NOT eIDAS-conformant providers. Production deployments must
+ * wire qualified providers (QSeal/QES via a Qualified Trust Service
+ * Provider, QTSA for timestamps, persistent delivery) and the
+ * {@see \Pulsar\Deploy\Check\EidasProductionReadinessCheck} deploy gate
+ * refuses these defaults in staging/production.
  */
 #[Api(since: '1.0.0')]
 final readonly class EidasConfig
 {
+    /** @var list<string> dev/test sentinel values refused in production by deploy check. */
+    public const array DEV_TEST_SIGNATURE_SERVICES = ['hmac'];
+    public const array DEV_TEST_SEAL_SERVICES = ['hmac'];
+    public const array DEV_TEST_TIMESTAMP_SERVICES = ['local'];
+    public const array DEV_TEST_DELIVERY_SERVICES = ['memory'];
+
     public function __construct(
         public string $signatureService = 'hmac',
         public string $sealService = 'hmac',
