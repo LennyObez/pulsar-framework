@@ -163,7 +163,13 @@
       "@phpstan",
       "@psalm",
       "@boundary:check",
-      "@test"
+      "@test",
+      "@security:lint"
+    ],
+    "qa:full": [
+      "@qa",
+      "@mutation",
+      "@test:coverage"
     ]
   },
   "config": {

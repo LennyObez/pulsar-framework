@@ -180,7 +180,11 @@ jobs:
             echo "Conditions : {$condPct}% ({$condsCov}/{$conds})\n";
             echo "Methods    : {$methodPct}% ({$methodsCov}/{$methods})\n";
 
-            $threshold = 70; // TODO TD-006: ramp 70 -> 90 -> 95 -> 100
+            // QUAL-COV-01 (external audit): coverage gate ramps over the rc.x
+            // window. Step 1 (rc.12): 80 for core, brings the security path
+            // up to par. Step 2 (rc.13): per-module gates at 95 for
+            // auth/security/crypto/audit. Step 3 (1.0.0 GA): 90 global.
+            $threshold = 80;
             $failed = false;
             foreach (["Statements" => $stmtPct, "Conditions" => $condPct, "Methods" => $methodPct] as $name => $pct) {
                 if ($pct < $threshold) {

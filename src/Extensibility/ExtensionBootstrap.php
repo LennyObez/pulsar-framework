@@ -392,15 +392,27 @@ final class ExtensionBootstrap
     }
 
     /**
-     * F3.4: instantiate an extension service provider via the
-     * container when possible so it can declare constructor
-     * dependencies. Falls back to `new $providerClass()` for
-     * extensions whose providers take no arguments (the historical
-     * convention) and for cases where the container cannot yet
-     * resolve the class. This keeps every existing extension working
-     * unchanged while letting new extensions use real DI.
+     * Instantiate an extension service provider via the container.
+     *
+     * ARCH-EXT-02 (external audit): the previous implementation fell back to
+     * `new $providerClass()` whenever container resolution failed. That
+     * fallback let providers escape the DI graph silently — a misconfigured
+     * provider that should have raised a binding error during boot was
+     * instead constructed with default state, masking the wiring bug until
+     * later (often in production). The extension-first contract requires
+     * every provider to flow through the container; if the container cannot
+     * resolve the class, the only acceptable answer is a clear failure that
+     * points the operator at the missing binding.
+     *
+     * The Pulsar container autowires zero-argument constructors out of the
+     * box, so existing providers continue to work unchanged. Providers with
+     * constructor dependencies must be bound explicitly in their extension's
+     * own composition root (or made autowire-friendly).
      *
      * @param class-string<ServiceProviderInterface> $providerClass
+     *
+     * @throws ExtensionException when the container cannot resolve the
+     *                           provider class
      */
     private static function instantiateProvider(
         string $providerClass,
@@ -408,16 +420,31 @@ final class ExtensionBootstrap
     ): ServiceProviderInterface {
         try {
             $resolved = $container->get($providerClass);
-
-            if ($resolved instanceof ServiceProviderInterface) {
-                return $resolved;
-            }
-        } catch (Throwable) {
-            // Container couldn't resolve — fall through to the
-            // zero-argument constructor path used historically.
+        } catch (Throwable $e) {
+            throw new ExtensionException(
+                sprintf(
+                    'Extension service provider "%s" could not be resolved through the container: %s. '
+                    . 'Bind it explicitly in your composition root or make its constructor autowire-friendly.',
+                    $providerClass,
+                    $e->getMessage(),
+                ),
+                previous: $e,
+            );
         }
 
-        return new $providerClass();
+        if (!$resolved instanceof ServiceProviderInterface) {
+            throw new ExtensionException(
+                sprintf(
+                    'Extension service provider "%s" resolved to %s, which does not implement %s. '
+                    . 'Check the container binding for this provider class.',
+                    $providerClass,
+                    $resolved::class,
+                    ServiceProviderInterface::class,
+                ),
+            );
+        }
+
+        return $resolved;
     }
 
     /**
