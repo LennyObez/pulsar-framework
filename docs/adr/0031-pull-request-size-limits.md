@@ -108,7 +108,9 @@ Specifically:
 ## Tracking
 
 - Audit findings closed: F33.M2, F385.M1, F385.M3, F387.M1, F387.M2 (Conventional Commits scope alignment).
-- CI workflow: `.github/workflows/pr-checks.yml` (extend with `check-pr-size.sh`).
+- CI workflow: the `check-pr-size.sh` gate runs from `.github/workflows/ci.yml`
+  (the `.github/workflows/pr-checks.yml` filename referenced in earlier drafts
+  was never adopted; pr-size enforcement lives alongside the rest of CI).
 - Owner: release manager.
 - Blocking: 1.0.0 GA tag.
 

@@ -3,15 +3,16 @@
  *
  * Branded embedded PDF viewer with page navigation, zoom controls,
  * fullscreen mode, and keyboard accessibility.
- * Requires PDF.js library (loaded via CDN or bundled).
+ * Requires PDF.js library — MUST be self-hosted (CDN-DOC audit), see
+ * the deployment note below.
  *
- * PDF.js must be loaded before this script:
- *   <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4/build/pdf.min.mjs" type="module"></script>
- *   or
- *   <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4/build/pdf.min.js"></script>
+ * Self-host PDF.js (do NOT load from a third-party CDN: GDPR, CSP, SRI):
+ * vendor `pdfjs-dist` into `resources/ui/vendor/pdfjs-dist/` and reference
+ * the local copy from your template, e.g.:
+ *   <script src="/static/vendor/pdfjs-dist/pdf.min.mjs" type="module"></script>
  *
- * The worker source must also be configured:
- *   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4/build/pdf.worker.min.js';
+ * The worker source must point to your local copy as well:
+ *   pdfjsLib.GlobalWorkerOptions.workerSrc = '/static/vendor/pdfjs-dist/pdf.worker.min.js';
  */
 'use strict';
 

@@ -135,9 +135,12 @@ final class RendersAdminViewTest extends TestCase
 
         $identity = $this->createStub(IdentityInterface::class);
 
-        // No exception means authorization passed
+        // QUAL-TEST-01: the previous `assertTrue(true)` placeholder hid the
+        // intent — this test exercises the no-throw path of callAuthorize().
+        // expectNotToPerformAssertions() makes the contract explicit and
+        // keeps PHPUnit from emitting the "risky test" warning.
+        $this->expectNotToPerformAssertions();
         $controller->callAuthorize($identity, 'tickets.view');
-        self::assertTrue(true);
     }
 
     #[Test]

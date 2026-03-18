@@ -59,20 +59,35 @@ final class AuthMiddleware implements MiddlewareInterface
 
     /**
      * Validate an API key. Replace with actual validation logic.
+     *
+     * QUAL-TODO-01 (external audit): the starter pack used to return
+     * `$apiKey !== ''`, which looked like a real check and was easy to
+     * ship to production by accident. Fail-closed by throwing instead —
+     * a developer who copies this template gets a clear runtime error
+     * pointing them at the wiring instead of a silent auth bypass.
      */
     private function validateApiKey(string $apiKey): bool
     {
-        // TODO: Implement actual API key validation against your key store
-        return $apiKey !== '';
+        throw new \LogicException(
+            'AuthMiddleware::validateApiKey is a starter-pack placeholder. '
+            . 'Wire your real validation against your key store (database, cache, '
+            . 'or remote introspection) before deploying this middleware.',
+        );
     }
 
     /**
      * Validate a Bearer token. Replace with actual JWT/token validation.
+     *
+     * QUAL-TODO-02: same fail-closed contract as validateApiKey above.
      */
     private function validateBearerToken(string $token): bool
     {
-        // TODO: Implement actual token validation (JWT signature check, expiry, etc.)
-        return $token !== '';
+        throw new \LogicException(
+            'AuthMiddleware::validateBearerToken is a starter-pack placeholder. '
+            . 'Wire your real validation (JWT signature + expiry check, OAuth2 '
+            . 'introspection, opaque-token store lookup) before deploying this '
+            . 'middleware.',
+        );
     }
 
     private static function unauthorized(string $message): ResponseInterface

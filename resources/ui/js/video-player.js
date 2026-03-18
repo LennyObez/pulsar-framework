@@ -5,8 +5,13 @@
  * quality selector, playback speed, and keyboard navigation.
  * Zero dependencies beyond optional HLS.js for adaptive streaming.
  *
- * HLS.js must be loaded before this script for HLS playback:
- *   <script src="https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js"></script>
+ * HLS.js must be loaded locally before this script — do NOT load it from
+ * a third-party CDN (CDN-DOC audit): GDPR Art 13/14 forbids leaking
+ * visitor IPs to external endpoints, CSP blocks external scripts in
+ * locked-down deployments, and SRI cannot be verified for a moving
+ * CDN target. Vendor HLS.js into `resources/ui/vendor/hls.js/` (the
+ * Pulsar policy already self-hosts fonts; JS libraries follow the
+ * same rule) and reference the local copy from your template.
  */
 'use strict';
 
