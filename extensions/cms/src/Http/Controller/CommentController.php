@@ -21,6 +21,9 @@ use function trim;
  * Handles comment form posts from content pages. Supports both
  * authenticated and guest submissions. CSRF validation is expected
  * to be handled by middleware before this controller is reached.
+ *
+ * @psalm-api Bound to a route by the CMS service provider; resolved
+ *            from the DI container by the router.
  */
 #[Internal(reason: 'CMS HTTP controller; implementation detail')]
 final readonly class CommentController

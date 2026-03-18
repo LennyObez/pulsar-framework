@@ -15,6 +15,9 @@ use function min;
 
 /**
  * Serves RSS and Atom feeds for published content.
+ *
+ * @psalm-api Bound to /feed/* routes by the CMS service provider;
+ *            resolved from the DI container by the router.
  */
 #[Internal(reason: 'CMS HTTP controller; implementation detail')]
 final readonly class FeedController
