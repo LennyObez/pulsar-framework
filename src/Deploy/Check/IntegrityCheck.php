@@ -50,20 +50,25 @@ final readonly class IntegrityCheck implements DeployCheckInterface
         }
 
         return match ($environment) {
-            'production' => CheckResult::warning(
+            // TOOL-DEP-01/02 (external audit): production fail-closed on missing
+            // integrity verification. Tampered framework files in a regulated
+            // deployment must trip the deploy gate, not a soft warning that
+            // operators routinely ignore in the noise of a release pipeline.
+            'production' => CheckResult::error(
                 self::CHECK_NAME,
-                'File integrity verification is disabled',
+                'File integrity verification is disabled in production',
                 [
-                    'Enable integrity verification in config/integrity.php for tamper detection.',
-                    'Run "php bin/pulsar optimize" to generate the integrity manifest.',
-                    'Integrity verification is recommended for regulated environments.',
+                    'Enable integrity verification in config/integrity.php — tampered framework files',
+                    'must trip the deploy gate in regulated environments (PCI Req 11, HIPAA',
+                    '§164.312(c)(1), ISO 27001 A.8.13).',
+                    'Run "php bin/pulsar optimize" to generate the integrity manifest before deployment.',
                 ],
             ),
             'staging' => CheckResult::warning(
                 self::CHECK_NAME,
                 'File integrity verification is disabled',
                 [
-                    'Enable integrity in staging to validate the manifest workflow.',
+                    'Enable integrity in staging to validate the manifest workflow before production.',
                 ],
             ),
             default => CheckResult::pass(
