@@ -21,6 +21,9 @@ use Throwable;
  * This is an alternative to the batch approach in CampaignDispatchJob,
  * useful when campaigns need per-recipient queuing for better fault isolation.
  * Each job sends one email and updates the corresponding send record status.
+ *
+ * @psalm-api Instantiated by the queue worker after deserializing job payloads;
+ *            entry point invoked by the QueueableInterface contract.
  */
 #[Internal(reason: 'Queue job; implementation detail')]
 final readonly class SendNewsletterEmailJob implements QueueableInterface

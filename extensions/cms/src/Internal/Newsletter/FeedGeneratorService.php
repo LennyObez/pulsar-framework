@@ -23,6 +23,9 @@ use const ENT_XML1;
  * Generates RSS 2.0 and Atom 1.0 feeds for published content filtered by content type.
  *
  * Supports multilingual content with hreflang alternate links in feeds.
+ *
+ * @psalm-api Bound to FeedGeneratorServiceInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use FeedGeneratorServiceInterface for public API')]
 final readonly class FeedGeneratorService implements FeedGeneratorServiceInterface

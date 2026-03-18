@@ -11,6 +11,9 @@ use Pulsar\Extension\Cms\Search\SearchAnalyticsRepositoryInterface;
 /**
  * @deprecated Use PostgresSearchService directly. This alias exists for backward compatibility
  *             during the transition to multi-database search adapters.
+ *
+ * @psalm-api Backward-compatible alias produced by SearchServiceFactory;
+ *            constructed by the factory, not instantiated by name.
  */
 #[Internal(reason: 'Deprecated; use SearchServiceFactory to obtain the correct adapter')]
 final readonly class SearchService extends PostgresSearchService
