@@ -126,6 +126,19 @@ final readonly class AttestationVerifier implements AttestationVerifierInterface
     /**
      * Full (basic) packed attestation with x5c certificate chain.
      *
+     * DOC-DEP-02 / SEC-WA-01 (external audit): the current verifier validates the
+     * SIGNATURE against the leaf certificate but does NOT validate the chain
+     * upward to a root CA or look up the AAGUID in the FIDO Metadata Service
+     * (MDS3). That makes the verified attestation strictly `Basic` trust
+     * (returned below) — sufficient for "the authenticator owns this private
+     * key" but insufficient for "this authenticator is genuine FIDO-certified
+     * hardware from vendor X". Higher trust levels (`AttestationCA`, `Attestation`)
+     * require chain validation against the FIDO MDS, which Pulsar adopts as part
+     * of the `web-auth/webauthn-lib` migration (ADR-0030 / SEC-WA-01). Until
+     * that lands, callers that require certified hardware MUST configure a
+     * separate AAGUID allowlist at the application layer instead of relying on
+     * the attestation trust level alone.
+     *
      * @param list<string> $x5c
      */
     private function verifyPackedFull(
@@ -151,6 +164,9 @@ final readonly class AttestationVerifier implements AttestationVerifierInterface
             throw WebAuthnException::invalidAttestation('Packed attestation signature verification failed');
         }
 
+        // DOC-DEP-02: trustLevel = Basic until chain validation + FIDO MDS3
+        // lookup are wired (SEC-WA-01 / ADR-0030). Anything higher would
+        // be a false claim about the authenticator's provenance.
         return new AttestationResult(
             verified: true,
             format: 'packed',
