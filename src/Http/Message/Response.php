@@ -80,8 +80,12 @@ class Response implements ResponseInterface
         $this->headerNames = [];
 
         foreach ($headers as $name => $value) {
-            $lowered = strtolower($name);
-            $this->headerNames[$lowered] = $name;
+            // SEC-IN-01: validate name and value at construction so a malformed
+            // header cannot reach the SAPI emit path.
+            HeaderValidator::assertValidName((string) $name);
+            HeaderValidator::assertValidValue($value);
+            $lowered = strtolower((string) $name);
+            $this->headerNames[$lowered] = (string) $name;
             $this->headers[$lowered] = is_array($value) ? $value : [$value];
         }
     }
@@ -189,7 +193,8 @@ class Response implements ResponseInterface
 
         $headers = [
             'Content-Type' => $contentType,
-            'Content-Disposition' => sprintf('attachment; filename="%s"', $filename),
+            // SEC-IN-02: RFC 5987 / 6266 canonical form, refuses CRLF/quote/control injection.
+            'Content-Disposition' => ContentDispositionBuilder::attachment($filename),
         ];
 
         if ($size !== false) {
@@ -228,7 +233,8 @@ class Response implements ResponseInterface
 
         $headers = [
             'Content-Type' => $contentType,
-            'Content-Disposition' => sprintf('inline; filename="%s"', basename($path)),
+            // SEC-IN-02: see download() — RFC 5987/6266 canonical form.
+            'Content-Disposition' => ContentDispositionBuilder::inline(basename($path)),
         ];
 
         if ($size !== false) {
@@ -432,6 +438,10 @@ class Response implements ResponseInterface
     #[Override]
     public function withHeader(string $name, $value): static
     {
+        // SEC-IN-01: refuse CRLF/NUL injection at the public PSR-7 boundary.
+        HeaderValidator::assertValidName($name);
+        HeaderValidator::assertValidValue($value);
+
         /** @var list<string> $values */
         $values = is_array($value) ? $value : [$value];
         $lowered = strtolower($name);
@@ -447,6 +457,10 @@ class Response implements ResponseInterface
     #[Override]
     public function withAddedHeader(string $name, $value): static
     {
+        // SEC-IN-01: same validation as withHeader for the additive variant.
+        HeaderValidator::assertValidName($name);
+        HeaderValidator::assertValidValue($value);
+
         /** @var list<string> $values */
         $values = is_array($value) ? $value : [$value];
         $lowered = strtolower($name);
