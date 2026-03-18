@@ -100,8 +100,15 @@ final class SubprocessRunner
             2 => ['pipe', 'w'],
         ];
 
-        $osEnv = getenv();
-        $mergedEnv = array_merge($osEnv, ['CI' => '1'], $env);
+        // SEC-IPC-01: build the child environment from an explicit allowlist
+        // instead of inheriting the parent's full env. The MCP server is invoked
+        // by potentially untrusted clients and the previous `array_merge(getenv(),
+        // ['CI' => 1], $env)` leaked every secret in the runner's environment
+        // (COMPOSER_AUTH, GITHUB_TOKEN, AWS_SECRET_ACCESS_KEY, …) into every
+        // tool subprocess. The allowlist below is the minimum set of variables a
+        // sane PHP/composer/git tool needs to run; everything else must be
+        // declared explicitly in `$env` by the caller.
+        $mergedEnv = $this->buildChildEnvironment($env);
 
         // Array form ($command is `list<string>`) bypasses shell
         // interpretation entirely — proc_open hands argv directly
@@ -298,6 +305,55 @@ final class SubprocessRunner
         }
 
         proc_terminate($process);
+    }
+
+    /**
+     * SEC-IPC-01: assemble the child process environment from an explicit
+     * allowlist of inherited variables plus the caller-supplied overrides.
+     *
+     * The allowlist names variables that must flow into composer / git / PHP
+     * subprocesses to function (e.g. PATH for executable resolution, HOME for
+     * dotfile lookup, COMPOSER_HOME for cache reuse). Everything else from the
+     * runner's env (secrets, CI tokens, AWS credentials, etc.) is dropped.
+     *
+     * Caller overrides win over the inherited values; the special CI=1 flag
+     * is appended so existing tooling that branches on it keeps working.
+     *
+     * @param array<string, string> $callerEnv
+     * @return array<string, string>
+     */
+    private function buildChildEnvironment(array $callerEnv): array
+    {
+        $inheritAllowlist = [
+            'PATH',
+            'PATHEXT',
+            'HOME',
+            'USERPROFILE',
+            'TEMP',
+            'TMP',
+            'TMPDIR',
+            'LANG',
+            'LC_ALL',
+            'TZ',
+            'SYSTEMROOT',
+            'COMSPEC',
+            'COMPOSER_HOME',
+            'COMPOSER_CACHE_DIR',
+            'XDG_CACHE_HOME',
+            'XDG_CONFIG_HOME',
+        ];
+
+        $inherited = [];
+
+        foreach ($inheritAllowlist as $name) {
+            $value = getenv($name);
+
+            if ($value !== false && $value !== '') {
+                $inherited[$name] = $value;
+            }
+        }
+
+        return array_merge($inherited, ['CI' => '1'], $callerEnv);
     }
 
     /**
