@@ -30,7 +30,7 @@
     "lint": "eslint . --ignore-pattern '*.config.*' --no-error-on-unmatched-pattern",
     "format:check": "prettier --check .",
     "format:fix": "prettier --write .",
-    "test": "vitest run --passWithNoTests",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit && tsc --noEmit -p extensions/analytics/frontend/tsconfig.json && tsc --noEmit -p extensions/analytics/frontend/tracker/tsconfig.json && tsc --noEmit -p extensions/cms/frontend/tsconfig.json && tsc --noEmit -p extensions/admin/frontend/tsconfig.json && tsc --noEmit -p extensions/studio/frontend/tsconfig.json",
     "build:studio": "tsc -p extensions/studio/frontend/tsconfig.json",
     "build:admin": "tsc -p extensions/admin/frontend/tsconfig.json",
