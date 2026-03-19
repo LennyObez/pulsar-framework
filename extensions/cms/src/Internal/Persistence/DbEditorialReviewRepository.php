@@ -12,6 +12,10 @@ use Pulsar\Database\Row;
 use Pulsar\Extension\Cms\Workflow\EditorialReview;
 use Pulsar\Extension\Cms\Workflow\ReviewStatus;
 
+/**
+ * @psalm-api Resolved from the DI container by EditorialWorkflowService; not
+ *            instantiated by name.
+ */
 #[Internal(reason: 'Raw-DB repository; use EditorialWorkflowServiceInterface for public API')]
 final readonly class DbEditorialReviewRepository
 {

@@ -18,6 +18,10 @@ use function json_encode;
 
 use const JSON_THROW_ON_ERROR;
 
+/**
+ * @psalm-api Bound to ContentTranslationRepositoryInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
+ */
 #[Internal(reason: 'Raw-DB repository; use ContentTranslationRepositoryInterface for public API')]
 final readonly class DbContentTranslationRepository implements ContentTranslationRepositoryInterface
 {
