@@ -265,6 +265,12 @@ final class Rfc6749ConformanceTest extends TestCase
             {
                 return $this->claims;
             }
+
+            #[Override]
+            public function getSubjectIdentifier(string $userId, string $clientId): string
+            {
+                return $userId;
+            }
         };
 
         $resolver = new OAuth2TokenResolver($repo, $claimsProvider);
