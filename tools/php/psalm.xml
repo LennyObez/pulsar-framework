@@ -85,6 +85,30 @@
             Broad Mixed*/Unused*/ClassMustBeFinal blanket suppressions have been
             removed 2026-04-23. The 357 -> (n) error counts surfaced will be
             burnt down per-file.
+
+            === external audit QUAL-PSA-01 ratchet plan ===
+            Counts as of 2026-05-12:
+              (A) Psalm 6.x / 7-beta upstream bugs ........... 11 suppressions
+              (B) PSR / structural limitations ............... 5 suppressions
+              (C) File-narrow specific suppressions .......... 5+ suppressions
+
+            Ratchet triggers (per category):
+              (A) When Psalm 7 stable lands, audit each (A) entry against the
+                  release notes — most should disappear. Failing entries get
+                  upstream tracking issues filed.
+              (B) Audit each entry against the PSR interface it pins. If the
+                  upstream PSR ever tightens the contract, the suppression
+                  becomes unnecessary. PSR-7 ParamNameMismatch and
+                  MoreSpecificImplementedParamType are likely permanent.
+              (C) These are the burndown queue. Each (C) entry has an explicit
+                  file path; investigate and either fix the false positive
+                  upstream, restructure the code, or upgrade the suppression to
+                  an inline `@psalm-suppress` with a tighter reason tag.
+
+            Adding a new suppression: classify (A/B/C), add a 2-line rationale
+            comment, link an upstream issue or local tech-debt entry. Adding
+            a suppression without this metadata is a CI-blocking review red
+            flag.
         -->
 
         <!-- (A) Psalm 6.x does not fully support PHP 8.5 #[Override] on
