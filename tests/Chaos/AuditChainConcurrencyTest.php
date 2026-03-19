@@ -16,9 +16,13 @@ use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditLogger;
 use Pulsar\Security\Audit\AuditOutcome;
 use Pulsar\Security\Audit\ChainableAuditSinkInterface;
+use Pulsar\Security\Crypto\KeyRingInterface;
 use Random\Engine\Secure;
 use Random\Randomizer;
 
+use function array_map;
+use function array_unique;
+use function count;
 use function random_bytes;
 
 /**
@@ -91,8 +95,9 @@ final class AuditChainConcurrencyTest extends TestCase
         self::assertCount(10, $entries);
 
         // Each entry's previousHmac MUST equal the previous entry's hmac
-        // (or the seed for the first entry).
-        $verifier = new AuditChainVerifier($auditKey);
+        // (or the seed for the first entry). The verifier needs a KeyRing
+        // that maps the AuditLogger-derived kid back to the audit key.
+        $verifier = new AuditChainVerifier(new SingleKeyRing($auditKey));
         $result = $verifier->verifyChain($entries);
         self::assertTrue(
             $result->valid,
@@ -108,6 +113,29 @@ final class AuditChainConcurrencyTest extends TestCase
             array_unique($prevHmacs),
             'Two entries share the same previousHmac — the intra-process mutex contract is broken',
         );
+    }
+}
+
+/**
+ * @internal test-only key ring that returns the same audit key for every
+ * kid lookup. Sufficient because the AuditLogger uses one key per
+ * instance, and the chain verifier asks the ring for `keyFor($kid)`
+ * where `$kid` is derived from the key itself.
+ */
+final readonly class SingleKeyRing implements KeyRingInterface
+{
+    public function __construct(private string $auditKey) {}
+
+    #[Override]
+    public function keyFor(string $kid): ?string
+    {
+        return $this->auditKey;
+    }
+
+    #[Override]
+    public function all(): iterable
+    {
+        yield 'audit' => $this->auditKey;
     }
 }
 
