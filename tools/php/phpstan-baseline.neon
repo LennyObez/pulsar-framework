@@ -1,5 +1,37 @@
+###############################################################################
+# PHPStan baseline — documented floor entries.
+#
+# external audit QUAL-STA-01 asked for the baseline to ratchet toward zero. After
+# session 2026-05-12 cleanup, the remaining 9 entries fall into TWO categories
+# that are documented as the accepted floor — each entry below has a rationale.
+# Any NEW addition to this baseline must follow the same pattern: identifier +
+# reason. Adding a baseline entry without rationale is a CI-blocking review red
+# flag.
+#
+# Category A — PHPStan can statically prove the test assertion is tautological
+#              because the production code's return type is narrowed to a
+#              literal (e.g. AnonymousIdentity::isAuthenticated() is typed
+#              `false`, AnonymousIdentity::hasRole() is typed `false`,
+#              authenticated Identity::isAuthenticated() is typed `true`).
+#              The tests still defend against future regressions: if someone
+#              widens the return type to a real bool, the assertion becomes
+#              meaningful again. Removing the test would lose that guard.
+#              Annotating each call site with `@phpstan-ignore` moves the
+#              suppression closer to the code but does not reduce the total
+#              suppression count, so the baseline entry is preferred for
+#              auditability (one place to enumerate the contract tests).
+#
+# Category B — Optional dependency stubs. psy/psysh is a SUGGESTED dependency
+#              (composer.json "suggest" section, not "require"). The REPL
+#              commands gate every Psy\* call behind class_exists(), so the
+#              code is safe to ship without the package. PHPStan cannot see
+#              the runtime guard and flags every static reference. Making
+#              psysh a hard dependency to please PHPStan would defeat the
+#              "optional REPL" contract.
+###############################################################################
 parameters:
 	ignoreErrors:
+		# === Category A: tautological test assertions (intentional contract tests) ===
 		-
 			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertTrue\(\) with true will always evaluate to true\.$#'
 			identifier: staticMethod.alreadyNarrowedType
@@ -30,7 +62,10 @@ parameters:
 			count: 1
 			path: ../../tests/Unit/Auth/Identity/IdentityTest.php
 
-		# PsySH is a suggested (optional) dependency — class_exists() guards all usage
+		# === Category B: PsySH (psy/psysh) is a SUGGESTED dependency ===
+		# class_exists() guards every Psy\* call at the source — PHPStan cannot
+		# see the runtime check and flags the static reference. Making psysh
+		# required would defeat the "optional REPL" contract.
 		-
 			message: '#^PHPDoc tag @var for variable \$(configClass|shellClass) contains unknown class Psy\\(Configuration|Shell)\.$#'
 			identifier: class.notFound
@@ -54,5 +89,3 @@ parameters:
 			identifier: class.notFound
 			count: 3
 			path: ../../src/Console/Repl/ReplCommand.php
-
-
