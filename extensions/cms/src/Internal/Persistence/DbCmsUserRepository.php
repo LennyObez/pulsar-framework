@@ -24,6 +24,9 @@ use function str_replace;
  *
  * Queries the auth_users table joined with content/comment counts
  * and filtered to users who hold at least one CMS role.
+ *
+ * @psalm-api Bound to CmsUserRepositoryInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Database persistence; use CmsUserRepositoryInterface')]
 final readonly class DbCmsUserRepository implements CmsUserRepositoryInterface

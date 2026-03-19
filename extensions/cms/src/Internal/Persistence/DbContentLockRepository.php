@@ -11,6 +11,10 @@ use Pulsar\Database\Portable\UpsertBuilder;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Cms\Workflow\ContentLock;
 
+/**
+ * @psalm-api Resolved from the DI container by ContentLockService and admin
+ *            controllers; not instantiated by name.
+ */
 #[Internal(reason: 'Raw-DB repository; use ContentLockServiceInterface for public API')]
 final readonly class DbContentLockRepository
 {

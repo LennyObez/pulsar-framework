@@ -18,6 +18,9 @@ use const JSON_THROW_ON_ERROR;
 
 /**
  * Cache-backed storage for theme preview sessions with automatic TTL expiry.
+ *
+ * @psalm-api Bound to PreviewSessionRepositoryInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Cache-backed preview session storage')]
 final readonly class CachePreviewSessionRepository implements PreviewSessionRepositoryInterface
