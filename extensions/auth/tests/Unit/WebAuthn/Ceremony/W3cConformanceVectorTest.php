@@ -222,4 +222,16 @@ final readonly class NoopAttestationVerifier implements AttestationVerifierInter
             aaguid: '',
         );
     }
+
+    #[Override]
+    public function isFormatAllowed(string $format): bool
+    {
+        return true;
+    }
+
+    #[Override]
+    public function allowedFormats(): array
+    {
+        return ['none', 'packed', 'fido-u2f', 'android-key', 'android-safetynet', 'apple', 'tpm'];
+    }
 }
