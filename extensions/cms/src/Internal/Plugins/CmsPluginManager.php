@@ -459,9 +459,33 @@ final readonly class CmsPluginManager implements CmsPluginManagerInterface
      * 2. Already-autoloadable class (installed via Composer require)
      * 3. PSR-4 autoload mappings from plugin manifest
      * 4. Fallback: direct file require from src/ directory
+     *
+     * SEC-EXT-02 (external audit): when `cms.security.require_signed_plugins`
+     * is enabled, this method refuses to load a plugin whose signature
+     * was not verified at install time. The verifier
+     * ({@see PluginProvenanceVerifier}) computes the SHA-256 archive
+     * digest and validates an Ed25519 detached signature against the
+     * `trusted_public_keys` allowlist; if either step fails, the install
+     * marks `signatureVerified=false` and the load path here REFUSES to
+     * boot the entry point. Without this gate the verifier existed but
+     * was advisory — a tampered plugin still loaded.
      */
     private function loadPluginInstance(InstalledCmsPlugin $plugin): ?CmsPluginInterface
     {
+        // SEC-EXT-02 — production fail-closed when signature enforcement is on.
+        if ($this->config->requireSignedPlugins && !$plugin->signatureVerified) {
+            $this->logger->error('Plugin refused to load: signature verification failed or not performed', [
+                'slug' => $plugin->slug,
+                'version' => $plugin->version,
+                'tenant_id' => $plugin->tenantId,
+                'provenance_verified' => $plugin->provenanceVerified,
+                'signature_verified' => $plugin->signatureVerified,
+                'reason' => 'cms.security.require_signed_plugins=true but plugin signature not verified',
+            ]);
+
+            return null;
+        }
+
         // Read manifest to get entry point
         $manifestPath = $plugin->storagePath . '/plugin.json';
 
@@ -650,12 +674,20 @@ final readonly class CmsPluginManager implements CmsPluginManagerInterface
         foreach ($iterator as $item) {
             /** @var SplFileInfo $item */
             if ($item->isDir()) {
+                // Path comes from RecursiveDirectoryIterator iterating $path,
+                // which was guarded by isInsideAllowedRoot() above — recursion
+                // stays inside the resolved allowed root.
+                // nosemgrep: php.lang.security.unlink-use.unlink-use
                 rmdir($item->getPathname());
             } else {
+                // Same root-guard as above; no user input flows into unlink
+                // outside the validated subtree.
+                // nosemgrep: php.lang.security.unlink-use.unlink-use
                 unlink($item->getPathname());
             }
         }
 
+        // nosemgrep: php.lang.security.unlink-use.unlink-use
         rmdir($path);
     }
 
