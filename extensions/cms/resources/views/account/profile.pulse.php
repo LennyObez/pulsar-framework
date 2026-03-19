@@ -5,7 +5,7 @@
 @section('content')
 <h1 class="pui-heading pui-heading--xl">@t('account.profile')</h1>
 
-@if (isset($_GET['saved']))
+@if (!empty($saved))
     <div class="pui-alert pui-alert--success pui-mb-4" role="alert">
         @t('account.profile_saved')
     </div>

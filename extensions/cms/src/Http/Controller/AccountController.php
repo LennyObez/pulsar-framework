@@ -71,6 +71,7 @@ final readonly class AccountController
             'customer' => $this->customerToArray($customer),
             'sections' => $sections,
             'active_section' => 'profile',
+            'saved' => isset($request->getQueryParams()['saved']),
         ];
 
         return $this->respond($request, 'account.profile', $data);
