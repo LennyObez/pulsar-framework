@@ -55,7 +55,13 @@ final class RfcJoseConformanceTest extends TestCase
             'private_key_bits' => 2048,
             'private_key_type' => OPENSSL_KEYTYPE_RSA,
         ]);
-        openssl_pkey_export($resource, $this->rsaPem);
+
+        // PHP 8.3+: openssl_pkey_export passes by reference; a typed non-
+        // nullable property is not addressable until initialised. Stage
+        // through a local var.
+        $pem = '';
+        openssl_pkey_export($resource, $pem);
+        $this->rsaPem = $pem;
 
         $details = openssl_pkey_get_details(openssl_pkey_get_private($this->rsaPem));
         $this->rsaPublicPem = $details['key'];
