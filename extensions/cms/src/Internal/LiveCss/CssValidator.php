@@ -22,6 +22,9 @@ use function trim;
  *
  * Scans line-by-line with regex patterns, handling case-insensitive matching,
  * whitespace obfuscation, CSS comments, backslash escapes, and encoded values.
+ *
+ * @psalm-api Bound to CssValidatorInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use CssValidatorInterface for public API')]
 final readonly class CssValidator implements CssValidatorInterface

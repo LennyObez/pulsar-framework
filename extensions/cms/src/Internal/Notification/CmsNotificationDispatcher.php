@@ -24,6 +24,9 @@ use Pulsar\Extension\Cms\Notification\ReviewRequestNotification;
  * This dispatcher creates the appropriate CMS notification DTO and logs it.
  * Real channel delivery (email, database, etc.) is a framework-level concern
  * wired through NotificationManagerInterface when available.
+ *
+ * @psalm-api Subscribed to ContentPublished/CommentReceived/ReviewRequested events
+ *            via the EventDispatcher; entry points invoked by the dispatcher.
  */
 #[Internal(reason: 'CMS notification wiring; use CmsNotificationInterface for public API')]
 final readonly class CmsNotificationDispatcher

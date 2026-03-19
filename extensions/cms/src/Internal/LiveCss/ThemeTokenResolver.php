@@ -21,6 +21,9 @@ use function strtolower;
 /**
  * Resolves editable design tokens from a theme's manifest settings
  * and validates proposed token values by type.
+ *
+ * @psalm-api Bound to ThemeTokenResolverInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use ThemeTokenResolverInterface for public API')]
 final readonly class ThemeTokenResolver implements ThemeTokenResolverInterface
