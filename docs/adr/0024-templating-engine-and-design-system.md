@@ -129,7 +129,6 @@ Plates uses native PHP files as templates (no compilation step). While simple, i
 
 ## Links
 
-- Plan: `.claude/plans/rc11-16-templating-design-system.md`
 - ADR-0004: Extension-first architecture (extension lifecycle via `pulsar.json`)
 - ADR-0009: Attribute-based public API surface (`#[Api]` / `#[Internal]`)
 - ADR-0011: Typed readonly configuration DTOs (ViewConfig pattern)

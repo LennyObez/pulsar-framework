@@ -84,7 +84,7 @@ The release manager picks one; this ADR records that staying with the current ho
 
 ## Tracking
 
-- Audit finding: **F385.9** in `.claude/findings.md`.
+- Audit finding: **F385.9** in the internal findings register.
 - Cross-reference: ADR-0025 §"WebAuthn: `web-auth/webauthn-lib`".
 - Owner: WebAuthn extension maintainer (assignment pending).
 - Blocking: 1.0.0 GA tag.
