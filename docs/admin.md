@@ -95,10 +95,10 @@ Configure allowed IP ranges at the infrastructure level (reverse proxy, load bal
 
 The middleware accepts the token in two forms:
 
-| Source                  | Use case                                                              |
-| ----------------------- | --------------------------------------------------------------------- |
-| `X-CSRF-Token` header   | SPA / fetch / XHR clients (preferred — no body parsing required)      |
-| `_csrf_token` POST body | Plain HTML `<form>` submissions, including the `<noscript>` fallback  |
+| Source                  | Use case                                                             |
+| ----------------------- | -------------------------------------------------------------------- |
+| `X-CSRF-Token` header   | SPA / fetch / XHR clients (preferred — no body parsing required)     |
+| `_csrf_token` POST body | Plain HTML `<form>` submissions, including the `<noscript>` fallback |
 
 When both are present the header value wins, so a client that supplies both for resilience does not get tripped by a mismatched body field. Both paths run through the same constant-time `hash_equals` comparison against the session-attached token, so neither form leaks timing information about the expected value.
 

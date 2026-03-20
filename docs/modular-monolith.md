@@ -221,13 +221,13 @@ attacker who controls that env controls which service is built.
 
 `TypedServiceResolver::resolve()` narrows the call-site contract:
 
-  1. The configured value must name a class that currently exists in
-     the autoloader.
-  2. The class must be a subtype of the slot's expected interface
-     (`PaymentProviderInterface` here). Anything else — even other
-     services registered in the container — is refused with a
-     precise diagnostic.
-  3. Only after both checks does the container resolve the FQCN.
+1. The configured value must name a class that currently exists in
+   the autoloader.
+2. The class must be a subtype of the slot's expected interface
+   (`PaymentProviderInterface` here). Anything else — even other
+   services registered in the container — is refused with a
+   precise diagnostic.
+3. Only after both checks does the container resolve the FQCN.
 
 Service providers that allow adapter selection through configuration
 **MUST** route the dynamic lookup through `TypedServiceResolver` (or

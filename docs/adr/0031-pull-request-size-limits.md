@@ -23,14 +23,15 @@ ADR-0001 governance commits to ADR-bound architectural change but says nothing a
 
 ### 1. Hard cap: feature PRs must not exceed 1 500 LOC of diff.
 
-A PR that exceeds 1 500 lines of *substantive* diff (excluding generated code, vendored fixtures, lockfile updates, and pure rename diffs) MUST be split before merge. CI enforces the cap by counting `git diff --shortstat` excluding paths in `.size-limit-ignore`.
+A PR that exceeds 1 500 lines of _substantive_ diff (excluding generated code, vendored fixtures, lockfile updates, and pure rename diffs) MUST be split before merge. CI enforces the cap by counting `git diff --shortstat` excluding paths in `.size-limit-ignore`.
 
 **Rationale for 1 500.** Below 500 LOC, review effectiveness is high; 500–1 500 covers most legitimate feature slices; above 1 500, splitting is feasible and the cost of refactoring the PR is dwarfed by the cost of an undetected regression in a regulated domain.
 
 Exceptions require:
+
 - explicit `oversize-pr-acknowledged` label,
 - maintainer comment in the PR thread referencing this ADR,
-- independent reviewer attestation (different from the PR author *and* the merging maintainer).
+- independent reviewer attestation (different from the PR author _and_ the merging maintainer).
 
 ### 2. Soft cap: feature PRs should target ≤ 500 LOC where feasible.
 
@@ -41,6 +42,7 @@ When ≤ 500 LOC is achievable without artificial splitting, prefer it. The CI c
 A release PR (the PR that bumps `composer.json`, `Version::PRERELEASE_SUFFIX`, and adds the `CHANGELOG.md` entry for an `rc.x` or `1.0.0` tag) MUST be ≤ 100 LOC of substantive diff. If it touches feature code, that feature code did not belong in the release PR — it should have shipped in a prior feature PR and been listed in the changelog.
 
 Concretely, an `rc.x` or GA release PR may modify:
+
 - `composer.json` (version field, possibly lock-file cascade),
 - `composer.lock` (regenerated),
 - `src/Core/Version.php` (`PRERELEASE_SUFFIX` constant),
@@ -67,6 +69,7 @@ When a release PR is closed without merging, the maintainer who closes it MUST l
 ### 6. The 1.0.0 GA tag is GATED on this ADR being satisfied.
 
 Specifically:
+
 - PR #387 (or its successors) MUST be split before merge per §1. The currently-open 243 K-LOC mega-PR is not eligible for merge under this policy.
 - The release PR that lands the GA tag MUST satisfy §3.
 - All commits between the last `rc.x` tag and the GA tag MUST be reachable individually via `git log`, not collapsed into one squash.

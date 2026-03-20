@@ -89,7 +89,7 @@
     if (rawWaveform) {
       try {
         waveformData = JSON.parse(rawWaveform);
-      } catch (e) {
+      } catch (_e) {
         // Invalid JSON, generate flat waveform
         waveformData = null;
       }

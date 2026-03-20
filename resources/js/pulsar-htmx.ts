@@ -231,7 +231,11 @@ class PulsarHtmx {
     }
 
     try {
-      const response = await fetch(url, { method, headers, body });
+      const init: RequestInit = { method, headers };
+      if (body !== undefined) {
+        init.body = body;
+      }
+      const response = await fetch(url, init);
       const html = await response.text();
 
       this.processResponseHeaders(response, el);
