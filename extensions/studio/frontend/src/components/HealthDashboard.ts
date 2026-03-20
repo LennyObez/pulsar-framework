@@ -185,15 +185,17 @@ function buildMemoryTrendCard(
   summary.style.cssText =
     'display:flex;gap:2rem;margin-top:1rem;font-size:var(--text-sm);color:var(--color-text-muted);';
 
-  const first = snapshots[0];
-  const last = snapshots[snapshots.length - 1];
+  const first = snapshots.at(0);
+  const last = snapshots.at(-1);
 
-  appendStat(summary, 'Start', formatBytes(first.usage_bytes));
-  appendStat(summary, 'Current', formatBytes(last.usage_bytes));
-  appendStat(summary, 'Samples', String(snapshots.length));
+  if (first && last) {
+    appendStat(summary, 'Start', formatBytes(first.usage_bytes));
+    appendStat(summary, 'Current', formatBytes(last.usage_bytes));
+    appendStat(summary, 'Samples', String(snapshots.length));
 
-  if (last.usage_bytes > first.usage_bytes) {
-    appendStat(summary, 'Growth', formatBytes(last.usage_bytes - first.usage_bytes));
+    if (last.usage_bytes > first.usage_bytes) {
+      appendStat(summary, 'Growth', formatBytes(last.usage_bytes - first.usage_bytes));
+    }
   }
 
   card.appendChild(summary);

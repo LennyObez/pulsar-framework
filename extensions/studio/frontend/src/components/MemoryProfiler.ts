@@ -80,14 +80,17 @@ export function buildMemoryProfilerPanel(
   const statsRow = document.createElement('div');
   statsRow.className = 'metrics-row';
 
-  const first = snapshots[0];
-  const last = snapshots[snapshots.length - 1];
-  const growth = last.usage_bytes - first.usage_bytes;
+  const first = snapshots.at(0);
+  const last = snapshots.at(-1);
 
-  statsRow.appendChild(buildMiniStat('Current', formatBytes(last.usage_bytes)));
-  statsRow.appendChild(buildMiniStat('Peak', formatBytes(last.peak_bytes)));
-  statsRow.appendChild(buildMiniStat('Samples', String(snapshots.length)));
-  statsRow.appendChild(buildMiniStat('Growth', (growth >= 0 ? '+' : '') + formatBytes(growth)));
+  if (first && last) {
+    const growth = last.usage_bytes - first.usage_bytes;
+
+    statsRow.appendChild(buildMiniStat('Current', formatBytes(last.usage_bytes)));
+    statsRow.appendChild(buildMiniStat('Peak', formatBytes(last.peak_bytes)));
+    statsRow.appendChild(buildMiniStat('Samples', String(snapshots.length)));
+    statsRow.appendChild(buildMiniStat('Growth', (growth >= 0 ? '+' : '') + formatBytes(growth)));
+  }
 
   panel.appendChild(statsRow);
 

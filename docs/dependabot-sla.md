@@ -43,12 +43,12 @@ disposition for security PRs.
 
 Severity is read from the GHSA / Dependabot PR body:
 
-| Severity (GHSA) | Merge SLA |
-|---|---|
-| Critical (9.0–10.0)   | 48 hours from PR creation |
-| High (7.0–8.9)        | 7 calendar days |
-| Medium (4.0–6.9)      | 14 calendar days |
-| Low (0.1–3.9)         | 30 calendar days |
+| Severity (GHSA)     | Merge SLA                 |
+| ------------------- | ------------------------- |
+| Critical (9.0–10.0) | 48 hours from PR creation |
+| High (7.0–8.9)      | 7 calendar days           |
+| Medium (4.0–6.9)    | 14 calendar days          |
+| Low (0.1–3.9)       | 30 calendar days          |
 
 If CI fails on a Dependabot PR, the SLA pauses while the maintainer
 fixes the breakage on a follow-up branch and re-targets the bump.

@@ -28,7 +28,7 @@ Implement a separate audit logging subsystem with keyed BLAKE2b hash chaining. A
   - on `AuditChainState::Empty` (the sink has no prior entries), seeds the chain — a legitimate fresh start;
   - on `AuditChainState::Healthy`, resumes from `lastHmac()`;
   - on `AuditChainState::Corrupted` (the sink holds entries but the last one cannot be parsed — truncation, malformed JSON, missing `hmac` field, IO failure), the logger throws `SecurityException::auditChainCorrupted()` and refuses to append further entries. Falling back to the seed in this case would silently start a new chain on top of corrupt state and break tamper-evidence.
-  Sinks that only implement the older `ChainableAuditSinkInterface` retain the legacy seed-on-null fallback for back-compat, but lose the fail-closed guarantee — production deployments should use a state-aware sink (`AuditFileSink` is one).
+    Sinks that only implement the older `ChainableAuditSinkInterface` retain the legacy seed-on-null fallback for back-compat, but lose the fail-closed guarantee — production deployments should use a state-aware sink (`AuditFileSink` is one).
 - **Verification.** `AuditEntry::verify(auditKey)` validates a single entry's HMAC. Walking the chain from the seed detects any tampering - modifying any entry invalidates all subsequent entries.
 - **Append-only sink.** `AuditFileSink` writes JSON Lines with `LOCK_EX` for safe concurrent appends. The sink interface (`AuditSinkInterface`) allows alternative backends.
 - **Derived audit key.** The HMAC key is derived from the master key via KDF with the `pulsar__audit_hmac` context (see ADR-0006). It is never stored in configuration files.

@@ -5,18 +5,6 @@
  * price transitions and highlighted recommended plan.
  */
 
-interface PricingPlan {
-  id: string;
-  name: string;
-  monthlyPrice: number;
-  annualPrice: number;
-  currency: string;
-  features: string[];
-  highlighted: boolean;
-  ctaUrl: string;
-  ctaText: string;
-}
-
 /**
  * Initialize an interactive pricing table.
  */

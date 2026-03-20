@@ -80,7 +80,7 @@
           record('lcp', last.startTime, { element: last.element?.tagName });
         }
       }).observe({ type: 'largest-contentful-paint', buffered: true });
-    } catch (e) {
+    } catch (_e) {
       /* Observer not supported */
     }
 
@@ -92,7 +92,7 @@
           record('fid', entries[0].processingStart - entries[0].startTime);
         }
       }).observe({ type: 'first-input', buffered: true });
-    } catch (e) {
+    } catch (_e) {
       /* Observer not supported */
     }
 
@@ -114,7 +114,7 @@
           record('cls', clsValue);
         }
       });
-    } catch (e) {
+    } catch (_e) {
       /* Observer not supported */
     }
   }
