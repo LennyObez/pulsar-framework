@@ -69,7 +69,7 @@ final class ExceptionHandlerTest extends TestCase
         $handler = new ExceptionHandler(new DevelopmentRenderer());
 
         $response = $handler->handle(
-            RoutingException::methodNotAllowed('/test', Method::POST, [Method::GET, Method::PUT]),
+            RoutingException::methodNotAllowed('/test', \Pulsar\Http\Method::POST, [\Pulsar\Http\Method::GET, \Pulsar\Http\Method::PUT]),
             $this->createRequest('/test'),
         );
 

@@ -1219,6 +1219,76 @@
       },
       "constants": []
     },
+    "Pulsar\\Api\\Exception\\ApiException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Filter\\Filter": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Filter\\FilterDefinition": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Filter\\FilterExpression": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Filter\\FilterOperator": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Filter\\FilterParser": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Filter\\FilterRegistry": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Filter\\FilterValueType": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Filter\\QueryFilter": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Format\\HalRenderer": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Format\\JsonApiRenderer": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Format\\JsonRenderer": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Format\\ResponseContext": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Format\\ResponseRendererInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Api\\Internal": {
       "since": "1.0.0",
       "methods": [],
@@ -2431,6 +2501,241 @@
       },
       "constants": []
     },
+    "Pulsar\\Api\\Negotiation\\ContentNegotiator": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\OpenApi\\Attribute\\ApiDoc": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\OpenApi\\Attribute\\ApiField": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\OpenApi\\Attribute\\ApiParam": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\OpenApi\\Attribute\\ApiResponse": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\OpenApi\\EndpointMetadata": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\OpenApi\\OpenApiConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\OpenApi\\SchemaInferrer": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\OpenApi\\SecuritySchemeDefinition": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\OpenApi\\SecuritySchemeType": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\OpenApi\\SpecGenerator": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\OpenApi\\SwaggerUiController": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Pagination\\CursorPaginator": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Pagination\\KeysetPaginator": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Pagination\\OffsetPaginator": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Pagination\\PaginationLinks": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Pagination\\PaginationMeta": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Pagination\\PaginationRequest": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Pagination\\PaginationResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Pagination\\PaginatorInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Resource\\AbstractApiResource": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Resource\\Attribute\\ApiHidden": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Resource\\Attribute\\ApiResource": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Resource\\Attribute\\ClassificationTag": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Resource\\Attribute\\Expose": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Resource\\Attribute\\Filterable": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Resource\\Attribute\\Sortable": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Resource\\ComplexityLimits": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Resource\\ConditionalField": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Resource\\FieldAllowlist": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Resource\\FieldPolicy": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Resource\\RedactionRule": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Resource\\RedactionStrategy": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Resource\\ResourceCollection": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Resource\\ResourceMetadata": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Security\\ClearanceSnapshot": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Security\\FieldAuthorizationResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Security\\FieldAuthorizer": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Sort\\SortDefinition": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Sort\\SortDirection": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Sort\\SortExpression": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Sort\\SortParser": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Sort\\SortRegistry": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Version\\ApiVersion": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Version\\ApiVersionResolver": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Version\\VersionStrategy": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Attribute\\Sensitive": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Audit\\AuditLoggerInterface": {
       "since": "1.0.0",
       "methods": [],
@@ -2754,6 +3059,36 @@
           "static": false
         }
       },
+      "constants": []
+    },
+    "Pulsar\\Auth\\Authorization\\Event\\AuthenticationFailed": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Auth\\Authorization\\Event\\AuthenticationSucceeded": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Auth\\Authorization\\Event\\AuthorizationDenied": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Auth\\Authorization\\Event\\AuthorizationGranted": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Auth\\Authorization\\Event\\PrivilegeEscalated": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Auth\\Authorization\\Event\\StepUpAuthRequired": {
+      "since": "1.0.0",
+      "methods": [],
       "constants": []
     },
     "Pulsar\\Auth\\Authorization\\GateInterface": {
@@ -3644,6 +3979,11 @@
       },
       "constants": []
     },
+    "Pulsar\\Auth\\TwoFactor\\RecoveryCodeGenerator": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Auth\\TwoFactor\\RecoveryCodeRotationResult": {
       "since": "1.0.0",
       "methods": [],
@@ -3763,6 +4103,11 @@
       },
       "constants": []
     },
+    "Pulsar\\Auth\\TwoFactor\\TotpGenerator": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Auth\\TwoFactor\\TotpReplayGuardInterface": {
       "since": "1.0.0",
       "methods": [],
@@ -3824,6 +4169,11 @@
           "static": false
         }
       },
+      "constants": []
+    },
+    "Pulsar\\Auth\\TwoFactor\\TotpVerifier": {
+      "since": "1.0.0",
+      "methods": [],
       "constants": []
     },
     "Pulsar\\Auth\\TwoFactor\\TwoFactorManagerInterface": {
@@ -5071,6 +5421,166 @@
           "static": false
         }
       },
+      "constants": []
+    },
+    "Pulsar\\Build\\ArtifactEntry": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Build\\ArtifactIntegrityVerifier": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Build\\BuildException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Build\\BuildManifest": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Build\\BuildMetadata": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Build\\VerificationResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Build\\VerificationStatus": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Cache\\Application\\CacheItem": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Cache\\Application\\CacheManager": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Cache\\Application\\CacheManagerInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Cache\\Application\\CachePool": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Cache\\Application\\Driver\\CacheDriverCapabilities": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Cache\\Application\\Driver\\CacheDriverInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Cache\\Application\\Event\\CacheClearEvent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Cache\\Application\\Event\\CacheDeleteEvent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Cache\\Application\\Event\\CacheErrorEvent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Cache\\Application\\Event\\CacheEvent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Cache\\Application\\Event\\CacheHitEvent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Cache\\Application\\Event\\CacheMissEvent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Cache\\Application\\Event\\CacheWriteEvent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Cache\\Application\\Exception\\CacheException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Cache\\Application\\Exception\\FenceTokenMismatchException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Cache\\Application\\Exception\\LockAcquisitionException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Cache\\Application\\Exception\\UnsupportedCapabilityException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Cache\\Application\\Lock\\FencedExecutor": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Cache\\Application\\Lock\\LockHandle": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Cache\\Application\\Lock\\LockInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Cache\\Application\\Serializer\\CacheSerializerInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Cache\\Application\\SimpleCache": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Cache\\Application\\Tag\\TagStrategyInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Cache\\Application\\TaggedCache": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Cache\\Application\\TaggedCacheInterface": {
+      "since": "1.0.0",
+      "methods": [],
       "constants": []
     },
     "Pulsar\\Cache\\CacheException": {
@@ -7070,6 +7580,21 @@
       },
       "constants": []
     },
+    "Pulsar\\Concurrency\\FanOut": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Concurrency\\FanOutResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\ApiConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Config\\AppConfig": {
       "since": "1.0.0",
       "methods": [],
@@ -7304,6 +7829,21 @@
       },
       "constants": []
     },
+    "Pulsar\\Config\\CacheConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\CacheDriverType": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\CachePoolConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Config\\CircuitBreakerConfig": {
       "since": "1.0.0",
       "methods": [],
@@ -7506,6 +8046,16 @@
           "static": false
         }
       },
+      "constants": []
+    },
+    "Pulsar\\Config\\CrossOriginConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\CspConfig": {
+      "since": "1.0.0",
+      "methods": [],
       "constants": []
     },
     "Pulsar\\Config\\CsrfConfig": {
@@ -7766,6 +8316,11 @@
       },
       "constants": []
     },
+    "Pulsar\\Config\\EventConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Config\\Exception\\ConfigException": {
       "since": "1.0.0",
       "methods": [],
@@ -7896,6 +8451,16 @@
       },
       "constants": []
     },
+    "Pulsar\\Config\\HstsConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\I18nConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Config\\IntegrityConfig": {
       "since": "1.0.0",
       "methods": [],
@@ -8024,6 +8589,21 @@
       },
       "constants": []
     },
+    "Pulsar\\Config\\MailConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\MailDriverType": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\MailEncryptionPolicy": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Config\\MetricsConfig": {
       "since": "1.0.0",
       "methods": [],
@@ -8122,6 +8702,16 @@
           "static": true
         }
       },
+      "constants": []
+    },
+    "Pulsar\\Config\\NotificationChannelType": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\NotificationConfig": {
+      "since": "1.0.0",
+      "methods": [],
       "constants": []
     },
     "Pulsar\\Config\\ObservabilityConfig": {
@@ -8276,6 +8866,11 @@
           "static": true
         }
       },
+      "constants": []
+    },
+    "Pulsar\\Config\\ReplConfig": {
+      "since": "1.0.0",
+      "methods": [],
       "constants": []
     },
     "Pulsar\\Config\\ResilienceConfig": {
@@ -8564,6 +9159,11 @@
       },
       "constants": []
     },
+    "Pulsar\\Config\\StormProtectionConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Config\\SupervisorConfig": {
       "since": "1.0.0",
       "methods": [],
@@ -8674,6 +9274,11 @@
           "static": true
         }
       },
+      "constants": []
+    },
+    "Pulsar\\Config\\TrustedExtensionsConfig": {
+      "since": "1.0.0",
+      "methods": [],
       "constants": []
     },
     "Pulsar\\Config\\TwoFactorConfig": {
@@ -8945,6 +9550,11 @@
           "static": true
         }
       },
+      "constants": []
+    },
+    "Pulsar\\Config\\ZeroTrustConfig": {
+      "since": "1.0.0",
+      "methods": [],
       "constants": []
     },
     "Pulsar\\Console\\Command": {
@@ -9984,6 +10594,26 @@
       },
       "constants": []
     },
+    "Pulsar\\Console\\Output\\TableFormatter": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Console\\Repl\\EnvironmentGuard": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Console\\Repl\\ReplSafeModeException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Console\\Repl\\SecretRedactor": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Console\\Verbosity": {
       "since": "1.0.0",
       "methods": [],
@@ -10100,6 +10730,11 @@
           "static": false
         }
       },
+      "constants": []
+    },
+    "Pulsar\\Container\\AdvancedContainerInterface": {
+      "since": "1.0.0",
+      "methods": [],
       "constants": []
     },
     "Pulsar\\Container\\BindingType": {
@@ -10333,6 +10968,11 @@
       },
       "constants": []
     },
+    "Pulsar\\Container\\Compiler\\CompilerPassInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Container\\ContainerInterface": {
       "since": "1.0.0",
       "methods": [],
@@ -10429,6 +11069,16 @@
           "static": false
         }
       },
+      "constants": []
+    },
+    "Pulsar\\Container\\ContextualBindingBuilder": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Container\\Decorator\\Decorate": {
+      "since": "1.0.0",
+      "methods": [],
       "constants": []
     },
     "Pulsar\\Container\\Exception\\ContainerException": {
@@ -10556,6 +11206,41 @@
           "static": false
         }
       },
+      "constants": []
+    },
+    "Pulsar\\Container\\Lazy\\Lazy": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Container\\Lifetime": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Container\\Provider\\DeferredServiceProviderInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Container\\Scope\\ScopeWideningException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Container\\Tag\\Tag": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Container\\Tag\\TagCollector": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Container\\Tag\\TaggedIterator": {
+      "since": "1.0.0",
+      "methods": [],
       "constants": []
     },
     "Pulsar\\Context\\CausationId": {
@@ -11701,6 +12386,41 @@
       },
       "constants": []
     },
+    "Pulsar\\Database\\Cache\\CacheableQuery": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Cache\\QueryCache": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Cache\\QueryCacheConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Cache\\QueryCacheInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Cache\\QueryCacheKey": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Cache\\SensitivityMetadata": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Cache\\TableTagExtractor": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Database\\ConnectionInterface": {
       "since": "1.0.0",
       "methods": [],
@@ -12170,6 +12890,46 @@
       },
       "constants": []
     },
+    "Pulsar\\Database\\Failover\\CallbackFailoverStrategy": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Failover\\ConfigReloadFailoverStrategy": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Failover\\DnsFailoverStrategy": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Failover\\FailoverConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Failover\\FailoverEvent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Failover\\FailoverManager": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Failover\\FailoverManagerInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Failover\\FailoverStrategyInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Database\\FetchMode": {
       "since": "1.0.0",
       "methods": [],
@@ -12291,6 +13051,26 @@
           "static": false
         }
       },
+      "constants": []
+    },
+    "Pulsar\\Database\\Health\\ConnectionHealthChecker": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Health\\ConnectionHealthCheckerInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Health\\HeartbeatMonitor": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Health\\HeartbeatMonitorInterface": {
+      "since": "1.0.0",
+      "methods": [],
       "constants": []
     },
     "Pulsar\\Database\\Introspection\\ColumnInfo": {
@@ -12891,6 +13671,56 @@
       },
       "constants": []
     },
+    "Pulsar\\Database\\Monitor\\ConnectionAuditor": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Monitor\\ConnectionAuditorInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Monitor\\MonitorConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Monitor\\MonitoredConnection": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Monitor\\QueryClassification": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Monitor\\SlowQueryDetector": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Monitor\\SlowQueryDetectorInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Monitor\\SqlLogEntry": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Monitor\\SqlLogger": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Monitor\\SqlLoggerInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Database\\Param": {
       "since": "1.0.0",
       "methods": [],
@@ -13299,6 +14129,36 @@
       },
       "constants": []
     },
+    "Pulsar\\Database\\Pool\\ConnectionPool": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Pool\\ConnectionPoolInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Pool\\NullConnectionPool": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Pool\\PoolConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Pool\\PoolStats": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Pool\\PooledConnection": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Database\\Result": {
       "since": "1.0.0",
       "methods": [],
@@ -13512,6 +14372,36 @@
           "static": false
         }
       },
+      "constants": []
+    },
+    "Pulsar\\Database\\Routing\\ConnectionRole": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Routing\\ReadWriteConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Routing\\ReadWriteRouter": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Routing\\ReadWriteRouterInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Routing\\RoutingConnectionManager": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Routing\\StickinessContext": {
+      "since": "1.0.0",
+      "methods": [],
       "constants": []
     },
     "Pulsar\\Database\\Row": {
@@ -15250,6 +16140,26 @@
       },
       "constants": []
     },
+    "Pulsar\\Event\\Attribute\\RequiresEnvelope": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Event\\Attribute\\StormOverride": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Event\\EnvelopeRequiredEvent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Event\\EventDispatcherInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Event\\EventEnvelope": {
       "since": "1.0.0",
       "methods": [],
@@ -15503,6 +16413,41 @@
       },
       "constants": []
     },
+    "Pulsar\\Event\\EventScope": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Event\\EventSubscriberInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Event\\Exception\\EventException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Event\\ListenerProviderInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Extensibility\\CapabilityPolicy": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Extensibility\\EnvironmentInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Extensibility\\Exception\\CapabilityDeniedException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Extensibility\\Exception\\DependencyException": {
       "since": "1.0.0",
       "methods": [],
@@ -15713,6 +16658,11 @@
           "static": true
         }
       },
+      "constants": []
+    },
+    "Pulsar\\Extensibility\\ExtensionCapability": {
+      "since": "1.0.0",
+      "methods": [],
       "constants": []
     },
     "Pulsar\\Extensibility\\ExtensionInterface": {
@@ -16110,6 +17060,26 @@
           "static": false
         }
       },
+      "constants": []
+    },
+    "Pulsar\\Extensibility\\TrustTier": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Extension\\Compiler\\CompiledExtensionEntry": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Extension\\Compiler\\CompiledExtensionManifest": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Extension\\Compiler\\ManifestLoader": {
+      "since": "1.0.0",
+      "methods": [],
       "constants": []
     },
     "Pulsar\\FeatureFlag\\Exception\\FeatureFlagException": {
@@ -17046,6 +18016,36 @@
           "static": false
         }
       },
+      "constants": []
+    },
+    "Pulsar\\Http\\Factory\\RequestFactory": {
+      "since": "1.0.0-rc.11",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Factory\\ResponseFactory": {
+      "since": "1.0.0-rc.11",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Factory\\ServerRequestFactory": {
+      "since": "1.0.0-rc.11",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Factory\\StreamFactory": {
+      "since": "1.0.0-rc.11",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Factory\\UploadedFileFactory": {
+      "since": "1.0.0-rc.11",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Factory\\UriFactory": {
+      "since": "1.0.0-rc.11",
+      "methods": [],
       "constants": []
     },
     "Pulsar\\Http\\HeaderBag": {
@@ -18445,6 +19445,41 @@
       },
       "constants": []
     },
+    "Pulsar\\Http\\Message\\BodyTooLargeException": {
+      "since": "1.0.0-rc.11",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Message\\BufferStream": {
+      "since": "1.0.0-rc.11",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Message\\Response": {
+      "since": "1.0.0-rc.11",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Message\\ServerRequest": {
+      "since": "1.0.0-rc.11",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Message\\Stream": {
+      "since": "1.0.0-rc.11",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Message\\UploadedFile": {
+      "since": "1.0.0-rc.11",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Message\\Uri": {
+      "since": "1.0.0-rc.11",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Http\\Method": {
       "since": "1.0.0",
       "methods": [],
@@ -18588,6 +19623,11 @@
           "static": true
         }
       },
+      "constants": []
+    },
+    "Pulsar\\Http\\Middleware\\LegacyMiddlewareAdapter": {
+      "since": "1.0.0-rc.11",
+      "methods": [],
       "constants": []
     },
     "Pulsar\\Http\\Middleware\\MiddlewareInterface": {
@@ -18827,6 +19867,11 @@
           "static": false
         }
       },
+      "constants": []
+    },
+    "Pulsar\\Http\\Middleware\\RequestHandlerInterface": {
+      "since": "1.0.0-rc.11",
+      "methods": [],
       "constants": []
     },
     "Pulsar\\Http\\RateLimit\\RateLimitResult": {
@@ -19999,6 +21044,136 @@
       },
       "constants": []
     },
+    "Pulsar\\Http\\Validation\\Analyzer\\AnalyzerFinding": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Analyzer\\FindingSeverity": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Analyzer\\PolicyAnalyzerInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Analyzer\\Policy\\ConsentAgeAnalyzer": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Analyzer\\Policy\\DataMinimizationAnalyzer": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Analyzer\\Policy\\PhiDetector": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Analyzer\\Policy\\RetentionPeriodAnalyzer": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Attribute\\CompiledValidationMap": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Attribute\\Sanitize": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Attribute\\Validate": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Attribute\\ValidationCompiler": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Contract\\ColumnName": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Contract\\InvalidIdentifierException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Contract\\TableName": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Contract\\ValidationQueryPort": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Contract\\WhereCondition": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Contract\\WhereConditions": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Filter\\FilterInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Filter\\HtmlEntities": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Filter\\Lowercase": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Filter\\SanitizationPipeline": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Filter\\SanitizationResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Filter\\StripTags": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Filter\\Trim": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Filter\\Uppercase": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Group\\ValidationGroup": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Http\\Validation\\RuleInterface": {
       "since": "1.0.0",
       "methods": [],
@@ -20146,6 +21321,36 @@
           "static": false
         }
       },
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\After": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\Alpha": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\AlphaNumeric": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\ArrayType": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\Ascii": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\Before": {
+      "since": "1.0.0",
+      "methods": [],
       "constants": []
     },
     "Pulsar\\Http\\Validation\\Rule\\Between": {
@@ -20528,6 +21733,86 @@
       },
       "constants": []
     },
+    "Pulsar\\Http\\Validation\\Rule\\Bic": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\BooleanType": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\Confirmed": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\Contains": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\CountryCode": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\CreditCard": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\CurrencyCode": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\Date": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\DateBetween": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\DateTimeRule": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\Decimal": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\Different": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\Dimensions": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\Distinct": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\Divisible": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\Each": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Http\\Validation\\Rule\\Email": {
       "since": "1.0.0",
       "methods": [],
@@ -20710,6 +21995,41 @@
       },
       "constants": []
     },
+    "Pulsar\\Http\\Validation\\Rule\\EndsWith": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\EnumRule": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\Exists": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\FileRule": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\GreaterThan": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\Iban": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\Image": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Http\\Validation\\Rule\\In": {
       "since": "1.0.0",
       "methods": [],
@@ -20752,6 +22072,11 @@
           "static": false
         }
       },
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\InstanceOfRule": {
+      "since": "1.0.0",
+      "methods": [],
       "constants": []
     },
     "Pulsar\\Http\\Validation\\Rule\\IntegerType": {
@@ -20886,6 +22211,31 @@
       },
       "constants": []
     },
+    "Pulsar\\Http\\Validation\\Rule\\Ip": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\Json": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\KeyExists": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\LanguageCode": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\LessThan": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Http\\Validation\\Rule\\Max": {
       "since": "1.0.0",
       "methods": [],
@@ -20930,6 +22280,11 @@
       },
       "constants": []
     },
+    "Pulsar\\Http\\Validation\\Rule\\MaxFileSize": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Http\\Validation\\Rule\\MaxLength": {
       "since": "1.0.0",
       "methods": [],
@@ -20972,6 +22327,11 @@
           "static": false
         }
       },
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\Mimes": {
+      "since": "1.0.0",
+      "methods": [],
       "constants": []
     },
     "Pulsar\\Http\\Validation\\Rule\\Min": {
@@ -21143,6 +22503,36 @@
           "static": false
         }
       },
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\Negative": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\NotContains": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\Nullable": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\Phone": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\Positive": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\PostalCode": {
+      "since": "1.0.0",
+      "methods": [],
       "constants": []
     },
     "Pulsar\\Http\\Validation\\Rule\\Regex": {
@@ -21519,6 +22909,86 @@
       },
       "constants": []
     },
+    "Pulsar\\Http\\Validation\\Rule\\Regulated\\Financial\\Cvv": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\Regulated\\Financial\\ExpirationDate": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\Regulated\\Financial\\Pan": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\Regulated\\Financial\\RoutingNumber": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\Regulated\\Financial\\Swift": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\Regulated\\Healthcare\\FhirResourceId": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\Regulated\\Healthcare\\Hl7Date": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\Regulated\\Healthcare\\Mrn": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\Regulated\\Healthcare\\Npi": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\Regulated\\Identity\\Ein": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\Regulated\\Identity\\PassportNumber": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\Regulated\\Identity\\Ssn": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\Regulated\\Identity\\TaxId": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\Regulated\\Legal\\BarNumber": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\Regulated\\Legal\\CaseNumber": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\Regulated\\Legal\\JurisdictionCode": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Http\\Validation\\Rule\\Required": {
       "since": "1.0.0",
       "methods": [],
@@ -21717,6 +23187,46 @@
       },
       "constants": []
     },
+    "Pulsar\\Http\\Validation\\Rule\\RequiredIf": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\RequiredUnless": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\RequiredWith": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\RequiredWithout": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\Same": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\Size": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\Slug": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\StartsWith": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Http\\Validation\\Rule\\StringType": {
       "since": "1.0.0",
       "methods": [],
@@ -21854,6 +23364,31 @@
           "static": false
         }
       },
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\Timezone": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\Unique": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\Url": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\Uuid": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\TranslatableViolation": {
+      "since": "1.0.0",
+      "methods": [],
       "constants": []
     },
     "Pulsar\\Http\\Validation\\ValidationException": {
@@ -22488,6 +24023,96 @@
           "static": false
         }
       },
+      "constants": []
+    },
+    "Pulsar\\I18n\\CatalogInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\I18n\\Exception\\I18nException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\I18n\\Exception\\MissingTranslationException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\I18n\\Extractor\\TranslationExtractor": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\I18n\\Format\\CurrencyFormatterInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\I18n\\Format\\DateFormatterInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\I18n\\Format\\NumberFormatterInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\I18n\\Linter\\TranslationLinter": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\I18n\\Locale": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\I18n\\LocaleNegotiatorInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\I18n\\Locale\\HreflangLink": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\I18n\\Locale\\LocaleUrlGenerator": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\I18n\\Locale\\LocaleUrlResolverInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\I18n\\Locale\\LocaleUrlStrategy": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\I18n\\Locale\\RouteBasedLocaleUrlResolver": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\I18n\\Locale\\UrlPrefixExtractor": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\I18n\\TranslationEntry": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\I18n\\TranslatorInterface": {
+      "since": "1.0.0",
+      "methods": [],
       "constants": []
     },
     "Pulsar\\Idempotency\\Exception\\IdempotencyException": {
@@ -25883,6 +27508,246 @@
       },
       "constants": []
     },
+    "Pulsar\\Mail\\Address": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\Attachment": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\Audit\\DeliveryStatus": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\Audit\\MailAuditRecord": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\Content": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\Envelope": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\Event\\MailEncryptionFallbackEvent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\Event\\MailEvent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\Event\\MailFailed": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\Event\\MailSent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\Exception\\MailException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\MailManager": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\MailManagerInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\Mailable": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\Message": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\Security\\PhiDetectedEvent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\Security\\PhiScrubberInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\TransportInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\Webhook\\IpAllowlistInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\Webhook\\WebhookDeduplicationStoreInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\Webhook\\WebhookEventType": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\Webhook\\WebhookHandlerInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\Webhook\\WebhookRequest": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\Webhook\\WebhookResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\Webhook\\WebhookVerifierInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Notification\\Consent\\ConsentRecord": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Notification\\Consent\\ConsentSource": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Notification\\Consent\\ConsentType": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Notification\\Consent\\LegalBasis": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Notification\\Consent\\LegalBasisRegistry": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Notification\\Consent\\NotificationClassification": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Notification\\Consent\\NotificationType": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Notification\\Consent\\PreferenceStoreInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Notification\\Consent\\UserPreferences": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Notification\\DatabaseNotificationStoreInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Notification\\Event\\NotificationEvent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Notification\\Event\\NotificationFailed": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Notification\\Event\\NotificationSent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Notification\\Exception\\NotificationException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Notification\\NotifiableInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Notification\\Notification": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Notification\\NotificationChannelInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Notification\\NotificationManager": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Notification\\NotificationManagerInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Notification\\SlackMessage": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Notification\\SmsGatewayInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Notification\\SmsMessage": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Notification\\WebhookPayload": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Observability\\Context\\CorrelationContext": {
       "since": "1.0.0",
       "methods": [],
@@ -26078,6 +27943,11 @@
           "static": false
         }
       },
+      "constants": []
+    },
+    "Pulsar\\Observability\\Log\\Compliance\\ComplianceLogFormatter": {
+      "since": "1.0.0",
+      "methods": [],
       "constants": []
     },
     "Pulsar\\Observability\\Log\\Exception\\LogException": {
@@ -26320,6 +28190,11 @@
       },
       "constants": []
     },
+    "Pulsar\\Observability\\Log\\Logger": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Observability\\Log\\Sink\\DeferredSinkInterface": {
       "since": "1.0.0",
       "methods": [],
@@ -26503,6 +28378,21 @@
           "static": false
         }
       },
+      "constants": []
+    },
+    "Pulsar\\Observability\\Metrics\\Counter": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Observability\\Metrics\\Gauge": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Observability\\Metrics\\Histogram": {
+      "since": "1.0.0",
+      "methods": [],
       "constants": []
     },
     "Pulsar\\Observability\\Metrics\\LabelSet": {
@@ -26921,6 +28811,11 @@
       },
       "constants": []
     },
+    "Pulsar\\Observability\\Tracing\\InMemorySpanCollector": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Observability\\Tracing\\Span": {
       "since": "1.0.0",
       "methods": [],
@@ -27002,6 +28897,11 @@
           "static": false
         }
       },
+      "constants": []
+    },
+    "Pulsar\\Observability\\Tracing\\SpanId": {
+      "since": "1.0.0",
+      "methods": [],
       "constants": []
     },
     "Pulsar\\Observability\\Tracing\\SpanProcessorInterface": {
@@ -27512,6 +29412,61 @@
       },
       "constants": []
     },
+    "Pulsar\\Queue\\Attribute\\AllowNonIdempotent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Attribute\\EffectClassification": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Attribute\\Encrypted": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Attribute\\Idempotent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Attribute\\NonIdempotent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Attribute\\SideEffectFree": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Attribute\\SystemJob": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Batch\\BatchRepositoryInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Batch\\JobBatch": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Batch\\PendingBatch": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Chain\\JobChain": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Queue\\DeadLetterQueue": {
       "since": "1.0.0",
       "methods": [],
@@ -27868,6 +29823,86 @@
       },
       "constants": []
     },
+    "Pulsar\\Queue\\Envelope\\BackoffStrategy": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Envelope\\JobEnvelope": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Event\\BatchCompleted": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Event\\BatchFailed": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Event\\ChainCompleted": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Event\\ChainFailed": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Event\\DlqJobDeleted": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Event\\DlqJobInspected": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Event\\DlqJobRetried": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Event\\DlqJobStored": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Event\\JobCompleted": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Event\\JobDispatched": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Event\\JobFailed": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Event\\JobRetried": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Event\\NonIdempotentJobAllowed": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Event\\QueueEvent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Queue\\Exception\\QueueException": {
       "since": "1.0.0",
       "methods": [],
@@ -28197,6 +30232,41 @@
       },
       "constants": []
     },
+    "Pulsar\\Queue\\Middleware\\JobMiddlewareInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Monitor\\HealthStatus": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Monitor\\MetricsCollector": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Monitor\\ProcessingTimeStats": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Monitor\\QueueHealthCheck": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Monitor\\QueueMonitor": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Monitor\\QueueMonitorInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Queue\\QueueDriverInterface": {
       "since": "1.0.0",
       "methods": [],
@@ -28519,6 +30589,26 @@
           "static": false
         }
       },
+      "constants": []
+    },
+    "Pulsar\\Queue\\Serialization\\SchemaVersionRegistry": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Serialization\\SerializerInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Serialization\\TypeRegistry": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Serialization\\VersionTransformerInterface": {
+      "since": "1.0.0",
+      "methods": [],
       "constants": []
     },
     "Pulsar\\Queue\\Worker": {
@@ -28941,6 +31031,11 @@
           "static": false
         }
       },
+      "constants": []
+    },
+    "Pulsar\\Resilience\\CircuitBreaker": {
+      "since": "1.0.0-rc.11",
+      "methods": [],
       "constants": []
     },
     "Pulsar\\Resilience\\CircuitBreakerState": {
@@ -29612,6 +31707,46 @@
       },
       "constants": []
     },
+    "Pulsar\\Routing\\Attribute\\PublicRoute": {
+      "since": "1.0.0-rc.11",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Routing\\Binding\\BindingMeta": {
+      "since": "1.0.0-rc.11",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Routing\\Binding\\Contract\\AuthorizationHookInterface": {
+      "since": "1.0.0-rc.11",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Routing\\Binding\\Contract\\ModelResolverPort": {
+      "since": "1.0.0-rc.11",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Routing\\Binding\\ModelBinder": {
+      "since": "1.0.0-rc.11",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Routing\\Binding\\ModelBindingConfig": {
+      "since": "1.0.0-rc.11",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Routing\\Binding\\ModelBindingException": {
+      "since": "1.0.0-rc.11",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Routing\\Binding\\ResolutionContext": {
+      "since": "1.0.0-rc.11",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Routing\\MatchedRoute": {
       "since": "1.0.0",
       "methods": [],
@@ -30142,6 +32277,21 @@
       },
       "constants": []
     },
+    "Pulsar\\Runtime\\Bridge\\PsrBridgeInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Runtime\\Bridge\\WorkerInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Runtime\\Exception\\ResourceLeakException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Runtime\\Exception\\RuntimeException": {
       "since": "1.0.0",
       "methods": [],
@@ -30196,6 +32346,11 @@
       },
       "constants": []
     },
+    "Pulsar\\Runtime\\Exception\\StatefulSingletonException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Runtime\\FpmRuntime": {
       "since": "1.0.0",
       "methods": [],
@@ -30248,6 +32403,11 @@
       },
       "constants": []
     },
+    "Pulsar\\Runtime\\Hygiene\\HygieneProfileInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Runtime\\PersistentRuntimeFactoryInterface": {
       "since": "1.0.0",
       "methods": [],
@@ -30286,6 +32446,11 @@
           "static": false
         }
       },
+      "constants": []
+    },
+    "Pulsar\\Runtime\\ReloadableRuntimeInterface": {
+      "since": "1.0.0",
+      "methods": [],
       "constants": []
     },
     "Pulsar\\Runtime\\ResettableInterface": {
@@ -30378,6 +32543,11 @@
       },
       "constants": []
     },
+    "Pulsar\\Runtime\\RuntimeFactory": {
+      "since": "1.0.0-rc.11",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Runtime\\RuntimeInterface": {
       "since": "1.0.0",
       "methods": [],
@@ -30440,6 +32610,11 @@
       },
       "constants": []
     },
+    "Pulsar\\Runtime\\RuntimeResolver": {
+      "since": "1.0.0-rc.11",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Runtime\\RuntimeStatus": {
       "since": "1.0.0",
       "methods": [],
@@ -30482,6 +32657,11 @@
           "static": true
         }
       },
+      "constants": []
+    },
+    "Pulsar\\Runtime\\RuntimeType": {
+      "since": "1.0.0",
+      "methods": [],
       "constants": []
     },
     "Pulsar\\Runtime\\Upgrade\\UpgradeContext": {
@@ -31238,6 +33418,16 @@
           "static": true
         }
       },
+      "constants": []
+    },
+    "Pulsar\\Runtime\\Worker\\HealthStatus": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Runtime\\Worker\\WorkerState": {
+      "since": "1.0.0",
+      "methods": [],
       "constants": []
     },
     "Pulsar\\Scheduler\\CronFields": {
@@ -32338,6 +34528,11 @@
           "static": false
         }
       },
+      "constants": []
+    },
+    "Pulsar\\Security\\Audit\\AuditChainVerifier": {
+      "since": "1.0.0",
+      "methods": [],
       "constants": []
     },
     "Pulsar\\Security\\Audit\\AuditEntry": {
@@ -34847,6 +37042,266 @@
       },
       "constants": []
     },
+    "Pulsar\\Security\\Compliance\\ComplianceEvent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\DataClassification": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Aml\\CustomerVerified": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Aml\\SanctionsChecked": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Aml\\SuspiciousActivityDetected": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Aml\\TransactionScreened": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Dora\\IctIncidentDetected": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Dora\\RecoveryInitiated": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Dora\\ResilienceTestCompleted": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Dora\\ThirdPartyRiskAssessed": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Gdpr\\BreachDetected": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Gdpr\\BreachNotified": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Gdpr\\ConsentGranted": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Gdpr\\ConsentRevoked": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Gdpr\\DataAccessRequested": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Gdpr\\DataDeletionRequested": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Gdpr\\DataPortabilityRequested": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Gdpr\\DpiaCompleted": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Hipaa\\AuditReviewCompleted": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Hipaa\\BreachNotification": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Hipaa\\PhiAccessed": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Hipaa\\PhiDisclosed": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Hipaa\\PhiModified": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Hipaa\\SecurityIncident": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\PciDss\\AccessControlChanged": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\PciDss\\CardDataAccessed": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\PciDss\\KeyRotated": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\PciDss\\PenetrationTestCompleted": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\PciDss\\VulnerabilityFound": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Sox\\AccessControlChanged": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Sox\\AuditTrailVerified": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Sox\\ControlTestCompleted": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Sox\\FinancialDataModified": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Evidence\\EvidenceExportResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Evidence\\EvidenceExporterInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Exception\\ComplianceException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Pseudonymization\\ForgetResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Pseudonymization\\ForgetServiceInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Pseudonymization\\PseudonymLookupInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Pseudonymization\\PseudonymMapping": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Pseudonymization\\PseudonymizationServiceInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Retention\\RetentionPolicy": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Retention\\RetentionPurgeResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Retention\\RetentionSchedule": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Snapshot\\BeforeAfterSnapshot": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Snapshot\\ClassifiedField": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Snapshot\\Snapshot": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Snapshot\\SnapshotCapture": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Crypto\\AesGcmCipherSuite": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Crypto\\CipherSuiteInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Crypto\\CompositeKeyProvider": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Crypto\\Encryptor": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Security\\Crypto\\EncryptorInterface": {
       "since": "1.0.0",
       "methods": [],
@@ -35379,6 +37834,11 @@
           "static": false
         }
       },
+      "constants": []
+    },
+    "Pulsar\\Security\\Crypto\\SodiumCipherSuite": {
+      "since": "1.0.0",
+      "methods": [],
       "constants": []
     },
     "Pulsar\\Security\\Csrf\\CsrfTokenManagerInterface": {
@@ -37881,6 +40341,16 @@
       },
       "constants": []
     },
+    "Pulsar\\Security\\Session\\Flash\\FlashBag": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Session\\Handler\\SessionHandlerInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Security\\Session\\SessionInterface": {
       "since": "1.0.0",
       "methods": [],
@@ -40038,6 +42508,181 @@
           "static": true
         }
       },
+      "constants": []
+    },
+    "Pulsar\\Security\\Session\\SessionManager": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Session\\SessionMetadata": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Session\\SessionMiddleware": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Session\\Validator\\SessionValidatorInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\Claim\\Claim": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\Claim\\ClaimSet": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\Claim\\ClaimSource": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\ContinuousVerification\\ContinuousVerificationInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\DeviceIdentity\\DeviceIdentity": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\DeviceIdentity\\DeviceProofResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\DeviceIdentity\\DeviceRegistryInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\Event\\AnomalyDetectedEvent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\Event\\PolicyDecisionEvent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\Event\\SignalRetentionPolicyChangedEvent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\Event\\StepUpAttemptedEvent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\Event\\StepUpLockoutEvent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\Policy\\ClaimRequirement": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\Policy\\PolicyDecision": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\Policy\\PolicyEngineInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\Policy\\PolicyEvaluationResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\Policy\\PolicyRule": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\Privacy\\PseudonymizerInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\Privacy\\SignalRetentionPolicy": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\Signal\\BehaviorBaseline": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\Signal\\BehaviorBaselineInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\Signal\\GeoLocation": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\Signal\\GeoLocationResolverInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\Signal\\NetworkIntelligenceInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\Signal\\SignalContext": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\Signal\\SignalProviderInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\StepUp\\StepUpAction": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\StepUp\\StepUpConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\StepUp\\StepUpState": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\TrustScore\\ScoreExplanation": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\TrustScore\\TrustScoreResult": {
+      "since": "1.0.0",
+      "methods": [],
       "constants": []
     },
     "Pulsar\\Storage\\StorageAdapterInterface": {
@@ -43443,6 +46088,71 @@
           "static": true
         }
       },
+      "constants": []
+    },
+    "Pulsar\\View\\Directive\\DirectiveInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\View\\Engine\\CompiledTemplate": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\View\\Engine\\TemplateAuthHelper": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\View\\Engine\\TemplateEngineInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\View\\Engine\\TemplateLocaleHelper": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\View\\Escaping\\AttributeEscaper": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\View\\Escaping\\CssEscaper": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\View\\Escaping\\EscaperInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\View\\Escaping\\HtmlEscaper": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\View\\Escaping\\JsEscaper": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\View\\Escaping\\UrlEscaper": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\View\\ViewConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\View\\ViewException": {
+      "since": "1.0.0",
+      "methods": [],
       "constants": []
     },
     "Pulsar\\Webhook\\Exception\\WebhookException": {

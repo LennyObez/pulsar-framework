@@ -137,6 +137,12 @@ final class Kernel implements KernelInterface
     /** @var array<string, list<array{name: string, hasDefault: bool, default: mixed}>> */
     private array $handlerParamMap = [];
 
+    /** @var array<string, bool> */
+    private array $handlerUsesArrayParams = [];
+
+    /** @var array<string, list<array{name: string, hasDefault: bool, default: mixed}>> */
+    private array $handlerParamMap = [];
+
     public function __construct(
         ?ContainerInterface $container = null,
         ?Router $router = null,
@@ -771,6 +777,10 @@ final class Kernel implements KernelInterface
      * 1. Container binding (registered classes, deferred providers)
      * 2. Autowiring: reflect the constructor, resolve each type-hinted
      *    parameter from the container, and instantiate the controller
+     *
+     * Attempts container resolution first (supports registered bindings, deferred
+     * providers, and autowiring). Falls back to direct instantiation only if the
+     * container cannot resolve the class.
      *
      * @param class-string $class
      *
