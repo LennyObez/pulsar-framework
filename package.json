@@ -31,7 +31,7 @@
     }
   },
   "scripts": {
-    "lint": "eslint . --ignore-pattern '*.config.*' --no-error-on-unmatched-pattern",
+    "lint": "eslint . --ignore-pattern '*.config.*' --no-error-on-unmatched-pattern --quiet",
     "format:check": "prettier --check .",
     "format:fix": "prettier --write .",
     "test": "vitest run",
