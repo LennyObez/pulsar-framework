@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Benchmark;
+namespace Pulsar\Benchmark\Comparative;
 
 use Pulsar\Database\Result;
 use Pulsar\Database\Row;

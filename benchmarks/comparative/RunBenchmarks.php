@@ -14,7 +14,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../../vendor/autoload.php';
 
-use Pulsar\Benchmark\PulsarBench;
+use Pulsar\Benchmark\Comparative\PulsarBench;
 
 $options = getopt('', ['baseline:', 'update-baseline', 'threshold:']);
 
