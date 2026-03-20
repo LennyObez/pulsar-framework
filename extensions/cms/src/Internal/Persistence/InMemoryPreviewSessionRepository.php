@@ -15,6 +15,10 @@ use Pulsar\Extension\Cms\Themes\PreviewSessionRepositoryInterface;
  * Used as a fallback when TaggedCacheInterface is not available. Preview
  * sessions are stored in-process memory and do not survive across requests,
  * which is acceptable for development and single-process deployments.
+ *
+ * @psalm-api Fallback binding for PreviewSessionRepositoryInterface in the CMS
+ *            service provider; resolved from the DI container, never instantiated
+ *            by name.
  */
 #[Internal(reason: 'Fallback implementation when no tagged cache is available')]
 final class InMemoryPreviewSessionRepository implements PreviewSessionRepositoryInterface
