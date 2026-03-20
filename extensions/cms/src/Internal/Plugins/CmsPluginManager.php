@@ -49,6 +49,7 @@ use function implode;
 use function is_dir;
 use function json_decode;
 use function random_bytes;
+use function realpath;
 use function rmdir;
 use function rtrim;
 use function spl_autoload_register;
@@ -68,8 +69,7 @@ use const JSON_THROW_ON_ERROR;
  *
  * Reuses SafeArchiveExtractor for Zip Slip protection. Tracks plugin failures
  * with a circuit breaker that auto-disables after 10 failures in 5 minutes.
- */
-/**
+ *
  * @psalm-api Bound to CmsPluginManagerInterface in the CMS service provider;
  *            resolved from the DI container, never instantiated by name.
  */
@@ -638,7 +638,7 @@ final readonly class CmsPluginManager implements CmsPluginManagerInterface
 
     private function removeDirectory(string $path): void
     {
-        if (!is_dir($path)) {
+        if (!is_dir($path) || !$this->isInsideAllowedRoot($path)) {
             return;
         }
 
@@ -657,5 +657,35 @@ final readonly class CmsPluginManager implements CmsPluginManagerInterface
         }
 
         rmdir($path);
+    }
+
+    /**
+     * Defence-in-depth: confirm the directory to remove resolves inside either
+     * the configured plugin storage path or the system temp dir. Guards
+     * against any future regression in slug validation or DB tampering.
+     */
+    private function isInsideAllowedRoot(string $path): bool
+    {
+        $resolved = realpath($path);
+
+        if ($resolved === false) {
+            return false;
+        }
+
+        foreach ([$this->storagePath, sys_get_temp_dir()] as $root) {
+            $rootReal = realpath($root);
+
+            if ($rootReal === false) {
+                continue;
+            }
+
+            $rootWithSep = rtrim($rootReal, '/\\') . DIRECTORY_SEPARATOR;
+
+            if (str_starts_with($resolved, $rootWithSep)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
