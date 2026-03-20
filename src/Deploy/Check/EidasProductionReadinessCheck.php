@@ -13,6 +13,7 @@ use Pulsar\Extension\Eidas\Config\EidasConfig;
 
 use function class_exists;
 use function in_array;
+use function sprintf;
 
 /**
  * Validates that the eIDAS extension is configured with production-grade

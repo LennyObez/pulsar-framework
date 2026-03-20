@@ -232,7 +232,7 @@ final class Rfc6749ConformanceTest extends TestCase
             tokenValue: 'opaque-token-value',
         );
 
-        $repo = new class($token) implements AccessTokenRepositoryInterface {
+        $repo = new class ($token) implements AccessTokenRepositoryInterface {
             public function __construct(private AccessToken $token) {}
 
             public function persist(AccessToken $token): void {}
@@ -252,7 +252,7 @@ final class Rfc6749ConformanceTest extends TestCase
             }
         };
 
-        $claimsProvider = new class($claims) implements UserClaimsProviderInterface {
+        $claimsProvider = new class ($claims) implements UserClaimsProviderInterface {
             /** @param array<string, mixed> $claims */
             public function __construct(private array $claims) {}
 

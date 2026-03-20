@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Observability\ErrorTracking;
 
+use Exception;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Observability\ErrorTracking\ErrorFingerprint;
+use ReflectionClass;
 use RuntimeException;
 
 use function strlen;
@@ -102,7 +104,7 @@ final class ErrorFingerprintTest extends TestCase
         $a = new RuntimeException('boom');
         $b = new RuntimeException('boom');
 
-        $reflection = new \ReflectionClass(\Exception::class);
+        $reflection = new ReflectionClass(Exception::class);
         $fileProp = $reflection->getProperty('file');
         $lineProp = $reflection->getProperty('line');
 

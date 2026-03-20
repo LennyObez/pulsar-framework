@@ -10,6 +10,8 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Container\Container;
 use Pulsar\Extension\Payments\PaymentsServiceProvider;
 
+use function sprintf;
+
 /**
  * F22.22: every entry returned by `provides()` MUST be bindable
  * after `register()` runs. Drift between the two lists has no
@@ -28,7 +30,7 @@ final class PaymentsServiceProviderProvidesContractTest extends TestCase
         // The provider reads `config.payments` from the container if
         // present; bind a closure returning an empty array so
         // PaymentsConfig::fromArray() builds defaults.
-        $container->bind('config.payments', static fn (): array => []);
+        $container->bind('config.payments', static fn(): array => []);
 
         $provider = new PaymentsServiceProvider();
         $provider->register($container);

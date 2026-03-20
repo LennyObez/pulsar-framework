@@ -122,7 +122,7 @@ final readonly class DbAuthorizationCodeRepository implements AuthorizationCodeR
     public function consume(string $codeValue): ?AuthorizationCode
     {
         $hash = $this->hashCode($codeValue);
-        $now = (new DateTimeImmutable())->format('Y-m-d H:i:s');
+        $now = new DateTimeImmutable()->format('Y-m-d H:i:s');
 
         return $this->connection->transaction(function (ConnectionInterface $tx) use ($hash, $now): ?AuthorizationCode {
             $affected = $tx->execute(

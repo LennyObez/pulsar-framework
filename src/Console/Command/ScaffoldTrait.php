@@ -277,7 +277,7 @@ trait ScaffoldTrait
             return;
         }
 
-        (new SafeFilesystem())->removeDirectoryRecursive($safe);
+        new SafeFilesystem()->removeDirectoryRecursive($safe);
     }
 
     /**
@@ -297,7 +297,7 @@ trait ScaffoldTrait
             return;
         }
 
-        (new SafeFilesystem())->removeFile($safe);
+        new SafeFilesystem()->removeFile($safe);
         $output->writeln(sprintf('  Removed %s', $path));
     }
 
@@ -314,7 +314,7 @@ trait ScaffoldTrait
         }
 
         $files = [];
-        foreach ((new SafeFilesystem())->listFilesRecursive($safe) as $file) {
+        foreach (new SafeFilesystem()->listFilesRecursive($safe) as $file) {
             $files[] = $file->absolute;
         }
 

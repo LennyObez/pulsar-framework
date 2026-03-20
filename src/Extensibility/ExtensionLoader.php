@@ -13,6 +13,7 @@ use Pulsar\Extensibility\Exception\ManifestException;
 
 use function count;
 use function in_array;
+use function sprintf;
 
 /**
  * Discovers and validates extension manifests.
