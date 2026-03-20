@@ -5,7 +5,6 @@ declare(strict_types=1);
 $finder = PhpCsFixer\Finder::create()
     ->in(__DIR__ . '/src')
     ->in(__DIR__ . '/tests')
-    ->in(__DIR__ . '/bootstrap')
     ->in(__DIR__ . '/config')
     ->in(__DIR__ . '/extensions')
     ->exclude('cache')
