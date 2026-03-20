@@ -160,7 +160,6 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - All PHPUnit notices, warnings, and deprecations resolved.
 - 319 Qodana static analysis issues fixed across the codebase.
-- `.claude/` added to `.gitignore`.
 
 ## [1.0.0-rc.3] - 2026-02-05
 

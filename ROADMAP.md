@@ -88,9 +88,9 @@
 
 ### rc.12 → 1.0.0 - GA gating work
 
-external audit (2026-05-11) and the in-flight Pulsar audit cycle leave the
+The external audit cycle and the in-flight Pulsar audit cycle leave the
 following work between rc.11 and the 1.0.0 GA tag. Each item links to its
-audit finding ID in `.claude/findings.md` and the PRD entry in
+audit finding ID in the internal findings register and the PRD entry in
 `docs/PRD-1.0.0.md`.
 
 **Blockers (GA tag cannot be cut while open)** — per **ADR-0032** (2026-05-12,

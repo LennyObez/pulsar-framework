@@ -56,11 +56,11 @@ jobs:
             exit 1
           fi
 
-      - name: Report abandoned packages (tracked in tech-debt.md)
+      - name: Report abandoned packages
         run: |
           # Abandoned transitive dev-deps (e.g. doctrine/annotations pulled by phpbench)
-          # are tracked in .claude/design/framework-uncompromising/tech-debt.md until
-          # upstream drops them. Direct abandoned deps MUST still be replaced.
+          # are tolerated until upstream drops them. Direct abandoned deps MUST
+          # still be replaced.
           composer audit --abandoned=report --no-interaction || true
 
       - name: Upload audit results
