@@ -20,6 +20,9 @@ use const JSON_THROW_ON_ERROR;
 
 /**
  * Database-backed product variant repository querying cms_product_variants.
+ *
+ * @psalm-api Bound to ProductVariantRepositoryInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use ProductVariantRepositoryInterface for public API')]
 final readonly class DbProductVariantRepository implements ProductVariantRepositoryInterface

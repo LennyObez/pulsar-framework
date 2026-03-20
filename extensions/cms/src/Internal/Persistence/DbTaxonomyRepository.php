@@ -13,6 +13,10 @@ use Pulsar\Extension\Cms\Taxonomy\Taxonomy;
 use Pulsar\Extension\Cms\Taxonomy\TaxonomyRepositoryInterface;
 use Pulsar\Extension\Cms\Taxonomy\TaxonomyTerm;
 
+/**
+ * @psalm-api Bound to TaxonomyRepositoryInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
+ */
 #[Internal(reason: 'Raw-DB repository; use TaxonomyRepositoryInterface for public API')]
 final readonly class DbTaxonomyRepository implements TaxonomyRepositoryInterface
 {

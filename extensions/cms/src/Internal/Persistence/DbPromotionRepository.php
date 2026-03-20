@@ -20,6 +20,9 @@ use const JSON_THROW_ON_ERROR;
 
 /**
  * Database-backed promotion repository with atomic usage counting.
+ *
+ * @psalm-api Bound to PromotionRepositoryInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use PromotionRepositoryInterface for public API')]
 final readonly class DbPromotionRepository implements PromotionRepositoryInterface
