@@ -10,8 +10,8 @@ use Pulsar\Webhook\Exception\WebhookException;
 
 use function abs;
 use function ctype_xdigit;
-use function strlen;
 use function str_starts_with;
+use function strlen;
 use function strtolower;
 use function substr;
 

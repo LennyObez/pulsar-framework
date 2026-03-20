@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Core;
 
+use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -28,7 +29,7 @@ use function is_dir;
 use function is_string;
 use function mkdir;
 use function random_bytes;
-use function scandir;
+use function strlen;
 
 #[CoversClass(Kernel::class)]
 #[CoversClass(BootProfile::class)]
@@ -302,7 +303,7 @@ final class KernelHandlerTest extends TestCase
         $kernel = new Kernel();
         $kernel->boot();
 
-        $this->expectException(\LogicException::class);
+        $this->expectException(LogicException::class);
         $this->expectExceptionMessage('addMiddleware() cannot be called after the kernel has booted');
 
         $kernel->addMiddleware(new HandlerPassthroughMiddleware());

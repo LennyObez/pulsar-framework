@@ -11,12 +11,13 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Audit\NullAuditLogger;
 use Pulsar\Extension\Auth\WebAuthn\Adapter\InMemoryCredentialRepository;
+use Pulsar\Extension\Auth\WebAuthn\Attestation\AttestationResult;
+use Pulsar\Extension\Auth\WebAuthn\Attestation\AttestationTrustLevel;
 use Pulsar\Extension\Auth\WebAuthn\Ceremony\RegistrationCeremony;
 use Pulsar\Extension\Auth\WebAuthn\Config\WebAuthnConfig;
 use Pulsar\Extension\Auth\WebAuthn\Contract\AttestationVerifierInterface;
 use Pulsar\Extension\Auth\WebAuthn\Exception\WebAuthnException;
-use Pulsar\Extension\Auth\WebAuthn\Attestation\AttestationResult;
-use Pulsar\Extension\Auth\WebAuthn\Attestation\AttestationTrustLevel;
+use Throwable;
 
 use function base64_encode;
 use function json_encode;
@@ -92,7 +93,7 @@ final class W3cConformanceVectorTest extends TestCase
     #[DataProvider('malformedCredentialJson')]
     public function malformedCredentialJsonIsRefused(string $credentialJson): void
     {
-        $this->expectException(\Throwable::class);
+        $this->expectException(Throwable::class);
         $this->ceremony->verify($credentialJson, 'expected-challenge');
     }
 

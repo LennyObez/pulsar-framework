@@ -15,13 +15,13 @@ final class EndForeachDirectiveTest extends TestCase
     #[Test]
     public function nameReturnsEndforeach(): void
     {
-        self::assertSame('endforeach', (new EndForeachDirective())->name());
+        self::assertSame('endforeach', new EndForeachDirective()->name());
     }
 
     #[Test]
     public function compileOutputRestoresParentLoop(): void
     {
-        $compiled = (new EndForeachDirective())->compile('');
+        $compiled = new EndForeachDirective()->compile('');
 
         self::assertStringContainsString('endforeach;', $compiled);
         self::assertStringContainsString('$loop = $__loopParent', $compiled);

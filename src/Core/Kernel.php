@@ -7,6 +7,7 @@ namespace Pulsar\Core;
 use Closure;
 use Error;
 use JsonException;
+use LogicException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface as PsrMiddlewareInterface;
@@ -100,6 +101,7 @@ use function dirname;
 use function is_array;
 use function is_callable;
 use function is_string;
+use function sprintf;
 use function str_contains;
 
 /**
@@ -457,7 +459,7 @@ final class Kernel implements KernelInterface
      *
      * @param PsrMiddlewareInterface|class-string<PsrMiddlewareInterface> $middleware
      *
-     * @throws \LogicException When called after `boot()` has run.
+     * @throws LogicException When called after `boot()` has run.
      */
     public function addMiddleware(PsrMiddlewareInterface|string $middleware): self
     {
@@ -466,7 +468,7 @@ final class Kernel implements KernelInterface
             // condition — caller registered middleware in the
             // wrong phase of the lifecycle. LogicException
             // is the right base class.
-            throw new \LogicException(
+            throw new LogicException(
                 'addMiddleware() cannot be called after the kernel has booted; '
                 . 'register all middleware before the first handle() invocation.',
             );
@@ -1192,7 +1194,7 @@ final class Kernel implements KernelInterface
                 }
                 try {
                     $extension->shutdown($this->container);
-                } catch (\Throwable $e) {
+                } catch (Throwable $e) {
                     error_log(sprintf(
                         '[Pulsar] Extension shutdown failed for "%s": %s',
                         $extension->name(),

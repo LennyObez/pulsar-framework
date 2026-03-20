@@ -14,6 +14,7 @@ use Pulsar\Config\Environment;
 use Pulsar\Config\Exception\ConfigException;
 use Pulsar\Config\Exception\MissingConfigException;
 use Pulsar\Config\ObservabilityConfig;
+use RuntimeException;
 
 #[CoversClass(ConfigManager::class)]
 final class ConfigManagerTest extends TestCase
@@ -316,7 +317,7 @@ final class ConfigManagerTest extends TestCase
 
             public function load(array $data, Environment $environment): object
             {
-                throw new \RuntimeException('factory should not be called when file is missing');
+                throw new RuntimeException('factory should not be called when file is missing');
             }
         };
 

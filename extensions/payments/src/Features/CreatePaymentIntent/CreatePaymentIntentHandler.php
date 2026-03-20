@@ -21,11 +21,11 @@ use Pulsar\Idempotency\IdempotencyClaimStatus;
 use Pulsar\Idempotency\IdempotencyStoreInterface;
 use Pulsar\Idempotency\SignedIdempotencyEnvelope;
 use Pulsar\Observability\Metrics\LabelSet;
-use SodiumException;
 use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditLogger;
 use Pulsar\Security\Audit\AuditOutcome;
+use SodiumException;
 use Throwable;
 
 use function strlen;

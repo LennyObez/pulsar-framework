@@ -102,7 +102,7 @@ final readonly class DatabaseOutboxPort implements OutboxPort
                 self::TABLE,
             ),
             [
-                'published_at' => (new DateTimeImmutable())->format('Y-m-d H:i:s.u'),
+                'published_at' => new DateTimeImmutable()->format('Y-m-d H:i:s.u'),
                 'event_id' => $eventId,
             ],
         );
@@ -152,7 +152,7 @@ final readonly class DatabaseOutboxPort implements OutboxPort
      */
     private function insert(EventEnvelope $envelope): void
     {
-        $now = (new DateTimeImmutable())->format('Y-m-d H:i:s.u');
+        $now = new DateTimeImmutable()->format('Y-m-d H:i:s.u');
 
         $this->connection->execute(
             sprintf(

@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace Pulsar\Auth\Guard;
 
+use LogicException;
 use Override;
 use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Api;
 use Pulsar\Auth\Identity\Identity;
 use Pulsar\Auth\Identity\IdentityInterface;
 use Pulsar\Security\Session\SessionInterface;
+
+use function count;
+use function sprintf;
 
 /**
  * Session-based authentication guard.
@@ -149,7 +153,7 @@ final class SessionGuard implements GuardInterface
     private function storeIdentity(IdentityInterface $identity): void
     {
         if (!$identity instanceof Identity) {
-            throw new \LogicException(sprintf(
+            throw new LogicException(sprintf(
                 'SessionGuard::storeIdentity expected %s, got %s. Custom '
                 . 'IdentityInterface implementations need a guard that knows '
                 . 'how to serialise them — wire your own guard or extend '

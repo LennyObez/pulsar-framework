@@ -12,6 +12,7 @@ use RuntimeException;
 use function base64_encode;
 use function count;
 use function explode;
+use function is_array;
 use function is_int;
 use function is_numeric;
 use function is_string;
@@ -194,7 +195,7 @@ final readonly class JwtSigner implements JwtSignerInterface
     private static function base64UrlDecode(string $data): string
     {
         $padded = str_replace(['-', '_'], ['+', '/'], $data);
-        $decoded = \base64_decode($padded, true);
+        $decoded = base64_decode($padded, true);
 
         return $decoded !== false ? $decoded : '';
     }

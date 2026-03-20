@@ -26,6 +26,7 @@ use function explode;
 use function implode;
 use function in_array;
 use function is_array;
+use function is_resource;
 use function is_string;
 use function json_decode;
 use function json_validate;

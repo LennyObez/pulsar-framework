@@ -15,6 +15,7 @@ use function hash_equals;
 use function json_encode;
 use function sodium_bin2hex;
 use function sodium_crypto_generichash;
+use function sprintf;
 use function strlen;
 use function substr;
 

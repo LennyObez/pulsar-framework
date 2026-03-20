@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Auth\Guard;
 
+use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\Stub;
@@ -176,7 +177,7 @@ final class SessionGuardTest extends TestCase
 
         $guard = new SessionGuard($session);
 
-        $this->expectException(\LogicException::class);
+        $this->expectException(LogicException::class);
         $this->expectExceptionMessage('SessionGuard::storeIdentity expected');
 
         $guard->updateIdentity(new AnonymousIdentity());

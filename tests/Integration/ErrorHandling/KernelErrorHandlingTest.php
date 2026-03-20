@@ -23,6 +23,8 @@ use Pulsar\Http\Validation\ValidationResult;
 use Pulsar\Http\Validation\Violation;
 use RuntimeException;
 
+use function strlen;
+
 #[CoversClass(Kernel::class)]
 #[CoversClass(ExceptionHandler::class)]
 final class KernelErrorHandlingTest extends TestCase

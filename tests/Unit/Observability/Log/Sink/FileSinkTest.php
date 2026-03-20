@@ -11,6 +11,9 @@ use Pulsar\Observability\Log\LogEntry;
 use Pulsar\Observability\Log\LogLevel;
 use Pulsar\Observability\Log\Sink\FileSink;
 
+use function dirname;
+use function sprintf;
+
 #[CoversClass(FileSink::class)]
 final class FileSinkTest extends TestCase
 {

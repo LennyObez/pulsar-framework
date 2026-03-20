@@ -19,6 +19,7 @@ use Pulsar\Security\Audit\ChainableAuditSinkInterface;
 use Stringable;
 
 use function file_put_contents;
+use function is_string;
 use function json_encode;
 use function random_bytes;
 

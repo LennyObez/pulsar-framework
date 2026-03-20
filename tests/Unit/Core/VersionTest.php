@@ -9,6 +9,8 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Core\Version;
 
+use function dirname;
+
 #[CoversClass(Version::class)]
 final class VersionTest extends TestCase
 {
