@@ -8,10 +8,10 @@ use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Extension\OAuth2\Contract\AccessTokenRepositoryInterface;
-use Pulsar\Extension\OAuth2\Contract\UserClaimsProviderInterface;
-use Pulsar\Extension\OAuth2\Oidc\UserInfoEndpoint;
-use Pulsar\Extension\OAuth2\Token\AccessToken;
+use Pulsar\Extension\Auth\OAuth2\Contract\AccessTokenRepositoryInterface;
+use Pulsar\Extension\Auth\OAuth2\Contract\UserClaimsProviderInterface;
+use Pulsar\Extension\Auth\OAuth2\Oidc\UserInfoEndpoint;
+use Pulsar\Extension\Auth\OAuth2\Token\AccessToken;
 
 #[CoversClass(UserInfoEndpoint::class)]
 final class UserInfoEndpointTest extends TestCase

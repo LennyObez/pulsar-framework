@@ -8,7 +8,7 @@ use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Extension\WebAuthn\PublicKey\CredentialSource;
+use Pulsar\Extension\Auth\WebAuthn\PublicKey\CredentialSource;
 
 #[CoversClass(CredentialSource::class)]
 final class CredentialSourceTest extends TestCase

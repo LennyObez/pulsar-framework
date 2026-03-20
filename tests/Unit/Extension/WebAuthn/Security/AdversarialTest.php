@@ -10,14 +10,14 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Audit\AuditLoggerInterface;
-use Pulsar\Extension\WebAuthn\Adapter\AttestationVerifier;
-use Pulsar\Extension\WebAuthn\Adapter\CborDecoder;
-use Pulsar\Extension\WebAuthn\Ceremony\AuthenticationCeremony;
-use Pulsar\Extension\WebAuthn\Ceremony\RegistrationCeremony;
-use Pulsar\Extension\WebAuthn\Config\WebAuthnConfig;
-use Pulsar\Extension\WebAuthn\Contract\CredentialRepositoryInterface;
-use Pulsar\Extension\WebAuthn\Exception\WebAuthnException;
-use Pulsar\Extension\WebAuthn\PublicKey\CredentialSource;
+use Pulsar\Extension\Auth\WebAuthn\Adapter\AttestationVerifier;
+use Pulsar\Extension\Auth\WebAuthn\Adapter\CborDecoder;
+use Pulsar\Extension\Auth\WebAuthn\Ceremony\AuthenticationCeremony;
+use Pulsar\Extension\Auth\WebAuthn\Ceremony\RegistrationCeremony;
+use Pulsar\Extension\Auth\WebAuthn\Config\WebAuthnConfig;
+use Pulsar\Extension\Auth\WebAuthn\Contract\CredentialRepositoryInterface;
+use Pulsar\Extension\Auth\WebAuthn\Exception\WebAuthnException;
+use Pulsar\Extension\Auth\WebAuthn\PublicKey\CredentialSource;
 
 use function chr;
 

@@ -8,8 +8,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Extension\WebAuthn\Adapter\CborDecoder;
-use Pulsar\Extension\WebAuthn\Exception\WebAuthnException;
+use Pulsar\Extension\Auth\WebAuthn\Adapter\CborDecoder;
+use Pulsar\Extension\Auth\WebAuthn\Exception\WebAuthnException;
 
 use function assert;
 use function is_array;

@@ -7,7 +7,7 @@ namespace Pulsar\Tests\Unit\Extension\WebAuthn\Authenticator;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Extension\WebAuthn\Authenticator\AuthenticatorType;
+use Pulsar\Extension\Auth\WebAuthn\Authenticator\AuthenticatorType;
 
 #[CoversClass(AuthenticatorType::class)]
 final class AuthenticatorTypeTest extends TestCase
