@@ -1,0 +1,25 @@
+{
+  "name": "pulsar/oauth2",
+  "version": "1.0.0-rc.11",
+  "description": "OAuth2/OIDC authorization server with PKCE, token introspection, and OpenID Connect provider",
+  "trust_tier": "core",
+  "extension_class": "Pulsar\\Extension\\OAuth2\\OAuth2Extension",
+  "pulsar": {
+    "min_version": "1.0.0-rc.11"
+  },
+  "provides": {
+    "services": [
+      "AuthorizationServerInterface",
+      "TokenIssuerInterface",
+      "ClientRepositoryInterface",
+      "ScopeRepositoryInterface",
+      "ConsentRepositoryInterface",
+      "AuthorizationCodeRepositoryInterface",
+      "RefreshTokenRepositoryInterface",
+      "AccessTokenRepositoryInterface",
+      "UserClaimsProviderInterface"
+    ],
+    "routes": true,
+    "commands": []
+  }
+}

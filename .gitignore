@@ -52,6 +52,9 @@ coverage/
 # REPL history
 .pulsar_repl_history
 
+# REPL history
+.pulsar_repl_history
+
 # PHP-CS-Fixer cache
 .php-cs-fixer.cache
 
