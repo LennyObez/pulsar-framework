@@ -7,8 +7,8 @@ namespace Pulsar\Tests\Unit\AuditFix;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Extension\OAuth2\Oidc\JwtSigner;
-use Pulsar\Extension\OAuth2\Oidc\OidcConfig;
+use Pulsar\Extension\Auth\OAuth2\Oidc\JwtSigner;
+use Pulsar\Extension\Auth\OAuth2\Oidc\OidcConfig;
 
 use function time;
 

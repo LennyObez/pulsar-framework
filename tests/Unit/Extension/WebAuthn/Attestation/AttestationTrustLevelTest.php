@@ -7,7 +7,7 @@ namespace Pulsar\Tests\Unit\Extension\WebAuthn\Attestation;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Extension\WebAuthn\Attestation\AttestationTrustLevel;
+use Pulsar\Extension\Auth\WebAuthn\Attestation\AttestationTrustLevel;
 
 #[CoversClass(AttestationTrustLevel::class)]
 final class AttestationTrustLevelTest extends TestCase

@@ -40,7 +40,6 @@ rules:
         - 'src/Cloud/Aws/**'
 
         # WebAuthn: RP ID hash and clientDataJSON hash mandated by W3C spec.
-        - 'extensions/webauthn/**'
         - 'extensions/auth/src/WebAuthn/**'
 
         # PKCE: SHA-256 challenge mandated by RFC 7636.

@@ -8,8 +8,8 @@ use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Extension\OAuth2\Token\AuthorizationCode;
-use Pulsar\Extension\OAuth2\Token\InMemoryAuthorizationCodeRepository;
+use Pulsar\Extension\Auth\OAuth2\Token\AuthorizationCode;
+use Pulsar\Extension\Auth\OAuth2\Token\InMemoryAuthorizationCodeRepository;
 
 #[CoversClass(InMemoryAuthorizationCodeRepository::class)]
 final class InMemoryAuthorizationCodeRepositoryTest extends TestCase

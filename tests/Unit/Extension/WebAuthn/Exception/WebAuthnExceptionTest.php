@@ -7,7 +7,7 @@ namespace Pulsar\Tests\Unit\Extension\WebAuthn\Exception;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Extension\WebAuthn\Exception\WebAuthnException;
+use Pulsar\Extension\Auth\WebAuthn\Exception\WebAuthnException;
 use RuntimeException;
 
 #[CoversClass(WebAuthnException::class)]
