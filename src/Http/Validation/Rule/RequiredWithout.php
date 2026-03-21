@@ -19,7 +19,7 @@ use function sprintf;
  * Does NOT skip null; it checks the condition and fails if required and missing.
  */
 #[Api(since: '1.0.0')]
-readonly class RequiredWithout implements RuleInterface
+final readonly class RequiredWithout implements RuleInterface
 {
     /** @var list<string> */
     private array $fields;

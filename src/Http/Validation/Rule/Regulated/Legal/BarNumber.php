@@ -24,7 +24,7 @@ use function strlen;
  * @see https://www.americanbar.org/
  */
 #[Api(since: '1.0.0')]
-readonly class BarNumber implements RuleInterface
+final readonly class BarNumber implements RuleInterface
 {
     private const int MAX_PATTERN_LENGTH = 500;
 

@@ -21,7 +21,7 @@ use function strval;
  * Skips null values.
  */
 #[Api(since: '1.0.0')]
-readonly class In implements RuleInterface
+final readonly class In implements RuleInterface
 {
     /**
      * @param list<string|int|float> $allowed

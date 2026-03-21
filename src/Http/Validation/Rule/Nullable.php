@@ -13,7 +13,7 @@ use Pulsar\Http\Validation\Violation;
  * Marker rule that explicitly allows null values. Always passes.
  */
 #[Api(since: '1.0.0')]
-readonly class Nullable implements RuleInterface
+final readonly class Nullable implements RuleInterface
 {
     #[Override]
     public function validate(string $field, mixed $value, array $data): ?Violation

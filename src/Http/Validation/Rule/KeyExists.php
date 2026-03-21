@@ -18,7 +18,7 @@ use function sprintf;
  * Specified keys must exist in the array value. Skips null values.
  */
 #[Api(since: '1.0.0')]
-readonly class KeyExists implements RuleInterface
+final readonly class KeyExists implements RuleInterface
 {
     /** @var list<string> */
     private array $keys;

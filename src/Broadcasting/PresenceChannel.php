@@ -11,7 +11,7 @@ use Pulsar\Api\Api;
  * Presence channel: requires authentication and tracks online members.
  */
 #[Api(since: '1.0.0')]
-readonly class PresenceChannel extends Channel
+final readonly class PresenceChannel extends Channel
 {
     #[Override]
     public function requiresAuth(): bool

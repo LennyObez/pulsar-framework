@@ -14,7 +14,7 @@ use function strip_tags;
  * Strips HTML/PHP tags from string values. Non-strings pass through unchanged.
  */
 #[Api(since: '1.0.0')]
-readonly class StripTags implements FilterInterface
+final readonly class StripTags implements FilterInterface
 {
     #[Override]
     public function apply(mixed $value): mixed

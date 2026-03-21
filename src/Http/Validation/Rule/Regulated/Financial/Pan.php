@@ -31,7 +31,7 @@ use function strlen;
  * @see https://www.pcisecuritystandards.org/ PCI DSS
  */
 #[Api(since: '1.0.0')]
-readonly class Pan implements RuleInterface
+final readonly class Pan implements RuleInterface
 {
     public function __construct(
         private string $message = '',

@@ -19,7 +19,7 @@ use function strrchr;
  * Validates the number of decimal places. Skips null values.
  */
 #[Api(since: '1.0.0')]
-readonly class Decimal implements RuleInterface
+final readonly class Decimal implements RuleInterface
 {
     private int $maxPlaces;
 

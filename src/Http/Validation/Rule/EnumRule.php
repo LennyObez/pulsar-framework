@@ -20,7 +20,7 @@ use function sprintf;
  * Value must be a valid case of a backed enum. Skips null values.
  */
 #[Api(since: '1.0.0')]
-readonly class EnumRule implements RuleInterface
+final readonly class EnumRule implements RuleInterface
 {
     /**
      * @param class-string<BackedEnum> $enumClass

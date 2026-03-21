@@ -29,7 +29,7 @@ use const UPLOAD_ERR_OK;
  * Skips null values.
  */
 #[Api(since: '1.0.0')]
-readonly class Mimes implements RuleInterface
+final readonly class Mimes implements RuleInterface
 {
     /** @var list<string> */
     private array $allowedMimes;

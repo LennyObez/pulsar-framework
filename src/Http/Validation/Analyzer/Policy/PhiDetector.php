@@ -22,7 +22,7 @@ use function preg_match;
  * and should be reviewed by qualified compliance personnel.
  */
 #[Api(since: '1.0.0')]
-readonly class PhiDetector implements PolicyAnalyzerInterface
+final readonly class PhiDetector implements PolicyAnalyzerInterface
 {
     /**
      * @return list<AnalyzerFinding>

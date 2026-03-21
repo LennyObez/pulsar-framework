@@ -21,7 +21,7 @@ use function sprintf;
  * @see https://www.hl7.org/fhir/datatypes.html#id
  */
 #[Api(since: '1.0.0')]
-readonly class FhirResourceId implements RuleInterface
+final readonly class FhirResourceId implements RuleInterface
 {
     public function __construct(
         private string $message = '',

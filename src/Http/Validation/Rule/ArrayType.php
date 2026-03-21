@@ -16,7 +16,7 @@ use function sprintf;
  * Value must be an array. Skips null values.
  */
 #[Api(since: '1.0.0')]
-readonly class ArrayType implements TypeRuleInterface
+final readonly class ArrayType implements TypeRuleInterface
 {
     public function __construct(
         private string $message = '',

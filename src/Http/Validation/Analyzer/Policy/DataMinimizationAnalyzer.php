@@ -23,7 +23,7 @@ use function strtolower;
  * reviewed by qualified privacy personnel.
  */
 #[Api(since: '1.0.0')]
-readonly class DataMinimizationAnalyzer implements PolicyAnalyzerInterface
+final readonly class DataMinimizationAnalyzer implements PolicyAnalyzerInterface
 {
     /** @var list<array{pattern: string, description: string, severity: string, confidence: float}> */
     private const array PII_INDICATORS = [

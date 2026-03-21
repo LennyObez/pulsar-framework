@@ -14,7 +14,7 @@ use Pulsar\Security\ZeroTrust\Claim\ClaimSource;
  * for regulatory audit trails (GDPR, HIPAA).
  */
 #[Api(since: '1.0.0')]
-readonly class SignalRetentionPolicyChangedEvent
+final readonly class SignalRetentionPolicyChangedEvent
 {
     /**
      * @param ClaimSource $source Signal source whose retention policy changed

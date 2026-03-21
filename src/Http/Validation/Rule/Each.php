@@ -18,7 +18,7 @@ use function sprintf;
  * Skips null values. Fails if value is not an array.
  */
 #[Api(since: '1.0.0')]
-readonly class Each implements RuleInterface
+final readonly class Each implements RuleInterface
 {
     /** @var list<RuleInterface> */
     private array $rules;
