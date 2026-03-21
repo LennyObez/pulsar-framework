@@ -78,7 +78,7 @@ final readonly class MetricsWiring implements ServiceWiringInterface
                 if (!$guard->isAuthorized($request)) {
                     return Response::text(
                         'Metrics endpoint requires Bearer token from PULSAR_DIAGNOSTICS_TOKEN.',
-                        ResponseStatus::Unauthorized,
+                        ResponseStatus::Unauthorized->value,
                     )->withHeader('WWW-Authenticate', 'Bearer realm="pulsar-metrics"');
                 }
 
