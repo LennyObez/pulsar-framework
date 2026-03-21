@@ -23,7 +23,7 @@ use function sprintf;
  * @see https://www.irs.gov/businesses/small-businesses-self-employed/employer-id-numbers
  */
 #[Api(since: '1.0.0')]
-readonly class Ein implements RuleInterface
+final readonly class Ein implements RuleInterface
 {
     /** @var list<int> Valid IRS campus prefixes */
     private const array VALID_PREFIXES = [

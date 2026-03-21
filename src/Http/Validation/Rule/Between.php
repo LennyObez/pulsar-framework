@@ -16,7 +16,7 @@ use function sprintf;
  * Numeric value must be within inclusive range [min, max]. Skips null values.
  */
 #[Api(since: '1.0.0')]
-readonly class Between implements RuleInterface
+final readonly class Between implements RuleInterface
 {
     public function __construct(
         private int|float $min,

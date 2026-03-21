@@ -16,7 +16,7 @@ use function sprintf;
  * HTTP-friendly boolean: true, false, 1, 0, "1", "0". Skips null values.
  */
 #[Api(since: '1.0.0')]
-readonly class BooleanType implements TypeRuleInterface
+final readonly class BooleanType implements TypeRuleInterface
 {
     /** @var list<mixed> */
     private const array ACCEPTED = [true, false, 1, 0, '1', '0'];

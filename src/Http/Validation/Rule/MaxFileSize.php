@@ -21,7 +21,7 @@ use const UPLOAD_ERR_OK;
  * Uploaded file size must not exceed maximum bytes. Skips null values.
  */
 #[Api(since: '1.0.0')]
-readonly class MaxFileSize implements RuleInterface
+final readonly class MaxFileSize implements RuleInterface
 {
     public function __construct(
         private int $maxBytes,

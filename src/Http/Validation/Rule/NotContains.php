@@ -17,7 +17,7 @@ use function str_contains;
  * Value must not contain the given substring. Skips null values.
  */
 #[Api(since: '1.0.0')]
-readonly class NotContains implements RuleInterface
+final readonly class NotContains implements RuleInterface
 {
     public function __construct(
         private string $needle,

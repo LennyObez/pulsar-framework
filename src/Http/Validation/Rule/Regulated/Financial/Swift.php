@@ -25,7 +25,7 @@ use function sprintf;
  * @see https://www.iso.org/standard/60390.html ISO 9362
  */
 #[Api(since: '1.0.0')]
-readonly class Swift implements RuleInterface
+final readonly class Swift implements RuleInterface
 {
     public function __construct(
         private string $message = '',

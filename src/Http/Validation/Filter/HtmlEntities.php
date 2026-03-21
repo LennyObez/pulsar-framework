@@ -14,7 +14,7 @@ use function is_string;
  * Encodes HTML special characters in string values. Non-strings pass through unchanged.
  */
 #[Api(since: '1.0.0')]
-readonly class HtmlEntities implements FilterInterface
+final readonly class HtmlEntities implements FilterInterface
 {
     #[Override]
     public function apply(mixed $value): mixed

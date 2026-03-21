@@ -15,7 +15,7 @@ use function sprintf;
  * Value must be an instance of the specified class. Skips null values.
  */
 #[Api(since: '1.0.0')]
-readonly class InstanceOfRule implements RuleInterface
+final readonly class InstanceOfRule implements RuleInterface
 {
     public function __construct(
         private string $className,

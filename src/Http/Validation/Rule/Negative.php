@@ -16,7 +16,7 @@ use function sprintf;
  * Value must be a negative number (less than zero). Skips null values.
  */
 #[Api(since: '1.0.0')]
-readonly class Negative implements RuleInterface
+final readonly class Negative implements RuleInterface
 {
     public function __construct(
         private string $message = '',

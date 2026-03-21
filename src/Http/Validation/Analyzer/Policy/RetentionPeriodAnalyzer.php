@@ -23,7 +23,7 @@ use function sprintf;
  * qualified data governance personnel.
  */
 #[Api(since: '1.0.0')]
-readonly class RetentionPeriodAnalyzer implements PolicyAnalyzerInterface
+final readonly class RetentionPeriodAnalyzer implements PolicyAnalyzerInterface
 {
     public function __construct(
         private int $retentionDays = 365,

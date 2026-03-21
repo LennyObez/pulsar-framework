@@ -27,7 +27,7 @@ use function strlen;
  * @see https://www.cms.gov/Regulations-and-Guidance/Administrative-Simplification/NationalProvIdentStand
  */
 #[Api(since: '1.0.0')]
-readonly class Npi implements RuleInterface
+final readonly class Npi implements RuleInterface
 {
     public function __construct(
         private string $message = '',

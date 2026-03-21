@@ -17,7 +17,7 @@ use function sprintf;
  * Value must be a valid JSON string. Skips null values.
  */
 #[Api(since: '1.0.0')]
-readonly class Json implements RuleInterface
+final readonly class Json implements RuleInterface
 {
     public function __construct(
         private string $message = '',

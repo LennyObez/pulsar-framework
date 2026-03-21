@@ -17,7 +17,7 @@ use function sprintf;
  * Value must be a valid date matching the given format. Skips null values.
  */
 #[Api(since: '1.0.0')]
-readonly class Date implements RuleInterface
+final readonly class Date implements RuleInterface
 {
     public function __construct(
         private string $format = 'Y-m-d',

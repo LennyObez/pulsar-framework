@@ -14,7 +14,7 @@ use Pulsar\I18n\TranslatorInterface;
  * resolves the key through the translator at render time.
  */
 #[Api(since: '1.0.0')]
-readonly class TranslatableViolation extends Violation
+final readonly class TranslatableViolation extends Violation
 {
     /**
      * @param array<string, mixed> $parameters ICU parameters for the message

@@ -16,7 +16,7 @@ use function sprintf;
  * Value must be less than the given threshold. Skips null values.
  */
 #[Api(since: '1.0.0')]
-readonly class LessThan implements RuleInterface
+final readonly class LessThan implements RuleInterface
 {
     public function __construct(
         private int|float $threshold,

@@ -17,7 +17,7 @@ use function sprintf;
  * Value must contain only ASCII characters. Skips null values.
  */
 #[Api(since: '1.0.0')]
-readonly class Ascii implements RuleInterface
+final readonly class Ascii implements RuleInterface
 {
     public function __construct(
         private string $message = '',

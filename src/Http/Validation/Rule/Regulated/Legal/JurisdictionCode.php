@@ -22,7 +22,7 @@ use function strtoupper;
  * @see https://www.iso.org/obp/ui/#iso:code:3166:US
  */
 #[Api(since: '1.0.0')]
-readonly class JurisdictionCode implements RuleInterface
+final readonly class JurisdictionCode implements RuleInterface
 {
     /** @var list<string> Valid US jurisdiction codes */
     private const array CODES = [

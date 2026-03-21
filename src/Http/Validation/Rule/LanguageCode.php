@@ -18,7 +18,7 @@ use function sprintf;
  * Validates ISO 639-1 two-letter language codes. Skips null values.
  */
 #[Api(since: '1.0.0')]
-readonly class LanguageCode implements RuleInterface
+final readonly class LanguageCode implements RuleInterface
 {
     /** @var list<string> */
     private const array CODES = [

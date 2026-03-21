@@ -25,7 +25,7 @@ use function sprintf;
  * @see https://www.aba.com/routing-number
  */
 #[Api(since: '1.0.0')]
-readonly class RoutingNumber implements RuleInterface
+final readonly class RoutingNumber implements RuleInterface
 {
     public function __construct(
         private string $message = '',

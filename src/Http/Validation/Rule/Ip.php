@@ -20,7 +20,7 @@ use const FILTER_VALIDATE_IP;
  * Value must be a valid IP address. Supports v4, v6, or both. Skips null values.
  */
 #[Api(since: '1.0.0')]
-readonly class Ip implements RuleInterface
+final readonly class Ip implements RuleInterface
 {
     public function __construct(
         private string $version = 'both',

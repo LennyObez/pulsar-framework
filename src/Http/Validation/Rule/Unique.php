@@ -19,7 +19,7 @@ use function sprintf;
  * Value must be unique in the database table/column. Skips null values.
  */
 #[Api(since: '1.0.0')]
-readonly class Unique implements RuleInterface
+final readonly class Unique implements RuleInterface
 {
     public function __construct(
         private ValidationQueryPort $port,

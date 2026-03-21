@@ -17,7 +17,7 @@ use function sprintf;
  * Value must contain only letters and digits. Supports optional unicode mode. Skips null values.
  */
 #[Api(since: '1.0.0')]
-readonly class AlphaNumeric implements RuleInterface
+final readonly class AlphaNumeric implements RuleInterface
 {
     public function __construct(
         private bool $unicode = false,
