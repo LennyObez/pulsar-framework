@@ -18,7 +18,7 @@ use Pulsar\Tenancy\TenantResolverInterface;
 /**
  * Middleware that resolves the current tenant and sets context.
  */
-readonly class TenantResolutionMiddleware implements MiddlewareInterface
+final readonly class TenantResolutionMiddleware implements MiddlewareInterface
 {
     public function __construct(
         private TenantResolverInterface $resolver,

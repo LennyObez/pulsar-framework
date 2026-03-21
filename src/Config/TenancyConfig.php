@@ -12,7 +12,7 @@ use Pulsar\Tenancy\TenantResolverStrategy;
  * Typed configuration DTO for `config/tenancy.php`.
  */
 #[Api(since: '1.0.0')]
-readonly class TenancyConfig
+final readonly class TenancyConfig
 {
     /**
      * @param array<string, array<string, mixed>> $tenants Map of tenant ID → tenant data

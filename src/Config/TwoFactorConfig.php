@@ -14,7 +14,7 @@ use function is_string;
  * Typed configuration DTO for two-factor authentication settings.
  */
 #[Api(since: '1.0.0')]
-readonly class TwoFactorConfig
+final readonly class TwoFactorConfig
 {
     public function __construct(
         public bool $enabled = false,

@@ -12,7 +12,7 @@ use Pulsar\Api\Api;
  * IP addresses are stored as hashes: never raw values.
  */
 #[Api(since: '1.0.0')]
-readonly class ConsentRecord
+final readonly class ConsentRecord
 {
     public function __construct(
         public int $timestamp,

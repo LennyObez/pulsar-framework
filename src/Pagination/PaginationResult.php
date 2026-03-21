@@ -15,7 +15,7 @@ use function count;
  * @template T
  */
 #[Api(since: '1.0.0')]
-readonly class PaginationResult
+final readonly class PaginationResult
 {
     /** Total number of pages. */
     public int $lastPage;

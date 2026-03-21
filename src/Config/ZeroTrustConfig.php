@@ -22,7 +22,7 @@ use function is_int;
  * Maps from the `zero_trust` key of `config/security.php`.
  */
 #[Api(since: '1.0.0')]
-readonly class ZeroTrustConfig
+final readonly class ZeroTrustConfig
 {
     /**
      * @param bool $enabled Whether zero-trust evaluation is active

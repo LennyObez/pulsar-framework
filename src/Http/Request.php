@@ -32,7 +32,7 @@ use const JSON_THROW_ON_ERROR;
  * Immutable HTTP request value object.
  */
 #[Api(since: '1.0.0')]
-readonly class Request
+final readonly class Request
 {
     /**
      * @param array<string, mixed> $query   GET parameters

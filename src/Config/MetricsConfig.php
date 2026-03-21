@@ -13,7 +13,7 @@ use function is_string;
  * Typed configuration DTO for the metrics section of observability config.
  */
 #[Api(since: '1.0.0')]
-readonly class MetricsConfig
+final readonly class MetricsConfig
 {
     public function __construct(
         public bool $enabled = true,

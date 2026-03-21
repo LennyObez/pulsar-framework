@@ -11,7 +11,7 @@ use Pulsar\Api\Api;
  * Defines a time window during which a tenant's scheduled jobs are suspended.
  */
 #[Api(since: '1.0.0')]
-readonly class MaintenanceWindow
+final readonly class MaintenanceWindow
 {
     public function __construct(
         public DateTimeImmutable $start,

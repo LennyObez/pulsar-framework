@@ -12,7 +12,7 @@ use function count;
  * Result of translation catalog linting.
  */
 #[Internal]
-readonly class LintResult
+final readonly class LintResult
 {
     /**
      * @param list<array{severity: LintSeverity, key: string, locale: string, domain: string, message: string}> $issues

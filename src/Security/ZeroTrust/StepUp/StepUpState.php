@@ -16,7 +16,7 @@ use Pulsar\Api\Api;
  * a new instance.
  */
 #[Api(since: '1.0.0')]
-readonly class StepUpState
+final readonly class StepUpState
 {
     /**
      * @param string $identityId Identity being tracked

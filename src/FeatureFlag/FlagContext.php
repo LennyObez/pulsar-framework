@@ -12,7 +12,7 @@ use Pulsar\Api\Api;
  * Context for evaluating a feature flag.
  */
 #[Api(since: '1.0.0')]
-readonly class FlagContext
+final readonly class FlagContext
 {
     /**
      * @param array<string, mixed> $attributes

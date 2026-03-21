@@ -17,7 +17,7 @@ use function sprintf;
  * String length must be <= the given maximum. Skips null values.
  */
 #[Api(since: '1.0.0')]
-readonly class MaxLength implements RuleInterface
+final readonly class MaxLength implements RuleInterface
 {
     public function __construct(
         private int $max,

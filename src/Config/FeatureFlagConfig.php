@@ -12,7 +12,7 @@ use Pulsar\FeatureFlag\FlagStorageDriver;
  * Typed configuration DTO for `config/features.php`.
  */
 #[Api(since: '1.0.0')]
-readonly class FeatureFlagConfig
+final readonly class FeatureFlagConfig
 {
     /**
      * @param array<string, array<string, mixed>> $flags Pre-configured flag definitions

@@ -15,7 +15,7 @@ use function is_string;
  * Readonly value object for an applied migration row.
  */
 #[Api(since: '1.0.0')]
-readonly class MigrationRecord
+final readonly class MigrationRecord
 {
     public function __construct(
         public string $version,

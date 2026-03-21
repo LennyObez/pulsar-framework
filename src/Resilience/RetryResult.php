@@ -12,7 +12,7 @@ use Throwable;
  * Result of a retry policy execution.
  */
 #[Api(since: '1.0.0')]
-readonly class RetryResult
+final readonly class RetryResult
 {
     /**
      * @param mixed      $result        The return value (null on failure)

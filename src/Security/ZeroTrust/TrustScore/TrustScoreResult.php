@@ -15,7 +15,7 @@ use Pulsar\Security\ZeroTrust\Claim\ClaimSet;
  * per-claim breakdowns for debugging and audit purposes.
  */
 #[Api(since: '1.0.0')]
-readonly class TrustScoreResult
+final readonly class TrustScoreResult
 {
     /**
      * @param float $score Normalized trust score (0.0 = no trust, 1.0 = full trust)

@@ -21,7 +21,7 @@ use function strtolower;
  * and 'sox', or 'PCI-DSS' and 'pci_dss', resolve to the same policy.
  */
 #[Api(since: '1.0.0')]
-readonly class RetentionSchedule
+final readonly class RetentionSchedule
 {
     /**
      * @var array<string, RetentionPolicy>

@@ -10,7 +10,7 @@ use Pulsar\Api\Api;
  * DTO representing an SMS notification message.
  */
 #[Api(since: '1.0.0')]
-readonly class SmsMessage
+final readonly class SmsMessage
 {
     /**
      * @param string      $to   Recipient phone number (E.164 format)

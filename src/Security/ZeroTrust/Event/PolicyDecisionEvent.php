@@ -14,7 +14,7 @@ use Pulsar\Security\ZeroTrust\Policy\PolicyEvaluationResult;
  * and anomaly detection based on access patterns.
  */
 #[Api(since: '1.0.0')]
-readonly class PolicyDecisionEvent
+final readonly class PolicyDecisionEvent
 {
     public function __construct(
         public PolicyEvaluationResult $result,

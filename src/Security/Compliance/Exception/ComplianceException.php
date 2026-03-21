@@ -12,7 +12,7 @@ use RuntimeException;
  * Exception for compliance-related failures.
  */
 #[Api(since: '1.0.0')]
-class ComplianceException extends RuntimeException
+final class ComplianceException extends RuntimeException
 {
     #[NoDiscard]
     public static function missingClassification(string $fieldName): self

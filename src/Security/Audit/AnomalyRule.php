@@ -13,7 +13,7 @@ use Pulsar\Api\Api;
  * occur from the same actor within the specified time window, the rule fires.
  */
 #[Api(since: '1.0.0')]
-readonly class AnomalyRule
+final readonly class AnomalyRule
 {
     /**
      * @param string     $name          Human-readable rule name

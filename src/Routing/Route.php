@@ -20,7 +20,7 @@ use const ARRAY_FILTER_USE_KEY;
  * Represents a single route definition.
  */
 #[Api(since: '1.0.0')]
-readonly class Route
+final readonly class Route
 {
     /**
      * Pre-compiled regex pattern for parameterized routes.

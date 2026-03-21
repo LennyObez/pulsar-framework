@@ -18,7 +18,7 @@ use const PHP_OS_FAMILY;
  * Typed configuration DTO for a single database connection.
  */
 #[Api(since: '1.0.0')]
-readonly class ConnectionConfig
+final readonly class ConnectionConfig
 {
     public function __construct(
         public string $name,

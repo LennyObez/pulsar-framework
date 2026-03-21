@@ -13,7 +13,7 @@ use Pulsar\Api\Api;
  * detecting brute-force patterns, and audit logging.
  */
 #[Api(since: '1.0.0')]
-readonly class StepUpAttemptedEvent
+final readonly class StepUpAttemptedEvent
 {
     /**
      * @param string $identityId Identity attempting step-up

@@ -15,7 +15,7 @@ use function is_int;
  * Maps from the `rate_limiting` key of `config/security.php`.
  */
 #[Api(since: '1.0.0')]
-readonly class RateLimitConfig
+final readonly class RateLimitConfig
 {
     public function __construct(
         public bool $enabled,

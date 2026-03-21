@@ -15,7 +15,7 @@ use function is_numeric;
  * Typed configuration DTO for the tracing section of observability config.
  */
 #[Api(since: '1.0.0')]
-readonly class TracingConfig
+final readonly class TracingConfig
 {
     public function __construct(
         public bool $enabled = false,

@@ -14,7 +14,7 @@ use function count;
  * Maps domain -> key -> list of source file references.
  */
 #[Internal]
-readonly class ExtractionResult
+final readonly class ExtractionResult
 {
     /**
      * @param array<string, array<string, list<string>>> $keys domain -> key -> references

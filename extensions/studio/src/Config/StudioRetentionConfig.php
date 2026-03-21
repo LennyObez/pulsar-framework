@@ -14,7 +14,7 @@ use function is_int;
  * Retention policy configuration for Studio event storage.
  */
 #[Internal]
-readonly class StudioRetentionConfig
+final readonly class StudioRetentionConfig
 {
     public function __construct(
         public int $maxAgeDays = 7,

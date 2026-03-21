@@ -11,7 +11,7 @@ use Pulsar\Api\Api;
  * Aggregated report from running all health checks.
  */
 #[Api(since: '1.0.0')]
-readonly class HealthReport
+final readonly class HealthReport
 {
     /**
      * @param list<HealthCheckResult> $results

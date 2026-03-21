@@ -16,7 +16,7 @@ use function time;
  * Immutable session metadata tracked alongside session data.
  */
 #[Api(since: '1.0.0')]
-readonly class SessionMetadata
+final readonly class SessionMetadata
 {
     public function __construct(
         public int $createdAt,

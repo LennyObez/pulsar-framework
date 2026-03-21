@@ -16,7 +16,7 @@ use Pulsar\Api\Api;
  * the export was encrypted.
  */
 #[Api(since: '1.0.0')]
-readonly class EvidenceExportResult
+final readonly class EvidenceExportResult
 {
     public function __construct(
         public string $archiveId,

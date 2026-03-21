@@ -12,7 +12,7 @@ use Pulsar\Config\Environment;
  * Security configuration for Studio access control.
  */
 #[Internal]
-readonly class StudioSecurityConfig
+final readonly class StudioSecurityConfig
 {
     /**
      * @param list<string> $allowedCidrs

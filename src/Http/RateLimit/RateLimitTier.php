@@ -10,7 +10,7 @@ use Pulsar\Api\Api;
  * Rate limit configuration for a specific tier or route group.
  */
 #[Api(since: '1.0.0')]
-readonly class RateLimitTier
+final readonly class RateLimitTier
 {
     public function __construct(
         public int $maxAttempts,

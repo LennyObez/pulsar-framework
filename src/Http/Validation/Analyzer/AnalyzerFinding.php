@@ -13,7 +13,7 @@ use function sprintf;
  * A single finding from a policy analyzer.
  */
 #[Api(since: '1.0.0')]
-readonly class AnalyzerFinding
+final readonly class AnalyzerFinding
 {
     /**
      * @param string $field The field path that triggered the finding

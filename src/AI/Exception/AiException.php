@@ -13,7 +13,7 @@ use function sprintf;
  * Base exception for AI SDK errors.
  */
 #[Api(since: '1.0.0')]
-class AiException extends RuntimeException
+final class AiException extends RuntimeException
 {
     /**
      * The provider returned an API error.

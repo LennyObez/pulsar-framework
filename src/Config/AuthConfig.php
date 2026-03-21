@@ -15,7 +15,7 @@ use function is_string;
  * Maps from the `auth` key of `config/security.php`.
  */
 #[Api(since: '1.0.0')]
-readonly class AuthConfig
+final readonly class AuthConfig
 {
     /**
      * @param list<AuthGuardConfig> $guards

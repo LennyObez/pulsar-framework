@@ -17,7 +17,7 @@ use function is_string;
  * Maps from the `headers` key of `config/security.php`.
  */
 #[Api(since: '1.0.0')]
-readonly class SecurityHeadersConfig
+final readonly class SecurityHeadersConfig
 {
     /**
      * Baseline headers always present on every response.

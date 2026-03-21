@@ -16,7 +16,7 @@ use function in_array;
  * request as an attribute for downstream consumers.
  */
 #[Api(since: '1.0.0')]
-readonly class DomainContext
+final readonly class DomainContext
 {
     /**
      * @param string $domain The full domain (e.g., 'forum.example.com')

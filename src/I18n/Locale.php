@@ -19,7 +19,7 @@ use function substr;
  * Provides parsing, fallback chain generation, and RTL detection.
  */
 #[Api(since: '1.0.0')]
-readonly class Locale
+final readonly class Locale
 {
     /** @var list<string> Languages that use right-to-left scripts */
     private const array RTL_LANGUAGES = ['ar', 'he', 'fa', 'ur'];

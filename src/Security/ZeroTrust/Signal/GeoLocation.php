@@ -13,7 +13,7 @@ use Pulsar\Api\Api;
  * and impossible travel scenarios.
  */
 #[Api(since: '1.0.0')]
-readonly class GeoLocation
+final readonly class GeoLocation
 {
     public function __construct(
         public float $latitude,

@@ -22,7 +22,7 @@ use Pulsar\Runtime\Upgrade\UpgradeContext;
  * runtime construction details.
  */
 #[Api(since: '1.0.0-rc.11')]
-readonly class RuntimeFactory implements PersistentRuntimeFactoryInterface
+final readonly class RuntimeFactory implements PersistentRuntimeFactoryInterface
 {
     public function __construct(
         private ContainerInterface $container,

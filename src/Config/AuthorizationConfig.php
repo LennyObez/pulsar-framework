@@ -11,7 +11,7 @@ use Pulsar\Api\Api;
  * Typed configuration DTO for authorization settings.
  */
 #[Api(since: '1.0.0')]
-readonly class AuthorizationConfig
+final readonly class AuthorizationConfig
 {
     /**
      * @param array<string, array<string, mixed>> $roles Role definitions keyed by name

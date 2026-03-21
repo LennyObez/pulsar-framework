@@ -16,7 +16,7 @@ use function sprintf;
  * Uses static factory methods for each failure scenario.
  */
 #[Api(since: '1.0.0')]
-class ViewException extends RuntimeException
+final class ViewException extends RuntimeException
 {
     #[NoDiscard]
     public static function templateNotFound(string $name, string $searchedPaths): self

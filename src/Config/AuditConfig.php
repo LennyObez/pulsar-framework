@@ -15,7 +15,7 @@ use function is_string;
  * Maps from the `audit` key of `config/observability.php`.
  */
 #[Api(since: '1.0.0')]
-readonly class AuditConfig
+final readonly class AuditConfig
 {
     /**
      * @param bool              $enabled    Whether audit logging is enabled

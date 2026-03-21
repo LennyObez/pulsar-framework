@@ -14,7 +14,7 @@ use function array_map;
  * Immutable value object representing a role with its associated permissions.
  */
 #[Api(since: '1.0.0')]
-readonly class Role
+final readonly class Role
 {
     /**
      * @param list<Permission> $permissions

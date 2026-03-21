@@ -17,7 +17,7 @@ use function sprintf;
  * Schedule definition for a job, backed by a cron expression.
  */
 #[Api(since: '1.0.0')]
-readonly class Schedule
+final readonly class Schedule
 {
     public function __construct(
         public string $expression,

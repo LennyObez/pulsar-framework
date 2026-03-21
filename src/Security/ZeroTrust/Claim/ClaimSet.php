@@ -23,7 +23,7 @@ use function count;
  * @implements IteratorAggregate<int, Claim>
  */
 #[Api(since: '1.0.0')]
-readonly class ClaimSet implements Countable, IteratorAggregate
+final readonly class ClaimSet implements Countable, IteratorAggregate
 {
     /** @var list<Claim> */
     private array $claims;

@@ -13,7 +13,7 @@ use Pulsar\Api\Api;
  * by the linter and template engines.
  */
 #[Api(since: '1.0.0')]
-readonly class TranslationEntry
+final readonly class TranslationEntry
 {
     public function __construct(
         public string $key,

@@ -13,7 +13,7 @@ use Throwable;
  * Result of a scheduled job execution.
  */
 #[Api(since: '1.0.0')]
-readonly class JobResult
+final readonly class JobResult
 {
     public function __construct(
         public string $jobName,

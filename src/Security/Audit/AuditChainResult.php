@@ -13,7 +13,7 @@ use Pulsar\Api\Api;
  * that failed verification (HMAC mismatch or broken chain linkage).
  */
 #[Api(since: '1.0.0')]
-readonly class AuditChainResult
+final readonly class AuditChainResult
 {
     /**
      * @param bool $valid Whether the entire chain is valid

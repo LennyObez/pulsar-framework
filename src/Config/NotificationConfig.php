@@ -16,7 +16,7 @@ use function is_string;
  * Typed configuration DTO for `config/notification.php`.
  */
 #[Api(since: '1.0.0')]
-readonly class NotificationConfig
+final readonly class NotificationConfig
 {
     /**
      * @param list<NotificationChannelType> $defaultChannels Default channels when notification does not specify via()

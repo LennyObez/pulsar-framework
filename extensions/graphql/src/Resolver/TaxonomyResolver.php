@@ -11,7 +11,7 @@ use Pulsar\Extension\Cms\Taxonomy\TaxonomyRepositoryInterface;
  * Resolves GraphQL queries for Taxonomy and TaxonomyTerm types.
  */
 #[Api(since: '1.0.0')]
-readonly class TaxonomyResolver
+final readonly class TaxonomyResolver
 {
     public function __construct(
         private TaxonomyRepositoryInterface $taxonomyRepository,

@@ -15,7 +15,7 @@ use function is_string;
  * Maps from the `cross_origin` key within the `headers` section of `config/security.php`.
  */
 #[Api(since: '1.0.0')]
-readonly class CrossOriginConfig
+final readonly class CrossOriginConfig
 {
     public function __construct(
         public string $openerPolicy = 'same-origin',

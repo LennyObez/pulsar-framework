@@ -16,7 +16,7 @@ use function substr;
  * Supports wildcard matching: "users.*" matches "users.create", "users.delete", etc.
  */
 #[Api(since: '1.0.0')]
-readonly class Permission
+final readonly class Permission
 {
     public function __construct(
         public string $name,

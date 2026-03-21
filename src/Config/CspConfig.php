@@ -19,7 +19,7 @@ use function is_string;
  * Maps from the `csp` key within the `headers` section of `config/security.php`.
  */
 #[Api(since: '1.0.0')]
-readonly class CspConfig
+final readonly class CspConfig
 {
     /**
      * @param array<string, string> $customDirectives Additional CSP directives not covered by named properties

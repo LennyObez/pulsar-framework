@@ -14,7 +14,7 @@ use Pulsar\Http\Method;
  * the typed RouteHandler for safe serialization.
  */
 #[Internal]
-readonly class CachedRoute
+final readonly class CachedRoute
 {
     /**
      * @param list<Method> $methods HTTP methods this route responds to

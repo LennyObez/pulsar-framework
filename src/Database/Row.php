@@ -21,7 +21,7 @@ use function stream_get_contents;
  * Readonly single-row value object with typed accessors.
  */
 #[Api(since: '1.0.0')]
-readonly class Row
+final readonly class Row
 {
     /**
      * @param array<string, mixed> $data Column name => value pairs

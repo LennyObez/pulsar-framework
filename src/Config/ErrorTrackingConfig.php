@@ -14,7 +14,7 @@ use function is_numeric;
  * Typed configuration DTO for the error tracking section of observability config.
  */
 #[Api(since: '1.0.0')]
-readonly class ErrorTrackingConfig
+final readonly class ErrorTrackingConfig
 {
     /**
      * @param list<string> $sensitiveFields Additional sensitive field names to scrub

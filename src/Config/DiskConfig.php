@@ -13,7 +13,7 @@ use function is_string;
  * Per-disk storage configuration.
  */
 #[Api(since: '1.0.0')]
-readonly class DiskConfig
+final readonly class DiskConfig
 {
     public function __construct(
         public string $name,

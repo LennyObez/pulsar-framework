@@ -11,7 +11,7 @@ use Pulsar\Api\Api;
  * Result of a single scheduler tick.
  */
 #[Api(since: '1.0.0')]
-readonly class SchedulerTickResult
+final readonly class SchedulerTickResult
 {
     /**
      * @param list<JobResult> $results

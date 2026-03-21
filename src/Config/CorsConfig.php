@@ -24,7 +24,7 @@ use function trim;
  * Maps from `config/security.php` under the `cors` key.
  */
 #[Api(since: '1.0.0')]
-readonly class CorsConfig
+final readonly class CorsConfig
 {
     /**
      * @param bool $enabled Whether CORS handling is active

@@ -11,7 +11,7 @@ use Pulsar\Context\RequestContext;
  * Contextual information passed to a job during execution.
  */
 #[Api(since: '1.0.0')]
-readonly class JobContext
+final readonly class JobContext
 {
     public function __construct(
         public string $jobId,

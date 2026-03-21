@@ -18,7 +18,7 @@ use function is_string;
  * and untrusted template sandbox limits.
  */
 #[Api(since: '1.0.0')]
-readonly class ViewConfig
+final readonly class ViewConfig
 {
     /**
      * @param list<string> $templatePaths Ordered list of template search directories

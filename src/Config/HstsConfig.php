@@ -16,7 +16,7 @@ use function is_numeric;
  * Maps from the `hsts` key within the `headers` section of `config/security.php`.
  */
 #[Api(since: '1.0.0')]
-readonly class HstsConfig
+final readonly class HstsConfig
 {
     public function __construct(
         public bool $enabled = true,

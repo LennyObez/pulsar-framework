@@ -15,7 +15,7 @@ use function is_string;
  * Configuration DTO for the Redis queue driver.
  */
 #[Internal(reason: 'Driver configuration; use QueueConfig for public access')]
-readonly class RedisDriverConfig
+final readonly class RedisDriverConfig
 {
     public function __construct(
         public string $host = '127.0.0.1',

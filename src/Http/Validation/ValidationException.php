@@ -15,7 +15,7 @@ use Pulsar\Http\ResponseStatus;
  * field violations. Always maps to HTTP 422 Unprocessable Entity.
  */
 #[Api(since: '1.0.0')]
-class ValidationException extends HttpException
+final class ValidationException extends HttpException
 {
     public function __construct(
         private readonly ValidationResult $result,

@@ -15,7 +15,7 @@ use function is_string;
  * Environment variables `LOG_LEVEL` and `LOG_CHANNEL` override file values.
  */
 #[Api(since: '1.0.0')]
-readonly class ObservabilityConfig
+final readonly class ObservabilityConfig
 {
     /**
      * @param list<LoggingChannelConfig> $loggingChannels

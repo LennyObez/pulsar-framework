@@ -13,7 +13,7 @@ use Pulsar\Api\Api;
  * Composes retry, circuit breaker, and health check sub-configs.
  */
 #[Api(since: '1.0.0')]
-readonly class ResilienceConfig
+final readonly class ResilienceConfig
 {
     public function __construct(
         public bool $enabled = false,

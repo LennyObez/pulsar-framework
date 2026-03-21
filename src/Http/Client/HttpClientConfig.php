@@ -15,7 +15,7 @@ use function is_string;
  * Immutable value object using clone-with for modifications.
  */
 #[Api(since: '1.0.0')]
-readonly class HttpClientConfig
+final readonly class HttpClientConfig
 {
     /**
      * @param float $timeout Connection + response timeout in seconds

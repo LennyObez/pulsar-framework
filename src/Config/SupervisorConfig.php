@@ -13,7 +13,7 @@ use function is_int;
  * Typed configuration DTO for `config/supervisor.php`.
  */
 #[Api(since: '1.0.0')]
-readonly class SupervisorConfig
+final readonly class SupervisorConfig
 {
     public function __construct(
         public bool $enabled = false,

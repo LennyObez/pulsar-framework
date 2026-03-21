@@ -18,7 +18,7 @@ use function sprintf;
  * the close code directly, not by throwing.
  */
 #[Api(since: '1.0.0')]
-class WebSocketException extends RuntimeException
+final class WebSocketException extends RuntimeException
 {
     public static function identityAlreadyBound(
         string $connectionId,

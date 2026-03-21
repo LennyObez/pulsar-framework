@@ -15,7 +15,7 @@ use Pulsar\Api\Api;
  * Each policy is versioned to support auditable policy changes.
  */
 #[Api(since: '1.0.0')]
-readonly class RetentionPolicy
+final readonly class RetentionPolicy
 {
     public function __construct(
         public string $policyId,

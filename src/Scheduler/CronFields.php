@@ -23,7 +23,7 @@ use function str_contains;
  * Standard five-field cron: minute hour dayOfMonth month dayOfWeek
  */
 #[Api(since: '1.0.0')]
-readonly class CronFields
+final readonly class CronFields
 {
     public function __construct(
         public string $minute,
