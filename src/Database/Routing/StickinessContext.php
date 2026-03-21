@@ -70,7 +70,7 @@ final class StickinessContext
 
         $this->slots[$key] = [
             'writeOccurred' => true,
-            'pinExpiresAtNs' => hrtime(true) + ($durationMs * 1_000_000),
+            'pinExpiresAtNs' => (int) hrtime(true) + ($durationMs * 1_000_000),
             'requestScoped' => false,
         ];
     }

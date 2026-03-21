@@ -39,8 +39,8 @@ use function str_starts_with;
 final readonly class SafePath
 {
     /**
-     * @param non-empty-string $absolute Absolute path validated to live under boundary
-     * @param non-empty-string $boundary Realpath of the trust boundary the value object guarantees
+     * @param string $absolute Absolute path validated to live under boundary
+     * @param string $boundary Realpath of the trust boundary the value object guarantees
      */
     private function __construct(
         public string $absolute,
