@@ -180,16 +180,7 @@ final class WebhookProcessorTest extends TestCase
             config: $config,
         );
 
-        return new WebhookProcessor(
-            verifier: $verifier,
-            eventLog: $this->eventLog,
-            handler: $handler,
-            clock: $this->clock,
-            metricRegistry: $this->metricRegistry,
-            logger: new NullLogger(),
-            config: $config,
-            processHandler: $processHandler,
-        );
+        return new WebhookProcessor(processHandler: $processHandler);
     }
 
     private function createConfig(): PaymentsConfig
