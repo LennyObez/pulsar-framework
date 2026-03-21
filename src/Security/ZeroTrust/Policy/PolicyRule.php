@@ -14,7 +14,7 @@ use Pulsar\Api\Api;
  * what happens when requirements are fully met, partially met, or unmet.
  */
 #[Api(since: '1.0.0')]
-readonly class PolicyRule
+final readonly class PolicyRule
 {
     /**
      * @param string $name Human-readable rule identifier for logging and debugging

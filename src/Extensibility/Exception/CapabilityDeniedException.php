@@ -19,7 +19,7 @@ use function ucfirst;
  * and remediation guidance for the host application.
  */
 #[Api(since: '1.0.0')]
-class CapabilityDeniedException extends ExtensionException
+final class CapabilityDeniedException extends ExtensionException
 {
     /**
      * Denied access to a specific container service.

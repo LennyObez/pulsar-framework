@@ -16,7 +16,7 @@ use function sprintf;
  * Numeric value must be <= the given maximum. Skips null values.
  */
 #[Api(since: '1.0.0')]
-readonly class Max implements RuleInterface
+final readonly class Max implements RuleInterface
 {
     public function __construct(
         private int|float $max,

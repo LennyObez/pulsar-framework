@@ -11,7 +11,7 @@ use Pulsar\Api\Api;
  * Configuration for health checks.
  */
 #[Api(since: '1.0.0')]
-readonly class HealthCheckConfig
+final readonly class HealthCheckConfig
 {
     public function __construct(
         public int $intervalSeconds = 30,

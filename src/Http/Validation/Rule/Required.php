@@ -15,7 +15,7 @@ use function sprintf;
  * Fails on null, empty string, or empty array.
  */
 #[Api(since: '1.0.0')]
-readonly class Required implements RuleInterface
+final readonly class Required implements RuleInterface
 {
     public function __construct(
         private string $message = '',

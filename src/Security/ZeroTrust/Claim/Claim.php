@@ -18,7 +18,7 @@ use function sprintf;
  * 1.0 = full confidence) and is tagged with the source that produced it.
  */
 #[Api(since: '1.0.0')]
-readonly class Claim
+final readonly class Claim
 {
     /**
      * @param string $name Claim identifier (e.g., "device.registered", "ip.in_range")

@@ -13,7 +13,7 @@ use Pulsar\Api\Api;
  * including pending/failed counts and cancellation status.
  */
 #[Api(since: '1.0.0')]
-readonly class JobBatch
+final readonly class JobBatch
 {
     public function __construct(
         public string $id,

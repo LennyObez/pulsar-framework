@@ -14,7 +14,7 @@ use function sprintf;
  * Exception thrown when a service discovery operation fails.
  */
 #[Api(since: '1.0.0')]
-class ServiceDiscoveryException extends RuntimeException
+final class ServiceDiscoveryException extends RuntimeException
 {
     #[NoDiscard]
     public static function serviceNotFound(string $name): self

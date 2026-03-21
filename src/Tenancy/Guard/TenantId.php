@@ -14,7 +14,7 @@ use function sprintf;
  * Immutable tenant identifier value object.
  */
 #[Api(since: '1.0.0')]
-readonly class TenantId
+final readonly class TenantId
 {
     private const string ID_PATTERN = '/^[a-zA-Z0-9_-]+$/';
 

@@ -17,7 +17,7 @@ use function is_string;
  * settings for the generated OpenAPI specification.
  */
 #[Api(since: '1.0.0')]
-readonly class OpenApiConfig
+final readonly class OpenApiConfig
 {
     /**
      * @param string $title API title in the info object

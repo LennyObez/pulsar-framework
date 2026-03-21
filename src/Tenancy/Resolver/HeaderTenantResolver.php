@@ -13,7 +13,7 @@ use Pulsar\Tenancy\TenantResolverInterface;
 /**
  * Resolves tenants from an HTTP header (e.g. X-Tenant-ID).
  */
-readonly class HeaderTenantResolver implements TenantResolverInterface
+final readonly class HeaderTenantResolver implements TenantResolverInterface
 {
     public function __construct(
         private TenancyConfig $config,

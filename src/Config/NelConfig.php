@@ -22,7 +22,7 @@ use const JSON_UNESCAPED_SLASHES;
  * configured endpoint, even when the request never reaches the server.
  */
 #[Api(since: '1.0.0')]
-readonly class NelConfig
+final readonly class NelConfig
 {
     public function __construct(
         public bool $enabled = false,

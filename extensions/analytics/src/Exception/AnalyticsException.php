@@ -13,7 +13,7 @@ use function sprintf;
  * Base exception for the analytics extension.
  */
 #[Api(since: '1.0.0')]
-class AnalyticsException extends RuntimeException
+final class AnalyticsException extends RuntimeException
 {
     public static function notFound(string $entity, string $id): self
     {

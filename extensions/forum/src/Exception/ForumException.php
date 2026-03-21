@@ -13,7 +13,7 @@ use function sprintf;
  * Base exception for all forum errors.
  */
 #[Api(since: '1.0.0')]
-class ForumException extends RuntimeException
+final class ForumException extends RuntimeException
 {
     public static function notFound(string $entity, string $id): self
     {

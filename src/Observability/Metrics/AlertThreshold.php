@@ -13,7 +13,7 @@ use Pulsar\Api\Api;
  * configured duration, the alert fires.
  */
 #[Api(since: '1.0.0')]
-readonly class AlertThreshold
+final readonly class AlertThreshold
 {
     /**
      * @param string $metricName  Name of the metric to watch

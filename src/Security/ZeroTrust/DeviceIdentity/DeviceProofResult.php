@@ -14,7 +14,7 @@ use Pulsar\Api\Api;
  * was successfully verified, along with a confidence score and failure reason if applicable.
  */
 #[Api(since: '1.0.0')]
-readonly class DeviceProofResult
+final readonly class DeviceProofResult
 {
     /**
      * @param bool $verified Whether the device proof passed verification

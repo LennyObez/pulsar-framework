@@ -21,7 +21,7 @@ use function is_string;
  * Maps from the `csrf` key of `config/security.php`.
  */
 #[Api(since: '1.0.0')]
-readonly class CsrfConfig
+final readonly class CsrfConfig
 {
     /**
      * @param list<string> $trustedOrigins Canonical origins e.g. ['https://example.com', 'https://app.example.com:8443']

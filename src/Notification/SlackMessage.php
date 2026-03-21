@@ -10,7 +10,7 @@ use Pulsar\Api\Api;
  * DTO representing a Slack notification message.
  */
 #[Api(since: '1.0.0')]
-readonly class SlackMessage
+final readonly class SlackMessage
 {
     /**
      * @param string        $channel   Slack channel or user (e.g., "#general", "@user")

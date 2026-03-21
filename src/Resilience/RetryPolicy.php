@@ -22,7 +22,7 @@ use function usleep;
  * Retry policy with exponential backoff and optional jitter.
  */
 #[Api(since: '1.0.0')]
-readonly class RetryPolicy
+final readonly class RetryPolicy
 {
     private Randomizer $randomizer;
 

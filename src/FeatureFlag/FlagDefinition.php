@@ -11,7 +11,7 @@ use Pulsar\Api\Api;
  * Immutable feature flag definition.
  */
 #[Api(since: '1.0.0')]
-readonly class FlagDefinition
+final readonly class FlagDefinition
 {
     /**
      * @param list<string> $allowedTenants

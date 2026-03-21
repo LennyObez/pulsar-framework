@@ -16,7 +16,7 @@ use function is_int;
  * Typed configuration DTO for config/studio.php.
  */
 #[Internal]
-readonly class StudioConfig
+final readonly class StudioConfig
 {
     /**
      * @param string $storeBackend One of 'sqlite', 'database', or 'buffered'

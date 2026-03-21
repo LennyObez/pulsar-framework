@@ -46,7 +46,7 @@ use const JSON_THROW_ON_ERROR;
  * Headers are stored lowercase internally with deterministic iteration order.
  */
 #[Api(since: '1.0.0-rc.11')]
-class ServerRequest implements ServerRequestInterface
+final class ServerRequest implements ServerRequestInterface
 {
     private string $protocolVersion;
 

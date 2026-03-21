@@ -17,7 +17,7 @@ use function count;
  * Eagerly loads all rows from the statement at construction time.
  */
 #[Api(since: '1.0.0')]
-readonly class Result
+final readonly class Result
 {
     /** @var list<Row> */
     public array $rows;

@@ -10,7 +10,7 @@ use Pulsar\Api\Api;
  * DTO representing a persisted notification record from the database.
  */
 #[Api(since: '1.0.0')]
-readonly class StoredNotification
+final readonly class StoredNotification
 {
     /**
      * @param string $id Notification unique identifier

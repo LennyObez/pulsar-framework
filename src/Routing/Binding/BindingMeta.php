@@ -13,7 +13,7 @@ use Pulsar\Api\Api;
  * and optional custom resolver for a specific route parameter.
  */
 #[Api(since: '1.0.0-rc.11')]
-readonly class BindingMeta
+final readonly class BindingMeta
 {
     /**
      * @param class-string $class

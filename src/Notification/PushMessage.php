@@ -10,7 +10,7 @@ use Pulsar\Api\Api;
  * DTO representing a push notification message.
  */
 #[Api(since: '1.0.0')]
-readonly class PushMessage
+final readonly class PushMessage
 {
     /**
      * @param string $title Notification title

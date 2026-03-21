@@ -17,7 +17,7 @@ use const JSON_THROW_ON_ERROR;
  * Resolves GraphQL queries for Content, Translation, and ContentBlock types.
  */
 #[Api(since: '1.0.0')]
-readonly class ContentResolver
+final readonly class ContentResolver
 {
     public function __construct(
         private ContentRepositoryInterface $contentRepository,

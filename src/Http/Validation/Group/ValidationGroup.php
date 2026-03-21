@@ -17,7 +17,7 @@ use function array_keys;
  * (e.g. 'create' vs 'update' operations).
  */
 #[Api(since: '1.0.0')]
-readonly class ValidationGroup
+final readonly class ValidationGroup
 {
     /** @var array<string, list<RuleInterface>> */
     public array $rules;

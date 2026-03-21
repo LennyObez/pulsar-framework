@@ -10,7 +10,7 @@ use Pulsar\Api\Api;
  * Represents a successfully matched route.
  */
 #[Api(since: '1.0.0')]
-readonly class MatchedRoute
+final readonly class MatchedRoute
 {
     /**
      * @param Route $route The matched route definition

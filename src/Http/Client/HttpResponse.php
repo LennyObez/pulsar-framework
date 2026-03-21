@@ -20,7 +20,7 @@ use function json_decode;
  * convenience accessors for status, headers, and body parsing.
  */
 #[Api(since: '1.0.0')]
-readonly class HttpResponse
+final readonly class HttpResponse
 {
     public function __construct(
         private ResponseStatus $statusCode,

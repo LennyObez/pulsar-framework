@@ -13,7 +13,7 @@ use function is_string;
  * Typed configuration DTO for a single authentication guard.
  */
 #[Api(since: '1.0.0')]
-readonly class AuthGuardConfig
+final readonly class AuthGuardConfig
 {
     public function __construct(
         public string $name,

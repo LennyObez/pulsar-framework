@@ -14,7 +14,7 @@ use Pulsar\Api\Api;
  * source template (for cache validation), and the compilation timestamp.
  */
 #[Api(since: '1.0.0')]
-readonly class CompiledTemplate
+final readonly class CompiledTemplate
 {
     /**
      * @param string $compiledPath Absolute path to the compiled PHP file

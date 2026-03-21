@@ -24,7 +24,7 @@ use function is_string;
  * @see https://w3c.github.io/webappsec-permissions-policy/
  */
 #[Api(since: '1.0.0')]
-readonly class PermissionsPolicyConfig
+final readonly class PermissionsPolicyConfig
 {
     /**
      * @param array<string, string> $additional Extra feature => allowlist pairs

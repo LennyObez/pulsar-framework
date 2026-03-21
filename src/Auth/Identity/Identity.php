@@ -19,7 +19,7 @@ use function is_string;
  * Immutable value object representing an authenticated identity.
  */
 #[Api(since: '1.0.0')]
-readonly class Identity implements IdentityInterface
+final readonly class Identity implements IdentityInterface
 {
     /**
      * @param list<string> $roles

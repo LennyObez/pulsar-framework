@@ -10,7 +10,7 @@ use Pulsar\Api\Api;
  * Snapshot of a notifiable entity's channel preferences and consent history.
  */
 #[Api(since: '1.0.0')]
-readonly class UserPreferences
+final readonly class UserPreferences
 {
     /**
      * @param string               $notifiableId       Unique identifier of the notifiable

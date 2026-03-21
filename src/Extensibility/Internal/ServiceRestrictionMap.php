@@ -20,7 +20,7 @@ use function in_array;
  *
  * @internal Not part of the public API: used by ScopedContainerProxy
  */
-readonly class ServiceRestrictionMap
+final readonly class ServiceRestrictionMap
 {
     /**
      * @param array<string, ExtensionCapability> $restrictedServices Service ID => required capability

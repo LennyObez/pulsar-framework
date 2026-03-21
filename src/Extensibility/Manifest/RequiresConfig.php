@@ -11,7 +11,7 @@ use Pulsar\Api\Api;
  * Configuration for extension dependencies.
  */
 #[Api(since: '1.0.0')]
-readonly class RequiresConfig
+final readonly class RequiresConfig
 {
     /**
      * @param array<string, string> $extensions Map of extension name to version constraint

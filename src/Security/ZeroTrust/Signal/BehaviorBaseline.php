@@ -14,7 +14,7 @@ use Pulsar\Api\Api;
  * anomaly detection by the behavior signal provider.
  */
 #[Api(since: '1.0.0')]
-readonly class BehaviorBaseline
+final readonly class BehaviorBaseline
 {
     /**
      * @param float $avgRequestsPerMinute Average request rate over the baseline period

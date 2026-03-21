@@ -10,7 +10,7 @@ use Pulsar\Api\Api;
  * Represents an object in storage.
  */
 #[Api(since: '1.0.0')]
-readonly class StorageObject
+final readonly class StorageObject
 {
     public function __construct(
         public string $key,

@@ -11,7 +11,7 @@ use Pulsar\Api\Api;
  * Typed configuration DTO for `config/scheduler.php`.
  */
 #[Api(since: '1.0.0')]
-readonly class SchedulerConfig
+final readonly class SchedulerConfig
 {
     public function __construct(
         public bool $enabled = false,

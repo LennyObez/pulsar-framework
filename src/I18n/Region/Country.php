@@ -17,7 +17,7 @@ use function in_array;
  * and flag emoji for display.
  */
 #[Api(since: '1.0.0')]
-readonly class Country
+final readonly class Country
 {
     /**
      * @param non-empty-string        $code       ISO 3166-1 alpha-2 code (e.g. "BE", "US")

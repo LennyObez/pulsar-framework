@@ -13,7 +13,7 @@ use Pulsar\Api\Internal;
  * type-hint resolution during model binding.
  */
 #[Internal(reason: 'Wiring detail; use Router::model() to register bindings')]
-readonly class ExplicitBinding
+final readonly class ExplicitBinding
 {
     /**
      * @param class-string $modelClass

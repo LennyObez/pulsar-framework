@@ -11,7 +11,7 @@ use Pulsar\Api\Api;
  * Configuration for retry policies.
  */
 #[Api(since: '1.0.0')]
-readonly class RetryConfig
+final readonly class RetryConfig
 {
     public function __construct(
         public int $maxAttempts = 3,

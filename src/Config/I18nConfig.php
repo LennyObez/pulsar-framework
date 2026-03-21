@@ -18,7 +18,7 @@ use function is_string;
  * Environment variables `APP_LOCALE` and `I18N_REGULATED` override file values.
  */
 #[Api(since: '1.0.0')]
-readonly class I18nConfig
+final readonly class I18nConfig
 {
     /**
      * @param list<string> $supportedLocales

@@ -12,7 +12,7 @@ use Pulsar\Config\Environment;
  * Collector configuration for Studio event collection.
  */
 #[Internal]
-readonly class StudioCollectorConfig
+final readonly class StudioCollectorConfig
 {
     public function __construct(
         public bool $http = true,

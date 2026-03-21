@@ -11,7 +11,7 @@ use Pulsar\Api\Api;
  * Immutable result of a single deploy check.
  */
 #[Api(since: '1.0.0')]
-readonly class CheckResult
+final readonly class CheckResult
 {
     /**
      * @param list<string> $recommendations Actionable suggestions for fixing the issue

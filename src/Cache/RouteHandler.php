@@ -13,7 +13,7 @@ use Pulsar\Api\Internal;
  * At dispatch time, the router always resolves via the container.
  */
 #[Internal]
-readonly class RouteHandler
+final readonly class RouteHandler
 {
     /**
      * @param RouteHandlerType $type Handler resolution strategy
