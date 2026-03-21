@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Extension\OpenTelemetry\Export\JsonLines\Tests\Unit\Schema;
+namespace Pulsar\Extension\ObservabilityExportTests\Unit\Schema;
 
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Extension\OpenTelemetry\Export\JsonLines\Schema\MetricSchema;
+use Pulsar\Extension\ObservabilityExport\Schema\MetricSchema;
 use Pulsar\Observability\Metrics\MetricSnapshot;
 use Pulsar\Observability\Metrics\MetricType;
 
