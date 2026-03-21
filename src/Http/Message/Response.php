@@ -440,10 +440,9 @@ class Response implements ResponseInterface
     {
         // SEC-IN-01: refuse CRLF/NUL injection at the public PSR-7 boundary.
         HeaderValidator::assertValidName($name);
-        HeaderValidator::assertValidValue($value);
-
         /** @var list<string> $values */
-        $values = is_array($value) ? $value : [$value];
+        $values = is_array($value) ? array_values($value) : [$value];
+        HeaderValidator::assertValidValue($values);
         $lowered = strtolower($name);
 
         return clone($this, [
@@ -459,10 +458,9 @@ class Response implements ResponseInterface
     {
         // SEC-IN-01: same validation as withHeader for the additive variant.
         HeaderValidator::assertValidName($name);
-        HeaderValidator::assertValidValue($value);
-
         /** @var list<string> $values */
-        $values = is_array($value) ? $value : [$value];
+        $values = is_array($value) ? array_values($value) : [$value];
+        HeaderValidator::assertValidValue($values);
         $lowered = strtolower($name);
 
         if (isset($this->headers[$lowered])) {

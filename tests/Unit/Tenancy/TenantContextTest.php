@@ -108,6 +108,7 @@ final class TenantContextTest extends TestCase
         $fiber->start();
 
         self::assertSame($rootTenant, $context->tryGet());
+        self::assertNotNull($observed, 'Fiber callback should have populated $observed');
         self::assertNull($observed['initial']);
         self::assertSame($fiberTenant, $observed['fiber_set']);
     }

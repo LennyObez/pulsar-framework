@@ -326,10 +326,9 @@ class ServerRequest implements ServerRequestInterface
     {
         // SEC-IN-01: validate RFC 7230 token name + CRLF/NUL-free value.
         HeaderValidator::assertValidName($name);
-        HeaderValidator::assertValidValue($value);
-
         /** @var list<string> $values */
-        $values = is_array($value) ? $value : [$value];
+        $values = is_array($value) ? array_values($value) : [$value];
+        HeaderValidator::assertValidValue($values);
         $lowered = strtolower($name);
 
         return clone($this, [
@@ -345,10 +344,9 @@ class ServerRequest implements ServerRequestInterface
     {
         // SEC-IN-01: same validation as withHeader for the additive variant.
         HeaderValidator::assertValidName($name);
-        HeaderValidator::assertValidValue($value);
-
         /** @var list<string> $values */
-        $values = is_array($value) ? $value : [$value];
+        $values = is_array($value) ? array_values($value) : [$value];
+        HeaderValidator::assertValidValue($values);
         $lowered = strtolower($name);
 
         if (isset($this->headers[$lowered])) {
@@ -982,6 +980,10 @@ class ServerRequest implements ServerRequestInterface
     /** SEC-HTTP-01: default body cap (10 MB). */
     public const int DEFAULT_MAX_BODY_BYTES = 10_485_760;
 
+    /**
+     * @param array<string, mixed> $server
+     * @return array<string, string>
+     */
     private static function extractHeadersFromServer(array $server): array
     {
         $headers = [];

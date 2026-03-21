@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Auth\OAuth2\Oidc\JwtSigner;
 use Pulsar\Extension\Auth\OAuth2\Oidc\OidcConfig;
+use Pulsar\Security\Crypto\KeyRingInterface;
 
 use function time;
 
@@ -19,8 +20,8 @@ use function time;
 #[CoversClass(JwtSigner::class)]
 final class JwtSignerClaimValidationTest extends TestCase
 {
-    private string $privateKeyPem = '';
-    private OidcConfig $config;
+    private const string KID = 'kid-1';
+
     private JwtSigner $signer;
 
     protected function setUp(): void
@@ -36,14 +37,14 @@ final class JwtSignerClaimValidationTest extends TestCase
         $exported = openssl_pkey_export($keyRes, $pem);
         self::assertTrue($exported, 'openssl_pkey_export failed');
         self::assertIsString($pem, 'openssl_pkey_export should populate $pem with the PEM-encoded key');
-        $this->privateKeyPem = $pem;
 
-        $this->config = new OidcConfig(
-            issuer: 'https://auth.example.com',
-            signingKey: $this->privateKeyPem,
-        );
+        $keyRing = $this->createStub(KeyRingInterface::class);
+        $keyRing->method('keyFor')
+            ->willReturnCallback(static fn(string $kid): ?string => $kid === self::KID ? $pem : null);
 
-        $this->signer = new JwtSigner($this->config);
+        $config = new OidcConfig(issuer: 'https://auth.example.com');
+
+        $this->signer = new JwtSigner($keyRing, $config);
     }
 
     #[Test]
@@ -58,8 +59,8 @@ final class JwtSignerClaimValidationTest extends TestCase
             'iat' => time(),
         ];
 
-        $jwt = $this->signer->sign($claims, 'kid-1');
-        $decoded = $this->signer->verify($jwt);
+        $jwt = $this->signer->sign($claims, self::KID);
+        $decoded = $this->signer->verify($jwt, self::KID);
 
         self::assertNotNull($decoded);
         self::assertSame('user-123', $decoded['sub']);
@@ -76,8 +77,8 @@ final class JwtSignerClaimValidationTest extends TestCase
             'iat' => time() - 3700,
         ];
 
-        $jwt = $this->signer->sign($claims, 'kid-1');
-        $decoded = $this->signer->verify($jwt);
+        $jwt = $this->signer->sign($claims, self::KID);
+        $decoded = $this->signer->verify($jwt, self::KID);
 
         self::assertNull($decoded, 'Expired token should be rejected');
     }
@@ -94,8 +95,8 @@ final class JwtSignerClaimValidationTest extends TestCase
             'iat' => time(),
         ];
 
-        $jwt = $this->signer->sign($claims, 'kid-1');
-        $decoded = $this->signer->verify($jwt);
+        $jwt = $this->signer->sign($claims, self::KID);
+        $decoded = $this->signer->verify($jwt, self::KID);
 
         self::assertNull($decoded, 'Token with future nbf should be rejected');
     }
@@ -110,8 +111,8 @@ final class JwtSignerClaimValidationTest extends TestCase
             'exp' => time() + 3600,
         ];
 
-        $jwt = $this->signer->sign($claims, 'kid-1');
-        $decoded = $this->signer->verify($jwt);
+        $jwt = $this->signer->sign($claims, self::KID);
+        $decoded = $this->signer->verify($jwt, self::KID);
 
         self::assertNull($decoded, 'Token with wrong issuer should be rejected');
     }
@@ -126,8 +127,8 @@ final class JwtSignerClaimValidationTest extends TestCase
             'exp' => time() + 3600,
         ];
 
-        $jwt = $this->signer->sign($claims, 'kid-1');
-        $decoded = $this->signer->verify($jwt);
+        $jwt = $this->signer->sign($claims, self::KID);
+        $decoded = $this->signer->verify($jwt, self::KID);
 
         self::assertNull($decoded, 'Token with wrong audience should be rejected');
     }
@@ -142,8 +143,8 @@ final class JwtSignerClaimValidationTest extends TestCase
             'exp' => time() + 3600,
         ];
 
-        $jwt = $this->signer->sign($claims, 'kid-1');
-        $decoded = $this->signer->verify($jwt);
+        $jwt = $this->signer->sign($claims, self::KID);
+        $decoded = $this->signer->verify($jwt, self::KID);
 
         self::assertNotNull($decoded);
     }
@@ -158,8 +159,8 @@ final class JwtSignerClaimValidationTest extends TestCase
             'exp' => time() + 3600,
         ];
 
-        $jwt = $this->signer->sign($claims, 'kid-1');
-        $decoded = $this->signer->verify($jwt);
+        $jwt = $this->signer->sign($claims, self::KID);
+        $decoded = $this->signer->verify($jwt, self::KID);
 
         self::assertNull($decoded, 'Token with aud array not containing issuer should be rejected');
     }
@@ -173,10 +174,10 @@ final class JwtSignerClaimValidationTest extends TestCase
             'exp' => time() + 3600,
         ];
 
-        $jwt = $this->signer->sign($claims, 'kid-1');
+        $jwt = $this->signer->sign($claims, self::KID);
         // Corrupt the signature portion
         $jwt .= 'tampered';
-        $decoded = $this->signer->verify($jwt);
+        $decoded = $this->signer->verify($jwt, self::KID);
 
         self::assertNull($decoded);
     }
@@ -184,7 +185,7 @@ final class JwtSignerClaimValidationTest extends TestCase
     #[Test]
     public function malformedJwtIsRejected(): void
     {
-        $decoded = $this->signer->verify('not-a-jwt');
+        $decoded = $this->signer->verify('not-a-jwt', self::KID);
 
         self::assertNull($decoded);
     }

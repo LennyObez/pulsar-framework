@@ -89,7 +89,7 @@ final readonly class TenantIsolationGuard
      */
     private function isSystemContextActive(): bool
     {
-        if ($this->systemContext === null || ! $this->systemContext->active) {
+        if ($this->systemContext === null || ! $this->systemContext->isActive()) {
             return false;
         }
 

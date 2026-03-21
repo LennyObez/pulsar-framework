@@ -80,14 +80,17 @@ final class LogFormatter
      */
     private function normalizeContext(array $context): array
     {
+        /** @var array<string, mixed> $normalized */
         $normalized = [];
 
-        /** @var mixed $value */
         foreach ($context as $key => $value) {
+            if (!is_string($key)) {
+                continue;
+            }
+
             if ($value instanceof Throwable) {
                 $normalized[$key] = $this->serializeThrowable($value);
             } else {
-                /** @var mixed */
                 $normalized[$key] = $value;
             }
         }
