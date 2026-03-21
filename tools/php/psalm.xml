@@ -6,19 +6,19 @@
     matches a real Psalm error fails CI) and forces unused private
     methods / dead code to surface in review.
 
-    DO NOT switch to per-file suppression via `psalm --alter` when
-    Unused* / PossiblyUnused* / InvalidReturnType issues fire —
+    DO NOT switch to per-file suppression via `psalm \-\-alter` when
+    Unused* / PossiblyUnused* / InvalidReturnType issues fire,
     that pass has been observed to delete legitimate methods
     (incident 2026-04-28). Either suppress at the call site with
     a precise `@psalm-suppress UnusedMethod reason: ...` tag, or
     restructure the code so the dead path is genuinely removed.
 -->
 <psalm
-    errorLevel="1"
-    resolveFromConfigFile="true"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xmlns="https://getpsalm.org/schema/config"
     xsi:schemaLocation="https://getpsalm.org/schema/config vendor/vimeo/psalm/config.xsd"
+    errorLevel="1"
+    resolveFromConfigFile="true"
     cacheDirectory="../../.psalm-cache"
     findUnusedBaselineEntry="true"
     findUnusedCode="true"
