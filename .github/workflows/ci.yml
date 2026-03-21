@@ -22,7 +22,9 @@ jobs:
       - uses: shivammathur/setup-php@accd6127cb78bee3e8082180cb391013d204ef9f # v2
         with:
           php-version: '8.5'
-          extensions: pdo_mysql, pdo_pgsql, pdo_sqlite
+          # imagick + gd are loaded so Psalm/PHPStan can resolve the
+          # optional image-processing code paths in extensions/cms.
+          extensions: pdo_mysql, pdo_pgsql, pdo_sqlite, imagick, gd
           coverage: none
 
       - name: Cache Composer dependencies
