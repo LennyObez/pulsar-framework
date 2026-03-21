@@ -61,7 +61,6 @@ final class MiddlewareRegistryTest extends TestCase
         $this->expectException(MiddlewareNotFoundException::class);
         $this->expectExceptionMessage('Middleware reference "auth-typo" could not be resolved');
 
-        // @phpstan-ignore argument.type (intentional: testing typo path)
         $registry->resolve('auth-typo');
     }
 

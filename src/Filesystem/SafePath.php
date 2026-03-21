@@ -154,8 +154,6 @@ final readonly class SafePath
      * Verify $candidate resolves under $boundaryReal. Walks up to the
      * nearest existing ancestor (so paths-to-create can still be
      * validated) and uses realpath to defeat symlink escapes.
-     *
-     * @return non-empty-string|null
      */
     private static function verifyUnderBoundary(string $candidate, string $boundaryReal): ?string
     {

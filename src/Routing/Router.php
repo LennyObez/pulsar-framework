@@ -39,15 +39,6 @@ final class Router implements RouterInterface
     /**
      * Method-indexed lookup table for fast matching.
      *
-     * Maps each HTTP method value to the list of routes that accept it.
-     * Built incrementally at registration time so that `match()` only
-     * scans routes for the requested method on the hot path.
-     *
-     * @var array<string, list<Route>>
-     */
-    private array $routesByMethod = [];
-
-    /**
      * O(1) hash map for static routes (no dynamic segments).
      *
      * Indexed by HTTP method then normalized path, enabling constant-time
@@ -119,10 +110,6 @@ final class Router implements RouterInterface
      */
     private function indexRouteByMethod(Route $route): void
     {
-        foreach ($route->methods as $method) {
-            $this->routesByMethod[$method->value][] = $route;
-        }
-
         // Index static routes (no dynamic segments) for O(1) lookup
         if ($route->compiledPattern === null && $route->host === null) {
             $normalizedPath = '/' . trim($route->path, '/');

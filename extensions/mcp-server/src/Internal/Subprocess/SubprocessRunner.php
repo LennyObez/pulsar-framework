@@ -270,9 +270,7 @@ final class SubprocessRunner
         }
 
         $status = proc_get_status($process);
-        $pid = is_array($status) && isset($status['pid']) && is_int($status['pid'])
-            ? $status['pid']
-            : 0;
+        $pid = $status['pid'];
 
         if (PHP_OS_FAMILY === 'Windows' && $pid > 0) {
             $this->windowsForceKillTree($pid);

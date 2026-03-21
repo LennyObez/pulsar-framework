@@ -197,6 +197,9 @@ readonly class Request
      */
     private const int JSON_BODY_DECODE_LIMIT = 8_388_608; // 8 MiB
 
+    /**
+     * @return array<string, mixed>
+     */
     private function decodeJsonBody(): array
     {
         $contentType = $this->header('Content-Type');

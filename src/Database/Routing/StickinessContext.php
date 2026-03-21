@@ -56,16 +56,23 @@ final class StickinessContext
     {
         $key = $this->currentKey();
 
-        $slot = ['writeOccurred' => true, 'pinExpiresAtNs' => null, 'requestScoped' => false];
-
         if ($duration === 'request') {
-            $slot['requestScoped'] = true;
-        } else {
-            $durationMs = (int) $duration;
-            $slot['pinExpiresAtNs'] = hrtime(true) + ($durationMs * 1_000_000);
+            $this->slots[$key] = [
+                'writeOccurred' => true,
+                'pinExpiresAtNs' => null,
+                'requestScoped' => true,
+            ];
+
+            return;
         }
 
-        $this->slots[$key] = $slot;
+        $durationMs = (int) $duration;
+
+        $this->slots[$key] = [
+            'writeOccurred' => true,
+            'pinExpiresAtNs' => hrtime(true) + ($durationMs * 1_000_000),
+            'requestScoped' => false,
+        ];
     }
 
     /**

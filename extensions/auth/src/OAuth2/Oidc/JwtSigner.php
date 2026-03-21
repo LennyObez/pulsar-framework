@@ -80,6 +80,7 @@ final readonly class JwtSigner implements JwtSignerInterface
             throw new RuntimeException('RSA signing failed');
         }
 
+        /** @var string $signature */
         return $signingInput . '.' . self::base64UrlEncode($signature);
     }
 
