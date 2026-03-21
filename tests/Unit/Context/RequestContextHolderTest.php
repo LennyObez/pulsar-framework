@@ -113,6 +113,7 @@ final class RequestContextHolderTest extends TestCase
 
         // After the Fiber returns, the root holder must still hold the root context.
         self::assertSame($rootContext, $holder->tryGet());
+        self::assertNotNull($observed, 'Fiber callback should have populated $observed');
         self::assertNull($observed['initial']);
         self::assertSame($fiberContext, $observed['fiber_set']);
     }

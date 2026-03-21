@@ -64,4 +64,8 @@ coverage/
 # Internal / local-only agent instructions (keep out of GitHub)
 CLAUDE.md
 .claude/
+.agents/
+.codex/
+AGENTS.md
+tests/Support/
 docs/internal/

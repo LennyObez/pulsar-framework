@@ -458,7 +458,7 @@ final readonly class QrCodeEncoder
     /**
      * Create an empty QR matrix.
      *
-     * @return list<list<int|null>> 2D array where null = unset, 0 = white, 1 = dark
+     * @return array<int, array<int, int|null>> 2D array where null = unset, 0 = white, 1 = dark
      */
     private function createMatrix(int $size): array
     {
@@ -474,8 +474,8 @@ final readonly class QrCodeEncoder
     /**
      * Place 7x7 finder patterns in three corners.
      *
-     * @param list<list<int|null>> &$matrix
-     * @param list<list<int|null>> &$reserved
+     * @param array<int, array<int, int|null>> &$matrix
+     * @param array<int, array<int, int|null>> &$reserved
      */
     private function placeFinderPatterns(array &$matrix, array &$reserved, int $size): void
     {
@@ -507,8 +507,8 @@ final readonly class QrCodeEncoder
     }
 
     /**
-     * @param list<list<int|null>> &$matrix
-     * @param list<list<int|null>> &$reserved
+     * @param array<int, array<int, int|null>> &$matrix
+     * @param array<int, array<int, int|null>> &$reserved
      */
     private function setIfInBounds(array &$matrix, array &$reserved, int $row, int $col, int $value, int $size): void
     {
@@ -521,8 +521,8 @@ final readonly class QrCodeEncoder
     /**
      * Place alignment patterns.
      *
-     * @param list<list<int|null>> &$matrix
-     * @param list<list<int|null>> &$reserved
+     * @param array<int, array<int, int|null>> &$matrix
+     * @param array<int, array<int, int|null>> &$reserved
      */
     private function placeAlignmentPatterns(array &$matrix, array &$reserved, int $version, int $size): void
     {
@@ -556,8 +556,8 @@ final readonly class QrCodeEncoder
     /**
      * Place timing patterns (row 6, column 6).
      *
-     * @param list<list<int|null>> &$matrix
-     * @param list<list<int|null>> &$reserved
+     * @param array<int, array<int, int|null>> &$matrix
+     * @param array<int, array<int, int|null>> &$reserved
      */
     private function placeTimingPatterns(array &$matrix, array &$reserved, int $size): void
     {
@@ -579,8 +579,8 @@ final readonly class QrCodeEncoder
     /**
      * Place the dark module (always at version * 4 + 13, row 8).
      *
-     * @param list<list<int|null>> &$matrix
-     * @param list<list<int|null>> &$reserved
+     * @param array<int, array<int, int|null>> &$matrix
+     * @param array<int, array<int, int|null>> &$reserved
      */
     private function placeDarkModule(array &$matrix, array &$reserved, int $version): void
     {
@@ -592,7 +592,7 @@ final readonly class QrCodeEncoder
     /**
      * Reserve cells for format information (not filled yet).
      *
-     * @param list<list<int|null>> &$reserved
+     * @param array<int, array<int, int|null>> &$reserved
      */
     private function reserveFormatArea(array &$reserved, int $size): void
     {
@@ -616,7 +616,7 @@ final readonly class QrCodeEncoder
     /**
      * Reserve cells for version information (versions 7+).
      *
-     * @param list<list<int|null>> &$reserved
+     * @param array<int, array<int, int|null>> &$reserved
      */
     private function reserveVersionArea(array &$reserved, int $size): void
     {
@@ -638,8 +638,8 @@ final readonly class QrCodeEncoder
     /**
      * Place data bits in the matrix using the standard zigzag pattern.
      *
-     * @param list<list<int|null>> &$matrix
-     * @param list<list<int|null>> $reserved
+     * @param array<int, array<int, int|null>> &$matrix
+     * @param array<int, array<int, int|null>> $reserved
      * @param list<int> $bits
      */
     private function placeDataBits(array &$matrix, array $reserved, array $bits, int $size): void
@@ -687,8 +687,8 @@ final readonly class QrCodeEncoder
     /**
      * Select the best masking pattern (lowest penalty score).
      *
-     * @param list<list<int|null>> $matrix
-     * @param list<list<int|null>> $reserved
+     * @param array<int, array<int, int|null>> $matrix
+     * @param array<int, array<int, int|null>> $reserved
      */
     private function selectBestMask(array $matrix, array $reserved, int $size): int
     {
@@ -712,8 +712,8 @@ final readonly class QrCodeEncoder
     /**
      * Apply a mask pattern to the matrix.
      *
-     * @param list<list<int|null>> &$matrix
-     * @param list<list<int|null>> $reserved
+     * @param array<int, array<int, int|null>> &$matrix
+     * @param array<int, array<int, int|null>> $reserved
      */
     private function applyMask(array &$matrix, array $reserved, int $maskPattern, int $size): void
     {
@@ -747,7 +747,7 @@ final readonly class QrCodeEncoder
      *
      * Implements all four penalty rules from ISO 18004.
      *
-     * @param list<list<int|null>> $matrix
+     * @param array<int, array<int, int|null>> $matrix
      */
     private function computePenalty(array $matrix, int $size): int
     {
@@ -885,7 +885,7 @@ final readonly class QrCodeEncoder
     /**
      * Place format information bits in the matrix.
      *
-     * @param list<list<int|null>> &$matrix
+     * @param array<int, array<int, int|null>> &$matrix
      */
     private function placeFormatInfo(array &$matrix, int $maskPattern, int $size): void
     {
@@ -930,7 +930,7 @@ final readonly class QrCodeEncoder
     /**
      * Render the QR matrix as an SVG string.
      *
-     * @param list<list<int|null>> $matrix
+     * @param array<int, array<int, int|null>> $matrix
      */
     private function renderSvg(array $matrix, int $size, int $moduleSize, int $quietZone): string
     {

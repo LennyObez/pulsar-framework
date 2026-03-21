@@ -72,6 +72,7 @@ final class RouteContextTest extends TestCase
         $fiber->start();
 
         self::assertSame('root.route', $ctx->label());
+        self::assertNotNull($observed, 'Fiber callback should have populated $observed');
         self::assertSame('unmatched', $observed['initial']);
         self::assertSame('fiber.route', $observed['fiber_label']);
     }
