@@ -438,7 +438,7 @@ final class ExtensionBootstrap
                     'Extension service provider "%s" resolved to %s, which does not implement %s. '
                     . 'Check the container binding for this provider class.',
                     $providerClass,
-                    $resolved::class,
+                    get_debug_type($resolved),
                     ServiceProviderInterface::class,
                 ),
             );

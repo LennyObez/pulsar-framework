@@ -101,7 +101,9 @@ final class AuditChainConcurrencyTest extends TestCase
         $result = $verifier->verifyChain($entries);
         self::assertTrue(
             $result->valid,
-            'Audit chain corrupted under fiber interleaving: ' . ($result->reason ?? 'unknown'),
+            'Audit chain corrupted under fiber interleaving. Failed entries: '
+                . implode(', ', $result->failedEntryIds)
+                . '; broken links: ' . implode(', ', $result->brokenLinks),
         );
 
         // Every previousHmac must be unique across the 10 entries
@@ -127,7 +129,7 @@ final readonly class SingleKeyRing implements KeyRingInterface
     public function __construct(private string $auditKey) {}
 
     #[Override]
-    public function keyFor(string $kid): ?string
+    public function keyFor(string $kid): string
     {
         return $this->auditKey;
     }

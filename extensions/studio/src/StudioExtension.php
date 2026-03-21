@@ -201,16 +201,6 @@ final class StudioExtension implements ExtensionInterface, PreBootExtensionInter
 
             // Chain MAC key: subkey 5
             $chainMacKey = $masterKey->deriveSubKey(5, 'stud_chn');
-        } elseif ($container->has(KeyProviderInterface::class)) {
-            /** @var MasterKey $masterKey */
-            $masterKey = $container->get(KeyProviderInterface::class);
-            $hasDecryptionKey = true;
-
-            // Archive MAC key — subkey 4
-            $archiveMacKey = $masterKey->deriveSubKey(4, 'stud_mac');
-
-            // Chain MAC key — subkey 5
-            $chainMacKey = $masterKey->deriveSubKey(5, 'stud_chn');
         }
 
         $container->instance(EventStoreInterface::class, $store);

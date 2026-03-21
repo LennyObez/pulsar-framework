@@ -69,7 +69,7 @@ final class VersionTest extends TestCase
         $contents = file_get_contents($composerPath);
         self::assertNotFalse($contents);
 
-        /** @var array{version?: string} $manifest */
+        /** @var array{version: string} $manifest */
         $manifest = json_decode($contents, true, 512, JSON_THROW_ON_ERROR);
         self::assertIsArray($manifest);
         self::assertArrayHasKey('version', $manifest);
