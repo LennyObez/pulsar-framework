@@ -26,6 +26,9 @@ use const ENT_XML1;
 
 /**
  * Generates XML sitemaps with hreflang alternate links and pagination.
+ *
+ * @psalm-api Bound to SitemapGeneratorInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use SitemapGeneratorInterface for public API')]
 final readonly class SitemapGenerator implements SitemapGeneratorInterface

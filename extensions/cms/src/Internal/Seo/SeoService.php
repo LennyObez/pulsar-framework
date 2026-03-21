@@ -20,6 +20,9 @@ use function trim;
 
 /**
  * Core SEO service generating meta tags and structured data for content items.
+ *
+ * @psalm-api Bound to SeoServiceInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use SeoServiceInterface for public API')]
 final readonly class SeoService implements SeoServiceInterface
