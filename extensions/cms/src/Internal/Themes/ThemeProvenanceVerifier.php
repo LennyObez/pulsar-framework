@@ -20,6 +20,9 @@ use function strlen;
 
 /**
  * Verifies theme package integrity using SHA-256 and authenticity using Ed25519 signatures.
+ *
+ * @psalm-api Bound to ThemeProvenanceVerifierInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use ThemeProvenanceVerifierInterface for public API')]
 final readonly class ThemeProvenanceVerifier implements ThemeProvenanceVerifierInterface
