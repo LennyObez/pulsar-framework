@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
  * Boolean (yes/no/all) filter for admin resource lists.
  *
  *   BooleanFilter::make('is_active')
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class BooleanFilter extends Filter

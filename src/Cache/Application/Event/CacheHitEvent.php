@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Emitted when a cache key is found (hit).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CacheHitEvent extends CacheEvent

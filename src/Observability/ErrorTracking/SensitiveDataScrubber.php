@@ -26,6 +26,7 @@ use function substr;
  *
  * Uses case-insensitive substring matching against a configurable list
  * of sensitive field names.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SensitiveDataScrubber

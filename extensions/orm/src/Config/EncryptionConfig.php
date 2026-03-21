@@ -10,6 +10,7 @@ use Pulsar\Security\Crypto\SubKeyId;
 
 /**
  * Encryption configuration DTO for ORM encrypted columns.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class EncryptionConfig

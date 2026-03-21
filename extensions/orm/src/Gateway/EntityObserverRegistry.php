@@ -14,6 +14,7 @@ use Pulsar\Extension\Orm\Domain\EntityEvent;
  * Observers are registered per entity class. When a lifecycle event
  * fires, all registered observers for that entity class are notified
  * in registration order.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class EntityObserverRegistry

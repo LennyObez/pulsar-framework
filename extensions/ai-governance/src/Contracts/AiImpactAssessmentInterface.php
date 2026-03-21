@@ -15,6 +15,7 @@ use Pulsar\Extension\AiGovernance\Enum\ImpactCategory;
  * ISO 42001:2023 Clause 6.1.2 requires organizations to assess the potential
  * impacts of AI systems. Implementations evaluate an AI model against specific
  * impact categories and produce structured findings.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface AiImpactAssessmentInterface

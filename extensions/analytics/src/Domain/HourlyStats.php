@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Hourly rollup statistics, retained for 48 hours then merged into daily.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class HourlyStats

@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Defines a threshold: if N or more events matching the given event type
  * occur from the same actor within the specified time window, the rule fires.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AnomalyRule

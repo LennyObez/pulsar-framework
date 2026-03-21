@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Contains the challenge and configuration to pass to the browser's
  * navigator.credentials.get() API.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AuthenticationOptions

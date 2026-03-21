@@ -13,6 +13,7 @@ use Pulsar\Extensibility\ServiceProviderInterface;
  * The provider's `register()` method is not called during bootstrap. Instead,
  * when any of its `provides()` service IDs is first requested via `get()`,
  * the container triggers `register()` just-in-time.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface DeferredServiceProviderInterface extends ServiceProviderInterface

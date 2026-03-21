@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Status of an idempotency claim.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum IdempotencyClaimStatus

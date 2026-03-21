@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
 
 /**
  * Time slot representing an available booking window.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TimeSlot

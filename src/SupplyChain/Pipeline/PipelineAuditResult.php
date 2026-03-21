@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * Reports which security tools are present or missing from workflows,
  * identifies security bypasses (e.g. --no-verify, continue-on-error),
  * and flags actions that are not SHA-pinned.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PipelineAuditResult

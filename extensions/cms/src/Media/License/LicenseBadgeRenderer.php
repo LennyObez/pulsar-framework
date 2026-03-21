@@ -18,6 +18,7 @@ use const ENT_QUOTES;
  *
  * @psalm-api Resolved from the DI container by template rendering;
  *            not instantiated by name.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class LicenseBadgeRenderer

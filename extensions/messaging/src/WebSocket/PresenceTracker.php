@@ -14,6 +14,7 @@ use Pulsar\WebSocket\BroadcastManagerInterface;
  * When a user connects via WebSocket, they are marked online.
  * When disconnected, they are marked offline. Status changes are
  * broadcast to relevant presence channels.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PresenceTracker

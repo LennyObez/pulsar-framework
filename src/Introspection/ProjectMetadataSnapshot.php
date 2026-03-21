@@ -19,6 +19,7 @@ use function array_map;
  *
  * Combines framework-level metadata (routes, commands, config schemas,
  * architecture map, API snapshot) with contributor-provided sections.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ProjectMetadataSnapshot

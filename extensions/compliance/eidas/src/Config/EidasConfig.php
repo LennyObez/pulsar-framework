@@ -19,6 +19,7 @@ use function is_string;
  * Provider, QTSA for timestamps, persistent delivery) and the
  * {@see \Pulsar\Deploy\Check\EidasProductionReadinessCheck} deploy gate
  * refuses these defaults in staging/production.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class EidasConfig

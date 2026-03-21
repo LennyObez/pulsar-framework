@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Used by the region selector to organize countries into navigable groups.
  * Follows the UN geoscheme seven-continent model.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum Continent: string

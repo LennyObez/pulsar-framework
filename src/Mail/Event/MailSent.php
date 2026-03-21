@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Emitted after a mail message is successfully sent.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class MailSent extends MailEvent

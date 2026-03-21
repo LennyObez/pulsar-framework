@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public DTO returned from PublishingChannelInterface and the
  *            orchestrator; consumed by user-land code and admin views.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PublishResult

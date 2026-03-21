@@ -36,6 +36,7 @@ use function is_array;
  *           return $this->user() !== null;
  *       }
  *   }
+ * @api
  */
 #[Api(since: '1.0.0')]
 abstract class FormRequest

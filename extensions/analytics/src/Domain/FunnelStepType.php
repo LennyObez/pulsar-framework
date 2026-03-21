@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * How a funnel step matches visitor actions.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum FunnelStepType: string

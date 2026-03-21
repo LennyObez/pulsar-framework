@@ -13,6 +13,7 @@ use function is_string;
 
 /**
  * A single tax rate rule mapping categories and countries to a rate.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TaxRateConfig

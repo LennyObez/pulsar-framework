@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * A single timing entry in the request profiler timeline.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ProfileEntry

@@ -24,6 +24,7 @@ use function count;
  *
  * Individual interceptors may be enabled/disabled via InterceptorToggleConfig,
  * but their relative order cannot change.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class InterceptorPipeline

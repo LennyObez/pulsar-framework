@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
  * Base contract for gRPC streaming operations.
  *
  * Streaming requires a persistent runtime (RoadRunner/FrankenPHP).
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface StreamInterface

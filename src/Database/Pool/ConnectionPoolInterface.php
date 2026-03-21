@@ -13,6 +13,7 @@ use Pulsar\Database\Exception\DatabaseException;
  *
  * Under FPM, no pool is created; connections are managed per-request
  * by the ConnectionManager directly.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ConnectionPoolInterface

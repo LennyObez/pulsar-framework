@@ -14,6 +14,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public binding contract; implemented by DbContentSnapshotRepository
  *            and consumed by governance + admin controllers.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ContentSnapshotServiceInterface

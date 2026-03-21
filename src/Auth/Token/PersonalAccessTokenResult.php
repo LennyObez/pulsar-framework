@@ -12,6 +12,7 @@ use SensitiveParameter;
  *
  * Contains the plaintext token (shown only once) and the persisted token record.
  * The plaintext value must be displayed to the user immediately and never stored.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PersonalAccessTokenResult

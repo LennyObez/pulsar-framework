@@ -23,6 +23,7 @@ use function rtrim;
  *
  * Uses deny-by-default field exposure: only explicitly exposed fields are visible.
  * Generates `#[Expose]`, `#[Filterable]`, `#[Sortable]` attributes based on property metadata.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ApiResourceGenerator extends AbstractGenerator

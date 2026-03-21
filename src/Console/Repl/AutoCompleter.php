@@ -25,6 +25,7 @@ use function str_starts_with;
  *
  * Resolves container bindings, class methods, scope variables,
  * PHP built-in functions, and Pulsar helper names for tab-completion.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class AutoCompleter

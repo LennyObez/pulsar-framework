@@ -26,6 +26,7 @@ use const JSON_THROW_ON_ERROR;
  *
  * Security: request bodies exceeding {@see MAX_BODY_SIZE} bytes are rejected
  * before parsing to prevent resource exhaustion.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class GraphqlController

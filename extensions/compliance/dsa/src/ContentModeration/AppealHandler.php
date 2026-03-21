@@ -15,6 +15,7 @@ use Pulsar\Api\Api;
  * that allows them to contest moderation decisions. Complaints
  * must be handled in a timely, non-discriminatory, non-arbitrary
  * manner by qualified staff.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AppealHandler

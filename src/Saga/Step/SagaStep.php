@@ -16,6 +16,7 @@ use Pulsar\Api\Api;
  * Compensation is NOT rollback; each step explicitly declares compensation
  * semantics. Irreversible steps (e.g., sending emails) cannot be compensated;
  * the saga handles this via logging and operator alerts.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SagaStep

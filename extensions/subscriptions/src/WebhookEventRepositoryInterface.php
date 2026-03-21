@@ -9,6 +9,7 @@ use Pulsar\Api\Pagination\PaginationResult;
 
 /**
  * Persistence contract for webhook event records.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface WebhookEventRepositoryInterface

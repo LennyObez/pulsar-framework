@@ -21,6 +21,7 @@ use function strtolower;
  * against patterns that indicate potentially unnecessary personally identifiable
  * information collection (e.g., maiden names, full SSNs). Results should be
  * reviewed by qualified privacy personnel.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DataMinimizationAnalyzer implements PolicyAnalyzerInterface

@@ -20,6 +20,7 @@ use Pulsar\Testing\Fake\StorageFake;
  *
  * Fakes are scoped to the current test instance (no shared static state),
  * making them safe for parallel test execution.
+ * @api
  */
 #[Api(since: '1.0.0')]
 trait ResetsTestState

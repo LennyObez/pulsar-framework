@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Classification category for user feedback submissions.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum FeedbackCategory: string

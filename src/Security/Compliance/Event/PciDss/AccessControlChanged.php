@@ -16,6 +16,7 @@ use function is_string;
  * Records a change to access control settings.
  *
  * Supports controls for PCI-DSS Requirement 7 restrict access by business need-to-know.
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]

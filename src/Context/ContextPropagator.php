@@ -17,6 +17,7 @@ use function is_string;
  *
  * Used to propagate context through queue job payloads, external HTTP calls,
  * and any other boundary that accepts key-value carriers.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ContextPropagator

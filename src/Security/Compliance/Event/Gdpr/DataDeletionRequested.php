@@ -16,6 +16,7 @@ use function is_string;
  * Records that a data deletion request (right to erasure) has been filed.
  *
  * Supports controls for GDPR Article 17 right to erasure.
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]

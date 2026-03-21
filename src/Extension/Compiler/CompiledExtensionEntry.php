@@ -11,6 +11,7 @@ use function is_string;
 
 /**
  * A single extension entry within a compiled extension manifest.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CompiledExtensionEntry

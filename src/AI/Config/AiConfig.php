@@ -15,6 +15,7 @@ use function is_string;
  *
  * Controls the default provider, model selection, and API connection parameters.
  * Disabled by default; requires explicit opt-in and API key configuration.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AiConfig

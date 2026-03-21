@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * Detects requests originating from the px-* client runtime
  * and exposes trigger, target, and swap context.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class HtmxRequest

@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public DTO returned from SeoServiceInterface; consumed by
  *            content templates rendering the head section.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class MetaTagCollection

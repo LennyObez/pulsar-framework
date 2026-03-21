@@ -16,6 +16,7 @@ use function is_string;
  * Records a cryptographic key rotation event.
  *
  * Supports controls for PCI-DSS Requirement 3 key management procedures.
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]

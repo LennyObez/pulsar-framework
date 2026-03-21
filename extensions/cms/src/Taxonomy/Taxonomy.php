@@ -15,6 +15,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public DTO returned from TaxonomyRepositoryInterface; consumed
  *            by content services and admin templates.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Taxonomy

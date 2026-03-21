@@ -15,6 +15,7 @@ use function count;
  * In-memory evidence store for testing and development.
  *
  * Production deployments should use a persistent store (database-backed).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class InMemoryEvidenceStore implements EvidenceStoreInterface

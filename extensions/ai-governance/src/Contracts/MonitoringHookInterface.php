@@ -13,6 +13,7 @@ use Pulsar\Extension\AiGovernance\Dto\AiModel;
  * ISO 42001:2023 Clause 9.1 requires continuous monitoring and measurement
  * of AI system performance. Integrators register monitoring hooks to track
  * drift, performance degradation, and bias emergence.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface MonitoringHookInterface

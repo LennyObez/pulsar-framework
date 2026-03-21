@@ -19,6 +19,7 @@ use function is_string;
  *
  * Supports ISO 42001:2023 Clause 6.1.2 (AI risk assessment) and Clause 8.2
  * (AI system impact assessment) by capturing assessment outcomes.
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]

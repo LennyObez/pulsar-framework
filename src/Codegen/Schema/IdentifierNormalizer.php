@@ -21,6 +21,7 @@ use function ucfirst;
  * Converts database identifiers to safe PHP class and property names.
  *
  * Handles SQL/PHP reserved words, special characters, and casing conventions.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class IdentifierNormalizer

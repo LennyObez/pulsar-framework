@@ -44,6 +44,7 @@ use function substr;
  * matching the AuditEntry pattern). Binding the key prevents lifting a
  * sealed payload from one row and replaying it under a different
  * idempotency key.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SignedIdempotencyEnvelope

@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Common interface for all response format renderers.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ResponseRendererInterface

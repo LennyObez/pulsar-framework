@@ -16,6 +16,7 @@ use Pulsar\Database\Row;
  *
  * @psalm-api Resolved by the docs sidebar template helper from the
  *            DI container; not new'd by name.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DocSidebarGenerator

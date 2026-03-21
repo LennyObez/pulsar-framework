@@ -10,6 +10,7 @@ use function is_string;
 
 /**
  * A single filter condition in a visual filter definition.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class FilterCondition

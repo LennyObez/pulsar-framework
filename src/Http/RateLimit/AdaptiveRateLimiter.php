@@ -18,6 +18,7 @@ use function max;
  *
  * The adaptive behavior is layered on top of the base limiter, so the
  * underlying storage and window mechanics remain unchanged.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class AdaptiveRateLimiter implements RateLimiterInterface

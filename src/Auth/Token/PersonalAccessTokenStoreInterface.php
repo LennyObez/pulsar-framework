@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Persistence contract for personal access tokens.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface PersonalAccessTokenStoreInterface

@@ -22,6 +22,7 @@ use function rename;
  *
  * Validates MIME type by magic bytes, enforces size limits,
  * sanitizes filenames, and integrates with antivirus scanning.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class UploadedFileHandler

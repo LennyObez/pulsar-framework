@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Roles in a chat conversation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum ChatRole: string

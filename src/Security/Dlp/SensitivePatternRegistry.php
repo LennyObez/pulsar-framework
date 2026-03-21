@@ -19,6 +19,7 @@ use const PREG_OFFSET_CAPTURE;
  * and secrets (API keys). Applications may register custom patterns at boot.
  *
  * Compliance: PCI-DSS Req.3/4 (CHD protection), HIPAA (ePHI), GDPR Art.32.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class SensitivePatternRegistry

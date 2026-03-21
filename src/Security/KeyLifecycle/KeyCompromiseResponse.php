@@ -23,6 +23,7 @@ use function sprintf;
  *
  * Addresses NIST SP 800-57 key compromise procedures and
  * PCI-DSS Req 3.6.5 (retirement of compromised keys).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class KeyCompromiseResponse

@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Input DTO for regression detection: captures current system configuration values.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RegressionInput

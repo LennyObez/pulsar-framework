@@ -29,6 +29,7 @@ use const JSON_THROW_ON_ERROR;
  * traditional offset pagination and provides stable results under concurrent writes.
  *
  * Best for ordered datasets with a unique sort key (e.g., created_at + id).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class KeysetPaginator implements PaginatorInterface

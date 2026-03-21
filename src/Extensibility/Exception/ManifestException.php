@@ -11,6 +11,7 @@ use function sprintf;
 
 /**
  * Exception for manifest parsing and validation errors.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ManifestException extends ExtensionException

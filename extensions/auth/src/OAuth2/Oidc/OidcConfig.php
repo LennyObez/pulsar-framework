@@ -11,6 +11,7 @@ use function is_string;
 
 /**
  * Configuration for the OpenID Connect provider.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class OidcConfig

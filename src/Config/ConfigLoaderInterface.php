@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Not consumed by core in 0.3.0. Establishes the pattern for extensions
  * that provide their own typed config DTOs.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ConfigLoaderInterface

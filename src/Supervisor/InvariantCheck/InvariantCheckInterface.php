@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * Invariant checks run periodically while the supervisor is active to
  * verify that system invariants hold (e.g., database connectivity,
  * expected filesystem state, configuration consistency).
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface InvariantCheckInterface

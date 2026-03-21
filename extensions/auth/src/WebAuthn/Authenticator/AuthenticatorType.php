@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Type of WebAuthn authenticator.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum AuthenticatorType: string

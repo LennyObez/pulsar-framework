@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Configuration DTO for code generators.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class GeneratorConfig

@@ -14,6 +14,7 @@ use function sprintf;
  * Exception thrown by the View module.
  *
  * Uses static factory methods for each failure scenario.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ViewException extends RuntimeException

@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
  * Shared compliance concern for frameworks that mandate incident/breach reporting.
  *
  * Used by GDPR, NIS2, HIPAA, PCI-DSS, PSD2, SOC 2, and others.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface HasIncidentReporting

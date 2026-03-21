@@ -40,6 +40,7 @@ use const JSON_UNESCAPED_UNICODE;
  *
  * Works with OpenAI, Azure OpenAI, and any API that follows the
  * OpenAI chat completions format.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class OpenAiProvider implements AiClientInterface

@@ -14,6 +14,7 @@ use function is_string;
 
 /**
  * Records validation of a PSD2 eIDAS certificate.
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]

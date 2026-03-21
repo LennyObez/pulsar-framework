@@ -9,6 +9,7 @@ use RuntimeException;
 
 /**
  * OAuth2 protocol exception with RFC 6749 error codes.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class OAuth2Exception extends RuntimeException

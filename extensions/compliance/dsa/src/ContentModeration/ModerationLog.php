@@ -14,6 +14,7 @@ use Pulsar\Api\Api;
  * Platforms must maintain a log of all moderation decisions and make
  * this data available for transparency reporting. The log is append-only
  * to ensure auditability and regulatory compliance.
+ * @api
  */
 #[Api(since: '1.0.0')]
 abstract class ModerationLog

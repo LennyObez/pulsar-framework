@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Implementations provide atomic consume to prevent race conditions
  * where two concurrent requests could both consume the same code.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface RecoveryCodeStoreInterface

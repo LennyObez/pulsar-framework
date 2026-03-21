@@ -32,6 +32,7 @@ use const JSON_UNESCAPED_UNICODE;
  * Periodically runs verification checks and records results as tamper-evident
  * evidence records. Each record's signature chains to the previous record's
  * signature, creating a provable sequence of compliance state.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class EvidenceChain

@@ -23,6 +23,7 @@ use function sprintf;
  * Validates IBAN numbers per ISO 13616.
  * Rearranges (moves first 4 chars to end), converts letters to digits, mod 97 === 1.
  * Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Iban implements RuleInterface

@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Supported column types for schema DDL operations.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum SchemaColumnType: string

@@ -23,6 +23,7 @@ use function substr;
  *
  * Operates on the first path segment to detect supported locale tags.
  * Uses string operations (not regex) on the hot path for performance.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class UrlPrefixExtractor

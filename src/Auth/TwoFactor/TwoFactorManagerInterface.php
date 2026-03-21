@@ -13,6 +13,7 @@ use SensitiveParameter;
  *
  * BREAKING in 1.0.0-rc.8: verifyCode() and confirmSetup() now require
  * a string $identityId parameter for replay prevention scoping.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface TwoFactorManagerInterface

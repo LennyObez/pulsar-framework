@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * A poll attached to a forum thread.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Poll

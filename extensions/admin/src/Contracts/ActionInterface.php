@@ -13,6 +13,7 @@ use Pulsar\Extension\Admin\Domain\ActionResult;
  *
  * @psalm-api Implemented by user-land admin actions registered with
  *            the action registry; never resolved by name in framework code.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ActionInterface

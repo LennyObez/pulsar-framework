@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Implementations perform active health probing (HTTP, TCP, gRPC)
  * and return the current health status.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface HealthCheckInterface

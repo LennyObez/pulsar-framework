@@ -24,6 +24,7 @@ use const PATHINFO_EXTENSION;
 /**
  * Generates image variants (responsive sizes with optional format conversion)
  * from an original image using the configured variant definitions.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ImageVariantGenerator

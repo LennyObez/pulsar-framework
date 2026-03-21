@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Renders invoice data into a presentable format.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface InvoiceRendererInterface

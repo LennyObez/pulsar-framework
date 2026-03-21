@@ -21,6 +21,7 @@ use function is_string;
  *
  * Supports controls for SOX segregation of duties monitoring
  * and PCI-DSS privileged access tracking.
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]

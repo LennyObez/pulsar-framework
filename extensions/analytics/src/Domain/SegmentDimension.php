@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Dimensions available for audience segmentation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum SegmentDimension: string

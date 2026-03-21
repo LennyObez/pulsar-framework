@@ -17,6 +17,7 @@ use Pulsar\Workflow\Exception\WorkflowException;
  * Implementations are responsible for mapping old state names/shapes to the new
  * definition's expectations. Failed migration must throw; partial state
  * corruption is never acceptable.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface DefinitionMigratorInterface

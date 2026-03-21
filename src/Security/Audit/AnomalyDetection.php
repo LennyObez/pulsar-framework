@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Immutable record of a detected anomaly.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AnomalyDetection

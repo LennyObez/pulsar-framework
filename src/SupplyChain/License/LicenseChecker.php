@@ -23,6 +23,7 @@ use const JSON_THROW_ON_ERROR;
  * Reads composer.lock data to extract each package's declared licenses
  * and verifies them against the project's allowlist. Packages with no
  * declared license are categorized as "unknown."
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class LicenseChecker

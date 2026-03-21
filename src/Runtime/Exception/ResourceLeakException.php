@@ -15,6 +15,7 @@ use function sprintf;
 
 /**
  * Thrown in strict mode when unreleased resources are detected at request end.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ResourceLeakException extends RuntimeException

@@ -20,6 +20,7 @@ use const FILE_APPEND;
  * and maintenance mode awareness.
  *
  * Created via ScheduleBuilder::job()->build().
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ScheduledJob implements JobInterface

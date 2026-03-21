@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public DTO produced by ContentTypeBuilder::build(); registered
  *            with ContentTypeRegistryInterface.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ContentTypeDefinition

@@ -16,6 +16,7 @@ use RuntimeException;
  * actor parameter is null and the active `RequestContext` does not carry an
  * actor either, this exception is thrown to force callers to pass an explicit
  * `AuditActor` (e.g. `AuditActor::system('mail.webhook')`).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class AuditActorMissingException extends RuntimeException

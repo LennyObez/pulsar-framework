@@ -15,6 +15,7 @@ use function is_string;
  * Typed configuration DTO for security headers.
  *
  * Maps from the `headers` key of `config/security.php`.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SecurityHeadersConfig

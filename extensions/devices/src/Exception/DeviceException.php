@@ -14,6 +14,7 @@ use function sprintf;
  *
  * Static factories expose the exact failure mode so callers can pattern-match
  * on semantic intent without string-parsing exception messages.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class DeviceException extends RuntimeException

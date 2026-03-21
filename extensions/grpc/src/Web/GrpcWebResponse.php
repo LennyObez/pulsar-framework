@@ -14,6 +14,7 @@ use function strlen;
 
 /**
  * Response DTO for gRPC-Web requests.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class GrpcWebResponse

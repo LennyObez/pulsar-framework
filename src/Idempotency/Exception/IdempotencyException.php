@@ -18,6 +18,7 @@ use function sprintf;
  * so HTTP / controller layers can map each failure to a consistent response
  * code via `match ($e->kind)` without parsing exception messages. See
  * `IdempotencyErrorKind` for the recommended HTTP-status mapping table.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class IdempotencyException extends RuntimeException

@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Types of discounts that can be applied.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum DiscountType: string

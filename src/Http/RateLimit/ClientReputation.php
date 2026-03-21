@@ -19,6 +19,7 @@ use function min;
  *
  * Score range: 0.0 (fully penalized) to 2.0 (trusted client).
  * Default: 1.0 (neutral).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ClientReputation

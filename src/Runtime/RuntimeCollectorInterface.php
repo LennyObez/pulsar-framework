@@ -14,6 +14,7 @@ use Pulsar\Api\Api;
  * Allows the persistent runtime to emit lifecycle events and record
  * request metrics without depending on a concrete collector implementation.
  * Extensions (e.g., Studio) provide the concrete implementation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface RuntimeCollectorInterface

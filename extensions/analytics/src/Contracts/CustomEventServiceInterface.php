@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Custom event querying and exploration.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface CustomEventServiceInterface

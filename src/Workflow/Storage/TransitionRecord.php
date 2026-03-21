@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * Maps to the `workflow_transitions` table schema. Records are append-only
  * and never updated or deleted, forming a complete audit trail.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TransitionRecord

@@ -21,6 +21,7 @@ use function sprintf;
  * and CRLF response splitting when the URL contains `\r` / `\n`. Refusing
  * the redirect at construction time fails loudly during testing and prevents
  * the dangerous response from ever being emitted.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class UnsafeRedirectException extends InvalidArgumentException

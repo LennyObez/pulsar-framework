@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * ConceptMaps allow translation of codes between systems (e.g., ICD-10 to SNOMED-CT).
  *
  * @see https://www.hl7.org/fhir/conceptmap.html
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ConceptMap

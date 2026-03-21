@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
  * Base class for admin resource list filters.
  *
  * Filters restrict the list view by applying criteria to specific fields.
+ * @api
  */
 #[Api(since: '1.0.0')]
 abstract class Filter

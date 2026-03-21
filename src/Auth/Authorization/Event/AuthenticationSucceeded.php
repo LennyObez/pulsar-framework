@@ -19,6 +19,7 @@ use function is_string;
  * Dispatched when authentication succeeds.
  *
  * Supports controls for HIPAA access logging and SOX audit trail requirements.
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]

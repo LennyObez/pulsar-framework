@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Parsed referrer information.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ReferrerSource

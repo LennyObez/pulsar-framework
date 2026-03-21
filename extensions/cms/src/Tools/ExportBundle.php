@@ -16,6 +16,7 @@ use Pulsar\Api\Api;
  * @psalm-api Public DTO returned from ImportExportServiceInterface::export();
  *            consumed by export controllers and the framework's
  *            ImportExportProvider adapter.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ExportBundle

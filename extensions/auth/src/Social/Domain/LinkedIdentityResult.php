@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Captures whether the link was established, the resulting
  * identity ID, and which action was taken.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class LinkedIdentityResult

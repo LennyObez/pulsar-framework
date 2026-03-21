@@ -17,6 +17,7 @@ use Pulsar\Api\Api;
  * - Initial notification: within 4 hours of classification as major
  * - Intermediate report: within 72 hours
  * - Final report: within 1 month
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class IctIncidentRecord

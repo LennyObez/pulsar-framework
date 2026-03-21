@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * All methods accept a URL (absolute or relative to the configured base URL)
  * and an optional array of request options.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface HttpClientInterface

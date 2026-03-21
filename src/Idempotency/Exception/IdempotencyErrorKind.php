@@ -27,6 +27,7 @@ use Pulsar\Api\Api;
  * concurrent in-flight request, and the result of that request will be
  * available shortly. All other kinds are caller errors or operator-side
  * incidents.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum IdempotencyErrorKind: string

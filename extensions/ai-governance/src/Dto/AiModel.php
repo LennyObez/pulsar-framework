@@ -15,6 +15,7 @@ use Pulsar\Extension\AiGovernance\Enum\AiModelStatus;
  *
  * Captures metadata required by ISO 42001:2023 Clause 8.2 for AI system
  * documentation including model cards, risk classification, and lifecycle state.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AiModel

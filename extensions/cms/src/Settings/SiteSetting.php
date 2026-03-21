@@ -15,6 +15,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public DTO returned from SettingsServiceInterface; consumed by
  *            user-land code and admin templates.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SiteSetting

@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * Saga steps use this to execute their forward and compensation actions.
  * Implementations may delegate to a local command bus, a message queue,
  * or an RPC client depending on the deployment topology.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface CommandBusPort

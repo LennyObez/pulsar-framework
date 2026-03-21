@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
  * A concept definition within a code system.
  *
  * @see https://www.hl7.org/fhir/codesystem-definitions.html#CodeSystem.concept
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ConceptDefinition

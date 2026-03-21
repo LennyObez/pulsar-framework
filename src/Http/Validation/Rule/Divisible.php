@@ -16,6 +16,7 @@ use function sprintf;
 
 /**
  * Value must be divisible by the given divisor. Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Divisible implements RuleInterface

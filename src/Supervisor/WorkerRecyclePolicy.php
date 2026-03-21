@@ -14,6 +14,7 @@ use Pulsar\Config\SupervisorConfig;
  * Encapsulates thresholds for request count, memory usage, and uptime.
  * When any threshold is exceeded the supervisor should initiate a
  * graceful restart of the affected worker.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class WorkerRecyclePolicy

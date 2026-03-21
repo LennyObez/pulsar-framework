@@ -17,6 +17,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public enum referenced by NewsletterCampaign::status; consumed
  *            by user-land code and admin views.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum CampaignStatus: string

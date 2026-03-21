@@ -14,6 +14,7 @@ use Pulsar\Codegen\Template\TemplateRenderer;
  * template rendering, path validation, and conflict detection.
  *
  * Subclasses implement `doGenerate()` to produce the list of generated files.
+ * @api
  */
 #[Api(since: '1.0.0')]
 abstract class AbstractGenerator implements GeneratorInterface

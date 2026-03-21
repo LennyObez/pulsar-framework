@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * Implementations are responsible for locating and deleting (or anonymizing)
  * data records that fall outside their category's retention window. Each
  * implementation handles a specific data store or category.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface DataPurgeInterface

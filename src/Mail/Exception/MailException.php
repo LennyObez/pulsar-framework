@@ -14,6 +14,7 @@ use function sprintf;
 
 /**
  * General exception for mail operations.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class MailException extends RuntimeException

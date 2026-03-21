@@ -38,6 +38,7 @@ use function sprintf;
  *
  * Provides `dump()`, `model()`, `route()`, `sql()`, `doc()`,
  * `bench()`, and `profile()` for developer convenience.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ReplHelpers

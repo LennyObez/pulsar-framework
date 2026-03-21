@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  * WebAuthn credential source (public key, counter, transports).
  *
  * Represents a registered WebAuthn credential linked to a user account.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CredentialSource

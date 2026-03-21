@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Dispatched when a service instance is removed from the discovery system.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ServiceDeregistered

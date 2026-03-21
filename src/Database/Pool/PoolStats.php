@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Snapshot of connection pool statistics.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PoolStats

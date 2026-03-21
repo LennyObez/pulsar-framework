@@ -14,6 +14,7 @@ use function is_string;
  *
  * iDEAL is the most popular online payment method in the Netherlands.
  * Integrated via Stripe Payment Methods API or Mollie.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class IdealConfig

@@ -13,6 +13,7 @@ use Pulsar\Api\Api;
  *
  * Specifies how long records must be kept before they may be purged.
  * Each policy is versioned to support auditable policy changes.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RetentionPolicy

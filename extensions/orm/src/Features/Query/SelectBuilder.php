@@ -41,6 +41,7 @@ use function sprintf;
  *
  * Implements both RowQueryBuilderInterface (raw rows) and
  * EntityQueryBuilderInterface (hydrated entities).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class SelectBuilder implements EntityQueryBuilderInterface

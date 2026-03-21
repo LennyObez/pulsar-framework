@@ -12,6 +12,7 @@ use Pulsar\Saga\Exception\SagaException;
  *
  * Executes saga definitions step-by-step with durable state persistence,
  * automatic compensation on failure, and compliance event emission.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface SagaOrchestratorInterface

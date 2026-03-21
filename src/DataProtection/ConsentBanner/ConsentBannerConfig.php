@@ -17,6 +17,7 @@ use function is_string;
  *
  * Controls which consent categories are shown, the privacy policy URL,
  * banner position, and whether granular opt-in is required.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ConsentBannerConfig

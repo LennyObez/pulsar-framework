@@ -25,6 +25,7 @@ use const SODIUM_CRYPTO_BOX_NONCEBYTES;
  *
  * The server stores only the encrypted key blobs: it cannot recover
  * the group key without a participant's secret key.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class GroupKeyDistributor

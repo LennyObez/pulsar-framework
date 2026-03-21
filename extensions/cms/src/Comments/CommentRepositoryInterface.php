@@ -12,6 +12,7 @@ use Pulsar\Api\Pagination\PaginationResult;
  *
  * @psalm-api Public binding contract; implemented by DbCommentRepository and
  *            consumed by CommentService and admin moderation controllers.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface CommentRepositoryInterface

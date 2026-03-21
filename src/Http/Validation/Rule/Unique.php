@@ -17,6 +17,7 @@ use function sprintf;
 
 /**
  * Value must be unique in the database table/column. Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Unique implements RuleInterface

@@ -12,6 +12,7 @@ use Pulsar\Api\Pagination\PaginationResult;
  *
  * Implementations must support upsert semantics, email-based lookup,
  * pagination, and daily rate-limit counting by email.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface BetaSignupRepositoryInterface

@@ -14,6 +14,7 @@ use Pulsar\Api\Api;
  *   Pending --complete--> Completed --partial_refund--> PartiallyRefunded --refund--> Refunded
  *   Pending --fail--> Failed
  *   Pending --cancel--> Cancelled
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum PaymentStatus: string

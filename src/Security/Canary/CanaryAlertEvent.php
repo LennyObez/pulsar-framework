@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Event emitted when a canary token is detected in an unexpected location.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CanaryAlertEvent

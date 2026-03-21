@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Base class for mail events.
+ * @api
  */
 #[Api(since: '1.0.0')]
 abstract readonly class MailEvent

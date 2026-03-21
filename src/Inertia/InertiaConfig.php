@@ -11,6 +11,7 @@ use function is_string;
 
 /**
  * Configuration for the Inertia-style SPA bridge.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class InertiaConfig

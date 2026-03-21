@@ -12,6 +12,7 @@ use Pulsar\Integrity\VerificationResult;
  *
  * Abstracts manifest loading and filesystem verification so that
  * controllers can be tested without touching the filesystem.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface IntegrityVerificationRunnerInterface

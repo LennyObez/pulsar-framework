@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Result of a single anti-spam check.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AntiSpamCheckResult

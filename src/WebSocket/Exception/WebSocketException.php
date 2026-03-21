@@ -16,6 +16,7 @@ use function sprintf;
  * conflicts, handler registration mistakes). Protocol-level errors that the
  * spec instructs to close with a numeric code are represented by returning
  * the close code directly, not by throwing.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class WebSocketException extends RuntimeException

@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Reputation level tiers derived from a user's cumulative reputation score.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum ReputationLevel: int

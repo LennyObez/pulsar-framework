@@ -17,6 +17,7 @@ use function is_int;
  * Enforces limits on the number of fields, nesting depth, and includes
  * per request. All violations produce 400 Bad Request responses with
  * descriptive error messages identifying which limit was exceeded.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ComplexityLimits

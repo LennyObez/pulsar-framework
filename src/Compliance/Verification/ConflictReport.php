@@ -10,6 +10,7 @@ use Pulsar\Compliance\ComplianceFramework;
 
 /**
  * Describes a conflict between two compliance frameworks and its resolution.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ConflictReport

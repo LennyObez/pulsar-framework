@@ -15,6 +15,7 @@ use Pulsar\Api\Api;
  * The key scope is (identityId, purpose, timeStep): not (identityId, code).
  * This prevents replay across different purposes and correctly ties the
  * guard to the accepted time step rather than the code string.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface TotpReplayGuardInterface

@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
  * Classification levels for data sensitivity.
  *
  * Supports controls for data handling policies across GDPR, HIPAA, PCI-DSS, and SOX.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum DataClassification: string

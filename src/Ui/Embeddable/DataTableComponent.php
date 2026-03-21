@@ -19,6 +19,7 @@ use const ENT_QUOTES;
  *
  * Renders a sortable, filterable, paginated table from any data source.
  * Works as <pulsar-data-table> custom element.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class DataTableComponent extends EmbeddableComponent

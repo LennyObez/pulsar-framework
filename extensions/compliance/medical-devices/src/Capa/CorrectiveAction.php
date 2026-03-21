@@ -14,6 +14,7 @@ use Pulsar\Api\Api;
  * or other undesirable situations to prevent recurrence.
  *
  * @see ISO 13485:2016 Section 8.5.2
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CorrectiveAction

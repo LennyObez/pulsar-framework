@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Holds the Composer package name and the FQCN of the extension class
  * declared via `extra.pulsar.extension` in composer.json.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DiscoveredExtension

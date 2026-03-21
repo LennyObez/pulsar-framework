@@ -14,6 +14,7 @@ use Pulsar\Observability\Metrics\MetricRegistry;
  *
  * Exposes only persistent services that are safe to use in long-lived
  * connections outside the request sandbox.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class UpgradeContext

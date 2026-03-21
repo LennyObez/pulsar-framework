@@ -14,6 +14,7 @@ use function strtoupper;
  * Validated column name value object.
  *
  * Accepts only alphanumeric + underscore identifiers that are not SQL keywords.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ColumnName

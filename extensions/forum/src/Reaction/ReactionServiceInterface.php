@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Service for managing emoji reactions on forum posts.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ReactionServiceInterface

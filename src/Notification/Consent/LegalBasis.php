@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * GDPR-aligned legal bases for processing personal data in notifications.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum LegalBasis: string

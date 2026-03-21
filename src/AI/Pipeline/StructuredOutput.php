@@ -21,6 +21,7 @@ use const JSON_UNESCAPED_SLASHES;
  *
  * Sends a prompt to the AI model with a JSON schema constraint,
  * then validates and parses the response into a typed array.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class StructuredOutput

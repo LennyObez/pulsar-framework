@@ -18,6 +18,7 @@ use function sprintf;
  * a faux `class-string` and let the pipeline crash much later when it
  * tried to instantiate `'typo'`. The registry now fails fast with a
  * precise diagnostic that names the offending reference.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class MiddlewareNotFoundException extends RuntimeException

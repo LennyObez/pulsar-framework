@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Result of a Peppol AS4 transmission.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PeppolTransmissionResult

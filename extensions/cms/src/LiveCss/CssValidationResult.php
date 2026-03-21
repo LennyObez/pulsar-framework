@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public DTO returned from CssValidatorInterface; consumed by
  *            LiveCssService and the admin editor.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CssValidationResult

@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Repository interface for digital asset and download entitlement management.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface DigitalAssetRepositoryInterface

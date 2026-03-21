@@ -16,6 +16,7 @@ use function random_bytes;
  *
  * Devices are immutable value objects. State transitions (last-seen updates,
  * token rotations) produce new instances via clone-with.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class UserDevice

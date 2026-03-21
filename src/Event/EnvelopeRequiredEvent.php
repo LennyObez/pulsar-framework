@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Events implementing this interface will cause the dispatcher to throw
  * EventException::envelopeRequired() if dispatched as plain objects.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface EnvelopeRequiredEvent {}

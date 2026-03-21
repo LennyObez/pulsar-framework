@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Extends the core AuditEvent taxonomy with AI-specific event types
  * required by ISO 42001:2023 Clause 9.1 monitoring and measurement.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum AiAuditEvent: string

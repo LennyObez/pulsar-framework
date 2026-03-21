@@ -30,6 +30,7 @@ use function trim;
  * Orchestrates all available generators (repository, migration, validation,
  * form, API resource, admin resource, test factory, policy) to produce
  * a complete CRUD scaffold for an entity.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class CrudCommand extends Command

@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * A downloadable file associated with a digital product.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DigitalAsset

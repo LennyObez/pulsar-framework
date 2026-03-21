@@ -17,6 +17,7 @@ use function trim;
  * Sanitizes uploaded filenames to prevent path traversal, special character
  * injection, and other filename-based attacks. Prepends a hash prefix
  * for uniqueness and cache-busting.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class FilenameSanitizer

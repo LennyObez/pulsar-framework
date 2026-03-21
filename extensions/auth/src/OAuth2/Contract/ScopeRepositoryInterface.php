@@ -9,6 +9,7 @@ use Pulsar\Extension\Auth\OAuth2\Token\Scope;
 
 /**
  * Repository for OAuth2 scope definitions and validation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ScopeRepositoryInterface

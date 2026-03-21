@@ -17,6 +17,7 @@ use function time;
  *
  * Uses direct COUNT queries via ConnectionInterface for efficient
  * aggregate computation without loading entity collections.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ForumCmsDashboardWidget implements DashboardWidgetInterface

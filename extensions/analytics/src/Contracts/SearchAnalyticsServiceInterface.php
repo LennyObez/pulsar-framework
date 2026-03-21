@@ -10,6 +10,7 @@ use Pulsar\Extension\Analytics\Domain\SearchQuery;
 
 /**
  * Internal site search analytics.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface SearchAnalyticsServiceInterface

@@ -25,6 +25,7 @@ use function preg_match;
  *
  * Stores the resolved version on the request attribute 'pulsar.api.version'.
  * Adds deprecation warning header for deprecated versions.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ApiVersionResolver implements MiddlewareInterface

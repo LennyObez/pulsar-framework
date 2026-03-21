@@ -11,6 +11,7 @@ use Pulsar\Extension\Forum\Exception\ForumException;
 
 /**
  * A user's report on a post for moderation review.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PostReport

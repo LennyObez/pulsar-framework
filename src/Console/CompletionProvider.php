@@ -20,6 +20,7 @@ use function strlen;
  *
  * Generates shell-specific completion scripts that enable tab-completion
  * for Pulsar CLI commands, options, and arguments.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class CompletionProvider

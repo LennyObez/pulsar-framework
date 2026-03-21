@@ -10,6 +10,7 @@ use Pulsar\Extension\Messaging\Domain\Message;
 
 /**
  * Repository for encrypted message persistence.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface MessageRepositoryInterface

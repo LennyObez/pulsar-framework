@@ -14,6 +14,7 @@ use function is_string;
 
 /**
  * Typed configuration DTO for `config/deploy.php`.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DeployConfig

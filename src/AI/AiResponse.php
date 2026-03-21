@@ -16,6 +16,7 @@ use function is_string;
  *
  * Carries the generated content, token usage metrics, finish reason,
  * and optional tool call data for function-calling workflows.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AiResponse

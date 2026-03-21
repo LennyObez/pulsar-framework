@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Result of a URL safety validation check.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class UrlValidationResult

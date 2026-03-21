@@ -13,6 +13,7 @@ use function is_string;
  * Typed configuration DTO for audit logging settings.
  *
  * Maps from the `audit` key of `config/observability.php`.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AuditConfig

@@ -10,6 +10,7 @@ use function is_array;
 
 /**
  * DTO for WebRTC signaling messages (offer/answer/ICE candidates).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SignalingMessage

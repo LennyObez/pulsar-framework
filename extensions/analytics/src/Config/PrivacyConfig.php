@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Privacy-related analytics configuration.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PrivacyConfig

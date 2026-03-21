@@ -14,6 +14,7 @@ use function sprintf;
 
 /**
  * Sampler that records traces with a given probability between 0.0 and 1.0.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ProbabilitySampler implements SamplerInterface

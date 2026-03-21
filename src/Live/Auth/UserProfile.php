@@ -23,6 +23,7 @@ use const ENT_QUOTES;
  * - Change password
  * - Manage MFA (enable/disable)
  * - View active sessions
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class UserProfile extends LiveComponent

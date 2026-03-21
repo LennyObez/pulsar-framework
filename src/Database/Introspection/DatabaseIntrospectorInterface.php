@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Contract for database schema introspection.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface DatabaseIntrospectorInterface

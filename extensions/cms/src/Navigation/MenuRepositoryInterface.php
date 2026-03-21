@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public binding contract; implemented by DbMenuRepository
  *            and consumed by navigation services and admin controllers.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface MenuRepositoryInterface

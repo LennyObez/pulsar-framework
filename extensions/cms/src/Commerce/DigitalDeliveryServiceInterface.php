@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Service interface for managing digital product download entitlements.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface DigitalDeliveryServiceInterface

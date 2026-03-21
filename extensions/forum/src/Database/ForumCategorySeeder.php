@@ -18,6 +18,7 @@ use Pulsar\Extension\Forum\Support\UuidGenerator;
  *
  * Creates 13 top-level categories covering all standard forum sections:
  * announcements, general discussion, getting started, and topic-specific areas.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ForumCategorySeeder implements SeederInterface

@@ -14,6 +14,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public DTO returned from AccountSectionProviderInterface; consumed
  *            by AccountController and Studio account templates.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AccountSection

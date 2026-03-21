@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * Implementations may store resources in a database, in-memory, or proxy
  * to an upstream FHIR server. The repository operates on raw FHIR arrays
  * to stay resource-type agnostic.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface FhirRepositoryInterface

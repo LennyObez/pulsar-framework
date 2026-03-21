@@ -13,6 +13,7 @@ use Pulsar\Queue\Exception\QueueException;
  * Every class that may be deserialized from a queue payload must be
  * explicitly registered. Unknown classes are rejected to prevent
  * arbitrary object instantiation attacks.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class TypeRegistry

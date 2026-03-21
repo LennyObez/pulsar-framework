@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
  * Individual WAF rule definition.
  *
  * Inspired by ModSecurity SecRule format but expressed as PHP-native DTOs.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class WafRule

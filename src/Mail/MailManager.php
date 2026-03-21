@@ -39,6 +39,7 @@ use function time;
 
 /**
  * Application mail manager with lazy transport resolution and observability.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class MailManager implements MailManagerInterface

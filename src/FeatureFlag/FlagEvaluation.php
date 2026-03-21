@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Record of a feature flag evaluation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class FlagEvaluation

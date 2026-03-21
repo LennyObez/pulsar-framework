@@ -20,6 +20,7 @@ use function trim;
  *
  * Expected format: `?sort=field1,-field2` (prefix `-` for descending).
  * Fields are validated against the SortRegistry.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SortParser

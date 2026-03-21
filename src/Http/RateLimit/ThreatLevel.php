@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Global threat level affecting rate limit enforcement.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum ThreatLevel: string

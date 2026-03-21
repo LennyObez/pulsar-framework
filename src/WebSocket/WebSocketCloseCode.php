@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * WebSocket close status codes (RFC 6455 Section 7.4.1).
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum WebSocketCloseCode: int

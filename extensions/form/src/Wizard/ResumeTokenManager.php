@@ -21,6 +21,7 @@ use function is_string;
  * Resume tokens allow users to continue a wizard later.
  * Single-use consumption uses CAS (Compare-And-Swap) semantics --
  * atomic check + delete prevents race conditions.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ResumeTokenManager

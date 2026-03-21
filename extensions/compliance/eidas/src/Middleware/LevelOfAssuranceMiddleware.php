@@ -21,6 +21,7 @@ use function str_contains;
  *
  * Checks the request for a LoA attribute set by the authentication layer.
  * If the actual LoA does not meet the configured minimum, returns 403.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class LevelOfAssuranceMiddleware implements MiddlewareInterface

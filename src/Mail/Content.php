@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Defines the body content (HTML and/or plain text) for a mailable.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Content

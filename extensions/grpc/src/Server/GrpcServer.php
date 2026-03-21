@@ -24,6 +24,7 @@ use function substr;
  * Wraps the transport adapter, integrates with the interceptor pipeline,
  * and dispatches incoming gRPC requests to registered service handlers.
  * Implements GrpcServerInterface so it can be passed directly to the adapter.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class GrpcServer implements GrpcServerInterface

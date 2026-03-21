@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Metric instrument types supported by the metrics system.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum MetricType: string

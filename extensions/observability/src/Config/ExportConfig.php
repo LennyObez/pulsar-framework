@@ -16,6 +16,7 @@ use function is_string;
  *
  * Controls where observability data is written when using the
  * local file-based exporters (spans, metrics, errors).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ExportConfig

@@ -14,6 +14,7 @@ use Pulsar\Config\Exception\ConfigException;
  * Stores configuration DTOs keyed by class name and retrieves them
  * with full type information.
  *
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ConfigRepository

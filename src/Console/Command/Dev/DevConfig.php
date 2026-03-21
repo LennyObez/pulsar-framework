@@ -15,6 +15,7 @@ use function is_string;
 
 /**
  * Configuration for the Docker development environment.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DevConfig

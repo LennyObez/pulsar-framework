@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * ICT risk categories per DORA Article 5-16.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum IctRiskCategory: string

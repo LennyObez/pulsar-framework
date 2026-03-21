@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * Each service handler represents a single protobuf service and exposes
  * its methods as MethodDescriptor instances. The handler is responsible
  * for dispatching calls to the appropriate implementation method.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ServiceHandlerInterface

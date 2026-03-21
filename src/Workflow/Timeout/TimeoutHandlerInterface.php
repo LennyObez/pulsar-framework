@@ -17,6 +17,7 @@ use Pulsar\Api\Api;
  * The default PollingTimeoutHandler queries for expired instances via
  * a scheduled command. Users with queue infrastructure may provide their
  * own implementation using delayed queue messages.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface TimeoutHandlerInterface

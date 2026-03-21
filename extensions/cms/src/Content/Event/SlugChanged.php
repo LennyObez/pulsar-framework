@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Event class — dispatched by the slug update service
  *            through the EventDispatcher; redirect listener subscribes.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SlugChanged

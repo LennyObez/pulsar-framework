@@ -9,6 +9,7 @@ use Pulsar\Extension\Tickets\Domain\TicketCategory;
 
 /**
  * Repository interface for ticket categories.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface TicketCategoryRepositoryInterface

@@ -9,6 +9,7 @@ use Throwable;
 
 /**
  * Result of a repair action.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RepairResult

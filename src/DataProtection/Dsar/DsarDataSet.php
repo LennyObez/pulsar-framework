@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * Contains structured records and optional file attachments (e.g.,
  * uploaded profile photos, documents) for inclusion in the DSAR
  * data package.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DsarDataSet

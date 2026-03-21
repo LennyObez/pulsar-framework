@@ -18,6 +18,7 @@ use function array_map;
  * Maps each compliance requirement to the specific Pulsar class/config that
  * satisfies it, the verification check result, code references, and evidence
  * timestamps. Output is structured JSON suitable for rendering to PDF.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AuditReportGenerator

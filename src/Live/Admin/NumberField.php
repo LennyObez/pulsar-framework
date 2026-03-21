@@ -9,6 +9,7 @@ use Pulsar\Extension\Admin\Domain\FieldType;
 
 /**
  * Numeric (integer or float) field for admin resources.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class NumberField extends Field

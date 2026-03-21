@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Backoff strategy for retry policies.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum BackoffStrategy: string

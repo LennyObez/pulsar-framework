@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Result of a recovery code consume operation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ConsumeResult

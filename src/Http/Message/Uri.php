@@ -22,6 +22,7 @@ use function strtolower;
  * Immutable URI value object implementing PSR-7 UriInterface.
  *
  * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement: Psalm does not yet infer clone() return type
+ * @api
  */
 #[Api(since: '1.0.0-rc.11')]
 final readonly class Uri implements UriInterface

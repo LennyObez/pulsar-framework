@@ -22,6 +22,7 @@ use function sprintf;
  *
  * Captures both raw events (PSR-14 dispatch) and envelope-wrapped events,
  * providing assertion methods with detailed failure messages.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class EventFake implements EventDispatcherInterface

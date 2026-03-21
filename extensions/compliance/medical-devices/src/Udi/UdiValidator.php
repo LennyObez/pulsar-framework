@@ -15,6 +15,7 @@ use function strlen;
  * This is a FORMAT validator; it checks structural validity against
  * the issuing agency's encoding rules. It does not verify that the
  * device is registered in EUDAMED or any UDI database.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class UdiValidator

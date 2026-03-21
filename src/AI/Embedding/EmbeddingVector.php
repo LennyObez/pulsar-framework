@@ -12,6 +12,7 @@ use function sqrt;
 
 /**
  * A single embedding vector with its source index.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class EmbeddingVector

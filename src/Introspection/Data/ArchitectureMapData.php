@@ -10,6 +10,7 @@ use function array_map;
 
 /**
  * High-level architecture map: registered extensions and container bindings.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ArchitectureMapData

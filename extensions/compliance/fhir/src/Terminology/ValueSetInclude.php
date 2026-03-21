@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
  * Specifies the contents of a code system within a ValueSet.
  *
  * @see https://www.hl7.org/fhir/valueset-definitions.html#ValueSet.compose.include
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ValueSetInclude

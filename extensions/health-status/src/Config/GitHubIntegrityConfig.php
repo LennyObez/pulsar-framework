@@ -16,6 +16,7 @@ use function is_string;
  * The token is read from the GITHUB_INTEGRITY_TOKEN environment variable
  * when not explicitly provided in the configuration array. Tokens are
  * never stored in configuration files.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class GitHubIntegrityConfig

@@ -25,6 +25,7 @@ use function uniqid;
  * Integrates with circuit breaking to prevent cascading failures, emits
  * telemetry counters via MetricRegistry, and produces compliance-grade
  * FailoverEvent records for regulated environments.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class FailoverManager implements FailoverManagerInterface

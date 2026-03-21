@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
 
 /**
  * Pulsar container interface extending PSR-11 with binding capabilities.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ContainerInterface extends PsrContainerInterface

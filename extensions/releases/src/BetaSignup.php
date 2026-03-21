@@ -16,6 +16,7 @@ use function random_bytes;
  * Tracks user interest in beta releases, including device preference
  * and camera brand compatibility. Supports invitation workflow via
  * hashed invite tokens using clone-with semantics.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class BetaSignup

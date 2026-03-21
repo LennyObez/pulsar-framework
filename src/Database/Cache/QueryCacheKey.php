@@ -21,6 +21,7 @@ use const JSON_THROW_ON_ERROR;
  * Keys are built from a hash of the normalized SQL, sorted bindings,
  * tenant ID, connection role, and schema version to ensure correctness
  * across tenants and schema migrations.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class QueryCacheKey

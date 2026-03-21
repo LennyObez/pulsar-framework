@@ -13,6 +13,7 @@ use Pulsar\Extension\Forum\Report\ThreadReport;
 
 /**
  * Moderation service: content reporting, report review, and user banning.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ModerationServiceInterface

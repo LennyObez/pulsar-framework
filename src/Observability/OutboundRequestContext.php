@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Created by HttpClientInstrumentation::start() and consumed by
  * finish() or error() to calculate duration and record metrics.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class OutboundRequestContext

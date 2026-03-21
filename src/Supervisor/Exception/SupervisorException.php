@@ -14,6 +14,7 @@ use function sprintf;
  * Exception for supervisor-related errors.
  *
  * Provides static factory methods for specific supervisor error scenarios.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class SupervisorException extends RuntimeException

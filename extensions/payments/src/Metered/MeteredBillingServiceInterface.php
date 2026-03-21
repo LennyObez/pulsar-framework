@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * Service for metered/usage-based billing.
  *
  * Records usage events and calculates costs based on pricing tiers.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface MeteredBillingServiceInterface

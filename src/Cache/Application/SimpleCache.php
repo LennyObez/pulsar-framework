@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
 
 /**
  * PSR-16 CacheInterface implementation wrapping a PSR-6 CachePool.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SimpleCache implements CacheInterface

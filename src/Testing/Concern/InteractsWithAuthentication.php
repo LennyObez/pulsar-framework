@@ -16,6 +16,7 @@ use Pulsar\Auth\Identity\IdentityInterface;
  * Usage:
  *   $this->actingAs($identity);
  *   self::assertAuthenticated();
+ * @api
  */
 #[Api(since: '1.0.0')]
 trait InteractsWithAuthentication

@@ -18,6 +18,7 @@ use function sprintf;
  * Bridges between the framework's event system and the WebSocket broadcast
  * infrastructure. Resolves channels from the event, applies authorization
  * constraints, and delegates delivery to the WebSocket BroadcastManager.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class BroadcastManager

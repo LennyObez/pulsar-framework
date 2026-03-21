@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Severity levels for impact assessment findings.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum ImpactSeverity: string

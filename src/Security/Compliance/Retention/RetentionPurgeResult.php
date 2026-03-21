@@ -13,6 +13,7 @@ use Pulsar\Api\Api;
  *
  * Contains the policy applied, affected date range, record count,
  * operator identity, and whether this was a dry-run.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RetentionPurgeResult

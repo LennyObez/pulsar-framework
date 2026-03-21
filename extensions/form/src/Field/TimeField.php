@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Time input field (HH:MM).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class TimeField extends AbstractField

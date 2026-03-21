@@ -13,6 +13,7 @@ use Pulsar\Database\ConnectionInterface;
  * Wraps DdlCompiler with connection execution. Uses transactions
  * for PostgreSQL (which supports transactional DDL). MySQL/MariaDB
  * and SQLite execute statements sequentially without atomicity guarantees.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SchemaManager

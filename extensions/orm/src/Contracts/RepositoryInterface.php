@@ -17,6 +17,7 @@ use Pulsar\Extension\Orm\Exception\OrmException;
  * All write operations require a MutationContext for audit trail.
  *
  * @template T of object
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface RepositoryInterface

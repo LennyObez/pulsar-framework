@@ -18,6 +18,7 @@ use function count;
  *
  * Steps are ordered: they execute sequentially in the forward direction
  * and compensate in reverse order on failure.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SagaDefinition

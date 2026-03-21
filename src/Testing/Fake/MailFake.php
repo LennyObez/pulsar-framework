@@ -28,6 +28,7 @@ use function sprintf;
  *
  * Captures both Mailable sends and raw Message sends, enabling tests
  * to verify mail was sent to the right recipients with the right content.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class MailFake implements MailManagerInterface

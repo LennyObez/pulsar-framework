@@ -14,6 +14,7 @@ use Throwable;
  * Returns {@see QueueHealthStatus::Unhealthy} when the driver cannot respond,
  * {@see QueueHealthStatus::Degraded} when the pending-job count exceeds the
  * configured threshold, and {@see QueueHealthStatus::Healthy} otherwise.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class QueueHealthCheck

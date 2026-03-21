@@ -27,6 +27,7 @@ use const ENT_SUBSTITUTE;
  *
  * In development mode, delegates to the DevErrorPage for detailed output.
  * In production mode, never exposes exception details, stack traces, or file paths.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ErrorPageRenderer implements ExceptionRendererInterface

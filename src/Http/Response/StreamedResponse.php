@@ -26,6 +26,7 @@ use function strtolower;
  * Streams data from a generator or iterator without buffering the full
  * response body in memory. Suitable for large dataset exports, file
  * downloads, and server-sent events.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class StreamedResponse implements ResponseInterface

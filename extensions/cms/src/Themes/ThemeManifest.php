@@ -15,6 +15,7 @@ use function is_string;
  *
  * @psalm-api Public DTO produced from theme.json parsing; consumed by
  *            ThemeManager and ThemeManifestValidator.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ThemeManifest

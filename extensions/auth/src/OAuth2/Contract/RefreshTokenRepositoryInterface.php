@@ -13,6 +13,7 @@ use Pulsar\Extension\Auth\OAuth2\Token\RefreshToken;
  * Refresh tokens are hashed in storage (never plaintext), support rotation
  * with one-time use policy, and include replay detection that revokes the
  * entire token family on reuse of a rotated-out token.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface RefreshTokenRepositoryInterface

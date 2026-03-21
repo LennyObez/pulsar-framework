@@ -13,6 +13,7 @@ use Pulsar\Api\Api;
  *
  * Supports chat completions, single-prompt completions, embeddings,
  * and structured output with JSON schema enforcement.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface AiClientInterface

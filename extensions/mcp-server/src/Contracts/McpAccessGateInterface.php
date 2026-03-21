@@ -11,6 +11,7 @@ use Pulsar\Extension\McpServer\Exception\McpSecurityException;
  * Access gate for MCP operations.
  *
  * Enforces environment-level, path-level, and concurrency constraints.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface McpAccessGateInterface

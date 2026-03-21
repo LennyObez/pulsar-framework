@@ -18,6 +18,7 @@ use function is_string;
  * Records verification of audit trail integrity.
  *
  * Supports controls for SOX Section 802 preservation of audit records.
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]

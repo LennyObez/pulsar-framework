@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Forum tag: a label that can be applied to threads for topic classification.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Tag

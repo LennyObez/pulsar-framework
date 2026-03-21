@@ -23,6 +23,7 @@ use function sprintf;
  *
  * Captures the notifiable entity and notification instance for each send,
  * enabling tests to verify notifications were sent to the right recipients.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class NotificationFake implements NotificationManagerInterface

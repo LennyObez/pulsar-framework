@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * State machine:
  *   Created --capture--> Captured --dispute--> Disputed --resolve--> Resolved
  *   Created --cancel---> Cancelled
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum PaymentIntentStatus: string

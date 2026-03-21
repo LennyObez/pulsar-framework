@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Peppol transmission status.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum PeppolTransmissionStatus: string

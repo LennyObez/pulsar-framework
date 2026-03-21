@@ -22,6 +22,7 @@ use function strtolower;
  * Analyzes request characteristics to compute a bot probability score.
  * Signals include: missing typical browser headers, suspicious user-agent
  * patterns, header ordering anomalies, and request consistency.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class BotDetector

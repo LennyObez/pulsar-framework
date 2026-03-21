@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Configuration for retry policies.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RetryConfig

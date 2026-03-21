@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
 
 /**
  * Context for evaluating a feature flag.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class FlagContext

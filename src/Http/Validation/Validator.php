@@ -25,6 +25,7 @@ use function sprintf;
  *     downstream rules (`Min`, `Between`, `MinLength`, …) would either
  *     misbehave or pile cascading violations on top of a single
  *     type-mismatch root cause.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class Validator

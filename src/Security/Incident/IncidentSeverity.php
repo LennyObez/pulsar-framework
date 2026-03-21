@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Aligned with common incident response frameworks (NIST SP 800-61,
  * ISO 27035). Used to prioritize triage and escalation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum IncidentSeverity: string

@@ -31,6 +31,7 @@ use function usleep;
  * scaffold layer live behind a SafePath chokepoint and a vetted
  * library wrapper. Static-analysis sweeps for `unlink($var)` /
  * `rmdir($var)` patterns are therefore satisfied at the source.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class SafeFilesystem

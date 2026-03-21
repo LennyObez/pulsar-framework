@@ -11,6 +11,7 @@ use function sprintf;
 
 /**
  * Base exception for the analytics extension.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class AnalyticsException extends RuntimeException

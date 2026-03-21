@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Lifecycle status of a saga execution.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum SagaStatus: string

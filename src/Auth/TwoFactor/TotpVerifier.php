@@ -14,6 +14,7 @@ use function intdiv;
  * Verifies TOTP codes with a configurable time window to account for clock drift.
  *
  * Returns the accepted time step on success for replay guard keying and diagnostics.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TotpVerifier

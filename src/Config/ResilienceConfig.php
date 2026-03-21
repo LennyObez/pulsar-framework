@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  * Typed configuration DTO for `config/resilience.php`.
  *
  * Composes retry, circuit breaker, and health check sub-configs.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ResilienceConfig

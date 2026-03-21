@@ -15,6 +15,7 @@ use function in_array;
  * Each country carries its ISO 3166-1 alpha-2 code, human-readable name,
  * continent classification, supported languages, default currency (ISO 4217),
  * and flag emoji for display.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Country

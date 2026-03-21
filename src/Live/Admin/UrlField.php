@@ -10,6 +10,7 @@ use Pulsar\Extension\Admin\Domain\ValidationRule;
 
 /**
  * URL field for admin resources. Adds URL validation automatically.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class UrlField extends Field

@@ -18,6 +18,7 @@ use function is_string;
  *
  * Uses dynamic function calls via {@see call_user_func()} to avoid compile-time
  * dependency on the gnupg extension, which may not be installed in all environments.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PgpEncryptor implements MailEncryptorInterface

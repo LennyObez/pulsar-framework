@@ -12,6 +12,7 @@ use Pulsar\Api\Pagination\PaginationResult;
  *
  * @psalm-api Public binding contract; implemented by DbNewsletterCampaignRepository
  *            and consumed by CampaignEditorService and dispatch jobs.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface NewsletterCampaignRepositoryInterface

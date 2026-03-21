@@ -12,6 +12,7 @@ use function is_string;
 
 /**
  * Wizard state machine configuration.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class WizardFormConfig

@@ -34,6 +34,7 @@ use function time;
  * When a PreferenceStoreInterface and NotificationClassificationRegistry are provided,
  * marketing notifications are blocked for notifiables who have not opted in.
  * Transactional notifications always bypass opt-out checks.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class NotificationManager implements NotificationManagerInterface

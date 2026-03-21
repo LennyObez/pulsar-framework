@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * State machine:
  *   Open --> UnderReview --> Won | Lost
  *   Open --> Accepted
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum DisputeStatus: string

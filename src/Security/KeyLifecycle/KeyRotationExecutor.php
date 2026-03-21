@@ -25,6 +25,7 @@ use function sprintf;
  *
  * Addresses PCI-DSS Req 3.6.4 (key changes for keys at end of cryptoperiod)
  * and ISO 27001 A.8.24.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class KeyRotationExecutor

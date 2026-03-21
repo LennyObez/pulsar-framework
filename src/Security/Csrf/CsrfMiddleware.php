@@ -43,6 +43,7 @@ use const JSON_THROW_ON_ERROR;
  * - The configured POST field (default: `_csrf_token`)
  *
  * Returns a 403 Forbidden JSON response when validation fails.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CsrfMiddleware implements MiddlewareInterface

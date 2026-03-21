@@ -14,6 +14,7 @@ use Pulsar\Extension\Forum\Exception\ForumException;
  *
  * Linked to the shared auth_users table via userId. Each user has at most
  * one forum profile per tenant.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ForumProfile

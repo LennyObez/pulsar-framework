@@ -14,6 +14,7 @@ use function is_string;
  *
  * Aggregates all seller information required by EU invoicing
  * regulations (VAT Directive 2006/112/EC, Article 226).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SellerProfile

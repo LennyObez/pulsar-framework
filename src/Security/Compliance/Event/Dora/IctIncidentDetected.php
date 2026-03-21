@@ -18,6 +18,7 @@ use function is_string;
  * Records detection of an ICT-related incident.
  *
  * Supports controls for DORA Article 17 ICT-related incident management.
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]

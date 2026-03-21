@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Contract for running and rolling back migrations.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface MigrationRunnerInterface

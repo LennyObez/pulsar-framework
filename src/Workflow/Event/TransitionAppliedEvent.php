@@ -10,6 +10,7 @@ use Pulsar\Workflow\ActorContext;
 
 /**
  * Dispatched after a transition has been successfully applied.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TransitionAppliedEvent

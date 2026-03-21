@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Report lifecycle status with state-machine transitions.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum ReportStatus: string

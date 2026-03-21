@@ -25,6 +25,7 @@ use function sprintf;
  * 3. Missing translations across locales (Warning)
  * 4. Max-length violations (Warning)
  * 5. Orphaned translations not in extraction manifest (Warning)
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TranslationLinter

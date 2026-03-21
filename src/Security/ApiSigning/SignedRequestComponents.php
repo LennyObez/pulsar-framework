@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Components extracted from or prepared for a signed request.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SignedRequestComponents

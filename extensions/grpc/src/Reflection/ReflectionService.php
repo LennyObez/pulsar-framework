@@ -14,6 +14,7 @@ use Pulsar\Extension\Grpc\Server\ServiceRegistryInterface;
  * Lists registered services and their method descriptors for tooling
  * (grpcurl, grpcui, etc.). Does NOT include proto file descriptors --
  * only service/method metadata from the compiled service registry.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ReflectionService

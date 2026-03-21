@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Encrypts/decrypts column values for at-rest encryption.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ColumnEncryptorInterface

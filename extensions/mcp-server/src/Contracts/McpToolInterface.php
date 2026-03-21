@@ -13,6 +13,7 @@ use Pulsar\Extension\McpServer\Domain\ToolResult;
  *
  * Implementations provide schema metadata for discovery and an execute
  * method for invocation via the MCP protocol.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface McpToolInterface

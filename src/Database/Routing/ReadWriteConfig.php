@@ -13,6 +13,7 @@ use Pulsar\Api\Api;
  * When enabled, SELECT queries are routed to read replicas while write
  * operations go to the primary host. Sticky duration controls how long
  * the connection remains pinned to the primary after a write.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ReadWriteConfig

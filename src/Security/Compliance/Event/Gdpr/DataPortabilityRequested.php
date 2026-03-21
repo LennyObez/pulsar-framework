@@ -18,6 +18,7 @@ use function is_string;
  * Records that a data portability request has been filed.
  *
  * Supports controls for GDPR Article 20 right to data portability.
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]

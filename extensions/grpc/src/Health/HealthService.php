@@ -19,6 +19,7 @@ use const JSON_THROW_ON_ERROR;
  * Standard gRPC health check service per grpc.health.v1.Health.
  *
  * Tracks per-service health status and supports the Check RPC.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class HealthService implements ServiceHandlerInterface

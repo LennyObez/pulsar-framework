@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Dispatched when a saga fails (after compensation completes or itself fails).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SagaFailedEvent

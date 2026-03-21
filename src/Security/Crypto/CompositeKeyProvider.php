@@ -24,6 +24,7 @@ use function strlen;
  *
  * When no override exists for a context, derivation delegates to the primary MasterKey,
  * preserving full backward compatibility.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class CompositeKeyProvider implements KeyProviderInterface

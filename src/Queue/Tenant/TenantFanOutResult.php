@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Result of a tenant fan-out dispatch operation, disambiguated from Concurrency\FanOutResult.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TenantFanOutResult

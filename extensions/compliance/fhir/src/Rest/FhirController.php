@@ -19,6 +19,7 @@ use function is_string;
  * operations per the FHIR specification.
  *
  * @see https://www.hl7.org/fhir/http.html
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class FhirController

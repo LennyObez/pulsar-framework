@@ -14,6 +14,7 @@ use function sprintf;
  *
  * @psalm-api Public exception class thrown across the CMS surface; static
  *            factory methods invoked by name throughout services.
+ * @api
  */
 #[Api(since: '1.0.0')]
 class CmsException extends RuntimeException

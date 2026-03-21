@@ -13,6 +13,7 @@ use Pulsar\Api\Api;
  * documentation and Annex A control A.7.5 for documentation of AI systems.
  *
  * @see https://arxiv.org/abs/1810.03993 Model Cards for Model Reporting
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ModelCard

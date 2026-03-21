@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * An email address with an optional display name.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Address

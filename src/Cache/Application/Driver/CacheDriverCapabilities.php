@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Used by CacheManager to validate pool configurations
  * (e.g., strict tags require atomic increment support).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CacheDriverCapabilities

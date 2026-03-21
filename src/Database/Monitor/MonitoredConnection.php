@@ -21,6 +21,7 @@ use function hrtime;
  * All connection methods delegate to the wrapped connection while
  * transparently collecting timing data and routing it to the configured
  * monitoring components.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class MonitoredConnection implements ConnectionInterface

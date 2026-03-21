@@ -18,6 +18,7 @@ use function is_string;
  * Records modification of Protected Health Information (PHI).
  *
  * Supports controls for HIPAA Security Rule integrity controls.
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]

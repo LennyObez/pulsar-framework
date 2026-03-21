@@ -15,6 +15,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public DTO returned from MediaRepositoryInterface; consumed by
  *            ResponsiveImageRenderer and admin views.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class MediaDerivative

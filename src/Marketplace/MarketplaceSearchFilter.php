@@ -9,6 +9,7 @@ use Pulsar\Extensibility\TrustTier;
 
 /**
  * Filters for marketplace search queries.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class MarketplaceSearchFilter

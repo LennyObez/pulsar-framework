@@ -15,6 +15,7 @@ use function str_starts_with;
 
 /**
  * Value must start with the given prefix. Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class StartsWith implements RuleInterface

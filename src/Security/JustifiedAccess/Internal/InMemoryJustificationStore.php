@@ -21,6 +21,7 @@ use function usort;
  * In-memory justification store for testing and development.
  *
  * Production deployments should use a database-backed implementation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class InMemoryJustificationStore implements JustificationStoreInterface

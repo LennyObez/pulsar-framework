@@ -13,6 +13,7 @@ use Pulsar\Security\Compliance\DataClassification;
  *
  * Supports controls for SOX audit trail requirements by associating
  * sensitivity metadata with individual data fields.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ClassifiedField

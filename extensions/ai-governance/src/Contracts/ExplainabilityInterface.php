@@ -14,6 +14,7 @@ use Pulsar\Extension\AiGovernance\Dto\Explanation;
  * ISO 42001:2023 Clause 8.4 and Annex A control A.8.5 require organizations
  * to provide transparency about how AI systems make decisions. Integrators
  * implement this interface for their specific AI provider.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ExplainabilityInterface

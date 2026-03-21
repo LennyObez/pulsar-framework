@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
  * Bidirectional gauge metric.
  *
  * Can go up and down. Use {@see set()}, {@see increment()}, or {@see decrement()}.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class Gauge

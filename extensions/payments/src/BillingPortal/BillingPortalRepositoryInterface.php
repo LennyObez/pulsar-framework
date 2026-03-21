@@ -10,6 +10,7 @@ use Pulsar\Extension\Payments\Domain\Subscription;
 
 /**
  * Repository interface for billing portal data access.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface BillingPortalRepositoryInterface

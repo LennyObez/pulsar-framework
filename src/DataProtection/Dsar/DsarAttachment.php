@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * A file attachment included in a DSAR data package.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DsarAttachment

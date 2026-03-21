@@ -9,6 +9,7 @@ use Pulsar\Extension\Payments\Domain\Money;
 
 /**
  * A single line item in a tax breakdown.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TaxLineItem

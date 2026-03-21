@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * Redirect: the user should be sent to a step-up authentication flow.
  * Deny: the user is locked out and cannot attempt step-up.
  * Allow: step-up authentication was successful and access is granted.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum StepUpAction: string

@@ -11,6 +11,7 @@ use function is_array;
 
 /**
  * Immutable configuration for the form extension.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class FormConfig

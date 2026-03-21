@@ -15,6 +15,7 @@ use Pulsar\Extension\Psd2\Exception\Psd2Exception;
  * Creates authentication challenges that are cryptographically linked
  * to the transaction amount and payee identity, ensuring that any
  * modification to the transaction details invalidates the challenge.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ScaDynamicLinkingServiceInterface

@@ -11,6 +11,7 @@ use Pulsar\Extension\Eidas\Exception\EidasException;
 
 /**
  * Electronic signature service per eIDAS Art. 25-34.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface DigitalSignatureServiceInterface

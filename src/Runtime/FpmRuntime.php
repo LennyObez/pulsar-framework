@@ -17,6 +17,7 @@ use Throwable;
  * Wraps the standard request lifecycle for PHP-FPM and CLI server.
  * beforeRequest/afterRequest are no-ops since FPM isolates requests
  * at the process level.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class FpmRuntime implements RuntimeInterface

@@ -16,6 +16,7 @@ use function sprintf;
 
 /**
  * Value must be a date before the given boundary date. Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Before implements RuleInterface

@@ -9,6 +9,7 @@ use Pulsar\Extension\Analytics\Domain\Site;
 
 /**
  * Manage tracked analytics sites.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface SiteServiceInterface

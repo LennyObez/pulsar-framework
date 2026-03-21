@@ -14,6 +14,7 @@ use function is_string;
  *
  * @psalm-api Public DTO returned from ImageVariantGenerator; consumed by
  *            MediaDerivative records and admin views.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ImageVariant

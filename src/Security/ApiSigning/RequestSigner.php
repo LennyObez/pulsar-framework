@@ -31,6 +31,7 @@ use const SODIUM_CRYPTO_GENERICHASH_KEYBYTES_MIN;
  * - X-Signature: the hex-encoded HMAC
  * - X-Signature-Timestamp: ISO 8601 timestamp
  * - X-Signature-Key-Id: identifier for the signing key
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RequestSigner

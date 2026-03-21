@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Probability of occurrence in risk assessment per ISO 14971.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum RiskProbability: string

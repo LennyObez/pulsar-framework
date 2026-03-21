@@ -14,6 +14,7 @@ use Pulsar\Api\Api;
  * Per PSD2 Art. 97(2), the authentication code must be linked to
  * the transaction amount and payee, ensuring any modification
  * invalidates the challenge.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ScaChallenge

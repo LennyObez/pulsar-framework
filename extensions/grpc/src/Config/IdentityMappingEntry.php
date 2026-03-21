@@ -16,6 +16,7 @@ use function is_string;
  *
  * Maps a certificate SAN to a service name, trust level, and allowed methods.
  * Declared in configuration and compiled at build time.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class IdentityMappingEntry

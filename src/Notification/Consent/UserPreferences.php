@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Snapshot of a notifiable entity's channel preferences and consent history.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class UserPreferences

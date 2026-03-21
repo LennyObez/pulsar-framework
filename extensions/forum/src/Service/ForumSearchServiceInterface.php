@@ -13,6 +13,7 @@ use Pulsar\Api\Pagination\PaginationResult;
  *
  * Supports driver-specific optimizations: PostgreSQL uses tsvector/tsquery,
  * MySQL uses FULLTEXT indexes, and SQLite falls back to LIKE matching.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ForumSearchServiceInterface

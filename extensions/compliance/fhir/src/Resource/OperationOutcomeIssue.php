@@ -12,6 +12,7 @@ use function is_string;
  * A single issue within an OperationOutcome.
  *
  * @see https://www.hl7.org/fhir/operationoutcome-definitions.html#OperationOutcome.issue
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class OperationOutcomeIssue

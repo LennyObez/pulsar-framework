@@ -12,6 +12,7 @@ use function sprintf;
 
 /**
  * Webhook processing exceptions.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class WebhookException extends RuntimeException

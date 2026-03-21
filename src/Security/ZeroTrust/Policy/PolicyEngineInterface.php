@@ -16,6 +16,7 @@ use Pulsar\Security\ZeroTrust\Claim\ClaimSet;
  *
  * Implementations must be stateless: the same ClaimSet + resource + action
  * must always produce the same PolicyEvaluationResult given the same rules.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface PolicyEngineInterface

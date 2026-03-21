@@ -34,6 +34,7 @@ use function str_repeat;
  *
  * Renders objects as property tables, arrays as indented trees,
  * scalars with their types, and collections with count + preview.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ResultPrinter

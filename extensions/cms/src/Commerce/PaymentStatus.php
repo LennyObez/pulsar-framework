@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Payment processing status for orders.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum PaymentStatus: string

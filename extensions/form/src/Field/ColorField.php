@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Color picker input field.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ColorField extends AbstractField

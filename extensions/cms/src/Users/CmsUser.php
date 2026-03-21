@@ -17,6 +17,7 @@ use Pulsar\Auth\Identity\TwoFactorStatus;
  *
  * @psalm-api Public DTO returned from CmsUserRepositoryInterface; consumed
  *            by admin user-management controllers and templates.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CmsUser

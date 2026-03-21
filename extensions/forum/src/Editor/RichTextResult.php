@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * The result of processing rich text input.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RichTextResult

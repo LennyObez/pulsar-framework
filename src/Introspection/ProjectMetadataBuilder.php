@@ -35,6 +35,7 @@ use const JSON_THROW_ON_ERROR;
  * Enforces per-contributor resource limits (section count, nesting depth,
  * keys per object, and total serialized size) to prevent any single
  * contributor from degrading the introspection snapshot.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ProjectMetadataBuilder

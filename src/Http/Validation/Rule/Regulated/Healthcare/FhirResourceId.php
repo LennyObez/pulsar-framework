@@ -19,6 +19,7 @@ use function sprintf;
  * FHIR resource IDs must match: [A-Za-z0-9.-]{1,64}
  *
  * @see https://www.hl7.org/fhir/datatypes.html#id
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class FhirResourceId implements RuleInterface

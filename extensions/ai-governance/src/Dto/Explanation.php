@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * ISO 42001:2023 Clause 8.4 and Annex A control A.8.5 require transparency
  * and explainability for AI-assisted decisions.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Explanation

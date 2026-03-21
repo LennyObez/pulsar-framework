@@ -11,6 +11,7 @@ use function is_int;
 
 /**
  * Rate limiting configuration for gRPC calls.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RateLimitConfig

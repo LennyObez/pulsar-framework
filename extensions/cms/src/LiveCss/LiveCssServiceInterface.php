@@ -12,6 +12,7 @@ use Pulsar\Extension\Cms\Exception\CmsException;
  *
  * @psalm-api Public binding contract; implemented by LiveCssService and
  *            consumed by admin theme controllers.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface LiveCssServiceInterface

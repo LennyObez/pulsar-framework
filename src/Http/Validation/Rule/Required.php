@@ -13,6 +13,7 @@ use function sprintf;
 
 /**
  * Fails on null, empty string, or empty array.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Required implements RuleInterface

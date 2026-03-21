@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Lifecycle events emitted during job execution.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum JobEvent: string

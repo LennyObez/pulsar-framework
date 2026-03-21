@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
  * Represents a single value from an Accept-style header with quality factor.
  *
  * Used internally by ContentNegotiation for sorting and matching preferences.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AcceptValue

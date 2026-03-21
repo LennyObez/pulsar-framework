@@ -19,6 +19,7 @@ use function str_split;
  * Validates credit card numbers using the Luhn algorithm.
  * Strips spaces and dashes, then validates 13-19 digits with Luhn checksum.
  * Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CreditCard implements RuleInterface

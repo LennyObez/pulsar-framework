@@ -9,6 +9,7 @@ use Throwable;
 
 /**
  * Result of executing a single saga step (forward or compensation).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class StepResult

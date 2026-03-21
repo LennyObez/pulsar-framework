@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * OAuth2 scope definition.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Scope

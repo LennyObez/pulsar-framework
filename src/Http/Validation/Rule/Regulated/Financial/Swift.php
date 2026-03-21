@@ -23,6 +23,7 @@ use function sprintf;
  * - 3 alphanumeric (optional): branch code
  *
  * @see https://www.iso.org/standard/60390.html ISO 9362
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Swift implements RuleInterface

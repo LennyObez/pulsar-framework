@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Action to take when a WAF rule matches.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum WafAction: string

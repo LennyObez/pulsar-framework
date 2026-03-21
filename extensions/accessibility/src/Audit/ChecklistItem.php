@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * A single item in the manual accessibility testing checklist.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ChecklistItem

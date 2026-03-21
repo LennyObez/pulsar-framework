@@ -15,6 +15,7 @@ use Pulsar\Http\Response;
  *
  * Used by RoadRunner adapter to bridge external PSR-7 workers to Pulsar's
  * internal HTTP types when needed (e.g., health endpoint responses).
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface PsrBridgeInterface

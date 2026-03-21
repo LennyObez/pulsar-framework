@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Types of filter values for type-safe validation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum FilterValueType: string

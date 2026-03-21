@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * A plan entry in a PricingTableBlock.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PricingTablePlan

@@ -15,6 +15,7 @@ use function array_keys;
  *
  * Groups allow different rule sets for different contexts
  * (e.g. 'create' vs 'update' operations).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ValidationGroup

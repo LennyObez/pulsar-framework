@@ -13,6 +13,7 @@ use Pulsar\Api\Api;
  * extensions that declare migrations in their manifest. Consumers
  * (CLI commands, dev servers, wiring classes) inject this service
  * instead of manually assembling paths.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface MigrationPathResolverInterface

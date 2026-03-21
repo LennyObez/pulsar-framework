@@ -13,6 +13,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Implemented by user-land providers and resolved through
  *            the DI container under tag pulsar.cms.llm-providers.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface LlmProviderInterface

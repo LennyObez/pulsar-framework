@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Status of a compliance check execution.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum CheckStatus: string

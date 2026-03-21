@@ -20,6 +20,7 @@ use const ENT_QUOTES;
  *
  * Unknown block types are rendered as HTML comments. Blocks that fail validation
  * are rendered as HTML comments containing the error details.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class BlockRenderer

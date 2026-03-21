@@ -16,6 +16,7 @@ use Pulsar\WebSocket\MessageHandlerInterface;
  * container — routes hold their class-strings, not the resolved objects,
  * so that per-request services (logger with correlation ID, etc.) bind
  * correctly.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Route

@@ -14,6 +14,7 @@ use Pulsar\Api\Api;
  * to confirm safety and performance throughout the device's lifetime.
  *
  * @see https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32017R0745 (Article 61, Annex XIV Part B)
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PmcfReport

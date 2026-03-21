@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Result of EN 16931 invoice validation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ValidationResult

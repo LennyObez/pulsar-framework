@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Emitted when a failed job is stored in the dead-letter queue.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DlqJobStored

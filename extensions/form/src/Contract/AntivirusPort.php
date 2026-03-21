@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Implementations connect to ClamAV, cloud-based scanning services,
  * or any other virus scanning infrastructure.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface AntivirusPort

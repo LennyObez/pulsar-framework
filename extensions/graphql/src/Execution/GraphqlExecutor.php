@@ -22,6 +22,7 @@ use function is_array;
  *
  * Security limits: queries exceeding {@see MAX_DEPTH} nesting levels
  * or {@see MAX_FIELDS} total selected fields are rejected before execution.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class GraphqlExecutor

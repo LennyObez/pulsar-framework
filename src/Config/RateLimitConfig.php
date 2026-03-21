@@ -13,6 +13,7 @@ use function is_int;
  * Typed configuration DTO for rate limiting settings.
  *
  * Maps from the `rate_limiting` key of `config/security.php`.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RateLimitConfig

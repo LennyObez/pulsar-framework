@@ -24,6 +24,7 @@ use function str_split;
  *
  * @psalm-api Public service resolved from the DI container by TOTP enrollment
  *            and payment endpoints; not instantiated by name.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class QrCodeEncoder

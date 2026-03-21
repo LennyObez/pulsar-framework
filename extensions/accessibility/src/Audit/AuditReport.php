@@ -16,6 +16,7 @@ use function count;
  *
  * Reports check results honestly: never claims "WCAG compliant".
  * Only reports "X automated checks passed, Y issues found, Z items require manual review".
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AuditReport

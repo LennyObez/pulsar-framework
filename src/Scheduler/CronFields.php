@@ -21,6 +21,7 @@ use function str_contains;
  * Parsed cron expression fields.
  *
  * Standard five-field cron: minute hour dayOfMonth month dayOfWeek
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CronFields

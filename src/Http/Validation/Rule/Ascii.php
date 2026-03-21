@@ -15,6 +15,7 @@ use function sprintf;
 
 /**
  * Value must contain only ASCII characters. Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Ascii implements RuleInterface

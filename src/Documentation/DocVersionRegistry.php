@@ -16,6 +16,7 @@ use function version_compare;
  *
  * Manages which versions are available and which is the current/latest.
  * Provides version resolution and navigation support.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class DocVersionRegistry

@@ -14,6 +14,7 @@ use function is_string;
 
 /**
  * Records creation of an SCA dynamic linking challenge.
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]

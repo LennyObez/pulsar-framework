@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * Messages can be public (visible to the reporter) or internal
  * (admin-only notes visible only to agents).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TicketMessage

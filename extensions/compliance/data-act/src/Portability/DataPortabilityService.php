@@ -14,6 +14,7 @@ use Pulsar\Api\Api;
  * conversion. Data holders must make data available to users and
  * authorized third parties in a structured, commonly used, and
  * machine-readable format.
+ * @api
  */
 #[Api(since: '1.0.0')]
 abstract class DataPortabilityService

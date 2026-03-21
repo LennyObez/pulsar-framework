@@ -12,6 +12,7 @@ use Pulsar\Extension\Auth\OAuth2\Token\AccessToken;
  *
  * For reference tokens: stored hashed, supports introspection and revocation.
  * For JWT tokens: not stored (self-contained), revocation via refresh token revocation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface AccessTokenRepositoryInterface

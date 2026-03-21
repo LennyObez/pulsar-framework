@@ -15,6 +15,7 @@ use Pulsar\Extension\Cms\Exception\CmsException;
  *
  * @psalm-api Public binding contract; implemented by BackupService and
  *            consumed by admin backup controllers and the BackupRetentionJob.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface BackupServiceInterface

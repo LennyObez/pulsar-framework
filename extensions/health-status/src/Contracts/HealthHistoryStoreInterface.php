@@ -11,6 +11,7 @@ use Pulsar\Extension\HealthStatus\Domain\Incident;
 
 /**
  * Persistence layer for health check history and incidents.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface HealthHistoryStoreInterface

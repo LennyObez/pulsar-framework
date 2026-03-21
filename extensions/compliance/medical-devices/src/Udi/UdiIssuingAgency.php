@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
  * UDI issuing agencies recognized by the EU MDR.
  *
  * @see https://health.ec.europa.eu/medical-devices-sector/new-regulations/udi_en
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum UdiIssuingAgency: string

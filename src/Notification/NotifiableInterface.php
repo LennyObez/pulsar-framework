@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Contract for entities that can receive notifications.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface NotifiableInterface

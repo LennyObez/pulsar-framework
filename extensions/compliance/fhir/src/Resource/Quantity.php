@@ -12,6 +12,7 @@ use function is_string;
  * A measured amount (or an amount that can potentially be measured).
  *
  * @see https://www.hl7.org/fhir/datatypes.html#Quantity
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Quantity

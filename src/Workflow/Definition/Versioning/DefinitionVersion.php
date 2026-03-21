@@ -17,6 +17,7 @@ use Pulsar\Workflow\Definition\WorkflowDefinition;
  *
  * Old versions are retained and never deleted: this enables auditability
  * and replay of historical workflow behavior.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DefinitionVersion

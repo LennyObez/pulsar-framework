@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Emitted when a failed job is scheduled for retry.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class JobRetried extends QueueEvent

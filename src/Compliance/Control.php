@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Each control belongs to a compliance framework (e.g., SOC 2, HIPAA) and
  * tracks which framework features provide coverage for its requirements.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Control

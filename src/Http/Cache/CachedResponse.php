@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Serializable representation of a cached HTTP response.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CachedResponse

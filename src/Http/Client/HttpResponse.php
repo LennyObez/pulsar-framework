@@ -18,6 +18,7 @@ use function json_decode;
  *
  * Wraps the raw response data from an HTTP request and provides
  * convenience accessors for status, headers, and body parsing.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class HttpResponse

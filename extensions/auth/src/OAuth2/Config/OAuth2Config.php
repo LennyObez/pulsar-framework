@@ -12,6 +12,7 @@ use function is_string;
 
 /**
  * Configuration for the OAuth2 authorization server.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class OAuth2Config

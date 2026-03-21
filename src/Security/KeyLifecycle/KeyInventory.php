@@ -19,6 +19,7 @@ use function count;
  * rotation schedule, and last-rotated timestamp. Integrates with
  * the compliance verification engine for PCI-DSS Req 3.6 and
  * ISO 27001 A.8.24 reporting.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class KeyInventory

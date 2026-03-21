@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Date-time input field (datetime-local).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class DateTimeField extends AbstractField

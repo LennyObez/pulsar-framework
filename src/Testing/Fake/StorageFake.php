@@ -26,6 +26,7 @@ use function time;
  *
  * Records all put/get/delete operations and provides assertions for
  * verifying storage behavior without a real filesystem or object store.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class StorageFake implements StorageAdapterInterface

@@ -18,6 +18,7 @@ use Pulsar\Api\Api;
  * documenting and tracking design control activities.
  *
  * @see ISO 13485:2016 Section 7.3
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DesignControlRecord

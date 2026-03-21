@@ -35,6 +35,7 @@ use function trim;
  * - $.store.book[?(@.price < 10)]: filter expressions
  * - $.store.book[-1]         : negative indexing
  * - $.store.book[0:3]        : array slicing
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class JsonPath

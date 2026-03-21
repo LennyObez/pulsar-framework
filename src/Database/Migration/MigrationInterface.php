@@ -18,6 +18,7 @@ use Pulsar\Database\ConnectionInterface;
  *     public function down(ConnectionInterface $connection): void { ... }
  * };
  * ```
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface MigrationInterface

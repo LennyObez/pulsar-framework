@@ -18,6 +18,7 @@ use function is_string;
 
 /**
  * REST API controller for sending and retrieving encrypted messages.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class MessageController

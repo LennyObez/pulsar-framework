@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * A parsed field from a GraphQL query AST.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ParsedField

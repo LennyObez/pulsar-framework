@@ -14,6 +14,7 @@ use function is_string;
  * a system action (typically a FHIR operation response for errors).
  *
  * @see https://www.hl7.org/fhir/operationoutcome.html
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class OperationOutcome extends FhirResource

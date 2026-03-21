@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Pulsar event dispatcher extending PSR-14 with envelope-aware dispatch.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface EventDispatcherInterface extends PsrEventDispatcherInterface

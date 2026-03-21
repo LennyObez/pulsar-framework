@@ -15,6 +15,7 @@ use function sprintf;
 
 /**
  * String length must be >= the given minimum. Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class MinLength implements RuleInterface

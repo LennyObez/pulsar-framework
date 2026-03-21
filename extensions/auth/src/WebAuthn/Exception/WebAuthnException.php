@@ -9,6 +9,7 @@ use RuntimeException;
 
 /**
  * WebAuthn ceremony and verification exceptions.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class WebAuthnException extends RuntimeException

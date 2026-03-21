@@ -22,6 +22,7 @@ use const UPLOAD_ERR_OK;
 /**
  * Image dimensions must meet constraints (min/max width/height).
  * Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Dimensions implements RuleInterface

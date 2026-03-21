@@ -13,6 +13,7 @@ use function is_int;
 
 /**
  * Configuration DTO for the Messaging extension.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class MessagingConfig

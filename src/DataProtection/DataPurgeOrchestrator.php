@@ -18,6 +18,7 @@ use function sprintf;
  *
  * Runs each purge handler against the matching retention policy,
  * logs results via AuditLoggerInterface, and returns aggregated results.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DataPurgeOrchestrator

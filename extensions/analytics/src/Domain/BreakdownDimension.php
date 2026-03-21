@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Dimensions available for stats breakdown queries.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum BreakdownDimension: string

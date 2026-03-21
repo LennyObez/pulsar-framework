@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Immutable snapshot of processing-time percentiles for a queue.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ProcessingTimeStats

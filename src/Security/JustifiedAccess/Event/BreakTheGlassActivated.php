@@ -18,6 +18,7 @@ use function is_string;
  *
  * This is a high-severity compliance event that triggers mandatory
  * post-incident review per HIPAA, PCI-DSS, and SOC 2 requirements.
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]

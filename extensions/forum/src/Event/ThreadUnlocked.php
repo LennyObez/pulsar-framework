@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Dispatched when a thread is unlocked by a moderator.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ThreadUnlocked

@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Result of a contrast ratio check between a foreground and background color pair.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ContrastResult

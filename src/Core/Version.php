@@ -15,6 +15,7 @@ use Pulsar\Api\Api;
  * the data is compiled into vendor/composer/installed.php). Falls back to the
  * compile-time constants when InstalledVersions is unavailable (e.g., running
  * without the Composer autoloader).
+ * @api
  */
 #[Api(since: '1.0.0-rc.1')]
 final class Version

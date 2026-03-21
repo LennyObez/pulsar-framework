@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * @see https://www.w3.org/TR/WCAG21/#dfn-relative-luminance
  * @see https://www.w3.org/TR/WCAG21/#dfn-contrast-ratio
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class LuminanceCalculator

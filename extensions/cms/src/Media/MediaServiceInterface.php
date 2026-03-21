@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * High-level media service for upload, derivative generation, and retrieval.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface MediaServiceInterface

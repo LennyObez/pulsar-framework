@@ -17,6 +17,7 @@ use function round;
  * Complete verification report produced by the engine.
  *
  * Contains per-check results grouped by domain, plus aggregate statistics.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class VerificationReport

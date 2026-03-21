@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Email input field with built-in format validation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class EmailField extends AbstractField

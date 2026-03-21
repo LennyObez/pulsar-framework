@@ -14,6 +14,7 @@ use function is_string;
 
 /**
  * Records completion of a PSD2 transaction risk assessment.
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]

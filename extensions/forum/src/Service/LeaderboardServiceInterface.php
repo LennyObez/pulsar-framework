@@ -9,6 +9,7 @@ use Pulsar\Extension\Forum\Profile\ForumProfile;
 
 /**
  * Service for computing forum leaderboard rankings.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface LeaderboardServiceInterface

@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * Provides 32 field types covering all common admin form needs:
  * text inputs, rich content, temporal pickers, media, structured
  * data, and specialized UI controls.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum FieldType: string

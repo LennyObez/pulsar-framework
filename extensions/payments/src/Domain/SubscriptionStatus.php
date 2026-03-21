@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Covers both web-based (Stripe/PayPal/SEPA) and mobile (App Store/Google Play)
  * subscription states.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum SubscriptionStatus: string

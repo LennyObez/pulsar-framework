@@ -14,6 +14,7 @@ use Pulsar\Extension\Auth\Social\Exception\SsoException;
  *
  * Implementations validate the token signature, issuer, audience, expiration,
  * and other claims according to the OpenID Connect Core specification.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface IdTokenVerifierInterface

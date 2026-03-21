@@ -29,6 +29,7 @@ use function strlen;
  *
  * @see https://www.iso.org/standard/66011.html ISO/IEC 7812
  * @see https://www.pcisecuritystandards.org/ PCI DSS
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Pan implements RuleInterface

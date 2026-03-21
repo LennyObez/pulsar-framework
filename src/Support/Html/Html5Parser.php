@@ -23,6 +23,7 @@ use const LIBXML_NOERROR;
  * Provides a clean API over the spec-compliant HTML5 parser with utilities
  * for text extraction, element querying, sanitization, and structural
  * validation. No third-party dependencies: uses the engine built into PHP.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class Html5Parser

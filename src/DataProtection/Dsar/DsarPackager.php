@@ -29,6 +29,7 @@ use const JSON_UNESCAPED_UNICODE;
  * - manifest.json: Metadata about the data export
  * - data/{source}/{category}.json: Structured data per source
  * - attachments/{source}/{filename}: File attachments
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DsarPackager

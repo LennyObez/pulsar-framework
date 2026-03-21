@@ -36,6 +36,7 @@ use const LOCK_UN;
  * All mutation methods acquire a database-level advisory lock (PostgreSQL
  * and MySQL) or a filesystem flock (SQLite) to prevent concurrent migration
  * runs from corrupting state.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class MigrationRunner implements MigrationRunnerInterface

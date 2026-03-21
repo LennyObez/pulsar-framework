@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Customer account linking commerce data to the shared auth_users table.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Customer

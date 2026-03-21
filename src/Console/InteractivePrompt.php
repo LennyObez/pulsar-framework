@@ -25,6 +25,7 @@ use function trim;
  *
  * Provides text input, confirmations, select menus, multi-select,
  * password input, and search-as-you-type prompts.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class InteractivePrompt

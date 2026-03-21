@@ -13,6 +13,7 @@ use Pulsar\Security\Exception\SecurityException;
  * Replaces sensitive values with non-sensitive tokens that can be safely stored
  * and transmitted. Supports PCI-DSS Requirement 3.4 compliance by rendering
  * cardholder data unreadable in storage.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface TokenizationServiceInterface

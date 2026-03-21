@@ -15,6 +15,7 @@ use function sprintf;
  *
  * Uses static factory methods per Pulsar convention to produce
  * domain-specific error messages with structured context.
+ * @api
  */
 #[Api(since: '1.0.0')]
 class WorkflowException extends RuntimeException

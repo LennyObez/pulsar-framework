@@ -12,6 +12,7 @@ use function version_compare;
 
 /**
  * Resolves semantic version constraints for extension compatibility.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class VersionConstraint

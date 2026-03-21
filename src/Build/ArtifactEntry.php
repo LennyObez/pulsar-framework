@@ -12,6 +12,7 @@ use function is_string;
 
 /**
  * A single build artifact entry with its path, hash, and size.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ArtifactEntry

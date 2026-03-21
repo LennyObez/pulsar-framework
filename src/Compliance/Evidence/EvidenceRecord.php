@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  * An immutable record of evidence that a control is implemented.
  *
  * Evidence records are timestamped and optionally signed for tamper detection.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class EvidenceRecord

@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
 
 /**
  * Ticket category: organizes tickets into a hierarchical taxonomy.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TicketCategory

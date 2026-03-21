@@ -31,6 +31,7 @@ use function substr;
  * - HMAC: keyed BLAKE2b via sodium_crypto_generichash (32-byte output).
  *
  * Ciphertext format: version byte (0x01) || nonce || ciphertext+mac.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SodiumCipherSuite implements CipherSuiteInterface

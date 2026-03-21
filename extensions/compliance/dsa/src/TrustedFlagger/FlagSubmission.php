@@ -15,6 +15,7 @@ use Pulsar\Api\Api;
  * an explanation of why it is considered illegal, and the identity
  * of the trusted flagger. These submissions must be processed with
  * priority and without undue delay.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class FlagSubmission

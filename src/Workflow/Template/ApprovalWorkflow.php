@@ -19,6 +19,7 @@ use Pulsar\Workflow\Guard\RoleGuard;
  * an escalation state that can be reached from the review state.
  *
  * Customize role names, state names, and metadata via the factory parameters.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ApprovalWorkflow

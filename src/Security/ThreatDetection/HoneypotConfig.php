@@ -14,6 +14,7 @@ use function is_string;
 
 /**
  * Configuration for honeypot endpoint detection.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class HoneypotConfig

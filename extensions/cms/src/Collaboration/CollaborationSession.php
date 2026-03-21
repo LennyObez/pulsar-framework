@@ -15,6 +15,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public DTO returned from CollaborationRepositoryInterface; consumed
  *            by CollaborationService and CRDT awareness rendering.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CollaborationSession

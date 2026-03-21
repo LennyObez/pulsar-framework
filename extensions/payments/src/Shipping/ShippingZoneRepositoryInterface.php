@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * Shipping zones define geographic regions with their available
  * shipping methods and rates. A single country may belong to
  * multiple zones; the zone with the most specific match wins.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ShippingZoneRepositoryInterface

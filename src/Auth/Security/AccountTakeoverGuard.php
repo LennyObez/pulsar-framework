@@ -24,6 +24,7 @@ use function time;
  * Monitors: password change, email change, MFA disable, recovery code
  * regeneration. Detects credential changes from new IP/device and
  * triggers elevated alerts.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AccountTakeoverGuard

@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Given a set of granted scopes (from OAuth2 token), determines whether
  * a specific FHIR operation is allowed.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SmartScopeEnforcer

@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Result of a connection warmup attempt.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ConnectionWarmupResult

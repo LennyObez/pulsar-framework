@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * Initial: the starting point: exactly one required per definition.
  * Intermediate: a transient state between initial and final.
  * Final: a terminal state: no outgoing transitions allowed.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum StateType: string

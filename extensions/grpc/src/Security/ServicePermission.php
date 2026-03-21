@@ -13,6 +13,7 @@ use function in_array;
  *
  * Encapsulates the set of fully qualified gRPC methods an identity is
  * allowed to call. Supports wildcard access via ["*"].
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ServicePermission

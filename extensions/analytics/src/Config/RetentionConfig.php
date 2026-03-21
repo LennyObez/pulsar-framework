@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Data retention periods for analytics data.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RetentionConfig

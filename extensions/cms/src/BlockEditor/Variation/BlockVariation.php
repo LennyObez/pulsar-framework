@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * Variations share the same block type but provide different default
  * configurations and visual identities (e.g., EmbedBlock variations
  * for YouTube, Vimeo, Twitter).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class BlockVariation

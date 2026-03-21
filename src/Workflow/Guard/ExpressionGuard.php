@@ -23,6 +23,7 @@ use function sprintf;
  *
  * This guard is intentionally limited to deterministic, side-effect-free evaluations.
  * For complex logic, implement a custom {@see TransitionGuardInterface}.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ExpressionGuard implements TransitionGuardInterface

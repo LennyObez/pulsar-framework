@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Diagnosis result from a repair job.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RepairDiagnosis

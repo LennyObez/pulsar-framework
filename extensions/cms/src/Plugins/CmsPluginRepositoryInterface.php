@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public binding contract; implemented by DbCmsPluginRepository
  *            and consumed by CmsPluginManager.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface CmsPluginRepositoryInterface

@@ -14,6 +14,7 @@ use Pulsar\Extension\Forum\Exception\ForumException;
  * Supports threaded replies via parentId, time-limited editing, solution
  * marking, and vote scoring. Stores both Markdown source and pre-rendered
  * sanitized HTML. Hashed IP and user agent for anti-abuse without PII retention.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Post

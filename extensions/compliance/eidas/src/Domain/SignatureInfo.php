@@ -13,6 +13,7 @@ use Pulsar\Api\Api;
  *
  * Contains the verification status, signer identity, signature format,
  * and whether the signature qualifies as a QES (Qualified Electronic Signature).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SignatureInfo

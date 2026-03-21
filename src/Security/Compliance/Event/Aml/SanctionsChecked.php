@@ -16,6 +16,7 @@ use function is_string;
  * Records completion of a sanctions list check.
  *
  * Supports controls for AML/CFT sanctions screening requirements.
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]

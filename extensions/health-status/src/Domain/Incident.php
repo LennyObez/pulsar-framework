@@ -13,6 +13,7 @@ use Pulsar\Api\Api;
  *
  * Incidents are immutable. State transitions (acknowledge, resolve)
  * return new instances using clone-with semantics.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Incident

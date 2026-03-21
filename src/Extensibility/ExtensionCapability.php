@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Each capability controls access to a specific class of framework operations.
  * The CapabilityPolicy maps trust tiers to sets of granted capabilities.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum ExtensionCapability

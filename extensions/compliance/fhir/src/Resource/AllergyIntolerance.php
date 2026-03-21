@@ -13,6 +13,7 @@ use function is_string;
  * Risk of harmful or undesirable physiological response related to a substance.
  *
  * @see https://www.hl7.org/fhir/allergyintolerance.html
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AllergyIntolerance extends FhirResource

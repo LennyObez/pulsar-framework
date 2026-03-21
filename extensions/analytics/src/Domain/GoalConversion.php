@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * A recorded goal conversion.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class GoalConversion

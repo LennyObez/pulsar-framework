@@ -19,6 +19,7 @@ use function str_replace;
  * - Interface types for request/response shapes
  * - A typed client class with methods for each route
  * - Full IntelliSense support for IDE autocomplete
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TypeScriptClientGenerator

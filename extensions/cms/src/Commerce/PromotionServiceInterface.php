@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Service interface for coupon validation, discount calculation, and usage tracking.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface PromotionServiceInterface

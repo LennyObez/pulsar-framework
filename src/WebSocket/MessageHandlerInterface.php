@@ -27,6 +27,7 @@ use Throwable;
  *
  * Implementations must be stateless across connections — per-connection state
  * belongs on the `WebSocketConnection::setMeta()` bag.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface MessageHandlerInterface

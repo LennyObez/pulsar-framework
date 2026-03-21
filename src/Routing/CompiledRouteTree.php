@@ -20,6 +20,7 @@ use function trim;
  * Generated at build time by RouteCompiler. At runtime, static routes
  * resolve via hash table lookup (no regex). Dynamic routes are matched
  * via a prefix trie that narrows candidates before any regex evaluation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class CompiledRouteTree

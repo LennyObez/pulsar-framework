@@ -24,6 +24,7 @@ use const JSON_UNESCAPED_UNICODE;
  *
  * @psalm-api Public service resolved from the DI container by resume
  *            content rendering; not instantiated by name.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ResumeJsonLdGenerator

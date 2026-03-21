@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public enum referenced by MenuItem::linkTarget; consumed by
  *            navigation rendering and admin editor.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum LinkTarget: string

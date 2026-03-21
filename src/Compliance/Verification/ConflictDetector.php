@@ -15,6 +15,7 @@ use function in_array;
  * Certain regulatory frameworks have requirements that appear contradictory.
  * This detector identifies these conflicts and provides expert resolutions
  * based on legal interpretation and industry practice.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ConflictDetector

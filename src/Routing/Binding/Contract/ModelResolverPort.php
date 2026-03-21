@@ -12,6 +12,7 @@ use Pulsar\Routing\Binding\ResolutionContext;
  *
  * Implementations live in the persistence layer (e.g. Eloquent, Doctrine).
  * The routing module depends only on this interface, never on ORM internals.
+ * @api
  */
 #[Api(since: '1.0.0-rc.11')]
 interface ModelResolverPort

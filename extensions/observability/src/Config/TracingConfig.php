@@ -13,6 +13,7 @@ use function is_string;
 
 /**
  * Trace/span configuration for the observability extension.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TracingConfig

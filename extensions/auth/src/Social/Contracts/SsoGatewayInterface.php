@@ -13,6 +13,7 @@ use Pulsar\Extension\Auth\Social\Exception\SsoException;
  *
  * Orchestrates the full OAuth callback: state verification, code exchange,
  * identity mapping, and account linking.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface SsoGatewayInterface

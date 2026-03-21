@@ -21,6 +21,7 @@ use Pulsar\Workflow\Guard\RoleGuard;
  * comment exists in the context before sign-off is allowed.
  *
  * States: draft -> pending_change_review -> change_approved -> pending_signoff -> signed_off | change_rejected
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AuditWorkflow

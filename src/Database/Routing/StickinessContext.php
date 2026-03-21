@@ -27,6 +27,7 @@ use function hrtime;
  * across tenants. State is now keyed by `Fiber::getCurrent()` via a
  * `WeakMap`, with a stable `$rootKey` for non-Fiber callers (F29.2
  * follow-up of F13.1 / F25.2 / F24.2).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class StickinessContext

@@ -19,6 +19,7 @@ use Pulsar\Http\Middleware\MiddlewareInterface;
  * Detects Inertia requests, manages asset versioning, handles
  * partial reloads, and injects shared data (auth user, flash
  * messages, CSRF token) into every Inertia response.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class InertiaMiddleware implements MiddlewareInterface

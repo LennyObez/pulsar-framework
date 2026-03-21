@@ -21,6 +21,7 @@ use function strlen;
  * Holds the key type, optional metadata, and raw key parameters.
  * Supports conversion to PEM format for RSA and EC public keys
  * via the getPublicKeyPem() method.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class JwkKey

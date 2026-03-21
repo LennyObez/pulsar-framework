@@ -13,6 +13,7 @@ use function in_array;
  *
  * Each definition specifies the target column/expression, allowed operators,
  * value type, and optional authorization guard.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class FilterDefinition

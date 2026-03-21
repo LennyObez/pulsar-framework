@@ -19,6 +19,7 @@ use const ENT_QUOTES;
  *
  * Presented after successful email/password authentication when the
  * identity has 2FA enabled. Supports TOTP codes and recovery codes.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class MfaChallenge extends LiveComponent

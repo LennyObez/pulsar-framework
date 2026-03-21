@@ -13,6 +13,7 @@ use Pulsar\Api\Api;
  *
  * When the ExceptionHandler encounters a renderable exception, it delegates
  * response creation to the exception itself, bypassing the default renderer.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface RenderableInterface

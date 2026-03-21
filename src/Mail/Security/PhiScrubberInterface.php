@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Used in HIPAA-compliant mail pipelines to ensure no PHI leaks
  * through subject lines, preheaders, or preview text.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface PhiScrubberInterface

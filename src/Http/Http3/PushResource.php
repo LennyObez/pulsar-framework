@@ -11,6 +11,7 @@ use function sprintf;
 
 /**
  * A single resource to push/preload via Link header.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PushResource

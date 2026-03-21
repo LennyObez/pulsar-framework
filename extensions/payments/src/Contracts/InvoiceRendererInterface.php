@@ -9,6 +9,7 @@ use Pulsar\Extension\Payments\Domain\Invoice;
 
 /**
  * Invoice rendering contract.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface InvoiceRendererInterface

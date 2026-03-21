@@ -19,6 +19,7 @@ use function usort;
  *
  * Tracks render duration per template name. Results are available for
  * Studio dashboard display and performance analysis.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class TemplateProfiler

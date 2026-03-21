@@ -14,6 +14,7 @@ use function sprintf;
 
 /**
  * Value must be less than the given threshold. Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class LessThan implements RuleInterface

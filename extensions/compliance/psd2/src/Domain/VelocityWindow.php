@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Records transaction count and total amount within a time window
  * for a specific identity, used for fraud scoring per PSD2 RTS Art. 18.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class VelocityWindow

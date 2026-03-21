@@ -16,6 +16,7 @@ use Pulsar\Security\Audit\AuditOutcome;
  * The mapping is built from configuration at boot time: no runtime
  * interpretation or dynamic evaluation. Same SAN always resolves to the
  * same identity (deterministic).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class MtlsIdentityMapper

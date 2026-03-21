@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Each implementation defines a unique type identifier, a JSON Schema for its
  * data structure, validation logic, and HTML rendering.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface BlockTypeInterface

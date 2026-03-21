@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Rejects submissions that are too short, predominantly uppercase,
  * or contain excessive character repetition.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ContentQualityGateInterface extends AntiSpamCheckInterface {}

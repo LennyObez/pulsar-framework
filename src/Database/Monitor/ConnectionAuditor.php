@@ -11,6 +11,7 @@ use Pulsar\Database\Driver;
 
 /**
  * Audits database connection lifecycle events.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ConnectionAuditor implements ConnectionAuditorInterface

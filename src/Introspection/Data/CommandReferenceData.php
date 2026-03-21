@@ -10,6 +10,7 @@ use function array_map;
 
 /**
  * Complete CLI command reference for the application.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CommandReferenceData

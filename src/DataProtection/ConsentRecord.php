@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
 
 /**
  * Immutable value object representing a consent record for a data subject.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ConsentRecord implements ConsentRecordInterface

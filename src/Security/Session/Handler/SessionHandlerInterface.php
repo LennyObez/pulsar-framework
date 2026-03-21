@@ -12,6 +12,7 @@ use Pulsar\Security\Exception\SecurityException;
  *
  * Extends PHP's native SessionHandlerInterface with capability queries
  * and session management operations (listing, revocation, concurrency).
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface SessionHandlerInterface extends \SessionHandlerInterface

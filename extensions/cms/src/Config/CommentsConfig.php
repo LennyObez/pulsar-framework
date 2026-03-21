@@ -15,6 +15,7 @@ use function is_string;
  *
  * @psalm-api Public configuration DTO loaded from config/cms.php; consumed
  *            by CommentService and admin moderation views.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CommentsConfig

@@ -12,6 +12,7 @@ use function is_string;
  * Details about each adverse reaction event linked to exposure to an allergen.
  *
  * @see https://www.hl7.org/fhir/allergyintolerance-definitions.html#AllergyIntolerance.reaction
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AllergyReaction

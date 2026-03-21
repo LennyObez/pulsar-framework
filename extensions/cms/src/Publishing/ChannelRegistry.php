@@ -14,6 +14,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public registry resolved from the DI container by
  *            PublishingOrchestrator; not instantiated by name.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ChannelRegistry

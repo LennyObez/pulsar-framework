@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Types of certificates tracked by the certificate monitor.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum CertificateType: string

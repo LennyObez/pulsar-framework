@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * Bridges the Pulsar gRPC server to an actual gRPC transport implementation
  * (grpc PECL extension, RoadRunner gRPC plugin, etc.). Pulsar owns the
  * service contracts and interceptor pipeline; the adapter owns the wire protocol.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface GrpcTransportAdapterInterface

@@ -11,6 +11,7 @@ use function sprintf;
 
 /**
  * Base exception for AI SDK errors.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class AiException extends RuntimeException

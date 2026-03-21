@@ -20,6 +20,7 @@ use function sort;
  * Aggregates moderation data from the ModerationLog to produce the
  * structured report mandated by the DSA. The report includes breakdowns
  * by action type, detection method, and appeal outcomes.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TransparencyReportGenerator

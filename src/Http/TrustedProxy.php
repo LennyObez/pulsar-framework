@@ -28,6 +28,7 @@ use const FILTER_VALIDATE_IP;
  *
  * When the request arrives through a trusted proxy, reads X-Forwarded-For
  * and walks right-to-left to find the first untrusted (client) IP.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TrustedProxy

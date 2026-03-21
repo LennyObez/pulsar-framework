@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Captures the reason, chosen action, and worker state at the time
  * the recycle decision was made.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RecycleRecord

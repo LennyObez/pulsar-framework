@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Manages type-to-type transforms and provides lookup for available
  * conversions from any given block type.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class TransformRegistry

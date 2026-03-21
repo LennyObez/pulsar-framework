@@ -19,6 +19,7 @@ use function is_string;
  * Typed configuration DTO for CSRF protection settings.
  *
  * Maps from the `csrf` key of `config/security.php`.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CsrfConfig

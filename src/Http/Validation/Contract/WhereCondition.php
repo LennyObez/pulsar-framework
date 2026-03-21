@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * A single WHERE condition binding a column name to a value.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class WhereCondition

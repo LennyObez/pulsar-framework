@@ -24,6 +24,7 @@ use function substr;
  * Supports multiple migration directories (project + extensions).
  * Migration filenames must follow the convention:
  * {YYYYMMDDHHMMSS}_description_snake_case.php
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class MigrationRepository

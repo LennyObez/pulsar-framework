@@ -12,6 +12,7 @@ use Pulsar\Extension\Cms\Exception\CmsException;
  *
  * @psalm-api Public binding contract; implemented by CmsPluginManager and
  *            consumed by admin plugin controllers.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface CmsPluginManagerInterface

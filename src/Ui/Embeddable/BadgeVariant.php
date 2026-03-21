@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Visual variants for the StatusBadgeComponent.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum BadgeVariant: string

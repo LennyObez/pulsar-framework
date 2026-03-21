@@ -10,6 +10,7 @@ use Pulsar\Extension\Forum\Profile\ForumProfile;
 
 /**
  * Determines whether a user's reputation grants a specific forum privilege.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface PrivilegeCheckerInterface

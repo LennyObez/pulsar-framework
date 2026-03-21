@@ -34,6 +34,7 @@ use const JSON_UNESCAPED_UNICODE;
  *
  * Delegates storage to a pluggable handler while managing validation,
  * encryption, metadata tracking, and fixation protection.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class SessionManager implements SessionInterface

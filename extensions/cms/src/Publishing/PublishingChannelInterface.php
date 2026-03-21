@@ -17,6 +17,7 @@ use Pulsar\Extension\Cms\Content\ContentTranslation;
  *
  * @psalm-api Public extension contract; implementations registered with
  *            ChannelRegistry and invoked by the orchestrator.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface PublishingChannelInterface

@@ -14,6 +14,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public enum referenced by ContentTypeField and consumed by user
  *            extension code defining custom content types.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum FieldType: string

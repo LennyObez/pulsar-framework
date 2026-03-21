@@ -15,6 +15,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public enum referenced by NewsletterSend::status; consumed by
  *            dispatch jobs and admin send-detail views.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum SendStatus: string

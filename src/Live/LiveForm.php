@@ -28,6 +28,7 @@ use function is_string;
  *           ];
  *       }
  *   }
+ * @api
  */
 #[Api(since: '1.0.0')]
 abstract class LiveForm

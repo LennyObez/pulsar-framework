@@ -6,6 +6,7 @@ namespace Pulsar\Api;
 
 /**
  * Types of backward-compatibility breaks.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum BcBreakType: string

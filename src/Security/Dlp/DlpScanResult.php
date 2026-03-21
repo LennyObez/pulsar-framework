@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Result of a DLP scan: what was found, where, and what action was taken.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DlpScanResult

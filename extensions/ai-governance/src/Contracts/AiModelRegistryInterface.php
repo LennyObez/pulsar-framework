@@ -17,6 +17,7 @@ use Pulsar\Extension\AiGovernance\Enum\AiModelStatus;
  * ISO 42001:2023 Clause 8.2 requires organizations to identify, document,
  * and track all AI systems within scope. This registry provides the central
  * catalog of registered models with lifecycle and risk tracking.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface AiModelRegistryInterface

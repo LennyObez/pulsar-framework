@@ -9,6 +9,7 @@ use Pulsar\Extension\Admin\Domain\FieldType;
 
 /**
  * Date field for admin resources.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class DateField extends Field

@@ -13,6 +13,7 @@ use function is_string;
  * Typed configuration DTO for Cross-Origin security headers (COOP, COEP, CORP).
  *
  * Maps from the `cross_origin` key within the `headers` section of `config/security.php`.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CrossOriginConfig

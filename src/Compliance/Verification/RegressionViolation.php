@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Describes a configuration regression that violates a compliance constraint.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RegressionViolation

@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Types of digital operational resilience tests per DORA Articles 24-27.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum ResilienceTestType: string

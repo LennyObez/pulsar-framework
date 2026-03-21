@@ -14,6 +14,7 @@ use Pulsar\Api\Api;
  * known vulnerabilities in the project's dependency tree.
  *
  * Conforms to the OpenVEX specification.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class VexDocument

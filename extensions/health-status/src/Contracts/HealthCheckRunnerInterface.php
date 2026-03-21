@@ -9,6 +9,7 @@ use Pulsar\Extension\HealthStatus\Domain\HealthSnapshot;
 
 /**
  * Executes all registered health checks and returns a snapshot.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface HealthCheckRunnerInterface

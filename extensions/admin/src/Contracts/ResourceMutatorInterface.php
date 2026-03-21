@@ -12,6 +12,7 @@ use Pulsar\Extension\Admin\Domain\ActionResult;
  * Write-side mutation interface for admin resources.
  *
  * All writes require a MutationContext to ensure audit traceability.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ResourceMutatorInterface

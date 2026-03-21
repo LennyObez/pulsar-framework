@@ -16,6 +16,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public DTO returned from ContentEventStoreInterface; consumed
  *            by audit views and event-replay projections.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ContentEvent

@@ -17,6 +17,7 @@ use function random_bytes;
  *
  * Represents a one-time or recurring payment through any gateway.
  * State transitions are validated against the PaymentStatus state machine.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Payment

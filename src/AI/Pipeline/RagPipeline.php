@@ -28,6 +28,7 @@ use function sprintf;
  * 2. Search the vector store for relevant documents
  * 3. Build a context-enriched prompt
  * 4. Send to the LLM for generation
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RagPipeline

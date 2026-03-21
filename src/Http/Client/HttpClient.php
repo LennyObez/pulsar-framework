@@ -37,6 +37,7 @@ use function usleep;
  *
  * No external dependencies (curl, Guzzle, etc.). Built-in SSRF protection
  * blocks requests to private/reserved IP ranges by default.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class HttpClient implements HttpClientInterface

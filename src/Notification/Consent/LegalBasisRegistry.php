@@ -18,6 +18,7 @@ use function sprintf;
  *
  * In regulated mode, every registered notification type must have a legal basis
  * mapping. Call validate() at boot time to enforce this.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class LegalBasisRegistry

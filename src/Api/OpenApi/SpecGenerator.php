@@ -31,6 +31,7 @@ use const JSON_UNESCAPED_UNICODE;
  * specification array. No runtime reflection is performed; all type
  * information must be provided via `EndpointMetadata` instances
  * collected at build time.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class SpecGenerator

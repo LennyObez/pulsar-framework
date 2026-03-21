@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * In-memory CSP report collector for testing and lightweight deployments.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class InMemoryCspReportCollector implements CspReportCollectorInterface

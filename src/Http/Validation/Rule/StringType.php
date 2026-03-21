@@ -14,6 +14,7 @@ use function sprintf;
 
 /**
  * Value must be a string. Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class StringType implements TypeRuleInterface

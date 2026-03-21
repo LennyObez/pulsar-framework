@@ -14,6 +14,7 @@ use function time;
 
 /**
  * PSR-6 CacheItemInterface implementation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class CacheItem implements CacheItemInterface

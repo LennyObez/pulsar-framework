@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Dispatched when a post is marked as the accepted solution for a thread.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PostAcceptedAsSolution

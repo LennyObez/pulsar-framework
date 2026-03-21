@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * Captures a text-based signature (typed name) along with
  * full consent evidence for regulated compliance.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class SignatureField extends AbstractRegulatedField

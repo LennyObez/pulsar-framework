@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Transactional notifications bypass opt-out checks (password resets, security alerts, etc.).
  * Marketing notifications require explicit opt-in consent.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum NotificationClassification: string

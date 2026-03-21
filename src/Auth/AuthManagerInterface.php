@@ -13,6 +13,7 @@ use Pulsar\Auth\Identity\IdentityInterface;
  * Contract for the authentication manager.
  *
  * Orchestrates multiple guards to resolve an identity from a request.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface AuthManagerInterface

@@ -17,6 +17,7 @@ use Pulsar\Extension\Cms\Exception\CmsException;
  *
  * @psalm-api Public DTO returned from CommentRepositoryInterface and
  *            CommentServiceInterface; consumed by templates and user-land code.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Comment

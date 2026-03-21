@@ -12,6 +12,7 @@ use Pulsar\Extension\Eidas\Exception\EidasException;
  * Registered electronic delivery service per eIDAS Art. 43-44.
  *
  * Provides evidence of transmission and receipt with non-repudiation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface RegisteredDeliveryServiceInterface

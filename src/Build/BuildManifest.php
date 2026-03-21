@@ -28,6 +28,7 @@ use const SORT_STRING;
  * Provides integrity verification by recording SHA-256 hashes and sizes
  * for every artifact, plus content hashes for source inputs. An optional
  * HMAC signature seals the manifest for tamper detection.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class BuildManifest

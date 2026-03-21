@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Contract for accessibility validators that analyze HTML for WCAG compliance.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ValidatorInterface

@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
  * DTO for OAuth2 token endpoint responses.
  *
  * Encapsulates the fields returned in a successful token response per RFC 6749 Section 5.1.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TokenResponse

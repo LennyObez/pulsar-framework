@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Types of schema change operations detected by the diff engine.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum SchemaOperationType: string

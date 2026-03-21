@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Implementations transform job data to and from a wire format (JSON, msgpack, etc.)
  * while enforcing type safety through the {@see TypeRegistry}.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface SerializerInterface

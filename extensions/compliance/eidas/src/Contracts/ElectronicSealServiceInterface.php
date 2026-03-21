@@ -13,6 +13,7 @@ use Pulsar\Extension\Eidas\Exception\EidasException;
  * Electronic seal service per eIDAS Art. 35-40.
  *
  * Organization-level seals for automated document integrity.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ElectronicSealServiceInterface

@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Defines maximum response and resolution times (in minutes),
  * along with escalation rules when SLA thresholds are breached.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TicketSla

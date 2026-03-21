@@ -13,6 +13,7 @@ use Pulsar\Api\Pagination\PaginationResult;
  * Implementations must support upsert semantics, pagination with optional
  * platform and beta filtering, and lookup of the latest stable release
  * per platform.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ReleaseRepositoryInterface

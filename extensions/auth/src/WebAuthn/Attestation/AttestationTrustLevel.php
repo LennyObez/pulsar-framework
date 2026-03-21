@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Trust level determined by attestation verification.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum AttestationTrustLevel: string

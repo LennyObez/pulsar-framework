@@ -18,6 +18,7 @@ use function is_string;
  *
  * Clients POST to this endpoint with `channel_name` and `socket_id` to get
  * an auth token that allows subscribing to private or presence channels.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class BroadcastAuthController

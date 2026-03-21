@@ -13,6 +13,7 @@ use Pulsar\Api\Resource\FieldPolicy;
  * Evaluates field policies against the requester's permissions, roles, and
  * classification clearance. Fields that fail authorization are either denied
  * (omitted silently) or marked for redaction.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class FieldAuthorizer

@@ -29,6 +29,7 @@ use const LOCK_EX;
  *
  * Stores history in a user-configurable file (default: ~/.pulsar_repl_history).
  * Supports search, navigation, deduplication, and maximum entry limits.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class HistoryManager

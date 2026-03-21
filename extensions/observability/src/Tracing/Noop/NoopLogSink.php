@@ -11,6 +11,7 @@ use Pulsar\Observability\Log\LogSinkInterface;
 
 /**
  * No-operation log sink that silently discards all log entries.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class NoopLogSink implements LogSinkInterface

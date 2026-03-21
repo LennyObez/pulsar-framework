@@ -12,6 +12,7 @@ use function is_string;
  * A reference from one resource to another.
  *
  * @see https://www.hl7.org/fhir/references.html
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Reference

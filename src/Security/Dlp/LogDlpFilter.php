@@ -16,6 +16,7 @@ use function is_string;
  * interface for log processors. When DLP is disabled, returns content unchanged.
  *
  * Compliance: PCI-DSS Req.3.4 (mask PAN when displayed), HIPAA (ePHI in logs).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class LogDlpFilter

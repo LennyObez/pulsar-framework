@@ -12,6 +12,7 @@ use function is_string;
  * A time period defined by a start and end date/time.
  *
  * @see https://www.hl7.org/fhir/datatypes.html#Period
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Period

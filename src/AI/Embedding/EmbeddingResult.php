@@ -13,6 +13,7 @@ use function count;
  * Result of an embedding generation request.
  *
  * Contains one or more embedding vectors alongside usage metadata.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class EmbeddingResult

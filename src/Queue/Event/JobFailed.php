@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Emitted when a job fails execution.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class JobFailed extends QueueEvent

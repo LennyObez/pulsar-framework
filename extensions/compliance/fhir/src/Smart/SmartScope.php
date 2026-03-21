@@ -19,6 +19,7 @@ use function preg_match;
  * - Permission: "read", "write", or "*" for both
  *
  * @see http://www.hl7.org/fhir/smart-app-launch/scopes-and-launch-context.html
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SmartScope

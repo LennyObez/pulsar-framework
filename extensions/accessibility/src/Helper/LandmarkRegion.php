@@ -13,6 +13,7 @@ use function sprintf;
  *
  * Each method wraps content in the appropriate semantic HTML element
  * with ARIA attributes for assistive technology navigation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class LandmarkRegion

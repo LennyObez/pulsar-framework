@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Read-side query interface for admin resources.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ResourceQueryInterface

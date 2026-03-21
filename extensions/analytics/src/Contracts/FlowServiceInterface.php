@@ -10,6 +10,7 @@ use Pulsar\Extension\Analytics\Domain\FlowStep;
 
 /**
  * Analyzes visitor navigation flows (behavior flow / user flow).
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface FlowServiceInterface

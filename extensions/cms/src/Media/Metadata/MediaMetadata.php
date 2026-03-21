@@ -20,6 +20,7 @@ use function round;
  *
  * Provides typed access to common photographic metadata fields
  * and supports serialization for JSON storage.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class MediaMetadata

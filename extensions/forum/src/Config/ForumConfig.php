@@ -14,6 +14,7 @@ use function is_int;
  *
  * Loaded from config/forum.php during the preBoot phase. All values have
  * sensible defaults suitable for general community forums.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ForumConfig

@@ -45,6 +45,7 @@ use const ENT_QUOTES;
  *
  * Produces WCAG 2.1 AA compliant HTML with proper ARIA attributes,
  * labels, error display, and focus management for error summaries.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class HtmlFormRenderer implements FormRendererInterface

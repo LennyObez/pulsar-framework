@@ -11,6 +11,7 @@ use function sprintf;
 
 /**
  * Thrown when an optimistic lock conflict is detected (version mismatch).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class OptimisticLockException extends OrmException

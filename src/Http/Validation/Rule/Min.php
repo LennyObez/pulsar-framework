@@ -14,6 +14,7 @@ use function sprintf;
 
 /**
  * Numeric value must be >= the given minimum. Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Min implements RuleInterface

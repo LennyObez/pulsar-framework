@@ -13,6 +13,7 @@ use Pulsar\Api\Api;
  *
  * The callback should return the new primary endpoint as a string,
  * or null if no failover target is available.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CallbackFailoverStrategy implements FailoverStrategyInterface
