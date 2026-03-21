@@ -305,7 +305,7 @@ final readonly class QrCodeEncoder
             $poly = $newPoly;
         }
 
-        return $poly;
+        return array_values($poly);
     }
 
     /**
@@ -349,6 +349,7 @@ final readonly class QrCodeEncoder
      */
     private function gfExp(int $n): int
     {
+        /** @var array<int, int>|null $expTable */
         static $expTable = null;
 
         if ($expTable === null) {
@@ -373,6 +374,7 @@ final readonly class QrCodeEncoder
      */
     private function gfLog(int $n): int
     {
+        /** @var array<int, int>|null $logTable */
         static $logTable = null;
 
         if ($logTable === null) {
@@ -418,7 +420,8 @@ final readonly class QrCodeEncoder
 
         // Interleave data codewords
         $interleaved = [];
-        $maxDataLen = max(array_map(count(...), $dataBlocks));
+        $blockLengths = array_map(count(...), $dataBlocks);
+        $maxDataLen = $blockLengths === [] ? 0 : max($blockLengths);
 
         for ($i = 0; $i < $maxDataLen; $i++) {
             for ($b = 0; $b < $numBlocks; $b++) {
@@ -429,7 +432,8 @@ final readonly class QrCodeEncoder
         }
 
         // Interleave EC codewords
-        $maxEcLen = max(array_map(count(...), $ecBlocks));
+        $ecLengths = array_map(count(...), $ecBlocks);
+        $maxEcLen = $ecLengths === [] ? 0 : max($ecLengths);
 
         for ($i = 0; $i < $maxEcLen; $i++) {
             for ($b = 0; $b < $numBlocks; $b++) {
@@ -461,7 +465,7 @@ final readonly class QrCodeEncoder
         $matrix = [];
 
         for ($r = 0; $r < $size; $r++) {
-            $matrix[$r] = array_fill(0, $size, null);
+            $matrix[] = array_fill(0, $size, null);
         }
 
         return $matrix;

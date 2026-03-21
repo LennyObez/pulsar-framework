@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Extension\OpenTelemetry\Export\JsonLines\Error;
+namespace Pulsar\Extension\ObservabilityExport\Error;
 
 use Override;
 use Pulsar\Api\Api;
-use Pulsar\Extension\OpenTelemetry\Export\JsonLines\Internal\JsonLinesFileWriter;
-use Pulsar\Extension\OpenTelemetry\Export\JsonLines\Schema\ErrorSchema;
+use Pulsar\Extension\ObservabilityExport\Internal\JsonLinesFileWriter;
+use Pulsar\Extension\ObservabilityExport\Schema\ErrorSchema;
 use Pulsar\Observability\ErrorTracking\ErrorEvent;
 
 use function count;

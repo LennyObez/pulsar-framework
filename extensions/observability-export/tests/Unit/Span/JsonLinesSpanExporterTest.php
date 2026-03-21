@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Extension\OpenTelemetry\Export\JsonLines\Tests\Unit\Span;
+namespace Pulsar\Extension\ObservabilityExportTests\Unit\Span;
 
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Extension\OpenTelemetry\Export\JsonLines\Span\JsonLinesSpanExporter;
+use Pulsar\Extension\ObservabilityExport\Span\JsonLinesSpanExporter;
 use Pulsar\Observability\Tracing\Span;
 use Pulsar\Observability\Tracing\SpanId;
 use Pulsar\Observability\Tracing\TraceContext;

@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Extension\OpenTelemetry\Export\JsonLines\Tests\Unit;
+namespace Pulsar\Extension\ObservabilityExportTests\Unit;
 
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Extension\ObservabilityExport\ObservabilityExportExtension;
-use Pulsar\Extension\OpenTelemetry\Export\JsonLines\Error\ErrorExporterInterface;
-use Pulsar\Extension\OpenTelemetry\Export\JsonLines\Metrics\MetricsExporterInterface;
-use Pulsar\Extension\OpenTelemetry\Export\JsonLines\Span\SpanExporterInterface;
+use Pulsar\Extension\ObservabilityExport\Error\ErrorExporterInterface;
+use Pulsar\Extension\ObservabilityExport\Metrics\MetricsExporterInterface;
+use Pulsar\Extension\ObservabilityExport\Span\SpanExporterInterface;
 use Pulsar\Routing\RouterInterface;
 
 final class ObservabilityExportExtensionTest extends TestCase
