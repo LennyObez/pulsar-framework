@@ -15,6 +15,7 @@ use Pulsar\Extension\Cms\Content\SafeHtmlPolicy;
  *
  * @psalm-api Public service resolved from the DI container by CommentService;
  *            not instantiated by name.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CommentBodyPolicy

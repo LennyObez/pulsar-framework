@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Immutable value object containing file metadata and the temporary path.
  * The component can then move the file to permanent storage.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class UploadedFile

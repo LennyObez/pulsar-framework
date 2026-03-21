@@ -12,6 +12,7 @@ use Pulsar\Workflow\Exception\WorkflowException;
  *
  * Implementations may back this with a database, file system, or in-memory
  * store. Old versions are retained and never deleted for auditability.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface DefinitionVersionRegistryInterface

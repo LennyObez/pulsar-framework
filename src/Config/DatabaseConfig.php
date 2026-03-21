@@ -17,6 +17,7 @@ use Pulsar\Database\Routing\ReadWriteConfig;
  * Top-level typed configuration DTO for `config/database.php`.
  *
  * Composes per-connection DTOs and migration settings.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DatabaseConfig

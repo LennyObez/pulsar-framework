@@ -11,6 +11,7 @@ use function is_string;
 
 /**
  * Typed configuration DTO for `config/storage.php`.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class StorageConfig

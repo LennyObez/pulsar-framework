@@ -13,6 +13,7 @@ use function usort;
 
 /**
  * Immutable collection of generated files with conflict detection.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class GeneratedFileSet

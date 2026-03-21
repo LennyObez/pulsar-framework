@@ -21,6 +21,7 @@ use function sprintf;
  * Valid campus prefixes are in the range 10-99.
  *
  * @see https://www.irs.gov/businesses/small-businesses-self-employed/employer-id-numbers
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Ein implements RuleInterface

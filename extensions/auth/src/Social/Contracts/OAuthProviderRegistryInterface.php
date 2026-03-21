@@ -11,6 +11,7 @@ use Pulsar\Extension\Auth\Social\Exception\SsoException;
  * Registry for OAuth provider implementations.
  *
  * Providers are registered by name and retrieved for use during the SSO flow.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface OAuthProviderRegistryInterface

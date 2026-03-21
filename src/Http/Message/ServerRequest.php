@@ -44,6 +44,7 @@ use const JSON_THROW_ON_ERROR;
  *
  * Implements ServerRequestInterface with Pulsar-specific convenience methods.
  * Headers are stored lowercase internally with deterministic iteration order.
+ * @api
  */
 #[Api(since: '1.0.0-rc.11')]
 final class ServerRequest implements ServerRequestInterface

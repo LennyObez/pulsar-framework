@@ -13,6 +13,7 @@ use Pulsar\Queue\QueueableInterface;
  * Jobs implementing this interface signal to the worker/middleware pipeline
  * that they require tenant context restoration from the envelope's tenantId.
  * The actual context restoration is handled by TenantJobMiddleware.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface TenantScopedJobInterface extends QueueableInterface

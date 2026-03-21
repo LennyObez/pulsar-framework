@@ -19,6 +19,7 @@ use function var_export;
  * A build artifact consumed at boot time. Contains all registered gRPC
  * services and their method descriptors, serialized as a PHP array file
  * for zero-overhead loading.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ServiceManifest

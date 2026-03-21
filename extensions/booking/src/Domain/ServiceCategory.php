@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Domain DTO; instantiated by repositories from database
  *            rows and returned to user-land code.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ServiceCategory

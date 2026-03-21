@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Record of an alert that has fired.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AlertFiring

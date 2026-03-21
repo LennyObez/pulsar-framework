@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Status of a workflow instance in its lifecycle.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum WorkflowInstanceStatus: string

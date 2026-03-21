@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Emitted after a notification is successfully delivered through a channel.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class NotificationSent extends NotificationEvent

@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Quote lifecycle status.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum QuoteStatus: string

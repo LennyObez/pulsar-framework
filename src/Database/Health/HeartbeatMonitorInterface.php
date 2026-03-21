@@ -9,6 +9,7 @@ use Pulsar\Database\ConnectionInterface;
 
 /**
  * Contract for monitoring health of multiple database connections.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface HeartbeatMonitorInterface

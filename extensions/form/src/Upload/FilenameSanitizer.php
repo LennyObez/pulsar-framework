@@ -24,6 +24,7 @@ use const PATHINFO_EXTENSION;
  *
  * Strips path traversal sequences, control characters, and null bytes.
  * Generates UUID-based storage filenames to prevent enumeration.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class FilenameSanitizer

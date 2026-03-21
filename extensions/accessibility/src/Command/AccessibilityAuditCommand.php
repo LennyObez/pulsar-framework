@@ -32,6 +32,7 @@ use const JSON_UNESCAPED_SLASHES;
  * CLI command for running accessibility audits on template files.
  *
  * This command is dev/CI only; it must never be registered in production mode.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class AccessibilityAuditCommand extends Command

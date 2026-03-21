@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
  * Vulnerability status in a VEX statement.
  *
  * Aligned with the OpenVEX specification status vocabulary.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum VexStatus: string

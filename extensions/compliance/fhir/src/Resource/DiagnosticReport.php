@@ -13,6 +13,7 @@ use function is_string;
  * The findings and interpretation of diagnostic tests performed on patients.
  *
  * @see https://www.hl7.org/fhir/diagnosticreport.html
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DiagnosticReport extends FhirResource

@@ -14,6 +14,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public enum referenced by Comment::status and consumed by
  *            user-land code and admin moderation views.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum ModerationStatus: string

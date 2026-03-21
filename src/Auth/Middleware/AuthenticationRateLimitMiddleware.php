@@ -34,6 +34,7 @@ use function is_string;
  *
  * Compliance: PCI-DSS Req.8.3.4 (account lockout), NIST SP 800-63B,
  * OWASP ASVS V2.2.1 (anti-automation).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AuthenticationRateLimitMiddleware implements MiddlewareInterface

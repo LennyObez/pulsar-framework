@@ -17,6 +17,7 @@ use function sprintf;
  *
  * Depth 0 = real BEGIN/COMMIT/ROLLBACK.
  * Depth > 0 = SAVEPOINT/RELEASE SAVEPOINT/ROLLBACK TO SAVEPOINT.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class Transaction

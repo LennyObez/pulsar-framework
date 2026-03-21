@@ -32,6 +32,7 @@ use function ksort;
  *     hasSoftDeletes: bool,
  *     isAuditAware: bool,
  * }
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class EntityDefinition

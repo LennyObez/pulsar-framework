@@ -22,6 +22,7 @@ use function is_string;
  * specific origins.
  *
  * @see https://w3c.github.io/webappsec-permissions-policy/
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PermissionsPolicyConfig

@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Result of processing an inbound webhook.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class WebhookResult

@@ -13,6 +13,7 @@ use function str_starts_with;
  *
  * Converts PHP scalar types, arrays, nullables, and common framework
  * types into their TypeScript equivalents for client code generation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PhpToTypeScriptMapper

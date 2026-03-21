@@ -12,6 +12,7 @@ use function is_int;
 
 /**
  * Configuration for the compliance verification engine.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class VerificationConfig

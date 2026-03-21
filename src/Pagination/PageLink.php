@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  * Single entry in a paginator's link array.
  *
  * Describes a numbered page, a previous/next arrow, or an ellipsis gap.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PageLink

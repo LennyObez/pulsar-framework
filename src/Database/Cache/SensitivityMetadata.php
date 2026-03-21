@@ -15,6 +15,7 @@ use function strtolower;
 /**
  * Determines whether a query should be excluded from caching based on
  * sensitivity rules: regulated tables and authorization-scoped queries.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SensitivityMetadata

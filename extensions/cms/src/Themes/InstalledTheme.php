@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public DTO returned from ThemeRepositoryInterface; consumed
  *            by ThemeManager and admin theme views.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class InstalledTheme

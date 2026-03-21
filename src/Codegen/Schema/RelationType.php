@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Relationship cardinality types for entity code generation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum RelationType: string

@@ -26,6 +26,7 @@ use function assert;
  * Provides access to repositories, query builders, schema management,
  * and transaction control. This is the primary entry point for application
  * code interacting with the ORM.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class EntityManager

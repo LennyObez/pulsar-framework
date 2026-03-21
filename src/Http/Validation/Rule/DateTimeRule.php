@@ -17,6 +17,7 @@ use function sprintf;
  * Value must be a valid datetime matching the given format. Skips null values.
  *
  * Named DateTimeRule to avoid conflict with PHP's DateTime class.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DateTimeRule implements RuleInterface

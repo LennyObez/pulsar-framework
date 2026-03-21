@@ -15,6 +15,7 @@ use Pulsar\Database\PdoConnection;
  *
  * Creates a fresh connection on every checkout and disconnects
  * immediately on checkin. No connection reuse occurs.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class NullConnectionPool implements ConnectionPoolInterface

@@ -10,6 +10,7 @@ use Pulsar\Security\ThreatDetection\ThreatCategory;
 
 /**
  * Result of executing an incident response playbook.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PlaybookResult

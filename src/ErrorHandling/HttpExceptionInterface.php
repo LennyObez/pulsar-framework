@@ -9,6 +9,7 @@ use Pulsar\Http\ResponseStatus;
 
 /**
  * Contract for exceptions that map to HTTP status codes.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface HttpExceptionInterface

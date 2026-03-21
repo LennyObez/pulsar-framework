@@ -21,6 +21,7 @@ use function implode;
  *
  * @see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Alt-Svc
  * @see https://datatracker.ietf.org/doc/html/rfc7838
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class AltSvcHeader

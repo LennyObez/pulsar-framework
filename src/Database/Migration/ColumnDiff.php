@@ -9,6 +9,7 @@ use Pulsar\Extension\Orm\Domain\ColumnMetadata;
 
 /**
  * Result of diffing entity columns against database columns.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ColumnDiff

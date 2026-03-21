@@ -42,6 +42,7 @@ use function hrtime;
  * concurrent requests (in persistent runtimes) cannot observe each
  * other's timings. The previous `microtime(true)` idiom was safe but
  * ergonomically poor — this class is the sanctioned substitute.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class Timer

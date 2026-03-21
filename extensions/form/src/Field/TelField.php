@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Telephone number input field.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class TelField extends AbstractField

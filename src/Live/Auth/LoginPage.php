@@ -29,6 +29,7 @@ use const ENT_QUOTES;
  * - MFA challenge redirect (when identity has 2FA enabled)
  * - Error display with rate-limit awareness
  * - Dark mode and custom branding
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class LoginPage extends LiveComponent

@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public binding contract; implemented by FeedGenerator and
  *            consumed by RssChannel + feed routes.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface FeedGeneratorInterface

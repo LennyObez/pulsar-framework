@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public DTO accepted by SearchAnalyticsRepositoryInterface and
  *            consumed by analytics controllers.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DateRange

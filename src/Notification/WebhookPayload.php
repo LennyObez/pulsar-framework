@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * DTO representing a webhook notification payload.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class WebhookPayload

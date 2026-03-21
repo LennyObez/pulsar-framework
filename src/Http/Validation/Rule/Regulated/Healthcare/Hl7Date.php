@@ -20,6 +20,7 @@ use function sprintf;
  *
  * @see https://www.hl7.org/fhir/datatypes.html#dateTime
  * @see https://hl7-definition.caristix.com/v2/HL7v2.5/DataTypes/DTM
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Hl7Date implements RuleInterface

@@ -16,6 +16,7 @@ use function random_bytes;
  * Supports lifecycle transitions (status updates, admin responses, GitHub
  * issue linking) via clone-with semantics: each mutation returns a new
  * instance, preserving the original.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Feedback

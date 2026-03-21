@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
  * Result of restoring a CMS backup.
  *
  * @psalm-api Public DTO returned from BackupServiceInterface::restoreBackup().
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RestoreResult

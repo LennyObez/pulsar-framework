@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * This covers message-body encryption: distinct from TLS transport encryption
  * configured via {@see \Pulsar\Config\MailEncryptionPolicy}.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum EncryptionType: string

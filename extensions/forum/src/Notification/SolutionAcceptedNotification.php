@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Notification sent when a user's post is accepted as the solution.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SolutionAcceptedNotification implements ForumNotificationInterface

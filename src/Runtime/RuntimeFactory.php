@@ -20,6 +20,7 @@ use Pulsar\Runtime\Upgrade\UpgradeContext;
  * Pulls internal dependencies (sandbox, leak detector, hygiene profile) from
  * the container so that consumers only depend on the factory, not on internal
  * runtime construction details.
+ * @api
  */
 #[Api(since: '1.0.0-rc.11')]
 final readonly class RuntimeFactory implements PersistentRuntimeFactoryInterface

@@ -13,6 +13,7 @@ use function is_string;
 
 /**
  * Readonly value object for an applied migration row.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class MigrationRecord

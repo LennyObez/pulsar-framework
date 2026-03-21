@@ -13,6 +13,7 @@ use Pulsar\Api\Api;
  * The envelope wraps the serialized payload with tracing context,
  * retry policy, encryption metadata, and tenant/subject identification
  * required for regulated job processing.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class JobEnvelope

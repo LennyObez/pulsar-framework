@@ -10,6 +10,7 @@ use Pulsar\Extension\Tickets\Domain\TicketStatus;
 
 /**
  * Dispatched when a ticket's status changes.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TicketStatusChanged

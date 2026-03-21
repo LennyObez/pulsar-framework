@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Result of processing a digital download request.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DownloadResult

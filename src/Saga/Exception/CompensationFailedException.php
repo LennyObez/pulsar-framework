@@ -15,6 +15,7 @@ use function sprintf;
  *
  * This is a critical error: the saga is in a partially compensated state
  * and requires operator intervention.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class CompensationFailedException extends SagaException

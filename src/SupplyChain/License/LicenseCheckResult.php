@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Categorizes all packages into compliant, non-compliant, and unknown
  * based on whether their declared licenses match the configured allowlist.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class LicenseCheckResult

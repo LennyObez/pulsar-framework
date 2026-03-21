@@ -19,6 +19,7 @@ use Pulsar\I18n\Locale\UrlPrefixExtractor;
  *
  * @psalm-api Public service resolved from the DI container by content
  *            middleware; not instantiated by name.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class LocaleResolver

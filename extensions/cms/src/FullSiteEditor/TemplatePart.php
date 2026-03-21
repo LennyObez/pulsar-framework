@@ -15,6 +15,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public DTO returned from TemplatePartRepositoryInterface;
  *            consumed by template rendering and admin editor.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TemplatePart

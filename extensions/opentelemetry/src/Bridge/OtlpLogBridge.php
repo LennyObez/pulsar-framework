@@ -27,6 +27,7 @@ use const JSON_THROW_ON_ERROR;
 /**
  * Log sink that converts Pulsar log entries to OTLP format with
  * sensitive data scrubbing and trace correlation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class OtlpLogBridge implements LogSinkInterface

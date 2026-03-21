@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Classifies queries by their first keyword and supports pinning
  * all traffic to the primary after a write operation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ReadWriteRouterInterface

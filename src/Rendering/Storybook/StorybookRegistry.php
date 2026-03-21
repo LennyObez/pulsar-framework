@@ -16,6 +16,7 @@ use function count;
  *
  * Collects all component stories and organizes them by category
  * for browsing in Pulsar Studio or standalone storybook server.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class StorybookRegistry

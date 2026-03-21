@@ -26,6 +26,7 @@ use const JSON_THROW_ON_ERROR;
  * Relays signaling messages between peers via WebSocket. The server
  * does not see or process media streams: only signaling metadata
  * passes through. Media keys are exchanged via the E2EE channel.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class SignalingHandler

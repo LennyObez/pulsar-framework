@@ -12,6 +12,7 @@ use function strip_tags;
 
 /**
  * Strips HTML/PHP tags from string values. Non-strings pass through unchanged.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class StripTags implements FilterInterface

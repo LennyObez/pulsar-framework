@@ -13,6 +13,7 @@ use Pulsar\Extension\Cms\Exception\CmsException;
  *
  * @psalm-api Public binding contract; implemented by RedirectManager and
  *            consumed by admin redirect controllers.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface RedirectManagerInterface

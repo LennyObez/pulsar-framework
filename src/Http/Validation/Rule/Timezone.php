@@ -16,6 +16,7 @@ use function sprintf;
 
 /**
  * Value must be a valid timezone identifier. Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Timezone implements RuleInterface

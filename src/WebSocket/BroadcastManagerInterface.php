@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Contract for broadcasting events to WebSocket channels.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface BroadcastManagerInterface

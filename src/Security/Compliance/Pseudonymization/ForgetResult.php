@@ -17,6 +17,7 @@ use Pulsar\Api\Api;
  *
  * This design supports controls for GDPR Article 17 right-to-erasure
  * by avoiding retention of identifiers that could enable re-linkage.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ForgetResult

@@ -22,6 +22,7 @@ use function rtrim;
  *
  * Creates a factory class with `definition()` method returning sensible defaults
  * per property type.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class TestFactoryGenerator extends AbstractGenerator

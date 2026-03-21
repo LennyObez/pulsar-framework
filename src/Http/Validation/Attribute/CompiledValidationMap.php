@@ -17,6 +17,7 @@ use function str_ends_with;
  *
  * At runtime this class loads the artifact without reflection.
  * The artifact is produced by ValidationCompiler at build time.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CompiledValidationMap

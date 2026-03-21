@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * All framework time references should use this interface instead of
  * direct time()/date() calls, enabling tests to freeze or advance time.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ClockInterface

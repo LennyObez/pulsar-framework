@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Pre-aggregated daily statistics for a site.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DailyStats

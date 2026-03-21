@@ -17,6 +17,7 @@ use function is_string;
  *
  * Maps from `config/domains.php`. Subdomain-to-extension mapping is
  * opt-in: by default all extensions serve on the same domain.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DomainConfig

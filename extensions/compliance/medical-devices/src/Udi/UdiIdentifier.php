@@ -16,6 +16,7 @@ use function is_string;
  * The PI identifies the production-specific data (lot, serial, expiry, date).
  *
  * @see https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32017R0745 (Article 27)
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class UdiIdentifier

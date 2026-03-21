@@ -18,6 +18,7 @@ use function usort;
  * Stores incidents in a PHP array. All data is lost when the process ends.
  * Production deployments should use FileIncidentReporter or a database-backed
  * implementation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class InMemoryIncidentReporter implements IncidentReporterInterface

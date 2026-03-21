@@ -14,6 +14,7 @@ use function ksort;
  *
  * Labels are sorted deterministically by key to produce a stable
  * map lookup key via {@see key()}.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class LabelSet

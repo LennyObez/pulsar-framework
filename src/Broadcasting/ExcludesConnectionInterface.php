@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * When combined with #[ShouldBroadcast(toOthers: true)], the connection
  * returned by excludeConnectionId() will not receive the broadcast.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ExcludesConnectionInterface

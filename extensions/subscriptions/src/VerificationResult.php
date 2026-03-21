@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * Returned by SubscriptionVerifierInterface::verify() after communicating
  * with Google Play or App Store servers.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class VerificationResult

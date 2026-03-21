@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Emitted when a mail send operation fails.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class MailFailed extends MailEvent

@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Immutable result of a single deploy check.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CheckResult

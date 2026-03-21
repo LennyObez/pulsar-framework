@@ -20,6 +20,7 @@ use function trim;
  * Parses the .env.example file to discover required keys (lines without
  * default values or with empty values), then checks whether each is
  * defined in the current environment.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class EnvValidator

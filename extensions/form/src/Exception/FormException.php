@@ -9,6 +9,7 @@ use RuntimeException;
 
 /**
  * Base exception for the form extension.
+ * @api
  */
 #[Api(since: '1.0.0')]
 class FormException extends RuntimeException

@@ -11,6 +11,7 @@ use function sprintf;
 
 /**
  * Exception for extension dependency resolution errors.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class DependencyException extends ExtensionException

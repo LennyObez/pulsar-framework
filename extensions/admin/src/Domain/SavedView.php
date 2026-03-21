@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Persisted filter/sort preset for an admin resource list.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SavedView

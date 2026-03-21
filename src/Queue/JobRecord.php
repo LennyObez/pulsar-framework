@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Immutable snapshot of a queued job's state.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class JobRecord

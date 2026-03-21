@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public extension contract; implementations registered with
  *            SpamScorer and aggregated into a combined score.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface SpamDetectorInterface

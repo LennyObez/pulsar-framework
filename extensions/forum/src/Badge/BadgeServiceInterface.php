@@ -9,6 +9,7 @@ use Pulsar\Extension\Forum\Domain\Badge;
 
 /**
  * Badge service: evaluate, award, and revoke achievement badges.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface BadgeServiceInterface

@@ -44,6 +44,7 @@ use Redis;
 
 /**
  * Application cache manager with lazy pool/driver resolution.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class CacheManager implements CacheManagerInterface

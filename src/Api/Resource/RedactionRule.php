@@ -18,6 +18,7 @@ use function str_repeat;
  *
  * Applied when a requester's clearance level is insufficient for full access
  * but sufficient for redacted access.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RedactionRule

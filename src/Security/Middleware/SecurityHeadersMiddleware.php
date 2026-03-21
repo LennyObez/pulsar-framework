@@ -31,6 +31,7 @@ use function substr;
  * The X-Forwarded-Proto header is only trusted when the client IP is in the
  * configured trusted proxies list, preventing header spoofing from untrusted
  * clients. See ADR-0026 (deploy config) and CFR-71.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SecurityHeadersMiddleware implements MiddlewareInterface

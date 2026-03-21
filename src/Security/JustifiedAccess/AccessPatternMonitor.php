@@ -21,6 +21,7 @@ use Pulsar\Testing\Clock\ClockInterface;
  *
  * Integrates with the audit logger and incident reporter to create
  * a complete compliance trail for PCI-DSS, HIPAA, and SOC 2.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AccessPatternMonitor

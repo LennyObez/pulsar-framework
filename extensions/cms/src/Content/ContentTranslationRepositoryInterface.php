@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * @psalm-api Public binding contract; implemented by
  *            DbContentTranslationRepository and consumed by URL resolution,
  *            content services, and admin controllers.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ContentTranslationRepositoryInterface

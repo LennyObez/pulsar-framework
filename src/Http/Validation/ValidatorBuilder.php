@@ -27,6 +27,7 @@ use function is_string;
  *       ->rule('email', 'required|email')
  *       ->rule('name', 'required|string|max_length:255')
  *       ->validate();
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ValidatorBuilder

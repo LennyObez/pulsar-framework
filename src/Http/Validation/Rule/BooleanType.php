@@ -14,6 +14,7 @@ use function sprintf;
 
 /**
  * HTTP-friendly boolean: true, false, 1, 0, "1", "0". Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class BooleanType implements TypeRuleInterface

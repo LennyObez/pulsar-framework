@@ -33,6 +33,7 @@ use const PATHINFO_EXTENSION;
  * 3. MIME type consistency
  * 4. Image-specific validation (dimensions, pixel count, embedded PHP)
  * 5-7. Reserved for format-specific validators (SVG, PDF)
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class FileValidator

@@ -15,6 +15,7 @@ use function preg_replace;
  *
  * @psalm-api Public DTO produced from content metadata; consumed by SEO
  *            preview admin panels.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SerpPreview

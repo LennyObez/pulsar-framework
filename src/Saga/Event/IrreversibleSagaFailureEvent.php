@@ -13,6 +13,7 @@ use Pulsar\Api\Api;
  * In regulated presets, this event requires operator acknowledgment. It
  * contains full details about which irreversible steps completed, which
  * step failed, and a hint about required operator action.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class IrreversibleSagaFailureEvent

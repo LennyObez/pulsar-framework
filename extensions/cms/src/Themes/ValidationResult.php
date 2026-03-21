@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public DTO returned from ThemeManifestValidatorInterface and
  *            PluginManifestValidatorInterface; consumed by manager classes.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ValidationResult

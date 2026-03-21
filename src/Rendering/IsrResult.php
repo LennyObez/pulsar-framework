@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Result from an ISR page lookup.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class IsrResult

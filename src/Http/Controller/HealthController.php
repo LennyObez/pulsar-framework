@@ -16,6 +16,7 @@ use function round;
  *
  * Returns 200 when all checks pass, 503 when any check is unhealthy
  * or degraded. Intended for load balancers and orchestrators.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class HealthController

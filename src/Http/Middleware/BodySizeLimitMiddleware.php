@@ -19,6 +19,7 @@ use Pulsar\Http\Message\Response;
  * the configured maximum with a 413 Payload Too Large response.
  *
  * This middleware should be placed early in the pipeline, before body parsing.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class BodySizeLimitMiddleware implements MiddlewareInterface

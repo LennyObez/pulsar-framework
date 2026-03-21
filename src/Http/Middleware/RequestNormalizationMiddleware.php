@@ -24,6 +24,7 @@ use function str_contains;
  * - Double-encoded traversal patterns
  *
  * This middleware should be placed early in the pipeline, before the router.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RequestNormalizationMiddleware implements MiddlewareInterface

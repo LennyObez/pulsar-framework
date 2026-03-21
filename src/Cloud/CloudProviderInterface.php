@@ -13,6 +13,7 @@ use Pulsar\Storage\StorageAdapterInterface;
  *
  * Each cloud provider (AWS, GCP, Azure) implements this to expose
  * provider-specific service adapters through a uniform factory API.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface CloudProviderInterface

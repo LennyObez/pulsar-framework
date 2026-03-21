@@ -16,6 +16,7 @@ use Pulsar\Extension\Orm\Domain\EntityEvent;
  *
  * For pre-events (creating/updating/deleting), returning false
  * cancels the operation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface EntityObserverInterface

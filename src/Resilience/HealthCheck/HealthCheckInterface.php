@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Interface for system health checks.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface HealthCheckInterface

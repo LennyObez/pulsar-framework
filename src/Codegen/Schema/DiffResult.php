@@ -15,6 +15,7 @@ use function is_array;
  * Ordered list of schema operations produced by the diff engine.
  *
  * Operations are in dependency order: creates before adds, drops after removes.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DiffResult

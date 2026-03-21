@@ -27,6 +27,7 @@ use function usort;
  *
  * Quality values (q-factors) range from 0.000 to 1.000 where 1.000 is
  * most preferred and 0 means "not acceptable."
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ContentNegotiation

@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Contract for a single sanitization filter.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface FilterInterface

@@ -23,6 +23,7 @@ use function substr;
  *
  * Storage is delegated to PersonalAccessTokenStoreInterface, which can be
  * backed by a database, file, or in-memory store.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class PersonalAccessTokenManager

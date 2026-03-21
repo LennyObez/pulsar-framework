@@ -18,6 +18,7 @@ use function sodium_memzero;
  *
  * Used to establish a shared symmetric key between two participants
  * without either party revealing their secret key.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class KeyExchange

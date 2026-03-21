@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Financial entities must maintain an up-to-date register of all ICT assets,
  * including information about their criticality, dependencies, and data flows.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class IctAsset

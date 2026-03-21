@@ -13,6 +13,7 @@ use Pulsar\Extension\Auth\Social\Domain\SocialIdentity;
  *
  * Implementations handle account creation, merging, or linking
  * based on the application's user management strategy.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface SocialIdentityLinkerInterface

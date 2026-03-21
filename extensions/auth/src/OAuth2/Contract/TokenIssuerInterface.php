@@ -14,6 +14,7 @@ use Pulsar\Extension\Auth\OAuth2\Token\TokenPair;
  *
  * All token signing uses Keyring-managed keys (Finding B).
  * All issuance events are audit-logged (Finding D).
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface TokenIssuerInterface

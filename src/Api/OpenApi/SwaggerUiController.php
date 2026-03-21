@@ -20,6 +20,7 @@ use const ENT_QUOTES;
  * This controller does NOT generate the spec at runtime. It reads the
  * pre-built JSON artifact from disk and serves it alongside an embedded
  * Swagger UI HTML page.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SwaggerUiController

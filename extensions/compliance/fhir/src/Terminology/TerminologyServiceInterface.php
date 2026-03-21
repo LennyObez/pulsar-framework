@@ -13,6 +13,7 @@ use Pulsar\Api\Api;
  * a unified terminology service for FHIR applications.
  *
  * @see https://www.hl7.org/fhir/terminology-service.html
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface TerminologyServiceInterface

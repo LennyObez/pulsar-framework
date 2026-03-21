@@ -21,6 +21,7 @@ use const SORT_STRING;
  *
  * Produced by ExtensionGraphCompiler at build time and loaded from a cached PHP file
  * at boot time via ManifestLoader.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CompiledExtensionManifest

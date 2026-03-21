@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * A single option in a poll.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PollOption

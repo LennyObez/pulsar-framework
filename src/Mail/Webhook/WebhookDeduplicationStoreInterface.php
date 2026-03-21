@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Tenant-aware: in multi-tenant deployments, event keys include the tenant ID
  * to prevent cross-tenant collisions.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface WebhookDeduplicationStoreInterface

@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public binding contract; implemented by DbContentRevisionRepository
  *            and consumed by RevisionService and admin revision views.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ContentRevisionRepositoryInterface

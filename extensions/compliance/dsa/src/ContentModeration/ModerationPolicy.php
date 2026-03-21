@@ -16,6 +16,7 @@ use function is_string;
  * Platforms must publish clear terms of service describing their
  * content moderation policies, including the types of restrictions
  * applied and the grounds for those restrictions.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ModerationPolicy

@@ -13,6 +13,7 @@ use Pulsar\Api\Api;
  * Subclasses add domain-specific fields per the FHIR R4/R5 specification.
  *
  * @see https://www.hl7.org/fhir/resource.html
+ * @api
  */
 #[Api(since: '1.0.0')]
 abstract readonly class FhirResource

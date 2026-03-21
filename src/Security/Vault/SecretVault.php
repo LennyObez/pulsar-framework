@@ -34,6 +34,7 @@ use function var_export;
  *
  * Sub-key ID 15 / context "secrets_" is used for vault encryption,
  * separate from the default encryption key.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class SecretVault

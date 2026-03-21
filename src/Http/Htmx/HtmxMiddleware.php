@@ -17,6 +17,7 @@ use Pulsar\Http\Middleware\MiddlewareInterface;
  * Attaches an HtmxRequest instance to the request attributes and
  * adds Vary: PX-Request to the response so caches distinguish
  * full-page from fragment responses.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class HtmxMiddleware implements MiddlewareInterface

@@ -19,6 +19,7 @@ use function in_array;
  * In StateMachine mode, exactly one `from` state is typical. In Workflow mode,
  * multiple `from` states enable join semantics (all source branches must be
  * active before the transition fires).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TransitionDefinition

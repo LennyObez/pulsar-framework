@@ -12,6 +12,7 @@ use Pulsar\Observability\Metrics\MetricRegistry;
 
 /**
  * Context passed to a job during execution.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class JobContext

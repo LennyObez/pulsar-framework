@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * Paginators take a query-building callback (or pre-fetched items) and return
  * a {@see PaginationResult} with consistent metadata regardless of strategy.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface PaginatorInterface

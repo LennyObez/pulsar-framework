@@ -17,6 +17,7 @@ use function is_string;
  * Emitted when an unusual access pattern is detected for an actor.
  *
  * Supports controls for PSD2 Art. 73, DORA Art. 9, and SOC 2 CC6.
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]

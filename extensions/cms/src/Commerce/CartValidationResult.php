@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Result of cart validation with current prices and error details.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CartValidationResult

@@ -15,6 +15,7 @@ use Pulsar\Api\Api;
  * assessment of the alleged illegality, including: an explanation of
  * the reasons, a clear indication of the electronic location, and
  * the name and email of the notifying party (Art. 16(2)).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class IllegalContentNotice

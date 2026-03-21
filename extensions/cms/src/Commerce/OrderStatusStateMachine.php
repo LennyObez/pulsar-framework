@@ -19,6 +19,7 @@ use function in_array;
  * - Fulfilled -> Refunded
  * - Failed -> Cancelled
  * - Any non-terminal status -> Cancelled (except already Cancelled or Refunded)
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class OrderStatusStateMachine

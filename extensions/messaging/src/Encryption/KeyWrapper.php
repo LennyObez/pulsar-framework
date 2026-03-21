@@ -30,6 +30,7 @@ use const SODIUM_CRYPTO_SECRETBOX_NONCEBYTES;
  *
  * Password change: re-wrap with new password-derived key. No re-encryption
  * of message history needed since the private key itself doesn't change.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class KeyWrapper

@@ -12,6 +12,7 @@ use function sprintf;
 
 /**
  * Exception for authentication failures.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class AuthenticationException extends RuntimeException

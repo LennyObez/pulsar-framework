@@ -22,6 +22,7 @@ use const JSON_THROW_ON_ERROR;
  *
  * HTTP-agnostic: returns WebhookProcessingResult, not a Response.
  * Domain-specific controllers map the result to their HTTP response format.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class WebhookProcessor

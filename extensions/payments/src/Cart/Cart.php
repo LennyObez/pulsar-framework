@@ -26,6 +26,7 @@ use function random_bytes;
  *
  * Guest carts use a null userId and are identified by session ID until
  * the user authenticates, at which point the guest cart is merged.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Cart

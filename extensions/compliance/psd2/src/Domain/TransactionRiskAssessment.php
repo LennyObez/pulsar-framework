@@ -13,6 +13,7 @@ use Pulsar\Api\Api;
  *
  * Contains the risk score, level, applicable exemption, and
  * the individual rule matches that contributed to the assessment.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TransactionRiskAssessment

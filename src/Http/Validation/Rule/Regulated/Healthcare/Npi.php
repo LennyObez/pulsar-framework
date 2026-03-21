@@ -25,6 +25,7 @@ use function strlen;
  * the NPI Registry.
  *
  * @see https://www.cms.gov/Regulations-and-Guidance/Administrative-Simplification/NationalProvIdentStand
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Npi implements RuleInterface

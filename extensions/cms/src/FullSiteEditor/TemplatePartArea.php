@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public enum referenced by TemplatePart::area; consumed by
  *            template rendering and admin editor.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum TemplatePartArea: string

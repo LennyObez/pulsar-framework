@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Locale-aware date/time formatting contract.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface DateFormatterInterface

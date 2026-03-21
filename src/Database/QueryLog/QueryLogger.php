@@ -19,6 +19,7 @@ use const DEBUG_BACKTRACE_IGNORE_ARGS;
  *
  * Records SQL queries with bindings, timing, and caller information.
  * Designed for development use: should not be enabled in production.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class QueryLogger

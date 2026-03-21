@@ -18,6 +18,7 @@ use function sprintf;
  * Prevents cardinality explosion by restricting which attribute keys
  * are forwarded for each metric scope. Unknown keys are logged on first
  * occurrence and tracked in a bounded set.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AttributeAllowlist

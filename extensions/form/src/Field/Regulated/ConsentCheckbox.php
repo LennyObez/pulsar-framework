@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * Captures full consent evidence including what the user was shown,
  * when they consented, and a hash of the policy text.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ConsentCheckbox extends AbstractRegulatedField

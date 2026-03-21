@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
  * A link related to a Bundle (e.g. self, next, prev for paging).
  *
  * @see https://www.hl7.org/fhir/bundle-definitions.html#Bundle.link
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class BundleLink

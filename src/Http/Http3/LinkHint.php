@@ -11,6 +11,7 @@ use function sprintf;
 
 /**
  * Represents a single Link header hint for preloading/preconnecting.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class LinkHint

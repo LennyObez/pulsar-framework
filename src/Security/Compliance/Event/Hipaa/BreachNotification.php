@@ -19,6 +19,7 @@ use function is_string;
  * Records a HIPAA breach notification event.
  *
  * Supports controls for HIPAA Breach Notification Rule (45 CFR 164.400-414).
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]

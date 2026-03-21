@@ -12,6 +12,7 @@ use function is_string;
  * Contact details (phone, fax, email, etc.).
  *
  * @see https://www.hl7.org/fhir/datatypes.html#ContactPoint
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ContactPoint

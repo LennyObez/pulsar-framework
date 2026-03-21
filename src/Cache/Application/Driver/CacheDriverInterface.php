@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Drivers handle raw string storage only. Serialization
  * happens in the pool layer, keeping drivers simple and testable.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface CacheDriverInterface

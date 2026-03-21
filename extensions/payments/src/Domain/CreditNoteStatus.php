@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Credit note lifecycle status.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum CreditNoteStatus: string

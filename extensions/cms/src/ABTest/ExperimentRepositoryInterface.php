@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public binding contract; implemented by DbExperimentRepository and
  *            consumed by ExperimentService and user-land code.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ExperimentRepositoryInterface

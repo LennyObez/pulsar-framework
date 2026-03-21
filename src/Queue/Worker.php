@@ -50,6 +50,7 @@ use const SIGTERM;
  * Emits lifecycle events (JobCompleted, JobFailed, JobRetried) and records
  * processing metrics. Supports graceful shutdown via POSIX signals on Unix
  * and polling-based status checks on Windows.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class Worker

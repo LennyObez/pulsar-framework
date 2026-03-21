@@ -13,6 +13,7 @@ use Pulsar\Api\Api;
  * Interceptors form a fixed-order pipeline: Tracing -> Auth -> RateLimit ->
  * Validation -> Logging. Each interceptor receives a call context and a
  * next handler, and may short-circuit by returning a result directly.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface InterceptorInterface

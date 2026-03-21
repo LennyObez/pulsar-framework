@@ -26,6 +26,7 @@ use Pulsar\Api\Api;
  *
  * Cases mirror the historical assignments visible in commits
  * 9d4a0eb4 / b2ab9264 / e2be3b3a.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum SubKeyId: int

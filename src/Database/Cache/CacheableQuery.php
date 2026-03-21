@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
 /**
  * Value object representing a query that should be checked against
  * the cache before execution.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CacheableQuery

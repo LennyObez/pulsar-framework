@@ -16,6 +16,7 @@ use Pulsar\Extension\Cms\FieldRegistry\ContentTypeDefinition;
  *
  * @psalm-api Public extension API constructed by CmsPluginManager and passed
  *            to plugin register() / boot() entry points.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class CmsPluginContext

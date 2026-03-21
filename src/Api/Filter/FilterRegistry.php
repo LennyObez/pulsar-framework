@@ -17,6 +17,7 @@ use function array_keys;
  * Filters must be explicitly registered. Unregistered fields are rejected
  * with 400 Bad Request. This is a Finding E invariant: no open-ended query
  * parameters are permitted.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class FilterRegistry

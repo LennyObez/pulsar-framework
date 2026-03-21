@@ -18,6 +18,7 @@ use function sprintf;
  * the request — a cheap denial-of-service vector that the framework must
  * fail closed against. Catching this exception in the kernel lets the
  * application reply with `413 Payload Too Large` instead of crashing.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class BodyTooLargeException extends RuntimeException

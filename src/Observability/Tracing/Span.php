@@ -13,6 +13,7 @@ use function hrtime;
  *
  * Spans track name, start/end times (via hrtime), attributes, and status.
  * Calling {@see end()} is idempotent.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class Span

@@ -18,6 +18,7 @@ use function random_bytes;
  * Represents a legally compliant refund document that references
  * the original invoice. Credit note numbers follow the pattern
  * CN-YYYY-NNNNNN for sequential audit trails.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CreditNote

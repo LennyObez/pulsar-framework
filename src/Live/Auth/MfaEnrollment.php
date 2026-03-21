@@ -22,6 +22,7 @@ use const ENT_QUOTES;
  * 1. Displays the QR code (provisioning URI) for scanning with an authenticator app
  * 2. Accepts a verification code to confirm the setup
  * 3. Shows recovery codes for backup
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class MfaEnrollment extends LiveComponent

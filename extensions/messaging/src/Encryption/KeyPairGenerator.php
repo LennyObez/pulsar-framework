@@ -17,6 +17,7 @@ use function sodium_memzero;
  *
  * Each user gets one identity key pair at account creation. The public key
  * is distributed; the secret key is wrapped and stored encrypted.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class KeyPairGenerator

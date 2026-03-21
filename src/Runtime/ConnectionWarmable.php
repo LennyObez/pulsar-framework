@@ -12,6 +12,7 @@ use RuntimeException;
  *
  * Implementors should open the physical connection when warmConnection()
  * is called (e.g. execute a lightweight query, send a PING, etc.).
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ConnectionWarmable

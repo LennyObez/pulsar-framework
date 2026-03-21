@@ -13,6 +13,7 @@ use Pulsar\Extension\AiGovernance\Enum\AiAuditEvent;
  * Extends the core audit logging pattern with AI governance events
  * per ISO 42001:2023 Clause 9.1 monitoring and measurement requirements.
  * Delegates to the core AuditLoggerInterface for tamper-evident storage.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface AiAuditLoggerInterface

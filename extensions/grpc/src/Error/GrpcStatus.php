@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
  * Standard gRPC status codes per the gRPC specification.
  *
  * @see https://grpc.github.io/grpc/core/md_doc_statuscodes.html
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum GrpcStatus: int

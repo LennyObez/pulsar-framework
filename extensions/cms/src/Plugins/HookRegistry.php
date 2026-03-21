@@ -18,6 +18,7 @@ use function usort;
  *
  * @psalm-api Public registry resolved from the DI container by CmsPluginManager
  *            and HookExecutionEngine; not instantiated by name.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class HookRegistry

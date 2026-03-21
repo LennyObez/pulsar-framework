@@ -12,6 +12,7 @@ use function is_string;
 
 /**
  * Mobile in-app purchase configuration (App Store + Google Play).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class MobileConfig

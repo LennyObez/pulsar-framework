@@ -12,6 +12,7 @@ use function sprintf;
 
 /**
  * Exception thrown when a service discovery operation fails.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ServiceDiscoveryException extends RuntimeException

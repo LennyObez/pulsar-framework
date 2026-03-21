@@ -15,6 +15,7 @@ use function sprintf;
 
 /**
  * Value must be a valid UUID (versions 1-5). Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Uuid implements RuleInterface

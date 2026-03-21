@@ -16,6 +16,7 @@ use function is_string;
  * Records access to cardholder data.
  *
  * Supports controls for PCI-DSS Requirement 10 tracking access to cardholder data.
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]

@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Mail encryption policy for TLS/STARTTLS negotiation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum MailEncryptionPolicy: string

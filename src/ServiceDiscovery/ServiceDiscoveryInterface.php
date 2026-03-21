@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * Implementations may range from static configuration files to dynamic
  * registries (Consul, etcd, Kubernetes). The GA release ships with
  * {@see StaticServiceDiscovery}; dynamic backends are planned for post-GA.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ServiceDiscoveryInterface

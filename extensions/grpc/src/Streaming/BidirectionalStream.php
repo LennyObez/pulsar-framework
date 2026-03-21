@@ -13,6 +13,7 @@ use SplQueue;
  *
  * Both client and server can read and write messages independently.
  * Uses separate read and write buffers for thread-safe operation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class BidirectionalStream implements StreamInterface

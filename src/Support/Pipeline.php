@@ -18,6 +18,7 @@ use Pulsar\Api\Api;
  *   $result = Pipeline::send($data)
  *       ->through([fn($d) => trim($d), fn($d) => strtolower($d)])
  *       ->thenReturn();
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class Pipeline

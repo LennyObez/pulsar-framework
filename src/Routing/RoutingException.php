@@ -13,6 +13,7 @@ use function sprintf;
 
 /**
  * Exception thrown when routing fails.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class RoutingException extends Exception

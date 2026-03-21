@@ -17,6 +17,7 @@ use function random_bytes;
  * Immutable - state transitions produce new instances via clone-with.
  * Supports web-based subscriptions (Stripe/PayPal/SEPA) and mobile
  * in-app purchases (App Store/Google Play).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Subscription

@@ -16,6 +16,7 @@ use function is_string;
  *
  * Merges one-time payment processing, recurring subscriptions,
  * gateway credentials, and compliance settings into a single config.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PaymentsConfig

@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Contract for registering scheduled jobs by class name and schedule.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface JobRegistryInterface

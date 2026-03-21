@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Used by GDPR, NIS2, HIPAA, PSD2, and others.
  * This extends HasIncidentReporting with breach-specific requirements.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface HasBreachNotification extends HasIncidentReporting

@@ -15,6 +15,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public DTO returned from ContentLockServiceInterface; consumed
  *            by editor middleware and admin templates.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ContentLock

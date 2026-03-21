@@ -15,6 +15,7 @@ use Pulsar\Config\EnvironmentMode;
  * CI environments are always blocked. Production requires explicit config
  * enablement plus the --i-know-what-im-doing flag. All other environments
  * require explicit config enablement (secure-by-default).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class EnvironmentGuard

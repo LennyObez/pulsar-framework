@@ -11,6 +11,7 @@ use Pulsar\Security\ThreatDetection\ThreatCategory;
 /**
  * An incident response playbook binding a threat category to a chain of
  * response steps executed sequentially when that threat is detected.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Playbook

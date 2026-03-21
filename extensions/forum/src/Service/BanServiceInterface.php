@@ -11,6 +11,7 @@ use Pulsar\Extension\Forum\Report\UserBan;
 
 /**
  * Service for managing forum user bans with full audit trail.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface BanServiceInterface

@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * Used to disambiguate the source of an audited action so downstream tooling
  * (compliance reports, anomaly detection, retention policy) can apply
  * actor-kind-specific rules without parsing the actor identifier string.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum AuditActorKind: string

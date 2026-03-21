@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Uses content hashing and/or text similarity to prevent
  * repeated submissions from the same source.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface DuplicateDetectorInterface extends AntiSpamCheckInterface {}

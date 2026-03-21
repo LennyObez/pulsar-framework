@@ -18,6 +18,7 @@ use const ARRAY_FILTER_USE_KEY;
 
 /**
  * Represents a single route definition.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Route

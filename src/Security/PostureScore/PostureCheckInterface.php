@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Checks whether a specific security control is active.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface PostureCheckInterface

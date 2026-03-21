@@ -9,6 +9,7 @@ use Pulsar\Database\ConnectionInterface;
 
 /**
  * Transaction management for ORM operations.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface TransactionManagerInterface

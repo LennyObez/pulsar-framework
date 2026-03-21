@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Result of processing a batch of RUM metrics.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RumCollectionResult

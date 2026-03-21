@@ -16,6 +16,7 @@ use Pulsar\Extension\Payments\Domain\Subscription;
  *
  * Provides a backend for customer-facing pages where users can view
  * invoices, update payment methods, change plans, and cancel subscriptions.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class BillingPortalService

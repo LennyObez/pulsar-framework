@@ -9,6 +9,7 @@ use Pulsar\Config\MailEncryptionPolicy;
 
 /**
  * Emitted when a message is sent without encryption due to a fallback from the configured policy.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class MailEncryptionFallbackEvent extends MailEvent

@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * Published at `/.well-known/smart-configuration` to enable SMART app launch.
  *
  * @see http://www.hl7.org/fhir/smart-app-launch/conformance.html
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SmartConfiguration

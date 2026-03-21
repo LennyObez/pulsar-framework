@@ -13,6 +13,7 @@ use Pulsar\Api\Api;
  * Each state has a unique name, a type classification (initial, intermediate,
  * or final), and optional metadata for domain-specific extensions
  * (display labels, descriptions, permissions, SLA timers, etc.).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class StateDefinition

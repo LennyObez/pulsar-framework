@@ -12,6 +12,7 @@ use Pulsar\Extension\Analytics\Domain\PageView;
 
 /**
  * Manage goals and evaluate conversions.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface GoalServiceInterface

@@ -36,6 +36,7 @@ use function sprintf;
  *
  * When a CapabilityPolicy is configured, container and router access
  * is scoped per extension based on its effective trust tier.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ExtensionBootstrap

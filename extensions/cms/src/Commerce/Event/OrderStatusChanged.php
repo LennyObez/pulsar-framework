@@ -12,6 +12,7 @@ use Pulsar\Extension\Cms\Commerce\OrderStatus;
  *
  * @psalm-api Event class — dispatched by the order status workflow
  *            through the EventDispatcher.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class OrderStatusChanged

@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Dispatched when all compensation actions complete successfully.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SagaCompensationCompletedEvent

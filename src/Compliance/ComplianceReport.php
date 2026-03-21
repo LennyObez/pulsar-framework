@@ -16,6 +16,7 @@ use function count;
  * Reports use "control coverage" language: the framework provides coverage
  * for regulatory controls, it does not guarantee compliance. Compliance is
  * an organizational responsibility that extends beyond technical controls.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ComplianceReport

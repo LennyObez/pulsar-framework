@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Policy for handling IP address changes detected mid-session.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum HijackPolicy: string

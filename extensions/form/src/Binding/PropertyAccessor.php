@@ -16,6 +16,7 @@ use function property_exists;
  *
  * Supports nested property paths (e.g., "address.city") and
  * handles readonly properties via reflection.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class PropertyAccessor

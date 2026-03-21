@@ -13,6 +13,7 @@ use function sprintf;
 
 /**
  * Thrown when configuration regressions violate the active compliance profile.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ComplianceRegressionException extends RuntimeException

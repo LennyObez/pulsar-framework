@@ -16,6 +16,7 @@ use function is_string;
  * Records completion of an internal control test.
  *
  * Supports controls for SOX Section 404 testing of internal controls.
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]

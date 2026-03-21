@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Available notification delivery channel types.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum NotificationChannelType: string

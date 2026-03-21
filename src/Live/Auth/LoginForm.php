@@ -9,6 +9,7 @@ use Pulsar\Live\LiveForm;
 
 /**
  * Typed form object for the login page.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class LoginForm extends LiveForm

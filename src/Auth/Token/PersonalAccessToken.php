@@ -20,6 +20,7 @@ use function in_array;
  * The plaintext token is only available immediately after creation
  * (via PersonalAccessTokenResult). Subsequent lookups return only
  * the hashed prefix for identification.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PersonalAccessToken

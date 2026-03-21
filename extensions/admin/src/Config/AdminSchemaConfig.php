@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * Disabled by default. When enabled, provides visual schema management
  * with governance-grade audit trails and configurable deny lists.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AdminSchemaConfig

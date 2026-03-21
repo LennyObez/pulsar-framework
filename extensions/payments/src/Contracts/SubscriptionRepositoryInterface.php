@@ -10,6 +10,7 @@ use Pulsar\Extension\Payments\Domain\Subscription;
 
 /**
  * Repository for persisting and retrieving subscriptions.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface SubscriptionRepositoryInterface

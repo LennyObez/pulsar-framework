@@ -12,6 +12,7 @@ use Pulsar\Extension\Cms\Forms\FormSubmission;
  *
  * @psalm-api Event constructed by FormSubmissionService and dispatched
  *            through the EventDispatcher.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class FormSubmitted

@@ -17,6 +17,7 @@ use function pow;
  *
  * Calculates increasing delays between retry attempts using the formula:
  *   delay = min(baseDelayMs * multiplier^(attempt - 1), maxDelayMs)
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class QueueRetryPolicy

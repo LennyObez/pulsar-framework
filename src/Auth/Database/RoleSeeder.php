@@ -18,6 +18,7 @@ use function array_map;
  *
  * Registers five standard roles: admin (full access), moderator (content + user management),
  * trusted (extended content permissions), member (basic access), and guest (read-only).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RoleSeeder implements SeederInterface

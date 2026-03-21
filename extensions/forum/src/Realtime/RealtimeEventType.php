@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Types of real-time events broadcast to forum clients.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum RealtimeEventType: string

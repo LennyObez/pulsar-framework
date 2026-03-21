@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
  * Fetch priority levels for resource loading hints.
  *
  * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/fetchPriority
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum FetchPriority: string

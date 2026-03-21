@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Strategies for redacting field values when the requester has partial access.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum RedactionStrategy: string

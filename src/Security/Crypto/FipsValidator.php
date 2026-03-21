@@ -22,6 +22,7 @@ use const OPENSSL_VERSION_TEXT;
  * HMAC-SHA-256). Achieves FIPS 140-2 compliance when deployed with a
  * NIST-validated OpenSSL FIPS provider. Use FipsValidator::verify() to
  * confirm your deployment meets FIPS requirements.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class FipsValidator

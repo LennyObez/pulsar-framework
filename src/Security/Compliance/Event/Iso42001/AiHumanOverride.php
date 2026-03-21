@@ -17,6 +17,7 @@ use function is_string;
  *
  * Supports ISO 42001:2023 Annex A control A.8 (transparency and explainability)
  * by capturing when humans intervene in AI decision-making.
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]

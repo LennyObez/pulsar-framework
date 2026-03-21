@@ -16,6 +16,7 @@ use function is_string;
  * Typed configuration DTO for `config/i18n.php`.
  *
  * Environment variables `APP_LOCALE` and `I18N_REGULATED` override file values.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class I18nConfig

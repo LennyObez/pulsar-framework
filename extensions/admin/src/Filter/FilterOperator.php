@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Comparison operators for filter conditions.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum FilterOperator: string

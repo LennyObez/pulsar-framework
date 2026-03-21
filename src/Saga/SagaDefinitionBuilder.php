@@ -29,6 +29,7 @@ use Pulsar\Saga\Step\SagaStep;
  *             ->forward(SendConfirmationAction::class)
  *             ->irreversible()
  *         ->build();
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class SagaDefinitionBuilder

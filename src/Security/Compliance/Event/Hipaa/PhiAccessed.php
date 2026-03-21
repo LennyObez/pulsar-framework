@@ -18,6 +18,7 @@ use function is_string;
  * Records access to Protected Health Information (PHI).
  *
  * Supports controls for HIPAA Security Rule access logging requirements.
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]

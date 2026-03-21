@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public DTO returned from PreviewSessionRepositoryInterface;
  *            consumed by ThemeManager and preview middleware.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PreviewSession

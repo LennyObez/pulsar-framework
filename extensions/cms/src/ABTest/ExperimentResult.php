@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 /**
  * @psalm-api Public DTO returned from ExperimentService::getResults() and
  *            consumed by admin templates and user-land code.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ExperimentResult

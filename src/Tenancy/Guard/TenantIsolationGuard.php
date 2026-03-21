@@ -19,6 +19,7 @@ use Pulsar\Tenancy\TenantContext;
  * When a {@see SystemContext} is provided and active, assertions are bypassed
  * with audit logging: this allows system-level operations (migrations, global
  * maintenance) to operate without tenant scope.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TenantIsolationGuard

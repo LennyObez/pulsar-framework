@@ -47,6 +47,7 @@ use function sodium_crypto_generichash;
  * `UPDATE ... WHERE consumed = 0 AND revoked = 0 AND expires_at > NOW()`
  * and reads `affected_rows` to detect a race-loser. The losing replay
  * sees zero rows and returns `null`.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DbAuthorizationCodeRepository implements AuthorizationCodeRepositoryInterface

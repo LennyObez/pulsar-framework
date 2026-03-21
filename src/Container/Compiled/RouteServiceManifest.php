@@ -19,6 +19,7 @@ use function count;
  * controller requires. At runtime, the container consults this manifest to
  * resolve only the services needed for the matched route instead of the full
  * dependency graph.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class RouteServiceManifest

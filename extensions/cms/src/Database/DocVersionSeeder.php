@@ -17,6 +17,7 @@ use Pulsar\Database\Seeder\SeederInterface;
  *
  * @psalm-api Discovered + run by the SeederRunner from the seeders
  *            directory; not new'd by name.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DocVersionSeeder implements SeederInterface

@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Rate limiting configuration for the analytics collection endpoint.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RateLimitConfig

@@ -12,6 +12,7 @@ use Pulsar\Extension\Auth\WebAuthn\Authenticator\AuthenticatorRecord;
  *
  * Provides CRUD operations for managing registered authenticators,
  * including human-friendly naming and listing.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface AuthenticatorRepositoryInterface

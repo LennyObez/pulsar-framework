@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public DTO returned from ThemeTokenResolverInterface; consumed
  *            by the admin token editor UI.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ThemeToken

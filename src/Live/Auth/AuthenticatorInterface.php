@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Implementors connect the auth UI components to the application's
  * actual authentication backend (session guard, token guard, etc.).
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface AuthenticatorInterface

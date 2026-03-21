@@ -12,6 +12,7 @@ use function is_string;
  * An entry in a FHIR Bundle.
  *
  * @see https://www.hl7.org/fhir/bundle-definitions.html#Bundle.entry
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class BundleEntry

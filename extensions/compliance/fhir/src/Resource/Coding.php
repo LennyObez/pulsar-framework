@@ -13,6 +13,7 @@ use function is_string;
  * A reference to a code defined by a terminology system (code + system + display).
  *
  * @see https://www.hl7.org/fhir/datatypes.html#Coding
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Coding

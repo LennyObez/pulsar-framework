@@ -12,6 +12,7 @@ use function sprintf;
 
 /**
  * Exception for event system errors.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class EventException extends RuntimeException

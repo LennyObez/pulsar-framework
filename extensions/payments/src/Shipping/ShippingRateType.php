@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Shipping rate calculation strategies.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum ShippingRateType: string

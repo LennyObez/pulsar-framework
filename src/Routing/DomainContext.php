@@ -14,6 +14,7 @@ use function in_array;
  * Carries the domain, subdomain, and extension scope information
  * determined by the SubdomainRoutingMiddleware. Attached to the
  * request as an attribute for downstream consumers.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DomainContext

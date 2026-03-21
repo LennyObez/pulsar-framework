@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Immutable charge record.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Charge

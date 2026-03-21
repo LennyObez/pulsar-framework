@@ -9,6 +9,7 @@ use Pulsar\Extension\Analytics\Domain\Site;
 
 /**
  * Persistence interface for analytics site records.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface SiteRepositoryInterface

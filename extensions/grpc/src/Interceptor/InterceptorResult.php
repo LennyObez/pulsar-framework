@@ -12,6 +12,7 @@ use Pulsar\Extension\Grpc\Error\GrpcStatus;
  *
  * Carries the serialized response payload, gRPC status, optional error
  * message, and trailing metadata.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class InterceptorResult

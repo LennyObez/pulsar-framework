@@ -10,6 +10,7 @@ use Pulsar\Extension\Analytics\Domain\DailyStats;
 
 /**
  * Persistence interface for pre-aggregated daily statistics.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface DailyStatsRepositoryInterface

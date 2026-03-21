@@ -13,6 +13,7 @@ use Pulsar\Api\Api;
  * One-time use, short-lived (default 10 min).
  * Bound to: client + redirect_uri + PKCE verifier.
  * Stored hashed in the repository.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AuthorizationCode

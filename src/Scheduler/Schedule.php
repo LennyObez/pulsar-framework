@@ -15,6 +15,7 @@ use function sprintf;
 
 /**
  * Schedule definition for a job, backed by a cron expression.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Schedule

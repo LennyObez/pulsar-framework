@@ -14,6 +14,7 @@ use Pulsar\Security\Csrf\CsrfMiddleware;
  *
  * Registers common short names ('auth', 'csrf', 'rate-limit', etc.)
  * and groups ('web', 'api') with the MiddlewareRegistry.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class MiddlewareAliasConfig

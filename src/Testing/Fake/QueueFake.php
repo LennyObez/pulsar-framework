@@ -25,6 +25,7 @@ use function time;
  *
  * Jobs are stored in memory without actual processing, enabling tests
  * to verify which jobs were queued, on which queues, and with what payloads.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class QueueFake implements QueueDriverInterface

@@ -14,6 +14,7 @@ use Pulsar\Extension\Admin\Domain\FieldType;
  * Supports plain string options or PHP backed enums:
  *   SelectField::make('status')->options(Status::cases())
  *   SelectField::make('category')->options(['tech', 'science', 'art'])
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class SelectField extends Field

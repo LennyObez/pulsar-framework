@@ -15,6 +15,7 @@ use function str_ends_with;
 
 /**
  * Value must end with the given suffix. Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class EndsWith implements RuleInterface

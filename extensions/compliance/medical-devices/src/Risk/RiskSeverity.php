@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Severity of harm in risk assessment per ISO 14971.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum RiskSeverity: string

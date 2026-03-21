@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Base class for all queue system events.
+ * @api
  */
 #[Api(since: '1.0.0')]
 abstract readonly class QueueEvent

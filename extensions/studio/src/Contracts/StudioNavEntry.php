@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Modules return a list of these from {@see StudioModuleInterface::navEntries()}
  * to populate the Studio sidebar navigation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class StudioNavEntry

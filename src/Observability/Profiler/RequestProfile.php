@@ -19,6 +19,7 @@ use function usort;
  * Completed profile for a single request lifecycle.
  *
  * Contains the full timeline of profiled operations grouped by category.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RequestProfile

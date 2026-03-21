@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Requires the client to solve a SHA-256 puzzle before submitting,
  * making automated mass-submissions computationally expensive.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ProofOfWorkVerifierInterface extends AntiSpamCheckInterface {}

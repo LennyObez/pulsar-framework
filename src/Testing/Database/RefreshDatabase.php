@@ -25,6 +25,7 @@ use Pulsar\Database\Migration\MigrationRunner;
  *           return $this->app->get(MigrationRunner::class);
  *       }
  *   }
+ * @api
  */
 #[Api(since: '1.0.0')]
 trait RefreshDatabase

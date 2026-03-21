@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * @psalm-api Public binding contract; implemented by CachePreviewSessionRepository
  *            (or InMemoryPreviewSessionRepository fallback) and consumed by
  *            ThemeManager.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface PreviewSessionRepositoryInterface

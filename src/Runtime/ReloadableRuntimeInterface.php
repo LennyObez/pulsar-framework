@@ -16,6 +16,7 @@ use Pulsar\Runtime\Worker\WorkerInfo;
  * 2. Stop accepting new requests (draining)
  * 3. Drain in-flight requests (configurable timeout)
  * 4. Recycle: worker exits, supervisor spawns fresh process
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ReloadableRuntimeInterface extends RuntimeInterface

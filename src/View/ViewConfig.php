@@ -16,6 +16,7 @@ use function is_string;
  *
  * Controls template paths, caching, escaping defaults, theme selection,
  * and untrusted template sandbox limits.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ViewConfig

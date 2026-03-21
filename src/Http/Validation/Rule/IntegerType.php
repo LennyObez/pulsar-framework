@@ -19,6 +19,7 @@ use const FILTER_VALIDATE_INT;
 /**
  * Value must be an integer or a numeric string that passes FILTER_VALIDATE_INT.
  * Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class IntegerType implements TypeRuleInterface

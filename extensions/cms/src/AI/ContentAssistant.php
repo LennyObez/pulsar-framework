@@ -21,6 +21,7 @@ use function mb_strlen;
  *
  * @psalm-api Public service resolved from the DI container by the CMS AI
  *            controllers and consumed by user-land code; not instantiated by name.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ContentAssistant

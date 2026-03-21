@@ -11,6 +11,7 @@ use function sprintf;
 
 /**
  * Base exception for all ticketing errors.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class TicketException extends RuntimeException

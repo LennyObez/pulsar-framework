@@ -16,6 +16,7 @@ use function is_array;
  * Flash data persists for exactly one request: data written via `set()` becomes
  * available on the next request via `get()`, then is automatically purged.
  * Call `age()` once per request (typically in middleware) to rotate the bags.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class FlashBag

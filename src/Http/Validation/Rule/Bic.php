@@ -17,6 +17,7 @@ use function sprintf;
  * Validates SWIFT/BIC format: 8 or 11 characters.
  * Pattern: [A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?
  * Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Bic implements RuleInterface

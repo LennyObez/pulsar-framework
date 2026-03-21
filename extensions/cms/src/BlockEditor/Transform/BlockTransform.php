@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * Transforms enable converting one block type to another while preserving
  * content (e.g., Heading to Paragraph, List to Paragraph).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class BlockTransform

@@ -24,6 +24,7 @@ use Pulsar\Testing\Concern\ResetsTestState;
  *           $events->assertDispatched(OrderCreated::class);
  *       }
  *   }
+ * @api
  */
 #[Api(since: '1.0.0')]
 abstract class TestCase extends PHPUnitTestCase

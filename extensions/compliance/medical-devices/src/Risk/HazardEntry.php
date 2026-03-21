@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Documents the identified hazard, its severity/probability, risk controls
  * applied, and the resulting residual risk level.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class HazardEntry

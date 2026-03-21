@@ -39,6 +39,7 @@ use function bin2hex;
  * state is lost on every request. The wiring layer picks the
  * right impl based on context (Session for HTTP, InMemorySession
  * for tests).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class InMemorySession implements SessionInterface

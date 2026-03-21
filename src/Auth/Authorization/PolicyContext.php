@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Context object passed to ABAC policies during evaluation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PolicyContext

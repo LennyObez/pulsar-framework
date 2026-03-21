@@ -24,6 +24,7 @@ use function microtime;
  * them for batch export.
  *
  * Applies attribute allowlist filtering and sampling before export.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class OtlpTracerBridge implements SpanProcessorInterface

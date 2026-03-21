@@ -22,6 +22,7 @@ use function substr;
  * those bytes can override later parameters (`dbname=`, `unix_socket=`,
  * `charset=`) — the canonical "DSN injection" attack against frameworks
  * that build DSN strings via `sprintf()` (F11.1).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class InvalidDsnComponentException extends InvalidArgumentException

@@ -14,6 +14,7 @@ use function strtolower;
  *
  * Distinguishes between standard MySQL, MariaDB, and Percona Server
  * based on the VERSION() output string.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum DriverVariant: string

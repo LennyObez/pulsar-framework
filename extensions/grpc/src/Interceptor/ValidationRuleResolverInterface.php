@@ -12,6 +12,7 @@ use Pulsar\Http\Validation\RuleInterface;
  *
  * Implementations map fully qualified method names to arrays of field
  * validation rules, enabling per-method request validation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ValidationRuleResolverInterface

@@ -21,6 +21,7 @@ use function strtolower;
  *
  * 128-bit (32 lowercase hex characters) value propagated through HTTP,
  * queue, scheduler, and CLI contexts.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CorrelationId

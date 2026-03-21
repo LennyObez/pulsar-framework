@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Immutable DTO representing a detected threat event.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ThreatEvent

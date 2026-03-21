@@ -16,6 +16,7 @@ use function count;
  *   $sequence = new Sequence(fn (int $i) => sprintf('user-%d@test.com', $i));
  *   $sequence();  // "user-0@test.com"
  *   $sequence();  // "user-1@test.com"
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class Sequence

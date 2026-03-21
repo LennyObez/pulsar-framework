@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Lifecycle status for products in the commerce catalog.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum ProductStatus: string

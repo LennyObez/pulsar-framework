@@ -17,6 +17,7 @@ use Throwable;
  *
  * Each playbook maps a ThreatCategory to a chain of PlaybookSteps.
  * Steps execute sequentially; if any step returns false, the chain halts.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PlaybookEngine

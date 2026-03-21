@@ -21,6 +21,7 @@ use function count;
  * provides tooling support for documenting these activities.
  *
  * @see ISO 14971:2019 Medical devices: Application of risk management
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RiskManagementFile

@@ -27,6 +27,7 @@ use const UPLOAD_ERR_OK;
 /**
  * File mime type must match one of the allowed types.
  * Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Mimes implements RuleInterface

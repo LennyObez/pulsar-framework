@@ -12,6 +12,7 @@ use function sprintf;
 
 /**
  * Thrown when a tenant context is required but has not been resolved.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class TenantContextMissingException extends RuntimeException

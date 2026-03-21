@@ -12,6 +12,7 @@ use Pulsar\Extension\Auth\WebAuthn\PublicKey\CredentialSource;
  *
  * Stores credential sources (public keys, counters, transports) associated
  * with user accounts. Supports multiple credentials per user.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface CredentialRepositoryInterface

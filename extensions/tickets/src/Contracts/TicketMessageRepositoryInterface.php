@@ -9,6 +9,7 @@ use Pulsar\Extension\Tickets\Domain\TicketMessage;
 
 /**
  * Repository interface for ticket messages.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface TicketMessageRepositoryInterface

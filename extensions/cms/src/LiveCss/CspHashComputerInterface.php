@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public binding contract; implemented by CspHashComputer and
  *            consumed by LiveCssService and the inline style renderer.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface CspHashComputerInterface

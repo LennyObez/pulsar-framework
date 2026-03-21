@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Strategy used to calculate delays between retry attempts.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum BackoffStrategy: string

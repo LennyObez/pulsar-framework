@@ -13,6 +13,7 @@ use function is_string;
  *
  * @psalm-api Public DTO returned from LLM clients; consumed by user-land code
  *            and admin templates.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class LlmResponse

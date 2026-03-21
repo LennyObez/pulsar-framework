@@ -19,6 +19,7 @@ use function sprintf;
  * Session-based authentication guard.
  *
  * Stores and retrieves identity data from the session.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class SessionGuard implements GuardInterface

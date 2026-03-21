@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * Supports nesting via parentId and ordering via sortOrder.
  * Thread creation can be disabled per category via isLocked.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Category

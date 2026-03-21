@@ -15,6 +15,7 @@ use function count;
  *
  * Bundles the AI-generated response with the retrieved context documents
  * for transparency and debugging.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RagResult

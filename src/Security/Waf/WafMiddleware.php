@@ -16,6 +16,7 @@ use Pulsar\Http\Middleware\MiddlewareInterface;
  * HTTP middleware that applies WAF rule evaluation to incoming requests.
  *
  * Blocks requests that match critical rules and logs all matches.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class WafMiddleware implements MiddlewareInterface

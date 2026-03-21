@@ -13,6 +13,7 @@ use Pulsar\Api\Pagination\PaginationResult;
  * Implementations must support upsert semantics (insert or update on conflict),
  * pagination, filtering by category/status, and a per-user daily count for
  * rate limiting.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface FeedbackRepositoryInterface

@@ -13,6 +13,7 @@ use function str_replace;
 
 /**
  * Emits an HTTP response to the client.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ResponseEmitter

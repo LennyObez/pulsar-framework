@@ -20,6 +20,7 @@ use function serialize;
  *
  * The cache is request-scoped: call reset() between requests on persistent
  * workers, or let it go out of scope on FPM.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class RequestCoalescer

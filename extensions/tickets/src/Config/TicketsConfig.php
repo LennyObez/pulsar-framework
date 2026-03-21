@@ -13,6 +13,7 @@ use function is_array;
 
 /**
  * Configuration DTO for the Tickets extension.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TicketsConfig

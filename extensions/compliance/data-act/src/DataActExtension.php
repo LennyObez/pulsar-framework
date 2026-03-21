@@ -19,6 +19,7 @@ use Pulsar\Routing\RouterInterface;
  * switching assistance, and third-party data access controls as
  * required by the Data Act for data holders, data recipients,
  * and cloud service providers.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DataActExtension implements ExtensionInterface

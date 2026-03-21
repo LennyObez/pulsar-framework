@@ -27,6 +27,7 @@ use function trim;
  * Generates Software Bill of Materials in CycloneDX 1.5 JSON format.
  *
  * Required by DORA Art.28 and NIS2 Art.21(d).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SbomGenerator

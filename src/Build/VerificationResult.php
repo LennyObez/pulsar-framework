@@ -12,6 +12,7 @@ use function is_string;
 
 /**
  * Result of verifying all artifacts against a build manifest.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class VerificationResult

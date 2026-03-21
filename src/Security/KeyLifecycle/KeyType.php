@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Types of cryptographic keys tracked by the key inventory.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum KeyType: string

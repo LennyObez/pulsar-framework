@@ -25,6 +25,7 @@ use function time;
  * Generates tokens bound to: session ID + form ID + intended action + TTL.
  * Each form instance gets its own token, preventing token reuse across
  * different forms or actions.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class FormCsrfManager

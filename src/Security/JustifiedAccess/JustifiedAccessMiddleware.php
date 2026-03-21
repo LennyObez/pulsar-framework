@@ -39,6 +39,7 @@ use function trim;
  * Body fields (fallback):
  *   _access_justification: free-text justification
  *   _access_justification_category: justification category
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class JustifiedAccessMiddleware implements MiddlewareInterface

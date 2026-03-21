@@ -24,6 +24,7 @@ use function str_contains;
  * Validates the client certificate from the TLS handshake (passed via
  * server params or a proxy header), extracts PSD2-specific information,
  * and makes it available as a request attribute.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CertificateAuthenticationMiddleware implements MiddlewareInterface

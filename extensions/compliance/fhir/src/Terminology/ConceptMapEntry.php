@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
  * A single entry in a ConceptMap, mapping one source code to one target code.
  *
  * @see https://www.hl7.org/fhir/conceptmap-definitions.html#ConceptMap.group.element.target
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ConceptMapEntry

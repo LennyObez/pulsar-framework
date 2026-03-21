@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Classification of detected threat types.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum ThreatCategory: string

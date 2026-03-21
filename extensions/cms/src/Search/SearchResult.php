@@ -12,6 +12,7 @@ use Pulsar\Extension\Cms\Content\Content;
  *
  * @psalm-api Public DTO returned from SearchServiceInterface; consumed by
  *            search templates and user-land code.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SearchResult

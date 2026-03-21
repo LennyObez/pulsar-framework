@@ -14,6 +14,7 @@ use function is_int;
  *
  * @psalm-api Public configuration DTO loaded from config/cms.php; consumed
  *            by caching decorators and admin diagnostic views.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CmsCacheConfig

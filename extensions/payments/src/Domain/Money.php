@@ -15,6 +15,7 @@ use function sprintf;
  *
  * All arithmetic operations return new instances. Cross-currency
  * operations are rejected at the type level.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Money

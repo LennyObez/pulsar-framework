@@ -18,6 +18,7 @@ use function sprintf;
  * Tracks TLS, signing, and FIPS module certificates with configurable
  * warning thresholds. Integrates with deploy checks to prevent deploys
  * with nearly-expired certificates.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class CertificateMonitor

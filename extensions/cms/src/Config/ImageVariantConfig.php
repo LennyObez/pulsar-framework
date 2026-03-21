@@ -14,6 +14,7 @@ use function is_string;
  *
  * @psalm-api Public configuration DTO referenced by MediaConfig; consumed
  *            by image variant generation jobs.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ImageVariantConfig

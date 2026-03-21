@@ -26,6 +26,7 @@ use function is_string;
  * runtime, so the cache is safe for the entire process lifetime and
  * eliminates the per-request `ReflectionMethod` allocation (M-2
  * audit response).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class NoCacheMiddleware implements MiddlewareInterface

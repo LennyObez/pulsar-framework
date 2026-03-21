@@ -28,6 +28,7 @@ use function strlen;
  *
  * @psalm-api Public sanitization policy resolved from the DI container by
  *            CommentBodyPolicy and content services; not instantiated by name.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SafeHtmlPolicy

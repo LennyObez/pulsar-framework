@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Risk level assessment result per ISO 14971.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum RiskLevel: string

@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Available storage backends for feature flag definitions.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum FlagStorageDriver: string

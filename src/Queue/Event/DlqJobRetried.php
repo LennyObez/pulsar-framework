@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Emitted when a dead-letter queue job is retried.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DlqJobRetried

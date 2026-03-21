@@ -16,6 +16,7 @@ use Pulsar\Container\Scope\ScopeWideningException;
  * they need tags, scopes, decoration, contextual bindings, or compilation.
  * Extension authors can continue depending on the stable minimal
  * {@see ContainerInterface} unless they opt in.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface AdvancedContainerInterface extends ContainerInterface

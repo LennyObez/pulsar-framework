@@ -26,6 +26,7 @@ use function trim;
  * Performs a depth-first tree walk to remove disallowed elements entirely
  * and strip disallowed attributes. Blocks all script execution, external
  * resource loading, and event handlers.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SvgSanitizer

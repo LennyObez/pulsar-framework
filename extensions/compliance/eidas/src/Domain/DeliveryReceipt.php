@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
 
 /**
  * Delivery receipt for registered electronic delivery per Art. 43-44.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DeliveryReceipt

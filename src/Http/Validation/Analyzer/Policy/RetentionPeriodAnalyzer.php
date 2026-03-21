@@ -21,6 +21,7 @@ use function sprintf;
  * timestamp values are older than the configured retention period.
  * Default retention period is 365 days. Results should be reviewed by
  * qualified data governance personnel.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RetentionPeriodAnalyzer implements PolicyAnalyzerInterface

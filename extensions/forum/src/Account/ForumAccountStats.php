@@ -10,6 +10,7 @@ use Pulsar\Extension\Forum\Domain\ReputationLevel;
 
 /**
  * Forum statistics for a user, displayed in the account section header.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ForumAccountStats

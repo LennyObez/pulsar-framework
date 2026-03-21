@@ -15,6 +15,7 @@ use function sprintf;
  * Irreversible steps (e.g., sending emails, external notifications) cannot
  * be compensated. The saga skips compensation for these steps and logs
  * the occurrence for operator action.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class IrreversibleStepException extends SagaException

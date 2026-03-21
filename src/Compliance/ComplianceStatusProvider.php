@@ -13,6 +13,7 @@ use function in_array;
  *
  * Aggregates data from the catalog, mapping, verifier, and evidence
  * systems into a unified status view.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ComplianceStatusProvider

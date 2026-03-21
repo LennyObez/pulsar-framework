@@ -16,6 +16,7 @@ use function is_string;
  * Emitted when a compliance officer reviews an access justification.
  *
  * Supports audit trail requirements for PCI-DSS, HIPAA, and SOC 2.
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]

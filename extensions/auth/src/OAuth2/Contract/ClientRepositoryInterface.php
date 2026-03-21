@@ -14,6 +14,7 @@ use Pulsar\Extension\Auth\OAuth2\Exception\OAuth2Exception;
  * Handles both statically registered clients and (when enabled)
  * dynamically registered clients. Dynamic registration is disabled
  * by default and requires explicit admin policy configuration.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ClientRepositoryInterface

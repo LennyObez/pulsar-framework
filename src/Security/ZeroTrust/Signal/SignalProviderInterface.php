@@ -16,6 +16,7 @@ use Pulsar\Security\ZeroTrust\Claim\ClaimSet;
  *
  * Signal providers MUST be idempotent: evaluating the same context twice must
  * produce equivalent claims. Providers MUST NOT cache state across requests.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface SignalProviderInterface

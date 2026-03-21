@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 /**
  * @psalm-api Public DTO returned from ExperimentRepositoryInterface and consumed
  *            by traffic-splitting code; class-level marker for findUnusedCode.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ExperimentVariant

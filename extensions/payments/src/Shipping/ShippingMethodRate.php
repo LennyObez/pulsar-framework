@@ -13,6 +13,7 @@ use Pulsar\Extension\Payments\Domain\Money;
  * Rates can be calculated as flat amounts, per-weight, per-price-tier,
  * per-item, or free-above-threshold. The {@see type} field determines
  * which calculation strategy applies.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ShippingMethodRate

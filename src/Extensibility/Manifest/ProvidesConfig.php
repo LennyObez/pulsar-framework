@@ -14,6 +14,7 @@ use function is_bool;
 
 /**
  * Configuration for what an extension provides.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ProvidesConfig

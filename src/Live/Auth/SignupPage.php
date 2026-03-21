@@ -20,6 +20,7 @@ use const ENT_QUOTES;
  * Handles form validation, password confirmation, and registration
  * through the AuthenticatorInterface. Supports social provider buttons
  * and email verification flow.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class SignupPage extends LiveComponent

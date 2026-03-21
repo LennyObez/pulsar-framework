@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Top-level admin panel configuration DTO.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AdminConfig

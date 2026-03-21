@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Structured result of a FIPS 140-2 compliance validation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class FipsValidationResult

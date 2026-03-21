@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Generates a manual testing checklist for accessibility items
  * that automated tools cannot reliably detect.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ManualChecklistGenerator

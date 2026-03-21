@@ -13,6 +13,7 @@ use Pulsar\Api\Api;
  * By default, raw query bindings are never logged. In production, only
  * a binding hash is recorded for correlation. Environment confirmation
  * is required before enabling raw binding logging.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class MonitorConfig

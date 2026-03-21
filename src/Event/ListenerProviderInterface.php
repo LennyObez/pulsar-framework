@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Pulsar listener provider extending PSR-14 with registration methods.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ListenerProviderInterface extends PsrListenerProviderInterface

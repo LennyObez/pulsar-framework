@@ -18,6 +18,7 @@ use Pulsar\Workflow\Storage\WorkflowInstance;
  * actor context or workflow instance.
  *
  * Guard evaluation results are logged for audit purposes.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface TransitionGuardInterface

@@ -15,6 +15,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public binding contract; implemented by driver-specific search
  *            services produced by SearchServiceFactory.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface SearchServiceInterface

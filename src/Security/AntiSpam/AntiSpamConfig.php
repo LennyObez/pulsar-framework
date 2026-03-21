@@ -17,6 +17,7 @@ use function is_string;
  * Configuration DTO for the anti-spam pipeline.
  *
  * Controls which checks are enabled and their thresholds.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AntiSpamConfig

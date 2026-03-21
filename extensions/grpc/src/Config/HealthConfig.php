@@ -11,6 +11,7 @@ use function is_bool;
 
 /**
  * Configuration for the gRPC health check service.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class HealthConfig

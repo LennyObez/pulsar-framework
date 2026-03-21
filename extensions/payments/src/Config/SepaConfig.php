@@ -12,6 +12,7 @@ use function is_string;
 
 /**
  * SEPA Direct Debit configuration for EU payments.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SepaConfig

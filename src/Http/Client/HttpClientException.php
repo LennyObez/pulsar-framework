@@ -15,6 +15,7 @@ use function sprintf;
 
 /**
  * Exception thrown by the HTTP client.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class HttpClientException extends RuntimeException

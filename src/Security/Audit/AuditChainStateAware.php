@@ -21,6 +21,7 @@ use Pulsar\Api\Api;
  * because adding `chainState()` to the existing interface would be a
  * breaking change for downstream sink implementations. New code can
  * implement both; legacy code keeps working unchanged.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface AuditChainStateAware extends ChainableAuditSinkInterface

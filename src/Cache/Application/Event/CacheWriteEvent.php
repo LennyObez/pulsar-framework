@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Emitted when a cache value is written.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CacheWriteEvent extends CacheEvent

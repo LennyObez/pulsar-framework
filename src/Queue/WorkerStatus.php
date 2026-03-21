@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Represents the current operational state of a queue worker.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum WorkerStatus: string

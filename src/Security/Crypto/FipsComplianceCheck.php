@@ -18,6 +18,7 @@ use function round;
  * Register with the HealthCheckRunner to verify FIPS mode at boot or
  * during deployment checks. Reports healthy when the OpenSSL FIPS provider
  * is active and all required algorithms are available.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class FipsComplianceCheck implements HealthCheckInterface

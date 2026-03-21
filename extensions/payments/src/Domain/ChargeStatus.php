@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Charge status values.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum ChargeStatus: string

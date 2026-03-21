@@ -13,6 +13,7 @@ use Pulsar\Api\Api;
  * may load code definitions from files, databases, or external APIs.
  *
  * @see https://www.hl7.org/fhir/codesystem.html
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface CodeSystemInterface

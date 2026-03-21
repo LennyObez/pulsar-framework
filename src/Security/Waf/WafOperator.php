@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Matching operators for WAF rules.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum WafOperator: string

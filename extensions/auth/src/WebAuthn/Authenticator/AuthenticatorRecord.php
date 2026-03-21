@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * Human-friendly representation of a registered authenticator
  * with display name, type info, and active status.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AuthenticatorRecord

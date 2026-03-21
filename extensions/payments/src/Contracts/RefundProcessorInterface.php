@@ -10,6 +10,7 @@ use Pulsar\Extension\Payments\Domain\Refund;
 
 /**
  * Refund processing contract.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface RefundProcessorInterface

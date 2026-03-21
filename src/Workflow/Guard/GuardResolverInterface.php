@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * Implementations typically delegate to the DI container. This port
  * decouples the engine from the container, keeping guard resolution
  * testable and explicit.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface GuardResolverInterface

@@ -23,6 +23,7 @@ use function sprintf;
  *
  * Provides a fluent builder for assembling validation rules on
  * raw config arrays before they are converted into typed DTOs.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ConfigValidator

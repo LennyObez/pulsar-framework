@@ -11,6 +11,7 @@ use function in_array;
 
 /**
  * A discount coupon that can be applied to payments or subscriptions.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Coupon

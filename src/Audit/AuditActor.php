@@ -18,6 +18,7 @@ use function trim;
  * actions cannot silently masquerade as a generic "system" identity. Use the
  * named factories (`user`, `serviceAccount`, `system`, `anonymous`) to
  * communicate the intended classification.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AuditActor implements Stringable

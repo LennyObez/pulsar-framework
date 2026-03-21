@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Interface for managing multiple database connections.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ConnectionManagerInterface

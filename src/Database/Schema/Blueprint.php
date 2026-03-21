@@ -24,6 +24,7 @@ use function sprintf;
  *     $table->timestamps();
  * });
  * ```
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class Blueprint

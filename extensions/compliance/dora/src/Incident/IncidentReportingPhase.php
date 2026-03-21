@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Incident reporting phases per DORA Article 19.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum IncidentReportingPhase: string

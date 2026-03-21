@@ -11,6 +11,7 @@ use function sprintf;
 
 /**
  * Base exception for all forum errors.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ForumException extends RuntimeException

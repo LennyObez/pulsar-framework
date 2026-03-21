@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Types of post-market surveillance reports.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum ReportType: string

@@ -12,6 +12,7 @@ use function in_array;
 
 /**
  * Immutable value object representing a set of hashed recovery codes.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RecoveryCodeSet

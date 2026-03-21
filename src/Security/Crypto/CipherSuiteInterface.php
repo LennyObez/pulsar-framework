@@ -18,6 +18,7 @@ use Pulsar\Security\Exception\SecurityException;
  * HMAC-SHA-256) via the AesGcmCipherSuite implementation. Achieves FIPS 140-2
  * compliance when deployed with a NIST-validated OpenSSL FIPS provider.
  * Use FipsValidator::verify() to confirm your deployment meets FIPS requirements.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface CipherSuiteInterface

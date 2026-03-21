@@ -13,6 +13,7 @@ use function count;
  * Immutable DTO encapsulating paginated items and their metadata.
  *
  * @template T
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PaginationResult

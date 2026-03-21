@@ -9,6 +9,7 @@ use RuntimeException;
 
 /**
  * Renders a route path to HTML for static site generation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface PageRendererInterface

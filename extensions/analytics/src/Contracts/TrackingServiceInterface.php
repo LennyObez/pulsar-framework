@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Processes incoming analytics events from the tracker.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface TrackingServiceInterface

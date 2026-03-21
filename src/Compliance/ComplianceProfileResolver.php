@@ -30,6 +30,7 @@ use function min;
  * - MFA scope: use the BROADEST scope ('always' > 'privileged' > 'sensitive-data' > 'none')
  *
  * When no framework specifies a value, sensible defaults are used.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ComplianceProfileResolver

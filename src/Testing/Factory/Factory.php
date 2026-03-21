@@ -29,6 +29,7 @@ use function array_merge;
  *
  * @phpstan-consistent-constructor
  * @psalm-consistent-constructor
+ * @api
  */
 #[Api(since: '1.0.0')]
 abstract class Factory

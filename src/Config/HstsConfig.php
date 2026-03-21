@@ -14,6 +14,7 @@ use function is_numeric;
  * Typed configuration DTO for HTTP Strict Transport Security headers.
  *
  * Maps from the `hsts` key within the `headers` section of `config/security.php`.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class HstsConfig

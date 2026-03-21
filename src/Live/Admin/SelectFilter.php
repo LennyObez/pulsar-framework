@@ -14,6 +14,7 @@ use function is_string;
  *
  *   SelectFilter::make('status')->options(Status::cases())
  *   SelectFilter::make('role')->options(['admin', 'user', 'editor'])
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class SelectFilter extends Filter

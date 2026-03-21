@@ -18,6 +18,7 @@ use function is_string;
  * Records completion of a Data Protection Impact Assessment.
  *
  * Supports controls for GDPR Article 35 data protection impact assessment.
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]

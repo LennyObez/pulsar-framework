@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Implementations communicate with Google Play Developer API or
  * App Store Server API to validate subscription state.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface SubscriptionVerifierInterface

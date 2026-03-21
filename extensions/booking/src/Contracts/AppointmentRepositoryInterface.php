@@ -11,6 +11,7 @@ use Pulsar\Extension\Booking\Domain\AppointmentStatus;
 
 /**
  * Persistence contract for appointments.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface AppointmentRepositoryInterface

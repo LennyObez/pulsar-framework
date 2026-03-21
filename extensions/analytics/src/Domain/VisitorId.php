@@ -13,6 +13,7 @@ use Pulsar\Security\Crypto\Hmac;
  * Generated via keyed BLAKE2b hash of IP + user agent + UTC day number using
  * a KDF-derived key. Cannot be reversed even if inputs are known, and changes
  * daily to prevent long-term tracking.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class VisitorId

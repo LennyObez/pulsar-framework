@@ -22,6 +22,7 @@ use function sprintf;
  * concern that should be handled separately.
  *
  * @see https://www.pcisecuritystandards.org/
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ExpirationDate implements RuleInterface

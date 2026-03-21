@@ -23,6 +23,7 @@ use function sprintf;
  *
  * Validates that the runtime is persistent (not FPM) before starting.
  * Supports overriding host, port, workers, and TLS settings via options.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ServeCommand extends Command

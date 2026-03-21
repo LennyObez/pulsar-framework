@@ -12,6 +12,7 @@ use function trim;
 
 /**
  * Content types supported by the gRPC-Web adapter.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum GrpcWebContentType: string

@@ -14,6 +14,7 @@ use function is_string;
  * Immutable DTO representing a CSP violation report received from a browser.
  *
  * @see https://www.w3.org/TR/CSP3/#violation-reports
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CspViolationReport

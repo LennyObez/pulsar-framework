@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Configuration for the key lifecycle engine.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class KeyLifecycleConfig

@@ -17,6 +17,7 @@ use function is_string;
  *
  * Supports controls for PCI-DSS Req 7.1, HIPAA §164.312(b),
  * GDPR Art. 5(1)(b), and SOC 2 CC6.1.
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]

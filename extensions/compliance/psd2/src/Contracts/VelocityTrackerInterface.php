@@ -13,6 +13,7 @@ use Pulsar\Extension\Psd2\Domain\VelocityWindow;
  * Records transaction counts and amounts per identity within
  * configurable time windows, supporting the velocity checks
  * required by PSD2 RTS Art. 18.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface VelocityTrackerInterface

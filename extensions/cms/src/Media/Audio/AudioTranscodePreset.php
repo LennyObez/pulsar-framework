@@ -14,6 +14,7 @@ use function is_string;
  *
  * @psalm-api Public DTO contained in AudioConfig::presets; consumed by
  *            AudioProcessor.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AudioTranscodePreset

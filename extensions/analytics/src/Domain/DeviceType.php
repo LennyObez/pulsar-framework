@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Device type classification derived from user agent analysis.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum DeviceType: string

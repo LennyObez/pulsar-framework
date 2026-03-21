@@ -16,6 +16,7 @@ use function is_string;
  * Records that a data subject has granted consent for a specific processing purpose.
  *
  * Supports controls for GDPR Article 7 consent management.
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]

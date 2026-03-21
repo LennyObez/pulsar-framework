@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Summary of an adverse event for inclusion in PMS reports.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AdverseEventSummary

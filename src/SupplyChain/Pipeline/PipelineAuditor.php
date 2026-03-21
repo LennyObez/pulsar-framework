@@ -24,6 +24,7 @@ use function str_contains;
  * - All required security tools are present
  * - No security steps use bypass flags (--no-verify, continue-on-error)
  * - All GitHub Actions are SHA-pinned (not using mutable tags)
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PipelineAuditor

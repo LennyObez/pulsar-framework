@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Represents a typed parameter in a route definition.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ParameterDefinition

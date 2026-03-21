@@ -11,6 +11,7 @@ use Pulsar\Extension\McpServer\Exception\McpSecurityException;
  * Determines whether a tool invocation is permitted.
  *
  * Checks tool-level allow/deny lists and category-based restrictions.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ToolPermissionCheckerInterface

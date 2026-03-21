@@ -10,6 +10,7 @@ use Pulsar\Tenancy\Guard\TenantId;
 
 /**
  * Contract for providing per-tenant schedule definitions.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface TenantScheduleProviderInterface

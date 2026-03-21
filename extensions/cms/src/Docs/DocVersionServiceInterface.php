@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public binding contract; implemented by DocVersionService and
  *            consumed by docs admin controllers.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface DocVersionServiceInterface

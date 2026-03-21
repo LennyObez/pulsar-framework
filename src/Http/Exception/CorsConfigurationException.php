@@ -15,6 +15,7 @@ use Pulsar\Api\Api;
  * defeats the per-origin scoping that credentials require. Catching
  * the misconfiguration in the constructor surfaces it before any
  * request can be served.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class CorsConfigurationException extends LogicException

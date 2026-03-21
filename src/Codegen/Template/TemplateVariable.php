@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Immutable value object representing a single template variable.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TemplateVariable

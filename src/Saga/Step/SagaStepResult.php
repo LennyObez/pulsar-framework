@@ -13,6 +13,7 @@ use Pulsar\Api\Api;
  * Maps to the `saga_step_results` table schema. Forward execution rows
  * are append-only. Compensation creates new rows with direction=compensating.
  * Irreversible steps receive status=skipped during compensation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SagaStepResult

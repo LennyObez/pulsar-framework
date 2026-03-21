@@ -38,6 +38,7 @@ use Pulsar\Extension\Admin\Domain\ResourceOperation;
  *           ];
  *       }
  *   }
+ * @api
  */
 #[Api(since: '1.0.0')]
 abstract class AdminResource implements DataResourceInterface

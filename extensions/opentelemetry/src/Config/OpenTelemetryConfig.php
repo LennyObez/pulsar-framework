@@ -29,6 +29,7 @@ use function trim;
  * - OTEL_TRACES_SAMPLER → sampler.type
  * - OTEL_TRACES_SAMPLER_ARG → sampler.probability
  * - OTEL_EXPORTER_OTLP_HEADERS → headers (comma-separated key=value)
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class OpenTelemetryConfig

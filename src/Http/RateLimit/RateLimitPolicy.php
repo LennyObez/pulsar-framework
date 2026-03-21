@@ -15,6 +15,7 @@ use function preg_match;
  * Maps route patterns to rate limit tiers. Supports different limits
  * by authentication state or API key tier. Patterns are evaluated in
  * registration order; the first match wins.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class RateLimitPolicy

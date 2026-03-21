@@ -17,6 +17,7 @@ use Traversable;
  * Supports entries with kid (looks up the specific key) and legacy entries
  * without kid (tries all keys in the ring). Chain verification checks that
  * each entry's previousHmac matches the preceding entry's hmac.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AuditChainVerifier

@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Immutable report aggregating all deploy check results.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DeployReport

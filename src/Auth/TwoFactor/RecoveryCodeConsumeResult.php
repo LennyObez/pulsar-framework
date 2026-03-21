@@ -15,6 +15,7 @@ use Pulsar\Api\Api;
  * valid forever) — the verify-and-consume contract therefore
  * exposes both at once so a code review of the consume path
  * trivially detects "matched but never persisted" mistakes.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RecoveryCodeConsumeResult

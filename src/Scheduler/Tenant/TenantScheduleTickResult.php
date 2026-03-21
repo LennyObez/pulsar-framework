@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Result of a tenant-aware scheduler tick.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TenantScheduleTickResult

@@ -15,6 +15,7 @@ use Pulsar\Config\EnvironmentMode;
  * Introspection is enabled by default in non-production environments.
  * The `INTROSPECTION_ENABLED` environment variable takes precedence over
  * file-based configuration when set.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class IntrospectionConfig

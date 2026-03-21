@@ -14,6 +14,7 @@ use function sprintf;
  * Base exception for all security-related errors.
  *
  * Provides static factory methods for specific security error scenarios.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class SecurityException extends RuntimeException

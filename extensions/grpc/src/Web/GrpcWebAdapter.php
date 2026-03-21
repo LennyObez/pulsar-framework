@@ -27,6 +27,7 @@ use function unpack;
  *
  * For production use, prefer Envoy proxy with the gRPC-Web filter.
  * This adapter only supports unary RPCs: streaming is not supported.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class GrpcWebAdapter

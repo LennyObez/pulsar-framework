@@ -15,6 +15,7 @@ use function sprintf;
  * In regulated presets, saga step handlers must use OutboxPort for integration
  * events. This exception is thrown by the runtime container guard when a
  * handler attempts to resolve IntegrationEventBusPort directly.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ForbiddenInjectionException extends SagaException

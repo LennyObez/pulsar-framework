@@ -20,6 +20,7 @@ use function random_bytes;
  *
  * Supports EN 16931 e-invoicing with seller/buyer party information,
  * per-line tax breakdown, and structured payment terms.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Invoice

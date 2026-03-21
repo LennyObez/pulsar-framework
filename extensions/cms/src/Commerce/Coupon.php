@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * A redeemable coupon code linked to a promotion.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Coupon

@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public enum referenced by ImportExportServiceInterface and
  *            MediaBundleImporter; admin import-policy controls expose its cases.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum DuplicateResolutionPolicy: string

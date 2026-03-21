@@ -19,6 +19,7 @@ use function time;
 
 /**
  * PSR-6 CacheItemPoolInterface implementation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class CachePool implements CacheItemPoolInterface

@@ -15,6 +15,7 @@ use function str_replace;
  *
  * @psalm-api Public DTO registered with PromptTemplateRegistry; consumed by
  *            ContentAssistant and extension code.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PromptTemplate

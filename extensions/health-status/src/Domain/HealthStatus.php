@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Overall system health status.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum HealthStatus: string

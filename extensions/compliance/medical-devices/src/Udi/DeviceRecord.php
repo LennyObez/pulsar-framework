@@ -13,6 +13,7 @@ use function is_string;
  *
  * Tracks device identification, classification, and lifecycle status
  * per MDR requirements.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DeviceRecord

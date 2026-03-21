@@ -10,6 +10,7 @@ use Pulsar\FeatureFlag\FlagStorageDriver;
 
 /**
  * Typed configuration DTO for `config/features.php`.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class FeatureFlagConfig

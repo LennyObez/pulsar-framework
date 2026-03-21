@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Reason codes for TOTP verification outcomes.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum VerifyReason: string

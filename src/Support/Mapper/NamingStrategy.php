@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Naming strategy for mapping array keys to constructor parameter names.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum NamingStrategy: string

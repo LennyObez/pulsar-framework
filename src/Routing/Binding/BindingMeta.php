@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Captures the model class, lookup key, scoping, authorization policy,
  * and optional custom resolver for a specific route parameter.
+ * @api
  */
 #[Api(since: '1.0.0-rc.11')]
 final readonly class BindingMeta

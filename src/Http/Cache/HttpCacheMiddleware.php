@@ -35,6 +35,7 @@ use function trim;
  *   - `cache.tags` (list<string>): Tags for invalidation groups
  *   - `cache.private` (bool): Whether to set Cache-Control: private
  *   - `cache.enabled` (bool): Set to false to skip caching for this route
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class HttpCacheMiddleware implements MiddlewareInterface

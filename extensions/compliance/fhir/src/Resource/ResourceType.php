@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
  * FHIR resource types supported by this extension.
  *
  * @see https://www.hl7.org/fhir/resourcelist.html
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum ResourceType: string

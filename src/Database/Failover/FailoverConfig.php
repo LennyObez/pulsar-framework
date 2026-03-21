@@ -13,6 +13,7 @@ use Pulsar\Api\Api;
  * Failover handles detection and switching to a standby endpoint.
  * It does NOT handle promotion: that is the responsibility of the
  * database cluster itself.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class FailoverConfig

@@ -23,6 +23,7 @@ use function trim;
  * Failed jobs are stored separately from the main queue for later
  * inspection, manual retry, or bulk purging. All mutation operations
  * emit audit events via the event dispatcher.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class DeadLetterQueue

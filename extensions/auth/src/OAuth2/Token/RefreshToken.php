@@ -14,6 +14,7 @@ use Pulsar\Api\Api;
  * Stored hashed in the repository, never in plaintext.
  * Rotation policy: one-time use, new refresh token issued on each use.
  * Replay detection: reuse of a rotated-out token revokes entire token family.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RefreshToken

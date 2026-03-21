@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Logical operators for combining filter conditions.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum FilterLogic: string

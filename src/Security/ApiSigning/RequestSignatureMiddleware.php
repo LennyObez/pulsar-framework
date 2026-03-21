@@ -29,6 +29,7 @@ use function is_string;
  *
  * Rejects unsigned or tampered requests with 401 Unauthorized.
  * Logs signature failures to the audit trail and dispatches threat events.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RequestSignatureMiddleware implements MiddlewareInterface

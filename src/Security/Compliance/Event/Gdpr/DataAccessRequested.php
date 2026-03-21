@@ -18,6 +18,7 @@ use function is_string;
  * Records that a data subject access request (DSAR) has been filed.
  *
  * Supports controls for GDPR Article 15 right of access.
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]

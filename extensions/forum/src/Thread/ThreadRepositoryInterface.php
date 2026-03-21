@@ -11,6 +11,7 @@ use Pulsar\Extension\Forum\Domain\ThreadType;
 
 /**
  * Repository interface for the Thread aggregate root.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ThreadRepositoryInterface

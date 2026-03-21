@@ -19,6 +19,7 @@ use function trim;
  *
  * URL-encodes values for use in href/src attributes. Validates against
  * dangerous URI schemes (javascript:, data:, vbscript:) to prevent XSS.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class UrlEscaper implements EscaperInterface

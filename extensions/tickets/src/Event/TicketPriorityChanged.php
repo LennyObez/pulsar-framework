@@ -10,6 +10,7 @@ use Pulsar\Extension\Tickets\Domain\TicketPriority;
 
 /**
  * Dispatched when a ticket's priority changes.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TicketPriorityChanged

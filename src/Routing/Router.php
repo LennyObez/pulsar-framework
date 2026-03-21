@@ -22,6 +22,7 @@ use function trim;
 
 /**
  * HTTP router for route registration and matching.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class Router implements RouterInterface

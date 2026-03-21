@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Status of a justification record in the compliance review workflow.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum ReviewStatus: string

@@ -14,6 +14,7 @@ use Pulsar\Extension\Payments\Domain\Money;
  * Abstracts cart storage (session, database, Redis) behind a clean contract.
  * Implementations handle cart persistence, guest-to-user migration, and
  * coupon validation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface CartServiceInterface

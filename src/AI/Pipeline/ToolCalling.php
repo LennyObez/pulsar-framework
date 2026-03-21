@@ -24,6 +24,7 @@ use function sprintf;
  * executes tool calls until the model produces a final text response.
  *
  * Includes a configurable iteration limit to prevent infinite loops.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ToolCalling

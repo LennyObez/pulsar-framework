@@ -17,6 +17,7 @@ use Pulsar\Database\Driver;
  * @psalm-api Static utility class invoked by name from CMS migration files.
  *            The migrations themselves are anonymous-class file returns loaded
  *            by the migration runner.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class CmsDdl

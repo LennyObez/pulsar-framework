@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * Carries correlation identity for tracing events across subsystems.
  * Note: tenantHash is deliberately excluded; tenant identity is resolved
  * exclusively by StudioManager::ingest() via TenantContext::tryGet().
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CorrelationContext

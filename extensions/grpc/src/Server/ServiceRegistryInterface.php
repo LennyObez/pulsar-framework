@@ -13,6 +13,7 @@ use Pulsar\Extension\Grpc\Handler\ServiceHandlerInterface;
  *
  * Populated from the compiled service manifest at boot time: no runtime
  * reflection or scanning. Services are resolved by fully qualified method name.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ServiceRegistryInterface

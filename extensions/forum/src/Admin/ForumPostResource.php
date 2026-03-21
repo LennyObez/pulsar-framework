@@ -17,6 +17,7 @@ use Pulsar\Extension\Admin\Domain\ResourceOperation;
  *
  * Provides read-only listing and viewing plus delete operations
  * for moderating individual replies within threads.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ForumPostResource implements DataResourceInterface

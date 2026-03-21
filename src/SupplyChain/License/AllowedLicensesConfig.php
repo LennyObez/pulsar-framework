@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * Defaults to common permissive and copyleft OSS licenses that are
  * broadly compatible with framework distribution. Override via
  * config/supply-chain.php to match project-specific requirements.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AllowedLicensesConfig

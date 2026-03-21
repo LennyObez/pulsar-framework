@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Raw SQL bindings are never stored: only a binding hash is recorded
  * for correlation purposes.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SqlLogEntry

@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Integrity verification policy modes.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum IntegrityPolicyMode: string

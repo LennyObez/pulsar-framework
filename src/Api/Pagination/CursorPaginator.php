@@ -28,6 +28,7 @@ use const JSON_THROW_ON_ERROR;
  *
  * Best for real-time feeds, infinite scroll, and large datasets where
  * total count is expensive.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CursorPaginator implements PaginatorInterface

@@ -13,6 +13,7 @@ use Pulsar\Api\Api;
  * Wraps a field value that is only included when the specified condition is met.
  * This allows resources to dynamically include/exclude fields based on
  * authentication state, permissions, scopes, or arbitrary runtime conditions.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ConditionalField

@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * A single item within an e-commerce transaction.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class EcommerceItem

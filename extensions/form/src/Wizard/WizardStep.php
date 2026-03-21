@@ -9,6 +9,7 @@ use Pulsar\Extension\Form\Contract\FieldInterface;
 
 /**
  * Represents a single step in a multi-step wizard form.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class WizardStep

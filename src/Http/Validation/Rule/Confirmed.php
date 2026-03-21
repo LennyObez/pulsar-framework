@@ -14,6 +14,7 @@ use function sprintf;
 
 /**
  * Value must match {field}_confirmation in data. Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Confirmed implements RuleInterface

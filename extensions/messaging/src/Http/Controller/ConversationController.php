@@ -19,6 +19,7 @@ use function is_string;
 
 /**
  * REST API controller for conversation management.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ConversationController

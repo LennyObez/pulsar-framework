@@ -34,6 +34,7 @@ use const DIRECTORY_SEPARATOR;
  *   pulsar asset:publish              Symlink all resource directories
  *   pulsar asset:publish --force      Overwrite existing symlinks
  *   pulsar asset:publish --copy       Copy files instead of symlinking
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class AssetPublishCommand extends Command

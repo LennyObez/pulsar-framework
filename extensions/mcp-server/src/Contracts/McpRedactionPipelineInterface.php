@@ -9,6 +9,7 @@ use Pulsar\Extension\McpServer\Domain\ToolResult;
 
 /**
  * Pipeline for redacting sensitive data from tool results before wire transmission.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface McpRedactionPipelineInterface

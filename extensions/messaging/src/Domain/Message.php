@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * The server only stores ciphertext: it cannot read message content.
  * Decryption happens client-side using the shared conversation key.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Message

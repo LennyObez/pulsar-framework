@@ -18,6 +18,7 @@ use function array_values;
  * old and new keys remain valid for decryption.
  *
  * Addresses PCI-DSS Req 3.6 (key management lifecycle).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class KeyRotationScheduler

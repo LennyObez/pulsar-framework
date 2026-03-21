@@ -16,6 +16,7 @@ use Pulsar\Api\Api;
  * that is not even an integer — producing cascades of confusing
  * violation messages where one (the type mismatch) explains all of
  * them.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface TypeRuleInterface extends RuleInterface {}

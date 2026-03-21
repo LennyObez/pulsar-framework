@@ -12,6 +12,7 @@ use function is_numeric;
 
 /**
  * Typed configuration DTO for the error tracking section of observability config.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ErrorTrackingConfig

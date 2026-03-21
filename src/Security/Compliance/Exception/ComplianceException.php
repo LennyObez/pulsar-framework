@@ -10,6 +10,7 @@ use RuntimeException;
 
 /**
  * Exception for compliance-related failures.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ComplianceException extends RuntimeException

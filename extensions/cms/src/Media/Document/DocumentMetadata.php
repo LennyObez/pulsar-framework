@@ -16,6 +16,7 @@ use function sprintf;
  *
  * @psalm-api Public DTO returned from DocumentMetadataExtractor; consumed by
  *            media services and admin views.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DocumentMetadata

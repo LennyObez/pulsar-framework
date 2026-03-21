@@ -15,6 +15,7 @@ use function sprintf;
 
 /**
  * Value must be a valid date matching the given format. Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Date implements RuleInterface

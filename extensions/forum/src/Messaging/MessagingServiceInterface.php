@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Service for private messaging between forum users.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface MessagingServiceInterface

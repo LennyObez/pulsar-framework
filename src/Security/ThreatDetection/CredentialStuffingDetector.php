@@ -23,6 +23,7 @@ use function time;
  * combinations (often from leaked databases) rather than targeting a single account.
  *
  * Compliance: DORA Art.17, NIS2 Art.21(b), PCI-DSS Req.11.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class CredentialStuffingDetector implements ThreatDetectorInterface

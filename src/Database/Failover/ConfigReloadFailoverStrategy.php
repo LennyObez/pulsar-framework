@@ -13,6 +13,7 @@ use Pulsar\Api\Api;
  *
  * The provided callable returns an updated configuration array.
  * The strategy extracts the 'host' key as the new primary endpoint.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ConfigReloadFailoverStrategy implements FailoverStrategyInterface

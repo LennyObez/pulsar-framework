@@ -19,6 +19,7 @@ use function usleep;
  * Standalone utility functions: value(), retry(), once(), tap().
  *
  * These are pure helper functions, not tied to any framework state.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class Helpers

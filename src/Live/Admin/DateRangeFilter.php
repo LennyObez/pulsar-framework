@@ -13,6 +13,7 @@ use function is_string;
  * Date range filter for admin resource lists.
  *
  *   DateRangeFilter::make('created_at')
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class DateRangeFilter extends Filter

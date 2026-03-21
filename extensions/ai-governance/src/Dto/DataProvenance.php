@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * ISO 42001:2023 Clause 8.3 requires organizations to manage data quality
  * and document the provenance of data used in AI system development.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DataProvenance

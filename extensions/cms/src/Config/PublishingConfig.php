@@ -13,6 +13,7 @@ use function is_string;
  *
  * @psalm-api Public configuration DTO loaded from config/cms.php; consumed
  *            by ChannelRegistry and individual publishing channels.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PublishingConfig

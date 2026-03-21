@@ -20,6 +20,7 @@ use function sprintf;
  * following common healthcare facility patterns.
  *
  * @see https://www.hl7.org/fhir/datatypes.html#identifier
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Mrn implements RuleInterface

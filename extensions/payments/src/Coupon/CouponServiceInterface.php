@@ -10,6 +10,7 @@ use Pulsar\Extension\Payments\Domain\Money;
 
 /**
  * Service for managing coupons and applying discounts.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface CouponServiceInterface

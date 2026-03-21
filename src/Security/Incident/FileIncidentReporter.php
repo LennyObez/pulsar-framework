@@ -39,6 +39,7 @@ use const LOCK_EX;
  * Each incident is written as a single JSON line with LOCK_EX for concurrent
  * write safety. The log directory is created with 0750 permissions if it
  * does not exist. Suitable for production use.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class FileIncidentReporter implements IncidentReporterInterface

@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Record of a single tool call execution.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ToolCallExecution

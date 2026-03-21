@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Defines a time window during which a tenant's scheduled jobs are suspended.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class MaintenanceWindow

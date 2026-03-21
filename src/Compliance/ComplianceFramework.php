@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Enumerates the compliance frameworks for which Pulsar provides control coverage.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum ComplianceFramework: string

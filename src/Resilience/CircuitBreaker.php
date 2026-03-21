@@ -17,6 +17,7 @@ use Throwable;
  * Tracks failures and opens the circuit when the failure threshold is exceeded.
  * After a timeout period, allows a limited number of probe requests (half-open state).
  * Resets to closed after sufficient successful probes.
+ * @api
  */
 #[Api(since: '1.0.0-rc.11')]
 final class CircuitBreaker

@@ -14,6 +14,7 @@ use function is_string;
  * provision of text.
  *
  * @see https://www.hl7.org/fhir/datatypes.html#CodeableConcept
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CodeableConcept

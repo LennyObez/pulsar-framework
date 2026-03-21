@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Sort direction for API sort expressions.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum SortDirection: string

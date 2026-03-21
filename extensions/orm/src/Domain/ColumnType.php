@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Supported column data types for entity mapping.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum ColumnType: string

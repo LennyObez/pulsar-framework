@@ -27,6 +27,7 @@ use const JSON_THROW_ON_ERROR;
  *
  * State is stored server-side by default. Anti-replay protection
  * via monotonic step counter prevents re-submitting completed steps.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class WizardStateMachine

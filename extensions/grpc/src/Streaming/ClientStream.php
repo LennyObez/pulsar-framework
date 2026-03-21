@@ -13,6 +13,7 @@ use SplQueue;
  *
  * The client sends a stream of messages, and the server responds with a single response
  * after the client has finished sending.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ClientStream implements StreamInterface

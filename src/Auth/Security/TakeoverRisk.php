@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Risk assessment result from the account takeover guard.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TakeoverRisk

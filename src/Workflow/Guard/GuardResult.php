@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * Guards produce either an allow or deny result. Deny results include
  * a human-readable reason that is logged for audit purposes.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class GuardResult

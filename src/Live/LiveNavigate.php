@@ -20,6 +20,7 @@ use const ENT_QUOTES;
  * Usage in templates:
  *   <a href="/dashboard" wire:navigate>Dashboard</a>
  *   <a href="/settings" wire:navigate.prefetch>Settings</a>
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class LiveNavigate

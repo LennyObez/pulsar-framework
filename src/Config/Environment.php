@@ -25,6 +25,7 @@ use const ARRAY_FILTER_USE_KEY;
  * OS environment variables always take precedence over `.env` file values.
  * The `.env` parser supports `KEY=VALUE` lines, `#` comments, and blank lines.
  * No interpolation is performed.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class Environment

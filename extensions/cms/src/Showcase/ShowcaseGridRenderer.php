@@ -21,6 +21,7 @@ use const JSON_THROW_ON_ERROR;
  *
  * @psalm-api Public service resolved from the DI container by showcase
  *            templates; not instantiated by name.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ShowcaseGridRenderer

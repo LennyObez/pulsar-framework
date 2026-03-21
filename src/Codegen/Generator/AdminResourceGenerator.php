@@ -20,6 +20,7 @@ use function rtrim;
  * Generates admin panel resource from EntityDefinition.
  *
  * Produces CRUD views (list, create, edit, show) and auto-registers in admin module.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class AdminResourceGenerator extends AbstractGenerator

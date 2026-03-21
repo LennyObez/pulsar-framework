@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Represents an object in storage.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class StorageObject

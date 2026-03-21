@@ -21,6 +21,7 @@ use function strtolower;
  *
  * Rejects protocol-relative URLs, data: URIs, javascript: URIs,
  * and any absolute URL whose host is not in the allowed list.
+ * @api
  */
 #[Api(since: '1.0.0-rc.11')]
 final readonly class SafeRedirect

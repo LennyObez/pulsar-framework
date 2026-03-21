@@ -18,6 +18,7 @@ use function trim;
  *
  * Uses regex-based extraction from SQL text to identify referenced tables.
  * Returns lowercase, deduplicated table names suitable for tag-based invalidation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TableTagExtractor

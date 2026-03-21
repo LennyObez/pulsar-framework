@@ -13,6 +13,7 @@ use Pulsar\Extension\McpServer\Exception\McpException;
  * Registry of available MCP tools.
  *
  * Manages tool registration, lookup, and invocation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface McpToolRegistryInterface

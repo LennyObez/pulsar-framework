@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * Implementations should use optimized COUNT queries rather than loading entities.
  *
  * @psalm-api Public binding contract; consumed by dashboard widgets.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ContentStatusQueryInterface

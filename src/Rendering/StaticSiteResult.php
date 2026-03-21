@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Result of a static site generation pass.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class StaticSiteResult

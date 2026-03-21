@@ -16,6 +16,7 @@ use Pulsar\Extension\Fhir\Resource\ResourceType;
  * what resource types, interactions, and search parameters the server supports.
  *
  * @see https://www.hl7.org/fhir/capabilitystatement.html
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class CapabilityStatementBuilder

@@ -12,6 +12,7 @@ use function sprintf;
 
 /**
  * Exception for request context errors.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ContextException extends RuntimeException

@@ -14,6 +14,7 @@ use function time;
  *
  * This event provides compliance traceability for non-idempotent job
  * dispatches, recording the justification reason and approving reviewer.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class NonIdempotentJobAllowed

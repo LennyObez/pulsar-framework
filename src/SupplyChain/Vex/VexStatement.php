@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Each statement describes the exploitability status of one vulnerability
  * (identified by CVE ID) in the context of a specific product.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class VexStatement

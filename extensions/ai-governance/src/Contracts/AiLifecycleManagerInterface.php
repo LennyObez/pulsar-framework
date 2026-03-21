@@ -16,6 +16,7 @@ use RuntimeException;
  * ISO 42001:2023 Clause 8.4 requires organizations to manage the lifecycle
  * of AI systems including versioning, validation gates, deployment, monitoring,
  * and rollback capabilities.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface AiLifecycleManagerInterface

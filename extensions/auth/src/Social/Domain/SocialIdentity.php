@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Maps the provider-specific user info response into a
  * canonical structure for identity linking and account creation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SocialIdentity

@@ -37,6 +37,7 @@ use const JSON_UNESCAPED_UNICODE;
  * Uses DatabaseIntrospector to read the schema and IdentifierNormalizer
  * for safe PHP identifiers. Writes entity definition JSON files and
  * updates the schema snapshot for future diff-based migration generation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class FromSchemaCommand extends Command

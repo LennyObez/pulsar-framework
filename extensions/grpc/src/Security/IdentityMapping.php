@@ -17,6 +17,7 @@ use function count;
  *
  * Built from configuration at boot time. Once constructed, the mapping is
  * frozen: no entries can be added or removed at runtime.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class IdentityMapping

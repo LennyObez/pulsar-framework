@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Implementations can integrate with external tax APIs
  * (e.g., Avalara, TaxJar, Vertex) or provide custom logic.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface TaxProviderInterface

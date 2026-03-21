@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Worker health status for readiness/liveness probes, disambiguated from Resilience\HealthCheck\HealthStatus.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum WorkerHealthStatus: string

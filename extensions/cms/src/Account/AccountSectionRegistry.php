@@ -16,6 +16,7 @@ use function usort;
  *
  * @psalm-api Public registry resolved from the DI container by AccountController
  *            and admin customer-detail templates; not instantiated by name.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class AccountSectionRegistry

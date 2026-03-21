@@ -27,6 +27,7 @@ use const JSON_THROW_ON_ERROR;
  * and Reporting API v1 format (application/reports+json).
  *
  * Wire this as a route handler at the path configured in CSP report-uri/report-to.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CspReportEndpoint implements RequestHandlerInterface

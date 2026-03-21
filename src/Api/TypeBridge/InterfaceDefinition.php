@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Represents a TypeScript interface for code generation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class InterfaceDefinition

@@ -14,6 +14,7 @@ use Pulsar\Extension\Cms\Content\DataClassification;
  *
  * @psalm-api Public DTO returned from MediaRepositoryInterface; consumed by
  *            media services, admin views, and user-land code.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class MediaAsset

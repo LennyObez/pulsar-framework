@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * A participant in a conversation, tracking membership and read state.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Participant

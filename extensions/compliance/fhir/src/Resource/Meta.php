@@ -13,6 +13,7 @@ use function is_string;
  * FHIR Resource metadata.
  *
  * @see https://www.hl7.org/fhir/resource.html#Meta
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Meta

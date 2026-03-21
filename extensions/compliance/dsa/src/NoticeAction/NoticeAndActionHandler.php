@@ -18,6 +18,7 @@ use Pulsar\Extension\Dsa\TrustedFlagger\TrustedFlaggerRegistry;
  * to notify them of illegal content. Notices must contain sufficient
  * information for the provider to make an informed and diligent
  * assessment. Trusted flagger notices receive priority processing.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class NoticeAndActionHandler

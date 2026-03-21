@@ -14,6 +14,7 @@ use Pulsar\Extension\Tickets\Domain\TicketStatus;
  * High-level service interface for ticket operations.
  *
  * Orchestrates domain logic, dispatches events, and enforces SLA rules.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface TicketServiceInterface

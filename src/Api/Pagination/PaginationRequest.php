@@ -18,6 +18,7 @@ use function min;
  *
  * Validates and normalizes page size, page number, and cursor values
  * against configured limits.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PaginationRequest

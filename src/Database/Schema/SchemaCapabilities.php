@@ -14,6 +14,7 @@ use Pulsar\Database\DriverVariant;
  *
  * Used by the admin UI and DdlCompiler to guard operations that
  * are unsupported on certain drivers (e.g., DROP COLUMN on older SQLite).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class SchemaCapabilities

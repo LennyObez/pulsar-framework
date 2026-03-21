@@ -16,6 +16,7 @@ use function is_string;
 
 /**
  * Represents an extension listing in the marketplace.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ExtensionListing

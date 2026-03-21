@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * eIDAS assurance levels per Art. 8.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum LevelOfAssurance: string

@@ -22,6 +22,7 @@ use function substr;
  *
  * Each code is 16 hex characters (8 bytes of randomness) with optional
  * checksum group for typo detection.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RecoveryCodeGenerator

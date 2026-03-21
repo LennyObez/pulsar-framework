@@ -33,6 +33,7 @@ use const PHP_INT_MAX;
  * - SVG output with configurable module size and quiet zone
  *
  * This is a self-contained implementation with no external dependencies.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class QrCodeEncoder

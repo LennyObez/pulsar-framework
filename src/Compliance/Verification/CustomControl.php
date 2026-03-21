@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * User-defined compliance control with a callable verifier.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CustomControl

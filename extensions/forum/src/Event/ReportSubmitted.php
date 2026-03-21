@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Dispatched when a user submits a report against a thread or post.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ReportSubmitted

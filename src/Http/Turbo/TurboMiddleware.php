@@ -17,6 +17,7 @@ use Pulsar\Http\Middleware\MiddlewareInterface;
  * Detects Turbo Frame requests (Turbo-Frame header) and attaches
  * the frame ID to request attributes so controllers can return
  * targeted frame content instead of full pages.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TurboMiddleware implements MiddlewareInterface

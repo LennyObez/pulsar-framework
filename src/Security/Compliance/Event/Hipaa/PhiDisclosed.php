@@ -18,6 +18,7 @@ use function is_string;
  * Records disclosure of PHI to a third party.
  *
  * Supports controls for HIPAA Privacy Rule disclosure accounting.
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]

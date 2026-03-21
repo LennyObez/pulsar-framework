@@ -32,6 +32,7 @@ use function sprintf;
  * validators (`/^[\x21-\x7E]{1,256}$/` for the payments gateway), so a
  * raw caller key can never collide with an injected namespace prefix
  * regardless of what the tenant chooses to put in their key.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TenantAwareIdempotencyStore implements IdempotencyStoreInterface

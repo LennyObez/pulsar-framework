@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Describes a registered extension and its lifecycle state.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ExtensionEntry

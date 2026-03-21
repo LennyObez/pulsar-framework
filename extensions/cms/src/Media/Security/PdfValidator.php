@@ -19,6 +19,7 @@ use function str_starts_with;
 /**
  * Validates PDF files by checking magic bytes and scanning for
  * dangerous JavaScript, launch actions, and form submission patterns.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PdfValidator

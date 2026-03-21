@@ -16,6 +16,7 @@ use Pulsar\Extension\Cms\Exception\CmsException;
  *
  * @psalm-api Public binding contract; implemented by CampaignEditorService
  *            and consumed by admin newsletter controllers.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface CampaignEditorServiceInterface

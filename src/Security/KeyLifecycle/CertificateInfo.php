@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
 
 /**
  * Information about a monitored certificate.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CertificateInfo

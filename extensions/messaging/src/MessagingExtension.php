@@ -32,6 +32,7 @@ use const DIRECTORY_SEPARATOR;
  *
  * @psalm-api Loaded by the framework's ExtensionLoader at boot time
  *            via the pulsar.json manifest, never instantiated by name.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class MessagingExtension implements ExtensionInterface, PreBootExtensionInterface

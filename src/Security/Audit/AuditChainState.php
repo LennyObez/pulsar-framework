@@ -22,6 +22,7 @@ use Pulsar\Api\Api;
  * `AuditChainStateAware::chainState()`; sinks that do not implement it
  * keep the legacy semantics for backwards compatibility but lose the
  * tamper-evidence guarantee.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum AuditChainState

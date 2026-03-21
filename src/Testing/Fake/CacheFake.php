@@ -21,6 +21,7 @@ use function sprintf;
  *
  * Records all get/set/delete operations for assertion, enabling tests to
  * verify caching behavior without a real cache backend.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class CacheFake implements CacheDriverInterface

@@ -25,6 +25,7 @@ use Pulsar\Api\Api;
  *           return $this->app->get(PDO::class);
  *       }
  *   }
+ * @api
  */
 #[Api(since: '1.0.0')]
 trait DatabaseTransactions

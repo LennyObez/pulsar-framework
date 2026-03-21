@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Determines how to handle existing files during code generation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum OverwritePolicy: string

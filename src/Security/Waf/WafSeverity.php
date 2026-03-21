@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Severity level for WAF rules, matching OWASP CRS convention.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum WafSeverity: int

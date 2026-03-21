@@ -13,6 +13,7 @@ use Pulsar\Api\Api;
  *
  * Handles OAuth2 authorization and token endpoints per RFC 6749.
  * Implementations wrap a proven OAuth2 server library behind this port.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface AuthorizationServerInterface

@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
 
 /**
  * Service for creating and managing polls in forum threads.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface PollServiceInterface

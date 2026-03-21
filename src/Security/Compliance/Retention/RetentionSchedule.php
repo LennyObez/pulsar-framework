@@ -19,6 +19,7 @@ use function strtolower;
  * for common regulatory frameworks. Regulation identifiers are normalized
  * (lowercased, hyphens replaced with underscores) so that both 'SOX'
  * and 'sox', or 'PCI-DSS' and 'pci_dss', resolve to the same policy.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RetentionSchedule

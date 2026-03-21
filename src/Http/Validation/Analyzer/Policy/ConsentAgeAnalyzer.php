@@ -24,6 +24,7 @@ use function sprintf;
  *
  * Advisory only: not a compliance gate. Results should be reviewed by
  * qualified compliance or legal personnel.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ConsentAgeAnalyzer implements PolicyAnalyzerInterface

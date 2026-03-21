@@ -18,6 +18,7 @@ use const ENT_QUOTES;
  * Turbo Frames decompose pages into independently updateable sections.
  * Navigation within a frame stays within that frame, enabling partial
  * page updates without JavaScript.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TurboFrame

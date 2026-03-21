@@ -20,6 +20,7 @@ use function is_string;
  * Loaded from config/extensions.php. Controls the effective trust tier
  * for each extension: the extension's requested tier is capped by
  * the host's allowed tier.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TrustedExtensionsConfig

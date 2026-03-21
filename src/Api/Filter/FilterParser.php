@@ -29,6 +29,7 @@ use function is_numeric;
  *   - `?filter[status]=eq:active`
  *   - `?filter[age]=gte:18`
  *   - `?filter[role]=in:admin,editor`
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class FilterParser

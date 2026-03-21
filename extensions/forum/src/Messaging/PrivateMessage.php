@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * A private message between forum users.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PrivateMessage

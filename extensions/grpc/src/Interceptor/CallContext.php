@@ -13,6 +13,7 @@ use Pulsar\Extension\Grpc\Handler\MethodDescriptor;
  * Carries method metadata, request payload, headers, deadline, and
  * client identity information. Interceptors may produce new contexts
  * with additional attributes via withAttribute().
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CallContext

@@ -18,6 +18,7 @@ use Pulsar\Routing\RouterInterface;
  * trusted flagger management, notice-and-action mechanisms, and
  * internal complaint handling as required by the DSA for online
  * intermediary services, hosting services, platforms, and VLOPs.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DsaExtension implements ExtensionInterface

@@ -13,6 +13,7 @@ use Pulsar\Database\Driver;
  * Handles common PostgreSQL type and default substitutions for SQLite and MySQL.
  * Structural differences (indexes, CHECK constraints) are handled per-migration
  * with driver conditionals.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ForumDdl

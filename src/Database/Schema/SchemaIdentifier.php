@@ -16,6 +16,7 @@ use function strtolower;
  *
  * Validates table, column, index, and foreign key names against a strict
  * pattern and rejects SQL reserved words to prevent injection and ambiguity.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class SchemaIdentifier

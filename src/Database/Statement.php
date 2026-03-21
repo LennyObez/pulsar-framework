@@ -18,6 +18,7 @@ use function is_int;
  * Prepared statement wrapper.
  *
  * Provides a fluent interface for binding parameters and executing statements.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class Statement

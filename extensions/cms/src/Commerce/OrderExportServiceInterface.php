@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Service interface for exporting order data in various formats.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface OrderExportServiceInterface

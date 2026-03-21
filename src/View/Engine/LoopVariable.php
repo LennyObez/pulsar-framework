@@ -23,6 +23,7 @@ use Pulsar\Api\Api;
  *   ->odd        (bool) True when index is odd (1, 3, 5, ...)
  *   ->depth      (int)  Nesting depth (1 for outermost)
  *   ->parent     (?self) Parent loop for nested @foreach
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class LoopVariable

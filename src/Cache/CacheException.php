@@ -12,6 +12,7 @@ use function sprintf;
 
 /**
  * Exception thrown for framework cache operations.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class CacheException extends RuntimeException

@@ -19,6 +19,7 @@ use Pulsar\Api\Api;
  * - "O" = Not subject to VAT
  * - "L" = Canary Islands indirect tax (IGIC)
  * - "M" = Tax for production, services and importation in Ceuta/Melilla (IPSI)
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class InvoiceTaxBreakdown

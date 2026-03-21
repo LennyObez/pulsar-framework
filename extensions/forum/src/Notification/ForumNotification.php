@@ -13,6 +13,7 @@ use Pulsar\Extension\Forum\Support\UuidGenerator;
  *
  * Each notification records a discrete event that a user should be informed
  * about, with optional structured data for rich rendering.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ForumNotification

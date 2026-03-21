@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Scope of an event dispatch: whether listeners are within the same module or across modules.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum EventScope: string

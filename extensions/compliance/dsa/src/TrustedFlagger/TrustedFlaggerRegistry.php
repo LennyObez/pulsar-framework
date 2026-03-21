@@ -13,6 +13,7 @@ use Pulsar\Api\Api;
  * Trusted flaggers are entities designated by Digital Services Coordinators
  * that have particular expertise in detecting, identifying, and notifying
  * illegal content. Their submissions receive priority processing.
+ * @api
  */
 #[Api(since: '1.0.0')]
 abstract class TrustedFlaggerRegistry

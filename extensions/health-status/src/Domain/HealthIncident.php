@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Represents an active or recent health incident.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class HealthIncident

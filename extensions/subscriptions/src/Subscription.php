@@ -16,6 +16,7 @@ use function random_bytes;
  * Immutable: state transitions produce new instances via clone-with.
  * The purchase token is stored as a one-way hash; the raw receipt is
  * encrypted at rest and may be null once verification is complete.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Subscription

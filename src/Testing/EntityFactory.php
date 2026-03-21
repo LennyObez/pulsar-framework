@@ -23,6 +23,7 @@ use function array_replace;
  * @template T of object
  *
  * @phpstan-consistent-constructor
+ * @api
  */
 #[Api(since: '1.0.0')]
 abstract class EntityFactory

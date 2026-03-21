@@ -13,6 +13,7 @@ use Pulsar\Extension\Auth\Social\Domain\SocialIdentity;
  * Provider adapter contract for OAuth-based social authentication.
  *
  * Implementations wrap vendor-specific OAuth flows behind this uniform interface.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface OAuthProviderInterface

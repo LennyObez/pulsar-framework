@@ -33,6 +33,7 @@ use function ucfirst;
  * Fluent string manipulation utilities.
  *
  * All methods are pure and static: no mutable state.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class Str

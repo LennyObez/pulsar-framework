@@ -20,6 +20,7 @@ use function is_int;
  * Typed configuration DTO for the zero-trust module.
  *
  * Maps from the `zero_trust` key of `config/security.php`.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ZeroTrustConfig

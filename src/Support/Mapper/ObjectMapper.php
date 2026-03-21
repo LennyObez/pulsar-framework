@@ -39,6 +39,7 @@ use function strtolower;
  *
  * Integrates with Pulsar's fromArray() convention: if the target class
  * has a static fromArray() method, it is used instead of reflection.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ObjectMapper

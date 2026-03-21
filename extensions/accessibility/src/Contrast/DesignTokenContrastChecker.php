@@ -14,6 +14,7 @@ use function sprintf;
  *
  * Extracts --color-* custom properties from :root blocks and evaluates
  * standard text/background combinations against WCAG 2.1 thresholds.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DesignTokenContrastChecker

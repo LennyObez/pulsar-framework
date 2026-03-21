@@ -17,6 +17,7 @@ use const ENT_QUOTES;
  *
  * Renders a drag-and-drop file upload area with progress, preview,
  * and validation. Works as <pulsar-file-uploader> custom element.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class FileUploaderComponent extends EmbeddableComponent

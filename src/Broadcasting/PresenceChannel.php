@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Presence channel: requires authentication and tracks online members.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PresenceChannel extends Channel

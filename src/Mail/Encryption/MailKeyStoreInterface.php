@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Manages recipient encryption key material (certificates or PGP public keys).
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface MailKeyStoreInterface

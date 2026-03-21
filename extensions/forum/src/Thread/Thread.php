@@ -15,6 +15,7 @@ use Pulsar\Extension\Forum\Exception\ForumException;
  *
  * Supports typed discussions (Q&A, bug report, feature request, etc.),
  * status transitions (open/closed/locked), pinning, and solution marking.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Thread

@@ -10,6 +10,7 @@ use Pulsar\Extension\Admin\Domain\ValidationRule;
 
 /**
  * Email field for admin resources. Adds email validation automatically.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class EmailField extends Field

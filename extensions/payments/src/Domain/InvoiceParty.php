@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Contains business identity, address, banking, and electronic addressing
  * details required by EN 16931 and Peppol BIS 3.0.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class InvoiceParty

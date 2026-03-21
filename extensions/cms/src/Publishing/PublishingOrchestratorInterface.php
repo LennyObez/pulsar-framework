@@ -12,6 +12,7 @@ use Pulsar\Extension\Cms\Content\Content;
  *
  * @psalm-api Public binding contract; implemented by PublishingOrchestrator
  *            and consumed by the publishing state machine.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface PublishingOrchestratorInterface

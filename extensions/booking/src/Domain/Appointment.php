@@ -12,6 +12,7 @@ use Pulsar\Extension\Payments\Domain\Money;
 
 /**
  * Immutable appointment entity with state machine enforcement.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Appointment

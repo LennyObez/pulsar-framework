@@ -25,6 +25,7 @@ use function strtoupper;
  * Using X-Pulsar-Region header instead of cookies avoids GDPR cookie
  * consent requirements. The JS client stores preferences in localStorage
  * and sends them via request headers on API calls.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RegionResolver

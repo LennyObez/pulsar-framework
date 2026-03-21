@@ -22,6 +22,7 @@ use const JSON_UNESCAPED_UNICODE;
  * Each component renders as a custom element (<pulsar-*>) that is
  * self-contained, styled, accessible, and works standalone or within
  * Pulsar Live components.
+ * @api
  */
 #[Api(since: '1.0.0')]
 abstract class EmbeddableComponent

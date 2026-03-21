@@ -18,6 +18,7 @@ use function range;
  * Page-based paginator: knows the total count and produces numbered page links.
  *
  * @template T
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Paginator

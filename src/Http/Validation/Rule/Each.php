@@ -16,6 +16,7 @@ use function sprintf;
 /**
  * Apply rules to each element of an array. Returns the first violation found.
  * Skips null values. Fails if value is not an array.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Each implements RuleInterface

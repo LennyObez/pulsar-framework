@@ -15,6 +15,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public DTO returned from NewsletterCampaignRepositoryInterface;
  *            consumed by admin templates and dispatch jobs.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class NewsletterCampaign

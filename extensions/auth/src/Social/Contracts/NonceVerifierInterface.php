@@ -11,6 +11,7 @@ use Pulsar\Extension\Auth\Social\Domain\IdTokenClaims;
  * Manages nonce generation and verification for OpenID Connect flows.
  *
  * Nonces prevent ID token replay attacks by binding tokens to specific authentication requests.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface NonceVerifierInterface

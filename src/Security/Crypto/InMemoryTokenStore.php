@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
  * In-memory token store for development and testing.
  *
  * Token mappings are lost when the process ends. Not suitable for production.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class InMemoryTokenStore implements TokenStoreInterface

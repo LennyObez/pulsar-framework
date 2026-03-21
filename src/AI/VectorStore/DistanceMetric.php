@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Distance metrics for vector similarity search.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum DistanceMetric: string

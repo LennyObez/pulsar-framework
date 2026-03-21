@@ -18,6 +18,7 @@ use Pulsar\Api\Api;
  * - 'device_id': Persistent device fingerprint
  * - 'route': Route name for step-up context
  * - 'session_id': Hashed session ID
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface TwoFactorRateLimiterInterface

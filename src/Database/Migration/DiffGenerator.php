@@ -26,6 +26,7 @@ use function strtolower;
  *
  * Produces a complete migration file that can be written to the migration
  * directory and executed by MigrationRunner.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DiffGenerator

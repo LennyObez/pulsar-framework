@@ -17,6 +17,7 @@ use function substr;
  * Value object wrapping a BCP 47 locale tag.
  *
  * Provides parsing, fallback chain generation, and RTL detection.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Locale

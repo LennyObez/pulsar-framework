@@ -18,6 +18,7 @@ use function sprintf;
  * canonical source; CI diff-checks regenerated map against committed version.
  *
  * No runtime directory scanning, reflection, or class-name guessing.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class FactoryMap

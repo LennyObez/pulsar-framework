@@ -21,6 +21,7 @@ use function array_values;
  * in memory. Registration and deregistration modify the in-memory state only,
  * making this implementation suitable for testing, local development, and
  * applications with known, fixed service topologies.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class StaticServiceDiscovery implements ServiceDiscoveryInterface

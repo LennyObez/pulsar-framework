@@ -20,6 +20,7 @@ use const JSON_UNESCAPED_SLASHES;
  *
  * NEL allows the browser to report network-level errors back to a
  * configured endpoint, even when the request never reaches the server.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class NelConfig

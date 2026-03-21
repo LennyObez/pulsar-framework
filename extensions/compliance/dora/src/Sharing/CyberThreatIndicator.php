@@ -13,6 +13,7 @@ use Pulsar\Api\Api;
  * Financial entities may exchange cyber threat information and intelligence
  * amongst themselves, including indicators of compromise, tactics, techniques,
  * and procedures.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CyberThreatIndicator

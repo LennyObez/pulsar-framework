@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Action to take in response to a detected threat.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum ThreatResponse: string

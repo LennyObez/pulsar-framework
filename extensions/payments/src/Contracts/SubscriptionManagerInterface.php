@@ -12,6 +12,7 @@ use Pulsar\Extension\Payments\Domain\SubscriptionStatus;
 
 /**
  * Subscription lifecycle management contract.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface SubscriptionManagerInterface

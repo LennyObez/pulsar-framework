@@ -49,6 +49,7 @@ use function substr;
  * The tag is 16 bytes, placed before the ciphertext so the libsodium API
  * (which concatenates ciphertext || tag) can be normalised without branching
  * at the format boundary.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AesGcmCipherSuite implements CipherSuiteInterface

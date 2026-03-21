@@ -15,6 +15,7 @@ use Pulsar\Runtime\Upgrade\UpgradeContext;
  *
  * Encapsulates the assembly of runtime dependencies (sandbox, leak detector,
  * reset registry) so that console commands don't import internal Runtime types.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface PersistentRuntimeFactoryInterface

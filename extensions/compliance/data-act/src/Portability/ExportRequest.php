@@ -13,6 +13,7 @@ use Pulsar\Api\Api;
  *
  * Tracks the lifecycle from submission through fulfillment or cancellation
  * as required by Data Act Article 5 (right to data portability).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ExportRequest

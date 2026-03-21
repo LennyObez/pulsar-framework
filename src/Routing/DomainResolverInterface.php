@@ -13,6 +13,7 @@ use Pulsar\Api\Api;
  * Implementations extract the host from the request (respecting
  * reverse proxy headers like X-Forwarded-Host) and determine
  * which subdomain and extension scopes apply.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface DomainResolverInterface

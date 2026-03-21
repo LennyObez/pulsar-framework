@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Catalogs provide access to translation entries organized
  * by locale and domain.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface CatalogInterface

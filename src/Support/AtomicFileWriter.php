@@ -25,6 +25,7 @@ use const DIRECTORY_SEPARATOR;
  * On Unix, rename() is atomic within the same filesystem.
  * On Windows, rename() fails if the target exists, so we unlink first.
  * A small race window exists on Windows: acceptable for build artifacts.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class AtomicFileWriter

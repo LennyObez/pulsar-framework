@@ -14,6 +14,7 @@ use function is_array;
  *
  * Maps from the `config/data_protection.php` file. Covers retention
  * policies, purge settings, and consent tracking configuration.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DataProtectionConfig

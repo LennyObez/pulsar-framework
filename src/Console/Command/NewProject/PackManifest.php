@@ -21,6 +21,7 @@ use function sprintf;
  *
  * Each scaffolding pack ships a `pack.json` file that describes its metadata,
  * compliance coverage, file templates, and post-install hooks.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PackManifest

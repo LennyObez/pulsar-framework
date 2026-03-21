@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Handles inbound webhook requests from mail providers.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface WebhookHandlerInterface

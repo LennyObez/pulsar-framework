@@ -12,6 +12,7 @@ use function is_string;
 
 /**
  * TLS and mTLS configuration for the gRPC server.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TlsConfig

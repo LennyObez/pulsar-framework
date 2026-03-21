@@ -19,6 +19,7 @@ use const UPLOAD_ERR_OK;
 
 /**
  * Uploaded file size must not exceed maximum bytes. Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class MaxFileSize implements RuleInterface

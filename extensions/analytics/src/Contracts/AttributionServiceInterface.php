@@ -11,6 +11,7 @@ use Pulsar\Extension\Analytics\Domain\AttributionResult;
 
 /**
  * Attribution modeling for conversion credit assignment.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface AttributionServiceInterface

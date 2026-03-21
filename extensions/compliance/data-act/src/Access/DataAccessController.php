@@ -14,6 +14,7 @@ use Pulsar\Extension\DataAct\Portability\ExportRequest;
  *
  * Provides endpoints for users to request data exports, check export
  * status, and manage their portability rights.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DataAccessController

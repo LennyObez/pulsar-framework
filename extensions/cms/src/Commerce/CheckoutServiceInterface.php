@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Service interface for the checkout flow: cart validation, order creation, and payment.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface CheckoutServiceInterface

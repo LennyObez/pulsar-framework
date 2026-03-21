@@ -17,6 +17,7 @@ use const SODIUM_CRYPTO_GENERICHASH_BYTES;
  *
  * @psalm-api Public utility called by name from MediaBundleImporter and import
  *            controllers to verify the evidence hash on uploaded bundles.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ExportIntegrityVerifier

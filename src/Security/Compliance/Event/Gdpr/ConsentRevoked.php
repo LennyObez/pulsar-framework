@@ -16,6 +16,7 @@ use function is_string;
  * Records that a data subject has revoked consent for a specific processing purpose.
  *
  * Supports controls for GDPR Article 7(3) right to withdraw consent.
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]

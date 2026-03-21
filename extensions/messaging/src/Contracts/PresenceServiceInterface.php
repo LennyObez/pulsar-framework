@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Tracks user online/offline presence status.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface PresenceServiceInterface

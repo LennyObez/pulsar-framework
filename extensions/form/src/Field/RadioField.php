@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Radio button group field.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class RadioField extends AbstractField

@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Repository interface for forum tags.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface TagRepositoryInterface

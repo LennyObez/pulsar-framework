@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * TypeScript type representation for code generation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum TypeScriptType: string

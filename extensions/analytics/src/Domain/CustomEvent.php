@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * A custom event tracked by the analytics system.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CustomEvent

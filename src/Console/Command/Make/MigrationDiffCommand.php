@@ -31,6 +31,7 @@ use function sprintf;
  * Reads the current entity definitions, compares against the stored
  * SchemaSnapshot, computes a DiffResult, and produces migration files.
  * Updates the stored snapshot after generation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class MigrationDiffCommand extends Command

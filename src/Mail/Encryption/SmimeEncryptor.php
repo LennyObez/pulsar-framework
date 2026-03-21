@@ -26,6 +26,7 @@ use const PKCS7_BINARY;
  * Encrypts content with AES-256-CBC using the recipient's X.509 certificate.
  * Since this deals with X.509 certificates (not symmetric/Keyring crypto),
  * direct OpenSSL usage is acceptable.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SmimeEncryptor implements MailEncryptorInterface

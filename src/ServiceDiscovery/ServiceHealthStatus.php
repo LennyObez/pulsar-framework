@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Health status for a service instance in the discovery registry.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum ServiceHealthStatus: string

@@ -29,6 +29,7 @@ use function strlen;
  * allow with an audit alert.
  *
  * Compliance: PCI-DSS Req.3/4, HIPAA §164.312(e), GDPR Art.32.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DlpScanMiddleware implements MiddlewareInterface

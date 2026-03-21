@@ -19,6 +19,7 @@ use const ENT_QUOTES;
  *
  * Produces a standalone page with component previews, a category
  * sidebar, responsive viewport toggles, and dark mode support.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class StorybookRenderer

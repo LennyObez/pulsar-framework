@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Pricing plan with trial, discount, and tier support.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PricingPlan

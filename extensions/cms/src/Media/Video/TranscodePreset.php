@@ -11,6 +11,7 @@ use function is_string;
 
 /**
  * A named transcoding preset defining output resolution, bitrate, and codec.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TranscodePreset

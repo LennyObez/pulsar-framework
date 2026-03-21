@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
 /**
  * @psalm-api Public DTO referenced through ExperimentRepositoryInterface and
  *            consumed by user-land code; class-level marker for findUnusedCode.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Experiment

@@ -21,6 +21,7 @@ use const SODIUM_CRYPTO_SECRETBOX_NONCEBYTES;
  * This is the symmetric cipher used for actual message content.
  * The key is either a direct shared secret (for DMs) or a group
  * symmetric key (distributed via crypto_box to each participant).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class MessageEncryptor

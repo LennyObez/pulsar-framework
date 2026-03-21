@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Implementations connect to embedding APIs (OpenAI, Ollama, etc.)
  * or run local models to produce dense vector representations.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface EmbeddingInterface

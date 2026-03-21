@@ -17,6 +17,7 @@ use Pulsar\Cache\Application\Exception\FenceTokenMismatchException;
  * For true distributed fencing, the downstream resource (database, API, etc.)
  * must independently validate the fencing token at write time. This executor
  * reduces: but does not eliminate: the window for stale-lock writes.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class FencedExecutor

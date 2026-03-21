@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * A single recorded database query with timing and context.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class QueryLogEntry

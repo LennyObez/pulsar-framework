@@ -9,6 +9,7 @@ use Pulsar\Cache\Application\Exception\LockAcquisitionException;
 
 /**
  * Cache lock contract.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface LockInterface

@@ -13,6 +13,7 @@ use Pulsar\Extension\Observability\Export\Otlp\SpanBatchExporter;
  *
  * Provides runtime status information about OTLP and JSON Lines
  * export pipelines for display in Pulsar Studio.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class StudioPanel

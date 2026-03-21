@@ -14,6 +14,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public DTO returned from ClientFingerprintResolver; consumed
  *            by rate limiting and abuse detection middleware.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ClientFingerprint

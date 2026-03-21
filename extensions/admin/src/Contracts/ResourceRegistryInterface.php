@@ -10,6 +10,7 @@ use Pulsar\Extension\Admin\Exception\ResourceNotFoundException;
 
 /**
  * Registry of admin data resources.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ResourceRegistryInterface

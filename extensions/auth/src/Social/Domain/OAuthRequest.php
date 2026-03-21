@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Captures all values needed to build the authorization URL, including
  * PKCE challenge data and OIDC nonce when applicable.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class OAuthRequest

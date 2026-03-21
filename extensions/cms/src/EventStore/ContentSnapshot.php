@@ -16,6 +16,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public DTO returned from ContentSnapshotServiceInterface;
  *            consumed by governance / audit views.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ContentSnapshot

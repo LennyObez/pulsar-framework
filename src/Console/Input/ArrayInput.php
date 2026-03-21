@@ -14,6 +14,7 @@ use function is_scalar;
 
 /**
  * Input from an array (useful for testing).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ArrayInput implements InputInterface

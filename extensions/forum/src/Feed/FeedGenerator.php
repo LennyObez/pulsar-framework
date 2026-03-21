@@ -16,6 +16,7 @@ use const ENT_XML1;
  *
  * Generates valid RSS 2.0 feeds from forum content, enabling
  * users to subscribe to new threads or posts via feed readers.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class FeedGenerator

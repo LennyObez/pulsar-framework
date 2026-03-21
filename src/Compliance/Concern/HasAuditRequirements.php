@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * All supported compliance frameworks require some form of audit trail.
  * This interface normalizes the audit retention requirement so the
  * ComplianceProfileResolver can compute the most restrictive value.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface HasAuditRequirements

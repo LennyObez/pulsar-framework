@@ -23,6 +23,7 @@ use const JSON_THROW_ON_ERROR;
  *
  * Stores notifications in a `notifications` table and provides CRUD
  * operations for querying, marking as read, and deleting notifications.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DatabaseNotificationRepository implements DatabaseNotificationStoreInterface

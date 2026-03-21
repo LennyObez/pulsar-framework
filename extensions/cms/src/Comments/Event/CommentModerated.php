@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * @psalm-api Event class — instantiated by the moderation service and
  *            dispatched through the EventDispatcher; user-land
  *            listeners type-hint the class to subscribe.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CommentModerated

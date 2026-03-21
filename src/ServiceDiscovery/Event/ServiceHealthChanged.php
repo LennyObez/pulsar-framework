@@ -9,6 +9,7 @@ use Pulsar\ServiceDiscovery\ServiceHealthStatus;
 
 /**
  * Dispatched when a service instance's health status changes.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ServiceHealthChanged

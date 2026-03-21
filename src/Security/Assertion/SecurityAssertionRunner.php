@@ -25,6 +25,7 @@ use function strlen;
  * - HSTS enabled with sufficient max-age
  * - Master key present and sufficient length
  * - Session encryption enabled
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SecurityAssertionRunner

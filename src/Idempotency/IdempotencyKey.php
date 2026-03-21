@@ -18,6 +18,7 @@ use function strlen;
  *
  * Can be created from a raw string or deterministically derived from
  * component parts via libsodium BLAKE2b hashing.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class IdempotencyKey

@@ -17,6 +17,7 @@ use const PHP_OS_FAMILY;
 
 /**
  * Supported database drivers.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum Driver: string

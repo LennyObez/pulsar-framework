@@ -18,6 +18,7 @@ use function is_string;
  * Supports ISO 42001:2023 Clause 8.4 (AI system lifecycle) and Clause 9.1
  * (monitoring and measurement) by capturing deployment decisions in the
  * compliance event stream.
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]

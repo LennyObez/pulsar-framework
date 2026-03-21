@@ -20,6 +20,7 @@ use function usleep;
 
 /**
  * Retry policy with exponential backoff and optional jitter.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RetryPolicy

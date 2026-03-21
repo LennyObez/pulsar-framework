@@ -22,6 +22,7 @@ use function count;
  * using the ReadWriteRouter. Supports single-query overrides, automatic
  * primary stickiness after writes, and audit logging of replica overrides
  * for regulated environments.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class RoutingConnectionManager implements ConnectionManagerInterface

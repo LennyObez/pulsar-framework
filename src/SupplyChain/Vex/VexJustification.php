@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Each value explains why the product is not affected by the vulnerability,
  * per the OpenVEX specification justification vocabulary.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum VexJustification: string

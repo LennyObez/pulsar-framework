@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * Contains the timestamp authority's response including the hash of the
  * timestamped data, the timestamp itself, and the TSA's identity.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TimestampToken

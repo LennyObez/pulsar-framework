@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * Each detector analyzes incoming requests for a specific attack pattern
  * and returns a ThreatEvent when a threat is detected.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ThreatDetectorInterface

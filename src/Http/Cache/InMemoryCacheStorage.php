@@ -15,6 +15,7 @@ use function count;
  * Ideal for persistent workers (RoadRunner, FrankenPHP) where the process
  * lifetime spans multiple requests. Entries are evicted on expiration
  * or when max capacity is reached (LRU).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class InMemoryCacheStorage implements CacheStorageInterface

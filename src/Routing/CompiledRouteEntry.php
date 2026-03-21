@@ -12,6 +12,7 @@ use Pulsar\Http\Method;
  *
  * Contains all data needed to reconstruct a Route at runtime
  * without carrying closures or non-serializable handlers.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CompiledRouteEntry

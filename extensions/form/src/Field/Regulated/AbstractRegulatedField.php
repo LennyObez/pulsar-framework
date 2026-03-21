@@ -14,6 +14,7 @@ use Pulsar\Extension\Form\Field\AbstractField;
  *
  * Regulated fields capture not just the value but also proof of what
  * the user was shown and when they consented.
+ * @api
  */
 #[Api(since: '1.0.0')]
 abstract class AbstractRegulatedField extends AbstractField

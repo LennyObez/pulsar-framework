@@ -17,6 +17,7 @@ use function sprintf;
 
 /**
  * Value must exist in the database table/column. Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Exists implements RuleInterface

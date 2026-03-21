@@ -13,6 +13,7 @@ use Pulsar\WebSocket\BroadcastManagerInterface;
  * Typing indicators are ephemeral; they are broadcast via WebSocket
  * but never persisted. The client is responsible for sending start/stop
  * typing events and the UI auto-clears after a timeout.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TypingIndicator

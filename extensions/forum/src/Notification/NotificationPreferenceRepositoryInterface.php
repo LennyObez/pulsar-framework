@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Repository interface for notification delivery preferences.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface NotificationPreferenceRepositoryInterface

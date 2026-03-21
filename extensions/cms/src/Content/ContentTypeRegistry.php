@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Static registry called by name from CMS plugins, content
  *            services, and the field registry.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ContentTypeRegistry

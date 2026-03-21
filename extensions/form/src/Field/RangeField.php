@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Range slider input field.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class RangeField extends AbstractField

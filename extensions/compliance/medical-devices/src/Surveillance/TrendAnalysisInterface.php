@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * MDR Article 83(3) requires manufacturers to detect statistically
  * significant increases in the frequency or severity of incidents.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface TrendAnalysisInterface

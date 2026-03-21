@@ -12,6 +12,7 @@ use Pulsar\Extension\Payments\Domain\Subscription;
 
 /**
  * Summary data for the customer billing portal page.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class BillingPortalSummary

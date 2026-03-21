@@ -16,6 +16,7 @@ use Pulsar\Security\Audit\AuditOutcome;
  * Provides querying, filtering, and status management for justification
  * records. Supports the mandatory access review workflows required by
  * PCI-DSS, HIPAA, GDPR, and SOC 2.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AccessReviewService

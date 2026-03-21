@@ -20,6 +20,7 @@ use function time;
  * Serves stale cached pages immediately and regenerates in background
  * on a configurable interval. Supports tag-based invalidation so that
  * content changes trigger regeneration of affected pages.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class IncrementalRegenerator

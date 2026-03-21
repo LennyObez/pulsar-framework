@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  * Age verification field with consent evidence capture.
  *
  * Requires the user to confirm they meet the minimum age requirement.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class AgeVerification extends AbstractRegulatedField

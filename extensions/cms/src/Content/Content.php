@@ -15,6 +15,7 @@ use Pulsar\Extension\Cms\Exception\CmsException;
  *
  * @psalm-api Public DTO returned from ContentRepositoryInterface; consumed by
  *            services, controllers, templates, and user-land code.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Content

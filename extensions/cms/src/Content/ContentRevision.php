@@ -19,6 +19,7 @@ use const SODIUM_CRYPTO_GENERICHASH_BYTES;
  *
  * @psalm-api Public DTO returned from ContentRevisionRepositoryInterface;
  *            consumed by RevisionService and admin revision history views.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ContentRevision

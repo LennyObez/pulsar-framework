@@ -13,6 +13,7 @@ use function random_bytes;
 
 /**
  * Immutable value object representing a security incident.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Incident implements IncidentInterface

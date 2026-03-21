@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Resolved from the DI container by FormSubmissionService;
  *            extensions register additional detectors during boot.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class SpamScorer

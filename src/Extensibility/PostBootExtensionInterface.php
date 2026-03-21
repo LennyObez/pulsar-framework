@@ -16,6 +16,7 @@ use Pulsar\Container\ContainerInterface;
  *
  * Phase ordering (all phases respect the dependency-resolved extension order):
  *   register → preBoot → boot → postBoot
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface PostBootExtensionInterface

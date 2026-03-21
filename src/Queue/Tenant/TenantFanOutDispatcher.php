@@ -25,6 +25,7 @@ use function count;
  * during dispatch. Each tenant's dispatch is an independent failure
  * domain: one failure does not prevent other tenants' jobs from
  * being dispatched.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TenantFanOutDispatcher

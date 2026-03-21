@@ -12,6 +12,7 @@ use function is_string;
 
 /**
  * Configuration for WebRTC STUN/TURN servers and ICE behavior.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class WebRtcConfig

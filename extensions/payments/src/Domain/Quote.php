@@ -18,6 +18,7 @@ use function random_bytes;
  * Represents a commercial proposal that can be accepted by the customer
  * and converted into a binding Invoice. Quote numbers follow the
  * pattern QTE-YYYY-NNNNNN for traceability.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Quote

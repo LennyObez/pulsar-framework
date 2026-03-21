@@ -12,6 +12,7 @@ use function sprintf;
 
 /**
  * Exception for PSD2 compliance failures.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class Psd2Exception extends RuntimeException

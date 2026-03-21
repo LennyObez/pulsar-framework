@@ -13,6 +13,7 @@ use Pulsar\Api\Api;
  * Documents digital operational resilience testing activities including
  * vulnerability assessments, penetration tests, and threat-led penetration
  * testing (TLPT) for critical ICT systems.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ResilienceTestRecord

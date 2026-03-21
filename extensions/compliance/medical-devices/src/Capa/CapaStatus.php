@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Status of a CAPA (Corrective and Preventive Action) per ISO 13485 Section 8.5.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum CapaStatus: string

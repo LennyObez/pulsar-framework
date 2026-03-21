@@ -10,6 +10,7 @@ use Pulsar\Workflow\ActorContext;
 
 /**
  * Dispatched when a transition is blocked by one or more guards.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TransitionBlockedEvent

@@ -22,6 +22,7 @@ use function ltrim;
  * Orchestrates the binding pipeline: determines which parameters need
  * model resolution, validates key types, delegates to the appropriate
  * resolver, and supports scoped (parent/child) binding chains.
+ * @api
  */
 #[Api(since: '1.0.0-rc.11')]
 final readonly class ModelBinder

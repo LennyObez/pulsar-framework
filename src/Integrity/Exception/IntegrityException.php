@@ -14,6 +14,7 @@ use function sprintf;
  * Exception thrown for file integrity errors.
  *
  * Provides static factory methods for specific integrity error scenarios.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class IntegrityException extends RuntimeException

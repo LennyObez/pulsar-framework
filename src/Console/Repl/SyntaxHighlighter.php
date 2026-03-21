@@ -18,6 +18,7 @@ use function strtolower;
  * Highlights keywords, strings, numbers, comments, variables, and types.
  * Designed for REPL output: not a full parser, but sufficient for
  * interactive single/multi-line snippets.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SyntaxHighlighter

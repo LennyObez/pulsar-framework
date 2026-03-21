@@ -15,6 +15,7 @@ use function count;
  * Readonly query result value object.
  *
  * Eagerly loads all rows from the statement at construction time.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Result

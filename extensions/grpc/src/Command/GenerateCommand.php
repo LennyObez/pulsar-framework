@@ -27,6 +27,7 @@ use function sprintf;
  * Runs ProtocRunner to invoke protoc, validates output with OutputValidator,
  * generates Pulsar service handler base classes with ServiceHandlerGenerator,
  * and records the protoc version with ProtocVersionPinner.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class GenerateCommand extends Command

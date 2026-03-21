@@ -16,6 +16,7 @@ use Pulsar\Api\Api;
  *
  * Binary values (encrypted blobs, blind index hashes) must be bound with
  * PDO::PARAM_LOB for portable storage across MySQL, MariaDB, PostgreSQL, and SQLite.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Param

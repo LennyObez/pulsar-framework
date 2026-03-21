@@ -11,6 +11,7 @@ use function sprintf;
 
 /**
  * Thrown when an entity cannot be found by its identifier.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class EntityNotFoundException extends OrmException

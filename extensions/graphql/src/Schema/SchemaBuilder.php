@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Builds the GraphQL schema programmatically from CMS domain types.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SchemaBuilder

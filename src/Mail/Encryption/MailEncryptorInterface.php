@@ -9,6 +9,7 @@ use Pulsar\Mail\Exception\MailException;
 
 /**
  * Encrypts mail body content using a recipient's public key material.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface MailEncryptorInterface

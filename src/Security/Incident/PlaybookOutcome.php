@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Outcome classification for playbook execution.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum PlaybookOutcome: string

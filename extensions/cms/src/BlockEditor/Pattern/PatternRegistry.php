@@ -15,6 +15,7 @@ use function stripos;
  *
  * Provides registration, lookup, and search functionality for
  * pre-built block compositions.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class PatternRegistry

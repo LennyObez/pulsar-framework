@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Status of a WebRTC call session.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum CallStatus: string

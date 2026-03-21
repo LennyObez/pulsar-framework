@@ -16,6 +16,7 @@ use function max;
  * Each registered check corresponds to a SecurityControl. When a control
  * is inactive, its weight is deducted from the maximum score (100).
  * The score is clamped to [0, 100].
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class SecurityScorer

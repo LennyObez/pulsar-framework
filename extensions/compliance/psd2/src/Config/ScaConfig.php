@@ -12,6 +12,7 @@ use function is_string;
 
 /**
  * SCA (Strong Customer Authentication) configuration.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ScaConfig

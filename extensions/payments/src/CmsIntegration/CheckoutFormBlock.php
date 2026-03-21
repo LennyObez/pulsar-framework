@@ -14,6 +14,7 @@ use function is_string;
  *
  * Renders a secure, PCI-compliant checkout form that tokenizes
  * card data client-side using Stripe Elements or PayPal Buttons.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CheckoutFormBlock

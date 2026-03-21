@@ -22,6 +22,7 @@ use function sprintf;
  * window, the matching rule fires and an incident is reported.
  *
  * Thread-safe within a single process (cooperative scheduling via Fibers).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class AuditAnomalyDetector

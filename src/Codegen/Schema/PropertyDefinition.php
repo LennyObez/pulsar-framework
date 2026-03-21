@@ -34,6 +34,7 @@ use function strtolower;
  *     length: int|null,
  *     isPrimaryKey: bool,
  * }
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PropertyDefinition

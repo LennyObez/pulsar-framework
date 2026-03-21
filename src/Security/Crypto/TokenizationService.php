@@ -29,6 +29,7 @@ use function substr;
  * PAN token format: first6 || random_digits || last4 (same length as original PAN)
  *
  * Sub-key ID: 7, KDF context: 'tokenize'
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class TokenizationService implements TokenizationServiceInterface

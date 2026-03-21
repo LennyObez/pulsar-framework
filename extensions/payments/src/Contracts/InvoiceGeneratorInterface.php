@@ -12,6 +12,7 @@ use Pulsar\Extension\Payments\Domain\Money;
 
 /**
  * Contract for invoice generation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface InvoiceGeneratorInterface

@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public event class instantiated by CmsExtension::onBoot() and
  *            dispatched via the EventDispatcher.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CmsReady

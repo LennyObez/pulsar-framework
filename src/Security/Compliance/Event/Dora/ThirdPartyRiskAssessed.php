@@ -18,6 +18,7 @@ use function is_string;
  * Records completion of a third-party ICT provider risk assessment.
  *
  * Supports controls for DORA Article 28 third-party ICT service provider risk.
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]

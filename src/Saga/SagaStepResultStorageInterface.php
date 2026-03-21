@@ -15,6 +15,7 @@ use Pulsar\Saga\Step\SagaStepStatus;
  * Forward execution rows are append-only. During compensation, new rows
  * are inserted with direction=compensating. Irreversible steps receive
  * status=skipped during compensation phases.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface SagaStepResultStorageInterface

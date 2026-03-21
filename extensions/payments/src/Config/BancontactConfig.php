@@ -14,6 +14,7 @@ use function is_string;
  *
  * Bancontact is Belgium's most popular electronic payment system.
  * Integrated via Stripe Payment Methods API.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class BancontactConfig

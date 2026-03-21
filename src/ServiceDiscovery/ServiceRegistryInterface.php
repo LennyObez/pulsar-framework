@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * Implementations handle registration, deregistration, TTL expiration,
  * and health status tracking. The registry is the write-side companion
  * to {@see ServiceDiscoveryInterface} (read-side).
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ServiceRegistryInterface

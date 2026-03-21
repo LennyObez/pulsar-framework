@@ -21,6 +21,7 @@ use function str_starts_with;
  *
  * Supports OWASP CRS-style paranoia levels (1-4) and short-circuits
  * on the first blocking match for performance.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class WafEngine

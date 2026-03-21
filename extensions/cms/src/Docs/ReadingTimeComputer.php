@@ -16,6 +16,7 @@ use function strip_tags;
  *
  * @psalm-api Resolved by content controllers from the DI container;
  *            not new'd by name.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ReadingTimeComputer

@@ -13,6 +13,7 @@ use function is_string;
 
 /**
  * Readonly configuration DTO for the gRPC extension.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class GrpcConfig

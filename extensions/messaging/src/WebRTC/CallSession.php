@@ -10,6 +10,7 @@ use Pulsar\Extension\Messaging\Domain\CallStatus;
 
 /**
  * Tracks an active or completed WebRTC call session.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class CallSession

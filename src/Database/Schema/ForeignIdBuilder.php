@@ -15,6 +15,7 @@ use function sprintf;
  * ```php
  * $table->foreignId('user_id')->references('id')->on('users');
  * ```
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ForeignIdBuilder

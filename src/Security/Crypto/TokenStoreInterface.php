@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Implementations persist the mapping between a generated token and the
  * encrypted representation of the original sensitive value.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface TokenStoreInterface

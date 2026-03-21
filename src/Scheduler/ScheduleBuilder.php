@@ -21,6 +21,7 @@ use function sprintf;
  *       ->evenInMaintenanceMode();
  *
  *   $registry->register($builder->build());
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ScheduleBuilder

@@ -16,6 +16,7 @@ use Pulsar\Api\Pagination\PaginationResult;
  *
  * @psalm-api Public binding contract; implemented by DbCmsUserRepository
  *            and consumed by admin user-management controllers.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface CmsUserRepositoryInterface

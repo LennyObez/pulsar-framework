@@ -14,6 +14,7 @@ use function is_array;
  *
  * Loaded from config/health-status.php during extension registration.
  * All values have sensible defaults for typical deployments.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class HealthStatusConfig

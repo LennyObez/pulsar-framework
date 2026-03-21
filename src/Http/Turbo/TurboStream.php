@@ -18,6 +18,7 @@ use const ENT_QUOTES;
  * Turbo Streams deliver HTML updates as custom elements that the
  * client processes to modify the DOM. Each stream targets an element
  * by ID and applies an action (append, replace, remove, etc.).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TurboStream

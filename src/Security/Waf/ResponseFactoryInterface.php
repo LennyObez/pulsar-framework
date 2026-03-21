@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  * Factory for creating HTTP responses in the WAF context.
  *
  * Abstracted to avoid coupling the WAF engine to a specific PSR-7 implementation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ResponseFactoryInterface

@@ -14,6 +14,7 @@ use Pulsar\Tenancy\TenantContext;
 
 /**
  * Manages the lifecycle of tenant scope within a request or job.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class TenantScope

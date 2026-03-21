@@ -11,6 +11,7 @@ use Pulsar\Console\Verbosity;
 
 /**
  * Output that buffers content (useful for testing).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class BufferedOutput implements OutputInterface

@@ -15,6 +15,7 @@ use Pulsar\Api\Api;
  * report per year. Online platforms and VLOPs have additional
  * reporting obligations including automated detection statistics,
  * trusted flagger data, and out-of-court dispute outcomes.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TransparencyReport

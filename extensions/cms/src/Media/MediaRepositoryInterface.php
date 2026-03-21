@@ -12,6 +12,7 @@ use Pulsar\Api\Pagination\PaginationResult;
  *
  * @psalm-api Public binding contract; implemented by DbMediaRepository and
  *            consumed by media services, admin controllers, and import tools.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface MediaRepositoryInterface

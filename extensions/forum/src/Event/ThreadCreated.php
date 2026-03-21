@@ -9,6 +9,7 @@ use Pulsar\Extension\Forum\Domain\ThreadType;
 
 /**
  * Dispatched when a new thread is created.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ThreadCreated

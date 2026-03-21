@@ -15,6 +15,7 @@ use function is_string;
 
 /**
  * Inbound webhook event DTO.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class WebhookEvent

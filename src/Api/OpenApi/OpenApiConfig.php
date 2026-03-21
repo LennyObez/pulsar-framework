@@ -15,6 +15,7 @@ use function is_string;
  *
  * Controls the metadata, server URLs, security schemes, and output
  * settings for the generated OpenAPI specification.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class OpenApiConfig

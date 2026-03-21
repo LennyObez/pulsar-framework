@@ -28,6 +28,7 @@ use const JSON_UNESCAPED_SLASHES;
  *
  * The rendered output integrates with ConsentManagerInterface so that
  * consent state is tracked server-side for compliance evidence.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ConsentBannerRenderer

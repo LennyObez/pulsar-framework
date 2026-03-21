@@ -19,6 +19,7 @@ use function is_array;
  *
  * Stores serialized query results and maintains a tag index so that
  * writes to specific tables can invalidate all related cached queries.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class QueryCache implements QueryCacheInterface

@@ -31,6 +31,7 @@ use function bin2hex;
  *
  * When a RequestContextHolder is available, auto-enriches entries with
  * correlation/causation IDs and auto-fills actor from context.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class AuditLogger implements AuditLoggerInterface

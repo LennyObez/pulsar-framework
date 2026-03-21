@@ -19,6 +19,7 @@ use Pulsar\Api\Api;
  * - email: email, email_verified
  * - address: address
  * - phone: phone_number, phone_number_verified
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface UserClaimsProviderInterface

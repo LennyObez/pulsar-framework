@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Contract for password hashing operations.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface PasswordHasherInterface

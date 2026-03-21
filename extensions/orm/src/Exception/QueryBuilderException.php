@@ -11,6 +11,7 @@ use function sprintf;
 
 /**
  * Thrown when query builder operations are invalid.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class QueryBuilderException extends OrmException

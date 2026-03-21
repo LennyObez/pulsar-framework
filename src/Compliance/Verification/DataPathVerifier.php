@@ -21,6 +21,7 @@ use function strtolower;
  * Inspects route definitions (provided as structured arrays) to confirm that
  * routes tagged with data classifications have the required middleware stack
  * for the active compliance profile.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DataPathVerifier

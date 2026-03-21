@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Captures all information needed to prove what the user consented to,
  * when, and in what context.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ConsentEvidence

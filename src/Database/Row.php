@@ -19,6 +19,7 @@ use function stream_get_contents;
 
 /**
  * Readonly single-row value object with typed accessors.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Row

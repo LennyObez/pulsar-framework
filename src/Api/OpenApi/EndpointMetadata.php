@@ -15,6 +15,7 @@ use Pulsar\Api\OpenApi\Attribute\ApiResponse;
  * Represents all the information needed to generate an OpenAPI path item
  * without performing any runtime reflection. Instances are constructed by
  * a build-time scanner that reads route registrations and attribute metadata.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class EndpointMetadata

@@ -12,6 +12,7 @@ use Pulsar\Extension\Forum\Domain\VoteDirection;
  * A user's vote on a thread.
  *
  * Unique per (tenant, user, thread): enforced at the repository/DB level.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ThreadVote

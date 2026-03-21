@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * Design changes must be identified, documented, reviewed, verified,
  * validated, and approved before implementation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DesignChange

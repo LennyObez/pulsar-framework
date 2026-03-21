@@ -19,6 +19,7 @@ use function is_string;
  * Dispatched when authentication fails.
  *
  * Supports controls for HIPAA access logging and intrusion detection.
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]

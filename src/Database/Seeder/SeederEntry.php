@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Represents a discovered seeder file.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SeederEntry

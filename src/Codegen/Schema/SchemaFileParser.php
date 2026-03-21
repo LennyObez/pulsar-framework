@@ -44,6 +44,7 @@ use const JSON_THROW_ON_ERROR;
  *       }
  *     }
  *   }
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SchemaFileParser

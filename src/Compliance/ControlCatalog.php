@@ -15,6 +15,7 @@ use function count;
  * Controls are registered at boot time by framework mapping classes.
  * Once populated, the catalog provides filtered views by framework, status,
  * and individual lookup by control ID.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ControlCatalog

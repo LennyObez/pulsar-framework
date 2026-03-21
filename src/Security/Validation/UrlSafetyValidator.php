@@ -23,6 +23,7 @@ use const FILTER_VALIDATE_IP;
  *
  * Rejects URLs that resolve to RFC 1918 private addresses, loopback, link-local,
  * and cloud metadata endpoints.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class UrlSafetyValidator

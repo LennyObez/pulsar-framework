@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Design and development lifecycle phases per ISO 13485 Section 7.3.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum DesignPhase: string

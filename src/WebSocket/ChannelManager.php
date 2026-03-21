@@ -20,6 +20,7 @@ use function str_starts_with;
  * - Public channels: anyone can subscribe
  * - Private channels (prefix "private-"): require authentication
  * - Presence channels (prefix "presence-"): track who is online
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ChannelManager

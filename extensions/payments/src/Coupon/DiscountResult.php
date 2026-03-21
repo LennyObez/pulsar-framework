@@ -9,6 +9,7 @@ use Pulsar\Extension\Payments\Domain\Money;
 
 /**
  * Result of applying a discount to an amount.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DiscountResult

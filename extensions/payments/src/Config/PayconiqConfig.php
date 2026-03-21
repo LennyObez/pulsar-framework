@@ -15,6 +15,7 @@ use function is_string;
  *
  * Payconiq is a mobile payment solution popular in Belgium, Luxembourg,
  * and the Netherlands. Supports both online and point-of-sale payments.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PayconiqConfig

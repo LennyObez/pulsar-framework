@@ -20,6 +20,7 @@ use function time;
  *
  * Suitable for single-process deployments and testing; for multi-process
  * deployments, use a store-backed implementation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class SlidingWindowRateLimiter implements RateLimiterInterface

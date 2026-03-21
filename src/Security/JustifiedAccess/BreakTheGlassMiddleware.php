@@ -39,6 +39,7 @@ use function trim;
  * 4. Recorded with mandatory justification
  *
  * Activated via the X-Break-The-Glass: true header.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class BreakTheGlassMiddleware implements MiddlewareInterface

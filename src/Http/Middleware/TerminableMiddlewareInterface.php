@@ -18,6 +18,7 @@ use Pulsar\Api\Api;
  *
  * Common uses: flushing metrics/logs, closing connections, updating
  * caches, sending async notifications, and recording analytics.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface TerminableMiddlewareInterface extends MiddlewareInterface

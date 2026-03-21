@@ -20,6 +20,7 @@ use function implode;
  *
  * @psalm-api Public DTO passed to ImportExportServiceInterface::export() and
  *            MediaBundleExporterInterface; admin export forms construct it.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ExportOptions

@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
  * Health status per the grpc.health.v1.Health specification.
  *
  * @see https://github.com/grpc/grpc/blob/master/doc/health-checking.md
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum HealthStatus: int

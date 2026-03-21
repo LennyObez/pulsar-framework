@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Immutable DTO containing metadata about a verified electronic signature.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SignatureInfo

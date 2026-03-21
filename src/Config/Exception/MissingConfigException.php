@@ -17,6 +17,7 @@ use function sprintf;
  *
  * Provides a clear message identifying the missing file and suggesting
  * how to create it (either manually or via `pulsar new:config`).
+ * @api
  */
 #[Api(since: '1.0.0-rc.11')]
 final class MissingConfigException extends RuntimeException

@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Contract for runtime hygiene profiles that reset global state between requests.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface HygieneProfileInterface

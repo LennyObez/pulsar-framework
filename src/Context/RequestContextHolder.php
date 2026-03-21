@@ -25,6 +25,7 @@ use WeakMap;
  * Storage is keyed by `Fiber::getCurrent()` — or a stable `$rootKey` for
  * code running outside any Fiber — using a `WeakMap`. When a Fiber
  * completes and is garbage-collected its slot is reclaimed automatically.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class RequestContextHolder implements ResettableInterface

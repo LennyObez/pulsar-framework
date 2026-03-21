@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Admin resource operations for permission checks.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum ResourceOperation: string

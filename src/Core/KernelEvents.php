@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * These events are dispatched at key points during kernel operation.
  * Extensions and middleware can listen for these events to perform
  * work at specific lifecycle stages.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum KernelEvents: string

@@ -11,6 +11,7 @@ use Pulsar\Observability\Tracing\SpanProcessorInterface;
 
 /**
  * Dispatches span lifecycle events to multiple processors.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CompositeSpanProcessor implements SpanProcessorInterface

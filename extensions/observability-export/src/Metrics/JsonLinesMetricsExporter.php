@@ -19,6 +19,7 @@ use const PHP_EOL;
  *
  * Buffers snapshots in memory and flushes to disk when the threshold is reached.
  * Uses flock(LOCK_EX) for multi-process safety.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class JsonLinesMetricsExporter implements MetricsExporterInterface

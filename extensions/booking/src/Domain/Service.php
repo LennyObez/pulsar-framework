@@ -10,6 +10,7 @@ use Pulsar\Extension\Payments\Domain\Money;
 
 /**
  * Bookable service entity.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Service

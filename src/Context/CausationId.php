@@ -21,6 +21,7 @@ use function strtolower;
  *
  * 128-bit (32 lowercase hex characters) value. Each new operation generates
  * a fresh causation ID to track causal chains.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CausationId

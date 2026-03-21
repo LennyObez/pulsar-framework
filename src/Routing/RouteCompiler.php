@@ -28,6 +28,7 @@ use function var_export;
  * for fast matching without recompilation at request time.
  *
  * Closure-based handlers are skipped (not serializable).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class RouteCompiler

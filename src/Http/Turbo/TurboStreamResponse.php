@@ -18,6 +18,7 @@ use Pulsar\Http\ResponseStatus;
  * DOM mutation instruction.
  *
  * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement: Psalm does not yet infer clone() return type
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TurboStreamResponse

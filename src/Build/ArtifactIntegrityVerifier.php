@@ -27,6 +27,7 @@ use const JSON_UNESCAPED_UNICODE;
  * Computes SHA-256 hashes of each artifact and compares them against
  * the hashes stored in the build manifest. Optionally verifies the
  * manifest signature using the central Keyring.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ArtifactIntegrityVerifier

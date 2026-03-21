@@ -20,6 +20,7 @@ use function substr;
  * string response bodies. This is the default body representation
  * for factory methods like Response::json(), Response::html(), and
  * Response::text().
+ * @api
  */
 #[Api(since: '1.0.0-rc.11')]
 final class StringStream implements StreamInterface

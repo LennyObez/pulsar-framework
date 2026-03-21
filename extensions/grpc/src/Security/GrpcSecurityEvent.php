@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Security events emitted by the gRPC extension for audit logging.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum GrpcSecurityEvent: string

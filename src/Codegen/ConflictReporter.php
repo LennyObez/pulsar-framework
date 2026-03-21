@@ -15,6 +15,7 @@ use const SORT_STRING;
  * Reports which files would be overwritten during code generation.
  *
  * Output is deterministic: same inputs always produce the same sorted conflict list.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ConflictReporter

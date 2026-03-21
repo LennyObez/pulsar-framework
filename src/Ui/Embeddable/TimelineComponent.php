@@ -16,6 +16,7 @@ use const ENT_QUOTES;
  * Embeddable timeline component for activity/audit trail visualization.
  *
  * Renders a vertical timeline of events. Works as <pulsar-timeline> custom element.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class TimelineComponent extends EmbeddableComponent

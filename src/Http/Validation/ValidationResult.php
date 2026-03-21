@@ -12,6 +12,7 @@ use function array_values;
 
 /**
  * Immutable collection of validation violations.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ValidationResult

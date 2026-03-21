@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Request component that a WAF rule inspects.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum WafTarget: string

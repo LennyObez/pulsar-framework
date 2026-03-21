@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * DTO representing a persisted notification record from the database.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class StoredNotification

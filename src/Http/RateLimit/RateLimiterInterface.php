@@ -18,6 +18,7 @@ use Pulsar\Api\Api;
  * requests than the limit) rather than destructive. For strict atomicity in
  * multi-process deployments, use {@see SqliteRateLimiter} which uses database
  * transactions, or a Redis-based implementation with Lua scripting.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface RateLimiterInterface

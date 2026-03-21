@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
  * Enumeration of security controls that contribute to the posture score.
  *
  * Each control has a weight (points deducted when missing).
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum SecurityControl: string

@@ -19,6 +19,7 @@ use const E_USER_DEPRECATED;
  *
  * Maintains a set of already-reported symbols to ensure each deprecation
  * is only triggered once per process.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class DeprecationReporter

@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * Each extension or module that stores personal data should register
  * a collector that can gather all data for a given subject ID. The
  * DsarRequestHandler orchestrates all collectors during a DSAR.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface DsarCollectorInterface

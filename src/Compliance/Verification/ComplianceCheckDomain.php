@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Categorizes compliance checks by security domain.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum ComplianceCheckDomain: string

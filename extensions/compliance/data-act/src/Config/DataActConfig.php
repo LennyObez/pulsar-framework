@@ -16,6 +16,7 @@ use function is_string;
  *
  * Configures data portability formats, interoperability profiles,
  * cloud switching timelines, and third-party access policies.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DataActConfig

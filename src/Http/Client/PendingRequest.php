@@ -23,6 +23,7 @@ use const JSON_UNESCAPED_UNICODE;
  *
  * All builder methods return a new instance (immutable builder pattern)
  * to avoid state leaking between requests.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PendingRequest

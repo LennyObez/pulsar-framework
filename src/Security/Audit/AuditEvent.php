@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Types of auditable security events.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum AuditEvent: string

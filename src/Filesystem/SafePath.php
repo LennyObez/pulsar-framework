@@ -34,6 +34,7 @@ use function str_starts_with;
  * distinguish "untrusted input was malicious" from "path was
  * legitimately empty"; rejecting via a thrown exception would force
  * try/catch on every option-parse path.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SafePath

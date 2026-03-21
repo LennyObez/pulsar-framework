@@ -14,6 +14,7 @@ use Pulsar\Api\Api;
  * Under GDPR Article 12(3), controllers must respond to DSARs within
  * 30 calendar days. This tracker monitors open requests and alerts
  * when deadlines are approaching or have passed.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DsarDeadlineTracker

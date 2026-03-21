@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Saga state is saved after each step to ensure durable execution
  * that survives process restarts.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface SagaStateStorageInterface

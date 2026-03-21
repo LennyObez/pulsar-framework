@@ -16,6 +16,7 @@ use function sprintf;
  * Defines what claim must be present, with what minimum confidence,
  * and from which sources it is accepted. Used by the policy engine
  * to evaluate whether a ClaimSet satisfies a rule's requirements.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ClaimRequirement

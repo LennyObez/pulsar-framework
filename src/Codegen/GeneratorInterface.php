@@ -12,6 +12,7 @@ use Pulsar\Codegen\Schema\EntityDefinition;
  *
  * Implementations produce a set of generated files from an entity definition
  * and generator configuration.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface GeneratorInterface

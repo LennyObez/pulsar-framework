@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
  * Contract for Markdown-to-HTML rendering in the forum.
  *
  * Output MUST be passed through ForumBodyPolicy before storage/display.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface MarkdownRendererInterface

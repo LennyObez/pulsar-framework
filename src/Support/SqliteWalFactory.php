@@ -20,6 +20,7 @@ use function sprintf;
  * Provides a standard setup for SQLite databases: WAL mode for
  * concurrent read access, a 5-second busy timeout, and automatic
  * directory creation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SqliteWalFactory

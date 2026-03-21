@@ -17,6 +17,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public extension contract; implementations are tagged with
  *            cms.account.section_provider and aggregated by AccountSectionRegistry.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface AccountSectionProviderInterface

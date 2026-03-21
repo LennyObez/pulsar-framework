@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Classification of serious incidents per MDR Article 2(65).
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum SeriousIncidentType: string

@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * A named GraphQL object type with a set of fields.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ObjectType

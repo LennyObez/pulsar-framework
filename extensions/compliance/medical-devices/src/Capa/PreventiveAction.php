@@ -15,6 +15,7 @@ use Pulsar\Api\Api;
  * or proactive quality improvement.
  *
  * @see ISO 13485:2016 Section 8.5.3
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PreventiveAction

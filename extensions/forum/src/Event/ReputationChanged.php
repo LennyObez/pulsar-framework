@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Dispatched when a user's reputation score changes.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ReputationChanged

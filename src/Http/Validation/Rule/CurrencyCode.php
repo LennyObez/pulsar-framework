@@ -16,6 +16,7 @@ use function sprintf;
 
 /**
  * Validates ISO 4217 currency codes. Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CurrencyCode implements RuleInterface

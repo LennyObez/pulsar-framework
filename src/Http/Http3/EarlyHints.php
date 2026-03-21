@@ -23,6 +23,7 @@ use function sprintf;
  * For nginx, use fastcgi_early_hints to proxy these headers.
  *
  * @see https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/103
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class EarlyHints

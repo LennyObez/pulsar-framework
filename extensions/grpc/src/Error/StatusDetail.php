@@ -18,6 +18,7 @@ use function is_string;
  * allowing services to communicate machine-readable error details.
  *
  * @see https://cloud.google.com/apis/design/errors#error_model
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class StatusDetail

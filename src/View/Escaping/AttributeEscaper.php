@@ -19,6 +19,7 @@ use function mb_substr;
  *
  * Multi-byte UTF-8 characters are properly handled by iterating over
  * codepoints rather than raw bytes.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AttributeEscaper implements EscaperInterface

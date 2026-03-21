@@ -13,6 +13,7 @@ use function is_string;
  * An interaction between a patient and healthcare provider(s).
  *
  * @see https://www.hl7.org/fhir/encounter.html
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Encounter extends FhirResource

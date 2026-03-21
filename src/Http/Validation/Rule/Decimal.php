@@ -17,6 +17,7 @@ use function strrchr;
 
 /**
  * Validates the number of decimal places. Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Decimal implements RuleInterface

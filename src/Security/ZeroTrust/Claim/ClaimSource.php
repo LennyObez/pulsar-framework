@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * Each signal provider produces claims tagged with the source that generated them.
  * This allows policy rules to require claims from specific, trusted sources and
  * enables audit trails to track which signals contributed to a decision.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum ClaimSource: string

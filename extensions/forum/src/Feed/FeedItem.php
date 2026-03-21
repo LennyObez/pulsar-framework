@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * A single item in an RSS feed.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class FeedItem

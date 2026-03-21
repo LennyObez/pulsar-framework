@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * Financial entities must maintain a register of all contractual arrangements
  * on the use of ICT services provided by third-party providers.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ThirdPartyProvider

@@ -13,6 +13,7 @@ use function sprintf;
  *
  * Live regions announce content changes to screen readers without
  * requiring the user to navigate to the updated area.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class LiveRegion

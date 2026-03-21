@@ -15,6 +15,7 @@ use function sprintf;
  * At boot time (or on demand), compares current system configuration against
  * the resolved ComplianceProfile constraints. Any violation is collected as a
  * RegressionViolation and optionally throws ComplianceRegressionException.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RegressionDetector

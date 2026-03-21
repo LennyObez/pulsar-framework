@@ -13,6 +13,7 @@ use function is_string;
 
 /**
  * WAF engine configuration.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class WafConfig

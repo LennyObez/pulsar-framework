@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * Electronic seals are organization-level (not personal) signatures used to
  * guarantee the origin and integrity of documents. They serve a similar purpose
  * to a corporate stamp but in digital form.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ElectronicSealServiceInterface

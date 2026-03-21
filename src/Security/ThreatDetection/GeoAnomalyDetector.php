@@ -21,6 +21,7 @@ use function time;
  * then Tokyo within 30 minutes), this indicates credential compromise.
  *
  * Compliance: DORA Art.17 (incident detection), ISO 27001 A.8.16.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class GeoAnomalyDetector implements ThreatDetectorInterface

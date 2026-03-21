@@ -17,6 +17,7 @@ use function is_string;
  * this DTO instead of maintaining their own scattered copies of company data.
  *
  * Maps from `config/business.php` with environment variable overrides.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class BusinessProfileConfig

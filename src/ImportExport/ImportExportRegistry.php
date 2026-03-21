@@ -18,6 +18,7 @@ use function sprintf;
  * Extensions register their providers during postBoot().
  * The registry is then used by CLI commands and admin UI
  * to discover and dispatch import/export operations.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ImportExportRegistry

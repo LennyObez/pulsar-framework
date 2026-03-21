@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * Used to classify the purpose of sensitive data access for compliance
  * reporting and anomaly detection. Custom categories can be added via
  * configuration.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum JustificationCategory: string

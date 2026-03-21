@@ -14,6 +14,7 @@ use function sprintf;
  * Exception for deploy check failures.
  *
  * Provides static factory methods for specific deploy error scenarios.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class DeployException extends RuntimeException

@@ -16,6 +16,7 @@ use function is_string;
  * Configuration for auto-generating /.well-known/security.txt per RFC 9116.
  *
  * @see https://www.rfc-editor.org/rfc/rfc9116
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SecurityTxtConfig

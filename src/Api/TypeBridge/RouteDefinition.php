@@ -12,6 +12,7 @@ use function sprintf;
 
 /**
  * Represents a route endpoint for TypeScript client generation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RouteDefinition

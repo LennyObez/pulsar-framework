@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
 
 /**
  * Result of verifying a mobile purchase token against a store API.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class MobileVerificationResult

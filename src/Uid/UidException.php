@@ -14,6 +14,7 @@ use function sprintf;
  *
  * Static factories make the failure mode explicit so callers can
  * pattern-match without parsing exception messages.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class UidException extends InvalidArgumentException

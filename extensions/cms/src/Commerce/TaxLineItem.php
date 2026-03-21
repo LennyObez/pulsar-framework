@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Tax calculation for a single line item.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TaxLineItem

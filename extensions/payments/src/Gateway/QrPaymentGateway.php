@@ -25,6 +25,7 @@ use function str_replace;
  * - Payment Link: Generic URL payment links encoded as QR
  *
  * Uses the existing CMS QrCodeEncoder for SVG generation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class QrPaymentGateway

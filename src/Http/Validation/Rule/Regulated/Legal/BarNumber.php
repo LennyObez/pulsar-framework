@@ -22,6 +22,7 @@ use function strlen;
  * Configurable via custom pattern for jurisdiction-specific formats.
  *
  * @see https://www.americanbar.org/
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class BarNumber implements RuleInterface

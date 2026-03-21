@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * Carries both structured data (for programmatic consumption) and
  * a text fallback (for display in clients that don't parse structured output).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ToolResult

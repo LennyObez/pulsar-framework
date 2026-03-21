@@ -20,6 +20,7 @@ use function is_string;
  *
  * Supports controls for audit trail requirements in SOX Section 302
  * and HIPAA access logging.
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]

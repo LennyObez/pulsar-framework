@@ -13,6 +13,7 @@ use Pulsar\Extension\Cms\Content\ContentTranslation;
  *
  * @psalm-api Public extension contract; implementations registered with the
  *            CMS service provider and aggregated by SeoService.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface StructuredDataGeneratorInterface

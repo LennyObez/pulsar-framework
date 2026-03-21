@@ -22,6 +22,7 @@ use Pulsar\Http\Middleware\MiddlewareInterface;
  *
  * When no subdomain mappings exist (the default), this middleware
  * is a near-zero-cost passthrough that attaches a default context.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SubdomainRoutingMiddleware implements MiddlewareInterface

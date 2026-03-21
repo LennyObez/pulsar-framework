@@ -24,6 +24,7 @@ use function round;
  *   $profiler->stop($timer);
  *
  * At request end, call finish() to produce a RequestProfile snapshot.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class RequestProfiler

@@ -13,6 +13,7 @@ use Pulsar\Api\Pagination\PaginationResult;
  *
  * @psalm-api Public binding contract; implemented by DbContentRepository and
  *            consumed by all content services, controllers, and user-land code.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ContentRepositoryInterface

@@ -16,6 +16,7 @@ use function array_merge;
  * Combines runtime verification, data-path verification, regression detection,
  * conflict detection, custom controls, and evidence chain recording into a
  * single coherent verification pipeline.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ComplianceVerificationEngine

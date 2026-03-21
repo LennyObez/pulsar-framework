@@ -14,6 +14,7 @@ use Pulsar\Extension\HealthStatus\Domain\Incident;
  * Implementations compare the current snapshot against recent history
  * to determine whether new incidents should be opened or existing
  * ones should be auto-resolved.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface IncidentDetectorInterface

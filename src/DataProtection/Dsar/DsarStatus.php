@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Status of a Data Subject Access Request.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum DsarStatus: string

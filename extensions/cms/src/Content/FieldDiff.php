@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public DTO contained in RevisionDiff::changes; consumed by
  *            admin revision-history templates.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class FieldDiff

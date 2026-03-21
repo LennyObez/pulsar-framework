@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public DTO returned from LinkHealthRepositoryInterface and
  *            LinkHealthServiceInterface; consumed by Studio panels.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class LinkHealthCheck

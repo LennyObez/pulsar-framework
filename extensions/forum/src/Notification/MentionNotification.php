@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Notification sent when a user is @mentioned in a post.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class MentionNotification implements ForumNotificationInterface

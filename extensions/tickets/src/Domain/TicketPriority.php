@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Ticket priority levels for triage and SLA enforcement.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum TicketPriority: string

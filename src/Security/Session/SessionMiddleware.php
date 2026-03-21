@@ -17,6 +17,7 @@ use Pulsar\Security\Session\Flash\FlashBag;
  *
  * Starts the session, ages flash messages, then saves and closes the session
  * after the downstream middleware pipeline has processed the request.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SessionMiddleware implements MiddlewareInterface

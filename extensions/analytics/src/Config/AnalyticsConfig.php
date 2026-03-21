@@ -14,6 +14,7 @@ use function is_string;
  *
  * Loaded from config/analytics.php during the preBoot phase.
  * All values have sensible defaults for typical deployments.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AnalyticsConfig

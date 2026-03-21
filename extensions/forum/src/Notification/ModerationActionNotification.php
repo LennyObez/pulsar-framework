@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Notification sent when a moderation action is taken on a user's content.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ModerationActionNotification implements ForumNotificationInterface

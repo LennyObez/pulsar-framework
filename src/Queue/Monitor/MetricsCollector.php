@@ -25,6 +25,7 @@ use const SORT_NUMERIC;
  * Integrates with the framework's {@see MetricRegistry} for counter/histogram
  * metrics while maintaining raw timing samples internally for percentile
  * calculations.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class MetricsCollector

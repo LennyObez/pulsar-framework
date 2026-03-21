@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * Implementations provide storage and querying of access justifications
  * for compliance review workflows.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface JustificationStoreInterface

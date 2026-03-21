@@ -11,6 +11,7 @@ use function is_array;
 
 /**
  * PSD2 extension configuration.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Psd2Config

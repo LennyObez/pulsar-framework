@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Handles circuit-breaking and failover execution, but does NOT
  * handle promotion: that is the database cluster's responsibility.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface FailoverManagerInterface

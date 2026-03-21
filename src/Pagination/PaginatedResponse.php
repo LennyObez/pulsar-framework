@@ -31,6 +31,7 @@ use const JSON_UNESCAPED_UNICODE;
  * ```
  *
  * @template T
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PaginatedResponse

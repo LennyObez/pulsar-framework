@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * The first function to return a non-null EdgeResponse wins.
  * If all functions return null, the request passes through to origin.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class EdgeFunctionPipeline

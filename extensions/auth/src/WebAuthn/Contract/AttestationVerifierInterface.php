@@ -16,6 +16,7 @@ use Pulsar\Extension\Auth\WebAuthn\Exception\WebAuthnException;
  * (fido-u2f, android-key, apple) added based on demand.
  *
  * Attestation format policy is configurable; disallowed formats are rejected.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface AttestationVerifierInterface

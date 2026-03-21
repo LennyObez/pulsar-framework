@@ -20,6 +20,7 @@ use function array_map;
  *
  * Combines thread reports and post reports into a unified view
  * with target_type discrimination. Supports bulk dismiss and action.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ForumReportResource implements DataResourceInterface

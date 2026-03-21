@@ -13,6 +13,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public enum referenced by Content::status; consumed by content
  *            services, admin views, and user-land code.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum PublishingStatus: string

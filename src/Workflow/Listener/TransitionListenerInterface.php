@@ -15,6 +15,7 @@ use Pulsar\Workflow\Storage\WorkflowInstance;
  * Each hook is called at its respective phase of the transition process.
  * Implementations should be fast and side-effect-aware; heavy work should
  * be deferred to async handlers via the event dispatcher.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface TransitionListenerInterface

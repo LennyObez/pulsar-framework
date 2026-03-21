@@ -14,6 +14,7 @@ use function sprintf;
  *
  * These are programming errors — callers must not catch them and
  * continue; fix the call site instead.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class TimerException extends LogicException

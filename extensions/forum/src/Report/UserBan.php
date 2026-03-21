@@ -15,6 +15,7 @@ use Pulsar\Extension\Forum\Support\UuidGenerator;
  * Supports temporary (with expiry) and permanent bans. A ban can be revoked
  * by a moderator, which sets revokedAt without deleting the record for audit
  * purposes.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class UserBan

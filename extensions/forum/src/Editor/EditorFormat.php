@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Supported editor input/output formats.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum EditorFormat: string

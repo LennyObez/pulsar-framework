@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * Provides non-repudiation evidence that a message was sent and/or received
  * per eIDAS Articles 43-44 on electronic registered delivery services.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DeliveryReceipt

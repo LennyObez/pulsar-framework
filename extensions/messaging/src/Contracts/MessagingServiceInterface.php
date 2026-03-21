@@ -13,6 +13,7 @@ use Pulsar\Extension\Messaging\Domain\MessageType;
 
 /**
  * Core messaging service for creating conversations and sending encrypted messages.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface MessagingServiceInterface

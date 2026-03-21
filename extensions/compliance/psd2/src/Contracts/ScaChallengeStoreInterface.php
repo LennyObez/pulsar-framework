@@ -12,6 +12,7 @@ use Pulsar\Extension\Psd2\Domain\ScaChallenge;
  *
  * Challenges are short-lived and must be stored atomically
  * to prevent race conditions during verification.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ScaChallengeStoreInterface

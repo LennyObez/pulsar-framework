@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Emitted when a notification delivery fails on a channel.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class NotificationFailed extends NotificationEvent

@@ -18,6 +18,7 @@ use function str_starts_with;
  *
  * Prevents directory traversal attacks and ensures all output stays within
  * permitted directories.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PathValidator

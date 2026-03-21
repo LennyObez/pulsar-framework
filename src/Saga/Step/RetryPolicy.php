@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Defines the maximum number of attempts and backoff strategy
  * for either forward or compensation direction of a saga step.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RetryPolicy

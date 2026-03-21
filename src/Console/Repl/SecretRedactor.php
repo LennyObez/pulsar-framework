@@ -19,6 +19,7 @@ use function strlen;
  * Redacts secrets from REPL output using multiple strategies:
  * known secret values, DSN credentials, #[Sensitive] properties,
  * and the framework SensitiveDataScrubber for array keys.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class SecretRedactor

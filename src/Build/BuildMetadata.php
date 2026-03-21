@@ -17,6 +17,7 @@ use const JSON_UNESCAPED_UNICODE;
 
 /**
  * Metadata about a build: when it was built, with what PHP and Pulsar versions, and on what host.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class BuildMetadata

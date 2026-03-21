@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * When a request matches the resource pattern and action, the policy engine checks
  * whether the ClaimSet satisfies all requirements. The decision fields control
  * what happens when requirements are fully met, partially met, or unmet.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PolicyRule

@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Implementations are responsible for persisting, retrieving, and managing
  * job records in the underlying transport (database, memory, sync, etc.).
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface QueueDriverInterface

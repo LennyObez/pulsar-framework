@@ -17,6 +17,7 @@ use function sprintf;
 /**
  * Field is required when ANY of the specified fields are absent (null or missing) in data.
  * Does NOT skip null; it checks the condition and fails if required and missing.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RequiredWithout implements RuleInterface

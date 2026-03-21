@@ -18,6 +18,7 @@ use function sprintf;
 
 /**
  * Value must be a valid case of a backed enum. Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class EnumRule implements RuleInterface

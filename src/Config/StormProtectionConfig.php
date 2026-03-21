@@ -14,6 +14,7 @@ use function min;
 
 /**
  * Storm protection sub-configuration for event dispatching.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class StormProtectionConfig

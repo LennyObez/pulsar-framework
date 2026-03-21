@@ -15,6 +15,7 @@ use function sprintf;
  * health status, and arbitrary metadata for a single service endpoint.
  *
  * @param array<string, string> $metadata
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ServiceInstance

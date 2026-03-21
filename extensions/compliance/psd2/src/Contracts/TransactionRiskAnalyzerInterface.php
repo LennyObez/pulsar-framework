@@ -14,6 +14,7 @@ use Pulsar\Extension\Psd2\Exception\Psd2Exception;
  * Performs fraud scoring using velocity checks, amount thresholds,
  * and configurable anomaly detection rules to determine whether
  * SCA is required or an exemption applies.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface TransactionRiskAnalyzerInterface

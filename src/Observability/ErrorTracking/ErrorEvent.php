@@ -14,6 +14,7 @@ use Throwable;
 
 /**
  * Readonly value object representing a single error occurrence.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ErrorEvent

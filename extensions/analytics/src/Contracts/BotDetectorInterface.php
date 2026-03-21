@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Detects whether a request is from a known bot.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface BotDetectorInterface

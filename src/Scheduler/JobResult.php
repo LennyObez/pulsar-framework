@@ -11,6 +11,7 @@ use Throwable;
 
 /**
  * Result of a scheduled job execution.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class JobResult

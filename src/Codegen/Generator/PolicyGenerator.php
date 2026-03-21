@@ -21,6 +21,7 @@ use function rtrim;
  *
  * DENY-BY-DEFAULT: all operations (view, create, update, delete) return false.
  * Developers must explicitly grant access per operation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class PolicyGenerator extends AbstractGenerator

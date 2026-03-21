@@ -25,6 +25,7 @@ use function strlen;
  *
  * Shows the failing line with surrounding code, colorized exception
  * chain, and condensed stack frames for readable error output.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ErrorRenderer

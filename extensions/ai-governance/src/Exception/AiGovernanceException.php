@@ -23,6 +23,7 @@ use function sprintf;
  * the configured gates. None of these are runtime failures of the AI
  * subsystem itself, so consumers handle them like any other PHP
  * argument-shape exception.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class AiGovernanceException extends InvalidArgumentException

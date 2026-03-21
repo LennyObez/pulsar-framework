@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
  * Verifies an external CAPTCHA service response.
  *
  * Supports hCaptcha and Cloudflare Turnstile (not reCAPTCHA; privacy concern).
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface CaptchaVerifierInterface extends AntiSpamCheckInterface

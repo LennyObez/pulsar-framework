@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * QR code payment format standards.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum QrPaymentFormat: string

@@ -25,6 +25,7 @@ use function sprintf;
  *
  * Definitions are immutable once constructed. Use {@see DefinitionBuilder}
  * for fluent construction with validation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class WorkflowDefinition

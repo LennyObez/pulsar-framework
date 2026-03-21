@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * A goal definition that triggers conversions on matching events.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Goal

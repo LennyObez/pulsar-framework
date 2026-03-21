@@ -22,6 +22,7 @@ use function rtrim;
  *
  * Maps PHP types to appropriate validation rules and produces a rules class
  * per entity with `rules()` returning a field-to-rules map.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ValidationRuleGenerator extends AbstractGenerator

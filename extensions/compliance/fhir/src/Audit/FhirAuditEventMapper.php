@@ -19,6 +19,7 @@ use function count;
  * resources for interoperability with healthcare systems.
  *
  * @see https://www.hl7.org/fhir/auditevent.html
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class FhirAuditEventMapper

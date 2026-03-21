@@ -10,6 +10,7 @@ use function sprintf;
 
 /**
  * Normalized RGB color with alpha channel.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ParsedColor

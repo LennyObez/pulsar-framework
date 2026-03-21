@@ -11,6 +11,7 @@ use function is_string;
 
 /**
  * API credentials and endpoint configuration for a single AI provider.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ProviderCredentials

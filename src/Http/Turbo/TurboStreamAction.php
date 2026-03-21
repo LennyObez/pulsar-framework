@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Each action describes how to modify the DOM when a stream
  * message is received by the client.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum TurboStreamAction: string

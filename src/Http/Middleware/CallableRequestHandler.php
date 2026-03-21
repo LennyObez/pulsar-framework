@@ -13,6 +13,7 @@ use Pulsar\Api\Api;
 
 /**
  * Adapts a callable into a PSR-15 RequestHandler.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CallableRequestHandler implements RequestHandlerInterface

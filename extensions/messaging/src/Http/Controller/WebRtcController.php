@@ -14,6 +14,7 @@ use function is_string;
 
 /**
  * REST API controller for WebRTC call initiation and ICE configuration.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class WebRtcController

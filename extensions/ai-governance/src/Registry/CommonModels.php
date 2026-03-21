@@ -24,6 +24,7 @@ use Pulsar\Extension\AiGovernance\Enum\AiModelStatus;
  *
  * @psalm-api Public factory class — methods are called by user-land
  *            governance bootstrap code, not by framework internals.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class CommonModels

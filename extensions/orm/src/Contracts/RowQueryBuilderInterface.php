@@ -18,6 +18,7 @@ use Pulsar\Extension\Orm\Domain\SortDirection;
  *
  * No insert/update/delete on the public interface: all writes
  * go through repositories with MutationContext.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface RowQueryBuilderInterface

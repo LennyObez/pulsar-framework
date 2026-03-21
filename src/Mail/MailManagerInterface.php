@@ -9,6 +9,7 @@ use Pulsar\Mail\Exception\MailException;
 
 /**
  * Application mail manager: public API for sending mail.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface MailManagerInterface

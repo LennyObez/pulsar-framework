@@ -17,6 +17,7 @@ use function is_string;
 
 /**
  * Immutable value object representing an authenticated identity.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Identity implements IdentityInterface

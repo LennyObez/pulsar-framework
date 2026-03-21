@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Verifies webhook source IPs against per-provider allowlists.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface IpAllowlistInterface

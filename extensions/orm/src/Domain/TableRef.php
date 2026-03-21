@@ -11,6 +11,7 @@ use function sprintf;
 
 /**
  * Table reference with optional alias.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TableRef

@@ -22,6 +22,7 @@ use function strtolower;
  *
  * Compliance: DORA Art.17 (incident detection), NIS2 Art.21(b),
  * PCI-DSS Req.6.4/11 (security monitoring), ISO 27001 A.8.16.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class InjectionAttemptDetector implements ThreatDetectorInterface

@@ -19,6 +19,7 @@ use function sprintf;
  * In persistent runtimes, cold connections on first request add latency.
  * ConnectionWarmup runs during the boot phase to establish connections
  * before any requests arrive, ensuring consistent first-request latency.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ConnectionWarmup

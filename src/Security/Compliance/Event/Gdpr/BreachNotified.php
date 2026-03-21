@@ -16,6 +16,7 @@ use function is_string;
  * Records that a supervisory authority has been notified of a breach.
  *
  * Supports controls for GDPR Article 33 notification to supervisory authority within 72 hours.
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]

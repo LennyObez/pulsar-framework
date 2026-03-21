@@ -11,6 +11,7 @@ use function str_replace;
 
 /**
  * Safe LIKE pattern builder that escapes user input.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class LikePattern

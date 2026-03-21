@@ -14,6 +14,7 @@ use Pulsar\Resilience\HealthCheck\HealthStatus;
  *
  * Each snapshot captures the overall system status, individual check
  * results with latency, total duration, and the exact capture time.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class HealthSnapshot

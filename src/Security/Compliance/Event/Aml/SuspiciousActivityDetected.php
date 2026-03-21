@@ -18,6 +18,7 @@ use function is_string;
  * Records detection of suspicious activity requiring SAR filing.
  *
  * Supports controls for AML suspicious activity reporting requirements.
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]

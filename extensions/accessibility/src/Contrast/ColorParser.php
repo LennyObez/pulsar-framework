@@ -14,6 +14,7 @@ use function strlen;
  *
  * Supports hex (#RGB, #RRGGBB, #RRGGBBAA), rgb()/rgba(),
  * hsl()/hsla(), and named CSS colors.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ColorParser

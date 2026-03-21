@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Represents a single component story (a rendered example with specific props).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ComponentStory

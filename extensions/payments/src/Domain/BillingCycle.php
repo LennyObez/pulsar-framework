@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
 
 /**
  * Billing cycle intervals for recurring subscriptions.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum BillingCycle: string

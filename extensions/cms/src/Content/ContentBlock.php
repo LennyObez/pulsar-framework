@@ -15,6 +15,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public DTO returned from ContentBlockRepositoryInterface; consumed
  *            by the block editor frontend bridge and template rendering.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ContentBlock

@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Aggregates raw analytics data into hourly and daily statistics.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface AggregationServiceInterface

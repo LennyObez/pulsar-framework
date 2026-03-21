@@ -11,6 +11,7 @@ use function sprintf;
 
 /**
  * Thrown when entity mapping metadata is invalid or incomplete.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class MappingException extends OrmException

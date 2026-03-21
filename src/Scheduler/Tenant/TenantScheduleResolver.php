@@ -13,6 +13,7 @@ use Pulsar\Tenancy\TenantProviderInterface;
 
 /**
  * Resolves scheduled jobs and maintenance windows per tenant.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TenantScheduleResolver

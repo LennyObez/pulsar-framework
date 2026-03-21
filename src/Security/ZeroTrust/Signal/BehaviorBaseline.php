@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * Tracks typical request rates and activity patterns to enable
  * anomaly detection by the behavior signal provider.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class BehaviorBaseline

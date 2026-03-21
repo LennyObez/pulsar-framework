@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Strategy for resolving the API version from a request.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum VersionStrategy: string

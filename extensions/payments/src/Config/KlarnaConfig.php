@@ -15,6 +15,7 @@ use function is_string;
  *
  * Supports Klarna Pay Later, Pay Now, and Slice It (installments).
  * Popular across Nordics and DACH regions. Integrated via Stripe.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class KlarnaConfig

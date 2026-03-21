@@ -11,6 +11,7 @@ use function sprintf;
 
 /**
  * A single config validation error with path and human-readable message.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ConfigValidationError

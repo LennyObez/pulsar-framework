@@ -12,6 +12,7 @@ use function mb_strtoupper;
 
 /**
  * Converts string values to uppercase. Non-strings pass through unchanged.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Uppercase implements FilterInterface

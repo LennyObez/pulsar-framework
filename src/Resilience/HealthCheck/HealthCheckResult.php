@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
 
 /**
  * Result of a single health check.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class HealthCheckResult

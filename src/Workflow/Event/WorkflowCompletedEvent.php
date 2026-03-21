@@ -10,6 +10,7 @@ use Pulsar\Workflow\ActorContext;
 
 /**
  * Dispatched when a workflow instance reaches a final state.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class WorkflowCompletedEvent

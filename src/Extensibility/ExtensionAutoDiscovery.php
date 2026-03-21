@@ -27,6 +27,7 @@ use const JSON_THROW_ON_ERROR;
  *
  * This enables zero-configuration extension registration: install a
  * Composer package and the framework discovers it automatically.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ExtensionAutoDiscovery

@@ -14,6 +14,7 @@ use function is_bool;
  *
  * Reflection allows tools like grpcurl to discover services.
  * Disabled by default in production; enabling emits a security event.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ReflectionConfig

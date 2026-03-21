@@ -10,6 +10,7 @@ use Pulsar\Extension\Analytics\Domain\EcommerceTransaction;
 
 /**
  * E-commerce analytics tracking and reporting.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface EcommerceServiceInterface

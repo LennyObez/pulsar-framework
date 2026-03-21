@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Supported OpenAPI security scheme types.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum SecuritySchemeType: string

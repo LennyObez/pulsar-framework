@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 /**
  * A single SLA escalation rule: triggers an action when elapsed
  * time exceeds the threshold.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class EscalationRule

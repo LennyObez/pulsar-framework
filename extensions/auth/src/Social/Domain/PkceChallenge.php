@@ -18,6 +18,7 @@ use function str_replace;
  *
  * Generates a cryptographically random code verifier and its
  * SHA-256 challenge per RFC 7636. Only the S256 method is supported.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PkceChallenge

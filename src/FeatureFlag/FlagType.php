@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Types of feature flag evaluation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum FlagType: string

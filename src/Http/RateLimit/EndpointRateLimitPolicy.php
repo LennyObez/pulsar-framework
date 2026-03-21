@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * Allows stricter limits for sensitive endpoints like login, API auth,
  * and password reset while allowing more lenient limits for public reads.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class EndpointRateLimitPolicy

@@ -11,6 +11,7 @@ use Pulsar\Webhook\Exception\WebhookException;
 
 /**
  * In-memory webhook replay prevention store with Fiber-safe mutex.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class InMemoryWebhookEventLog implements WebhookEventLogInterface

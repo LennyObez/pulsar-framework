@@ -11,6 +11,7 @@ use function strlen;
 
 /**
  * Represents a WebSocket frame (RFC 6455 Section 5).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class WebSocketFrame

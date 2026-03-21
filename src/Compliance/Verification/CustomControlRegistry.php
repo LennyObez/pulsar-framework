@@ -18,6 +18,7 @@ use function count;
  * Organizations can register custom controls beyond the built-in regulatory
  * framework mappings. Custom controls appear in verification reports alongside
  * framework controls.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class CustomControlRegistry

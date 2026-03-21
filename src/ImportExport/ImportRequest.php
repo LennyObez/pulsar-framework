@@ -12,6 +12,7 @@ use function strlen;
 
 /**
  * Request DTO for an import operation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ImportRequest

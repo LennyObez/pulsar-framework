@@ -38,6 +38,7 @@ use function usort;
  * @template T
  *
  * @implements IteratorAggregate<int, T>
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class Collection implements Countable, IteratorAggregate

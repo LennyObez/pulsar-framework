@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * WebSocket frame opcodes (RFC 6455 Section 5.2).
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum WebSocketOpcode: int

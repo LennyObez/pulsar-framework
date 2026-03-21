@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Status of a data portability export request.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum ExportStatus: string

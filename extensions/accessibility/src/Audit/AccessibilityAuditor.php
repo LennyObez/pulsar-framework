@@ -20,6 +20,7 @@ use function is_file;
  * Orchestrates WCAG validators against HTML content.
  *
  * Runs all registered validators and aggregates results into an audit report.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AccessibilityAuditor

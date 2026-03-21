@@ -22,6 +22,7 @@ use function trim;
  * Typed configuration DTO for CORS (Cross-Origin Resource Sharing).
  *
  * Maps from `config/security.php` under the `cors` key.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CorsConfig

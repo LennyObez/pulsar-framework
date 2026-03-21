@@ -13,6 +13,7 @@ use Pulsar\Api\Api;
  * Supports optional per-line tax classification for EN 16931 e-invoicing
  * compliance. The taxCategory and taxRatePercent fields map directly to
  * UBL ClassifiedTaxCategory.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class InvoiceLineItem

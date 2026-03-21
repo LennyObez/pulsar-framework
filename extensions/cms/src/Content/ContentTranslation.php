@@ -18,6 +18,7 @@ use function strlen;
  * @psalm-api Public DTO returned from ContentTranslationRepositoryInterface;
  *            consumed by content services, URL resolution, and template
  *            rendering.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ContentTranslation

@@ -12,6 +12,7 @@ use function sprintf;
 
 /**
  * Exception for eIDAS compliance failures.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class EidasException extends RuntimeException

@@ -14,6 +14,7 @@ use function sprintf;
 
 /**
  * Value must be a negative number (less than zero). Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Negative implements RuleInterface

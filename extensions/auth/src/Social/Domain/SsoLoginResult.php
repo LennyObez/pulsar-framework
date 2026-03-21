@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * Combines the resolved social identity, the identity linking
  * outcome, and optionally verified ID token claims into a
  * single result object for downstream processing.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SsoLoginResult

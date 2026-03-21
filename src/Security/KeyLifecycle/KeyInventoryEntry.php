@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * Immutable record of a cryptographic key in the inventory.
  *
  * Tracks key metadata without storing actual key material.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class KeyInventoryEntry

@@ -48,6 +48,7 @@ use function substr;
  *
  * The 62 bits of randomness still provide enough collision resistance for
  * any sane workload — the birthday bound is 2^31 IDs/ms.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class UuidV7

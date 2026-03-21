@@ -13,6 +13,7 @@ use Pulsar\Api\Api;
  * between subject identifiers and their pseudonyms. This contract
  * supports controls for GDPR right-to-erasure by enabling targeted
  * deletion of individual mappings.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface PseudonymLookupInterface

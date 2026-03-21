@@ -23,6 +23,7 @@ use function implode;
  * listed in Link headers.
  *
  * @see https://httpwg.org/specs/rfc8297.html
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ServerPush

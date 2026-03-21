@@ -31,6 +31,7 @@ use function in_array;
  *
  * Denies access to sensitive services such as MasterKey, AuditLoggerInterface,
  * RoleRegistryInterface, and all Internal\ namespaced classes.
+ * @api
  */
 #[Api(since: '1.0.0')]
 /**

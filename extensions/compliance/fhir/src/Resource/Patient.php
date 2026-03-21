@@ -14,6 +14,7 @@ use function is_string;
  * Demographics and administrative information about an individual receiving care.
  *
  * @see https://www.hl7.org/fhir/patient.html
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Patient extends FhirResource

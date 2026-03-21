@@ -16,6 +16,7 @@ use Pulsar\Support\Html\Html5Parser;
  *
  * Also scans specified HTML attributes (href, src, alt, title) separately
  * to catch sensitive data leaked into URLs or metadata.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class HtmlAwareDlpScanner

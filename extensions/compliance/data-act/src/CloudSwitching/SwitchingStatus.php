@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Status of a cloud switching migration plan.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum SwitchingStatus: string

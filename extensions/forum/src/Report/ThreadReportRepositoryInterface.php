@@ -10,6 +10,7 @@ use Pulsar\Extension\Forum\Domain\ReportStatus;
 
 /**
  * Repository interface for thread reports.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ThreadReportRepositoryInterface

@@ -18,6 +18,7 @@ use Pulsar\Workflow\Storage\WorkflowInstance;
  *
  * Coordinates definition lookup, guard evaluation, state transitions,
  * event dispatching, and audit logging.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface WorkflowEngineInterface

@@ -23,6 +23,7 @@ use function is_string;
  * Subclasses define public properties with `#[Expose]` to declare the API shape.
  * The `toArray()` method only includes exposed fields, respecting authorization
  * and classification clearance from the {@see ClearanceSnapshot}.
+ * @api
  */
 #[Api(since: '1.0.0')]
 abstract class AbstractApiResource

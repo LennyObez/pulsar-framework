@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Severity level for configuration validation issues.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum ConfigSeverity: string

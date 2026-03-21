@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public binding contract; implemented by DbRedirectRepository
  *            and consumed by CmsSlugRedirectMiddleware and admin controllers.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface RedirectRepositoryInterface

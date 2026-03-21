@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Implementations should clear application caches (e.g., config,
  * route, or view caches) without side effects on persistent data.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface CachePurgeHookInterface

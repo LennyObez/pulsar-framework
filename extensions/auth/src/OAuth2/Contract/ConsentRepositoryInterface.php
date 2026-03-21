@@ -12,6 +12,7 @@ use Pulsar\Extension\Auth\OAuth2\Consent\ConsentRecord;
  *
  * Tracks which scopes a user has granted to which clients.
  * Consent decisions are audit-logged.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ConsentRepositoryInterface

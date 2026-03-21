@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Action the supervisor takes when a worker recycle is triggered.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum RecycleAction: string

@@ -24,6 +24,7 @@ use function count;
  * For each active tenant, resolves their scheduled jobs, checks for
  * maintenance windows, and dispatches due jobs via the queue with
  * proper tenant scope isolation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TenantFanOutSchedule

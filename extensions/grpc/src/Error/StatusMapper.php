@@ -16,6 +16,7 @@ use Throwable;
  *
  * Provides a standard mapping from exception types to gRPC statuses,
  * with special handling for {@see GrpcException} which carries its own status.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class StatusMapper

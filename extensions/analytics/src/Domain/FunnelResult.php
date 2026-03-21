@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Result of evaluating a funnel over a date range.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class FunnelResult

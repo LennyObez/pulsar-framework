@@ -10,6 +10,7 @@ use Pulsar\Extension\Payments\Domain\Money;
 
 /**
  * Aggregated usage summary for a billing period.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class UsageSummary

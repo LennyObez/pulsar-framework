@@ -15,6 +15,7 @@ use function array_merge;
  * Declarative fetch plan for eager relation loading.
  *
  * No lazy loading: all relations must be declared upfront via FetchPlan.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class FetchPlan

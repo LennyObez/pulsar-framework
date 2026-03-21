@@ -23,6 +23,7 @@ use Pulsar\Security\Audit\AuditOutcome;
  * loss in regulated environments (PCI Req 10, HIPAA §164.312(b), SOX ITGC,
  * GDPR Art 30) is not acceptable. Wire AuditLogger (HMAC chain + persistent
  * sink) in your composition root before deploying.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class NullAuditLogger implements AuditLoggerInterface

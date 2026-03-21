@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * FHIR specification versions supported by this extension.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum FhirVersion: string

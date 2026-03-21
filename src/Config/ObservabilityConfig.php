@@ -13,6 +13,7 @@ use function is_string;
  * Typed configuration DTO for `config/observability.php`.
  *
  * Environment variables `LOG_LEVEL` and `LOG_CHANNEL` override file values.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ObservabilityConfig

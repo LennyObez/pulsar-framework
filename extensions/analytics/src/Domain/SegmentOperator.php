@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Comparison operators for segment filters.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum SegmentOperator: string

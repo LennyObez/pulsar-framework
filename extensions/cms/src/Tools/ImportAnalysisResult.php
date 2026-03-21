@@ -14,6 +14,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public DTO returned from ImportAnalyzer::analyze(); consumed by
  *            the admin import-preview view.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ImportAnalysisResult

@@ -22,6 +22,7 @@ use function is_string;
  *
  * Supports controls for zero-trust architecture requirements
  * and PCI-DSS multi-factor authentication policies.
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]

@@ -23,6 +23,7 @@ use function sprintf;
  * externally (e.g., via a scheduler that calls the escalation transition).
  *
  * States: submitted -> level_1 -> level_2 -> ... -> level_N -> approved | rejected
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class EscalationWorkflow

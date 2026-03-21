@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * CMS block: Pricing comparison table.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PricingTableBlock

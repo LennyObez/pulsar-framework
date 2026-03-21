@@ -28,6 +28,7 @@ use Pulsar\Database\Driver;
  *
  * $schema->drop('users');
  * ```
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SchemaBuilder

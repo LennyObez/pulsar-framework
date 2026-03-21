@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * Fluent builder for contextual bindings.
  *
  * Usage: `$container->when(Consumer::class)->needs(Abstract::class)->give(Concrete::class)`
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ContextualBindingBuilder

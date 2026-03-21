@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Provides key-value configuration with optional namespacing,
  * versioning, and integrity verification via the Integrity module.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ConfigCenterInterface

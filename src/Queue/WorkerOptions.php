@@ -10,6 +10,7 @@ use Pulsar\Config\QueueConfig;
 
 /**
  * Immutable options governing worker lifecycle and resource limits.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class WorkerOptions

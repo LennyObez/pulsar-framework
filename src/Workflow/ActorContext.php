@@ -13,6 +13,7 @@ use Pulsar\Workflow\Exception\WorkflowException;
  * Guards and storage operations receive this to identify who is acting,
  * enabling audit logging and authorization checks. All fields are captured
  * at the moment of action and stored immutably in the transition log.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ActorContext

@@ -11,6 +11,7 @@ use Pulsar\Http\Validation\Violation;
 
 /**
  * Marker rule that explicitly allows null values. Always passes.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Nullable implements RuleInterface

@@ -18,6 +18,7 @@ use function is_string;
  * Records a security incident affecting ePHI.
  *
  * Supports controls for HIPAA Security Rule incident response (45 CFR 164.308(a)(6)).
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]

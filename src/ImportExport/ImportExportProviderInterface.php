@@ -13,6 +13,7 @@ use Pulsar\Api\Api;
  * its own import/export capabilities with the central registry.
  * The registry aggregates all providers and routes import/export
  * operations to the appropriate extension.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ImportExportProviderInterface

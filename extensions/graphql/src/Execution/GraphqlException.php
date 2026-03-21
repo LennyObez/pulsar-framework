@@ -9,6 +9,7 @@ use RuntimeException;
 
 /**
  * Exception for GraphQL parsing and execution errors.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class GraphqlException extends RuntimeException

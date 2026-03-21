@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Complete metadata for a mapped entity class.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class EntityMetadata

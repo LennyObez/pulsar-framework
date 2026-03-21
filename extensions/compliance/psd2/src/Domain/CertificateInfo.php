@@ -15,6 +15,7 @@ use function in_array;
  *
  * Extracts PSD2-specific fields from the certificate's
  * QcStatements extension (ETSI TS 119 495).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CertificateInfo

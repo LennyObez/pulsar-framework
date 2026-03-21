@@ -17,6 +17,7 @@ use Pulsar\Extension\DataAct\Portability\DataPortabilityService;
  * Assists customers in migrating data from one cloud service provider
  * to another, ensuring transition periods, data availability, and
  * functional equivalence as required by the regulation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class SwitchingAssistant

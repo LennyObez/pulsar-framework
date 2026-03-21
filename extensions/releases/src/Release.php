@@ -16,6 +16,7 @@ use function random_bytes;
  *
  * Tracks version history, platform targeting, release notes, and
  * beta/stable lifecycle transitions via clone-with semantics.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Release

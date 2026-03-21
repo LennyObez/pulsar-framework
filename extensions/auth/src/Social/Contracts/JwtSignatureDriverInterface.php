@@ -11,6 +11,7 @@ use Pulsar\Extension\Auth\Social\Domain\JwkKey;
  * Pluggable JWT signature verification driver.
  *
  * Implementations provide algorithm-specific signature verification (e.g. RS256, ES256).
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface JwtSignatureDriverInterface

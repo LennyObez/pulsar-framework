@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Warning level for certificate expiration alerts.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum CertificateWarningLevel: string

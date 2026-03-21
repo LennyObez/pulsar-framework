@@ -13,6 +13,7 @@ use function sprintf;
 
 /**
  * Immutable tenant value object.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Tenant

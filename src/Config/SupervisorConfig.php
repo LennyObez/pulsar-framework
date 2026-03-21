@@ -11,6 +11,7 @@ use function is_int;
 
 /**
  * Typed configuration DTO for `config/supervisor.php`.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SupervisorConfig

@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Dispatched when a saga step fails after exhausting retries.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SagaStepFailedEvent

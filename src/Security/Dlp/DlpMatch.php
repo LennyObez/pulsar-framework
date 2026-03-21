@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Represents a single sensitive data match found by the DLP engine.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DlpMatch

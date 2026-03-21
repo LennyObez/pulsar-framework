@@ -27,6 +27,7 @@ use const JSON_ERROR_NONE;
  *
  * @psalm-api Public DTO returned from SiteDefinitionParser; consumed by
  *            ImportExportService::importSiteDefinition().
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SiteDefinition

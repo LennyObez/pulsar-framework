@@ -13,6 +13,7 @@ use function sprintf;
 
 /**
  * Exception for resilience/self-healing errors.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ResilienceException extends RuntimeException

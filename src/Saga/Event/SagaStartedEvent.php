@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Dispatched when a saga execution begins.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SagaStartedEvent

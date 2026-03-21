@@ -9,6 +9,7 @@ use Pulsar\Database\ConnectionInterface;
 
 /**
  * Contract for checking database connection health.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ConnectionHealthCheckerInterface

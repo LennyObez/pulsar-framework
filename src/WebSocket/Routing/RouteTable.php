@@ -23,6 +23,7 @@ use function array_values;
  * The table is exact-match on path (no parameter extraction yet — see TD-036).
  * Globs and path parameters will land alongside the HTTP router's trie-based
  * match when `Routing\Router` gains WebSocket awareness.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class RouteTable

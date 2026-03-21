@@ -10,6 +10,7 @@ use Throwable;
 
 /**
  * Result of a retry policy execution.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RetryResult

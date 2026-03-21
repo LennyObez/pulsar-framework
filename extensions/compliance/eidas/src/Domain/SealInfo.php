@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
 
 /**
  * Result of an electronic seal verification.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SealInfo

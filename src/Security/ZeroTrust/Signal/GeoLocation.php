@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Used by the location signal provider to detect geographic anomalies
  * and impossible travel scenarios.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class GeoLocation

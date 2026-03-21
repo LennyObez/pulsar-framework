@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Registered via static `register()` from the cms BlockEditor
  *            service provider; not new'd by name.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class CoreVariations

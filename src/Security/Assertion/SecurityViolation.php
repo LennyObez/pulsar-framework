@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Represents a single security assertion violation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SecurityViolation

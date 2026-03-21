@@ -17,6 +17,7 @@ use function sprintf;
  * Any of those characters in a header value lets an attacker forge a
  * trailing header, an entire second response, or terminate the headers
  * block early — the canonical CRLF response-splitting attack.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class UnsafeHeaderException extends InvalidArgumentException

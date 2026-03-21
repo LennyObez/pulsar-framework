@@ -34,6 +34,7 @@ use function in_array;
  * Designed for build-time use only. Reads class metadata (constructor parameters,
  * public properties, property hooks) to produce OpenAPI-compatible JSON Schema
  * objects, including Pulsar compliance vendor extensions from `#[ApiField]`.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class SchemaInferrer

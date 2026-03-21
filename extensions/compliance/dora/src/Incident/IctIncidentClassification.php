@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * Incidents are classified as major or non-major based on RTS criteria
  * including number of clients affected, duration, data loss, criticality
  * of services affected, and geographical spread.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum IctIncidentClassification: string

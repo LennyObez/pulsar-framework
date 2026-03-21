@@ -15,6 +15,7 @@ use Pulsar\Extension\DataAct\Portability\ExportRequest;
  * Tracks the full lifecycle of a customer's migration from the
  * current cloud provider to a target provider, including data
  * export, transition deadlines, and completion status.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SwitchingPlan

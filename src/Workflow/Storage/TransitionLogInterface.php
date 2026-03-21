@@ -13,6 +13,7 @@ use RuntimeException;
  * Records every state transition for a workflow instance as an immutable
  * log entry. Supports full history retrieval and state reconstruction
  * from the transition log alone.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface TransitionLogInterface

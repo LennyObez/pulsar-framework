@@ -20,6 +20,7 @@ use const JSON_UNESCAPED_UNICODE;
  *
  * JSON-encodes and escapes values for safe use inside inline <script> blocks.
  * Encodes HTML-significant characters to prevent breaking out of script context.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class JsEscaper implements EscaperInterface

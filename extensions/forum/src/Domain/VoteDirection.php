@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Vote direction with integer value for score aggregation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum VoteDirection: int

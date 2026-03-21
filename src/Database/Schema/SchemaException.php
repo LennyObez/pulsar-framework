@@ -13,6 +13,7 @@ use function sprintf;
 
 /**
  * Exception for schema DDL operations.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class SchemaException extends RuntimeException

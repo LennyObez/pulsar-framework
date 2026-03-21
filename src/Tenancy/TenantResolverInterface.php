@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Interface for resolving the current tenant from an HTTP request.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface TenantResolverInterface

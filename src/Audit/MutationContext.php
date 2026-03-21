@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * Required for all write operations across Pulsar subsystems (ORM, Admin, etc.)
  * to ensure every mutation carries an auditable actor, reason, and correlation ID.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class MutationContext

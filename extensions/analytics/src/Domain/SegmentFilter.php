@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * A single filter condition within an audience segment.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SegmentFilter

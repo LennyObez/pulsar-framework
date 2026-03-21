@@ -15,6 +15,7 @@ use function array_sum;
  * along with any warnings or errors encountered during the import.
  *
  * @psalm-api Public DTO returned from ImportExportServiceInterface::import().
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ImportResult

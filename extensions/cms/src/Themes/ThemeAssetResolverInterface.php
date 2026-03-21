@@ -12,6 +12,7 @@ use Pulsar\Extension\Cms\Exception\CmsException;
  *
  * @psalm-api Public binding contract; implemented by ThemeAssetResolver and
  *            consumed by template rendering.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ThemeAssetResolverInterface

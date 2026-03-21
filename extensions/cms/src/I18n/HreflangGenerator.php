@@ -23,6 +23,7 @@ use function str_starts_with;
  *
  * @psalm-api Public service resolved from the DI container by content
  *            controllers; not instantiated by name.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class HreflangGenerator

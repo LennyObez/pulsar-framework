@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Emitted when a cache pool is cleared.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CacheClearEvent extends CacheEvent

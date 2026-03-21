@@ -15,6 +15,7 @@ use Throwable;
  * Prevents one failing dependency from consuming all available capacity
  * by limiting the number of concurrent executions per resource. When the
  * maximum is reached, additional calls are rejected immediately.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class BulkheadLimiter

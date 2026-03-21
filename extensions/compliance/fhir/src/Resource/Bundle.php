@@ -13,6 +13,7 @@ use function is_string;
  * A container for a collection of resources.
  *
  * @see https://www.hl7.org/fhir/bundle.html
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Bundle extends FhirResource

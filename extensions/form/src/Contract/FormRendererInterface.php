@@ -12,6 +12,7 @@ use Pulsar\Http\Validation\ValidationResult;
  *
  * Renders forms and fields to accessible HTML markup with
  * proper ARIA attributes, labels, and error display.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface FormRendererInterface

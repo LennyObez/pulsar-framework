@@ -15,6 +15,7 @@ use function sprintf;
  * Base exception for all database-related errors.
  *
  * Provides static factory methods for specific database error scenarios.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class DatabaseException extends RuntimeException

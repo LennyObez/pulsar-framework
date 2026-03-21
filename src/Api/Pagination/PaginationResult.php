@@ -15,6 +15,7 @@ use function count;
  * Provides a consistent format across all pagination strategies.
  *
  * @template T
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PaginationResult

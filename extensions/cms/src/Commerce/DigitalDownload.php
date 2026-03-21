@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Tracks a customer's download entitlement for a purchased digital asset.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DigitalDownload

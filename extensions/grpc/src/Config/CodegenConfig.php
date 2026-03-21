@@ -11,6 +11,7 @@ use function is_string;
 
 /**
  * Configuration for the protoc codegen wrapper.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CodegenConfig

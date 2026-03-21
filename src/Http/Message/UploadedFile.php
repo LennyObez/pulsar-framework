@@ -35,6 +35,7 @@ use const UPLOAD_ERR_PARTIAL;
 
 /**
  * PSR-7 uploaded file value object.
+ * @api
  */
 #[Api(since: '1.0.0-rc.11')]
 final class UploadedFile implements UploadedFileInterface

@@ -9,6 +9,7 @@ use Pulsar\Api\Pagination\PaginationResult;
 
 /**
  * Repository interface for user ban records.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface UserBanRepositoryInterface

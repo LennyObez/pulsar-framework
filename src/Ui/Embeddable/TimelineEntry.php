@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Represents a single entry in a timeline component.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TimelineEntry

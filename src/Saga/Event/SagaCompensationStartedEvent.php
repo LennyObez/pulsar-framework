@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Dispatched when saga compensation begins after a step failure.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SagaCompensationStartedEvent

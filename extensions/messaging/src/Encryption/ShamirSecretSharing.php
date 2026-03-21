@@ -22,6 +22,7 @@ use function strlen;
  *
  * Operates over GF(256) for byte-level splitting, making it compatible
  * with arbitrary binary secrets (encryption keys).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ShamirSecretSharing

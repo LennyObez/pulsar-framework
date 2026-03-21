@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
  * Comment policy for a content item.
  *
  * @psalm-api Public enum referenced by Content::commentPolicy.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum CommentPolicy: string

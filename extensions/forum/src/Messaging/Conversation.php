@@ -11,6 +11,7 @@ use function in_array;
 
 /**
  * A conversation thread between two or more users.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Conversation

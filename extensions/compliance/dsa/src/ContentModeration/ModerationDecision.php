@@ -15,6 +15,7 @@ use Pulsar\Api\Api;
  * (Art. 17(3)) covering: the facts, the applicable rule, and an explanation
  * of how the content violates that rule. Users must be informed of available
  * redress mechanisms.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ModerationDecision

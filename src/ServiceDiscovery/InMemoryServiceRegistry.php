@@ -23,6 +23,7 @@ use function time;
  * Implements both discovery (read) and registry (write) interfaces.
  * Suitable for single-process applications, testing, and as a local
  * cache in front of distributed backends (Consul, etcd).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class InMemoryServiceRegistry implements ServiceDiscoveryInterface, ServiceRegistryInterface

@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Output verbosity levels.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum Verbosity: int

@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  * HAL (Hypertext Application Language) renderer (optional, opt-in).
  *
  * Produces responses conforming to the HAL spec with _links and _embedded.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class HalRenderer implements ResponseRendererInterface

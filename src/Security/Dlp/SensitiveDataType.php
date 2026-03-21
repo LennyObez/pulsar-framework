@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Classification of sensitive data types detected by the DLP engine.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum SensitiveDataType: string

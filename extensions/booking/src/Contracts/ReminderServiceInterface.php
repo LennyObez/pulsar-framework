@@ -9,6 +9,7 @@ use Pulsar\Extension\Booking\Domain\Appointment;
 
 /**
  * Orchestrates appointment reminders via email and SMS.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ReminderServiceInterface

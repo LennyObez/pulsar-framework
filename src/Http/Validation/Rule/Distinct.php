@@ -15,6 +15,7 @@ use function sprintf;
 
 /**
  * All array elements must be unique (strict comparison). Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Distinct implements RuleInterface

@@ -11,6 +11,7 @@ use function is_string;
 
 /**
  * CMS block: Donation button with configurable amounts.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DonateButtonBlock

@@ -11,6 +11,7 @@ use Pulsar\Extension\Booking\Exception\BookingException;
 
 /**
  * Core booking operations.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface BookingServiceInterface

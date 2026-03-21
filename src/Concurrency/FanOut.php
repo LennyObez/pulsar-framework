@@ -26,6 +26,7 @@ use function hrtime;
  * sequential execution or the queue system for I/O-bound work.
  *
  * @see FanOutResult For the per-task outcome structure
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class FanOut

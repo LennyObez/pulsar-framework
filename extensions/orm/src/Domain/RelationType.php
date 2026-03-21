@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Supported entity relation types.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum RelationType: string

@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * A visitor session with 30-minute inactivity window.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Session

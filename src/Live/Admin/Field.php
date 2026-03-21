@@ -20,6 +20,7 @@ use Pulsar\Extension\Admin\Domain\ValidationRule;
  *       ->required()
  *       ->searchable()
  *       ->placeholder('Enter full name');
+ * @api
  */
 #[Api(since: '1.0.0')]
 class Field

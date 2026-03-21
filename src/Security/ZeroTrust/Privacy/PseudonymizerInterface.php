@@ -13,6 +13,7 @@ use Pulsar\Api\Api;
  * consistent pseudonyms, enabling analytics and audit while protecting
  * user privacy. The pseudonymization must be deterministic (same input
  * yields same pseudonym) but irreversible without the pseudonymization key.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface PseudonymizerInterface

@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  * Immutable consent record value object.
  *
  * Records that a subject has granted specific scopes to a client.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ConsentRecord

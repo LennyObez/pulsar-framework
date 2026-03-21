@@ -25,6 +25,7 @@ use function sprintf;
  * Header names are case-insensitive per RFC 7230.
  *
  * @implements IteratorAggregate<string, list<string>>
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class HeaderBag implements IteratorAggregate

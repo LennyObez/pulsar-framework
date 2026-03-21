@@ -11,6 +11,7 @@ use Pulsar\Extension\Forum\Thread\Thread;
 
 /**
  * Primary forum service: thread and post CRUD with lifecycle operations.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ForumServiceInterface

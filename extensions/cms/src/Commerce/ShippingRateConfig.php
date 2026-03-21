@@ -12,6 +12,7 @@ use function is_string;
 
 /**
  * Configuration for a single shipping rate rule.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ShippingRateConfig

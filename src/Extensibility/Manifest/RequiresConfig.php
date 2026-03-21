@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Configuration for extension dependencies.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RequiresConfig

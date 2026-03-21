@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Summary statistics for an accessibility audit.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AuditSummary

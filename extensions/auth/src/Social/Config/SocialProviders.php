@@ -15,6 +15,7 @@ use SensitiveParameter;
  * correct authorization URL, token URL, JWKS URI, issuer, and default
  * scopes. The caller supplies only their client_id, client_secret,
  * and optional redirect_uri.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class SocialProviders

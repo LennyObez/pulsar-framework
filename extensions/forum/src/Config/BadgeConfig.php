@@ -10,6 +10,7 @@ use function is_int;
 
 /**
  * Badge system configuration with trigger thresholds.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class BadgeConfig

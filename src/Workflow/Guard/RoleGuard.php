@@ -19,6 +19,7 @@ use function sprintf;
  * Roles are read from the transition metadata under the 'required_roles' key
  * and matched against the actor's claims snapshot. The actor's roles are
  * expected in the workflow instance context under the 'actor_roles' key.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RoleGuard implements TransitionGuardInterface

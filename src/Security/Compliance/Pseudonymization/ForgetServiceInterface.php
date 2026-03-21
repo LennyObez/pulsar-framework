@@ -13,6 +13,7 @@ use Pulsar\Security\Compliance\Exception\ComplianceException;
  * Implementations delete the pseudonym mapping for a given subject
  * and produce an auditable record of the deletion. This contract
  * supports controls for GDPR Article 17 right-to-erasure requirements.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ForgetServiceInterface

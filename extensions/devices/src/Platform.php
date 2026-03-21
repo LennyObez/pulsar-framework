@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Supported device platforms.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum Platform: string

@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * State tokens are single-use: verification consumes the token to prevent replay attacks.
  * Implementations must also store and retrieve PKCE code verifiers when PKCE is enabled.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface OAuthStateManagerInterface

@@ -17,6 +17,7 @@ use function is_string;
  *
  * Supports ISO 42001:2023 Clause 6.1.2 (AI risk assessment) and Annex A
  * control A.8 (transparency) by recording bias incidents for investigation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]

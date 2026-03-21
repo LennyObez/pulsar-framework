@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * Provides default context windows, pricing tiers, and capability flags
  * so applications can make informed routing decisions.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ModelCard

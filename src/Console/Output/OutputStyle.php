@@ -19,6 +19,7 @@ use function str_repeat;
  * Provides semantic styling (info, success, warning, error), tables,
  * progress bars, and other formatting utilities. Automatically degrades
  * to plain text when the terminal does not support ANSI escape codes.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class OutputStyle

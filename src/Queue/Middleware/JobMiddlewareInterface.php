@@ -15,6 +15,7 @@ use Pulsar\Queue\Envelope\JobEnvelope;
  * Each middleware receives the envelope and a `$next` closure representing
  * the remainder of the pipeline. Middleware may modify the envelope,
  * short-circuit processing, or add pre/post behavior.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface JobMiddlewareInterface

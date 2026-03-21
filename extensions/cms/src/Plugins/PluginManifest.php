@@ -15,6 +15,7 @@ use function is_string;
  *
  * @psalm-api Public DTO produced from plugin.json parsing; consumed by
  *            CmsPluginManager and PluginManifestValidator.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PluginManifest

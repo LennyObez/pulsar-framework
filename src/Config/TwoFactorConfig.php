@@ -12,6 +12,7 @@ use function is_string;
 
 /**
  * Typed configuration DTO for two-factor authentication settings.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TwoFactorConfig

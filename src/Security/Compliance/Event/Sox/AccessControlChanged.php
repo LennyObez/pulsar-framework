@@ -16,6 +16,7 @@ use function is_string;
  * Records a change to access controls over financial systems.
  *
  * Supports controls for SOX Section 404 management assessment of internal controls.
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]

@@ -9,6 +9,7 @@ use Pulsar\Cache\Application\Exception\CacheException;
 
 /**
  * Contract for cache value serialization.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface CacheSerializerInterface

@@ -17,6 +17,7 @@ use Pulsar\Api\Api;
  *
  * Must be initialized with a StorageManager via Storage::bind() during
  * application bootstrap (handled by StorageWiring).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class Storage

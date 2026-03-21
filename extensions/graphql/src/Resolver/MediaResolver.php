@@ -9,6 +9,7 @@ use Pulsar\Extension\Cms\Media\MediaRepositoryInterface;
 
 /**
  * Resolves GraphQL queries for Media type.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class MediaResolver

@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Represents the implementation status of a regulatory control.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum ControlStatus: string

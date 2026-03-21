@@ -11,6 +11,7 @@ use function count;
 
 /**
  * Represents the result of validating a configuration DTO.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ConfigValidationResult

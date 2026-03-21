@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * Canary tokens are invisible markers placed in sensitive data exports.
  * If a canary token appears in an unexpected location, it indicates a data leak.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CanaryToken

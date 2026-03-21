@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Instances are returned from {@see Blueprint} column methods and allow
  * chaining modifiers: `->nullable()`, `->default(...)`, `->unique()`, etc.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ColumnBuilder

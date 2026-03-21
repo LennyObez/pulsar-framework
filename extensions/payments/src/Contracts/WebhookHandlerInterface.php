@@ -11,6 +11,7 @@ use Pulsar\Extension\Payments\Domain\WebhookEvent;
  * Webhook event handler contract.
  *
  * Implementations process webhook events dispatched by the WebhookProcessor.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface WebhookHandlerInterface

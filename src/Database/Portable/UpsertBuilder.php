@@ -16,6 +16,7 @@ use function sprintf;
  *
  * PostgreSQL/SQLite: INSERT INTO ... ON CONFLICT (...) DO UPDATE SET col = EXCLUDED.col
  * MySQL:            INSERT INTO ... ON DUPLICATE KEY UPDATE col = VALUES(col)
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class UpsertBuilder

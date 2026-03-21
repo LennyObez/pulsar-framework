@@ -11,6 +11,7 @@ use Pulsar\Extension\Payments\Exception\PaymentException;
 
 /**
  * Immutable dispute record with state machine enforcement.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Dispute
