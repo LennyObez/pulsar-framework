@@ -21,6 +21,9 @@ use const ENT_XML1;
 
 /**
  * Generates RSS 2.0 and Atom 1.0 feeds for published content.
+ *
+ * @psalm-api Bound to FeedGeneratorInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use FeedGeneratorInterface for public API')]
 final readonly class FeedGenerator implements FeedGeneratorInterface
