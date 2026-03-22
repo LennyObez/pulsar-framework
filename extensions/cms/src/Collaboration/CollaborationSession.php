@@ -12,6 +12,9 @@ use Pulsar\Api\Api;
  *
  * Tracks cursor position and selection range for awareness (showing other
  * users' editing positions in the UI).
+ *
+ * @psalm-api Public DTO returned from CollaborationRepositoryInterface; consumed
+ *            by CollaborationService and CRDT awareness rendering.
  */
 #[Api(since: '1.0.0')]
 final readonly class CollaborationSession

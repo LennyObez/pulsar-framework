@@ -21,6 +21,9 @@ use function sprintf;
  * Intended to be run periodically (e.g., via cron every minute) to:
  *  - Publish content whose scheduled_publish_at time has arrived
  *  - Archive content whose scheduled_unpublish_at time has arrived
+ *
+ * @psalm-api Registered with the console kernel by name from the CMS service
+ *            provider; instantiated by the Command bus, not by name.
  */
 #[Internal(reason: 'CMS scheduled publishing command')]
 final class CmsPublishScheduledCommand extends Command

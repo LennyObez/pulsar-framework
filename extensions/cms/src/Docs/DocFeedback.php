@@ -12,6 +12,9 @@ use Pulsar\Api\Api;
  *
  * Captures whether a visitor found a doc page helpful, with an
  * optional free-text comment for qualitative feedback.
+ *
+ * @psalm-api Public DTO returned from DocFeedbackRepositoryInterface; consumed
+ *            by docs feedback templates.
  */
 #[Api(since: '1.0.0')]
 final readonly class DocFeedback
