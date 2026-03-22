@@ -11,6 +11,9 @@ use Pulsar\Api\Api;
  *
  * Extensions register these via AccountSectionProviderInterface to contribute
  * their own tabs to both front-office (/account/) and back-office (/admin/customers/{id}) views.
+ *
+ * @psalm-api Public DTO returned from AccountSectionProviderInterface; consumed
+ *            by AccountController and Studio account templates.
  */
 #[Api(since: '1.0.0')]
 final readonly class AccountSection

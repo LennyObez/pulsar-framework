@@ -18,6 +18,9 @@ use function mb_strlen;
  *
  * Uses the framework-level {@see AiClientInterface} for all LLM operations,
  * unifying provider management across the CMS and core.
+ *
+ * @psalm-api Public service resolved from the DI container by the CMS AI
+ *            controllers and consumed by user-land code; not instantiated by name.
  */
 #[Api(since: '1.0.0')]
 final readonly class ContentAssistant
