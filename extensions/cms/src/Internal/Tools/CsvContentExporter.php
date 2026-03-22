@@ -24,6 +24,10 @@ use function stream_get_contents;
  * in-memory CSV generation.
  */
 #[Internal(reason: 'Import/export internals; use ImportExportServiceInterface')]
+/**
+ * @psalm-api Resolved from the DI container by ImportExportService and admin
+ *            controllers; not instantiated by name.
+ */
 final readonly class CsvContentExporter
 {
     private const array COLUMNS = [

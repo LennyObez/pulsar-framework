@@ -34,6 +34,10 @@ use const SODIUM_CRYPTO_GENERICHASH_BYTES;
  * Generates export bundles from CMS data with PII redaction and integrity hashing.
  */
 #[Internal(reason: 'Import/export internals; use ImportExportServiceInterface')]
+/**
+ * @psalm-api Resolved from the DI container by ImportExportService and admin
+ *            controllers; not instantiated by name.
+ */
 final readonly class ExportBundleGenerator
 {
     /** PII field names that are redacted when includePii is false. */

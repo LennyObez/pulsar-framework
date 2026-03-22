@@ -49,6 +49,10 @@ use const SODIUM_CRYPTO_GENERICHASH_BYTES;
  * stored in private media disk. Restore validates hash before applying.
  */
 #[Internal(reason: 'Backup internals; use BackupServiceInterface')]
+/**
+ * @psalm-api Bound to BackupServiceInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
+ */
 final readonly class BackupService implements BackupServiceInterface
 {
     private const string BACKUP_DIR = 'backups/cms';
