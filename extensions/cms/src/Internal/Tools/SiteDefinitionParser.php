@@ -238,8 +238,13 @@ final readonly class SiteDefinitionParser
 
         // 8. Regenerate sitemaps
         if (!$dryRun) {
-            $baseUrl = is_string($definition->site['url'] ?? null) ? $definition->site['url'] : (is_string($definition->site['base_url'] ?? null) ? $definition->site['base_url'] : 'https://localhost');
-            $tenantId = is_string($definition->site['tenant_id'] ?? null) ? $definition->site['tenant_id'] : null;
+            $rawUrl = $definition->site['url'] ?? null;
+            $rawBaseUrl = $definition->site['base_url'] ?? null;
+            $baseUrl = is_string($rawUrl)
+                ? $rawUrl
+                : (is_string($rawBaseUrl) ? $rawBaseUrl : 'https://localhost');
+            $rawTenantId = $definition->site['tenant_id'] ?? null;
+            $tenantId = is_string($rawTenantId) ? $rawTenantId : null;
             $this->sitemapGenerator->generateIndex($baseUrl, $tenantId);
         }
 
