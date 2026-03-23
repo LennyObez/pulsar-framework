@@ -275,9 +275,8 @@ final readonly class PayPalGateway implements PaymentProviderInterface
             $decoded = json_decode($response, true, 32, JSON_THROW_ON_ERROR);
 
             if (isset($decoded['error'])) {
-                $message = is_string($decoded['error_description'] ?? null)
-                    ? $decoded['error_description']
-                    : 'Unknown PayPal error';
+                $rawErrorDescription = $decoded['error_description'] ?? null;
+                $message = is_string($rawErrorDescription) ? $rawErrorDescription : 'Unknown PayPal error';
 
                 throw PaymentProviderException::providerError("PayPal: $message");
             }
