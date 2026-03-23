@@ -163,8 +163,9 @@ final readonly class OpenAiProvider implements AiClientInterface
                 continue;
             }
 
+            $rawEmbedding = $item['embedding'] ?? null;
             /** @var list<mixed> $embeddingValues */
-            $embeddingValues = is_array($item['embedding'] ?? null) ? $item['embedding'] : [];
+            $embeddingValues = is_array($rawEmbedding) ? $rawEmbedding : [];
 
             $floats = [];
 
@@ -174,15 +175,17 @@ final readonly class OpenAiProvider implements AiClientInterface
                 }
             }
 
+            $rawIndex = $item['index'] ?? null;
             $vectors[] = new EmbeddingVector(
                 values: $floats,
-                index: is_int($item['index'] ?? null) ? $item['index'] : 0,
+                index: is_int($rawIndex) ? $rawIndex : 0,
             );
         }
 
+        $rawTotalTokens = $usage['total_tokens'] ?? null;
         return new EmbeddingResult(
             embeddings: $vectors,
-            totalTokens: is_int($usage['total_tokens'] ?? null) ? $usage['total_tokens'] : 0,
+            totalTokens: is_int($rawTotalTokens) ? $rawTotalTokens : 0,
             model: $model,
         );
     }
@@ -236,7 +239,8 @@ final readonly class OpenAiProvider implements AiClientInterface
         if (isset($data['error'])) {
             /** @var array{message?: string} $error */
             $error = (array) $data['error'];
-            $message = is_string($error['message'] ?? null) ? $error['message'] : 'Unknown OpenAI API error';
+            $rawErrorMessage = $error['message'] ?? null;
+            $message = is_string($rawErrorMessage) ? $rawErrorMessage : 'Unknown OpenAI API error';
 
             return AiResponse::error($message);
         }
@@ -249,17 +253,22 @@ final readonly class OpenAiProvider implements AiClientInterface
      */
     private function parseChatResponse(array $data, string $model): AiResponse
     {
+        $rawChoices = $data['choices'] ?? null;
         /** @var list<array<string, mixed>> $choices */
-        $choices = is_array($data['choices'] ?? null) ? $data['choices'] : [];
-        $firstChoice = is_array($choices[0] ?? null) ? $choices[0] : [];
+        $choices = is_array($rawChoices) ? $rawChoices : [];
+        $rawFirstChoice = $choices[0] ?? null;
+        $firstChoice = is_array($rawFirstChoice) ? $rawFirstChoice : [];
 
+        $rawMessage = $firstChoice['message'] ?? null;
         /** @var array{content?: string, tool_calls?: list<array<string, mixed>>} $message */
-        $message = is_array($firstChoice['message'] ?? null) ? $firstChoice['message'] : [];
+        $message = is_array($rawMessage) ? $rawMessage : [];
 
+        $rawUsage = $data['usage'] ?? null;
         /** @var array{prompt_tokens?: int, completion_tokens?: int} $usage */
-        $usage = is_array($data['usage'] ?? null) ? $data['usage'] : [];
+        $usage = is_array($rawUsage) ? $rawUsage : [];
 
-        $content = is_string($message['content'] ?? null) ? $message['content'] : '';
+        $rawContent = $message['content'] ?? null;
+        $content = is_string($rawContent) ? $rawContent : '';
 
         /** @var list<ToolCall> $toolCalls */
         $toolCalls = [];
@@ -271,8 +280,10 @@ final readonly class OpenAiProvider implements AiClientInterface
                 }
 
                 /** @var array{id?: string, function?: array{name?: string, arguments?: string}} $tc */
-                $func = is_array($tc['function'] ?? null) ? $tc['function'] : [];
-                $argsStr = is_string($func['arguments'] ?? null) ? $func['arguments'] : '{}';
+                $rawFunc = $tc['function'] ?? null;
+                $func = is_array($rawFunc) ? $rawFunc : [];
+                $rawArgsStr = $func['arguments'] ?? null;
+                $argsStr = is_string($rawArgsStr) ? $rawArgsStr : '{}';
 
                 $argsDecoded = json_decode($argsStr, true);
                 /** @var array<string, mixed> $args */
