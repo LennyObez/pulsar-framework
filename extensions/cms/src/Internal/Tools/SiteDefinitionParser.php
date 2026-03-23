@@ -302,23 +302,28 @@ final readonly class SiteDefinitionParser
                 $taxonomyId = $existingTaxonomy->id;
                 $updated++;
 
+                $rawTaxLocale = $taxData['locale'] ?? null;
+                $rawTaxDescription = $taxData['description'] ?? null;
+                $rawTaxTenantId = $taxData['tenant_id'] ?? null;
+                $rawTaxHierarchical = $taxData['hierarchical'] ?? null;
+
                 if (!$dryRun) {
                     $translations = [];
 
                     if (isset($taxData['name'])) {
                         $translations[] = new TaxonomyTranslation(
                             taxonomyId: $taxonomyId,
-                            locale: is_string($taxData['locale'] ?? null) ? $taxData['locale'] : 'en',
+                            locale: is_string($rawTaxLocale) ? $rawTaxLocale : 'en',
                             name: is_string($taxData['name']) ? $taxData['name'] : '',
-                            description: is_string($taxData['description'] ?? null) ? $taxData['description'] : null,
+                            description: is_string($rawTaxDescription) ? $rawTaxDescription : null,
                         );
                     }
 
                     $taxonomy = new Taxonomy(
                         id: $taxonomyId,
-                        tenantId: is_string($taxData['tenant_id'] ?? null) ? $taxData['tenant_id'] : null,
+                        tenantId: is_string($rawTaxTenantId) ? $rawTaxTenantId : null,
                         slug: $slug,
-                        hierarchical: is_bool($taxData['hierarchical'] ?? null) ? $taxData['hierarchical'] : false,
+                        hierarchical: is_bool($rawTaxHierarchical) ? $rawTaxHierarchical : false,
                         createdAt: $existingTaxonomy->createdAt,
                         importId: $importId,
                     );
@@ -330,12 +335,17 @@ final readonly class SiteDefinitionParser
                 $taxonomyId = UuidGenerator::v7();
                 $created++;
 
+                $rawTaxLocale = $taxData['locale'] ?? null;
+                $rawTaxDescription = $taxData['description'] ?? null;
+                $rawTaxTenantId = $taxData['tenant_id'] ?? null;
+                $rawTaxHierarchical = $taxData['hierarchical'] ?? null;
+
                 if (!$dryRun) {
                     $taxonomy = new Taxonomy(
                         id: $taxonomyId,
-                        tenantId: is_string($taxData['tenant_id'] ?? null) ? $taxData['tenant_id'] : null,
+                        tenantId: is_string($rawTaxTenantId) ? $rawTaxTenantId : null,
                         slug: $slug,
-                        hierarchical: is_bool($taxData['hierarchical'] ?? null) ? $taxData['hierarchical'] : false,
+                        hierarchical: is_bool($rawTaxHierarchical) ? $rawTaxHierarchical : false,
                         createdAt: new DateTimeImmutable(),
                         importId: $importId,
                     );
@@ -344,9 +354,9 @@ final readonly class SiteDefinitionParser
                     if (isset($taxData['name'])) {
                         $translations[] = new TaxonomyTranslation(
                             taxonomyId: $taxonomyId,
-                            locale: is_string($taxData['locale'] ?? null) ? $taxData['locale'] : 'en',
+                            locale: is_string($rawTaxLocale) ? $rawTaxLocale : 'en',
                             name: is_string($taxData['name']) ? $taxData['name'] : '',
-                            description: is_string($taxData['description'] ?? null) ? $taxData['description'] : null,
+                            description: is_string($rawTaxDescription) ? $rawTaxDescription : null,
                         );
                     }
 
