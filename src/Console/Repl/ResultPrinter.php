@@ -10,6 +10,7 @@ use NoDiscard;
 use Pulsar\Api\Api;
 use ReflectionClass;
 use Stringable;
+use Traversable;
 use UnitEnum;
 
 use function array_slice;
@@ -323,7 +324,7 @@ final readonly class ResultPrinter
         }
 
         // If it's also iterable, show first/last items
-        if (is_iterable($value)) {
+        if ($value instanceof Traversable) {
             $items = [];
 
             foreach ($value as $item) {

@@ -88,7 +88,7 @@ final class SignalingHandler
             'payload' => is_array($data['payload'] ?? null) ? $data['payload'] : [],
         ]);
 
-        if (!is_string($message->toUserId) || $message->toUserId === '') {
+        if ($message->toUserId === '') {
             return;
         }
 
