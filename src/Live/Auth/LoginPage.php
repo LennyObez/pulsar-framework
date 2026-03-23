@@ -52,8 +52,8 @@ final class LoginPage extends LiveComponent
     #[LiveProp]
     public string $mfaIdentityId = '';
 
-    private AuthUiConfig $config;
-    private ?AuthenticatorInterface $authenticator;
+    private ?AuthUiConfig $config = null;
+    private ?AuthenticatorInterface $authenticator = null;
 
     public function mount(array $params = []): void
     {

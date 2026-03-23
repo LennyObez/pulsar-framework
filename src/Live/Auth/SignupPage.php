@@ -43,8 +43,8 @@ final class SignupPage extends LiveComponent
     #[LiveProp]
     public bool $registered = false;
 
-    private AuthUiConfig $config;
-    private ?AuthenticatorInterface $authenticator;
+    private ?AuthUiConfig $config = null;
+    private ?AuthenticatorInterface $authenticator = null;
 
     public function mount(array $params = []): void
     {

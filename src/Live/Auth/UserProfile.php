@@ -58,8 +58,8 @@ final class UserProfile extends LiveComponent
     #[LiveProp]
     public string $activeSection = 'profile';
 
-    private ?AuthenticatorInterface $authenticator;
-    private AuthUiConfig $config;
+    private ?AuthenticatorInterface $authenticator = null;
+    private ?AuthUiConfig $config = null;
 
     public function mount(array $params = []): void
     {

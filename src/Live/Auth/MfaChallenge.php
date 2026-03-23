@@ -36,8 +36,8 @@ final class MfaChallenge extends LiveComponent
     #[LiveProp]
     public bool $useRecoveryCode = false;
 
-    private ?AuthenticatorInterface $authenticator;
-    private AuthUiConfig $config;
+    private ?AuthenticatorInterface $authenticator = null;
+    private ?AuthUiConfig $config = null;
 
     public function mount(array $params = []): void
     {
