@@ -8,6 +8,9 @@ use Pulsar\Api\Api;
 
 /**
  * Notification dispatched when a new comment is posted on content.
+ *
+ * @psalm-api Constructed by CmsNotificationDispatcher and dispatched through
+ *            the framework notification manager.
  */
 #[Api(since: '1.0.0')]
 final readonly class CommentReceivedNotification implements CmsNotificationInterface

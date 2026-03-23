@@ -25,6 +25,10 @@ use function str_starts_with;
  * per-request copy with content context for translated slug resolution.
  */
 #[Internal(reason: 'CMS i18n; locale URL resolution via content translations')]
+/**
+ * @psalm-api Bound to LocaleUrlResolverInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
+ */
 final readonly class CmsLocaleUrlResolver implements LocaleUrlResolverInterface
 {
     public function __construct(
