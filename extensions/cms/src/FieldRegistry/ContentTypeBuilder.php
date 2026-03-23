@@ -17,6 +17,8 @@ use Pulsar\Api\Api;
  *         ->field('tagline', FieldType::String, required: true, translatable: true)
  *         ->field('featured', FieldType::Bool, default: false)
  *         ->build();
+ *
+ * @psalm-api Public builder constructed by name from extension boot routines.
  */
 #[Api(since: '1.0.0')]
 final class ContentTypeBuilder

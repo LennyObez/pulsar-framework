@@ -8,6 +8,9 @@ use Pulsar\Api\Api;
 
 /**
  * Persistence interface for custom field definitions and values.
+ *
+ * @psalm-api Public binding contract; implemented by DbFieldRegistryRepository
+ *            and consumed by content services and admin controllers.
  */
 #[Api(since: '1.0.0')]
 interface FieldRegistryRepositoryInterface
