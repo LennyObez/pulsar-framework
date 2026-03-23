@@ -1,12 +1,12 @@
 <?php
 /**
- * @var string $formattedCount
- * @var string $formattedSize
- * @var string $samplingPct
- * @var int $retentionDays
- * @var int $maxSizeMb
- * @var string $collectors
- * @var string $storagePath
+ * @var string|null $formattedCount
+ * @var string|null $formattedSize
+ * @var string|null $samplingPct
+ * @var int|null $retentionDays
+ * @var int|null $maxSizeMb
+ * @var string|null $collectors
+ * @var string|null $storagePath
  */
 $typedCount = $formattedCount ?? '0';
 $typedSize = $formattedSize ?? '0 B';
