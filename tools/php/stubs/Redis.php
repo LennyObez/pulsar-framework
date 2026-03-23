@@ -179,9 +179,9 @@ class Redis
      * @param string $start
      * @param string $end
      * @param array<string, mixed> $options
-     * @return list<string>
+     * @return list<string>|false
      */
-    public function zRangeByScore(string $key, string $start, string $end, array $options = []): array {}
+    public function zRangeByScore(string $key, string $start, string $end, array $options = []): array|false {}
 
     /**
      * @param string $key
@@ -234,9 +234,9 @@ class Redis
      * @param string $key
      * @param int $start
      * @param int $end
-     * @return list<string>
+     * @return list<string>|false
      */
-    public function lRange(string $key, int $start, int $end): array {}
+    public function lRange(string $key, int $start, int $end): array|false {}
 
     /**
      * @param string $key

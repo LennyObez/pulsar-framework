@@ -139,7 +139,7 @@ final readonly class OllamaProvider implements AiClientInterface
             return new EmbeddingResult(embeddings: [], totalTokens: 0, model: $model);
         }
 
-        /** @var list<list<float>> $embeddings */
+        /** @var list<mixed> $embeddings */
         $embeddings = is_array($data['embeddings'] ?? null) ? $data['embeddings'] : [];
 
         $vectors = [];
