@@ -78,9 +78,12 @@ final readonly class ExperimentController extends AbstractAdminController
         $createdVariants = [];
 
         foreach ($variants as $variantData) {
-            $variantName = is_string($variantData['name'] ?? null) ? $variantData['name'] : '';
-            $variantContentId = is_string($variantData['content_id'] ?? null) ? $variantData['content_id'] : '';
-            $weight = is_int($variantData['weight'] ?? null) ? $variantData['weight'] : 1;
+            $rawVariantName = $variantData['name'] ?? null;
+            $variantName = is_string($rawVariantName) ? $rawVariantName : '';
+            $rawVariantContentId = $variantData['content_id'] ?? null;
+            $variantContentId = is_string($rawVariantContentId) ? $rawVariantContentId : '';
+            $rawWeight = $variantData['weight'] ?? null;
+            $weight = is_int($rawWeight) ? $rawWeight : 1;
 
             if ($variantName !== '' && $variantContentId !== '') {
                 $createdVariants[] = $this->experimentService->addVariant(

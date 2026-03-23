@@ -74,12 +74,16 @@ final readonly class ThemeTokenResolver implements ThemeTokenResolverInterface
             /** @var array<string, mixed> $constraintsArray */
             $constraintsArray = is_array($rawConstraints) ? $rawConstraints : [];
 
+            $rawDefault = $def['default'] ?? null;
+            $rawLabel = $def['label'] ?? null;
+            $rawLabelName = $def['name'] ?? null;
+            $rawGroup = $def['group'] ?? null;
             $tokens[] = new ThemeToken(
                 name: (is_string($def['name']) ? $def['name'] : ''),
                 type: (is_string($def['type']) ? $def['type'] : ''),
-                default: is_string($def['default'] ?? null) ? $def['default'] : '',
-                label: is_string($def['label'] ?? null) ? $def['label'] : (is_string($def['name'] ?? null) ? $def['name'] : ''),
-                group: is_string($def['group'] ?? null) ? $def['group'] : 'General',
+                default: is_string($rawDefault) ? $rawDefault : '',
+                label: is_string($rawLabel) ? $rawLabel : (is_string($rawLabelName) ? $rawLabelName : ''),
+                group: is_string($rawGroup) ? $rawGroup : 'General',
                 constraints: $constraintsArray,
             );
         }

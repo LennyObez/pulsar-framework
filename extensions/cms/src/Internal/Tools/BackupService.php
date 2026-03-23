@@ -322,14 +322,19 @@ final readonly class BackupService implements BackupServiceInterface
                 continue;
             }
 
+            $rawStoragePath = $meta['storage_path'] ?? null;
+            $rawHash = $meta['hash'] ?? null;
+            $rawSize = $meta['size'] ?? null;
+            $rawCreatedAt = $meta['created_at'] ?? null;
+            $rawCreatedBy = $meta['created_by'] ?? null;
             $backups[] = new Backup(
                 id: is_string($meta['id']) ? $meta['id'] : '',
                 scope: $scope,
-                storagePath: is_string($meta['storage_path'] ?? null) ? $meta['storage_path'] : '',
-                hash: is_string($meta['hash'] ?? null) ? $meta['hash'] : '',
-                size: is_int($meta['size'] ?? null) ? $meta['size'] : 0,
-                createdAt: new DateTimeImmutable(is_string($meta['created_at'] ?? null) ? $meta['created_at'] : 'now'),
-                createdBy: is_string($meta['created_by'] ?? null) ? $meta['created_by'] : '',
+                storagePath: is_string($rawStoragePath) ? $rawStoragePath : '',
+                hash: is_string($rawHash) ? $rawHash : '',
+                size: is_int($rawSize) ? $rawSize : 0,
+                createdAt: new DateTimeImmutable(is_string($rawCreatedAt) ? $rawCreatedAt : 'now'),
+                createdBy: is_string($rawCreatedBy) ? $rawCreatedBy : '',
             );
         }
 

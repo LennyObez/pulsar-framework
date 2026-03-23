@@ -74,7 +74,8 @@ final class JwsVerifier
             throw PaymentException::jwsVerificationFailed('header is not a JSON object');
         }
 
-        $alg = is_string($header['alg'] ?? null) ? $header['alg'] : '';
+        $rawAlg = $header['alg'] ?? null;
+        $alg = is_string($rawAlg) ? $rawAlg : '';
 
         if ($alg !== 'ES256') {
             throw PaymentException::jwsVerificationFailed(
@@ -82,8 +83,9 @@ final class JwsVerifier
             );
         }
 
+        $rawX5c = $header['x5c'] ?? null;
         /** @var list<string> $x5c */
-        $x5c = is_array($header['x5c'] ?? null) ? $header['x5c'] : [];
+        $x5c = is_array($rawX5c) ? $rawX5c : [];
 
         if ($x5c === []) {
             throw PaymentException::jwsVerificationFailed('x5c certificate chain is missing');
