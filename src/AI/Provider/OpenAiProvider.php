@@ -289,20 +289,25 @@ final readonly class OpenAiProvider implements AiClientInterface
                 /** @var array<string, mixed> $args */
                 $args = is_array($argsDecoded) ? $argsDecoded : [];
 
+                $rawTcId = $tc['id'] ?? null;
+                $rawFuncName = $func['name'] ?? null;
                 $toolCalls[] = new ToolCall(
-                    id: is_string($tc['id'] ?? null) ? $tc['id'] : '',
-                    name: is_string($func['name'] ?? null) ? $func['name'] : '',
+                    id: is_string($rawTcId) ? $rawTcId : '',
+                    name: is_string($rawFuncName) ? $rawFuncName : '',
                     arguments: $args,
                 );
             }
         }
 
-        $finishReason = is_string($firstChoice['finish_reason'] ?? null) ? $firstChoice['finish_reason'] : 'stop';
+        $rawFinishReason = $firstChoice['finish_reason'] ?? null;
+        $finishReason = is_string($rawFinishReason) ? $rawFinishReason : 'stop';
 
+        $rawPromptTokens = $usage['prompt_tokens'] ?? null;
+        $rawCompletionTokens = $usage['completion_tokens'] ?? null;
         return new AiResponse(
             content: $content,
-            inputTokens: is_int($usage['prompt_tokens'] ?? null) ? $usage['prompt_tokens'] : 0,
-            outputTokens: is_int($usage['completion_tokens'] ?? null) ? $usage['completion_tokens'] : 0,
+            inputTokens: is_int($rawPromptTokens) ? $rawPromptTokens : 0,
+            outputTokens: is_int($rawCompletionTokens) ? $rawCompletionTokens : 0,
             finishReason: $finishReason,
             toolCalls: $toolCalls,
             model: $model,

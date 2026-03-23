@@ -102,17 +102,22 @@ final readonly class OllamaProvider implements AiClientInterface
             return AiResponse::error($message);
         }
 
+        $rawMessage = $data['message'] ?? null;
         /** @var array{content?: string} $responseMessage */
-        $responseMessage = is_array($data['message'] ?? null) ? $data['message'] : [];
+        $responseMessage = is_array($rawMessage) ? $rawMessage : [];
 
-        $evalCount = is_int($data['eval_count'] ?? null) ? $data['eval_count'] : 0;
-        $promptEvalCount = is_int($data['prompt_eval_count'] ?? null) ? $data['prompt_eval_count'] : 0;
+        $rawEvalCount = $data['eval_count'] ?? null;
+        $evalCount = is_int($rawEvalCount) ? $rawEvalCount : 0;
+        $rawPromptEvalCount = $data['prompt_eval_count'] ?? null;
+        $promptEvalCount = is_int($rawPromptEvalCount) ? $rawPromptEvalCount : 0;
 
+        $rawContent = $responseMessage['content'] ?? null;
+        $rawDoneReason = $data['done_reason'] ?? null;
         return new AiResponse(
-            content: is_string($responseMessage['content'] ?? null) ? $responseMessage['content'] : '',
+            content: is_string($rawContent) ? $rawContent : '',
             inputTokens: $promptEvalCount,
             outputTokens: $evalCount,
-            finishReason: is_string($data['done_reason'] ?? null) ? $data['done_reason'] : 'stop',
+            finishReason: is_string($rawDoneReason) ? $rawDoneReason : 'stop',
             model: $model,
         );
     }
