@@ -363,13 +363,15 @@ final readonly class SiteDefinitionParser
                     }
 
                     /** @var array<string, mixed> $termData */
-                    $termSlug = is_string($termData['slug'] ?? null) ? $termData['slug'] : null;
+                    $rawTermSlug = $termData['slug'] ?? null;
+                    $termSlug = is_string($rawTermSlug) ? $rawTermSlug : null;
 
                     if ($termSlug === null) {
                         continue;
                     }
 
-                    $termImportId = is_string($termData['import_id'] ?? null) ? $termData['import_id'] : null;
+                    $rawTermImportId = $termData['import_id'] ?? null;
+                    $termImportId = is_string($rawTermImportId) ? $rawTermImportId : null;
                     $existingTerm = $termImportId !== null ? $this->taxonomyRepository->findTermByImportId($termImportId) : null;
 
                     if ($existingTerm !== null) {
@@ -380,25 +382,33 @@ final readonly class SiteDefinitionParser
                         $created++;
 
                         if (!$dryRun) {
+                            $rawTaxTenantId = $taxData['tenant_id'] ?? null;
+                            $rawTermSortOrder = $termData['sort_order'] ?? null;
                             $term = new TaxonomyTerm(
                                 id: $termId,
                                 taxonomyId: $taxonomyId,
-                                tenantId: is_string($taxData['tenant_id'] ?? null) ? $taxData['tenant_id'] : null,
+                                tenantId: is_string($rawTaxTenantId) ? $rawTaxTenantId : null,
                                 parentId: null,
-                                sortOrder: is_int($termData['sort_order'] ?? null) ? $termData['sort_order'] : 0,
+                                sortOrder: is_int($rawTermSortOrder) ? $rawTermSortOrder : 0,
                                 createdAt: new DateTimeImmutable(),
                                 importId: $termImportId,
                             );
                             $termTranslations = [];
 
                             if (isset($termData['name'])) {
-                                $termLocale = is_string($termData['locale'] ?? null) ? $termData['locale'] : (is_string($taxData['locale'] ?? null) ? $taxData['locale'] : 'en');
+                                $rawTermLocale = $termData['locale'] ?? null;
+                                $rawTaxLocale = $taxData['locale'] ?? null;
+                                $termLocale = is_string($rawTermLocale)
+                                    ? $rawTermLocale
+                                    : (is_string($rawTaxLocale) ? $rawTaxLocale : 'en');
+                                $rawTermName = $termData['name'];
+                                $rawTermDescription = $termData['description'] ?? null;
                                 $termTranslations[] = new TaxonomyTermTranslation(
                                     termId: $termId,
                                     locale: $termLocale,
-                                    name: is_string($termData['name']) ? $termData['name'] : '',
+                                    name: is_string($rawTermName) ? $rawTermName : '',
                                     slug: $termSlug,
-                                    description: is_string($termData['description'] ?? null) ? $termData['description'] : null,
+                                    description: is_string($rawTermDescription) ? $rawTermDescription : null,
                                 );
                             }
 
@@ -427,8 +437,13 @@ final readonly class SiteDefinitionParser
         $refMap = [];
 
         foreach ($mediaEntries as $mediaData) {
-            $ref = is_string($mediaData['ref'] ?? null) ? $mediaData['ref'] : (is_string($mediaData['filename'] ?? null) ? $mediaData['filename'] : null);
-            $source = is_string($mediaData['source'] ?? null) ? $mediaData['source'] : null;
+            $rawRef = $mediaData['ref'] ?? null;
+            $rawFilename = $mediaData['filename'] ?? null;
+            $ref = is_string($rawRef)
+                ? $rawRef
+                : (is_string($rawFilename) ? $rawFilename : null);
+            $rawSource = $mediaData['source'] ?? null;
+            $source = is_string($rawSource) ? $rawSource : null;
 
             if ($ref === null) {
                 $warnings[] = 'Media entry missing ref/filename, skipped';
@@ -489,7 +504,8 @@ final readonly class SiteDefinitionParser
         $contentEntries = [];
 
         foreach ($contentItems as $itemData) {
-            $importId = is_string($itemData['import_id'] ?? null) ? $itemData['import_id'] : null;
+            $rawImportId = $itemData['import_id'] ?? null;
+            $importId = is_string($rawImportId) ? $rawImportId : null;
             $slug = $this->resolveSlug($itemData, $importId);
 
             // Allow empty slug for homepage (root page). Only skip if slug is null
@@ -500,8 +516,11 @@ final readonly class SiteDefinitionParser
                 continue;
             }
 
-            $contentType = is_string($itemData['content_type'] ?? null) ? $itemData['content_type'] : (is_string($itemData['type'] ?? null) ? $itemData['type'] : 'page');
-            $importId = is_string($itemData['import_id'] ?? null) ? $itemData['import_id'] : null;
+            $rawContentType = $itemData['content_type'] ?? null;
+            $rawType = $itemData['type'] ?? null;
+            $contentType = is_string($rawContentType)
+                ? $rawContentType
+                : (is_string($rawType) ? $rawType : 'page');
 
             // Idempotent lookup
             $existing = $importId !== null ? $this->contentRepository->findByImportId($importId) : null;
@@ -522,8 +541,9 @@ final readonly class SiteDefinitionParser
             if ($importId !== null) {
                 $contentRefMap[$importId] = $contentId;
             }
-            if (is_string($itemData['id'] ?? null)) {
-                $contentRefMap[$itemData['id']] = $contentId;
+            $rawItemId = $itemData['id'] ?? null;
+            if (is_string($rawItemId)) {
+                $contentRefMap[$rawItemId] = $contentId;
             }
 
             // Detect homepage: explicit is_homepage flag or empty slug
@@ -544,11 +564,18 @@ final readonly class SiteDefinitionParser
             $itemData = $entry['data'];
             $isUpdate = $entry['is_update'];
 
-            $contentTypeValue = is_string($itemData['content_type'] ?? null) ? $itemData['content_type'] : (is_string($itemData['type'] ?? null) ? $itemData['type'] : 'page');
+            $rawContentTypeValue = $itemData['content_type'] ?? null;
+            $rawTypeValue = $itemData['type'] ?? null;
+            $contentTypeValue = is_string($rawContentTypeValue)
+                ? $rawContentTypeValue
+                : (is_string($rawTypeValue) ? $rawTypeValue : 'page');
             $contentType = ContentType::tryFrom($contentTypeValue) ?? ContentType::Page;
-            $slug = is_string($itemData['slug'] ?? null) ? $itemData['slug'] : '';
-            $template = is_string($itemData['template'] ?? null) ? $itemData['template'] : null;
-            $importId = is_string($itemData['import_id'] ?? null) ? $itemData['import_id'] : null;
+            $rawSlug = $itemData['slug'] ?? null;
+            $slug = is_string($rawSlug) ? $rawSlug : '';
+            $rawTemplate = $itemData['template'] ?? null;
+            $template = is_string($rawTemplate) ? $rawTemplate : null;
+            $rawImportId = $itemData['import_id'] ?? null;
+            $importId = is_string($rawImportId) ? $rawImportId : null;
 
             $authorId = $this->resolveAuthorId($itemData);
 
