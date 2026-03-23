@@ -14,6 +14,9 @@ use Pulsar\Extension\Cms\Content\ContentTranslation;
  * Each channel represents a delivery target (web, RSS, static site, etc.)
  * and is invoked by the PublishingOrchestrator when content transitions
  * to or from the Published state.
+ *
+ * @psalm-api Public extension contract; implementations registered with
+ *            ChannelRegistry and invoked by the orchestrator.
  */
 #[Api(since: '1.0.0')]
 interface PublishingChannelInterface

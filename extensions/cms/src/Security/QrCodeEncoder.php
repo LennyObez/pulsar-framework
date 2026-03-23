@@ -21,6 +21,9 @@ use function str_split;
  * Uses a pure-PHP QR code encoder based on the ISO/IEC 18004 standard.
  * Produces minimal SVG output suitable for inline embedding in HTML
  * (e.g. TOTP enrollment screens, payment QR codes).
+ *
+ * @psalm-api Public service resolved from the DI container by TOTP enrollment
+ *            and payment endpoints; not instantiated by name.
  */
 #[Api(since: '1.0.0')]
 final class QrCodeEncoder

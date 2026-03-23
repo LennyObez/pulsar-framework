@@ -8,6 +8,9 @@ use Pulsar\Api\Api;
 
 /**
  * Result of a publish or unpublish operation on a single channel.
+ *
+ * @psalm-api Public DTO returned from PublishingChannelInterface and the
+ *            orchestrator; consumed by user-land code and admin views.
  */
 #[Api(since: '1.0.0')]
 final readonly class PublishResult
