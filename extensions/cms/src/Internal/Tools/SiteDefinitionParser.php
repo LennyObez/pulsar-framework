@@ -938,11 +938,12 @@ final readonly class SiteDefinitionParser
                     $itemLocaleData = $localeItem['item'];
 
                     if (isset($itemLocaleData['label'])) {
+                        $rawTitleAttr = $itemLocaleData['title_attr'] ?? null;
                         $itemTranslations[] = new MenuItemTranslation(
                             menuItemId: $itemId,
                             locale: $itemLocale,
                             label: is_string($itemLocaleData['label']) ? $itemLocaleData['label'] : '',
-                            titleAttr: is_string($itemLocaleData['title_attr'] ?? null) ? $itemLocaleData['title_attr'] : null,
+                            titleAttr: is_string($rawTitleAttr) ? $rawTitleAttr : null,
                         );
                     }
                 }

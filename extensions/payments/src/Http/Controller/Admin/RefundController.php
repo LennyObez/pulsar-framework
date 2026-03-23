@@ -51,7 +51,8 @@ final readonly class RefundController
         if (isset($body['amount'])) {
             $rawAmount = $body['amount'];
             $amountValue = is_int($rawAmount) ? $rawAmount : (is_numeric($rawAmount) ? (int) $rawAmount : 0);
-            $currencyCode = is_string($body['currency'] ?? null) ? strtoupper($body['currency']) : 'USD';
+            $rawCurrency = $body['currency'] ?? null;
+            $currencyCode = is_string($rawCurrency) ? strtoupper($rawCurrency) : 'USD';
             $currency = Currency::tryFrom($currencyCode);
 
             if ($currency === null) {
