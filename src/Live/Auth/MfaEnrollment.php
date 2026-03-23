@@ -52,9 +52,9 @@ final class MfaEnrollment extends LiveComponent
     #[LiveProp]
     public string $secret = '';
 
-    private ?TwoFactorManagerInterface $twoFactorManager;
-    private ?IdentityInterface $identity;
-    private AuthUiConfig $config;
+    private ?TwoFactorManagerInterface $twoFactorManager = null;
+    private ?IdentityInterface $identity = null;
+    private ?AuthUiConfig $config = null;
 
     public function mount(array $params = []): void
     {
