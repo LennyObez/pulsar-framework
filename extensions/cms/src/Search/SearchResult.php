@@ -9,6 +9,9 @@ use Pulsar\Extension\Cms\Content\Content;
 
 /**
  * Full-text search result with ranked items, suggestions, and timing.
+ *
+ * @psalm-api Public DTO returned from SearchServiceInterface; consumed by
+ *            search templates and user-land code.
  */
 #[Api(since: '1.0.0')]
 final readonly class SearchResult

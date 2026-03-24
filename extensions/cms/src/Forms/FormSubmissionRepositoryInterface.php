@@ -8,6 +8,9 @@ use Pulsar\Api\Api;
 
 /**
  * Repository contract for form submission persistence.
+ *
+ * @psalm-api Public binding contract; implemented by DbFormSubmissionRepository
+ *            and consumed by FormSubmissionService and admin controllers.
  */
 #[Api(since: '1.0.0')]
 interface FormSubmissionRepositoryInterface

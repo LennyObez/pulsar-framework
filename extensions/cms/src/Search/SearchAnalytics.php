@@ -8,6 +8,9 @@ use Pulsar\Api\Api;
 
 /**
  * Aggregated search analytics report.
+ *
+ * @psalm-api Public DTO returned from SearchAnalyticsRepositoryInterface;
+ *            consumed by analytics templates.
  */
 #[Api(since: '1.0.0')]
 final readonly class SearchAnalytics

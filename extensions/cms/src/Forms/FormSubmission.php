@@ -16,6 +16,9 @@ use const JSON_THROW_ON_ERROR;
 
 /**
  * Represents a single form submission with spam scoring and evidence hashing.
+ *
+ * @psalm-api Public DTO returned from FormSubmissionRepositoryInterface;
+ *            consumed by admin templates and notification mailables.
  */
 #[Api(since: '1.0.0')]
 final readonly class FormSubmission
