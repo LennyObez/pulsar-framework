@@ -12,6 +12,9 @@ use Pulsar\Api\Api;
  *
  * Represents a composed email campaign with subject, HTML/text bodies,
  * scheduling, and aggregate analytics counters for open/click/bounce tracking.
+ *
+ * @psalm-api Public DTO returned from NewsletterCampaignRepositoryInterface;
+ *            consumed by admin templates and dispatch jobs.
  */
 #[Api(since: '1.0.0')]
 final readonly class NewsletterCampaign

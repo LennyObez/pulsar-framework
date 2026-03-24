@@ -16,6 +16,9 @@ use function sodium_crypto_generichash;
  * Represents an email address subscribed to the newsletter, with
  * double opt-in confirmation via hashed token and IP tracking for
  * compliance with anti-spam regulations (CAN-SPAM, GDPR).
+ *
+ * @psalm-api Public DTO returned from NewsletterSubscriberRepositoryInterface;
+ *            consumed by subscription service and admin views.
  */
 #[Api(since: '1.0.0')]
 final readonly class NewsletterSubscriber
