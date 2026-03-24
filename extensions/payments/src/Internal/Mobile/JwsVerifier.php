@@ -93,7 +93,7 @@ final class JwsVerifier
 
         $leafCertDer = $x5c[0];
 
-        if (!is_string($leafCertDer) || $leafCertDer === '') {
+        if ($leafCertDer === '') {
             throw PaymentException::jwsVerificationFailed('x5c[0] certificate is empty');
         }
 

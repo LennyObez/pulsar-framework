@@ -82,10 +82,6 @@ final readonly class HeaderValidator
         }
 
         foreach ($value as $item) {
-            if (!is_string($item)) {
-                throw new InvalidArgumentException('Header value array entries must all be strings');
-            }
-
             self::assertNoCrlfNul($item);
         }
     }
