@@ -65,8 +65,10 @@ final readonly class FieldController extends AbstractAdminController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $fieldKey = is_string($body['field_key'] ?? null) ? $body['field_key'] : '';
-        $fieldTypeStr = is_string($body['field_type'] ?? null) ? $body['field_type'] : '';
+        $rawFieldKey = $body['field_key'] ?? null;
+        $fieldKey = is_string($rawFieldKey) ? $rawFieldKey : '';
+        $rawFieldType = $body['field_type'] ?? null;
+        $fieldTypeStr = is_string($rawFieldType) ? $rawFieldType : '';
 
         if ($fieldKey === '' || $fieldTypeStr === '') {
             return Response::json(['error' => 'field_key and field_type are required'], 400);
@@ -78,19 +80,25 @@ final readonly class FieldController extends AbstractAdminController
             return Response::json(['error' => 'Invalid field_type'], 400);
         }
 
+        $rawRequired = $body['required'] ?? null;
+        $rawTranslatable = $body['translatable'] ?? null;
+        $rawSearchable = $body['searchable'] ?? null;
+        $rawFilterable = $body['filterable'] ?? null;
+        $rawSortable = $body['sortable'] ?? null;
+        $rawSortOrder = $body['sort_order'] ?? null;
         $field = new ContentTypeField(
             id: UuidGenerator::v7(),
             contentType: $contentType,
             fieldKey: $fieldKey,
             fieldType: $fieldType,
-            required: is_bool($body['required'] ?? null) ? $body['required'] : false,
-            translatable: is_bool($body['translatable'] ?? null) ? $body['translatable'] : false,
-            searchable: is_bool($body['searchable'] ?? null) ? $body['searchable'] : false,
-            filterable: is_bool($body['filterable'] ?? null) ? $body['filterable'] : false,
-            sortable: is_bool($body['sortable'] ?? null) ? $body['sortable'] : false,
+            required: is_bool($rawRequired) ? $rawRequired : false,
+            translatable: is_bool($rawTranslatable) ? $rawTranslatable : false,
+            searchable: is_bool($rawSearchable) ? $rawSearchable : false,
+            filterable: is_bool($rawFilterable) ? $rawFilterable : false,
+            sortable: is_bool($rawSortable) ? $rawSortable : false,
             validationRules: self::toStringKeyedArray($body['validation_rules'] ?? []),
             defaultValue: $body['default_value'] ?? null,
-            sortOrder: is_int($body['sort_order'] ?? null) ? $body['sort_order'] : 0,
+            sortOrder: is_int($rawSortOrder) ? $rawSortOrder : 0,
         );
 
         $this->fieldRepository->saveField($field);
