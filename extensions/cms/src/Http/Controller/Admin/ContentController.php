@@ -108,16 +108,22 @@ final readonly class ContentController extends AbstractAdminController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $contentType = ContentType::tryFrom(is_string($body['content_type'] ?? null) ? $body['content_type'] : 'page');
+        $rawContentTypeValue = $body['content_type'] ?? null;
+        $contentTypeStr = is_string($rawContentTypeValue) ? $rawContentTypeValue : 'page';
+        $contentType = ContentType::tryFrom($contentTypeStr);
 
         if ($contentType === null) {
             return Response::json(['error' => 'Invalid content type'], 400);
         }
 
-        $locale = is_string($body['locale'] ?? null) ? $body['locale'] : $this->config->defaultLocale;
-        $title = is_string($body['title'] ?? null) ? $body['title'] : '';
-        $slugSegment = is_string($body['slug'] ?? null) ? $body['slug'] : '';
-        $rawBody = is_string($body['body'] ?? null) ? $body['body'] : '';
+        $rawLocale = $body['locale'] ?? null;
+        $locale = is_string($rawLocale) ? $rawLocale : $this->config->defaultLocale;
+        $rawTitle = $body['title'] ?? null;
+        $title = is_string($rawTitle) ? $rawTitle : '';
+        $rawSlug = $body['slug'] ?? null;
+        $slugSegment = is_string($rawSlug) ? $rawSlug : '';
+        $rawBodyText = $body['body'] ?? null;
+        $rawBody = is_string($rawBodyText) ? $rawBodyText : '';
 
         if ($title === '' || $slugSegment === '') {
             return Response::json(['error' => 'Title and slug are required'], 400);
@@ -126,16 +132,20 @@ final readonly class ContentController extends AbstractAdminController
         $sanitizedBody = $this->safeHtmlPolicy->sanitize($rawBody);
         $tenantId = $this->validateTenantAccess($request);
 
+        $rawTemplate = $body['template'] ?? null;
+        $rawParentId = $body['parent_id'] ?? null;
+        $rawCommentPolicy = $body['comment_policy'] ?? null;
+        $rawDataClassification = $body['data_classification'] ?? null;
         $contentId = UuidGenerator::v7();
         $content = Content::create(
             id: $contentId,
             contentType: $contentType,
             authorId: $identity->id(),
             tenantId: $tenantId,
-            template: is_string($body['template'] ?? null) ? $body['template'] : null,
-            parentId: is_string($body['parent_id'] ?? null) ? $body['parent_id'] : null,
-            commentPolicy: CommentPolicy::tryFrom(is_string($body['comment_policy'] ?? null) ? $body['comment_policy'] : '') ?? CommentPolicy::Inherit,
-            dataClassification: DataClassification::tryFrom(is_string($body['data_classification'] ?? null) ? $body['data_classification'] : '') ?? DataClassification::Public,
+            template: is_string($rawTemplate) ? $rawTemplate : null,
+            parentId: is_string($rawParentId) ? $rawParentId : null,
+            commentPolicy: CommentPolicy::tryFrom(is_string($rawCommentPolicy) ? $rawCommentPolicy : '') ?? CommentPolicy::Inherit,
+            dataClassification: DataClassification::tryFrom(is_string($rawDataClassification) ? $rawDataClassification : '') ?? DataClassification::Public,
         );
 
         $this->contentRepository->save($content);
@@ -150,6 +160,9 @@ final readonly class ContentController extends AbstractAdminController
             }
         }
 
+        $rawExcerpt = $body['excerpt'] ?? null;
+        $rawMetaTitle = $body['meta_title'] ?? null;
+        $rawMetaDescription = $body['meta_description'] ?? null;
         $translationId = UuidGenerator::v7();
         $translation = ContentTranslation::create(
             id: $translationId,
@@ -159,9 +172,9 @@ final readonly class ContentController extends AbstractAdminController
             slugSegment: $slugSegment,
             path: $path,
             body: $sanitizedBody,
-            excerpt: is_string($body['excerpt'] ?? null) ? $body['excerpt'] : null,
-            metaTitle: is_string($body['meta_title'] ?? null) ? $body['meta_title'] : null,
-            metaDescription: is_string($body['meta_description'] ?? null) ? $body['meta_description'] : null,
+            excerpt: is_string($rawExcerpt) ? $rawExcerpt : null,
+            metaTitle: is_string($rawMetaTitle) ? $rawMetaTitle : null,
+            metaDescription: is_string($rawMetaDescription) ? $rawMetaDescription : null,
         );
 
         $this->translationRepository->save($translation);
