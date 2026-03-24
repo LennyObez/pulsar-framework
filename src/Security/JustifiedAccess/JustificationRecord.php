@@ -77,25 +77,40 @@ final readonly class JustificationRecord
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
+        $rawId = $data['id'] ?? null;
+        $rawActorId = $data['actor_id'] ?? null;
+        $rawActorName = $data['actor_name'] ?? null;
+        $rawActorRole = $data['actor_role'] ?? null;
+        $rawResourceType = $data['resource_type'] ?? null;
+        $rawResourceId = $data['resource_id'] ?? null;
+        $rawCategory = $data['category'] ?? null;
+        $rawJustification = $data['justification_text'] ?? null;
+        $rawClassification = $data['data_classification'] ?? null;
+        $rawAccessTimestamp = $data['access_timestamp'] ?? null;
+        $rawSessionId = $data['session_id'] ?? null;
+        $rawIpAddress = $data['ip_address'] ?? null;
         $supervisorApproval = $data['supervisor_approval'] ?? null;
+        $rawReviewStatus = $data['review_status'] ?? null;
+        $rawBreakTheGlass = $data['break_the_glass'] ?? null;
+        $rawMetadata = $data['metadata'] ?? null;
 
         return new self(
-            id: is_string($data['id'] ?? null) ? $data['id'] : '',
-            actorId: is_string($data['actor_id'] ?? null) ? $data['actor_id'] : '',
-            actorName: is_string($data['actor_name'] ?? null) ? $data['actor_name'] : '',
-            actorRole: is_string($data['actor_role'] ?? null) ? $data['actor_role'] : '',
-            resourceType: is_string($data['resource_type'] ?? null) ? $data['resource_type'] : '',
-            resourceId: is_string($data['resource_id'] ?? null) ? $data['resource_id'] : '',
-            category: JustificationCategory::from(is_string($data['category'] ?? null) ? $data['category'] : 'customer_request'),
-            justificationText: is_string($data['justification_text'] ?? null) ? $data['justification_text'] : '',
-            dataClassification: DataClassification::from(is_string($data['data_classification'] ?? null) ? $data['data_classification'] : 'internal'),
-            accessTimestamp: is_string($data['access_timestamp'] ?? null) ? new DateTimeImmutable($data['access_timestamp']) : new DateTimeImmutable(),
-            sessionId: is_string($data['session_id'] ?? null) ? $data['session_id'] : '',
-            ipAddress: is_string($data['ip_address'] ?? null) ? $data['ip_address'] : '',
+            id: is_string($rawId) ? $rawId : '',
+            actorId: is_string($rawActorId) ? $rawActorId : '',
+            actorName: is_string($rawActorName) ? $rawActorName : '',
+            actorRole: is_string($rawActorRole) ? $rawActorRole : '',
+            resourceType: is_string($rawResourceType) ? $rawResourceType : '',
+            resourceId: is_string($rawResourceId) ? $rawResourceId : '',
+            category: JustificationCategory::from(is_string($rawCategory) ? $rawCategory : 'customer_request'),
+            justificationText: is_string($rawJustification) ? $rawJustification : '',
+            dataClassification: DataClassification::from(is_string($rawClassification) ? $rawClassification : 'internal'),
+            accessTimestamp: is_string($rawAccessTimestamp) ? new DateTimeImmutable($rawAccessTimestamp) : new DateTimeImmutable(),
+            sessionId: is_string($rawSessionId) ? $rawSessionId : '',
+            ipAddress: is_string($rawIpAddress) ? $rawIpAddress : '',
             supervisorApproval: is_bool($supervisorApproval) ? $supervisorApproval : null,
-            reviewStatus: ReviewStatus::from(is_string($data['review_status'] ?? null) ? $data['review_status'] : 'pending'),
-            breakTheGlass: is_bool($data['break_the_glass'] ?? null) && $data['break_the_glass'],
-            metadata: is_array($data['metadata'] ?? null) ? $data['metadata'] : [],
+            reviewStatus: ReviewStatus::from(is_string($rawReviewStatus) ? $rawReviewStatus : 'pending'),
+            breakTheGlass: is_bool($rawBreakTheGlass) && $rawBreakTheGlass,
+            metadata: is_array($rawMetadata) ? $rawMetadata : [],
         );
     }
 }
