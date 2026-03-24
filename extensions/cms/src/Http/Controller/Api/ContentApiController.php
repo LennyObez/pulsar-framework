@@ -53,10 +53,14 @@ final readonly class ContentApiController
     {
         $params = $request->getQueryParams();
 
-        $locale = is_string($params['locale'] ?? null) ? $params['locale'] : $this->config->defaultLocale;
-        $contentType = is_string($params['type'] ?? null) ? $params['type'] : null;
-        $page = max(1, is_int($params['page'] ?? null) ? $params['page'] : 1);
-        $perPage = min(100, max(1, is_int($params['per_page'] ?? null) ? $params['per_page'] : 20));
+        $rawLocale = $params['locale'] ?? null;
+        $locale = is_string($rawLocale) ? $rawLocale : $this->config->defaultLocale;
+        $rawType = $params['type'] ?? null;
+        $contentType = is_string($rawType) ? $rawType : null;
+        $rawPage = $params['page'] ?? null;
+        $page = max(1, is_int($rawPage) ? $rawPage : 1);
+        $rawPerPage = $params['per_page'] ?? null;
+        $perPage = min(100, max(1, is_int($rawPerPage) ? $rawPerPage : 20));
 
         /** @var string|null $tenantId */
         $tenantId = $request->getAttribute('tenant_id');
@@ -95,7 +99,8 @@ final readonly class ContentApiController
         }
 
         $params = $request->getQueryParams();
-        $locale = is_string($params['locale'] ?? null) ? $params['locale'] : $this->config->defaultLocale;
+        $rawLocale = $params['locale'] ?? null;
+        $locale = is_string($rawLocale) ? $rawLocale : $this->config->defaultLocale;
 
         $translations = $this->translationRepository->findByContentId($id);
         $blocks = $this->blockRepository->findByContentAndLocale($id, $locale);
@@ -157,7 +162,9 @@ final readonly class ContentApiController
             ], 422);
         }
 
-        $contentType = ContentType::tryFrom(is_string($body['content_type'] ?? null) ? $body['content_type'] : 'page');
+        $rawContentTypeValue = $body['content_type'] ?? null;
+        $contentTypeStr = is_string($rawContentTypeValue) ? $rawContentTypeValue : 'page';
+        $contentType = ContentType::tryFrom($contentTypeStr);
 
         if ($contentType === null) {
             return Response::json([
@@ -167,22 +174,27 @@ final readonly class ContentApiController
             ], 422);
         }
 
-        $locale = is_string($body['locale'] ?? null) ? $body['locale'] : $this->config->defaultLocale;
+        $rawLocaleBody = $body['locale'] ?? null;
+        $locale = is_string($rawLocaleBody) ? $rawLocaleBody : $this->config->defaultLocale;
         $title = (is_string($body['title']) ? $body['title'] : '');
         $slugSegment = (is_string($body['slug']) ? $body['slug'] : '');
-        $bodyContent = is_string($body['body'] ?? null) ? $body['body'] : '';
+        $rawBody = $body['body'] ?? null;
+        $bodyContent = is_string($rawBody) ? $rawBody : '';
 
         /** @var string|null $tenantId */
         $tenantId = $request->getAttribute('tenant_id');
 
+        $rawAuthorId = $body['author_id'] ?? null;
+        $rawTemplate = $body['template'] ?? null;
+        $rawParentId = $body['parent_id'] ?? null;
         $contentId = UuidGenerator::v7();
         $content = Content::create(
             id: $contentId,
             contentType: $contentType,
-            authorId: is_string($body['author_id'] ?? null) ? $body['author_id'] : 'api',
+            authorId: is_string($rawAuthorId) ? $rawAuthorId : 'api',
             tenantId: $tenantId,
-            template: is_string($body['template'] ?? null) ? $body['template'] : null,
-            parentId: is_string($body['parent_id'] ?? null) ? $body['parent_id'] : null,
+            template: is_string($rawTemplate) ? $rawTemplate : null,
+            parentId: is_string($rawParentId) ? $rawParentId : null,
         );
 
         $this->contentRepository->save($content);
