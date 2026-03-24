@@ -8,6 +8,9 @@ use Pulsar\Api\Api;
 
 /**
  * Per-locale translation for a menu item.
+ *
+ * @psalm-api Public DTO returned from MenuRepositoryInterface; consumed
+ *            by navigation rendering and admin editor.
  */
 #[Api(since: '1.0.0')]
 final readonly class MenuItemTranslation

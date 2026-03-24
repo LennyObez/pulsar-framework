@@ -9,6 +9,9 @@ use Pulsar\Api\Api;
 
 /**
  * A navigation menu assigned to a specific location (e.g., primary, footer).
+ *
+ * @psalm-api Public DTO returned from MenuRepositoryInterface; consumed by
+ *            navigation rendering and admin editor.
  */
 #[Api(since: '1.0.0')]
 final readonly class Menu
