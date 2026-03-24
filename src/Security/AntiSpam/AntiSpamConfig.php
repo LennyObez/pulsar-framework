@@ -81,29 +81,51 @@ final readonly class AntiSpamConfig
         /** @var array<string, int> $cooldownTiers */
         $cooldownTiers = is_array($rawCooldownTiers) ? $rawCooldownTiers : ['new' => 60, 'established' => 10, 'moderator' => 0];
 
+        $rawHoneypotEnabled = $data['honeypot_enabled'] ?? null;
+        $rawHoneypotFieldName = $data['honeypot_field_name'] ?? null;
+        $rawDuplicateDetection = $data['duplicate_detection_enabled'] ?? null;
+        $rawDuplicateWindow = $data['duplicate_window_seconds'] ?? null;
+        $rawDuplicateSimilarity = $data['duplicate_similarity_threshold'] ?? null;
+        $rawLinkDensity = $data['link_density_enabled'] ?? null;
+        $rawMaxLinkDensity = $data['max_link_density'] ?? null;
+        $rawContentQuality = $data['content_quality_enabled'] ?? null;
+        $rawMinContent = $data['min_content_length'] ?? null;
+        $rawMaxUppercase = $data['max_uppercase_ratio'] ?? null;
+        $rawMaxRepeatedChar = $data['max_repeated_char_ratio'] ?? null;
+        $rawProofOfWorkEnabled = $data['proof_of_work_enabled'] ?? null;
+        $rawProofOfWorkPrefix = $data['proof_of_work_prefix'] ?? null;
+        $rawCaptchaEnabled = $data['captcha_enabled'] ?? null;
+        $rawCaptchaProvider = $data['captcha_provider'] ?? null;
+        $rawCaptchaSiteKey = $data['captcha_site_key'] ?? null;
+        $rawCaptchaSecretKey = $data['captcha_secret_key'] ?? null;
+        $rawAccountAgeGate = $data['account_age_gate_enabled'] ?? null;
+        $rawMinAccountAge = $data['min_account_age_seconds'] ?? null;
+        $rawReputationCooldown = $data['reputation_cooldown_enabled'] ?? null;
+        $rawShortCircuit = $data['short_circuit'] ?? null;
+
         return new self(
-            honeypotEnabled: is_bool($data['honeypot_enabled'] ?? null) ? $data['honeypot_enabled'] : true,
-            honeypotFieldName: is_string($data['honeypot_field_name'] ?? null) ? $data['honeypot_field_name'] : 'website_url',
-            duplicateDetectionEnabled: is_bool($data['duplicate_detection_enabled'] ?? null) ? $data['duplicate_detection_enabled'] : true,
-            duplicateWindowSeconds: is_int($data['duplicate_window_seconds'] ?? null) ? $data['duplicate_window_seconds'] : 300,
-            duplicateSimilarityThreshold: is_float($data['duplicate_similarity_threshold'] ?? null) ? $data['duplicate_similarity_threshold'] : 85.0,
-            linkDensityEnabled: is_bool($data['link_density_enabled'] ?? null) ? $data['link_density_enabled'] : true,
-            maxLinkDensity: is_float($data['max_link_density'] ?? null) ? $data['max_link_density'] : 0.3,
-            contentQualityEnabled: is_bool($data['content_quality_enabled'] ?? null) ? $data['content_quality_enabled'] : true,
-            minContentLength: is_int($data['min_content_length'] ?? null) ? $data['min_content_length'] : 10,
-            maxUppercaseRatio: is_float($data['max_uppercase_ratio'] ?? null) ? $data['max_uppercase_ratio'] : 0.8,
-            maxRepeatedCharRatio: is_float($data['max_repeated_char_ratio'] ?? null) ? $data['max_repeated_char_ratio'] : 0.5,
-            proofOfWorkEnabled: is_bool($data['proof_of_work_enabled'] ?? null) ? $data['proof_of_work_enabled'] : false,
-            proofOfWorkPrefix: is_string($data['proof_of_work_prefix'] ?? null) ? $data['proof_of_work_prefix'] : '0000',
-            captchaEnabled: is_bool($data['captcha_enabled'] ?? null) ? $data['captcha_enabled'] : false,
-            captchaProvider: is_string($data['captcha_provider'] ?? null) ? $data['captcha_provider'] : 'hcaptcha',
-            captchaSiteKey: is_string($data['captcha_site_key'] ?? null) ? $data['captcha_site_key'] : '',
-            captchaSecretKey: is_string($data['captcha_secret_key'] ?? null) ? $data['captcha_secret_key'] : '',
-            accountAgeGateEnabled: is_bool($data['account_age_gate_enabled'] ?? null) ? $data['account_age_gate_enabled'] : false,
-            minAccountAgeSeconds: is_int($data['min_account_age_seconds'] ?? null) ? $data['min_account_age_seconds'] : 300,
-            reputationCooldownEnabled: is_bool($data['reputation_cooldown_enabled'] ?? null) ? $data['reputation_cooldown_enabled'] : true,
+            honeypotEnabled: is_bool($rawHoneypotEnabled) ? $rawHoneypotEnabled : true,
+            honeypotFieldName: is_string($rawHoneypotFieldName) ? $rawHoneypotFieldName : 'website_url',
+            duplicateDetectionEnabled: is_bool($rawDuplicateDetection) ? $rawDuplicateDetection : true,
+            duplicateWindowSeconds: is_int($rawDuplicateWindow) ? $rawDuplicateWindow : 300,
+            duplicateSimilarityThreshold: is_float($rawDuplicateSimilarity) ? $rawDuplicateSimilarity : 85.0,
+            linkDensityEnabled: is_bool($rawLinkDensity) ? $rawLinkDensity : true,
+            maxLinkDensity: is_float($rawMaxLinkDensity) ? $rawMaxLinkDensity : 0.3,
+            contentQualityEnabled: is_bool($rawContentQuality) ? $rawContentQuality : true,
+            minContentLength: is_int($rawMinContent) ? $rawMinContent : 10,
+            maxUppercaseRatio: is_float($rawMaxUppercase) ? $rawMaxUppercase : 0.8,
+            maxRepeatedCharRatio: is_float($rawMaxRepeatedChar) ? $rawMaxRepeatedChar : 0.5,
+            proofOfWorkEnabled: is_bool($rawProofOfWorkEnabled) ? $rawProofOfWorkEnabled : false,
+            proofOfWorkPrefix: is_string($rawProofOfWorkPrefix) ? $rawProofOfWorkPrefix : '0000',
+            captchaEnabled: is_bool($rawCaptchaEnabled) ? $rawCaptchaEnabled : false,
+            captchaProvider: is_string($rawCaptchaProvider) ? $rawCaptchaProvider : 'hcaptcha',
+            captchaSiteKey: is_string($rawCaptchaSiteKey) ? $rawCaptchaSiteKey : '',
+            captchaSecretKey: is_string($rawCaptchaSecretKey) ? $rawCaptchaSecretKey : '',
+            accountAgeGateEnabled: is_bool($rawAccountAgeGate) ? $rawAccountAgeGate : false,
+            minAccountAgeSeconds: is_int($rawMinAccountAge) ? $rawMinAccountAge : 300,
+            reputationCooldownEnabled: is_bool($rawReputationCooldown) ? $rawReputationCooldown : true,
             cooldownTiers: $cooldownTiers,
-            shortCircuit: is_bool($data['short_circuit'] ?? null) ? $data['short_circuit'] : false,
+            shortCircuit: is_bool($rawShortCircuit) ? $rawShortCircuit : false,
         );
     }
 }
