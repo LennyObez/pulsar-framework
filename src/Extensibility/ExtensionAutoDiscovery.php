@@ -70,14 +70,22 @@ final readonly class ExtensionAutoDiscovery
             return [];
         }
 
-        /** @var array{packages?: list<array<string, mixed>>}|list<array<string, mixed>> $data */
+        /** @var mixed $data */
         $data = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
 
         // Composer 2.x wraps packages in a "packages" key
         /** @var list<array<string, mixed>> $packages */
-        $packages = isset($data['packages']) && is_array($data['packages'])
-            ? $data['packages']
-            : (is_array($data) && !isset($data['packages']) ? $data : []);
+        $packages = [];
+        if (is_array($data)) {
+            $packagesValue = $data['packages'] ?? null;
+            if (is_array($packagesValue)) {
+                /** @var list<array<string, mixed>> $packages */
+                $packages = array_values(array_filter($packagesValue, 'is_array'));
+            } elseif (!isset($data['packages'])) {
+                /** @var list<array<string, mixed>> $packages */
+                $packages = array_values(array_filter($data, 'is_array'));
+            }
+        }
 
         $discovered = [];
 
@@ -105,7 +113,6 @@ final readonly class ExtensionAutoDiscovery
             return [];
         }
 
-        /** @var list<string> $vendors */
         $vendors = scandir($this->vendorPath);
 
         if ($vendors === false) {
@@ -123,7 +130,6 @@ final readonly class ExtensionAutoDiscovery
                 continue;
             }
 
-            /** @var list<string> $packages */
             $packages = scandir($vendorDir);
 
             if ($packages === false) {
