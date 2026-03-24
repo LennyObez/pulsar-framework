@@ -160,26 +160,44 @@ final readonly class MediaMetadata
      */
     public static function fromArray(array $data): self
     {
+        $rawDateTaken = $data['date_taken'] ?? null;
+        $rawCameraMake = $data['camera_make'] ?? null;
+        $rawCameraModel = $data['camera_model'] ?? null;
+        $rawLens = $data['lens'] ?? null;
+        $rawFocalLength = $data['focal_length'] ?? null;
+        $rawAperture = $data['aperture'] ?? null;
+        $rawExposureTime = $data['exposure_time'] ?? null;
+        $rawIso = $data['iso'] ?? null;
+        $rawFlash = $data['flash'] ?? null;
+        $rawWhiteBalance = $data['white_balance'] ?? null;
+        $rawOrientation = $data['orientation'] ?? null;
+        $rawColorSpace = $data['color_space'] ?? null;
+        $rawXResolution = $data['x_resolution'] ?? null;
+        $rawYResolution = $data['y_resolution'] ?? null;
+        $rawSoftware = $data['software'] ?? null;
+        $rawCopyright = $data['copyright'] ?? null;
+        $rawDescription = $data['description'] ?? null;
+
         return new self(
-            dateTaken: is_string($data['date_taken'] ?? null) ? $data['date_taken'] : null,
+            dateTaken: is_string($rawDateTaken) ? $rawDateTaken : null,
             gpsLatitude: self::toNullableFloat($data['gps_latitude'] ?? null),
             gpsLongitude: self::toNullableFloat($data['gps_longitude'] ?? null),
-            cameraMake: is_string($data['camera_make'] ?? null) ? $data['camera_make'] : null,
-            cameraModel: is_string($data['camera_model'] ?? null) ? $data['camera_model'] : null,
-            lens: is_string($data['lens'] ?? null) ? $data['lens'] : null,
-            focalLength: is_string($data['focal_length'] ?? null) ? $data['focal_length'] : null,
-            aperture: is_string($data['aperture'] ?? null) ? $data['aperture'] : null,
-            exposureTime: is_string($data['exposure_time'] ?? null) ? $data['exposure_time'] : null,
-            iso: is_int($data['iso'] ?? null) ? $data['iso'] : null,
-            flash: is_string($data['flash'] ?? null) ? $data['flash'] : null,
-            whiteBalance: is_string($data['white_balance'] ?? null) ? $data['white_balance'] : null,
-            orientation: is_int($data['orientation'] ?? null) ? $data['orientation'] : null,
-            colorSpace: is_string($data['color_space'] ?? null) ? $data['color_space'] : null,
-            xResolution: is_int($data['x_resolution'] ?? null) ? $data['x_resolution'] : null,
-            yResolution: is_int($data['y_resolution'] ?? null) ? $data['y_resolution'] : null,
-            software: is_string($data['software'] ?? null) ? $data['software'] : null,
-            copyright: is_string($data['copyright'] ?? null) ? $data['copyright'] : null,
-            description: is_string($data['description'] ?? null) ? $data['description'] : null,
+            cameraMake: is_string($rawCameraMake) ? $rawCameraMake : null,
+            cameraModel: is_string($rawCameraModel) ? $rawCameraModel : null,
+            lens: is_string($rawLens) ? $rawLens : null,
+            focalLength: is_string($rawFocalLength) ? $rawFocalLength : null,
+            aperture: is_string($rawAperture) ? $rawAperture : null,
+            exposureTime: is_string($rawExposureTime) ? $rawExposureTime : null,
+            iso: is_int($rawIso) ? $rawIso : null,
+            flash: is_string($rawFlash) ? $rawFlash : null,
+            whiteBalance: is_string($rawWhiteBalance) ? $rawWhiteBalance : null,
+            orientation: is_int($rawOrientation) ? $rawOrientation : null,
+            colorSpace: is_string($rawColorSpace) ? $rawColorSpace : null,
+            xResolution: is_int($rawXResolution) ? $rawXResolution : null,
+            yResolution: is_int($rawYResolution) ? $rawYResolution : null,
+            software: is_string($rawSoftware) ? $rawSoftware : null,
+            copyright: is_string($rawCopyright) ? $rawCopyright : null,
+            description: is_string($rawDescription) ? $rawDescription : null,
         );
     }
 
