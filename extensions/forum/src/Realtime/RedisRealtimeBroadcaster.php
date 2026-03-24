@@ -113,10 +113,6 @@ final class RedisRealtimeBroadcaster implements RealtimeBroadcasterInterface
         $events = [];
 
         foreach ($entries as $entry) {
-            if (!is_string($entry)) {
-                continue;
-            }
-
             /** @var array{type: string, channel: string, payload: string, user_id: string, timestamp: string}|null $data */
             $data = json_decode($entry, true);
 

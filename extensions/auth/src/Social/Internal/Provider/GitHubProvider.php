@@ -117,12 +117,12 @@ final readonly class GitHubProvider implements OAuthProviderInterface
             ['Authorization' => 'Bearer ' . $accessToken, 'Accept' => 'application/json'],
         );
 
-        /** @var list<array<string, mixed>> $emails */
         $emails = json_decode($emailsJson, true, 16, JSON_THROW_ON_ERROR);
 
         if (!is_array($emails)) {
             return null;
         }
+        /** @var list<array<string, mixed>> $emails */
 
         foreach ($emails as $entry) {
             if (is_array($entry) && ($entry['primary'] ?? false) === true && is_string($entry['email'] ?? null)) {
