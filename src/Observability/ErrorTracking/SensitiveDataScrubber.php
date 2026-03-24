@@ -79,10 +79,6 @@ final readonly class SensitiveDataScrubber
         $result = [];
 
         foreach ($data as $key => $value) {
-            if (!is_string($key)) {
-                continue;
-            }
-
             if ($this->isSensitiveKey($key)) {
                 $result[$key] = self::REDACTED;
             } elseif (is_array($value)) {

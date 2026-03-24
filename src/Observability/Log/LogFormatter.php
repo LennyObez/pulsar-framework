@@ -84,10 +84,6 @@ final class LogFormatter
         $normalized = [];
 
         foreach ($context as $key => $value) {
-            if (!is_string($key)) {
-                continue;
-            }
-
             if ($value instanceof Throwable) {
                 $normalized[$key] = $this->serializeThrowable($value);
             } else {

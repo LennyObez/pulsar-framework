@@ -69,11 +69,11 @@ final readonly class SegmentController
 
         $filters = [];
 
-        /** @var array<string, mixed> $rawFilter */
         foreach ($rawFilters as $rawFilter) {
             if (!is_array($rawFilter)) {
                 continue;
             }
+            /** @var array<string, mixed> $rawFilter */
 
             $dimStr = is_string($rawFilter['dimension'] ?? null) ? $rawFilter['dimension'] : '';
             $opStr = is_string($rawFilter['operator'] ?? null) ? $rawFilter['operator'] : '';

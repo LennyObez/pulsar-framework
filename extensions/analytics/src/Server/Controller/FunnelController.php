@@ -69,11 +69,11 @@ final readonly class FunnelController
 
         $steps = [];
 
-        /** @var array<string, mixed> $rawStep */
         foreach ($rawSteps as $i => $rawStep) {
             if (!is_array($rawStep)) {
                 continue;
             }
+            /** @var array<string, mixed> $rawStep */
 
             $stepName = is_string($rawStep['name'] ?? null) ? $rawStep['name'] : '';
             $stepTypeStr = is_string($rawStep['type'] ?? null) ? $rawStep['type'] : '';
