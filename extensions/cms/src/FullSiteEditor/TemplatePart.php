@@ -12,6 +12,9 @@ use Pulsar\Api\Api;
  *
  * Template parts are the building blocks of full-site editing. Each part
  * can be independently edited and is rendered within template layouts.
+ *
+ * @psalm-api Public DTO returned from TemplatePartRepositoryInterface;
+ *            consumed by template rendering and admin editor.
  */
 #[Api(since: '1.0.0')]
 final readonly class TemplatePart

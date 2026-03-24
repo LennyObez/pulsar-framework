@@ -8,6 +8,9 @@ use Pulsar\Api\Api;
 
 /**
  * Predefined areas where template parts can be placed.
+ *
+ * @psalm-api Public enum referenced by TemplatePart::area; consumed by
+ *            template rendering and admin editor.
  */
 #[Api(since: '1.0.0')]
 enum TemplatePartArea: string
