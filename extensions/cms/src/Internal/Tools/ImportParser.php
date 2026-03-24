@@ -1071,10 +1071,6 @@ final readonly class ImportParser
             $menuTranslations = [];
 
             foreach ($translations as $locale => $transData) {
-                if (!is_string($locale) || !is_array($transData)) {
-                    continue;
-                }
-
                 if ($this->config->allowedLocales !== null && !in_array($locale, $this->config->allowedLocales, true)) {
                     continue;
                 }

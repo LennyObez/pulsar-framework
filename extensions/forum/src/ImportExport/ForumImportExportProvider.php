@@ -341,15 +341,6 @@ final readonly class ForumImportExportProvider implements ImportExportProviderIn
                     $translations = $entry['translations'];
 
                     foreach ($translations as $locale => $translationData) {
-                        if (!is_string($locale) || !is_array($translationData)) {
-                            $warnings[] = sprintf(
-                                'Skipping invalid translation entry for category "%s"',
-                                $entry['slug'],
-                            );
-
-                            continue;
-                        }
-
                         $rawName = $translationData['name'] ?? null;
                         $name = is_string($rawName) ? $rawName : '';
                         $rawDescription = $translationData['description'] ?? null;

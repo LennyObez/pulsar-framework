@@ -1054,10 +1054,6 @@ final readonly class SiteDefinitionParser
         array $itemData,
     ): void {
         foreach ($translations as $locale => $transData) {
-            if (!is_string($locale) || !is_array($transData)) {
-                continue;
-            }
-
             $slugSegment = $this->resolveTranslationSlugSegment($transData, $rootSlug);
 
             $body = is_string($transData['body'] ?? null) ? $transData['body'] : '';
