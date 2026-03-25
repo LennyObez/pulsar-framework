@@ -11,6 +11,9 @@ use Pulsar\Api\Api;
  *
  * Provides GDPR compliance operations: full data export and
  * PII erasure for a given user, with audit trail.
+ *
+ * @psalm-api Public binding contract; implemented by ToolsService and consumed
+ *            by admin GDPR / data-rights controllers.
  */
 #[Api(since: '1.0.0')]
 interface ToolsServiceInterface
