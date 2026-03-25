@@ -43,20 +43,33 @@ final readonly class AudioMetadata
      */
     public static function fromArray(array $data): self
     {
+        $rawTitle = $data['title'] ?? null;
+        $rawArtist = $data['artist'] ?? null;
+        $rawAlbum = $data['album'] ?? null;
+        $rawGenre = $data['genre'] ?? null;
+        $rawYear = $data['year'] ?? null;
+        $rawTrack = $data['track_number'] ?? null;
+        $rawBitrate = $data['bitrate'] ?? null;
+        $rawSampleRate = $data['sample_rate'] ?? null;
+        $rawChannels = $data['channels'] ?? null;
+        $rawCodec = $data['codec'] ?? null;
+        $rawFormat = $data['format'] ?? null;
+        $rawFileSize = $data['file_size'] ?? null;
+
         return new self(
-            title: is_string($data['title'] ?? null) ? $data['title'] : null,
-            artist: is_string($data['artist'] ?? null) ? $data['artist'] : null,
-            album: is_string($data['album'] ?? null) ? $data['album'] : null,
-            genre: is_string($data['genre'] ?? null) ? $data['genre'] : null,
-            year: is_int($data['year'] ?? null) ? $data['year'] : null,
-            trackNumber: is_int($data['track_number'] ?? null) ? $data['track_number'] : null,
+            title: is_string($rawTitle) ? $rawTitle : null,
+            artist: is_string($rawArtist) ? $rawArtist : null,
+            album: is_string($rawAlbum) ? $rawAlbum : null,
+            genre: is_string($rawGenre) ? $rawGenre : null,
+            year: is_int($rawYear) ? $rawYear : null,
+            trackNumber: is_int($rawTrack) ? $rawTrack : null,
             duration: self::toNullableFloat($data['duration'] ?? null),
-            bitrate: is_int($data['bitrate'] ?? null) ? $data['bitrate'] : null,
-            sampleRate: is_int($data['sample_rate'] ?? null) ? $data['sample_rate'] : null,
-            channels: is_int($data['channels'] ?? null) ? $data['channels'] : null,
-            codec: is_string($data['codec'] ?? null) ? $data['codec'] : null,
-            format: is_string($data['format'] ?? null) ? $data['format'] : null,
-            fileSize: is_int($data['file_size'] ?? null) ? $data['file_size'] : null,
+            bitrate: is_int($rawBitrate) ? $rawBitrate : null,
+            sampleRate: is_int($rawSampleRate) ? $rawSampleRate : null,
+            channels: is_int($rawChannels) ? $rawChannels : null,
+            codec: is_string($rawCodec) ? $rawCodec : null,
+            format: is_string($rawFormat) ? $rawFormat : null,
+            fileSize: is_int($rawFileSize) ? $rawFileSize : null,
         );
     }
 
