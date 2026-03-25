@@ -7,12 +7,6 @@ namespace Pulsar\Security\AntiSpam;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_array;
-use function is_bool;
-use function is_float;
-use function is_int;
-use function is_string;
-
 /**
  * Configuration DTO for the anti-spam pipeline.
  *
@@ -72,60 +66,57 @@ final readonly class AntiSpamConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     honeypot_enabled?: bool,
+     *     honeypot_field_name?: string,
+     *     duplicate_detection_enabled?: bool,
+     *     duplicate_window_seconds?: int,
+     *     duplicate_similarity_threshold?: float,
+     *     link_density_enabled?: bool,
+     *     max_link_density?: float,
+     *     content_quality_enabled?: bool,
+     *     min_content_length?: int,
+     *     max_uppercase_ratio?: float,
+     *     max_repeated_char_ratio?: float,
+     *     proof_of_work_enabled?: bool,
+     *     proof_of_work_prefix?: string,
+     *     captcha_enabled?: bool,
+     *     captcha_provider?: string,
+     *     captcha_site_key?: string,
+     *     captcha_secret_key?: string,
+     *     account_age_gate_enabled?: bool,
+     *     min_account_age_seconds?: int,
+     *     reputation_cooldown_enabled?: bool,
+     *     cooldown_tiers?: array<string, int>,
+     *     short_circuit?: bool,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $rawCooldownTiers = $data['cooldown_tiers'] ?? null;
-        /** @var array<string, int> $cooldownTiers */
-        $cooldownTiers = is_array($rawCooldownTiers) ? $rawCooldownTiers : ['new' => 60, 'established' => 10, 'moderator' => 0];
-
-        $rawHoneypotEnabled = $data['honeypot_enabled'] ?? null;
-        $rawHoneypotFieldName = $data['honeypot_field_name'] ?? null;
-        $rawDuplicateDetection = $data['duplicate_detection_enabled'] ?? null;
-        $rawDuplicateWindow = $data['duplicate_window_seconds'] ?? null;
-        $rawDuplicateSimilarity = $data['duplicate_similarity_threshold'] ?? null;
-        $rawLinkDensity = $data['link_density_enabled'] ?? null;
-        $rawMaxLinkDensity = $data['max_link_density'] ?? null;
-        $rawContentQuality = $data['content_quality_enabled'] ?? null;
-        $rawMinContent = $data['min_content_length'] ?? null;
-        $rawMaxUppercase = $data['max_uppercase_ratio'] ?? null;
-        $rawMaxRepeatedChar = $data['max_repeated_char_ratio'] ?? null;
-        $rawProofOfWorkEnabled = $data['proof_of_work_enabled'] ?? null;
-        $rawProofOfWorkPrefix = $data['proof_of_work_prefix'] ?? null;
-        $rawCaptchaEnabled = $data['captcha_enabled'] ?? null;
-        $rawCaptchaProvider = $data['captcha_provider'] ?? null;
-        $rawCaptchaSiteKey = $data['captcha_site_key'] ?? null;
-        $rawCaptchaSecretKey = $data['captcha_secret_key'] ?? null;
-        $rawAccountAgeGate = $data['account_age_gate_enabled'] ?? null;
-        $rawMinAccountAge = $data['min_account_age_seconds'] ?? null;
-        $rawReputationCooldown = $data['reputation_cooldown_enabled'] ?? null;
-        $rawShortCircuit = $data['short_circuit'] ?? null;
-
         return new self(
-            honeypotEnabled: is_bool($rawHoneypotEnabled) ? $rawHoneypotEnabled : true,
-            honeypotFieldName: is_string($rawHoneypotFieldName) ? $rawHoneypotFieldName : 'website_url',
-            duplicateDetectionEnabled: is_bool($rawDuplicateDetection) ? $rawDuplicateDetection : true,
-            duplicateWindowSeconds: is_int($rawDuplicateWindow) ? $rawDuplicateWindow : 300,
-            duplicateSimilarityThreshold: is_float($rawDuplicateSimilarity) ? $rawDuplicateSimilarity : 85.0,
-            linkDensityEnabled: is_bool($rawLinkDensity) ? $rawLinkDensity : true,
-            maxLinkDensity: is_float($rawMaxLinkDensity) ? $rawMaxLinkDensity : 0.3,
-            contentQualityEnabled: is_bool($rawContentQuality) ? $rawContentQuality : true,
-            minContentLength: is_int($rawMinContent) ? $rawMinContent : 10,
-            maxUppercaseRatio: is_float($rawMaxUppercase) ? $rawMaxUppercase : 0.8,
-            maxRepeatedCharRatio: is_float($rawMaxRepeatedChar) ? $rawMaxRepeatedChar : 0.5,
-            proofOfWorkEnabled: is_bool($rawProofOfWorkEnabled) ? $rawProofOfWorkEnabled : false,
-            proofOfWorkPrefix: is_string($rawProofOfWorkPrefix) ? $rawProofOfWorkPrefix : '0000',
-            captchaEnabled: is_bool($rawCaptchaEnabled) ? $rawCaptchaEnabled : false,
-            captchaProvider: is_string($rawCaptchaProvider) ? $rawCaptchaProvider : 'hcaptcha',
-            captchaSiteKey: is_string($rawCaptchaSiteKey) ? $rawCaptchaSiteKey : '',
-            captchaSecretKey: is_string($rawCaptchaSecretKey) ? $rawCaptchaSecretKey : '',
-            accountAgeGateEnabled: is_bool($rawAccountAgeGate) ? $rawAccountAgeGate : false,
-            minAccountAgeSeconds: is_int($rawMinAccountAge) ? $rawMinAccountAge : 300,
-            reputationCooldownEnabled: is_bool($rawReputationCooldown) ? $rawReputationCooldown : true,
-            cooldownTiers: $cooldownTiers,
-            shortCircuit: is_bool($rawShortCircuit) ? $rawShortCircuit : false,
+            honeypotEnabled: $data['honeypot_enabled'] ?? true,
+            honeypotFieldName: $data['honeypot_field_name'] ?? 'website_url',
+            duplicateDetectionEnabled: $data['duplicate_detection_enabled'] ?? true,
+            duplicateWindowSeconds: $data['duplicate_window_seconds'] ?? 300,
+            duplicateSimilarityThreshold: $data['duplicate_similarity_threshold'] ?? 85.0,
+            linkDensityEnabled: $data['link_density_enabled'] ?? true,
+            maxLinkDensity: $data['max_link_density'] ?? 0.3,
+            contentQualityEnabled: $data['content_quality_enabled'] ?? true,
+            minContentLength: $data['min_content_length'] ?? 10,
+            maxUppercaseRatio: $data['max_uppercase_ratio'] ?? 0.8,
+            maxRepeatedCharRatio: $data['max_repeated_char_ratio'] ?? 0.5,
+            proofOfWorkEnabled: $data['proof_of_work_enabled'] ?? false,
+            proofOfWorkPrefix: $data['proof_of_work_prefix'] ?? '0000',
+            captchaEnabled: $data['captcha_enabled'] ?? false,
+            captchaProvider: $data['captcha_provider'] ?? 'hcaptcha',
+            captchaSiteKey: $data['captcha_site_key'] ?? '',
+            captchaSecretKey: $data['captcha_secret_key'] ?? '',
+            accountAgeGateEnabled: $data['account_age_gate_enabled'] ?? false,
+            minAccountAgeSeconds: $data['min_account_age_seconds'] ?? 300,
+            reputationCooldownEnabled: $data['reputation_cooldown_enabled'] ?? true,
+            cooldownTiers: $data['cooldown_tiers'] ?? ['new' => 60, 'established' => 10, 'moderator' => 0],
+            shortCircuit: $data['short_circuit'] ?? false,
         );
     }
 }
