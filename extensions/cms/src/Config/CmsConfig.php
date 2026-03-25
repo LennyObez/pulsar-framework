@@ -117,16 +117,30 @@ final readonly class CmsConfig
         /** @var array<string, mixed> $formsData */
         $formsData = is_array($data['forms'] ?? null) ? $data['forms'] : [];
 
+        $rawSiteName = $data['site_name'] ?? null;
+        $rawDefaultLocale = $data['default_locale'] ?? null;
+        $rawSupportedLocales = $data['supported_locales'] ?? null;
+        $rawDefaultLocaleInUrl = $data['default_locale_in_url'] ?? null;
+        $rawEditorialWorkflow = $data['editorial_workflow'] ?? null;
+        $rawEventSourcing = $data['event_sourcing'] ?? null;
+        $rawAtomicSnapshots = $data['atomic_snapshots'] ?? null;
+        $rawMaxHierarchyDepth = $data['max_hierarchy_depth'] ?? null;
+        $rawHomepageContentId = $data['homepage_content_id'] ?? null;
+        $rawHttpCacheTtl = $data['http_cache_ttl_seconds'] ?? null;
+        $rawPublicRateLimitContent = $data['public_rate_limit_content'] ?? null;
+        $rawPublicRateLimitCheckout = $data['public_rate_limit_checkout'] ?? null;
+        $rawApiKeyRequired = $data['api_key_required'] ?? null;
+
         return new self(
-            siteName: is_string($data['site_name'] ?? null) ? $data['site_name'] : 'Pulsar CMS',
-            defaultLocale: is_string($data['default_locale'] ?? null) ? $data['default_locale'] : 'en',
-            supportedLocales: is_array($data['supported_locales'] ?? null) ? array_values(array_filter($data['supported_locales'], 'is_string')) : ['en'],
-            defaultLocaleInUrl: is_bool($data['default_locale_in_url'] ?? null) ? $data['default_locale_in_url'] : false,
-            editorialWorkflow: is_bool($data['editorial_workflow'] ?? null) ? $data['editorial_workflow'] : false,
-            eventSourcing: is_bool($data['event_sourcing'] ?? null) ? $data['event_sourcing'] : false,
-            atomicSnapshots: is_bool($data['atomic_snapshots'] ?? null) ? $data['atomic_snapshots'] : false,
-            maxHierarchyDepth: is_int($data['max_hierarchy_depth'] ?? null) ? $data['max_hierarchy_depth'] : 10,
-            homepageContentId: isset($data['homepage_content_id']) && is_string($data['homepage_content_id']) ? $data['homepage_content_id'] : null,
+            siteName: is_string($rawSiteName) ? $rawSiteName : 'Pulsar CMS',
+            defaultLocale: is_string($rawDefaultLocale) ? $rawDefaultLocale : 'en',
+            supportedLocales: is_array($rawSupportedLocales) ? array_values(array_filter($rawSupportedLocales, 'is_string')) : ['en'],
+            defaultLocaleInUrl: is_bool($rawDefaultLocaleInUrl) ? $rawDefaultLocaleInUrl : false,
+            editorialWorkflow: is_bool($rawEditorialWorkflow) ? $rawEditorialWorkflow : false,
+            eventSourcing: is_bool($rawEventSourcing) ? $rawEventSourcing : false,
+            atomicSnapshots: is_bool($rawAtomicSnapshots) ? $rawAtomicSnapshots : false,
+            maxHierarchyDepth: is_int($rawMaxHierarchyDepth) ? $rawMaxHierarchyDepth : 10,
+            homepageContentId: is_string($rawHomepageContentId) ? $rawHomepageContentId : null,
             cache: CmsCacheConfig::fromArray($cacheData),
             media: MediaConfig::fromArray($mediaData),
             comments: CommentsConfig::fromArray($commentsData),
@@ -136,10 +150,10 @@ final readonly class CmsConfig
             commerce: isset($data['commerce']) ? CommerceConfig::fromArray($commerceData) : null,
             liveCss: LiveCssConfig::fromArray($liveCssData),
             import: ImportConfig::fromArray($importData),
-            httpCacheTtlSeconds: is_int($data['http_cache_ttl_seconds'] ?? null) ? $data['http_cache_ttl_seconds'] : 300,
-            publicRateLimitContent: is_int($data['public_rate_limit_content'] ?? null) ? $data['public_rate_limit_content'] : 120,
-            publicRateLimitCheckout: is_int($data['public_rate_limit_checkout'] ?? null) ? $data['public_rate_limit_checkout'] : 30,
-            apiKeyRequired: is_bool($data['api_key_required'] ?? null) ? $data['api_key_required'] : false,
+            httpCacheTtlSeconds: is_int($rawHttpCacheTtl) ? $rawHttpCacheTtl : 300,
+            publicRateLimitContent: is_int($rawPublicRateLimitContent) ? $rawPublicRateLimitContent : 120,
+            publicRateLimitCheckout: is_int($rawPublicRateLimitCheckout) ? $rawPublicRateLimitCheckout : 30,
+            apiKeyRequired: is_bool($rawApiKeyRequired) ? $rawApiKeyRequired : false,
             notifications: NotificationConfig::fromArray($notificationsData),
             ai: AiConfig::fromArray($aiData),
             publishing: PublishingConfig::fromArray($publishingData),
