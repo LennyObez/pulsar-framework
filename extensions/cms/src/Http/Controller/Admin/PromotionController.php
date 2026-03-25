@@ -87,8 +87,10 @@ final readonly class PromotionController extends AbstractAdminController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $name = is_string($body['name'] ?? null) ? $body['name'] : '';
-        $typeStr = is_string($body['type'] ?? null) ? $body['type'] : '';
+        $rawName = $body['name'] ?? null;
+        $name = is_string($rawName) ? $rawName : '';
+        $rawTypeStr = $body['type'] ?? null;
+        $typeStr = is_string($rawTypeStr) ? $rawTypeStr : '';
 
         if ($name === '') {
             return Response::json(['error' => 'Promotion name is required'], 400);
@@ -100,7 +102,8 @@ final readonly class PromotionController extends AbstractAdminController
             return Response::json(['error' => 'Invalid promotion type'], 400);
         }
 
-        $value = is_int($body['value'] ?? null) ? $body['value'] : 0;
+        $rawValue = $body['value'] ?? null;
+        $value = is_int($rawValue) ? $rawValue : 0;
 
         if ($value <= 0) {
             return Response::json(['error' => 'Promotion value must be positive'], 400);
@@ -109,12 +112,14 @@ final readonly class PromotionController extends AbstractAdminController
         /** @var string|null $tenantId */
         $tenantId = $request->getAttribute('tenant_id');
 
-        $startsAt = is_string($body['starts_at'] ?? null) && $body['starts_at'] !== ''
-            ? new DateTimeImmutable($body['starts_at'])
+        $rawStartsAt = $body['starts_at'] ?? null;
+        $startsAt = is_string($rawStartsAt) && $rawStartsAt !== ''
+            ? new DateTimeImmutable($rawStartsAt)
             : null;
 
-        $expiresAt = is_string($body['expires_at'] ?? null) && $body['expires_at'] !== ''
-            ? new DateTimeImmutable($body['expires_at'])
+        $rawExpiresAt = $body['expires_at'] ?? null;
+        $expiresAt = is_string($rawExpiresAt) && $rawExpiresAt !== ''
+            ? new DateTimeImmutable($rawExpiresAt)
             : null;
 
         /** @var list<string> $productIds */
