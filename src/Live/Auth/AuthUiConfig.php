@@ -59,23 +59,37 @@ final readonly class AuthUiConfig
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
+        $rawSocialProviders = $data['social_providers'] ?? null;
         /** @var list<string> $socialProviders */
-        $socialProviders = is_array($data['social_providers'] ?? null) ? $data['social_providers'] : [];
+        $socialProviders = is_array($rawSocialProviders) ? $rawSocialProviders : [];
+
+        $rawBrandName = $data['brand_name'] ?? null;
+        $rawLogoUrl = $data['logo_url'] ?? null;
+        $rawAccentColor = $data['accent_color'] ?? null;
+        $rawDarkMode = $data['dark_mode'] ?? null;
+        $rawShowRememberMe = $data['show_remember_me'] ?? null;
+        $rawShowForgotPassword = $data['show_forgot_password'] ?? null;
+        $rawRequireEmailVerification = $data['require_email_verification'] ?? null;
+        $rawEnableMfa = $data['enable_mfa'] ?? null;
+        $rawLoginRedirect = $data['login_redirect'] ?? null;
+        $rawLogoutRedirect = $data['logout_redirect'] ?? null;
+        $rawSignupRedirect = $data['signup_redirect'] ?? null;
+        $rawPasswordMinLength = $data['password_min_length'] ?? null;
 
         return new self(
-            brandName: is_string($data['brand_name'] ?? null) ? $data['brand_name'] : '',
-            logoUrl: is_string($data['logo_url'] ?? null) ? $data['logo_url'] : '',
-            accentColor: is_string($data['accent_color'] ?? null) ? $data['accent_color'] : '#4f46e5',
-            darkMode: is_bool($data['dark_mode'] ?? null) ? $data['dark_mode'] : false,
+            brandName: is_string($rawBrandName) ? $rawBrandName : '',
+            logoUrl: is_string($rawLogoUrl) ? $rawLogoUrl : '',
+            accentColor: is_string($rawAccentColor) ? $rawAccentColor : '#4f46e5',
+            darkMode: is_bool($rawDarkMode) ? $rawDarkMode : false,
             socialProviders: $socialProviders,
-            showRememberMe: is_bool($data['show_remember_me'] ?? null) ? $data['show_remember_me'] : true,
-            showForgotPassword: is_bool($data['show_forgot_password'] ?? null) ? $data['show_forgot_password'] : true,
-            requireEmailVerification: is_bool($data['require_email_verification'] ?? null) ? $data['require_email_verification'] : false,
-            enableMfa: is_bool($data['enable_mfa'] ?? null) ? $data['enable_mfa'] : true,
-            loginRedirect: is_string($data['login_redirect'] ?? null) ? $data['login_redirect'] : '/dashboard',
-            logoutRedirect: is_string($data['logout_redirect'] ?? null) ? $data['logout_redirect'] : '/login',
-            signupRedirect: is_string($data['signup_redirect'] ?? null) ? $data['signup_redirect'] : '/dashboard',
-            passwordMinLength: isset($data['password_min_length']) && is_int($data['password_min_length']) ? $data['password_min_length'] : 8,
+            showRememberMe: is_bool($rawShowRememberMe) ? $rawShowRememberMe : true,
+            showForgotPassword: is_bool($rawShowForgotPassword) ? $rawShowForgotPassword : true,
+            requireEmailVerification: is_bool($rawRequireEmailVerification) ? $rawRequireEmailVerification : false,
+            enableMfa: is_bool($rawEnableMfa) ? $rawEnableMfa : true,
+            loginRedirect: is_string($rawLoginRedirect) ? $rawLoginRedirect : '/dashboard',
+            logoutRedirect: is_string($rawLogoutRedirect) ? $rawLogoutRedirect : '/login',
+            signupRedirect: is_string($rawSignupRedirect) ? $rawSignupRedirect : '/dashboard',
+            passwordMinLength: is_int($rawPasswordMinLength) ? $rawPasswordMinLength : 8,
         );
     }
 }
