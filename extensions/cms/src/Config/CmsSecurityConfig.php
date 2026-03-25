@@ -87,8 +87,22 @@ final readonly class CmsSecurityConfig
      */
     public static function fromArray(array $data): self
     {
+        $rawSsrfEnabled = $data['ssrf_enabled'] ?? null;
+        $rawMaxRedirects = $data['max_redirects'] ?? null;
+        $rawConnectTimeout = $data['connect_timeout_seconds'] ?? null;
+        $rawTotalTimeout = $data['total_timeout_seconds'] ?? null;
+        $rawMaxResponseBytes = $data['max_response_bytes'] ?? null;
+        $rawForwardedForHeader = $data['forwarded_for_header'] ?? null;
+        $rawRealIpHeader = $data['real_ip_header'] ?? null;
+        $rawCloudflareMode = $data['cloudflare_mode'] ?? null;
+        $rawStepUpTtl = $data['step_up_ttl_minutes'] ?? null;
+        $rawRequireSignedPlugins = $data['require_signed_plugins'] ?? null;
+        $rawIntegrityCheckOnBoot = $data['integrity_check_on_boot'] ?? null;
+        $rawIpv6SubnetMask = $data['ipv6_subnet_mask'] ?? null;
+        $rawHotlinkProtection = $data['hotlink_protection'] ?? null;
+
         return new self(
-            ssrfEnabled: is_bool($data['ssrf_enabled'] ?? null) ? $data['ssrf_enabled'] : true,
+            ssrfEnabled: is_bool($rawSsrfEnabled) ? $rawSsrfEnabled : true,
             blockedIpRanges: self::toStringList($data['blocked_ip_ranges'] ?? null, [
                 '127.0.0.0/8', '10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16',
                 '169.254.0.0/16', '0.0.0.0/8', '100.64.0.0/10', '198.18.0.0/15',
@@ -96,21 +110,21 @@ final readonly class CmsSecurityConfig
             ]),
             additionalBlockedIps: self::toStringList($data['additional_blocked_ips'] ?? null, []),
             allowedOutboundPorts: self::toIntList($data['allowed_outbound_ports'] ?? null, [80, 443]),
-            maxRedirects: is_int($data['max_redirects'] ?? null) ? $data['max_redirects'] : 3,
-            connectTimeoutSeconds: is_int($data['connect_timeout_seconds'] ?? null) ? $data['connect_timeout_seconds'] : 5,
-            totalTimeoutSeconds: is_int($data['total_timeout_seconds'] ?? null) ? $data['total_timeout_seconds'] : 15,
-            maxResponseBytes: is_int($data['max_response_bytes'] ?? null) ? $data['max_response_bytes'] : 10_485_760,
+            maxRedirects: is_int($rawMaxRedirects) ? $rawMaxRedirects : 3,
+            connectTimeoutSeconds: is_int($rawConnectTimeout) ? $rawConnectTimeout : 5,
+            totalTimeoutSeconds: is_int($rawTotalTimeout) ? $rawTotalTimeout : 15,
+            maxResponseBytes: is_int($rawMaxResponseBytes) ? $rawMaxResponseBytes : 10_485_760,
             oembedAllowedProviders: self::toStringList($data['oembed_allowed_providers'] ?? null, []),
             trustedProxies: self::toStringList($data['trusted_proxies'] ?? null, []),
-            forwardedForHeader: is_string($data['forwarded_for_header'] ?? null) ? $data['forwarded_for_header'] : 'X-Forwarded-For',
-            realIpHeader: is_string($data['real_ip_header'] ?? null) ? $data['real_ip_header'] : 'X-Real-IP',
-            cloudflareMode: is_bool($data['cloudflare_mode'] ?? null) ? $data['cloudflare_mode'] : false,
-            stepUpTtlMinutes: is_int($data['step_up_ttl_minutes'] ?? null) ? $data['step_up_ttl_minutes'] : 15,
+            forwardedForHeader: is_string($rawForwardedForHeader) ? $rawForwardedForHeader : 'X-Forwarded-For',
+            realIpHeader: is_string($rawRealIpHeader) ? $rawRealIpHeader : 'X-Real-IP',
+            cloudflareMode: is_bool($rawCloudflareMode) ? $rawCloudflareMode : false,
+            stepUpTtlMinutes: is_int($rawStepUpTtl) ? $rawStepUpTtl : 15,
             trustedPublicKeys: self::toStringList($data['trusted_public_keys'] ?? null, []),
-            requireSignedPlugins: is_bool($data['require_signed_plugins'] ?? null) ? $data['require_signed_plugins'] : false,
-            integrityCheckOnBoot: is_bool($data['integrity_check_on_boot'] ?? null) ? $data['integrity_check_on_boot'] : true,
-            ipv6SubnetMask: is_int($data['ipv6_subnet_mask'] ?? null) ? $data['ipv6_subnet_mask'] : 64,
-            hotlinkProtection: is_bool($data['hotlink_protection'] ?? null) ? $data['hotlink_protection'] : false,
+            requireSignedPlugins: is_bool($rawRequireSignedPlugins) ? $rawRequireSignedPlugins : false,
+            integrityCheckOnBoot: is_bool($rawIntegrityCheckOnBoot) ? $rawIntegrityCheckOnBoot : true,
+            ipv6SubnetMask: is_int($rawIpv6SubnetMask) ? $rawIpv6SubnetMask : 64,
+            hotlinkProtection: is_bool($rawHotlinkProtection) ? $rawHotlinkProtection : false,
             hotlinkAllowedDomains: self::toStringList($data['hotlink_allowed_domains'] ?? null, []),
         );
     }
