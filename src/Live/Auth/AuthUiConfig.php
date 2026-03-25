@@ -8,9 +8,6 @@ use NoDiscard;
 use Pulsar\Api\Api;
 
 use function is_array;
-use function is_bool;
-use function is_int;
-use function is_string;
 
 /**
  * Configuration for pre-built auth UI components.
@@ -54,7 +51,21 @@ final readonly class AuthUiConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     brand_name?: string,
+     *     logo_url?: string,
+     *     accent_color?: string,
+     *     dark_mode?: bool,
+     *     social_providers?: list<string>|array<array-key, mixed>,
+     *     show_remember_me?: bool,
+     *     show_forgot_password?: bool,
+     *     require_email_verification?: bool,
+     *     enable_mfa?: bool,
+     *     login_redirect?: string,
+     *     logout_redirect?: string,
+     *     signup_redirect?: string,
+     *     password_min_length?: int,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
@@ -63,33 +74,20 @@ final readonly class AuthUiConfig
         /** @var list<string> $socialProviders */
         $socialProviders = is_array($rawSocialProviders) ? $rawSocialProviders : [];
 
-        $rawBrandName = $data['brand_name'] ?? null;
-        $rawLogoUrl = $data['logo_url'] ?? null;
-        $rawAccentColor = $data['accent_color'] ?? null;
-        $rawDarkMode = $data['dark_mode'] ?? null;
-        $rawShowRememberMe = $data['show_remember_me'] ?? null;
-        $rawShowForgotPassword = $data['show_forgot_password'] ?? null;
-        $rawRequireEmailVerification = $data['require_email_verification'] ?? null;
-        $rawEnableMfa = $data['enable_mfa'] ?? null;
-        $rawLoginRedirect = $data['login_redirect'] ?? null;
-        $rawLogoutRedirect = $data['logout_redirect'] ?? null;
-        $rawSignupRedirect = $data['signup_redirect'] ?? null;
-        $rawPasswordMinLength = $data['password_min_length'] ?? null;
-
         return new self(
-            brandName: is_string($rawBrandName) ? $rawBrandName : '',
-            logoUrl: is_string($rawLogoUrl) ? $rawLogoUrl : '',
-            accentColor: is_string($rawAccentColor) ? $rawAccentColor : '#4f46e5',
-            darkMode: is_bool($rawDarkMode) ? $rawDarkMode : false,
+            brandName: $data['brand_name'] ?? '',
+            logoUrl: $data['logo_url'] ?? '',
+            accentColor: $data['accent_color'] ?? '#4f46e5',
+            darkMode: $data['dark_mode'] ?? false,
             socialProviders: $socialProviders,
-            showRememberMe: is_bool($rawShowRememberMe) ? $rawShowRememberMe : true,
-            showForgotPassword: is_bool($rawShowForgotPassword) ? $rawShowForgotPassword : true,
-            requireEmailVerification: is_bool($rawRequireEmailVerification) ? $rawRequireEmailVerification : false,
-            enableMfa: is_bool($rawEnableMfa) ? $rawEnableMfa : true,
-            loginRedirect: is_string($rawLoginRedirect) ? $rawLoginRedirect : '/dashboard',
-            logoutRedirect: is_string($rawLogoutRedirect) ? $rawLogoutRedirect : '/login',
-            signupRedirect: is_string($rawSignupRedirect) ? $rawSignupRedirect : '/dashboard',
-            passwordMinLength: is_int($rawPasswordMinLength) ? $rawPasswordMinLength : 8,
+            showRememberMe: $data['show_remember_me'] ?? true,
+            showForgotPassword: $data['show_forgot_password'] ?? true,
+            requireEmailVerification: $data['require_email_verification'] ?? false,
+            enableMfa: $data['enable_mfa'] ?? true,
+            loginRedirect: $data['login_redirect'] ?? '/dashboard',
+            logoutRedirect: $data['logout_redirect'] ?? '/login',
+            signupRedirect: $data['signup_redirect'] ?? '/dashboard',
+            passwordMinLength: $data['password_min_length'] ?? 8,
         );
     }
 }
