@@ -52,18 +52,30 @@ final readonly class CommentsConfig
      */
     public static function fromArray(array $data): self
     {
+        $rawEnabled = $data['enabled'] ?? null;
+        $rawAutoApprove = $data['auto_approve_authenticated'] ?? null;
+        $rawEditWindow = $data['edit_window_minutes'] ?? null;
+        $rawMaxNesting = $data['max_nesting_depth'] ?? null;
+        $rawRateLimitMinute = $data['rate_limit_per_minute'] ?? null;
+        $rawRateLimitHour = $data['rate_limit_per_hour'] ?? null;
+        $rawGuestAllowed = $data['guest_comments_allowed'] ?? null;
+        $rawRequireEmail = $data['require_email'] ?? null;
+        $rawMaxBodyLength = $data['max_body_length'] ?? null;
+        $rawMaxLinks = $data['max_links_per_comment'] ?? null;
+        $rawHoneypot = $data['honeypot_field_name'] ?? null;
+
         return new self(
-            enabled: is_bool($data['enabled'] ?? null) ? $data['enabled'] : true,
-            autoApproveAuthenticated: is_bool($data['auto_approve_authenticated'] ?? null) ? $data['auto_approve_authenticated'] : false,
-            editWindowMinutes: is_int($data['edit_window_minutes'] ?? null) ? $data['edit_window_minutes'] : 15,
-            maxNestingDepth: is_int($data['max_nesting_depth'] ?? null) ? $data['max_nesting_depth'] : 3,
-            rateLimitPerMinute: is_int($data['rate_limit_per_minute'] ?? null) ? $data['rate_limit_per_minute'] : 5,
-            rateLimitPerHour: is_int($data['rate_limit_per_hour'] ?? null) ? $data['rate_limit_per_hour'] : 30,
-            guestCommentsAllowed: is_bool($data['guest_comments_allowed'] ?? null) ? $data['guest_comments_allowed'] : true,
-            requireEmail: is_bool($data['require_email'] ?? null) ? $data['require_email'] : false,
-            maxBodyLength: is_int($data['max_body_length'] ?? null) ? $data['max_body_length'] : 10_000,
-            maxLinksPerComment: is_int($data['max_links_per_comment'] ?? null) ? $data['max_links_per_comment'] : 3,
-            honeypotFieldName: is_string($data['honeypot_field_name'] ?? null) ? $data['honeypot_field_name'] : 'website_url',
+            enabled: is_bool($rawEnabled) ? $rawEnabled : true,
+            autoApproveAuthenticated: is_bool($rawAutoApprove) ? $rawAutoApprove : false,
+            editWindowMinutes: is_int($rawEditWindow) ? $rawEditWindow : 15,
+            maxNestingDepth: is_int($rawMaxNesting) ? $rawMaxNesting : 3,
+            rateLimitPerMinute: is_int($rawRateLimitMinute) ? $rawRateLimitMinute : 5,
+            rateLimitPerHour: is_int($rawRateLimitHour) ? $rawRateLimitHour : 30,
+            guestCommentsAllowed: is_bool($rawGuestAllowed) ? $rawGuestAllowed : true,
+            requireEmail: is_bool($rawRequireEmail) ? $rawRequireEmail : false,
+            maxBodyLength: is_int($rawMaxBodyLength) ? $rawMaxBodyLength : 10_000,
+            maxLinksPerComment: is_int($rawMaxLinks) ? $rawMaxLinks : 3,
+            honeypotFieldName: is_string($rawHoneypot) ? $rawHoneypot : 'website_url',
         );
     }
 }
