@@ -13,6 +13,9 @@ use Pulsar\Extension\Cms\FieldRegistry\ContentTypeDefinition;
  *
  * Provides methods for registering content types, admin pages, hooks,
  * shortcodes, and block types. All registrations are namespaced by plugin slug.
+ *
+ * @psalm-api Public extension API constructed by CmsPluginManager and passed
+ *            to plugin register() / boot() entry points.
  */
 #[Api(since: '1.0.0')]
 final class CmsPluginContext
