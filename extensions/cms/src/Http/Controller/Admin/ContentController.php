@@ -273,17 +273,21 @@ final readonly class ContentController extends AbstractAdminController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $locale = is_string($body['locale'] ?? null) ? $body['locale'] : $this->config->defaultLocale;
+        $rawLocale = $body['locale'] ?? null;
+        $locale = is_string($rawLocale) ? $rawLocale : $this->config->defaultLocale;
         $translation = $this->translationRepository->findByContentAndLocale($id, $locale);
 
         if ($translation === null) {
             return Response::json(['error' => 'Translation not found for locale'], 404);
         }
 
-        $title = is_string($body['title'] ?? null) ? $body['title'] : $translation->title;
-        $rawBody = is_string($body['body'] ?? null) ? $body['body'] : $translation->body;
+        $rawTitle = $body['title'] ?? null;
+        $title = is_string($rawTitle) ? $rawTitle : $translation->title;
+        $rawBodyText = $body['body'] ?? null;
+        $rawBody = is_string($rawBodyText) ? $rawBodyText : $translation->body;
         $sanitizedBody = $this->safeHtmlPolicy->sanitize($rawBody);
-        $slugSegment = is_string($body['slug'] ?? null) ? $body['slug'] : $translation->slugSegment;
+        $rawSlug = $body['slug'] ?? null;
+        $slugSegment = is_string($rawSlug) ? $rawSlug : $translation->slugSegment;
 
         $path = $translation->path;
 
@@ -299,6 +303,9 @@ final readonly class ContentController extends AbstractAdminController
             }
         }
 
+        $rawExcerpt = $body['excerpt'] ?? null;
+        $rawMetaTitle = $body['meta_title'] ?? null;
+        $rawMetaDescription = $body['meta_description'] ?? null;
         $updatedTranslation = ContentTranslation::create(
             id: $translation->id,
             contentId: $id,
@@ -307,9 +314,9 @@ final readonly class ContentController extends AbstractAdminController
             slugSegment: $slugSegment,
             path: $path,
             body: $sanitizedBody,
-            excerpt: is_string($body['excerpt'] ?? null) ? $body['excerpt'] : $translation->excerpt,
-            metaTitle: is_string($body['meta_title'] ?? null) ? $body['meta_title'] : $translation->metaTitle,
-            metaDescription: is_string($body['meta_description'] ?? null) ? $body['meta_description'] : $translation->metaDescription,
+            excerpt: is_string($rawExcerpt) ? $rawExcerpt : $translation->excerpt,
+            metaTitle: is_string($rawMetaTitle) ? $rawMetaTitle : $translation->metaTitle,
+            metaDescription: is_string($rawMetaDescription) ? $rawMetaDescription : $translation->metaDescription,
         );
 
         $this->translationRepository->save($updatedTranslation);
