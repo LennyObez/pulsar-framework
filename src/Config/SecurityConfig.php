@@ -28,28 +28,26 @@ final readonly class SecurityConfig
     /**
      * Build from the raw security config array and environment.
      *
-     * @param array<string, mixed> $data Raw array from config/security.php
+     * @param array{
+     *     session?: array<string, mixed>,
+     *     csrf?: array<string, mixed>,
+     *     headers?: array<string, mixed>,
+     *     rate_limiting?: array<string, mixed>,
+     *     auth?: array<string, mixed>|null,
+     *     cipher_suite?: string,
+     * } $data Raw array from config/security.php
      */
     #[NoDiscard]
     public static function fromArray(array $data, Environment $environment): self
     {
         /** @var array<string, mixed> $sessionData */
         $sessionData = $data['session'] ?? [];
-
         /** @var array<string, mixed> $csrfData */
         $csrfData = $data['csrf'] ?? [];
-
-        /** @var array<string, mixed> $headersData */
         $headersData = $data['headers'] ?? [];
-
         /** @var array<string, mixed> $rateLimitData */
         $rateLimitData = $data['rate_limiting'] ?? [];
-
-        /** @var array<string, mixed>|null $authData */
         $authData = $data['auth'] ?? null;
-
-        /** @var string $cipherSuite */
-        $cipherSuite = $data['cipher_suite'] ?? 'sodium';
 
         return new self(
             session: SessionConfig::fromArray($sessionData, $environment),
@@ -57,7 +55,7 @@ final readonly class SecurityConfig
             headers: SecurityHeadersConfig::fromArray($headersData),
             rateLimit: RateLimitConfig::fromArray($rateLimitData),
             auth: $authData !== null ? AuthConfig::fromArray($authData) : null,
-            cipherSuite: $cipherSuite,
+            cipherSuite: $data['cipher_suite'] ?? 'sodium',
         );
     }
 }

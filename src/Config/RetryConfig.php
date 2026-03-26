@@ -23,25 +23,22 @@ final readonly class RetryConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     max_attempts?: int,
+     *     base_delay_ms?: int,
+     *     max_delay_ms?: int,
+     *     multiplier?: float|int,
+     *     jitter?: bool|int|string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var int $maxAttempts */
-        $maxAttempts = $data['max_attempts'] ?? 3;
-        /** @var int $baseDelayMs */
-        $baseDelayMs = $data['base_delay_ms'] ?? 100;
-        /** @var int $maxDelayMs */
-        $maxDelayMs = $data['max_delay_ms'] ?? 5000;
-        /** @var float $multiplier */
-        $multiplier = $data['multiplier'] ?? 2.0;
-
         return new self(
-            maxAttempts: $maxAttempts,
-            baseDelayMs: $baseDelayMs,
-            maxDelayMs: $maxDelayMs,
-            multiplier: $multiplier,
+            maxAttempts: $data['max_attempts'] ?? 3,
+            baseDelayMs: $data['base_delay_ms'] ?? 100,
+            maxDelayMs: $data['max_delay_ms'] ?? 5000,
+            multiplier: (float) ($data['multiplier'] ?? 2.0),
             jitter: (bool) ($data['jitter'] ?? true),
         );
     }

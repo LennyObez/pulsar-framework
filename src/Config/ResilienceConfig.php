@@ -24,7 +24,12 @@ final readonly class ResilienceConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data Raw array from config/resilience.php
+     * @param array{
+     *     enabled?: bool|int|string,
+     *     retry?: array<string, mixed>,
+     *     circuit_breaker?: array<string, mixed>,
+     *     health_check?: array<string, mixed>,
+     * } $data Raw array from config/resilience.php
      */
     #[NoDiscard]
     public static function fromArray(array $data, Environment $environment): self
@@ -33,20 +38,11 @@ final readonly class ResilienceConfig
             ? $environment->get('RESILIENCE_ENABLED') === 'true'
             : (bool) ($data['enabled'] ?? false);
 
-        /** @var array<string, mixed> $retryData */
-        $retryData = $data['retry'] ?? [];
-
-        /** @var array<string, mixed> $cbData */
-        $cbData = $data['circuit_breaker'] ?? [];
-
-        /** @var array<string, mixed> $hcData */
-        $hcData = $data['health_check'] ?? [];
-
         return new self(
             enabled: $enabled,
-            retry: RetryConfig::fromArray($retryData),
-            circuitBreaker: CircuitBreakerConfig::fromArray($cbData),
-            healthCheck: HealthCheckConfig::fromArray($hcData),
+            retry: RetryConfig::fromArray($data['retry'] ?? []),
+            circuitBreaker: CircuitBreakerConfig::fromArray($data['circuit_breaker'] ?? []),
+            healthCheck: HealthCheckConfig::fromArray($data['health_check'] ?? []),
         );
     }
 }

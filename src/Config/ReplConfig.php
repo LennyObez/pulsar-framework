@@ -7,9 +7,6 @@ namespace Pulsar\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_array;
-use function is_string;
-
 /**
  * Typed configuration DTO for `config/repl.php`.
  * @api
@@ -29,7 +26,13 @@ final readonly class ReplConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data Raw array from config/repl.php
+     * @param array{
+     *     enabled?: bool|int|string,
+     *     safe_mode?: bool|int|string,
+     *     audit?: bool|int|string,
+     *     history_file?: string,
+     *     startup_commands?: list<string>,
+     * } $data Raw array from config/repl.php
      */
     #[NoDiscard]
     public static function fromArray(array $data, Environment $environment): self
@@ -38,17 +41,12 @@ final readonly class ReplConfig
             ? $environment->get('REPL_ENABLED') === 'true'
             : (bool) ($data['enabled'] ?? false);
 
-        $historyFile = $data['history_file'] ?? '.pulsar_repl_history';
-
-        /** @var list<string> $startupCommands */
-        $startupCommands = is_array($data['startup_commands'] ?? null) ? $data['startup_commands'] : [];
-
         return new self(
             enabled: $enabled,
             safeMode: (bool) ($data['safe_mode'] ?? true),
             audit: (bool) ($data['audit'] ?? false),
-            historyFile: is_string($historyFile) ? $historyFile : '.pulsar_repl_history',
-            startupCommands: $startupCommands,
+            historyFile: $data['history_file'] ?? '.pulsar_repl_history',
+            startupCommands: $data['startup_commands'] ?? [],
         );
     }
 }
