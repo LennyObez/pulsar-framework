@@ -15,6 +15,9 @@ use const ENT_QUOTES;
  *
  * Generates accessible, branded markup using pui-* CSS classes
  * showing author name, license type, and optional date.
+ *
+ * @psalm-api Resolved from the DI container by template rendering;
+ *            not instantiated by name.
  */
 #[Api(since: '1.0.0')]
 final readonly class LicenseBadgeRenderer

@@ -26,6 +26,9 @@ use function tempnam;
  * - Ghostscript CLI (gs): Fallback when Imagick is unavailable
  *
  * The generated thumbnail is a JPEG image at configurable resolution.
+ *
+ * @psalm-api Resolved from the DI container by document derivative jobs;
+ *            not instantiated by name.
  */
 #[Internal(reason: 'Use PdfThumbnailGenerator via service container')]
 final readonly class PdfThumbnailGenerator

@@ -28,6 +28,9 @@ use function trim;
  * table without loading the entire file into memory. For robust extraction
  * of all PDF versions, uses a stream-based parser that reads the file
  * sequentially.
+ *
+ * @psalm-api Resolved from the DI container by media services and admin
+ *            upload controllers; not instantiated by name.
  */
 #[Internal(reason: 'Use DocumentMetadata DTO directly for public API')]
 final readonly class DocumentMetadataExtractor
