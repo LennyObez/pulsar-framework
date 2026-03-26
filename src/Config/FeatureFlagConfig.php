@@ -28,7 +28,14 @@ final readonly class FeatureFlagConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data Raw array from config/features.php
+     * @param array{
+     *     enabled?: bool|int|string,
+     *     storage?: string,
+     *     file_path?: string,
+     *     audit_evaluations?: bool|int|string,
+     *     default_state?: bool|int|string,
+     *     flags?: array<string, array<string, mixed>>,
+     * } $data Raw array from config/features.php
      */
     #[NoDiscard]
     public static function fromArray(array $data, Environment $environment): self
@@ -37,22 +44,13 @@ final readonly class FeatureFlagConfig
             ? $environment->get('FEATURE_FLAGS_ENABLED') === 'true'
             : (bool) ($data['enabled'] ?? false);
 
-        /** @var string $storageValue */
-        $storageValue = $data['storage'] ?? 'memory';
-
-        /** @var array<string, array<string, mixed>> $flags */
-        $flags = $data['flags'] ?? [];
-
-        /** @var string $filePath */
-        $filePath = $data['file_path'] ?? 'storage/flags.json';
-
         return new self(
             enabled: $enabled,
-            storage: FlagStorageDriver::from($storageValue),
-            filePath: $filePath,
+            storage: FlagStorageDriver::from($data['storage'] ?? 'memory'),
+            filePath: $data['file_path'] ?? 'storage/flags.json',
             auditEvaluations: (bool) ($data['audit_evaluations'] ?? false),
             defaultState: (bool) ($data['default_state'] ?? false),
-            flags: $flags,
+            flags: $data['flags'] ?? [],
         );
     }
 }
