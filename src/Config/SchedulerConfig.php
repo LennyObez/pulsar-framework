@@ -23,7 +23,13 @@ final readonly class SchedulerConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data Raw array from config/scheduler.php
+     * @param array{
+     *     enabled?: bool|int|string,
+     *     timezone?: string,
+     *     max_execution_time?: int,
+     *     lock_timeout?: int,
+     *     log_output?: bool|int|string,
+     * } $data Raw array from config/scheduler.php
      */
     #[NoDiscard]
     public static function fromArray(array $data, Environment $environment): self
@@ -32,18 +38,11 @@ final readonly class SchedulerConfig
             ? $environment->get('SCHEDULER_ENABLED') === 'true'
             : (bool) ($data['enabled'] ?? false);
 
-        /** @var string $timezone */
-        $timezone = $data['timezone'] ?? 'UTC';
-        /** @var int $maxExecutionTime */
-        $maxExecutionTime = $data['max_execution_time'] ?? 3600;
-        /** @var int $lockTimeout */
-        $lockTimeout = $data['lock_timeout'] ?? 300;
-
         return new self(
             enabled: $enabled,
-            timezone: $timezone,
-            maxExecutionTime: $maxExecutionTime,
-            lockTimeout: $lockTimeout,
+            timezone: $data['timezone'] ?? 'UTC',
+            maxExecutionTime: $data['max_execution_time'] ?? 3600,
+            lockTimeout: $data['lock_timeout'] ?? 300,
             logOutput: (bool) ($data['log_output'] ?? true),
         );
     }
