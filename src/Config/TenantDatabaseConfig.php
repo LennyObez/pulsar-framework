@@ -21,20 +21,17 @@ final readonly class TenantDatabaseConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     strategy?: string,
+     *     prefix_template?: string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var string $strategyValue */
-        $strategyValue = $data['strategy'] ?? 'prefix';
-
-        /** @var string $prefixTemplate */
-        $prefixTemplate = $data['prefix_template'] ?? 'tenant_{tenant_id}_';
-
         return new self(
-            strategy: TenantDatabaseStrategy::from($strategyValue),
-            prefixTemplate: $prefixTemplate,
+            strategy: TenantDatabaseStrategy::from($data['strategy'] ?? 'prefix'),
+            prefixTemplate: $data['prefix_template'] ?? 'tenant_{tenant_id}_',
         );
     }
 }

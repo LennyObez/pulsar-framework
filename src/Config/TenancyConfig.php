@@ -30,7 +30,16 @@ final readonly class TenancyConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data Raw array from config/tenancy.php
+     * @param array{
+     *     enabled?: bool|int|string,
+     *     resolver?: string,
+     *     header_name?: string,
+     *     subdomain_suffix?: string,
+     *     path_prefix?: string,
+     *     default_tenant?: string|null,
+     *     database?: array{strategy?: string, prefix_template?: string},
+     *     tenants?: array<string, array<string, mixed>>,
+     * } $data Raw array from config/tenancy.php
      */
     #[NoDiscard]
     public static function fromArray(array $data, Environment $environment): self
@@ -39,34 +48,15 @@ final readonly class TenancyConfig
             ? $environment->get('TENANCY_ENABLED') === 'true'
             : (bool) ($data['enabled'] ?? false);
 
-        /** @var string $resolverValue */
-        $resolverValue = $data['resolver'] ?? 'header';
-        $resolver = TenantResolverStrategy::from($resolverValue);
-
-        /** @var array<string, mixed> $dbData */
-        $dbData = $data['database'] ?? [];
-
-        /** @var array<string, array<string, mixed>> $tenants */
-        $tenants = $data['tenants'] ?? [];
-
-        /** @var string $headerName */
-        $headerName = $data['header_name'] ?? 'X-Tenant-ID';
-        /** @var string $subdomainSuffix */
-        $subdomainSuffix = $data['subdomain_suffix'] ?? '';
-        /** @var string $pathPrefix */
-        $pathPrefix = $data['path_prefix'] ?? '/t/';
-        /** @var string|null $defaultTenant */
-        $defaultTenant = $data['default_tenant'] ?? null;
-
         return new self(
             enabled: $enabled,
-            resolver: $resolver,
-            headerName: $headerName,
-            subdomainSuffix: $subdomainSuffix,
-            pathPrefix: $pathPrefix,
-            defaultTenant: $defaultTenant,
-            database: TenantDatabaseConfig::fromArray($dbData),
-            tenants: $tenants,
+            resolver: TenantResolverStrategy::from($data['resolver'] ?? 'header'),
+            headerName: $data['header_name'] ?? 'X-Tenant-ID',
+            subdomainSuffix: $data['subdomain_suffix'] ?? '',
+            pathPrefix: $data['path_prefix'] ?? '/t/',
+            defaultTenant: $data['default_tenant'] ?? null,
+            database: TenantDatabaseConfig::fromArray($data['database'] ?? []),
+            tenants: $data['tenants'] ?? [],
         );
     }
 }
