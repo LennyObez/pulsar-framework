@@ -7,8 +7,6 @@ namespace Pulsar\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_string;
-
 /**
  * Typed configuration DTO for a single authentication guard.
  * @api
@@ -25,21 +23,19 @@ final readonly class AuthGuardConfig
     /**
      * Build from a raw guard config array.
      *
-     * @param array<string, mixed> $data
+     * @param array{
+     *     name?: string,
+     *     driver?: string,
+     *     enabled?: bool|int|string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $rawName = $data['name'] ?? '';
-        $name = is_string($rawName) ? $rawName : '';
-        $rawDriver = $data['driver'] ?? 'session';
-        $driver = is_string($rawDriver) ? $rawDriver : 'session';
-        $enabled = (bool) ($data['enabled'] ?? true);
-
         return new self(
-            name: $name,
-            driver: $driver,
-            enabled: $enabled,
+            name: $data['name'] ?? '',
+            driver: $data['driver'] ?? 'session',
+            enabled: (bool) ($data['enabled'] ?? true),
         );
     }
 }
