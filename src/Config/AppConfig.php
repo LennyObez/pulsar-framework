@@ -7,8 +7,6 @@ namespace Pulsar\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_string;
-
 /**
  * Typed configuration DTO for `config/app.php`.
  *
@@ -29,22 +27,22 @@ final readonly class AppConfig
     /**
      * Build an AppConfig from a raw config array and environment.
      *
-     * @param array<string, mixed> $data Raw array from config/app.php
+     * @param array{
+     *     name?: string,
+     *     env?: string,
+     *     debug?: bool|int|string,
+     *     timezone?: string,
+     *     locale?: string,
+     * } $data Raw array from config/app.php
      */
     #[NoDiscard]
     public static function fromArray(array $data, Environment $environment): self
     {
-        // Resolve mode: env var overrides file value
-        $envValue = $environment->get('APP_ENV');
-        $rawEnv = $data['env'] ?? 'local';
-        $modeString = $envValue ?? (is_string($rawEnv) ? $rawEnv : 'local');
+        $modeString = $environment->get('APP_ENV') ?? $data['env'] ?? 'local';
         $mode = EnvironmentMode::tryFrom($modeString) ?? EnvironmentMode::Local;
 
-        // Resolve name: env var overrides file value
-        $rawName = $data['name'] ?? 'Pulsar';
-        $name = $environment->get('APP_NAME') ?? (is_string($rawName) ? $rawName : 'Pulsar');
+        $name = $environment->get('APP_NAME') ?? $data['name'] ?? 'Pulsar';
 
-        // Resolve debug: env var overrides file value, which overrides mode default
         $debugEnv = $environment->get('APP_DEBUG');
 
         if ($debugEnv !== null) {
@@ -55,17 +53,12 @@ final readonly class AppConfig
             $debug = $mode->isDebugByDefault();
         }
 
-        $rawTimezone = $data['timezone'] ?? 'UTC';
-        $timezone = is_string($rawTimezone) ? $rawTimezone : 'UTC';
-        $rawLocale = $data['locale'] ?? 'en';
-        $locale = is_string($rawLocale) ? $rawLocale : 'en';
-
         return new self(
             name: $name,
             mode: $mode,
             debug: $debug,
-            timezone: $timezone,
-            locale: $locale,
+            timezone: $data['timezone'] ?? 'UTC',
+            locale: $data['locale'] ?? 'en',
         );
     }
 

@@ -8,9 +8,6 @@ use NoDiscard;
 use Pulsar\Api\Api;
 
 use function is_array;
-use function is_bool;
-use function is_int;
-use function is_string;
 
 /**
  * Typed configuration DTO for `config/cache.php`.
@@ -32,7 +29,12 @@ final readonly class CacheConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data Raw array from config/cache.php
+     * @param array{
+     *     enabled?: bool|int|string,
+     *     default_pool?: string,
+     *     path?: string,
+     *     pools?: array<string, mixed>,
+     * } $data Raw array from config/cache.php
      */
     #[NoDiscard]
     public static function fromArray(array $data, Environment $environment): self
@@ -41,15 +43,11 @@ final readonly class CacheConfig
             ? $environment->get('CACHE_ENABLED') === 'true'
             : (bool) ($data['enabled'] ?? false);
 
-        $defaultPoolRaw = $data['default_pool'] ?? null;
-        $defaultPool = $environment->get('CACHE_DEFAULT_POOL')
-            ?? (is_string($defaultPoolRaw) ? $defaultPoolRaw : 'default');
+        $defaultPool = $environment->get('CACHE_DEFAULT_POOL') ?? $data['default_pool'] ?? 'default';
 
-        $path = $environment->get('CACHE_PATH')
-            ?? (is_string($data['path'] ?? null) ? $data['path'] : 'var/cache');
+        $path = $environment->get('CACHE_PATH') ?? $data['path'] ?? 'var/cache';
 
-        /** @var array<string, mixed> $poolsData */
-        $poolsData = is_array($data['pools'] ?? null) ? $data['pools'] : [];
+        $poolsData = $data['pools'] ?? [];
 
         /** @var array<string, CachePoolConfig> $pools */
         $pools = [];
@@ -77,26 +75,33 @@ final readonly class CacheConfig
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     driver?: string,
+     *     serializer?: string,
+     *     default_ttl_seconds?: int|null,
+     *     critical?: bool,
+     *     encrypted?: bool,
+     *     tags_strategy?: string,
+     *     host?: string|null,
+     *     port?: int|null,
+     *     path?: string|null,
+     * } $data
      */
     private static function buildPoolConfig(string $name, array $data): CachePoolConfig
     {
-        $driverValue = is_string($data['driver'] ?? null) ? $data['driver'] : 'filesystem';
-        $driver = CacheDriverType::tryFrom($driverValue) ?? CacheDriverType::Filesystem;
-
-        $rawTtl = $data['default_ttl_seconds'] ?? null;
+        $driver = CacheDriverType::tryFrom($data['driver'] ?? 'filesystem') ?? CacheDriverType::Filesystem;
 
         return new CachePoolConfig(
             name: $name,
             driver: $driver,
-            serializer: is_string($data['serializer'] ?? null) ? $data['serializer'] : 'json',
-            defaultTtlSeconds: is_int($rawTtl) ? $rawTtl : null,
-            critical: is_bool($data['critical'] ?? null) ? $data['critical'] : false,
-            encrypted: is_bool($data['encrypted'] ?? null) ? $data['encrypted'] : false,
-            tagsStrategy: is_string($data['tags_strategy'] ?? null) ? $data['tags_strategy'] : 'auto',
-            host: is_string($data['host'] ?? null) ? $data['host'] : null,
-            port: is_int($data['port'] ?? null) ? $data['port'] : null,
-            path: is_string($data['path'] ?? null) ? $data['path'] : null,
+            serializer: $data['serializer'] ?? 'json',
+            defaultTtlSeconds: $data['default_ttl_seconds'] ?? null,
+            critical: $data['critical'] ?? false,
+            encrypted: $data['encrypted'] ?? false,
+            tagsStrategy: $data['tags_strategy'] ?? 'auto',
+            host: $data['host'] ?? null,
+            port: $data['port'] ?? null,
+            path: $data['path'] ?? null,
         );
     }
 }
