@@ -7,8 +7,6 @@ namespace Pulsar\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_int;
-
 /**
  * Typed configuration DTO for rate limiting settings.
  *
@@ -27,21 +25,19 @@ final readonly class RateLimitConfig
     /**
      * Build from the raw rate limit config array.
      *
-     * @param array<string, mixed> $data Raw `rate_limiting` sub-array from config/security.php
+     * @param array{
+     *     enabled?: bool|int|string,
+     *     default_limit?: int,
+     *     default_window?: int,
+     * } $data Raw `rate_limiting` sub-array from config/security.php
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $enabled = (bool) ($data['enabled'] ?? true);
-        $rawDefaultLimit = $data['default_limit'] ?? 60;
-        $defaultLimit = is_int($rawDefaultLimit) ? $rawDefaultLimit : (int) (is_numeric($rawDefaultLimit) ? $rawDefaultLimit : 60);
-        $rawDefaultWindow = $data['default_window'] ?? 60;
-        $defaultWindow = is_int($rawDefaultWindow) ? $rawDefaultWindow : (int) (is_numeric($rawDefaultWindow) ? $rawDefaultWindow : 60);
-
         return new self(
-            enabled: $enabled,
-            defaultLimit: $defaultLimit,
-            defaultWindow: $defaultWindow,
+            enabled: (bool) ($data['enabled'] ?? true),
+            defaultLimit: $data['default_limit'] ?? 60,
+            defaultWindow: $data['default_window'] ?? 60,
         );
     }
 }

@@ -7,8 +7,6 @@ namespace Pulsar\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_string;
-
 /**
  * Typed configuration DTO for audit logging settings.
  *
@@ -32,24 +30,19 @@ final readonly class AuditConfig
     /**
      * Build from the raw audit config array.
      *
-     * @param array<string, mixed> $data Raw `audit` sub-array from config/observability.php
+     * @param array{
+     *     enabled?: bool|int|string,
+     *     log_path?: string,
+     *     events?: list<string>,
+     * } $data Raw `audit` sub-array from config/observability.php
      */
     #[NoDiscard]
     public static function fromArray(array $data, Environment $environment): self
     {
-        $enabled = (bool) ($data['enabled'] ?? true);
-
-        $rawLogPath = $data['log_path'] ?? 'var/logs/audit.jsonl';
-        $logPath = $environment->get('AUDIT_LOG_PATH')
-            ?? (is_string($rawLogPath) ? $rawLogPath : 'var/logs/audit.jsonl');
-
-        /** @var list<string> $events */
-        $events = $data['events'] ?? [];
-
         return new self(
-            enabled: $enabled,
-            logPath: $logPath,
-            events: $events,
+            enabled: (bool) ($data['enabled'] ?? true),
+            logPath: $environment->get('AUDIT_LOG_PATH') ?? $data['log_path'] ?? 'var/logs/audit.jsonl',
+            events: $data['events'] ?? [],
         );
     }
 }
