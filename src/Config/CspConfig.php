@@ -10,7 +10,6 @@ use Pulsar\Api\Api;
 use function array_filter;
 use function array_map;
 use function implode;
-use function is_array;
 use function is_string;
 
 /**
@@ -102,46 +101,51 @@ final readonly class CspConfig
     }
 
     /**
-     * @param array<string, mixed> $data Raw `csp` sub-array from config
+     * @param array{
+     *     enabled?: bool|int|string,
+     *     report_only?: bool|int|string,
+     *     default_src?: string,
+     *     script_src?: string,
+     *     style_src?: string,
+     *     img_src?: string,
+     *     font_src?: string,
+     *     connect_src?: string,
+     *     media_src?: string,
+     *     object_src?: string,
+     *     frame_src?: string,
+     *     frame_ancestors?: string,
+     *     base_uri?: string,
+     *     form_action?: string,
+     *     upgrade_insecure_requests?: bool|int|string,
+     *     report_uri?: string,
+     *     report_to?: string,
+     *     custom_directives?: array<string, string>,
+     * } $data Raw `csp` sub-array from config
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $rawCustomDirectives = $data['custom_directives'] ?? [];
-        /** @var array<string, string> $customDirectives */
-        $customDirectives = is_array($rawCustomDirectives)
-            ? array_filter($rawCustomDirectives, is_string(...))
-            : [];
+        $customDirectives = array_filter($data['custom_directives'] ?? [], is_string(...));
 
         return new self(
             enabled: (bool) ($data['enabled'] ?? true),
             reportOnly: (bool) ($data['report_only'] ?? false),
-            defaultSrc: self::extractString($data, 'default_src', "'self'"),
-            scriptSrc: self::extractString($data, 'script_src', "'self'"),
-            styleSrc: self::extractString($data, 'style_src', "'self'"),
-            imgSrc: self::extractString($data, 'img_src', "'self'"),
-            fontSrc: self::extractString($data, 'font_src', "'self'"),
-            connectSrc: self::extractString($data, 'connect_src', "'self'"),
-            mediaSrc: self::extractString($data, 'media_src', "'self'"),
-            objectSrc: self::extractString($data, 'object_src', "'none'"),
-            frameSrc: self::extractString($data, 'frame_src', "'self'"),
-            frameAncestors: self::extractString($data, 'frame_ancestors', "'self'"),
-            baseUri: self::extractString($data, 'base_uri', "'self'"),
-            formAction: self::extractString($data, 'form_action', "'self'"),
+            defaultSrc: $data['default_src'] ?? "'self'",
+            scriptSrc: $data['script_src'] ?? "'self'",
+            styleSrc: $data['style_src'] ?? "'self'",
+            imgSrc: $data['img_src'] ?? "'self'",
+            fontSrc: $data['font_src'] ?? "'self'",
+            connectSrc: $data['connect_src'] ?? "'self'",
+            mediaSrc: $data['media_src'] ?? "'self'",
+            objectSrc: $data['object_src'] ?? "'none'",
+            frameSrc: $data['frame_src'] ?? "'self'",
+            frameAncestors: $data['frame_ancestors'] ?? "'self'",
+            baseUri: $data['base_uri'] ?? "'self'",
+            formAction: $data['form_action'] ?? "'self'",
             upgradeInsecureRequests: (bool) ($data['upgrade_insecure_requests'] ?? false),
-            reportUri: self::extractString($data, 'report_uri', ''),
-            reportTo: self::extractString($data, 'report_to', ''),
+            reportUri: $data['report_uri'] ?? '',
+            reportTo: $data['report_to'] ?? '',
             customDirectives: $customDirectives,
         );
-    }
-
-    /**
-     * @param array<string, mixed> $data
-     */
-    private static function extractString(array $data, string $key, string $default): string
-    {
-        $value = $data[$key] ?? $default;
-
-        return is_string($value) ? $value : $default;
     }
 }

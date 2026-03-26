@@ -7,9 +7,6 @@ namespace Pulsar\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_int;
-use function is_numeric;
-
 /**
  * Typed configuration DTO for HTTP Strict Transport Security headers.
  *
@@ -43,17 +40,19 @@ final readonly class HstsConfig
     }
 
     /**
-     * @param array<string, mixed> $data Raw `hsts` sub-array from config
+     * @param array{
+     *     enabled?: bool|int|string,
+     *     max_age?: int,
+     *     include_sub_domains?: bool|int|string,
+     *     preload?: bool|int|string,
+     * } $data Raw `hsts` sub-array from config
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $rawMaxAge = $data['max_age'] ?? 63072000;
-        $maxAge = is_int($rawMaxAge) ? $rawMaxAge : (int) (is_numeric($rawMaxAge) ? $rawMaxAge : 63072000);
-
         return new self(
             enabled: (bool) ($data['enabled'] ?? true),
-            maxAge: $maxAge,
+            maxAge: $data['max_age'] ?? 63072000,
             includeSubDomains: (bool) ($data['include_sub_domains'] ?? true),
             preload: (bool) ($data['preload'] ?? false),
         );

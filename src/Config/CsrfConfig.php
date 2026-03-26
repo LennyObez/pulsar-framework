@@ -10,9 +10,6 @@ use Pulsar\Api\Api;
 use function array_filter;
 use function array_values;
 use function in_array;
-use function is_array;
-use function is_int;
-use function is_numeric;
 use function is_string;
 
 /**
@@ -40,30 +37,29 @@ final readonly class CsrfConfig
     /**
      * Build from the raw CSRF config array.
      *
-     * @param array<string, mixed> $data Raw `csrf` sub-array from config/security.php
+     * @param array{
+     *     enabled?: bool|int|string,
+     *     token_length?: int,
+     *     header_name?: string,
+     *     form_field_name?: string,
+     *     trusted_origins?: list<string>,
+     *     origin_validation?: string,
+     * } $data Raw `csrf` sub-array from config/security.php
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $enabled = (bool) ($data['enabled'] ?? true);
-        $rawTokenLength = $data['token_length'] ?? 32;
-        $tokenLength = is_int($rawTokenLength) ? $rawTokenLength : (int) (is_numeric($rawTokenLength) ? $rawTokenLength : 32);
-        $rawHeaderName = $data['header_name'] ?? 'X-CSRF-Token';
-        $headerName = is_string($rawHeaderName) ? $rawHeaderName : 'X-CSRF-Token';
-        $rawFormFieldName = $data['form_field_name'] ?? '_csrf_token';
-        $formFieldName = is_string($rawFormFieldName) ? $rawFormFieldName : '_csrf_token';
-        /** @var list<string> $trustedOrigins */
-        $trustedOrigins = is_array($data['trusted_origins'] ?? null) ? array_values(array_filter($data['trusted_origins'], is_string(...))) : [];
+        $trustedOrigins = array_values(array_filter($data['trusted_origins'] ?? [], is_string(...)));
         $rawOriginValidation = $data['origin_validation'] ?? 'optional';
         $originValidation = in_array($rawOriginValidation, ['off', 'optional', 'required'], true)
             ? $rawOriginValidation
             : 'optional';
 
         return new self(
-            enabled: $enabled,
-            tokenLength: $tokenLength,
-            headerName: $headerName,
-            formFieldName: $formFieldName,
+            enabled: (bool) ($data['enabled'] ?? true),
+            tokenLength: $data['token_length'] ?? 32,
+            headerName: $data['header_name'] ?? 'X-CSRF-Token',
+            formFieldName: $data['form_field_name'] ?? '_csrf_token',
             trustedOrigins: $trustedOrigins,
             originValidation: $originValidation,
         );
