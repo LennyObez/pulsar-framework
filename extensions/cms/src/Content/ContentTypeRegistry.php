@@ -9,6 +9,9 @@ use Pulsar\Api\Api;
 /**
  * Registry for content types, including both built-in enum cases and
  * custom types registered by CMS plugins at runtime.
+ *
+ * @psalm-api Static registry called by name from CMS plugins, content
+ *            services, and the field registry.
  */
 #[Api(since: '1.0.0')]
 final class ContentTypeRegistry

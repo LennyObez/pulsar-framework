@@ -10,6 +10,9 @@ use Pulsar\Api\Pagination\PaginationResult;
 
 /**
  * Repository interface for the Content aggregate root.
+ *
+ * @psalm-api Public binding contract; implemented by DbContentRepository and
+ *            consumed by all content services, controllers, and user-land code.
  */
 #[Api(since: '1.0.0')]
 interface ContentRepositoryInterface

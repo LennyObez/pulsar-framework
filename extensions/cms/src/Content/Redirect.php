@@ -12,6 +12,9 @@ use Pulsar\Api\Api;
  *
  * Created automatically when content slugs or hierarchy change,
  * and can also be created manually by administrators.
+ *
+ * @psalm-api Public DTO returned from RedirectRepositoryInterface; consumed
+ *            by CmsSlugRedirectMiddleware and admin redirect controllers.
  */
 #[Api(since: '1.0.0')]
 final readonly class Redirect

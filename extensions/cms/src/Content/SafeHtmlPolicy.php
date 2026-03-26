@@ -25,6 +25,9 @@ use function strlen;
  * Implements a 7-step sanitization algorithm: input canonicalization, DOM parsing,
  * tree walk, attribute filtering, URL sanitization, dangerous construct removal,
  * and final serialization with defense-in-depth validation.
+ *
+ * @psalm-api Public sanitization policy resolved from the DI container by
+ *            CommentBodyPolicy and content services; not instantiated by name.
  */
 #[Api(since: '1.0.0')]
 final readonly class SafeHtmlPolicy

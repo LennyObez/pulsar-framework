@@ -17,6 +17,9 @@ use Pulsar\Extension\Cms\Publishing\PublishingOrchestratorInterface;
  *
  * When a PublishingOrchestrator is provided, multi-channel publishing is
  * triggered automatically after successful publish/unpublish transitions.
+ *
+ * @psalm-api Resolved from the DI container by content services and admin
+ *            controllers; not instantiated by name.
  */
 #[Internal]
 final readonly class PublishingStateMachine
