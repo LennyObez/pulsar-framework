@@ -9,10 +9,6 @@ use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Security\Compliance\DataClassification;
 
-use function is_array;
-use function is_bool;
-use function is_string;
-
 /**
  * Immutable record of a justified access event.
  *
@@ -72,45 +68,47 @@ final readonly class JustificationRecord
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     id?: string,
+     *     actor_id?: string,
+     *     actor_name?: string,
+     *     actor_role?: string,
+     *     resource_type?: string,
+     *     resource_id?: string,
+     *     category?: string,
+     *     justification_text?: string,
+     *     data_classification?: string,
+     *     access_timestamp?: string,
+     *     session_id?: string,
+     *     ip_address?: string,
+     *     supervisor_approval?: bool|null,
+     *     review_status?: string,
+     *     break_the_glass?: bool,
+     *     metadata?: array<mixed, mixed>,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $rawId = $data['id'] ?? null;
-        $rawActorId = $data['actor_id'] ?? null;
-        $rawActorName = $data['actor_name'] ?? null;
-        $rawActorRole = $data['actor_role'] ?? null;
-        $rawResourceType = $data['resource_type'] ?? null;
-        $rawResourceId = $data['resource_id'] ?? null;
-        $rawCategory = $data['category'] ?? null;
-        $rawJustification = $data['justification_text'] ?? null;
-        $rawClassification = $data['data_classification'] ?? null;
-        $rawAccessTimestamp = $data['access_timestamp'] ?? null;
-        $rawSessionId = $data['session_id'] ?? null;
-        $rawIpAddress = $data['ip_address'] ?? null;
-        $supervisorApproval = $data['supervisor_approval'] ?? null;
-        $rawReviewStatus = $data['review_status'] ?? null;
-        $rawBreakTheGlass = $data['break_the_glass'] ?? null;
-        $rawMetadata = $data['metadata'] ?? null;
-
         return new self(
-            id: is_string($rawId) ? $rawId : '',
-            actorId: is_string($rawActorId) ? $rawActorId : '',
-            actorName: is_string($rawActorName) ? $rawActorName : '',
-            actorRole: is_string($rawActorRole) ? $rawActorRole : '',
-            resourceType: is_string($rawResourceType) ? $rawResourceType : '',
-            resourceId: is_string($rawResourceId) ? $rawResourceId : '',
-            category: JustificationCategory::from(is_string($rawCategory) ? $rawCategory : 'customer_request'),
-            justificationText: is_string($rawJustification) ? $rawJustification : '',
-            dataClassification: DataClassification::from(is_string($rawClassification) ? $rawClassification : 'internal'),
-            accessTimestamp: is_string($rawAccessTimestamp) ? new DateTimeImmutable($rawAccessTimestamp) : new DateTimeImmutable(),
-            sessionId: is_string($rawSessionId) ? $rawSessionId : '',
-            ipAddress: is_string($rawIpAddress) ? $rawIpAddress : '',
-            supervisorApproval: is_bool($supervisorApproval) ? $supervisorApproval : null,
-            reviewStatus: ReviewStatus::from(is_string($rawReviewStatus) ? $rawReviewStatus : 'pending'),
-            breakTheGlass: is_bool($rawBreakTheGlass) && $rawBreakTheGlass,
-            metadata: is_array($rawMetadata) ? $rawMetadata : [],
+            id: $data['id'] ?? '',
+            actorId: $data['actor_id'] ?? '',
+            actorName: $data['actor_name'] ?? '',
+            actorRole: $data['actor_role'] ?? '',
+            resourceType: $data['resource_type'] ?? '',
+            resourceId: $data['resource_id'] ?? '',
+            category: JustificationCategory::from($data['category'] ?? 'customer_request'),
+            justificationText: $data['justification_text'] ?? '',
+            dataClassification: DataClassification::from($data['data_classification'] ?? 'internal'),
+            accessTimestamp: isset($data['access_timestamp'])
+                ? new DateTimeImmutable($data['access_timestamp'])
+                : new DateTimeImmutable(),
+            sessionId: $data['session_id'] ?? '',
+            ipAddress: $data['ip_address'] ?? '',
+            supervisorApproval: $data['supervisor_approval'] ?? null,
+            reviewStatus: ReviewStatus::from($data['review_status'] ?? 'pending'),
+            breakTheGlass: $data['break_the_glass'] ?? false,
+            metadata: $data['metadata'] ?? [],
         );
     }
 }
