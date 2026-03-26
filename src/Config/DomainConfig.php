@@ -7,9 +7,10 @@ namespace Pulsar\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
+use function array_filter;
+use function array_values;
 use function in_array;
 use function is_array;
-use function is_bool;
 use function is_string;
 
 /**
@@ -40,54 +41,35 @@ final readonly class DomainConfig
     /**
      * Build from a raw config array.
      *
-     * @param array<string, mixed> $data Raw array from config/domains.php
+     * @param array{
+     *     default_domain?: string,
+     *     subdomains?: array<string, string|array<array-key, mixed>>,
+     *     cors_across_subdomains?: bool,
+     *     shared_session_domain?: string,
+     *     scheme?: string,
+     * } $data Raw array from config/domains.php
      */
     #[NoDiscard]
     public static function fromArray(array $data, Environment $environment): self
     {
-        $rawDomain = $data['default_domain'] ?? 'localhost';
-        $defaultDomain = $environment->get('APP_DOMAIN')
-            ?? (is_string($rawDomain) ? $rawDomain : 'localhost');
-
-        $rawSubdomains = $data['subdomains'] ?? [];
         $subdomains = [];
-
-        if (is_array($rawSubdomains)) {
-            foreach ($rawSubdomains as $subdomain => $scopes) {
-                if (!is_string($subdomain)) {
-                    continue;
-                }
-
-                if (is_string($scopes)) {
-                    $subdomains[$subdomain] = [$scopes];
-                } elseif (is_array($scopes)) {
-                    /** @var list<string> $filtered */
-                    $filtered = array_values(array_filter(
-                        $scopes,
-                        static fn(mixed $v): bool => is_string($v),
-                    ));
-                    $subdomains[$subdomain] = $filtered;
-                }
+        foreach ($data['subdomains'] ?? [] as $subdomain => $scopes) {
+            if (is_string($scopes)) {
+                $subdomains[$subdomain] = [$scopes];
+            } elseif (is_array($scopes)) {
+                $subdomains[$subdomain] = array_values(array_filter(
+                    $scopes,
+                    static fn(mixed $v): bool => is_string($v),
+                ));
             }
         }
 
-        $corsAcrossSubdomains = isset($data['cors_across_subdomains'])
-            ? (is_bool($data['cors_across_subdomains']) ? $data['cors_across_subdomains'] : true)
-            : true;
-
-        $rawSessionDomain = $data['shared_session_domain'] ?? '';
-        $sharedSessionDomain = $environment->get('SESSION_DOMAIN')
-            ?? (is_string($rawSessionDomain) ? $rawSessionDomain : '');
-
-        $rawScheme = $data['scheme'] ?? 'https';
-        $scheme = is_string($rawScheme) ? $rawScheme : 'https';
-
         return new self(
-            defaultDomain: $defaultDomain,
+            defaultDomain: $environment->get('APP_DOMAIN') ?? $data['default_domain'] ?? 'localhost',
             subdomains: $subdomains,
-            corsAcrossSubdomains: $corsAcrossSubdomains,
-            sharedSessionDomain: $sharedSessionDomain,
-            scheme: $scheme,
+            corsAcrossSubdomains: $data['cors_across_subdomains'] ?? true,
+            sharedSessionDomain: $environment->get('SESSION_DOMAIN') ?? $data['shared_session_domain'] ?? '',
+            scheme: $data['scheme'] ?? 'https',
         );
     }
 
