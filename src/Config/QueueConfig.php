@@ -7,10 +7,6 @@ namespace Pulsar\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_float;
-use function is_int;
-use function is_string;
-
 /**
  * Typed configuration DTO for `config/queue.php`.
  * @api
@@ -39,7 +35,28 @@ final readonly class QueueConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data Raw array from config/queue.php
+     * @param array{
+     *     enabled?: bool|int|string,
+     *     driver?: string,
+     *     default_queue?: string,
+     *     worker?: array{
+     *         max_jobs?: int,
+     *         max_memory_mb?: int,
+     *         time_limit_seconds?: int,
+     *         sleep_ms?: int,
+     *     },
+     *     retry?: array{
+     *         max_attempts?: int,
+     *         base_delay_ms?: int,
+     *         max_delay_ms?: int,
+     *         multiplier?: float|int,
+     *     },
+     *     dead_letter?: array{
+     *         enabled?: bool|int|string,
+     *         retention_days?: int,
+     *     },
+     *     driver_options?: array<string, mixed>,
+     * } $data Raw array from config/queue.php
      */
     #[NoDiscard]
     public static function fromArray(array $data, Environment $environment): self
@@ -48,49 +65,28 @@ final readonly class QueueConfig
             ? $environment->get('QUEUE_ENABLED') === 'true'
             : (bool) ($data['enabled'] ?? false);
 
-        $driverValue = $environment->get('QUEUE_DRIVER') ?? ($data['driver'] ?? 'sync');
-        $driver = QueueDriverType::from(is_string($driverValue) ? $driverValue : 'sync');
+        $driverValue = $environment->get('QUEUE_DRIVER') ?? $data['driver'] ?? 'sync';
+        $driver = QueueDriverType::from($driverValue);
 
-        /** @var string $defaultQueue */
-        $defaultQueue = $data['default_queue'] ?? 'default';
-
-        /** @var array<string, mixed> $workerData */
         $workerData = $data['worker'] ?? [];
-
-        /** @var array<string, mixed> $retryData */
         $retryData = $data['retry'] ?? [];
-
-        /** @var array<string, mixed> $dlData */
         $dlData = $data['dead_letter'] ?? [];
-
-        $rawMaxJobs = $workerData['max_jobs'] ?? 1000;
-        $rawMaxMemory = $workerData['max_memory_mb'] ?? 256;
-        $rawTimeLimit = $workerData['time_limit_seconds'] ?? 3600;
-        $rawSleep = $workerData['sleep_ms'] ?? 1000;
-        $rawMaxAttempts = $retryData['max_attempts'] ?? 3;
-        $rawBaseDelay = $retryData['base_delay_ms'] ?? 1000;
-        $rawMaxDelay = $retryData['max_delay_ms'] ?? 60000;
-        $rawMultiplier = $retryData['multiplier'] ?? 2.0;
-        $rawDlRetention = $dlData['retention_days'] ?? 30;
-
-        /** @var array<string, mixed> $rawDriverOptions */
-        $rawDriverOptions = $data['driver_options'] ?? [];
 
         return new self(
             enabled: $enabled,
             driver: $driver,
-            defaultQueue: $defaultQueue,
-            workerMaxJobs: is_int($rawMaxJobs) ? $rawMaxJobs : 1000,
-            workerMaxMemoryMb: is_int($rawMaxMemory) ? $rawMaxMemory : 256,
-            workerTimeLimitSeconds: is_int($rawTimeLimit) ? $rawTimeLimit : 3600,
-            workerSleepMs: is_int($rawSleep) ? $rawSleep : 1000,
-            retryMaxAttempts: is_int($rawMaxAttempts) ? $rawMaxAttempts : 3,
-            retryBaseDelayMs: is_int($rawBaseDelay) ? $rawBaseDelay : 1000,
-            retryMaxDelayMs: is_int($rawMaxDelay) ? $rawMaxDelay : 60000,
-            retryMultiplier: is_float($rawMultiplier) || is_int($rawMultiplier) ? (float) $rawMultiplier : 2.0,
+            defaultQueue: $data['default_queue'] ?? 'default',
+            workerMaxJobs: $workerData['max_jobs'] ?? 1000,
+            workerMaxMemoryMb: $workerData['max_memory_mb'] ?? 256,
+            workerTimeLimitSeconds: $workerData['time_limit_seconds'] ?? 3600,
+            workerSleepMs: $workerData['sleep_ms'] ?? 1000,
+            retryMaxAttempts: $retryData['max_attempts'] ?? 3,
+            retryBaseDelayMs: $retryData['base_delay_ms'] ?? 1000,
+            retryMaxDelayMs: $retryData['max_delay_ms'] ?? 60000,
+            retryMultiplier: (float) ($retryData['multiplier'] ?? 2.0),
             deadLetterEnabled: (bool) ($dlData['enabled'] ?? true),
-            deadLetterRetentionDays: is_int($rawDlRetention) ? $rawDlRetention : 30,
-            driverOptions: $rawDriverOptions,
+            deadLetterRetentionDays: $dlData['retention_days'] ?? 30,
+            driverOptions: $data['driver_options'] ?? [],
         );
     }
 }
