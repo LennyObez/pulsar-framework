@@ -14,6 +14,9 @@ use function sprintf;
 
 /**
  * Structured metadata extracted from an audio file (ID3 tags and stream info).
+ *
+ * @psalm-api Public DTO returned from AudioMetadataExtractor; consumed by
+ *            media services and admin views.
  */
 #[Api(since: '1.0.0')]
 final readonly class AudioMetadata

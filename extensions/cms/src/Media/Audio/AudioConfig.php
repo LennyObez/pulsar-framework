@@ -13,6 +13,8 @@ use function is_string;
 
 /**
  * Configuration for audio processing and transcoding.
+ *
+ * @psalm-api Public configuration DTO loaded from config/cms.php (media.audio).
  */
 #[Api(since: '1.0.0')]
 final readonly class AudioConfig

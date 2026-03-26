@@ -11,6 +11,9 @@ use function is_string;
 
 /**
  * A named audio transcoding preset defining codec, bitrate, and format.
+ *
+ * @psalm-api Public DTO contained in AudioConfig::presets; consumed by
+ *            AudioProcessor.
  */
 #[Api(since: '1.0.0')]
 final readonly class AudioTranscodePreset

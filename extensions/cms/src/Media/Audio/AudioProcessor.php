@@ -19,6 +19,9 @@ use function tempnam;
  *
  * Converts source audio files to target presets (codec, bitrate, sample rate).
  * If FFmpeg is unavailable, logs a warning and returns null gracefully.
+ *
+ * @psalm-api Resolved from the DI container by audio derivative jobs and
+ *            admin upload controllers; not instantiated by name.
  */
 #[Internal(reason: 'Use AudioProcessor via service container')]
 final readonly class AudioProcessor
@@ -168,7 +171,9 @@ final readonly class AudioProcessor
     /**
      * Safely remove a temporary file after verifying it resides inside the
      * system temp directory. This guards against path-traversal: only files
-     * whose resolved real path starts with sys_get_temp_dir() are deleted.
+     * whose resolved real path starts with sys_get_temp_dir() (with an
+     * explicit trailing separator) are deleted, so a directory whose name
+     * shares a prefix with the temp dir cannot escape the boundary.
      */
     private static function cleanupTempFile(string $path): void
     {
@@ -183,7 +188,9 @@ final readonly class AudioProcessor
             return;
         }
 
-        if (!str_starts_with($realPath, $tempDir)) {
+        $tempDirWithSep = rtrim($tempDir, '/\\') . DIRECTORY_SEPARATOR;
+
+        if (!str_starts_with($realPath, $tempDirWithSep)) {
             return;
         }
 
