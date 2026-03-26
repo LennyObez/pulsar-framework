@@ -17,6 +17,9 @@ use function implode;
  * Options controlling a CMS data export operation.
  *
  * @phpstan-type EntityType 'content'|'taxonomies'|'menus'|'settings'|'media_refs'|'comments'|'users'|'media_files'|'configuration'
+ *
+ * @psalm-api Public DTO passed to ImportExportServiceInterface::export() and
+ *            MediaBundleExporterInterface; admin export forms construct it.
  */
 #[Api(since: '1.0.0')]
 final readonly class ExportOptions

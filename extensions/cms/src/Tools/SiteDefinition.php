@@ -24,6 +24,9 @@ use const JSON_ERROR_NONE;
  *
  * Represents the validated structure of a site definition JSON document
  * conforming to the N.3 import schema.
+ *
+ * @psalm-api Public DTO returned from SiteDefinitionParser; consumed by
+ *            ImportExportService::importSiteDefinition().
  */
 #[Api(since: '1.0.0')]
 final readonly class SiteDefinition

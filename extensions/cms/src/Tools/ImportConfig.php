@@ -13,6 +13,9 @@ use function is_string;
 
 /**
  * Configuration for CMS import operations.
+ *
+ * @psalm-api Public configuration DTO loaded from config/cms.php as part of
+ *            CmsConfig.import; consumed by ImportExportService.
  */
 #[Api(since: '1.0.0')]
 final readonly class ImportConfig
