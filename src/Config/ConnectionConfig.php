@@ -8,7 +8,6 @@ use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Database\Driver;
 
-use function is_string;
 use function str_starts_with;
 
 use const DIRECTORY_SEPARATOR;
@@ -38,29 +37,31 @@ final readonly class ConnectionConfig
     /**
      * Build from a raw config array and environment.
      *
-     * @param array<string, mixed> $data Raw connection config array
+     * @param array{
+     *     driver?: string,
+     *     host?: string,
+     *     port?: int|string,
+     *     database?: string,
+     *     username?: string,
+     *     password?: string,
+     *     charset?: string,
+     *     collation?: string,
+     *     options?: array<string, mixed>,
+     * } $data Raw connection config array
      * @param string|null $basePath Project root for resolving relative SQLite paths.
      *                              When null, relative paths are left as-is (resolved by Driver at DSN time).
      */
     #[NoDiscard]
     public static function fromArray(string $name, array $data, Environment $environment, ?string $basePath = null): self
     {
-        $rawDriver = $data['driver'] ?? 'mysql';
-        $driverString = is_string($rawDriver) ? $rawDriver : 'mysql';
-        $driver = Driver::from($driverString);
+        $driver = Driver::from($data['driver'] ?? 'mysql');
 
-        /** @var string $hostDefault */
-        $hostDefault = $data['host'] ?? '127.0.0.1';
-        $host = $environment->get('DB_HOST') ?? $hostDefault;
+        $host = $environment->get('DB_HOST') ?? $data['host'] ?? '127.0.0.1';
 
         $portEnv = $environment->get('DB_PORT');
-        /** @var int|string $portDefault */
-        $portDefault = $data['port'] ?? $driver->defaultPort();
-        $port = $portEnv !== null ? (int) $portEnv : (int) $portDefault;
+        $port = $portEnv !== null ? (int) $portEnv : (int) ($data['port'] ?? $driver->defaultPort());
 
-        /** @var string $dbDefault */
-        $dbDefault = $data['database'] ?? '';
-        $database = $environment->get('DB_DATABASE') ?? $dbDefault;
+        $database = $environment->get('DB_DATABASE') ?? $data['database'] ?? '';
 
         // For SQLite, resolve relative paths against the project root at config time.
         // This ensures symlinked projects write to their own database, not the framework's.
@@ -68,34 +69,17 @@ final readonly class ConnectionConfig
             $database = self::resolveSqlitePath($database, $basePath);
         }
 
-        /** @var string $usernameDefault */
-        $usernameDefault = $data['username'] ?? '';
-        $username = $environment->get('DB_USERNAME') ?? $usernameDefault;
-
-        /** @var string $passwordDefault */
-        $passwordDefault = $data['password'] ?? '';
-        $password = $environment->get('DB_PASSWORD') ?? $passwordDefault;
-
-        /** @var string $charset */
-        $charset = $data['charset'] ?? 'utf8mb4';
-
-        /** @var string $collation */
-        $collation = $data['collation'] ?? 'utf8mb4_unicode_ci';
-
-        /** @var array<string, mixed> $options */
-        $options = $data['options'] ?? [];
-
         return new self(
             name: $name,
             driver: $driver,
             host: $host,
             port: $port,
             database: $database,
-            username: $username,
-            password: $password,
-            charset: $charset,
-            collation: $collation,
-            options: $options,
+            username: $environment->get('DB_USERNAME') ?? $data['username'] ?? '',
+            password: $environment->get('DB_PASSWORD') ?? $data['password'] ?? '',
+            charset: $data['charset'] ?? 'utf8mb4',
+            collation: $data['collation'] ?? 'utf8mb4_unicode_ci',
+            options: $data['options'] ?? [],
         );
     }
 

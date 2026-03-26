@@ -7,8 +7,6 @@ namespace Pulsar\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_string;
-
 /**
  * Per-disk storage configuration.
  * @api
@@ -29,30 +27,29 @@ final readonly class DiskConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data Raw array for a single disk entry
+     * @param array{
+     *     driver?: string,
+     *     root?: string,
+     *     visibility?: string,
+     *     region?: string,
+     *     bucket?: string,
+     *     prefix?: string,
+     *     endpoint?: string|null,
+     *     use_path_style?: bool|int|string,
+     * } $data Raw array for a single disk entry
      */
     #[NoDiscard]
     public static function fromArray(string $name, array $data): self
     {
-        $rawDriver = $data['driver'] ?? 'local';
-        $driver = StorageDriver::from(is_string($rawDriver) ? $rawDriver : 'local');
-
-        $rawRoot = $data['root'] ?? '';
-        $rawVisibility = $data['visibility'] ?? 'private';
-        $rawRegion = $data['region'] ?? '';
-        $rawBucket = $data['bucket'] ?? '';
-        $rawPrefix = $data['prefix'] ?? '';
-        $rawEndpoint = $data['endpoint'] ?? null;
-
         return new self(
             name: $name,
-            driver: $driver,
-            root: is_string($rawRoot) ? $rawRoot : '',
-            visibility: is_string($rawVisibility) ? $rawVisibility : 'private',
-            region: is_string($rawRegion) ? $rawRegion : '',
-            bucket: is_string($rawBucket) ? $rawBucket : '',
-            prefix: is_string($rawPrefix) ? $rawPrefix : '',
-            endpoint: is_string($rawEndpoint) ? $rawEndpoint : null,
+            driver: StorageDriver::from($data['driver'] ?? 'local'),
+            root: $data['root'] ?? '',
+            visibility: $data['visibility'] ?? 'private',
+            region: $data['region'] ?? '',
+            bucket: $data['bucket'] ?? '',
+            prefix: $data['prefix'] ?? '',
+            endpoint: $data['endpoint'] ?? null,
             usePathStyle: (bool) ($data['use_path_style'] ?? false),
         );
     }
