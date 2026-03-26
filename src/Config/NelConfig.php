@@ -7,9 +7,6 @@ namespace Pulsar\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_int;
-use function is_numeric;
-use function is_string;
 use function json_encode;
 
 use const JSON_THROW_ON_ERROR;
@@ -78,29 +75,25 @@ final readonly class NelConfig
     }
 
     /**
-     * @param array<string, mixed> $data Raw `nel` sub-array from config
+     * @param array{
+     *     enabled?: bool|int|string,
+     *     report_to?: string,
+     *     max_age?: int,
+     *     include_subdomains?: bool|int|string,
+     *     success_fraction?: float|int,
+     *     failure_fraction?: float|int,
+     * } $data Raw `nel` sub-array from config
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $rawMaxAge = $data['max_age'] ?? 86400;
-        $maxAge = is_int($rawMaxAge) ? $rawMaxAge : (int) (is_numeric($rawMaxAge) ? $rawMaxAge : 86400);
-
-        $rawSuccessFraction = $data['success_fraction'] ?? 0.0;
-        $successFraction = is_numeric($rawSuccessFraction) ? (float) $rawSuccessFraction : 0.0;
-
-        $rawFailureFraction = $data['failure_fraction'] ?? 1.0;
-        $failureFraction = is_numeric($rawFailureFraction) ? (float) $rawFailureFraction : 1.0;
-
-        $rawReportTo = $data['report_to'] ?? 'default';
-
         return new self(
             enabled: (bool) ($data['enabled'] ?? false),
-            reportTo: is_string($rawReportTo) ? $rawReportTo : 'default',
-            maxAge: $maxAge,
+            reportTo: $data['report_to'] ?? 'default',
+            maxAge: $data['max_age'] ?? 86400,
             includeSubdomains: (bool) ($data['include_subdomains'] ?? false),
-            successFraction: $successFraction,
-            failureFraction: $failureFraction,
+            successFraction: (float) ($data['success_fraction'] ?? 0.0),
+            failureFraction: (float) ($data['failure_fraction'] ?? 1.0),
         );
     }
 }

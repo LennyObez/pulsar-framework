@@ -7,6 +7,7 @@ namespace Pulsar\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
+use function array_map;
 use function is_array;
 use function is_scalar;
 use function is_string;
@@ -121,26 +122,27 @@ final readonly class SecurityHeadersConfig
     /**
      * Build from the raw security headers config array.
      *
+     * Mixed shape: known sub-config keys (csp, hsts, ...) plus arbitrary
+     * string => scalar header overrides.
+     *
      * @param array<string, mixed> $data Raw `headers` sub-array from config/security.php
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var array<string, mixed> $cspData */
+        /**
+         * @var array{base_uri?: string, connect_src?: string, custom_directives?: array<string, string>, default_src?: string, enabled?: bool|int|string, font_src?: string, form_action?: string, frame_ancestors?: string, frame_src?: string, img_src?: string, media_src?: string, object_src?: string, report_only?: bool|int|string, report_to?: string, report_uri?: string, script_src?: string, style_src?: string, upgrade_insecure_requests?: bool|int|string} $cspData
+         */
         $cspData = is_array($data['csp'] ?? null) ? $data['csp'] : [];
-
-        /** @var array<string, mixed> $hstsData */
+        /** @var array{enabled?: bool|int|string, include_sub_domains?: bool|int|string, max_age?: int, preload?: bool|int|string} $hstsData */
         $hstsData = is_array($data['hsts'] ?? null) ? $data['hsts'] : [];
-
         /** @var array<string, mixed> $crossOriginData */
         $crossOriginData = is_array($data['cross_origin'] ?? null) ? $data['cross_origin'] : [];
-
         /** @var array<string, mixed> $permissionsPolicyData */
         $permissionsPolicyData = is_array($data['permissions_policy'] ?? null) ? $data['permissions_policy'] : [];
-
-        /** @var array<string, mixed> $nelData */
+        /** @var array{enabled?: bool|int|string, failure_fraction?: float|int, include_subdomains?: bool|int|string, max_age?: int, report_to?: string, success_fraction?: float|int} $nelData */
         $nelData = is_array($data['nel'] ?? null) ? $data['nel'] : [];
-
+        /** @var mixed $rawNelEndpoint */
         $rawNelEndpoint = $data['nel_endpoint_url'] ?? '';
         $nelEndpointUrl = is_string($rawNelEndpoint) ? $rawNelEndpoint : '';
 
