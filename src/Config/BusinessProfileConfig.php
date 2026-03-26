@@ -201,6 +201,7 @@ final readonly class BusinessProfileConfig
             return $envValue;
         }
 
+        /** @var mixed $raw */
         $raw = $data[$key] ?? $default;
 
         return is_string($raw) ? $raw : $default;
@@ -223,6 +224,7 @@ final readonly class BusinessProfileConfig
             return $envValue;
         }
 
+        /** @var mixed $raw */
         $raw = $data[$key] ?? null;
 
         return is_string($raw) ? $raw : null;
