@@ -20,19 +20,17 @@ final readonly class HealthCheckConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     interval_seconds?: int,
+     *     timeout_seconds?: int,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var int $intervalSeconds */
-        $intervalSeconds = $data['interval_seconds'] ?? 30;
-        /** @var int $timeoutSeconds */
-        $timeoutSeconds = $data['timeout_seconds'] ?? 5;
-
         return new self(
-            intervalSeconds: $intervalSeconds,
-            timeoutSeconds: $timeoutSeconds,
+            intervalSeconds: $data['interval_seconds'] ?? 30,
+            timeoutSeconds: $data['timeout_seconds'] ?? 5,
         );
     }
 }

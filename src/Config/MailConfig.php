@@ -7,10 +7,6 @@ namespace Pulsar\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_array;
-use function is_bool;
-use function is_string;
-
 /**
  * Typed configuration DTO for `config/mail.php`.
  * @api
@@ -34,7 +30,17 @@ final readonly class MailConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data Raw array from config/mail.php
+     * @param array{
+     *     enabled?: bool|int|string,
+     *     default_driver?: string,
+     *     default_from_address?: string,
+     *     default_from_name?: string,
+     *     default_reply_to?: string,
+     *     encryption_policy?: string,
+     *     hipaa_mode?: bool|int|string,
+     *     audit_hash_enabled?: bool|int|string,
+     *     driver_options?: array<string, mixed>,
+     * } $data Raw array from config/mail.php
      */
     #[NoDiscard]
     public static function fromArray(array $data, Environment $environment): self
@@ -43,44 +49,30 @@ final readonly class MailConfig
             ? $environment->get('MAIL_ENABLED') === 'true'
             : (bool) ($data['enabled'] ?? false);
 
-        $driverValue = $environment->get('MAIL_DRIVER') ?? ($data['default_driver'] ?? 'smtp');
-        $defaultDriver = MailDriverType::tryFrom(is_string($driverValue) ? $driverValue : 'smtp')
-            ?? MailDriverType::Smtp;
+        $driverValue = $environment->get('MAIL_DRIVER') ?? $data['default_driver'] ?? 'smtp';
+        $defaultDriver = MailDriverType::tryFrom($driverValue) ?? MailDriverType::Smtp;
 
-        $defaultFromAddress = $environment->get('MAIL_FROM_ADDRESS')
-            ?? (is_string($data['default_from_address'] ?? null) ? $data['default_from_address'] : '');
-
-        $defaultFromName = $environment->get('MAIL_FROM_NAME')
-            ?? (is_string($data['default_from_name'] ?? null) ? $data['default_from_name'] : '');
-
-        $defaultReplyTo = $environment->get('MAIL_REPLY_TO')
-            ?? (is_string($data['default_reply_to'] ?? null) ? $data['default_reply_to'] : '');
-
-        $encryptionValue = $environment->get('MAIL_ENCRYPTION_POLICY') ?? ($data['encryption_policy'] ?? 'none');
-        $encryptionPolicy = MailEncryptionPolicy::tryFrom(is_string($encryptionValue) ? $encryptionValue : 'none')
-            ?? MailEncryptionPolicy::None;
+        $encryptionValue = $environment->get('MAIL_ENCRYPTION_POLICY') ?? $data['encryption_policy'] ?? 'none';
+        $encryptionPolicy = MailEncryptionPolicy::tryFrom($encryptionValue) ?? MailEncryptionPolicy::None;
 
         $hipaaMode = $environment->get('MAIL_HIPAA_MODE') !== null
             ? $environment->get('MAIL_HIPAA_MODE') === 'true'
-            : (is_bool($data['hipaa_mode'] ?? null) ? $data['hipaa_mode'] : false);
+            : (bool) ($data['hipaa_mode'] ?? false);
 
         $auditHashEnabled = $environment->get('MAIL_AUDIT_HASH') !== null
             ? $environment->get('MAIL_AUDIT_HASH') === 'true'
-            : (is_bool($data['audit_hash_enabled'] ?? null) ? $data['audit_hash_enabled'] : false);
-
-        /** @var array<string, mixed> $driverOptions */
-        $driverOptions = is_array($data['driver_options'] ?? null) ? $data['driver_options'] : [];
+            : (bool) ($data['audit_hash_enabled'] ?? false);
 
         return new self(
             enabled: $enabled,
             defaultDriver: $defaultDriver,
-            defaultFromAddress: $defaultFromAddress,
-            defaultFromName: $defaultFromName,
-            defaultReplyTo: $defaultReplyTo,
+            defaultFromAddress: $environment->get('MAIL_FROM_ADDRESS') ?? $data['default_from_address'] ?? '',
+            defaultFromName: $environment->get('MAIL_FROM_NAME') ?? $data['default_from_name'] ?? '',
+            defaultReplyTo: $environment->get('MAIL_REPLY_TO') ?? $data['default_reply_to'] ?? '',
             encryptionPolicy: $encryptionPolicy,
             hipaaMode: $hipaaMode,
             auditHashEnabled: $auditHashEnabled,
-            driverOptions: $driverOptions,
+            driverOptions: $data['driver_options'] ?? [],
         );
     }
 }

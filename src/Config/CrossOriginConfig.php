@@ -7,8 +7,6 @@ namespace Pulsar\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_string;
-
 /**
  * Typed configuration DTO for Cross-Origin security headers (COOP, COEP, CORP).
  *
@@ -25,19 +23,19 @@ final readonly class CrossOriginConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data Raw `cross_origin` sub-array from config
+     * @param array{
+     *     opener_policy?: string,
+     *     embedder_policy?: string,
+     *     resource_policy?: string,
+     * } $data Raw `cross_origin` sub-array from config
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $rawOpenerPolicy = $data['opener_policy'] ?? 'same-origin';
-        $rawEmbedderPolicy = $data['embedder_policy'] ?? '';
-        $rawResourcePolicy = $data['resource_policy'] ?? 'same-origin';
-
         return new self(
-            openerPolicy: is_string($rawOpenerPolicy) ? $rawOpenerPolicy : 'same-origin',
-            embedderPolicy: is_string($rawEmbedderPolicy) ? $rawEmbedderPolicy : '',
-            resourcePolicy: is_string($rawResourcePolicy) ? $rawResourcePolicy : 'same-origin',
+            openerPolicy: $data['opener_policy'] ?? 'same-origin',
+            embedderPolicy: $data['embedder_policy'] ?? '',
+            resourcePolicy: $data['resource_policy'] ?? 'same-origin',
         );
     }
 }
