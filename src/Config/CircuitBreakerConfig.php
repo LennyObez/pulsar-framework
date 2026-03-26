@@ -22,25 +22,21 @@ final readonly class CircuitBreakerConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     failure_threshold?: int,
+     *     success_threshold?: int,
+     *     open_timeout_seconds?: int,
+     *     sample_window_seconds?: int,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var int $failureThreshold */
-        $failureThreshold = $data['failure_threshold'] ?? 5;
-        /** @var int $successThreshold */
-        $successThreshold = $data['success_threshold'] ?? 2;
-        /** @var int $openTimeoutSeconds */
-        $openTimeoutSeconds = $data['open_timeout_seconds'] ?? 30;
-        /** @var int $sampleWindowSeconds */
-        $sampleWindowSeconds = $data['sample_window_seconds'] ?? 60;
-
         return new self(
-            failureThreshold: $failureThreshold,
-            successThreshold: $successThreshold,
-            openTimeoutSeconds: $openTimeoutSeconds,
-            sampleWindowSeconds: $sampleWindowSeconds,
+            failureThreshold: $data['failure_threshold'] ?? 5,
+            successThreshold: $data['success_threshold'] ?? 2,
+            openTimeoutSeconds: $data['open_timeout_seconds'] ?? 30,
+            sampleWindowSeconds: $data['sample_window_seconds'] ?? 60,
         );
     }
 }
