@@ -71,35 +71,32 @@ final readonly class DeployConfig
     }
 
     /**
-     * @param array<string, mixed> $data Raw array from config/deploy.php
+     * @param array{
+     *     trusted_proxies?: list<string>,
+     *     request_limits?: array{
+     *         max_post_size_mb?: int,
+     *         max_upload_size_mb?: int,
+     *     },
+     *     http3?: array{
+     *         enabled?: bool|int|string,
+     *         alt_svc_max_age?: int,
+     *     },
+     *     checks?: array<string, mixed>,
+     * } $data Raw array from config/deploy.php
      */
     #[NoDiscard]
     public static function fromArray(array $data, Environment $environment): self
     {
-        /** @var list<string> $trustedProxies */
-        $trustedProxies = $data['trusted_proxies'] ?? [];
-
-        /** @var array<string, mixed> $requestLimits */
         $requestLimits = $data['request_limits'] ?? [];
-
-        /** @var array<string, mixed> $http3 */
         $http3 = $data['http3'] ?? [];
 
-        $rawMaxPost = $requestLimits['max_post_size_mb'] ?? 8;
-        $rawMaxUpload = $requestLimits['max_upload_size_mb'] ?? 10;
-        $rawAltSvcMaxAge = $http3['alt_svc_max_age'] ?? 86400;
-
-        /** @var array<string, mixed> $rawChecks */
-        $rawChecks = $data['checks'] ?? [];
-        $checks = self::parseChecks($rawChecks, $environment);
-
         return new self(
-            trustedProxies: $trustedProxies,
-            maxPostSizeMb: is_int($rawMaxPost) ? $rawMaxPost : 8,
-            maxUploadSizeMb: is_int($rawMaxUpload) ? $rawMaxUpload : 10,
+            trustedProxies: $data['trusted_proxies'] ?? [],
+            maxPostSizeMb: $requestLimits['max_post_size_mb'] ?? 8,
+            maxUploadSizeMb: $requestLimits['max_upload_size_mb'] ?? 10,
             http3Enabled: (bool) ($http3['enabled'] ?? false),
-            http3AltSvcMaxAge: is_int($rawAltSvcMaxAge) ? $rawAltSvcMaxAge : 86400,
-            checks: $checks,
+            http3AltSvcMaxAge: $http3['alt_svc_max_age'] ?? 86400,
+            checks: self::parseChecks($data['checks'] ?? [], $environment),
         );
     }
 
@@ -150,6 +147,7 @@ final readonly class DeployConfig
             $config = $defaultConfig;
 
             if (isset($rawChecks[$name]) && is_array($rawChecks[$name])) {
+                /** @var mixed $rawSeverity */
                 $rawSeverity = $rawChecks[$name]['severity'] ?? null;
                 $config = [
                     'enabled' => (bool) ($rawChecks[$name]['enabled'] ?? $defaultConfig['enabled']),
