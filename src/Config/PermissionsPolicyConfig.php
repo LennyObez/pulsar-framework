@@ -10,7 +10,6 @@ use Pulsar\Api\Api;
 use function array_filter;
 use function array_map;
 use function implode;
-use function is_array;
 use function is_string;
 
 /**
@@ -73,39 +72,39 @@ final readonly class PermissionsPolicyConfig
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     camera?: string,
+     *     microphone?: string,
+     *     geolocation?: string,
+     *     accelerometer?: string,
+     *     gyroscope?: string,
+     *     magnetometer?: string,
+     *     payment?: string,
+     *     usb?: string,
+     *     autoplay?: string,
+     *     fullscreen?: string,
+     *     picture_in_picture?: string,
+     *     additional?: array<string, string>,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var array<string, string> $additional */
-        $additional = is_array($data['additional'] ?? null)
-            ? array_filter($data['additional'], is_string(...))
-            : [];
+        $additional = array_filter($data['additional'] ?? [], is_string(...));
 
         return new self(
-            camera: self::str($data, 'camera', '()'),
-            microphone: self::str($data, 'microphone', '()'),
-            geolocation: self::str($data, 'geolocation', '()'),
-            accelerometer: self::str($data, 'accelerometer', '()'),
-            gyroscope: self::str($data, 'gyroscope', '()'),
-            magnetometer: self::str($data, 'magnetometer', '()'),
-            payment: self::str($data, 'payment', '()'),
-            usb: self::str($data, 'usb', '()'),
-            autoplay: self::str($data, 'autoplay', '(self)'),
-            fullscreen: self::str($data, 'fullscreen', '(self)'),
-            pictureInPicture: self::str($data, 'picture_in_picture', '(self)'),
+            camera: $data['camera'] ?? '()',
+            microphone: $data['microphone'] ?? '()',
+            geolocation: $data['geolocation'] ?? '()',
+            accelerometer: $data['accelerometer'] ?? '()',
+            gyroscope: $data['gyroscope'] ?? '()',
+            magnetometer: $data['magnetometer'] ?? '()',
+            payment: $data['payment'] ?? '()',
+            usb: $data['usb'] ?? '()',
+            autoplay: $data['autoplay'] ?? '(self)',
+            fullscreen: $data['fullscreen'] ?? '(self)',
+            pictureInPicture: $data['picture_in_picture'] ?? '(self)',
             additional: $additional,
         );
-    }
-
-    /**
-     * @param array<string, mixed> $data
-     */
-    private static function str(array $data, string $key, string $default): string
-    {
-        $value = $data[$key] ?? $default;
-
-        return is_string($value) ? $value : $default;
     }
 }

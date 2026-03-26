@@ -40,42 +40,36 @@ final readonly class DatabaseConfig
     /**
      * Build from the raw database config array and environment.
      *
-     * @param array<string, mixed> $data Raw array from config/database.php
+     * @param array{
+     *     default?: string,
+     *     connections?: array<string, array<string, mixed>>,
+     *     migrations?: array{table?: string, path?: string},
+     *     pool?: array<string, mixed>,
+     *     read_write?: array<string, mixed>,
+     *     failover?: array<string, mixed>,
+     *     query_cache?: array<string, mixed>,
+     *     monitor?: array<string, mixed>,
+     * } $data Raw array from config/database.php
      * @param string|null $basePath Project root for resolving relative SQLite paths
      */
     #[NoDiscard]
     public static function fromArray(array $data, Environment $environment, ?string $basePath = null): self
     {
-        /** @var string $defaultFromConfig */
-        $defaultFromConfig = $data['default'] ?? 'mysql';
-        $defaultConnection = $environment->get('DB_CONNECTION') ?? $defaultFromConfig;
-
-        /** @var array<string, array<string, mixed>> $connectionsData */
-        $connectionsData = $data['connections'] ?? [];
+        $defaultConnection = $environment->get('DB_CONNECTION') ?? $data['default'] ?? 'mysql';
 
         $connections = [];
-        foreach ($connectionsData as $name => $connData) {
-            /** @var array<string, mixed> $connData */
+        foreach ($data['connections'] ?? [] as $name => $connData) {
             $connections[$name] = ConnectionConfig::fromArray($name, $connData, $environment, $basePath);
         }
 
-        /** @var array<string, mixed> $migrationsData */
         $migrationsData = $data['migrations'] ?? [];
-        /** @var string $migrationsTable */
         $migrationsTable = $migrationsData['table'] ?? 'pulsar_migrations';
-
-        /** @var string $migrationsPath */
         $migrationsPath = $migrationsData['path'] ?? 'database/migrations';
 
-        /** @var array<string, mixed> $poolData */
         $poolData = $data['pool'] ?? [];
-        /** @var array<string, mixed> $readWriteData */
         $readWriteData = $data['read_write'] ?? [];
-        /** @var array<string, mixed> $failoverData */
         $failoverData = $data['failover'] ?? [];
-        /** @var array<string, mixed> $queryCacheData */
         $queryCacheData = $data['query_cache'] ?? [];
-        /** @var array<string, mixed> $monitorData */
         $monitorData = $data['monitor'] ?? [];
 
         return new self(
