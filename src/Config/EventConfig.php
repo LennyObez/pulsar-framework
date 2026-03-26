@@ -20,7 +20,14 @@ final readonly class EventConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data Raw array from config/event.php
+     * @param array{
+     *     enabled?: bool|int|string,
+     *     storm_protection?: array{
+     *         max_depth?: int,
+     *         loop_detection?: bool,
+     *         max_repeats_per_event?: int,
+     *     },
+     * } $data Raw array from config/event.php
      */
     #[NoDiscard]
     public static function fromArray(array $data, Environment $environment): self
@@ -29,12 +36,9 @@ final readonly class EventConfig
             ? $environment->get('EVENT_ENABLED') === 'true'
             : (bool) ($data['enabled'] ?? true);
 
-        /** @var array<string, mixed> $stormData */
-        $stormData = $data['storm_protection'] ?? [];
-
         return new self(
             enabled: $enabled,
-            stormProtection: StormProtectionConfig::fromArray($stormData, $environment),
+            stormProtection: StormProtectionConfig::fromArray($data['storm_protection'] ?? [], $environment),
         );
     }
 }
