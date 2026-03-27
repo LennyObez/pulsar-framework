@@ -7,10 +7,6 @@ namespace Pulsar\Extension\Observability\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_bool;
-use function is_int;
-use function is_string;
-
 /**
  * Configuration for file-based JSON Lines export targets.
  *
@@ -30,23 +26,23 @@ final readonly class ExportConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     enabled?: bool,
+     *     spans_path?: string,
+     *     metrics_path?: string,
+     *     errors_path?: string,
+     *     flush_threshold?: int,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $rawEnabled = $data['enabled'] ?? true;
-        $rawSpansPath = $data['spans_path'] ?? 'var/observability/spans.jsonl';
-        $rawMetricsPath = $data['metrics_path'] ?? 'var/observability/metrics.jsonl';
-        $rawErrorsPath = $data['errors_path'] ?? 'var/observability/errors.jsonl';
-        $rawFlushThreshold = $data['flush_threshold'] ?? 10;
-
         return new self(
-            enabled: is_bool($rawEnabled) ? $rawEnabled : true,
-            spansPath: is_string($rawSpansPath) ? $rawSpansPath : 'var/observability/spans.jsonl',
-            metricsPath: is_string($rawMetricsPath) ? $rawMetricsPath : 'var/observability/metrics.jsonl',
-            errorsPath: is_string($rawErrorsPath) ? $rawErrorsPath : 'var/observability/errors.jsonl',
-            flushThreshold: is_int($rawFlushThreshold) ? $rawFlushThreshold : 10,
+            enabled: $data['enabled'] ?? true,
+            spansPath: $data['spans_path'] ?? 'var/observability/spans.jsonl',
+            metricsPath: $data['metrics_path'] ?? 'var/observability/metrics.jsonl',
+            errorsPath: $data['errors_path'] ?? 'var/observability/errors.jsonl',
+            flushThreshold: $data['flush_threshold'] ?? 10,
         );
     }
 }

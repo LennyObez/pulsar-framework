@@ -7,8 +7,6 @@ namespace Pulsar\Extension\Observability\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_int;
-
 /**
  * Batch exporter configuration.
  * @api
@@ -22,17 +20,17 @@ final readonly class BatchConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     max_batch_size?: int,
+     *     max_queue_size?: int,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $rawMaxBatchSize = $data['max_batch_size'] ?? 512;
-        $rawMaxQueueSize = $data['max_queue_size'] ?? 2048;
-
         return new self(
-            maxBatchSize: is_int($rawMaxBatchSize) ? $rawMaxBatchSize : 512,
-            maxQueueSize: is_int($rawMaxQueueSize) ? $rawMaxQueueSize : 2048,
+            maxBatchSize: $data['max_batch_size'] ?? 512,
+            maxQueueSize: $data['max_queue_size'] ?? 2048,
         );
     }
 }
