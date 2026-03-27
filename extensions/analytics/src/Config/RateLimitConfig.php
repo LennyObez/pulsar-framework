@@ -23,16 +23,16 @@ final readonly class RateLimitConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     max_events_per_ip_per_minute?: int,
+     *     burst?: int,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
-        $rawMax = $data['max_events_per_ip_per_minute'] ?? null;
-        $rawBurst = $data['burst'] ?? null;
-
         return new self(
-            maxEventsPerIpPerMinute: $rawMax !== null ? (is_numeric($rawMax) ? (int) $rawMax : 0) : 30,
-            burst: $rawBurst !== null ? (is_numeric($rawBurst) ? (int) $rawBurst : 0) : 5,
+            maxEventsPerIpPerMinute: $data['max_events_per_ip_per_minute'] ?? 30,
+            burst: $data['burst'] ?? 5,
         );
     }
 }

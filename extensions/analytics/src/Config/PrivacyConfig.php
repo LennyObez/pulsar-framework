@@ -33,7 +33,11 @@ final readonly class PrivacyConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     respect_dnt?: bool|int|string,
+     *     anonymize_referrer?: bool|int|string,
+     *     require_consent?: bool|int|string,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
