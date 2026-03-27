@@ -30,25 +30,21 @@ final readonly class AdminSchemaConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     enabled?: bool,
+     *     allowed_operations?: list<string>,
+     *     deny_table_prefixes?: list<string>,
+     *     require_step_up_for?: list<string>,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var bool $enabled */
-        $enabled = $data['enabled'] ?? false;
-        /** @var list<string> $allowedOperations */
-        $allowedOperations = $data['allowed_operations'] ?? ['create', 'alter', 'drop', 'rename'];
-        /** @var list<string> $denyTablePrefixes */
-        $denyTablePrefixes = $data['deny_table_prefixes'] ?? ['admin_', 'pulsar_', 'sqlite_', 'studio_'];
-        /** @var list<string> $requireStepUpFor */
-        $requireStepUpFor = $data['require_step_up_for'] ?? ['drop', 'rename', 'drop_column', 'drop_index'];
-
         return new self(
-            enabled: $enabled,
-            allowedOperations: $allowedOperations,
-            denyTablePrefixes: $denyTablePrefixes,
-            requireStepUpFor: $requireStepUpFor,
+            enabled: $data['enabled'] ?? false,
+            allowedOperations: $data['allowed_operations'] ?? ['create', 'alter', 'drop', 'rename'],
+            denyTablePrefixes: $data['deny_table_prefixes'] ?? ['admin_', 'pulsar_', 'sqlite_', 'studio_'],
+            requireStepUpFor: $data['require_step_up_for'] ?? ['drop', 'rename', 'drop_column', 'drop_index'],
         );
     }
 }

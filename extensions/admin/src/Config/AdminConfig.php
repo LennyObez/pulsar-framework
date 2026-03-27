@@ -25,34 +25,27 @@ final readonly class AdminConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data Raw array from config/admin.php
+     * @param array{
+     *     enabled?: bool,
+     *     route_prefix?: string,
+     *     security?: array<string, mixed>,
+     *     pagination?: array<string, mixed>,
+     *     rate_limit?: array<string, mixed>,
+     *     storage?: array<string, mixed>,
+     *     schema?: array<string, mixed>,
+     * } $data Raw array from config/admin.php
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var bool $enabled */
-        $enabled = $data['enabled'] ?? false;
-        /** @var string $routePrefix */
-        $routePrefix = $data['route_prefix'] ?? '/admin';
-        /** @var array<string, mixed> $securityData */
-        $securityData = $data['security'] ?? [];
-        /** @var array<string, mixed> $paginationData */
-        $paginationData = $data['pagination'] ?? [];
-        /** @var array<string, mixed> $rateLimitData */
-        $rateLimitData = $data['rate_limit'] ?? [];
-        /** @var array<string, mixed> $storageData */
-        $storageData = $data['storage'] ?? [];
-        /** @var array<string, mixed> $schemaData */
-        $schemaData = $data['schema'] ?? [];
-
         return new self(
-            enabled: $enabled,
-            routePrefix: $routePrefix,
-            security: AdminSecurityConfig::fromArray($securityData),
-            pagination: AdminPaginationConfig::fromArray($paginationData),
-            rateLimit: AdminRateLimitConfig::fromArray($rateLimitData),
-            storage: AdminStorageConfig::fromArray($storageData),
-            schema: AdminSchemaConfig::fromArray($schemaData),
+            enabled: $data['enabled'] ?? false,
+            routePrefix: $data['route_prefix'] ?? '/admin',
+            security: AdminSecurityConfig::fromArray($data['security'] ?? []),
+            pagination: AdminPaginationConfig::fromArray($data['pagination'] ?? []),
+            rateLimit: AdminRateLimitConfig::fromArray($data['rate_limit'] ?? []),
+            storage: AdminStorageConfig::fromArray($data['storage'] ?? []),
+            schema: AdminSchemaConfig::fromArray($data['schema'] ?? []),
         );
     }
 }
