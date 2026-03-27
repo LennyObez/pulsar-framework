@@ -34,7 +34,11 @@ final readonly class WebhookProcessor
         private int $deduplicationTtlSeconds = 259200,
         private string $eventIdKey = 'id',
         private string $eventTypeKey = 'type',
-    ) {}
+    ) {
+        if ($this->secret === '') {
+            throw WebhookException::emptySecret();
+        }
+    }
 
     /**
      * Process an incoming webhook payload.
