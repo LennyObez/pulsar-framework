@@ -7,10 +7,6 @@ namespace Pulsar\Extension\DataAct\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_bool;
-use function is_int;
-use function is_string;
-
 /**
  * EU Data Act (Regulation 2023/2854) extension configuration.
  *
@@ -41,19 +37,27 @@ final readonly class DataActConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     enabled?: bool,
+     *     entity_role?: string,
+     *     portability_max_days?: int,
+     *     switching_transition_days?: int,
+     *     default_export_format?: string,
+     *     enable_access_logging?: bool,
+     *     access_log_retention_days?: int,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            enabled: is_bool($data['enabled'] ?? null) ? $data['enabled'] : false,
-            entityRole: is_string($data['entity_role'] ?? null) ? $data['entity_role'] : 'data_holder',
-            portabilityMaxDays: is_int($data['portability_max_days'] ?? null) ? $data['portability_max_days'] : 30,
-            switchingTransitionDays: is_int($data['switching_transition_days'] ?? null) ? $data['switching_transition_days'] : 30,
-            defaultExportFormat: is_string($data['default_export_format'] ?? null) ? $data['default_export_format'] : 'json',
-            enableAccessLogging: is_bool($data['enable_access_logging'] ?? null) ? $data['enable_access_logging'] : true,
-            accessLogRetentionDays: is_int($data['access_log_retention_days'] ?? null) ? $data['access_log_retention_days'] : 1825,
+            enabled: $data['enabled'] ?? false,
+            entityRole: $data['entity_role'] ?? 'data_holder',
+            portabilityMaxDays: $data['portability_max_days'] ?? 30,
+            switchingTransitionDays: $data['switching_transition_days'] ?? 30,
+            defaultExportFormat: $data['default_export_format'] ?? 'json',
+            enableAccessLogging: $data['enable_access_logging'] ?? true,
+            accessLogRetentionDays: $data['access_log_retention_days'] ?? 1825,
         );
     }
 

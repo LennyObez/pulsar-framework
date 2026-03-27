@@ -7,10 +7,6 @@ namespace Pulsar\Extension\Dsa\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_bool;
-use function is_int;
-use function is_string;
-
 /**
  * DSA extension configuration.
  *
@@ -41,18 +37,25 @@ final readonly class DsaConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     enabled?: bool,
+     *     platform_type?: string,
+     *     contact_point?: string,
+     *     legal_representative?: string,
+     *     appeal_window_days?: int,
+     *     notice_response_hours?: int,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            enabled: is_bool($data['enabled'] ?? null) ? $data['enabled'] : false,
-            platformType: is_string($data['platform_type'] ?? null) ? $data['platform_type'] : 'hosting',
-            contactPoint: is_string($data['contact_point'] ?? null) ? $data['contact_point'] : '',
-            legalRepresentative: is_string($data['legal_representative'] ?? null) ? $data['legal_representative'] : '',
-            appealWindowDays: is_int($data['appeal_window_days'] ?? null) ? $data['appeal_window_days'] : 180,
-            noticeResponseHours: is_int($data['notice_response_hours'] ?? null) ? $data['notice_response_hours'] : 24,
+            enabled: $data['enabled'] ?? false,
+            platformType: $data['platform_type'] ?? 'hosting',
+            contactPoint: $data['contact_point'] ?? '',
+            legalRepresentative: $data['legal_representative'] ?? '',
+            appealWindowDays: $data['appeal_window_days'] ?? 180,
+            noticeResponseHours: $data['notice_response_hours'] ?? 24,
         );
     }
 

@@ -7,8 +7,6 @@ namespace Pulsar\Extension\Eidas\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_string;
-
 /**
  * eIDAS extension configuration.
  *
@@ -40,18 +38,25 @@ final readonly class EidasConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     signature_service?: string,
+     *     seal_service?: string,
+     *     timestamp_service?: string,
+     *     delivery_service?: string,
+     *     default_signature_format?: string,
+     *     tsa_name?: string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            signatureService: is_string($data['signature_service'] ?? null) ? $data['signature_service'] : 'hmac',
-            sealService: is_string($data['seal_service'] ?? null) ? $data['seal_service'] : 'hmac',
-            timestampService: is_string($data['timestamp_service'] ?? null) ? $data['timestamp_service'] : 'local',
-            deliveryService: is_string($data['delivery_service'] ?? null) ? $data['delivery_service'] : 'memory',
-            defaultSignatureFormat: is_string($data['default_signature_format'] ?? null) ? $data['default_signature_format'] : 'jades',
-            tsaName: is_string($data['tsa_name'] ?? null) ? $data['tsa_name'] : 'Pulsar Local TSA',
+            signatureService: $data['signature_service'] ?? 'hmac',
+            sealService: $data['seal_service'] ?? 'hmac',
+            timestampService: $data['timestamp_service'] ?? 'local',
+            deliveryService: $data['delivery_service'] ?? 'memory',
+            defaultSignatureFormat: $data['default_signature_format'] ?? 'jades',
+            tsaName: $data['tsa_name'] ?? 'Pulsar Local TSA',
         );
     }
 }
