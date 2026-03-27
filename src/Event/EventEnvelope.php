@@ -11,13 +11,14 @@ use Pulsar\Event\Exception\EventException;
 use Random\Engine\Secure;
 use Random\RandomException;
 use Random\Randomizer;
+use SodiumException;
 
 use function bin2hex;
-use function hash;
 use function is_array;
 use function is_int;
 use function is_string;
 use function json_encode;
+use function sodium_crypto_generichash;
 use function sprintf;
 
 use const JSON_THROW_ON_ERROR;
@@ -54,6 +55,7 @@ final readonly class EventEnvelope
      *
      * @throws JsonException
      * @throws RandomException
+     * @throws SodiumException
      */
     #[NoDiscard]
     public static function wrap(
@@ -101,6 +103,7 @@ final readonly class EventEnvelope
      *
      * @throws JsonException
      * @throws EventException When a required envelope field (event_type, etc.) is missing or empty.
+     * @throws SodiumException
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
@@ -142,20 +145,25 @@ final readonly class EventEnvelope
     }
 
     /**
-     * Compute canonical payload hash.
+     * Compute canonical payload hash using BLAKE2b (libsodium).
      *
      * Includes eventType and schemaVersion in the hash so identical payloads
-     * with different types/versions produce different hashes.
+     * with different types/versions produce different hashes. Per ADR-0006
+     * the framework uses libsodium primitives only — `hash('sha256', ...)` is
+     * forbidden in security-relevant code. The output is a 32-byte (64 hex)
+     * digest, the same length as the previous SHA-256 implementation, so any
+     * stored fixed-width column or comparison logic is preserved.
      *
      * @param array<string, mixed> $payload
      *
      * @throws JsonException
+     * @throws SodiumException
      */
     private static function computeHash(string $eventType, int $schemaVersion, array $payload): string
     {
         $canonicalInput = self::canonicalize($eventType, $schemaVersion, $payload);
 
-        return hash('sha256', $canonicalInput);
+        return bin2hex(sodium_crypto_generichash($canonicalInput, '', 32));
     }
 
     /**
