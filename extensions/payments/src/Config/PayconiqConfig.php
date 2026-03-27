@@ -7,9 +7,6 @@ namespace Pulsar\Extension\Payments\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_int;
-use function is_string;
-
 /**
  * Payconiq payment gateway configuration.
  *
@@ -31,33 +28,27 @@ final readonly class PayconiqConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     merchant_id?: string,
+     *     api_key?: string,
+     *     webhook_secret?: string,
+     *     environment?: string,
+     *     enabled?: bool|int|string,
+     *     callback_url?: string,
+     *     payment_expiry_seconds?: int,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $merchantIdVal = $data['merchant_id'] ?? null;
-        $merchantId = is_string($merchantIdVal) ? $merchantIdVal : '';
-        $apiKeyVal = $data['api_key'] ?? null;
-        $apiKey = is_string($apiKeyVal) ? $apiKeyVal : '';
-        $webhookSecretVal = $data['webhook_secret'] ?? null;
-        $webhookSecret = is_string($webhookSecretVal) ? $webhookSecretVal : '';
-        $environmentVal = $data['environment'] ?? null;
-        $environment = is_string($environmentVal) ? $environmentVal : 'ext';
-        $enabled = (bool) ($data['enabled'] ?? false);
-        $callbackUrlVal = $data['callback_url'] ?? null;
-        $callbackUrl = is_string($callbackUrlVal) ? $callbackUrlVal : '';
-        $expiryVal = $data['payment_expiry_seconds'] ?? null;
-        $paymentExpirySeconds = is_int($expiryVal) ? $expiryVal : 900;
-
         return new self(
-            merchantId: $merchantId,
-            apiKey: $apiKey,
-            webhookSecret: $webhookSecret,
-            environment: $environment,
-            enabled: $enabled,
-            callbackUrl: $callbackUrl,
-            paymentExpirySeconds: $paymentExpirySeconds,
+            merchantId: $data['merchant_id'] ?? '',
+            apiKey: $data['api_key'] ?? '',
+            webhookSecret: $data['webhook_secret'] ?? '',
+            environment: $data['environment'] ?? 'ext',
+            enabled: (bool) ($data['enabled'] ?? false),
+            callbackUrl: $data['callback_url'] ?? '',
+            paymentExpirySeconds: $data['payment_expiry_seconds'] ?? 900,
         );
     }
 
