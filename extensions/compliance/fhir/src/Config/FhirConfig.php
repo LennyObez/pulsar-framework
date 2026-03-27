@@ -7,8 +7,6 @@ namespace Pulsar\Extension\Fhir\Config;
 use Pulsar\Api\Api;
 use Pulsar\Extension\Fhir\Resource\FhirVersion;
 
-use function is_string;
-
 /**
  * Configuration for the FHIR extension.
  * @api
@@ -36,29 +34,29 @@ final readonly class FhirConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     server_name?: string,
+     *     fhir_version?: string,
+     *     base_path?: string,
+     *     supported_resource_types?: list<string>,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
-        /** @var list<string> $supportedTypes */
-        $supportedTypes = $data['supported_resource_types'] ?? [
-            'Patient',
-            'Observation',
-            'Encounter',
-            'Condition',
-            'MedicationRequest',
-            'AllergyIntolerance',
-            'Procedure',
-            'DiagnosticReport',
-        ];
-
         return new self(
-            serverName: is_string($data['server_name'] ?? null) ? $data['server_name'] : 'Pulsar FHIR Server',
-            fhirVersion: is_string($data['fhir_version'] ?? null)
-                ? FhirVersion::from($data['fhir_version'])
-                : FhirVersion::R4,
-            basePath: is_string($data['base_path'] ?? null) ? $data['base_path'] : '/fhir',
-            supportedResourceTypes: $supportedTypes,
+            serverName: $data['server_name'] ?? 'Pulsar FHIR Server',
+            fhirVersion: FhirVersion::tryFrom($data['fhir_version'] ?? '') ?? FhirVersion::R4,
+            basePath: $data['base_path'] ?? '/fhir',
+            supportedResourceTypes: $data['supported_resource_types'] ?? [
+                'Patient',
+                'Observation',
+                'Encounter',
+                'Condition',
+                'MedicationRequest',
+                'AllergyIntolerance',
+                'Procedure',
+                'DiagnosticReport',
+            ],
         );
     }
 }
