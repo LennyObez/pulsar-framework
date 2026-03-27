@@ -23,28 +23,23 @@ final readonly class StripeConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     secret_key?: string,
+     *     publishable_key?: string,
+     *     webhook_secret?: string,
+     *     api_version?: string,
+     *     test_mode?: bool|int|string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var string $secretKey */
-        $secretKey = $data['secret_key'] ?? '';
-        /** @var string $publishableKey */
-        $publishableKey = $data['publishable_key'] ?? '';
-        /** @var string $webhookSecret */
-        $webhookSecret = $data['webhook_secret'] ?? '';
-        /** @var string $apiVersion */
-        $apiVersion = $data['api_version'] ?? '2024-12-18.acacia';
-        /** @var bool $testMode */
-        $testMode = (bool) ($data['test_mode'] ?? true);
-
         return new self(
-            secretKey: $secretKey,
-            publishableKey: $publishableKey,
-            webhookSecret: $webhookSecret,
-            apiVersion: $apiVersion,
-            testMode: $testMode,
+            secretKey: $data['secret_key'] ?? '',
+            publishableKey: $data['publishable_key'] ?? '',
+            webhookSecret: $data['webhook_secret'] ?? '',
+            apiVersion: $data['api_version'] ?? '2024-12-18.acacia',
+            testMode: (bool) ($data['test_mode'] ?? true),
         );
     }
 }

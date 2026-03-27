@@ -8,7 +8,6 @@ use NoDiscard;
 use Pulsar\Api\Api;
 
 use function in_array;
-use function is_string;
 
 /**
  * Klarna payment gateway configuration.
@@ -31,26 +30,26 @@ final readonly class KlarnaConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     enabled?: bool|int|string,
+     *     region?: string,
+     *     pay_later_enabled?: bool|int|string,
+     *     pay_now_enabled?: bool|int|string,
+     *     slice_it_enabled?: bool|int|string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $enabled = (bool) ($data['enabled'] ?? false);
-        $regionVal = $data['region'] ?? null;
-        $region = is_string($regionVal) && in_array($regionVal, self::VALID_REGIONS, true)
-            ? $regionVal
-            : 'eu';
-        $payLaterEnabled = (bool) ($data['pay_later_enabled'] ?? true);
-        $payNowEnabled = (bool) ($data['pay_now_enabled'] ?? true);
-        $sliceItEnabled = (bool) ($data['slice_it_enabled'] ?? true);
+        $regionVal = $data['region'] ?? 'eu';
+        $region = in_array($regionVal, self::VALID_REGIONS, true) ? $regionVal : 'eu';
 
         return new self(
-            enabled: $enabled,
+            enabled: (bool) ($data['enabled'] ?? false),
             region: $region,
-            payLaterEnabled: $payLaterEnabled,
-            payNowEnabled: $payNowEnabled,
-            sliceItEnabled: $sliceItEnabled,
+            payLaterEnabled: (bool) ($data['pay_later_enabled'] ?? true),
+            payNowEnabled: (bool) ($data['pay_now_enabled'] ?? true),
+            sliceItEnabled: (bool) ($data['slice_it_enabled'] ?? true),
         );
     }
 }

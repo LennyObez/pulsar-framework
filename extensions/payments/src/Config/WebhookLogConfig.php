@@ -20,19 +20,17 @@ final readonly class WebhookLogConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     ttl_seconds?: int,
+     *     store?: string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var int $ttlSeconds */
-        $ttlSeconds = $data['ttl_seconds'] ?? 259200;
-        /** @var string $store */
-        $store = $data['store'] ?? 'memory';
-
         return new self(
-            ttlSeconds: $ttlSeconds,
-            store: $store,
+            ttlSeconds: $data['ttl_seconds'] ?? 259200,
+            store: $data['store'] ?? 'memory',
         );
     }
 }

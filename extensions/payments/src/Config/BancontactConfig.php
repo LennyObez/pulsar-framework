@@ -7,8 +7,6 @@ namespace Pulsar\Extension\Payments\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_string;
-
 /**
  * Bancontact payment gateway configuration.
  *
@@ -25,18 +23,17 @@ final readonly class BancontactConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     enabled?: bool|int|string,
+     *     preferred_language?: string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $enabled = (bool) ($data['enabled'] ?? false);
-        $langVal = $data['preferred_language'] ?? null;
-        $preferredLanguage = is_string($langVal) ? $langVal : 'nl';
-
         return new self(
-            enabled: $enabled,
-            preferredLanguage: $preferredLanguage,
+            enabled: (bool) ($data['enabled'] ?? false),
+            preferredLanguage: $data['preferred_language'] ?? 'nl',
         );
     }
 }

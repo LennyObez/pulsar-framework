@@ -22,25 +22,21 @@ final readonly class WebhookConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     secret?: string,
+     *     path?: string,
+     *     tolerance_seconds?: int,
+     *     signature_header?: string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var string $secret */
-        $secret = $data['secret'] ?? '';
-        /** @var string $path */
-        $path = $data['path'] ?? '/webhooks/payments';
-        /** @var int $toleranceSeconds */
-        $toleranceSeconds = $data['tolerance_seconds'] ?? 300;
-        /** @var string $signatureHeader */
-        $signatureHeader = $data['signature_header'] ?? 'X-Payments-Signature';
-
         return new self(
-            secret: $secret,
-            path: $path,
-            toleranceSeconds: $toleranceSeconds,
-            signatureHeader: $signatureHeader,
+            secret: $data['secret'] ?? '',
+            path: $data['path'] ?? '/webhooks/payments',
+            toleranceSeconds: $data['tolerance_seconds'] ?? 300,
+            signatureHeader: $data['signature_header'] ?? 'X-Payments-Signature',
         );
     }
 }
