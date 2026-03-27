@@ -26,21 +26,20 @@ final readonly class AuthConfig
         public WebAuthnConfig $webauthn,
     ) {}
 
-    /** @param array<string, mixed> $data */
+    /**
+     * @param array{
+     *     social?: array<string, mixed>,
+     *     oauth2?: array<string, mixed>,
+     *     webauthn?: array<string, mixed>,
+     * } $data
+     */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var array<string, mixed> $socialData */
-        $socialData = (array) ($data['social'] ?? []);
-        /** @var array<string, mixed> $oauth2Data */
-        $oauth2Data = (array) ($data['oauth2'] ?? []);
-        /** @var array<string, mixed> $webauthnData */
-        $webauthnData = (array) ($data['webauthn'] ?? []);
-
         return new self(
-            social: SocialSsoConfig::fromArray($socialData),
-            oauth2: OAuth2Config::fromArray($oauth2Data),
-            webauthn: WebAuthnConfig::fromArray($webauthnData),
+            social: SocialSsoConfig::fromArray($data['social'] ?? []),
+            oauth2: OAuth2Config::fromArray($data['oauth2'] ?? []),
+            webauthn: WebAuthnConfig::fromArray($data['webauthn'] ?? []),
         );
     }
 }
