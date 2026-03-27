@@ -7,10 +7,6 @@ namespace Pulsar\Extension\OpenTelemetry\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_bool;
-use function is_int;
-use function is_string;
-
 /**
  * Metrics-specific OTLP configuration.
  * @api
@@ -25,19 +21,19 @@ final readonly class OtlpMetricsConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     enabled?: bool,
+     *     endpoint?: string,
+     *     collect_interval_ms?: int,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $rawEnabled = $data['enabled'] ?? true;
-        $rawEndpoint = $data['endpoint'] ?? '';
-        $rawInterval = $data['collect_interval_ms'] ?? 60_000;
-
         return new self(
-            enabled: is_bool($rawEnabled) ? $rawEnabled : true,
-            endpoint: is_string($rawEndpoint) ? $rawEndpoint : '',
-            collectIntervalMs: is_int($rawInterval) ? $rawInterval : 60_000,
+            enabled: $data['enabled'] ?? true,
+            endpoint: $data['endpoint'] ?? '',
+            collectIntervalMs: $data['collect_interval_ms'] ?? 60_000,
         );
     }
 }

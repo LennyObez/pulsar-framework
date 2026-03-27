@@ -8,9 +8,6 @@ use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Observability\Log\LogLevel;
 
-use function is_bool;
-use function is_string;
-
 /**
  * Logs-specific OTLP configuration.
  * @api
@@ -25,25 +22,19 @@ final readonly class OtlpLogsConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     enabled?: bool,
+     *     endpoint?: string,
+     *     min_level?: string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $rawEnabled = $data['enabled'] ?? true;
-        $rawEndpoint = $data['endpoint'] ?? '';
-        $rawMinLevel = $data['min_level'] ?? 'warning';
-
-        $minLevel = LogLevel::Warning;
-
-        if (is_string($rawMinLevel)) {
-            $minLevel = LogLevel::tryFrom($rawMinLevel) ?? LogLevel::Warning;
-        }
-
         return new self(
-            enabled: is_bool($rawEnabled) ? $rawEnabled : true,
-            endpoint: is_string($rawEndpoint) ? $rawEndpoint : '',
-            minLevel: $minLevel,
+            enabled: $data['enabled'] ?? true,
+            endpoint: $data['endpoint'] ?? '',
+            minLevel: LogLevel::tryFrom($data['min_level'] ?? '') ?? LogLevel::Warning,
         );
     }
 }
