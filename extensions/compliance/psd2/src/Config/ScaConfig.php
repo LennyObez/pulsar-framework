@@ -7,9 +7,6 @@ namespace Pulsar\Extension\Psd2\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_int;
-use function is_string;
-
 /**
  * SCA (Strong Customer Authentication) configuration.
  * @api
@@ -24,15 +21,19 @@ final readonly class ScaConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     challenge_timeout_seconds?: int,
+     *     challenge_store?: string,
+     *     code_length?: int,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            challengeTimeoutSeconds: is_int($data['challenge_timeout_seconds'] ?? null) ? $data['challenge_timeout_seconds'] : 300,
-            challengeStore: is_string($data['challenge_store'] ?? null) ? $data['challenge_store'] : 'memory',
-            codeLength: is_int($data['code_length'] ?? null) ? $data['code_length'] : 8,
+            challengeTimeoutSeconds: $data['challenge_timeout_seconds'] ?? 300,
+            challengeStore: $data['challenge_store'] ?? 'memory',
+            codeLength: $data['code_length'] ?? 8,
         );
     }
 }

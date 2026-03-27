@@ -7,10 +7,6 @@ namespace Pulsar\Extension\Psd2\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_float;
-use function is_int;
-use function is_string;
-
 /**
  * Transaction risk analysis configuration.
  * @api
@@ -29,19 +25,27 @@ final readonly class RiskConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     low_threshold?: float,
+     *     high_threshold?: float,
+     *     velocity_window_seconds?: int,
+     *     velocity_max_count?: int,
+     *     velocity_max_amount_minor_units?: int,
+     *     low_value_threshold_minor_units?: int,
+     *     velocity_tracker?: string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            lowThreshold: is_float($data['low_threshold'] ?? null) ? $data['low_threshold'] : 0.3,
-            highThreshold: is_float($data['high_threshold'] ?? null) ? $data['high_threshold'] : 0.7,
-            velocityWindowSeconds: is_int($data['velocity_window_seconds'] ?? null) ? $data['velocity_window_seconds'] : 3600,
-            velocityMaxCount: is_int($data['velocity_max_count'] ?? null) ? $data['velocity_max_count'] : 10,
-            velocityMaxAmountMinorUnits: is_int($data['velocity_max_amount_minor_units'] ?? null) ? $data['velocity_max_amount_minor_units'] : 50000,
-            lowValueThresholdMinorUnits: is_int($data['low_value_threshold_minor_units'] ?? null) ? $data['low_value_threshold_minor_units'] : 3000,
-            velocityTracker: is_string($data['velocity_tracker'] ?? null) ? $data['velocity_tracker'] : 'memory',
+            lowThreshold: $data['low_threshold'] ?? 0.3,
+            highThreshold: $data['high_threshold'] ?? 0.7,
+            velocityWindowSeconds: $data['velocity_window_seconds'] ?? 3600,
+            velocityMaxCount: $data['velocity_max_count'] ?? 10,
+            velocityMaxAmountMinorUnits: $data['velocity_max_amount_minor_units'] ?? 50000,
+            lowValueThresholdMinorUnits: $data['low_value_threshold_minor_units'] ?? 3000,
+            velocityTracker: $data['velocity_tracker'] ?? 'memory',
         );
     }
 }
