@@ -7,6 +7,7 @@ namespace Pulsar\Extension\Auth\OAuth2\Grant;
 use DateTimeImmutable;
 use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
+use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Extension\Auth\OAuth2\Client\OAuthClient;
 use Pulsar\Extension\Auth\OAuth2\Contract\AccessTokenRepositoryInterface;
@@ -71,7 +72,7 @@ final readonly class RefreshTokenGrant implements GrantInterface
                 $this->auditLogger->log(
                     event: AuditEvent::SecurityEvent,
                     outcome: AuditOutcome::Failure,
-                    actor: null,
+                    actor: AuditActor::serviceAccount('client:' . $client->id),
                     action: 'oauth2.refresh_token.replay_detected',
                     resource: 'client:' . $client->id,
                     metadata: ['detail' => 'Rotated-out refresh token reused; entire family revoked'],

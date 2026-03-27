@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Mail\Audit;
 
 use Pulsar\Api\Internal;
+use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Mail\Attachment;
 use Pulsar\Mail\Message;
@@ -75,7 +76,7 @@ final readonly class MailAuditor
             outcome: $deliveryStatus === DeliveryStatus::Failed
                 ? AuditOutcome::Failure
                 : AuditOutcome::Success,
-            actor: null,
+            actor: AuditActor::system('mail.auditor'),
             action: 'mail.send',
             resource: $messageId,
             metadata: $record->toMetadata(),

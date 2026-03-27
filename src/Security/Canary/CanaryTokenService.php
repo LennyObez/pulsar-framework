@@ -7,6 +7,7 @@ namespace Pulsar\Security\Canary;
 use DateTimeImmutable;
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditOutcome;
@@ -117,7 +118,7 @@ final class CanaryTokenService
             $this->auditLogger?->log(
                 event: AuditEvent::SecurityEvent,
                 outcome: AuditOutcome::Failure,
-                actor: null,
+                actor: AuditActor::system('security.canary'),
                 action: 'canary.triggered',
                 resource: $token->label,
                 metadata: [

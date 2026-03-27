@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Features\ExportResource;
 
+use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Extension\Admin\Contracts\ExportDriverInterface;
 use Pulsar\Extension\Admin\Contracts\ResourceQueryInterface;
@@ -79,7 +80,7 @@ final readonly class ExportResourceHandler
         $this->auditLogger->log(
             event: AuditEvent::DataAccess,
             outcome: AuditOutcome::Success,
-            actor: null,
+            actor: AuditActor::system('admin.export'),
             action: "admin.export.$request->resourceName",
             resource: $request->resourceName,
             metadata: [

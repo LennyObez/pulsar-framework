@@ -6,6 +6,7 @@ namespace Pulsar\Tenancy\Guard;
 
 use LogicException;
 use Pulsar\Api\Api;
+use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditOutcome;
@@ -40,7 +41,7 @@ final class SystemContext
         $this->auditLogger?->log(
             event: AuditEvent::SystemEvent,
             outcome: AuditOutcome::Success,
-            actor: null,
+            actor: AuditActor::system('tenancy.system_context'),
             action: 'system_context_entered',
             metadata: ['reason' => $reason],
         );
@@ -62,7 +63,7 @@ final class SystemContext
         $this->auditLogger?->log(
             event: AuditEvent::SystemEvent,
             outcome: AuditOutcome::Success,
-            actor: null,
+            actor: AuditActor::system('tenancy.system_context'),
             action: 'system_context_exited',
         );
     }

@@ -6,6 +6,7 @@ namespace Pulsar\Audit;
 
 use JsonException;
 use Pulsar\Api\Api;
+use Pulsar\Audit\Exception\AuditActorMissingException;
 use Pulsar\Security\Audit\AuditEntry;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditOutcome;
@@ -24,11 +25,16 @@ interface AuditLoggerInterface
     /**
      * Log an audit event.
      *
-     * When $actor is null, the implementation auto-fills from RequestContext.actor
-     * if available.
+     * `$actor` may be:
+     * - an `AuditActor` value object (preferred — explicit kind classification),
+     * - a non-empty string identifier (legacy form, accepted for migration),
+     * - `null` only if the active `RequestContext` already carries an actor;
+     *   otherwise an `AuditActorMissingException` is raised. There is no
+     *   silent `'system'` fallback (F25.10).
      *
      * @param array<string, mixed> $metadata
      *
+     * @throws AuditActorMissingException when no actor can be resolved.
      * @throws RandomException
      * @throws JsonException
      * @throws SodiumException
@@ -36,7 +42,7 @@ interface AuditLoggerInterface
     public function log(
         AuditEvent $event,
         AuditOutcome $outcome,
-        ?string $actor,
+        AuditActor|string|null $actor,
         string $action,
         string $resource = '',
         array $metadata = [],
