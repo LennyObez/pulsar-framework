@@ -307,15 +307,17 @@ final class SecurityHeadersMiddlewareTest extends TestCase
     }
 
     #[Test]
-    public function coepAbsentByDefault(): void
+    public function coepBaselinePresentByDefault(): void
     {
+        // F30.4: Cross-Origin-Embedder-Policy is now part of the MINIMUM_HEADERS
+        // baseline so it cannot be silently dropped by an empty CrossOriginConfig.
         $config = new SecurityHeadersConfig(headers: []);
 
         $middleware = new SecurityHeadersMiddleware($config);
 
         $response = $middleware->process($this->createRequest(), $this->textHandler());
 
-        self::assertSame('', $response->getHeaderLine('Cross-Origin-Embedder-Policy'));
+        self::assertSame('require-corp', $response->getHeaderLine('Cross-Origin-Embedder-Policy'));
     }
 
     #[Test]
