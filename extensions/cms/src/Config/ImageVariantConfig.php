@@ -6,9 +6,6 @@ namespace Pulsar\Extension\Cms\Config;
 
 use Pulsar\Api\Api;
 
-use function is_int;
-use function is_string;
-
 /**
  * Configuration for a single image variant (responsive size).
  *
@@ -35,16 +32,22 @@ final readonly class ImageVariantConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     name?: string,
+     *     max_width?: int,
+     *     max_height?: int,
+     *     format?: string,
+     *     quality?: int,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
         return new self(
-            name: is_string($data['name'] ?? null) ? $data['name'] : '',
-            maxWidth: is_int($data['max_width'] ?? null) ? $data['max_width'] : 0,
-            maxHeight: is_int($data['max_height'] ?? null) ? $data['max_height'] : 0,
-            format: is_string($data['format'] ?? null) ? $data['format'] : 'original',
-            quality: is_int($data['quality'] ?? null) ? $data['quality'] : 80,
+            name: $data['name'] ?? '',
+            maxWidth: $data['max_width'] ?? 0,
+            maxHeight: $data['max_height'] ?? 0,
+            format: $data['format'] ?? 'original',
+            quality: $data['quality'] ?? 80,
         );
     }
 }

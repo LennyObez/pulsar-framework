@@ -6,8 +6,6 @@ namespace Pulsar\Extension\Cms\Config;
 
 use Pulsar\Api\Api;
 
-use function is_string;
-
 /**
  * AI content assistant configuration.
  *
@@ -37,16 +35,22 @@ final readonly class AiConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     enabled?: bool|int|string,
+     *     provider?: string,
+     *     model?: string,
+     *     api_key?: string,
+     *     base_url?: string,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
         return new self(
             enabled: (bool) ($data['enabled'] ?? false),
-            provider: is_string($data['provider'] ?? null) ? $data['provider'] : 'openai',
-            model: is_string($data['model'] ?? null) ? $data['model'] : '',
-            apiKey: is_string($data['api_key'] ?? null) ? $data['api_key'] : '',
-            baseUrl: is_string($data['base_url'] ?? null) ? $data['base_url'] : '',
+            provider: $data['provider'] ?? 'openai',
+            model: $data['model'] ?? '',
+            apiKey: $data['api_key'] ?? '',
+            baseUrl: $data['base_url'] ?? '',
         );
     }
 }

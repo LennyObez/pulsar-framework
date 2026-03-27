@@ -6,10 +6,7 @@ namespace Pulsar\Extension\Cms\Config;
 
 use Pulsar\Api\Api;
 
-use function is_array;
-use function is_bool;
-use function is_int;
-use function is_string;
+use function array_values;
 
 /**
  * Theme system configuration.
@@ -41,18 +38,28 @@ final readonly class ThemesConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     storage_path?: string,
+     *     asset_deploy_mode?: string,
+     *     require_signed_themes?: bool,
+     *     trusted_public_keys?: list<string>,
+     *     integrity_check_on_boot?: bool,
+     *     max_archive_size?: int,
+     *     max_file_count?: int,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
+        $trustedPublicKeys = array_values($data['trusted_public_keys'] ?? []);
+
         return new self(
-            storagePath: is_string($data['storage_path'] ?? null) ? $data['storage_path'] : 'storage/cms/themes',
-            assetDeployMode: is_string($data['asset_deploy_mode'] ?? null) ? $data['asset_deploy_mode'] : 'copy',
-            requireSignedThemes: is_bool($data['require_signed_themes'] ?? null) ? $data['require_signed_themes'] : true,
-            trustedPublicKeys: is_array($data['trusted_public_keys'] ?? null) ? array_values(array_map(static fn(mixed $v): string => is_string($v) ? $v : '', $data['trusted_public_keys'])) : [],
-            integrityCheckOnBoot: is_bool($data['integrity_check_on_boot'] ?? null) ? $data['integrity_check_on_boot'] : true,
-            maxArchiveSize: is_int($data['max_archive_size'] ?? null) ? $data['max_archive_size'] : 52_428_800,
-            maxFileCount: is_int($data['max_file_count'] ?? null) ? $data['max_file_count'] : 10_000,
+            storagePath: $data['storage_path'] ?? 'storage/cms/themes',
+            assetDeployMode: $data['asset_deploy_mode'] ?? 'copy',
+            requireSignedThemes: $data['require_signed_themes'] ?? true,
+            trustedPublicKeys: $trustedPublicKeys,
+            integrityCheckOnBoot: $data['integrity_check_on_boot'] ?? true,
+            maxArchiveSize: $data['max_archive_size'] ?? 52_428_800,
+            maxFileCount: $data['max_file_count'] ?? 10_000,
         );
     }
 }

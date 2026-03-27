@@ -6,10 +6,6 @@ namespace Pulsar\Extension\Cms\Config;
 
 use Pulsar\Api\Api;
 
-use function is_array;
-use function is_bool;
-use function is_string;
-
 /**
  * SEO and link health configuration.
  *
@@ -44,25 +40,30 @@ final readonly class SeoConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     default_robots?: string,
+     *     title_suffix?: string,
+     *     sitemap_changefreq?: array<string, string>,
+     *     sitemap_priority?: array<string, float>,
+     *     enable_structured_data?: bool,
+     *     enable_media_sitemap?: bool,
+     *     link_health_check_schedule?: string,
+     *     google_site_verification?: string|null,
+     *     bing_site_verification?: string|null,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
-        /** @var array<string, string> $changefreq */
-        $changefreq = is_array($data['sitemap_changefreq'] ?? null) ? $data['sitemap_changefreq'] : ['article' => 'weekly', 'page' => 'monthly'];
-        /** @var array<string, float> $priority */
-        $priority = is_array($data['sitemap_priority'] ?? null) ? $data['sitemap_priority'] : ['page' => 0.8, 'article' => 0.6];
-
         return new self(
-            defaultRobots: is_string($data['default_robots'] ?? null) ? $data['default_robots'] : 'index, follow',
-            titleSuffix: is_string($data['title_suffix'] ?? null) ? $data['title_suffix'] : '',
-            sitemapChangefreq: $changefreq,
-            sitemapPriority: $priority,
-            enableStructuredData: is_bool($data['enable_structured_data'] ?? null) ? $data['enable_structured_data'] : true,
-            enableMediaSitemap: is_bool($data['enable_media_sitemap'] ?? null) ? $data['enable_media_sitemap'] : true,
-            linkHealthCheckSchedule: is_string($data['link_health_check_schedule'] ?? null) ? $data['link_health_check_schedule'] : '0 3 * * 0',
-            googleSiteVerification: is_string($data['google_site_verification'] ?? null) ? $data['google_site_verification'] : null,
-            bingSiteVerification: is_string($data['bing_site_verification'] ?? null) ? $data['bing_site_verification'] : null,
+            defaultRobots: $data['default_robots'] ?? 'index, follow',
+            titleSuffix: $data['title_suffix'] ?? '',
+            sitemapChangefreq: $data['sitemap_changefreq'] ?? ['article' => 'weekly', 'page' => 'monthly'],
+            sitemapPriority: $data['sitemap_priority'] ?? ['page' => 0.8, 'article' => 0.6],
+            enableStructuredData: $data['enable_structured_data'] ?? true,
+            enableMediaSitemap: $data['enable_media_sitemap'] ?? true,
+            linkHealthCheckSchedule: $data['link_health_check_schedule'] ?? '0 3 * * 0',
+            googleSiteVerification: $data['google_site_verification'] ?? null,
+            bingSiteVerification: $data['bing_site_verification'] ?? null,
         );
     }
 }

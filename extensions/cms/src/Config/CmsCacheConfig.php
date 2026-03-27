@@ -6,9 +6,6 @@ namespace Pulsar\Extension\Cms\Config;
 
 use Pulsar\Api\Api;
 
-use function is_bool;
-use function is_int;
-
 /**
  * CMS caching configuration.
  *
@@ -35,16 +32,22 @@ final readonly class CmsCacheConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     page_cache_ttl_seconds?: int,
+     *     stampede_protection?: bool,
+     *     early_recompute_beta?: int,
+     *     stale_grace_period_seconds?: int,
+     *     lock_timeout_seconds?: int,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
         return new self(
-            pageCacheTtlSeconds: is_int($data['page_cache_ttl_seconds'] ?? null) ? $data['page_cache_ttl_seconds'] : 3600,
-            stampedeProtection: is_bool($data['stampede_protection'] ?? null) ? $data['stampede_protection'] : true,
-            earlyRecomputeBeta: is_int($data['early_recompute_beta'] ?? null) ? $data['early_recompute_beta'] : 10,
-            staleGracePeriodSeconds: is_int($data['stale_grace_period_seconds'] ?? null) ? $data['stale_grace_period_seconds'] : 300,
-            lockTimeoutSeconds: is_int($data['lock_timeout_seconds'] ?? null) ? $data['lock_timeout_seconds'] : 5,
+            pageCacheTtlSeconds: $data['page_cache_ttl_seconds'] ?? 3600,
+            stampedeProtection: $data['stampede_protection'] ?? true,
+            earlyRecomputeBeta: $data['early_recompute_beta'] ?? 10,
+            staleGracePeriodSeconds: $data['stale_grace_period_seconds'] ?? 300,
+            lockTimeoutSeconds: $data['lock_timeout_seconds'] ?? 5,
         );
     }
 }
