@@ -6,8 +6,6 @@ namespace Pulsar\Extension\Forum\Config;
 
 use Pulsar\Api\Api;
 
-use function is_int;
-
 /**
  * Badge system configuration with trigger thresholds.
  * @api
@@ -32,23 +30,25 @@ final readonly class BadgeConfig
         public int $multilingualLocaleThreshold = 2,
     ) {}
 
-    private static function int(mixed $value, int $default): int
-    {
-        return is_int($value) ? $value : $default;
-    }
-
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     enabled?: bool|int|string,
+     *     helpful_upvote_threshold?: int,
+     *     popular_thread_view_threshold?: int,
+     *     solver_accepted_answer_threshold?: int,
+     *     bug_hunter_confirmed_threshold?: int,
+     *     multilingual_locale_threshold?: int,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
         return new self(
             enabled: (bool) ($data['enabled'] ?? true),
-            helpfulUpvoteThreshold: self::int($data['helpful_upvote_threshold'] ?? null, 10),
-            popularThreadViewThreshold: self::int($data['popular_thread_view_threshold'] ?? null, 50),
-            solverAcceptedAnswerThreshold: self::int($data['solver_accepted_answer_threshold'] ?? null, 10),
-            bugHunterConfirmedThreshold: self::int($data['bug_hunter_confirmed_threshold'] ?? null, 5),
-            multilingualLocaleThreshold: self::int($data['multilingual_locale_threshold'] ?? null, 2),
+            helpfulUpvoteThreshold: $data['helpful_upvote_threshold'] ?? 10,
+            popularThreadViewThreshold: $data['popular_thread_view_threshold'] ?? 50,
+            solverAcceptedAnswerThreshold: $data['solver_accepted_answer_threshold'] ?? 10,
+            bugHunterConfirmedThreshold: $data['bug_hunter_confirmed_threshold'] ?? 5,
+            multilingualLocaleThreshold: $data['multilingual_locale_threshold'] ?? 2,
         );
     }
 }

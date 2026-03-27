@@ -6,9 +6,6 @@ namespace Pulsar\Extension\Forum\Config;
 
 use Pulsar\Api\Api;
 
-use function is_array;
-use function is_int;
-
 /**
  * Top-level forum configuration DTO.
  *
@@ -48,41 +45,37 @@ final readonly class ForumConfig
         public BadgeConfig $badges = new BadgeConfig(),
     ) {}
 
-    private static function int(mixed $value, int $default): int
-    {
-        return is_int($value) ? $value : $default;
-    }
-
     /**
-     * @param array<string, mixed> $data
-     * @return array<string, mixed>
-     */
-    private static function subArray(array $data, string $key): array
-    {
-        $value = $data[$key] ?? [];
-
-        /** @var array<string, mixed> */
-        return is_array($value) ? $value : [];
-    }
-
-    /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     threads_per_page?: int,
+     *     posts_per_page?: int,
+     *     post_cooldown_seconds?: int,
+     *     require_thread_approval?: bool|int|string,
+     *     allow_guest_viewing?: bool|int|string,
+     *     max_title_length?: int,
+     *     max_body_length?: int,
+     *     max_tags_per_thread?: int,
+     *     edit_window_minutes?: int,
+     *     moderation?: array<string, mixed>,
+     *     reputation?: array<string, mixed>,
+     *     badges?: array<string, mixed>,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
         return new self(
-            threadsPerPage: self::int($data['threads_per_page'] ?? null, 25),
-            postsPerPage: self::int($data['posts_per_page'] ?? null, 20),
-            postCooldownSeconds: self::int($data['post_cooldown_seconds'] ?? null, 30),
+            threadsPerPage: $data['threads_per_page'] ?? 25,
+            postsPerPage: $data['posts_per_page'] ?? 20,
+            postCooldownSeconds: $data['post_cooldown_seconds'] ?? 30,
             requireThreadApproval: (bool) ($data['require_thread_approval'] ?? false),
             allowGuestViewing: (bool) ($data['allow_guest_viewing'] ?? true),
-            maxTitleLength: self::int($data['max_title_length'] ?? null, 200),
-            maxBodyLength: self::int($data['max_body_length'] ?? null, 50_000),
-            maxTagsPerThread: self::int($data['max_tags_per_thread'] ?? null, 5),
-            editWindowMinutes: self::int($data['edit_window_minutes'] ?? null, 30),
-            moderation: ModerationConfig::fromArray(self::subArray($data, 'moderation')),
-            reputation: ReputationConfig::fromArray(self::subArray($data, 'reputation')),
-            badges: BadgeConfig::fromArray(self::subArray($data, 'badges')),
+            maxTitleLength: $data['max_title_length'] ?? 200,
+            maxBodyLength: $data['max_body_length'] ?? 50_000,
+            maxTagsPerThread: $data['max_tags_per_thread'] ?? 5,
+            editWindowMinutes: $data['edit_window_minutes'] ?? 30,
+            moderation: ModerationConfig::fromArray($data['moderation'] ?? []),
+            reputation: ReputationConfig::fromArray($data['reputation'] ?? []),
+            badges: BadgeConfig::fromArray($data['badges'] ?? []),
         );
     }
 }
