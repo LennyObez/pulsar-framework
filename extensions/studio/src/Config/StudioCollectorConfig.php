@@ -29,36 +29,29 @@ final readonly class StudioCollectorConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     http?: array{enabled?: bool|int|string},
+     *     database?: array{enabled?: bool|int|string, store_raw_sql?: bool|int|string, redact_table_names?: bool|int|string},
+     *     logs?: array{enabled?: bool|int|string},
+     *     exceptions?: array{enabled?: bool|int|string},
+     *     scheduler?: array{enabled?: bool|int|string},
+     *     feature_flags?: array{enabled?: bool|int|string},
+     *     queue?: array{enabled?: bool|int|string},
+     *     benchmark?: array{enabled?: bool|int|string},
+     *     runtime?: array{enabled?: bool|int|string},
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data, Environment $environment): self
     {
-        /** @var array<string, mixed> $httpData */
         $httpData = $data['http'] ?? [];
-
-        /** @var array<string, mixed> $databaseData */
         $databaseData = $data['database'] ?? [];
-
-        /** @var array<string, mixed> $logsData */
         $logsData = $data['logs'] ?? [];
-
-        /** @var array<string, mixed> $exceptionsData */
         $exceptionsData = $data['exceptions'] ?? [];
-
-        /** @var array<string, mixed> $schedulerData */
         $schedulerData = $data['scheduler'] ?? [];
-
-        /** @var array<string, mixed> $featureFlagsData */
         $featureFlagsData = $data['feature_flags'] ?? [];
-
-        /** @var array<string, mixed> $queueData */
         $queueData = $data['queue'] ?? [];
-
-        /** @var array<string, mixed> $benchmarkData */
         $benchmarkData = $data['benchmark'] ?? [];
-
-        /** @var array<string, mixed> $runtimeData */
         $runtimeData = $data['runtime'] ?? [];
 
         $storeRawSql = $environment->get('STUDIO_STORE_RAW_SQL') !== null
