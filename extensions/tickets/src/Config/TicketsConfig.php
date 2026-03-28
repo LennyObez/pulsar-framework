@@ -7,9 +7,7 @@ namespace Pulsar\Extension\Tickets\Config;
 use Pulsar\Api\Api;
 use Pulsar\Extension\Tickets\Domain\TicketSla;
 
-use function array_key_exists;
 use function array_map;
-use function is_array;
 
 /**
  * Configuration DTO for the Tickets extension.
@@ -36,24 +34,26 @@ final readonly class TicketsConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     auto_assign_enabled?: bool|int|string,
+     *     auto_assign_strategy?: string,
+     *     email_notifications_enabled?: bool|int|string,
+     *     contact_form_integration?: bool|int|string,
+     *     sla_rules?: list<array{priority: string, first_response_minutes: int, resolution_minutes: int, escalation_rules?: list<array{threshold_minutes: int, action: string, target?: string}>}>,
+     *     auto_close_after_days?: int,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
-        $slaRules = [];
-        if (array_key_exists('sla_rules', $data) && is_array($data['sla_rules'])) {
-            /** @var list<array{priority: string, first_response_minutes: int, resolution_minutes: int, escalation_rules?: list<array{threshold_minutes: int, action: string, target?: string}>}> $rawRules */
-            $rawRules = $data['sla_rules'];
-            $slaRules = array_map(TicketSla::fromArray(...), $rawRules);
-        }
+        $slaRules = array_map(TicketSla::fromArray(...), $data['sla_rules'] ?? []);
 
         return new self(
             autoAssignEnabled: (bool) ($data['auto_assign_enabled'] ?? false),
-            autoAssignStrategy: (string) ($data['auto_assign_strategy'] ?? 'round_robin'),
+            autoAssignStrategy: $data['auto_assign_strategy'] ?? 'round_robin',
             emailNotificationsEnabled: (bool) ($data['email_notifications_enabled'] ?? true),
             contactFormIntegration: (bool) ($data['contact_form_integration'] ?? false),
             slaRules: $slaRules,
-            autoCloseAfterDays: (int) ($data['auto_close_after_days'] ?? 7),
+            autoCloseAfterDays: $data['auto_close_after_days'] ?? 7,
         );
     }
 }
