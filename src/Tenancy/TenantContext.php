@@ -4,66 +4,95 @@ declare(strict_types=1);
 
 namespace Pulsar\Tenancy;
 
+use Fiber;
 use NoDiscard;
 use Override;
 use Pulsar\Api\Api;
 use Pulsar\Runtime\ResettableInterface;
 use Pulsar\Tenancy\Exception\TenancyException;
+use stdClass;
+use WeakMap;
 
 /**
- * Holds the current tenant for the active request.
+ * Holds the current tenant for the active request, isolated per Fiber.
+ *
+ * Persistent-runtime workers (RoadRunner, FrankenPHP, Swoole) interleave
+ * Fiber-suspended HTTP requests on the same worker process. A naive
+ * `private ?Tenant $tenant` field was shared across every Fiber on the
+ * worker, so request A could read or overwrite request B's tenant —
+ * a hard cross-tenant isolation breach (F13.1).
+ *
+ * Storage is keyed by `Fiber::getCurrent()` — or a stable `$rootKey` for
+ * code running outside any Fiber — using a `WeakMap`. When a Fiber
+ * completes and is garbage-collected its slot is reclaimed automatically.
  */
 #[Api(since: '1.0.0')]
 final class TenantContext implements ResettableInterface
 {
-    private ?Tenant $tenant = null;
+    /** @var WeakMap<object, Tenant> Per-Fiber (or root) tenant. */
+    private WeakMap $tenants;
 
-    /**
-     * Set the current tenant.
-     */
-    public function set(Tenant $tenant): void
+    private readonly stdClass $rootKey;
+
+    public function __construct()
     {
-        $this->tenant = $tenant;
+        /** @var WeakMap<object, Tenant> $map */
+        $map = new WeakMap();
+        $this->tenants = $map;
+        $this->rootKey = new stdClass();
     }
 
     /**
-     * Get the current tenant.
+     * Set the current Fiber's tenant.
+     */
+    public function set(Tenant $tenant): void
+    {
+        $this->tenants[$this->currentKey()] = $tenant;
+    }
+
+    /**
+     * Get the current Fiber's tenant.
      *
      * @throws TenancyException If no tenant has been resolved.
      */
     #[NoDiscard]
     public function get(): Tenant
     {
-        return $this->tenant ?? throw TenancyException::tenantNotResolved();
+        return $this->tryGet() ?? throw TenancyException::tenantNotResolved();
     }
 
     /**
-     * Get the current tenant without throwing.
+     * Get the current Fiber's tenant without throwing.
      */
     public function tryGet(): ?Tenant
     {
-        return $this->tenant;
+        return $this->tenants[$this->currentKey()] ?? null;
     }
 
     /**
-     * Check if a tenant has been resolved.
+     * Check if a tenant has been resolved for the current Fiber.
      */
     public function isResolved(): bool
     {
-        return $this->tenant !== null;
+        return isset($this->tenants[$this->currentKey()]);
     }
 
     /**
-     * Clear the current tenant.
+     * Clear the current Fiber's tenant.
      */
     public function clear(): void
     {
-        $this->tenant = null;
+        unset($this->tenants[$this->currentKey()]);
     }
 
     #[Override]
     public function resetRequestState(): void
     {
         $this->clear();
+    }
+
+    private function currentKey(): object
+    {
+        return Fiber::getCurrent() ?? $this->rootKey;
     }
 }
