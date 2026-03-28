@@ -7,9 +7,6 @@ namespace Pulsar\Extension\Form\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_int;
-use function is_string;
-
 /**
  * Wizard state machine configuration.
  * @api
@@ -23,16 +20,17 @@ final readonly class WizardFormConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     ttl?: int,
+     *     storage?: string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $rawTtl = $data['ttl'] ?? 1800;
-
         return new self(
-            ttl: is_int($rawTtl) ? $rawTtl : 1800,
-            storage: is_string($data['storage'] ?? null) ? $data['storage'] : 'server',
+            ttl: $data['ttl'] ?? 1800,
+            storage: $data['storage'] ?? 'server',
         );
     }
 }
