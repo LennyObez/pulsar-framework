@@ -6,8 +6,6 @@ namespace Pulsar\Extension\Fhir\Resource;
 
 use Pulsar\Api\Api;
 
-use function is_string;
-
 /**
  * A name of a human with text, parts, and usage information.
  *
@@ -66,24 +64,24 @@ final readonly class HumanName
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     use?: string|null,
+     *     text?: string|null,
+     *     family?: string|null,
+     *     given?: list<string>,
+     *     prefix?: list<string>,
+     *     suffix?: list<string>,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
-        /** @var list<string> $given */
-        $given = $data['given'] ?? [];
-        /** @var list<string> $prefix */
-        $prefix = $data['prefix'] ?? [];
-        /** @var list<string> $suffix */
-        $suffix = $data['suffix'] ?? [];
-
         return new self(
-            use: is_string($data['use'] ?? null) ? $data['use'] : null,
-            text: is_string($data['text'] ?? null) ? $data['text'] : null,
-            family: is_string($data['family'] ?? null) ? $data['family'] : null,
-            given: $given,
-            prefix: $prefix,
-            suffix: $suffix,
+            use: $data['use'] ?? null,
+            text: $data['text'] ?? null,
+            family: $data['family'] ?? null,
+            given: $data['given'] ?? [],
+            prefix: $data['prefix'] ?? [],
+            suffix: $data['suffix'] ?? [],
         );
     }
 }

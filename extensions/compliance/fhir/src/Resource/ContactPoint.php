@@ -6,8 +6,6 @@ namespace Pulsar\Extension\Fhir\Resource;
 
 use Pulsar\Api\Api;
 
-use function is_string;
-
 /**
  * Contact details (phone, fax, email, etc.).
  *
@@ -51,15 +49,20 @@ final readonly class ContactPoint
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     system?: string|null,
+     *     value?: string|null,
+     *     use?: string|null,
+     *     rank?: int|null,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
         return new self(
-            system: is_string($data['system'] ?? null) ? $data['system'] : null,
-            value: is_string($data['value'] ?? null) ? $data['value'] : null,
-            use: is_string($data['use'] ?? null) ? $data['use'] : null,
-            rank: isset($data['rank']) && is_numeric($data['rank']) ? (int) $data['rank'] : null,
+            system: $data['system'] ?? null,
+            value: $data['value'] ?? null,
+            use: $data['use'] ?? null,
+            rank: $data['rank'] ?? null,
         );
     }
 }

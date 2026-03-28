@@ -6,8 +6,6 @@ namespace Pulsar\Extension\Fhir\Resource;
 
 use Pulsar\Api\Api;
 
-use function is_string;
-
 /**
  * A reference from one resource to another.
  *
@@ -51,17 +49,21 @@ final readonly class Reference
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     reference?: string|null,
+     *     type?: string|null,
+     *     display?: string|null,
+     *     identifier?: array<string, mixed>|null,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
-        /** @var array<string, mixed>|null $identifierData */
         $identifierData = $data['identifier'] ?? null;
 
         return new self(
-            reference: is_string($data['reference'] ?? null) ? $data['reference'] : null,
-            type: is_string($data['type'] ?? null) ? $data['type'] : null,
-            display: is_string($data['display'] ?? null) ? $data['display'] : null,
+            reference: $data['reference'] ?? null,
+            type: $data['type'] ?? null,
+            display: $data['display'] ?? null,
             identifier: $identifierData !== null ? Identifier::fromArray($identifierData) : null,
         );
     }
