@@ -7,10 +7,6 @@ namespace Pulsar\Extension\Form\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_bool;
-use function is_int;
-use function is_string;
-
 /**
  * CSRF configuration for form-specific token binding.
  * @api
@@ -25,20 +21,19 @@ final readonly class CsrfFormConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     enabled?: bool,
+     *     ttl?: int,
+     *     field_name?: string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $enabled = is_bool($data['enabled'] ?? null) ? $data['enabled'] : true;
-        $rawTtl = $data['ttl'] ?? 3600;
-        $ttl = is_int($rawTtl) ? $rawTtl : 3600;
-        $fieldName = is_string($data['field_name'] ?? null) ? $data['field_name'] : '_csrf_token';
-
         return new self(
-            enabled: $enabled,
-            ttl: $ttl,
-            fieldName: $fieldName,
+            enabled: $data['enabled'] ?? true,
+            ttl: $data['ttl'] ?? 3600,
+            fieldName: $data['field_name'] ?? '_csrf_token',
         );
     }
 }

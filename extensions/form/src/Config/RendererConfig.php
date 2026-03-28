@@ -7,8 +7,6 @@ namespace Pulsar\Extension\Form\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_string;
-
 /**
  * Form renderer theming configuration.
  * @api
@@ -25,17 +23,23 @@ final readonly class RendererConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     theme?: string,
+     *     error_class?: string,
+     *     label_class?: string,
+     *     input_class?: string,
+     *     error_summary_class?: string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            theme: is_string($data['theme'] ?? null) ? $data['theme'] : 'default',
-            errorClass: is_string($data['error_class'] ?? null) ? $data['error_class'] : 'form-error',
-            labelClass: is_string($data['label_class'] ?? null) ? $data['label_class'] : 'form-label',
-            inputClass: is_string($data['input_class'] ?? null) ? $data['input_class'] : 'form-input',
-            errorSummaryClass: is_string($data['error_summary_class'] ?? null) ? $data['error_summary_class'] : 'form-error-summary',
+            theme: $data['theme'] ?? 'default',
+            errorClass: $data['error_class'] ?? 'form-error',
+            labelClass: $data['label_class'] ?? 'form-label',
+            inputClass: $data['input_class'] ?? 'form-input',
+            errorSummaryClass: $data['error_summary_class'] ?? 'form-error-summary',
         );
     }
 }
