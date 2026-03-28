@@ -7,9 +7,6 @@ namespace Pulsar\Extension\Grpc\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_bool;
-use function is_string;
-
 /**
  * TLS and mTLS configuration for the gRPC server.
  * @api
@@ -26,17 +23,23 @@ final readonly class TlsConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     enabled?: bool,
+     *     cert_path?: string,
+     *     key_path?: string,
+     *     ca_path?: string,
+     *     mutual?: bool,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            enabled: is_bool($data['enabled'] ?? null) ? $data['enabled'] : false,
-            certPath: is_string($data['cert_path'] ?? null) ? $data['cert_path'] : '',
-            keyPath: is_string($data['key_path'] ?? null) ? $data['key_path'] : '',
-            caPath: is_string($data['ca_path'] ?? null) ? $data['ca_path'] : '',
-            mutual: is_bool($data['mutual'] ?? null) ? $data['mutual'] : false,
+            enabled: $data['enabled'] ?? false,
+            certPath: $data['cert_path'] ?? '',
+            keyPath: $data['key_path'] ?? '',
+            caPath: $data['ca_path'] ?? '',
+            mutual: $data['mutual'] ?? false,
         );
     }
 

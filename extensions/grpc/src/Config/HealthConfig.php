@@ -7,8 +7,6 @@ namespace Pulsar\Extension\Grpc\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_bool;
-
 /**
  * Configuration for the gRPC health check service.
  * @api
@@ -21,13 +19,13 @@ final readonly class HealthConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{enabled?: bool} $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            enabled: is_bool($data['enabled'] ?? null) ? $data['enabled'] : true,
+            enabled: $data['enabled'] ?? true,
         );
     }
 }

@@ -7,8 +7,6 @@ namespace Pulsar\Extension\Grpc\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_int;
-
 /**
  * Rate limiting configuration for gRPC calls.
  * @api
@@ -22,15 +20,17 @@ final readonly class RateLimitConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     max_requests_per_second?: int,
+     *     burst_size?: int,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            maxRequestsPerSecond: is_int($data['max_requests_per_second'] ?? null)
-                ? $data['max_requests_per_second'] : 1000,
-            burstSize: is_int($data['burst_size'] ?? null) ? $data['burst_size'] : 100,
+            maxRequestsPerSecond: $data['max_requests_per_second'] ?? 1000,
+            burstSize: $data['burst_size'] ?? 100,
         );
     }
 }
