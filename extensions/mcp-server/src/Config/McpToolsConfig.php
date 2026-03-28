@@ -7,9 +7,8 @@ namespace Pulsar\Extension\McpServer\Config;
 use NoDiscard;
 use Pulsar\Api\Internal;
 
-use function is_array;
-use function is_int;
-use function is_string;
+use function array_filter;
+use function array_values;
 
 /**
  * Tool execution sub-configuration.
@@ -33,42 +32,28 @@ final readonly class McpToolsConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     disabled_read_tools?: list<string>,
+     *     allowed_actions?: list<string>,
+     *     max_output_bytes?: int,
+     *     action_timeout?: int,
+     *     commands?: array{phpunit?: string|null, composer?: string|null, pnpm?: string|null},
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $disabledRaw = $data['disabled_read_tools'] ?? [];
-        $disabledReadTools = is_array($disabledRaw) ? array_values(array_filter($disabledRaw, '\is_string')) : [];
-
-        $allowedRaw = $data['allowed_actions'] ?? [];
-        $allowedActions = is_array($allowedRaw) ? array_values(array_filter($allowedRaw, '\is_string')) : [];
-
-        $maxOutputRaw = $data['max_output_bytes'] ?? null;
-        $maxOutputBytes = is_int($maxOutputRaw) ? $maxOutputRaw : 1_048_576;
-
-        $actionTimeoutRaw = $data['action_timeout'] ?? null;
-        $actionTimeout = is_int($actionTimeoutRaw) ? $actionTimeoutRaw : 120;
-
-        /** @var array<string, mixed> $commandsRaw */
-        $commandsRaw = (array) ($data['commands'] ?? []);
-
-        /** @var string|null $phpunit */
-        $phpunit = isset($commandsRaw['phpunit']) && is_string($commandsRaw['phpunit']) ? $commandsRaw['phpunit'] : null;
-        /** @var string|null $composer */
-        $composer = isset($commandsRaw['composer']) && is_string($commandsRaw['composer']) ? $commandsRaw['composer'] : null;
-        /** @var string|null $pnpm */
-        $pnpm = isset($commandsRaw['pnpm']) && is_string($commandsRaw['pnpm']) ? $commandsRaw['pnpm'] : null;
+        $commandsRaw = $data['commands'] ?? [];
 
         return new self(
-            disabledReadTools: $disabledReadTools,
-            allowedActions: $allowedActions,
-            maxOutputBytes: $maxOutputBytes,
-            actionTimeout: $actionTimeout,
+            disabledReadTools: array_values(array_filter($data['disabled_read_tools'] ?? [], '\is_string')),
+            allowedActions: array_values(array_filter($data['allowed_actions'] ?? [], '\is_string')),
+            maxOutputBytes: $data['max_output_bytes'] ?? 1_048_576,
+            actionTimeout: $data['action_timeout'] ?? 120,
             commands: [
-                'phpunit' => $phpunit,
-                'composer' => $composer,
-                'pnpm' => $pnpm,
+                'phpunit' => $commandsRaw['phpunit'] ?? null,
+                'composer' => $commandsRaw['composer'] ?? null,
+                'pnpm' => $commandsRaw['pnpm'] ?? null,
             ],
         );
     }
