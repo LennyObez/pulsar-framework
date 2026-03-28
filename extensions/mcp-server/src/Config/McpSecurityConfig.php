@@ -7,8 +7,8 @@ namespace Pulsar\Extension\McpServer\Config;
 use NoDiscard;
 use Pulsar\Api\Internal;
 
-use function is_array;
-use function is_int;
+use function array_filter;
+use function array_values;
 
 /**
  * Security sub-configuration for MCP access control.
@@ -30,29 +30,21 @@ final readonly class McpSecurityConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     path_allowlist?: list<string>,
+     *     rate_limit_per_minute?: int,
+     *     tool_rate_limits?: array<string, int>,
+     *     max_concurrent_actions?: int,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $pathAllowlistRaw = $data['path_allowlist'] ?? [];
-        $pathAllowlist = is_array($pathAllowlistRaw) ? array_values(array_filter($pathAllowlistRaw, '\is_string')) : [];
-
-        $rateLimitRaw = $data['rate_limit_per_minute'] ?? null;
-        $rateLimitPerMinute = is_int($rateLimitRaw) ? $rateLimitRaw : 60;
-
-        $toolRateLimitsRaw = $data['tool_rate_limits'] ?? [];
-        /** @var array<string, int> $toolRateLimits */
-        $toolRateLimits = is_array($toolRateLimitsRaw) ? $toolRateLimitsRaw : [];
-
-        $maxConcurrentRaw = $data['max_concurrent_actions'] ?? null;
-        $maxConcurrentActions = is_int($maxConcurrentRaw) ? $maxConcurrentRaw : 1;
-
         return new self(
-            pathAllowlist: $pathAllowlist,
-            rateLimitPerMinute: $rateLimitPerMinute,
-            toolRateLimits: $toolRateLimits,
-            maxConcurrentActions: $maxConcurrentActions,
+            pathAllowlist: array_values(array_filter($data['path_allowlist'] ?? [], '\is_string')),
+            rateLimitPerMinute: $data['rate_limit_per_minute'] ?? 60,
+            toolRateLimits: $data['tool_rate_limits'] ?? [],
+            maxConcurrentActions: $data['max_concurrent_actions'] ?? 1,
         );
     }
 }
