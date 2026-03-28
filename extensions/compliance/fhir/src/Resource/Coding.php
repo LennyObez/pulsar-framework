@@ -6,9 +6,6 @@ namespace Pulsar\Extension\Fhir\Resource;
 
 use Pulsar\Api\Api;
 
-use function is_bool;
-use function is_string;
-
 /**
  * A reference to a code defined by a terminology system (code + system + display).
  *
@@ -57,16 +54,22 @@ final readonly class Coding
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     system?: string|null,
+     *     version?: string|null,
+     *     code?: string|null,
+     *     display?: string|null,
+     *     userSelected?: bool|null,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
         return new self(
-            system: is_string($data['system'] ?? null) ? $data['system'] : null,
-            version: is_string($data['version'] ?? null) ? $data['version'] : null,
-            code: is_string($data['code'] ?? null) ? $data['code'] : null,
-            display: is_string($data['display'] ?? null) ? $data['display'] : null,
-            userSelected: is_bool($data['userSelected'] ?? null) ? $data['userSelected'] : null,
+            system: $data['system'] ?? null,
+            version: $data['version'] ?? null,
+            code: $data['code'] ?? null,
+            display: $data['display'] ?? null,
+            userSelected: $data['userSelected'] ?? null,
         );
     }
 }

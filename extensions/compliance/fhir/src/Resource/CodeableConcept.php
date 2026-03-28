@@ -6,7 +6,8 @@ namespace Pulsar\Extension\Fhir\Resource;
 
 use Pulsar\Api\Api;
 
-use function is_string;
+use function array_map;
+use function array_values;
 
 /**
  * A CodeableConcept represents a value that is usually supplied by providing
@@ -49,19 +50,19 @@ final readonly class CodeableConcept
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     coding?: list<array<string, mixed>>,
+     *     text?: string|null,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
-        /** @var list<array<string, mixed>> $codingList */
-        $codingList = $data['coding'] ?? [];
-
         return new self(
             coding: array_values(array_map(
                 static fn(array $c): Coding => Coding::fromArray($c),
-                $codingList,
+                $data['coding'] ?? [],
             )),
-            text: is_string($data['text'] ?? null) ? $data['text'] : null,
+            text: $data['text'] ?? null,
         );
     }
 }

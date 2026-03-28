@@ -6,8 +6,6 @@ namespace Pulsar\Extension\Fhir\Resource;
 
 use Pulsar\Api\Api;
 
-use function is_string;
-
 /**
  * A technical identifier for a resource, distinct from the resource's FHIR ID.
  *
@@ -51,18 +49,22 @@ final readonly class Identifier
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     use?: string|null,
+     *     type?: array<string, mixed>|null,
+     *     system?: string|null,
+     *     value?: string|null,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
-        /** @var array<string, mixed>|null $typeData */
         $typeData = $data['type'] ?? null;
 
         return new self(
-            use: is_string($data['use'] ?? null) ? $data['use'] : null,
+            use: $data['use'] ?? null,
             type: $typeData !== null ? CodeableConcept::fromArray($typeData) : null,
-            system: is_string($data['system'] ?? null) ? $data['system'] : null,
-            value: is_string($data['value'] ?? null) ? $data['value'] : null,
+            system: $data['system'] ?? null,
+            value: $data['value'] ?? null,
         );
     }
 }
