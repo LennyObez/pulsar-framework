@@ -23,34 +23,24 @@ final readonly class EncryptionConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     enabled?: bool,
+     *     sub_key_id?: int,
+     *     context?: string,
+     *     blind_index_context?: string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var bool $enabled */
-        $enabled = $data['enabled'] ?? false;
-
-        // F33.6: prefer the framework's central SubKeyId enum to
-        // make the subsystem assignment visible at review time.
-        // The fallback to the integer is kept for back-compat with
-        // configs already shipped, but new code should pass the
-        // enum case via `subKeyId: SubKeyId::Orm->value` in the
-        // raw config array.
-        /** @var int $subKeyId */
-        $subKeyId = $data['sub_key_id'] ?? SubKeyId::Orm->value;
-
-        /** @var string $context */
-        $context = $data['context'] ?? 'orm__enc';
-
-        /** @var string $blindIndexContext */
-        $blindIndexContext = $data['blind_index_context'] ?? 'orm__bidx';
-
         return new self(
-            enabled: $enabled,
-            subKeyId: $subKeyId,
-            context: $context,
-            blindIndexContext: $blindIndexContext,
+            enabled: $data['enabled'] ?? false,
+            // F33.6: prefer the framework's central SubKeyId enum to make the
+            // subsystem assignment visible at review time. The integer fallback
+            // is kept for back-compat with configs already shipped.
+            subKeyId: $data['sub_key_id'] ?? SubKeyId::Orm->value,
+            context: $data['context'] ?? 'orm__enc',
+            blindIndexContext: $data['blind_index_context'] ?? 'orm__bidx',
         );
     }
 }
