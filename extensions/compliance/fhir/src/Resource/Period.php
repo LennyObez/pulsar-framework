@@ -6,8 +6,6 @@ namespace Pulsar\Extension\Fhir\Resource;
 
 use Pulsar\Api\Api;
 
-use function is_string;
-
 /**
  * A time period defined by a start and end date/time.
  *
@@ -41,13 +39,16 @@ final readonly class Period
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     start?: string|null,
+     *     end?: string|null,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
         return new self(
-            start: is_string($data['start'] ?? null) ? $data['start'] : null,
-            end: is_string($data['end'] ?? null) ? $data['end'] : null,
+            start: $data['start'] ?? null,
+            end: $data['end'] ?? null,
         );
     }
 }

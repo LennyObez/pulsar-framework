@@ -6,8 +6,6 @@ namespace Pulsar\Extension\Fhir\Resource;
 
 use Pulsar\Api\Api;
 
-use function is_string;
-
 /**
  * A measured amount (or an amount that can potentially be measured).
  *
@@ -56,16 +54,22 @@ final readonly class Quantity
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     value?: float|int|null,
+     *     comparator?: string|null,
+     *     unit?: string|null,
+     *     system?: string|null,
+     *     code?: string|null,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
         return new self(
-            value: isset($data['value']) && is_numeric($data['value']) ? (float) $data['value'] : null,
-            comparator: is_string($data['comparator'] ?? null) ? $data['comparator'] : null,
-            unit: is_string($data['unit'] ?? null) ? $data['unit'] : null,
-            system: is_string($data['system'] ?? null) ? $data['system'] : null,
-            code: is_string($data['code'] ?? null) ? $data['code'] : null,
+            value: isset($data['value']) ? (float) $data['value'] : null,
+            comparator: $data['comparator'] ?? null,
+            unit: $data['unit'] ?? null,
+            system: $data['system'] ?? null,
+            code: $data['code'] ?? null,
         );
     }
 }
