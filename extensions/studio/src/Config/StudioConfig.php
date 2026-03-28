@@ -9,8 +9,8 @@ use Pulsar\Api\Internal;
 use Pulsar\Config\Environment;
 
 use function in_array;
-use function is_float;
-use function is_int;
+use function max;
+use function min;
 
 /**
  * Typed configuration DTO for config/studio.php.
@@ -33,7 +33,16 @@ final readonly class StudioConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data Raw array from config/studio.php
+     * @param array{
+     *     enabled?: bool|int|string,
+     *     storage_path?: string,
+     *     store?: string,
+     *     retention?: array<string, mixed>,
+     *     security?: array<string, mixed>,
+     *     server?: array<string, mixed>,
+     *     collectors?: array<string, mixed>,
+     *     sampling_rate?: float|int,
+     * } $data Raw array from config/studio.php
      */
     #[NoDiscard]
     public static function fromArray(array $data, Environment $environment): self
@@ -42,44 +51,28 @@ final readonly class StudioConfig
             ? $environment->get('STUDIO_ENABLED') === 'true'
             : (bool) ($data['enabled'] ?? true);
 
-        /** @var string $storagePath */
         $storagePath = $environment->get('STUDIO_STORAGE_PATH')
-            ?? ($data['storage_path'] ?? 'storage/studio/studio.sqlite');
+            ?? $data['storage_path']
+            ?? 'storage/studio/studio.sqlite';
 
-        $storeBackendEnv = $environment->get('STUDIO_STORE_BACKEND');
-        $storeBackendRaw = $storeBackendEnv ?? ($data['store'] ?? 'sqlite');
+        $storeBackendRaw = $environment->get('STUDIO_STORE_BACKEND') ?? $data['store'] ?? 'sqlite';
         $storeBackend = in_array($storeBackendRaw, ['sqlite', 'database', 'buffered'], true)
             ? $storeBackendRaw
             : 'sqlite';
 
-        /** @var array<string, mixed> $retentionData */
-        $retentionData = $data['retention'] ?? [];
-
-        /** @var array<string, mixed> $securityData */
-        $securityData = $data['security'] ?? [];
-
-        /** @var array<string, mixed> $serverData */
-        $serverData = $data['server'] ?? [];
-
-        /** @var array<string, mixed> $collectorData */
-        $collectorData = $data['collectors'] ?? [];
-
         $samplingRateEnv = $environment->get('STUDIO_SAMPLING_RATE');
-        if ($samplingRateEnv !== null) {
-            $samplingRate = (float) $samplingRateEnv;
-        } else {
-            $rawSamplingRate = $data['sampling_rate'] ?? 1.0;
-            $samplingRate = is_float($rawSamplingRate) || is_int($rawSamplingRate) ? (float) $rawSamplingRate : (is_numeric($rawSamplingRate) ? (float) $rawSamplingRate : 1.0);
-        }
+        $samplingRate = $samplingRateEnv !== null
+            ? (float) $samplingRateEnv
+            : (float) ($data['sampling_rate'] ?? 1.0);
 
         return new self(
             enabled: $enabled,
             storagePath: $storagePath,
             storeBackend: $storeBackend,
-            retention: StudioRetentionConfig::fromArray($retentionData, $environment),
-            security: StudioSecurityConfig::fromArray($securityData, $environment),
-            server: StudioServerConfig::fromArray($serverData, $environment),
-            collectors: StudioCollectorConfig::fromArray($collectorData, $environment),
+            retention: StudioRetentionConfig::fromArray($data['retention'] ?? [], $environment),
+            security: StudioSecurityConfig::fromArray($data['security'] ?? [], $environment),
+            server: StudioServerConfig::fromArray($data['server'] ?? [], $environment),
+            collectors: StudioCollectorConfig::fromArray($data['collectors'] ?? [], $environment),
             samplingRate: max(0.0, min(1.0, $samplingRate)),
         );
     }
