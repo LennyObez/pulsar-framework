@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Tenancy\Guard;
 
+use Fiber;
 use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -94,6 +95,75 @@ final class SystemContextTest extends TestCase
 
         $system = new SystemContext($auditLogger);
         $system->enter('migration');
+        $system->exit();
+    }
+
+    #[Test]
+    public function fibersDoNotShareActiveFlag(): void
+    {
+        $system = new SystemContext();
+        $system->enter('root-migration');
+
+        $observed = null;
+        $fiber = new Fiber(function () use ($system, &$observed): void {
+            $observed = ['initial' => $system->isActive()];
+            // Fiber starts with no active context regardless of root state.
+            $system->enter('fiber-migration');
+            $observed['fiber_active'] = $system->isActive();
+            $system->exit();
+            $observed['fiber_after_exit'] = $system->isActive();
+        });
+
+        $fiber->start();
+
+        // Root remains active even though the Fiber entered + exited its own slot.
+        self::assertTrue($system->isActive());
+        self::assertFalse($observed['initial']);
+        self::assertTrue($observed['fiber_active']);
+        self::assertFalse($observed['fiber_after_exit']);
+
+        $system->exit();
+    }
+
+    #[Test]
+    public function fiberCannotExitRootSystemContext(): void
+    {
+        $system = new SystemContext();
+        $system->enter('root');
+
+        $caught = null;
+        $fiber = new Fiber(function () use ($system, &$caught): void {
+            try {
+                $system->exit();
+            } catch (LogicException $e) {
+                $caught = $e->getMessage();
+            }
+        });
+
+        $fiber->start();
+
+        self::assertSame('System context is not active', $caught);
+        self::assertTrue($system->isActive());
+
+        $system->exit();
+    }
+
+    #[Test]
+    public function legacyActivePropertyReadsCurrentFiberSlot(): void
+    {
+        $system = new SystemContext();
+        $system->enter('root');
+
+        $fiber = new Fiber(function () use ($system): mixed {
+            return $system->active;
+        });
+
+        $fiber->start();
+
+        // The Fiber observes ITS OWN active flag (false), not the root's (true).
+        self::assertFalse($fiber->getReturn());
+        self::assertTrue($system->active);
+
         $system->exit();
     }
 }
