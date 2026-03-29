@@ -7,6 +7,7 @@ namespace Pulsar\Tests\Unit\Http;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Http\Exception\UnsafeHeaderException;
 use Pulsar\Http\HeaderBag;
 
 #[CoversClass(HeaderBag::class)]
@@ -218,5 +219,99 @@ final class HeaderBagTest extends TestCase
         self::assertTrue($bag->has('Content-Type'));
         self::assertTrue($bag->has('Content-Length'));
         self::assertFalse($bag->has('Request-Method'));
+    }
+
+    #[Test]
+    public function constructorRejectsCrlfInValue(): void
+    {
+        $this->expectException(UnsafeHeaderException::class);
+
+        new HeaderBag(['X-Forwarded-For' => "10.0.0.1\r\nX-Injected: bad"]);
+    }
+
+    #[Test]
+    public function constructorRejectsLfOnlyInValue(): void
+    {
+        $this->expectException(UnsafeHeaderException::class);
+
+        new HeaderBag(['X-Trace' => "trace-id\nset-cookie: stolen=1"]);
+    }
+
+    #[Test]
+    public function constructorRejectsNulInValue(): void
+    {
+        $this->expectException(UnsafeHeaderException::class);
+
+        new HeaderBag(['X-Custom' => "abc\x00def"]);
+    }
+
+    #[Test]
+    public function constructorRejectsControlCharactersInValueList(): void
+    {
+        $this->expectException(UnsafeHeaderException::class);
+
+        new HeaderBag(['Accept' => ['text/plain', "text/html\r\n"]]);
+    }
+
+    #[Test]
+    public function constructorRejectsEmptyName(): void
+    {
+        $this->expectException(UnsafeHeaderException::class);
+
+        new HeaderBag(['' => 'value']);
+    }
+
+    #[Test]
+    public function constructorRejectsNameWithSpace(): void
+    {
+        $this->expectException(UnsafeHeaderException::class);
+
+        new HeaderBag(['Bad Name' => 'value']);
+    }
+
+    #[Test]
+    public function constructorRejectsNameWithCrlf(): void
+    {
+        $this->expectException(UnsafeHeaderException::class);
+
+        new HeaderBag(["X-Custom\r\nInjected" => 'value']);
+    }
+
+    #[Test]
+    public function constructorRejectsNameWithControlByte(): void
+    {
+        $this->expectException(UnsafeHeaderException::class);
+
+        new HeaderBag(["X-Bad\x00" => 'value']);
+    }
+
+    #[Test]
+    public function withRejectsCrlfInValue(): void
+    {
+        $bag = new HeaderBag();
+
+        $this->expectException(UnsafeHeaderException::class);
+
+        (void) $bag->with('Location', "/safe\r\nSet-Cookie: forged=1");
+    }
+
+    #[Test]
+    public function withAddedRejectsCrlfInValue(): void
+    {
+        $bag = new HeaderBag();
+
+        $this->expectException(UnsafeHeaderException::class);
+
+        (void) $bag->withAdded('X-Trace', "value\nSet-Cookie: x=1");
+    }
+
+    #[Test]
+    public function constructorAcceptsTabInValue(): void
+    {
+        // Tab (0x09) is permitted as a horizontal whitespace character
+        // inside header values per RFC 7230 §3.2.6 (obs-fold predecessor).
+        $bag = new HeaderBag(['X-Allow-Tab' => "left\tright"]);
+
+        self::assertSame("left\tright", $bag->first('X-Allow-Tab'));
     }
 }
