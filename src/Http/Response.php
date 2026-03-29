@@ -6,6 +6,14 @@ namespace Pulsar\Http;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Http\Exception\UnsafeRedirectException;
+
+use function in_array;
+use function is_array;
+use function parse_url;
+use function preg_match;
+use function str_starts_with;
+use function strtolower;
 
 /**
  * Immutable HTTP response value object.
@@ -175,13 +183,51 @@ readonly class Response
     }
 
     /**
+     * Schemes accepted by `redirect()` when the target URL is absolute.
+     *
+     * Anything outside this list (`javascript:`, `data:`, `vbscript:`,
+     * `file:`, custom schemes, …) is rejected because it can hijack the
+     * browser into executing attacker-controlled code in the user's
+     * security context, exfiltrate via inline data URIs, or escape the
+     * web origin entirely.
+     */
+    private const array ALLOWED_REDIRECT_SCHEMES = ['http', 'https'];
+
+    /**
      * Create a redirect response.
+     *
+     * Validates the URL against three layered rules to prevent open-redirect
+     * abuse and CRLF header smuggling (F2.5 / F2.6):
+     *
+     * 1. The URL must be non-empty and contain no control characters
+     *    (NUL, CR, LF, ASCII < 0x20).
+     * 2. If the URL is absolute (`scheme://host/...`), the scheme must be
+     *    one of `ALLOWED_REDIRECT_SCHEMES`. Schemes such as `javascript:`,
+     *    `data:` and `file:` are rejected outright.
+     * 3. Protocol-relative URLs (`//host/...`) are rejected because they
+     *    inherit the request scheme and effectively let an attacker pivot
+     *    the redirect to any host without an explicit scheme.
+     *
+     * Optional `$allowedHosts` constrains absolute redirects to a set of
+     * hostnames; pass `null` to allow any host with an accepted scheme.
+     * Pass an empty array to forbid absolute redirects entirely (relative
+     * paths only).
+     *
+     * @param list<string>|null $allowedHosts Lower-cased hostnames the
+     *                                         absolute URL must match. `null`
+     *                                         disables the check; `[]` forces
+     *                                         relative-only redirects.
+     *
+     * @throws UnsafeRedirectException
      */
     #[NoDiscard]
     public static function redirect(
         string $url,
         ResponseStatus $status = ResponseStatus::Found,
+        ?array $allowedHosts = null,
     ): self {
+        self::assertSafeRedirectUrl($url, $allowedHosts);
+
         return new self(
             body: '',
             status: $status,
@@ -189,6 +235,69 @@ readonly class Response
                 'Location' => $url,
             ]),
         );
+    }
+
+    /**
+     * @param list<string>|null $allowedHosts
+     *
+     * @throws UnsafeRedirectException
+     */
+    private static function assertSafeRedirectUrl(string $url, ?array $allowedHosts): void
+    {
+        if ($url === '') {
+            throw UnsafeRedirectException::emptyUrl();
+        }
+
+        // Reject control characters: \r, \n, NUL and any other ASCII < 0x20.
+        // CR/LF would break the response into a forged second header — the
+        // canonical "CRLF response splitting" attack.
+        if (preg_match('/[\x00-\x1F\x7F]/', $url) === 1) {
+            throw UnsafeRedirectException::controlCharacters();
+        }
+
+        if (str_starts_with($url, '//')) {
+            throw UnsafeRedirectException::protocolRelative();
+        }
+
+        // Path-relative URL (begins with "/", "./", "../", or "?", "#"):
+        // browsers resolve it against the current origin, so it is always
+        // same-origin. Allowed by default; the `[]` allowlist still permits
+        // these so that callers can opt into "relative-only" mode safely.
+        if (
+            str_starts_with($url, '/')
+            || str_starts_with($url, './')
+            || str_starts_with($url, '../')
+            || str_starts_with($url, '?')
+            || str_starts_with($url, '#')
+        ) {
+            return;
+        }
+
+        // From here on the URL is treated as absolute. parse_url is lenient
+        // (e.g. it accepts `javascript:alert(1)`), so we must validate the
+        // scheme explicitly against the allowlist.
+        $parts = parse_url($url);
+        $scheme = is_array($parts) && isset($parts['scheme']) ? strtolower($parts['scheme']) : '';
+
+        if ($scheme === '' || !in_array($scheme, self::ALLOWED_REDIRECT_SCHEMES, true)) {
+            throw UnsafeRedirectException::disallowedScheme(
+                $scheme === '' ? 'unknown' : $scheme,
+                'http and https',
+            );
+        }
+
+        if ($allowedHosts !== null) {
+            $host = is_array($parts) && isset($parts['host']) ? strtolower($parts['host']) : '';
+            $normalizedAllowlist = [];
+
+            foreach ($allowedHosts as $allowed) {
+                $normalizedAllowlist[] = strtolower($allowed);
+            }
+
+            if ($host === '' || !in_array($host, $normalizedAllowlist, true)) {
+                throw UnsafeRedirectException::notInAllowlist($url);
+            }
+        }
     }
 
     /**
