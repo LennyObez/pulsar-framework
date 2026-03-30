@@ -7,7 +7,8 @@ namespace Pulsar\Extension\Fhir\Resource;
 use Override;
 use Pulsar\Api\Api;
 
-use function is_string;
+use function array_map;
+use function array_values;
 
 /**
  * An interaction between a patient and healthcare provider(s).
@@ -98,52 +99,52 @@ final readonly class Encounter extends FhirResource
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     id?: string|null,
+     *     meta?: array<string, mixed>|null,
+     *     language?: string|null,
+     *     identifier?: list<array<string, mixed>>,
+     *     status?: string|null,
+     *     class?: array<string, mixed>|null,
+     *     type?: list<array<string, mixed>>,
+     *     subject?: array<string, mixed>|null,
+     *     period?: array<string, mixed>|null,
+     *     reasonCode?: list<array<string, mixed>>,
+     *     reasonReference?: list<array<string, mixed>>,
+     *     serviceProvider?: array<string, mixed>|null,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
-        /** @var array<string, mixed>|null $metaData */
         $metaData = $data['meta'] ?? null;
-        /** @var list<array<string, mixed>> $identifierList */
-        $identifierList = $data['identifier'] ?? [];
-        /** @var array<string, mixed>|null $classData */
         $classData = $data['class'] ?? null;
-        /** @var list<array<string, mixed>> $typeList */
-        $typeList = $data['type'] ?? [];
-        /** @var array<string, mixed>|null $subjectData */
         $subjectData = $data['subject'] ?? null;
-        /** @var array<string, mixed>|null $periodData */
         $periodData = $data['period'] ?? null;
-        /** @var list<array<string, mixed>> $reasonCodeList */
-        $reasonCodeList = $data['reasonCode'] ?? [];
-        /** @var list<array<string, mixed>> $reasonRefList */
-        $reasonRefList = $data['reasonReference'] ?? [];
-        /** @var array<string, mixed>|null $serviceProviderData */
         $serviceProviderData = $data['serviceProvider'] ?? null;
 
         return new self(
-            id: is_string($data['id'] ?? null) ? $data['id'] : null,
+            id: $data['id'] ?? null,
             meta: $metaData !== null ? Meta::fromArray($metaData) : null,
-            language: is_string($data['language'] ?? null) ? $data['language'] : null,
+            language: $data['language'] ?? null,
             identifier: array_values(array_map(
                 static fn(array $i): Identifier => Identifier::fromArray($i),
-                $identifierList,
+                $data['identifier'] ?? [],
             )),
-            status: is_string($data['status'] ?? null) ? $data['status'] : null,
+            status: $data['status'] ?? null,
             class_: $classData !== null ? Coding::fromArray($classData) : null,
             type: array_values(array_map(
                 static fn(array $c): CodeableConcept => CodeableConcept::fromArray($c),
-                $typeList,
+                $data['type'] ?? [],
             )),
             subject: $subjectData !== null ? Reference::fromArray($subjectData) : null,
             period: $periodData !== null ? Period::fromArray($periodData) : null,
             reasonCode: array_values(array_map(
                 static fn(array $c): CodeableConcept => CodeableConcept::fromArray($c),
-                $reasonCodeList,
+                $data['reasonCode'] ?? [],
             )),
             reasonReference: array_values(array_map(
                 static fn(array $r): Reference => Reference::fromArray($r),
-                $reasonRefList,
+                $data['reasonReference'] ?? [],
             )),
             serviceProvider: $serviceProviderData !== null
                 ? Reference::fromArray($serviceProviderData)
