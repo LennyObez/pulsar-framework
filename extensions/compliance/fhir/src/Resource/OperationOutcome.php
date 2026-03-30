@@ -7,7 +7,8 @@ namespace Pulsar\Extension\Fhir\Resource;
 use Override;
 use Pulsar\Api\Api;
 
-use function is_string;
+use function array_map;
+use function array_values;
 
 /**
  * A collection of error, warning, or information messages that result from
@@ -73,22 +74,24 @@ final readonly class OperationOutcome extends FhirResource
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     id?: string|null,
+     *     meta?: array<string, mixed>|null,
+     *     language?: string|null,
+     *     issue?: list<array<string, mixed>>,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
-        /** @var array<string, mixed>|null $metaData */
         $metaData = $data['meta'] ?? null;
-        /** @var list<array<string, mixed>> $issueList */
-        $issueList = $data['issue'] ?? [];
 
         return new self(
-            id: is_string($data['id'] ?? null) ? $data['id'] : null,
+            id: $data['id'] ?? null,
             meta: $metaData !== null ? Meta::fromArray($metaData) : null,
-            language: is_string($data['language'] ?? null) ? $data['language'] : null,
+            language: $data['language'] ?? null,
             issue: array_values(array_map(
                 static fn(array $i): OperationOutcomeIssue => OperationOutcomeIssue::fromArray($i),
-                $issueList,
+                $data['issue'] ?? [],
             )),
         );
     }
