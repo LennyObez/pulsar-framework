@@ -6,11 +6,6 @@ namespace Pulsar\Extension\Cms\Commerce;
 
 use Pulsar\Api\Api;
 
-use function is_array;
-use function is_float;
-use function is_int;
-use function is_string;
-
 /**
  * A single tax rate rule mapping categories and countries to a rate.
  * @api
@@ -32,21 +27,20 @@ final readonly class TaxRateConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     category?: string,
+     *     rate?: float|int,
+     *     label?: string,
+     *     countryCodes?: list<string>,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
-        $rawCodes = is_array($data['countryCodes'] ?? null) ? $data['countryCodes'] : [];
-        $countryCodes = [];
-        foreach ($rawCodes as $v) {
-            $countryCodes[] = is_string($v) ? $v : '';
-        }
-
         return new self(
-            category: is_string($data['category'] ?? null) ? $data['category'] : '',
-            rate: is_float($data['rate'] ?? null) || is_int($data['rate'] ?? null) ? (float) $data['rate'] : 0.0,
-            label: is_string($data['label'] ?? null) ? $data['label'] : '',
-            countryCodes: $countryCodes,
+            category: $data['category'] ?? '',
+            rate: (float) ($data['rate'] ?? 0.0),
+            label: $data['label'] ?? '',
+            countryCodes: $data['countryCodes'] ?? [],
         );
     }
 }
