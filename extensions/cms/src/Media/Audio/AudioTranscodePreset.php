@@ -6,9 +6,6 @@ namespace Pulsar\Extension\Cms\Media\Audio;
 
 use Pulsar\Api\Api;
 
-use function is_int;
-use function is_string;
-
 /**
  * A named audio transcoding preset defining codec, bitrate, and format.
  *
@@ -28,16 +25,22 @@ final readonly class AudioTranscodePreset
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     codec?: string,
+     *     bitrate?: string,
+     *     format?: string,
+     *     sample_rate?: int,
+     *     channels?: int,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
         return new self(
-            codec: is_string($data['codec'] ?? null) ? $data['codec'] : 'libmp3lame',
-            bitrate: is_string($data['bitrate'] ?? null) ? $data['bitrate'] : '128k',
-            format: is_string($data['format'] ?? null) ? $data['format'] : 'mp3',
-            sampleRate: is_int($data['sample_rate'] ?? null) ? $data['sample_rate'] : 44100,
-            channels: is_int($data['channels'] ?? null) ? $data['channels'] : 2,
+            codec: $data['codec'] ?? 'libmp3lame',
+            bitrate: $data['bitrate'] ?? '128k',
+            format: $data['format'] ?? 'mp3',
+            sampleRate: $data['sample_rate'] ?? 44100,
+            channels: $data['channels'] ?? 2,
         );
     }
 }
