@@ -35,23 +35,36 @@ final readonly class VideoMetadata
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     duration?: float|int|null,
+     *     width?: int|null,
+     *     height?: int|null,
+     *     video_codec?: string|null,
+     *     audio_codec?: string|null,
+     *     framerate?: float|int|null,
+     *     video_bitrate?: int|null,
+     *     audio_bitrate?: int|null,
+     *     audio_sample_rate?: int|null,
+     *     audio_channels?: int|null,
+     *     format?: string|null,
+     *     file_size?: int|null,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
         return new self(
             duration: self::toNullableFloat($data['duration'] ?? null),
-            width: is_int($data['width'] ?? null) ? $data['width'] : null,
-            height: is_int($data['height'] ?? null) ? $data['height'] : null,
-            videoCodec: is_string($data['video_codec'] ?? null) ? $data['video_codec'] : null,
-            audioCodec: is_string($data['audio_codec'] ?? null) ? $data['audio_codec'] : null,
+            width: $data['width'] ?? null,
+            height: $data['height'] ?? null,
+            videoCodec: $data['video_codec'] ?? null,
+            audioCodec: $data['audio_codec'] ?? null,
             framerate: self::toNullableFloat($data['framerate'] ?? null),
-            videoBitrate: is_int($data['video_bitrate'] ?? null) ? $data['video_bitrate'] : null,
-            audioBitrate: is_int($data['audio_bitrate'] ?? null) ? $data['audio_bitrate'] : null,
-            audioSampleRate: is_int($data['audio_sample_rate'] ?? null) ? $data['audio_sample_rate'] : null,
-            audioChannels: is_int($data['audio_channels'] ?? null) ? $data['audio_channels'] : null,
-            format: is_string($data['format'] ?? null) ? $data['format'] : null,
-            fileSize: is_int($data['file_size'] ?? null) ? $data['file_size'] : null,
+            videoBitrate: $data['video_bitrate'] ?? null,
+            audioBitrate: $data['audio_bitrate'] ?? null,
+            audioSampleRate: $data['audio_sample_rate'] ?? null,
+            audioChannels: $data['audio_channels'] ?? null,
+            format: $data['format'] ?? null,
+            fileSize: $data['file_size'] ?? null,
         );
     }
 
