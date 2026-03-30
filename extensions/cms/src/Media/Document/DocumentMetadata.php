@@ -7,8 +7,6 @@ namespace Pulsar\Extension\Cms\Media\Document;
 use Pulsar\Api\Api;
 
 use function array_filter;
-use function is_int;
-use function is_string;
 use function sprintf;
 
 /**
@@ -35,21 +33,32 @@ final readonly class DocumentMetadata
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     title?: string|null,
+     *     author?: string|null,
+     *     subject?: string|null,
+     *     creator?: string|null,
+     *     producer?: string|null,
+     *     page_count?: int|null,
+     *     creation_date?: string|null,
+     *     modification_date?: string|null,
+     *     pdf_version?: string|null,
+     *     file_size?: int|null,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
         return new self(
-            title: is_string($data['title'] ?? null) ? $data['title'] : null,
-            author: is_string($data['author'] ?? null) ? $data['author'] : null,
-            subject: is_string($data['subject'] ?? null) ? $data['subject'] : null,
-            creator: is_string($data['creator'] ?? null) ? $data['creator'] : null,
-            producer: is_string($data['producer'] ?? null) ? $data['producer'] : null,
-            pageCount: is_int($data['page_count'] ?? null) ? $data['page_count'] : null,
-            creationDate: is_string($data['creation_date'] ?? null) ? $data['creation_date'] : null,
-            modificationDate: is_string($data['modification_date'] ?? null) ? $data['modification_date'] : null,
-            pdfVersion: is_string($data['pdf_version'] ?? null) ? $data['pdf_version'] : null,
-            fileSize: is_int($data['file_size'] ?? null) ? $data['file_size'] : null,
+            title: $data['title'] ?? null,
+            author: $data['author'] ?? null,
+            subject: $data['subject'] ?? null,
+            creator: $data['creator'] ?? null,
+            producer: $data['producer'] ?? null,
+            pageCount: $data['page_count'] ?? null,
+            creationDate: $data['creation_date'] ?? null,
+            modificationDate: $data['modification_date'] ?? null,
+            pdfVersion: $data['pdf_version'] ?? null,
+            fileSize: $data['file_size'] ?? null,
         );
     }
 
