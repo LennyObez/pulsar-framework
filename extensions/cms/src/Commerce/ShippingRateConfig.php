@@ -6,9 +6,7 @@ namespace Pulsar\Extension\Cms\Commerce;
 
 use Pulsar\Api\Api;
 
-use function is_array;
-use function is_int;
-use function is_string;
+use function array_values;
 
 /**
  * Configuration for a single shipping rate rule.
@@ -35,17 +33,24 @@ final readonly class ShippingRateConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     method?: string,
+     *     base_amount?: int,
+     *     per_item_amount?: int,
+     *     free_threshold?: int|null,
+     *     estimated_days?: int|null,
+     *     country_codes?: list<string>,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
         return new self(
-            method: ShippingMethod::from(is_string($data['method'] ?? null) ? $data['method'] : 'standard'),
-            baseAmount: is_int($data['base_amount'] ?? null) ? $data['base_amount'] : 0,
-            perItemAmount: is_int($data['per_item_amount'] ?? null) ? $data['per_item_amount'] : 0,
-            freeThreshold: isset($data['free_threshold']) ? (is_int($data['free_threshold']) ? $data['free_threshold'] : 0) : null,
-            estimatedDays: isset($data['estimated_days']) ? (is_int($data['estimated_days']) ? $data['estimated_days'] : 0) : null,
-            countryCodes: is_array($data['country_codes'] ?? null) ? array_values(array_map(static fn(mixed $v): string => is_string($v) ? $v : '', $data['country_codes'])) : [],
+            method: ShippingMethod::from($data['method'] ?? 'standard'),
+            baseAmount: $data['base_amount'] ?? 0,
+            perItemAmount: $data['per_item_amount'] ?? 0,
+            freeThreshold: $data['free_threshold'] ?? null,
+            estimatedDays: $data['estimated_days'] ?? null,
+            countryCodes: array_values($data['country_codes'] ?? []),
         );
     }
 }
