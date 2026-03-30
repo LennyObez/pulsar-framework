@@ -6,9 +6,6 @@ namespace Pulsar\Extension\Cms\Media\Video;
 
 use Pulsar\Api\Api;
 
-use function is_int;
-use function is_string;
-
 /**
  * A named transcoding preset defining output resolution, bitrate, and codec.
  * @api
@@ -26,17 +23,24 @@ final readonly class TranscodePreset
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     width?: int,
+     *     height?: int,
+     *     video_bitrate?: string,
+     *     audio_bitrate?: string,
+     *     codec?: string,
+     *     format?: string,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
         return new self(
-            width: is_int($data['width'] ?? null) ? $data['width'] : 1280,
-            height: is_int($data['height'] ?? null) ? $data['height'] : 720,
-            videoBitrate: is_string($data['video_bitrate'] ?? null) ? $data['video_bitrate'] : '2500k',
-            audioBitrate: is_string($data['audio_bitrate'] ?? null) ? $data['audio_bitrate'] : '128k',
-            codec: is_string($data['codec'] ?? null) ? $data['codec'] : 'libx264',
-            format: is_string($data['format'] ?? null) ? $data['format'] : 'mp4',
+            width: $data['width'] ?? 1280,
+            height: $data['height'] ?? 720,
+            videoBitrate: $data['video_bitrate'] ?? '2500k',
+            audioBitrate: $data['audio_bitrate'] ?? '128k',
+            codec: $data['codec'] ?? 'libx264',
+            format: $data['format'] ?? 'mp4',
         );
     }
 }
