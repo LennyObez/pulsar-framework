@@ -6,8 +6,6 @@ namespace Pulsar\Extension\Fhir\Resource;
 
 use Pulsar\Api\Api;
 
-use function is_string;
-
 /**
  * A single issue within an OperationOutcome.
  *
@@ -60,24 +58,26 @@ final readonly class OperationOutcomeIssue
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     severity?: string,
+     *     code?: string,
+     *     details?: array<string, mixed>|null,
+     *     diagnostics?: string|null,
+     *     location?: list<string>,
+     *     expression?: list<string>,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
-        /** @var array<string, mixed>|null $detailsData */
         $detailsData = $data['details'] ?? null;
-        /** @var list<string> $location */
-        $location = $data['location'] ?? [];
-        /** @var list<string> $expression */
-        $expression = $data['expression'] ?? [];
 
         return new self(
-            severity: is_string($data['severity'] ?? null) ? $data['severity'] : 'error',
-            code: is_string($data['code'] ?? null) ? $data['code'] : 'processing',
+            severity: $data['severity'] ?? 'error',
+            code: $data['code'] ?? 'processing',
             details: $detailsData !== null ? CodeableConcept::fromArray($detailsData) : null,
-            diagnostics: is_string($data['diagnostics'] ?? null) ? $data['diagnostics'] : null,
-            location: $location,
-            expression: $expression,
+            diagnostics: $data['diagnostics'] ?? null,
+            location: $data['location'] ?? [],
+            expression: $data['expression'] ?? [],
         );
     }
 }

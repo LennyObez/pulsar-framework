@@ -6,7 +6,8 @@ namespace Pulsar\Extension\Fhir\Resource;
 
 use Pulsar\Api\Api;
 
-use function is_string;
+use function array_map;
+use function array_values;
 
 /**
  * Details about each adverse reaction event linked to exposure to an allergen.
@@ -62,24 +63,27 @@ final readonly class AllergyReaction
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     substance?: array<string, mixed>|null,
+     *     manifestation?: list<array<string, mixed>>,
+     *     severity?: string|null,
+     *     onset?: string|null,
+     *     description?: string|null,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
-        /** @var array<string, mixed>|null $substanceData */
         $substanceData = $data['substance'] ?? null;
-        /** @var list<array<string, mixed>> $manifestationList */
-        $manifestationList = $data['manifestation'] ?? [];
 
         return new self(
             substance: $substanceData !== null ? CodeableConcept::fromArray($substanceData) : null,
             manifestation: array_values(array_map(
                 static fn(array $c): CodeableConcept => CodeableConcept::fromArray($c),
-                $manifestationList,
+                $data['manifestation'] ?? [],
             )),
-            severity: is_string($data['severity'] ?? null) ? $data['severity'] : null,
-            onset: is_string($data['onset'] ?? null) ? $data['onset'] : null,
-            description: is_string($data['description'] ?? null) ? $data['description'] : null,
+            severity: $data['severity'] ?? null,
+            onset: $data['onset'] ?? null,
+            description: $data['description'] ?? null,
         );
     }
 }
