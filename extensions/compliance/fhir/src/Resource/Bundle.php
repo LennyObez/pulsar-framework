@@ -7,7 +7,8 @@ namespace Pulsar\Extension\Fhir\Resource;
 use Override;
 use Pulsar\Api\Api;
 
-use function is_string;
+use function array_map;
+use function array_values;
 
 /**
  * A container for a collection of resources.
@@ -70,32 +71,36 @@ final readonly class Bundle extends FhirResource
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     id?: string|null,
+     *     meta?: array<string, mixed>|null,
+     *     language?: string|null,
+     *     type?: string|null,
+     *     total?: int|null,
+     *     link?: list<array<string, string>>,
+     *     entry?: list<array<string, mixed>>,
+     *     timestamp?: string|null,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
-        /** @var array<string, mixed>|null $metaData */
         $metaData = $data['meta'] ?? null;
-        /** @var list<array<string, string>> $linkList */
-        $linkList = $data['link'] ?? [];
-        /** @var list<array<string, mixed>> $entryList */
-        $entryList = $data['entry'] ?? [];
 
         return new self(
-            id: is_string($data['id'] ?? null) ? $data['id'] : null,
+            id: $data['id'] ?? null,
             meta: $metaData !== null ? Meta::fromArray($metaData) : null,
-            language: is_string($data['language'] ?? null) ? $data['language'] : null,
-            type: is_string($data['type'] ?? null) ? $data['type'] : null,
-            total: isset($data['total']) && is_numeric($data['total']) ? (int) $data['total'] : null,
+            language: $data['language'] ?? null,
+            type: $data['type'] ?? null,
+            total: $data['total'] ?? null,
             link: array_values(array_map(
                 static fn(array $l): BundleLink => BundleLink::fromArray($l),
-                $linkList,
+                $data['link'] ?? [],
             )),
             entry: array_values(array_map(
                 static fn(array $e): BundleEntry => BundleEntry::fromArray($e),
-                $entryList,
+                $data['entry'] ?? [],
             )),
-            timestamp: is_string($data['timestamp'] ?? null) ? $data['timestamp'] : null,
+            timestamp: $data['timestamp'] ?? null,
         );
     }
 }
