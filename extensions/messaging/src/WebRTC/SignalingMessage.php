@@ -6,8 +6,6 @@ namespace Pulsar\Extension\Messaging\WebRTC;
 
 use Pulsar\Api\Api;
 
-use function is_array;
-
 /**
  * DTO for WebRTC signaling messages (offer/answer/ICE candidates).
  * @api
@@ -31,16 +29,22 @@ final readonly class SignalingMessage
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     type?: string,
+     *     from_user_id?: string,
+     *     to_user_id?: string,
+     *     call_id?: string,
+     *     payload?: array<string, mixed>,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
         return new self(
-            type: (string) ($data['type'] ?? ''),
-            fromUserId: (string) ($data['from_user_id'] ?? ''),
-            toUserId: (string) ($data['to_user_id'] ?? ''),
-            callId: (string) ($data['call_id'] ?? ''),
-            payload: is_array($data['payload'] ?? null) ? $data['payload'] : [],
+            type: $data['type'] ?? '',
+            fromUserId: $data['from_user_id'] ?? '',
+            toUserId: $data['to_user_id'] ?? '',
+            callId: $data['call_id'] ?? '',
+            payload: $data['payload'] ?? [],
         );
     }
 
