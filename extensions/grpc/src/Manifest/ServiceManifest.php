@@ -8,8 +8,6 @@ use NoDiscard;
 use Pulsar\Api\Api;
 
 use function array_map;
-use function is_array;
-use function is_string;
 use function sprintf;
 use function var_export;
 
@@ -36,25 +34,24 @@ final readonly class ServiceManifest
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     services?: list<array<string, mixed>>,
+     *     version?: string,
+     *     compiled_at?: string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var list<array<string, mixed>> $servicesData */
-        $servicesData = is_array($data['services'] ?? null) ? $data['services'] : [];
-
         $services = [];
-        foreach ($servicesData as $entry) {
-            if (is_array($entry)) {
-                $services[] = ManifestEntry::fromArray($entry);
-            }
+        foreach ($data['services'] ?? [] as $entry) {
+            $services[] = ManifestEntry::fromArray($entry);
         }
 
         return new self(
             services: $services,
-            version: is_string($data['version'] ?? null) ? $data['version'] : '1.0',
-            compiledAt: is_string($data['compiled_at'] ?? null) ? $data['compiled_at'] : '',
+            version: $data['version'] ?? '1.0',
+            compiledAt: $data['compiled_at'] ?? '',
         );
     }
 
