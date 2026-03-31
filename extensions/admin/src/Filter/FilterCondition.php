@@ -6,8 +6,6 @@ namespace Pulsar\Extension\Admin\Filter;
 
 use Pulsar\Api\Api;
 
-use function is_string;
-
 /**
  * A single filter condition in a visual filter definition.
  * @api
@@ -27,16 +25,17 @@ final readonly class FilterCondition
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     field?: string,
+     *     operator?: string,
+     *     value?: mixed,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
-        $field = isset($data['field']) && is_string($data['field']) ? $data['field'] : '';
-        $operator = isset($data['operator']) && is_string($data['operator']) ? $data['operator'] : 'eq';
-
         return new self(
-            field: $field,
-            operator: FilterOperator::from($operator),
+            field: $data['field'] ?? '',
+            operator: FilterOperator::from($data['operator'] ?? 'eq'),
             value: $data['value'] ?? null,
         );
     }

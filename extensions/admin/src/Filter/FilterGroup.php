@@ -6,9 +6,8 @@ namespace Pulsar\Extension\Admin\Filter;
 
 use Pulsar\Api\Api;
 
+use function array_map;
 use function count;
-use function is_array;
-use function is_string;
 
 /**
  * A group of filter conditions combined with AND/OR logic.
@@ -54,37 +53,24 @@ final readonly class FilterGroup
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     logic?: string,
+     *     conditions?: list<array<string, mixed>>,
+     *     groups?: list<array<string, mixed>>,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
-        $logicRaw = isset($data['logic']) && is_string($data['logic']) ? $data['logic'] : 'and';
-        $logic = FilterLogic::tryFrom($logicRaw) ?? FilterLogic::And;
+        $logic = FilterLogic::tryFrom($data['logic'] ?? 'and') ?? FilterLogic::And;
 
         $conditions = [];
-        $conditionsRaw = $data['conditions'] ?? null;
-
-        if (is_array($conditionsRaw)) {
-            /** @var mixed $condData */
-            foreach ($conditionsRaw as $condData) {
-                if (is_array($condData)) {
-                    /** @var array<string, mixed> $condData */
-                    $conditions[] = FilterCondition::fromArray($condData);
-                }
-            }
+        foreach ($data['conditions'] ?? [] as $condData) {
+            $conditions[] = FilterCondition::fromArray($condData);
         }
 
         $groups = [];
-        $groupsRaw = $data['groups'] ?? null;
-
-        if (is_array($groupsRaw)) {
-            /** @var mixed $groupData */
-            foreach ($groupsRaw as $groupData) {
-                if (is_array($groupData)) {
-                    /** @var array<string, mixed> $groupData */
-                    $groups[] = self::fromArray($groupData);
-                }
-            }
+        foreach ($data['groups'] ?? [] as $groupData) {
+            $groups[] = self::fromArray($groupData);
         }
 
         return new self(
