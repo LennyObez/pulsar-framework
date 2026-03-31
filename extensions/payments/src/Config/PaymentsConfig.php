@@ -42,6 +42,16 @@ final readonly class PaymentsConfig
         public int $dunningMaxRetries,
         public int $trialMaxDays,
         public array $countryPaymentMethods = [],
+        /**
+         * F13.10: when true, every `PaymentGateway` operation refuses to
+         * proceed unless an active `TenantContext` is resolved. Multi-
+         * tenant deployments should set this to true in `config/payments.php`
+         * so a payment cannot accidentally be issued outside a tenant scope
+         * — typically a bug in the request pipeline, but in the worst case
+         * a cross-tenant resource access vector. Defaults to false to keep
+         * single-tenant deployments and CLI workflows working untouched.
+         */
+        public bool $requireTenantContext = false,
     ) {}
 
     /**
@@ -93,6 +103,7 @@ final readonly class PaymentsConfig
         $invoiceRetentionDays = self::int($data, 'invoice_retention_days', 3650);
         $dunningMaxRetries = self::int($data, 'dunning_max_retries', 4);
         $trialMaxDays = self::int($data, 'trial_max_days', 30);
+        $requireTenantContext = (bool) ($data['require_tenant_context'] ?? false);
 
         // Per-country payment method overrides
         $rawCountryMethods = $data['country_payment_methods'] ?? [];
@@ -117,6 +128,7 @@ final readonly class PaymentsConfig
             dunningMaxRetries: $dunningMaxRetries,
             trialMaxDays: $trialMaxDays,
             countryPaymentMethods: $countryPaymentMethods,
+            requireTenantContext: $requireTenantContext,
         );
     }
 
