@@ -7,8 +7,6 @@ namespace Pulsar\Extension\Payments\Domain;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_string;
-
 /**
  * Immutable seller/company profile for invoice rendering.
  *
@@ -59,28 +57,47 @@ final readonly class SellerProfile
     /**
      * Build from a key-value array (e.g., from CMS settings).
      *
-     * @param array<string, mixed> $data
+     * @param array{
+     *     company_name?: string,
+     *     legal_form?: string,
+     *     vat_number?: string,
+     *     registration_number?: string,
+     *     address_line1?: string,
+     *     address_line2?: string,
+     *     city?: string,
+     *     postal_code?: string,
+     *     country?: string,
+     *     iban?: string,
+     *     bic?: string,
+     *     bank_name?: string,
+     *     phone?: string,
+     *     email?: string,
+     *     website?: string,
+     *     logo_path?: string|null,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
+        $logoPath = $data['logo_path'] ?? null;
+
         return new self(
-            companyName: self::str($data, 'company_name', ''),
-            legalForm: self::str($data, 'legal_form', ''),
-            vatNumber: self::str($data, 'vat_number', ''),
-            registrationNumber: self::str($data, 'registration_number', ''),
-            addressLine1: self::str($data, 'address_line1', ''),
-            addressLine2: self::str($data, 'address_line2', ''),
-            city: self::str($data, 'city', ''),
-            postalCode: self::str($data, 'postal_code', ''),
-            country: self::str($data, 'country', ''),
-            iban: self::str($data, 'iban', ''),
-            bic: self::str($data, 'bic', ''),
-            bankName: self::str($data, 'bank_name', ''),
-            phone: self::str($data, 'phone', ''),
-            email: self::str($data, 'email', ''),
-            website: self::str($data, 'website', ''),
-            logoPath: self::strOrNull($data, 'logo_path'),
+            companyName: $data['company_name'] ?? '',
+            legalForm: $data['legal_form'] ?? '',
+            vatNumber: $data['vat_number'] ?? '',
+            registrationNumber: $data['registration_number'] ?? '',
+            addressLine1: $data['address_line1'] ?? '',
+            addressLine2: $data['address_line2'] ?? '',
+            city: $data['city'] ?? '',
+            postalCode: $data['postal_code'] ?? '',
+            country: $data['country'] ?? '',
+            iban: $data['iban'] ?? '',
+            bic: $data['bic'] ?? '',
+            bankName: $data['bank_name'] ?? '',
+            phone: $data['phone'] ?? '',
+            email: $data['email'] ?? '',
+            website: $data['website'] ?? '',
+            logoPath: ($logoPath !== null && $logoPath !== '') ? $logoPath : null,
         );
     }
 
@@ -128,23 +145,4 @@ final readonly class SellerProfile
         return $this->iban !== '' && $this->bic !== '';
     }
 
-    /**
-     * @param array<string, mixed> $data
-     */
-    private static function str(array $data, string $key, string $default): string
-    {
-        $value = $data[$key] ?? null;
-
-        return is_string($value) ? $value : $default;
-    }
-
-    /**
-     * @param array<string, mixed> $data
-     */
-    private static function strOrNull(array $data, string $key): ?string
-    {
-        $value = $data[$key] ?? null;
-
-        return is_string($value) && $value !== '' ? $value : null;
-    }
 }

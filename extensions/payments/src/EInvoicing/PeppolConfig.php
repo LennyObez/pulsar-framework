@@ -7,8 +7,6 @@ namespace Pulsar\Extension\Payments\EInvoicing;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_string;
-
 /**
  * Peppol Access Point configuration.
  *
@@ -30,18 +28,25 @@ final readonly class PeppolConfig
     /**
      * Build from a raw configuration array.
      *
-     * @param array<string, mixed> $data
+     * @param array{
+     *     enabled?: bool|int|string,
+     *     access_point_url?: string,
+     *     sender_id?: string,
+     *     sender_scheme?: string,
+     *     receiver_lookup_endpoint?: string|null,
+     *     signing_key_path?: string|null,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
             enabled: (bool) ($data['enabled'] ?? false),
-            accessPointUrl: is_string($data['access_point_url'] ?? null) ? $data['access_point_url'] : '',
-            senderId: is_string($data['sender_id'] ?? null) ? $data['sender_id'] : '',
-            senderScheme: is_string($data['sender_scheme'] ?? null) ? $data['sender_scheme'] : '0088',
-            receiverLookupEndpoint: is_string($data['receiver_lookup_endpoint'] ?? null) ? $data['receiver_lookup_endpoint'] : null,
-            signingKeyPath: is_string($data['signing_key_path'] ?? null) ? $data['signing_key_path'] : null,
+            accessPointUrl: $data['access_point_url'] ?? '',
+            senderId: $data['sender_id'] ?? '',
+            senderScheme: $data['sender_scheme'] ?? '0088',
+            receiverLookupEndpoint: $data['receiver_lookup_endpoint'] ?? null,
+            signingKeyPath: $data['signing_key_path'] ?? null,
         );
     }
 
