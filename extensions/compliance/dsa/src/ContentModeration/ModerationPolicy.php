@@ -7,9 +7,6 @@ namespace Pulsar\Extension\Dsa\ContentModeration;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_bool;
-use function is_string;
-
 /**
  * Content moderation policy definition per DSA Article 14.
  *
@@ -39,18 +36,25 @@ final readonly class ModerationPolicy
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     id?: string,
+     *     name?: string,
+     *     description?: string,
+     *     legal_basis?: string,
+     *     requires_human_review?: bool,
+     *     category?: string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            id: is_string($data['id'] ?? null) ? $data['id'] : '',
-            name: is_string($data['name'] ?? null) ? $data['name'] : '',
-            description: is_string($data['description'] ?? null) ? $data['description'] : '',
-            legalBasis: is_string($data['legal_basis'] ?? null) ? $data['legal_basis'] : '',
-            requiresHumanReview: is_bool($data['requires_human_review'] ?? null) ? $data['requires_human_review'] : true,
-            category: is_string($data['category'] ?? null) ? $data['category'] : 'terms_violation',
+            id: $data['id'] ?? '',
+            name: $data['name'] ?? '',
+            description: $data['description'] ?? '',
+            legalBasis: $data['legal_basis'] ?? '',
+            requiresHumanReview: $data['requires_human_review'] ?? true,
+            category: $data['category'] ?? 'terms_violation',
         );
     }
 
