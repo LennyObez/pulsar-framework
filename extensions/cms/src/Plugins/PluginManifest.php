@@ -52,22 +52,37 @@ final readonly class PluginManifest
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     slug?: string,
+     *     display_name?: string,
+     *     name?: string,
+     *     version?: string,
+     *     description?: string|null,
+     *     author_name?: string|null,
+     *     author_url?: string|null,
+     *     license?: string|null,
+     *     pulsar_version?: string|null,
+     *     capabilities?: list<string>,
+     *     dependencies?: array<string, string>,
+     *     entry_point?: string|null,
+     *     settings?: array<string, mixed>,
+     *     autoload?: array<string, array<string, string>>|null,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
         return new self(
-            slug: is_string($data['slug'] ?? null) ? $data['slug'] : '',
-            displayName: is_string($data['display_name'] ?? null) ? $data['display_name'] : (is_string($data['name'] ?? null) ? $data['name'] : ''),
-            version: is_string($data['version'] ?? null) ? $data['version'] : '0.0.0',
-            description: isset($data['description']) ? (is_string($data['description']) ? $data['description'] : '') : null,
-            authorName: isset($data['author_name']) ? (is_string($data['author_name']) ? $data['author_name'] : '') : null,
-            authorUrl: isset($data['author_url']) ? (is_string($data['author_url']) ? $data['author_url'] : '') : null,
-            license: isset($data['license']) ? (is_string($data['license']) ? $data['license'] : '') : null,
-            pulsarVersionConstraint: isset($data['pulsar_version']) ? (is_string($data['pulsar_version']) ? $data['pulsar_version'] : '') : null,
+            slug: $data['slug'] ?? '',
+            displayName: $data['display_name'] ?? $data['name'] ?? '',
+            version: $data['version'] ?? '0.0.0',
+            description: $data['description'] ?? null,
+            authorName: $data['author_name'] ?? null,
+            authorUrl: $data['author_url'] ?? null,
+            license: $data['license'] ?? null,
+            pulsarVersionConstraint: $data['pulsar_version'] ?? null,
             capabilities: self::toStringList($data['capabilities'] ?? []),
             dependencies: self::toStringMap($data['dependencies'] ?? []),
-            entryPoint: isset($data['entry_point']) ? (is_string($data['entry_point']) ? $data['entry_point'] : '') : null,
+            entryPoint: $data['entry_point'] ?? null,
             settings: self::toStringKeyedArray($data['settings'] ?? []),
             autoload: isset($data['autoload']) ? self::toStringKeyedStringMap($data['autoload']) : null,
         );
