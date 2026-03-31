@@ -18,7 +18,6 @@ use Pulsar\Extension\AiGovernance\Enum\AiModelRiskLevel;
 use Pulsar\Extension\AiGovernance\Enum\AiModelStatus;
 use Pulsar\Extension\AiGovernance\Internal\AiLifecycleManager;
 use Pulsar\Extension\AiGovernance\Internal\Store\InMemoryModelRegistry;
-use RuntimeException;
 
 #[CoversClass(AiLifecycleManager::class)]
 final class AiLifecycleManagerTest extends TestCase
@@ -71,7 +70,7 @@ final class AiLifecycleManagerTest extends TestCase
 
         $this->manager->addDeploymentGate($gate);
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('safety-check: Model safety score below threshold');
         $this->manager->deploy('m1');
     }
@@ -94,7 +93,7 @@ final class AiLifecycleManagerTest extends TestCase
         $this->manager->addDeploymentGate($gate1);
         $this->manager->addDeploymentGate($gate2);
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('gate-a: Failure A; gate-b: Failure B');
         $this->manager->deploy('m1');
     }

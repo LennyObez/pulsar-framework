@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Payments;
 
 use Pulsar\Container\ContainerInterface;
+use Pulsar\Container\Resolution\TypedServiceResolver;
 use Pulsar\Extensibility\ServiceProviderInterface;
 use Pulsar\Extension\Payments\Config\PaymentsConfig;
 use Pulsar\Extension\Payments\Contracts\ClockInterface;
@@ -67,7 +68,15 @@ final class PaymentsServiceProvider implements ServiceProviderInterface
             return match ($config->provider) {
                 'null' => new NullProvider($clock),
                 'simulator' => new SimulatorProvider($clock),
-                default => $container->get($config->provider),
+                // F3.1 / F17.1 / F22.3: refuse arbitrary class instantiation —
+                // verify the configured FQCN actually implements the expected
+                // interface before letting the container resolve it.
+                default => TypedServiceResolver::resolve(
+                    $container,
+                    $config->provider,
+                    PaymentProviderInterface::class,
+                    'payments.provider',
+                ),
             };
         });
 
@@ -79,7 +88,12 @@ final class PaymentsServiceProvider implements ServiceProviderInterface
             /** @var IdempotencyStoreInterface $base */
             $base = match ($config->idempotency->store) {
                 'memory' => new InMemoryIdempotencyStore(),
-                default => $container->get($config->idempotency->store),
+                default => TypedServiceResolver::resolve(
+                    $container,
+                    $config->idempotency->store,
+                    IdempotencyStoreInterface::class,
+                    'payments.idempotency.store',
+                ),
             };
 
             // F21.16: when a `TenantContext` is wired (multi-tenant
@@ -106,7 +120,12 @@ final class PaymentsServiceProvider implements ServiceProviderInterface
             /** @var WebhookEventLogInterface */
             return match ($config->webhookLog->store) {
                 'memory' => new InMemoryWebhookEventLog(),
-                default => $container->get($config->webhookLog->store),
+                default => TypedServiceResolver::resolve(
+                    $container,
+                    $config->webhookLog->store,
+                    WebhookEventLogInterface::class,
+                    'payments.webhook_log.store',
+                ),
             };
         });
 
