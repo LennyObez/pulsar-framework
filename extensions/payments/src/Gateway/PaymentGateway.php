@@ -31,6 +31,7 @@ use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditLogger;
 use Pulsar\Security\Audit\AuditOutcome;
+use Pulsar\Tenancy\TenantContext;
 use Throwable;
 
 use function strlen;
@@ -54,6 +55,13 @@ final readonly class PaymentGateway implements PaymentGatewayInterface
         private ClockInterface $clock,
         private PaymentsConfig $config,
         private ?CreatePaymentIntentHandler $createHandler = null,
+        // F13.9: when a `TenantContext` is wired, the gateway stamps the
+        // tenant id on every audit record so a multi-tenant audit trail
+        // can be filtered per tenant. Idempotency-key tenant scoping is
+        // handled separately by the `TenantAwareIdempotencyStore` decorator
+        // wired around the underlying store. Optional — single-tenant
+        // deployments leave it null.
+        private ?TenantContext $tenantContext = null,
     ) {}
 
     /**
@@ -421,12 +429,12 @@ final readonly class PaymentGateway implements PaymentGatewayInterface
             actor: 'payments',
             action: $action,
             resource: 'payment_intent:' . $intentId,
-            metadata: [
+            metadata: $this->withTenantMetadata([
                 'provider' => $this->provider->name(),
                 'currency' => $amount->currency->value,
                 'amount_minor_units' => $amount->amount,
                 'status' => $status,
-            ],
+            ]),
         );
     }
 
@@ -438,13 +446,13 @@ final readonly class PaymentGateway implements PaymentGatewayInterface
             actor: 'payments',
             action: 'capture_intent',
             resource: 'charge:' . $charge->id,
-            metadata: [
+            metadata: $this->withTenantMetadata([
                 'provider' => $this->provider->name(),
                 'currency' => $charge->amount->currency->value,
                 'amount_minor_units' => $charge->amount->amount,
                 'intent_id' => $charge->intentId,
                 'status' => $charge->status->value,
-            ],
+            ]),
         );
     }
 
@@ -456,14 +464,38 @@ final readonly class PaymentGateway implements PaymentGatewayInterface
             actor: 'payments',
             action: 'refund',
             resource: 'refund:' . $refund->id,
-            metadata: [
+            metadata: $this->withTenantMetadata([
                 'provider' => $this->provider->name(),
                 'currency' => $refund->amount->currency->value,
                 'amount_minor_units' => $refund->amount->amount,
                 'charge_id' => $refund->chargeId,
                 'status' => $refund->status->value,
-            ],
+            ]),
         );
+    }
+
+    /**
+     * Stamp the active tenant id onto an audit metadata bag.
+     *
+     * F13.9: a multi-tenant audit trail must record which tenant
+     * initiated each payment operation so compliance reports and
+     * incident replays can be filtered per tenant. When no tenant is
+     * resolved (single-tenant deploy or bootstrap call), the metadata
+     * is returned unchanged.
+     *
+     * @param array<string, mixed> $metadata
+     *
+     * @return array<string, mixed>
+     */
+    private function withTenantMetadata(array $metadata): array
+    {
+        $tenant = $this->tenantContext?->tryGet();
+
+        if ($tenant !== null) {
+            $metadata['tenant_id'] = $tenant->id;
+        }
+
+        return $metadata;
     }
 
     private function incrementIntentMetric(Money $amount, string $status): void
