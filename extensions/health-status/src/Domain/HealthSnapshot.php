@@ -50,28 +50,23 @@ final readonly class HealthSnapshot
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     id: string,
+     *     overall_status: string,
+     *     results: list<array{name: string, status: string, message: string, latency_ms: float}>,
+     *     total_duration_ms: float|int|string,
+     *     captured_at: string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var string $id */
-        $id = $data['id'];
-        /** @var string $overallStatus */
-        $overallStatus = $data['overall_status'];
-        /** @var list<array{name: string, status: string, message: string, latency_ms: float}> $results */
-        $results = $data['results'];
-        /** @var float|int|string $totalDurationMs */
-        $totalDurationMs = $data['total_duration_ms'];
-        /** @var string $capturedAt */
-        $capturedAt = $data['captured_at'];
-
         return new self(
-            id: (string) $id,
-            overallStatus: HealthStatus::from((string) $overallStatus),
-            results: $results,
-            totalDurationMs: (float) $totalDurationMs,
-            capturedAt: new DateTimeImmutable((string) $capturedAt),
+            id: $data['id'],
+            overallStatus: HealthStatus::from($data['overall_status']),
+            results: $data['results'],
+            totalDurationMs: (float) $data['total_duration_ms'],
+            capturedAt: new DateTimeImmutable($data['captured_at']),
         );
     }
 }
