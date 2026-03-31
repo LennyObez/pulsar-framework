@@ -8,9 +8,6 @@ use InvalidArgumentException;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_bool;
-use function is_int;
-
 /**
  * Configures how old content revisions are retained and pruned.
  *
@@ -44,16 +41,21 @@ final readonly class RevisionRetentionPolicy
     /**
      * Build from a raw config array.
      *
-     * @param array<string, mixed> $data
+     * @param array{
+     *     max_revisions_per_content?: int,
+     *     max_age_days?: int,
+     *     keep_published?: bool,
+     *     keep_first_revision?: bool,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            maxRevisionsPerContent: is_int($data['max_revisions_per_content'] ?? null) ? $data['max_revisions_per_content'] : 50,
-            maxAgeDays: is_int($data['max_age_days'] ?? null) ? $data['max_age_days'] : 365,
-            keepPublished: is_bool($data['keep_published'] ?? null) ? $data['keep_published'] : true,
-            keepFirstRevision: is_bool($data['keep_first_revision'] ?? null) ? $data['keep_first_revision'] : true,
+            maxRevisionsPerContent: $data['max_revisions_per_content'] ?? 50,
+            maxAgeDays: $data['max_age_days'] ?? 365,
+            keepPublished: $data['keep_published'] ?? true,
+            keepFirstRevision: $data['keep_first_revision'] ?? true,
         );
     }
 }
