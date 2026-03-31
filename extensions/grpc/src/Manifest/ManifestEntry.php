@@ -7,9 +7,6 @@ namespace Pulsar\Extension\Grpc\Manifest;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_array;
-use function is_string;
-
 /**
  * A single service entry in the compiled service manifest.
  * @api
@@ -29,18 +26,19 @@ final readonly class ManifestEntry
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     service_name?: string,
+     *     handler_class?: string,
+     *     methods?: list<array{name: string, full_name: string, type: string, input_type: string, output_type: string, handler: string}>,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var list<array{name: string, full_name: string, type: string, input_type: string, output_type: string, handler: string}> $methods */
-        $methods = is_array($data['methods'] ?? null) ? $data['methods'] : [];
-
         return new self(
-            serviceName: is_string($data['service_name'] ?? null) ? $data['service_name'] : '',
-            handlerClass: is_string($data['handler_class'] ?? null) ? $data['handler_class'] : '',
-            methods: $methods,
+            serviceName: $data['service_name'] ?? '',
+            handlerClass: $data['handler_class'] ?? '',
+            methods: $data['methods'] ?? [],
         );
     }
 
