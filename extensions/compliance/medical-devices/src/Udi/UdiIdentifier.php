@@ -6,8 +6,6 @@ namespace Pulsar\Extension\MedicalDevices\Udi;
 
 use Pulsar\Api\Api;
 
-use function is_string;
-
 /**
  * Unique Device Identifier per EU MDR Article 27.
  *
@@ -91,23 +89,26 @@ final readonly class UdiIdentifier
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     device_identifier?: string,
+     *     lot_number?: string|null,
+     *     serial_number?: string|null,
+     *     expiration_date?: string|null,
+     *     manufacturing_date?: string|null,
+     *     issuing_agency?: string,
+     *     human_readable?: string|null,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
-        /** @var string $deviceIdentifier */
-        $deviceIdentifier = $data['device_identifier'] ?? '';
-
         return new self(
-            deviceIdentifier: $deviceIdentifier,
-            lotNumber: is_string($data['lot_number'] ?? null) ? $data['lot_number'] : null,
-            serialNumber: is_string($data['serial_number'] ?? null) ? $data['serial_number'] : null,
-            expirationDate: is_string($data['expiration_date'] ?? null) ? $data['expiration_date'] : null,
-            manufacturingDate: is_string($data['manufacturing_date'] ?? null) ? $data['manufacturing_date'] : null,
-            issuingAgency: is_string($data['issuing_agency'] ?? null)
-                ? UdiIssuingAgency::from($data['issuing_agency'])
-                : UdiIssuingAgency::GS1,
-            humanReadable: is_string($data['human_readable'] ?? null) ? $data['human_readable'] : null,
+            deviceIdentifier: $data['device_identifier'] ?? '',
+            lotNumber: $data['lot_number'] ?? null,
+            serialNumber: $data['serial_number'] ?? null,
+            expirationDate: $data['expiration_date'] ?? null,
+            manufacturingDate: $data['manufacturing_date'] ?? null,
+            issuingAgency: UdiIssuingAgency::tryFrom($data['issuing_agency'] ?? '') ?? UdiIssuingAgency::GS1,
+            humanReadable: $data['human_readable'] ?? null,
         );
     }
 }

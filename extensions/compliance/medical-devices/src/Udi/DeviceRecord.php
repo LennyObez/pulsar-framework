@@ -6,8 +6,6 @@ namespace Pulsar\Extension\MedicalDevices\Udi;
 
 use Pulsar\Api\Api;
 
-use function is_string;
-
 /**
  * A registered medical device record.
  *
@@ -63,29 +61,30 @@ final readonly class DeviceRecord
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     udi: array<string, mixed>,
+     *     device_name?: string,
+     *     manufacturer?: string,
+     *     risk_class?: string,
+     *     notified_body?: string|null,
+     *     intended_purpose?: string|null,
+     *     status?: string,
+     *     certificate_number?: string|null,
+     *     certificate_expiry?: string|null,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
-        /** @var array<string, mixed> $udiData */
-        $udiData = $data['udi'];
-        /** @var string $deviceName */
-        $deviceName = $data['device_name'] ?? '';
-        /** @var string $manufacturer */
-        $manufacturer = $data['manufacturer'] ?? '';
-        /** @var string $riskClassStr */
-        $riskClassStr = $data['risk_class'] ?? '';
-
         return new self(
-            udi: UdiIdentifier::fromArray($udiData),
-            deviceName: $deviceName,
-            manufacturer: $manufacturer,
-            riskClass: DeviceRiskClass::from($riskClassStr),
-            notifiedBody: is_string($data['notified_body'] ?? null) ? $data['notified_body'] : null,
-            intendedPurpose: is_string($data['intended_purpose'] ?? null) ? $data['intended_purpose'] : null,
-            status: is_string($data['status'] ?? null) ? DeviceStatus::from($data['status']) : DeviceStatus::Active,
-            certificateNumber: is_string($data['certificate_number'] ?? null) ? $data['certificate_number'] : null,
-            certificateExpiry: is_string($data['certificate_expiry'] ?? null) ? $data['certificate_expiry'] : null,
+            udi: UdiIdentifier::fromArray($data['udi']),
+            deviceName: $data['device_name'] ?? '',
+            manufacturer: $data['manufacturer'] ?? '',
+            riskClass: DeviceRiskClass::from($data['risk_class'] ?? ''),
+            notifiedBody: $data['notified_body'] ?? null,
+            intendedPurpose: $data['intended_purpose'] ?? null,
+            status: DeviceStatus::tryFrom($data['status'] ?? '') ?? DeviceStatus::Active,
+            certificateNumber: $data['certificate_number'] ?? null,
+            certificateExpiry: $data['certificate_expiry'] ?? null,
         );
     }
 }
