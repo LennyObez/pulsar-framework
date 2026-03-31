@@ -7,9 +7,6 @@ namespace Pulsar\Extension\Cms\FullSiteEditor;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_array;
-use function is_string;
-
 /**
  * Global styles configuration for full-site editing.
  *
@@ -40,17 +37,23 @@ final readonly class GlobalStylesConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     colors?: array<string, string>,
+     *     typography?: array<string, string>,
+     *     spacing?: array<string, string>,
+     *     borders?: array<string, string>,
+     *     custom_css?: string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            colors: self::extractStringMap($data, 'colors'),
-            typography: self::extractStringMap($data, 'typography'),
-            spacing: self::extractStringMap($data, 'spacing'),
-            borders: self::extractStringMap($data, 'borders'),
-            customCss: is_string($data['custom_css'] ?? null) ? $data['custom_css'] : '',
+            colors: $data['colors'] ?? [],
+            typography: $data['typography'] ?? [],
+            spacing: $data['spacing'] ?? [],
+            borders: $data['borders'] ?? [],
+            customCss: $data['custom_css'] ?? '',
         );
     }
 
@@ -89,27 +92,4 @@ final readonly class GlobalStylesConfig
         return $rootBlock;
     }
 
-    /**
-     * @param array<string, mixed> $data
-     * @return array<string, string>
-     */
-    private static function extractStringMap(array $data, string $key): array
-    {
-        $raw = $data[$key] ?? [];
-
-        if (!is_array($raw)) {
-            return [];
-        }
-
-        $map = [];
-
-        /** @var mixed $v */
-        foreach ($raw as $k => $v) {
-            if (is_string($k) && is_string($v)) {
-                $map[$k] = $v;
-            }
-        }
-
-        return $map;
-    }
 }
