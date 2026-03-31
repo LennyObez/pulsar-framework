@@ -53,9 +53,22 @@ final readonly class TrustedProxy
      */
     public function resolveClientIp(ServerRequestInterface $request): string
     {
-        $remoteAddr = $request->getServerParams()['REMOTE_ADDR'] ?? null;
-        $remoteAddr = is_string($remoteAddr) ? $remoteAddr : '127.0.0.1';
-        $remoteAddr = $this->validIpOrFallback($remoteAddr, '127.0.0.1');
+        $remoteAddrRaw = $request->getServerParams()['REMOTE_ADDR'] ?? null;
+
+        // Missing / non-string REMOTE_ADDR: fall back to loopback so the
+        // (typically test-only) caller still gets a workable IP. A string
+        // value is taken at face value; only the trust check below decides
+        // whether to consult `X-Forwarded-For`.
+        $remoteAddr = is_string($remoteAddrRaw) ? $remoteAddrRaw : '127.0.0.1';
+
+        // String but malformed REMOTE_ADDR: it cannot match any trusted
+        // CIDR, so there is no question of walking `X-Forwarded-For`.
+        // Return the raw value so audit logs see exactly what the
+        // connection presented; never let an unparsable bytes pivot us
+        // into reading attacker-controlled forwarding headers.
+        if (filter_var($remoteAddr, FILTER_VALIDATE_IP) === false) {
+            return $remoteAddr;
+        }
 
         if (!$this->isTrusted($remoteAddr)) {
             return $remoteAddr;
@@ -83,16 +96,6 @@ final readonly class TrustedProxy
         }
 
         return $remoteAddr;
-    }
-
-    /**
-     * Return the candidate if it parses as a valid IP address, otherwise
-     * return the supplied fallback. Used at the boundary so the rest of
-     * the resolver can assume `REMOTE_ADDR` is well-formed.
-     */
-    private function validIpOrFallback(string $candidate, string $fallback): string
-    {
-        return filter_var($candidate, FILTER_VALIDATE_IP) !== false ? $candidate : $fallback;
     }
 
     private function isTrusted(string $ip): bool
