@@ -6,8 +6,6 @@ namespace Pulsar\Extension\Cms\AI;
 
 use Pulsar\Api\Api;
 
-use function is_string;
-
 /**
  * Immutable DTO representing a response from an LLM provider.
  *
@@ -26,15 +24,20 @@ final readonly class LlmResponse
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     content?: string,
+     *     input_tokens?: int,
+     *     output_tokens?: int,
+     *     finish_reason?: string,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
         return new self(
-            content: is_string($data['content'] ?? null) ? $data['content'] : '',
-            inputTokens: is_numeric($data['input_tokens'] ?? null) ? (int) $data['input_tokens'] : 0,
-            outputTokens: is_numeric($data['output_tokens'] ?? null) ? (int) $data['output_tokens'] : 0,
-            finishReason: is_string($data['finish_reason'] ?? null) ? $data['finish_reason'] : 'stop',
+            content: $data['content'] ?? '',
+            inputTokens: $data['input_tokens'] ?? 0,
+            outputTokens: $data['output_tokens'] ?? 0,
+            finishReason: $data['finish_reason'] ?? 'stop',
         );
     }
 }
