@@ -32,25 +32,20 @@ final readonly class ReadWriteConfig
     /**
      * Build from a raw config array.
      *
-     * @param array<string, mixed> $data
+     * @param array{
+     *     read_hosts?: list<string>,
+     *     write_host?: string,
+     *     sticky_duration?: string|int,
+     *     enabled?: bool|int|string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var list<string> $readHosts */
-        $readHosts = $data['read_hosts'] ?? [];
-
-        /** @var string $writeHost */
-        $writeHost = $data['write_host'] ?? '127.0.0.1';
-
-        /** @var string|int $rawSticky */
-        $rawSticky = $data['sticky_duration'] ?? 'request';
-        $stickyDuration = $rawSticky;
-
         return new self(
-            readHosts: $readHosts,
-            writeHost: $writeHost,
-            stickyDuration: $stickyDuration,
+            readHosts: $data['read_hosts'] ?? [],
+            writeHost: $data['write_host'] ?? '127.0.0.1',
+            stickyDuration: $data['sticky_duration'] ?? 'request',
             enabled: (bool) ($data['enabled'] ?? false),
         );
     }

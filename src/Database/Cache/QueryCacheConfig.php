@@ -32,25 +32,21 @@ final readonly class QueryCacheConfig
     /**
      * Build from a raw config array.
      *
-     * @param array<string, mixed> $data
+     * @param array{
+     *     enabled?: bool|int|string,
+     *     default_ttl_seconds?: int|string,
+     *     sensitive_table_names?: list<string>,
+     *     authorization_columns?: list<string>,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var list<string> $sensitiveTableNames */
-        $sensitiveTableNames = $data['sensitive_table_names'] ?? [];
-
-        /** @var list<string> $authorizationColumns */
-        $authorizationColumns = $data['authorization_columns'] ?? ['user_id', 'tenant_id'];
-
-        /** @var int|string $defaultTtl */
-        $defaultTtl = $data['default_ttl_seconds'] ?? 60;
-
         return new self(
             enabled: (bool) ($data['enabled'] ?? true),
-            defaultTtlSeconds: (int) $defaultTtl,
-            sensitiveTableNames: $sensitiveTableNames,
-            authorizationColumns: $authorizationColumns,
+            defaultTtlSeconds: (int) ($data['default_ttl_seconds'] ?? 60),
+            sensitiveTableNames: $data['sensitive_table_names'] ?? [],
+            authorizationColumns: $data['authorization_columns'] ?? ['user_id', 'tenant_id'],
         );
     }
 }
