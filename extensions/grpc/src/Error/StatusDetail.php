@@ -7,10 +7,6 @@ namespace Pulsar\Extension\Grpc\Error;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_array;
-use function is_int;
-use function is_string;
-
 /**
  * Rich error details following the google.rpc.Status model.
  *
@@ -35,19 +31,19 @@ final readonly class StatusDetail
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     code?: int,
+     *     message?: string,
+     *     details?: array<string, mixed>,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $codeRaw = $data['code'] ?? null;
-        $rawCode = is_int($codeRaw) ? $codeRaw : GrpcStatus::Unknown->value;
-        $rawMessage = (is_string($data['message'] ?? null) ? $data['message'] : '');
-
         return new self(
-            code: GrpcStatus::from($rawCode),
-            message: $rawMessage,
-            details: self::extractDetails($data),
+            code: GrpcStatus::tryFrom($data['code'] ?? GrpcStatus::Unknown->value) ?? GrpcStatus::Unknown,
+            message: $data['message'] ?? '',
+            details: $data['details'] ?? [],
         );
     }
 
@@ -61,21 +57,5 @@ final readonly class StatusDetail
             'message' => $this->message,
             'details' => $this->details,
         ];
-    }
-
-    /**
-     * @param array<string, mixed> $data
-     * @return array<string, mixed>
-     */
-    private static function extractDetails(array $data): array
-    {
-        $raw = $data['details'] ?? [];
-
-        if (!is_array($raw)) {
-            return [];
-        }
-
-        /** @var array<string, mixed> $raw */
-        return $raw;
     }
 }

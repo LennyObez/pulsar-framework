@@ -19,15 +19,13 @@ final readonly class HealthCheckResponse
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{status?: int} $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $rawStatus = is_numeric($data['status'] ?? null) ? (int) $data['status'] : HealthStatus::Unknown->value;
-
         return new self(
-            status: HealthStatus::from($rawStatus),
+            status: HealthStatus::tryFrom($data['status'] ?? HealthStatus::Unknown->value) ?? HealthStatus::Unknown,
         );
     }
 
