@@ -19,6 +19,7 @@ use Pulsar\Extension\Payments\Internal\Support\ParametersHasher;
 use Pulsar\Idempotency\Exception\IdempotencyException;
 use Pulsar\Idempotency\IdempotencyClaimStatus;
 use Pulsar\Idempotency\IdempotencyStoreInterface;
+use Pulsar\Idempotency\SignedIdempotencyEnvelope;
 use Pulsar\Observability\Metrics\LabelSet;
 use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Security\Audit\AuditEvent;
@@ -45,6 +46,9 @@ final readonly class CreatePaymentIntentHandler
         private LoggerInterface $logger,
         private ClockInterface $clock,
         private PaymentsConfig $config,
+        // F21.3: signs/verifies idempotency-cache payloads. Required so
+        // a forged store row cannot replay as a synthesised intent.
+        private SignedIdempotencyEnvelope $envelope,
     ) {}
 
     /**
@@ -81,7 +85,7 @@ final readonly class CreatePaymentIntentHandler
             $payload = $claim->resultPayload;
 
             return new CreatePaymentIntentResult(
-                intent: $this->deserializeIntent($payload),
+                intent: $this->deserializeIntent($request->idempotencyKey, $payload),
                 replayed: true,
             );
         }
@@ -139,8 +143,12 @@ final readonly class CreatePaymentIntentHandler
             ],
         ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
 
+        // F21.3: bind the payload to the idempotency key with a HMAC
+        // envelope so a tampered store row cannot replay a forged intent.
+        $sealed = $this->envelope->seal($key, $payload);
+
         try {
-            $this->idempotencyStore->commit($key, $payload);
+            $this->idempotencyStore->commit($key, $sealed);
         } catch (Throwable $e) {
             $this->logger->critical('Failed to commit idempotency result', [
                 'key' => $key,
@@ -152,8 +160,10 @@ final readonly class CreatePaymentIntentHandler
         }
     }
 
-    private function deserializeIntent(string $payload): PaymentIntent
+    private function deserializeIntent(string $idempotencyKey, string $sealed): PaymentIntent
     {
+        $payload = $this->envelope->open($idempotencyKey, $sealed);
+
         /** @var array{data: array{id: string, amount: int, currency: string, status: string, provider: string, idempotency_key: string, created_at: int, metadata?: array<string, mixed>}} $envelope */
         $envelope = json_decode($payload, true, flags: JSON_THROW_ON_ERROR);
         $data = $envelope['data'];
