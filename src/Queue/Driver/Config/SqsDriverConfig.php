@@ -7,8 +7,6 @@ namespace Pulsar\Queue\Driver\Config;
 use NoDiscard;
 use Pulsar\Api\Internal;
 
-use function is_string;
-
 /**
  * Configuration DTO for the Amazon SQS queue driver.
  */
@@ -23,21 +21,21 @@ final readonly class SqsDriverConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data Raw config array
+     * @param array{
+     *     region?: string,
+     *     key?: string,
+     *     secret?: string,
+     *     prefix?: string,
+     * } $data Raw config array
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $rawRegion = $data['region'] ?? 'us-east-1';
-        $rawKey = $data['key'] ?? '';
-        $rawSecret = $data['secret'] ?? '';
-        $rawPrefix = $data['prefix'] ?? '';
-
         return new self(
-            region: is_string($rawRegion) ? $rawRegion : 'us-east-1',
-            key: is_string($rawKey) ? $rawKey : '',
-            secret: is_string($rawSecret) ? $rawSecret : '',
-            prefix: is_string($rawPrefix) ? $rawPrefix : '',
+            region: $data['region'] ?? 'us-east-1',
+            key: $data['key'] ?? '',
+            secret: $data['secret'] ?? '',
+            prefix: $data['prefix'] ?? '',
         );
     }
 }
