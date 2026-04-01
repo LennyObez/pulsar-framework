@@ -7,11 +7,6 @@ namespace Pulsar\Cloud;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_array;
-use function is_float;
-use function is_int;
-use function is_string;
-
 /**
  * Top-level cloud configuration for provider selection and shared settings.
  * @api
@@ -39,34 +34,27 @@ final readonly class CloudConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data Raw config array
+     * @param array{
+     *     default_provider?: string,
+     *     aws?: array<string, mixed>,
+     *     gcp?: array<string, mixed>,
+     *     azure?: array<string, mixed>,
+     *     http_timeout?: int,
+     *     retry_attempts?: int,
+     *     retry_delay?: float|int,
+     * } $data Raw config array
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $rawProvider = $data['default_provider'] ?? 'aws';
-        $rawAws = $data['aws'] ?? [];
-        $rawGcp = $data['gcp'] ?? [];
-        $rawAzure = $data['azure'] ?? [];
-        $rawTimeout = $data['http_timeout'] ?? 30;
-        $rawRetryAttempts = $data['retry_attempts'] ?? 3;
-        $rawRetryDelay = $data['retry_delay'] ?? 0.5;
-
-        /** @var array<string, mixed> $awsArray */
-        $awsArray = is_array($rawAws) ? $rawAws : [];
-        /** @var array<string, mixed> $gcpArray */
-        $gcpArray = is_array($rawGcp) ? $rawGcp : [];
-        /** @var array<string, mixed> $azureArray */
-        $azureArray = is_array($rawAzure) ? $rawAzure : [];
-
         return new self(
-            defaultProvider: is_string($rawProvider) ? $rawProvider : 'aws',
-            aws: $awsArray,
-            gcp: $gcpArray,
-            azure: $azureArray,
-            httpTimeout: is_int($rawTimeout) ? $rawTimeout : 30,
-            retryAttempts: is_int($rawRetryAttempts) ? $rawRetryAttempts : 3,
-            retryDelay: is_float($rawRetryDelay) || is_int($rawRetryDelay) ? (float) $rawRetryDelay : 0.5,
+            defaultProvider: $data['default_provider'] ?? 'aws',
+            aws: $data['aws'] ?? [],
+            gcp: $data['gcp'] ?? [],
+            azure: $data['azure'] ?? [],
+            httpTimeout: $data['http_timeout'] ?? 30,
+            retryAttempts: $data['retry_attempts'] ?? 3,
+            retryDelay: (float) ($data['retry_delay'] ?? 0.5),
         );
     }
 }
