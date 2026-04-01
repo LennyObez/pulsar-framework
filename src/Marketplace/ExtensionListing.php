@@ -8,11 +8,11 @@ use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Extensibility\TrustTier;
 
+use function array_filter;
+use function array_values;
 use function count;
-use function is_array;
-use function is_float;
-use function is_int;
-use function is_string;
+use function end;
+use function explode;
 
 /**
  * Represents an extension listing in the marketplace.
@@ -51,34 +51,39 @@ final readonly class ExtensionListing
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     name?: string,
+     *     version?: string,
+     *     author?: string,
+     *     description?: string,
+     *     trust_tier?: string,
+     *     downloads?: int,
+     *     rating?: float|int,
+     *     pulsar_min_version?: string,
+     *     pulsar_max_version?: string,
+     *     categories?: list<string>,
+     *     homepage?: string,
+     *     license?: string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $trustTierValue = is_string($data['trust_tier'] ?? null) ? $data['trust_tier'] : '';
-
-        /** @var list<string> $categories */
-        $categories = isset($data['categories']) && is_array($data['categories'])
-            ? array_values(array_filter($data['categories'], 'is_string'))
-            : [];
+        $categories = array_values(array_filter($data['categories'] ?? [], 'is_string'));
 
         return new self(
-            name: is_string($data['name'] ?? null) ? $data['name'] : '',
-            version: is_string($data['version'] ?? null) ? $data['version'] : '0.0.0',
-            author: is_string($data['author'] ?? null) ? $data['author'] : '',
-            description: is_string($data['description'] ?? null) ? $data['description'] : '',
-            trustTier: TrustTier::tryFrom($trustTierValue) ?? TrustTier::Community,
-            downloads: is_int($data['downloads'] ?? null) ? $data['downloads'] : 0,
-            rating: is_float($data['rating'] ?? null) || is_int($data['rating'] ?? null)
-                ? (float) $data['rating'] : 0.0,
-            pulsarMinVersion: is_string($data['pulsar_min_version'] ?? null)
-                ? $data['pulsar_min_version'] : '0.0.0',
-            pulsarMaxVersion: is_string($data['pulsar_max_version'] ?? null)
-                ? $data['pulsar_max_version'] : '',
+            name: $data['name'] ?? '',
+            version: $data['version'] ?? '0.0.0',
+            author: $data['author'] ?? '',
+            description: $data['description'] ?? '',
+            trustTier: TrustTier::tryFrom($data['trust_tier'] ?? '') ?? TrustTier::Community,
+            downloads: $data['downloads'] ?? 0,
+            rating: (float) ($data['rating'] ?? 0.0),
+            pulsarMinVersion: $data['pulsar_min_version'] ?? '0.0.0',
+            pulsarMaxVersion: $data['pulsar_max_version'] ?? '',
             categories: $categories,
-            homepage: is_string($data['homepage'] ?? null) ? $data['homepage'] : '',
-            license: is_string($data['license'] ?? null) ? $data['license'] : '',
+            homepage: $data['homepage'] ?? '',
+            license: $data['license'] ?? '',
         );
     }
 
