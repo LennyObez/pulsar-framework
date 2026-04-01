@@ -8,7 +8,6 @@ use NoDiscard;
 use Pulsar\Api\Api;
 
 use function is_array;
-use function is_string;
 
 /**
  * Typed configuration DTO for OpenAPI spec generation.
@@ -56,65 +55,49 @@ final readonly class OpenApiConfig
     /**
      * Build an OpenApiConfig from a raw config array.
      *
-     * @param array<string, mixed> $data Raw array from config/openapi.php
+     * @param array{
+     *     title?: string,
+     *     version?: string,
+     *     description?: string,
+     *     terms_of_service?: string|null,
+     *     contact_name?: string|null,
+     *     contact_email?: string|null,
+     *     contact_url?: string|null,
+     *     license_name?: string|null,
+     *     license_url?: string|null,
+     *     servers?: list<array{url: string, description: string}>,
+     *     security_schemes?: list<SecuritySchemeDefinition>,
+     *     output_path?: string,
+     *     swagger_ui_route?: string,
+     *     swagger_ui_enabled?: bool,
+     * } $data Raw array from config/openapi.php
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $rawServers = $data['servers'] ?? [];
-        $servers = is_array($rawServers) ? self::filterServers($rawServers) : [];
-
-        $rawSchemes = $data['security_schemes'] ?? [];
-        $securitySchemes = is_array($rawSchemes) ? self::filterSecuritySchemes($rawSchemes) : [];
-
-        $rawOutputPath = $data['output_path'] ?? 'storage/api/openapi.json';
-        $outputPath = is_string($rawOutputPath) ? $rawOutputPath : 'storage/api/openapi.json';
-
-        $rawSwaggerRoute = $data['swagger_ui_route'] ?? '/api/docs';
-        $swaggerUiRoute = is_string($rawSwaggerRoute) ? $rawSwaggerRoute : '/api/docs';
-
-        $swaggerUiEnabled = ($data['swagger_ui_enabled'] ?? false) === true;
+        $servers = self::filterServers($data['servers'] ?? []);
+        $securitySchemes = self::filterSecuritySchemes($data['security_schemes'] ?? []);
 
         return new self(
-            title: self::stringOrDefault($data, 'title', 'Pulsar API'),
-            version: self::stringOrDefault($data, 'version', '1.0.0'),
-            description: self::stringOrDefault($data, 'description', ''),
-            termsOfService: self::nullableString($data, 'terms_of_service'),
-            contactName: self::nullableString($data, 'contact_name'),
-            contactEmail: self::nullableString($data, 'contact_email'),
-            contactUrl: self::nullableString($data, 'contact_url'),
-            licenseName: self::nullableString($data, 'license_name'),
-            licenseUrl: self::nullableString($data, 'license_url'),
+            title: $data['title'] ?? 'Pulsar API',
+            version: $data['version'] ?? '1.0.0',
+            description: $data['description'] ?? '',
+            termsOfService: $data['terms_of_service'] ?? null,
+            contactName: $data['contact_name'] ?? null,
+            contactEmail: $data['contact_email'] ?? null,
+            contactUrl: $data['contact_url'] ?? null,
+            licenseName: $data['license_name'] ?? null,
+            licenseUrl: $data['license_url'] ?? null,
             servers: $servers,
             securitySchemes: $securitySchemes,
-            outputPath: $outputPath,
-            swaggerUiRoute: $swaggerUiRoute,
-            swaggerUiEnabled: $swaggerUiEnabled,
+            outputPath: $data['output_path'] ?? 'storage/api/openapi.json',
+            swaggerUiRoute: $data['swagger_ui_route'] ?? '/api/docs',
+            swaggerUiEnabled: ($data['swagger_ui_enabled'] ?? false) === true,
         );
     }
 
     /**
-     * @param array<string, mixed> $data
-     */
-    private static function stringOrDefault(array $data, string $key, string $default): string
-    {
-        $value = $data[$key] ?? $default;
-
-        return is_string($value) ? $value : $default;
-    }
-
-    /**
-     * @param array<string, mixed> $data
-     */
-    private static function nullableString(array $data, string $key): ?string
-    {
-        $value = $data[$key] ?? null;
-
-        return is_string($value) ? $value : null;
-    }
-
-    /**
-     * @param array<array-key, mixed> $items
+     * @param list<array{url: string, description: string}> $items
      *
      * @return list<array{url: string, description: string}>
      */
@@ -126,8 +109,6 @@ final readonly class OpenApiConfig
             if (
                 is_array($item)
                 && isset($item['url'], $item['description'])
-                && is_string($item['url'])
-                && is_string($item['description'])
             ) {
                 $servers[] = ['url' => $item['url'], 'description' => $item['description']];
             }
@@ -137,7 +118,7 @@ final readonly class OpenApiConfig
     }
 
     /**
-     * @param array<array-key, mixed> $items
+     * @param list<SecuritySchemeDefinition> $items
      *
      * @return list<SecuritySchemeDefinition>
      */
