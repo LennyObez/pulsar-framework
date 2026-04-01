@@ -7,8 +7,6 @@ namespace Pulsar\Codegen\Schema;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_string;
-
 /**
  * Metadata for a relationship between entities.
  *
@@ -48,19 +46,23 @@ final readonly class RelationshipDefinition
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     type?: string,
+     *     relatedEntity?: string,
+     *     foreignKey?: string,
+     *     localKey?: string,
+     *     pivotTable?: string|null,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $rawType = is_string($data['type'] ?? null) ? $data['type'] : '';
-
         return new self(
-            type: RelationType::from($rawType),
-            relatedEntity: is_string($data['relatedEntity'] ?? null) ? $data['relatedEntity'] : '',
-            foreignKey: is_string($data['foreignKey'] ?? null) ? $data['foreignKey'] : '',
-            localKey: is_string($data['localKey'] ?? null) ? $data['localKey'] : '',
-            pivotTable: is_string($data['pivotTable'] ?? null) ? $data['pivotTable'] : null,
+            type: RelationType::from($data['type'] ?? ''),
+            relatedEntity: $data['relatedEntity'] ?? '',
+            foreignKey: $data['foreignKey'] ?? '',
+            localKey: $data['localKey'] ?? '',
+            pivotTable: $data['pivotTable'] ?? null,
         );
     }
 }
