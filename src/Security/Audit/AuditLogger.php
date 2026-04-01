@@ -14,6 +14,7 @@ use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Audit\Exception\AuditActorMissingException;
 use Pulsar\Context\RequestContextHolder;
 use Pulsar\Security\Crypto\Hmac;
+use Pulsar\Security\Exception\SecurityException;
 use Random\Engine\Secure;
 use Random\RandomException;
 use Random\Randomizer;
@@ -50,6 +51,11 @@ final class AuditLogger implements AuditLoggerInterface
     private readonly Randomizer $randomizer;
 
     /**
+     * @throws SecurityException When the sink reports
+     *                           {@see AuditChainState::Corrupted}: the
+     *                           chain cannot be safely resumed and we
+     *                           refuse to silently re-seed over the
+     *                           corrupt state (F24.3).
      * @throws SodiumException
      */
     public function __construct(
@@ -60,8 +66,32 @@ final class AuditLogger implements AuditLoggerInterface
     ) {
         $this->previousHmac = Hmac::computeHex(self::SEED_MESSAGE, $this->auditKey);
 
-        // Resume chain from the last entry if the sink supports it
-        if ($sink instanceof ChainableAuditSinkInterface) {
+        // F24.3: state-aware sinks distinguish "empty, fresh chain"
+        // from "non-empty but unreadable" — fail closed on corruption
+        // so a tamper-evident chain cannot silently restart from the
+        // seed after a truncated or malformed last entry.
+        if ($sink instanceof AuditChainStateAware) {
+            $state = $sink->chainState();
+
+            if ($state === AuditChainState::Corrupted) {
+                throw SecurityException::auditChainCorrupted(
+                    'audit sink reports unreadable last entry — see error_log for diagnostics',
+                );
+            }
+
+            if ($state === AuditChainState::Healthy) {
+                $lastHmac = $sink->lastHmac();
+
+                if ($lastHmac !== null) {
+                    $this->previousHmac = $lastHmac;
+                }
+            }
+            // AuditChainState::Empty -> keep the seed previousHmac.
+        } elseif ($sink instanceof ChainableAuditSinkInterface) {
+            // Legacy contract: a sink that doesn't implement
+            // AuditChainStateAware can't distinguish corruption from
+            // emptiness, so a null lastHmac falls back to the seed
+            // (and forfeits the corruption-detection guarantee).
             $lastHmac = $sink->lastHmac();
 
             if ($lastHmac !== null) {
