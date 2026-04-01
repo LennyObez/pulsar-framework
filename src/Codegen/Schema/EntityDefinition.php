@@ -10,9 +10,6 @@ use Pulsar\Database\Introspection\ColumnInfo;
 
 use function array_map;
 use function in_array;
-use function is_array;
-use function is_bool;
-use function is_string;
 use function ksort;
 
 /**
@@ -173,42 +170,41 @@ final readonly class EntityDefinition
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     className?: string,
+     *     namespace?: string,
+     *     tableName?: string,
+     *     properties?: list<array<string, mixed>>,
+     *     relationships?: list<array<string, mixed>>,
+     *     primaryKey?: string,
+     *     hasTimestamps?: bool,
+     *     hasSoftDeletes?: bool,
+     *     isAuditAware?: bool,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $rawProperties = is_array($data['properties'] ?? null) ? $data['properties'] : [];
-        $rawRelationships = is_array($data['relationships'] ?? null) ? $data['relationships'] : [];
-
         $properties = [];
-
-        foreach ($rawProperties as $prop) {
-            if (is_array($prop)) {
-                /** @var array<string, mixed> $prop */
-                $properties[] = PropertyDefinition::fromArray($prop);
-            }
+        foreach ($data['properties'] ?? [] as $prop) {
+            $properties[] = PropertyDefinition::fromArray($prop);
         }
 
         $relationships = [];
-
-        foreach ($rawRelationships as $rel) {
-            if (is_array($rel)) {
-                /** @var array<string, mixed> $rel */
-                $relationships[] = RelationshipDefinition::fromArray($rel);
-            }
+        foreach ($data['relationships'] ?? [] as $rel) {
+            $relationships[] = RelationshipDefinition::fromArray($rel);
         }
 
         return new self(
-            className: is_string($data['className'] ?? null) ? $data['className'] : '',
-            namespace: is_string($data['namespace'] ?? null) ? $data['namespace'] : '',
-            tableName: is_string($data['tableName'] ?? null) ? $data['tableName'] : '',
+            className: $data['className'] ?? '',
+            namespace: $data['namespace'] ?? '',
+            tableName: $data['tableName'] ?? '',
             properties: $properties,
             relationships: $relationships,
-            primaryKey: is_string($data['primaryKey'] ?? null) ? $data['primaryKey'] : 'id',
-            hasTimestamps: is_bool($data['hasTimestamps'] ?? null) ? $data['hasTimestamps'] : false,
-            hasSoftDeletes: is_bool($data['hasSoftDeletes'] ?? null) ? $data['hasSoftDeletes'] : false,
-            isAuditAware: is_bool($data['isAuditAware'] ?? null) ? $data['isAuditAware'] : false,
+            primaryKey: $data['primaryKey'] ?? 'id',
+            hasTimestamps: $data['hasTimestamps'] ?? false,
+            hasSoftDeletes: $data['hasSoftDeletes'] ?? false,
+            isAuditAware: $data['isAuditAware'] ?? false,
         );
     }
 
