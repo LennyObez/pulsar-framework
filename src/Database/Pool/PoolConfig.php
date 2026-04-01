@@ -28,32 +28,23 @@ final readonly class PoolConfig
     /**
      * Build from a raw config array.
      *
-     * @param array<string, mixed> $data
+     * @param array{
+     *     min_connections?: int|string,
+     *     max_connections?: int|string,
+     *     idle_timeout_seconds?: int|string,
+     *     max_lifetime_seconds?: int|string,
+     *     health_check_interval_seconds?: int|string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var int|string $minConnections */
-        $minConnections = $data['min_connections'] ?? 2;
-
-        /** @var int|string $maxConnections */
-        $maxConnections = $data['max_connections'] ?? 10;
-
-        /** @var int|string $idleTimeout */
-        $idleTimeout = $data['idle_timeout_seconds'] ?? 60;
-
-        /** @var int|string $maxLifetime */
-        $maxLifetime = $data['max_lifetime_seconds'] ?? 3600;
-
-        /** @var int|string $healthCheckInterval */
-        $healthCheckInterval = $data['health_check_interval_seconds'] ?? 30;
-
         return new self(
-            minConnections: (int) $minConnections,
-            maxConnections: (int) $maxConnections,
-            idleTimeoutSeconds: (int) $idleTimeout,
-            maxLifetimeSeconds: (int) $maxLifetime,
-            healthCheckIntervalSeconds: (int) $healthCheckInterval,
+            minConnections: (int) ($data['min_connections'] ?? 2),
+            maxConnections: (int) ($data['max_connections'] ?? 10),
+            idleTimeoutSeconds: (int) ($data['idle_timeout_seconds'] ?? 60),
+            maxLifetimeSeconds: (int) ($data['max_lifetime_seconds'] ?? 3600),
+            healthCheckIntervalSeconds: (int) ($data['health_check_interval_seconds'] ?? 30),
         );
     }
 }

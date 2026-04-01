@@ -31,22 +31,21 @@ final readonly class MonitorConfig
     /**
      * Build from a raw config array.
      *
-     * @param array<string, mixed> $data
+     * @param array{
+     *     slow_query_threshold_ms?: int,
+     *     log_raw_bindings?: bool|int|string,
+     *     require_environment_confirmation?: bool|int|string,
+     *     pii_columns?: list<string>,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var list<string> $piiColumns */
-        $piiColumns = $data['pii_columns'] ?? [];
-
-        /** @var int $thresholdMs */
-        $thresholdMs = $data['slow_query_threshold_ms'] ?? 1000;
-
         return new self(
-            slowQueryThresholdMs: $thresholdMs,
+            slowQueryThresholdMs: $data['slow_query_threshold_ms'] ?? 1000,
             logRawBindings: (bool) ($data['log_raw_bindings'] ?? false),
             requireEnvironmentConfirmation: (bool) ($data['require_environment_confirmation'] ?? true),
-            piiColumns: $piiColumns,
+            piiColumns: $data['pii_columns'] ?? [],
         );
     }
 }
