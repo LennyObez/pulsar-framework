@@ -51,4 +51,35 @@ final class CacheException extends RuntimeException
     {
         return new self(sprintf('Invalid cache directory "%s": %s', $path, $reason));
     }
+
+    /**
+     * F26.2: an `ALWAYS_ALLOWED` class on the cache deserialization
+     * allowlist disappeared from the codebase between snapshot and
+     * scan. Refusing to scan rather than silently dropping the entry
+     * keeps the allowlist's invariants honest.
+     */
+    #[NoDiscard]
+    public static function alwaysAllowedClassMissing(string $className): self
+    {
+        return new self(sprintf(
+            'Cache allowlist references missing class "%s". Update CacheAllowedClasses::ALWAYS_ALLOWED.',
+            $className,
+        ));
+    }
+
+    /**
+     * F26.2: an `ALWAYS_ALLOWED` class violates the safety guards that
+     * other allowlisted classes pass via `isEligible()` (Serializable
+     * implementations or dangerous magic methods turn the class into
+     * a deserialization gadget chain).
+     */
+    #[NoDiscard]
+    public static function alwaysAllowedClassUnsafe(string $className, string $reason): self
+    {
+        return new self(sprintf(
+            'Cache allowlist class "%s" is unsafe for unserialize(): %s',
+            $className,
+            $reason,
+        ));
+    }
 }
