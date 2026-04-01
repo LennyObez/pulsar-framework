@@ -9,7 +9,6 @@ use Pulsar\Api\Internal;
 use SensitiveParameter;
 
 use function file_get_contents;
-use function is_string;
 use function json_decode;
 
 use const JSON_THROW_ON_ERROR;
@@ -29,16 +28,21 @@ final readonly class GcpConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data Raw config array
+     * @param array{
+     *     project_id?: string,
+     *     credentials_path?: string,
+     *     endpoint?: string|null,
+     *     access_token?: string|null,
+     * } $data Raw config array
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            projectId: is_string($data['project_id'] ?? null) ? $data['project_id'] : '',
-            credentialsPath: is_string($data['credentials_path'] ?? null) ? $data['credentials_path'] : '',
-            endpoint: is_string($data['endpoint'] ?? null) ? $data['endpoint'] : null,
-            accessToken: is_string($data['access_token'] ?? null) ? $data['access_token'] : null,
+            projectId: $data['project_id'] ?? '',
+            credentialsPath: $data['credentials_path'] ?? '',
+            endpoint: $data['endpoint'] ?? null,
+            accessToken: $data['access_token'] ?? null,
         );
     }
 

@@ -8,8 +8,6 @@ use NoDiscard;
 use Pulsar\Api\Internal;
 use SensitiveParameter;
 
-use function is_string;
-
 /**
  * Configuration DTO for AWS cloud services.
  */
@@ -26,17 +24,23 @@ final readonly class AwsConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data Raw config array
+     * @param array{
+     *     region?: string,
+     *     access_key?: string,
+     *     secret_key?: string,
+     *     endpoint?: string|null,
+     *     session_token?: string|null,
+     * } $data Raw config array
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            region: is_string($data['region'] ?? null) ? $data['region'] : 'us-east-1',
-            accessKey: is_string($data['access_key'] ?? null) ? $data['access_key'] : '',
-            secretKey: is_string($data['secret_key'] ?? null) ? $data['secret_key'] : '',
-            endpoint: is_string($data['endpoint'] ?? null) ? $data['endpoint'] : null,
-            sessionToken: is_string($data['session_token'] ?? null) ? $data['session_token'] : null,
+            region: $data['region'] ?? 'us-east-1',
+            accessKey: $data['access_key'] ?? '',
+            secretKey: $data['secret_key'] ?? '',
+            endpoint: $data['endpoint'] ?? null,
+            sessionToken: $data['session_token'] ?? null,
         );
     }
 
