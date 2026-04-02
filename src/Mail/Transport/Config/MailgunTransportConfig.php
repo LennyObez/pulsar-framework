@@ -8,8 +8,6 @@ use NoDiscard;
 use Pulsar\Api\Internal;
 use SensitiveParameter;
 
-use function is_string;
-
 /**
  * Configuration for the Mailgun mail transport.
  */
@@ -24,15 +22,19 @@ final readonly class MailgunTransportConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     domain?: string,
+     *     api_key?: string,
+     *     endpoint?: string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            domain: is_string($data['domain'] ?? null) ? $data['domain'] : '',
-            apiKey: is_string($data['api_key'] ?? null) ? $data['api_key'] : '',
-            endpoint: is_string($data['endpoint'] ?? null) ? $data['endpoint'] : 'https://api.mailgun.net',
+            domain: $data['domain'] ?? '',
+            apiKey: $data['api_key'] ?? '',
+            endpoint: $data['endpoint'] ?? 'https://api.mailgun.net',
         );
     }
 }
