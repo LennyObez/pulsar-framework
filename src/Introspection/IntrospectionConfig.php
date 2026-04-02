@@ -32,7 +32,7 @@ final readonly class IntrospectionConfig
      *   2. `$data['enabled']` from config file
      *   3. Default: enabled in local/staging, disabled in production
      *
-     * @param array<string, mixed> $data
+     * @param array{enabled?: bool|int|string} $data
      */
     #[NoDiscard]
     public static function fromArray(array $data, Environment $environment, EnvironmentMode $mode): self
