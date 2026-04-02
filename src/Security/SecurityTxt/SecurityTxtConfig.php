@@ -7,11 +7,6 @@ namespace Pulsar\Security\SecurityTxt;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function array_filter;
-use function array_values;
-use function is_array;
-use function is_string;
-
 /**
  * Configuration for auto-generating /.well-known/security.txt per RFC 9116.
  *
@@ -43,41 +38,29 @@ final readonly class SecurityTxtConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     contacts?: list<string>,
+     *     expires?: string,
+     *     encryption?: string,
+     *     acknowledgments?: string,
+     *     policy?: string,
+     *     preferred_languages?: list<string>,
+     *     canonical?: string,
+     *     hiring?: list<string>,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var list<string> $contacts */
-        $contacts = is_array($data['contacts'] ?? null)
-            ? array_values(array_filter($data['contacts'], is_string(...)))
-            : [];
-
-        /** @var list<string> $preferredLanguages */
-        $preferredLanguages = is_array($data['preferred_languages'] ?? null)
-            ? array_values(array_filter($data['preferred_languages'], is_string(...)))
-            : [];
-
-        /** @var list<string> $hiring */
-        $hiring = is_array($data['hiring'] ?? null)
-            ? array_values(array_filter($data['hiring'], is_string(...)))
-            : [];
-
-        $rawExpires = $data['expires'] ?? '';
-        $rawEncryption = $data['encryption'] ?? '';
-        $rawAcknowledgments = $data['acknowledgments'] ?? '';
-        $rawPolicy = $data['policy'] ?? '';
-        $rawCanonical = $data['canonical'] ?? '';
-
         return new self(
-            contacts: $contacts,
-            expires: is_string($rawExpires) ? $rawExpires : '',
-            encryption: is_string($rawEncryption) ? $rawEncryption : '',
-            acknowledgments: is_string($rawAcknowledgments) ? $rawAcknowledgments : '',
-            policy: is_string($rawPolicy) ? $rawPolicy : '',
-            preferredLanguages: $preferredLanguages,
-            canonical: is_string($rawCanonical) ? $rawCanonical : '',
-            hiring: $hiring,
+            contacts: $data['contacts'] ?? [],
+            expires: $data['expires'] ?? '',
+            encryption: $data['encryption'] ?? '',
+            acknowledgments: $data['acknowledgments'] ?? '',
+            policy: $data['policy'] ?? '',
+            preferredLanguages: $data['preferred_languages'] ?? [],
+            canonical: $data['canonical'] ?? '',
+            hiring: $data['hiring'] ?? [],
         );
     }
 }
