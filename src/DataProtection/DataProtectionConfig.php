@@ -7,8 +7,6 @@ namespace Pulsar\DataProtection;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_array;
-
 /**
  * Typed configuration DTO for data protection settings.
  *
@@ -31,32 +29,25 @@ final readonly class DataProtectionConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data Raw config array from data_protection.php
+     * @param array{
+     *     retention?: list<array<string, mixed>>,
+     *     purge?: array<string, mixed>,
+     *     consent?: array<string, mixed>,
+     * } $data Raw config array from data_protection.php
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $rawRetention = $data['retention'] ?? [];
         $retention = [];
 
-        if (is_array($rawRetention)) {
-            foreach ($rawRetention as $entry) {
-                if (is_array($entry)) {
-                    $retention[] = RetentionPolicy::fromArray($entry);
-                }
-            }
+        foreach ($data['retention'] ?? [] as $entry) {
+            $retention[] = RetentionPolicy::fromArray($entry);
         }
-
-        $rawPurge = $data['purge'] ?? [];
-        $purge = is_array($rawPurge) ? PurgeConfig::fromArray($rawPurge) : new PurgeConfig();
-
-        $rawConsent = $data['consent'] ?? [];
-        $consent = is_array($rawConsent) ? ConsentConfig::fromArray($rawConsent) : new ConsentConfig();
 
         return new self(
             retention: $retention,
-            purge: $purge,
-            consent: $consent,
+            purge: PurgeConfig::fromArray($data['purge'] ?? []),
+            consent: ConsentConfig::fromArray($data['consent'] ?? []),
         );
     }
 }
