@@ -48,7 +48,12 @@ final readonly class PseudonymMapping
     /**
      * Reconstruct a mapping from its array representation.
      *
-     * @param array<string, mixed> $data
+     * @param array{
+     *     subject_id?: string|null,
+     *     pseudonym?: string|null,
+     *     encrypted_salt?: string|null,
+     *     created_at?: string|null,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
