@@ -7,10 +7,6 @@ namespace Pulsar\Http\Htmx;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_bool;
-use function is_int;
-use function is_string;
-
 /**
  * Configuration for the Pulsar hypermedia (px-*) runtime.
  * @api
@@ -30,20 +26,29 @@ final readonly class HtmxConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     attribute_prefix?: string,
+     *     default_swap_delay_ms?: int,
+     *     default_settle_delay_ms?: int,
+     *     include_indicator_styles?: bool,
+     *     history_cache_enabled?: bool,
+     *     history_cache_size?: int,
+     *     self_requests_only?: bool,
+     *     csrf_header_name?: string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            attributePrefix: is_string($data['attribute_prefix'] ?? null) ? $data['attribute_prefix'] : 'px',
-            defaultSwapDelayMs: is_int($data['default_swap_delay_ms'] ?? null) ? $data['default_swap_delay_ms'] : 0,
-            defaultSettleDelayMs: is_int($data['default_settle_delay_ms'] ?? null) ? $data['default_settle_delay_ms'] : 20,
-            includeIndicatorStyles: is_bool($data['include_indicator_styles'] ?? null) ? $data['include_indicator_styles'] : true,
-            historyCacheEnabled: is_bool($data['history_cache_enabled'] ?? null) ? $data['history_cache_enabled'] : true,
-            historyCacheSize: is_int($data['history_cache_size'] ?? null) ? $data['history_cache_size'] : 10,
-            selfRequestsOnly: is_bool($data['self_requests_only'] ?? null) ? $data['self_requests_only'] : true,
-            csrfHeaderName: is_string($data['csrf_header_name'] ?? null) ? $data['csrf_header_name'] : 'X-CSRF-Token',
+            attributePrefix: $data['attribute_prefix'] ?? 'px',
+            defaultSwapDelayMs: $data['default_swap_delay_ms'] ?? 0,
+            defaultSettleDelayMs: $data['default_settle_delay_ms'] ?? 20,
+            includeIndicatorStyles: $data['include_indicator_styles'] ?? true,
+            historyCacheEnabled: $data['history_cache_enabled'] ?? true,
+            historyCacheSize: $data['history_cache_size'] ?? 10,
+            selfRequestsOnly: $data['self_requests_only'] ?? true,
+            csrfHeaderName: $data['csrf_header_name'] ?? 'X-CSRF-Token',
         );
     }
 }

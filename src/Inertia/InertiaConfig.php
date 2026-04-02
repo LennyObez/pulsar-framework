@@ -7,8 +7,6 @@ namespace Pulsar\Inertia;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_string;
-
 /**
  * Configuration for the Inertia-style SPA bridge.
  * @api
@@ -23,15 +21,19 @@ final readonly class InertiaConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     root_view?: string,
+     *     version_header?: string,
+     *     component_path_prefix?: string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            rootView: is_string($data['root_view'] ?? null) ? $data['root_view'] : 'app',
-            versionHeader: is_string($data['version_header'] ?? null) ? $data['version_header'] : 'X-Inertia-Version',
-            componentPathPrefix: is_string($data['component_path_prefix'] ?? null) ? $data['component_path_prefix'] : '',
+            rootView: $data['root_view'] ?? 'app',
+            versionHeader: $data['version_header'] ?? 'X-Inertia-Version',
+            componentPathPrefix: $data['component_path_prefix'] ?? '',
         );
     }
 }
