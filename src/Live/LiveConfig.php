@@ -7,10 +7,6 @@ namespace Pulsar\Live;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_bool;
-use function is_int;
-use function is_string;
-
 /**
  * Configuration for Pulsar Live components.
  * @api
@@ -28,18 +24,25 @@ final readonly class LiveConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     endpoint_prefix?: string,
+     *     debounce_ms?: int,
+     *     max_payload_size?: int,
+     *     enable_polling?: bool,
+     *     default_poll_interval_ms?: int,
+     *     morph_dom?: bool,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            endpointPrefix: is_string($data['endpoint_prefix'] ?? null) ? $data['endpoint_prefix'] : '/_live',
-            debounceMs: is_int($data['debounce_ms'] ?? null) ? $data['debounce_ms'] : 150,
-            maxPayloadSize: is_int($data['max_payload_size'] ?? null) ? $data['max_payload_size'] : 1_048_576,
-            enablePolling: is_bool($data['enable_polling'] ?? null) ? $data['enable_polling'] : true,
-            defaultPollIntervalMs: is_int($data['default_poll_interval_ms'] ?? null) ? $data['default_poll_interval_ms'] : 2000,
-            morphDom: is_bool($data['morph_dom'] ?? null) ? $data['morph_dom'] : true,
+            endpointPrefix: $data['endpoint_prefix'] ?? '/_live',
+            debounceMs: $data['debounce_ms'] ?? 150,
+            maxPayloadSize: $data['max_payload_size'] ?? 1_048_576,
+            enablePolling: $data['enable_polling'] ?? true,
+            defaultPollIntervalMs: $data['default_poll_interval_ms'] ?? 2000,
+            morphDom: $data['morph_dom'] ?? true,
         );
     }
 }
