@@ -7,9 +7,6 @@ namespace Pulsar\Rendering;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_array;
-use function is_string;
-
 /**
  * Configuration for static site generation (SSG).
  * @api
@@ -27,17 +24,19 @@ final readonly class StaticSiteConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     output_dir?: string,
+     *     base_url?: string,
+     *     exclude_patterns?: list<string>,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            outputDir: is_string($data['output_dir'] ?? null) ? $data['output_dir'] : 'public/static',
-            baseUrl: is_string($data['base_url'] ?? null) ? $data['base_url'] : '',
-            excludePatterns: is_array($data['exclude_patterns'] ?? null)
-                ? array_values(array_filter($data['exclude_patterns'], 'is_string'))
-                : ['/api/*', '/admin/*', '/_*'],
+            outputDir: $data['output_dir'] ?? 'public/static',
+            baseUrl: $data['base_url'] ?? '',
+            excludePatterns: $data['exclude_patterns'] ?? ['/api/*', '/admin/*', '/_*'],
         );
     }
 }
