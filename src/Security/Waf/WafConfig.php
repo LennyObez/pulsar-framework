@@ -7,10 +7,6 @@ namespace Pulsar\Security\Waf;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_array;
-use function is_int;
-use function is_string;
-
 /**
  * WAF engine configuration.
  * @api
@@ -32,25 +28,21 @@ final readonly class WafConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     enabled?: bool|int|string,
+     *     paranoia_level?: int,
+     *     bypass_ips?: list<string>,
+     *     custom_rules_path?: string|null,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var list<string> $bypassIps */
-        $bypassIps = isset($data['bypass_ips']) && is_array($data['bypass_ips'])
-            ? $data['bypass_ips']
-            : [];
-
         return new self(
             enabled: (bool) ($data['enabled'] ?? true),
-            paranoiaLevel: isset($data['paranoia_level']) && is_int($data['paranoia_level'])
-                ? max(1, min(4, $data['paranoia_level']))
-                : 1,
-            bypassIps: $bypassIps,
-            customRulesPath: isset($data['custom_rules_path']) && is_string($data['custom_rules_path'])
-                ? $data['custom_rules_path']
-                : null,
+            paranoiaLevel: max(1, min(4, $data['paranoia_level'] ?? 1)),
+            bypassIps: $data['bypass_ips'] ?? [],
+            customRulesPath: $data['custom_rules_path'] ?? null,
         );
     }
 }

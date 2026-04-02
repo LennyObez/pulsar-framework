@@ -7,11 +7,6 @@ namespace Pulsar\Security\ThreatDetection;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function array_values;
-use function is_array;
-use function is_bool;
-use function is_string;
-
 /**
  * Configuration for honeypot endpoint detection.
  * @api
@@ -55,25 +50,23 @@ final readonly class HoneypotConfig
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     paths?: list<string>,
+     *     block_ip?: bool,
+     *     response_action?: ThreatResponse|string|null,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var list<string> $paths */
-        $paths = is_array($data['paths'] ?? null) ? array_values($data['paths']) : [];
-
-        $rawBlock = $data['block_ip'] ?? true;
-        $blockIp = is_bool($rawBlock) ? $rawBlock : true;
-
         $rawAction = $data['response_action'] ?? null;
         $responseAction = $rawAction instanceof ThreatResponse
             ? $rawAction
-            : ThreatResponse::tryFrom(is_string($rawAction) ? $rawAction : '') ?? ThreatResponse::Block;
+            : ThreatResponse::tryFrom($rawAction ?? '') ?? ThreatResponse::Block;
 
         return new self(
-            paths: $paths,
-            blockIp: $blockIp,
+            paths: $data['paths'] ?? [],
+            blockIp: $data['block_ip'] ?? true,
             responseAction: $responseAction,
         );
     }
