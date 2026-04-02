@@ -28,25 +28,21 @@ final readonly class KeyLifecycleConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     default_rotation_interval_seconds?: int,
+     *     default_grace_period_seconds?: int,
+     *     certificate_warning_days?: list<int>,
+     *     deploy_block_days?: int,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var int $rotationInterval */
-        $rotationInterval = $data['default_rotation_interval_seconds'] ?? 7776000;
-        /** @var int $gracePeriod */
-        $gracePeriod = $data['default_grace_period_seconds'] ?? 86400;
-        /** @var list<int> $warningDays */
-        $warningDays = $data['certificate_warning_days'] ?? [30, 14, 7, 1];
-        /** @var int $deployBlock */
-        $deployBlock = $data['deploy_block_days'] ?? 1;
-
         return new self(
-            defaultRotationIntervalSeconds: $rotationInterval,
-            defaultGracePeriodSeconds: $gracePeriod,
-            certificateWarningDays: $warningDays,
-            deployBlockDays: $deployBlock,
+            defaultRotationIntervalSeconds: $data['default_rotation_interval_seconds'] ?? 7776000,
+            defaultGracePeriodSeconds: $data['default_grace_period_seconds'] ?? 86400,
+            certificateWarningDays: $data['certificate_warning_days'] ?? [30, 14, 7, 1],
+            deployBlockDays: $data['deploy_block_days'] ?? 1,
         );
     }
 }
