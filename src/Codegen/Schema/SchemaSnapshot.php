@@ -9,7 +9,6 @@ use Pulsar\Api\Api;
 
 use function array_map;
 use function hash;
-use function is_array;
 use function is_string;
 use function json_encode;
 use function ksort;
@@ -64,24 +63,25 @@ final readonly class SchemaSnapshot
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     entities?: array<string, array<string, mixed>>,
+     *     version?: string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $rawEntities = is_array($data['entities'] ?? null) ? $data['entities'] : [];
         $entities = [];
 
-        foreach ($rawEntities as $tableName => $entityData) {
-            if (is_string($tableName) && is_array($entityData)) {
-                /** @var array<string, mixed> $entityData */
+        foreach ($data['entities'] ?? [] as $tableName => $entityData) {
+            if (is_string($tableName)) {
                 $entities[$tableName] = EntityDefinition::fromArray($entityData);
             }
         }
 
         return new self(
             entities: $entities,
-            version: is_string($data['version'] ?? null) ? $data['version'] : '1',
+            version: $data['version'] ?? '1',
         );
     }
 
