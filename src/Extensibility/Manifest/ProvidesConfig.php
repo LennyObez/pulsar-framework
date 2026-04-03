@@ -10,7 +10,6 @@ use Pulsar\Extensibility\Exception\ManifestException;
 
 use function array_is_list;
 use function is_array;
-use function is_bool;
 
 /**
  * Configuration for what an extension provides.
@@ -49,7 +48,13 @@ final readonly class ProvidesConfig
     /**
      * Create from manifest array data.
      *
-     * @param array<string, mixed> $data
+     * @param array{
+     *     services?: list<string>|array<string, string>,
+     *     commands?: list<string>|array<string, string>,
+     *     middleware?: list<string>|array<string, string>,
+     *     migrations?: list<string>|array<string, string>,
+     *     routes?: bool,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
@@ -58,7 +63,6 @@ final readonly class ProvidesConfig
         $commands = $data['commands'] ?? [];
         $middleware = $data['middleware'] ?? [];
         $migrations = $data['migrations'] ?? [];
-        $routes = $data['routes'] ?? false;
 
         if (!is_array($services)) {
             throw ManifestException::invalidFieldType('provides.services', 'list', 'non-array', '');
@@ -79,27 +83,23 @@ final readonly class ProvidesConfig
         if ($services !== [] && !array_is_list($services)) {
             throw ManifestException::invalidFieldType('provides.services', 'list', 'associative array', '');
         }
-        /** @var list<string> $services */
 
         if ($commands !== [] && !array_is_list($commands)) {
             throw ManifestException::invalidFieldType('provides.commands', 'list', 'associative array', '');
         }
-        /** @var list<string> $commands */
 
         if ($middleware !== [] && !array_is_list($middleware)) {
             throw ManifestException::invalidFieldType('provides.middleware', 'list', 'associative array', '');
         }
-        /** @var list<string> $middleware */
 
         if ($migrations !== [] && !array_is_list($migrations)) {
             throw ManifestException::invalidFieldType('provides.migrations', 'list', 'associative array', '');
         }
-        /** @var list<string> $migrations */
 
         return new self(
             services: $services,
             commands: $commands,
-            routes: is_bool($routes) ? $routes : false,
+            routes: $data['routes'] ?? false,
             middleware: $middleware,
             migrations: $migrations,
         );
