@@ -9,9 +9,6 @@ use DateTimeImmutable;
 use NoDiscard;
 use Pulsar\Api\Internal;
 
-use function is_int;
-use function is_numeric;
-use function is_string;
 use function max;
 
 /**
@@ -47,24 +44,19 @@ final readonly class DefaultRetentionPolicy implements RetentionPolicyInterface
      * ]
      * ```
      *
-     * @param array<string, mixed> $data
+     * @param array{
+     *     category?: string,
+     *     retention_days?: int,
+     *     legal_basis?: string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $rawCategory = $data['category'] ?? '';
-        $category = is_string($rawCategory) ? $rawCategory : '';
-
-        $rawDays = $data['retention_days'] ?? 0;
-        $retentionDays = max(0, is_int($rawDays) ? $rawDays : (int) (is_numeric($rawDays) ? $rawDays : 0));
-
-        $rawBasis = $data['legal_basis'] ?? '';
-        $legalBasis = is_string($rawBasis) ? $rawBasis : '';
-
         return new self(
-            category: $category,
-            retentionDays: $retentionDays,
-            legalBasis: $legalBasis,
+            category: $data['category'] ?? '',
+            retentionDays: max(0, $data['retention_days'] ?? 0),
+            legalBasis: $data['legal_basis'] ?? '',
         );
     }
 
