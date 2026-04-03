@@ -101,7 +101,13 @@ final readonly class Identity implements IdentityInterface
     /**
      * Reconstitute an identity from a serialized array.
      *
-     * @param array<string, mixed> $data
+     * @param array{
+     *     id?: string,
+     *     display_name?: string,
+     *     roles?: list<string>,
+     *     two_factor_status?: int|string,
+     *     attributes?: array<string, mixed>,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
@@ -126,17 +132,11 @@ final readonly class Identity implements IdentityInterface
             throw AuthenticationException::invalidIdentityData('attributes must be an array');
         }
 
-        /** @var int|string $twoFactorStatusRaw */
-        $twoFactorStatusRaw = $data['two_factor_status'] ?? TwoFactorStatus::Disabled->value;
-        $twoFactorStatus = TwoFactorStatus::from($twoFactorStatusRaw);
-
-        /** @var list<string> $roles */
-        /** @var array<string, mixed> $attributes */
         return new self(
             id: $id,
             displayName: $displayName,
             roles: $roles,
-            twoFactorStatus: $twoFactorStatus,
+            twoFactorStatus: TwoFactorStatus::from($data['two_factor_status'] ?? TwoFactorStatus::Disabled->value),
             attributes: $attributes,
         );
     }
