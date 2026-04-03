@@ -10,7 +10,6 @@ use Pulsar\Api\Api;
 use function array_map;
 use function hash;
 use function implode;
-use function is_string;
 use function ksort;
 use function serialize;
 
@@ -42,30 +41,24 @@ final readonly class CompiledExtensionManifest
     /**
      * Create from array data.
      *
-     * @param array<string, mixed> $data
+     * @param array{
+     *     extensions?: list<array<string, mixed>>,
+     *     configHashes?: array<string, string>,
+     *     codeHashes?: array<string, string>,
+     *     totalHash?: string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var list<array<string, mixed>> $extensionData */
-        $extensionData = $data['extensions'] ?? [];
-
-        $extensions = array_map(
-            static fn(array $entry): CompiledExtensionEntry => CompiledExtensionEntry::fromArray($entry),
-            $extensionData,
-        );
-
-        /** @var array<string, string> $configHashes */
-        $configHashes = $data['configHashes'] ?? [];
-
-        /** @var array<string, string> $codeHashes */
-        $codeHashes = $data['codeHashes'] ?? [];
-
         return new self(
-            extensions: $extensions,
-            configHashes: $configHashes,
-            codeHashes: $codeHashes,
-            totalHash: is_string($data['totalHash'] ?? null) ? $data['totalHash'] : '',
+            extensions: array_map(
+                static fn(array $entry): CompiledExtensionEntry => CompiledExtensionEntry::fromArray($entry),
+                $data['extensions'] ?? [],
+            ),
+            configHashes: $data['configHashes'] ?? [],
+            codeHashes: $data['codeHashes'] ?? [],
+            totalHash: $data['totalHash'] ?? '',
         );
     }
 
