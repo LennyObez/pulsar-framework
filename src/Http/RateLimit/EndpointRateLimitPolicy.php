@@ -24,22 +24,19 @@ final readonly class EndpointRateLimitPolicy
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     pattern?: string,
+     *     max_attempts?: int,
+     *     window_seconds?: int,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var string $pattern */
-        $pattern = $data['pattern'] ?? '';
-        /** @var int $maxAttempts */
-        $maxAttempts = $data['max_attempts'] ?? 60;
-        /** @var int $windowSeconds */
-        $windowSeconds = $data['window_seconds'] ?? 60;
-
         return new self(
-            pattern: $pattern,
-            maxAttempts: $maxAttempts,
-            windowSeconds: $windowSeconds,
+            pattern: $data['pattern'] ?? '',
+            maxAttempts: $data['max_attempts'] ?? 60,
+            windowSeconds: $data['window_seconds'] ?? 60,
         );
     }
 }

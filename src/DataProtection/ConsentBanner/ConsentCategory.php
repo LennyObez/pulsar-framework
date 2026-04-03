@@ -7,9 +7,6 @@ namespace Pulsar\DataProtection\ConsentBanner;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_bool;
-use function is_string;
-
 /**
  * Represents a consent category in the cookie banner.
  *
@@ -36,17 +33,22 @@ final readonly class ConsentCategory
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     label?: string,
+     *     description?: string,
+     *     required?: bool,
+     *     default_enabled?: bool,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(string $key, array $data): self
     {
         return new self(
             key: $key,
-            label: isset($data['label']) && is_string($data['label']) ? $data['label'] : $key,
-            description: isset($data['description']) && is_string($data['description']) ? $data['description'] : '',
-            required: isset($data['required']) && is_bool($data['required']) ? $data['required'] : false,
-            defaultEnabled: isset($data['default_enabled']) && is_bool($data['default_enabled']) ? $data['default_enabled'] : false,
+            label: $data['label'] ?? $key,
+            description: $data['description'] ?? '',
+            required: $data['required'] ?? false,
+            defaultEnabled: $data['default_enabled'] ?? false,
         );
     }
 }
