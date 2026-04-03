@@ -70,27 +70,27 @@ final readonly class EventMetadata
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     correlation_id?: string,
+     *     causation_id?: string,
+     *     actor?: string|null,
+     *     tenant_id?: string|null,
+     *     occurred_at?: string|null,
+     *     attributes?: array<string, mixed>,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var array<string, mixed> $attributes */
-        $attributes = $data['attributes'] ?? [];
-
-        $correlationId = $data['correlation_id'] ?? '';
-        $causationId = $data['causation_id'] ?? '';
-        $actor = $data['actor'] ?? null;
-        $tenantId = $data['tenant_id'] ?? null;
         $occurredAtRaw = $data['occurred_at'] ?? null;
 
         return new self(
-            correlationId: CorrelationId::fromString(is_string($correlationId) ? $correlationId : ''),
-            causationId: CausationId::fromString(is_string($causationId) ? $causationId : ''),
-            actor: is_string($actor) ? $actor : null,
-            tenantId: is_string($tenantId) ? $tenantId : null,
+            correlationId: CorrelationId::fromString($data['correlation_id'] ?? ''),
+            causationId: CausationId::fromString($data['causation_id'] ?? ''),
+            actor: $data['actor'] ?? null,
+            tenantId: $data['tenant_id'] ?? null,
             occurredAt: is_string($occurredAtRaw) ? self::parseOccurredAt($occurredAtRaw) : null,
-            attributes: $attributes,
+            attributes: $data['attributes'] ?? [],
         );
     }
 
