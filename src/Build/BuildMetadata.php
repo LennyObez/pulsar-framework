@@ -7,7 +7,6 @@ namespace Pulsar\Build;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_string;
 use function json_encode;
 
 use const JSON_PRETTY_PRINT;
@@ -32,16 +31,21 @@ final readonly class BuildMetadata
     /**
      * Create from array data.
      *
-     * @param array<string, mixed> $data
+     * @param array{
+     *     builtAt?: string,
+     *     phpVersion?: string,
+     *     pulsarVersion?: string,
+     *     host?: string|null,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            builtAt: is_string($data['builtAt'] ?? null) ? $data['builtAt'] : '',
-            phpVersion: is_string($data['phpVersion'] ?? null) ? $data['phpVersion'] : '',
-            pulsarVersion: is_string($data['pulsarVersion'] ?? null) ? $data['pulsarVersion'] : '',
-            host: is_string($data['host'] ?? null) ? $data['host'] : null,
+            builtAt: $data['builtAt'] ?? '',
+            phpVersion: $data['phpVersion'] ?? '',
+            pulsarVersion: $data['pulsarVersion'] ?? '',
+            host: $data['host'] ?? null,
         );
     }
 

@@ -9,9 +9,6 @@ use NoDiscard;
 use Pulsar\Api\Api;
 
 use function array_map;
-use function is_array;
-use function is_int;
-use function is_string;
 use function json_decode;
 use function json_encode;
 use function ksort;
@@ -51,32 +48,33 @@ final readonly class BuildManifest
     /**
      * Create from array data.
      *
-     * @param array<string, mixed> $data
+     * @param array{
+     *     version?: int,
+     *     algorithm?: string,
+     *     artifacts?: array<string, array<string, mixed>>,
+     *     contentHashes?: array<string, string>,
+     *     signature?: string|null,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var array<string, array<string, mixed>> $artifactData */
-        $artifactData = is_array($data['artifacts'] ?? null) ? $data['artifacts'] : [];
-
         $artifacts = array_map(
             static fn(array $entry): ArtifactEntry => ArtifactEntry::fromArray($entry),
-            $artifactData,
+            $data['artifacts'] ?? [],
         );
 
         ksort($artifacts, SORT_STRING);
 
-        /** @var array<string, string> $contentHashes */
-        $contentHashes = is_array($data['contentHashes'] ?? null) ? $data['contentHashes'] : [];
-
+        $contentHashes = $data['contentHashes'] ?? [];
         ksort($contentHashes, SORT_STRING);
 
         return new self(
-            version: isset($data['version']) && is_int($data['version']) ? $data['version'] : 1,
-            algorithm: is_string($data['algorithm'] ?? null) ? $data['algorithm'] : 'sha256',
+            version: $data['version'] ?? 1,
+            algorithm: $data['algorithm'] ?? 'sha256',
             artifacts: $artifacts,
             contentHashes: $contentHashes,
-            signature: is_string($data['signature'] ?? null) ? $data['signature'] : null,
+            signature: $data['signature'] ?? null,
         );
     }
 
