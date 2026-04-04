@@ -13,7 +13,6 @@ use Random\Engine\Secure;
 use Random\Randomizer;
 
 use function bin2hex;
-use function is_string;
 
 /**
  * Dispatched when authentication succeeds.
@@ -53,22 +52,27 @@ final readonly class AuthenticationSucceeded implements EnvelopeRequiredEvent
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     identity_id?: string,
+     *     guard_name?: string,
+     *     method?: string,
+     *     correlation_id?: string,
+     *     nonce?: string,
+     *     occurred_at?: string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $occurredAt = is_string($data['occurred_at'] ?? null)
-            ? new DateTimeImmutable($data['occurred_at'])
-            : new DateTimeImmutable();
+        $occurredAt = $data['occurred_at'] ?? null;
 
         return new self(
-            identityId: is_string($data['identity_id'] ?? null) ? $data['identity_id'] : '',
-            guardName: is_string($data['guard_name'] ?? null) ? $data['guard_name'] : '',
-            method: is_string($data['method'] ?? null) ? $data['method'] : '',
-            correlationId: is_string($data['correlation_id'] ?? null) ? $data['correlation_id'] : '',
-            nonce: is_string($data['nonce'] ?? null) ? $data['nonce'] : '',
-            occurredAt: $occurredAt,
+            identityId: $data['identity_id'] ?? '',
+            guardName: $data['guard_name'] ?? '',
+            method: $data['method'] ?? '',
+            correlationId: $data['correlation_id'] ?? '',
+            nonce: $data['nonce'] ?? '',
+            occurredAt: $occurredAt !== null ? new DateTimeImmutable($occurredAt) : new DateTimeImmutable(),
         );
     }
 
