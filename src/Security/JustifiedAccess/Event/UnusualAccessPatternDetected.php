@@ -10,9 +10,6 @@ use Pulsar\Api\Api;
 use Pulsar\Event\Attribute\RequiresEnvelope;
 use Pulsar\Security\Compliance\ComplianceEvent;
 
-use function is_int;
-use function is_string;
-
 /**
  * Emitted when an unusual access pattern is detected for an actor.
  *
@@ -61,20 +58,31 @@ final readonly class UnusualAccessPatternDetected extends ComplianceEvent
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     event_id?: string,
+     *     occurred_at?: string,
+     *     correlation_id?: string,
+     *     nonce?: string,
+     *     actor_id?: string,
+     *     unique_resources_accessed?: int,
+     *     threshold?: int,
+     *     window_seconds?: int,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
+        $occurredAt = $data['occurred_at'] ?? null;
+
         return new self(
-            eventId: is_string($data['event_id'] ?? null) ? $data['event_id'] : '',
-            occurredAt: is_string($data['occurred_at'] ?? null) ? new DateTimeImmutable($data['occurred_at']) : new DateTimeImmutable(),
-            correlationId: is_string($data['correlation_id'] ?? null) ? $data['correlation_id'] : '',
-            nonce: is_string($data['nonce'] ?? null) ? $data['nonce'] : '',
-            actorId: is_string($data['actor_id'] ?? null) ? $data['actor_id'] : '',
-            uniqueResourcesAccessed: is_int($data['unique_resources_accessed'] ?? null) ? $data['unique_resources_accessed'] : 0,
-            threshold: is_int($data['threshold'] ?? null) ? $data['threshold'] : 50,
-            windowSeconds: is_int($data['window_seconds'] ?? null) ? $data['window_seconds'] : 3600,
+            eventId: $data['event_id'] ?? '',
+            occurredAt: $occurredAt !== null ? new DateTimeImmutable($occurredAt) : new DateTimeImmutable(),
+            correlationId: $data['correlation_id'] ?? '',
+            nonce: $data['nonce'] ?? '',
+            actorId: $data['actor_id'] ?? '',
+            uniqueResourcesAccessed: $data['unique_resources_accessed'] ?? 0,
+            threshold: $data['threshold'] ?? 50,
+            windowSeconds: $data['window_seconds'] ?? 3600,
         );
     }
 }
