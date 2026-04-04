@@ -10,8 +10,6 @@ use Pulsar\Api\Api;
 use Pulsar\Event\Attribute\RequiresEnvelope;
 use Pulsar\Security\Compliance\ComplianceEvent;
 
-use function is_string;
-
 /**
  * Emitted when a justified access event is recorded.
  *
@@ -65,22 +63,35 @@ final readonly class JustifiedAccessRecorded extends ComplianceEvent
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     event_id?: string,
+     *     occurred_at?: string,
+     *     correlation_id?: string,
+     *     nonce?: string,
+     *     justification_id?: string,
+     *     actor_id?: string,
+     *     resource_type?: string,
+     *     resource_id?: string,
+     *     category?: string,
+     *     data_classification?: string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
+        $occurredAt = $data['occurred_at'] ?? null;
+
         return new self(
-            eventId: is_string($data['event_id'] ?? null) ? $data['event_id'] : '',
-            occurredAt: is_string($data['occurred_at'] ?? null) ? new DateTimeImmutable($data['occurred_at']) : new DateTimeImmutable(),
-            correlationId: is_string($data['correlation_id'] ?? null) ? $data['correlation_id'] : '',
-            nonce: is_string($data['nonce'] ?? null) ? $data['nonce'] : '',
-            justificationId: is_string($data['justification_id'] ?? null) ? $data['justification_id'] : '',
-            actorId: is_string($data['actor_id'] ?? null) ? $data['actor_id'] : '',
-            resourceType: is_string($data['resource_type'] ?? null) ? $data['resource_type'] : '',
-            resourceId: is_string($data['resource_id'] ?? null) ? $data['resource_id'] : '',
-            category: is_string($data['category'] ?? null) ? $data['category'] : '',
-            dataClassification: is_string($data['data_classification'] ?? null) ? $data['data_classification'] : '',
+            eventId: $data['event_id'] ?? '',
+            occurredAt: $occurredAt !== null ? new DateTimeImmutable($occurredAt) : new DateTimeImmutable(),
+            correlationId: $data['correlation_id'] ?? '',
+            nonce: $data['nonce'] ?? '',
+            justificationId: $data['justification_id'] ?? '',
+            actorId: $data['actor_id'] ?? '',
+            resourceType: $data['resource_type'] ?? '',
+            resourceId: $data['resource_id'] ?? '',
+            category: $data['category'] ?? '',
+            dataClassification: $data['data_classification'] ?? '',
         );
     }
 }
