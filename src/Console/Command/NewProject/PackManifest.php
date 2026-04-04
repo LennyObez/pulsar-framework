@@ -48,7 +48,15 @@ final readonly class PackManifest
     /**
      * Create a manifest from a decoded pack.json array.
      *
-     * @param array<string, mixed> $data Decoded JSON data
+     * @param array{
+     *     name?: string,
+     *     description?: string,
+     *     version?: string,
+     *     requiredPulsarVersion?: string,
+     *     compliancePresets?: list<string>,
+     *     files?: array<string, string>,
+     *     postInstallCommands?: list<string>,
+     * } $data Decoded JSON data
      *
      * @throws InvalidArgumentException If required fields are missing or invalid
      */
