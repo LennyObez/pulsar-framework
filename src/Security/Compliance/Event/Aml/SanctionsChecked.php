@@ -10,8 +10,6 @@ use Pulsar\Api\Api;
 use Pulsar\Event\Attribute\RequiresEnvelope;
 use Pulsar\Security\Compliance\ComplianceEvent;
 
-use function is_string;
-
 /**
  * Records completion of a sanctions list check.
  *
@@ -62,21 +60,33 @@ final readonly class SanctionsChecked extends ComplianceEvent
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     event_id?: string,
+     *     occurred_at?: string,
+     *     correlation_id?: string,
+     *     nonce?: string,
+     *     checker_identity?: string,
+     *     customer_pseudonym?: string,
+     *     sanctions_list_version?: string,
+     *     result?: string,
+     *     match_details?: string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
+        $occurredAt = $data['occurred_at'] ?? null;
+
         return new self(
-            eventId: is_string($data['event_id'] ?? null) ? $data['event_id'] : '',
-            occurredAt: is_string($data['occurred_at'] ?? null) ? new DateTimeImmutable($data['occurred_at']) : new DateTimeImmutable(),
-            correlationId: is_string($data['correlation_id'] ?? null) ? $data['correlation_id'] : '',
-            nonce: is_string($data['nonce'] ?? null) ? $data['nonce'] : '',
-            checkerIdentity: is_string($data['checker_identity'] ?? null) ? $data['checker_identity'] : '',
-            customerPseudonym: is_string($data['customer_pseudonym'] ?? null) ? $data['customer_pseudonym'] : '',
-            sanctionsListVersion: is_string($data['sanctions_list_version'] ?? null) ? $data['sanctions_list_version'] : '',
-            result: is_string($data['result'] ?? null) ? $data['result'] : '',
-            matchDetails: is_string($data['match_details'] ?? null) ? $data['match_details'] : '',
+            eventId: $data['event_id'] ?? '',
+            occurredAt: $occurredAt !== null ? new DateTimeImmutable($occurredAt) : new DateTimeImmutable(),
+            correlationId: $data['correlation_id'] ?? '',
+            nonce: $data['nonce'] ?? '',
+            checkerIdentity: $data['checker_identity'] ?? '',
+            customerPseudonym: $data['customer_pseudonym'] ?? '',
+            sanctionsListVersion: $data['sanctions_list_version'] ?? '',
+            result: $data['result'] ?? '',
+            matchDetails: $data['match_details'] ?? '',
         );
     }
 }
