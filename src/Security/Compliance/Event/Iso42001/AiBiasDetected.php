@@ -10,8 +10,6 @@ use Pulsar\Api\Api;
 use Pulsar\Event\Attribute\RequiresEnvelope;
 use Pulsar\Security\Compliance\ComplianceEvent;
 
-use function is_string;
-
 /**
  * Records detection of bias in an AI model's outputs.
  *
@@ -63,21 +61,33 @@ final readonly class AiBiasDetected extends ComplianceEvent
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     event_id?: string,
+     *     occurred_at?: string,
+     *     correlation_id?: string,
+     *     nonce?: string,
+     *     model_id?: string,
+     *     bias_type?: string,
+     *     affected_group?: string,
+     *     description?: string,
+     *     detected_by?: string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
+        $occurredAt = $data['occurred_at'] ?? null;
+
         return new self(
-            eventId: is_string($data['event_id'] ?? null) ? $data['event_id'] : '',
-            occurredAt: is_string($data['occurred_at'] ?? null) ? new DateTimeImmutable($data['occurred_at']) : new DateTimeImmutable(),
-            correlationId: is_string($data['correlation_id'] ?? null) ? $data['correlation_id'] : '',
-            nonce: is_string($data['nonce'] ?? null) ? $data['nonce'] : '',
-            modelId: is_string($data['model_id'] ?? null) ? $data['model_id'] : '',
-            biasType: is_string($data['bias_type'] ?? null) ? $data['bias_type'] : '',
-            affectedGroup: is_string($data['affected_group'] ?? null) ? $data['affected_group'] : '',
-            description: is_string($data['description'] ?? null) ? $data['description'] : '',
-            detectedBy: is_string($data['detected_by'] ?? null) ? $data['detected_by'] : '',
+            eventId: $data['event_id'] ?? '',
+            occurredAt: $occurredAt !== null ? new DateTimeImmutable($occurredAt) : new DateTimeImmutable(),
+            correlationId: $data['correlation_id'] ?? '',
+            nonce: $data['nonce'] ?? '',
+            modelId: $data['model_id'] ?? '',
+            biasType: $data['bias_type'] ?? '',
+            affectedGroup: $data['affected_group'] ?? '',
+            description: $data['description'] ?? '',
+            detectedBy: $data['detected_by'] ?? '',
         );
     }
 }

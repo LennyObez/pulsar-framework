@@ -10,8 +10,6 @@ use Pulsar\Api\Api;
 use Pulsar\Event\Attribute\RequiresEnvelope;
 use Pulsar\Security\Compliance\ComplianceEvent;
 
-use function is_string;
-
 /**
  * Records the deployment of an AI model to production.
  *
@@ -64,21 +62,33 @@ final readonly class AiModelDeployed extends ComplianceEvent
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     event_id?: string,
+     *     occurred_at?: string,
+     *     correlation_id?: string,
+     *     nonce?: string,
+     *     model_id?: string,
+     *     model_name?: string,
+     *     model_version?: string,
+     *     risk_level?: string,
+     *     deployed_by?: string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
+        $occurredAt = $data['occurred_at'] ?? null;
+
         return new self(
-            eventId: is_string($data['event_id'] ?? null) ? $data['event_id'] : '',
-            occurredAt: is_string($data['occurred_at'] ?? null) ? new DateTimeImmutable($data['occurred_at']) : new DateTimeImmutable(),
-            correlationId: is_string($data['correlation_id'] ?? null) ? $data['correlation_id'] : '',
-            nonce: is_string($data['nonce'] ?? null) ? $data['nonce'] : '',
-            modelId: is_string($data['model_id'] ?? null) ? $data['model_id'] : '',
-            modelName: is_string($data['model_name'] ?? null) ? $data['model_name'] : '',
-            modelVersion: is_string($data['model_version'] ?? null) ? $data['model_version'] : '',
-            riskLevel: is_string($data['risk_level'] ?? null) ? $data['risk_level'] : '',
-            deployedBy: is_string($data['deployed_by'] ?? null) ? $data['deployed_by'] : '',
+            eventId: $data['event_id'] ?? '',
+            occurredAt: $occurredAt !== null ? new DateTimeImmutable($occurredAt) : new DateTimeImmutable(),
+            correlationId: $data['correlation_id'] ?? '',
+            nonce: $data['nonce'] ?? '',
+            modelId: $data['model_id'] ?? '',
+            modelName: $data['model_name'] ?? '',
+            modelVersion: $data['model_version'] ?? '',
+            riskLevel: $data['risk_level'] ?? '',
+            deployedBy: $data['deployed_by'] ?? '',
         );
     }
 }
