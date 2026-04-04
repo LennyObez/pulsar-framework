@@ -10,11 +10,6 @@ use Pulsar\Api\Api;
 use Pulsar\Event\Attribute\RequiresEnvelope;
 use Pulsar\Security\Compliance\ComplianceEvent;
 
-use function array_values;
-use function is_array;
-use function is_int;
-use function is_string;
-
 /**
  * Records a HIPAA breach notification event.
  *
@@ -68,24 +63,35 @@ final readonly class BreachNotification extends ComplianceEvent
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     event_id?: string,
+     *     occurred_at?: string,
+     *     correlation_id?: string,
+     *     nonce?: string,
+     *     reporter_identity?: string,
+     *     affected_count?: int,
+     *     phi_categories?: list<string>,
+     *     discovery_date?: string,
+     *     notification_deadline?: string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var list<string> $phiCategories */
-        $phiCategories = is_array($data['phi_categories'] ?? null) ? array_values($data['phi_categories']) : [];
+        $occurredAt = $data['occurred_at'] ?? null;
+        $discoveryDate = $data['discovery_date'] ?? null;
+        $notificationDeadline = $data['notification_deadline'] ?? null;
 
         return new self(
-            eventId: is_string($data['event_id'] ?? null) ? $data['event_id'] : '',
-            occurredAt: is_string($data['occurred_at'] ?? null) ? new DateTimeImmutable($data['occurred_at']) : new DateTimeImmutable(),
-            correlationId: is_string($data['correlation_id'] ?? null) ? $data['correlation_id'] : '',
-            nonce: is_string($data['nonce'] ?? null) ? $data['nonce'] : '',
-            reporterIdentity: is_string($data['reporter_identity'] ?? null) ? $data['reporter_identity'] : '',
-            affectedCount: is_int($data['affected_count'] ?? null) ? $data['affected_count'] : 0,
-            phiCategories: $phiCategories,
-            discoveryDate: is_string($data['discovery_date'] ?? null) ? new DateTimeImmutable($data['discovery_date']) : new DateTimeImmutable(),
-            notificationDeadline: is_string($data['notification_deadline'] ?? null) ? new DateTimeImmutable($data['notification_deadline']) : new DateTimeImmutable(),
+            eventId: $data['event_id'] ?? '',
+            occurredAt: $occurredAt !== null ? new DateTimeImmutable($occurredAt) : new DateTimeImmutable(),
+            correlationId: $data['correlation_id'] ?? '',
+            nonce: $data['nonce'] ?? '',
+            reporterIdentity: $data['reporter_identity'] ?? '',
+            affectedCount: $data['affected_count'] ?? 0,
+            phiCategories: $data['phi_categories'] ?? [],
+            discoveryDate: $discoveryDate !== null ? new DateTimeImmutable($discoveryDate) : new DateTimeImmutable(),
+            notificationDeadline: $notificationDeadline !== null ? new DateTimeImmutable($notificationDeadline) : new DateTimeImmutable(),
         );
     }
 }
