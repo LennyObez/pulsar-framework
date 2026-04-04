@@ -13,7 +13,6 @@ use Random\Engine\Secure;
 use Random\Randomizer;
 
 use function bin2hex;
-use function is_string;
 
 /**
  * Dispatched when authentication fails.
@@ -53,22 +52,27 @@ final readonly class AuthenticationFailed implements EnvelopeRequiredEvent
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     attempted_identity?: string,
+     *     guard_name?: string,
+     *     failure_reason?: string,
+     *     correlation_id?: string,
+     *     nonce?: string,
+     *     occurred_at?: string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $occurredAt = is_string($data['occurred_at'] ?? null)
-            ? new DateTimeImmutable($data['occurred_at'])
-            : new DateTimeImmutable();
+        $occurredAt = $data['occurred_at'] ?? null;
 
         return new self(
-            attemptedIdentity: is_string($data['attempted_identity'] ?? null) ? $data['attempted_identity'] : '',
-            guardName: is_string($data['guard_name'] ?? null) ? $data['guard_name'] : '',
-            failureReason: is_string($data['failure_reason'] ?? null) ? $data['failure_reason'] : '',
-            correlationId: is_string($data['correlation_id'] ?? null) ? $data['correlation_id'] : '',
-            nonce: is_string($data['nonce'] ?? null) ? $data['nonce'] : '',
-            occurredAt: $occurredAt,
+            attemptedIdentity: $data['attempted_identity'] ?? '',
+            guardName: $data['guard_name'] ?? '',
+            failureReason: $data['failure_reason'] ?? '',
+            correlationId: $data['correlation_id'] ?? '',
+            nonce: $data['nonce'] ?? '',
+            occurredAt: $occurredAt !== null ? new DateTimeImmutable($occurredAt) : new DateTimeImmutable(),
         );
     }
 
