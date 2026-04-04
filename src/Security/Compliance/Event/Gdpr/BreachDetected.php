@@ -10,11 +10,6 @@ use Pulsar\Api\Api;
 use Pulsar\Event\Attribute\RequiresEnvelope;
 use Pulsar\Security\Compliance\ComplianceEvent;
 
-use function array_values;
-use function is_array;
-use function is_int;
-use function is_string;
-
 /**
  * Records that a personal data breach has been detected.
  *
@@ -68,24 +63,33 @@ final readonly class BreachDetected extends ComplianceEvent
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     event_id?: string,
+     *     occurred_at?: string,
+     *     correlation_id?: string,
+     *     nonce?: string,
+     *     detected_by?: string,
+     *     affected_subject_count?: int,
+     *     data_categories?: list<string>,
+     *     severity?: string,
+     *     description?: string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var list<string> $dataCategories */
-        $dataCategories = is_array($data['data_categories'] ?? null) ? array_values($data['data_categories']) : [];
+        $occurredAt = $data['occurred_at'] ?? null;
 
         return new self(
-            eventId: is_string($data['event_id'] ?? null) ? $data['event_id'] : '',
-            occurredAt: is_string($data['occurred_at'] ?? null) ? new DateTimeImmutable($data['occurred_at']) : new DateTimeImmutable(),
-            correlationId: is_string($data['correlation_id'] ?? null) ? $data['correlation_id'] : '',
-            nonce: is_string($data['nonce'] ?? null) ? $data['nonce'] : '',
-            detectedBy: is_string($data['detected_by'] ?? null) ? $data['detected_by'] : '',
-            affectedSubjectCount: is_int($data['affected_subject_count'] ?? null) ? $data['affected_subject_count'] : 0,
-            dataCategories: $dataCategories,
-            severity: is_string($data['severity'] ?? null) ? $data['severity'] : '',
-            description: is_string($data['description'] ?? null) ? $data['description'] : '',
+            eventId: $data['event_id'] ?? '',
+            occurredAt: $occurredAt !== null ? new DateTimeImmutable($occurredAt) : new DateTimeImmutable(),
+            correlationId: $data['correlation_id'] ?? '',
+            nonce: $data['nonce'] ?? '',
+            detectedBy: $data['detected_by'] ?? '',
+            affectedSubjectCount: $data['affected_subject_count'] ?? 0,
+            dataCategories: $data['data_categories'] ?? [],
+            severity: $data['severity'] ?? '',
+            description: $data['description'] ?? '',
         );
     }
 }

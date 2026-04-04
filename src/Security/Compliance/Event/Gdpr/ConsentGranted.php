@@ -10,8 +10,6 @@ use Pulsar\Api\Api;
 use Pulsar\Event\Attribute\RequiresEnvelope;
 use Pulsar\Security\Compliance\ComplianceEvent;
 
-use function is_string;
-
 /**
  * Records that a data subject has granted consent for a specific processing purpose.
  *
@@ -62,25 +60,34 @@ final readonly class ConsentGranted extends ComplianceEvent
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     event_id?: string,
+     *     occurred_at?: string,
+     *     correlation_id?: string,
+     *     nonce?: string,
+     *     subject_id?: string,
+     *     purpose?: string,
+     *     legal_basis?: string,
+     *     consent_scope?: string,
+     *     expires_at?: string|null,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $expiresAt = is_string($data['expires_at'] ?? null)
-            ? new DateTimeImmutable($data['expires_at'])
-            : null;
+        $occurredAt = $data['occurred_at'] ?? null;
+        $expiresAt = $data['expires_at'] ?? null;
 
         return new self(
-            eventId: is_string($data['event_id'] ?? null) ? $data['event_id'] : '',
-            occurredAt: is_string($data['occurred_at'] ?? null) ? new DateTimeImmutable($data['occurred_at']) : new DateTimeImmutable(),
-            correlationId: is_string($data['correlation_id'] ?? null) ? $data['correlation_id'] : '',
-            nonce: is_string($data['nonce'] ?? null) ? $data['nonce'] : '',
-            subjectId: is_string($data['subject_id'] ?? null) ? $data['subject_id'] : '',
-            purpose: is_string($data['purpose'] ?? null) ? $data['purpose'] : '',
-            legalBasis: is_string($data['legal_basis'] ?? null) ? $data['legal_basis'] : '',
-            consentScope: is_string($data['consent_scope'] ?? null) ? $data['consent_scope'] : '',
-            expiresAt: $expiresAt,
+            eventId: $data['event_id'] ?? '',
+            occurredAt: $occurredAt !== null ? new DateTimeImmutable($occurredAt) : new DateTimeImmutable(),
+            correlationId: $data['correlation_id'] ?? '',
+            nonce: $data['nonce'] ?? '',
+            subjectId: $data['subject_id'] ?? '',
+            purpose: $data['purpose'] ?? '',
+            legalBasis: $data['legal_basis'] ?? '',
+            consentScope: $data['consent_scope'] ?? '',
+            expiresAt: $expiresAt !== null ? new DateTimeImmutable($expiresAt) : null,
         );
     }
 }
