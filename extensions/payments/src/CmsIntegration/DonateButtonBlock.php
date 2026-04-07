@@ -6,9 +6,6 @@ namespace Pulsar\Extension\Payments\CmsIntegration;
 
 use Pulsar\Api\Api;
 
-use function is_int;
-use function is_string;
-
 /**
  * CMS block: Donation button with configurable amounts.
  * @api
@@ -29,26 +26,24 @@ final readonly class DonateButtonBlock
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     currency?: string,
+     *     suggested_amounts?: list<int>,
+     *     allow_custom_amount?: bool|int|string,
+     *     button_text?: string,
+     *     success_url?: string,
+     *     cancel_url?: string,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
-        $rawAmounts = (array) ($data['suggested_amounts'] ?? [500, 1000, 2500, 5000]);
-        /** @var list<int> $amounts */
-        $amounts = array_map(static fn(mixed $v): int => is_int($v) ? $v : (is_numeric($v) ? (int) $v : 0), $rawAmounts);
-
-        $currency = isset($data['currency']) && is_string($data['currency']) ? $data['currency'] : 'USD';
-        $buttonText = isset($data['button_text']) && is_string($data['button_text']) ? $data['button_text'] : 'Donate';
-        $successUrl = isset($data['success_url']) && is_string($data['success_url']) ? $data['success_url'] : '/donate/thank-you';
-        $cancelUrl = isset($data['cancel_url']) && is_string($data['cancel_url']) ? $data['cancel_url'] : '/';
-
         return new self(
-            currency: $currency,
-            suggestedAmounts: $amounts,
+            currency: $data['currency'] ?? 'USD',
+            suggestedAmounts: $data['suggested_amounts'] ?? [500, 1000, 2500, 5000],
             allowCustomAmount: (bool) ($data['allow_custom_amount'] ?? true),
-            buttonText: $buttonText,
-            successUrl: $successUrl,
-            cancelUrl: $cancelUrl,
+            buttonText: $data['button_text'] ?? 'Donate',
+            successUrl: $data['success_url'] ?? '/donate/thank-you',
+            cancelUrl: $data['cancel_url'] ?? '/',
         );
     }
 

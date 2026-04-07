@@ -6,9 +6,6 @@ namespace Pulsar\Extension\Payments\CmsIntegration;
 
 use Pulsar\Api\Api;
 
-use function is_int;
-use function is_string;
-
 /**
  * CMS block: Product card with buy button.
  * @api
@@ -28,34 +25,29 @@ final readonly class ProductCardBlock
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     product_name?: string,
+     *     description?: string,
+     *     price_display?: string,
+     *     price_minor_units?: int|string,
+     *     currency?: string,
+     *     image_url?: string|null,
+     *     buy_url?: string,
+     *     button_text?: string,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
-        $priceVal = $data['price_minor_units'] ?? null;
-        $priceMinor = is_int($priceVal) ? $priceVal : (is_numeric($priceVal) ? (int) $priceVal : 0);
-        $imageVal = $data['image_url'] ?? null;
-
         return new self(
-            productName: self::str($data, 'product_name', ''),
-            description: self::str($data, 'description', ''),
-            priceDisplay: self::str($data, 'price_display', ''),
-            priceMinorUnits: $priceMinor,
-            currency: self::str($data, 'currency', 'USD'),
-            imageUrl: is_string($imageVal) ? $imageVal : null,
-            buyUrl: self::str($data, 'buy_url', '/checkout'),
-            buttonText: self::str($data, 'button_text', 'Buy Now'),
+            productName: $data['product_name'] ?? '',
+            description: $data['description'] ?? '',
+            priceDisplay: $data['price_display'] ?? '',
+            priceMinorUnits: (int) ($data['price_minor_units'] ?? 0),
+            currency: $data['currency'] ?? 'USD',
+            imageUrl: $data['image_url'] ?? null,
+            buyUrl: $data['buy_url'] ?? '/checkout',
+            buttonText: $data['button_text'] ?? 'Buy Now',
         );
-    }
-
-    /**
-     * @param array<string, mixed> $data
-     */
-    private static function str(array $data, string $key, string $default): string
-    {
-        $value = $data[$key] ?? $default;
-
-        return is_string($value) ? $value : $default;
     }
 
     /**
