@@ -364,9 +364,15 @@ jobs:
       - run: composer install --no-interaction --no-progress
 
       - name: Verify cache warmup pipeline
-        env:
-          PULSAR_MASTER_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        # F28.4: do not bake a fixed master key into CI yaml. The
+        # previous hardcoded `0123...cdef` value was 32 bytes of
+        # entirely-public-knowledge entropy; cache artefacts encrypted
+        # under it (uploaded by later steps) were trivially decryptable
+        # by anyone reading the workflow file. Generate per-run instead
+        # via openssl. The key is exported only inside this step and
+        # is not persisted between jobs.
         run: |
+          export PULSAR_MASTER_KEY="$(openssl rand -hex 32)"
           if php bin/pulsar list 2>/dev/null | grep -q 'optimize:validate'; then
             php bin/pulsar optimize:validate --strict
           else
