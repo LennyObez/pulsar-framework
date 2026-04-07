@@ -7,8 +7,6 @@ namespace Pulsar\Routing\Binding;
 use NoDiscard;
 use Pulsar\Api\Internal;
 
-use function is_string;
-
 /**
  * Pre-compiled map of route name to parameter binding metadata.
  *
@@ -67,7 +65,15 @@ final readonly class CompiledBindingMap
     /**
      * Reconstruct from a serialized cache array.
      *
-     * @param array<string, array<string, array<string, mixed>>> $data
+     * @param array<string, array<string, array{
+     *     class?: class-string,
+     *     key_name?: string,
+     *     key_type?: string,
+     *     scoped?: bool,
+     *     parent_relation?: string|null,
+     *     authz_policy?: string|null,
+     *     custom_resolver?: class-string|null,
+     * }>> $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
@@ -76,33 +82,14 @@ final readonly class CompiledBindingMap
 
         foreach ($data as $routeName => $parameters) {
             foreach ($parameters as $paramName => $metaData) {
-                /** @var array<string, mixed> $metaData */
-                /** @var class-string $class */
-                $class = isset($metaData['class']) && is_string($metaData['class']) ? $metaData['class'] : '';
-
-                /** @var class-string|null $customResolver */
-                $customResolver = isset($metaData['custom_resolver']) && is_string($metaData['custom_resolver'])
-                    ? $metaData['custom_resolver']
-                    : null;
-
-                $keyName = isset($metaData['key_name']) && is_string($metaData['key_name']) ? $metaData['key_name'] : 'id';
-                $keyType = isset($metaData['key_type']) && is_string($metaData['key_type']) ? $metaData['key_type'] : 'int';
-                $scoped = isset($metaData['scoped']) && $metaData['scoped'] === true;
-                $parentRelation = isset($metaData['parent_relation']) && is_string($metaData['parent_relation'])
-                    ? $metaData['parent_relation']
-                    : null;
-                $authzPolicy = isset($metaData['authz_policy']) && is_string($metaData['authz_policy'])
-                    ? $metaData['authz_policy']
-                    : null;
-
                 $map[$routeName][$paramName] = new BindingMeta(
-                    class: $class,
-                    keyName: $keyName,
-                    keyType: $keyType,
-                    scoped: $scoped,
-                    parentRelation: $parentRelation,
-                    authzPolicy: $authzPolicy,
-                    customResolver: $customResolver,
+                    class: $metaData['class'] ?? '',
+                    keyName: $metaData['key_name'] ?? 'id',
+                    keyType: $metaData['key_type'] ?? 'int',
+                    scoped: ($metaData['scoped'] ?? false) === true,
+                    parentRelation: $metaData['parent_relation'] ?? null,
+                    authzPolicy: $metaData['authz_policy'] ?? null,
+                    customResolver: $metaData['custom_resolver'] ?? null,
                 );
             }
         }
