@@ -249,66 +249,43 @@ final readonly class OpenAiProvider implements AiClientInterface
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     choices?: list<array{
+     *         message?: array{
+     *             content?: string,
+     *             tool_calls?: list<array{id?: string, function?: array{name?: string, arguments?: string}}>,
+     *         },
+     *         finish_reason?: string,
+     *     }>,
+     *     usage?: array{prompt_tokens?: int, completion_tokens?: int},
+     * } $data
      */
     private function parseChatResponse(array $data, string $model): AiResponse
     {
-        $rawChoices = $data['choices'] ?? null;
-        /** @var list<array<string, mixed>> $choices */
-        $choices = is_array($rawChoices) ? $rawChoices : [];
-        $rawFirstChoice = $choices[0] ?? null;
-        $firstChoice = is_array($rawFirstChoice) ? $rawFirstChoice : [];
+        $firstChoice = $data['choices'][0] ?? [];
+        $message = $firstChoice['message'] ?? [];
+        $usage = $data['usage'] ?? [];
 
-        $rawMessage = $firstChoice['message'] ?? null;
-        /** @var array{content?: string, tool_calls?: list<array<string, mixed>>} $message */
-        $message = is_array($rawMessage) ? $rawMessage : [];
-
-        $rawUsage = $data['usage'] ?? null;
-        /** @var array{prompt_tokens?: int, completion_tokens?: int} $usage */
-        $usage = is_array($rawUsage) ? $rawUsage : [];
-
-        $rawContent = $message['content'] ?? null;
-        $content = is_string($rawContent) ? $rawContent : '';
-
-        /** @var list<ToolCall> $toolCalls */
         $toolCalls = [];
 
-        if (isset($message['tool_calls']) && is_array($message['tool_calls'])) {
-            foreach ($message['tool_calls'] as $tc) {
-                if (!is_array($tc)) {
-                    continue;
-                }
+        foreach ($message['tool_calls'] ?? [] as $tc) {
+            $func = $tc['function'] ?? [];
+            $argsDecoded = json_decode($func['arguments'] ?? '{}', true);
+            /** @var array<string, mixed> $args */
+            $args = is_array($argsDecoded) ? $argsDecoded : [];
 
-                /** @var array{id?: string, function?: array{name?: string, arguments?: string}} $tc */
-                $rawFunc = $tc['function'] ?? null;
-                $func = is_array($rawFunc) ? $rawFunc : [];
-                $rawArgsStr = $func['arguments'] ?? null;
-                $argsStr = is_string($rawArgsStr) ? $rawArgsStr : '{}';
-
-                $argsDecoded = json_decode($argsStr, true);
-                /** @var array<string, mixed> $args */
-                $args = is_array($argsDecoded) ? $argsDecoded : [];
-
-                $rawTcId = $tc['id'] ?? null;
-                $rawFuncName = $func['name'] ?? null;
-                $toolCalls[] = new ToolCall(
-                    id: is_string($rawTcId) ? $rawTcId : '',
-                    name: is_string($rawFuncName) ? $rawFuncName : '',
-                    arguments: $args,
-                );
-            }
+            $toolCalls[] = new ToolCall(
+                id: $tc['id'] ?? '',
+                name: $func['name'] ?? '',
+                arguments: $args,
+            );
         }
 
-        $rawFinishReason = $firstChoice['finish_reason'] ?? null;
-        $finishReason = is_string($rawFinishReason) ? $rawFinishReason : 'stop';
-
-        $rawPromptTokens = $usage['prompt_tokens'] ?? null;
-        $rawCompletionTokens = $usage['completion_tokens'] ?? null;
         return new AiResponse(
-            content: $content,
-            inputTokens: is_int($rawPromptTokens) ? $rawPromptTokens : 0,
-            outputTokens: is_int($rawCompletionTokens) ? $rawCompletionTokens : 0,
-            finishReason: $finishReason,
+            content: $message['content'] ?? '',
+            inputTokens: $usage['prompt_tokens'] ?? 0,
+            outputTokens: $usage['completion_tokens'] ?? 0,
+            finishReason: $firstChoice['finish_reason'] ?? 'stop',
             toolCalls: $toolCalls,
             model: $model,
         );
