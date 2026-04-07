@@ -61,7 +61,18 @@ final readonly class PaymentGateway implements PaymentGatewayInterface
         // must not be replay-able as a forged response, so the gateway
         // refuses to construct without an envelope signer.
         private SignedIdempotencyEnvelope $envelope,
-        private ?CreatePaymentIntentHandler $createHandler = null,
+        // F22.2: the create-intent handler is now a required dependency.
+        // Earlier revisions accepted `?CreatePaymentIntentHandler = null`
+        // and instantiated a fresh handler inline — a hidden service-
+        // locator pattern that hardcoded the handler's constructor
+        // signature inside the gateway. PaymentsServiceProvider already
+        // binds the handler in the container, so production wiring was
+        // never affected; the only callers exercising the null branch
+        // were tests that passed `createHandler: null` explicitly. Force
+        // the typed dependency so any future change to the handler
+        // constructor reaches every call site through the type system
+        // rather than silently breaking the inline fallback.
+        private CreatePaymentIntentHandler $createHandler,
         // F13.9: when a `TenantContext` is wired, the gateway stamps the
         // tenant id on every audit record so a multi-tenant audit trail
         // can be filtered per tenant. Idempotency-key tenant scoping is
@@ -84,18 +95,7 @@ final readonly class PaymentGateway implements PaymentGatewayInterface
     {
         $this->assertTenantScope('createIntent');
 
-        $handler = $this->createHandler ?? new CreatePaymentIntentHandler(
-            $this->provider,
-            $this->idempotencyStore,
-            $this->auditLogger,
-            $this->metricRegistry,
-            $this->logger,
-            $this->clock,
-            $this->config,
-            $this->envelope,
-        );
-
-        return $handler->execute(
+        return $this->createHandler->execute(
             new CreatePaymentIntentRequest($amount, $idempotencyKey, $metadata),
         )->intent;
     }

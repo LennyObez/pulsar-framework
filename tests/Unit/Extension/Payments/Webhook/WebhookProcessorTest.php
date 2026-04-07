@@ -23,6 +23,7 @@ use Pulsar\Extension\Payments\Config\WebhookConfig;
 use Pulsar\Extension\Payments\Config\WebhookLogConfig;
 use Pulsar\Extension\Payments\Contracts\WebhookHandlerInterface;
 use Pulsar\Extension\Payments\Domain\WebhookEvent;
+use Pulsar\Extension\Payments\Features\ProcessWebhook\ProcessWebhookHandler;
 use Pulsar\Extension\Payments\Internal\Infrastructure\Clock\FixedClock;
 use Pulsar\Extension\Payments\Internal\Infrastructure\Webhook\HmacWebhookVerifier;
 use Pulsar\Extension\Payments\Webhook\WebhookProcessor;
@@ -167,14 +168,27 @@ final class WebhookProcessorTest extends TestCase
 
     private function createProcessor(WebhookHandlerInterface $handler): WebhookProcessor
     {
-        return new WebhookProcessor(
-            verifier: new HmacWebhookVerifier($this->clock),
+        $verifier = new HmacWebhookVerifier($this->clock);
+        $config = $this->createConfig();
+        $processHandler = new ProcessWebhookHandler(
+            verifier: $verifier,
             eventLog: $this->eventLog,
             handler: $handler,
             clock: $this->clock,
             metricRegistry: $this->metricRegistry,
             logger: new NullLogger(),
-            config: $this->createConfig(),
+            config: $config,
+        );
+
+        return new WebhookProcessor(
+            verifier: $verifier,
+            eventLog: $this->eventLog,
+            handler: $handler,
+            clock: $this->clock,
+            metricRegistry: $this->metricRegistry,
+            logger: new NullLogger(),
+            config: $config,
+            processHandler: $processHandler,
         );
     }
 
