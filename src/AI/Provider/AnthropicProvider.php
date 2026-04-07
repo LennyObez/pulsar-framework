@@ -236,45 +236,32 @@ final readonly class AnthropicProvider implements AiClientInterface
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     content?: list<array{type?: string, text?: string, id?: string, name?: string, input?: array<string, mixed>}>,
+     *     usage?: array{input_tokens?: int, output_tokens?: int},
+     *     stop_reason?: string,
+     * } $data
      */
     private function parseResponse(array $data, string $model): AiResponse
     {
-        /** @var list<array<string, mixed>> $contentBlocks */
-        $contentBlocks = is_array($data['content'] ?? null) ? $data['content'] : [];
-
-        /** @var array{input_tokens?: int, output_tokens?: int} $usage */
-        $usage = is_array($data['usage'] ?? null) ? $data['usage'] : [];
-
         $content = '';
-        /** @var list<ToolCall> $toolCalls */
         $toolCalls = [];
 
-        foreach ($contentBlocks as $block) {
-            /** @var array{type?: string, text?: string, id?: string, name?: string, input?: array<string, mixed>} $block */
-            $rawType = $block['type'] ?? null;
-            $type = is_string($rawType) ? $rawType : '';
+        foreach ($data['content'] ?? [] as $block) {
+            $type = $block['type'] ?? '';
 
-            $rawText = $block['text'] ?? null;
-            if ($type === 'text' && is_string($rawText)) {
-                $content .= $rawText;
+            if ($type === 'text' && isset($block['text'])) {
+                $content .= $block['text'];
             } elseif ($type === 'tool_use') {
-                $rawInput = $block['input'] ?? null;
-                /** @var array<string, mixed> $input */
-                $input = is_array($rawInput) ? $rawInput : [];
-
-                $rawId = $block['id'] ?? null;
-                $rawName = $block['name'] ?? null;
                 $toolCalls[] = new ToolCall(
-                    id: is_string($rawId) ? $rawId : '',
-                    name: is_string($rawName) ? $rawName : '',
-                    arguments: $input,
+                    id: $block['id'] ?? '',
+                    name: $block['name'] ?? '',
+                    arguments: $block['input'] ?? [],
                 );
             }
         }
 
-        $rawStopReason = $data['stop_reason'] ?? null;
-        $stopReason = is_string($rawStopReason) ? $rawStopReason : 'end_turn';
+        $stopReason = $data['stop_reason'] ?? 'end_turn';
         $finishReason = match ($stopReason) {
             'end_turn' => 'stop',
             'max_tokens' => 'length',
@@ -282,12 +269,12 @@ final readonly class AnthropicProvider implements AiClientInterface
             default => $stopReason,
         };
 
-        $rawInputTokens = $usage['input_tokens'] ?? null;
-        $rawOutputTokens = $usage['output_tokens'] ?? null;
+        $usage = $data['usage'] ?? [];
+
         return new AiResponse(
             content: $content,
-            inputTokens: is_int($rawInputTokens) ? $rawInputTokens : 0,
-            outputTokens: is_int($rawOutputTokens) ? $rawOutputTokens : 0,
+            inputTokens: $usage['input_tokens'] ?? 0,
+            outputTokens: $usage['output_tokens'] ?? 0,
             finishReason: $finishReason,
             toolCalls: $toolCalls,
             model: $model,
