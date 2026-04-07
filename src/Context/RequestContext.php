@@ -8,8 +8,6 @@ use DateTimeImmutable;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_string;
-
 /**
  * Immutable request context carrying correlation, causation, and request metadata.
  *
@@ -90,33 +88,33 @@ final readonly class RequestContext
     /**
      * Deserialize from array with snake_case keys.
      *
-     * @param array<string, mixed> $data
+     * @param array{
+     *     correlation_id?: string,
+     *     causation_id?: string,
+     *     actor?: string|null,
+     *     tenant_id?: string|null,
+     *     ip?: string|null,
+     *     user_agent?: string|null,
+     *     locale?: string|null,
+     *     timestamp?: string|null,
+     *     attributes?: array<string, mixed>,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var array<string, mixed> $attributes */
-        $attributes = $data['attributes'] ?? [];
-
-        $correlationId = $data['correlation_id'] ?? '';
-        $causationId = $data['causation_id'] ?? '';
-        $actor = $data['actor'] ?? null;
-        $tenantId = $data['tenant_id'] ?? null;
-        $ip = $data['ip'] ?? null;
-        $userAgent = $data['user_agent'] ?? null;
-        $locale = $data['locale'] ?? null;
         $timestampRaw = $data['timestamp'] ?? null;
 
         return new self(
-            correlationId: CorrelationId::fromString(is_string($correlationId) ? $correlationId : ''),
-            causationId: CausationId::fromString(is_string($causationId) ? $causationId : ''),
-            actor: is_string($actor) ? $actor : null,
-            tenantId: is_string($tenantId) ? $tenantId : null,
-            ip: is_string($ip) ? $ip : null,
-            userAgent: is_string($userAgent) ? $userAgent : null,
-            locale: is_string($locale) ? $locale : null,
-            timestamp: is_string($timestampRaw) ? new DateTimeImmutable($timestampRaw) : null,
-            attributes: $attributes,
+            correlationId: CorrelationId::fromString($data['correlation_id'] ?? ''),
+            causationId: CausationId::fromString($data['causation_id'] ?? ''),
+            actor: $data['actor'] ?? null,
+            tenantId: $data['tenant_id'] ?? null,
+            ip: $data['ip'] ?? null,
+            userAgent: $data['user_agent'] ?? null,
+            locale: $data['locale'] ?? null,
+            timestamp: $timestampRaw !== null ? new DateTimeImmutable($timestampRaw) : null,
+            attributes: $data['attributes'] ?? [],
         );
     }
 }
