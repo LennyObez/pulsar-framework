@@ -7,10 +7,6 @@ namespace Pulsar\AI;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_array;
-use function is_numeric;
-use function is_string;
-
 /**
  * Immutable DTO representing a response from an AI provider.
  *
@@ -72,30 +68,31 @@ final readonly class AiResponse
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     content?: string,
+     *     input_tokens?: int|string,
+     *     output_tokens?: int|string,
+     *     finish_reason?: string,
+     *     tool_calls?: list<array<string, mixed>>,
+     *     model?: string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var list<ToolCall> $toolCalls */
         $toolCalls = [];
 
-        if (isset($data['tool_calls']) && is_array($data['tool_calls'])) {
-            foreach ($data['tool_calls'] as $tc) {
-                if (is_array($tc)) {
-                    /** @var array<string, mixed> $tc */
-                    $toolCalls[] = ToolCall::fromArray($tc);
-                }
-            }
+        foreach ($data['tool_calls'] ?? [] as $tc) {
+            $toolCalls[] = ToolCall::fromArray($tc);
         }
 
         return new self(
-            content: is_string($data['content'] ?? null) ? $data['content'] : '',
-            inputTokens: is_numeric($data['input_tokens'] ?? null) ? (int) $data['input_tokens'] : 0,
-            outputTokens: is_numeric($data['output_tokens'] ?? null) ? (int) $data['output_tokens'] : 0,
-            finishReason: is_string($data['finish_reason'] ?? null) ? $data['finish_reason'] : 'stop',
+            content: $data['content'] ?? '',
+            inputTokens: (int) ($data['input_tokens'] ?? 0),
+            outputTokens: (int) ($data['output_tokens'] ?? 0),
+            finishReason: $data['finish_reason'] ?? 'stop',
             toolCalls: $toolCalls,
-            model: is_string($data['model'] ?? null) ? $data['model'] : '',
+            model: $data['model'] ?? '',
         );
     }
 

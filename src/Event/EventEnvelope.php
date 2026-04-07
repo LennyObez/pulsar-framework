@@ -100,7 +100,15 @@ final readonly class EventEnvelope
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     event_id?: string,
+     *     event_type?: string,
+     *     schema_version?: int,
+     *     metadata?: array<string, mixed>,
+     *     payload?: array<string, mixed>,
+     *     origin_module?: string|null,
+     *     scope?: string|null,
+     * } $data
      *
      * @throws JsonException
      * @throws EventException When a required envelope field (event_type, etc.) is missing or empty.
@@ -109,39 +117,27 @@ final readonly class EventEnvelope
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var array<string, mixed> $metadataData */
-        $metadataData = $data['metadata'] ?? [];
-
-        /** @var array<string, mixed> $payload */
-        $payload = $data['payload'] ?? [];
-
-        $eventId = $data['event_id'] ?? '';
         $eventType = $data['event_type'] ?? '';
-        $schemaVersion = $data['schema_version'] ?? 0;
-        $originModule = $data['origin_module'] ?? null;
-        $scopeRaw = $data['scope'] ?? null;
 
-        $validEventType = is_string($eventType) ? $eventType : '';
-
-        if ($validEventType === '') {
+        if ($eventType === '') {
             throw EventException::missingEnvelopeField('eventType');
         }
 
-        $scope = is_string($scopeRaw) ? (EventScope::tryFrom($scopeRaw) ?? EventScope::CrossModule) : EventScope::CrossModule;
+        $payload = $data['payload'] ?? [];
+        $schemaVersion = $data['schema_version'] ?? 0;
+        $scopeRaw = $data['scope'] ?? null;
 
         return new self(
-            eventId: is_string($eventId) ? $eventId : '',
-            eventType: $validEventType,
-            schemaVersion: is_int($schemaVersion) ? $schemaVersion : 0,
-            metadata: EventMetadata::fromArray($metadataData),
+            eventId: $data['event_id'] ?? '',
+            eventType: $eventType,
+            schemaVersion: $schemaVersion,
+            metadata: EventMetadata::fromArray($data['metadata'] ?? []),
             payload: $payload,
-            payloadHash: self::computeHash(
-                $validEventType,
-                is_int($schemaVersion) ? $schemaVersion : 0,
-                $payload,
-            ),
-            originModule: is_string($originModule) ? $originModule : null,
-            scope: $scope,
+            payloadHash: self::computeHash($eventType, $schemaVersion, $payload),
+            originModule: $data['origin_module'] ?? null,
+            scope: $scopeRaw !== null
+                ? (EventScope::tryFrom($scopeRaw) ?? EventScope::CrossModule)
+                : EventScope::CrossModule,
         );
     }
 
