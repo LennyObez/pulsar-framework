@@ -6,9 +6,6 @@ namespace Pulsar\I18n\Compiler;
 
 use Pulsar\Api\Internal;
 
-use function is_array;
-use function is_string;
-
 /**
  * Readonly DTO representing a compiled i18n catalog index.
  *
@@ -32,26 +29,20 @@ final readonly class CompiledCatalogIndex
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     locales?: list<string>,
+     *     index?: array<string, array<string, list<string>>>,
+     *     file_hashes?: array<string, string>,
+     *     total_hash?: string,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
-        /** @var list<string> $locales */
-        $locales = isset($data['locales']) && is_array($data['locales']) ? $data['locales'] : [];
-
-        /** @var array<string, array<string, list<string>>> $index */
-        $index = isset($data['index']) && is_array($data['index']) ? $data['index'] : [];
-
-        /** @var array<string, string> $fileHashes */
-        $fileHashes = isset($data['file_hashes']) && is_array($data['file_hashes']) ? $data['file_hashes'] : [];
-
-        $totalHash = isset($data['total_hash']) && is_string($data['total_hash']) ? $data['total_hash'] : '';
-
         return new self(
-            locales: $locales,
-            index: $index,
-            fileHashes: $fileHashes,
-            totalHash: $totalHash,
+            locales: $data['locales'] ?? [],
+            index: $data['index'] ?? [],
+            fileHashes: $data['file_hashes'] ?? [],
+            totalHash: $data['total_hash'] ?? '',
         );
     }
 
