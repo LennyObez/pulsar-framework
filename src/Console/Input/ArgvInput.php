@@ -7,7 +7,10 @@ namespace Pulsar\Console\Input;
 use Override;
 use Pulsar\Console\InputInterface;
 
+use function is_bool;
 use function is_int;
+use function is_numeric;
+use function is_string;
 use function strlen;
 
 /**
@@ -166,5 +169,41 @@ final class ArgvInput implements InputInterface
     public function getOption(string $name, mixed $default = null): mixed
     {
         return $this->options[$name] ?? $default;
+    }
+
+    #[Override]
+    public function getStringOption(string $name, string $default = ''): string
+    {
+        $value = $this->options[$name] ?? null;
+
+        return is_string($value) ? $value : $default;
+    }
+
+    #[Override]
+    public function getNullableStringOption(string $name): ?string
+    {
+        $value = $this->options[$name] ?? null;
+
+        return is_string($value) ? $value : null;
+    }
+
+    #[Override]
+    public function getIntOption(string $name, int $default = 0): int
+    {
+        $value = $this->options[$name] ?? null;
+
+        if (is_int($value)) {
+            return $value;
+        }
+
+        return is_string($value) && is_numeric($value) ? (int) $value : $default;
+    }
+
+    #[Override]
+    public function getBoolOption(string $name, bool $default = false): bool
+    {
+        $value = $this->options[$name] ?? null;
+
+        return is_bool($value) ? $value : $default;
     }
 }
