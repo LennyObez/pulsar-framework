@@ -7,6 +7,7 @@ namespace Pulsar\Extension\Payments\Gateway;
 use DateTimeImmutable;
 use JsonException;
 use Psr\Log\LoggerInterface;
+use SodiumException;
 use Pulsar\Extension\Payments\Config\PaymentsConfig;
 use Pulsar\Extension\Payments\Contracts\ClockInterface;
 use Pulsar\Extension\Payments\Contracts\PaymentGatewayInterface;
@@ -89,7 +90,6 @@ final readonly class PaymentGateway implements PaymentGatewayInterface
      *
      * @throws IdempotencyException
      * @throws PaymentProviderException
-     * @throws JsonException
      */
     public function createIntent(Money $amount, string $idempotencyKey, array $metadata = []): PaymentIntent
     {
@@ -105,7 +105,6 @@ final readonly class PaymentGateway implements PaymentGatewayInterface
      *
      * @throws IdempotencyException
      * @throws PaymentProviderException
-     * @throws JsonException
      */
     public function captureIntent(string $intentId, string $idempotencyKey): Charge
     {
@@ -159,7 +158,6 @@ final readonly class PaymentGateway implements PaymentGatewayInterface
      *
      * @throws IdempotencyException
      * @throws PaymentProviderException
-     * @throws JsonException
      */
     public function cancelIntent(string $intentId, string $idempotencyKey): PaymentIntent
     {
@@ -213,7 +211,6 @@ final readonly class PaymentGateway implements PaymentGatewayInterface
      *
      * @throws IdempotencyException
      * @throws PaymentProviderException
-     * @throws JsonException
      */
     public function refund(string $chargeId, ?Money $amount, string $idempotencyKey): Refund
     {
@@ -334,15 +331,24 @@ final readonly class PaymentGateway implements PaymentGatewayInterface
 
     private function commitResult(string $key, string $type, PaymentIntent|Charge|Refund $result): void
     {
-        $payload = json_encode([
-            'schema_version' => 1,
-            'type' => $type,
-            'data' => $this->serializeResult($result),
-        ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
+        // F22.6: encode + seal can throw JsonException / SodiumException
+        // — both are framework-internal serialisation details. Wrap into
+        // the domain `IdempotencyException::serializationFailed()` so
+        // the consumer-facing interface only ever leaks IdempotencyException
+        // / PaymentProviderException as documented.
+        try {
+            $payload = json_encode([
+                'schema_version' => 1,
+                'type' => $type,
+                'data' => $this->serializeResult($result),
+            ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
 
-        // F21.3: bind the payload to the idempotency key with a HMAC
-        // envelope so a tampered store row cannot replay a forged result.
-        $sealed = $this->envelope->seal($key, $payload);
+            // F21.3: bind the payload to the idempotency key with a HMAC
+            // envelope so a tampered store row cannot replay a forged result.
+            $sealed = $this->envelope->seal($key, $payload);
+        } catch (JsonException | SodiumException $e) {
+            throw IdempotencyException::serializationFailed($key, $e);
+        }
 
         try {
             $this->idempotencyStore->commit($key, $sealed);
@@ -400,10 +406,15 @@ final readonly class PaymentGateway implements PaymentGatewayInterface
 
     private function deserializeIntent(string $idempotencyKey, string $sealed): PaymentIntent
     {
-        $payload = $this->envelope->open($idempotencyKey, $sealed);
+        try {
+            $payload = $this->envelope->open($idempotencyKey, $sealed);
 
-        /** @var array{data: array{id: string, amount: int, currency: string, status: string, provider: string, idempotency_key: string, created_at: int, metadata?: array<string, mixed>}} $envelope */
-        $envelope = json_decode($payload, true, flags: JSON_THROW_ON_ERROR);
+            /** @var array{data: array{id: string, amount: int, currency: string, status: string, provider: string, idempotency_key: string, created_at: int, metadata?: array<string, mixed>}} $envelope */
+            $envelope = json_decode($payload, true, flags: JSON_THROW_ON_ERROR);
+        } catch (JsonException | SodiumException $e) {
+            throw IdempotencyException::serializationFailed($idempotencyKey, $e);
+        }
+
         $data = $envelope['data'];
 
         /** @var array<string, mixed> $metadata */
@@ -422,10 +433,15 @@ final readonly class PaymentGateway implements PaymentGatewayInterface
 
     private function deserializeCharge(string $idempotencyKey, string $sealed): Charge
     {
-        $payload = $this->envelope->open($idempotencyKey, $sealed);
+        try {
+            $payload = $this->envelope->open($idempotencyKey, $sealed);
 
-        /** @var array{data: array{id: string, intent_id: string, amount: int, currency: string, status: string, provider: string, created_at: int, failure_reason: string|null, metadata?: array<string, mixed>}} $envelope */
-        $envelope = json_decode($payload, true, flags: JSON_THROW_ON_ERROR);
+            /** @var array{data: array{id: string, intent_id: string, amount: int, currency: string, status: string, provider: string, created_at: int, failure_reason: string|null, metadata?: array<string, mixed>}} $envelope */
+            $envelope = json_decode($payload, true, flags: JSON_THROW_ON_ERROR);
+        } catch (JsonException | SodiumException $e) {
+            throw IdempotencyException::serializationFailed($idempotencyKey, $e);
+        }
+
         $data = $envelope['data'];
 
         /** @var array<string, mixed> $metadata */
@@ -445,10 +461,15 @@ final readonly class PaymentGateway implements PaymentGatewayInterface
 
     private function deserializeRefund(string $idempotencyKey, string $sealed): Refund
     {
-        $payload = $this->envelope->open($idempotencyKey, $sealed);
+        try {
+            $payload = $this->envelope->open($idempotencyKey, $sealed);
 
-        /** @var array{data: array{id: string, charge_id: string, amount: int, currency: string, status: string, provider: string, created_at: int, failure_reason: string|null, metadata?: array<string, mixed>}} $envelope */
-        $envelope = json_decode($payload, true, flags: JSON_THROW_ON_ERROR);
+            /** @var array{data: array{id: string, charge_id: string, amount: int, currency: string, status: string, provider: string, created_at: int, failure_reason: string|null, metadata?: array<string, mixed>}} $envelope */
+            $envelope = json_decode($payload, true, flags: JSON_THROW_ON_ERROR);
+        } catch (JsonException | SodiumException $e) {
+            throw IdempotencyException::serializationFailed($idempotencyKey, $e);
+        }
+
         $data = $envelope['data'];
 
         /** @var array<string, mixed> $metadata */

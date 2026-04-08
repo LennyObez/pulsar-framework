@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Payments\Contracts;
 
-use JsonException;
 use Pulsar\Api\Api;
 use Pulsar\Extension\Payments\Domain\Charge;
 use Pulsar\Extension\Payments\Domain\Money;
@@ -15,6 +14,12 @@ use Pulsar\Idempotency\Exception\IdempotencyException;
 
 /**
  * Payment gateway port: orchestrates provider calls with cross-cutting concerns.
+ *
+ * Implementation-detail exceptions (JsonException from
+ * (de)serialisation, SodiumException from envelope signing) are wrapped
+ * by the implementation into `IdempotencyException::serializationFailed()`
+ * so consumers only need to catch the two domain exceptions declared
+ * below (F22.6).
  */
 #[Api(since: '1.0.0')]
 interface PaymentGatewayInterface
@@ -26,7 +31,6 @@ interface PaymentGatewayInterface
      *
      * @throws IdempotencyException
      * @throws PaymentProviderException
-     * @throws JsonException
      */
     public function createIntent(Money $amount, string $idempotencyKey, array $metadata = []): PaymentIntent;
 
@@ -35,7 +39,6 @@ interface PaymentGatewayInterface
      *
      * @throws IdempotencyException
      * @throws PaymentProviderException
-     * @throws JsonException
      */
     public function captureIntent(string $intentId, string $idempotencyKey): Charge;
 
@@ -44,7 +47,6 @@ interface PaymentGatewayInterface
      *
      * @throws IdempotencyException
      * @throws PaymentProviderException
-     * @throws JsonException
      */
     public function cancelIntent(string $intentId, string $idempotencyKey): PaymentIntent;
 
@@ -53,7 +55,6 @@ interface PaymentGatewayInterface
      *
      * @throws IdempotencyException
      * @throws PaymentProviderException
-     * @throws JsonException
      */
     public function refund(string $chargeId, ?Money $amount, string $idempotencyKey): Refund;
 
