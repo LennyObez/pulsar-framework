@@ -6,6 +6,8 @@ namespace Pulsar\Extension\Cms\Internal\Tools;
 
 use Pulsar\Api\Internal;
 
+use function is_bool;
+use function is_int;
 use function is_string;
 
 /**
@@ -88,5 +90,53 @@ trait ImportFieldResolverTrait
         }
 
         return $rootSlug;
+    }
+
+    /**
+     * Read a string field with default.
+     *
+     * @param array<string, mixed> $data
+     */
+    private static function asString(array $data, string $key, string $default = ''): string
+    {
+        $value = $data[$key] ?? null;
+
+        return is_string($value) ? $value : $default;
+    }
+
+    /**
+     * Read a nullable string field.
+     *
+     * @param array<string, mixed> $data
+     */
+    private static function asNullableString(array $data, string $key): ?string
+    {
+        $value = $data[$key] ?? null;
+
+        return is_string($value) ? $value : null;
+    }
+
+    /**
+     * Read an integer field with default.
+     *
+     * @param array<string, mixed> $data
+     */
+    private static function asInt(array $data, string $key, int $default = 0): int
+    {
+        $value = $data[$key] ?? null;
+
+        return is_int($value) ? $value : $default;
+    }
+
+    /**
+     * Read a boolean field with default.
+     *
+     * @param array<string, mixed> $data
+     */
+    private static function asBool(array $data, string $key, bool $default = false): bool
+    {
+        $value = $data[$key] ?? null;
+
+        return is_bool($value) ? $value : $default;
     }
 }
