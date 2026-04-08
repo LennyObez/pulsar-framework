@@ -238,14 +238,12 @@ final readonly class SiteDefinitionParser
 
         // 8. Regenerate sitemaps
         if (!$dryRun) {
-            $rawUrl = $definition->site['url'] ?? null;
-            $rawBaseUrl = $definition->site['base_url'] ?? null;
-            $baseUrl = is_string($rawUrl)
-                ? $rawUrl
-                : (is_string($rawBaseUrl) ? $rawBaseUrl : 'https://localhost');
-            $rawTenantId = $definition->site['tenant_id'] ?? null;
-            $tenantId = is_string($rawTenantId) ? $rawTenantId : null;
-            $this->sitemapGenerator->generateIndex($baseUrl, $tenantId);
+            $url = self::asNullableString($definition->site, 'url');
+            $baseUrl = $url ?? self::asString($definition->site, 'base_url', 'https://localhost');
+            $this->sitemapGenerator->generateIndex(
+                $baseUrl,
+                self::asNullableString($definition->site, 'tenant_id'),
+            );
         }
 
         $this->auditLogger?->log(
@@ -302,28 +300,23 @@ final readonly class SiteDefinitionParser
                 $taxonomyId = $existingTaxonomy->id;
                 $updated++;
 
-                $rawTaxLocale = $taxData['locale'] ?? null;
-                $rawTaxDescription = $taxData['description'] ?? null;
-                $rawTaxTenantId = $taxData['tenant_id'] ?? null;
-                $rawTaxHierarchical = $taxData['hierarchical'] ?? null;
-
                 if (!$dryRun) {
                     $translations = [];
 
                     if (isset($taxData['name'])) {
                         $translations[] = new TaxonomyTranslation(
                             taxonomyId: $taxonomyId,
-                            locale: is_string($rawTaxLocale) ? $rawTaxLocale : 'en',
-                            name: is_string($taxData['name']) ? $taxData['name'] : '',
-                            description: is_string($rawTaxDescription) ? $rawTaxDescription : null,
+                            locale: self::asString($taxData, 'locale', 'en'),
+                            name: self::asString($taxData, 'name'),
+                            description: self::asNullableString($taxData, 'description'),
                         );
                     }
 
                     $taxonomy = new Taxonomy(
                         id: $taxonomyId,
-                        tenantId: is_string($rawTaxTenantId) ? $rawTaxTenantId : null,
+                        tenantId: self::asNullableString($taxData, 'tenant_id'),
                         slug: $slug,
-                        hierarchical: is_bool($rawTaxHierarchical) ? $rawTaxHierarchical : false,
+                        hierarchical: self::asBool($taxData, 'hierarchical'),
                         createdAt: $existingTaxonomy->createdAt,
                         importId: $importId,
                     );
@@ -335,17 +328,12 @@ final readonly class SiteDefinitionParser
                 $taxonomyId = UuidGenerator::v7();
                 $created++;
 
-                $rawTaxLocale = $taxData['locale'] ?? null;
-                $rawTaxDescription = $taxData['description'] ?? null;
-                $rawTaxTenantId = $taxData['tenant_id'] ?? null;
-                $rawTaxHierarchical = $taxData['hierarchical'] ?? null;
-
                 if (!$dryRun) {
                     $taxonomy = new Taxonomy(
                         id: $taxonomyId,
-                        tenantId: is_string($rawTaxTenantId) ? $rawTaxTenantId : null,
+                        tenantId: self::asNullableString($taxData, 'tenant_id'),
                         slug: $slug,
-                        hierarchical: is_bool($rawTaxHierarchical) ? $rawTaxHierarchical : false,
+                        hierarchical: self::asBool($taxData, 'hierarchical'),
                         createdAt: new DateTimeImmutable(),
                         importId: $importId,
                     );
@@ -354,9 +342,9 @@ final readonly class SiteDefinitionParser
                     if (isset($taxData['name'])) {
                         $translations[] = new TaxonomyTranslation(
                             taxonomyId: $taxonomyId,
-                            locale: is_string($rawTaxLocale) ? $rawTaxLocale : 'en',
-                            name: is_string($taxData['name']) ? $taxData['name'] : '',
-                            description: is_string($rawTaxDescription) ? $rawTaxDescription : null,
+                            locale: self::asString($taxData, 'locale', 'en'),
+                            name: self::asString($taxData, 'name'),
+                            description: self::asNullableString($taxData, 'description'),
                         );
                     }
 
@@ -373,15 +361,13 @@ final readonly class SiteDefinitionParser
                     }
 
                     /** @var array<string, mixed> $termData */
-                    $rawTermSlug = $termData['slug'] ?? null;
-                    $termSlug = is_string($rawTermSlug) ? $rawTermSlug : null;
+                    $termSlug = self::asNullableString($termData, 'slug');
 
                     if ($termSlug === null) {
                         continue;
                     }
 
-                    $rawTermImportId = $termData['import_id'] ?? null;
-                    $termImportId = is_string($rawTermImportId) ? $rawTermImportId : null;
+                    $termImportId = self::asNullableString($termData, 'import_id');
                     $existingTerm = $termImportId !== null ? $this->taxonomyRepository->findTermByImportId($termImportId) : null;
 
                     if ($existingTerm !== null) {
@@ -392,33 +378,26 @@ final readonly class SiteDefinitionParser
                         $created++;
 
                         if (!$dryRun) {
-                            $rawTaxTenantId = $taxData['tenant_id'] ?? null;
-                            $rawTermSortOrder = $termData['sort_order'] ?? null;
                             $term = new TaxonomyTerm(
                                 id: $termId,
                                 taxonomyId: $taxonomyId,
-                                tenantId: is_string($rawTaxTenantId) ? $rawTaxTenantId : null,
+                                tenantId: self::asNullableString($taxData, 'tenant_id'),
                                 parentId: null,
-                                sortOrder: is_int($rawTermSortOrder) ? $rawTermSortOrder : 0,
+                                sortOrder: self::asInt($termData, 'sort_order'),
                                 createdAt: new DateTimeImmutable(),
                                 importId: $termImportId,
                             );
                             $termTranslations = [];
 
                             if (isset($termData['name'])) {
-                                $rawTermLocale = $termData['locale'] ?? null;
-                                $rawTaxLocale = $taxData['locale'] ?? null;
-                                $termLocale = is_string($rawTermLocale)
-                                    ? $rawTermLocale
-                                    : (is_string($rawTaxLocale) ? $rawTaxLocale : 'en');
-                                $rawTermName = $termData['name'];
-                                $rawTermDescription = $termData['description'] ?? null;
+                                $termLocale = self::asNullableString($termData, 'locale')
+                                    ?? self::asString($taxData, 'locale', 'en');
                                 $termTranslations[] = new TaxonomyTermTranslation(
                                     termId: $termId,
                                     locale: $termLocale,
-                                    name: is_string($rawTermName) ? $rawTermName : '',
+                                    name: self::asString($termData, 'name'),
                                     slug: $termSlug,
-                                    description: is_string($rawTermDescription) ? $rawTermDescription : null,
+                                    description: self::asNullableString($termData, 'description'),
                                 );
                             }
 
@@ -447,13 +426,9 @@ final readonly class SiteDefinitionParser
         $refMap = [];
 
         foreach ($mediaEntries as $mediaData) {
-            $rawRef = $mediaData['ref'] ?? null;
-            $rawFilename = $mediaData['filename'] ?? null;
-            $ref = is_string($rawRef)
-                ? $rawRef
-                : (is_string($rawFilename) ? $rawFilename : null);
-            $rawSource = $mediaData['source'] ?? null;
-            $source = is_string($rawSource) ? $rawSource : null;
+            $ref = self::asNullableString($mediaData, 'ref')
+                ?? self::asNullableString($mediaData, 'filename');
+            $source = self::asNullableString($mediaData, 'source');
 
             if ($ref === null) {
                 $warnings[] = 'Media entry missing ref/filename, skipped';
@@ -514,8 +489,7 @@ final readonly class SiteDefinitionParser
         $contentEntries = [];
 
         foreach ($contentItems as $itemData) {
-            $rawImportId = $itemData['import_id'] ?? null;
-            $importId = is_string($rawImportId) ? $rawImportId : null;
+            $importId = self::asNullableString($itemData, 'import_id');
             $slug = $this->resolveSlug($itemData, $importId);
 
             // Allow empty slug for homepage (root page). Only skip if slug is null
@@ -526,11 +500,8 @@ final readonly class SiteDefinitionParser
                 continue;
             }
 
-            $rawContentType = $itemData['content_type'] ?? null;
-            $rawType = $itemData['type'] ?? null;
-            $contentType = is_string($rawContentType)
-                ? $rawContentType
-                : (is_string($rawType) ? $rawType : 'page');
+            $contentType = self::asNullableString($itemData, 'content_type')
+                ?? self::asString($itemData, 'type', 'page');
 
             // Idempotent lookup
             $existing = $importId !== null ? $this->contentRepository->findByImportId($importId) : null;
@@ -551,8 +522,8 @@ final readonly class SiteDefinitionParser
             if ($importId !== null) {
                 $contentRefMap[$importId] = $contentId;
             }
-            $rawItemId = $itemData['id'] ?? null;
-            if (is_string($rawItemId)) {
+            $rawItemId = self::asNullableString($itemData, 'id');
+            if ($rawItemId !== null) {
                 $contentRefMap[$rawItemId] = $contentId;
             }
 
@@ -574,24 +545,18 @@ final readonly class SiteDefinitionParser
             $itemData = $entry['data'];
             $isUpdate = $entry['is_update'];
 
-            $rawContentTypeValue = $itemData['content_type'] ?? null;
-            $rawTypeValue = $itemData['type'] ?? null;
-            $contentTypeValue = is_string($rawContentTypeValue)
-                ? $rawContentTypeValue
-                : (is_string($rawTypeValue) ? $rawTypeValue : 'page');
+            $contentTypeValue = self::asNullableString($itemData, 'content_type')
+                ?? self::asString($itemData, 'type', 'page');
             $contentType = ContentType::tryFrom($contentTypeValue) ?? ContentType::Page;
-            $rawSlug = $itemData['slug'] ?? null;
-            $slug = is_string($rawSlug) ? $rawSlug : '';
-            $rawTemplate = $itemData['template'] ?? null;
-            $template = is_string($rawTemplate) ? $rawTemplate : null;
-            $rawImportId = $itemData['import_id'] ?? null;
-            $importId = is_string($rawImportId) ? $rawImportId : null;
+            $slug = self::asString($itemData, 'slug');
+            $template = self::asNullableString($itemData, 'template');
+            $importId = self::asNullableString($itemData, 'import_id');
 
             $authorId = $this->resolveAuthorId($itemData);
 
             // Resolve parent reference: parent_id may be an import_id or a real UUID.
             // Check contentRefMap first (import_id resolution), then fall back to direct UUID.
-            $rawParentId = is_string($itemData['parent_id'] ?? null) ? $itemData['parent_id'] : null;
+            $rawParentId = self::asNullableString($itemData, 'parent_id');
             $parentId = null;
 
             if ($rawParentId !== null) {
@@ -606,7 +571,7 @@ final readonly class SiteDefinitionParser
             }
 
             if ($parentId === null && isset($itemData['parent_slug'])) {
-                $parentSlug = is_string($itemData['parent_slug']) ? $itemData['parent_slug'] : '';
+                $parentSlug = self::asString($itemData, 'parent_slug');
                 $parentRef = $contentTypeValue . ':' . $parentSlug;
                 $parentId = $contentRefMap[$parentRef] ?? null;
             }
@@ -616,13 +581,13 @@ final readonly class SiteDefinitionParser
                     id: $contentId,
                     contentType: $contentType,
                     authorId: $authorId,
-                    tenantId: is_string($itemData['tenant_id'] ?? null) ? $itemData['tenant_id'] : null,
+                    tenantId: self::asNullableString($itemData, 'tenant_id'),
                     template: $template,
                     parentId: $parentId,
                 );
 
                 // Override status if specified in import data
-                $statusValue = is_string($itemData['status'] ?? null) ? $itemData['status'] : null;
+                $statusValue = self::asNullableString($itemData, 'status');
 
                 if ($statusValue !== null) {
                     $publishingStatus = PublishingStatus::tryFrom($statusValue);
@@ -640,7 +605,7 @@ final readonly class SiteDefinitionParser
                 if ($existing !== null) {
                     $newStatus = $existing->status;
                     $newPublishedAt = $existing->publishedAt;
-                    $statusValue = is_string($itemData['status'] ?? null) ? $itemData['status'] : null;
+                    $statusValue = self::asNullableString($itemData, 'status');
 
                     if ($statusValue !== null) {
                         $publishingStatus = PublishingStatus::tryFrom($statusValue);
@@ -1181,6 +1146,7 @@ final readonly class SiteDefinitionParser
             );
         } finally {
             // tempnam() guarantees the path is within sys_get_temp_dir()
+            // nosemgrep: php.lang.security.unlink-use.unlink-use
             @unlink($tmpFile);
         }
     }
