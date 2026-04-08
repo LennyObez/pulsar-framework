@@ -18,8 +18,7 @@ use SodiumException;
 use function dirname;
 use function file_put_contents;
 use function is_dir;
-use function is_int;
-use function is_string;
+use function is_numeric;
 use function json_encode;
 use function sprintf;
 use function strlen;
@@ -61,9 +60,8 @@ final class EvidenceExportCommand extends Command
     {
         $isJson = $input->hasOption('json');
 
-        $rawOutputOption = $input->hasOption('output') ? $input->getOption('output') : null;
-        $outputPath = is_string($rawOutputOption)
-            ? $rawOutputOption
+        $outputPath = $input->hasOption('output')
+            ? $input->getStringOption('output', sprintf('studio-export-%d.json', time()))
             : sprintf('studio-export-%d.json', time());
 
         try {
@@ -94,9 +92,9 @@ final class EvidenceExportCommand extends Command
         file_put_contents($outputPath, $archiveJson);
 
         $rawEventCount = $archive->manifest['event_count'] ?? 0;
-        $eventCount = is_int($rawEventCount) ? $rawEventCount : (int) (is_numeric($rawEventCount) ? $rawEventCount : 0);
+        $eventCount = is_numeric($rawEventCount) ? (int) $rawEventCount : 0;
         $rawChainLinkCount = $archive->manifest['chain_link_count'] ?? 0;
-        $chainLinkCount = is_int($rawChainLinkCount) ? $rawChainLinkCount : (int) (is_numeric($rawChainLinkCount) ? $rawChainLinkCount : 0);
+        $chainLinkCount = is_numeric($rawChainLinkCount) ? (int) $rawChainLinkCount : 0;
 
         $metadata = [
             'file' => $outputPath,
