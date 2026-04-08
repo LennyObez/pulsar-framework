@@ -13,7 +13,6 @@ use Pulsar\Console\OutputInterface;
 use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
 
 use function explode;
-use function is_string;
 use function json_encode;
 use function sprintf;
 use function usleep;
@@ -48,15 +47,15 @@ final class ConsoleTailCommand extends Command
     #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
-        $rawTypeOption = $input->hasOption('type') ? $input->getOption('type') : null;
-        $typeFilter = is_string($rawTypeOption) ? explode(',', $rawTypeOption) : [];
+        $typeOption = $input->hasOption('type') ? $input->getStringOption('type') : '';
+        $typeFilter = $typeOption !== '' ? explode(',', $typeOption) : [];
 
-        $rawFilterOption = $input->hasOption('filter') ? $input->getOption('filter') : null;
-        $correlationFilter = is_string($rawFilterOption) ? $rawFilterOption : null;
+        $correlationFilter = $input->hasOption('filter')
+            ? $input->getNullableStringOption('filter')
+            : null;
 
         $isJson = $input->hasOption('json');
-        $rawLines = $input->getOption('lines', '20') ?? '20';
-        $lines = is_numeric($rawLines) ? (int) $rawLines : 20;
+        $lines = $input->getIntOption('lines', 20);
 
         // Build initial query filters
         $filters = [];
