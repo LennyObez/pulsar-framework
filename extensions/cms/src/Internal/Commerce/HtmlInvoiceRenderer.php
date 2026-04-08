@@ -176,37 +176,40 @@ final readonly class HtmlInvoiceRenderer implements InvoiceRendererInterface
     }
 
     /**
-     * @param array<string, mixed> $address
+     * @param array{
+     *     line1?: string,
+     *     line2?: string,
+     *     city?: string,
+     *     region?: string,
+     *     postalCode?: string,
+     *     country?: string,
+     * } $address
      */
     private function formatAddress(array $address): string
     {
         $e = htmlspecialchars(...);
         $lines = [];
 
-        $line1 = is_string($address['line1'] ?? null) ? $address['line1'] : '';
-        $lines[] = $e($line1, ENT_QUOTES, 'UTF-8');
+        $lines[] = $e($address['line1'] ?? '', ENT_QUOTES, 'UTF-8');
 
-        $line2 = is_string($address['line2'] ?? null) ? $address['line2'] : '';
+        $line2 = $address['line2'] ?? '';
 
         if ($line2 !== '') {
             $lines[] = $e($line2, ENT_QUOTES, 'UTF-8');
         }
 
-        $city = is_string($address['city'] ?? null) ? $address['city'] : '';
-        $cityLine = $e($city, ENT_QUOTES, 'UTF-8');
+        $cityLine = $e($address['city'] ?? '', ENT_QUOTES, 'UTF-8');
 
-        $region = is_string($address['region'] ?? null) ? $address['region'] : '';
+        $region = $address['region'] ?? '';
 
         if ($region !== '') {
             $cityLine .= ', ' . $e($region, ENT_QUOTES, 'UTF-8');
         }
 
-        $postalCode = is_string($address['postalCode'] ?? null) ? $address['postalCode'] : '';
-        $cityLine .= ' ' . $e($postalCode, ENT_QUOTES, 'UTF-8');
+        $cityLine .= ' ' . $e($address['postalCode'] ?? '', ENT_QUOTES, 'UTF-8');
         $lines[] = $cityLine;
 
-        $country = is_string($address['country'] ?? null) ? $address['country'] : '';
-        $lines[] = $e($country, ENT_QUOTES, 'UTF-8');
+        $lines[] = $e($address['country'] ?? '', ENT_QUOTES, 'UTF-8');
 
         return '<p>' . implode('<br>', $lines) . '</p>';
     }
