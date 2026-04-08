@@ -51,8 +51,6 @@ use function basename;
 use function count;
 use function file_put_contents;
 use function is_array;
-use function is_bool;
-use function is_int;
 use function is_string;
 use function preg_match;
 use function str_replace;
@@ -785,8 +783,8 @@ final readonly class SiteDefinitionParser
 
         foreach ($menusByLocation as $location => $localeEntries) {
             $firstEntry = $localeEntries[0];
-            $importId = is_string($firstEntry['import_id'] ?? null) ? $firstEntry['import_id'] : null;
-            $existingMenu = $this->menuRepository->findByLocation($location, is_string($firstEntry['locale'] ?? null) ? $firstEntry['locale'] : 'en');
+            $importId = self::asNullableString($firstEntry, 'import_id');
+            $existingMenu = $this->menuRepository->findByLocation($location, self::asString($firstEntry, 'locale', 'en'));
 
             if ($existingMenu !== null) {
                 $menuId = $existingMenu->id;
@@ -808,7 +806,7 @@ final readonly class SiteDefinitionParser
             // Create or update the single Menu for this location
             $menu = new Menu(
                 id: $menuId,
-                tenantId: is_string($firstEntry['tenant_id'] ?? null) ? $firstEntry['tenant_id'] : null,
+                tenantId: self::asNullableString($firstEntry, 'tenant_id'),
                 location: $location,
                 createdAt: $existingMenu !== null ? $existingMenu->createdAt : new DateTimeImmutable(),
                 importId: $importId,
@@ -817,12 +815,10 @@ final readonly class SiteDefinitionParser
 
             // Collect translations from all locale entries
             foreach ($localeEntries as $entry) {
-                $locale = is_string($entry['locale'] ?? null) ? $entry['locale'] : 'en';
-                $name = is_string($entry['name'] ?? null) ? $entry['name'] : $location;
                 $translations[] = new MenuTranslation(
                     menuId: $menuId,
-                    locale: $locale,
-                    name: $name,
+                    locale: self::asString($entry, 'locale', 'en'),
+                    name: self::asString($entry, 'name', $location),
                 );
             }
 
@@ -836,7 +832,7 @@ final readonly class SiteDefinitionParser
             $itemsByPosition = [];
 
             foreach ($localeEntries as $entry) {
-                $locale = is_string($entry['locale'] ?? null) ? $entry['locale'] : 'en';
+                $locale = self::asString($entry, 'locale', 'en');
                 $items = $entry['items'] ?? [];
 
                 if (!is_array($items)) {
@@ -848,7 +844,8 @@ final readonly class SiteDefinitionParser
                         continue;
                     }
 
-                    $pos = is_int($itemData['sort_order'] ?? null) ? $itemData['sort_order'] : (int) $sortOrder;
+                    /** @var array<string, mixed> $itemData */
+                    $pos = self::asInt($itemData, 'sort_order', (int) $sortOrder);
                     $itemsByPosition[$pos][] = ['item' => $itemData, 'locale' => $locale];
                 }
             }
@@ -857,8 +854,7 @@ final readonly class SiteDefinitionParser
                 // Use the first locale entry as the canonical item definition
                 $firstItem = $localeItems[0]['item'];
 
-                /** @var array<string, mixed> $firstItem */
-                $itemImportId = is_string($firstItem['import_id'] ?? null) ? $firstItem['import_id'] : null;
+                $itemImportId = self::asNullableString($firstItem, 'import_id');
                 $existingItem = $itemImportId !== null ? $this->menuRepository->findItemByImportId($itemImportId) : null;
 
                 if ($existingItem !== null) {
@@ -873,7 +869,7 @@ final readonly class SiteDefinitionParser
                 $contentId = null;
 
                 if (isset($firstItem['content_ref'])) {
-                    $contentRef = is_string($firstItem['content_ref']) ? $firstItem['content_ref'] : '';
+                    $contentRef = self::asString($firstItem, 'content_ref');
 
                     if (isset($contentRefMap[$contentRef])) {
                         $contentId = $contentRefMap[$contentRef];
@@ -885,12 +881,12 @@ final readonly class SiteDefinitionParser
                     menuId: $menuId,
                     parentId: null,
                     contentId: $contentId,
-                    url: is_string($firstItem['url'] ?? null) ? $firstItem['url'] : null,
-                    target: LinkTarget::tryFrom(is_string($firstItem['target'] ?? null) ? $firstItem['target'] : '_self') ?? LinkTarget::Self,
-                    cssClass: is_string($firstItem['css_class'] ?? null) ? $firstItem['css_class'] : null,
-                    icon: is_string($firstItem['icon'] ?? null) ? $firstItem['icon'] : null,
+                    url: self::asNullableString($firstItem, 'url'),
+                    target: LinkTarget::tryFrom(self::asString($firstItem, 'target', '_self')) ?? LinkTarget::Self,
+                    cssClass: self::asNullableString($firstItem, 'css_class'),
+                    icon: self::asNullableString($firstItem, 'icon'),
                     sortOrder: $sortOrder,
-                    visible: is_bool($firstItem['visible'] ?? null) ? $firstItem['visible'] : true,
+                    visible: self::asBool($firstItem, 'visible', true),
                     importId: $itemImportId,
                 );
 
@@ -899,16 +895,14 @@ final readonly class SiteDefinitionParser
 
                 foreach ($localeItems as $localeItem) {
                     $itemLocale = $localeItem['locale'];
-                    /** @var array<string, mixed> $itemLocaleData */
                     $itemLocaleData = $localeItem['item'];
 
                     if (isset($itemLocaleData['label'])) {
-                        $rawTitleAttr = $itemLocaleData['title_attr'] ?? null;
                         $itemTranslations[] = new MenuItemTranslation(
                             menuItemId: $itemId,
                             locale: $itemLocale,
-                            label: is_string($itemLocaleData['label']) ? $itemLocaleData['label'] : '',
-                            titleAttr: is_string($rawTitleAttr) ? $rawTitleAttr : null,
+                            label: self::asString($itemLocaleData, 'label'),
+                            titleAttr: self::asNullableString($itemLocaleData, 'title_attr'),
                         );
                     }
                 }
@@ -969,8 +963,10 @@ final readonly class SiteDefinitionParser
         $warnings = [];
 
         foreach ($redirects as $redirectData) {
-            $from = $redirectData['from'] ?? $redirectData['from_path'] ?? null;
-            $to = $redirectData['to'] ?? $redirectData['to_path'] ?? null;
+            $from = self::asNullableString($redirectData, 'from')
+                ?? self::asNullableString($redirectData, 'from_path');
+            $to = self::asNullableString($redirectData, 'to')
+                ?? self::asNullableString($redirectData, 'to_path');
 
             if ($from === null || $to === null) {
                 $warnings[] = 'Redirect entry missing from/to path, skipped';
@@ -983,16 +979,16 @@ final readonly class SiteDefinitionParser
             if (!$dryRun) {
                 $redirect = new Redirect(
                     id: UuidGenerator::v7(),
-                    tenantId: is_string($redirectData['tenant_id'] ?? null) ? $redirectData['tenant_id'] : null,
-                    fromPath: is_string($from) ? $from : '',
-                    toPath: is_string($to) ? $to : '',
-                    statusCode: is_int($redirectData['status_code'] ?? null) ? $redirectData['status_code'] : 301,
-                    locale: is_string($redirectData['locale'] ?? null) ? $redirectData['locale'] : null,
+                    tenantId: self::asNullableString($redirectData, 'tenant_id'),
+                    fromPath: $from,
+                    toPath: $to,
+                    statusCode: self::asInt($redirectData, 'status_code', 301),
+                    locale: self::asNullableString($redirectData, 'locale'),
                     hits: 0,
                     lastHitAt: null,
                     createdAt: new DateTimeImmutable(),
-                    createdBy: is_string($redirectData['created_by'] ?? null) ? $redirectData['created_by'] : 'system',
-                    reason: is_string($redirectData['reason'] ?? null) ? $redirectData['reason'] : 'Site definition import',
+                    createdBy: self::asString($redirectData, 'created_by', 'system'),
+                    reason: self::asString($redirectData, 'reason', 'Site definition import'),
                 );
 
                 $this->redirectRepository->save($redirect);
@@ -1021,17 +1017,16 @@ final readonly class SiteDefinitionParser
         foreach ($translations as $locale => $transData) {
             $slugSegment = $this->resolveTranslationSlugSegment($transData, $rootSlug);
 
-            $body = is_string($transData['body'] ?? null) ? $transData['body'] : '';
-            $body = $this->resolveMediaRefs($body, $mediaRefMap);
+            $body = $this->resolveMediaRefs(self::asString($transData, 'body'), $mediaRefMap);
 
             // Resolve og_image
             $ogImageId = null;
 
             if (isset($transData['og_image'])) {
-                $ogImageRef = is_string($transData['og_image']) ? $transData['og_image'] : '';
+                $ogImageRef = self::asString($transData, 'og_image');
                 $ogImageId = $mediaRefMap[$ogImageRef] ?? null;
             } elseif (isset($itemData['og_image'])) {
-                $ogImageRef = is_string($itemData['og_image']) ? $itemData['og_image'] : '';
+                $ogImageRef = self::asString($itemData, 'og_image');
                 $ogImageId = $mediaRefMap[$ogImageRef] ?? null;
             }
 
@@ -1040,13 +1035,13 @@ final readonly class SiteDefinitionParser
                 id: $translationId,
                 contentId: $contentId,
                 locale: $locale,
-                title: is_string($transData['title'] ?? null) ? $transData['title'] : $slugSegment,
+                title: self::asString($transData, 'title', $slugSegment),
                 slugSegment: $slugSegment,
-                path: ltrim(is_string($transData['path'] ?? null) ? $transData['path'] : $slugSegment, '/'),
+                path: ltrim(self::asString($transData, 'path', $slugSegment), '/'),
                 body: $body,
-                excerpt: is_string($transData['excerpt'] ?? null) ? $transData['excerpt'] : null,
-                metaTitle: is_string($transData['meta_title'] ?? null) ? $transData['meta_title'] : null,
-                metaDescription: is_string($transData['meta_description'] ?? null) ? $transData['meta_description'] : null,
+                excerpt: self::asNullableString($transData, 'excerpt'),
+                metaTitle: self::asNullableString($transData, 'meta_title'),
+                metaDescription: self::asNullableString($transData, 'meta_description'),
                 ogImageId: $ogImageId,
             );
             $this->translationRepository?->save($translation);
@@ -1065,15 +1060,12 @@ final readonly class SiteDefinitionParser
         array $itemData,
         array $mediaRefMap,
     ): void {
-        $locale = is_string($itemData['locale'] ?? null) ? $itemData['locale'] : 'en';
-
-        $body = is_string($itemData['body'] ?? null) ? $itemData['body'] : '';
-        $body = $this->resolveMediaRefs($body, $mediaRefMap);
+        $body = $this->resolveMediaRefs(self::asString($itemData, 'body'), $mediaRefMap);
 
         $ogImageId = null;
 
         if (isset($itemData['og_image'])) {
-            $ogImageRef = is_string($itemData['og_image']) ? $itemData['og_image'] : '';
+            $ogImageRef = self::asString($itemData, 'og_image');
             $ogImageId = $mediaRefMap[$ogImageRef] ?? null;
         }
 
@@ -1081,14 +1073,14 @@ final readonly class SiteDefinitionParser
         $translation = ContentTranslation::create(
             id: $translationId,
             contentId: $contentId,
-            locale: $locale,
-            title: is_string($itemData['title'] ?? null) ? $itemData['title'] : $slug,
+            locale: self::asString($itemData, 'locale', 'en'),
+            title: self::asString($itemData, 'title', $slug),
             slugSegment: $slug,
-            path: ltrim(is_string($itemData['path'] ?? null) ? $itemData['path'] : $slug, '/'),
+            path: ltrim(self::asString($itemData, 'path', $slug), '/'),
             body: $body,
-            excerpt: is_string($itemData['excerpt'] ?? null) ? $itemData['excerpt'] : null,
-            metaTitle: is_string($itemData['meta_title'] ?? null) ? $itemData['meta_title'] : null,
-            metaDescription: is_string($itemData['meta_description'] ?? null) ? $itemData['meta_description'] : null,
+            excerpt: self::asNullableString($itemData, 'excerpt'),
+            metaTitle: self::asNullableString($itemData, 'meta_title'),
+            metaDescription: self::asNullableString($itemData, 'meta_description'),
             ogImageId: $ogImageId,
         );
         $this->translationRepository?->save($translation);
@@ -1134,14 +1126,14 @@ final readonly class SiteDefinitionParser
                 $tmpFile,
                 strlen($response->body),
                 0,
-                is_string($mediaData['filename'] ?? null) ? $mediaData['filename'] : basename($source),
-                is_string($mediaData['mime_type'] ?? null) ? $mediaData['mime_type'] : $response->headers['content-type'][0] ?? 'application/octet-stream',
+                self::asString($mediaData, 'filename', basename($source)),
+                self::asString($mediaData, 'mime_type', $response->headers['content-type'][0] ?? 'application/octet-stream'),
             );
 
             return $this->mediaService->upload(
                 $uploadedFile,
-                is_string($mediaData['uploader_id'] ?? null) ? $mediaData['uploader_id'] : 'system',
-                is_string($mediaData['tenant_id'] ?? null) ? $mediaData['tenant_id'] : null,
+                self::asString($mediaData, 'uploader_id', 'system'),
+                self::asNullableString($mediaData, 'tenant_id'),
                 MediaVisibility::Public,
             );
         } finally {
