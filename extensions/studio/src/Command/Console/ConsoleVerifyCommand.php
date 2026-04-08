@@ -55,8 +55,7 @@ final class ConsoleVerifyCommand extends Command
     {
         $rawFilePath = $input->getArgument(0);
         $filePath = is_string($rawFilePath) ? $rawFilePath : '';
-        $rawMode = $input->getOption('mode', 'public') ?? 'public';
-        $mode = is_string($rawMode) ? $rawMode : 'public';
+        $mode = $input->getStringOption('mode', 'public');
         $isJson = $input->hasOption('json');
 
         if (!file_exists($filePath)) {
