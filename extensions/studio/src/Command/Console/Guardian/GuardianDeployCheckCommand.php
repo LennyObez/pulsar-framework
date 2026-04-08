@@ -15,7 +15,6 @@ use Pulsar\Deploy\CheckSeverity;
 use Pulsar\Deploy\DeployCheckRunnerInterface;
 use Pulsar\Extension\Studio\Command\Console\JsonOutputHelper;
 
-use function is_string;
 use function sprintf;
 
 /**
@@ -48,8 +47,7 @@ final class GuardianDeployCheckCommand extends Command
     {
         $isJson = $input->hasOption('json');
         $isStrict = $input->hasOption('strict');
-        $rawEnv = $input->getOption('env') ?? 'production';
-        $environment = is_string($rawEnv) ? $rawEnv : 'production';
+        $environment = $input->getStringOption('env', 'production');
 
         $report = $this->deployCheck->run($environment);
 
