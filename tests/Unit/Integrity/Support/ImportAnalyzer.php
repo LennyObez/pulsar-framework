@@ -11,6 +11,7 @@ use function file_get_contents;
 use function is_array;
 use function ltrim;
 use function preg_match;
+use function str_replace;
 use function str_starts_with;
 use function substr;
 use function token_get_all;
@@ -109,7 +110,11 @@ final class ImportAnalyzer
      */
     public static function extractClassStringReferences(string $filePath): array
     {
-        $code = file_get_contents($filePath);
+        // Use `@` to swallow the read-failed warning. The function
+        // already returns `false` on a missing / unreadable file, and
+        // PHPUnit's strictness converts the warning into a test
+        // failure for the legitimate "file does not exist" case.
+        $code = @file_get_contents($filePath);
 
         if ($code === false) {
             return [];
@@ -140,8 +145,14 @@ final class ImportAnalyzer
                 continue;
             }
 
+            // Strip surrounding quotes, then normalise the source-level
+            // double-backslash escape (`\\\\` in source = `\\` in PHP =
+            // ONE backslash logically) so that double-quoted strings
+            // and single-quoted strings share the same canonical form
+            // before matching.
             $inner = trim(substr($literal, 1, -1));
-            $candidate = ltrim($inner, '\\');
+            $normalised = str_replace('\\\\', '\\', $inner);
+            $candidate = ltrim($normalised, '\\');
 
             if (
                 preg_match('/^Pulsar(\\\\[A-Z][A-Za-z0-9_]*)+$/', $candidate) === 1
