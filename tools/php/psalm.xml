@@ -71,6 +71,7 @@
         <file name="stubs/GooglePubSub.php"/>
         <file name="stubs/Grpc.php"/>
         <file name="stubs/RoadRunner.php"/>
+        <file name="stubs/Psr7.php"/>
     </stubs>
 
     <issueHandlers>
