@@ -298,80 +298,95 @@ final readonly class ImportController extends AbstractAdminController
     }
 
     /**
-     * @param array{content: array<string, mixed>, translation: array<string, mixed>, blocks: list<array<string, mixed>>} $item
+     * @param array{
+     *     content: array{content_type?: string, author_id?: string},
+     *     translation: array{
+     *         locale?: string,
+     *         title?: string,
+     *         slug?: string,
+     *         path?: string,
+     *         body?: string,
+     *         excerpt?: string|null,
+     *         meta_title?: string|null,
+     *         meta_description?: string|null,
+     *     },
+     *     blocks: list<array<string, mixed>>,
+     * } $item
      */
     private function persistMarkdownItem(array $item): void
     {
         $c = $item['content'];
         $t = $item['translation'];
         $contentId = UuidGenerator::v7();
-        $rawContentType = $c['content_type'] ?? null;
-        $contentTypeStr = is_string($rawContentType) ? $rawContentType : 'page';
-        $contentType = ContentType::tryFrom($contentTypeStr) ?? ContentType::Page;
+        $contentType = ContentType::tryFrom($c['content_type'] ?? 'page') ?? ContentType::Page;
 
-        $rawAuthorId = $c['author_id'] ?? null;
         $content = Content::create(
             id: $contentId,
             contentType: $contentType,
-            authorId: is_string($rawAuthorId) ? $rawAuthorId : 'system',
+            authorId: $c['author_id'] ?? 'system',
         );
 
         $this->contentRepository->save($content);
 
-        $rawLocale = $t['locale'] ?? null;
-        $rawTitle = $t['title'] ?? null;
-        $rawSlug = $t['slug'] ?? null;
-        $rawPath = $t['path'] ?? null;
-        $rawBody = $t['body'] ?? null;
-        $rawExcerpt = $t['excerpt'] ?? null;
-        $rawMetaTitle = $t['meta_title'] ?? null;
-        $rawMetaDescription = $t['meta_description'] ?? null;
-        $slugSegmentFallback = is_string($rawSlug) ? $rawSlug : 'untitled';
+        $slugSegmentFallback = $t['slug'] ?? 'untitled';
         $translation = ContentTranslation::create(
             id: UuidGenerator::v7(),
             contentId: $contentId,
-            locale: is_string($rawLocale) ? $rawLocale : 'en',
-            title: is_string($rawTitle) ? $rawTitle : '',
+            locale: $t['locale'] ?? 'en',
+            title: $t['title'] ?? '',
             slugSegment: $slugSegmentFallback,
-            path: is_string($rawPath) ? $rawPath : $slugSegmentFallback,
-            body: is_string($rawBody) ? $rawBody : '',
-            excerpt: is_string($rawExcerpt) ? $rawExcerpt : null,
-            metaTitle: is_string($rawMetaTitle) ? $rawMetaTitle : null,
-            metaDescription: is_string($rawMetaDescription) ? $rawMetaDescription : null,
+            path: $t['path'] ?? $slugSegmentFallback,
+            body: $t['body'] ?? '',
+            excerpt: $t['excerpt'] ?? null,
+            metaTitle: $t['meta_title'] ?? null,
+            metaDescription: $t['meta_description'] ?? null,
         );
 
         $this->translationRepository->save($translation);
     }
 
     /**
-     * @param array{content: array<string, mixed>, translation: array<string, mixed>} $item
+     * @param array{
+     *     content: array{content_type?: string, author_id?: string},
+     *     translation: array{
+     *         locale?: string,
+     *         title?: string,
+     *         slug?: string,
+     *         path?: string,
+     *         body?: string,
+     *         excerpt?: string|null,
+     *         meta_title?: string|null,
+     *         meta_description?: string|null,
+     *     },
+     * } $item
      */
     private function persistCsvItem(array $item): void
     {
         $c = $item['content'];
         $t = $item['translation'];
         $contentId = UuidGenerator::v7();
-        $contentType = ContentType::tryFrom(is_string($c['content_type'] ?? null) ? $c['content_type'] : 'page') ?? ContentType::Page;
+        $contentType = ContentType::tryFrom($c['content_type'] ?? 'page') ?? ContentType::Page;
 
         $content = Content::create(
             id: $contentId,
             contentType: $contentType,
-            authorId: is_string($c['author_id'] ?? null) ? $c['author_id'] : 'system',
+            authorId: $c['author_id'] ?? 'system',
         );
 
         $this->contentRepository->save($content);
 
+        $slugFallback = $t['slug'] ?? 'untitled';
         $translation = ContentTranslation::create(
             id: UuidGenerator::v7(),
             contentId: $contentId,
-            locale: is_string($t['locale'] ?? null) ? $t['locale'] : 'en',
-            title: is_string($t['title'] ?? null) ? $t['title'] : '',
-            slugSegment: is_string($t['slug'] ?? null) ? $t['slug'] : 'untitled',
-            path: is_string($t['path'] ?? null) ? $t['path'] : (is_string($t['slug'] ?? null) ? $t['slug'] : 'untitled'),
-            body: is_string($t['body'] ?? null) ? $t['body'] : '',
-            excerpt: is_string($t['excerpt'] ?? null) ? $t['excerpt'] : null,
-            metaTitle: is_string($t['meta_title'] ?? null) ? $t['meta_title'] : null,
-            metaDescription: is_string($t['meta_description'] ?? null) ? $t['meta_description'] : null,
+            locale: $t['locale'] ?? 'en',
+            title: $t['title'] ?? '',
+            slugSegment: $slugFallback,
+            path: $t['path'] ?? $slugFallback,
+            body: $t['body'] ?? '',
+            excerpt: $t['excerpt'] ?? null,
+            metaTitle: $t['meta_title'] ?? null,
+            metaDescription: $t['meta_description'] ?? null,
         );
 
         $this->translationRepository->save($translation);
