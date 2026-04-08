@@ -15,7 +15,6 @@ use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
 
 use function count;
 use function explode;
-use function is_string;
 use function json_encode;
 use function sprintf;
 
@@ -60,29 +59,24 @@ final class ConsoleQueryCommand extends Command
         $filters = [];
 
         if ($input->hasOption('type')) {
-            $rawType = $input->getOption('type');
-            $filters['event_type'] = is_string($rawType) ? explode(',', $rawType) : [];
+            $type = $input->getStringOption('type');
+            $filters['event_type'] = $type !== '' ? explode(',', $type) : [];
         }
 
         if ($input->hasOption('request-id')) {
-            $rawRequestId = $input->getOption('request-id');
-            $filters['request_id'] = is_string($rawRequestId) ? $rawRequestId : '';
+            $filters['request_id'] = $input->getStringOption('request-id');
         }
 
         if ($input->hasOption('job-id')) {
-            $rawJobId = $input->getOption('job-id');
-            $filters['job_id'] = is_string($rawJobId) ? $rawJobId : '';
+            $filters['job_id'] = $input->getStringOption('job-id');
         }
 
         if ($input->hasOption('trace-id')) {
-            $rawTraceId = $input->getOption('trace-id');
-            $filters['trace_id'] = is_string($rawTraceId) ? $rawTraceId : '';
+            $filters['trace_id'] = $input->getStringOption('trace-id');
         }
 
-        $rawLimit = $input->getOption('limit', '50') ?? '50';
-        $limit = is_numeric($rawLimit) ? (int) $rawLimit : 50;
-        $rawOffset = $input->getOption('offset', '0') ?? '0';
-        $offset = is_numeric($rawOffset) ? (int) $rawOffset : 0;
+        $limit = $input->getIntOption('limit', 50);
+        $offset = $input->getIntOption('offset', 0);
 
         $events = $this->store->query($filters, $limit, $offset);
         $total = $this->store->count($filters);
