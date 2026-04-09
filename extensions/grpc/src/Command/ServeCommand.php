@@ -14,7 +14,6 @@ use Pulsar\Extension\Grpc\Config\GrpcConfig;
 use Pulsar\Extension\Grpc\Server\GrpcServerInterface;
 use RuntimeException;
 
-use function is_string;
 use function php_sapi_name;
 use function sprintf;
 
@@ -97,9 +96,9 @@ final class ServeCommand extends Command
     private function resolveOption(InputInterface $input, string $name, string $default): string
     {
         if ($input->hasOption($name)) {
-            $value = $input->getOption($name);
+            $value = $input->getStringOption($name);
 
-            if (is_string($value) && $value !== '') {
+            if ($value !== '') {
                 return $value;
             }
         }
