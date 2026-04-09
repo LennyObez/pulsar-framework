@@ -16,7 +16,6 @@ use Pulsar\Extension\Studio\Console\Event\EventType;
 use Pulsar\Extension\Studio\Console\Redaction\RedactionPipelineInterface;
 
 use function is_array;
-use function is_string;
 use function json_decode;
 use function sprintf;
 
@@ -51,10 +50,9 @@ final class RedactionTestCommand extends Command
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $isJson = $input->hasOption('json');
-        $payloadJson = $input->getOption('payload');
-        $typeName = $input->getOption('type') ?? EventType::HttpRequest->value;
+        $payloadJson = $input->getNullableStringOption('payload');
+        $typeNameStr = $input->getStringOption('type', EventType::HttpRequest->value);
 
-        $typeNameStr = is_string($typeName) ? $typeName : EventType::HttpRequest->value;
         $eventType = EventType::tryFrom($typeNameStr);
 
         if ($eventType === null) {
@@ -69,7 +67,7 @@ final class RedactionTestCommand extends Command
             return ExitCode::Error->value;
         }
 
-        if (!is_string($payloadJson)) {
+        if ($payloadJson === null) {
             $payload = $this->samplePayload();
         } else {
             /** @var array<string, mixed> $payload */
