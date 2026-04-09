@@ -59,13 +59,13 @@ final class IntegrityBuildCommand extends Command
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $sign = $input->hasOption('sign');
-        $outputPath = $input->getOption('output');
+        $defaultOutput = $this->basePath . DIRECTORY_SEPARATOR . $this->config->manifestPath;
+        $outputPath = $input->getStringOption('output', $defaultOutput);
 
-        if ($outputPath === null || $outputPath === true) {
-            $outputPath = $this->basePath . DIRECTORY_SEPARATOR . $this->config->manifestPath;
+        if ($outputPath === '') {
+            $outputPath = $defaultOutput;
         }
 
-        /** @var string $outputPath */
         $output->writeln('Building integrity manifest...');
         $output->writeln(sprintf('  Include: %s', implode(', ', $this->config->include)));
         $output->writeln(sprintf('  Exclude: %s', implode(', ', $this->config->exclude)));

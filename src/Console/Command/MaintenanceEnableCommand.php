@@ -12,7 +12,6 @@ use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 use Pulsar\Deploy\MaintenanceMode;
 
-use function is_string;
 use function sprintf;
 
 /**
@@ -48,16 +47,14 @@ final class MaintenanceEnableCommand extends Command
             return ExitCode::Success->value;
         }
 
-        $secret = $input->getOption('secret');
-        $message = $input->getOption('message');
-        $retryRaw = $input->getOption('retry', '60');
-        $allowRaw = $input->getOption('allow');
-
-        $retryAfter = is_string($retryRaw) ? (int) $retryRaw : 60;
+        $secret = $input->getNullableStringOption('secret');
+        $message = $input->getNullableStringOption('message');
+        $retryAfter = $input->getIntOption('retry', 60);
+        $allowRaw = $input->getStringOption('allow');
 
         $allowedIps = [];
 
-        if (is_string($allowRaw) && $allowRaw !== '') {
+        if ($allowRaw !== '') {
             $allowedIps = array_values(array_filter(
                 array_map(trim(...), explode(',', $allowRaw)),
                 static fn(string $ip): bool => $ip !== '',
@@ -65,15 +62,15 @@ final class MaintenanceEnableCommand extends Command
         }
 
         $this->maintenanceMode->enable(
-            secret: is_string($secret) ? $secret : null,
-            message: is_string($message) ? $message : null,
+            secret: $secret,
+            message: $message,
             retryAfter: $retryAfter,
             allowedIps: $allowedIps,
         );
 
         $output->success('Maintenance mode enabled.');
 
-        if (is_string($secret)) {
+        if ($secret !== null) {
             $output->writeln(sprintf('  Bypass secret: %s', $secret));
         }
 
