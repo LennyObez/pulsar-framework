@@ -15,7 +15,6 @@ use Pulsar\Extensibility\Exception\ExtensionException;
 use Pulsar\Extensibility\ExtensionRegistry;
 
 use function count;
-use function is_string;
 use function sprintf;
 use function str_contains;
 
@@ -44,7 +43,7 @@ final class ExtensionListCommand extends Command
     #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
-        $filter = $input->getOption('filter');
+        $filter = $input->getNullableStringOption('filter');
         $extensions = $this->registry->all();
 
         if ($extensions === []) {
@@ -60,7 +59,7 @@ final class ExtensionListCommand extends Command
         foreach ($extensions as $extension) {
             $name = $extension->name();
 
-            if (is_string($filter) && !str_contains($name, $filter)) {
+            if ($filter !== null && !str_contains($name, $filter)) {
                 continue;
             }
 

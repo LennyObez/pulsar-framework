@@ -40,7 +40,7 @@ final class ListCommand extends Command
     #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
-        $format = $input->getOption('format', 'text');
+        $format = $input->getStringOption('format', 'text');
 
         if ($format === 'json') {
             return $this->renderJson($output);
