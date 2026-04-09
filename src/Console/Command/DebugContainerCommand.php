@@ -61,7 +61,7 @@ final class DebugContainerCommand extends Command
         $this->kernel->boot();
 
         $container = $this->kernel->container();
-        $filter = $input->getOption('filter');
+        $filter = $input->getNullableStringOption('filter');
 
         if ($input->hasOption('check-lifetimes')) {
             return $this->checkLifetimes($container, $output);
@@ -109,9 +109,8 @@ final class DebugContainerCommand extends Command
      * Display all tagged services grouped by tag name.
      *
      * @param mixed $container The booted container instance
-     * @param mixed $filter Optional filter string for binding IDs
      */
-    private function showTags(mixed $container, mixed $filter, OutputInterface $output): int
+    private function showTags(mixed $container, ?string $filter, OutputInterface $output): int
     {
         if (!$container instanceof AdvancedContainerInterface) {
             $output->error('Container does not support advanced features (definitions unavailable).');
@@ -123,7 +122,7 @@ final class DebugContainerCommand extends Command
         $tagGroups = [];
 
         foreach ($definitions as $id => $definition) {
-            if (is_string($filter) && !str_contains($id, $filter)) {
+            if ($filter !== null && !str_contains($id, $filter)) {
                 continue;
             }
 
@@ -164,9 +163,8 @@ final class DebugContainerCommand extends Command
      * Display all bindings with their metadata.
      *
      * @param mixed $container The booted container instance
-     * @param mixed $filter Optional filter string for binding IDs
      */
-    private function showBindings(mixed $container, mixed $filter, OutputInterface $output): int
+    private function showBindings(mixed $container, ?string $filter, OutputInterface $output): int
     {
         if (!$container instanceof AdvancedContainerInterface) {
             $output->error('Container does not support advanced features (definitions unavailable).');
@@ -175,11 +173,10 @@ final class DebugContainerCommand extends Command
 
         $definitions = $container->getDefinitions();
 
-        if (is_string($filter)) {
-            $filterString = $filter;
+        if ($filter !== null) {
             $definitions = array_filter(
                 $definitions,
-                static fn(string $id): bool => str_contains($id, $filterString),
+                static fn(string $id): bool => str_contains($id, $filter),
                 ARRAY_FILTER_USE_KEY,
             );
         }

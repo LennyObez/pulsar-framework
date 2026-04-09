@@ -63,9 +63,9 @@ final class DebugRoutesCommand extends Command
             return ExitCode::Success->value;
         }
 
-        $methodFilter = $input->getOption('method');
-        $pathFilter = $input->getOption('path');
-        $nameFilter = $input->getOption('name');
+        $methodFilter = $input->getNullableStringOption('method');
+        $pathFilter = $input->getNullableStringOption('path');
+        $nameFilter = $input->getNullableStringOption('name');
 
         $filteredRoutes = $this->filterRoutes($routes, $methodFilter, $pathFilter, $nameFilter);
 
@@ -120,22 +120,22 @@ final class DebugRoutesCommand extends Command
      * @param list<Route> $routes
      * @return list<Route>
      */
-    private function filterRoutes(array $routes, mixed $methodFilter, mixed $pathFilter, mixed $nameFilter): array
+    private function filterRoutes(array $routes, ?string $methodFilter, ?string $pathFilter, ?string $nameFilter): array
     {
         $filtered = [];
 
         foreach ($routes as $route) {
             $methods = implode('|', array_map(fn($m) => $m->value, $route->methods));
 
-            if (is_string($methodFilter) && !str_contains(strtoupper($methods), strtoupper($methodFilter))) {
+            if ($methodFilter !== null && !str_contains(strtoupper($methods), strtoupper($methodFilter))) {
                 continue;
             }
 
-            if (is_string($pathFilter) && !str_contains($route->path, $pathFilter)) {
+            if ($pathFilter !== null && !str_contains($route->path, $pathFilter)) {
                 continue;
             }
 
-            if (is_string($nameFilter) && ($route->name === null || !str_contains($route->name, $nameFilter))) {
+            if ($nameFilter !== null && ($route->name === null || !str_contains($route->name, $nameFilter))) {
                 continue;
             }
 
