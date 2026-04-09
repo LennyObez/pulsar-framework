@@ -298,4 +298,68 @@ final class MoneyTest extends TestCase
         self::assertNotSame($a, $result);
         self::assertSame(100, $a->amount);
     }
+
+    #[Test]
+    public function addThrowsOnOverflow(): void
+    {
+        // F21.8: PHP_INT_MAX + 1 silently wraps to PHP_INT_MIN on
+        // 64-bit ints. Money MUST refuse rather than report a
+        // negative balance.
+        $a = Money::of(PHP_INT_MAX, Currency::USD);
+        $b = Money::of(1, Currency::USD);
+
+        $this->expectException(MoneyException::class);
+        $this->expectExceptionMessage('overflow');
+
+        $a->add($b);
+    }
+
+    #[Test]
+    public function addAcceptsExactPhpIntMaxResult(): void
+    {
+        // The boundary case: a + b == PHP_INT_MAX is still valid.
+        $a = Money::of(PHP_INT_MAX - 100, Currency::USD);
+        $b = Money::of(100, Currency::USD);
+
+        $result = $a->add($b);
+
+        self::assertSame(PHP_INT_MAX, $result->amount);
+    }
+
+    #[Test]
+    public function multiplyThrowsOnOverflow(): void
+    {
+        $a = Money::of(PHP_INT_MAX, Currency::USD);
+
+        $this->expectException(MoneyException::class);
+        $this->expectExceptionMessage('overflow');
+
+        $a->multiply(2);
+    }
+
+    #[Test]
+    public function multiplyAcceptsZeroFactor(): void
+    {
+        // Zero factor must NOT trigger the overflow guard's
+        // intdiv-by-zero. The result is always 0.
+        $a = Money::of(PHP_INT_MAX, Currency::USD);
+
+        $result = $a->multiply(0);
+
+        self::assertSame(0, $result->amount);
+    }
+
+    #[Test]
+    public function percentageThrowsOnIntermediateOverflow(): void
+    {
+        // amount * basisPoints can overflow before the /10000
+        // division happens. Verify the guard rejects it instead of
+        // silently wrapping.
+        $a = Money::of(PHP_INT_MAX, Currency::USD);
+
+        $this->expectException(MoneyException::class);
+        $this->expectExceptionMessage('overflow');
+
+        $a->percentage(20000); // 200% — would multiply, then divide
+    }
 }
