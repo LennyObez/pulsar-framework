@@ -52,7 +52,7 @@ final class MakePortCommand extends Command
 
         [$name, $module, $modulePath, $namespace] = $context;
 
-        $methods = $this->parseCommaSeparatedOption($input->getOption('methods', ''));
+        $methods = $this->parseCommaSeparatedOption($input->getStringOption('methods'));
 
         $contractsDir = $modulePath . DIRECTORY_SEPARATOR . 'Contracts';
         if (!is_dir($contractsDir)) {

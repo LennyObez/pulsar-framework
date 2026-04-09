@@ -118,21 +118,17 @@ trait ScaffoldTrait
         string $nameLabel,
     ): array|int {
         $name = $input->getArgument(0);
-        $module = $input->getOption('module');
-        $basePath = $input->getOption('path', 'app/Modules');
+        $module = $input->getStringOption('module');
+        $basePath = $input->getStringOption('path', 'app/Modules');
 
         if (!is_string($name) || $name === '') {
             $output->errorln($nameLabel . ' name is required.');
             return ExitCode::Invalid->value;
         }
 
-        if (!is_string($module) || $module === '') {
+        if ($module === '') {
             $output->errorln('Module name is required (--module).');
             return ExitCode::Invalid->value;
-        }
-
-        if (!is_string($basePath)) {
-            $basePath = 'app/Modules';
         }
 
         $name = $this->toPascalCase($name);
@@ -160,9 +156,9 @@ trait ScaffoldTrait
      *
      * @return list<string>
      */
-    private function parseCommaSeparatedOption(mixed $value): array
+    private function parseCommaSeparatedOption(string $value): array
     {
-        if (!is_string($value) || $value === '') {
+        if ($value === '') {
             return [];
         }
 
