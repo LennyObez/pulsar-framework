@@ -47,15 +47,11 @@ final class MakeModuleCommand extends Command
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $name = $input->getArgument(0);
-        $basePath = $input->getOption('path', 'app/Modules');
+        $basePath = $input->getStringOption('path', 'app/Modules');
 
         if (!is_string($name) || $name === '') {
             $output->errorln('Module name is required.');
             return ExitCode::Invalid->value;
-        }
-
-        if (!is_string($basePath)) {
-            $basePath = 'app/Modules';
         }
 
         $name = $this->toPascalCase($name);
