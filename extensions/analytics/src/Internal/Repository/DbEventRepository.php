@@ -133,8 +133,7 @@ final readonly class DbEventRepository implements EventRepositoryInterface
         /** @var array<string, mixed> $props */
         $props = $propsRaw !== null ? json_decode($propsRaw, true, flags: JSON_THROW_ON_ERROR) : [];
 
-        $revenueRaw = $row->get('revenue_value');
-        $revenue = $revenueRaw !== null && is_numeric($revenueRaw) ? (float) $revenueRaw : null;
+        $revenue = $row->getNullableFloat('revenue_value');
 
         return new CustomEvent(
             id: $row->getString('id'),

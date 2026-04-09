@@ -13,6 +13,7 @@ use function array_keys;
 use function is_bool;
 use function is_float;
 use function is_int;
+use function is_numeric;
 use function is_resource;
 use function is_string;
 use function stream_get_contents;
@@ -170,6 +171,34 @@ final readonly class Row
         }
 
         throw DatabaseException::typeCastFailed($column, 'int');
+    }
+
+    /**
+     * Get a column as a nullable float.
+     *
+     * @throws DatabaseException If the column does not exist.
+     */
+    public function getNullableFloat(string $column): ?float
+    {
+        $value = $this->get($column);
+
+        if ($value === null) {
+            return null;
+        }
+
+        if (is_float($value)) {
+            return $value;
+        }
+
+        if (is_int($value)) {
+            return (float) $value;
+        }
+
+        if (is_string($value) && is_numeric($value)) {
+            return (float) $value;
+        }
+
+        throw DatabaseException::typeCastFailed($column, 'float');
     }
 
     /**
