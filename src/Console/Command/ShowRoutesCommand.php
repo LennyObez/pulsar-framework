@@ -70,8 +70,8 @@ final class ShowRoutesCommand extends Command
             return ExitCode::Success->value;
         }
 
-        $methodFilter = $input->getOption('method');
-        $pathFilter = $input->getOption('path');
+        $methodFilter = $input->getNullableStringOption('method');
+        $pathFilter = $input->getNullableStringOption('path');
 
         $table = new TableFormatter();
         $table->setHeaders(['Method', 'Path', 'Name', 'Handler', 'Middleware']);
@@ -81,11 +81,11 @@ final class ShowRoutesCommand extends Command
             $methods = implode('|', array_map(fn($m) => $m->value, $route->methods));
 
             // Apply filters
-            if (is_string($methodFilter) && !str_contains(strtoupper($methods), strtoupper($methodFilter))) {
+            if ($methodFilter !== null && !str_contains(strtoupper($methods), strtoupper($methodFilter))) {
                 continue;
             }
 
-            if (is_string($pathFilter) && !str_contains($route->path, $pathFilter)) {
+            if ($pathFilter !== null && !str_contains($route->path, $pathFilter)) {
                 continue;
             }
 
