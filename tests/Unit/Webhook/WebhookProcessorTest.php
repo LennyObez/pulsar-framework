@@ -163,6 +163,50 @@ final class WebhookProcessorTest extends TestCase
         $verifier->verify('payload', 't=1,v1=deadbeef', '', 300);
     }
 
+    #[Test]
+    public function processRejectsBodyExceedingSizeLimit(): void
+    {
+        // F25.6: a body larger than the configured cap must be
+        // rejected before signature verification (prevents both DoS
+        // and the secondary OOM via json_decode on a 10 GB blob).
+        $handler = $this->createStub(WebhookHandlerInterface::class);
+        $processor = new WebhookProcessor(
+            verifier: new HmacWebhookVerifier($this->now),
+            eventLog: new InMemoryWebhookEventLog(),
+            handler: $handler,
+            secret: self::SECRET,
+            maxBodyBytes: 64,
+        );
+
+        $oversized = str_repeat('a', 65); // 1 byte over the cap
+        $header = $this->buildSignatureHeader($oversized, $this->now->getTimestamp());
+
+        $result = $processor->process($oversized, $header, $this->now);
+
+        self::assertSame(WebhookProcessingStatus::HandlerError, $result->status);
+        self::assertSame('Webhook payload exceeds size limit', $result->error);
+    }
+
+    #[Test]
+    public function processRejectsDeeplyNestedJson(): void
+    {
+        // F25.6: cap json_decode depth at 32 — defends against
+        // small-but-deeply-nested JSON-bomb payloads that fit under
+        // the byte cap but consume excessive parser resources.
+        // Build a JSON object nested 50 levels deep.
+        $payload = str_repeat('{"x":', 50) . '1' . str_repeat('}', 50);
+
+        $handler = $this->createStub(WebhookHandlerInterface::class);
+        $processor = $this->createProcessor($handler);
+
+        $header = $this->buildSignatureHeader($payload, $this->now->getTimestamp());
+
+        $result = $processor->process($payload, $header, $this->now);
+
+        self::assertSame(WebhookProcessingStatus::HandlerError, $result->status);
+        self::assertSame('Invalid JSON payload', $result->error);
+    }
+
     private function createProcessor(
         WebhookHandlerInterface $handler,
         ?InMemoryWebhookEventLog $eventLog = null,
