@@ -167,7 +167,22 @@ final readonly class ContentSnapshotService implements ContentSnapshotServiceInt
             throw CmsException::contentNotFound($snapshotId);
         }
 
-        /** @var list<array<string, mixed>> $translationsData */
+        /** @var list<array{
+         *     id?: string,
+         *     locale?: string,
+         *     title?: string,
+         *     slug_segment?: string,
+         *     path?: string,
+         *     body?: string,
+         *     excerpt?: string|null,
+         *     meta_title?: string|null,
+         *     meta_description?: string|null,
+         *     og_image_id?: string|null,
+         *     robots?: string|null,
+         *     structured_data_overrides?: array<string, mixed>|null,
+         *     reading_time_minutes?: int|null,
+         * }> $translationsData
+         */
         $translationsData = json_decode($row->getString('translations_json'), true, 512, JSON_THROW_ON_ERROR);
 
         $this->db->transaction(function (ConnectionInterface $db) use ($translationsData, $row, $restoredBy): void {
@@ -175,26 +190,23 @@ final readonly class ContentSnapshotService implements ContentSnapshotServiceInt
             $snapshotNumber = $row->getInt('snapshot_number');
 
             foreach ($translationsData as $data) {
-                $locale = is_string($data['locale'] ?? null) ? $data['locale'] : '';
-
-                /** @var array<string, mixed>|null $overrides */
-                $overrides = is_array($data['structured_data_overrides'] ?? null) ? $data['structured_data_overrides'] : null;
+                $locale = $data['locale'] ?? '';
 
                 $translation = new ContentTranslation(
-                    id: is_string($data['id'] ?? null) ? $data['id'] : '',
+                    id: $data['id'] ?? '',
                     contentId: $contentId,
                     locale: $locale,
-                    title: is_string($data['title'] ?? null) ? $data['title'] : '',
-                    slugSegment: is_string($data['slug_segment'] ?? null) ? $data['slug_segment'] : '',
-                    path: is_string($data['path'] ?? null) ? $data['path'] : '',
-                    body: is_string($data['body'] ?? null) ? $data['body'] : '',
-                    excerpt: is_string($data['excerpt'] ?? null) ? $data['excerpt'] : null,
-                    metaTitle: is_string($data['meta_title'] ?? null) ? $data['meta_title'] : null,
-                    metaDescription: is_string($data['meta_description'] ?? null) ? $data['meta_description'] : null,
-                    ogImageId: is_string($data['og_image_id'] ?? null) ? $data['og_image_id'] : null,
-                    robots: is_string($data['robots'] ?? null) ? $data['robots'] : null,
-                    structuredDataOverrides: $overrides,
-                    readingTimeMinutes: is_int($data['reading_time_minutes'] ?? null) ? $data['reading_time_minutes'] : null,
+                    title: $data['title'] ?? '',
+                    slugSegment: $data['slug_segment'] ?? '',
+                    path: $data['path'] ?? '',
+                    body: $data['body'] ?? '',
+                    excerpt: $data['excerpt'] ?? null,
+                    metaTitle: $data['meta_title'] ?? null,
+                    metaDescription: $data['meta_description'] ?? null,
+                    ogImageId: $data['og_image_id'] ?? null,
+                    robots: $data['robots'] ?? null,
+                    structuredDataOverrides: $data['structured_data_overrides'] ?? null,
+                    readingTimeMinutes: $data['reading_time_minutes'] ?? null,
                     bodyPlaintext: '',
                     headingsText: '',
                     customFieldsText: '',
