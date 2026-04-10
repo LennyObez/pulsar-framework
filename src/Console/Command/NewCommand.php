@@ -71,12 +71,10 @@ final class NewCommand extends Command
         }
 
         // Resolve presets from option values
-        $presetValue = $input->getOption('preset', 'web');
-        $envValue = $input->getOption('env', 'local');
-        $packValue = $input->getOption('pack');
+        $packValue = $input->getNullableStringOption('pack');
 
-        $preset = ProjectPreset::fromInput(is_string($presetValue) ? $presetValue : null);
-        $env = EnvironmentPreset::fromInput(is_string($envValue) ? $envValue : null);
+        $preset = ProjectPreset::fromInput($input->getStringOption('preset', 'web'));
+        $env = EnvironmentPreset::fromInput($input->getStringOption('env', 'local'));
 
         // Resolve target directory relative to cwd
         $cwd = getcwd();
@@ -95,7 +93,7 @@ final class NewCommand extends Command
             $generator->generate($name, $preset, $env, $targetPath, $output);
 
             // Install scaffolding pack if specified
-            if (is_string($packValue) && $packValue !== '') {
+            if ($packValue !== null && $packValue !== '') {
                 $output->newLine();
                 $installer = new PackInstaller();
                 $installer->install($packValue, $name, $targetPath, $output);
