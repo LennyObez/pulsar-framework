@@ -46,8 +46,7 @@ final class RuntimeReloadCommand extends Command
             return ExitCode::Error->value;
         }
 
-        $pidOption = $input->getOption('pid');
-        /** @var string|null $pidOption */
+        $pidOption = $input->getNullableStringOption('pid');
         $pid = $pidOption !== null ? (int) $pidOption : $this->detectPid();
 
         if ($pid === null || $pid <= 0) {
