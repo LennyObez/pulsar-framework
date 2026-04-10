@@ -56,20 +56,30 @@ final readonly class DefaultCertificateValidator implements CertificateValidator
     #[Override]
     public function validate(string $pemCertificate): CertificateInfo
     {
+        /** @var array{
+         *     subject?: array{CN?: string},
+         *     issuer?: array{CN?: string},
+         *     serialNumberHex?: string,
+         *     validFrom_time_t?: int,
+         *     validTo_time_t?: int,
+         *     extensions?: array<string, mixed>,
+         *     ...
+         * }|false $parsed
+         */
         $parsed = openssl_x509_parse($pemCertificate);
 
         if (!is_array($parsed)) {
             throw Psd2Exception::certificateParseFailure('OpenSSL could not parse the certificate');
         }
 
-        $subjectArr = is_array($parsed['subject'] ?? null) ? $parsed['subject'] : [];
-        $issuerArr = is_array($parsed['issuer'] ?? null) ? $parsed['issuer'] : [];
-        $subject = is_string($subjectArr['CN'] ?? null) ? (string) $subjectArr['CN'] : '';
-        $issuer = is_string($issuerArr['CN'] ?? null) ? (string) $issuerArr['CN'] : '';
-        $serialNumber = is_string($parsed['serialNumberHex'] ?? null) ? $parsed['serialNumberHex'] : '';
+        $subjectArr = $parsed['subject'] ?? [];
+        $issuerArr = $parsed['issuer'] ?? [];
+        $subject = $subjectArr['CN'] ?? '';
+        $issuer = $issuerArr['CN'] ?? '';
+        $serialNumber = $parsed['serialNumberHex'] ?? '';
 
-        $validFromTs = is_int($parsed['validFrom_time_t'] ?? null) ? $parsed['validFrom_time_t'] : 0;
-        $validToTs = is_int($parsed['validTo_time_t'] ?? null) ? $parsed['validTo_time_t'] : 0;
+        $validFromTs = $parsed['validFrom_time_t'] ?? 0;
+        $validToTs = $parsed['validTo_time_t'] ?? 0;
         $validFrom = new DateTimeImmutable('@' . $validFromTs);
         $validUntil = new DateTimeImmutable('@' . $validToTs);
 
