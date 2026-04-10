@@ -57,26 +57,23 @@ final readonly class FormSubmissionService implements FormSubmissionServiceInter
     public function submit(array $formData, array $meta): FormSubmission
     {
         // Validate CSRF token
-        $csrfToken = is_string($meta['_csrf_token'] ?? null) ? $meta['_csrf_token'] : '';
+        $csrfToken = $meta['_csrf_token'] ?? '';
 
         if (!$this->csrfTokenManager->validate($csrfToken)) {
             throw new RuntimeException('Invalid or missing CSRF token');
         }
 
         // Hash IP and user agent for privacy-preserving identification
-        $ip = is_string($meta['ip'] ?? null) ? $meta['ip'] : '0.0.0.0';
-        $userAgent = is_string($meta['user_agent'] ?? null) ? $meta['user_agent'] : '';
-
-        $ipHash = bin2hex(sodium_crypto_generichash($ip));
-        $userAgentHash = bin2hex(sodium_crypto_generichash($userAgent));
+        $ipHash = bin2hex(sodium_crypto_generichash($meta['ip'] ?? '0.0.0.0'));
+        $userAgentHash = bin2hex(sodium_crypto_generichash($meta['user_agent'] ?? ''));
 
         // Run spam detection
         $spamResult = $this->spamScorer->score($formData, $meta);
 
         // Extract form block and content identifiers
-        $formBlockId = is_string($meta['form_block_id'] ?? null) ? $meta['form_block_id'] : '';
-        $contentId = is_string($meta['content_id'] ?? null) ? $meta['content_id'] : '';
-        $tenantId = is_string($meta['tenant_id'] ?? null) ? $meta['tenant_id'] : null;
+        $formBlockId = $meta['form_block_id'] ?? '';
+        $contentId = $meta['content_id'] ?? '';
+        $tenantId = $meta['tenant_id'] ?? null;
 
         $submission = FormSubmission::create(
             formBlockId: $formBlockId,
