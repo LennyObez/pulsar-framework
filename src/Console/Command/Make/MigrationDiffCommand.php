@@ -22,7 +22,6 @@ use Pulsar\Console\OutputInterface;
 
 use function count;
 use function date;
-use function is_string;
 use function sprintf;
 
 /**
@@ -59,17 +58,9 @@ final class MigrationDiffCommand extends Command
     #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
-        $basePath = $input->getOption('path', '.');
-        $customName = $input->getOption('name');
+        $basePath = $input->getStringOption('path', '.');
+        $customName = $input->getStringOption('name');
         $force = $input->hasOption('force');
-
-        if (!is_string($basePath)) {
-            $basePath = '.';
-        }
-
-        if (!is_string($customName) || $customName === '') {
-            $customName = '';
-        }
 
         $output->writeln('Comparing schema snapshots...');
 
