@@ -13,6 +13,10 @@ use Random\Randomizer;
 
 use function array_key_exists;
 use function bin2hex;
+use function is_bool;
+use function is_int;
+use function is_numeric;
+use function is_string;
 
 /**
  * F9.17: in-memory SessionInterface implementation for tests
@@ -80,6 +84,46 @@ final class InMemorySession implements SessionInterface
     public function get(string $key, mixed $default = null): mixed
     {
         return $this->data[$key] ?? $default;
+    }
+
+    #[Override]
+    #[NoDiscard]
+    public function getString(string $key, string $default = ''): string
+    {
+        $value = $this->data[$key] ?? null;
+
+        return is_string($value) ? $value : $default;
+    }
+
+    #[Override]
+    #[NoDiscard]
+    public function getNullableString(string $key): ?string
+    {
+        $value = $this->data[$key] ?? null;
+
+        return is_string($value) ? $value : null;
+    }
+
+    #[Override]
+    #[NoDiscard]
+    public function getInt(string $key, int $default = 0): int
+    {
+        $value = $this->data[$key] ?? null;
+
+        if (is_int($value)) {
+            return $value;
+        }
+
+        return is_string($value) && is_numeric($value) ? (int) $value : $default;
+    }
+
+    #[Override]
+    #[NoDiscard]
+    public function getBool(string $key, bool $default = false): bool
+    {
+        $value = $this->data[$key] ?? null;
+
+        return is_bool($value) ? $value : $default;
     }
 
     #[Override]
