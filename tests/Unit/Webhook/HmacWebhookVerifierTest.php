@@ -41,14 +41,46 @@ final class HmacWebhookVerifierTest extends TestCase
     #[Test]
     public function invalidSignatureThrows(): void
     {
+        // F25.8: use a well-formed but non-matching signature
+        // (64 hex chars, all zeros) so we exercise the
+        // hash_equals mismatch path rather than the format-rejection
+        // path.
         $payload = '{"id":"evt_1"}';
         $timestamp = 1700000000;
-        $header = sprintf('t=%d,v1=%s', $timestamp, 'invalid_hex_signature');
+        $header = sprintf('t=%d,v1=%s', $timestamp, str_repeat('0', 64));
 
         $this->expectException(WebhookException::class);
         $this->expectExceptionMessage('signature verification failed');
 
         $this->verifier->verify($payload, $header, self::SECRET, 300);
+    }
+
+    #[Test]
+    public function nonHexV1SignatureRejected(): void
+    {
+        // F25.8: anything that isn't 64 lowercase hex chars in v1=
+        // must surface as malformedHeader BEFORE hash_equals so the
+        // verification path never compares against attacker-supplied
+        // bytes of arbitrary length / charset.
+        $timestamp = 1700000000;
+        $header = sprintf('t=%d,v1=%s', $timestamp, 'invalid_hex_signature');
+
+        $this->expectException(WebhookException::class);
+        $this->expectExceptionMessage('non-hex v1 signature');
+
+        $this->verifier->verify('{}', $header, self::SECRET, 300);
+    }
+
+    #[Test]
+    public function shortV1SignatureRejected(): void
+    {
+        $timestamp = 1700000000;
+        $header = sprintf('t=%d,v1=%s', $timestamp, 'deadbeef'); // 8 hex chars
+
+        $this->expectException(WebhookException::class);
+        $this->expectExceptionMessage('non-hex v1 signature');
+
+        $this->verifier->verify('{}', $header, self::SECRET, 300);
     }
 
     #[Test]
@@ -95,10 +127,14 @@ final class HmacWebhookVerifierTest extends TestCase
     #[Test]
     public function multipleV1OneValidAccepts(): void
     {
+        // F25.8: 'old_invalid_sig' (15 chars, has '_') would now be
+        // rejected at parse time before hash_equals ever sees it.
+        // Use an old-but-well-formed hex signature so we still
+        // exercise the multi-signature acceptance branch.
         $payload = '{"id":"evt_multi"}';
         $timestamp = 1700000000;
         $validSig = $this->computeSignature($payload, $timestamp, self::SECRET);
-        $header = sprintf('t=%d,v1=%s,v1=%s', $timestamp, 'old_invalid_sig', $validSig);
+        $header = sprintf('t=%d,v1=%s,v1=%s', $timestamp, str_repeat('a', 64), $validSig);
 
         $this->verifier->verify($payload, $header, self::SECRET, 300);
 
