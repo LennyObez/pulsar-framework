@@ -52,27 +52,23 @@ final class MakeAdapterCommand extends Command
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $name = $input->getArgument(0);
-        $portName = $input->getOption('port');
-        $module = $input->getOption('module');
-        $basePath = $input->getOption('path', 'app/Modules');
+        $portName = $input->getStringOption('port');
+        $module = $input->getStringOption('module');
+        $basePath = $input->getStringOption('path', 'app/Modules');
 
         if (!is_string($name) || $name === '') {
             $output->errorln('Adapter name is required.');
             return ExitCode::Invalid->value;
         }
 
-        if (!is_string($module) || $module === '') {
+        if ($module === '') {
             $output->errorln('Module name is required (--module).');
             return ExitCode::Invalid->value;
         }
 
-        if (!is_string($portName) || $portName === '') {
+        if ($portName === '') {
             $output->errorln('Port name is required (--port).');
             return ExitCode::Invalid->value;
-        }
-
-        if (!is_string($basePath)) {
-            $basePath = 'app/Modules';
         }
 
         $name = $this->toPascalCase($name);
