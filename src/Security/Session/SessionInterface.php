@@ -34,6 +34,34 @@ interface SessionInterface
     public function get(string $key, mixed $default = null): mixed;
 
     /**
+     * Get a value from the session as a string. Returns the default when the
+     * key is missing or the value is not a string.
+     */
+    #[NoDiscard]
+    public function getString(string $key, string $default = ''): string;
+
+    /**
+     * Get a value from the session as a nullable string. Returns null when the
+     * key is missing or the value is not a string.
+     */
+    #[NoDiscard]
+    public function getNullableString(string $key): ?string;
+
+    /**
+     * Get a value from the session as an int. Returns the default when the key
+     * is missing or the value is not int/numeric-string.
+     */
+    #[NoDiscard]
+    public function getInt(string $key, int $default = 0): int;
+
+    /**
+     * Get a value from the session as a bool. Returns the default when the key
+     * is missing or the value is not a bool.
+     */
+    #[NoDiscard]
+    public function getBool(string $key, bool $default = false): bool;
+
+    /**
      * Set a value in the session.
      */
     public function set(string $key, mixed $value): void;
