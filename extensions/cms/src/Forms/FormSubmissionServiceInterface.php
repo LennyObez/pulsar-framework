@@ -20,7 +20,14 @@ interface FormSubmissionServiceInterface
      * Process a form submission with spam detection and notifications.
      *
      * @param array<string, mixed> $formData
-     * @param array<string, mixed> $meta Request metadata (IP, user agent, CSRF token, etc.)
+     * @param array{
+     *     _csrf_token?: string,
+     *     ip?: string,
+     *     user_agent?: string,
+     *     form_block_id?: string,
+     *     content_id?: string,
+     *     tenant_id?: string|null,
+     * } $meta Request metadata (IP, user agent, CSRF token, etc.)
      */
     public function submit(array $formData, array $meta): FormSubmission;
 
