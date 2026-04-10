@@ -65,8 +65,7 @@ final class RuntimeServeCommand extends Command
         $config = $this->resolveConfig($input);
 
         // Resolve runtime type from --runtime option or auto-detect
-        $runtimeOption = $input->getOption('runtime');
-        /** @var string|null $runtimeOption */
+        $runtimeOption = $input->getNullableStringOption('runtime');
         $runtimeType = $runtimeOption !== null
             ? RuntimeType::from($runtimeOption)
             : $this->resolver->resolve();
@@ -132,30 +131,17 @@ final class RuntimeServeCommand extends Command
     {
         $base = $this->runtimeConfig ?? new RuntimeConfig();
 
-        /** @var string|null $host */
-        $host = $input->getOption('host');
-        /** @var string|null $port */
-        $port = $input->getOption('port');
-        /** @var string|null $maxRequests */
-        $maxRequests = $input->getOption('max-requests');
-        /** @var string|null $memory */
-        $memory = $input->getOption('memory');
-        /** @var string|null $timeout */
-        $timeout = $input->getOption('timeout');
-        /** @var string|null $concurrency */
-        $concurrency = $input->getOption('concurrency');
-
         return new RuntimeConfig(
-            host: $host ?? $base->host,
-            port: $port !== null ? (int) $port : $base->port,
-            maxRequests: $maxRequests !== null ? (int) $maxRequests : $base->maxRequests,
-            memoryThresholdMb: $memory !== null ? (int) $memory : $base->memoryThresholdMb,
-            timeLimitSeconds: $timeout !== null ? (int) $timeout : $base->timeLimitSeconds,
+            host: $input->getStringOption('host', $base->host),
+            port: $input->hasOption('port') ? $input->getIntOption('port', $base->port) : $base->port,
+            maxRequests: $input->hasOption('max-requests') ? $input->getIntOption('max-requests', $base->maxRequests) : $base->maxRequests,
+            memoryThresholdMb: $input->hasOption('memory') ? $input->getIntOption('memory', $base->memoryThresholdMb) : $base->memoryThresholdMb,
+            timeLimitSeconds: $input->hasOption('timeout') ? $input->getIntOption('timeout', $base->timeLimitSeconds) : $base->timeLimitSeconds,
             keepAlive: $base->keepAlive,
             keepAliveTimeout: $base->keepAliveTimeout,
             headerTimeoutSeconds: $base->headerTimeoutSeconds,
             bodyTimeoutSeconds: $base->bodyTimeoutSeconds,
-            fiberConcurrency: $concurrency !== null ? (int) $concurrency : $base->fiberConcurrency,
+            fiberConcurrency: $input->hasOption('concurrency') ? $input->getIntOption('concurrency', $base->fiberConcurrency) : $base->fiberConcurrency,
             maxHeaderSize: $base->maxHeaderSize,
             maxBodySize: $base->maxBodySize,
             addDateHeader: $base->addDateHeader,

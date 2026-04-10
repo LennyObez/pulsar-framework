@@ -13,7 +13,6 @@ use Pulsar\Introspection\ProjectMetadataService;
 use Pulsar\Observability\ErrorTracking\SensitiveDataScrubber;
 
 use function in_array;
-use function is_string;
 use function json_encode;
 
 use const JSON_PRETTY_PRINT;
@@ -64,8 +63,7 @@ final class MetadataExportCommand extends Command
     #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
-        $sectionRaw = $input->getOption('section');
-        $section = is_string($sectionRaw) ? $sectionRaw : 'all';
+        $section = $input->getStringOption('section', 'all');
         $pretty = $input->hasOption('pretty');
 
         if (!in_array($section, self::VALID_SECTIONS, true)) {
