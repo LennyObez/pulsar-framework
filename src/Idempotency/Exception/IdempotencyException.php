@@ -13,41 +13,66 @@ use function sprintf;
 
 /**
  * Idempotency violation exceptions.
+ *
+ * F22.9: every factory tags the exception with an `IdempotencyErrorKind`
+ * so HTTP / controller layers can map each failure to a consistent response
+ * code via `match ($e->kind)` without parsing exception messages. See
+ * `IdempotencyErrorKind` for the recommended HTTP-status mapping table.
  */
 #[Api(since: '1.0.0')]
 final class IdempotencyException extends RuntimeException
 {
+    private function __construct(
+        string $message,
+        public readonly IdempotencyErrorKind $kind,
+        ?Throwable $previous = null,
+    ) {
+        parent::__construct($message, 0, $previous);
+    }
+
     #[NoDiscard]
     public static function parameterMismatch(string $key): self
     {
-        return new self(sprintf(
-            'Idempotency key "%s" was previously used with different parameters',
-            $key,
-        ));
+        return new self(
+            sprintf(
+                'Idempotency key "%s" was previously used with different parameters',
+                $key,
+            ),
+            IdempotencyErrorKind::ParameterMismatch,
+        );
     }
 
     #[NoDiscard]
     public static function concurrentClaim(string $key): self
     {
-        return new self(sprintf(
-            'Idempotency key "%s" is currently being processed',
-            $key,
-        ));
+        return new self(
+            sprintf(
+                'Idempotency key "%s" is currently being processed',
+                $key,
+            ),
+            IdempotencyErrorKind::ConcurrentClaim,
+        );
     }
 
     #[NoDiscard]
     public static function invalidKey(string $reason): self
     {
-        return new self(sprintf('Invalid idempotency key: %s', $reason));
+        return new self(
+            sprintf('Invalid idempotency key: %s', $reason),
+            IdempotencyErrorKind::InvalidKey,
+        );
     }
 
     #[NoDiscard]
     public static function commitFailed(string $key): self
     {
-        return new self(sprintf(
-            'Failed to commit idempotency result for key "%s"',
-            $key,
-        ));
+        return new self(
+            sprintf(
+                'Failed to commit idempotency result for key "%s"',
+                $key,
+            ),
+            IdempotencyErrorKind::CommitFailed,
+        );
     }
 
     /**
@@ -59,11 +84,14 @@ final class IdempotencyException extends RuntimeException
     #[NoDiscard]
     public static function tamperedPayload(string $key, string $reason): self
     {
-        return new self(sprintf(
-            'Idempotency payload for key "%s" failed integrity check: %s',
-            $key,
-            $reason,
-        ));
+        return new self(
+            sprintf(
+                'Idempotency payload for key "%s" failed integrity check: %s',
+                $key,
+                $reason,
+            ),
+            IdempotencyErrorKind::TamperedPayload,
+        );
     }
 
     /**
@@ -80,7 +108,8 @@ final class IdempotencyException extends RuntimeException
     {
         return new self(
             sprintf('Failed to (de)serialise idempotency payload for key "%s": %s', $key, $previous->getMessage()),
-            previous: $previous,
+            IdempotencyErrorKind::SerializationFailed,
+            $previous,
         );
     }
 }
