@@ -187,10 +187,15 @@ final readonly class OrderExportService implements OrderExportServiceInterface
     /**
      * Fetch orders from the repository using the given filters.
      *
-     * Supports filters: dateFrom (string), dateTo (string), status (string),
-     * tenantId (string), page (int), perPage (int).
-     *
-     * @param array<string, mixed> $filters
+     * @param array{
+     *     status?: string,
+     *     tenantId?: string,
+     *     dateFrom?: string,
+     *     dateTo?: string,
+     *     customerId?: string,
+     *     page?: int,
+     *     perPage?: int,
+     * } $filters
      *
      * @return list<Order>
      */
@@ -199,7 +204,7 @@ final readonly class OrderExportService implements OrderExportServiceInterface
         $repoFilters = [];
 
         $statusFilter = $filters['status'] ?? '';
-        if (is_string($statusFilter) && $statusFilter !== '') {
+        if ($statusFilter !== '') {
             $status = OrderStatus::tryFrom($statusFilter);
 
             if ($status !== null) {
@@ -223,8 +228,8 @@ final readonly class OrderExportService implements OrderExportServiceInterface
             $repoFilters['customerId'] = $filters['customerId'];
         }
 
-        $page = is_int($filters['page'] ?? null) ? $filters['page'] : 1;
-        $perPage = is_int($filters['perPage'] ?? null) ? $filters['perPage'] : 10000;
+        $page = $filters['page'] ?? 1;
+        $perPage = $filters['perPage'] ?? 10000;
 
         return $this->orderRepository->listOrders($repoFilters, $page, $perPage);
     }
