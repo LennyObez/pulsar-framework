@@ -60,16 +60,23 @@ final readonly class LoginFormBlock implements BlockTypeInterface
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     action?: string,
+     *     redirectUrl?: string,
+     *     showRememberMe?: bool,
+     *     showForgotPassword?: bool,
+     *     forgotPasswordUrl?: string,
+     *     registerUrl?: string|null,
+     * } $data
      */
     private function renderLoginForm(array $data): string
     {
-        $action = htmlspecialchars(is_string($data['action'] ?? null) ? $data['action'] : '/login', ENT_QUOTES, 'UTF-8');
-        $redirectUrl = is_string($data['redirectUrl'] ?? null) ? $data['redirectUrl'] : '';
-        $showRememberMe = is_bool($data['showRememberMe'] ?? null) ? $data['showRememberMe'] : true;
-        $showForgotPassword = is_bool($data['showForgotPassword'] ?? null) ? $data['showForgotPassword'] : true;
+        $action = htmlspecialchars($data['action'] ?? '/login', ENT_QUOTES, 'UTF-8');
+        $redirectUrl = $data['redirectUrl'] ?? '';
+        $showRememberMe = $data['showRememberMe'] ?? true;
+        $showForgotPassword = $data['showForgotPassword'] ?? true;
         $forgotPasswordUrl = htmlspecialchars(
-            is_string($data['forgotPasswordUrl'] ?? null) ? $data['forgotPasswordUrl'] : '/forgot-password',
+            $data['forgotPasswordUrl'] ?? '/forgot-password',
             ENT_QUOTES,
             'UTF-8',
         );
@@ -115,12 +122,12 @@ final readonly class LoginFormBlock implements BlockTypeInterface
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{username?: string, logoutUrl?: string} $data
      */
     private function renderLoggedIn(array $data): string
     {
-        $username = htmlspecialchars(is_string($data['username'] ?? null) ? $data['username'] : 'User', ENT_QUOTES, 'UTF-8');
-        $logoutUrl = htmlspecialchars(is_string($data['logoutUrl'] ?? null) ? $data['logoutUrl'] : '/logout', ENT_QUOTES, 'UTF-8');
+        $username = htmlspecialchars($data['username'] ?? 'User', ENT_QUOTES, 'UTF-8');
+        $logoutUrl = htmlspecialchars($data['logoutUrl'] ?? '/logout', ENT_QUOTES, 'UTF-8');
 
         return '<div class="login-form-block login-form-block--logged-in">'
             . "<span class=\"login-form-block__greeting\">Welcome, $username</span>"

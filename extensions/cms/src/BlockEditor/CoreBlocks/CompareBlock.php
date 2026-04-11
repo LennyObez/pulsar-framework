@@ -62,15 +62,15 @@ final readonly class CompareBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
-        /** @var array<string, mixed> $before */
-        $before = $data['beforeImage'] ?? [];
-        /** @var array<string, mixed> $after */
-        $after = $data['afterImage'] ?? [];
+        /** @var array{src?: string, alt?: string} $before */
+        $before = is_array($data['beforeImage'] ?? null) ? $data['beforeImage'] : [];
+        /** @var array{src?: string, alt?: string} $after */
+        $after = is_array($data['afterImage'] ?? null) ? $data['afterImage'] : [];
 
-        $beforeSrc = htmlspecialchars(is_string($before['src'] ?? null) ? $before['src'] : '', ENT_QUOTES, 'UTF-8');
-        $beforeAlt = htmlspecialchars(is_string($before['alt'] ?? null) ? $before['alt'] : '', ENT_QUOTES, 'UTF-8');
-        $afterSrc = htmlspecialchars(is_string($after['src'] ?? null) ? $after['src'] : '', ENT_QUOTES, 'UTF-8');
-        $afterAlt = htmlspecialchars(is_string($after['alt'] ?? null) ? $after['alt'] : '', ENT_QUOTES, 'UTF-8');
+        $beforeSrc = htmlspecialchars($before['src'] ?? '', ENT_QUOTES, 'UTF-8');
+        $beforeAlt = htmlspecialchars($before['alt'] ?? '', ENT_QUOTES, 'UTF-8');
+        $afterSrc = htmlspecialchars($after['src'] ?? '', ENT_QUOTES, 'UTF-8');
+        $afterAlt = htmlspecialchars($after['alt'] ?? '', ENT_QUOTES, 'UTF-8');
         $beforeLabel = htmlspecialchars(is_string($data['beforeLabel'] ?? null) ? $data['beforeLabel'] : 'Before', ENT_QUOTES, 'UTF-8');
         $afterLabel = htmlspecialchars(is_string($data['afterLabel'] ?? null) ? $data['afterLabel'] : 'After', ENT_QUOTES, 'UTF-8');
 
