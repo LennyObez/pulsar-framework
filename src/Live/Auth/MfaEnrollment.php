@@ -58,23 +58,25 @@ final class MfaEnrollment extends LiveComponent
 
     public function mount(array $params = []): void
     {
-        $this->twoFactorManager = ($params['twoFactorManager'] ?? null) instanceof TwoFactorManagerInterface
+        $twoFactorManager = ($params['twoFactorManager'] ?? null) instanceof TwoFactorManagerInterface
             ? $params['twoFactorManager']
             : null;
-        $this->identity = ($params['identity'] ?? null) instanceof IdentityInterface
+        $identity = ($params['identity'] ?? null) instanceof IdentityInterface
             ? $params['identity']
             : null;
+        $this->twoFactorManager = $twoFactorManager;
+        $this->identity = $identity;
         $this->config = ($params['config'] ?? null) instanceof AuthUiConfig
             ? $params['config']
             : new AuthUiConfig();
 
-        if ($this->twoFactorManager !== null && $this->identity !== null && $this->step === 'setup') {
-            $setupData = $this->twoFactorManager->beginSetup($this->identity);
+        if ($twoFactorManager !== null && $identity !== null && $this->step === 'setup') {
+            $setupData = $twoFactorManager->beginSetup($identity);
             $this->provisioningUri = $setupData['provisioning_uri'];
             $this->secretBase32 = $setupData['secret_base32'];
             $this->secret = $setupData['secret'];
             $this->recoveryCodes = $setupData['recovery_codes'];
-            $this->identityId = $this->identity->id();
+            $this->identityId = $identity->id();
         }
     }
 
