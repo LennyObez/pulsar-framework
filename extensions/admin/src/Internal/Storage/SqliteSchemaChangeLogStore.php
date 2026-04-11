@@ -172,14 +172,24 @@ final class SqliteSchemaChangeLogStore implements SchemaChangeLogStoreInterface
     }
 
     /**
-     * @param list<array<string, mixed>> $rows
+     * @param list<array{
+     *     id: string,
+     *     operation: string,
+     *     table_name: string,
+     *     actor: string,
+     *     reason: string,
+     *     timestamp: int,
+     *     statements: string,
+     *     evidence_hash: string,
+     *     correlation_id: string|null,
+     *     success: int,
+     * }> $rows
      * @return list<SchemaChangeLogEntry>
      */
     private function hydrateAll(array $rows): array
     {
         return array_map(
             static function (array $row): SchemaChangeLogEntry {
-                /** @var array{id: string, operation: string, table_name: string, actor: string, reason: string, timestamp: int, statements: string, evidence_hash: string, correlation_id: string|null, success: int} $row */
                 /** @var list<string> $statements */
                 $statements = json_decode($row['statements'], true, 512, JSON_THROW_ON_ERROR);
 
