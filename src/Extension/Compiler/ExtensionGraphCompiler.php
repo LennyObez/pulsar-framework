@@ -220,11 +220,13 @@ final class ExtensionGraphCompiler
         $lenB = count($b);
 
         while ($i < $lenA && $j < $lenB) {
-            if (strcmp($a[$i], $b[$j]) <= 0) {
-                $result[] = $a[$i];
+            $valA = $a[$i];
+            $valB = $b[$j];
+            if (strcmp($valA, $valB) <= 0) {
+                $result[] = $valA;
                 $i++;
             } else {
-                $result[] = $b[$j];
+                $result[] = $valB;
                 $j++;
             }
         }
