@@ -14,17 +14,23 @@ use Pulsar\Http\Message\Response;
 use Pulsar\Http\Middleware\MiddlewareInterface;
 use Pulsar\Http\ResponseStatus;
 
+use JsonException;
+
 use function htmlspecialchars;
 use function in_array;
 use function is_array;
 use function is_string;
+use function json_decode;
 use function parse_url;
 use function preg_replace;
 use function rtrim;
 use function sprintf;
 use function str_contains;
+use function strlen;
 use function strtolower;
 use function trim;
+
+use const JSON_THROW_ON_ERROR;
 
 /**
  * CSRF protection middleware.
@@ -83,7 +89,23 @@ final readonly class CsrfMiddleware implements MiddlewareInterface
     }
 
     /**
-     * Extract the CSRF token from the request (header or POST field).
+     * F9.7: maximum JSON body bytes the middleware will rewind + parse to
+     * extract a CSRF token. Headers are still the recommended carrier;
+     * scanning the body is a fallback for JSON SPAs that ship the token
+     * in `{"_csrf_token": "..."}`. 256 KiB is more than enough for any
+     * realistic form-payload while bounding the cost of a hostile body.
+     */
+    private const int JSON_BODY_INSPECTION_LIMIT = 262_144;
+
+    /**
+     * Extract the CSRF token from the request (header, POST field, or JSON body).
+     *
+     * F9.7: for JSON-bodied requests no upstream middleware necessarily
+     * parsed the body into `getParsedBody()`, so a SPA POSTing
+     * `Content-Type: application/json` with `{"_csrf_token": "..."}` was
+     * never matched by the form-field path and got rejected outright.
+     * The middleware now reads + rewinds the body when the content type
+     * is JSON and looks up the field in the decoded structure.
      */
     private function extractToken(ServerRequestInterface $request): ?string
     {
@@ -94,7 +116,8 @@ final readonly class CsrfMiddleware implements MiddlewareInterface
             return $headerToken;
         }
 
-        // Fall back to POST field
+        // Form-encoded body (parsedBody is populated by PSR-7 itself
+        // for `application/x-www-form-urlencoded` and `multipart/form-data`).
         $parsedBody = $request->getParsedBody();
         $fieldToken = is_array($parsedBody) ? ($parsedBody[$this->config->formFieldName] ?? null) : null;
 
@@ -102,7 +125,60 @@ final readonly class CsrfMiddleware implements MiddlewareInterface
             return $fieldToken;
         }
 
+        // JSON body fallback. Only inspected when the request advertises
+        // `application/json`; we rewind the stream so the downstream
+        // handler still sees the original body.
+        $jsonToken = $this->extractJsonBodyToken($request);
+
+        if ($jsonToken !== null) {
+            return $jsonToken;
+        }
+
         return null;
+    }
+
+    private function extractJsonBodyToken(ServerRequestInterface $request): ?string
+    {
+        $contentType = $request->getHeaderLine('Content-Type');
+
+        if (!str_contains(strtolower($contentType), 'application/json')) {
+            return null;
+        }
+
+        $body = $request->getBody();
+
+        if (!$body->isReadable()) {
+            return null;
+        }
+
+        if ($body->isSeekable()) {
+            $body->rewind();
+        }
+
+        $raw = $body->getContents();
+
+        if ($body->isSeekable()) {
+            $body->rewind();
+        }
+
+        if ($raw === '' || strlen($raw) > self::JSON_BODY_INSPECTION_LIMIT) {
+            return null;
+        }
+
+        try {
+            /** @var mixed $decoded */
+            $decoded = json_decode($raw, true, 8, JSON_THROW_ON_ERROR);
+        } catch (JsonException) {
+            return null;
+        }
+
+        if (!is_array($decoded)) {
+            return null;
+        }
+
+        $field = $decoded[$this->config->formFieldName] ?? null;
+
+        return is_string($field) && $field !== '' ? $field : null;
     }
 
     /**
