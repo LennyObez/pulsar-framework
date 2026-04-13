@@ -8,7 +8,9 @@ use Pulsar\Api\Internal;
 use Pulsar\Cache\Application\Lock\LockInterface;
 use Pulsar\Cache\Application\TaggedCacheInterface;
 
+use function is_int;
 use function is_numeric;
+use function is_string;
 use function sprintf;
 use function time;
 
@@ -55,8 +57,11 @@ final readonly class CmsRateLimiter
         $handle = $this->lock->acquire($lockResource, ttlSeconds: $windowSeconds, timeoutMs: 1000);
 
         try {
+            /** @var mixed $current */
             $current = $this->cache->get($cacheKey);
-            $attempts = ($current !== null && is_numeric($current)) ? ((int) $current + 1) : 1;
+            $attempts = (is_string($current) || is_int($current)) && is_numeric($current)
+                ? ((int) $current + 1)
+                : 1;
 
             $this->cache->set($cacheKey, (string) $attempts, ['cms_rate_limit'], $windowSeconds);
 
