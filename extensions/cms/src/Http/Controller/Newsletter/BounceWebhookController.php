@@ -49,10 +49,14 @@ final readonly class BounceWebhookController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $sendId = is_string($body['send_id'] ?? null) ? $body['send_id'] : '';
-        $subscriberId = is_string($body['subscriber_id'] ?? null) ? $body['subscriber_id'] : '';
-        $bounceType = is_string($body['bounce_type'] ?? null) ? $body['bounce_type'] : 'soft';
-        $reason = is_string($body['reason'] ?? null) ? $body['reason'] : 'Unknown bounce';
+        $rawSendId = $body['send_id'] ?? null;
+        $rawSubscriberId = $body['subscriber_id'] ?? null;
+        $rawBounceType = $body['bounce_type'] ?? null;
+        $rawReason = $body['reason'] ?? null;
+        $sendId = is_string($rawSendId) ? $rawSendId : '';
+        $subscriberId = is_string($rawSubscriberId) ? $rawSubscriberId : '';
+        $bounceType = is_string($rawBounceType) ? $rawBounceType : 'soft';
+        $reason = is_string($rawReason) ? $rawReason : 'Unknown bounce';
 
         if ($sendId === '' || $subscriberId === '') {
             return Response::json(['error' => 'send_id and subscriber_id are required'], 400);
@@ -93,10 +97,14 @@ final readonly class BounceWebhookController
                 continue;
             }
 
-            $sendId = is_string($bounce['send_id'] ?? null) ? $bounce['send_id'] : '';
-            $subscriberId = is_string($bounce['subscriber_id'] ?? null) ? $bounce['subscriber_id'] : '';
-            $bounceType = is_string($bounce['bounce_type'] ?? null) ? $bounce['bounce_type'] : 'soft';
-            $reason = is_string($bounce['reason'] ?? null) ? $bounce['reason'] : 'Unknown bounce';
+            $rawSendId = $bounce['send_id'] ?? null;
+            $rawSubscriberId = $bounce['subscriber_id'] ?? null;
+            $rawBounceType = $bounce['bounce_type'] ?? null;
+            $rawReason = $bounce['reason'] ?? null;
+            $sendId = is_string($rawSendId) ? $rawSendId : '';
+            $subscriberId = is_string($rawSubscriberId) ? $rawSubscriberId : '';
+            $bounceType = is_string($rawBounceType) ? $rawBounceType : 'soft';
+            $reason = is_string($rawReason) ? $rawReason : 'Unknown bounce';
 
             if ($sendId === '' || $subscriberId === '') {
                 continue;
