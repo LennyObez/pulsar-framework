@@ -52,6 +52,7 @@ final readonly class CachePreviewSessionRepository implements PreviewSessionRepo
 
     public function findByToken(string $token): ?PreviewSession
     {
+        /** @var mixed $data */
         $data = $this->cache->get(self::KEY_PREFIX . $token);
 
         if ($data === null) {

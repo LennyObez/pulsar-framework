@@ -15,6 +15,8 @@ use Pulsar\Http\Middleware\MiddlewareInterface;
 use Pulsar\Http\ResponseStatus;
 
 use function hash;
+use function is_int;
+use function is_numeric;
 use function is_string;
 use function max;
 use function sprintf;
@@ -110,8 +112,11 @@ final readonly class CommentRateLimitMiddleware implements MiddlewareInterface
      */
     private function incrementCounter(string $key, int $ttlSeconds): int
     {
+        /** @var mixed $current */
         $current = $this->cache->get($key);
-        $count = ($current !== null && is_numeric($current)) ? ((int) $current + 1) : 1;
+        $count = (is_string($current) || is_int($current)) && is_numeric($current)
+            ? ((int) $current + 1)
+            : 1;
 
         $this->cache->set($key, (string) $count, ['cms_comment_rate'], $ttlSeconds);
 

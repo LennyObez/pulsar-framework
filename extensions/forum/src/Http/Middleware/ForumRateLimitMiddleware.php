@@ -16,6 +16,8 @@ use Pulsar\Http\Middleware\MiddlewareInterface;
 use Pulsar\Http\ResponseStatus;
 
 use function hash;
+use function is_int;
+use function is_numeric;
 use function is_string;
 use function max;
 use function sprintf;
@@ -150,8 +152,11 @@ final readonly class ForumRateLimitMiddleware implements MiddlewareInterface
             }
         }
 
+        /** @var mixed $current */
         $current = $this->cache->get($key);
-        $count = is_numeric($current) ? ((int) $current + 1) : 1;
+        $count = (is_string($current) || is_int($current)) && is_numeric($current)
+            ? ((int) $current + 1)
+            : 1;
 
         $this->cache->set($key, (string) $count, ['forum_rate'], self::WINDOW_SECONDS);
 

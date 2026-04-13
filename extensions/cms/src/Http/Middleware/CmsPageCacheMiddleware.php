@@ -63,6 +63,7 @@ final readonly class CmsPageCacheMiddleware implements MiddlewareInterface
 
         $cacheKey = $this->computeCacheKey($request);
 
+        /** @var mixed $cached */
         $cached = $this->cache->get($cacheKey);
 
         if (is_string($cached)) {
