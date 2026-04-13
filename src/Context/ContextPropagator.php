@@ -75,12 +75,19 @@ final readonly class ContextPropagator
             /** @var array<string, mixed> $attributes */
             $attributes = $carrier[self::KEY_ATTRIBUTES] ?? [];
 
-            $actor = is_string($carrier[self::KEY_ACTOR] ?? null) ? $carrier[self::KEY_ACTOR] : null;
-            $tenantId = is_string($carrier[self::KEY_TENANT_ID] ?? null) ? $carrier[self::KEY_TENANT_ID] : null;
-            $ip = is_string($carrier[self::KEY_IP] ?? null) ? $carrier[self::KEY_IP] : null;
-            $userAgent = is_string($carrier[self::KEY_USER_AGENT] ?? null) ? $carrier[self::KEY_USER_AGENT] : null;
-            $locale = is_string($carrier[self::KEY_LOCALE] ?? null) ? $carrier[self::KEY_LOCALE] : null;
-            $timestampRaw = is_string($carrier[self::KEY_TIMESTAMP] ?? null) ? $carrier[self::KEY_TIMESTAMP] : null;
+            $rawActor = $carrier[self::KEY_ACTOR] ?? null;
+            $rawTenantId = $carrier[self::KEY_TENANT_ID] ?? null;
+            $rawIp = $carrier[self::KEY_IP] ?? null;
+            $rawUserAgent = $carrier[self::KEY_USER_AGENT] ?? null;
+            $rawLocale = $carrier[self::KEY_LOCALE] ?? null;
+            $rawTimestamp = $carrier[self::KEY_TIMESTAMP] ?? null;
+
+            $actor = is_string($rawActor) ? $rawActor : null;
+            $tenantId = is_string($rawTenantId) ? $rawTenantId : null;
+            $ip = is_string($rawIp) ? $rawIp : null;
+            $userAgent = is_string($rawUserAgent) ? $rawUserAgent : null;
+            $locale = is_string($rawLocale) ? $rawLocale : null;
+            $timestampRaw = is_string($rawTimestamp) ? $rawTimestamp : null;
 
             return new RequestContext(
                 correlationId: CorrelationId::fromString($correlationId),
