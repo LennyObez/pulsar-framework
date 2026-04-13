@@ -20,6 +20,8 @@ use function count;
 use function htmlspecialchars;
 use function implode;
 use function is_array;
+use function is_float;
+use function is_int;
 use function is_numeric;
 use function is_string;
 use function random_bytes;
@@ -281,34 +283,50 @@ final readonly class ShippingMethodController
      */
     private function buildMethodFromInput(array $data): ?ShippingMethodRate
     {
-        $methodId = is_string($data['method_id'] ?? null) ? $data['method_id'] : '';
+        $rawMethodId = $data['method_id'] ?? null;
+        $methodId = is_string($rawMethodId) ? $rawMethodId : '';
 
         if ($methodId === '') {
             return null;
         }
 
-        $label = is_string($data['label'] ?? null) && $data['label'] !== '' ? $data['label'] : $methodId;
-        $typeValue = is_string($data['type'] ?? null) ? $data['type'] : 'flat';
+        $rawLabel = $data['label'] ?? null;
+        $label = is_string($rawLabel) && $rawLabel !== '' ? $rawLabel : $methodId;
+        $rawType = $data['type'] ?? null;
+        $typeValue = is_string($rawType) ? $rawType : 'flat';
         $type = ShippingRateType::tryFrom($typeValue) ?? ShippingRateType::Flat;
 
-        $baseRateAmount = is_numeric($data['base_rate'] ?? null) ? (int) $data['base_rate'] : 0;
-        $currencyCode = is_string($data['currency'] ?? null) ? $data['currency'] : 'EUR';
+        $rawBaseRate = $data['base_rate'] ?? null;
+        $baseRateAmount = (is_string($rawBaseRate) || is_int($rawBaseRate) || is_float($rawBaseRate))
+            && is_numeric($rawBaseRate)
+            ? (int) $rawBaseRate
+            : 0;
+        $rawCurrency = $data['currency'] ?? null;
+        $currencyCode = is_string($rawCurrency) ? $rawCurrency : 'EUR';
         $currency = Currency::tryFrom($currencyCode) ?? Currency::EUR;
 
         $baseRate = Money::of($baseRateAmount, $currency);
 
+        $rawId = $data['id'] ?? null;
+
+        $toNullableInt = static function (mixed $value): ?int {
+            return (is_string($value) || is_int($value) || is_float($value)) && is_numeric($value)
+                ? (int) $value
+                : null;
+        };
+
         return new ShippingMethodRate(
-            id: is_string($data['id'] ?? null) && $data['id'] !== '' ? $data['id'] : bin2hex(random_bytes(16)),
+            id: is_string($rawId) && $rawId !== '' ? $rawId : bin2hex(random_bytes(16)),
             methodId: $methodId,
             label: $label,
             type: $type,
             baseRate: $baseRate,
-            freeAboveAmount: is_numeric($data['free_above'] ?? null) ? (int) $data['free_above'] : null,
-            perItemAmount: is_numeric($data['per_item'] ?? null) ? (int) $data['per_item'] : null,
-            minWeightGrams: is_numeric($data['min_weight'] ?? null) ? (int) $data['min_weight'] : null,
-            maxWeightGrams: is_numeric($data['max_weight'] ?? null) ? (int) $data['max_weight'] : null,
-            estimatedDaysMin: is_numeric($data['estimated_days_min'] ?? null) ? (int) $data['estimated_days_min'] : null,
-            estimatedDaysMax: is_numeric($data['estimated_days_max'] ?? null) ? (int) $data['estimated_days_max'] : null,
+            freeAboveAmount: $toNullableInt($data['free_above'] ?? null),
+            perItemAmount: $toNullableInt($data['per_item'] ?? null),
+            minWeightGrams: $toNullableInt($data['min_weight'] ?? null),
+            maxWeightGrams: $toNullableInt($data['max_weight'] ?? null),
+            estimatedDaysMin: $toNullableInt($data['estimated_days_min'] ?? null),
+            estimatedDaysMax: $toNullableInt($data['estimated_days_max'] ?? null),
             enabled: (bool) ($data['enabled'] ?? true),
         );
     }
