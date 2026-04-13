@@ -159,7 +159,7 @@ final readonly class DefaultCertificateValidator implements CertificateValidator
     /**
      * Extract PSD2 roles from certificate extensions.
      *
-     * @param array<mixed, mixed> $parsed
+     * @param array{extensions?: array<string, string>, ...<string, mixed>} $parsed
      *
      * @return list<string>
      */
@@ -170,6 +170,7 @@ final readonly class DefaultCertificateValidator implements CertificateValidator
         // For the framework, we extract from subject/extensions hints
         $roles = [];
         $extensions = is_array($parsed['extensions'] ?? null) ? $parsed['extensions'] : [];
+        /** @var array<string, string> $extensions */
 
         foreach ($extensions as $oid => $value) {
             if (!is_string($oid) || !is_string($value)) {
@@ -200,11 +201,12 @@ final readonly class DefaultCertificateValidator implements CertificateValidator
     /**
      * Extract the NCA authorization number from certificate extensions.
      *
-     * @param array<mixed, mixed> $parsed
+     * @param array{extensions?: array<string, string>, ...<string, mixed>} $parsed
      */
     private function extractAuthorizationNumber(array $parsed): string
     {
         $extensions = is_array($parsed['extensions'] ?? null) ? $parsed['extensions'] : [];
+        /** @var array<string, string> $extensions */
 
         foreach ($extensions as $value) {
             if (!is_string($value)) {
@@ -221,11 +223,12 @@ final readonly class DefaultCertificateValidator implements CertificateValidator
     }
 
     /**
-     * @param array<mixed, mixed> $parsed
+     * @param array{extensions?: array<string, string>, ...<string, mixed>} $parsed
      */
     private function extractNcaName(array $parsed): string
     {
         $extensions = is_array($parsed['extensions'] ?? null) ? $parsed['extensions'] : [];
+        /** @var array<string, string> $extensions */
 
         foreach ($extensions as $value) {
             if (is_string($value) && str_contains($value, 'NCA')) {
@@ -237,11 +240,12 @@ final readonly class DefaultCertificateValidator implements CertificateValidator
     }
 
     /**
-     * @param array<mixed, mixed> $parsed
+     * @param array{extensions?: array<string, string>, ...<string, mixed>} $parsed
      */
     private function extractNcaId(array $parsed): string
     {
         $extensions = is_array($parsed['extensions'] ?? null) ? $parsed['extensions'] : [];
+        /** @var array<string, string> $extensions */
 
         foreach ($extensions as $oid => $value) {
             if (is_string($oid) && is_string($value) && str_contains($oid, 'NCAId')) {
@@ -255,11 +259,12 @@ final readonly class DefaultCertificateValidator implements CertificateValidator
     /**
      * Check whether the certificate is a qualified eIDAS certificate.
      *
-     * @param array<mixed, mixed> $parsed
+     * @param array{extensions?: array<string, string>, ...<string, mixed>} $parsed
      */
     private function checkQualification(array $parsed): bool
     {
         $extensions = is_array($parsed['extensions'] ?? null) ? $parsed['extensions'] : [];
+        /** @var array<string, string> $extensions */
 
         foreach ($extensions as $oid => $value) {
             if (!is_string($oid) || !is_string($value)) {
