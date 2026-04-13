@@ -75,22 +75,22 @@ final readonly class ContextPropagator
             /** @var array<string, mixed> $attributes */
             $attributes = $carrier[self::KEY_ATTRIBUTES] ?? [];
 
-            $actor = $carrier[self::KEY_ACTOR] ?? null;
-            $tenantId = $carrier[self::KEY_TENANT_ID] ?? null;
-            $ip = $carrier[self::KEY_IP] ?? null;
-            $userAgent = $carrier[self::KEY_USER_AGENT] ?? null;
-            $locale = $carrier[self::KEY_LOCALE] ?? null;
-            $timestampRaw = $carrier[self::KEY_TIMESTAMP] ?? null;
+            $actor = is_string($carrier[self::KEY_ACTOR] ?? null) ? $carrier[self::KEY_ACTOR] : null;
+            $tenantId = is_string($carrier[self::KEY_TENANT_ID] ?? null) ? $carrier[self::KEY_TENANT_ID] : null;
+            $ip = is_string($carrier[self::KEY_IP] ?? null) ? $carrier[self::KEY_IP] : null;
+            $userAgent = is_string($carrier[self::KEY_USER_AGENT] ?? null) ? $carrier[self::KEY_USER_AGENT] : null;
+            $locale = is_string($carrier[self::KEY_LOCALE] ?? null) ? $carrier[self::KEY_LOCALE] : null;
+            $timestampRaw = is_string($carrier[self::KEY_TIMESTAMP] ?? null) ? $carrier[self::KEY_TIMESTAMP] : null;
 
             return new RequestContext(
                 correlationId: CorrelationId::fromString($correlationId),
                 causationId: CausationId::fromString($causationId),
-                actor: is_string($actor) ? $actor : null,
-                tenantId: is_string($tenantId) ? $tenantId : null,
-                ip: is_string($ip) ? $ip : null,
-                userAgent: is_string($userAgent) ? $userAgent : null,
-                locale: is_string($locale) ? $locale : null,
-                timestamp: is_string($timestampRaw) ? new DateTimeImmutable($timestampRaw) : null,
+                actor: $actor,
+                tenantId: $tenantId,
+                ip: $ip,
+                userAgent: $userAgent,
+                locale: $locale,
+                timestamp: $timestampRaw !== null ? new DateTimeImmutable($timestampRaw) : null,
                 attributes: $attributes,
             );
         } catch (Throwable) {
