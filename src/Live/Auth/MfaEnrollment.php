@@ -53,9 +53,15 @@ final class MfaEnrollment extends LiveComponent
     public string $secret = '';
 
     private ?TwoFactorManagerInterface $twoFactorManager = null;
-    private ?IdentityInterface $identity = null;
     private ?AuthUiConfig $config = null;
 
+    /**
+     * @param array{
+     *     twoFactorManager?: TwoFactorManagerInterface,
+     *     identity?: IdentityInterface,
+     *     config?: AuthUiConfig,
+     * } $params
+     */
     public function mount(array $params = []): void
     {
         $twoFactorManager = ($params['twoFactorManager'] ?? null) instanceof TwoFactorManagerInterface
@@ -65,7 +71,6 @@ final class MfaEnrollment extends LiveComponent
             ? $params['identity']
             : null;
         $this->twoFactorManager = $twoFactorManager;
-        $this->identity = $identity;
         $this->config = ($params['config'] ?? null) instanceof AuthUiConfig
             ? $params['config']
             : new AuthUiConfig();
