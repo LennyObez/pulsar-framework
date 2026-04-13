@@ -158,4 +158,40 @@ final class DevelopmentRendererTest extends TestCase
         self::assertStringContainsString('Content-Type', $html);
         self::assertStringContainsString('application/json', $html);
     }
+
+    /**
+     * F4.7: query parameters with sensitive names (`token`, `password`,
+     * `api_key`) used to render verbatim in the development page,
+     * leaking the values whenever APP_DEBUG=true was accidentally
+     * enabled in production. The renderer now passes query params
+     * through the same scrubber as headers.
+     */
+    #[Test]
+    public function scrubsSensitiveQueryParameters(): void
+    {
+        $renderer = new DevelopmentRenderer();
+        $exception = new RuntimeException('test');
+
+        $request = new ServerRequest(
+            method: 'GET',
+            uri: '/api/resource',
+            queryParams: [
+                'page' => '1',
+                'token' => 'super-secret-token-abc',
+                'api_key' => 'sk_live_123456',
+                'password' => 'hunter2',
+            ],
+        );
+
+        $html = $renderer->render($exception, $request, ResponseStatus::InternalServerError);
+
+        self::assertStringNotContainsString('super-secret-token-abc', $html);
+        self::assertStringNotContainsString('sk_live_123456', $html);
+        self::assertStringNotContainsString('hunter2', $html);
+        self::assertStringContainsString('[REDACTED]', $html);
+
+        // Non-sensitive params still rendered
+        self::assertStringContainsString('page', $html);
+        self::assertStringContainsString('1', $html);
+    }
 }
