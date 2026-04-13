@@ -192,17 +192,18 @@ final readonly class DatabaseOutboxPort implements OutboxPort
      */
     private function hydrate(array $row): EventEnvelope
     {
-        $payloadJson = $row['payload_json'] ?? '';
-        $metadataJson = $row['metadata_json'] ?? '';
-        $eventType = $row['event_type'] ?? '';
-        $schemaVersion = $row['schema_version'] ?? 0;
-        $originModule = $row['origin_module'] ?? null;
-        $scope = $row['scope'] ?? null;
+        $payloadJson = is_string($row['payload_json'] ?? null) ? $row['payload_json'] : '';
+        $metadataJson = is_string($row['metadata_json'] ?? null) ? $row['metadata_json'] : '';
+        $eventType = is_string($row['event_type'] ?? null) ? $row['event_type'] : '';
+        $schemaVersion = is_int($row['schema_version'] ?? null) ? $row['schema_version'] : 0;
+        $originModule = is_string($row['origin_module'] ?? null) ? $row['origin_module'] : null;
+        $scope = is_string($row['scope'] ?? null) ? $row['scope'] : null;
+        $eventId = is_string($row['event_id'] ?? null) ? $row['event_id'] : '';
 
-        $payload = is_string($payloadJson) && $payloadJson !== ''
+        $payload = $payloadJson !== ''
             ? json_decode($payloadJson, true, 512, JSON_THROW_ON_ERROR)
             : [];
-        $metadata = is_string($metadataJson) && $metadataJson !== ''
+        $metadata = $metadataJson !== ''
             ? json_decode($metadataJson, true, 512, JSON_THROW_ON_ERROR)
             : [];
 
@@ -217,13 +218,13 @@ final readonly class DatabaseOutboxPort implements OutboxPort
         /** @var array<string, mixed> $metadata */
 
         return EventEnvelope::fromArray([
-            'event_id' => $row['event_id'] ?? '',
-            'event_type' => is_string($eventType) ? $eventType : '',
-            'schema_version' => is_int($schemaVersion) ? $schemaVersion : 0,
+            'event_id' => $eventId,
+            'event_type' => $eventType,
+            'schema_version' => $schemaVersion,
             'metadata' => $metadata,
             'payload' => $payload,
-            'origin_module' => is_string($originModule) ? $originModule : null,
-            'scope' => is_string($scope) ? $scope : null,
+            'origin_module' => $originModule,
+            'scope' => $scope,
         ]);
     }
 
