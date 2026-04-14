@@ -56,8 +56,12 @@ final readonly class SettingsController extends AbstractAdminController
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
-        $locale = is_string($body['locale'] ?? null) ? $body['locale'] : null;
-        $reason = is_string($body['reason'] ?? null) ? $body['reason'] : null;
+        /** @var mixed $rawLocale */
+        $rawLocale = $body['locale'] ?? null;
+        /** @var mixed $rawReason */
+        $rawReason = $body['reason'] ?? null;
+        $locale = is_string($rawLocale) ? $rawLocale : null;
+        $reason = is_string($rawReason) ? $rawReason : null;
 
         /** @var array<string, mixed> $settings */
         $settings = is_array($body['settings'] ?? null) ? $body['settings'] : [];
