@@ -192,12 +192,19 @@ final readonly class DatabaseOutboxPort implements OutboxPort
      */
     private function hydrate(array $row): EventEnvelope
     {
+        /** @var mixed $rawPayloadJson */
         $rawPayloadJson = $row['payload_json'] ?? null;
+        /** @var mixed $rawMetadataJson */
         $rawMetadataJson = $row['metadata_json'] ?? null;
+        /** @var mixed $rawEventType */
         $rawEventType = $row['event_type'] ?? null;
+        /** @var mixed $rawSchemaVersion */
         $rawSchemaVersion = $row['schema_version'] ?? null;
+        /** @var mixed $rawOriginModule */
         $rawOriginModule = $row['origin_module'] ?? null;
+        /** @var mixed $rawScope */
         $rawScope = $row['scope'] ?? null;
+        /** @var mixed $rawEventId */
         $rawEventId = $row['event_id'] ?? null;
 
         $payloadJson = is_string($rawPayloadJson) ? $rawPayloadJson : '';
