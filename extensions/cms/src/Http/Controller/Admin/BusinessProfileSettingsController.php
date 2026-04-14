@@ -96,7 +96,9 @@ final readonly class BusinessProfileSettingsController extends AbstractAdminCont
 
         /** @var array<string, mixed> $profileData */
         $profileData = is_array($body['profile'] ?? null) ? $body['profile'] : [];
-        $reason = is_string($body['reason'] ?? null) ? $body['reason'] : 'Business profile updated';
+        /** @var mixed $rawReason */
+        $rawReason = $body['reason'] ?? null;
+        $reason = is_string($rawReason) ? $rawReason : 'Business profile updated';
 
         $updatedCount = 0;
 

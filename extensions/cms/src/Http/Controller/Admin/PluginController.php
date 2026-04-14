@@ -203,8 +203,12 @@ final readonly class PluginController extends AbstractAdminController
         $settings = is_array($body['settings'] ?? null) ? $body['settings'] : [];
 
         $settingsGroup = "plugin.$id";
-        $locale = is_string($body['locale'] ?? null) ? $body['locale'] : null;
-        $reason = is_string($body['reason'] ?? null) ? $body['reason'] : null;
+        /** @var mixed $rawLocale */
+        $rawLocale = $body['locale'] ?? null;
+        /** @var mixed $rawReason */
+        $rawReason = $body['reason'] ?? null;
+        $locale = is_string($rawLocale) ? $rawLocale : null;
+        $reason = is_string($rawReason) ? $rawReason : null;
 
         foreach ($settings as $key => $value) {
             $this->settingsService->set($settingsGroup, $key, $value, $locale, $reason);
