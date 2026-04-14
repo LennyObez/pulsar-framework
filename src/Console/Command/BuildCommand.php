@@ -178,7 +178,7 @@ final class BuildCommand extends Command
 
         $strict = $input->hasOption('strict');
         $sign = $input->hasOption('sign');
-        $runtimeValue = $input->getOption('runtime', 'fpm');
+        $runtimeValue = $input->getStringOption('runtime', 'fpm');
         $runtime = $runtimeValue === 'persistent' ? RuntimeType::Persistent : RuntimeType::Fpm;
 
         $output->writeln('Building production artifacts...');
