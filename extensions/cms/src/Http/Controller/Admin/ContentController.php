@@ -30,7 +30,11 @@ use Pulsar\View\Engine\TemplateEngineInterface;
 
 use function array_map;
 use function in_array;
+use function is_int;
+use function is_numeric;
 use function is_string;
+use function max;
+use function min;
 use function strlen;
 
 /**
@@ -64,11 +68,15 @@ final readonly class ContentController extends AbstractAdminController
         $this->authorize($identity, 'cms.content.view');
 
         $locale = $this->resolveLocale($request);
-        $contentType = $request->getQueryParams()['type'] ?? null;
-        $pageParam = $request->getQueryParams()['page'] ?? 1;
-        $page = max(1, is_numeric($pageParam) ? (int) $pageParam : 1);
-        $perPageParam = $request->getQueryParams()['per_page'] ?? 20;
-        $perPage = min(100, max(1, is_numeric($perPageParam) ? (int) $perPageParam : 20));
+        $queryParams = $request->getQueryParams();
+        /** @var mixed $contentType */
+        $contentType = $queryParams['type'] ?? null;
+        /** @var mixed $pageParam */
+        $pageParam = $queryParams['page'] ?? 1;
+        $page = max(1, (is_string($pageParam) || is_int($pageParam)) && is_numeric($pageParam) ? (int) $pageParam : 1);
+        /** @var mixed $perPageParam */
+        $perPageParam = $queryParams['per_page'] ?? 20;
+        $perPage = min(100, max(1, (is_string($perPageParam) || is_int($perPageParam)) && is_numeric($perPageParam) ? (int) $perPageParam : 20));
 
         $tenantId = $this->validateTenantAccess($request);
 
@@ -108,6 +116,7 @@ final readonly class ContentController extends AbstractAdminController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
+        /** @var mixed $rawContentTypeValue */
         $rawContentTypeValue = $body['content_type'] ?? null;
         $contentTypeStr = is_string($rawContentTypeValue) ? $rawContentTypeValue : 'page';
         $contentType = ContentType::tryFrom($contentTypeStr);
@@ -116,12 +125,16 @@ final readonly class ContentController extends AbstractAdminController
             return Response::json(['error' => 'Invalid content type'], 400);
         }
 
+        /** @var mixed $rawLocale */
         $rawLocale = $body['locale'] ?? null;
         $locale = is_string($rawLocale) ? $rawLocale : $this->config->defaultLocale;
+        /** @var mixed $rawTitle */
         $rawTitle = $body['title'] ?? null;
         $title = is_string($rawTitle) ? $rawTitle : '';
+        /** @var mixed $rawSlug */
         $rawSlug = $body['slug'] ?? null;
         $slugSegment = is_string($rawSlug) ? $rawSlug : '';
+        /** @var mixed $rawBodyText */
         $rawBodyText = $body['body'] ?? null;
         $rawBody = is_string($rawBodyText) ? $rawBodyText : '';
 
