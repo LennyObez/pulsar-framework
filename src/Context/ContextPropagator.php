@@ -75,11 +75,17 @@ final readonly class ContextPropagator
             /** @var array<string, mixed> $attributes */
             $attributes = $carrier[self::KEY_ATTRIBUTES] ?? [];
 
+            /** @var mixed $rawActor */
             $rawActor = $carrier[self::KEY_ACTOR] ?? null;
+            /** @var mixed $rawTenantId */
             $rawTenantId = $carrier[self::KEY_TENANT_ID] ?? null;
+            /** @var mixed $rawIp */
             $rawIp = $carrier[self::KEY_IP] ?? null;
+            /** @var mixed $rawUserAgent */
             $rawUserAgent = $carrier[self::KEY_USER_AGENT] ?? null;
+            /** @var mixed $rawLocale */
             $rawLocale = $carrier[self::KEY_LOCALE] ?? null;
+            /** @var mixed $rawTimestamp */
             $rawTimestamp = $carrier[self::KEY_TIMESTAMP] ?? null;
 
             $actor = is_string($rawActor) ? $rawActor : null;
