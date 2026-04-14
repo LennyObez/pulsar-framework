@@ -16,7 +16,6 @@ use Pulsar\ImportExport\ImportExportRegistry;
 use function count;
 use function explode;
 use function file_put_contents;
-use function is_string;
 use function json_encode;
 use function sprintf;
 
@@ -62,9 +61,9 @@ final class ExportCommand extends Command
         }
 
         $providerNames = [];
-        $providersOption = $input->getOption('providers');
+        $providersOption = $input->getStringOption('providers', '');
 
-        if (is_string($providersOption) && $providersOption !== '') {
+        if ($providersOption !== '') {
             $providerNames = explode(',', $providersOption);
             $providerNames = array_map(trim(...), $providerNames);
 
@@ -78,8 +77,8 @@ final class ExportCommand extends Command
             }
         }
 
-        $formatOption = $input->getOption('format');
-        $format = is_string($formatOption) && $formatOption !== '' ? $formatOption : 'json';
+        $formatOption = $input->getStringOption('format', 'json');
+        $format = $formatOption !== '' ? $formatOption : 'json';
         $includePii = $input->hasOption('include-pii');
 
         $request = new ExportRequest(
@@ -104,9 +103,9 @@ final class ExportCommand extends Command
             'providers' => $combinedData,
         ], JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 
-        $outputFile = $input->getOption('output');
+        $outputFile = $input->getNullableStringOption('output');
 
-        if (is_string($outputFile) && $outputFile !== '') {
+        if ($outputFile !== null && $outputFile !== '') {
             file_put_contents($outputFile, $json);
             $output->success(sprintf('Export written to %s', $outputFile));
         } else {
