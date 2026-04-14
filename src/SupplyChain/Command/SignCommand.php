@@ -50,9 +50,7 @@ final class SignCommand extends Command
     #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
-        $keyFile = $input->hasOption('key-file') && is_string($input->getOption('key-file'))
-            ? $input->getOption('key-file')
-            : '';
+        $keyFile = $input->getStringOption('key-file', '');
 
         if ($keyFile === '') {
             $output->error('--key-file is required. Provide the path to your Ed25519 secret key.');
@@ -71,13 +69,8 @@ final class SignCommand extends Command
             return ExitCode::Error->value;
         }
 
-        $dir = $input->hasOption('dir') && is_string($input->getOption('dir'))
-            ? $input->getOption('dir')
-            : $this->projectRoot . '/dist';
-
-        $outputPath = $input->hasOption('output') && is_string($input->getOption('output'))
-            ? $input->getOption('output')
-            : $this->projectRoot . '/signatures.json';
+        $dir = $input->getStringOption('dir', $this->projectRoot . '/dist');
+        $outputPath = $input->getStringOption('output', $this->projectRoot . '/signatures.json');
 
         $output->info(sprintf('Signing artifacts in %s...', $dir));
 

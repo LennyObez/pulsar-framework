@@ -49,9 +49,7 @@ final class VerifyCommand extends Command
     #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
-        $keyFile = $input->hasOption('key-file') && is_string($input->getOption('key-file'))
-            ? $input->getOption('key-file')
-            : '';
+        $keyFile = $input->getStringOption('key-file', '');
 
         if ($keyFile === '') {
             $output->error('--key-file is required. Provide the path to your Ed25519 public key.');
@@ -70,13 +68,8 @@ final class VerifyCommand extends Command
             return ExitCode::Error->value;
         }
 
-        $dir = $input->hasOption('dir') && is_string($input->getOption('dir'))
-            ? $input->getOption('dir')
-            : $this->projectRoot . '/dist';
-
-        $manifestPath = $input->hasOption('manifest') && is_string($input->getOption('manifest'))
-            ? $input->getOption('manifest')
-            : $this->projectRoot . '/signatures.json';
+        $dir = $input->getStringOption('dir', $this->projectRoot . '/dist');
+        $manifestPath = $input->getStringOption('manifest', $this->projectRoot . '/signatures.json');
 
         $manifestJson = file_get_contents($manifestPath);
 
