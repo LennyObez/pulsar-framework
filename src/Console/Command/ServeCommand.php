@@ -18,9 +18,7 @@ use function filter_var;
 use function implode;
 use function in_array;
 use function is_dir;
-use function is_int;
 use function is_resource;
-use function is_string;
 use function preg_match;
 use function proc_close;
 use function proc_open;
@@ -167,28 +165,17 @@ final class ServeCommand extends Command
 
     private function resolveHost(InputInterface $input): string
     {
-        $hostOption = $input->getOption('host');
-
-        return $input->hasOption('host') && is_string($hostOption)
-            ? $hostOption
-            : '127.0.0.1';
+        return $input->getStringOption('host', '127.0.0.1');
     }
 
     private function resolvePort(InputInterface $input): int
     {
-        $portOption = $input->getOption('port');
-
-        return $input->hasOption('port') && (is_int($portOption) || is_string($portOption))
-            ? (int) $portOption
-            : 8000;
+        return $input->getIntOption('port', 8000);
     }
 
     private function resolveDocroot(InputInterface $input): string
     {
-        $docrootOption = $input->getOption('docroot');
-        $docroot = $input->hasOption('docroot') && is_string($docrootOption)
-            ? $docrootOption
-            : $this->basePath . DIRECTORY_SEPARATOR . 'public';
+        $docroot = $input->getStringOption('docroot', $this->basePath . DIRECTORY_SEPARATOR . 'public');
 
         if (!is_dir($docroot)) {
             // Fall back to project root if no public/ directory exists

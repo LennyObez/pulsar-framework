@@ -18,7 +18,6 @@ use function array_values;
 use function count;
 use function explode;
 use function implode;
-use function is_string;
 use function preg_match;
 use function sprintf;
 use function str_ends_with;
@@ -58,12 +57,8 @@ final class TestChangedCommand extends Command
     #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
-        $from = $input->getOption('from', 'HEAD');
+        $from = $input->getStringOption('from', 'HEAD');
         $dryRun = $input->hasOption('dry-run');
-
-        if (!is_string($from)) {
-            $from = 'HEAD';
-        }
 
         $output->writeln(sprintf('Finding changed files since %s...', $from));
 
