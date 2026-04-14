@@ -6,7 +6,7 @@ namespace Pulsar\Http\Validation\Rule;
 
 use Override;
 use Pulsar\Api\Api;
-use Pulsar\Http\Validation\RuleInterface;
+use Pulsar\Http\Validation\TypeRuleInterface;
 use Pulsar\Http\Validation\Violation;
 
 use function filter_var;
@@ -21,7 +21,7 @@ use const FILTER_VALIDATE_INT;
  * Skips null values.
  */
 #[Api(since: '1.0.0')]
-readonly class IntegerType implements RuleInterface
+readonly class IntegerType implements TypeRuleInterface
 {
     public function __construct(
         private string $message = '',

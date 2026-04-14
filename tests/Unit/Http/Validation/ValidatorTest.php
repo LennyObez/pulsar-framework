@@ -7,6 +7,8 @@ namespace Pulsar\Tests\Unit\Http\Validation;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Http\Validation\Rule\IntegerType;
+use Pulsar\Http\Validation\Rule\Min;
 use Pulsar\Http\Validation\Rule\MinLength;
 use Pulsar\Http\Validation\Rule\Required;
 use Pulsar\Http\Validation\Rule\StringType;
@@ -122,5 +124,37 @@ final class ValidatorTest extends TestCase
 
         self::assertTrue($result->failed());
         self::assertSame('name', $result->violations[0]->field);
+    }
+
+    /**
+     * F7.7: a type-rule failure must short-circuit downstream rules.
+     * Otherwise running e.g. `Min(10)` against the string 'abc' (which
+     * already failed `IntegerType`) emits a confusing cascade where the
+     * primary error is masked.
+     */
+    #[Test]
+    public function typeRuleFailureShortCircuitsRemainingRules(): void
+    {
+        $result = $this->validator->validate(
+            ['age' => 'abc'],
+            ['age' => [new IntegerType(), new Min(18)]],
+        );
+
+        self::assertTrue($result->failed());
+        self::assertCount(1, $result->violations);
+        self::assertSame('integer', $result->violations[0]->rule);
+    }
+
+    #[Test]
+    public function stringTypeFailureShortCircuitsMinLength(): void
+    {
+        $result = $this->validator->validate(
+            ['name' => 42],
+            ['name' => [new StringType(), new MinLength(3)]],
+        );
+
+        self::assertTrue($result->failed());
+        self::assertCount(1, $result->violations);
+        self::assertSame('string', $result->violations[0]->rule);
     }
 }
