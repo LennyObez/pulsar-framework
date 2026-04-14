@@ -14,8 +14,6 @@ use Pulsar\Extension\Studio\Config\StudioConfig;
 
 use function file_exists;
 use function is_dir;
-use function is_int;
-use function is_string;
 use function sprintf;
 
 /**
@@ -48,15 +46,8 @@ final class StudioServeCommand extends Command
             return ExitCode::Error->value;
         }
 
-        $hostOption = $input->getOption('host');
-        $host = $input->hasOption('host') && is_string($hostOption)
-            ? $hostOption
-            : $this->config->server->host;
-
-        $portOption = $input->getOption('port');
-        $port = $input->hasOption('port') && (is_int($portOption) || is_string($portOption))
-            ? (int) $portOption
-            : $this->config->server->port;
+        $host = $input->getStringOption('host', $this->config->server->host);
+        $port = $input->getIntOption('port', $this->config->server->port);
 
         $documentRoot = $this->basePath . '/' . $this->config->server->documentRoot;
 

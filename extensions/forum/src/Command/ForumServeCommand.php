@@ -13,9 +13,7 @@ use Pulsar\Console\OutputInterface;
 use Pulsar\Extension\Forum\Config\ForumConfig;
 
 use function file_exists;
-use function is_int;
 use function is_resource;
-use function is_string;
 use function proc_close;
 use function proc_open;
 use function sprintf;
@@ -53,15 +51,8 @@ final class ForumServeCommand extends Command
     #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
-        $hostOption = $input->getOption('host');
-        $host = $input->hasOption('host') && is_string($hostOption)
-            ? $hostOption
-            : '127.0.0.1';
-
-        $portOption = $input->getOption('port');
-        $port = $input->hasOption('port') && (is_int($portOption) || is_string($portOption))
-            ? (int) $portOption
-            : 8888;
+        $host = $input->getStringOption('host', '127.0.0.1');
+        $port = $input->getIntOption('port', 8888);
 
         $routerScript = $this->basePath . '/extensions/forum/dev/router.php';
         if (!file_exists($routerScript)) {
