@@ -15,7 +15,6 @@ use Pulsar\SupplyChain\Vex\VexSerializer;
 
 use function count;
 use function file_put_contents;
-use function is_string;
 use function sprintf;
 
 /**
@@ -44,9 +43,7 @@ final class VexCommand extends Command
     #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
-        $outputPath = $input->hasOption('output') && is_string($input->getOption('output'))
-            ? $input->getOption('output')
-            : $this->projectRoot . '/vex.json';
+        $outputPath = $input->getStringOption('output', $this->projectRoot . '/vex.json');
 
         $output->info('Generating VEX document...');
 
