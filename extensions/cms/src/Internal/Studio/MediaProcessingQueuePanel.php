@@ -98,18 +98,24 @@ final readonly class MediaProcessingQueuePanel
             }
 
             $payload = $this->decodePayload($record->payload);
-            $mediaAssetId = is_string($payload['asset_id'] ?? null) ? $payload['asset_id'] : '';
-            $derivativeType = is_string($payload['variant'] ?? null) ? $payload['variant'] : '';
+            /** @var mixed $rawAssetId */
+            $rawAssetId = $payload['asset_id'] ?? null;
+            /** @var mixed $rawVariant */
+            $rawVariant = $payload['variant'] ?? null;
+            $mediaAssetId = is_string($rawAssetId) ? $rawAssetId : '';
+            $derivativeType = is_string($rawVariant) ? $rawVariant : '';
 
             $completedAt = null;
             $failedAt = null;
 
             if ($record->status === JobRecordStatus::Completed) {
+                /** @var mixed $rawCompleted */
                 $rawCompleted = $payload['completed_at'] ?? null;
                 $completedAt = is_int($rawCompleted) ? $rawCompleted : null;
             }
 
             if ($record->status === JobRecordStatus::Failed) {
+                /** @var mixed $rawFailed */
                 $rawFailed = $payload['failed_at'] ?? null;
                 $failedAt = is_int($rawFailed) ? $rawFailed : null;
             }
