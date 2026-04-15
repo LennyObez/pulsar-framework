@@ -53,9 +53,13 @@ final readonly class ImageBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
-        $src = htmlspecialchars(is_string($data['src'] ?? null) ? $data['src'] : '', ENT_QUOTES, 'UTF-8');
-        $alt = htmlspecialchars(is_string($data['alt'] ?? null) ? $data['alt'] : '', ENT_QUOTES, 'UTF-8');
+        $rawSrc = $data['src'] ?? null;
+        $rawAlt = $data['alt'] ?? null;
+        $src = htmlspecialchars(is_string($rawSrc) ? $rawSrc : '', ENT_QUOTES, 'UTF-8');
+        $alt = htmlspecialchars(is_string($rawAlt) ? $rawAlt : '', ENT_QUOTES, 'UTF-8');
+        /** @var mixed $caption */
         $caption = $data['caption'] ?? null;
+        /** @var mixed $alignment */
         $alignment = $data['alignment'] ?? null;
 
         $figureStyle = '';
