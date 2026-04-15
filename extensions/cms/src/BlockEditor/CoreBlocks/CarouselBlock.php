@@ -55,7 +55,8 @@ final readonly class CarouselBlock implements BlockTypeInterface
         /** @var list<mixed> $slides */
         $slides = $data['slides'] ?? [];
         $autoplay = ($data['autoplay'] ?? false) === true ? 'true' : 'false';
-        $interval = is_int($data['interval'] ?? null) ? $data['interval'] : 5000;
+        $rawInterval = $data['interval'] ?? null;
+        $interval = is_int($rawInterval) ? $rawInterval : 5000;
 
         if ($interval < 1) {
             $interval = 5000;
@@ -82,8 +83,11 @@ final readonly class CarouselBlock implements BlockTypeInterface
             }
 
             $slideIndex++;
-            $imageUrl = htmlspecialchars(is_string($slide['imageUrl'] ?? null) ? $slide['imageUrl'] : '', ENT_QUOTES, 'UTF-8');
-            $alt = htmlspecialchars(is_string($slide['alt'] ?? null) ? $slide['alt'] : '', ENT_QUOTES, 'UTF-8');
+            $rawImageUrl = $slide['imageUrl'] ?? null;
+            $rawAlt = $slide['alt'] ?? null;
+            $imageUrl = htmlspecialchars(is_string($rawImageUrl) ? $rawImageUrl : '', ENT_QUOTES, 'UTF-8');
+            $alt = htmlspecialchars(is_string($rawAlt) ? $rawAlt : '', ENT_QUOTES, 'UTF-8');
+            /** @var mixed $caption */
             $caption = $slide['caption'] ?? null;
 
             $html .= "<div class=\"carousel__slide\" role=\"group\" aria-roledescription=\"slide\" aria-label=\"Slide $slideIndex of $slideCount\">";
