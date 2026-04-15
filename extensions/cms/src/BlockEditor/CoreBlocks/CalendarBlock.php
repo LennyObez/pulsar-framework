@@ -56,8 +56,10 @@ final readonly class CalendarBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
-        $year = is_int($data['year'] ?? null) ? $data['year'] : (int) date('Y');
-        $month = is_int($data['month'] ?? null) ? $data['month'] : (int) date('n');
+        $rawYear = $data['year'] ?? null;
+        $rawMonth = $data['month'] ?? null;
+        $year = is_int($rawYear) ? $rawYear : (int) date('Y');
+        $month = is_int($rawMonth) ? $rawMonth : (int) date('n');
 
         if ($month < 1 || $month > 12) {
             $month = (int) date('n');
@@ -69,7 +71,9 @@ final readonly class CalendarBlock implements BlockTypeInterface
 
         /** @var list<mixed> $posts */
         $posts = $data['posts'] ?? [];
+        /** @var mixed $prevMonthUrl */
         $prevMonthUrl = $data['prevMonthUrl'] ?? null;
+        /** @var mixed $nextMonthUrl */
         $nextMonthUrl = $data['nextMonthUrl'] ?? null;
 
         $postMap = [];
@@ -79,10 +83,12 @@ final readonly class CalendarBlock implements BlockTypeInterface
                 continue;
             }
 
+            /** @var mixed $day */
             $day = $post['day'] ?? null;
 
             if (is_int($day) && $day >= 1 && $day <= 31) {
-                $postMap[$day] = is_string($post['url'] ?? null) ? $post['url'] : '#';
+                $rawUrl = $post['url'] ?? null;
+                $postMap[$day] = is_string($rawUrl) ? $rawUrl : '#';
             }
         }
 
