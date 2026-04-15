@@ -217,12 +217,14 @@ final readonly class ShippingMethodController
      */
     private function validateZoneInput(array $body): ?string
     {
-        $name = is_string($body['name'] ?? null) ? $body['name'] : '';
+        $rawName = $body['name'] ?? null;
+        $name = is_string($rawName) ? $rawName : '';
 
         if ($name === '') {
             return 'payments.shipping.name_required';
         }
 
+        /** @var mixed $countries */
         $countries = $body['countries'] ?? null;
 
         if (!is_array($countries) || $countries === []) {
@@ -240,7 +242,8 @@ final readonly class ShippingMethodController
      */
     private function buildZoneFromInput(string $id, array $body): ShippingZone
     {
-        $name = is_string($body['name'] ?? null) && $body['name'] !== '' ? $body['name'] : 'Unnamed Zone';
+        $rawName = $body['name'] ?? null;
+        $name = is_string($rawName) && $rawName !== '' ? $rawName : 'Unnamed Zone';
 
         /** @var list<string> $countries */
         $countries = [];
