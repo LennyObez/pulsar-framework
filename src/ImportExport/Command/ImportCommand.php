@@ -78,15 +78,15 @@ final class ImportCommand extends Command
             return ExitCode::Error->value;
         }
 
-        $formatOption = $input->getOption('format');
-        $format = is_string($formatOption) && $formatOption !== '' ? $formatOption : 'json';
+        $formatOption = $input->getStringOption('format', 'json');
+        $format = $formatOption !== '' ? $formatOption : 'json';
 
         $dryRun = $input->hasOption('dry-run');
 
-        $duplicatesOption = $input->getOption('duplicates');
+        $duplicatesOption = $input->getNullableStringOption('duplicates');
         $duplicateStrategy = DuplicateStrategy::Skip;
 
-        if (is_string($duplicatesOption)) {
+        if ($duplicatesOption !== null) {
             $resolved = DuplicateStrategy::tryFrom($duplicatesOption);
 
             if ($resolved !== null) {
@@ -94,7 +94,7 @@ final class ImportCommand extends Command
             }
         }
 
-        $providerOption = $input->getOption('provider');
+        $providerOption = $input->getNullableStringOption('provider');
         $providerNames = $this->resolveProviders($content, $providerOption, $format);
 
         if ($providerNames === []) {
@@ -168,9 +168,9 @@ final class ImportCommand extends Command
      *
      * @return list<string>
      */
-    private function resolveProviders(string $content, mixed $providerOption, string $format): array
+    private function resolveProviders(string $content, ?string $providerOption, string $format): array
     {
-        if (is_string($providerOption) && $providerOption !== '') {
+        if ($providerOption !== null && $providerOption !== '') {
             return [$providerOption];
         }
 
