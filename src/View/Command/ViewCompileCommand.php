@@ -125,9 +125,9 @@ final class ViewCompileCommand extends Command
         }
 
         // Write manifest if requested
-        $manifestPath = $input->getOption('manifest');
+        $manifestPath = $input->getNullableStringOption('manifest');
 
-        if (is_string($manifestPath)) {
+        if ($manifestPath !== null) {
             $this->writeManifest($manifestPath, $compiledNames, $output);
         }
 
