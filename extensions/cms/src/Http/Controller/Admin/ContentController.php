@@ -145,9 +145,13 @@ final readonly class ContentController extends AbstractAdminController
         $sanitizedBody = $this->safeHtmlPolicy->sanitize($rawBody);
         $tenantId = $this->validateTenantAccess($request);
 
+        /** @var mixed $rawTemplate */
         $rawTemplate = $body['template'] ?? null;
+        /** @var mixed $rawParentId */
         $rawParentId = $body['parent_id'] ?? null;
+        /** @var mixed $rawCommentPolicy */
         $rawCommentPolicy = $body['comment_policy'] ?? null;
+        /** @var mixed $rawDataClassification */
         $rawDataClassification = $body['data_classification'] ?? null;
         $contentId = UuidGenerator::v7();
         $content = Content::create(
@@ -173,8 +177,11 @@ final readonly class ContentController extends AbstractAdminController
             }
         }
 
+        /** @var mixed $rawExcerpt */
         $rawExcerpt = $body['excerpt'] ?? null;
+        /** @var mixed $rawMetaTitle */
         $rawMetaTitle = $body['meta_title'] ?? null;
+        /** @var mixed $rawMetaDescription */
         $rawMetaDescription = $body['meta_description'] ?? null;
         $translationId = UuidGenerator::v7();
         $translation = ContentTranslation::create(
@@ -316,8 +323,11 @@ final readonly class ContentController extends AbstractAdminController
             }
         }
 
+        /** @var mixed $rawExcerpt */
         $rawExcerpt = $body['excerpt'] ?? null;
+        /** @var mixed $rawMetaTitle */
         $rawMetaTitle = $body['meta_title'] ?? null;
+        /** @var mixed $rawMetaDescription */
         $rawMetaDescription = $body['meta_description'] ?? null;
         $updatedTranslation = ContentTranslation::create(
             id: $translation->id,
