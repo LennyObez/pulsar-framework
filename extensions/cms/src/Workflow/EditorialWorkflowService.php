@@ -16,8 +16,6 @@ use Pulsar\Extension\Cms\Support\UuidGenerator;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditOutcome;
 
-use function is_string;
-
 /**
  * Manages the editorial review workflow lifecycle.
  *
@@ -217,19 +215,19 @@ final readonly class EditorialWorkflowService implements EditorialWorkflowServic
         $reviews = [];
 
         foreach ($result->rows as $row) {
-            $decidedAt = $row->get('decided_at');
+            $decidedAt = $row->getNullableString('decided_at');
 
             $reviews[] = new EditorialReview(
                 id: $row->getString('id'),
                 contentId: $row->getString('content_id'),
-                locale: $row->get('locale') !== null ? $row->getString('locale') : null,
+                locale: $row->getNullableString('locale'),
                 requestedBy: $row->getString('requested_by'),
-                reviewerId: $row->get('reviewer_id') !== null ? $row->getString('reviewer_id') : null,
+                reviewerId: $row->getNullableString('reviewer_id'),
                 status: ReviewStatus::from($row->getString('status')),
-                comment: $row->get('comment') !== null ? $row->getString('comment') : null,
-                decisionReason: $row->get('decision_reason') !== null ? $row->getString('decision_reason') : null,
+                comment: $row->getNullableString('comment'),
+                decisionReason: $row->getNullableString('decision_reason'),
                 createdAt: new DateTimeImmutable($row->getString('created_at')),
-                decidedAt: $decidedAt !== null ? new DateTimeImmutable(is_string($decidedAt) ? $decidedAt : '') : null,
+                decidedAt: $decidedAt !== null ? new DateTimeImmutable($decidedAt) : null,
             );
         }
 
@@ -296,19 +294,19 @@ final readonly class EditorialWorkflowService implements EditorialWorkflowServic
             throw CmsException::contentNotFound($reviewId);
         }
 
-        $decidedAt = $row->get('decided_at');
+        $decidedAt = $row->getNullableString('decided_at');
 
         return new EditorialReview(
             id: $row->getString('id'),
             contentId: $row->getString('content_id'),
-            locale: $row->get('locale') !== null ? $row->getString('locale') : null,
+            locale: $row->getNullableString('locale'),
             requestedBy: $row->getString('requested_by'),
-            reviewerId: $row->get('reviewer_id') !== null ? $row->getString('reviewer_id') : null,
+            reviewerId: $row->getNullableString('reviewer_id'),
             status: ReviewStatus::from($row->getString('status')),
-            comment: $row->get('comment') !== null ? $row->getString('comment') : null,
-            decisionReason: $row->get('decision_reason') !== null ? $row->getString('decision_reason') : null,
+            comment: $row->getNullableString('comment'),
+            decisionReason: $row->getNullableString('decision_reason'),
             createdAt: new DateTimeImmutable($row->getString('created_at')),
-            decidedAt: $decidedAt !== null ? new DateTimeImmutable(is_string($decidedAt) ? $decidedAt : '') : null,
+            decidedAt: $decidedAt !== null ? new DateTimeImmutable($decidedAt) : null,
         );
     }
 
