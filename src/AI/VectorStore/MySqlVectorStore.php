@@ -13,9 +13,7 @@ use Pulsar\Database\Row;
 use function array_map;
 use function implode;
 use function is_array;
-use function is_numeric;
 use function is_scalar;
-use function is_string;
 use function json_decode;
 use function json_encode;
 use function preg_match;
@@ -103,19 +101,14 @@ final readonly class MySqlVectorStore implements VectorStoreInterface
         $result = $this->connection->query($sql, $bindings);
 
         return $result->map(function (Row $row): SearchResult {
-            $metadataRaw = $row->get('metadata');
-            $metadataDecoded = is_string($metadataRaw) ? json_decode($metadataRaw, true) : null;
+            $metadataDecoded = json_decode($row->getString('metadata'), true);
             /** @var array<string, mixed> $metadata */
             $metadata = is_array($metadataDecoded) ? $metadataDecoded : [];
 
-            $id = $row->get('id');
-            $score = $row->get('score');
-            $content = $row->get('content');
-
             return new SearchResult(
-                id: is_scalar($id) ? (string) $id : '',
-                score: is_numeric($score) ? (float) $score : 0.0,
-                content: is_string($content) ? $content : '',
+                id: $row->getString('id'),
+                score: $row->getFloat('score'),
+                content: $row->getString('content'),
                 metadata: $metadata,
             );
         });
@@ -183,9 +176,7 @@ final readonly class MySqlVectorStore implements VectorStoreInterface
                 return 0;
             }
 
-            $cnt = $first->get('cnt');
-
-            return is_numeric($cnt) ? (int) $cnt : 0;
+            return $first->getInt('cnt');
         }
 
         $conditions = [];
@@ -208,9 +199,7 @@ final readonly class MySqlVectorStore implements VectorStoreInterface
             return 0;
         }
 
-        $cnt = $first->get('cnt');
-
-        return is_numeric($cnt) ? (int) $cnt : 0;
+        return $first->getInt('cnt');
     }
 
     /**
