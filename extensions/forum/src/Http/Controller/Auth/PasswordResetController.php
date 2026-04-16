@@ -90,8 +90,7 @@ final readonly class PasswordResetController
         );
 
         if ($result->rowCount > 0) {
-            $firstRow = $result->rows[0]->toArray();
-            $userId = is_string($firstRow['id'] ?? null) ? $firstRow['id'] : '';
+            $userId = $result->rows[0]->getString('id');
             $token = bin2hex(random_bytes(32));
             $tokenHash = hash('sha256', $token);
 
@@ -199,8 +198,7 @@ final readonly class PasswordResetController
             ], 422);
         }
 
-        $resetRow = $resetResult->rows[0]->toArray();
-        $userId = is_string($resetRow['user_id'] ?? null) ? $resetRow['user_id'] : '';
+        $userId = $resetResult->rows[0]->getString('user_id');
         $newHash = password_hash($password, PASSWORD_BCRYPT);
 
         $this->connection->execute(

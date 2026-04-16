@@ -93,8 +93,8 @@ final readonly class LoginController
             ], 422);
         }
 
-        $user = $result->rows[0]->toArray();
-        $passwordHash = is_string($user['password_hash'] ?? null) ? $user['password_hash'] : '';
+        $userRow = $result->rows[0];
+        $passwordHash = $userRow->getString('password_hash');
 
         if (!password_verify($password, $passwordHash)) {
             return $this->respondWithView($request, 'auth.login', [
@@ -104,7 +104,7 @@ final readonly class LoginController
             ], 422);
         }
 
-        if (($user['is_locked'] ?? 0) === 1) {
+        if ($userRow->getInt('is_locked') === 1) {
             return $this->respondWithView($request, 'auth.login', [
                 'page_title' => 'Sign In',
                 'errors' => ['form' => 'This account has been locked. Contact an administrator.'],
@@ -112,7 +112,7 @@ final readonly class LoginController
             ], 403);
         }
 
-        $userId = is_string($user['id'] ?? null) ? $user['id'] : '';
+        $userId = $userRow->getString('id');
         $identity = new Identity(
             id: $userId,
             displayName: $email,
