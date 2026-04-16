@@ -37,6 +37,7 @@ final readonly class SessionNonceVerifier implements NonceVerifierInterface
     {
         $nonce = bin2hex(random_bytes(32));
 
+        /** @var mixed $raw */
         $raw = $this->session->get(self::NONCE_KEY, []);
         /** @var array<string, true> $nonces */
         $nonces = is_array($raw) ? $raw : [];
@@ -55,6 +56,7 @@ final readonly class SessionNonceVerifier implements NonceVerifierInterface
             return false;
         }
 
+        /** @var mixed $rawNonces */
         $rawNonces = $this->session->get(self::NONCE_KEY, []);
         /** @var array<string, true> $nonces */
         $nonces = is_array($rawNonces) ? $rawNonces : [];
