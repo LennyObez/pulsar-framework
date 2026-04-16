@@ -149,9 +149,7 @@ final readonly class QrCodeEncoder
      */
     private function selectVersion(int $dataLength): int
     {
-        $versionCount = count(self::VERSION_DATA_CODEWORDS);
-
-        for ($v = 0; $v < $versionCount; $v++) {
+        foreach (self::VERSION_DATA_CODEWORDS as $v => $totalDataCw) {
             // Byte mode: 4-bit mode indicator + character count indicator + data
             $charCountBits = $v < 9 ? 8 : 16; // Versions 1-9: 8 bits, 10+: 16 bits
             $headerBits = 4 + $charCountBits;
@@ -159,9 +157,8 @@ final readonly class QrCodeEncoder
             $totalBits = $headerBits + $dataBits;
 
             // Available data bits = data codewords * 8
-            $ecBlocks = self::VERSION_EC_BLOCKS[$v];
-            $ecPerBlock = self::VERSION_EC_CODEWORDS_PER_BLOCK[$v];
-            $totalDataCw = self::VERSION_DATA_CODEWORDS[$v];
+            $ecBlocks = self::VERSION_EC_BLOCKS[$v] ?? 0;
+            $ecPerBlock = self::VERSION_EC_CODEWORDS_PER_BLOCK[$v] ?? 0;
             $availableCodewords = $totalDataCw - ($ecBlocks * $ecPerBlock);
 
             if ($availableCodewords * 8 >= $totalBits) {
