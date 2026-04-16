@@ -247,6 +247,7 @@ final readonly class HtmlInvoiceRenderer implements InvoiceRendererInterface
             return null;
         }
 
+        /** @var mixed $value */
         $value = $this->settings->get($group, $key);
 
         return is_string($value) ? $value : (is_scalar($value) ? (string) $value : null);

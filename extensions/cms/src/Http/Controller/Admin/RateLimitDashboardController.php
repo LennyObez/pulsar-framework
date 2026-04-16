@@ -163,7 +163,9 @@ final readonly class RateLimitDashboardController extends AbstractAdminControlle
         $configs = [];
 
         foreach (self::DEFAULT_ENDPOINTS as $endpoint => $defaults) {
+            /** @var mixed $storedLimit */
             $storedLimit = $this->settings->get(self::SETTINGS_GROUP, 'endpoint:' . $endpoint . ':limit');
+            /** @var mixed $storedWindow */
             $storedWindow = $this->settings->get(self::SETTINGS_GROUP, 'endpoint:' . $endpoint . ':window');
 
             $configs[$endpoint] = [
