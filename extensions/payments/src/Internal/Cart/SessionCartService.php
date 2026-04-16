@@ -41,6 +41,7 @@ final readonly class SessionCartService implements CartServiceInterface
     public function getCart(?string $userId = null): Cart
     {
         $key = $this->sessionKey($userId);
+        /** @var mixed $data */
         $data = $this->session->get($key);
 
         if (is_array($data)) {

@@ -38,6 +38,7 @@ final readonly class SessionOAuthStateManager implements OAuthStateManagerInterf
     {
         $state = bin2hex(random_bytes(32));
 
+        /** @var mixed $rawStates */
         $rawStates = $this->session->get(self::STATE_KEY, []);
         /** @var array<string, int> $states */
         $states = is_array($rawStates) ? $rawStates : [];
@@ -51,6 +52,7 @@ final readonly class SessionOAuthStateManager implements OAuthStateManagerInterf
     #[Override]
     public function verify(string $state): bool
     {
+        /** @var mixed $rawStates */
         $rawStates = $this->session->get(self::STATE_KEY, []);
         /** @var array<string, int> $states */
         $states = is_array($rawStates) ? $rawStates : [];
@@ -74,6 +76,7 @@ final readonly class SessionOAuthStateManager implements OAuthStateManagerInterf
     #[Override]
     public function storePkceVerifier(string $state, string $verifier): void
     {
+        /** @var mixed $rawPkce */
         $rawPkce = $this->session->get(self::PKCE_KEY, []);
         /** @var array<string, string> $pkce */
         $pkce = is_array($rawPkce) ? $rawPkce : [];
@@ -90,6 +93,7 @@ final readonly class SessionOAuthStateManager implements OAuthStateManagerInterf
     #[Override]
     public function retrievePkceVerifier(string $state): ?string
     {
+        /** @var mixed $rawPkce */
         $rawPkce = $this->session->get(self::PKCE_KEY, []);
         /** @var array<string, string> $pkce */
         $pkce = is_array($rawPkce) ? $rawPkce : [];
