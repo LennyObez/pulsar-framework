@@ -76,9 +76,12 @@ final class ResolveTaggedIteratorPass implements CompilerPassInterface
                         /** @var TaggedIterator $taggedIterator */
                         $taggedIterator = $attrs[0]->newInstance();
                         $taggedIds = $builder->findTaggedServiceIds($taggedIterator->tag);
+                        /** @var list<mixed> $services */
                         $services = [];
                         foreach ($taggedIds as $taggedId) {
-                            $services[] = $container->get($taggedId);
+                            /** @var mixed $service */
+                            $service = $container->get($taggedId);
+                            $services[] = $service;
                         }
                         $dependencies[] = $services;
                         continue;

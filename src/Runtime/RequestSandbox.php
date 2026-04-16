@@ -70,6 +70,7 @@ final readonly class RequestSandbox
         // 3. Reset resettable singletons in deterministic order
         foreach ($this->registry->resettableIds as $id) {
             if ($this->container->has($id)) {
+                /** @var mixed $service */
                 $service = $this->container->get($id);
 
                 if ($service instanceof ResettableInterface) {
