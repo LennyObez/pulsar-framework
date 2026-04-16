@@ -8,11 +8,16 @@ use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Config\Exception\ConfigException;
 
+use function array_filter;
 use function array_key_exists;
+use function in_array;
 use function is_file;
 use function is_readable;
 use function preg_replace;
 use function rtrim;
+use function str_starts_with;
+
+use const ARRAY_FILTER_USE_KEY;
 
 /**
  * Loads environment variables from the OS and an optional `.env` file.
@@ -40,15 +45,123 @@ final class Environment
     }
 
     /**
+     * F4.9: prefix allowlist for OS-level environment variables when an
+     * operator hardens the loader via {@see loadFiltered()}. The list is
+     * deliberately conservative — it covers Pulsar's own surface plus
+     * common application namespaces and well-known shell-environment
+     * basics — so a bare `getenv()` cannot leak unrelated process-level
+     * variables (Apache `SetEnv`, php-fpm `env[]`, sibling-app secrets)
+     * into the framework's view of the world.
+     *
+     * Operators with bespoke prefixes can extend or override this list
+     * by passing an explicit allowlist to {@see loadFiltered()}.
+     *
+     * @var list<string>
+     */
+    public const array DEFAULT_PREFIX_ALLOWLIST = [
+        'APP_',
+        'PULSAR_',
+        'DB_',
+        'DATABASE_',
+        'LOG_',
+        'SESSION_',
+        'MAIL_',
+        'CACHE_',
+        'QUEUE_',
+        'REDIS_',
+        'AWS_',
+        'GCP_',
+        'GOOGLE_',
+        'AZURE_',
+        'OAUTH_',
+        'WEBAUTHN_',
+        'STRIPE_',
+        'PAYPAL_',
+        'PSD2_',
+        'EIDAS_',
+        'GHCR_',
+        'GITHUB_',
+    ];
+
+    /**
+     * F4.9: explicit single-name allowlist. Some shell-environment basics
+     * are useful (`HOME`, `PATH`, `TZ`, `LANG`) but do not match any of
+     * the prefix patterns. The framework keeps them available so that
+     * downstream code reading `Environment::get('PATH')` still works
+     * after `loadFiltered()`.
+     *
+     * @var list<string>
+     */
+    public const array DEFAULT_LITERAL_ALLOWLIST = [
+        'HOME',
+        'PATH',
+        'PWD',
+        'TZ',
+        'LANG',
+        'LC_ALL',
+        'TERM',
+        'USER',
+        'USERNAME',
+        'TMPDIR',
+        'TEMP',
+        'TMP',
+    ];
+
+    /**
      * Create an Environment instance from OS env vars and an optional `.env` file.
      *
      * OS vars are read first. If an `.env` file path is provided and exists,
      * its values are loaded but never override existing OS vars.
+     *
+     * Note: this method is unfiltered for backwards compatibility — it
+     * exposes every OS environment variable. Operators in regulated
+     * deployments should switch to {@see loadFiltered()} which enforces
+     * a prefix allowlist and prevents adjacent-process secrets from
+     * leaking into Pulsar's environment view (F4.9).
      */
     #[NoDiscard]
     public static function load(?string $envFilePath = null): self
     {
+        return self::doLoad($envFilePath, null, null);
+    }
+
+    /**
+     * F4.9: load environment with a prefix-based allowlist applied to
+     * the OS-level vars. The `.env` file values are not filtered (they
+     * are already curated by the operator). The merged set still has OS
+     * vars winning over file vars for any key that survives the filter.
+     *
+     * @param list<string>|null $prefixAllowlist  Defaults to {@see DEFAULT_PREFIX_ALLOWLIST}.
+     * @param list<string>|null $literalAllowlist Defaults to {@see DEFAULT_LITERAL_ALLOWLIST}.
+     */
+    #[NoDiscard]
+    public static function loadFiltered(
+        ?string $envFilePath = null,
+        ?array $prefixAllowlist = null,
+        ?array $literalAllowlist = null,
+    ): self {
+        return self::doLoad(
+            $envFilePath,
+            $prefixAllowlist ?? self::DEFAULT_PREFIX_ALLOWLIST,
+            $literalAllowlist ?? self::DEFAULT_LITERAL_ALLOWLIST,
+        );
+    }
+
+    /**
+     * @param list<string>|null $prefixAllowlist
+     * @param list<string>|null $literalAllowlist
+     */
+    private static function doLoad(
+        ?string $envFilePath,
+        ?array $prefixAllowlist,
+        ?array $literalAllowlist,
+    ): self {
         $osVars = self::readOsVars();
+
+        if ($prefixAllowlist !== null) {
+            $osVars = self::applyAllowlist($osVars, $prefixAllowlist, $literalAllowlist ?? []);
+        }
+
         $fileVars = [];
 
         if ($envFilePath !== null && is_file($envFilePath) && is_readable($envFilePath)) {
@@ -62,6 +175,34 @@ final class Environment
         }
 
         return new self($merged);
+    }
+
+    /**
+     * @param array<string, string> $vars
+     * @param list<string> $prefixAllowlist
+     * @param list<string> $literalAllowlist
+     *
+     * @return array<string, string>
+     */
+    private static function applyAllowlist(array $vars, array $prefixAllowlist, array $literalAllowlist): array
+    {
+        return array_filter(
+            $vars,
+            static function (string $key) use ($prefixAllowlist, $literalAllowlist): bool {
+                if (in_array($key, $literalAllowlist, true)) {
+                    return true;
+                }
+
+                foreach ($prefixAllowlist as $prefix) {
+                    if (str_starts_with($key, $prefix)) {
+                        return true;
+                    }
+                }
+
+                return false;
+            },
+            ARRAY_FILTER_USE_KEY,
+        );
     }
 
     /**
