@@ -18,6 +18,4 @@ use Pulsar\Api\Api;
  * them.
  */
 #[Api(since: '1.0.0')]
-interface TypeRuleInterface extends RuleInterface
-{
-}
+interface TypeRuleInterface extends RuleInterface {}
