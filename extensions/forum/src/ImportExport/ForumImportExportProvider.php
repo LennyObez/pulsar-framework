@@ -321,10 +321,13 @@ final readonly class ForumImportExportProvider implements ImportExportProviderIn
             }
 
             if (!$dryRun) {
+                /** @var mixed $rawId */
                 $rawId = $entry['id'] ?? null;
                 $id = is_string($rawId) ? $rawId : bin2hex(random_bytes(16));
+                /** @var mixed $rawParentId */
                 $rawParentId = $entry['parent_id'] ?? null;
                 $parentId = is_string($rawParentId) ? $rawParentId : null;
+                /** @var mixed $rawSortOrder */
                 $rawSortOrder = $entry['sort_order'] ?? null;
                 $sortOrder = is_int($rawSortOrder) ? $rawSortOrder : 0;
                 $category = \Pulsar\Extension\Forum\Category\Category::create(
@@ -408,18 +411,24 @@ final readonly class ForumImportExportProvider implements ImportExportProviderIn
             }
 
             if (!$dryRun) {
+                /** @var mixed $rawId */
                 $rawId = $entry['id'] ?? null;
                 $threadId = is_string($rawId) ? $rawId : bin2hex(random_bytes(16));
+                /** @var mixed $rawCategoryId */
                 $rawCategoryId = $entry['category_id'] ?? null;
                 $categoryId = is_string($rawCategoryId) ? $rawCategoryId : '';
+                /** @var mixed $rawAuthorId */
                 $rawAuthorId = $entry['author_id'] ?? null;
                 $authorId = is_string($rawAuthorId) ? $rawAuthorId : 'system';
+                /** @var mixed $rawTypeStr */
                 $rawTypeStr = $entry['type'] ?? null;
                 $typeStr = is_string($rawTypeStr) ? $rawTypeStr : 'discussion';
                 $threadType = \Pulsar\Extension\Forum\Domain\ThreadType::tryFrom($typeStr) ?? \Pulsar\Extension\Forum\Domain\ThreadType::Discussion;
 
+                /** @var mixed $rawIpHash */
                 $rawIpHash = $entry['ip_hash'] ?? null;
                 $ipHash = is_string($rawIpHash) ? $rawIpHash : '';
+                /** @var mixed $rawUserAgentHash */
                 $rawUserAgentHash = $entry['user_agent_hash'] ?? null;
                 $userAgentHash = is_string($rawUserAgentHash) ? $rawUserAgentHash : '';
 
