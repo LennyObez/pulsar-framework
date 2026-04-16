@@ -904,6 +904,7 @@ final readonly class QrCodeEncoder
         $formatInfo = self::FORMAT_INFO[$maskPattern];
 
         // Place around top-left finder
+        /** @var list<array{0: int, 1: int}> $positions */
         $positions = [
             // Horizontal (row 8, columns 0-7 then $size-8 to $size-1)
             [8, 0], [8, 1], [8, 2], [8, 3], [8, 4], [8, 5],
@@ -912,30 +913,32 @@ final readonly class QrCodeEncoder
             [7, 8], [5, 8], [4, 8], [3, 8], [2, 8], [1, 8], [0, 8],
         ];
 
-        for ($i = 0; $i < 15; $i++) {
+        foreach ($positions as $i => [$row, $col]) {
             $bit = ($formatInfo >> (14 - $i)) & 1;
-            $matrix[$positions[$i][0]][$positions[$i][1]] = $bit;
+            $matrix[$row][$col] = $bit;
         }
 
         // Place around bottom-left and top-right finders
+        /** @var list<array{0: int, 1: int}> $bottomLeftPositions */
         $bottomLeftPositions = [
             [$size - 1, 8], [$size - 2, 8], [$size - 3, 8], [$size - 4, 8],
             [$size - 5, 8], [$size - 6, 8], [$size - 7, 8],
         ];
 
+        /** @var list<array{0: int, 1: int}> $topRightPositions */
         $topRightPositions = [
             [8, $size - 8], [8, $size - 7], [8, $size - 6], [8, $size - 5],
             [8, $size - 4], [8, $size - 3], [8, $size - 2], [8, $size - 1],
         ];
 
-        for ($i = 0; $i < 7; $i++) {
+        foreach ($bottomLeftPositions as $i => [$row, $col]) {
             $bit = ($formatInfo >> $i) & 1;
-            $matrix[$bottomLeftPositions[$i][0]][$bottomLeftPositions[$i][1]] = $bit;
+            $matrix[$row][$col] = $bit;
         }
 
-        for ($i = 0; $i < 8; $i++) {
+        foreach ($topRightPositions as $i => [$row, $col]) {
             $bit = ($formatInfo >> (14 - $i)) & 1;
-            $matrix[$topRightPositions[$i][0]][$topRightPositions[$i][1]] = $bit;
+            $matrix[$row][$col] = $bit;
         }
     }
 
