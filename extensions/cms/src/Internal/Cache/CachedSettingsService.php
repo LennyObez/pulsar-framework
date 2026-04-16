@@ -30,12 +30,14 @@ final readonly class CachedSettingsService implements SettingsServiceInterface
     public function get(string $group, string $key, ?string $locale = null): mixed
     {
         $cacheKey = sprintf('cms_settings:%s:%s:%s', $group, $key, $locale ?? '_');
+        /** @var mixed $cached */
         $cached = $this->cache->get($cacheKey);
 
         if ($cached !== null) {
             return $cached;
         }
 
+        /** @var mixed $value */
         $value = $this->inner->get($group, $key, $locale);
         $this->cache->set($cacheKey, $value, [self::TAG], self::TTL);
 

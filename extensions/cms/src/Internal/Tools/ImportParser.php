@@ -1204,6 +1204,7 @@ final readonly class ImportParser
             }
 
             foreach ($keys as $key => $value) {
+                /** @var mixed $existing */
                 $existing = $this->settingsService->get($group, (string) $key);
 
                 if ($existing !== null) {
