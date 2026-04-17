@@ -63,8 +63,10 @@ final readonly class ContactFormBlock implements BlockTypeInterface
     {
         /** @var list<mixed> $fields */
         $fields = $data['fields'] ?? [];
-        $submitText = htmlspecialchars(is_string($data['submitText'] ?? null) ? $data['submitText'] : 'Submit', ENT_QUOTES, 'UTF-8');
-        $action = htmlspecialchars(is_string($data['action'] ?? null) ? $data['action'] : '', ENT_QUOTES, 'UTF-8');
+        $rawSubmitText = $data['submitText'] ?? null;
+        $rawAction = $data['action'] ?? null;
+        $submitText = htmlspecialchars(is_string($rawSubmitText) ? $rawSubmitText : 'Submit', ENT_QUOTES, 'UTF-8');
+        $action = htmlspecialchars(is_string($rawAction) ? $rawAction : '', ENT_QUOTES, 'UTF-8');
 
         // Generate a unique proof-of-work challenge per form render
         $powChallenge = bin2hex(random_bytes(16));
@@ -93,9 +95,12 @@ final readonly class ContactFormBlock implements BlockTypeInterface
                 continue;
             }
 
-            $name = htmlspecialchars(is_string($field['name'] ?? null) ? $field['name'] : '', ENT_QUOTES, 'UTF-8');
-            $type = htmlspecialchars(is_string($field['type'] ?? null) ? $field['type'] : 'text', ENT_QUOTES, 'UTF-8');
-            $label = htmlspecialchars(is_string($field['label'] ?? null) ? $field['label'] : '', ENT_QUOTES, 'UTF-8');
+            $rawName = $field['name'] ?? null;
+            $rawType = $field['type'] ?? null;
+            $rawLabel = $field['label'] ?? null;
+            $name = htmlspecialchars(is_string($rawName) ? $rawName : '', ENT_QUOTES, 'UTF-8');
+            $type = htmlspecialchars(is_string($rawType) ? $rawType : 'text', ENT_QUOTES, 'UTF-8');
+            $label = htmlspecialchars(is_string($rawLabel) ? $rawLabel : '', ENT_QUOTES, 'UTF-8');
 
             $html .= '<div class="contact-form__field">';
             $html .= "<label for=\"field-$name\">$label</label>";

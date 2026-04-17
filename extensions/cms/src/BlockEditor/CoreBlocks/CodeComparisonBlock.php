@@ -44,12 +44,17 @@ final readonly class CodeComparisonBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
+        /** @var mixed $title */
         $title = $data['title'] ?? null;
-        $leftLabel = htmlspecialchars(is_string($data['leftLabel'] ?? null) ? $data['leftLabel'] : '', ENT_QUOTES, 'UTF-8');
-        $leftCode = htmlspecialchars(is_string($data['leftCode'] ?? null) ? $data['leftCode'] : '', ENT_QUOTES, 'UTF-8');
+        $rawLeftLabel = $data['leftLabel'] ?? null;
+        $rawLeftCode = $data['leftCode'] ?? null;
+        $rawRightLabel = $data['rightLabel'] ?? null;
+        $rawRightCode = $data['rightCode'] ?? null;
+        $leftLabel = htmlspecialchars(is_string($rawLeftLabel) ? $rawLeftLabel : '', ENT_QUOTES, 'UTF-8');
+        $leftCode = htmlspecialchars(is_string($rawLeftCode) ? $rawLeftCode : '', ENT_QUOTES, 'UTF-8');
         $leftLang = $this->sanitizeLanguage($data['leftLanguage'] ?? null);
-        $rightLabel = htmlspecialchars(is_string($data['rightLabel'] ?? null) ? $data['rightLabel'] : '', ENT_QUOTES, 'UTF-8');
-        $rightCode = htmlspecialchars(is_string($data['rightCode'] ?? null) ? $data['rightCode'] : '', ENT_QUOTES, 'UTF-8');
+        $rightLabel = htmlspecialchars(is_string($rawRightLabel) ? $rawRightLabel : '', ENT_QUOTES, 'UTF-8');
+        $rightCode = htmlspecialchars(is_string($rawRightCode) ? $rawRightCode : '', ENT_QUOTES, 'UTF-8');
         $rightLang = $this->sanitizeLanguage($data['rightLanguage'] ?? null);
 
         $html = '<div class="code-comparison-block">';
