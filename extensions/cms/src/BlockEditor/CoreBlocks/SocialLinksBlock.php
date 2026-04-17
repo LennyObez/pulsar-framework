@@ -71,8 +71,10 @@ final readonly class SocialLinksBlock implements BlockTypeInterface
     {
         /** @var list<mixed> $links */
         $links = $data['links'] ?? [];
-        $style = is_string($data['style'] ?? null) ? $data['style'] : 'both';
-        $size = is_string($data['size'] ?? null) ? $data['size'] : 'md';
+        $rawStyle = $data['style'] ?? null;
+        $rawSize = $data['size'] ?? null;
+        $style = is_string($rawStyle) ? $rawStyle : 'both';
+        $size = is_string($rawSize) ? $rawSize : 'md';
 
         $html = "<nav class=\"social-links social-links--$style social-links--$size\" aria-label=\"Social media links\">";
 
@@ -81,8 +83,10 @@ final readonly class SocialLinksBlock implements BlockTypeInterface
                 continue;
             }
 
-            $platform = is_string($link['platform'] ?? null) ? $link['platform'] : '';
-            $url = htmlspecialchars(is_string($link['url'] ?? null) ? $link['url'] : '', ENT_QUOTES, 'UTF-8');
+            $rawPlatform = $link['platform'] ?? null;
+            $rawUrl = $link['url'] ?? null;
+            $platform = is_string($rawPlatform) ? $rawPlatform : '';
+            $url = htmlspecialchars(is_string($rawUrl) ? $rawUrl : '', ENT_QUOTES, 'UTF-8');
             $escapedPlatform = htmlspecialchars($platform, ENT_QUOTES, 'UTF-8');
             $label = self::PLATFORM_LABELS[$platform] ?? $escapedPlatform;
 
