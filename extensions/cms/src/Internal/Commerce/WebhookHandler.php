@@ -166,9 +166,13 @@ final readonly class WebhookHandler
      */
     private function handlePaymentSucceeded(array $object): void
     {
-        $paymentIntentId = is_string($object['id'] ?? null) ? $object['id'] : '';
-        $metadata = is_array($object['metadata'] ?? null) ? $object['metadata'] : [];
-        $orderId = is_string($metadata['orderId'] ?? null) ? $metadata['orderId'] : '';
+        $rawId = $object['id'] ?? null;
+        $paymentIntentId = is_string($rawId) ? $rawId : '';
+        /** @var mixed $rawMetadata */
+        $rawMetadata = $object['metadata'] ?? null;
+        $metadata = is_array($rawMetadata) ? $rawMetadata : [];
+        $rawOrderId = $metadata['orderId'] ?? null;
+        $orderId = is_string($rawOrderId) ? $rawOrderId : '';
 
         if ($orderId === '') {
             return;
@@ -202,9 +206,13 @@ final readonly class WebhookHandler
      */
     private function handlePaymentFailed(array $object): void
     {
-        $metadata = is_array($object['metadata'] ?? null) ? $object['metadata'] : [];
-        $orderId = is_string($metadata['orderId'] ?? null) ? $metadata['orderId'] : '';
-        $reason = is_string($object['failure_message'] ?? null) ? $object['failure_message'] : 'Payment failed';
+        /** @var mixed $rawMetadata */
+        $rawMetadata = $object['metadata'] ?? null;
+        $metadata = is_array($rawMetadata) ? $rawMetadata : [];
+        $rawOrderId = $metadata['orderId'] ?? null;
+        $orderId = is_string($rawOrderId) ? $rawOrderId : '';
+        $rawReason = $object['failure_message'] ?? null;
+        $reason = is_string($rawReason) ? $rawReason : 'Payment failed';
 
         if ($orderId === '') {
             return;
@@ -227,9 +235,13 @@ final readonly class WebhookHandler
      */
     private function handleChargeRefunded(array $object): void
     {
-        $metadata = is_array($object['metadata'] ?? null) ? $object['metadata'] : [];
-        $orderId = is_string($metadata['orderId'] ?? null) ? $metadata['orderId'] : '';
-        $refundAmount = is_int($object['amount_refunded'] ?? null) ? $object['amount_refunded'] : 0;
+        /** @var mixed $rawMetadata */
+        $rawMetadata = $object['metadata'] ?? null;
+        $metadata = is_array($rawMetadata) ? $rawMetadata : [];
+        $rawOrderId = $metadata['orderId'] ?? null;
+        $orderId = is_string($rawOrderId) ? $rawOrderId : '';
+        $rawRefundAmount = $object['amount_refunded'] ?? null;
+        $refundAmount = is_int($rawRefundAmount) ? $rawRefundAmount : 0;
 
         if ($orderId === '' || $refundAmount === 0) {
             return;
