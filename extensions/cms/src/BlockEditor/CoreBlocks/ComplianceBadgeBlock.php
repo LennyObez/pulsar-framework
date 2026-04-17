@@ -113,8 +113,10 @@ final readonly class ComplianceBadgeBlock implements BlockTypeInterface
      */
     private function renderBadge(array $badge): string
     {
+        /** @var mixed $rawFramework */
         $rawFramework = $badge['framework'] ?? null;
         $framework = is_string($rawFramework) ? $rawFramework : '';
+        /** @var mixed $rawLabel */
         $rawLabel = $badge['label'] ?? null;
         $label = is_string($rawLabel)
             ? $rawLabel

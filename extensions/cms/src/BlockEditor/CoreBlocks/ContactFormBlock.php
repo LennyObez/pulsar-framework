@@ -63,7 +63,9 @@ final readonly class ContactFormBlock implements BlockTypeInterface
     {
         /** @var list<mixed> $fields */
         $fields = $data['fields'] ?? [];
+        /** @var mixed $rawSubmitText */
         $rawSubmitText = $data['submitText'] ?? null;
+        /** @var mixed $rawAction */
         $rawAction = $data['action'] ?? null;
         $submitText = htmlspecialchars(is_string($rawSubmitText) ? $rawSubmitText : 'Submit', ENT_QUOTES, 'UTF-8');
         $action = htmlspecialchars(is_string($rawAction) ? $rawAction : '', ENT_QUOTES, 'UTF-8');
@@ -95,8 +97,11 @@ final readonly class ContactFormBlock implements BlockTypeInterface
                 continue;
             }
 
+            /** @var mixed $rawName */
             $rawName = $field['name'] ?? null;
+            /** @var mixed $rawType */
             $rawType = $field['type'] ?? null;
+            /** @var mixed $rawLabel */
             $rawLabel = $field['label'] ?? null;
             $name = htmlspecialchars(is_string($rawName) ? $rawName : '', ENT_QUOTES, 'UTF-8');
             $type = htmlspecialchars(is_string($rawType) ? $rawType : 'text', ENT_QUOTES, 'UTF-8');
