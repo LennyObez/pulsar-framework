@@ -4,6 +4,8 @@
   "description": "Pulsar HMVC Framework (PHP 8.5)",
   "type": "library",
   "license": "Apache-2.0",
+  "minimum-stability": "dev",
+  "prefer-stable": true,
   "require": {
     "php": ">=8.5.1",
     "ext-ctype": "*",
