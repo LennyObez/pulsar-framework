@@ -55,6 +55,7 @@ final readonly class CarouselBlock implements BlockTypeInterface
         /** @var list<mixed> $slides */
         $slides = $data['slides'] ?? [];
         $autoplay = ($data['autoplay'] ?? false) === true ? 'true' : 'false';
+        /** @var mixed $rawInterval */
         $rawInterval = $data['interval'] ?? null;
         $interval = is_int($rawInterval) ? $rawInterval : 5000;
 
@@ -83,7 +84,9 @@ final readonly class CarouselBlock implements BlockTypeInterface
             }
 
             $slideIndex++;
+            /** @var mixed $rawImageUrl */
             $rawImageUrl = $slide['imageUrl'] ?? null;
+            /** @var mixed $rawAlt */
             $rawAlt = $slide['alt'] ?? null;
             $imageUrl = htmlspecialchars(is_string($rawImageUrl) ? $rawImageUrl : '', ENT_QUOTES, 'UTF-8');
             $alt = htmlspecialchars(is_string($rawAlt) ? $rawAlt : '', ENT_QUOTES, 'UTF-8');
