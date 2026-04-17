@@ -76,6 +76,7 @@ final readonly class SensitiveDataScrubber
     {
         $result = [];
 
+        /** @var mixed $value */
         foreach ($data as $key => $value) {
             if (is_string($key) && $this->isSensitiveKey($key)) {
                 $result[$key] = self::REDACTED;
@@ -83,6 +84,7 @@ final readonly class SensitiveDataScrubber
                 /** @var array<string, mixed> $value */
                 $result[$key] = $this->scrub($value);
             } else {
+                /** @var mixed */
                 $result[$key] = $value;
             }
         }
