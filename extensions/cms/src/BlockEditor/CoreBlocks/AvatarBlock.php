@@ -48,16 +48,22 @@ final readonly class AvatarBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
+        /** @var mixed $src */
         $src = $data['src'] ?? null;
-        $alt = htmlspecialchars(is_string($data['alt'] ?? null) ? $data['alt'] : '', ENT_QUOTES, 'UTF-8');
-        $name = is_string($data['name'] ?? null) ? $data['name'] : '';
-        $size = is_string($data['size'] ?? null) && in_array($data['size'], self::VALID_SIZES, true)
-            ? $data['size']
+        $rawAlt = $data['alt'] ?? null;
+        $rawName = $data['name'] ?? null;
+        $rawSize = $data['size'] ?? null;
+        $rawShape = $data['shape'] ?? null;
+        $rawWidth = $data['width'] ?? null;
+        $alt = htmlspecialchars(is_string($rawAlt) ? $rawAlt : '', ENT_QUOTES, 'UTF-8');
+        $name = is_string($rawName) ? $rawName : '';
+        $size = is_string($rawSize) && in_array($rawSize, self::VALID_SIZES, true)
+            ? $rawSize
             : 'md';
-        $shape = is_string($data['shape'] ?? null) && in_array($data['shape'], self::VALID_SHAPES, true)
-            ? $data['shape']
+        $shape = is_string($rawShape) && in_array($rawShape, self::VALID_SHAPES, true)
+            ? $rawShape
             : 'circle';
-        $width = is_int($data['width'] ?? null) ? $data['width'] : null;
+        $width = is_int($rawWidth) ? $rawWidth : null;
 
         $widthAttr = $width !== null ? " width=\"$width\" height=\"$width\"" : '';
 
