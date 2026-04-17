@@ -102,16 +102,20 @@ final readonly class OllamaProvider implements AiClientInterface
             return AiResponse::error($message);
         }
 
+        /** @var mixed $rawMessage */
         $rawMessage = $data['message'] ?? null;
         /** @var array{content?: string} $responseMessage */
         $responseMessage = is_array($rawMessage) ? $rawMessage : [];
 
+        /** @var mixed $rawEvalCount */
         $rawEvalCount = $data['eval_count'] ?? null;
         $evalCount = is_int($rawEvalCount) ? $rawEvalCount : 0;
+        /** @var mixed $rawPromptEvalCount */
         $rawPromptEvalCount = $data['prompt_eval_count'] ?? null;
         $promptEvalCount = is_int($rawPromptEvalCount) ? $rawPromptEvalCount : 0;
 
         $rawContent = $responseMessage['content'] ?? null;
+        /** @var mixed $rawDoneReason */
         $rawDoneReason = $data['done_reason'] ?? null;
         return new AiResponse(
             content: is_string($rawContent) ? $rawContent : '',
