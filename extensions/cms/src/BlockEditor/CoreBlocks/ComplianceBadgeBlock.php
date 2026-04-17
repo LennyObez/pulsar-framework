@@ -113,14 +113,19 @@ final readonly class ComplianceBadgeBlock implements BlockTypeInterface
      */
     private function renderBadge(array $badge): string
     {
-        $framework = is_string($badge['framework'] ?? null) ? $badge['framework'] : '';
-        $label = is_string($badge['label'] ?? null)
-            ? $badge['label']
+        $rawFramework = $badge['framework'] ?? null;
+        $framework = is_string($rawFramework) ? $rawFramework : '';
+        $rawLabel = $badge['label'] ?? null;
+        $label = is_string($rawLabel)
+            ? $rawLabel
             : (self::KNOWN_FRAMEWORKS[$framework] ?? $framework);
         $escapedLabel = htmlspecialchars($label, ENT_QUOTES, 'UTF-8');
         $escapedFramework = htmlspecialchars($framework, ENT_QUOTES, 'UTF-8');
+        /** @var mixed $logoUrl */
         $logoUrl = $badge['logoUrl'] ?? null;
+        /** @var mixed $url */
         $url = $badge['url'] ?? null;
+        /** @var mixed $status */
         $status = $badge['status'] ?? null;
 
         $content = '';
