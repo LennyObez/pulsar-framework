@@ -60,6 +60,7 @@ final readonly class PricingTableBlock implements BlockTypeInterface
     {
         /** @var list<mixed> $plans */
         $plans = $data['plans'] ?? [];
+        /** @var mixed $highlighted */
         $highlighted = $data['highlighted'] ?? null;
 
         $html = '<div class="pricing-table">';
@@ -75,10 +76,14 @@ final readonly class PricingTableBlock implements BlockTypeInterface
                 $cssClass .= ' pricing-plan--highlighted';
             }
 
-            $name = htmlspecialchars(is_string($plan['name'] ?? null) ? $plan['name'] : '', ENT_QUOTES, 'UTF-8');
-            $price = htmlspecialchars(is_string($plan['price'] ?? null) ? $plan['price'] : '', ENT_QUOTES, 'UTF-8');
-            $ctaText = htmlspecialchars(is_string($plan['ctaText'] ?? null) ? $plan['ctaText'] : '', ENT_QUOTES, 'UTF-8');
-            $ctaUrl = htmlspecialchars(is_string($plan['ctaUrl'] ?? null) ? $plan['ctaUrl'] : '', ENT_QUOTES, 'UTF-8');
+            $rawName = $plan['name'] ?? null;
+            $rawPrice = $plan['price'] ?? null;
+            $rawCtaText = $plan['ctaText'] ?? null;
+            $rawCtaUrl = $plan['ctaUrl'] ?? null;
+            $name = htmlspecialchars(is_string($rawName) ? $rawName : '', ENT_QUOTES, 'UTF-8');
+            $price = htmlspecialchars(is_string($rawPrice) ? $rawPrice : '', ENT_QUOTES, 'UTF-8');
+            $ctaText = htmlspecialchars(is_string($rawCtaText) ? $rawCtaText : '', ENT_QUOTES, 'UTF-8');
+            $ctaUrl = htmlspecialchars(is_string($rawCtaUrl) ? $rawCtaUrl : '', ENT_QUOTES, 'UTF-8');
 
             $html .= "<div class=\"$cssClass\">";
             $html .= "<h3 class=\"pricing-plan__name\">$name</h3>";
