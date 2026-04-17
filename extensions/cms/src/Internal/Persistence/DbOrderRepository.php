@@ -18,6 +18,7 @@ use Pulsar\Extension\Cms\Commerce\ShippingMethod;
 use Pulsar\Extension\Cms\Content\DataClassification;
 use Pulsar\Extension\Cms\Exception\CmsException;
 
+use function is_string;
 use function json_decode;
 use function json_encode;
 
@@ -105,19 +106,20 @@ final readonly class DbOrderRepository implements OrderRepositoryInterface
     public function listOrders(array $filters, int $page, int $perPage): array
     {
         $sql = 'SELECT * FROM cms_orders WHERE 1=1';
+        /** @var array<string, mixed> $bindings */
         $bindings = [];
 
-        if (isset($filters['status'])) {
+        if (is_string($filters['status'] ?? null)) {
             $sql .= ' AND status = :status';
             $bindings['status'] = $filters['status'];
         }
 
-        if (isset($filters['customerId'])) {
+        if (is_string($filters['customerId'] ?? null)) {
             $sql .= ' AND customer_id = :customer_id';
             $bindings['customer_id'] = $filters['customerId'];
         }
 
-        if (isset($filters['tenantId'])) {
+        if (is_string($filters['tenantId'] ?? null)) {
             $sql .= ' AND tenant_id = :tenant_id';
             $bindings['tenant_id'] = $filters['tenantId'];
         } elseif ($this->tenantId !== null) {
@@ -125,12 +127,12 @@ final readonly class DbOrderRepository implements OrderRepositoryInterface
             $bindings['tenant_id'] = $this->tenantId;
         }
 
-        if (isset($filters['dateFrom'])) {
+        if (is_string($filters['dateFrom'] ?? null)) {
             $sql .= ' AND created_at >= :date_from';
             $bindings['date_from'] = $filters['dateFrom'];
         }
 
-        if (isset($filters['dateTo'])) {
+        if (is_string($filters['dateTo'] ?? null)) {
             $sql .= ' AND created_at <= :date_to';
             $bindings['date_to'] = $filters['dateTo'];
         }
