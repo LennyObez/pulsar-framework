@@ -65,8 +65,10 @@ final readonly class AccordionBlock implements BlockTypeInterface
                 continue;
             }
 
-            $title = htmlspecialchars(is_string($item['title'] ?? null) ? $item['title'] : '', ENT_QUOTES, 'UTF-8');
-            $content = htmlspecialchars(is_string($item['content'] ?? null) ? $item['content'] : '', ENT_QUOTES, 'UTF-8');
+            $rawTitle = $item['title'] ?? null;
+            $rawContent = $item['content'] ?? null;
+            $title = htmlspecialchars(is_string($rawTitle) ? $rawTitle : '', ENT_QUOTES, 'UTF-8');
+            $content = htmlspecialchars(is_string($rawContent) ? $rawContent : '', ENT_QUOTES, 'UTF-8');
             $headingId = "accordion-heading-$i";
             $panelId = "accordion-panel-$i";
 
@@ -86,8 +88,10 @@ final readonly class AccordionBlock implements BlockTypeInterface
                     continue;
                 }
 
-                $qText = is_string($item['title'] ?? null) ? $item['title'] : '';
-                $aText = is_string($item['content'] ?? null) ? $item['content'] : '';
+                $rawQText = $item['title'] ?? null;
+                $rawAText = $item['content'] ?? null;
+                $qText = is_string($rawQText) ? $rawQText : '';
+                $aText = is_string($rawAText) ? $rawAText : '';
 
                 $faqItems[] = [
                     '@type' => 'Question',
