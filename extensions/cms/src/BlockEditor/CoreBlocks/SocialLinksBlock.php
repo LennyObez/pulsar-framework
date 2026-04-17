@@ -71,7 +71,9 @@ final readonly class SocialLinksBlock implements BlockTypeInterface
     {
         /** @var list<mixed> $links */
         $links = $data['links'] ?? [];
+        /** @var mixed $rawStyle */
         $rawStyle = $data['style'] ?? null;
+        /** @var mixed $rawSize */
         $rawSize = $data['size'] ?? null;
         $style = is_string($rawStyle) ? $rawStyle : 'both';
         $size = is_string($rawSize) ? $rawSize : 'md';
@@ -83,7 +85,9 @@ final readonly class SocialLinksBlock implements BlockTypeInterface
                 continue;
             }
 
+            /** @var mixed $rawPlatform */
             $rawPlatform = $link['platform'] ?? null;
+            /** @var mixed $rawUrl */
             $rawUrl = $link['url'] ?? null;
             $platform = is_string($rawPlatform) ? $rawPlatform : '';
             $url = htmlspecialchars(is_string($rawUrl) ? $rawUrl : '', ENT_QUOTES, 'UTF-8');

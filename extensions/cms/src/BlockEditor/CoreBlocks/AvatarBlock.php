@@ -50,10 +50,15 @@ final readonly class AvatarBlock implements BlockTypeInterface
     {
         /** @var mixed $src */
         $src = $data['src'] ?? null;
+        /** @var mixed $rawAlt */
         $rawAlt = $data['alt'] ?? null;
+        /** @var mixed $rawName */
         $rawName = $data['name'] ?? null;
+        /** @var mixed $rawSize */
         $rawSize = $data['size'] ?? null;
+        /** @var mixed $rawShape */
         $rawShape = $data['shape'] ?? null;
+        /** @var mixed $rawWidth */
         $rawWidth = $data['width'] ?? null;
         $alt = htmlspecialchars(is_string($rawAlt) ? $rawAlt : '', ENT_QUOTES, 'UTF-8');
         $name = is_string($rawName) ? $rawName : '';

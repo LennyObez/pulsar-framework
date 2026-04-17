@@ -65,7 +65,9 @@ final readonly class AccordionBlock implements BlockTypeInterface
                 continue;
             }
 
+            /** @var mixed $rawTitle */
             $rawTitle = $item['title'] ?? null;
+            /** @var mixed $rawContent */
             $rawContent = $item['content'] ?? null;
             $title = htmlspecialchars(is_string($rawTitle) ? $rawTitle : '', ENT_QUOTES, 'UTF-8');
             $content = htmlspecialchars(is_string($rawContent) ? $rawContent : '', ENT_QUOTES, 'UTF-8');
@@ -88,7 +90,9 @@ final readonly class AccordionBlock implements BlockTypeInterface
                     continue;
                 }
 
+                /** @var mixed $rawQText */
                 $rawQText = $item['title'] ?? null;
+                /** @var mixed $rawAText */
                 $rawAText = $item['content'] ?? null;
                 $qText = is_string($rawQText) ? $rawQText : '';
                 $aText = is_string($rawAText) ? $rawAText : '';

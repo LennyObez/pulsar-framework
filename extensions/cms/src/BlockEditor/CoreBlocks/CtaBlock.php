@@ -45,7 +45,9 @@ final readonly class CtaBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
+        /** @var mixed $rawText */
         $rawText = $data['text'] ?? null;
+        /** @var mixed $rawUrl */
         $rawUrl = $data['url'] ?? null;
         $textStr = is_string($rawText) ? $rawText : '';
         $urlStr = is_string($rawUrl) ? $rawUrl : '';
