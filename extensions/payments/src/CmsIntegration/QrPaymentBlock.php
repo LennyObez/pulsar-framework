@@ -197,14 +197,19 @@ final readonly class QrPaymentBlock implements BlockTypeInterface
     private function generateQrSvg(QrPaymentGateway $gateway, array $data, string $format): string
     {
         $amount = $this->resolveAmount($data);
+        /** @var mixed $rawBeneficiary */
         $rawBeneficiary = $data['beneficiary_name'] ?? null;
         $beneficiaryName = is_string($rawBeneficiary) ? $rawBeneficiary : '';
+        /** @var mixed $rawIban */
         $rawIban = $data['iban'] ?? null;
         $iban = is_string($rawIban) ? $rawIban : '';
+        /** @var mixed $rawBic */
         $rawBic = $data['bic'] ?? null;
         $bic = is_string($rawBic) ? $rawBic : '';
+        /** @var mixed $rawReference */
         $rawReference = $data['reference'] ?? null;
         $reference = is_string($rawReference) ? $rawReference : '';
+        /** @var mixed $rawPaymentUrl */
         $rawPaymentUrl = $data['payment_url'] ?? null;
         $paymentUrl = is_string($rawPaymentUrl) ? $rawPaymentUrl : '';
 
