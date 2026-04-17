@@ -155,6 +155,7 @@ final readonly class MetricsRequestBuilder
         $w = new ProtobufWriter();
 
         // NumberDataPoint.time_unix_nano (field 3, fixed64)
+        /** @var mixed $timeNano */
         $timeNano = $dp['time_unix_nano'] ?? null;
 
         if (is_int($timeNano)) {
@@ -163,6 +164,7 @@ final readonly class MetricsRequestBuilder
 
         // NumberDataPoint.as_double (field 4) or as_int (field 6)
         if (isset($dp['value'])) {
+            /** @var mixed $value */
             $value = $dp['value'];
 
             if (is_float($value)) {
@@ -194,6 +196,7 @@ final readonly class MetricsRequestBuilder
         $w = new ProtobufWriter();
 
         // HistogramDataPoint.time_unix_nano (field 3, fixed64)
+        /** @var mixed $hdpTimeNano */
         $hdpTimeNano = $dp['time_unix_nano'] ?? null;
 
         if (is_int($hdpTimeNano)) {
@@ -201,6 +204,7 @@ final readonly class MetricsRequestBuilder
         }
 
         // HistogramDataPoint.count (field 4, fixed64)
+        /** @var mixed $hdpCount */
         $hdpCount = $dp['count'] ?? null;
 
         if (is_int($hdpCount)) {
@@ -208,6 +212,7 @@ final readonly class MetricsRequestBuilder
         }
 
         // HistogramDataPoint.sum (field 5, double/fixed64 wire type 1)
+        /** @var mixed $hdpSum */
         $hdpSum = $dp['sum'] ?? null;
 
         if (is_float($hdpSum) || is_int($hdpSum)) {

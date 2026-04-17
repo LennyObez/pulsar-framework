@@ -126,6 +126,7 @@ final readonly class MetricsRequestBuilder
     private function encodeNumberDataPoint(array $dp): ProtobufWriter
     {
         $w = new ProtobufWriter();
+        /** @var mixed $timeNano */
         $timeNano = $dp['time_unix_nano'] ?? null;
 
         if (is_int($timeNano)) {
@@ -133,6 +134,7 @@ final readonly class MetricsRequestBuilder
         }
 
         if (isset($dp['value'])) {
+            /** @var mixed $value */
             $value = $dp['value'];
 
             if (is_float($value)) {
@@ -159,18 +161,21 @@ final readonly class MetricsRequestBuilder
     private function encodeHistogramDataPoint(array $dp): ProtobufWriter
     {
         $w = new ProtobufWriter();
+        /** @var mixed $hdpTimeNano */
         $hdpTimeNano = $dp['time_unix_nano'] ?? null;
 
         if (is_int($hdpTimeNano)) {
             $w->writeFixed64Field(OtlpFieldNumbers::HDP_TIME_UNIX_NANO, $hdpTimeNano);
         }
 
+        /** @var mixed $hdpCount */
         $hdpCount = $dp['count'] ?? null;
 
         if (is_int($hdpCount)) {
             $w->writeFixed64Field(OtlpFieldNumbers::HDP_COUNT, $hdpCount);
         }
 
+        /** @var mixed $hdpSum */
         $hdpSum = $dp['sum'] ?? null;
 
         if (is_float($hdpSum) || is_int($hdpSum)) {
