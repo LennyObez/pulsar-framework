@@ -86,7 +86,9 @@ final readonly class CloudWiring implements ServiceWiringInterface
         $container->instance(AwsConfig::class, $awsConfig);
 
         // S3 Storage
+        /** @var mixed $rawBucket */
         $rawBucket = $awsData['s3_bucket'] ?? '';
+        /** @var mixed $rawPrefix */
         $rawPrefix = $awsData['s3_prefix'] ?? '';
 
         if (is_string($rawBucket) && $rawBucket !== '') {
@@ -102,7 +104,9 @@ final readonly class CloudWiring implements ServiceWiringInterface
         }
 
         // SQS Queue
+        /** @var mixed $rawSqsPrefix */
         $rawSqsPrefix = $awsData['sqs_prefix'] ?? '';
+        /** @var mixed $rawFifo */
         $rawFifo = $awsData['sqs_fifo'] ?? false;
 
         $container->bind(
