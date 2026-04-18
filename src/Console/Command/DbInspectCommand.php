@@ -43,6 +43,7 @@ final class DbInspectCommand extends Command
     #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
+        /** @var mixed $tableName */
         $tableName = $input->getArgument(0);
         $showAllColumns = $input->hasOption('columns');
 

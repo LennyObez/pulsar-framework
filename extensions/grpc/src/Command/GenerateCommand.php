@@ -61,6 +61,7 @@ final class GenerateCommand extends Command
     #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
+        /** @var mixed $protoFile */
         $protoFile = $input->getArgument(0);
         $outputDir = $this->resolveOutputDir($input);
         $validateOnly = $input->hasOption('validate-only');
