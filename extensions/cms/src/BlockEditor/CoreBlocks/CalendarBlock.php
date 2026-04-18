@@ -56,7 +56,9 @@ final readonly class CalendarBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
+        /** @var mixed $rawYear */
         $rawYear = $data['year'] ?? null;
+        /** @var mixed $rawMonth */
         $rawMonth = $data['month'] ?? null;
         $year = is_int($rawYear) ? $rawYear : (int) date('Y');
         $month = is_int($rawMonth) ? $rawMonth : (int) date('n');
@@ -87,6 +89,7 @@ final readonly class CalendarBlock implements BlockTypeInterface
             $day = $post['day'] ?? null;
 
             if (is_int($day) && $day >= 1 && $day <= 31) {
+                /** @var mixed $rawUrl */
                 $rawUrl = $post['url'] ?? null;
                 $postMap[$day] = is_string($rawUrl) ? $rawUrl : '#';
             }
@@ -94,8 +97,8 @@ final readonly class CalendarBlock implements BlockTypeInterface
 
         $daysInMonth = cal_days_in_month(CAL_GREGORIAN, $month, $year);
         $timestamp = mktime(0, 0, 0, $month, 1, $year);
-        $firstDayOfWeek = $timestamp !== false ? (int) date('w', $timestamp) : 0;
-        $monthName = $timestamp !== false ? date('F', $timestamp) : '';
+        $firstDayOfWeek = (int) date('w', $timestamp);
+        $monthName = date('F', $timestamp);
         $days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
         $html = '<div class="calendar-block">';
