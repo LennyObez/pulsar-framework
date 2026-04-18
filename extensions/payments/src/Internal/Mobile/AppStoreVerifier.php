@@ -184,22 +184,24 @@ final readonly class AppStoreVerifier implements MobileVerifierInterface
             }
 
             $lastTransaction = $lastTransactions[0];
-            $status = is_int($lastTransaction['status'] ?? null) ? $lastTransaction['status'] : -1;
+            /** @var mixed $rawStatus */
+            $rawStatus = $lastTransaction['status'] ?? null;
+            $status = is_int($rawStatus) ? $rawStatus : -1;
 
             $isValid = $status === 1 || $status === 4;
 
-            $signedTransactionInfo = is_string($lastTransaction['signedTransactionInfo'] ?? null)
-                ? $lastTransaction['signedTransactionInfo']
-                : '';
+            /** @var mixed $rawSignedTransactionInfo */
+            $rawSignedTransactionInfo = $lastTransaction['signedTransactionInfo'] ?? null;
+            $signedTransactionInfo = is_string($rawSignedTransactionInfo) ? $rawSignedTransactionInfo : '';
 
             $transactionInfo = $this->decodeSignedPayload($signedTransactionInfo);
-            $productId = is_string($transactionInfo['productId'] ?? null)
-                ? $transactionInfo['productId']
-                : '';
+            /** @var mixed $rawProductId */
+            $rawProductId = $transactionInfo['productId'] ?? null;
+            $productId = is_string($rawProductId) ? $rawProductId : '';
 
-            $expiresDateMs = is_int($transactionInfo['expiresDate'] ?? null)
-                ? $transactionInfo['expiresDate']
-                : null;
+            /** @var mixed $rawExpiresDate */
+            $rawExpiresDate = $transactionInfo['expiresDate'] ?? null;
+            $expiresDateMs = is_int($rawExpiresDate) ? $rawExpiresDate : null;
 
             $expiresAt = $expiresDateMs !== null
                 ? new DateTimeImmutable()->setTimestamp(intdiv($expiresDateMs, 1000))
@@ -207,9 +209,9 @@ final readonly class AppStoreVerifier implements MobileVerifierInterface
 
             $gracePeriodUntil = $status === 4 && $expiresAt !== null ? $expiresAt : null;
 
-            $signedRenewalInfo = is_string($lastTransaction['signedRenewalInfo'] ?? null)
-                ? $lastTransaction['signedRenewalInfo']
-                : '';
+            /** @var mixed $rawSignedRenewalInfo */
+            $rawSignedRenewalInfo = $lastTransaction['signedRenewalInfo'] ?? null;
+            $signedRenewalInfo = is_string($rawSignedRenewalInfo) ? $rawSignedRenewalInfo : '';
 
             $renewalInfo = $this->decodeSignedPayload($signedRenewalInfo);
             $autoRenewing = ($renewalInfo['autoRenewStatus'] ?? 0) === 1;
