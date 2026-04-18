@@ -147,8 +147,12 @@ final readonly class SchemaFileParser
         $data = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
 
         $entities = [];
-        $rawEntities = is_array($data['entities'] ?? null) ? $data['entities'] : [];
-        $namespace = is_string($data['namespace'] ?? null) ? $data['namespace'] : $this->defaultNamespace;
+        /** @var mixed $rawEntitiesValue */
+        $rawEntitiesValue = $data['entities'] ?? null;
+        $rawEntities = is_array($rawEntitiesValue) ? $rawEntitiesValue : [];
+        /** @var mixed $rawNamespace */
+        $rawNamespace = $data['namespace'] ?? null;
+        $namespace = is_string($rawNamespace) ? $rawNamespace : $this->defaultNamespace;
 
         foreach ($rawEntities as $className => $definition) {
             if (!is_string($className) || !is_array($definition)) {
@@ -166,12 +170,16 @@ final readonly class SchemaFileParser
      */
     private function parseEntity(string $className, array $definition, string $namespace): EntityDefinition
     {
-        $tableName = is_string($definition['table'] ?? null)
-            ? $definition['table']
+        /** @var mixed $rawTableName */
+        $rawTableName = $definition['table'] ?? null;
+        $tableName = is_string($rawTableName)
+            ? $rawTableName
             : IdentifierNormalizer::toTableName($className);
 
         $properties = [];
-        $rawProperties = is_array($definition['properties'] ?? null) ? $definition['properties'] : [];
+        /** @var mixed $rawPropertiesValue */
+        $rawPropertiesValue = $definition['properties'] ?? null;
+        $rawProperties = is_array($rawPropertiesValue) ? $rawPropertiesValue : [];
 
         foreach ($rawProperties as $propName => $propDef) {
             if (!is_string($propName) || !is_array($propDef)) {
@@ -182,7 +190,9 @@ final readonly class SchemaFileParser
         }
 
         $relationships = [];
-        $rawRelations = is_array($definition['relations'] ?? null) ? $definition['relations'] : [];
+        /** @var mixed $rawRelationsValue */
+        $rawRelationsValue = $definition['relations'] ?? null;
+        $rawRelations = is_array($rawRelationsValue) ? $rawRelationsValue : [];
 
         foreach ($rawRelations as $relName => $relDef) {
             if (!is_string($relName) || !is_array($relDef)) {
