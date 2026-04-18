@@ -302,10 +302,14 @@ final class Collection implements Countable, IteratorAggregate
 
         usort($items, static function (mixed $a, mixed $b) use ($keyOrCallback): int {
             if (is_string($keyOrCallback)) {
+                /** @var mixed $va */
                 $va = is_array($a) ? ($a[$keyOrCallback] ?? null) : (is_object($a) && property_exists($a, $keyOrCallback) ? $a->{$keyOrCallback} : null);
+                /** @var mixed $vb */
                 $vb = is_array($b) ? ($b[$keyOrCallback] ?? null) : (is_object($b) && property_exists($b, $keyOrCallback) ? $b->{$keyOrCallback} : null);
             } else {
+                /** @var mixed $va */
                 $va = $keyOrCallback($a);
+                /** @var mixed $vb */
                 $vb = $keyOrCallback($b);
             }
 
