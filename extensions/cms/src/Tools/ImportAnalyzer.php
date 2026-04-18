@@ -51,7 +51,9 @@ final readonly class ImportAnalyzer
                 }
 
                 /** @var array<string, mixed> $item */
+                /** @var mixed $slug */
                 $slug = $item['slug'] ?? $item['slugSegment'] ?? null;
+                /** @var mixed $locale */
                 $locale = $item['locale'] ?? 'en';
 
                 if (is_string($slug) && $slug !== '') {
@@ -112,6 +114,7 @@ final readonly class ImportAnalyzer
                     }
                 }
 
+                /** @var mixed $storagePath */
                 $storagePath = $item['storage_path'] ?? null;
 
                 if (is_string($storagePath) && !isset($bundleData['media_files'])) {
