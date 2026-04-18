@@ -406,15 +406,19 @@ final readonly class Request
         /** @var array<string, mixed> $cookieData */
         $cookieData = $cookies ?? $_COOKIE;
 
+        /** @var mixed $requestMethod */
         $requestMethod = $serverData['REQUEST_METHOD'] ?? 'GET';
         $method = Method::fromString(is_string($requestMethod) ? $requestMethod : 'GET');
 
+        /** @var mixed $requestUri */
         $requestUri = $serverData['REQUEST_URI'] ?? '/';
         $uri = is_string($requestUri) ? $requestUri : '/';
 
+        /** @var mixed $queryStr */
         $queryStr = $serverData['QUERY_STRING'] ?? '';
         $queryString = is_string($queryStr) ? $queryStr : '';
 
+        /** @var mixed $protocol */
         $protocol = $serverData['SERVER_PROTOCOL'] ?? null;
         $protocolVersion = is_string($protocol)
             ? str_replace('HTTP/', '', $protocol)
