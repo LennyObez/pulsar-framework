@@ -26,6 +26,10 @@ final readonly class OAuth2Config
      * @param bool $pairwiseSubjects Whether pairwise subject identifiers are supported
      * @param string $signingKeyId Keyring key identifier for token signing
      * @param string $tokenFormat Token format: 'reference' or 'jwt'
+     * @param string $authorizationCodeStore Storage backend for authorization codes:
+     *                                       'memory' (default, dev/testing only) or
+     *                                       'database' (F385.12, production-grade
+     *                                       persistence via {@see Pulsar\Database\ConnectionInterface}).
      */
     public function __construct(
         public string $issuer = '',
@@ -37,6 +41,7 @@ final readonly class OAuth2Config
         public bool $pairwiseSubjects = false,
         public string $signingKeyId = 'oauth_sign',
         public string $tokenFormat = 'reference',
+        public string $authorizationCodeStore = 'memory',
     ) {}
 
     /**
@@ -59,6 +64,10 @@ final readonly class OAuth2Config
         $sigKeyId = isset($data['signing_key_id']) && is_string($data['signing_key_id']) ? $data['signing_key_id'] : 'oauth_sign';
         /** @var string $tokenFmt */
         $tokenFmt = isset($data['token_format']) && is_string($data['token_format']) ? $data['token_format'] : 'reference';
+        /** @var string $authCodeStore */
+        $authCodeStore = isset($data['authorization_code_store']) && is_string($data['authorization_code_store'])
+            ? $data['authorization_code_store']
+            : 'memory';
 
         return new self(
             issuer: $issuer,
@@ -70,6 +79,7 @@ final readonly class OAuth2Config
             pairwiseSubjects: (bool) ($data['pairwise_subjects'] ?? false),
             signingKeyId: $sigKeyId,
             tokenFormat: $tokenFmt,
+            authorizationCodeStore: $authCodeStore,
         );
     }
 }

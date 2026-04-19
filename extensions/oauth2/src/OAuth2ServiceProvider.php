@@ -31,6 +31,8 @@ use Pulsar\Extension\OAuth2\Oidc\OidcConfig;
 use Pulsar\Extension\OAuth2\Oidc\OidcDiscovery;
 use Pulsar\Extension\OAuth2\Oidc\UserInfoEndpoint;
 use Pulsar\Extension\OAuth2\Token\InMemoryAccessTokenRepository;
+use Pulsar\Database\ConnectionInterface;
+use Pulsar\Extension\OAuth2\Token\DbAuthorizationCodeRepository;
 use Pulsar\Extension\OAuth2\Token\InMemoryAuthorizationCodeRepository;
 use Pulsar\Extension\OAuth2\Token\InMemoryRefreshTokenRepository;
 use Pulsar\Extension\OAuth2\Token\InMemoryScopeRepository;
@@ -77,7 +79,24 @@ final class OAuth2ServiceProvider implements ServiceProviderInterface
         $container->bind(ConsentRepositoryInterface::class, InMemoryConsentRepository::class);
         $container->bind(AccessTokenRepositoryInterface::class, InMemoryAccessTokenRepository::class);
         $container->bind(RefreshTokenRepositoryInterface::class, InMemoryRefreshTokenRepository::class);
-        $container->bind(AuthorizationCodeRepositoryInterface::class, InMemoryAuthorizationCodeRepository::class);
+        // F385.12: select Db vs InMemory based on `oauth2.authorization_code_store`.
+        // Production deployments configure `database` so codes survive
+        // worker restarts; in-memory is left as the dev/test default for BC.
+        $container->bind(AuthorizationCodeRepositoryInterface::class, static function () use ($container) {
+            /** @var OAuth2Config $config */
+            $config = $container->get(OAuth2Config::class);
+
+            if ($config->authorizationCodeStore === 'database' && $container->has(ConnectionInterface::class)) {
+                /** @var ConnectionInterface $connection */
+                $connection = $container->get(ConnectionInterface::class);
+                $repo = new DbAuthorizationCodeRepository($connection);
+                $repo->installSchema();
+
+                return $repo;
+            }
+
+            return new InMemoryAuthorizationCodeRepository();
+        });
 
         // JWT signing
         $container->bind(JwtSigner::class, static function () use ($container): JwtSigner {
