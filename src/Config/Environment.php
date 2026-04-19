@@ -285,6 +285,26 @@ final class Environment
      * - Blank lines
      * - Quoted values (single and double quotes stripped from both ends)
      *
+     * F4.8: deliberate non-features. The parser is intentionally
+     * primitive — Pulsar treats `.env` as a developer-convenience
+     * fallback and routes operational secrets through the OS
+     * environment / KMS instead. Specifically:
+     *
+     *   - **No escape sequences**. `\"` inside a double-quoted value
+     *     is left as-is; embed double-quotes by switching to single
+     *     quotes (`'foo"bar'`).
+     *   - **No multi-line values**. Each line is parsed independently;
+     *     a line break inside quotes is not honoured. Use `\n` in
+     *     single-line strings or move the value to OS env vars.
+     *   - **No `${VAR}` interpolation**. Each value is taken
+     *     literally — no expansion of other variables, no command
+     *     substitution. Compose interpolated values in the calling
+     *     environment before exporting them.
+     *
+     * Operators that need full POSIX-shell semantics should pull in
+     * `vlucas/phpdotenv` and pass the resulting array through
+     * `Environment::loadFiltered()` for the same allowlist guarantees.
+     *
      * @return array<string, string>
      */
     private static function parseEnvFile(string $path): array

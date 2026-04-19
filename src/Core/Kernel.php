@@ -441,10 +441,27 @@ final class Kernel implements KernelInterface
     /**
      * Add global middleware.
      *
+     * F2.18: refuses to mutate the middleware pipeline after the
+     * kernel has booted. The pipeline is cached after the first
+     * `handle()` call so a post-boot `addMiddleware()` would
+     * silently take effect only on a few requests (those that
+     * happen to invalidate the cache for unrelated reasons) and
+     * stay invisible on the rest — a near-impossible bug to
+     * diagnose under load. Throw early instead.
+     *
      * @param PsrMiddlewareInterface|class-string<PsrMiddlewareInterface> $middleware
+     *
+     * @throws RuntimeException When called after `boot()` has run.
      */
     public function addMiddleware(PsrMiddlewareInterface|string $middleware): self
     {
+        if ($this->booted) {
+            throw new RuntimeException(
+                'addMiddleware() cannot be called after the kernel has booted; '
+                . 'register all middleware before the first handle() invocation.',
+            );
+        }
+
         $this->middleware->pipe($middleware);
         return $this;
     }
