@@ -186,6 +186,17 @@ readonly class Request
      *
      * @return array<string, mixed>
      */
+    /**
+     * F7.17: hard cap on the body size that `json()` will pass to
+     * `json_decode`. The outer `Request::fromGlobals()` already
+     * applies a body-size cap (default 8 MiB) at read time, but a
+     * caller constructing a `Request` instance directly with a hand-
+     * crafted body (tests, internal dispatch) bypasses that cap. This
+     * second-line guard ensures the JSON parser never sees more than
+     * a documented bound regardless of how the body got here.
+     */
+    private const int JSON_BODY_DECODE_LIMIT = 8_388_608; // 8 MiB
+
     private function decodeJsonBody(): array
     {
         $contentType = $this->header('Content-Type');
@@ -193,7 +204,15 @@ readonly class Request
             return [];
         }
 
-        if ($this->body === '' || !json_validate($this->body)) {
+        // F7.17: refuse to decode oversize bodies. Returning an empty
+        // array keeps the `json()` contract intact (callers already
+        // handle the empty-array case for invalid JSON / wrong content
+        // type) without raising mid-request.
+        if ($this->body === '' || strlen($this->body) > self::JSON_BODY_DECODE_LIMIT) {
+            return [];
+        }
+
+        if (!json_validate($this->body)) {
             return [];
         }
 
