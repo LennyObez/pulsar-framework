@@ -64,8 +64,15 @@ final class TracingMiddlewareTest extends TestCase
         self::assertSame('users.show', $span->attributes()['http.route'] ?? null);
     }
 
+    /**
+     * F24.6: span name uses `unmatched` rather than the raw path
+     * when no RouteContext is wired. Keeping the raw path made
+     * span cardinality unbounded for any request that threw before
+     * route matching (parse errors, pre-router middleware throws).
+     * The raw path is still available on `http.path` attribute.
+     */
     #[Test]
-    public function spanNameKeepsRawPathWhenRouteContextIsNull(): void
+    public function spanNameUsesUnmatchedWhenRouteContextIsNull(): void
     {
         $collector = new InMemorySpanCollector();
 
@@ -86,11 +93,12 @@ final class TracingMiddlewareTest extends TestCase
         self::assertCount(1, $spans);
 
         $span = $spans[0];
-        self::assertSame('HTTP GET /users/42', $span->name);
+        self::assertSame('HTTP GET unmatched', $span->name);
+        self::assertSame('/users/42', $span->attributes()['http.path'] ?? null);
     }
 
     #[Test]
-    public function spanNameKeepsRawPathWhenRouteContextIsUnmatched(): void
+    public function spanNameUsesUnmatchedLabelWhenRouteContextIsUnpopulated(): void
     {
         $collector = new InMemorySpanCollector();
         $routeContext = new RouteContext();
@@ -113,7 +121,7 @@ final class TracingMiddlewareTest extends TestCase
         self::assertCount(1, $spans);
 
         $span = $spans[0];
-        // 'unmatched' label should NOT replace the raw path for unmatched routes
-        self::assertSame('HTTP GET /not-found', $span->name);
+        self::assertSame('HTTP GET unmatched', $span->name);
+        self::assertSame('/not-found', $span->attributes()['http.path'] ?? null);
     }
 }

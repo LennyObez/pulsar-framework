@@ -87,10 +87,15 @@ final readonly class TracingMiddleware implements MiddlewareInterface
         $method = $request->getMethod();
         $path = $request->getUri()->getPath();
 
-        // Create root span
-        $spanName = sprintf('HTTP %s %s', $method, $path);
+        // F24.6: never seed the span name with the raw path — that
+        // makes the cardinality unbounded for any request that throws
+        // before route matching (parse errors, middleware exceptions
+        // pre-router) since the `finally` block only updates the name
+        // when a routeLabel is available. Start with a placeholder
+        // that the post-route logic always replaces with a bounded
+        // label or 'unmatched'.
         $span = new Span(
-            name: $spanName,
+            name: sprintf('HTTP %s pending', $method),
             context: $context,
             parentSpanId: $parentContext?->spanId,
         );
@@ -116,11 +121,18 @@ final readonly class TracingMiddleware implements MiddlewareInterface
                 $this->traceContextParser->serialize($context),
             );
         } finally {
-            // Update span name with resolved route for bounded cardinality
+            // F24.6: always replace the placeholder name with either a
+            // bounded route label or the literal `unmatched` so the
+            // span cardinality stays under control even when the
+            // request threw before route matching.
             $routeLabel = $this->routeContext?->label();
+            $span->name = sprintf(
+                'HTTP %s %s',
+                $request->getMethod(),
+                $routeLabel ?? 'unmatched',
+            );
 
             if ($routeLabel !== null && $routeLabel !== 'unmatched') {
-                $span->name = sprintf('HTTP %s %s', $request->getMethod(), $routeLabel);
                 $span->setAttribute('http.route', $routeLabel);
             }
 
