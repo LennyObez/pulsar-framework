@@ -208,11 +208,13 @@ final readonly class VexGenerator
     {
         $statements = [];
 
+        /** @var mixed $rawAdvisories */
+        $rawAdvisories = $auditData['advisories'] ?? null;
         /** @var array<string, mixed> $advisories */
-        $advisories = is_array($auditData['advisories'] ?? null) ? $auditData['advisories'] : [];
+        $advisories = is_array($rawAdvisories) ? $rawAdvisories : [];
 
         foreach ($advisories as $packageName => $packageAdvisories) {
-            if (!is_string($packageName) || !is_array($packageAdvisories)) {
+            if (!is_array($packageAdvisories)) {
                 continue;
             }
 
@@ -222,13 +224,15 @@ final readonly class VexGenerator
                 }
 
                 /** @var array<string, mixed> $advisory */
-                $cve = is_string($advisory['cve'] ?? null) ? $advisory['cve'] : '';
+                /** @var mixed $rawCve */
+                $rawCve = $advisory['cve'] ?? null;
+                $cve = is_string($rawCve) ? $rawCve : '';
 
                 if ($cve === '') {
+                    /** @var mixed $rawAdvisoryId */
+                    $rawAdvisoryId = $advisory['advisoryId'] ?? null;
                     // Use advisory ID as fallback identifier
-                    $cve = is_string($advisory['advisoryId'] ?? null)
-                        ? $advisory['advisoryId']
-                        : 'UNKNOWN';
+                    $cve = is_string($rawAdvisoryId) ? $rawAdvisoryId : 'UNKNOWN';
                 }
 
                 $statement = $this->assessVulnerability($packageName, $cve, $advisory, $importMap);
