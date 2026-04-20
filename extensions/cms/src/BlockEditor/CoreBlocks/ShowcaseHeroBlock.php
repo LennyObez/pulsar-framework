@@ -46,11 +46,13 @@ final readonly class ShowcaseHeroBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
+        /** @var mixed $rawSlug */
         $rawSlug = $data['projectSlug'] ?? '';
         $slug = htmlspecialchars(is_string($rawSlug) ? $rawSlug : '', ENT_QUOTES, 'UTF-8');
 
         $html = "<section class=\"cms-showcase-hero\" data-project-slug=\"$slug\">";
 
+        /** @var mixed $overlayText */
         $overlayText = $data['overlayText'] ?? null;
 
         if (is_string($overlayText) && $overlayText !== '') {
@@ -58,7 +60,9 @@ final readonly class ShowcaseHeroBlock implements BlockTypeInterface
             $html .= "<h2 class=\"cms-showcase-hero__title\">$escapedText</h2>";
         }
 
+        /** @var mixed $ctaLabel */
         $ctaLabel = $data['ctaLabel'] ?? null;
+        /** @var mixed $ctaUrl */
         $ctaUrl = $data['ctaUrl'] ?? null;
 
         if (is_string($ctaLabel) && $ctaLabel !== '' && is_string($ctaUrl) && $ctaUrl !== '') {
