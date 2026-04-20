@@ -66,7 +66,10 @@ final readonly class BenchmarkBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
-        $title = htmlspecialchars(is_string($data['title'] ?? null) ? $data['title'] : '', ENT_QUOTES, 'UTF-8');
+        /** @var mixed $rawTitle */
+        $rawTitle = $data['title'] ?? null;
+        $title = htmlspecialchars(is_string($rawTitle) ? $rawTitle : '', ENT_QUOTES, 'UTF-8');
+        /** @var mixed $description */
         $description = $data['description'] ?? null;
 
         /** @var list<mixed> $metrics */
@@ -89,7 +92,9 @@ final readonly class BenchmarkBlock implements BlockTypeInterface
             $html .= $this->renderMetric($metric);
         }
 
+        /** @var mixed $source */
         $source = $data['source'] ?? null;
+        /** @var mixed $sourceUrl */
         $sourceUrl = $data['sourceUrl'] ?? null;
 
         if (is_string($source) && $source !== '') {
@@ -111,8 +116,12 @@ final readonly class BenchmarkBlock implements BlockTypeInterface
      */
     private function renderMetric(array $metric): string
     {
-        $name = htmlspecialchars(is_string($metric['name'] ?? null) ? $metric['name'] : '', ENT_QUOTES, 'UTF-8');
-        $unit = htmlspecialchars(is_string($metric['unit'] ?? null) ? $metric['unit'] : '', ENT_QUOTES, 'UTF-8');
+        /** @var mixed $rawName */
+        $rawName = $metric['name'] ?? null;
+        /** @var mixed $rawUnit */
+        $rawUnit = $metric['unit'] ?? null;
+        $name = htmlspecialchars(is_string($rawName) ? $rawName : '', ENT_QUOTES, 'UTF-8');
+        $unit = htmlspecialchars(is_string($rawUnit) ? $rawUnit : '', ENT_QUOTES, 'UTF-8');
 
         /** @var list<mixed> $entries */
         $entries = $metric['entries'] ?? [];
