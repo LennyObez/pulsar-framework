@@ -43,11 +43,16 @@ final readonly class MapBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
+        /** @var mixed $rawLat */
         $rawLat = $data['latitude'] ?? null;
+        /** @var mixed $rawLon */
         $rawLon = $data['longitude'] ?? null;
         $lat = (is_float($rawLat) || is_int($rawLat)) ? (float) $rawLat : 0.0;
         $lon = (is_float($rawLon) || is_int($rawLon)) ? (float) $rawLon : 0.0;
-        $zoom = is_int($data['zoom'] ?? null) ? $data['zoom'] : 13;
+        /** @var mixed $rawZoom */
+        $rawZoom = $data['zoom'] ?? null;
+        $zoom = is_int($rawZoom) ? $rawZoom : 13;
+        /** @var mixed $caption */
         $caption = $data['caption'] ?? null;
 
         if ($zoom < 1 || $zoom > 20) {
