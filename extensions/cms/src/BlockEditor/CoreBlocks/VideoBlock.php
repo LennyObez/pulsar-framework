@@ -42,8 +42,12 @@ final readonly class VideoBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
-        $src = htmlspecialchars(is_string($data['src'] ?? null) ? $data['src'] : '', ENT_QUOTES, 'UTF-8');
+        /** @var mixed $rawSrcValue */
+        $rawSrcValue = $data['src'] ?? null;
+        $src = htmlspecialchars(is_string($rawSrcValue) ? $rawSrcValue : '', ENT_QUOTES, 'UTF-8');
+        /** @var mixed $poster */
         $poster = $data['poster'] ?? null;
+        /** @var mixed $caption */
         $caption = $data['caption'] ?? null;
 
         $posterAttr = '';
@@ -64,7 +68,7 @@ final readonly class VideoBlock implements BlockTypeInterface
         $html .= '</figure>';
 
         // VideoObject structured data for SEO
-        $rawSrc = is_string($data['src'] ?? null) ? $data['src'] : '';
+        $rawSrc = is_string($rawSrcValue) ? $rawSrcValue : '';
 
         if ($rawSrc !== '') {
             $structuredData = [
