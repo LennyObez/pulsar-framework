@@ -57,12 +57,14 @@ final readonly class ButtonGroupBlock implements BlockTypeInterface
         /** @var list<mixed> $buttons */
         $buttons = $data['buttons'] ?? [];
 
+        /** @var mixed $alignment */
         $alignment = $data['alignment'] ?? null;
 
         if (!is_string($alignment) || !in_array($alignment, self::VALID_ALIGNMENTS, true)) {
             $alignment = 'center';
         }
 
+        /** @var mixed $layout */
         $layout = $data['layout'] ?? null;
 
         if (!is_string($layout) || !in_array($layout, self::VALID_LAYOUTS, true)) {
@@ -76,8 +78,12 @@ final readonly class ButtonGroupBlock implements BlockTypeInterface
                 continue;
             }
 
-            $text = htmlspecialchars(is_string($button['text'] ?? null) ? $button['text'] : '', ENT_QUOTES, 'UTF-8');
-            $url = htmlspecialchars(is_string($button['url'] ?? null) ? $button['url'] : '', ENT_QUOTES, 'UTF-8');
+            /** @var mixed $rawText */
+            $rawText = $button['text'] ?? null;
+            /** @var mixed $rawUrl */
+            $rawUrl = $button['url'] ?? null;
+            $text = htmlspecialchars(is_string($rawText) ? $rawText : '', ENT_QUOTES, 'UTF-8');
+            $url = htmlspecialchars(is_string($rawUrl) ? $rawUrl : '', ENT_QUOTES, 'UTF-8');
 
             $html .= "<a href=\"$url\" class=\"button-group__button\">$text</a>";
         }

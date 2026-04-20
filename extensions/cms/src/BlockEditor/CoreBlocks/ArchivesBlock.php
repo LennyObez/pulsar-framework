@@ -60,8 +60,12 @@ final readonly class ArchivesBlock implements BlockTypeInterface
     {
         /** @var list<mixed> $archives */
         $archives = $data['archives'] ?? [];
-        $display = is_string($data['display'] ?? null) ? $data['display'] : 'list';
-        $showCounts = is_bool($data['showCounts'] ?? null) ? $data['showCounts'] : true;
+        /** @var mixed $rawDisplay */
+        $rawDisplay = $data['display'] ?? null;
+        $display = is_string($rawDisplay) ? $rawDisplay : 'list';
+        /** @var mixed $rawShowCounts */
+        $rawShowCounts = $data['showCounts'] ?? null;
+        $showCounts = is_bool($rawShowCounts) ? $rawShowCounts : true;
 
         if ($display === 'dropdown') {
             return $this->renderDropdown($archives, $showCounts);
@@ -82,9 +86,15 @@ final readonly class ArchivesBlock implements BlockTypeInterface
                 continue;
             }
 
-            $label = htmlspecialchars(is_string($archive['label'] ?? null) ? $archive['label'] : '', ENT_QUOTES, 'UTF-8');
-            $url = htmlspecialchars(is_string($archive['url'] ?? null) ? $archive['url'] : '#', ENT_QUOTES, 'UTF-8');
-            $count = is_int($archive['count'] ?? null) ? $archive['count'] : 0;
+            /** @var mixed $rawLabel */
+            $rawLabel = $archive['label'] ?? null;
+            /** @var mixed $rawUrl */
+            $rawUrl = $archive['url'] ?? null;
+            /** @var mixed $rawCount */
+            $rawCount = $archive['count'] ?? null;
+            $label = htmlspecialchars(is_string($rawLabel) ? $rawLabel : '', ENT_QUOTES, 'UTF-8');
+            $url = htmlspecialchars(is_string($rawUrl) ? $rawUrl : '#', ENT_QUOTES, 'UTF-8');
+            $count = is_int($rawCount) ? $rawCount : 0;
 
             $countSuffix = $showCounts ? " <span class=\"archives-block__count\">($count)</span>" : '';
             $html .= "<li><a href=\"$url\">$label</a>$countSuffix</li>";
@@ -108,9 +118,15 @@ final readonly class ArchivesBlock implements BlockTypeInterface
                 continue;
             }
 
-            $label = htmlspecialchars(is_string($archive['label'] ?? null) ? $archive['label'] : '', ENT_QUOTES, 'UTF-8');
-            $url = htmlspecialchars(is_string($archive['url'] ?? null) ? $archive['url'] : '#', ENT_QUOTES, 'UTF-8');
-            $count = is_int($archive['count'] ?? null) ? $archive['count'] : 0;
+            /** @var mixed $rawLabel */
+            $rawLabel = $archive['label'] ?? null;
+            /** @var mixed $rawUrl */
+            $rawUrl = $archive['url'] ?? null;
+            /** @var mixed $rawCount */
+            $rawCount = $archive['count'] ?? null;
+            $label = htmlspecialchars(is_string($rawLabel) ? $rawLabel : '', ENT_QUOTES, 'UTF-8');
+            $url = htmlspecialchars(is_string($rawUrl) ? $rawUrl : '#', ENT_QUOTES, 'UTF-8');
+            $count = is_int($rawCount) ? $rawCount : 0;
 
             $text = $showCounts ? "$label ($count)" : $label;
             $html .= "<option value=\"$url\">$text</option>";

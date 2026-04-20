@@ -42,15 +42,20 @@ final readonly class HeadingBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
-        $rawText = is_string($data['text'] ?? null) ? $data['text'] : '';
+        /** @var mixed $rawTextValue */
+        $rawTextValue = $data['text'] ?? null;
+        $rawText = is_string($rawTextValue) ? $rawTextValue : '';
         $text = htmlspecialchars($rawText, ENT_QUOTES, 'UTF-8');
-        $level = is_int($data['level'] ?? null) ? $data['level'] : 1;
+        /** @var mixed $rawLevel */
+        $rawLevel = $data['level'] ?? null;
+        $level = is_int($rawLevel) ? $rawLevel : 1;
 
         if ($level < 1 || $level > 6) {
             $level = 1;
         }
 
         // Auto-generate anchor ID for table of contents
+        /** @var mixed $anchor */
         $anchor = $data['anchor'] ?? null;
 
         if (!is_string($anchor) || $anchor === '') {

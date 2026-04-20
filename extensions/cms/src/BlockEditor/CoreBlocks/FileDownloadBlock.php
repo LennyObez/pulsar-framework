@@ -40,9 +40,15 @@ final readonly class FileDownloadBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
-        $url = htmlspecialchars(is_string($data['url'] ?? null) ? $data['url'] : '', ENT_QUOTES, 'UTF-8');
-        $filename = htmlspecialchars(is_string($data['filename'] ?? null) ? $data['filename'] : '', ENT_QUOTES, 'UTF-8');
+        /** @var mixed $rawUrl */
+        $rawUrl = $data['url'] ?? null;
+        /** @var mixed $rawFilename */
+        $rawFilename = $data['filename'] ?? null;
+        $url = htmlspecialchars(is_string($rawUrl) ? $rawUrl : '', ENT_QUOTES, 'UTF-8');
+        $filename = htmlspecialchars(is_string($rawFilename) ? $rawFilename : '', ENT_QUOTES, 'UTF-8');
+        /** @var mixed $description */
         $description = $data['description'] ?? null;
+        /** @var mixed $fileSize */
         $fileSize = $data['fileSize'] ?? null;
 
         $html = '<div class="file-download">';

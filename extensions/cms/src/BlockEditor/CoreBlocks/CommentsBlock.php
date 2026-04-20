@@ -100,9 +100,16 @@ final readonly class CommentsBlock implements BlockTypeInterface
      */
     private function renderComment(array $comment): string
     {
-        $author = htmlspecialchars(is_string($comment['author'] ?? null) ? $comment['author'] : '', ENT_QUOTES, 'UTF-8');
-        $content = htmlspecialchars(is_string($comment['content'] ?? null) ? $comment['content'] : '', ENT_QUOTES, 'UTF-8');
-        $date = htmlspecialchars(is_string($comment['date'] ?? null) ? $comment['date'] : '', ENT_QUOTES, 'UTF-8');
+        /** @var mixed $rawAuthor */
+        $rawAuthor = $comment['author'] ?? null;
+        /** @var mixed $rawContent */
+        $rawContent = $comment['content'] ?? null;
+        /** @var mixed $rawDate */
+        $rawDate = $comment['date'] ?? null;
+        $author = htmlspecialchars(is_string($rawAuthor) ? $rawAuthor : '', ENT_QUOTES, 'UTF-8');
+        $content = htmlspecialchars(is_string($rawContent) ? $rawContent : '', ENT_QUOTES, 'UTF-8');
+        $date = htmlspecialchars(is_string($rawDate) ? $rawDate : '', ENT_QUOTES, 'UTF-8');
+        /** @var mixed $avatarUrl */
         $avatarUrl = $comment['avatarUrl'] ?? null;
 
         $html = '<li class="comments-block__comment">';
