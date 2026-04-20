@@ -64,9 +64,14 @@ final readonly class VideoMetadataExtractor
      */
     private function buildMetadata(array $data): VideoMetadata
     {
-        $format = is_array($data['format'] ?? null) ? $data['format'] : [];
+        /** @var mixed $rawFormat */
+        $rawFormat = $data['format'] ?? null;
+        /** @var array<string, mixed> $format */
+        $format = is_array($rawFormat) ? $rawFormat : [];
+        /** @var mixed $rawStreams */
+        $rawStreams = $data['streams'] ?? null;
         /** @var list<mixed> $streams */
-        $streams = is_array($data['streams'] ?? null) ? array_values($data['streams']) : [];
+        $streams = is_array($rawStreams) ? array_values($rawStreams) : [];
 
         $videoStream = $this->findStream($streams, 'video');
         $audioStream = $this->findStream($streams, 'audio');
