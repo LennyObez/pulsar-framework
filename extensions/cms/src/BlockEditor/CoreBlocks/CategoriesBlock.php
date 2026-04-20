@@ -58,8 +58,12 @@ final readonly class CategoriesBlock implements BlockTypeInterface
     {
         /** @var list<mixed> $categories */
         $categories = $data['categories'] ?? [];
-        $display = is_string($data['display'] ?? null) ? $data['display'] : 'list';
-        $showCounts = is_bool($data['showCounts'] ?? null) ? $data['showCounts'] : true;
+        /** @var mixed $rawDisplay */
+        $rawDisplay = $data['display'] ?? null;
+        $display = is_string($rawDisplay) ? $rawDisplay : 'list';
+        /** @var mixed $rawShowCounts */
+        $rawShowCounts = $data['showCounts'] ?? null;
+        $showCounts = is_bool($rawShowCounts) ? $rawShowCounts : true;
 
         if ($display === 'dropdown') {
             return $this->renderDropdown($categories, $showCounts);
@@ -80,9 +84,15 @@ final readonly class CategoriesBlock implements BlockTypeInterface
                 continue;
             }
 
-            $name = htmlspecialchars(is_string($category['name'] ?? null) ? $category['name'] : '', ENT_QUOTES, 'UTF-8');
-            $url = htmlspecialchars(is_string($category['url'] ?? null) ? $category['url'] : '#', ENT_QUOTES, 'UTF-8');
-            $count = is_int($category['count'] ?? null) ? $category['count'] : 0;
+            /** @var mixed $rawName */
+            $rawName = $category['name'] ?? null;
+            /** @var mixed $rawUrl */
+            $rawUrl = $category['url'] ?? null;
+            /** @var mixed $rawCount */
+            $rawCount = $category['count'] ?? null;
+            $name = htmlspecialchars(is_string($rawName) ? $rawName : '', ENT_QUOTES, 'UTF-8');
+            $url = htmlspecialchars(is_string($rawUrl) ? $rawUrl : '#', ENT_QUOTES, 'UTF-8');
+            $count = is_int($rawCount) ? $rawCount : 0;
 
             $countSuffix = $showCounts ? " <span class=\"categories-block__count\">($count)</span>" : '';
             $html .= "<li><a href=\"$url\">$name</a>$countSuffix</li>";
@@ -106,9 +116,15 @@ final readonly class CategoriesBlock implements BlockTypeInterface
                 continue;
             }
 
-            $name = htmlspecialchars(is_string($category['name'] ?? null) ? $category['name'] : '', ENT_QUOTES, 'UTF-8');
-            $url = htmlspecialchars(is_string($category['url'] ?? null) ? $category['url'] : '#', ENT_QUOTES, 'UTF-8');
-            $count = is_int($category['count'] ?? null) ? $category['count'] : 0;
+            /** @var mixed $rawName */
+            $rawName = $category['name'] ?? null;
+            /** @var mixed $rawUrl */
+            $rawUrl = $category['url'] ?? null;
+            /** @var mixed $rawCount */
+            $rawCount = $category['count'] ?? null;
+            $name = htmlspecialchars(is_string($rawName) ? $rawName : '', ENT_QUOTES, 'UTF-8');
+            $url = htmlspecialchars(is_string($rawUrl) ? $rawUrl : '#', ENT_QUOTES, 'UTF-8');
+            $count = is_int($rawCount) ? $rawCount : 0;
 
             $label = $showCounts ? "$name ($count)" : $name;
             $html .= "<option value=\"$url\">$label</option>";
