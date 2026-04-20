@@ -68,11 +68,18 @@ final readonly class AudioMetadataExtractor
      */
     private function buildMetadata(array $data): AudioMetadata
     {
-        $format = is_array($data['format'] ?? null) ? $data['format'] : [];
+        /** @var mixed $rawFormat */
+        $rawFormat = $data['format'] ?? null;
+        /** @var array<string, mixed> $format */
+        $format = is_array($rawFormat) ? $rawFormat : [];
+        /** @var mixed $rawStreams */
+        $rawStreams = $data['streams'] ?? null;
         /** @var list<mixed> $streams */
-        $streams = is_array($data['streams'] ?? null) ? array_values($data['streams']) : [];
+        $streams = is_array($rawStreams) ? array_values($rawStreams) : [];
+        /** @var mixed $rawTags */
+        $rawTags = $format['tags'] ?? null;
         /** @var array<string, mixed> $tags */
-        $tags = is_array($format['tags'] ?? null) ? $format['tags'] : [];
+        $tags = is_array($rawTags) ? $rawTags : [];
 
         $audioStream = $this->findAudioStream($streams);
 
