@@ -141,13 +141,21 @@ final class RouteCompiler
 
         foreach ($data['dynamic'] as $method => $routes) {
             foreach ($routes as $routeData) {
+                /** @var mixed $rawEntry */
+                $rawEntry = $routeData['entry'] ?? null;
                 /** @var array<string, mixed> $entryData */
-                $entryData = is_array($routeData['entry'] ?? null) ? $routeData['entry'] : [];
+                $entryData = is_array($rawEntry) ? $rawEntry : [];
+                /** @var mixed $rawPattern */
+                $rawPattern = $routeData['pattern'] ?? null;
+                /** @var mixed $rawHost */
+                $rawHost = $routeData['host'] ?? null;
+                /** @var mixed $rawHostPattern */
+                $rawHostPattern = $routeData['hostPattern'] ?? null;
                 $dynamicRoutes[$method][] = new CompiledDynamicRoute(
-                    pattern: is_string($routeData['pattern'] ?? null) ? $routeData['pattern'] : '',
+                    pattern: is_string($rawPattern) ? $rawPattern : '',
                     entry: $this->arrayToEntry($entryData),
-                    host: is_string($routeData['host'] ?? null) ? $routeData['host'] : null,
-                    hostPattern: is_string($routeData['hostPattern'] ?? null) ? $routeData['hostPattern'] : null,
+                    host: is_string($rawHost) ? $rawHost : null,
+                    hostPattern: is_string($rawHostPattern) ? $rawHostPattern : null,
                 );
             }
         }
