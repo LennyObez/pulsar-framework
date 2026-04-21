@@ -199,8 +199,12 @@ final readonly class FhirController
                 continue;
             }
 
-            $method = is_string($request['method'] ?? null) ? $request['method'] : '';
-            $url = is_string($request['url'] ?? null) ? $request['url'] : '';
+            /** @var mixed $rawMethod */
+            $rawMethod = $request['method'] ?? null;
+            /** @var mixed $rawUrl */
+            $rawUrl = $request['url'] ?? null;
+            $method = is_string($rawMethod) ? $rawMethod : '';
+            $url = is_string($rawUrl) ? $rawUrl : '';
             $parts = explode('/', $url, 2);
             $type = $parts[0];
             $id = $parts[1] ?? '';
