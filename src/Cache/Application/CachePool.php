@@ -58,6 +58,7 @@ final class CachePool implements CacheItemPoolInterface
                 return CacheItem::miss($key);
             }
 
+            /** @var mixed $value */
             $value = $this->serializer->deserialize($raw);
             $this->eventEmitter->emitHit($this->poolName, $this->driver->name(), $key, $start);
 
@@ -109,6 +110,7 @@ final class CachePool implements CacheItemPoolInterface
                         $results[$key] = CacheItem::miss($key);
                         $this->eventEmitter->emitMiss($this->poolName, $this->driver->name(), $key, $start);
                     } else {
+                        /** @var mixed $value */
                         $value = $this->serializer->deserialize($raw);
                         $results[$key] = CacheItem::hit($key, $value);
                         $this->eventEmitter->emitHit($this->poolName, $this->driver->name(), $key, $start);
