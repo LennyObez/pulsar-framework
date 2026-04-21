@@ -99,13 +99,16 @@ final readonly class PayPalGateway implements PaymentProviderInterface
         $captures = is_array($payments['captures'] ?? null) ? $payments['captures'] : [];
         $firstCapture = $captures[0] ?? [];
 
+        /** @var mixed $captureIdVal */
         $captureIdVal = $firstCapture['id'] ?? null;
         $captureId = is_string($captureIdVal) ? $captureIdVal : $intentId;
 
         /** @var array<string, mixed> $captureAmount */
         $captureAmount = is_array($firstCapture['amount'] ?? null) ? $firstCapture['amount'] : [];
+        /** @var mixed $valueRaw */
         $valueRaw = $captureAmount['value'] ?? null;
         $value = is_string($valueRaw) ? $valueRaw : '0';
+        /** @var mixed $currRaw */
         $currRaw = $captureAmount['currency_code'] ?? null;
         $currencyCode = is_string($currRaw) ? strtoupper($currRaw) : 'USD';
 
