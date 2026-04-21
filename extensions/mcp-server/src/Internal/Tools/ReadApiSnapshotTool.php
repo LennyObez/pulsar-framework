@@ -72,6 +72,7 @@ final readonly class ReadApiSnapshotTool implements McpToolInterface
         $classes = $snapshot->apiSnapshot->classes;
 
         // Filter by exact class name
+        /** @var mixed $classFilter */
         $classFilter = $params['class'] ?? null;
         if (is_string($classFilter) && $classFilter !== '') {
             $classes = isset($classes[$classFilter])
@@ -80,6 +81,7 @@ final readonly class ReadApiSnapshotTool implements McpToolInterface
         }
 
         // Filter by namespace prefix
+        /** @var mixed $nsPrefix */
         $nsPrefix = $params['namespacePrefix'] ?? null;
         if (is_string($nsPrefix) && $nsPrefix !== '') {
             $classes = array_filter(
@@ -93,6 +95,7 @@ final readonly class ReadApiSnapshotTool implements McpToolInterface
         /** @var int $limitVal */
         $limitVal = isset($params['limit']) && is_int($params['limit']) ? $params['limit'] : 100;
         $limit = max(1, $limitVal);
+        /** @var mixed $cursor */
         $cursor = $params['cursor'] ?? null;
         $allKeys = array_keys($classes);
         $totalCount = count($allKeys);
