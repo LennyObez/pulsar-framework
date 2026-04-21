@@ -31,7 +31,10 @@ final class KernelErrorHandlingTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->tempDir = sys_get_temp_dir() . '/pulsar_kernel_err_test_' . uniqid();
+        // F3.3: cwd-rooted temp dir so SafePath cleanup helper accepts the path.
+        $cwd = getcwd();
+        self::assertNotFalse($cwd);
+        $this->tempDir = $cwd . '/var/tmp_pulsar_kernel_err_test_' . uniqid();
         mkdir($this->tempDir, 0o775, true);
         $this->writeConfigFiles(debug: true);
 
@@ -53,26 +56,32 @@ final class KernelErrorHandlingTest extends TestCase
         $this->cleanDir($this->tempDir);
     }
 
+    /**
+     * F3.3: route cleanup through SafeFilesystem so the test fixture
+     * does not depend on bare `unlink()` (static-analysis flag) and
+     * benefits from the same path-traversal guards as production.
+     */
     private function cleanDir(string $dir): void
     {
         if (!is_dir($dir)) {
             return;
         }
-        $items = scandir($dir);
-        if ($items !== false) {
-            foreach ($items as $item) {
-                if ($item === '.' || $item === '..') {
-                    continue;
-                }
-                $path = $dir . DIRECTORY_SEPARATOR . $item;
-                if (is_dir($path)) {
-                    $this->cleanDir($path);
-                } else {
-                    unlink($path);
-                }
-            }
+
+        $cwd = getcwd();
+        if ($cwd === false) {
+            return;
         }
-        rmdir($dir);
+
+        $relative = str_starts_with($dir, $cwd)
+            ? ltrim(substr($dir, strlen($cwd)), '/\\')
+            : $dir;
+
+        $safe = \Pulsar\Filesystem\SafePath::resolveUnderCwd($relative);
+        if ($safe === null) {
+            return;
+        }
+
+        new \Pulsar\Filesystem\SafeFilesystem()->removeDirectoryRecursive($safe);
     }
 
     private function writeConfigFiles(bool $debug = true): void
@@ -215,15 +224,26 @@ final class KernelErrorHandlingTest extends TestCase
         self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
     }
 
+    /**
+     * F4.11: previously the kernel re-threw uncaught exceptions when
+     * no ExceptionHandler was registered, leaking stack traces to the
+     * SAPI default error page. The fallback now renders a generic
+     * 500 via ProductionRenderer so the response is leak-free.
+     */
     #[Test]
-    public function kernelWithoutConfigManagerPropagatesExceptions(): void
+    public function kernelWithoutConfigManagerReturns500FallbackResponse(): void
     {
         $kernel = new Kernel();
         $kernel->router()->get('/error', fn() => throw new RuntimeException('No handler'));
 
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('No handler');
-        $kernel->handle($this->createRequest(path: '/error'));
+        $response = $kernel->handle($this->createRequest(path: '/error'));
+
+        self::assertSame(ResponseStatus::InternalServerError->value, $response->getStatusCode());
+        $body = (string) $response->getBody();
+        // Generic fallback page — no leak of the exception class /
+        // message / stack trace.
+        self::assertStringNotContainsString('No handler', $body);
+        self::assertStringNotContainsString('RuntimeException', $body);
     }
 
     #[Test]
