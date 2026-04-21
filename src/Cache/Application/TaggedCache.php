@@ -80,6 +80,7 @@ final readonly class TaggedCache implements TaggedCacheInterface
 
             /** @var string $serializedValue */
             $serializedValue = $envelope['v'];
+            /** @var mixed $value */
             $value = $this->serializer->deserialize($serializedValue);
             $this->eventEmitter->emitHit($this->poolName, $this->driver->name(), $key, $start);
 
