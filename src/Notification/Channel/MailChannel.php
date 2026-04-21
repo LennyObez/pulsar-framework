@@ -42,6 +42,7 @@ final readonly class MailChannel implements NotificationChannelInterface
     {
         $mailable = $notification->toMail($notifiable);
 
+        /** @var mixed $route */
         $route = $notifiable->routeNotificationFor($this->name());
 
         if (is_string($route)) {

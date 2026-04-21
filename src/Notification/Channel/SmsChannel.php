@@ -30,6 +30,7 @@ final readonly class SmsChannel implements NotificationChannelInterface
     {
         $message = $notification->toSms($notifiable);
 
+        /** @var mixed $route */
         $route = $notifiable->routeNotificationFor($this->name());
 
         if (is_string($route) && $route !== '') {
