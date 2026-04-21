@@ -30,6 +30,7 @@ final readonly class BroadcastChannel implements NotificationChannelInterface
     public function send(NotifiableInterface $notifiable, Notification $notification): void
     {
         $data = $notification->toBroadcast($notifiable);
+        /** @var mixed $channel */
         $channel = $notifiable->routeNotificationFor($this->name());
 
         if (!is_string($channel) || $channel === '') {
