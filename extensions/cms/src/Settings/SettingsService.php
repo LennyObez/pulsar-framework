@@ -135,10 +135,12 @@ final readonly class SettingsService implements SettingsServiceInterface
 
         foreach ($globalResult->rows as $row) {
             $k = $row->getString('key');
-            $settings[$k] = $this->deserializeValue(
+            /** @var mixed $deserialized */
+            $deserialized = $this->deserializeValue(
                 $row->getString('value'),
                 $row->getString('value_type'),
             );
+            $settings[$k] = $deserialized;
         }
 
         // Override with locale-specific settings if requested
@@ -189,10 +191,12 @@ final readonly class SettingsService implements SettingsServiceInterface
             $k = $row->getString('key');
 
             // Locale-specific values override global (they come after NULLS FIRST)
-            $settings[$g][$k] = $this->deserializeValue(
+            /** @var mixed $deserialized */
+            $deserialized = $this->deserializeValue(
                 $row->getString('value'),
                 $row->getString('value_type'),
             );
+            $settings[$g][$k] = $deserialized;
         }
 
         return $settings;
