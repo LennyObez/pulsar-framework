@@ -391,19 +391,27 @@ final readonly class AnalyticsImportExportProvider implements ImportExportProvid
                         continue;
                     }
 
+                    /** @var mixed $rawStepType */
+                    $rawStepType = $stepData['type'] ?? null;
                     $type = \Pulsar\Extension\Analytics\Domain\FunnelStepType::tryFrom(
-                        is_string($stepData['type'] ?? null) ? $stepData['type'] : '',
+                        is_string($rawStepType) ? $rawStepType : '',
                     );
 
                     if ($type === null) {
                         continue;
                     }
 
+                    /** @var mixed $rawStepPosition */
+                    $rawStepPosition = $stepData['position'] ?? null;
+                    /** @var mixed $rawStepName */
+                    $rawStepName = $stepData['name'] ?? null;
+                    /** @var mixed $rawStepValue */
+                    $rawStepValue = $stepData['value'] ?? null;
                     $steps[] = new \Pulsar\Extension\Analytics\Domain\FunnelStep(
-                        position: is_int($stepData['position'] ?? null) ? $stepData['position'] : $position,
-                        name: is_string($stepData['name'] ?? null) ? $stepData['name'] : "Step {$position}",
+                        position: is_int($rawStepPosition) ? $rawStepPosition : $position,
+                        name: is_string($rawStepName) ? $rawStepName : "Step {$position}",
                         type: $type,
-                        value: is_string($stepData['value'] ?? null) ? $stepData['value'] : '',
+                        value: is_string($rawStepValue) ? $rawStepValue : '',
                     );
                     $position++;
                 }
