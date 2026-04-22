@@ -103,6 +103,7 @@ final readonly class OAuth2TokenResolver implements TokenResolverInterface
      */
     private static function deriveTwoFactorStatus(array $claims): TwoFactorStatus
     {
+        /** @var mixed $amr */
         $amr = $claims['amr'] ?? null;
 
         if (is_array($amr)) {
@@ -113,6 +114,7 @@ final readonly class OAuth2TokenResolver implements TokenResolverInterface
             }
         }
 
+        /** @var mixed $acr */
         $acr = $claims['acr'] ?? null;
 
         if (is_string($acr) && self::isMfaAcr($acr)) {
