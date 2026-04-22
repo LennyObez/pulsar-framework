@@ -310,6 +310,7 @@ final readonly class SchemaApiController
      */
     private function buildColumnFromArray(array $c): SchemaColumn
     {
+        /** @var mixed $typeRaw */
         $typeRaw = $c['type'] ?? 'string';
         $type = SchemaColumnType::from(is_string($typeRaw) ? $typeRaw : 'string');
 
@@ -321,7 +322,9 @@ final readonly class SchemaApiController
         /** @var list<string> $enumValues */
         $enumValues = $c['enum_values'] ?? [];
 
+        /** @var mixed $nameRaw */
         $nameRaw = $c['name'] ?? '';
+        /** @var mixed $defaultValue */
         $defaultValue = $c['default_value'] ?? null;
         /** @var bool|float|int|string|null $typedDefault */
         $typedDefault = is_scalar($defaultValue) || $defaultValue === null ? $defaultValue : null;
