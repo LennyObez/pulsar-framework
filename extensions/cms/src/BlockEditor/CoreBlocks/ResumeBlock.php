@@ -63,8 +63,10 @@ final readonly class ResumeBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
+        /** @var mixed $rawSlug */
         $rawSlug = $data['resumeSlug'] ?? '';
         $slug = htmlspecialchars(is_string($rawSlug) ? $rawSlug : '', ENT_QUOTES, 'UTF-8');
+        /** @var mixed $rawLayout */
         $rawLayout = $data['layout'] ?? 'single-column';
         $layout = is_string($rawLayout) && in_array($rawLayout, self::VALID_LAYOUTS, true)
             ? $rawLayout
