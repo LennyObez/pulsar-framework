@@ -235,6 +235,7 @@ final readonly class HtmlFormRenderer implements FormRendererInterface
             $attrs['placeholder'] = $this->esc($field->getPlaceholder());
         }
 
+        /** @var mixed $rawValue */
         $rawValue = $field->getValue();
         $value = $this->esc(is_string($rawValue) ? $rawValue : '');
 
@@ -259,6 +260,7 @@ final readonly class HtmlFormRenderer implements FormRendererInterface
             $options .= sprintf('<option value="">%s</option>', $this->esc($field->getPlaceholder()));
         }
 
+        /** @var mixed $fieldValue */
         $fieldValue = $field->getValue();
         $fieldValueStr = is_string($fieldValue) || is_int($fieldValue) ? (string) $fieldValue : '';
 
@@ -340,6 +342,7 @@ final readonly class HtmlFormRenderer implements FormRendererInterface
             $html .= '</div>';
         }
 
+        /** @var mixed $radioValue */
         $radioValue = $field->getValue();
         $radioValueStr = is_string($radioValue) || is_int($radioValue) ? (string) $radioValue : '';
 
