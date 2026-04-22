@@ -59,13 +59,11 @@ final readonly class SbomGenerator
             $components = [...$components, ...$this->extractPnpmComponents($pnpmLockContents)];
         }
 
-        $projectName = is_array($composerJson) && is_string($composerJson['name'] ?? null)
-            ? $composerJson['name']
-            : 'unknown';
+        $rawProjectName = is_array($composerJson) ? ($composerJson['name'] ?? null) : null;
+        $projectName = is_string($rawProjectName) ? $rawProjectName : 'unknown';
 
-        $projectVersion = is_array($composerJson) && is_string($composerJson['version'] ?? null)
-            ? $composerJson['version']
-            : 'unknown';
+        $rawProjectVersion = is_array($composerJson) ? ($composerJson['version'] ?? null) : null;
+        $projectVersion = is_string($rawProjectVersion) ? $rawProjectVersion : 'unknown';
 
         return [
             'bomFormat' => 'CycloneDX',
