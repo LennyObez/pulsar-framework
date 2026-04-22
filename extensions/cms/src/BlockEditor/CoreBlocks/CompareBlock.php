@@ -71,8 +71,12 @@ final readonly class CompareBlock implements BlockTypeInterface
         $beforeAlt = htmlspecialchars($before['alt'] ?? '', ENT_QUOTES, 'UTF-8');
         $afterSrc = htmlspecialchars($after['src'] ?? '', ENT_QUOTES, 'UTF-8');
         $afterAlt = htmlspecialchars($after['alt'] ?? '', ENT_QUOTES, 'UTF-8');
-        $beforeLabel = htmlspecialchars(is_string($data['beforeLabel'] ?? null) ? $data['beforeLabel'] : 'Before', ENT_QUOTES, 'UTF-8');
-        $afterLabel = htmlspecialchars(is_string($data['afterLabel'] ?? null) ? $data['afterLabel'] : 'After', ENT_QUOTES, 'UTF-8');
+        /** @var mixed $rawBeforeLabel */
+        $rawBeforeLabel = $data['beforeLabel'] ?? null;
+        /** @var mixed $rawAfterLabel */
+        $rawAfterLabel = $data['afterLabel'] ?? null;
+        $beforeLabel = htmlspecialchars(is_string($rawBeforeLabel) ? $rawBeforeLabel : 'Before', ENT_QUOTES, 'UTF-8');
+        $afterLabel = htmlspecialchars(is_string($rawAfterLabel) ? $rawAfterLabel : 'After', ENT_QUOTES, 'UTF-8');
 
         $html = '<cms-image-compare'
             . " data-before-src=\"$beforeSrc\""
@@ -83,6 +87,7 @@ final readonly class CompareBlock implements BlockTypeInterface
             . " data-after-label=\"$afterLabel\""
             . '></cms-image-compare>';
 
+        /** @var mixed $caption */
         $caption = $data['caption'] ?? null;
 
         if (is_string($caption) && $caption !== '') {

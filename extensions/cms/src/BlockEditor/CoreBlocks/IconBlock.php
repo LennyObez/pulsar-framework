@@ -42,8 +42,12 @@ final readonly class IconBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
-        $name = htmlspecialchars(is_string($data['name'] ?? null) ? $data['name'] : '', ENT_QUOTES, 'UTF-8');
+        /** @var mixed $rawName */
+        $rawName = $data['name'] ?? null;
+        $name = htmlspecialchars(is_string($rawName) ? $rawName : '', ENT_QUOTES, 'UTF-8');
+        /** @var mixed $size */
         $size = $data['size'] ?? null;
+        /** @var mixed $color */
         $color = $data['color'] ?? null;
 
         if (!is_string($size) || !in_array($size, self::VALID_SIZES, true)) {

@@ -53,6 +53,7 @@ final readonly class CounterBlock implements BlockTypeInterface
     {
         /** @var list<mixed> $items */
         $items = $data['items'] ?? [];
+        /** @var mixed $columns */
         $columns = $data['columns'] ?? null;
 
         if (!is_int($columns) || $columns < 1) {
@@ -70,8 +71,12 @@ final readonly class CounterBlock implements BlockTypeInterface
                 continue;
             }
 
-            $value = htmlspecialchars(is_string($item['value'] ?? null) ? $item['value'] : '', ENT_QUOTES, 'UTF-8');
-            $label = htmlspecialchars(is_string($item['label'] ?? null) ? $item['label'] : '', ENT_QUOTES, 'UTF-8');
+            /** @var mixed $rawValue */
+            $rawValue = $item['value'] ?? null;
+            /** @var mixed $rawLabel */
+            $rawLabel = $item['label'] ?? null;
+            $value = htmlspecialchars(is_string($rawValue) ? $rawValue : '', ENT_QUOTES, 'UTF-8');
+            $label = htmlspecialchars(is_string($rawLabel) ? $rawLabel : '', ENT_QUOTES, 'UTF-8');
 
             $html .= "<div class=\"counter\"><span class=\"counter__value\">$value</span><span class=\"counter__label\">$label</span></div>";
         }
