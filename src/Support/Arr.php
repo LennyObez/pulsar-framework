@@ -46,6 +46,7 @@ final class Arr
         }
 
         $segments = explode('.', $key);
+        /** @var mixed $current */
         $current = $array;
 
         foreach ($segments as $segment) {
@@ -53,6 +54,7 @@ final class Arr
                 return $default;
             }
 
+            /** @var mixed $current */
             $current = $current[$segment];
         }
 
@@ -99,6 +101,7 @@ final class Arr
         }
 
         $segments = explode('.', $key);
+        /** @var mixed $current */
         $current = $array;
 
         foreach ($segments as $segment) {
@@ -106,6 +109,7 @@ final class Arr
                 return false;
             }
 
+            /** @var mixed $current */
             $current = $current[$segment];
         }
 
