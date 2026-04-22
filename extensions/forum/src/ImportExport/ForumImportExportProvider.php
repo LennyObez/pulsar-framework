@@ -478,10 +478,13 @@ final readonly class ForumImportExportProvider implements ImportExportProviderIn
             }
 
             if (!$dryRun) {
+                /** @var mixed $rawTagId */
                 $rawTagId = $entry['id'] ?? null;
                 $tagId = is_string($rawTagId) ? $rawTagId : bin2hex(random_bytes(16));
+                /** @var mixed $rawTagName */
                 $rawTagName = $entry['name'] ?? null;
                 $tagName = is_string($rawTagName) ? $rawTagName : $entry['slug'];
+                /** @var mixed $rawTagDescription */
                 $rawTagDescription = $entry['description'] ?? null;
                 $tagDescription = is_string($rawTagDescription) ? $rawTagDescription : '';
                 $tag = \Pulsar\Extension\Forum\Tag\Tag::create(
