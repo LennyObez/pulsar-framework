@@ -166,4 +166,16 @@ readonly class ExtensionManifest
     {
         return $this->requires->getExtensionNames();
     }
+
+    /**
+     * F3.11: return the version constraint declared for a specific
+     * dependency in `requires.extensions[name]`. Returns null when
+     * the extension is not declared as a dependency at all, or when
+     * the dependency has no version constraint (historical "any
+     * version" default).
+     */
+    public function getDependencyVersionConstraint(string $extensionName): ?string
+    {
+        return $this->requires->getVersionConstraint($extensionName);
+    }
 }
