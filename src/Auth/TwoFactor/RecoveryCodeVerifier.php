@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Auth\TwoFactor;
 
+use function array_values;
 use function hash_equals;
 use function strtoupper;
 
@@ -40,5 +41,40 @@ final readonly class RecoveryCodeVerifier
         }
 
         return $matchedIndex;
+    }
+
+    /**
+     * F12.4: verify-and-consume in one call. The previous
+     * {@see verify()} returned a matched index without consuming
+     * the code, leaving the caller responsible for removing the
+     * matched entry from the user's stored list. A developer who
+     * forgot to do that turned every match into a permanent
+     * backdoor — the same code stays valid forever.
+     *
+     * The new API forces consumption: either the call returns a
+     * `RecoveryCodeConsumeResult` whose `remainingCodes` MUST be
+     * persisted, or the call returns null on miss. Callers cannot
+     * read the matched code without committing to the new state.
+     *
+     * @param list<string> $validCodes Codes currently stored for the user
+     *
+     * @return RecoveryCodeConsumeResult|null Match data + remaining codes, or null on miss
+     */
+    public function verifyAndConsume(string $code, array $validCodes): ?RecoveryCodeConsumeResult
+    {
+        $matchedIndex = $this->verify($code, $validCodes);
+
+        if ($matchedIndex === -1) {
+            return null;
+        }
+
+        // Strip the matched code from the list.
+        $remaining = $validCodes;
+        unset($remaining[$matchedIndex]);
+
+        return new RecoveryCodeConsumeResult(
+            matchedIndex: $matchedIndex,
+            remainingCodes: array_values($remaining),
+        );
     }
 }
