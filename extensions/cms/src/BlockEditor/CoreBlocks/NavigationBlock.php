@@ -69,9 +69,13 @@ final readonly class NavigationBlock implements BlockTypeInterface
     {
         /** @var list<mixed> $items */
         $items = $data['items'] ?? [];
-        $orientation = is_string($data['orientation'] ?? null) ? $data['orientation'] : 'horizontal';
+        /** @var mixed $rawOrientation */
+        $rawOrientation = $data['orientation'] ?? null;
+        $orientation = is_string($rawOrientation) ? $rawOrientation : 'horizontal';
+        /** @var mixed $rawAriaLabel */
+        $rawAriaLabel = $data['ariaLabel'] ?? null;
         $ariaLabel = htmlspecialchars(
-            is_string($data['ariaLabel'] ?? null) ? $data['ariaLabel'] : 'Navigation',
+            is_string($rawAriaLabel) ? $rawAriaLabel : 'Navigation',
             ENT_QUOTES,
             'UTF-8',
         );
@@ -96,9 +100,14 @@ final readonly class NavigationBlock implements BlockTypeInterface
      */
     private function renderItem(array $item): string
     {
-        $label = htmlspecialchars(is_string($item['label'] ?? null) ? $item['label'] : '', ENT_QUOTES, 'UTF-8');
-        $url = htmlspecialchars(is_string($item['url'] ?? null) ? $item['url'] : '#', ENT_QUOTES, 'UTF-8');
+        /** @var mixed $rawLabel */
+        $rawLabel = $item['label'] ?? null;
+        /** @var mixed $rawUrl */
+        $rawUrl = $item['url'] ?? null;
+        $label = htmlspecialchars(is_string($rawLabel) ? $rawLabel : '', ENT_QUOTES, 'UTF-8');
+        $url = htmlspecialchars(is_string($rawUrl) ? $rawUrl : '#', ENT_QUOTES, 'UTF-8');
         $active = ($item['active'] ?? false) === true;
+        /** @var mixed $children */
         $children = $item['children'] ?? [];
 
         $activeClass = $active ? ' navigation-block__item--active' : '';
