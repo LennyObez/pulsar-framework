@@ -56,11 +56,19 @@ final readonly class RssBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
+        /** @var mixed $rawItems */
+        $rawItems = $data['items'] ?? null;
         /** @var list<array{title?: string, url?: string, date?: string, description?: string}> $items */
-        $items = is_array($data['items'] ?? null) ? $data['items'] : [];
-        $showDescription = is_bool($data['showDescription'] ?? null) ? $data['showDescription'] : true;
-        $showDate = is_bool($data['showDate'] ?? null) ? $data['showDate'] : true;
-        $feedUrl = htmlspecialchars(is_string($data['feedUrl'] ?? null) ? $data['feedUrl'] : '', ENT_QUOTES, 'UTF-8');
+        $items = is_array($rawItems) ? $rawItems : [];
+        /** @var mixed $rawShowDescription */
+        $rawShowDescription = $data['showDescription'] ?? null;
+        /** @var mixed $rawShowDate */
+        $rawShowDate = $data['showDate'] ?? null;
+        $showDescription = is_bool($rawShowDescription) ? $rawShowDescription : true;
+        $showDate = is_bool($rawShowDate) ? $rawShowDate : true;
+        /** @var mixed $rawFeedUrl */
+        $rawFeedUrl = $data['feedUrl'] ?? null;
+        $feedUrl = htmlspecialchars(is_string($rawFeedUrl) ? $rawFeedUrl : '', ENT_QUOTES, 'UTF-8');
 
         $html = "<div class=\"rss-block\" data-feed-url=\"$feedUrl\">";
         $html .= '<ul class="rss-block__list">';
