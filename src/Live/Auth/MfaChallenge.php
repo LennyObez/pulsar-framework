@@ -39,6 +39,14 @@ final class MfaChallenge extends LiveComponent
     private ?AuthenticatorInterface $authenticator = null;
     private ?AuthUiConfig $config = null;
 
+    /**
+     * @param array{
+     *     identity-id?: string,
+     *     identityId?: string,
+     *     authenticator?: AuthenticatorInterface,
+     *     config?: AuthUiConfig,
+     * } $params
+     */
     public function mount(array $params = []): void
     {
         $idRaw = $params['identity-id'] ?? $params['identityId'] ?? '';
