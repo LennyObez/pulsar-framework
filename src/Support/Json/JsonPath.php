@@ -116,6 +116,7 @@ final class JsonPath
             foreach ($segments as $segment) {
                 $next = [];
 
+                /** @var mixed $node */
                 foreach ($current as $node) {
                     $next = [...$next, ...$segment($node)];
                 }
