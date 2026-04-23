@@ -43,8 +43,10 @@ final readonly class PiiMasker
             return $bindings;
         }
 
+        /** @var array<string|int, mixed> $masked */
         $masked = [];
 
+        /** @var mixed $value */
         foreach ($bindings as $key => $value) {
             $columnName = strtolower(ltrim((string) $key, ':'));
 
