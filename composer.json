@@ -54,8 +54,8 @@
     "ext-amqp": "Required for AMQP queue driver (RabbitMQ)",
     "ext-redis": "Required for Redis cache and queue drivers",
     "ext-sockets": "Required for persistent HTTP runtime (optional, guarded by runtime check)",
-    "aws/aws-sdk-php": "Required for Amazon SQS queue driver",
-    "google/cloud-pubsub": "Required for Google Cloud Pub/Sub queue driver",
+    "aws/aws-sdk-php": "Optional, only when wiring an opt-in extension that uses Amazon SQS — never imported by core (ADR-0006 isolation, ARCHITECTURE_RULES.md vendor allowlist)",
+    "google/cloud-pubsub": "Optional, only when wiring an opt-in extension that uses Google Cloud Pub/Sub — never imported by core (ADR-0006 isolation, ARCHITECTURE_RULES.md vendor allowlist)",
     "nyholm/psr7": "Required for differential testing against PSR-7 reference implementation",
     "psy/psysh": "Required for the interactive REPL (pulsar shell)"
   },
