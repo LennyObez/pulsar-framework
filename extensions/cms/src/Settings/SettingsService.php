@@ -151,10 +151,12 @@ final readonly class SettingsService implements SettingsServiceInterface
 
             foreach ($localeResult->rows as $row) {
                 $k = $row->getString('key');
-                $settings[$k] = $this->deserializeValue(
+                /** @var mixed $deserializedLocale */
+                $deserializedLocale = $this->deserializeValue(
                     $row->getString('value'),
                     $row->getString('value_type'),
                 );
+                $settings[$k] = $deserializedLocale;
             }
         }
 
