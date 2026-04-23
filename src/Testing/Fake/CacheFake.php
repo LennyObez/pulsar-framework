@@ -39,7 +39,10 @@ final class CacheFake implements CacheDriverInterface
         return $this->store[$key] ?? null;
     }
 
-    /** @return array<string, string|null> */
+    /**
+     * @param list<string> $keys
+     * @return array<string, string|null>
+     */
     public function getMultiple(array $keys): array
     {
         $result = [];
