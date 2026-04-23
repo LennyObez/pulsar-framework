@@ -61,6 +61,12 @@ final class UserProfile extends LiveComponent
     private ?AuthenticatorInterface $authenticator = null;
     private ?AuthUiConfig $config = null;
 
+    /**
+     * @param array{
+     *     authenticator?: AuthenticatorInterface,
+     *     config?: AuthUiConfig,
+     * } $params
+     */
     public function mount(array $params = []): void
     {
         $auth = $params['authenticator'] ?? null;
@@ -72,8 +78,12 @@ final class UserProfile extends LiveComponent
             $user = $this->authenticator->currentUser();
 
             if ($user !== null) {
-                $this->name = (is_string($user['name'] ?? null) ? $user['name'] : '');
-                $this->email = (is_string($user['email'] ?? null) ? $user['email'] : '');
+                /** @var mixed $rawName */
+                $rawName = $user['name'] ?? null;
+                /** @var mixed $rawEmail */
+                $rawEmail = $user['email'] ?? null;
+                $this->name = is_string($rawName) ? $rawName : '';
+                $this->email = is_string($rawEmail) ? $rawEmail : '';
             }
         }
     }
