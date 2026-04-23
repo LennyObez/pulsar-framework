@@ -69,8 +69,10 @@ final class GdprLogFormatter implements ComplianceLogFormatter
      */
     private function pseudonymizeContext(array $context): array
     {
+        /** @var array<string, mixed> $result */
         $result = [];
 
+        /** @var mixed $value */
         foreach ($context as $key => $value) {
             if ($this->shouldPseudonymize($key) && is_string($value)) {
                 $result[$key] = $this->pseudonymize($value);
