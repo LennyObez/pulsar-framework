@@ -16,6 +16,7 @@ use function array_filter;
 use function array_values;
 use function fclose;
 use function flock;
+use function is_int;
 use function fopen;
 use function is_scalar;
 use function sprintf;
@@ -278,12 +279,10 @@ final readonly class MigrationRunner implements MigrationRunnerInterface
             return 0;
         }
 
+        /** @var mixed $maxBatch */
         $maxBatch = $first->getOrDefault('max_batch', 0);
 
-        /** @var int|null $value */
-        $value = $maxBatch;
-
-        return $value ?? 0;
+        return is_int($maxBatch) ? $maxBatch : 0;
     }
 
     /**
@@ -503,6 +502,7 @@ final readonly class MigrationRunner implements MigrationRunnerInterface
         );
 
         $row = $result->first();
+        /** @var mixed $acquired */
         $acquired = $row?->getOrDefault('acquired', 0);
 
         // GET_LOCK returns 1 (acquired), 0 (timeout), or NULL (error).
