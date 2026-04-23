@@ -156,7 +156,9 @@ final readonly class CloudWiring implements ServiceWiringInterface
         $container->instance(GcpConfig::class, $gcpConfig);
 
         // GCS Storage
+        /** @var mixed $rawBucket */
         $rawBucket = $gcpData['gcs_bucket'] ?? '';
+        /** @var mixed $rawPrefix */
         $rawPrefix = $gcpData['gcs_prefix'] ?? '';
 
         if (is_string($rawBucket) && $rawBucket !== '') {
