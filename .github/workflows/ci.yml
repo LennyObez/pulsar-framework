@@ -52,6 +52,17 @@ jobs:
           BASE_REF: ${{ github.base_ref }}
         run: git fetch origin "$BASE_REF" --depth=1
 
+      # F387.4 / F387.M2 / F380.M1: PR titles using `chore:` or `docs:`
+      # while adding new src/ modules or new extensions get less
+      # reviewer attention than they need. Block at CI time so the
+      # title gets renamed before merge.
+      - name: PR title scope strictness
+        if: github.event_name == 'pull_request'
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          BASE_REF: ${{ github.base_ref }}
+        run: bash tools/ci/check-pr-title-scope.sh
+
       - name: Boundary enforcement (Deptrac)
         run: composer boundary:deptrac
 
