@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Command\NewProject;
 
+use InvalidArgumentException;
 use Pulsar\Api\Internal;
 use Random\Engine\Secure;
 use Random\RandomException;
@@ -11,6 +12,7 @@ use Random\Randomizer;
 
 use function base64_encode;
 use function bin2hex;
+use function preg_match;
 use function sprintf;
 
 /**
@@ -30,12 +32,31 @@ final readonly class SecureEnvGenerator
     }
 
     /**
+     * F17.7: app names that contain newlines / `=` / quotes would let
+     * a hostile / careless caller inject extra env keys into the
+     * generated `.env` file (`MyApp\nINJECTED=evil` becomes a real
+     * `INJECTED` line on the next read). The check below restricts
+     * the value to the alphanumeric / dash / dot / underscore /
+     * single-space set that covers every real-world project name
+     * while ruling out every shell-special character.
+     */
+    private const string APP_NAME_PATTERN = '/^[A-Za-z0-9 ._\-]+$/';
+
+    /**
      * Generate `.env` file content.
      *
      * @throws RandomException
+     * @throws InvalidArgumentException When $appName contains shell-injection-prone characters.
      */
     public function generate(string $appName, EnvironmentPreset $env): string
     {
+        if ($appName === '' || preg_match(self::APP_NAME_PATTERN, $appName) !== 1) {
+            throw new InvalidArgumentException(sprintf(
+                'App name must be non-empty and contain only alphanumeric, space, dot, dash, underscore. Got: "%s"',
+                $appName,
+            ));
+        }
+
         $debug = $env === EnvironmentPreset::Local ? 'true' : 'false';
         $url = $env === EnvironmentPreset::Local
             ? 'http://localhost:8000'
