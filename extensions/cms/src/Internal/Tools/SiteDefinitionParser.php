@@ -350,9 +350,11 @@ final readonly class SiteDefinitionParser
                 }
             }
 
+            /** @var mixed $terms */
             $terms = $taxData['terms'] ?? [];
 
             if (is_array($terms)) {
+                /** @var mixed $termData */
                 foreach ($terms as $termData) {
                     if (!is_array($termData)) {
                         continue;
@@ -548,7 +550,6 @@ final readonly class SiteDefinitionParser
             $contentType = ContentType::tryFrom($contentTypeValue) ?? ContentType::Page;
             $slug = self::asString($itemData, 'slug');
             $template = self::asNullableString($itemData, 'template');
-            $importId = self::asNullableString($itemData, 'import_id');
 
             $authorId = $this->resolveAuthorId($itemData);
 
