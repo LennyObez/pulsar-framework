@@ -71,7 +71,9 @@ final readonly class PayPalWebhookHandler
      */
     private function handleStatusChange(array $resource, SubscriptionStatus $newStatus): bool
     {
-        $gatewayId = is_string($resource['id'] ?? null) ? $resource['id'] : '';
+        /** @var mixed $rawGatewayId */
+        $rawGatewayId = $resource['id'] ?? null;
+        $gatewayId = is_string($rawGatewayId) ? $rawGatewayId : '';
 
         if ($gatewayId === '') {
             return false;
@@ -101,9 +103,9 @@ final readonly class PayPalWebhookHandler
      */
     private function handlePaymentCompleted(array $resource): bool
     {
-        $billingAgreementId = is_string($resource['billing_agreement_id'] ?? null)
-            ? $resource['billing_agreement_id']
-            : '';
+        /** @var mixed $rawBillingAgreementId */
+        $rawBillingAgreementId = $resource['billing_agreement_id'] ?? null;
+        $billingAgreementId = is_string($rawBillingAgreementId) ? $rawBillingAgreementId : '';
 
         if ($billingAgreementId === '') {
             return false;
