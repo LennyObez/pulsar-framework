@@ -111,7 +111,9 @@ final readonly class CursorPaginator implements PaginatorInterface
     {
         /** @var int<0, max> $lastIndex */
         $lastIndex = count($pageItems) - 1;
+        /** @var mixed $lastItem */
         $lastItem = $pageItems[$lastIndex];
+        /** @var mixed $position */
         $position = is_array($lastItem) ? ($lastItem['id'] ?? count($pageItems)) : count($pageItems);
 
         return base64_encode(json_encode([
