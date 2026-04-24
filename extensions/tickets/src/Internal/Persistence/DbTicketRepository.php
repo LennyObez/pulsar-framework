@@ -228,7 +228,7 @@ final readonly class DbTicketRepository implements TicketRepositoryInterface
         $result = $this->connection->query(self::SQL_COUNT_BY_STATUS, []);
         $counts = [];
 
-        foreach ($result->all() as $row) {
+        foreach ($result->rows as $row) {
             $counts[$row->getString('status')] = $row->getInt('cnt');
         }
 
