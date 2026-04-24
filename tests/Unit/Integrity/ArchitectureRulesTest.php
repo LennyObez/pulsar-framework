@@ -15,6 +15,8 @@ use RecursiveIteratorIterator;
 use SplFileInfo;
 
 use function array_keys;
+use function array_unique;
+use function array_values;
 use function count;
 use function dirname;
 use function file_get_contents;
@@ -492,7 +494,16 @@ final class ArchitectureRulesTest extends TestCase
                 continue;
             }
 
-            $references = ImportAnalyzer::extractReferences($filePath);
+            // F23.4: combine static `use` / FQCN references with the
+            // class-string scan so `$container->get('Pulsar\Foo\Bar')`
+            // and `class_exists('Pulsar\Foo\Bar')` are not invisible
+            // to boundary-enforcement. Without the merge the
+            // arbitrary-class-instantiation pattern bypasses the
+            // architecture rules — exactly the case those rules
+            // exist to surface.
+            $staticRefs = ImportAnalyzer::extractReferences($filePath);
+            $stringRefs = ImportAnalyzer::extractClassStringReferences($filePath);
+            $references = array_values(array_unique([...$staticRefs, ...$stringRefs]));
             if ($references !== []) {
                 self::$fileReferences[$filePath] = $references;
             }

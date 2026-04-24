@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Container\Resolution;
 
 use InvalidArgumentException;
-use Pulsar\Api\Internal;
+use Pulsar\Api\Api;
 use Pulsar\Container\ContainerInterface;
 
 use function class_exists;
@@ -42,7 +42,7 @@ use function sprintf;
  * Service providers should call this helper from the `default =>` arm of
  * any `match` over a config-string-driven dispatch.
  */
-#[Internal]
+#[Api(since: '1.0.0')]
 final class TypedServiceResolver
 {
     /**
