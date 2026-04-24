@@ -143,14 +143,17 @@ final class EntityDehydrator
     private function extractValue(array $reflectionData, object $entity, ColumnMetadata $col): mixed
     {
         $prop = self::propertyFor($reflectionData, $col->propertyName);
+        /** @var mixed $value */
         $value = $prop->getValue($entity);
 
         // Apply custom caster
         if ($col->casterClass !== null && $value !== null) {
             /** @var callable $toDb */
             $toDb = [$col->casterClass, 'toDatabase'];
+            /** @var mixed $value */
             $value = $toDb($value);
         } else {
+            /** @var mixed $value */
             $value = $this->typeCaster->toDatabase($value, $col->type);
         }
 
