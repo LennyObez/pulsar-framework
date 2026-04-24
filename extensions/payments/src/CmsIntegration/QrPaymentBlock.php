@@ -242,10 +242,12 @@ final readonly class QrPaymentBlock implements BlockTypeInterface
      */
     private function resolveAmount(array $data): Money
     {
+        /** @var mixed $rawAmount */
         $rawAmount = $data['amount'] ?? 0;
         $amountValue = is_int($rawAmount)
             ? $rawAmount
             : ((is_string($rawAmount) || is_float($rawAmount)) && is_numeric($rawAmount) ? (int) $rawAmount : 0);
+        /** @var mixed $rawCurrency */
         $rawCurrency = $data['currency'] ?? null;
         $currencyStr = is_string($rawCurrency) ? $rawCurrency : 'EUR';
         $currency = Currency::tryFrom($currencyStr) ?? Currency::EUR;
@@ -260,12 +262,14 @@ final readonly class QrPaymentBlock implements BlockTypeInterface
      */
     private function formatAmountDisplay(array $data): string
     {
+        /** @var mixed $rawAmount */
         $rawAmount = $data['amount'] ?? null;
 
         if (!is_int($rawAmount) || $rawAmount <= 0) {
             return '';
         }
 
+        /** @var mixed $rawCurrency */
         $rawCurrency = $data['currency'] ?? null;
         $currencyStr = is_string($rawCurrency) ? $rawCurrency : 'EUR';
         $currency = Currency::tryFrom($currencyStr) ?? Currency::EUR;
