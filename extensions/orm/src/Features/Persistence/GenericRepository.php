@@ -72,8 +72,9 @@ final readonly class GenericRepository implements RepositoryInterface
             $builder->withFetchPlan($fetchPlan);
         }
 
+        /** @var mixed $value */
         foreach ($criteria as $column => $value) {
-            $builder->where($column, $value);
+            $builder->where((string) $column, $value);
         }
 
         /** @var list<T> */
@@ -90,8 +91,9 @@ final readonly class GenericRepository implements RepositoryInterface
             $builder->withFetchPlan($fetchPlan);
         }
 
+        /** @var mixed $value */
         foreach ($criteria as $column => $value) {
-            $builder->where($column, $value);
+            $builder->where((string) $column, $value);
         }
 
         /** @var T|null */
@@ -159,8 +161,9 @@ final readonly class GenericRepository implements RepositoryInterface
     {
         $builder = $this->query();
 
+        /** @var mixed $value */
         foreach ($criteria as $column => $value) {
-            $builder->where($column, $value);
+            $builder->where((string) $column, $value);
         }
 
         return $builder->aggregate()->count();
