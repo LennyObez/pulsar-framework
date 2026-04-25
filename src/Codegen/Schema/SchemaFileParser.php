@@ -202,13 +202,17 @@ final readonly class SchemaFileParser
             $relationships[] = $this->parseRelation($relName, $relDef);
         }
 
+        /** @var mixed $rawPrimaryKey */
+        $rawPrimaryKey = $definition['primaryKey'] ?? null;
+        $primaryKey = is_string($rawPrimaryKey) ? $rawPrimaryKey : 'id';
+
         return new EntityDefinition(
             className: $className,
             namespace: $namespace,
             tableName: $tableName,
             properties: $properties,
             relationships: $relationships,
-            primaryKey: is_string($definition['primaryKey'] ?? null) ? $definition['primaryKey'] : 'id',
+            primaryKey: $primaryKey,
             hasTimestamps: ($definition['timestamps'] ?? false) === true,
             hasSoftDeletes: ($definition['softDeletes'] ?? false) === true,
             isAuditAware: ($definition['audit'] ?? false) === true,
@@ -220,10 +224,14 @@ final readonly class SchemaFileParser
      */
     private function parseProperty(string $name, array $propDef): PropertyDefinition
     {
-        $type = is_string($propDef['type'] ?? null) ? $propDef['type'] : 'string';
+        /** @var mixed $rawType */
+        $rawType = $propDef['type'] ?? null;
+        $type = is_string($rawType) ? $rawType : 'string';
         $phpType = $this->schemaTypeToPhp($type);
         $nullable = ($propDef['nullable'] ?? false) === true;
-        $columnName = is_string($propDef['column'] ?? null) ? $propDef['column'] : IdentifierNormalizer::toColumnName($name);
+        /** @var mixed $rawColumnName */
+        $rawColumnName = $propDef['column'] ?? null;
+        $columnName = is_string($rawColumnName) ? $rawColumnName : IdentifierNormalizer::toColumnName($name);
         $length = isset($propDef['length']) && is_int($propDef['length']) ? $propDef['length'] : null;
 
         return new PropertyDefinition(
