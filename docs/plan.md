@@ -853,7 +853,7 @@ The Kubernetes Operator lives outside the Cargo workspace under `services/operat
 
 **Status.** Planned (Phase 1.5 scope, single consolidated sprint).
 
-### 4.16 pulsar-mail (SMTP + template + webhook verifier)
+### 4.12 pulsar-mail (SMTP + template + webhook verifier)
 
 **Purpose.** SMTP client with TLS (both STARTTLS and implicit), message-level encryption via S/MIME, MJML-to-HTML compilation, plain-text fallback auto-generation, attachment handling with size and type limits, webhook verifiers for Sendgrid, SES, Mailgun, Postmark (HMAC-signature verification), bounce-report parsing, DMARC alignment.
 
@@ -867,7 +867,7 @@ The Kubernetes Operator lives outside the Cargo workspace under `services/operat
 
 **Status.** Planned (Phase 2B scope).
 
-### 4.17 pulsar-queue (Job queue with AEAD payload encryption)
+### 4.13 pulsar-queue (Job queue with AEAD payload encryption)
 
 **Purpose.** Redis-backed job queue with msgpack serialisation and AEAD payload encryption (subkey 10 per key-derivation hierarchy), Lua-script-based atomic claim-and-update, per-job retry policy, dead-letter queue, delayed jobs, priority classes, worker supervision, graceful shutdown, back-pressure, per-job observability.
 
@@ -881,7 +881,7 @@ The Kubernetes Operator lives outside the Cargo workspace under `services/operat
 
 **Status.** Planned (Phase 2B scope).
 
-### 4.18 pulsar-scheduler (Cron-like distributed scheduler)
+### 4.14 pulsar-scheduler (Cron-like distributed scheduler)
 
 **Purpose.** Cron-expression parser, distributed locking via Redis or PostgreSQL advisory locks to ensure at-most-one-run-per-schedule across instances, ergonomic `every_minutes(int)` / `every_hours(int)` builders, drift detection and correction, history retention, audit-chain linkage per scheduled execution.
 
@@ -895,7 +895,7 @@ The Kubernetes Operator lives outside the Cargo workspace under `services/operat
 
 **Status.** Planned (Phase 2B scope).
 
-### 4.19 pulsar-cache (Multi-tier cache)
+### 4.15 pulsar-cache (Multi-tier cache)
 
 **Purpose.** Multi-tier cache with in-process first tier (Moka), Redis second tier, optional CDN-edge third tier, typed keys and values, stampede protection via single-flight, per-key TTL, cache-aside and read-through patterns, integrity protection via AEAD when the cache stores sensitive material, integrity markers fixed vs PHP `@unserialize` suppressions.
 
@@ -909,7 +909,7 @@ The Kubernetes Operator lives outside the Cargo workspace under `services/operat
 
 **Status.** Planned (Phase 2B scope).
 
-### 4.20 pulsar-config (Typed readonly configuration)
+### 4.16 pulsar-config (Typed readonly configuration)
 
 **Purpose.** Layered configuration (builtin defaults → TOML files → environment variables → runtime overrides), typed readonly DTOs per configuration domain, secret references resolved via HashiCorp Vault / AWS Secrets Manager / Azure Key Vault / GCP Secret Manager adapters, hot-reload on supported layers, schema validation, configuration diff utility for drift detection.
 
@@ -923,7 +923,7 @@ The Kubernetes Operator lives outside the Cargo workspace under `services/operat
 
 **Status.** Planned (Phase 2B scope).
 
-### 4.21 pulsar-storage (Object storage abstraction)
+### 4.17 pulsar-storage (Object storage abstraction)
 
 **Purpose.** Object storage abstraction with pluggable backends (AWS S3, Azure Blob, GCS, MinIO, local filesystem), presigned URLs, multipart uploads for large files, AEAD encryption at rest option, integrity verification on read, per-bucket policies, regional routing for data residency enforcement (coupled with `pulsar-dataprotection`).
 
@@ -937,13 +937,13 @@ The Kubernetes Operator lives outside the Cargo workspace under `services/operat
 
 **Status.** Planned (Phase 2B scope).
 
-### 4.22 pulsar-form (Form builder + validation + mime sniffer)
+### 4.18 pulsar-form (Form builder + validation + mime sniffer)
 
-**Purpose.** Typed form definitions with derive macros, declarative validation rules, multi-step flow support, file upload with magic-byte MIME sniffing (defence in depth against extension spoofing), CSRF integration (depends on `pulsar-csrf`), auto-generated client-side validation via JSON-Schema emission, i18n integration for error messages.
+**Purpose.** Typed form definitions with derive macros, declarative validation rules, multi-step flow support, file upload with magic-byte MIME sniffing (defence in depth against extension spoofing), CSRF integration (via `pulsar-guard::csrf`), auto-generated client-side validation via JSON-Schema emission, i18n integration for error messages.
 
 **Key types.** `Form`, `Field`, `Validator`, `MimeSniffer`, `UploadLimit`, `FormError`.
 
-**Dependencies.** `pulsar-framework`, `pulsar-csrf`, `serde`, `validator = "0.19"`, `infer = "0.16"` (MIME sniffing), `thiserror`.
+**Dependencies.** `pulsar-framework`, `pulsar-guard`, `serde`, `validator = "0.19"`, `infer = "0.16"` (MIME sniffing), `thiserror`.
 
 **Re-exported in meta.** No.
 
@@ -951,7 +951,7 @@ The Kubernetes Operator lives outside the Cargo workspace under `services/operat
 
 **Status.** Planned (Phase 2B scope).
 
-### 4.23 pulsar-webhook (Generic webhook subscriptions)
+### 4.19 pulsar-webhook (Generic webhook subscriptions)
 
 **Purpose.** Generic webhook subscription framework, per-endpoint signature scheme (HMAC-SHA256 default, Ed25519 optional), retry with exponential backoff, delivery attempts audit (audit-chain linkage), replay-attack defence via nonce + timestamp window, subscription CRUD API, deliverability dashboards.
 
@@ -965,7 +965,7 @@ The Kubernetes Operator lives outside the Cargo workspace under `services/operat
 
 **Status.** Planned (Phase 2B scope).
 
-### 4.24 pulsar-idempotency (Idempotency-Key middleware)
+### 4.20 pulsar-idempotency (Idempotency-Key middleware)
 
 **Purpose.** Idempotency-Key middleware primitive, pluggable store (Redis default, PostgreSQL optional), TTL-bounded result cache, idempotency fingerprint on request body hash, safe interaction with retries from upstream clients, conflict detection on same key with different body.
 
@@ -979,7 +979,7 @@ The Kubernetes Operator lives outside the Cargo workspace under `services/operat
 
 **Status.** Planned (Phase 2B scope).
 
-### 4.25 pulsar-notification (Consent-aware notifications)
+### 4.21 pulsar-notification (Consent-aware notifications)
 
 **Purpose.** Consent-aware notification dispatcher across Web Push (VAPID), Apple Push Notification Service, Firebase Cloud Messaging, SMS (Twilio, Vonage, AWS SNS), email (via `pulsar-mail`), in-app inbox, with delivery policy respecting user preferences declared in `pulsar-consent`.
 
@@ -993,7 +993,7 @@ The Kubernetes Operator lives outside the Cargo workspace under `services/operat
 
 **Status.** Planned (Phase 2B scope).
 
-### 4.26 pulsar-pagination (Pagination primitives)
+### 4.22 pulsar-pagination (Pagination primitives)
 
 **Purpose.** Cursor and offset pagination, typed page envelopes, total-count hint with approximation strategy for large tables, consistent ordering guarantees, integration with `pulsar-orm` repositories, link-header generation per RFC 5988.
 
@@ -1007,7 +1007,7 @@ The Kubernetes Operator lives outside the Cargo workspace under `services/operat
 
 **Status.** Planned (Phase 2B scope).
 
-### 4.27 pulsar-feature-flag (Feature flags + kill switch + A/B)
+### 4.23 pulsar-feature-flag (Feature flags + kill switch + A/B)
 
 **Purpose.** Feature flag evaluation with local cache plus remote provider adapters (OpenFeature-compatible, LaunchDarkly, Unleash, GrowthBook, in-process static), user targeting rules, kill switch semantics, A/B variant allocation, evaluation log for audit, percentage rollout, segment-based gating.
 
@@ -1021,7 +1021,7 @@ The Kubernetes Operator lives outside the Cargo workspace under `services/operat
 
 **Status.** Planned (Phase 2B scope).
 
-### 4.28 pulsar-i18n (Dedicated internationalisation)
+### 4.24 pulsar-i18n (Dedicated internationalisation)
 
 **Purpose.** Dedicated i18n crate (not folded into the template engine): dot-notation key resolution (`domain.subdomain.key`), ICU placeholder substitution including plural forms, locale negotiation chains (Accept-Language → user profile → per-request override → fallback chain), RTL support with `dir="auto"` propagation, message catalogue compilation at build time, hot-reload in development.
 
@@ -1035,13 +1035,13 @@ The Kubernetes Operator lives outside the Cargo workspace under `services/operat
 
 **Status.** Planned (Phase 2B scope).
 
-### 4.29 pulsar-tenancy (Multi-tenant isolation)
+### 4.25 pulsar-tenancy (Multi-tenant isolation)
 
-**Purpose.** Row-level, schema-level, and database-level tenant isolation (selectable per deployment), tenant-scoped caches, tenant-scoped rate limits, tenant-scoped audit chains with per-tenant master-key derivation, tenant-aware middleware, tenant migration tooling for splits and merges, compliance-aware tenant classification.
+**Purpose.** Row-level, schema-level, and database-level tenant isolation (selectable per deployment), tenant-scoped caches, tenant-scoped rate limits (via `pulsar-guard::ratelimit`), tenant-scoped audit chains with per-tenant master-key derivation, tenant-aware middleware, tenant migration tooling for splits and merges, compliance-aware tenant classification.
 
 **Key types.** `TenantId`, `IsolationStrategy`, `TenantContext`, `TenantMigration`, `Scope`.
 
-**Dependencies.** `pulsar-framework`, `pulsar-kernel`, `pulsar-orm`, `pulsar-cache`, `pulsar-ratelimit`, `pulsar-audit`, `thiserror`.
+**Dependencies.** `pulsar-framework`, `pulsar-kernel`, `pulsar-orm`, `pulsar-cache`, `pulsar-guard`, `pulsar-audit`, `thiserror`.
 
 **Re-exported in meta.** No.
 
@@ -1049,7 +1049,7 @@ The Kubernetes Operator lives outside the Cargo workspace under `services/operat
 
 **Status.** Planned (Phase 2B scope).
 
-### 4.30 pulsar-dataprotection (DSAR + RtbF + data residency)
+### 4.26 pulsar-dataprotection (DSAR + RtbF + data residency)
 
 **Purpose.** Data Subject Access Request (GDPR Art. 15) workflow orchestration, Right to be Forgotten (GDPR Art. 17) orchestrator with dry-run and two-phase commit across tables, data portability export (GDPR Art. 20) in machine-readable formats, data residency enforcement coupled with `pulsar-storage` regional routing, retention-policy TTL enforcement at row level, data purge audit.
 
@@ -1061,9 +1061,9 @@ The Kubernetes Operator lives outside the Cargo workspace under `services/operat
 
 **PHP parity.** `src/DataProtection/` (1 906 LOC) in PHP (reference impl only; Rust productionises).
 
-**Status.** Planned (Phase 2C scope).
+**Status.** Planned (Phase 2C scope). **TLA+ specification required** (`spec/dataprotection.tla` for two-phase commit RtbF; folds into the nine-spec count of Section XII via the orchestration spec when shared invariants apply).
 
-### 4.31 pulsar-consent (Granular consent ledger)
+### 4.27 pulsar-consent (Granular consent ledger)
 
 **Purpose.** Granular consent ledger with append-only storage, per-purpose opt-in and withdrawal tracking, legal-basis categorisation (consent, contract, legal obligation, vital interests, public task, legitimate interests), cookie banner with server-side preference centre, cookie classification, integration with `pulsar-analytics` and `pulsar-notification` for consent-gated dispatch.
 
@@ -1077,13 +1077,41 @@ The Kubernetes Operator lives outside the Cargo workspace under `services/operat
 
 **Status.** Planned (Phase 2C scope).
 
-### 4.32 pulsar-cms (Content Management System)
+### 4.28 pulsar-authz (Authorization engine — RBAC + ABAC + ReBAC)
+
+**Purpose.** First-party authorization engine unifying three composable models: Role-Based Access Control (roles and role hierarchies), Attribute-Based Access Control (typed attribute predicates evaluated at policy-engine time, integrated with `pulsar-compliance`), and Relationship-Based Access Control on the Zanzibar model (namespaces, relations, userset rewrites, check and expand APIs, consistency tokens, change feed). Interoperability with SpiceDB via zed-tokens. Replaces ad-hoc ownership checks and pairs with `pulsar-orm` Row-Level Security to deliver end-to-end policy enforcement from the request boundary through to the database.
+
+**Key types.** `AuthzPolicy`, `Role`, `Attribute`, `Relation`, `Namespace`, `UsersetRewrite`, `CheckRequest`, `ExpandRequest`, `ConsistencyToken`, `ZanzibarBackend`, `SpiceDbAdapter`.
+
+**Dependencies.** `pulsar-framework`, `pulsar-kernel`, `pulsar-audit`, `pulsar-compliance`, `serde`, `thiserror`.
+
+**Re-exported in meta.** Yes.
+
+**PHP parity.** Subset of `src/Auth/Authorization/` in PHP, formalised and extended with ReBAC per Section 16.1.2.
+
+**Status.** Planned (Phase 2A scope, paired with Sprint 2.6).
+
+### 4.29 pulsar-identity-standards (W3C VC + DIDs + JWS + COSE)
+
+**Purpose.** Decentralised-identity standards crate covering W3C Verifiable Credentials Data Model v2.0 (issuer, holder, verifier roles), W3C Decentralized Identifiers Core v1.0 (resolver, registrar), DID methods `did:web`, `did:key`, `did:jwk`, JWT-VC and JSON-LD-VC credential formats, Presentation Exchange Protocol (DIF), Status List 2021 for revocation, and signature-format converters (HMAC primary, JWS-detached Ed25519 cross-language, COSE-Sign1 for IoT). Required for eIDAS 2 EUDI Wallet compatibility and legal-tech vertical evaluations.
+
+**Key types.** `VcIssuer`, `VcVerifier`, `VcHolder`, `Credential`, `Presentation`, `DidResolver`, `DidRegistrar`, `DidMethod`, `JwsSignature`, `CoseSignature`, `StatusList2021`, `PresentationExchange`.
+
+**Dependencies.** `pulsar-framework`, `pulsar-kernel`, `pulsar-audit`, `ring`, `serde`, `serde_json`, `thiserror`.
+
+**Re-exported in meta.** Yes.
+
+**PHP parity.** None (new state-of-art surface per Section 16.1.3 and 16.2.1).
+
+**Status.** Planned (Phase 2C scope, ahead of `pulsar-dataprotection`).
+
+### 4.30 pulsar-cms (Content Management System)
 
 **Purpose.** First-party content management system. Pages, posts, taxonomies, media library, menus, user roles, workflow states (Draft → Review → Published → Archived), scheduled publishing, multi-language content, revisions with diff, SEO metadata, sitemap generation, RSS feed, HTMX-enhanced public pages rendered by `pulsar-engine` SSR (Decision 2.9); admin integration through `pulsar-console-api` + `services/admin/` Web Components (Decision 2.8). Covers the PHP CMS surface including experimentation (A/B), newsletter, business profile, bulk operations, import/export, link health, custom fields, form submissions, invoices, customers, digital assets.
 
 **Key types.** `Page`, `Post`, `Taxonomy`, `Term`, `Media`, `Menu`, `Workflow`, `Revision`, `Sitemap`, `RssFeed`, `Experiment`.
 
-**Dependencies.** `pulsar-framework`, `pulsar-engine`, `pulsar-workflow`, `pulsar-feature-flag`, `pulsar-search`, `chrono`.
+**Dependencies.** `pulsar-framework`, `pulsar-engine`, `pulsar-orchestration`, `pulsar-feature-flag`, `pulsar-search`, `chrono`.
 
 **Re-exported in meta.** No.
 
@@ -1091,7 +1119,7 @@ The Kubernetes Operator lives outside the Cargo workspace under `services/operat
 
 **Status.** Planned (Phase 3A scope).
 
-### 4.33 pulsar-forum (Discussion forum)
+### 4.31 pulsar-forum (Discussion forum)
 
 **Purpose.** Threaded discussion forum. Categories, threads, posts, moderation actions, reactions, reputation, subscriptions, email notifications, spam detection via opt-in Akismet-compatible adapter, full-text search via `pulsar-search`.
 
@@ -1105,7 +1133,7 @@ The Kubernetes Operator lives outside the Cargo workspace under `services/operat
 
 **Status.** Planned (Phase 3A scope).
 
-### 4.34 pulsar-payments (Commerce + subscriptions)
+### 4.32 pulsar-payments (Commerce + subscriptions)
 
 **Purpose.** Commerce extension with pluggable payment-provider adapters for Stripe, Braintree, Mollie, PayPal, Adyen; cart with line items and quote; credit notes, invoices, subscriptions with proration, trials, dunning; PDF rendering via a `pulsar-engine` template + Rust PDF writer (typst or printpdf); tax computation hooks (pluggable adapter); idempotency-first design with idempotency keys propagated across the entire request lifecycle; dispute workflow.
 
@@ -1133,11 +1161,11 @@ The Kubernetes Operator lives outside the Cargo workspace under `services/operat
 
 **Status.** Planned (Phase 3A scope, paired with `services/admin/` build pipeline).
 
-### 4.36 pulsar-api (REST API + OpenAPI generation)
+### 4.34 pulsar-api (REST API + OpenAPI generation)
 
-**Purpose.** Typed REST API framework on top of `pulsar-http`: content negotiation, pagination (via `pulsar-pagination`), filtering, sorting, field selection, API versioning (URI path and header-based), OpenAPI 3.1 generation from typed handlers, Swagger UI and Rapidoc embed options, JSON:API and HAL adapters.
+**Purpose.** Typed REST API framework on top of `pulsar-http`: content negotiation, pagination (via `pulsar-pagination`), filtering, sorting, field selection, API versioning (URI path and header-based), OpenAPI 3.1 generation from typed handlers, AsyncAPI 3 emission for streaming endpoints (Section 16.3.3), Swagger UI and Rapidoc embed options, JSON:API and HAL adapters, opt-in OData v4.01 query expressions (Section 16.3.4, feature flag `odata`).
 
-**Key types.** `ApiRoute`, `Version`, `OpenApiSpec`, `JsonApi`, `Hal`, `FieldSelection`, `FilterExpr`.
+**Key types.** `ApiRoute`, `Version`, `OpenApiSpec`, `AsyncApiSpec`, `JsonApi`, `Hal`, `FieldSelection`, `FilterExpr`, `ODataQuery`.
 
 **Dependencies.** `pulsar-framework`, `pulsar-http`, `pulsar-pagination`, `utoipa = "5"`, `serde`, `thiserror`.
 
@@ -1147,13 +1175,13 @@ The Kubernetes Operator lives outside the Cargo workspace under `services/operat
 
 **Status.** Planned (Phase 3B scope).
 
-### 4.37 pulsar-graphql (GraphQL via async-graphql)
+### 4.35 pulsar-graphql (GraphQL via async-graphql)
 
-**Purpose.** GraphQL server on `async-graphql`, schema-first and code-first both supported, Dataloader for N+1 avoidance, subscriptions over WebSocket (through `pulsar-websocket`), persisted queries, query cost analysis, introspection access control.
+**Purpose.** GraphQL server on `async-graphql`, schema-first and code-first both supported, Dataloader for N+1 avoidance, subscriptions over WebSocket (through `pulsar-realtime::websocket`), persisted queries, query cost analysis, introspection access control.
 
 **Key types.** `Schema`, `Resolver`, `Dataloader`, `Subscription`, `QueryCost`.
 
-**Dependencies.** `pulsar-framework`, `pulsar-api`, `pulsar-websocket`, `async-graphql = "7"`, `thiserror`.
+**Dependencies.** `pulsar-framework`, `pulsar-api`, `pulsar-realtime`, `async-graphql = "7"`, `thiserror`.
 
 **Re-exported in meta.** No.
 
@@ -1161,7 +1189,7 @@ The Kubernetes Operator lives outside the Cargo workspace under `services/operat
 
 **Status.** Planned (Phase 3B scope).
 
-### 4.38 pulsar-grpc (gRPC via tonic)
+### 4.36 pulsar-grpc (gRPC via tonic)
 
 **Purpose.** gRPC server and client on `tonic`, proto compilation through `tonic-build`, interceptor integration with middleware pipeline, reflection service, health service (gRPC health protocol), optional gRPC-Web and gRPC-JSON transcoding.
 
@@ -1175,7 +1203,7 @@ The Kubernetes Operator lives outside the Cargo workspace under `services/operat
 
 **Status.** Planned (Phase 3B scope).
 
-### 4.39 pulsar-mcp-server (Model Context Protocol server)
+### 4.37 pulsar-mcp-server (Model Context Protocol server)
 
 **Purpose.** Model Context Protocol server implementation (MCP specification 2025-03-26 baseline), JSON-RPC-over-stdio and over-HTTP transports, resource, tool, and prompt capabilities, per-tool authorisation hooks, audit-chain integration, schema validation on inbound calls, structured output constraints.
 
@@ -1189,35 +1217,26 @@ The Kubernetes Operator lives outside the Cargo workspace under `services/operat
 
 **Status.** Planned (Phase 3B scope).
 
-### 4.40 pulsar-websocket (WebSocket inbound + outbound)
+### 4.38 pulsar-realtime (WebSocket + SSE + WebTransport + broadcasting — consolidated)
 
-**Purpose.** WebSocket server with inbound `MessageHandler`, outbound `FrameSink`, typed per-route handlers, named channel manager, broadcast fan-out (delegates to `pulsar-broadcasting`), route-table-driven dispatch, middleware pipeline for frame-level concerns (auth, rate-limit, compression), ping/pong liveness, graceful close.
+**Purpose.** Unified realtime crate consolidating four surfaces that share session state, auth, rate-limit middleware, and back-pressure semantics. Closes PHP VOID DRIFT gap #13 (WebSocket inbound `MessageHandlerInterface`) and folds in the WebTransport (Section 16.3.1), SSE (Section 16.3.2), and broadcasting (former `pulsar-broadcasting`) state-of-art surfaces. Sub-modules publish under `pulsar_realtime::<module>`:
 
-**Key types.** `WebSocketServer`, `MessageHandler`, `FrameSink`, `Channel`, `InboundDispatcher`, `WsRoute`.
+- `realtime::websocket` — server with inbound `MessageHandler`, outbound `FrameSink`, typed per-route handlers, named channel manager, route-table-driven dispatch, middleware pipeline for frame-level concerns (auth, rate-limit, compression), ping/pong liveness, graceful close. TLA+ specification covers the inbound dispatch lifecycle.
+- `realtime::sse` — Server-Sent Events as a first-class response type with per-connection back-pressure, automatic reconnection hints, retry-after semantics, resumable streams via `Last-Event-ID`.
+- `realtime::webtransport` — WebTransport over HTTP/3 (unreliable datagrams and reliable streams), multiplexed sessions, framed datagram channel for low-latency real-time features, interop tested against Chrome and Firefox reference clients.
+- `realtime::broadcasting` — pub/sub abstraction with backend adapters for Redis Pub/Sub, NATS, Kafka, and in-process; channel fan-out for WebSocket and SSE; presence channels with typed member metadata; private-channel auth hook.
 
-**Dependencies.** `pulsar-framework`, `pulsar-http`, `pulsar-kernel`, `tokio-tungstenite = "0.24"`, `thiserror`.
+**Key types.** `WebSocketServer`, `MessageHandler`, `FrameSink`, `Channel`, `InboundDispatcher`, `WsRoute`, `SseStream`, `SseEvent`, `LastEventId`, `WebTransportSession`, `Datagram`, `Broadcaster`, `PresenceChannel`, `PrivateChannel`, `AuthHook`. One top-level `RealtimeMiddleware` composes the subset configured for a given pipeline.
 
-**Re-exported in meta.** No.
-
-**PHP parity.** `src/WebSocket/` (1 675 LOC) in PHP; inbound MessageHandler completed April 2026 (gap #13 closed).
-
-**Status.** Planned (Phase 3B scope). **TLA+ specification required** (`spec/websocket.tla`).
-
-### 4.41 pulsar-broadcasting (Pub/sub + channel fan-out)
-
-**Purpose.** Pub/sub abstraction for real-time features, backend adapters for Redis Pub/Sub, NATS, Kafka, and in-process; channel fan-out for `pulsar-websocket` and server-sent events over `pulsar-http`; presence channels with typed member metadata; private channel authentication hook.
-
-**Key types.** `Broadcaster`, `Channel`, `PresenceChannel`, `PrivateChannel`, `AuthHook`.
-
-**Dependencies.** `pulsar-framework`, `pulsar-websocket`, `redis`, `async-nats = "0.38"`, `rdkafka = "0.37"` (optional), `thiserror`.
+**Dependencies.** `pulsar-framework`, `pulsar-http`, `pulsar-kernel`, `tokio-tungstenite = "0.24"`, `async-nats = "0.38"`, `redis = "0.27"`, `rdkafka = "0.37"` (optional via feature `kafka`), `thiserror`.
 
 **Re-exported in meta.** No.
 
-**PHP parity.** `src/Broadcasting/` (367 LOC) in PHP.
+**PHP parity.** `src/WebSocket/` (1 675 LOC) + `src/Broadcasting/` (367 LOC) in PHP. Inbound `MessageHandlerInterface` completed April 2026 (gap #13 closed).
 
-**Status.** Planned (Phase 3B scope).
+**Status.** Planned (Phase 3B scope, single consolidated sprint). **TLA+ specification required** (`spec/websocket.tla` covers inbound dispatch lifecycle).
 
-### 4.42 pulsar-ai (Multi-provider AI abstraction)
+### 4.39 pulsar-ai (Multi-provider AI abstraction)
 
 **Purpose.** Typed provider abstraction over Anthropic, OpenAI, Google Vertex AI, Mistral, Azure OpenAI, AWS Bedrock, Ollama (local), and an in-process `llama.cpp` adapter for air-gapped deployments. Covers text completion, chat completion with tool calling, embeddings, image generation. Provider-agnostic streaming API. Cost tracking. Token counting.
 
@@ -1231,11 +1250,11 @@ The Kubernetes Operator lives outside the Cargo workspace under `services/operat
 
 **Status.** Planned (Phase 3C scope).
 
-### 4.43 pulsar-ai-governance (ISO 42001:2023 + EU AI Act)
+### 4.40 pulsar-ai-governance (ISO 42001:2023 + EU AI Act + NIST AI RMF + OWASP LLM Top 10)
 
-**Purpose.** Runtime implementation of ISO 42001:2023 and EU AI Act (Regulation (EU) 2024/1689) requirements: model registry with tamper-evident provenance, prompt injection defence via structured I/O schemas, LLM audit trail (hash of prompt, hash of output, token counts, cost per call, latency), RAG retrieval audit, output moderation with PII redaction hooks, risk-level classifier per EU AI Act four-tier taxonomy (minimal, limited, high, unacceptable), bias-detection hooks, human-in-the-loop gating for high-risk decisions.
+**Purpose.** Runtime implementation of ISO 42001:2023, EU AI Act (Regulation (EU) 2024/1689), NIST AI Risk Management Framework (Section 16.8.6), and OWASP LLM Top 10 (Section 16.8.7) requirements: model registry with tamper-evident provenance, prompt injection defence via structured I/O schemas, LLM audit trail (hash of prompt, hash of output, token counts, cost per call, latency), RAG retrieval audit, output moderation with PII redaction hooks, risk-level classifier per EU AI Act four-tier taxonomy (minimal, limited, high, unacceptable), bias-detection hooks, human-in-the-loop gating for high-risk decisions.
 
-**Key types.** `ModelRegistry`, `ModelProvenance`, `PromptSchema`, `LlmAuditEntry`, `PiiRedactor`, `RiskLevel`, `HumanReviewGate`, `BiasDetector`.
+**Key types.** `ModelRegistry`, `ModelProvenance`, `PromptSchema`, `LlmAuditEntry`, `PiiRedactor`, `RiskLevel`, `HumanReviewGate`, `BiasDetector`, `NistAiRmfMapping`, `OwaspLlmTopTenCheck`.
 
 **Dependencies.** `pulsar-framework`, `pulsar-audit`, `pulsar-compliance`, `serde`, `thiserror`.
 
@@ -1245,11 +1264,11 @@ The Kubernetes Operator lives outside the Cargo workspace under `services/operat
 
 **Status.** Planned (Phase 3C scope).
 
-### 4.44 pulsar-vector-search (Vector search for RAG)
+### 4.41 pulsar-vector-search (Vector search for RAG)
 
-**Purpose.** Vector search abstraction with pluggable backends: `pgvector` (PostgreSQL extension, default), Qdrant adapter, Weaviate adapter, in-memory HNSW for testing. Covers dense embedding indexes, hybrid search (BM25 + vector), re-ranking hooks, metadata filtering.
+**Purpose.** Vector search abstraction with pluggable backends: `pgvector` (PostgreSQL extension, default), Qdrant adapter, Weaviate adapter, in-memory HNSW for testing. Covers dense embedding indexes, hybrid search (BM25 + vector), re-ranking hooks, metadata filtering, retrieval-quality metrics (recall@k, MRR, NDCG), retrieval-trace audit (Section 16.8.4).
 
-**Key types.** `VectorIndex`, `Embedding`, `HybridSearch`, `ReRanker`, `Backend`.
+**Key types.** `VectorIndex`, `Embedding`, `HybridSearch`, `ReRanker`, `Backend`, `RetrievalMetrics`.
 
 **Dependencies.** `pulsar-framework`, `pulsar-orm` (pgvector path), `qdrant-client = "1.11"` (optional), `thiserror`.
 
@@ -1259,13 +1278,27 @@ The Kubernetes Operator lives outside the Cargo workspace under `services/operat
 
 **Status.** Planned (Phase 3C scope).
 
-### 4.45 pulsar-live (Reactive server-driven framework)
+### 4.42 pulsar-ai-agents (Agentic framework — tool-use loop, Computer Use adapter)
 
-**Purpose.** Livewire-style reactive server-driven framework: typed reactive components with server-side state, diff-based DOM patches delivered over WebSocket (through `pulsar-websocket`) or server-sent events, progressive enhancement (full functionality without JavaScript for non-reactive fallback paths), wire protocol defined by this crate, component authoring via proc-macro `#[live_component]`.
+**Purpose.** First-party agentic framework realising the tool-use planning loop on top of `pulsar-ai`. Structured action-observation trace persisted via `pulsar-audit`; loop-break guards on iteration count, wall-clock, and cost ceiling; Anthropic Computer Use adapter (screenshot + click primitives) gated behind capability grants; planner/executor decomposition; tool registry with per-tool authorisation hooks consuming `pulsar-authz`; mandatory `pulsar-ai-governance` audit on every agent invocation; reproducible-run support via deterministic prompt hashing.
+
+**Key types.** `Agent`, `AgentLoop`, `Plan`, `Action`, `Observation`, `Trace`, `LoopGuard`, `CostCeiling`, `ComputerUseAdapter`, `Screenshot`, `ToolRegistry`, `AuthorisedTool`.
+
+**Dependencies.** `pulsar-framework`, `pulsar-ai`, `pulsar-ai-governance`, `pulsar-authz`, `pulsar-audit`, `reqwest`, `serde`, `thiserror`.
+
+**Re-exported in meta.** No.
+
+**PHP parity.** None (new state-of-art surface per Section 16.8.1).
+
+**Status.** Planned (Phase 3C scope, after `pulsar-ai-governance`).
+
+### 4.43 pulsar-live (Reactive server-driven framework)
+
+**Purpose.** Livewire-style reactive server-driven framework: typed reactive components with server-side state, diff-based DOM patches delivered over WebSocket (through `pulsar-realtime::websocket`) or server-sent events (through `pulsar-realtime::sse`), progressive enhancement (full functionality without JavaScript for non-reactive fallback paths), wire protocol defined by this crate, component authoring via proc-macro `#[live_component]`.
 
 **Key types.** `LiveComponent`, `LiveState`, `Diff`, `LiveEvent`, `WireProtocol`.
 
-**Dependencies.** `pulsar-framework`, `pulsar-websocket`, `pulsar-engine`, `serde`, `thiserror`.
+**Dependencies.** `pulsar-framework`, `pulsar-realtime`, `pulsar-engine`, `serde`, `thiserror`.
 
 **Re-exported in meta.** No.
 
@@ -1273,7 +1306,7 @@ The Kubernetes Operator lives outside the Cargo workspace under `services/operat
 
 **Status.** Planned (Phase 3D scope).
 
-### 4.46 pulsar-studio (Dev Studio IDE extension)
+### 4.44 pulsar-studio (Dev Studio IDE extension)
 
 **Purpose.** Dev Studio IDE extension: route browser, DI container inspector, migration editor, template sandbox, audit-chain inspector, observability panel, extension capability editor, local benchmark runner, fuzz target trigger, cargo-expand integration for proc-macro debugging, config-diff viewer.
 
@@ -1287,7 +1320,7 @@ The Kubernetes Operator lives outside the Cargo workspace under `services/operat
 
 **Status.** Planned (Phase 3D scope).
 
-### 4.47 pulsar-analytics (CSP-compliant tracker)
+### 4.45 pulsar-analytics (CSP-compliant tracker)
 
 **Purpose.** Privacy-respecting analytics: CSP-compliant JavaScript tracker (no third-party network calls, no fingerprinting, cookie-less mode default), consent-banner integration (through `pulsar-consent`), event-stream storage (ClickHouse default, PostgreSQL optional), funnel and cohort analysis, export to third-party analytics platforms when consent is explicitly granted.
 
@@ -1301,11 +1334,11 @@ The Kubernetes Operator lives outside the Cargo workspace under `services/operat
 
 **Status.** Planned (Phase 3D scope).
 
-### 4.48 pulsar-accessibility (Accessibility tooling)
+### 4.46 pulsar-accessibility (Accessibility tooling)
 
-**Purpose.** Accessibility-first tooling: contrast-ratio checker (WCAG 2.2 AA and AAA thresholds), axe-core integration for server-side render audit, keyboard-trap detection, screen-reader-announcement helpers, `prefers-reduced-motion` and `prefers-color-scheme` propagation, high-contrast mode theme, dyslexia-friendly font policy integration.
+**Purpose.** Accessibility-first tooling: contrast-ratio checker (WCAG 2.2 AA and AAA thresholds), axe-core integration for server-side render audit, keyboard-trap detection, screen-reader-announcement helpers, `prefers-reduced-motion` and `prefers-color-scheme` propagation, high-contrast mode theme, dyslexia-friendly font policy integration, cognitive-accessibility primitives (reading-level scoring, plain-language toggle, Atkinson Hyperlegible / OpenDyslexic font switch per Section 16.7.4).
 
-**Key types.** `ContrastCheck`, `AxeAudit`, `KeyboardTrapDetector`, `A11yPreference`.
+**Key types.** `ContrastCheck`, `AxeAudit`, `KeyboardTrapDetector`, `A11yPreference`, `ReadingLevel`, `CognitiveProfile`.
 
 **Dependencies.** `pulsar-framework`, `pulsar-engine`, `serde`, `thiserror`.
 
@@ -1315,121 +1348,26 @@ The Kubernetes Operator lives outside the Cargo workspace under `services/operat
 
 **Status.** Planned (Phase 3D scope).
 
-### 4.49 pulsar-workflow (Workflow engine)
+### 4.47 pulsar-orchestration (Workflow + saga — consolidated)
 
-**Purpose.** Typed workflow engine with state-machine-based steps, declarative transitions with guards and actions, compensating actions, persistence through `pulsar-orm`, audit-chain linkage on every transition, cron and event triggers, parallel and sequential step composition, human-approval gates.
+**Purpose.** Unified orchestration crate consolidating two responsibilities that share state-machine semantics, audit-chain linkage on transitions, and persistence patterns on top of `pulsar-orm`. Sub-modules publish under `pulsar_orchestration::<module>`:
 
-**Key types.** `Workflow`, `State`, `Transition`, `Guard`, `Action`, `HumanGate`.
+- `orchestration::workflow` — typed workflow engine with state-machine-based steps, declarative transitions with guards and actions, compensating actions, persistence through `pulsar-orm`, audit-chain linkage on every transition, cron and event triggers, parallel and sequential step composition, human-approval gates.
+- `orchestration::saga` — saga pattern for distributed transactions: step definitions with forward action and compensating action, saga coordinator with at-least-once execution and idempotent compensation, failure recovery, orchestration on top of the workflow engine or choreography on top of `pulsar-realtime::broadcasting`.
 
-**Dependencies.** `pulsar-framework`, `pulsar-orm`, `pulsar-audit`, `pulsar-scheduler`, `thiserror`.
+**Key types.** `Workflow`, `State`, `Transition`, `Guard`, `Action`, `HumanGate`, `Saga`, `Step`, `Compensation`, `SagaCoordinator`, `RecoveryPolicy`.
 
-**Re-exported in meta.** Yes.
-
-**PHP parity.** `src/Workflow/` (3 759 LOC) in PHP.
-
-**Status.** Planned (Phase 3E scope). **TLA+ specification required** (`spec/workflow.tla`).
-
-### 4.50 pulsar-saga (Saga orchestration)
-
-**Purpose.** Saga pattern for distributed transactions: step definitions with forward action and compensating action, saga coordinator with at-least-once execution and idempotent compensation, failure recovery, audit-chain linkage, orchestration via `pulsar-workflow` or choreography via `pulsar-broadcasting`.
-
-**Key types.** `Saga`, `Step`, `Compensation`, `SagaCoordinator`, `RecoveryPolicy`.
-
-**Dependencies.** `pulsar-framework`, `pulsar-workflow`, `pulsar-broadcasting`, `pulsar-audit`, `thiserror`.
+**Dependencies.** `pulsar-framework`, `pulsar-orm`, `pulsar-audit`, `pulsar-scheduler`, `pulsar-realtime`, `thiserror`.
 
 **Re-exported in meta.** Yes.
 
-**PHP parity.** `src/Saga/` (1 858 LOC) in PHP, ADR-0027.
+**PHP parity.** `src/Workflow/` (3 759 LOC) + `src/Saga/` (1 858 LOC) in PHP, ADR-0027.
 
-**Status.** Planned (Phase 3E scope). **TLA+ specification required** (`spec/saga.tla`).
+**Status.** Planned (Phase 3E scope, single consolidated sprint). **TLA+ specifications required** (`spec/workflow.tla` covers state-machine reachability, `spec/saga.tla` covers compensation ordering).
 
-### 4.51 pulsar-tickets (Ticketing extension)
+### 4.48 pulsar-cloud (AWS/Azure/GCP adapters)
 
-**Purpose.** Ticketing: ticket lifecycle (open, in-progress, resolved, closed), categories and priorities, assignment rules, SLA tracking with escalation, internal notes vs customer-visible replies, integration with `pulsar-notification` and `pulsar-audit`.
-
-**Key types.** `Ticket`, `TicketCategory`, `Priority`, `Sla`, `Assignment`.
-
-**Dependencies.** `pulsar-framework`, `pulsar-notification`, `pulsar-audit`, `chrono`.
-
-**Re-exported in meta.** No.
-
-**PHP parity.** `extensions/tickets/` in PHP.
-
-**Status.** Planned (Phase 3E scope).
-
-### 4.52 pulsar-feedback (Feedback + GitHub issue linking)
-
-**Purpose.** Feedback capture extension with form builder integration (`pulsar-form`), optional GitHub issue creation on submission via webhook, categorisation, sentiment analysis hook (optional, via `pulsar-ai`), public roadmap page integration.
-
-**Key types.** `Feedback`, `Category`, `GitHubLink`, `SentimentHook`.
-
-**Dependencies.** `pulsar-framework`, `pulsar-form`, `pulsar-webhook`, `reqwest`.
-
-**Re-exported in meta.** No.
-
-**PHP parity.** `extensions/feedback/` in PHP.
-
-**Status.** Planned (Phase 3E scope).
-
-### 4.53 pulsar-booking (Booking + calendar sync)
-
-**Purpose.** Booking extension: resources, availability windows, time slots, reservations, cancellation policy, Google Calendar and Microsoft Graph Calendar sync, iCalendar export, recurring bookings.
-
-**Key types.** `Resource`, `Availability`, `Reservation`, `CalendarSync`.
-
-**Dependencies.** `pulsar-framework`, `pulsar-notification`, `pulsar-auth` (for calendar OAuth2), `chrono`.
-
-**Re-exported in meta.** No.
-
-**PHP parity.** `extensions/booking/` in PHP.
-
-**Status.** Planned (Phase 3E scope).
-
-### 4.54 pulsar-devices (UserDevice registry)
-
-**Purpose.** User device registry: device fingerprint (conservative, non-identifying), first-seen and last-seen timestamps, trust scoring, known-device vs unknown-device enforcement in auth flows, device-specific revocation.
-
-**Key types.** `UserDevice`, `Fingerprint`, `TrustScore`.
-
-**Dependencies.** `pulsar-framework`, `pulsar-auth`, `pulsar-audit`.
-
-**Re-exported in meta.** No.
-
-**PHP parity.** `extensions/devices/` in PHP.
-
-**Status.** Planned (Phase 3E scope).
-
-### 4.55 pulsar-releases (BetaSignup + Release DTOs)
-
-**Purpose.** Release-communication extension: beta signup flow, release-notes publication, changelog rendering, release-train subscription, feature-flag linkage to releases, release dashboard in the admin console.
-
-**Key types.** `Release`, `BetaSignup`, `ReleaseTrain`, `ReleaseNote`.
-
-**Dependencies.** `pulsar-framework`, `pulsar-feature-flag`, `pulsar-notification`.
-
-**Re-exported in meta.** No.
-
-**PHP parity.** `extensions/releases/` in PHP.
-
-**Status.** Planned (Phase 3E scope).
-
-### 4.56 pulsar-importexport (Universal import/export)
-
-**Purpose.** Universal import/export framework: CSV, JSON, XML, Excel, Parquet input; pluggable mapping with validation; dry-run preview; progress reporting; resumable imports on failure; scheduled exports; audit-chain linkage for bulk data changes.
-
-**Key types.** `Importer`, `Exporter`, `Mapping`, `ValidationResult`, `DryRun`, `ResumeToken`.
-
-**Dependencies.** `pulsar-framework`, `pulsar-queue`, `pulsar-audit`, `calamine = "0.26"` (Excel), `polars = "0.45"` (Parquet), `serde`.
-
-**Re-exported in meta.** No.
-
-**PHP parity.** `src/ImportExport/` (768 LOC) in PHP.
-
-**Status.** Planned (Phase 3E scope).
-
-### 4.57 pulsar-cloud (AWS/Azure/GCP adapters)
-
-**Purpose.** Unified cloud-vendor adapter layer: S3/Blob/GCS via `pulsar-storage` adapters, SNS/Service Bus/Pub-Sub via `pulsar-broadcasting` adapters, Secrets Manager / Key Vault / Secret Manager via `pulsar-config` adapters, CloudWatch / Azure Monitor / Cloud Logging via `pulsar-observability` adapters, SQS/Service Bus/Pub-Sub via `pulsar-queue` adapters. Avoids vendor-specific surface leaking into downstream code.
+**Purpose.** Unified cloud-vendor adapter layer: S3/Blob/GCS via `pulsar-storage` adapters, SNS/Service Bus/Pub-Sub via `pulsar-realtime::broadcasting` adapters, Secrets Manager / Key Vault / Secret Manager via `pulsar-config` adapters, CloudWatch / Azure Monitor / Cloud Logging via `pulsar-observability` adapters, SQS/Service Bus/Pub-Sub via `pulsar-queue` adapters. Avoids vendor-specific surface leaking into downstream code.
 
 **Key types.** `AwsAdapter`, `AzureAdapter`, `GcpAdapter`, `CloudCredentialProvider`.
 
@@ -1441,7 +1379,7 @@ The Kubernetes Operator lives outside the Cargo workspace under `services/operat
 
 **Status.** Planned (Phase 3E scope).
 
-### 4.58 pulsar-edge (Edge compute + CDN integration)
+### 4.49 pulsar-edge (Edge compute + CDN integration)
 
 **Purpose.** Edge-compute and CDN integration: Cloudflare Workers deploy-target, Fastly Compute@Edge deploy-target, edge-side fragment caching, purge API, signed cookie propagation at edge, TLS certificate provisioning via ACME.
 
@@ -1455,41 +1393,30 @@ The Kubernetes Operator lives outside the Cargo workspace under `services/operat
 
 **Status.** Planned (Phase 3E scope).
 
-### 4.59 pulsar-supervisor (Health check runner)
+### 4.50 pulsar-cluster (Health supervisor + service discovery — consolidated)
 
-**Purpose.** Health-check runner: liveness, readiness, and startup probes per subsystem, periodic background checks, aggregated health status dashboard, Kubernetes probe emission, Nomad check emission, fail-fast behaviour on startup-probe failure.
+**Purpose.** Unified cluster-coordination crate consolidating health supervision and service discovery, two surfaces that share Kubernetes/etcd integration and topology-watcher semantics. Sub-modules publish under `pulsar_cluster::<module>`:
 
-**Key types.** `HealthCheck`, `Probe`, `Supervisor`, `AggregatedStatus`.
+- `cluster::supervisor` — health-check runner: liveness, readiness, and startup probes per subsystem, periodic background checks, aggregated health-status dashboard, Kubernetes probe emission, Nomad check emission, fail-fast behaviour on startup-probe failure.
+- `cluster::discovery` — service discovery: Consul adapter, etcd adapter, Kubernetes Service adapter, DNS-SD adapter, client-side load balancing with health filtering, watch-and-update for topology changes.
 
-**Dependencies.** `pulsar-framework`, `pulsar-observability`, `tokio`, `thiserror`.
+**Key types.** `HealthCheck`, `Probe`, `Supervisor`, `AggregatedStatus`, `Discovery`, `Service`, `Instance`, `LoadBalancer`. One top-level `ClusterCoordinator` composes the subset configured for a given deployment.
 
-**Re-exported in meta.** No.
-
-**PHP parity.** `src/Supervisor/` (1 013 LOC) in PHP.
-
-**Status.** Planned (Phase 3E scope).
-
-### 4.60 pulsar-service-discovery (Service discovery)
-
-**Purpose.** Service discovery: Consul adapter, etcd adapter, Kubernetes Service adapter, DNS-SD adapter, client-side load balancing with health filtering, watch-and-update for topology changes.
-
-**Key types.** `Discovery`, `Service`, `Instance`, `LoadBalancer`.
-
-**Dependencies.** `pulsar-framework`, `pulsar-http`, `etcd-client = "0.14"`, `k8s-openapi = "0.24"`, `trust-dns-resolver`, `thiserror`.
+**Dependencies.** `pulsar-framework`, `pulsar-http`, `pulsar-observability`, `etcd-client = "0.14"`, `k8s-openapi = "0.24"`, `trust-dns-resolver`, `tokio`, `thiserror`.
 
 **Re-exported in meta.** No.
 
-**PHP parity.** `src/ServiceDiscovery/` (962 LOC) in PHP, ADR-0029.
+**PHP parity.** `src/Supervisor/` (1 013 LOC) + `src/ServiceDiscovery/` (962 LOC) in PHP, ADR-0029.
 
-**Status.** Planned (Phase 3E scope).
+**Status.** Planned (Phase 3E scope, single consolidated sprint).
 
-### 4.61 pulsar-deploy (Deploy orchestration)
+### 4.51 pulsar-deploy (Deploy orchestration)
 
 **Purpose.** Deploy orchestration: rolling, blue-green, and canary deploy strategies; pre-flight health check; post-deploy verification; rollback on verification failure; feature-flag-driven progressive rollout (through `pulsar-feature-flag`); deployment audit (through `pulsar-audit`).
 
 **Key types.** `DeployStrategy`, `Rollout`, `Verification`, `Rollback`.
 
-**Dependencies.** `pulsar-framework`, `pulsar-feature-flag`, `pulsar-supervisor`, `pulsar-audit`, `thiserror`.
+**Dependencies.** `pulsar-framework`, `pulsar-feature-flag`, `pulsar-cluster`, `pulsar-audit`, `thiserror`.
 
 **Re-exported in meta.** No.
 
@@ -1497,21 +1424,21 @@ The Kubernetes Operator lives outside the Cargo workspace under `services/operat
 
 **Status.** Planned (Phase 3E scope).
 
-### 4.62 pulsar-cli (CLI tool)
+### 4.52 pulsar-cli (CLI tool)
 
-**Purpose.** Command-line tool for framework operations: `new` (scaffold application), `migrate`, `seed`, `routes`, `serve`, `extension install/remove/list`, `audit verify`, `diagnostics`, `key generate`, `key rotate`, `dsar export`, `consent report`, `doctor`, `lint` (answers PHP VOID DRIFT gap #8).
+**Purpose.** Command-line tool for framework operations: `new` (scaffold application), `migrate`, `seed`, `routes`, `serve`, `extension install/remove/list`, `audit verify`, `diagnostics`, `key generate`, `key rotate`, `dsar export`, `consent report`, `import`, `export`, `doctor`, `lint` (answers PHP VOID DRIFT gap #8). Cross-platform binary distribution per Section 16.10.6 (Linux glibc, Linux musl, macOS, Windows, FreeBSD) plus Homebrew, Scoop, apt, dnf packaging.
 
 **Key types.** `Command`, `Args`, `Context`.
 
-**Dependencies.** `pulsar-framework`, `clap = "4"`, `anyhow`, `indicatif`, `console`.
+**Dependencies.** `pulsar-framework`, `clap = "4"`, `anyhow`, `indicatif`, `console`, `calamine = "0.26"`, `polars = "0.45"` (for absorbed import/export subcommands).
 
 **Re-exported in meta.** No (binary, not library).
 
-**PHP parity.** `src/Console/` in PHP.
+**PHP parity.** `src/Console/` + `src/ImportExport/` in PHP (importexport absorbed per Section 16.13).
 
 **Status.** Planned (Phase 4 scope).
 
-### 4.63 pulsar-test (Testing utilities)
+### 4.53 pulsar-test (Testing utilities)
 
 **Purpose.** Test helpers: in-memory adapters for every port defined in the kernel and core crates, time-travel clock, deterministic random (also usable as cross-language fixture source per VOID DRIFT gap #14), assertion helpers for audit-chain integrity, snapshot fixtures, chaos-scenario runner.
 
