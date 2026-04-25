@@ -184,7 +184,7 @@ categories = ["web-programming::http-server", "web-programming"]
 # ──────────────────────────────────────────────────────────────────────────
 # Async runtime
 # ──────────────────────────────────────────────────────────────────────────
-tokio = { version = "1.47", features = ["full"] }
+tokio = { version = "1.52", features = ["full"] }
 tokio-util = "0.7"
 futures = "0.3"
 async-trait = "0.1"
@@ -192,7 +192,7 @@ async-trait = "0.1"
 # ──────────────────────────────────────────────────────────────────────────
 # HTTP stack
 # ──────────────────────────────────────────────────────────────────────────
-hyper = { version = "1.7", features = ["full"] }
+hyper = { version = "1.9", features = ["full"] }
 hyper-util = { version = "0.1", features = ["full"] }
 http = "1.4"
 http-body = "1.0"
@@ -286,7 +286,7 @@ object_store = { version = "0.11", features = ["aws", "azure", "gcp"] }
 # ──────────────────────────────────────────────────────────────────────────
 tokio-tungstenite = "0.24"
 async-nats = "0.38"
-rdkafka = { version = "0.37", optional = true }
+rdkafka = "0.37"
 
 # ──────────────────────────────────────────────────────────────────────────
 # API paradigms

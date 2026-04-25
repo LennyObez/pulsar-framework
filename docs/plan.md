@@ -746,7 +746,7 @@ The Kubernetes Operator lives outside the Cargo workspace under `services/operat
 
 **Key types.** `Template`, `Engine`, `Context`, `Filter`, `Function`, `Loader`, `CompiledTemplate`.
 
-**Dependencies.** `pulsar-kernel`, `pest = "2"`, `pest_derive`, `icu = "2.0"`, `serde`, `thiserror`.
+**Dependencies.** `pulsar-kernel`, `pest = "2"`, `pest_derive`, `icu = "2.2"`, `serde`, `thiserror`.
 
 **Re-exported in meta.** Yes.
 
@@ -3137,7 +3137,7 @@ Nine gating checkpoints bracket the rewrite. Eight fire at the exit of a phase (
 | Crate                  | Version    | Justification                                                                  |
 |------------------------|-----------:|--------------------------------------------------------------------------------|
 | `ring`                 | 0.17       | Audited, FIPS-derived crypto primitives.                                        |
-| `subtle`               | 2.5        | Constant-time byte equality and choice operations.                              |
+| `subtle`               | 2.7        | Constant-time byte equality and choice operations.                              |
 | `zeroize`              | 1.8        | Drop-time memory zeroisation for secrets.                                       |
 | `secrecy`              | 0.10       | Type-level marker for secret values with controlled `Debug`.                    |
 | `thiserror`            | 2          | Derive-based error ergonomics without runtime cost.                             |
