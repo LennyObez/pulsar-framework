@@ -42,7 +42,9 @@ final readonly class ConfigurableShippingCalculator implements ShippingCalculato
             );
         }
 
-        $country = is_string($address['country'] ?? null) ? $address['country'] : '';
+        /** @var mixed $rawCountry */
+        $rawCountry = $address['country'] ?? null;
+        $country = is_string($rawCountry) ? $rawCountry : '';
         $subtotal = $this->calculateSubtotal($items);
 
         // Find the best matching rate for the destination country
@@ -78,7 +80,9 @@ final readonly class ConfigurableShippingCalculator implements ShippingCalculato
 
     public function availableMethods(array $address): array
     {
-        $country = is_string($address['country'] ?? null) ? $address['country'] : '';
+        /** @var mixed $rawCountry */
+        $rawCountry = $address['country'] ?? null;
+        $country = is_string($rawCountry) ? $rawCountry : '';
 
         $methods = array_filter(
             $this->config->shippingRates,

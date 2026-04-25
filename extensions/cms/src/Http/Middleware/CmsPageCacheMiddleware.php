@@ -148,8 +148,10 @@ final readonly class CmsPageCacheMiddleware implements MiddlewareInterface
      */
     private function filterQueryParams(array $params): array
     {
+        /** @var array<string, mixed> $filtered */
         $filtered = [];
 
+        /** @var mixed $value */
         foreach ($params as $key => $value) {
             if ($key === '_nocache') {
                 continue;
