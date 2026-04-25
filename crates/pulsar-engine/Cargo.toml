@@ -12,3 +12,11 @@ documentation.workspace = true
 readme = "README.md"
 keywords.workspace = true
 categories.workspace = true
+
+[dependencies]
+pulsar-kernel = { path = "../pulsar-kernel", version = "=0.0.1-alpha.0" }
+pest = { workspace = true }
+pest_derive = { workspace = true }
+icu = { workspace = true }
+serde = { workspace = true }
+thiserror = { workspace = true }

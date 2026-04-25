@@ -12,3 +12,22 @@ documentation.workspace = true
 readme = "README.md"
 keywords.workspace = true
 categories.workspace = true
+
+[dependencies]
+# Stable public surface — every re-exported crate marked "Re-exported in meta. Yes." in Section IV
+pulsar-kernel = { path = "../pulsar-kernel", version = "=0.0.1-alpha.0" }
+pulsar-http = { path = "../pulsar-http", version = "=0.0.1-alpha.0" }
+pulsar-engine = { path = "../pulsar-engine", version = "=0.0.1-alpha.0" }
+pulsar-orm = { path = "../pulsar-orm", version = "=0.0.1-alpha.0" }
+pulsar-audit = { path = "../pulsar-audit", version = "=0.0.1-alpha.0" }
+pulsar-auth = { path = "../pulsar-auth", version = "=0.0.1-alpha.0" }
+pulsar-compliance = { path = "../pulsar-compliance", version = "=0.0.1-alpha.0" }
+pulsar-observability = { path = "../pulsar-observability", version = "=0.0.1-alpha.0" }
+pulsar-search = { path = "../pulsar-search", version = "=0.0.1-alpha.0" }
+pulsar-guard = { path = "../pulsar-guard", version = "=0.0.1-alpha.0" }
+pulsar-dataprotection = { path = "../pulsar-dataprotection", version = "=0.0.1-alpha.0" }
+pulsar-consent = { path = "../pulsar-consent", version = "=0.0.1-alpha.0" }
+pulsar-authz = { path = "../pulsar-authz", version = "=0.0.1-alpha.0" }
+pulsar-identity-standards = { path = "../pulsar-identity-standards", version = "=0.0.1-alpha.0" }
+pulsar-ai-governance = { path = "../pulsar-ai-governance", version = "=0.0.1-alpha.0" }
+pulsar-orchestration = { path = "../pulsar-orchestration", version = "=0.0.1-alpha.0" }

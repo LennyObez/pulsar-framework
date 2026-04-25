@@ -250,6 +250,7 @@ opentelemetry-otlp = "0.31"
 opentelemetry-semantic-conventions = "0.31"
 metrics = "0.24"
 metrics-exporter-prometheus = "0.17"
+clickhouse = "0.13"
 
 # ──────────────────────────────────────────────────────────────────────────
 # Auth + Identity standards
@@ -337,6 +338,14 @@ figment = { version = "0.10", features = ["toml", "env"] }
 # ──────────────────────────────────────────────────────────────────────────
 etcd-client = "0.14"
 trust-dns-resolver = "0.23"
+k8s-openapi = { version = "0.24", features = ["latest"] }
+
+# ──────────────────────────────────────────────────────────────────────────
+# Cloud SDKs (AWS, Azure, GCP) — for pulsar-cloud
+# ──────────────────────────────────────────────────────────────────────────
+aws-sdk-s3 = "1.56"
+azure_core = "0.21"
+google-cloud-storage = "0.22"
 
 # ──────────────────────────────────────────────────────────────────────────
 # Edge / ACME
