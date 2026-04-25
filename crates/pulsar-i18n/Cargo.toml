@@ -1,0 +1,14 @@
+[package]
+name = "pulsar-i18n"
+description = "Internationalisation with dot-notation keys, ICU plurals, RTL, locale fallback chains."
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+readme = "README.md"
+keywords.workspace = true
+categories.workspace = true

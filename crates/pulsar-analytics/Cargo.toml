@@ -1,0 +1,14 @@
+[package]
+name = "pulsar-analytics"
+description = "CSP-compliant tracker, consent-gated event ingest, funnel and cohort analysis."
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+readme = "README.md"
+keywords.workspace = true
+categories.workspace = true

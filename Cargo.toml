@@ -1,0 +1,428 @@
+[workspace]
+resolver = "3"
+members = [
+    # ─────────────────────────────────────────────────────────────────────
+    # Meta-crate (re-exports stable public surface)
+    # ─────────────────────────────────────────────────────────────────────
+    "crates/pulsar-framework",
+
+    # ─────────────────────────────────────────────────────────────────────
+    # Kernel layer — formally verified, minimum surface
+    # ─────────────────────────────────────────────────────────────────────
+    "crates/pulsar-kernel",
+
+    # ─────────────────────────────────────────────────────────────────────
+    # Core foundation crates
+    # ─────────────────────────────────────────────────────────────────────
+    "crates/pulsar-http",
+    "crates/pulsar-engine",
+    "crates/pulsar-orm",
+    "crates/pulsar-audit",
+    "crates/pulsar-auth",
+    "crates/pulsar-compliance",
+    "crates/pulsar-observability",
+    "crates/pulsar-search",
+
+    # ─────────────────────────────────────────────────────────────────────
+    # Security controls layer (consolidated per Section 16.14)
+    # ─────────────────────────────────────────────────────────────────────
+    "crates/pulsar-guard",
+
+    # ─────────────────────────────────────────────────────────────────────
+    # Application infrastructure layer
+    # ─────────────────────────────────────────────────────────────────────
+    "crates/pulsar-mail",
+    "crates/pulsar-queue",
+    "crates/pulsar-scheduler",
+    "crates/pulsar-cache",
+    "crates/pulsar-config",
+    "crates/pulsar-storage",
+    "crates/pulsar-form",
+    "crates/pulsar-webhook",
+    "crates/pulsar-idempotency",
+    "crates/pulsar-notification",
+    "crates/pulsar-pagination",
+    "crates/pulsar-feature-flag",
+    "crates/pulsar-i18n",
+    "crates/pulsar-tenancy",
+
+    # ─────────────────────────────────────────────────────────────────────
+    # Data protection + Authorization + Identity standards
+    # ─────────────────────────────────────────────────────────────────────
+    "crates/pulsar-dataprotection",
+    "crates/pulsar-consent",
+    "crates/pulsar-authz",
+    "crates/pulsar-identity-standards",
+
+    # ─────────────────────────────────────────────────────────────────────
+    # Application extensions
+    # ─────────────────────────────────────────────────────────────────────
+    "crates/pulsar-cms",
+    "crates/pulsar-forum",
+    "crates/pulsar-payments",
+    "crates/pulsar-console-api",
+
+    # ─────────────────────────────────────────────────────────────────────
+    # API paradigms
+    # ─────────────────────────────────────────────────────────────────────
+    "crates/pulsar-api",
+    "crates/pulsar-graphql",
+    "crates/pulsar-grpc",
+    "crates/pulsar-mcp-server",
+    "crates/pulsar-realtime",
+
+    # ─────────────────────────────────────────────────────────────────────
+    # AI surface
+    # ─────────────────────────────────────────────────────────────────────
+    "crates/pulsar-ai",
+    "crates/pulsar-ai-governance",
+    "crates/pulsar-vector-search",
+    "crates/pulsar-ai-agents",
+
+    # ─────────────────────────────────────────────────────────────────────
+    # Reactive + Developer experience
+    # ─────────────────────────────────────────────────────────────────────
+    "crates/pulsar-live",
+    "crates/pulsar-studio",
+    "crates/pulsar-analytics",
+    "crates/pulsar-accessibility",
+
+    # ─────────────────────────────────────────────────────────────────────
+    # Orchestration (consolidated workflow + saga per Section 16.14)
+    # ─────────────────────────────────────────────────────────────────────
+    "crates/pulsar-orchestration",
+
+    # ─────────────────────────────────────────────────────────────────────
+    # Infrastructure adapters
+    # ─────────────────────────────────────────────────────────────────────
+    "crates/pulsar-cloud",
+    "crates/pulsar-edge",
+    "crates/pulsar-cluster",
+    "crates/pulsar-deploy",
+
+    # ─────────────────────────────────────────────────────────────────────
+    # CLI + Test utilities
+    # ─────────────────────────────────────────────────────────────────────
+    "crates/pulsar-cli",
+    "crates/pulsar-test",
+]
+
+# Note: the Kubernetes Operator lives in `services/operator/` in Go (Decision 2.46), not as a Rust crate.
+# Note: the admin SPA lives in `services/admin/` in native HTML5 + ES2025 + Web Components (Decision 2.8), not as a Rust crate.
+
+# Default members run on `cargo build` / `cargo test` without --package.
+default-members = [
+    "crates/pulsar-framework",
+    "crates/pulsar-kernel",
+    "crates/pulsar-http",
+    "crates/pulsar-engine",
+    "crates/pulsar-orm",
+    "crates/pulsar-audit",
+    "crates/pulsar-auth",
+    "crates/pulsar-compliance",
+    "crates/pulsar-observability",
+    "crates/pulsar-search",
+    "crates/pulsar-guard",
+    "crates/pulsar-mail",
+    "crates/pulsar-queue",
+    "crates/pulsar-scheduler",
+    "crates/pulsar-cache",
+    "crates/pulsar-config",
+    "crates/pulsar-storage",
+    "crates/pulsar-form",
+    "crates/pulsar-webhook",
+    "crates/pulsar-idempotency",
+    "crates/pulsar-notification",
+    "crates/pulsar-pagination",
+    "crates/pulsar-feature-flag",
+    "crates/pulsar-i18n",
+    "crates/pulsar-tenancy",
+    "crates/pulsar-dataprotection",
+    "crates/pulsar-consent",
+    "crates/pulsar-authz",
+    "crates/pulsar-identity-standards",
+    "crates/pulsar-cms",
+    "crates/pulsar-forum",
+    "crates/pulsar-payments",
+    "crates/pulsar-console-api",
+    "crates/pulsar-api",
+    "crates/pulsar-graphql",
+    "crates/pulsar-grpc",
+    "crates/pulsar-mcp-server",
+    "crates/pulsar-realtime",
+    "crates/pulsar-ai",
+    "crates/pulsar-ai-governance",
+    "crates/pulsar-vector-search",
+    "crates/pulsar-ai-agents",
+    "crates/pulsar-live",
+    "crates/pulsar-studio",
+    "crates/pulsar-analytics",
+    "crates/pulsar-accessibility",
+    "crates/pulsar-orchestration",
+    "crates/pulsar-cloud",
+    "crates/pulsar-edge",
+    "crates/pulsar-cluster",
+    "crates/pulsar-deploy",
+    "crates/pulsar-cli",
+    "crates/pulsar-test",
+]
+
+[workspace.package]
+version = "0.0.1-alpha.0"
+authors = ["Lenny Obez <github@lennyobez.com>"]
+edition = "2024"
+rust-version = "1.95"
+license = "Apache-2.0"
+repository = "https://github.com/LennyObez/pulsar-framework"
+homepage = "https://pulsar-framework.com"
+documentation = "https://docs.rs/pulsar-framework"
+readme = "README.md"
+keywords = ["web", "framework", "regulated", "banking", "healthcare"]
+categories = ["web-programming::http-server", "web-programming"]
+
+[workspace.dependencies]
+# ──────────────────────────────────────────────────────────────────────────
+# Async runtime
+# ──────────────────────────────────────────────────────────────────────────
+tokio = { version = "1.47", features = ["full"] }
+tokio-util = "0.7"
+futures = "0.3"
+async-trait = "0.1"
+
+# ──────────────────────────────────────────────────────────────────────────
+# HTTP stack
+# ──────────────────────────────────────────────────────────────────────────
+hyper = { version = "1.7", features = ["full"] }
+hyper-util = { version = "0.1", features = ["full"] }
+http = "1.4"
+http-body = "1.0"
+http-body-util = "0.1"
+tower = { version = "0.5", features = ["full"] }
+tower-http = { version = "0.6", features = ["full"] }
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "json", "stream"] }
+
+# ──────────────────────────────────────────────────────────────────────────
+# Crypto primitives (audited)
+# ──────────────────────────────────────────────────────────────────────────
+ring = "0.17"
+rustls = "0.23"
+rustls-pemfile = "2.2"
+argon2 = "0.5"
+subtle = "2.7"
+zeroize = { version = "1.8", features = ["derive"] }
+secrecy = { version = "0.10", features = ["serde"] }
+rand = "0.8"
+rand_chacha = "0.3"
+blake3 = "1.8"
+hmac = "0.12"
+sha2 = "0.10"
+hkdf = "0.12"
+
+# ──────────────────────────────────────────────────────────────────────────
+# Serialization
+# ──────────────────────────────────────────────────────────────────────────
+serde = { version = "1.0", features = ["derive", "rc"] }
+serde_json = "1.0"
+serde_yaml = "0.9"
+toml = "0.8"
+rmp-serde = "1.3"
+ciborium = "0.2"
+
+# ──────────────────────────────────────────────────────────────────────────
+# Database
+# ──────────────────────────────────────────────────────────────────────────
+sqlx = { version = "0.8", features = ["runtime-tokio", "postgres", "sqlite", "mysql", "chrono", "uuid", "json", "migrate"] }
+redis = { version = "0.27", features = ["tokio-comp", "tokio-rustls-comp", "connection-manager"] }
+
+# ──────────────────────────────────────────────────────────────────────────
+# Search
+# ──────────────────────────────────────────────────────────────────────────
+tantivy = "0.25"
+
+# ──────────────────────────────────────────────────────────────────────────
+# Observability (OpenTelemetry semantic conventions compliance)
+# ──────────────────────────────────────────────────────────────────────────
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json", "fmt"] }
+tracing-opentelemetry = "0.32"
+opentelemetry = "0.31"
+opentelemetry-otlp = "0.31"
+opentelemetry-semantic-conventions = "0.31"
+metrics = "0.24"
+metrics-exporter-prometheus = "0.17"
+
+# ──────────────────────────────────────────────────────────────────────────
+# Auth + Identity standards
+# ──────────────────────────────────────────────────────────────────────────
+oauth2 = "5"
+openidconnect = "4"
+webauthn-rs = "0.5"
+totp-rs = "5"
+samael = "0.0.18"  # SAML 2.0
+ldap3 = "0.11"
+cryptoki = "0.7"   # PKCS#11 HSM
+
+# ──────────────────────────────────────────────────────────────────────────
+# Template engine + i18n
+# ──────────────────────────────────────────────────────────────────────────
+pest = "2"
+pest_derive = "2"
+icu = "2.2"
+unic-langid = "0.9"
+
+# ──────────────────────────────────────────────────────────────────────────
+# Mail
+# ──────────────────────────────────────────────────────────────────────────
+lettre = { version = "0.11", default-features = false, features = ["tokio1", "tokio1-rustls-tls", "smtp-transport", "builder"] }
+mrml = "4"
+
+# ──────────────────────────────────────────────────────────────────────────
+# Storage
+# ──────────────────────────────────────────────────────────────────────────
+object_store = { version = "0.11", features = ["aws", "azure", "gcp"] }
+
+# ──────────────────────────────────────────────────────────────────────────
+# Realtime / WebSocket / Broadcasting
+# ──────────────────────────────────────────────────────────────────────────
+tokio-tungstenite = "0.24"
+async-nats = "0.38"
+rdkafka = { version = "0.37", optional = true }
+
+# ──────────────────────────────────────────────────────────────────────────
+# API paradigms
+# ──────────────────────────────────────────────────────────────────────────
+async-graphql = "7"
+tonic = "0.13"
+tonic-build = "0.13"
+prost = "0.13"
+utoipa = "5"
+
+# ──────────────────────────────────────────────────────────────────────────
+# AI / ML (Rust-native, no Python sidecar)
+# ──────────────────────────────────────────────────────────────────────────
+candle-core = "0.9"
+candle-nn = "0.9"
+candle-transformers = "0.9"
+qdrant-client = "1.11"
+
+# ──────────────────────────────────────────────────────────────────────────
+# WASM extension sandbox
+# ──────────────────────────────────────────────────────────────────────────
+wasmtime = "44"
+wasmtime-wasi = "44"
+
+# ──────────────────────────────────────────────────────────────────────────
+# Form + Validation + MIME
+# ──────────────────────────────────────────────────────────────────────────
+validator = "0.19"
+infer = "0.16"
+
+# ──────────────────────────────────────────────────────────────────────────
+# Cache (multi-tier)
+# ──────────────────────────────────────────────────────────────────────────
+moka = { version = "0.12", features = ["future"] }
+
+# ──────────────────────────────────────────────────────────────────────────
+# Scheduler
+# ──────────────────────────────────────────────────────────────────────────
+cron = "0.12"
+
+# ──────────────────────────────────────────────────────────────────────────
+# Configuration
+# ──────────────────────────────────────────────────────────────────────────
+figment = { version = "0.10", features = ["toml", "env"] }
+
+# ──────────────────────────────────────────────────────────────────────────
+# Service discovery
+# ──────────────────────────────────────────────────────────────────────────
+etcd-client = "0.14"
+trust-dns-resolver = "0.23"
+
+# ──────────────────────────────────────────────────────────────────────────
+# Edge / ACME
+# ──────────────────────────────────────────────────────────────────────────
+acme-client = "0.4"
+
+# ──────────────────────────────────────────────────────────────────────────
+# Feature flags (OpenFeature-compatible)
+# ──────────────────────────────────────────────────────────────────────────
+open-feature = "0.1"
+
+# ──────────────────────────────────────────────────────────────────────────
+# Error handling
+# ──────────────────────────────────────────────────────────────────────────
+thiserror = "2.0"
+anyhow = "1.0"
+
+# ──────────────────────────────────────────────────────────────────────────
+# Utilities
+# ──────────────────────────────────────────────────────────────────────────
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1.11", features = ["v4", "v7", "serde"] }
+url = "2.5"
+bytes = "1.9"
+regex = "1.11"
+percent-encoding = "2.3"
+once_cell = "1.20"
+parking_lot = "0.12"
+dashmap = "6.1"
+rust_decimal = { version = "1.36", features = ["serde"] }
+
+# ──────────────────────────────────────────────────────────────────────────
+# CLI
+# ──────────────────────────────────────────────────────────────────────────
+clap = { version = "4.5", features = ["derive", "env"] }
+indicatif = "0.17"
+console = "0.15"
+
+# ──────────────────────────────────────────────────────────────────────────
+# Import / Export formats
+# ──────────────────────────────────────────────────────────────────────────
+calamine = "0.26"  # Excel
+polars = { version = "0.45", features = ["parquet", "csv", "json"] }
+
+# ──────────────────────────────────────────────────────────────────────────
+# Proc-macro support (for ORM, engine, kernel attributes)
+# ──────────────────────────────────────────────────────────────────────────
+proc-macro2 = "1"
+syn = { version = "2", features = ["full", "extra-traits"] }
+quote = "1"
+darling = "0.21"
+
+# ──────────────────────────────────────────────────────────────────────────
+# Testing
+# ──────────────────────────────────────────────────────────────────────────
+proptest = "1.6"
+quickcheck = "1.0"
+criterion = { version = "0.5", features = ["html_reports"] }
+mockall = "0.13"
+insta = { version = "1.42", features = ["json", "yaml"] }
+wiremock = "0.6"
+scraper = "0.20"
+thirtyfour = "0.34"
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+strip = "symbols"
+panic = "abort"
+
+[profile.release-with-debug]
+inherits = "release"
+debug = "full"
+strip = "none"
+
+[profile.bench]
+opt-level = 3
+lto = "thin"
+debug = "line-tables-only"
+
+[profile.dev]
+opt-level = 0
+debug = "full"
+incremental = true
+
+[profile.dev.package."*"]
+# Dependencies compiled in opt-level=1 for faster debug runs
+opt-level = 1

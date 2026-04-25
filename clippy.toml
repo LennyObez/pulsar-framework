@@ -1,0 +1,24 @@
+# Pulsar framework Rust — Clippy configuration
+# Applied in addition to `clippy::all`, `clippy::pedantic`, `clippy::nursery`,
+# and selected restriction lints enabled in `Cargo.toml` / top-level attributes.
+
+# Cognitive complexity threshold (default: 25)
+cognitive-complexity-threshold = 15
+
+# Max items per function arg list
+too-many-arguments-threshold = 5
+
+# MSRV enforcement
+msrv = "1.95.0"
+
+# Documentation required
+missing-docs-in-crate-items = true
+
+# Disallow primitive types in public API where domain types should be used
+# (enforced by clippy::disallowed_types in lint config)
+
+# Upper bound on enum variants before suggesting refactor
+enum-variant-size-threshold = 200
+
+# Max lines for a single function
+too-many-lines-threshold = 100

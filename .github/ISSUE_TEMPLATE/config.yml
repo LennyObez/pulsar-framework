@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/LennyObez/pulsar-framework/security/advisories/new
+    about: Report vulnerabilities privately through GitHub Security Advisories. Do not open public issues for security concerns.
+  - name: Question or discussion
+    url: https://github.com/LennyObez/pulsar-framework/discussions
+    about: Ask questions, share ideas, or discuss the framework with the community.
+  - name: Documentation
+    url: https://docs.rs/pulsar-framework
+    about: Consult the published documentation before filing issues.

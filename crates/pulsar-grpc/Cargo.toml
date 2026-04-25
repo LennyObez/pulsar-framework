@@ -1,0 +1,14 @@
+[package]
+name = "pulsar-grpc"
+description = "gRPC on tonic with interceptors, reflection, health, optional gRPC-Web transcoding."
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+readme = "README.md"
+keywords.workspace = true
+categories.workspace = true

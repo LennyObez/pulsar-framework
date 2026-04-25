@@ -1,0 +1,51 @@
+# Rust build artifacts
+/target
+**/*.rs.bk
+
+# Cargo
+Cargo.lock.bak
+
+# sccache
+.sccache-cache/
+
+# Coverage
+*.profraw
+*.profdata
+tarpaulin-report.html
+cobertura.xml
+/coverage/
+
+# Mutation testing
+/mutants.out/
+
+# Fuzzing
+/fuzz/target/
+/fuzz/corpus/
+/fuzz/artifacts/
+
+# IDE
+/.vscode/
+/.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets (should never be committed)
+.env
+.env.local
+*.pem
+*.key
+credentials.toml
+
+# Local development
+/tmp/
+/local/
+*.log
+
+# Claude Code operator files (offline, never committed)
+CLAUDE.md
+.claude/

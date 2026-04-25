@@ -1,0 +1,14 @@
+[package]
+name = "pulsar-payments"
+description = "Commerce extension with Stripe, Braintree, Mollie, PayPal, Adyen adapters."
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+readme = "README.md"
+keywords.workspace = true
+categories.workspace = true

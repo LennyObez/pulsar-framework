@@ -1,0 +1,72 @@
+name: Feature request
+description: Suggest an enhancement to Pulsar Framework
+title: "[Feature]: "
+labels: ["type/feature", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting an enhancement. Well-scoped requests get prioritized fastest.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem statement
+      description: What problem does this feature solve? Who benefits? Describe the use case concretely.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: How should this work? Include API sketches, type signatures, and example usage if possible.
+      render: markdown
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: What other approaches have been evaluated? Why is this one preferred?
+
+  - type: dropdown
+    id: crate
+    attributes:
+      label: Target crate
+      options:
+        - pulsar-framework (meta)
+        - pulsar-kernel
+        - pulsar-http
+        - pulsar-engine
+        - pulsar-orm
+        - pulsar-audit
+        - pulsar-auth
+        - pulsar-compliance
+        - pulsar-observability
+        - pulsar-cms
+        - pulsar-forum
+        - pulsar-payments
+        - pulsar-console
+        - pulsar-cli
+        - pulsar-test
+        - New crate (propose in description)
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope considerations
+      options:
+        - label: This feature fits within the "regulated, mission-critical web framework" mandate
+        - label: This feature is not already provided by existing crates in the ecosystem
+        - label: I have considered backward compatibility implications
+        - label: I am willing to contribute an implementation or an ADR
+
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: Related issues, ADRs, external specs, or prior art.

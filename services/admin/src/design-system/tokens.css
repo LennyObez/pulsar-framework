@@ -1,0 +1,91 @@
+/*
+ * Pulsar Admin Console — design tokens.
+ *
+ * Colours in OKLCH for perceptual uniformity. Spacing on a linear scale.
+ * Typography aligned with the framework font policy (JetBrains Mono, Montserrat, Overpass).
+ * Tokens flow into Web Components via :host inheritance.
+ */
+
+:root {
+  color-scheme: light dark;
+
+  /* Brand */
+  --color-brand: oklch(63% 0.18 35);
+  --color-brand-soft: oklch(80% 0.12 35);
+  --color-brand-strong: oklch(45% 0.22 35);
+
+  /* Surface */
+  --color-bg: oklch(99% 0.005 250);
+  --color-surface: oklch(96% 0.01 250);
+  --color-surface-raised: oklch(94% 0.012 250);
+  --color-border: oklch(86% 0.008 250);
+
+  /* Text */
+  --color-text: oklch(20% 0.01 250);
+  --color-text-muted: oklch(50% 0.012 250);
+  --color-text-inverse: oklch(96% 0.005 250);
+
+  /* Semantic */
+  --color-danger: oklch(58% 0.22 25);
+  --color-warning: oklch(70% 0.18 80);
+  --color-success: oklch(65% 0.16 145);
+  --color-info: oklch(65% 0.14 220);
+
+  /* Typography */
+  --font-body: "Montserrat", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Code", monospace;
+  --font-display: "Overpass", var(--font-body);
+
+  /* Spacing scale */
+  --space-3xs: 0.125rem;
+  --space-2xs: 0.25rem;
+  --space-xs: 0.5rem;
+  --space-sm: 0.75rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+  --space-3xl: 4rem;
+
+  /* Radius */
+  --radius-sm: 0.125rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 1rem;
+  --radius-full: 9999px;
+
+  /* Z-index */
+  --z-base: 1;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-modal-backdrop: 300;
+  --z-modal: 400;
+  --z-toast: 500;
+  --z-tooltip: 600;
+
+  /* Motion */
+  --motion-duration-fast: 120ms;
+  --motion-duration-base: 200ms;
+  --motion-duration-slow: 320ms;
+  --motion-easing-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --motion-easing-emphasised: cubic-bezier(0.2, 0, 0, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: oklch(12% 0.015 250);
+    --color-surface: oklch(15% 0.018 250);
+    --color-surface-raised: oklch(18% 0.02 250);
+    --color-border: oklch(28% 0.015 250);
+    --color-text: oklch(92% 0.005 250);
+    --color-text-muted: oklch(70% 0.01 250);
+    --color-text-inverse: oklch(15% 0.018 250);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-duration-fast: 0ms;
+    --motion-duration-base: 0ms;
+    --motion-duration-slow: 0ms;
+  }
+}
