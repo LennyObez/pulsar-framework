@@ -66,8 +66,15 @@ final class MetricsMiddlewareTest extends TestCase
         self::assertSame(0.0, $rawPathValue);
     }
 
+    /**
+     * F8.3: when no `RouteContext` is wired the middleware MUST
+     * NOT use the raw URI as the metric label — that produces
+     * unbounded series (one per dynamic id / uuid path), the
+     * Prometheus failure mode #1. The label binds to the bounded
+     * sentinel `unmatched` instead.
+     */
     #[Test]
-    public function fallsBackToRawPathWhenRouteContextIsNull(): void
+    public function fallsBackToUnmatchedSentinelWhenRouteContextIsNull(): void
     {
         $registry = new MetricRegistry();
 
@@ -81,8 +88,12 @@ final class MetricsMiddlewareTest extends TestCase
         $middleware->process($request, $handler);
 
         $counter = $registry->counter('pulsar_http_requests_total', '');
-        $value = $counter->value(new LabelSet(['method' => 'GET', 'route' => '/health', 'status' => '200']));
+        $value = $counter->value(new LabelSet(['method' => 'GET', 'route' => 'unmatched', 'status' => '200']));
         self::assertSame(1.0, $value);
+
+        // Raw path MUST NOT be used as label.
+        $rawValue = $counter->value(new LabelSet(['method' => 'GET', 'route' => '/health', 'status' => '200']));
+        self::assertSame(0.0, $rawValue);
     }
 
     #[Test]
@@ -187,9 +198,10 @@ final class MetricsMiddlewareTest extends TestCase
 
         $middleware->process($request, $handler);
 
-        // Verify histogram was recorded
+        // Verify histogram was recorded — F8.3: when no RouteContext
+        // is wired, the label binds to `unmatched`.
         $histogram = $registry->histogram('pulsar_http_request_duration_seconds', '');
-        $count = $histogram->count(new LabelSet(['method' => 'GET', 'route' => '/timed']));
+        $count = $histogram->count(new LabelSet(['method' => 'GET', 'route' => 'unmatched']));
         self::assertSame(1, $count);
     }
 
