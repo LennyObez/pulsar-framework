@@ -12,3 +12,13 @@ documentation.workspace = true
 readme = "README.md"
 keywords.workspace = true
 categories.workspace = true
+
+[dependencies]
+pulsar-kernel = { path = "../pulsar-kernel", version = "=0.0.1-alpha.0" }
+pulsar-orm = { path = "../pulsar-orm", version = "=0.0.1-alpha.0" }
+proptest = { workspace = true }
+insta = { workspace = true }
+mockall = { workspace = true }
+wiremock = { workspace = true }
+tokio = { workspace = true }
+thiserror = { workspace = true }
