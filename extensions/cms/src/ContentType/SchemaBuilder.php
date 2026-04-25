@@ -76,7 +76,9 @@ final readonly class SchemaBuilder
     {
         $type = $this->extractString($input, 'type');
         $label = $this->extractString($input, 'label');
-        $icon = is_string($input['icon'] ?? null) ? $input['icon'] : '';
+        /** @var mixed $rawIcon */
+        $rawIcon = $input['icon'] ?? null;
+        $icon = is_string($rawIcon) ? $rawIcon : '';
 
         $this->validateSlug($type);
 
