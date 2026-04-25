@@ -6,6 +6,7 @@ namespace Pulsar\Http\Middleware;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Auth\Middleware\AuthenticationRateLimitMiddleware;
 use Pulsar\Security\Csrf\CsrfMiddleware;
 
 /**
@@ -31,6 +32,15 @@ final class MiddlewareAliasConfig
             'cors' => CorsMiddleware::class,
             'csrf' => CsrfMiddleware::class,
             'rate-limit' => RateLimitMiddleware::class,
+            // F12.18: a stricter, separate-budget rate limiter for
+            // authentication entry points (login, password-reset,
+            // 2FA-verify). Using `rate-limit` for these endpoints
+            // shares the bucket with general API traffic, which a
+            // legitimate user can exhaust through normal use; this
+            // dedicated alias has its own per-IP budget so brute-force
+            // on auth endpoints fails fast without affecting other
+            // routes. Wire on the route: `->middleware(['auth-rate-limit'])`.
+            'auth-rate-limit' => AuthenticationRateLimitMiddleware::class,
             'no-cache' => NoCacheMiddleware::class,
             'compression' => CompressionMiddleware::class,
             'tracing' => TracingMiddleware::class,
