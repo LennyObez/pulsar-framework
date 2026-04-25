@@ -44,6 +44,7 @@ coverage/
 .env
 .env.*
 !.env.example
+!.env.production.example
 
 # REPL history
 .pulsar_repl_history
