@@ -41,7 +41,10 @@ final readonly class EmbedBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
-        $url = htmlspecialchars(is_string($data['url'] ?? null) ? $data['url'] : '', ENT_QUOTES, 'UTF-8');
+        /** @var mixed $rawUrl */
+        $rawUrl = $data['url'] ?? null;
+        $url = htmlspecialchars(is_string($rawUrl) ? $rawUrl : '', ENT_QUOTES, 'UTF-8');
+        /** @var mixed $html */
         $html = $data['html'] ?? null;
 
         // If custom HTML is provided, render in a fully sandboxed srcdoc iframe
