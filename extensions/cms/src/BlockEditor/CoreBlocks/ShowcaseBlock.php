@@ -48,11 +48,14 @@ final readonly class ShowcaseBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
-        $limit = min(50, max(1, is_int($data['limit'] ?? null) ? $data['limit'] : 6));
+        /** @var mixed $rawLimit */
+        $rawLimit = $data['limit'] ?? null;
+        $limit = min(50, max(1, is_int($rawLimit) ? $rawLimit : 6));
         $showTech = ($data['showTechnologies'] ?? true) ? 'true' : 'false';
         $featuredOnly = ($data['featuredOnly'] ?? false) ? 'true' : 'false';
 
         $industryAttr = '';
+        /** @var mixed $industry */
         $industry = $data['industry'] ?? null;
 
         if (is_string($industry) && $industry !== '') {

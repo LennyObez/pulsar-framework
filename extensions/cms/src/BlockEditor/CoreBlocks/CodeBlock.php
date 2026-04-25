@@ -39,7 +39,10 @@ final readonly class CodeBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
-        $code = htmlspecialchars(is_string($data['code'] ?? null) ? $data['code'] : '', ENT_QUOTES, 'UTF-8');
+        /** @var mixed $rawCode */
+        $rawCode = $data['code'] ?? null;
+        $code = htmlspecialchars(is_string($rawCode) ? $rawCode : '', ENT_QUOTES, 'UTF-8');
+        /** @var mixed $language */
         $language = $data['language'] ?? null;
 
         if (is_string($language) && $language !== '' && preg_match('/^[a-zA-Z0-9_-]+$/', $language) === 1) {
