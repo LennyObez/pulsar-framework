@@ -1,0 +1,91 @@
+# Cargo configuration for the Pulsar Framework workspace.
+#
+# Per Section VII of docs/plan.md:
+# - mold linker on Linux (~5x faster linking than lld at workspace scale)
+# - sccache wrapper across local and CI builds
+# - reasonable defaults for build, test, and bench profiles
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Compile cache (sccache)
+# ──────────────────────────────────────────────────────────────────────────────
+# Setting via environment in CI is preferred (RUSTC_WRAPPER=sccache); the build
+# alias below activates it locally without requiring the env var.
+[build]
+# Uncomment to enable globally (requires sccache installed):
+# rustc-wrapper = "sccache"
+jobs = -1  # Use all available cores
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Linux x86_64 — mold linker
+# ──────────────────────────────────────────────────────────────────────────────
+[target.x86_64-unknown-linux-gnu]
+linker = "clang"
+rustflags = [
+    "-C", "link-arg=-fuse-ld=mold",
+    "-C", "force-frame-pointers=yes",  # Helps profilers and stack traces
+]
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Linux aarch64 — mold linker
+# ──────────────────────────────────────────────────────────────────────────────
+[target.aarch64-unknown-linux-gnu]
+linker = "clang"
+rustflags = [
+    "-C", "link-arg=-fuse-ld=mold",
+    "-C", "force-frame-pointers=yes",
+]
+
+# ──────────────────────────────────────────────────────────────────────────────
+# macOS — system linker (mold not supported on macOS)
+# ──────────────────────────────────────────────────────────────────────────────
+[target.x86_64-apple-darwin]
+rustflags = ["-C", "force-frame-pointers=yes"]
+
+[target.aarch64-apple-darwin]
+rustflags = ["-C", "force-frame-pointers=yes"]
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Windows — system linker
+# ──────────────────────────────────────────────────────────────────────────────
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C", "force-frame-pointers=yes"]
+
+# ──────────────────────────────────────────────────────────────────────────────
+# WebAssembly (extension sandbox) — Section 2.19
+# ──────────────────────────────────────────────────────────────────────────────
+[target.wasm32-unknown-unknown]
+rustflags = []
+
+[target.wasm32-wasip2]
+rustflags = []
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Aliases — common workflow commands
+# ──────────────────────────────────────────────────────────────────────────────
+[alias]
+# Quality gates from Section VI (ordered for fastest fail)
+check-all = "check --workspace --all-targets --all-features"
+clippy-all = "clippy --workspace --all-targets --all-features -- -D warnings"
+fmt-check = "fmt --all -- --check"
+test-all = "nextest run --workspace --all-features"
+doc-test = "test --workspace --doc"
+cov = "llvm-cov nextest --workspace --all-features --lcov --output-path lcov.info"
+deny-check = "deny check advisories bans licenses sources"
+
+# Phase-specific helpers
+fuzz-kernel = "fuzz run fuzz_router"
+
+# Sprint quality-gate sequence (per CLAUDE.md Section 3)
+sprint-gate = "check --workspace --all-targets --all-features"
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Networking
+# ──────────────────────────────────────────────────────────────────────────────
+[net]
+git-fetch-with-cli = true  # Avoid libgit2 quirks on large mirrors
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Registry — explicitly pin the canonical crates.io index
+# ──────────────────────────────────────────────────────────────────────────────
+[registries.crates-io]
+protocol = "sparse"  # 5-10x faster than the legacy Git index

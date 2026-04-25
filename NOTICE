@@ -1,0 +1,37 @@
+Pulsar Framework
+Copyright 2026 Lenny Obez
+
+This product includes software developed at Pulsar Framework
+(https://github.com/LennyObez/pulsar-framework).
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+================================================================================
+Trademark
+================================================================================
+
+"Pulsar Framework" is a trademark registered with the European Union Intellectual
+Property Office (EUIPO). The trademark policy is published in
+docs/trademark-policy.md and governs permitted uses of the name and associated
+marks. The Apache-2.0 license grants no trademark rights; trademark usage is
+governed exclusively by the trademark policy.
+
+================================================================================
+Third-party software
+================================================================================
+
+This software depends on third-party crates listed in Cargo.toml workspace
+dependencies. Each dependency is distributed under its own license, accepted
+through the cargo-deny license allow-list (deny.toml). The full attribution set
+is generated at build time via `cargo about` (post-Phase 0); a snapshot is
+published with each release in docs/legal/third-party-licenses.md.
