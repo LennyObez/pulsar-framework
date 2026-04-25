@@ -72,12 +72,14 @@ final class GdprLogFormatter implements ComplianceLogFormatter
         /** @var array<string, mixed> $result */
         $result = [];
 
+        /** @var array-key $key */
         /** @var mixed $value */
         foreach ($context as $key => $value) {
-            if ($this->shouldPseudonymize($key) && is_string($value)) {
-                $result[$key] = $this->pseudonymize($value);
+            $strKey = (string) $key;
+            if ($this->shouldPseudonymize($strKey) && is_string($value)) {
+                $result[$strKey] = $this->pseudonymize($value);
             } else {
-                $result[$key] = $value;
+                $result[$strKey] = $value;
             }
         }
 
