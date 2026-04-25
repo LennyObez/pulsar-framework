@@ -14,6 +14,7 @@ use Pulsar\Extension\Cms\Commerce\ProductRepositoryInterface;
 use Pulsar\Extension\Cms\Commerce\ProductStatus;
 
 use function implode;
+use function is_string;
 use function sprintf;
 
 /**
@@ -127,14 +128,15 @@ final readonly class DbProductRepository implements ProductRepositoryInterface
     public function listProducts(array $filters, int $page, int $perPage): array
     {
         $sql = 'SELECT * FROM cms_products WHERE 1=1';
+        /** @var array<string, mixed> $bindings */
         $bindings = [];
 
-        if (isset($filters['status'])) {
+        if (is_string($filters['status'] ?? null)) {
             $sql .= ' AND status = :status';
             $bindings['status'] = $filters['status'];
         }
 
-        if (isset($filters['tenantId'])) {
+        if (is_string($filters['tenantId'] ?? null)) {
             $sql .= ' AND tenant_id = :tenant_id';
             $bindings['tenant_id'] = $filters['tenantId'];
         } elseif ($this->tenantId !== null) {
