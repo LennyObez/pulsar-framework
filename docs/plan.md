@@ -28,7 +28,7 @@ The rewrite is cadenced by exit criteria and quality gates rather than by calend
 - **Phase 3B — API Paradigms** — GraphQL, gRPC, MCP server, REST API framework with OpenAPI generation, WebSocket, WebTransport, broadcasting, server-sent events.
 - **Phase 3C — AI Surface** — AI providers (Anthropic, OpenAI, Ollama, local models), vector search, AI governance aligned to ISO 42001:2023 and the EU AI Act.
 - **Phase 3D — Reactive + Dev Experience** — `pulsar-live` (reactive server-driven primitive), `pulsar-studio` (Dev Studio IDE extension), analytics, accessibility.
-- **Phase 3E — Domain Extensions** — tickets, feedback, booking, devices, releases, import/export, workflow, saga, cloud adapters, edge compute integration, supervisor, service discovery, deploy orchestration.
+- **Phase 3E — Orchestration + Infrastructure Adapters** — consolidated `pulsar-orchestration` (workflow + saga), cloud adapters, edge compute integration, consolidated `pulsar-cluster` (supervisor + service discovery), deploy orchestration. Six former domain extensions (tickets, feedback, booking, devices, releases, importexport) are removed from framework core per Section 16.13: four become downstream applications, `devices` folds into `pulsar-auth` as a sub-module, and `importexport` folds into `pulsar-cli` subcommands plus `pulsar-orm` helpers.
 - **Phase 4 — Finalisation** — WebAssembly extension sandbox, CLI tool, extension marketplace, exhaustive test suites, documentation consolidation, external security audit, FIPS 140-3 validation, confidential computing, governance and RFC process, privacy-enhancing technologies, `1.0.0` GA release.
 
 The merge strategy is big-bang: the full rewrite develops on the `develop` branch across every sprint of every phase; the PHP codebase receives the terminal tag `v0.99.0-php-final` and is frozen; on completion of Phase 4 the single `develop → main` pull request undergoes `/ultrareview` and becomes the new `main` head. No partial integration and no hybrid operation is planned: the PHP tree is preserved for historical auditability but receives no further maintenance, no bug fixes, and no security patches beyond the freeze tag. The same GitHub repository URL, `LennyObez/pulsar-framework`, hosts both histories.
@@ -1745,47 +1745,35 @@ Phase 1 delivers the formally verified microkernel in six sprints, each correspo
 
 ### Phase 1.5 — Security Controls
 
-Phase 1.5 delivers the horizontal security-controls layer between kernel and core. Every control depends on the verified kernel and is consumed by the core runtime (HTTP, ORM, auth) in Phase 2A. The phase closes at tag `v0.2.0`.
+Phase 1.5 delivers the horizontal security-controls layer between kernel and core as a single consolidated crate `pulsar-guard` (Section 16.14). The six security concerns share middleware plumbing, request lifecycle, and back-pressure semantics; merging them avoids six identical CI pipelines and six duplicate middleware-composition modules. Every control depends on the verified kernel and is consumed by the core runtime (HTTP, ORM, auth) in Phase 2A. The phase closes at tag `v0.2.0`.
 
-#### Sprint 1.5.1 — pulsar-csrf
+#### Sprint 1.5 — pulsar-guard (consolidated security controls)
 
-**Scope.** Double-submit cookie CSRF tokens with HMAC authentication bound to session identifier; SameSite cookie defaults; Origin and Referer verification; middleware before-hook integration; stateless single-page-app flow via custom header.
+**Scope.** Single sprint delivers the consolidated `pulsar-guard` crate with six sub-modules (`guard::csrf`, `guard::sri`, `guard::incident`, `guard::ratelimit`, `guard::resilience`, `guard::ssrf`) sharing a unified middleware composition surface and a top-level `GuardMiddleware` that composes the subset configured for a given pipeline.
 
-**Deliverables:** Code: `pulsar_csrf::{CsrfToken, CsrfMiddleware, CsrfVerifier, CsrfPolicy}`. Tests: property tests on token round-trip; adversarial forgery tests. Documentation: ADR-0030 CSRF Defense; book chapter `concepts/csrf.md`. Formal: Creusot contracts on `generate` and `verify`.
+**Sub-tasks:**
 
-**Exit criteria:** Forgery rejection rate 100 % across adversarial corpus; all workspace quality gates pass.
+- **`guard::csrf`** — Double-submit cookie CSRF tokens with HMAC authentication bound to session identifier; SameSite cookie defaults; Origin and Referer verification; middleware before-hook integration; stateless single-page-app flow via custom header. Property tests on token round-trip; adversarial forgery tests. Creusot contracts on `generate` and `verify`. ADR-0030 CSRF Defense; book chapter `concepts/csrf.md`.
+- **`guard::sri`** — Subresource Integrity digest generation (SHA-384 default, SHA-512 available); integrity attribute injection into rendered templates; asset-pipeline hook; CSP header emission with hashed inline scripts. Snapshot tests on rendered HTML; CSP compliance parser tests. ADR-0031 SRI and CSP.
+- **`guard::incident`** — Incident classification per FIRST CVSS 4.0, containment action catalogue, automatic circuit-trip on threshold breach, audit-chain linkage per incident, runbook reference, notification dispatch. Integration tests with mocked audit and notification. ADR-0032 Incident Response Primitives.
+- **`guard::ratelimit`** — Token-bucket and sliding-window algorithms; per-IP, per-user, per-tenant, per-endpoint scopes; Redis backend with local fallback; graceful degradation; 429 with Retry-After. Load tests at 10 000 req/s across scopes; chaos scenario for Redis failure. ADR-0033 Rate Limiting Algorithms; closes PHP VOID DRIFT gap #7.
+- **`guard::resilience`** — Circuit breaker (closed/open/half-open), bulkhead semaphore, retry with exponential backoff and full jitter, timeout primitive, hedging, policy composition. Property tests on retry composition; chaos scenarios for dependency failure. ADR-0034 Resilience Policies.
+- **`guard::ssrf`** — Outbound URL validation with private-IP blocking, DNS-rebinding defence, allowlist policy, `reqwest` middleware integration. Adversarial tests against private-IP and DNS-rebinding corpora. ADR-0035 SSRF Defense.
 
-#### Sprint 1.5.2 — pulsar-sri
+**Deliverables:** Code: `pulsar_guard::{CsrfToken, CsrfMiddleware, CsrfVerifier, CsrfPolicy, AssetDigest, SriPolicy, CspBuilder, Incident, IncidentSeverity, ContainmentAction, IncidentDispatcher, Runbook, RateLimiter, Bucket, Window, Scope, Quota, RateLimitMiddleware, ResiliencePolicy, CircuitBreaker, Bulkhead, RetryPolicy, TimeoutPolicy, Hedge, SsrfGuard, GuardMiddleware}`. Tests: per-sub-module unit, property, and chaos suites; integration tests on cross-sub-module composition (e.g., rate-limit cooperating with circuit breaker). Documentation: six per-sub-module ADRs (0030–0035) plus a single book chapter `concepts/guard.md` describing the unified composition surface. Formal: Creusot contracts on CSRF generate/verify and SRI digest invariants.
 
-**Scope.** Subresource Integrity digest generation (SHA-384 default, SHA-512 available); integrity attribute injection into rendered templates; asset-pipeline hook; CSP header emission with hashed inline scripts.
+**Exit criteria:**
+- CSRF forgery rejection rate 100 % across adversarial corpus.
+- CSP emission passes strict Mozilla Observatory A+ grade on reference templates.
+- Incident classification determinism verified; audit chain records every incident.
+- Rate-limiter throughput 100 000 decisions per second per instance.
+- Circuit-breaker state-transition determinism verified; chaos passes on dependency failure.
+- SSRF guard rejects 100 % of private-IP and DNS-rebinding adversarial corpora.
+- All six sub-modules composable via single `GuardMiddleware` without ordering ambiguity.
+- All workspace quality gates pass.
+- Phase 1.5 closes, tag `v0.2.0`.
 
-**Deliverables:** Code: `pulsar_sri::{AssetDigest, SriPolicy, CspBuilder}`. Tests: snapshot tests on rendered HTML; CSP compliance parser tests. Documentation: ADR-0031 SRI and CSP.
-
-**Exit criteria:** CSP emission passes strict Mozilla Observatory A+ grade on reference templates; all workspace quality gates pass.
-
-#### Sprint 1.5.3 — pulsar-incident
-
-**Scope.** Incident classification per FIRST CVSS 4.0, containment action catalogue, automatic circuit-trip on threshold breach, audit-chain linkage per incident, runbook reference, notification dispatch.
-
-**Deliverables:** Code: `pulsar_incident::{Incident, IncidentSeverity, ContainmentAction, IncidentDispatcher, Runbook}`. Tests: integration tests with mocked audit and notification. Documentation: ADR-0032 Incident Response Primitives.
-
-**Exit criteria:** Classification determinism verified; audit chain records every incident; all workspace quality gates pass.
-
-#### Sprint 1.5.4 — pulsar-ratelimit
-
-**Scope.** Token-bucket and sliding-window algorithms; per-IP, per-user, per-tenant, per-endpoint scopes; Redis backend with local fallback; graceful degradation; 429 with Retry-After.
-
-**Deliverables:** Code: `pulsar_ratelimit::{RateLimiter, Bucket, Window, Scope, Quota, RateLimitMiddleware}`. Tests: load tests at 10 000 req/s across scopes; chaos scenario for Redis failure. Documentation: ADR-0033 Rate Limiting Algorithms; closes PHP VOID DRIFT gap #7.
-
-**Exit criteria:** Throughput 100 000 decisions per second per instance; all workspace quality gates pass.
-
-#### Sprint 1.5.5 — pulsar-resilience
-
-**Scope.** Circuit breaker (closed/open/half-open), bulkhead semaphore, retry with exponential backoff and full jitter, timeout primitive, hedging, policy composition.
-
-**Deliverables:** Code: `pulsar_resilience::{ResiliencePolicy, CircuitBreaker, Bulkhead, RetryPolicy, TimeoutPolicy, Hedge}`. Tests: property tests on retry composition; chaos scenarios for dependency failure. Documentation: ADR-0034 Resilience Policies.
-
-**Exit criteria:** Breaker state-transition determinism verified; all workspace quality gates pass; Phase 1.5 closes, tag `v0.2.0`.
+**Quality gate reference:** Section VI applies in full.
 
 ---
 
@@ -2338,41 +2326,49 @@ Client side (`services/admin/`, native HTML5 + ES2025 + Web Components, no frame
 
 ### Phase 3B — API Paradigms
 
-Phase 3B delivers API paradigms across six sprints: REST with OpenAPI generation, WebSocket inbound and outbound, broadcasting, GraphQL, gRPC, and Model Context Protocol server. The phase closes at tag `v0.9.0`.
+Phase 3B delivers API paradigms across five sprints: REST with OpenAPI/AsyncAPI/OData generation, the consolidated realtime crate (WebSocket + SSE + WebTransport + broadcasting per Section 16.14), GraphQL, gRPC, and Model Context Protocol server. The phase closes at tag `v0.9.0`.
 
-#### Sprint 3B.1 — pulsar-api REST + OpenAPI
+#### Sprint 3B.1 — pulsar-api REST + OpenAPI + AsyncAPI + OData
 
-**Scope.** Typed REST framework on top of `pulsar-http`: content negotiation, pagination via `pulsar-pagination`, filtering, sorting, field selection, URI-path and header-based API versioning, OpenAPI 3.1 generation from typed handlers, Swagger UI and Rapidoc embed options, JSON:API and HAL adapters.
+**Scope.** Typed REST framework on top of `pulsar-http`: content negotiation, pagination via `pulsar-pagination`, filtering, sorting, field selection, URI-path and header-based API versioning, OpenAPI 3.1 generation from typed handlers, AsyncAPI 3 emission for streaming endpoints (Section 16.3.3), Swagger UI and Rapidoc embed options, JSON:API and HAL adapters, opt-in OData v4.01 query expressions behind feature flag `odata` (Section 16.3.4).
 
-**Deliverables:** Code: `pulsar_api::{ApiRoute, Version, OpenApiSpec, JsonApi, Hal, FieldSelection, FilterExpr}`. Tests: snapshot tests on OpenAPI spec generation; integration tests per adapter. Documentation: ADR-0053 REST API Framework.
+**Deliverables:** Code: `pulsar_api::{ApiRoute, Version, OpenApiSpec, AsyncApiSpec, JsonApi, Hal, FieldSelection, FilterExpr, ODataQuery}`. Tests: snapshot tests on OpenAPI spec generation; AsyncAPI emission validation; OData query-expression parsing fuzz; integration tests per adapter. Documentation: ADR-0053 REST API Framework; ADR-0087 AsyncAPI Emission; ADR-0088 OData Feature Flag.
 
-**Exit criteria:** OpenAPI 3.1 spec validates against reference examples; all workspace quality gates pass.
+**Exit criteria:** OpenAPI 3.1 spec validates against reference examples; AsyncAPI 3 spec validates against AsyncAPI parser; OData query expressions parse without panic across fuzz corpus; all workspace quality gates pass.
 
-#### Sprint 3B.2 — pulsar-websocket
+#### Sprint 3B.2 — pulsar-realtime (consolidated WebSocket + SSE + WebTransport + broadcasting)
 
-**Scope.** WebSocket server with inbound `MessageHandler`, outbound `FrameSink`, typed per-route handlers, named channel manager, route-table-driven dispatch, middleware pipeline for frame-level concerns (auth, rate-limit, compression), ping/pong liveness, graceful close. TLA+ specification for inbound dispatch lifecycle. Closes PHP VOID DRIFT gap #13.
+**Scope.** Single sprint delivers the consolidated `pulsar-realtime` crate with four sub-modules (`realtime::websocket`, `realtime::sse`, `realtime::webtransport`, `realtime::broadcasting`) sharing session state, auth, rate-limit middleware, and back-pressure semantics. Closes PHP VOID DRIFT gap #13 (WebSocket inbound `MessageHandlerInterface`) and folds in the WebTransport (Section 16.3.1), SSE (Section 16.3.2), and broadcasting state-of-art surfaces.
 
-**Deliverables:** Code: `pulsar_websocket::{WebSocketServer, MessageHandler, FrameSink, Channel, InboundDispatcher, WsRoute}`. Tests: integration tests per route type; fuzz harness on frame parsing; chaos scenarios for partial frame delivery. Documentation: ADR-0054 WebSocket Dispatch. Formal: TLA+ spec `spec/websocket.tla` on inbound lifecycle.
+**Sub-tasks:**
 
-**Exit criteria:** TLA+ passes TLC model check; all workspace quality gates pass.
+- **`realtime::websocket`** — Server with inbound `MessageHandler`, outbound `FrameSink`, typed per-route handlers, named channel manager, route-table-driven dispatch, middleware pipeline for frame-level concerns (auth, rate-limit, compression), ping/pong liveness, graceful close. Integration tests per route type; fuzz harness on frame parsing; chaos scenarios for partial frame delivery. ADR-0054 WebSocket Dispatch.
+- **`realtime::sse`** — Server-Sent Events as a first-class response type with per-connection back-pressure, automatic reconnection hints, retry-after semantics, resumable streams via `Last-Event-ID`. Integration tests on resumable streams; chaos scenarios for connection churn. ADR-0089 Server-Sent Events.
+- **`realtime::webtransport`** — WebTransport over HTTP/3 (unreliable datagrams and reliable streams), multiplexed sessions, framed datagram channel for low-latency real-time features, interop tested against Chrome and Firefox reference clients. Latency-budget benchmarks below ten milliseconds over loopback. ADR-0090 WebTransport.
+- **`realtime::broadcasting`** — Pub/sub abstraction with Redis Pub/Sub, NATS, Kafka, in-process backends; channel fan-out for WebSocket and SSE; presence channels with typed member metadata; private-channel auth hook. Per-backend integration tests; property tests on fan-out ordering guarantees. ADR-0055 Broadcasting.
 
-#### Sprint 3B.3 — pulsar-broadcasting
+**Deliverables:** Code: `pulsar_realtime::{WebSocketServer, MessageHandler, FrameSink, Channel, InboundDispatcher, WsRoute, SseStream, SseEvent, LastEventId, WebTransportSession, Datagram, Broadcaster, PresenceChannel, PrivateChannel, AuthHook, RealtimeMiddleware}`. Tests: integrated suite across the four sub-modules including cross-sub-module composition (broadcasting fan-out into WebSocket and SSE simultaneously). Documentation: four per-sub-module ADRs plus a unified book chapter `guide/realtime.md`. Formal: TLA+ spec `spec/websocket.tla` covers inbound dispatch lifecycle.
 
-**Scope.** Pub/sub abstraction with Redis Pub/Sub, NATS, Kafka, in-process backends; channel fan-out for WebSocket and SSE; presence channels with typed member metadata; private channel auth hook.
+**Exit criteria:**
+- TLA+ `spec/websocket.tla` passes TLC model check.
+- WebSocket fuzz: 10M iterations zero crash on frame parsing.
+- SSE resumable streams reattach without event loss across chaos scenarios.
+- WebTransport interop passes against Chrome and Firefox reference clients; loopback datagram latency below ten milliseconds.
+- Broadcasting per-channel total ordering verified across Redis, NATS, Kafka, in-process backends.
+- All four sub-modules composable via single `RealtimeMiddleware` without ordering ambiguity.
+- All workspace quality gates pass.
 
-**Deliverables:** Code: `pulsar_broadcasting::{Broadcaster, Channel, PresenceChannel, PrivateChannel, AuthHook}`. Tests: per-backend integration tests; property tests on fan-out ordering guarantees. Documentation: ADR-0055 Broadcasting.
+**Quality gate reference:** Section VI applies in full.
 
-**Exit criteria:** Per-channel total ordering verified; all workspace quality gates pass.
+#### Sprint 3B.3 — pulsar-graphql
 
-#### Sprint 3B.4 — pulsar-graphql
-
-**Scope.** GraphQL server on `async-graphql`, schema-first and code-first, Dataloader for N+1 avoidance, subscriptions over `pulsar-websocket`, persisted queries, query cost analysis, introspection access control.
+**Scope.** GraphQL server on `async-graphql`, schema-first and code-first, Dataloader for N+1 avoidance, subscriptions over `pulsar-realtime::websocket`, persisted queries, query cost analysis, introspection access control.
 
 **Deliverables:** Code: `pulsar_graphql::{Schema, Resolver, Dataloader, Subscription, QueryCost}`. Tests: integration tests on schema introspection; property tests on query-cost determinism. Documentation: ADR-0056 GraphQL Adapter.
 
 **Exit criteria:** Query cost rejects depth-bomb queries; all workspace quality gates pass.
 
-#### Sprint 3B.5 — pulsar-grpc
+#### Sprint 3B.4 — pulsar-grpc
 
 **Scope.** gRPC server and client on `tonic`, proto compilation via `tonic-build`, interceptor integration with middleware pipeline, reflection service, health service (gRPC health protocol), optional gRPC-Web and gRPC-JSON transcoding.
 
@@ -2380,7 +2376,7 @@ Phase 3B delivers API paradigms across six sprints: REST with OpenAPI generation
 
 **Exit criteria:** Reflection service passes `grpcurl` inspection; all workspace quality gates pass.
 
-#### Sprint 3B.6 — pulsar-mcp-server
+#### Sprint 3B.5 — pulsar-mcp-server
 
 **Scope.** Model Context Protocol server (MCP specification 2025-03-26 baseline), JSON-RPC-over-stdio and over-HTTP transports, resource/tool/prompt capabilities, per-tool authorisation hooks, audit-chain integration, schema validation, structured output constraints.
 
@@ -2392,7 +2388,7 @@ Phase 3B delivers API paradigms across six sprints: REST with OpenAPI generation
 
 ### Phase 3C — AI Surface
 
-Phase 3C delivers AI providers, vector search, and AI governance. The phase closes at tag `v0.10.0`.
+Phase 3C delivers AI providers, vector search, AI governance, and the agentic framework across four sprints. The phase closes at tag `v0.10.0`.
 
 #### Sprint 3C.1 — pulsar-ai
 
@@ -2404,19 +2400,27 @@ Phase 3C delivers AI providers, vector search, and AI governance. The phase clos
 
 #### Sprint 3C.2 — pulsar-vector-search
 
-**Scope.** Vector search abstraction with `pgvector` default, Qdrant adapter, Weaviate adapter, in-memory HNSW for testing. Dense embedding indexes, hybrid search (BM25 + vector), re-ranking hooks, metadata filtering.
+**Scope.** Vector search abstraction with `pgvector` default, Qdrant adapter, Weaviate adapter, in-memory HNSW for testing. Dense embedding indexes, hybrid search (BM25 + vector), re-ranking hooks, metadata filtering, retrieval-quality metrics (recall@k, MRR, NDCG) per Section 16.8.4.
 
-**Deliverables:** Code: `pulsar_vector_search::{VectorIndex, Embedding, HybridSearch, ReRanker, Backend}`. Tests: integration tests per backend; benchmark on 10-million-vector corpus. Documentation: ADR-0060 Vector Search.
+**Deliverables:** Code: `pulsar_vector_search::{VectorIndex, Embedding, HybridSearch, ReRanker, Backend, RetrievalMetrics}`. Tests: integration tests per backend; benchmark on 10-million-vector corpus. Documentation: ADR-0060 Vector Search.
 
 **Exit criteria:** P99 query latency below 100 ms on 10-million-vector corpus with pgvector; all workspace quality gates pass.
 
 #### Sprint 3C.3 — pulsar-ai-governance
 
-**Scope.** ISO 42001:2023 and EU AI Act runtime: model registry with tamper-evident provenance (via `pulsar-audit`), prompt injection defence via structured I/O schemas, LLM audit trail, RAG retrieval audit, PII redaction hooks, four-tier EU AI Act risk classifier, bias-detection hooks, human-in-the-loop gating for high-risk decisions.
+**Scope.** ISO 42001:2023, EU AI Act, NIST AI Risk Management Framework (Section 16.8.6), and OWASP LLM Top 10 (Section 16.8.7) runtime: model registry with tamper-evident provenance (via `pulsar-audit`), prompt injection defence via structured I/O schemas, LLM audit trail, RAG retrieval audit, PII redaction hooks, four-tier EU AI Act risk classifier, bias-detection hooks, human-in-the-loop gating for high-risk decisions, NIST AI RMF mapping table, OWASP LLM Top 10 control checklist.
 
-**Deliverables:** Code: `pulsar_ai_governance::{ModelRegistry, ModelProvenance, PromptSchema, LlmAuditEntry, PiiRedactor, RiskLevel, HumanReviewGate, BiasDetector}`. Tests: adversarial tests for prompt-injection defence; property tests on PII redaction completeness. Documentation: ADR-0061 AI Governance Runtime.
+**Deliverables:** Code: `pulsar_ai_governance::{ModelRegistry, ModelProvenance, PromptSchema, LlmAuditEntry, PiiRedactor, RiskLevel, HumanReviewGate, BiasDetector, NistAiRmfMapping, OwaspLlmTopTenCheck}`. Tests: adversarial tests for prompt-injection defence; property tests on PII redaction completeness; NIST AI RMF mapping conformance test; OWASP LLM Top 10 reference-corpus verification. Documentation: ADR-0061 AI Governance Runtime; ADR-0091 NIST AI RMF Integration; ADR-0092 OWASP LLM Top 10 Compliance.
 
-**Exit criteria:** Prompt-injection corpus blocked at 99.9 % rate; zero false-negative PII leak across redaction corpus; all workspace quality gates pass; Phase 3C closes, tag `v0.10.0`.
+**Exit criteria:** Prompt-injection corpus blocked at 99.9 % rate; zero false-negative PII leak across redaction corpus; NIST AI RMF mapping covers all four functions (govern, map, measure, manage); OWASP LLM Top 10 controls implemented and asserted; all workspace quality gates pass.
+
+#### Sprint 3C.4 — pulsar-ai-agents (agentic framework)
+
+**Scope.** First-party agentic framework realising the tool-use planning loop on top of `pulsar-ai`. Structured action-observation trace persisted via `pulsar-audit`; loop-break guards on iteration count, wall-clock, and cost ceiling; Anthropic Computer Use adapter (screenshot + click primitives) gated behind capability grants; planner/executor decomposition; tool registry with per-tool authorisation hooks consuming `pulsar-authz`; mandatory `pulsar-ai-governance` audit on every agent invocation; reproducible-run support via deterministic prompt hashing. Section 16.8.1.
+
+**Deliverables:** Code: `pulsar_ai_agents::{Agent, AgentLoop, Plan, Action, Observation, Trace, LoopGuard, CostCeiling, ComputerUseAdapter, Screenshot, ToolRegistry, AuthorisedTool}`. Tests: end-to-end agent loop on a fixture-based tool catalogue; chaos scenarios for tool failure mid-loop; property tests on loop-guard termination invariants; adversarial tests on prompt-injection at the planner boundary. Documentation: ADR-0093 Agentic Framework.
+
+**Exit criteria:** Loop guards terminate every divergent loop within configured budgets; Computer Use adapter sandboxed behind capability grants verified; every agent invocation produces a complete audit trail in `pulsar-audit`; all workspace quality gates pass; Phase 3C closes, tag `v0.10.0`.
 
 ---
 
@@ -2458,83 +2462,39 @@ Phase 3D delivers the reactive server-driven framework, Dev Studio IDE, analytic
 
 ---
 
-### Phase 3E — Domain Extensions + Infrastructure Adapters
+### Phase 3E — Orchestration + Infrastructure Adapters
 
-Phase 3E delivers workflow, saga, domain extensions, and infrastructure adapters. The phase closes at tag `v0.12.0`.
+Phase 3E delivers the consolidated orchestration crate (workflow + saga per Section 16.14), cloud and edge adapters, the consolidated cluster crate (supervisor + service-discovery per Section 16.14), and deploy orchestration across five sprints. The six former domain extensions (tickets, feedback, booking, devices, releases, importexport) are removed from framework core per Section 16.13: four become downstream applications, `devices` folds into `pulsar-auth` as a sub-module, and `importexport` folds into `pulsar-cli` subcommands plus `pulsar-orm` helpers. The phase closes at tag `v0.12.0`.
 
-#### Sprint 3E.1 — pulsar-workflow
+#### Sprint 3E.1 — pulsar-orchestration (consolidated workflow + saga)
 
-**Scope.** Typed workflow engine with state-machine steps, declarative transitions with guards and actions, compensating actions, persistence via `pulsar-orm`, audit-chain linkage per transition, cron and event triggers, parallel and sequential composition, human-approval gates. TLA+ specification for state-machine correctness.
+**Scope.** Single sprint delivers the consolidated `pulsar-orchestration` crate with two sub-modules (`orchestration::workflow`, `orchestration::saga`) sharing state-machine semantics, audit-chain linkage on transitions, and persistence patterns on top of `pulsar-orm`.
 
-**Deliverables:** Code: `pulsar_workflow::{Workflow, State, Transition, Guard, Action, HumanGate}`. Tests: property tests on reachability; chaos scenarios for crash mid-transition. Documentation: ADR-0066 Workflow Engine. Formal: `spec/workflow.tla`.
+**Sub-tasks:**
 
-**Exit criteria:** TLC passes on state-reachability invariants; all workspace quality gates pass.
+- **`orchestration::workflow`** — Typed workflow engine with state-machine steps, declarative transitions with guards and actions, compensating actions, persistence via `pulsar-orm`, audit-chain linkage per transition, cron and event triggers, parallel and sequential composition, human-approval gates. TLA+ specification on state-machine reachability. Property tests on reachability; chaos scenarios for crash mid-transition. ADR-0066 Workflow Engine.
+- **`orchestration::saga`** — Saga pattern: step definitions with forward and compensating actions, saga coordinator with at-least-once execution and idempotent compensation, failure recovery, orchestration on top of the workflow engine or choreography on top of `pulsar-realtime::broadcasting`. TLA+ specification on compensation ordering. Chaos scenarios for failure at each compensation step; property tests on compensation idempotency. ADR-0067 Saga Orchestration.
 
-#### Sprint 3E.2 — pulsar-saga
+**Deliverables:** Code: `pulsar_orchestration::{Workflow, State, Transition, Guard, Action, HumanGate, Saga, Step, Compensation, SagaCoordinator, RecoveryPolicy}`. Tests: integrated suite across the two sub-modules including end-to-end workflow-saga composition. Documentation: ADR-0066 + ADR-0067 (preserved); unified book chapter `guide/orchestration.md`. Formal: TLA+ specs `spec/workflow.tla` and `spec/saga.tla`.
 
-**Scope.** Saga pattern: step definitions with forward and compensating actions, saga coordinator with at-least-once execution and idempotent compensation, failure recovery, orchestration via `pulsar-workflow` or choreography via `pulsar-broadcasting`. TLA+ specification for compensation ordering.
+**Exit criteria:**
+- TLC passes on `spec/workflow.tla` state-reachability invariants.
+- TLC passes on `spec/saga.tla` compensation-ordering invariants.
+- Property tests confirm idempotent compensation across at-least-once execution.
+- Workflow human-approval gates intercept 100 % of high-risk transitions.
+- All workspace quality gates pass.
 
-**Deliverables:** Code: `pulsar_saga::{Saga, Step, Compensation, SagaCoordinator, RecoveryPolicy}`. Tests: chaos scenarios for failure at each compensation step; property tests on compensation idempotency. Documentation: ADR-0067 Saga Orchestration. Formal: `spec/saga.tla`.
+**Quality gate reference:** Section VI applies in full.
 
-**Exit criteria:** TLC passes on compensation ordering; property tests confirm idempotent compensation; all workspace quality gates pass.
+#### Sprint 3E.2 — pulsar-cloud
 
-#### Sprint 3E.3 — pulsar-tickets
-
-**Scope.** Ticket lifecycle, categories and priorities, assignment rules, SLA tracking with escalation, internal notes vs customer-visible replies, integration with `pulsar-notification` and `pulsar-audit`.
-
-**Deliverables:** Code: `pulsar_tickets::{Ticket, TicketCategory, Priority, Sla, Assignment}`. Tests: SLA breach-detection tests. Documentation: ADR-0068 Ticketing Extension.
-
-**Exit criteria:** All workspace quality gates pass.
-
-#### Sprint 3E.4 — pulsar-feedback
-
-**Scope.** Feedback capture with `pulsar-form` integration, optional GitHub issue creation on submission, categorisation, optional sentiment analysis via `pulsar-ai`.
-
-**Deliverables:** Code: `pulsar_feedback::{Feedback, Category, GitHubLink, SentimentHook}`. Tests: GitHub webhook integration against recorded fixtures. Documentation: ADR-0069 Feedback Extension.
-
-**Exit criteria:** All workspace quality gates pass.
-
-#### Sprint 3E.5 — pulsar-booking
-
-**Scope.** Resources, availability windows, reservations, cancellation policy, Google Calendar and Microsoft Graph sync, iCalendar export, recurring bookings.
-
-**Deliverables:** Code: `pulsar_booking::{Resource, Availability, Reservation, CalendarSync}`. Tests: calendar-sync fixtures for Google and Microsoft. Documentation: ADR-0070 Booking Extension.
-
-**Exit criteria:** All workspace quality gates pass.
-
-#### Sprint 3E.6 — pulsar-devices
-
-**Scope.** Device fingerprint (conservative, non-identifying), first-seen and last-seen, trust scoring, known-device enforcement in auth flows, device-specific revocation.
-
-**Deliverables:** Code: `pulsar_devices::{UserDevice, Fingerprint, TrustScore}`. Tests: property tests on fingerprint stability. Documentation: ADR-0071 Device Registry.
-
-**Exit criteria:** All workspace quality gates pass.
-
-#### Sprint 3E.7 — pulsar-releases
-
-**Scope.** Beta signup flow, release-notes publication, changelog rendering, release-train subscription, feature-flag linkage, release dashboard.
-
-**Deliverables:** Code: `pulsar_releases::{Release, BetaSignup, ReleaseTrain, ReleaseNote}`. Tests: integration tests with `pulsar-feature-flag`. Documentation: ADR-0072 Release Communication.
-
-**Exit criteria:** All workspace quality gates pass.
-
-#### Sprint 3E.8 — pulsar-importexport
-
-**Scope.** CSV, JSON, XML, Excel, Parquet import/export with pluggable mapping, validation, dry-run preview, progress reporting, resumable imports, scheduled exports, audit-chain linkage.
-
-**Deliverables:** Code: `pulsar_importexport::{Importer, Exporter, Mapping, ValidationResult, DryRun, ResumeToken}`. Tests: per-format round-trip tests; chaos scenarios for resume after failure. Documentation: ADR-0073 Import/Export Framework.
-
-**Exit criteria:** All five input formats round-trip cleanly; all workspace quality gates pass.
-
-#### Sprint 3E.9 — pulsar-cloud
-
-**Scope.** Unified cloud-vendor adapter layer: S3/Blob/GCS, SNS/Service Bus/Pub-Sub, Secrets Manager / Key Vault / Secret Manager, CloudWatch / Azure Monitor / Cloud Logging, SQS/Service Bus/Pub-Sub.
+**Scope.** Unified cloud-vendor adapter layer: S3/Blob/GCS via `pulsar-storage` adapters, SNS/Service Bus/Pub-Sub via `pulsar-realtime::broadcasting` adapters, Secrets Manager / Key Vault / Secret Manager via `pulsar-config` adapters, CloudWatch / Azure Monitor / Cloud Logging via `pulsar-observability` adapters, SQS/Service Bus/Pub-Sub via `pulsar-queue` adapters.
 
 **Deliverables:** Code: `pulsar_cloud::{AwsAdapter, AzureAdapter, GcpAdapter, CloudCredentialProvider}`. Tests: LocalStack / Azurite / fake-gcs-server integration tests. Documentation: ADR-0074 Cloud Adapter Layer.
 
 **Exit criteria:** All three vendors tested in CI; all workspace quality gates pass.
 
-#### Sprint 3E.10 — pulsar-edge
+#### Sprint 3E.3 — pulsar-edge
 
 **Scope.** Cloudflare Workers and Fastly Compute@Edge deploy targets, edge-side fragment caching, purge API, signed cookie propagation at edge, TLS provisioning via ACME.
 
@@ -2542,25 +2502,24 @@ Phase 3E delivers workflow, saga, domain extensions, and infrastructure adapters
 
 **Exit criteria:** Reference deployment lands on both Cloudflare and Fastly; all workspace quality gates pass.
 
-#### Sprint 3E.11 — pulsar-supervisor
+#### Sprint 3E.4 — pulsar-cluster (consolidated supervisor + service-discovery)
 
-**Scope.** Liveness, readiness, and startup probes per subsystem, periodic background checks, aggregated health dashboard, Kubernetes and Nomad probe emission, fail-fast on startup failure.
+**Scope.** Single sprint delivers the consolidated `pulsar-cluster` crate with two sub-modules (`cluster::supervisor`, `cluster::discovery`) sharing Kubernetes/etcd integration, topology-watcher semantics, and the same probe-emission infrastructure.
 
-**Deliverables:** Code: `pulsar_supervisor::{HealthCheck, Probe, Supervisor, AggregatedStatus}`. Tests: chaos scenarios per probe type. Documentation: ADR-0076 Health Supervisor.
+**Sub-tasks:**
 
-**Exit criteria:** All workspace quality gates pass.
+- **`cluster::supervisor`** — Liveness, readiness, and startup probes per subsystem, periodic background checks, aggregated health dashboard, Kubernetes and Nomad probe emission, fail-fast on startup failure. Chaos scenarios per probe type. ADR-0076 Health Supervisor.
+- **`cluster::discovery`** — Consul, etcd, Kubernetes Service, and DNS-SD adapters; client-side load balancing with health filtering; watch-and-update for topology changes. Chaos scenarios for topology churn. ADR-0077 Service Discovery.
 
-#### Sprint 3E.12 — pulsar-service-discovery
+**Deliverables:** Code: `pulsar_cluster::{HealthCheck, Probe, Supervisor, AggregatedStatus, Discovery, Service, Instance, LoadBalancer, ClusterCoordinator}`. Tests: integrated suite covering health-aware load balancing (discovery filters out instances flagged unhealthy by supervisor). Documentation: ADR-0076 + ADR-0077 (preserved); unified book chapter `guide/cluster.md`.
 
-**Scope.** Consul, etcd, Kubernetes Service, and DNS-SD adapters; client-side load balancing with health filtering; watch-and-update for topology changes.
+**Exit criteria:** All four discovery backends tested in CI; supervisor probes verified on Kubernetes and Nomad reference deployments; cross-sub-module integration verified (unhealthy instance evicted from load balancer in under 5 seconds); all workspace quality gates pass.
 
-**Deliverables:** Code: `pulsar_service_discovery::{Discovery, Service, Instance, LoadBalancer}`. Tests: chaos scenarios for topology churn. Documentation: ADR-0077 Service Discovery.
+**Quality gate reference:** Section VI applies in full.
 
-**Exit criteria:** All four discovery backends tested in CI; all workspace quality gates pass.
+#### Sprint 3E.5 — pulsar-deploy
 
-#### Sprint 3E.13 — pulsar-deploy
-
-**Scope.** Rolling, blue-green, and canary deploy strategies; pre-flight health check; post-deploy verification; rollback on verification failure; feature-flag-driven progressive rollout; deployment audit.
+**Scope.** Rolling, blue-green, and canary deploy strategies; pre-flight health check (via `pulsar-cluster::supervisor`); post-deploy verification; rollback on verification failure; feature-flag-driven progressive rollout (via `pulsar-feature-flag`); deployment audit (via `pulsar-audit`).
 
 **Deliverables:** Code: `pulsar_deploy::{DeployStrategy, Rollout, Verification, Rollback}`. Tests: end-to-end deploy scenarios including rollback. Documentation: ADR-0078 Deploy Orchestration.
 
