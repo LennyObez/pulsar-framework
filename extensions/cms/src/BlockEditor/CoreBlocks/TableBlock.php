@@ -55,7 +55,9 @@ final readonly class TableBlock implements BlockTypeInterface
 
         /** @var list<mixed> $rows */
         $rows = $data['rows'] ?? [];
-        $hasHeaderRow = is_bool($data['hasHeaderRow'] ?? null) ? $data['hasHeaderRow'] : true;
+        /** @var mixed $rawHasHeaderRow */
+        $rawHasHeaderRow = $data['hasHeaderRow'] ?? null;
+        $hasHeaderRow = is_bool($rawHasHeaderRow) ? $rawHasHeaderRow : true;
 
         $html = '<table>';
 
@@ -78,6 +80,7 @@ final readonly class TableBlock implements BlockTypeInterface
 
             $html .= '<tr>';
 
+            /** @var mixed $cell */
             foreach ($row as $cell) {
                 $html .= '<td>' . htmlspecialchars(is_string($cell) ? $cell : '', ENT_QUOTES, 'UTF-8') . '</td>';
             }
@@ -96,6 +99,7 @@ final readonly class TableBlock implements BlockTypeInterface
         if (!isset($data['headers']) || !is_array($data['headers'])) {
             $errors[] = 'headers is required and must be an array';
         } else {
+            /** @var mixed $header */
             foreach ($data['headers'] as $index => $header) {
                 if (!is_string($header)) {
                     $errors[] = "headers[$index] must be a string";
@@ -113,6 +117,7 @@ final readonly class TableBlock implements BlockTypeInterface
                     continue;
                 }
 
+                /** @var mixed $cell */
                 foreach ($row as $cellIndex => $cell) {
                     if (!is_string($cell)) {
                         $errors[] = "rows[$rowIndex][$cellIndex] must be a string";
