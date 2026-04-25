@@ -12,3 +12,14 @@ documentation.workspace = true
 readme = "README.md"
 keywords.workspace = true
 categories.workspace = true
+
+[dependencies]
+pulsar-framework = { path = "../pulsar-framework", version = "=0.0.1-alpha.0" }
+pulsar-http = { path = "../pulsar-http", version = "=0.0.1-alpha.0" }
+pulsar-auth = { path = "../pulsar-auth", version = "=0.0.1-alpha.0" }
+pulsar-authz = { path = "../pulsar-authz", version = "=0.0.1-alpha.0" }
+pulsar-compliance = { path = "../pulsar-compliance", version = "=0.0.1-alpha.0" }
+pulsar-audit = { path = "../pulsar-audit", version = "=0.0.1-alpha.0" }
+pulsar-realtime = { path = "../pulsar-realtime", version = "=0.0.1-alpha.0" }
+serde = { workspace = true }
+thiserror = { workspace = true }
