@@ -166,11 +166,13 @@ final readonly class WebhookHandler
      */
     private function handlePaymentSucceeded(array $object): void
     {
+        /** @var mixed $rawId */
         $rawId = $object['id'] ?? null;
         $paymentIntentId = is_string($rawId) ? $rawId : '';
         /** @var mixed $rawMetadata */
         $rawMetadata = $object['metadata'] ?? null;
         $metadata = is_array($rawMetadata) ? $rawMetadata : [];
+        /** @var mixed $rawOrderId */
         $rawOrderId = $metadata['orderId'] ?? null;
         $orderId = is_string($rawOrderId) ? $rawOrderId : '';
 
@@ -209,8 +211,10 @@ final readonly class WebhookHandler
         /** @var mixed $rawMetadata */
         $rawMetadata = $object['metadata'] ?? null;
         $metadata = is_array($rawMetadata) ? $rawMetadata : [];
+        /** @var mixed $rawOrderId */
         $rawOrderId = $metadata['orderId'] ?? null;
         $orderId = is_string($rawOrderId) ? $rawOrderId : '';
+        /** @var mixed $rawReason */
         $rawReason = $object['failure_message'] ?? null;
         $reason = is_string($rawReason) ? $rawReason : 'Payment failed';
 
@@ -238,8 +242,10 @@ final readonly class WebhookHandler
         /** @var mixed $rawMetadata */
         $rawMetadata = $object['metadata'] ?? null;
         $metadata = is_array($rawMetadata) ? $rawMetadata : [];
+        /** @var mixed $rawOrderId */
         $rawOrderId = $metadata['orderId'] ?? null;
         $orderId = is_string($rawOrderId) ? $rawOrderId : '';
+        /** @var mixed $rawRefundAmount */
         $rawRefundAmount = $object['amount_refunded'] ?? null;
         $refundAmount = is_int($rawRefundAmount) ? $rawRefundAmount : 0;
 
