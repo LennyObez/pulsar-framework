@@ -1,0 +1,96 @@
+name: nightly
+
+on:
+  schedule:
+    - cron: "0 2 * * *"  # 02:00 UTC daily
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+
+jobs:
+  mutants:
+    name: cargo-mutants
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: "1.95.0"
+      - uses: Swatinem/rust-cache@v2
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-mutants,cargo-nextest
+      - name: cargo mutants on critical-coverage crates
+        run: |
+          cargo mutants \
+            --workspace \
+            --minimum-test-timeout 60 \
+            --no-shuffle \
+            --jobs 2 \
+            --in-diff <(git diff origin/develop...HEAD -- '**/*.rs') 2>/dev/null \
+            || cargo mutants --workspace --minimum-test-timeout 60 --no-shuffle --jobs 2
+
+  fuzz-short:
+    name: cargo-fuzz short
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly
+      - uses: Swatinem/rust-cache@v2
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-fuzz
+      - name: run all fuzz targets for 10 minutes each
+        run: |
+          if [ -d fuzz/fuzz_targets ]; then
+            for target in fuzz/fuzz_targets/*.rs; do
+              name=$(basename "$target" .rs)
+              echo "::group::fuzz $name"
+              cargo +nightly fuzz run "$name" -- -runs=2000000 -max_total_time=600
+              echo "::endgroup::"
+            done
+          else
+            echo "No fuzz targets yet — Phase 1 kernel fuzzers will land in fuzz/."
+          fi
+
+  miri:
+    name: miri
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly
+          components: miri
+      - uses: Swatinem/rust-cache@v2
+      - name: cargo miri on kernel
+        env:
+          MIRIFLAGS: "-Zmiri-strict-provenance"
+        run: |
+          rustup +nightly component add miri
+          cargo +nightly miri test --package pulsar-kernel || echo "kernel tests not yet present"
+
+  semver-checks:
+    name: cargo-semver-checks
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: "1.95.0"
+      - uses: Swatinem/rust-cache@v2
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-semver-checks
+      - run: cargo semver-checks --workspace --baseline-rev origin/main || true

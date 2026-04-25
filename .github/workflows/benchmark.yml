@@ -1,0 +1,59 @@
+name: benchmark
+
+on:
+  push:
+    branches: [develop]
+  pull_request:
+    branches: [develop]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  deployments: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  bench:
+    name: criterion regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: "1.95.0"
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: install bencher output adapter
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-criterion
+
+      - name: cargo bench
+        run: |
+          if find . -path ./target -prune -o -name 'benches' -type d -print | grep -q benches; then
+            cargo bench --workspace --no-fail-fast -- --output-format bencher 2>&1 | tee bench.txt
+          else
+            echo "No benches/ directories yet — Phase 1 kernel benches will land later."
+            echo "test pulsar_placeholder ... bench: 1 ns/iter (+/- 0)" > bench.txt
+          fi
+
+      - name: criterion comparison report
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          tool: cargo
+          output-file-path: bench.txt
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: false
+          alert-threshold: "105%"
+          fail-on-alert: true
+          comment-on-alert: true
+          summary-always: true
+          benchmark-data-dir-path: docs/perf/baselines/develop
