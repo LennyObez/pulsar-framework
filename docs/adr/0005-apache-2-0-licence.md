@@ -84,4 +84,17 @@ A `NOTICE` file at the repository root carries the Apache-2.0 boilerplate copyri
   * EUIPO. "Trade mark applications." euipo.europa.eu.
   * WIPO. "Madrid Protocol concerning the international registration of marks." wipo.int/madrid.
   * Open Source Initiative. "Apache License 2.0." opensource.org/license/apache-2-0.
-* Compliance mapping: not directly regulatory, but enables procurement under enterprise OSS guidelines (e.g. ISO/IEC 5230:2020 OpenChain conformance).
+
+## Compliance mapping
+
+The licence + trademark posture is upstream of every procurement-side compliance question. Apache-2.0 is the OSI-approved licence that maximises downstream procurement compatibility; the EUIPO trademark + defensive patent grant + future commercial dual-licence path collectively answer the procurement, IP, and counterparty-contract questions regulated buyers raise.
+
+* **ISO/IEC 5230:2020 (OpenChain Conformance)** — Apache-2.0 is on the OpenChain-recommended permissive licence list. Per-crate `license = "Apache-2.0"` declaration in every `Cargo.toml` + `LICENSE` file at repo root + `NOTICE` file with attribution + SBOM emitted by `publish.yml` collectively satisfy OpenChain § 3.1 (Identification of License Obligations) + § 3.2 (Compliance Artifact Creation).
+* **ISO/IEC 18974:2023 (OpenChain Security Assurance)** — Apache-2.0 + the SSDLC controls in ADR-0007 + the SBOM emission in ADR-0006 collectively support 18974's process-based security-assurance claims downstream procurement evaluators check.
+* **ISO/IEC 5962:2021 (SPDX)** — `Apache-2.0` SPDX identifier is the canonical machine-readable licence tag. CycloneDX SBOMs emitted by `publish.yml` carry SPDX identifiers per crate per 5962.
+* **EU CRA Annex II § 1(d)** (information and instructions to user) — Apache-2.0 grants downstream users explicit rights to use, modify, redistribute. The trademark policy (`docs/trademark-policy.md`) explicitly limits "Pulsar" mark use so downstream rebrandings cannot misrepresent themselves as endorsed.
+* **EU CRA Annex II § 2(g)** (security update period) — Apache-2.0 permits AS-IS distribution; Pulsar's security-update commitment is documented in `SECURITY.md` independently of the licence.
+* **EU AI Act Art. 25** (obligations of distributors) — Apache-2.0 + EUIPO trademark + immutable signed releases per ADR-0006 + ADR-0007 collectively support distributor-obligation compliance for downstream applications using `pulsar-ai`.
+* **GDPR Art. 28(3)** (binding contract between controller and processor) — Apache-2.0 itself is not a processor agreement; the post-GA commercial dual-licence path (Decision 2.49) provides the counterparty contract regulated controllers may require for processor relationships involving Pulsar-hosted services.
+* **OpenSSF Best Practices Badge — Gold tier** — Section 16.12.8 target. Apache-2.0 + clear `LICENSE` + `CONTRIBUTING.md` + signed releases + reproducible builds + SBOM are gold-tier criteria the licence + branch + supply-chain ADRs collectively satisfy.
+* **WIPO Madrid Protocol** — EUIPO base registration (Phase 0) + Madrid Protocol international extensions at GA covering UK, US, CH, CA, AU, SG, JP per Decision 2.50.

@@ -97,3 +97,23 @@ Protected-branch policy on both `main` and `develop`:
   * GitHub. "GitHub Flow." docs.github.com/get-started/quickstart/github-flow.
   * Conventional Commits v1.0.0. conventionalcommits.org/en/v1.0.0.
   * GPG signing for commits. docs.github.com/authentication/managing-commit-signature-verification.
+
+## Compliance mapping
+
+The branch model + branch protection + GPG-signed commits collectively constitute the change-management control surface that regulators evaluate when auditing software-development processes. Every framework targeting regulated deployment must demonstrate "code changes are reviewed, attributed, and tamper-evident" — the three-tier branch topology is Pulsar's evidence.
+
+* **ISO/IEC 27001:2022 A.8.32** (change management) — `develop` integration branch + sprint feature branches + required PR review constitute the documented change-management process.
+* **ISO/IEC 27001:2022 A.5.4** (management responsibilities) — branch protection enforces the maintainer-approval requirement on every change to `main`.
+* **ISO/IEC 27001:2022 A.8.4** (access to source code) — branch protection rules + CODEOWNERS enforce least-privilege access at the repository level. CODEOWNERS auto-assigns the maintainer to critical-coverage-tier crates so review responsibility is unambiguous.
+* **ISO/IEC 27034-3:2018** (application security management process — § 7 verification) — required status checks (fmt + clippy + check + nextest + llvm-cov + deny + audit) on PRs gate the change-management workflow.
+* **PCI-DSS 4.0 Req. 6.5.1** (changes follow change-control procedures) — sprint-branch contract + required reviews + GPG-signed commits + linear history on `main` collectively satisfy 6.5.1.
+* **PCI-DSS 4.0 Req. 6.5.2** (separation of duties between development and production) — `develop` (integration / development) vs `main` (release / production) is the technical separation; commits to `main` only via reviewed PRs from `develop`.
+* **PCI-DSS 4.0 Req. 6.5.3** (segregation of pre-production and production environments) — tags on `main` are immutable; rebuilds from a tag are reproducible (per Section 14.6 SLSA L4 + repro-build.yml).
+* **PCI-DSS 4.0 Req. 6.5.4** (separation of duties between personnel assigned to pre-production and production environments) — single-maintainer Phase 0 is acknowledged residual risk; CODEOWNERS already encodes the separation-of-duties seam for when a contributor pool emerges.
+* **DORA Art. 9(2)(c)** (preventive measures including authentication of users and devices, and secure system development life cycle) — branch model + GPG signing + Trusted Publisher OIDC are the SSDLC controls.
+* **NIST SP 800-218 SSDF — PS.1.1** (protect repositories from unauthorised changes) — branch protection + required signed commits.
+* **NIST SP 800-218 SSDF — PS.2.1** (provide a mechanism for verifying software release integrity) — annotated GPG-signed tags on `main` are the verification mechanism.
+* **NIST SP 800-53 Rev. 5 CM-3** (configuration change control) — branch model is the documented, approved, audited change-control process.
+* **NIST SP 800-53 Rev. 5 CM-5** (access restrictions for change) — branch protection + CODEOWNERS enforce CM-5.
+* **EU CRA Annex I § 1(g)** (vulnerabilities can be addressed through security updates, including, where applicable, automatic updates) — `develop` → `main` cadence supports rapid security-patch shipping when CVEs land.
+* **NIS2 Art. 21(2)(e)** (security in network and information systems acquisition, development and maintenance) — branch model + signed commits + reproducible builds collectively satisfy the SSDLC requirements.
