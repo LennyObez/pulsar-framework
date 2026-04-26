@@ -7,6 +7,12 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Sprint 0.7 — Plan committed + trademark policy
+
+* `docs/plan.md` v2.2 already committed (throughout Phase 1-11 reconciliation + Sprint 0.1-0.6 refinements); the master plan is the authoritative reference for every Phase 0 decision.
+* `docs/trademark-policy.md` lands the EUIPO-aligned trademark policy per [ADR-0005](docs/adr/0005-apache-2-0-licence.md) and [Decision 2.50](docs/plan.md). Sections cover what the trademark covers, nominative use that requires no permission, uses that require permission, fork rules, downstream-application rules, commercial-entity rules (consulting, training, hosting, managed services, post-GA dual-licence path), defensive patent posture, reporting concerns, and contact channels. Modelled on Linux Foundation, Rust Foundation, PostgreSQL, and Apache Software Foundation trademark policies.
+* README.md already references both files (Status link to plan; License + Trademark section link to trademark policy).
+
 ### Sprint 0.6 — Architecture diagrams (6 Mermaid)
 
 * `docs/architecture/overview.md` — entry point linking the six diagrams + ADR roadmap + plan section cross-references.
