@@ -7,6 +7,12 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Sprint 0.4 — CI workflows formal exit gate
+
+* All five GitHub Actions workflows (ci.yml, nightly.yml, audit.yml, benchmark.yml, publish.yml) verified syntactically valid via `python3 -c "import yaml; yaml.safe_load(...)"`.
+* New `docs/ops/ci.md` documents the CI topology end-to-end: workflow inventory, per-job breakdown, caching strategy, runner choice, local invocation aliases, and Sprint 0.4 exit verification status.
+* The "first ci.yml run on develop succeeds" and "publish.yml dry-runs cargo publish --dry-run" exit criteria are deferred to the first `git push origin develop` (per plan workflow rule "never push unless explicitly requested"). Workflow source is correct and triggers properly on `vN.M.P*` tag patterns.
+
 ### Sprint 0.3 — 53 crate stubs formal exit gate
 
 * `cargo check --workspace` succeeds in 2m22s on local develop (exit 0).
