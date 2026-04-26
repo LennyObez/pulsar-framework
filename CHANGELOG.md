@@ -7,6 +7,17 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Sprint 0.1 — Meta-files alignment (in progress)
+
+* README.md aligned with v2.2 plan: 53-crate workspace layout, 23-framework compliance count, native Web Components admin SPA replaces Leptos WASM, Mermaid architecture refreshed with consolidated layers, explicit links to docs/plan.md and docs/adr/INDEX.md per Sprint 0.1 exit criterion.
+* SECURITY.md crypto section now reflects in-scope FIPS 140-3 validation pathway (Sprint 4.7), HSM/PKCS#11 (Sprint 2C.3), confidential computing (Sprint 4.8), and PQC hybrid (Sprint 1.1 + 2.5) per plan Section 14.
+* CONTRIBUTING.md scope list expanded to all 53 crate names; quality-gate command sequence corrected (`cargo mutants --minimum-test-timeout 60` was previously the invalid `--minimum-test-efficacy 95`); new naming-conventions section pointing at plan Section XVII catalogue.
+* Three blocking v2.1 baseline bugs surfaced and fixed: `subtle 2.7` (does not exist on crates.io, max is 2.6.1) → `subtle 2.6`; `acme-client 0.4` (abandoned 2017, transitively pulls banned `native-tls 0.1`) → `instant-acme 0.7` (modern async ACME v2 on hyper + rustls); meta-crate dependency cycle (40 inner stubs incorrectly declared `pulsar-framework` as a dep, creating cycles via meta-crate re-exports) — pulsar-framework removed from all inner stubs, `pulsar-kernel` added to pulsar-queue + pulsar-cache + pulsar-storage for AEAD primitive access.
+* `trust-dns-resolver 0.23` (unmaintained per RUSTSEC-2025-0017) migrated to `hickory-resolver 0.24` across workspace.dependencies, pulsar-cluster Cargo.toml, and Section IV 4.50 spec.
+* deny.toml license allow-list extended with five OSI/FSF-approved permissive licenses encountered in the resolved dep graph: `Apache-2.0 WITH LLVM-exception`, `MIT-0`, `0BSD`, `BSL-1.0`, `CDLA-Permissive-2.0`.
+* Cargo.lock generated and committed for reproducible builds (per plan Section 14.6 SLSA 4 requirement and the binary nature of pulsar-cli).
+* `cargo deny check licenses` now passes green; `cargo metadata --no-deps` parses cleanly across the 53-crate workspace with zero cycles.
+
 ### Added
 
 - Master plan `docs/plan.md` v2.2 — full strict-parity rewrite roadmap with 53 first-party crates, 11 phases, 9 TLA+ specifications, 23 compliance framework mappings, and 50 strategic decisions.

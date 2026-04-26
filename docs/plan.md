@@ -1407,7 +1407,7 @@ The Kubernetes Operator lives outside the Cargo workspace under `services/operat
 
 **Key types.** `EdgeDeployment`, `FragmentCache`, `PurgeApi`, `AcmeClient`.
 
-**Dependencies.** `pulsar-framework`, `pulsar-http`, `acme-client = "0.4"`, `reqwest`, `thiserror`.
+**Dependencies.** `pulsar-framework`, `pulsar-http`, `instant-acme = "0.7"` (modern async ACME v2 client on hyper + rustls; replaces the abandoned `acme-client` crate which transitively depended on `native-tls` banned by deny.toml), `reqwest`, `thiserror`.
 
 **Re-exported in meta.** No.
 
@@ -1424,7 +1424,7 @@ The Kubernetes Operator lives outside the Cargo workspace under `services/operat
 
 **Key types.** `HealthCheck`, `Probe`, `Supervisor`, `AggregatedStatus`, `Discovery`, `Service`, `Instance`, `LoadBalancer`. One top-level `ClusterCoordinator` composes the subset configured for a given deployment.
 
-**Dependencies.** `pulsar-framework`, `pulsar-http`, `pulsar-observability`, `etcd-client = "0.14"`, `k8s-openapi = "0.24"`, `trust-dns-resolver`, `tokio`, `thiserror`.
+**Dependencies.** `pulsar-framework`, `pulsar-http`, `pulsar-observability`, `etcd-client = "0.14"`, `k8s-openapi = "0.24"`, `hickory-resolver = "0.24"` (rebrand of `trust-dns-resolver`; the legacy `trust-dns-*` crates are unmaintained per RUSTSEC-2025-0017), `tokio`, `thiserror`.
 
 **Re-exported in meta.** No.
 
@@ -3158,7 +3158,7 @@ Nine gating checkpoints bracket the rewrite. Eight fire at the exit of a phase (
 | Crate                  | Version    | Justification                                                                  |
 |------------------------|-----------:|--------------------------------------------------------------------------------|
 | `ring`                 | 0.17       | Audited, FIPS-derived crypto primitives.                                        |
-| `subtle`               | 2.7        | Constant-time byte equality and choice operations.                              |
+| `subtle`               | 2.6        | Constant-time byte equality and choice operations.                              |
 | `zeroize`              | 1.8        | Drop-time memory zeroisation for secrets.                                       |
 | `secrecy`              | 0.10       | Type-level marker for secret values with controlled `Debug`.                    |
 | `thiserror`            | 2          | Derive-based error ergonomics without runtime cost.                             |

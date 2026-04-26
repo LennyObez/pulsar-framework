@@ -31,37 +31,50 @@ docs/*      ─ documentation-only changes
 chore/*     ─ tooling, build, dependency updates
 ```
 
-- Commits must be **GPG-signed**
-- Commit messages follow **Conventional Commits**: `<type>(<scope>): <imperative summary>`
-  - Types: `feat`, `fix`, `docs`, `perf`, `refactor`, `test`, `ci`, `build`, `chore`, `security`
-  - Scopes: `kernel`, `http`, `engine`, `orm`, `audit`, `auth`, `compliance`, `obs`, `cms`, `forum`, `payments`, `console`, `cli`, `test`, `ci`, `docs`, `arch`
+- Commits must be **GPG-signed** (Ed25519 key preferred per plan Decision 2.30)
+- Commit messages follow **Conventional Commits v1.0.0**: `<type>(<scope>): <imperative summary ≤ 72 chars>`
+  - Types: `feat`, `fix`, `docs`, `perf`, `refactor`, `test`, `ci`, `build`, `chore`, `security`, `deps`
+  - Scopes: any of the 53 first-party crate names without the `pulsar-` prefix (e.g. `kernel`, `http`, `orm`, `auth`, `audit`, `compliance`, `observability`, `search`, `guard`, `mail`, `queue`, `scheduler`, `cache`, `config`, `storage`, `form`, `webhook`, `idempotency`, `notification`, `pagination`, `feature-flag`, `i18n`, `tenancy`, `dataprotection`, `consent`, `authz`, `identity-standards`, `cms`, `forum`, `payments`, `console-api`, `api`, `graphql`, `grpc`, `mcp-server`, `realtime`, `ai`, `ai-governance`, `vector-search`, `ai-agents`, `live`, `studio`, `analytics`, `accessibility`, `orchestration`, `cloud`, `edge`, `cluster`, `deploy`, `cli`, `test`, `framework` for the meta-crate); plus `workspace` (root Cargo.toml), `ci` (GitHub Actions workflows), `docs` (plan, ADR, book), `adr` (single ADR), `arch` (architecture diagrams)
+- Body wraps at 72 columns
 - No `Co-Authored-By` trailers
-- Pull requests target `develop`; the `develop → main` merge is reserved for release cycles
+- No reference to automated drafting tooling in any committed artefact
+- Pull requests target `develop`; the `develop → main` merge is reserved for the terminal GA release via `/ultrareview` (plan Section 2.6)
 
 ## Quality gates (non-negotiable)
 
 Before opening a pull request, run the full gate suite locally. Every item must pass.
 
+The full per-sprint quality-gate suite is documented in [docs/plan.md](docs/plan.md) Section VI. Run locally before opening a pull request:
+
 ```bash
-cargo fmt --check
-cargo clippy --all-targets --all-features -- -D warnings
-cargo check --all-targets --all-features
-cargo nextest run --all-features
-cargo llvm-cov --all-features --lcov --output-path coverage.lcov
-cargo mutants --workspace --minimum-test-efficacy 95
-cargo audit --deny warnings
-cargo deny check
-cargo machete
+cargo fmt --all -- --check
+cargo clippy --workspace --all-targets --all-features -- -D warnings
+cargo check --workspace --all-targets --all-features
+cargo nextest run --workspace --all-features
+cargo test --workspace --doc
+cargo llvm-cov --workspace --lcov --fail-under-lines 100      # kernel, security, compliance, data protection crates
+cargo llvm-cov --workspace --lcov --fail-under-lines 95       # other crates
+cargo llvm-cov --workspace --branch --fail-under-branches 100 # kernel, security, compliance, data protection
+cargo llvm-cov --workspace --mcdc --fail-under-mcdc 100       # kernel, security, compliance
+cargo mutants --workspace --minimum-test-timeout 60           # ≥ 95% on kernel/security/compliance/data-protection
+cargo fuzz run <target> -- -runs=10000000                     # parser sprints
+cargo audit                                                    # zero advisories
+cargo deny check advisories bans licenses sources
+cargo machete                                                  # zero unused deps
+cargo bench --workspace                                        # criterion comparison vs baseline
+cargo creusot                                                  # kernel sprints only
+tlc -config spec/<name>.cfg spec/<name>.tla                   # kernel + Sprint 2.5 + 3B.2 + 3E.1
 ```
 
 Per-module requirements:
 
-- **Line, branch, condition coverage**: 100%
-- **Mutation kill rate**: ≥ 95%
-- **Fuzz targets** (parser modules only): `cargo fuzz run <target> -- -max_total_time=3600` must terminate with zero crashes
-- **Benchmark regression** (`criterion`): zero regression versus the committed baseline in `docs/perf/benchmarks-baseline.json`
-- **Formal proofs** (kernel modules): `cargo creusot` verifies all contracts
-- **TLA+ specs** (kernel modules): `tlc` model check passes for every spec in `spec/`
+- **Line, branch, MC/DC coverage**: 100% on `pulsar-kernel`, `pulsar-guard`, `pulsar-compliance`, `pulsar-dataprotection`; ≥ 95% line/branch on every other crate
+- **Mutation kill rate** (`cargo mutants`): ≥ 95% on kernel/security/compliance/data-protection; ≥ 90% on every other crate
+- **Fuzz targets** (every parser sprint): `cargo fuzz run <target> -- -runs=10000000` must complete with zero crashes
+- **Benchmark regression** (`criterion`): no P99 regression above 5% versus the committed baseline in `docs/perf/baselines/<version>/`
+- **Formal proofs** (kernel sprints): `cargo creusot` verifies every annotated contract
+- **TLA+ specs**: `tlc` model check passes for every relevant `spec/<name>.tla` (nine specs total at GA per plan Section XII)
+- **OpenSSF Scorecard**: ≥ 9.0 sustained for 30 days before each release per plan Section 16.12.8
 
 ## Testing strategy
 
@@ -73,9 +86,38 @@ Per-module requirements:
 - **Chaos tests**: `tests/chaos/` at workspace root.
 - **Load tests**: `tests/load/` at workspace root; executed in nightly CI.
 
+## Naming and coding conventions
+
+The authoritative naming and coding catalogue is **plan Section XVII** ([docs/plan.md](docs/plan.md)). It governs:
+
+- Crate naming (`pulsar-<subsystem>` kebab-case, semantic suffixes)
+- Module layout within a crate (`src/lib.rs`, `src/error.rs`, `src/sealed.rs`, per-subdomain directories)
+- Type naming (PascalCase with semantic suffix: `Error`, `Builder`, `Policy`, `Adapter`, `Provider`, `Registry`, `Store`, `Context`, `Handler`, `Middleware`, `Dispatcher`; avoid `Manager`, `Helper`, `Util`, `Service`, `Data`, `Info`, `Impl`)
+- Trait naming (noun-form for roles, `-er` for actions, `-able` for properties)
+- Method naming (`new`, `build`, `from_*`, `into_*`, `as_*`, `to_*`, `is_*`, `has_*`, `with_*`, `set_*`; never `get_*`)
+- Field naming (snake_case, durations suffixed with unit `_ms`/`_seconds`, IDs as newtype wrappers, timestamps `created_at`/`updated_at`/`deleted_at`)
+- Error strategy (one public `Error` enum per crate using `thiserror`; `anyhow` only in `pulsar-cli`)
+- Feature flag naming (kebab-case)
+- Configuration key naming (snake_case TOML)
+- Environment variable naming (`PULSAR_<SUBSYSTEM>_<NAME>` SCREAMING_SNAKE_CASE)
+- Metric naming (Prometheus + OpenMetrics conventions)
+- HTTP header naming (`Pulsar-<Name>` per RFC 6648, no `X-` prefix)
+- Audit event naming (past-tense DDD, e.g. `UserAuthenticated`, `OrderPlaced`)
+- Database table + column naming
+- Migration naming
+- Proc-macro naming
+- Public API stability markers (`#[api(since)]`, `#[experimental]`, `#[deprecated]`, `#[internal]`)
+- Testing conventions
+- Benchmark conventions
+- Logging conventions
+- Unsafe code policy
+- Dependency discipline
+
+Deviations from Section XVII require an explicit ADR.
+
 ## Architecture decision records
 
-Any change that alters architectural shape, public API, or cross-module contracts requires an **Architecture Decision Record** in `docs/adr/NNNN-<kebab-title>.md`. The ADR template is `docs/adr/0000-template.md`.
+Any change that alters architectural shape, public API, or cross-module contracts requires an **Architecture Decision Record** in `docs/adr/NNNN-<kebab-title>.md`. The ADR template is `docs/adr/0000-template.md` (lands at Sprint 0.5).
 
 The ADR must cover:
 

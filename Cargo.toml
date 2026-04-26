@@ -208,7 +208,7 @@ ring = "0.17"
 rustls = "0.23"
 rustls-pemfile = "2.2"
 argon2 = "0.5"
-subtle = "2.7"
+subtle = "2.6"
 zeroize = { version = "1.8", features = ["derive"] }
 secrecy = { version = "0.10", features = ["serde"] }
 rand = "0.8"
@@ -337,7 +337,7 @@ figment = { version = "0.10", features = ["toml", "env"] }
 # Service discovery
 # ──────────────────────────────────────────────────────────────────────────
 etcd-client = "0.14"
-trust-dns-resolver = "0.23"
+hickory-resolver = "0.24"
 k8s-openapi = { version = "0.24", features = ["latest"] }
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -348,9 +348,10 @@ azure_core = "0.21"
 google-cloud-storage = "0.22"
 
 # ──────────────────────────────────────────────────────────────────────────
-# Edge / ACME
+# Edge / ACME (instant-acme: modern async ACME v2 client on hyper + rustls,
+# no native-tls dependency, replaces the abandoned acme-client 0.4)
 # ──────────────────────────────────────────────────────────────────────────
-acme-client = "0.4"
+instant-acme = "0.7"
 
 # ──────────────────────────────────────────────────────────────────────────
 # Feature flags (OpenFeature-compatible)

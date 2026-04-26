@@ -14,7 +14,6 @@ keywords.workspace = true
 categories.workspace = true
 
 [dependencies]
-pulsar-framework = { path = "../pulsar-framework", version = "=0.0.1-alpha.0" }
 pulsar-engine = { path = "../pulsar-engine", version = "=0.0.1-alpha.0" }
 pulsar-orchestration = { path = "../pulsar-orchestration", version = "=0.0.1-alpha.0" }
 pulsar-feature-flag = { path = "../pulsar-feature-flag", version = "=0.0.1-alpha.0" }

@@ -82,7 +82,15 @@ A formal bug bounty program may be launched after the 1.0.0 release.
 
 The framework relies exclusively on audited cryptographic primitives provided by `ring`, `rustls`, and the standard Rust cryptography ecosystem. No custom primitives are shipped. Constant-time operations are enforced via the `subtle` crate, memory zeroing via `zeroize`, and secret wrapping via `secrecy`.
 
-Side-channel hardening at the hardware level is a documented non-goal for the v1.0.0 scope; deployments requiring FIPS 140-2/140-3 validated hardware must pair Pulsar with an appropriate HSM or attested enclave.
+**Post-quantum cryptography** ships at 1.0.0 GA per plan Section 14.1: hybrid X25519 + ML-KEM (Kyber) for TLS 1.3 key exchange, Ed25519 + ML-DSA (Dilithium) for code-signing and token-signing. Classical-only variants are deprecated at 2.0.
+
+**FIPS 140-3 validation** ships at 1.0.0 GA via opt-in build profile `fips` per plan Section 14.2 and Sprint 4.7: every cryptographic operation routes through a FIPS-140-3-validated backend (BoringCrypto, AWS-LC, or a FIPS-validated `ring` variant once available). Accredited laboratory targets Security Level 2 for the crypto module.
+
+**HSM integration** ships at 1.0.0 GA via PKCS#11 adapter (`cryptoki`) per plan Section 14.3 and Sprint 2C.3: Thales Luna, AWS CloudHSM, Azure Dedicated HSM, Google Cloud HSM, Nitrokey HSM 2, YubiHSM 2 supported at launch; SoftHSM as the development reference backend. With HSM configured, master-key material never touches host process memory.
+
+**Confidential computing** ships at 1.0.0 GA per plan Section 14.4 and Sprint 4.8: AMD SEV-SNP and Intel TDX confidential VMs with remote attestation at startup; integrates with Google Confidential Space and AWS Nitro Enclaves.
+
+Side-channel hardening at the hardware level (Spectre/Meltdown-class attacks) is a documented non-goal for the v1.0.0 scope and is tracked in plan risk R-007 for post-GA 1.1; the framework relies on `subtle` for software-level constant-time primitives.
 
 ## Supply Chain
 

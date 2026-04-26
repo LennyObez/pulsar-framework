@@ -14,11 +14,10 @@ keywords.workspace = true
 categories.workspace = true
 
 [dependencies]
-pulsar-framework = { path = "../pulsar-framework", version = "=0.0.1-alpha.0" }
 pulsar-http = { path = "../pulsar-http", version = "=0.0.1-alpha.0" }
 pulsar-observability = { path = "../pulsar-observability", version = "=0.0.1-alpha.0" }
 etcd-client = { workspace = true }
 k8s-openapi = { workspace = true }
-trust-dns-resolver = { workspace = true }
+hickory-resolver = { workspace = true }
 tokio = { workspace = true }
 thiserror = { workspace = true }

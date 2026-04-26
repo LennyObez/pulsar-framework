@@ -14,6 +14,5 @@ keywords.workspace = true
 categories.workspace = true
 
 [dependencies]
-pulsar-framework = { path = "../pulsar-framework", version = "=0.0.1-alpha.0" }
 serde = { workspace = true }
 thiserror = { workspace = true }
