@@ -23,3 +23,6 @@ thiserror = { workspace = true }
 [features]
 default = []
 odata = []
+
+[lints]
+workspace = true

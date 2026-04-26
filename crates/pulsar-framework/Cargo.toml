@@ -31,3 +31,6 @@ pulsar-authz = { path = "../pulsar-authz", version = "=0.0.1-alpha.0" }
 pulsar-identity-standards = { path = "../pulsar-identity-standards", version = "=0.0.1-alpha.0" }
 pulsar-ai-governance = { path = "../pulsar-ai-governance", version = "=0.0.1-alpha.0" }
 pulsar-orchestration = { path = "../pulsar-orchestration", version = "=0.0.1-alpha.0" }
+
+[lints]
+workspace = true

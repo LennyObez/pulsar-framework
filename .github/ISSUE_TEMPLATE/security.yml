@@ -1,0 +1,51 @@
+name: Security disclosure (DO NOT FILE PUBLICLY)
+description: This template intentionally redirects to the private disclosure channel.
+title: "[security] Do not file — use the private channel"
+labels: ["security", "wontfix"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## ⚠ STOP — do not file this issue publicly
+
+        Security vulnerabilities must be reported through one of the **private** channels per [SECURITY.md](../../SECURITY.md):
+
+        ### Primary — GitHub Security Advisories (preferred)
+
+        Open a private advisory at:
+
+        **<https://github.com/LennyObez/pulsar-framework/security/advisories/new>**
+
+        GitHub Security Advisories provide a private workspace for coordinated disclosure, patch development, and CVE assignment.
+
+        ### Fallback — encrypted email
+
+        If GitHub access is unavailable:
+
+        **`security@pulsar-framework.com`** (active once the domain is provisioned)
+
+        PGP encryption supported. Public key fingerprint at `https://pulsar-framework.com/.well-known/security-contact.asc`.
+
+        ## Why is this template here?
+
+        This template exists to redirect security reporters who default to "Open issue" without reading SECURITY.md. The label `wontfix` is auto-applied so the issue closes immediately and does not surface in the public roadmap.
+
+        ## What if my report is not security-sensitive?
+
+        If you are unsure, treat it as security-sensitive and use the private channel. The maintainer will redirect to the public bug-report template if appropriate. Public disclosure of an actual vulnerability before the embargo expires is a breach of the safe-harbour policy in SECURITY.md.
+
+        ## Acknowledgement timeline
+
+        Initial acknowledgement is sent within **72 hours** per the SECURITY.md disclosure process. Severity assessment per CVSS 4.0; remediation timelines: Critical 14 days, High 30 days, Medium/Low next scheduled minor release.
+
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: Confirmation
+      description: Please confirm before submitting.
+      options:
+        - label: I understand this template should NOT be used for actual security reports.
+          required: true
+        - label: I will use one of the private channels (GitHub Security Advisory or `security@pulsar-framework.com`) for vulnerability disclosure.
+          required: true

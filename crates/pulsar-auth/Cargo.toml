@@ -26,3 +26,6 @@ ldap3 = { workspace = true }
 reqwest = { workspace = true }
 url = { workspace = true }
 thiserror = { workspace = true }
+
+[lints]
+workspace = true

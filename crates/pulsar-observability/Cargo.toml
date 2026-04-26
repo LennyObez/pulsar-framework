@@ -25,3 +25,6 @@ metrics = { workspace = true }
 metrics-exporter-prometheus = { workspace = true }
 clickhouse = { workspace = true }
 thiserror = { workspace = true }
+
+[lints]
+workspace = true

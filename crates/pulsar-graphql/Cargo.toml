@@ -19,3 +19,6 @@ pulsar-realtime = { path = "../pulsar-realtime", version = "=0.0.1-alpha.0" }
 async-graphql = { workspace = true }
 serde = { workspace = true }
 thiserror = { workspace = true }
+
+[lints]
+workspace = true

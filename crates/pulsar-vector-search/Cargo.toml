@@ -23,3 +23,6 @@ thiserror = { workspace = true }
 default = ["pgvector"]
 pgvector = []
 qdrant = ["dep:qdrant-client"]
+
+[lints]
+workspace = true

@@ -20,3 +20,6 @@ pest_derive = { workspace = true }
 icu = { workspace = true }
 serde = { workspace = true }
 thiserror = { workspace = true }
+
+[lints]
+workspace = true

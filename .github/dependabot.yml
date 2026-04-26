@@ -1,0 +1,99 @@
+# Pulsar Framework — Dependabot configuration
+#
+# Per plan Section 16.12.3 dependency confusion defence + risk R-016 ecosystem
+# drift management. Weekly updates surface drift early and keep the resolved
+# dep graph close to upstream HEAD without overwhelming reviewers.
+#
+# Documentation: https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+
+updates:
+  # ─── Cargo workspace deps (Rust) ──────────────────────────────────────
+  - package-ecosystem: "cargo"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Brussels"
+    open-pull-requests-limit: 10
+    target-branch: "develop"
+    labels:
+      - "deps"
+      - "rust"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    groups:
+      # Group patch + minor bumps to reduce PR noise
+      patch-and-minor:
+        applies-to: version-updates
+        update-types:
+          - "patch"
+          - "minor"
+      # Major bumps reviewed individually
+      major:
+        applies-to: version-updates
+        update-types:
+          - "major"
+      # Security fixes always individual
+      security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+    # Reviewers + assignees inherited from CODEOWNERS
+
+  # ─── GitHub Actions versions (.github/workflows/) ─────────────────────
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Brussels"
+    open-pull-requests-limit: 5
+    target-branch: "develop"
+    labels:
+      - "deps"
+      - "ci"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    groups:
+      actions:
+        patterns:
+          - "*"
+
+  # ─── Go modules in services/operator/ ────────────────────────────────
+  - package-ecosystem: "gomod"
+    directory: "/services/operator"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Brussels"
+    open-pull-requests-limit: 5
+    target-branch: "develop"
+    labels:
+      - "deps"
+      - "go"
+      - "operator"
+    commit-message:
+      prefix: "deps(operator)"
+
+  # ─── npm in services/admin/ if package.json appears (currently no JS deps) ─
+  - package-ecosystem: "npm"
+    directory: "/services/admin"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Brussels"
+    open-pull-requests-limit: 5
+    target-branch: "develop"
+    labels:
+      - "deps"
+      - "admin"
+    commit-message:
+      prefix: "deps(admin)"

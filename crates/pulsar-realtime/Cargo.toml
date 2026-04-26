@@ -27,3 +27,6 @@ thiserror = { workspace = true }
 [features]
 default = []
 kafka = ["dep:rdkafka"]
+
+[lints]
+workspace = true

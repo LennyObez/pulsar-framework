@@ -1,11 +1,14 @@
 //! Consolidated WebSocket, SSE, WebTransport, broadcasting fan-out (Section 16.14).
 //!
-//! Placeholder release for namespace reservation. Implementation arrives at the sprint
-//! identified in `docs/plan.md` Section IV. Until then this crate exposes only the
-//! version constant.
+//! Placeholder release for namespace reservation. The implementation ships
+//! at the sprint identified in `docs/plan.md` Section IV (per-crate spec)
+//! and Section V (implementing sprint). Until then this crate exposes only
+//! the version constant plus the standard module skeleton (prelude / error /
+//! sealed) per Section XVII.2 module layout.
 
-#![deny(missing_docs)]
-#![forbid(unsafe_code)]
+pub mod error;
+pub mod prelude;
+mod sealed;
 
 /// Crate version constant emitted from the workspace package version.
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

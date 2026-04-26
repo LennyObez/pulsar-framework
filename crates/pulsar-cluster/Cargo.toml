@@ -21,3 +21,6 @@ k8s-openapi = { workspace = true }
 hickory-resolver = { workspace = true }
 tokio = { workspace = true }
 thiserror = { workspace = true }
+
+[lints]
+workspace = true

@@ -1,0 +1,19 @@
+[package]
+name = "pulsar-example-hello-world"
+description = "Pulsar Framework example: hello-world (cross-vertical)."
+version = "0.0.1-alpha.0"
+edition = "2024"
+rust-version = "1.95"
+license = "Apache-2.0"
+publish = false  # Examples are not published to crates.io
+authors = ["Lenny Obez <github@lennyobez.com>"]
+
+# Examples are intentionally OUTSIDE the workspace (no [workspace.dependencies]
+# inheritance) so they exercise the public surface as a downstream consumer.
+# Path deps to the workspace during development; pinned crates.io versions in
+# release-mode examples.
+[dependencies]
+# pulsar-framework = "0.0.1-alpha.0"  # uncomment + adjust when target sprint ships
+
+# Workspace exclusion: this Cargo.toml is NOT listed in workspace.members.
+# Cargo treats it as a separate crate, which is what we want for examples.

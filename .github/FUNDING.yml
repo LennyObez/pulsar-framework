@@ -1,0 +1,17 @@
+# Pulsar Framework — Funding model per Decision 2.49.
+#
+# GitHub Sponsors + Open Collective baseline opens at Phase 0 namespace
+# publication (v0.0.1-alpha.0). No paid features, no pay-to-prioritise tier,
+# no advertising. Optional dual-licence commercial path opens post-GA per
+# Decision 2.49 for organisations whose procurement requires a counterparty
+# contract.
+
+github: [LennyObez]
+# open_collective: pulsar-framework  # uncomment once Open Collective fiscal host is set up
+# liberapay: pulsar-framework        # alternative if Open Collective not yet available
+# patreon:                           # not used
+# tidelift:                          # not used pre-GA
+# community_bridge:                  # not used
+# issuehunt:                         # not used
+# ko_fi:                             # not used
+# custom: ['https://pulsar-framework.com/sponsor']  # uncomment once domain provisioned
