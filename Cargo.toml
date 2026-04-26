@@ -105,10 +105,17 @@ members = [
     # ─────────────────────────────────────────────────────────────────────
     "crates/pulsar-cli",
     "crates/pulsar-test",
+
+    # ─────────────────────────────────────────────────────────────────────
+    # Workspace-local automation (cargo-xtask pattern; not published)
+    # ─────────────────────────────────────────────────────────────────────
+    "tools/xtask",
 ]
 
 # Note: the Kubernetes Operator lives in `services/operator/` in Go (Decision 2.46), not as a Rust crate.
 # Note: the admin SPA lives in `services/admin/` in native HTML5 + ES2025 + Web Components (Decision 2.8), not as a Rust crate.
+# Note: tools/xtask is in [workspace.members] so `cargo run -p xtask` works, but excluded from
+# [workspace.default-members] so `cargo build` / `cargo test` skip it.
 
 # Default members run on `cargo build` / `cargo test` without --package.
 default-members = [
@@ -179,6 +186,52 @@ documentation = "https://docs.rs/pulsar-framework"
 readme = "README.md"
 keywords = ["web", "framework", "regulated", "banking", "healthcare"]
 categories = ["web-programming::http-server", "web-programming"]
+
+# ──────────────────────────────────────────────────────────────────────────
+# Workspace-level lints (Cargo 1.74+ unified lint policy per Section XVII).
+# Per-crate `lib.rs` opts into these via `[lints] workspace = true`. Overrides
+# for crates that need exceptions (e.g. proc-macro crates) are per-crate.
+# ──────────────────────────────────────────────────────────────────────────
+[workspace.lints.rust]
+# Safety: Section XVII.23 unsafe-code policy
+unsafe_code = "forbid"
+# Documentation: Section XVII.21 every public item documented
+missing_docs = "deny"
+# Soundness: idiomatic Rust 2024 hygiene
+rust_2024_compatibility = "deny"
+unused_must_use = "deny"
+unused_lifetimes = "warn"
+unused_imports = "warn"
+unused_extern_crates = "warn"
+trivial_casts = "warn"
+trivial_numeric_casts = "warn"
+unreachable_pub = "warn"
+
+[workspace.lints.clippy]
+# Pedantic + nursery + cargo lints; project-specific allows below
+all = { level = "deny", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+nursery = { level = "warn", priority = -1 }
+cargo = { level = "warn", priority = -1 }
+# Section XVII.7 error strategy: forbid panics in library code
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+todo = "deny"
+unimplemented = "deny"
+# Section XVII.5 method naming
+get_unwrap = "deny"
+# Allow legitimate cases that pedantic flags noisily
+module_name_repetitions = "allow"
+must_use_candidate = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+multiple_crate_versions = "allow"  # see deny.toml multiple-versions = "warn" instead
+
+[workspace.lints.rustdoc]
+broken_intra_doc_links = "deny"
+private_intra_doc_links = "warn"
+missing_crate_level_docs = "deny"
 
 [workspace.dependencies]
 # ──────────────────────────────────────────────────────────────────────────
