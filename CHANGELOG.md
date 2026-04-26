@@ -7,6 +7,20 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Sprint 0.5 — Initial 8 ADRs + INDEX.md
+
+* `docs/adr/0000-template.md` — MADR-style template with Status, Context, Decision, Consequences (positive/negative/neutral), Alternatives considered, References, optional Compliance mapping. Every future ADR uses this template.
+* `docs/adr/0001-rewrite-in-rust.md` — Full rewrite of Pulsar Framework from PHP 8.5 to Rust 1.95+ (Decisions 2.1, 2.2, 2.3, 2.7).
+* `docs/adr/0002-modular-monolith-hexagonal.md` — Modular monolith with hexagonal ports-and-adapters across crate boundaries (Decisions 2.22, 2.32).
+* `docs/adr/0003-microkernel-formal-verification.md` — Formally verified microkernel for crypto, audit, session, router, middleware, DI (Decisions 2.20, 2.22, 2.3) — encodes the nine TLA+ specs + Creusot contract scope.
+* `docs/adr/0004-wasm-extension-sandbox.md` — WebAssembly extension sandbox with capability-based security (Decision 2.19) — implementation deferred to Sprint 4.1.
+* `docs/adr/0005-apache-2-0-licence.md` — Apache License, Version 2.0 with EUIPO trademark protection (Decisions 2.21, 2.50) — Madrid Protocol international extensions at GA.
+* `docs/adr/0006-crates-io-pulsar-namespace.md` — `pulsar-*` crates.io namespace with meta-crate `pulsar-framework` (Decisions 2.23, 2.24) — 53 crates enumerated with re-export discipline.
+* `docs/adr/0007-branch-model.md` — Branch model with `main` stable, `develop` integration, sprint feature branches (Decisions 2.5, 2.6) — three-tier topology with required status checks.
+* `docs/adr/0008-gitflow-sprint-branches.md` — Sprint feature branch contract `feat/sprint-N-M-topic` with squash-merge (Decisions 2.5, 2.6, 2.30) — full lifecycle, naming convention, status checks, tag policy.
+* `docs/adr/INDEX.md` — index of all ADRs plus roadmap of ~85 future ADRs aligned with plan Section V sprint sequence.
+* CI invariant: every ADR file referenced in INDEX.md must exist (ci.yml `adr-index` job enforces).
+
 ### Sprint 0.4 — CI workflows formal exit gate
 
 * All five GitHub Actions workflows (ci.yml, nightly.yml, audit.yml, benchmark.yml, publish.yml) verified syntactically valid via `python3 -c "import yaml; yaml.safe_load(...)"`.
