@@ -1,0 +1,55 @@
+# RFC 9116 — `security.txt` for the Pulsar Framework project.
+#
+# This file is the canonical machine-readable security-disclosure entry
+# point. It is mirrored at:
+#
+#   https://pulsar-framework.com/.well-known/security.txt
+#   https://github.com/LennyObez/pulsar-framework/raw/develop/.well-known/security.txt
+#
+# Reporters' tools (e.g. https://securitytxt.org parsers, OSINT scanners,
+# automated bug-bounty platforms) discover it via HTTPS GET on either URL.
+#
+# Update at every renewal cycle (see Expires below) and any time the
+# disclosure channels change. Always sign the canonical hosted copy with
+# the maintainer's PGP key (Decision 2.30) before publishing.
+
+Contact: https://github.com/LennyObez/pulsar-framework/security/advisories/new
+Contact: mailto:security@pulsar-framework.com
+Contact: https://pulsar-framework.com/security/contact
+
+# Expires per RFC 9116 § 2.5.5 — MUST be present, MUST be in ISO 8601
+# UTC, SHOULD be < 1 year out. Renewed at every minor release.
+Expires: 2027-04-25T00:00:00.000Z
+
+# Encryption per RFC 9116 § 2.5.4 — public PGP key for confidential
+# initial contact when opening a GitHub Security Advisory is not feasible
+# (e.g. for severity-coordinated multi-vendor disclosures).
+Encryption: https://pulsar-framework.com/.well-known/security-contact.asc
+
+# Acknowledgments per RFC 9116 § 2.5.1 — the Hall of Thanks where
+# coordinated reporters are credited (with their consent).
+Acknowledgments: https://pulsar-framework.com/security/acknowledgments
+
+# Preferred-Languages per RFC 9116 § 2.5.8 — coordinator is fluent
+# in English + French. Other languages handled via translation.
+Preferred-Languages: en, fr
+
+# Canonical per RFC 9116 § 2.5.2 — the authoritative location of this
+# file. Reporters can verify they are reading the maintainer's copy
+# (and not a tampered mirror) by comparing against this URL.
+Canonical: https://pulsar-framework.com/.well-known/security.txt
+Canonical: https://github.com/LennyObez/pulsar-framework/raw/develop/.well-known/security.txt
+
+# Policy per RFC 9116 § 2.5.7 — full disclosure policy + safe-harbour
+# terms + remediation timelines (Critical 14d / High 30d / Medium+Low
+# next minor release).
+Policy: https://github.com/LennyObez/pulsar-framework/blob/develop/SECURITY.md
+
+# Hiring per RFC 9116 § 2.5.6 — currently no openings (single-maintainer
+# Phase 0). Updated when contributor positions open.
+# Hiring: https://pulsar-framework.com/careers
+
+# CSAF per RFC 9116 § 2.5.3 — Common Security Advisory Framework
+# distribution endpoint, populated once we cut our first CVE-bearing
+# advisory in Phase 1+.
+# CSAF: https://pulsar-framework.com/.well-known/csaf/provider-metadata.json
