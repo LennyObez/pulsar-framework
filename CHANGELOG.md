@@ -7,6 +7,14 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Sprint 0.3 — 53 crate stubs formal exit gate
+
+* `cargo check --workspace` succeeds in 2m22s on local develop (exit 0).
+* `cargo test --workspace` runs zero tests across the 53-crate workspace and exits 0 (`running 0 tests` — `test result: ok. 0 passed; 0 failed`), matching plan spec for stub-phase verification.
+* `cargo doc --workspace --no-deps` generates 53 `index.html` files in 7m32s (exit 0); every stub crate has crate-level `//!` doc comment, `#![deny(missing_docs)]`, `#![forbid(unsafe_code)]`, and the `pub const VERSION` constant per Sprint 0.3 spec.
+* Plan Section IV introduction gains a Meta-crate convention paragraph explaining why per-crate "Dependencies" lines list pulsar-framework as the public composition surface but inner stubs do not declare it as a Cargo dep (cycle through the meta-crate's re-exports). Inner crates depend directly on the smaller set of inner crates whose types they need (most commonly pulsar-kernel); the meta-crate aggregates the surface for downstream consumption. Standard meta-crate pattern from tokio, sqlx.
+* Five v2.1 leftover references to "fifteen placeholder crates" / "fifteen crates" in Section V Phase 0 intro, Sprint 0.8, Sprint 4.6 exit criteria, Section IX.1, and Section IX.5 corrected to "fifty-three" — matching Section IV crate count and the workspace [members] list.
+
 ### Sprint 0.2 — Workspace Cargo manifests formal exit gate
 
 * Three quality-gate commands all green: `cargo check --workspace --all-targets --all-features` exit 0, `cargo deny check` reports `advisories ok, bans ok, licenses ok, sources ok`, `cargo fmt --all -- --check` exit 0 with no warning noise.

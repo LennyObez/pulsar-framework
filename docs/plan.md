@@ -447,6 +447,8 @@ An internal event bus carries typed events between modules. Events are Rust type
 
 The workspace is a single Cargo workspace with fifty-three first-party Rust crates organised by layer (post-consolidation per Section 16.14), plus two non-Rust sub-projects in `services/` (the admin SPA in native HTML5 + ES2025 + Web Components per Decision 2.8, and the Kubernetes Operator in Go per Decision 2.46). A `spec/` tree hosts TLA+ specifications, a `tools/` tree hosts workspace-local build tooling, an `examples/` tree hosts reference applications, and a `docs/` tree hosts documentation artefacts.
 
+**Meta-crate convention.** The per-crate "Dependencies" lines below describe the *public composition* surface — what types and capabilities a downstream application gets when it depends on the crate. Internally, the inner crates do **not** declare `pulsar-framework` as a Cargo dependency; doing so would create a cyclic dependency through the meta-crate's re-exports (the meta-crate re-exports the sixteen "Re-exported in meta. Yes" crates, so those crates cannot also declare it as a dep). Instead, inner crates depend directly on the smaller set of inner crates whose types they need (most commonly `pulsar-kernel` for crypto + audit + types + error patterns), and the meta-crate `pulsar-framework` aggregates the surface for downstream consumption. Application code consumes `pulsar_framework::prelude::*` rather than depending on individual inner crates. This is the standard meta-crate pattern (see e.g. `tokio`, `sqlx`).
+
 ```
 pulsar-framework/
 ├── Cargo.toml                    # workspace manifest, [workspace] table only
@@ -1500,7 +1502,7 @@ Within each phase, sprints are listed in the order they must be delivered. Sprin
 
 ### Phase 0 — Foundation
 
-Phase 0 establishes the complete workspace skeleton, the CI topology, the ADR process, the initial architecture diagrams, this master plan committed, and publishes fifteen placeholder crates at version `0.0.1-alpha.0` to reserve the `pulsar-*` namespace on crates.io. No production code lands in Phase 0; every sprint deliverable is structural.
+Phase 0 establishes the complete workspace skeleton, the CI topology, the ADR process, the initial architecture diagrams, this master plan committed, and publishes the fifty-three placeholder crates at version `0.0.1-alpha.0` to reserve the `pulsar-*` namespace on crates.io. No production code lands in Phase 0; every sprint deliverable is structural.
 
 #### Sprint 0.1 — Meta-files
 
@@ -1629,7 +1631,7 @@ Phase 0 establishes the complete workspace skeleton, the CI topology, the ADR pr
 
 #### Sprint 0.8 — Foundation tag + namespace-reservation alpha publish
 
-**Scope.** Tags `v0.0.1-alpha.0` on `develop`. Publishes fifteen placeholder crates to crates.io via the `publish.yml` workflow. Each placeholder README states explicitly: "Placeholder release for namespace reservation. The implementation ships in 0.1.0."
+**Scope.** Tags `v0.0.1-alpha.0` on `develop`. Publishes the fifty-three placeholder crates to crates.io via the `publish.yml` workflow in dependency-order (kernel first, meta-crate last). Each placeholder README states explicitly: "Placeholder release for namespace reservation. The implementation ships in 0.1.0."
 
 **Deliverables:**
 - Code: published crates.
@@ -2660,7 +2662,7 @@ Phase 4 delivers the WebAssembly extension sandbox, the CLI, the extension marke
 **Exit criteria:**
 - External audit findings at severity High or Critical: zero open.
 - `1.0.0` tagged on `main`, signed, and published.
-- All fifteen crates visible on crates.io at `1.0.0`.
+- All fifty-three crates visible on crates.io at `1.0.0`.
 - Every success metric in Section XII met.
 - All workspace quality gates from Section VI pass.
 
@@ -2827,7 +2829,7 @@ Every branch protection attaches the following required checks: `ci / fmt`, `ci 
 
 ### 9.1 Phase 0 — `0.0.1-alpha.0`
 
-Phase 0 closes with the publication of fifteen placeholder crates at `0.0.1-alpha.0` to reserve the `pulsar-*` namespace on crates.io. Each placeholder carries a README stating the version contains no production functionality. Each subsequent Phase 0 sprint bumps the patch to `0.0.1-alpha.N` to validate the publish workflow.
+Phase 0 closes with the publication of the fifty-three placeholder crates at `0.0.1-alpha.0` to reserve the `pulsar-*` namespace on crates.io. Each placeholder carries a README stating the version contains no production functionality. Each subsequent Phase 0 sprint bumps the patch to `0.0.1-alpha.N` to validate the publish workflow.
 
 ### 9.2 Phase 1 — `0.1.0` kernel stable
 
@@ -2843,7 +2845,7 @@ At the close of Phase 3, the workspace is tagged `v0.8.0`. The console, CMS, for
 
 ### 9.5 Phase 4 — `1.0.0-rc.N` and `1.0.0` GA
 
-During Phase 4, `v1.0.0-rc.1`, `v1.0.0-rc.2`, …, `v1.0.0-rc.N` tags are issued on `develop` after each audit remediation cycle. The terminal tag `v1.0.0` is issued on `main` immediately after the `develop → main` big-bang merge. All fifteen crates publish at `1.0.0` in a single atomic publish step driven by the `publish.yml` workflow.
+During Phase 4, `v1.0.0-rc.1`, `v1.0.0-rc.2`, …, `v1.0.0-rc.N` tags are issued on `develop` after each audit remediation cycle. The terminal tag `v1.0.0` is issued on `main` immediately after the `develop → main` big-bang merge. All fifty-three crates publish at `1.0.0` in a single atomic publish step driven by the `publish.yml` workflow.
 
 ### 9.6 Post-GA semver discipline
 
