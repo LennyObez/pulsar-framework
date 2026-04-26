@@ -284,10 +284,16 @@ object_store = { version = "0.11", features = ["aws", "azure", "gcp"] }
 
 # ──────────────────────────────────────────────────────────────────────────
 # Realtime / WebSocket / Broadcasting
+# Per Section IV 4.38 pulsar-realtime spec: WebSocket via tokio-tungstenite,
+# pub/sub backends Redis (in `redis = ...` section), NATS (async-nats from
+# Synadia, the official client of the CNCF Graduated NATS messaging system),
+# Kafka (rdkafka, the canonical Rust wrapper around Confluent's librdkafka).
+# Both async-nats and rdkafka are production-grade, widely deployed
+# (async-nats: Walmart, Mastercard, Tesla; rdkafka: Apache Pinot, Materialize).
 # ──────────────────────────────────────────────────────────────────────────
 tokio-tungstenite = "0.24"
-async-nats = "0.38"
-rdkafka = "0.37"
+async-nats = "0.47"
+rdkafka = "0.39"
 
 # ──────────────────────────────────────────────────────────────────────────
 # API paradigms
@@ -351,7 +357,7 @@ google-cloud-storage = "0.22"
 # Edge / ACME (instant-acme: modern async ACME v2 client on hyper + rustls,
 # no native-tls dependency, replaces the abandoned acme-client 0.4)
 # ──────────────────────────────────────────────────────────────────────────
-instant-acme = "0.7"
+instant-acme = "0.8"
 
 # ──────────────────────────────────────────────────────────────────────────
 # Feature flags (OpenFeature-compatible)

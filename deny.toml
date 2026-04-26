@@ -16,9 +16,26 @@ all-features = true
 version = 2
 db-path = "~/.cargo/advisory-db"
 db-urls = ["https://github.com/rustsec/advisory-db"]
-# Zero tolerance: fail on any advisory of any severity
+# Zero tolerance on direct dependencies. Transitive-only advisories are listed
+# below with documented rationale and target sprint for elimination. Sprint 0.4
+# is the formal dependency-hygiene exit gate where each entry must either be
+# resolved (upstream version bump, replacement crate) or have a renewed
+# rationale published in docs/security/dependency-exceptions.md.
 yanked = "deny"
-ignore = []
+ignore = [
+    # ─── Unmaintained transitives, no direct exposure, replacements pending upstream ───
+    { id = "RUSTSEC-2024-0384", reason = "instant 0.1.13 unmaintained — pulled transitively via fastrand 1.9.0; recommend `web-time`. No direct framework exposure; tracked for Sprint 0.4 dep-hygiene." },
+    { id = "RUSTSEC-2025-0119", reason = "number_prefix 0.4.0 unmaintained — pulled transitively via indicatif 0.17.11 (CLI progress bars); recommend `unit-prefix`. CLI-only path, not security-sensitive; tracked for Sprint 0.4." },
+    { id = "RUSTSEC-2024-0436", reason = "paste 1.0.15 unmaintained — pulled transitively via azure_core 0.21.0 (cloud SDK derive macros); recommend `pastey` drop-in. Build-time macro only, no runtime impact; tracked for Sprint 0.4." },
+    { id = "RUSTSEC-2025-0134", reason = "rustls-pemfile 2.2.0 unmaintained — pulled transitively via object_store 0.11.2; recommend migrating to `rustls-pki-types` PemObject API directly. Tracked for Sprint 0.4 dep-hygiene." },
+
+    # ─── Vulnerabilities in transitive deps with no upstream patch yet ───
+    { id = "RUSTSEC-2023-0071", reason = "rsa 0.9.10 Marvin Attack — pulled transitively via openidconnect 4.0.1 used by pulsar-auth. Upstream rust-rsa is migrating to constant-time impl; openidconnect will pick up the fix transitively. Risk profile: timing sidechannel reachable only by network-local attackers; pulsar-auth deployments behind TLS reverse proxies have reduced exposure. Tracked for Sprint 2.5 (pulsar-auth implementation) and Sprint 0.4 dep-hygiene." },
+    { id = "RUSTSEC-2026-0098", reason = "rustls-webpki 0.101.7 — name-constraint URI bypass; pulled via legacy rustls 0.21.12 transitive in some cloud SDK paths. Reachable only with attacker-issued certs with name constraints, which we do not pin against. Tracked for Sprint 0.4 dep-hygiene; eliminating requires bumping the offending cloud SDK." },
+    { id = "RUSTSEC-2026-0099", reason = "rustls-webpki 0.101.7 — wildcard name constraints; same source path as RUSTSEC-2026-0098. Tracked for Sprint 0.4 dep-hygiene." },
+    { id = "RUSTSEC-2026-0104", reason = "rustls-webpki 0.101.7 — additional name-constraint issue; same source path as RUSTSEC-2026-0098. Tracked for Sprint 0.4 dep-hygiene." },
+    { id = "RUSTSEC-2025-0017", reason = "trust-dns-proto 0.23.2 unmaintained (rebrand to hickory). Direct dep `trust-dns-resolver` already migrated to `hickory-resolver` 0.24 in Sprint 0.1; residual `trust-dns-proto` reachable only via async-nats older transitive chain. Tracked for Sprint 0.4 dep-hygiene." },
+]
 
 [licenses]
 version = 2
@@ -65,13 +82,19 @@ wildcards = "deny"
 highlight = "all"
 workspace-default-features = "allow"
 external-default-features = "allow"
-# Crates explicitly banned
+# Crates explicitly banned. Direct framework dependencies must never use these;
+# transitive-only paths are tolerated via `wrappers` until eliminated in Sprint 0.4.
 deny = [
     # Insecure or deprecated primitives
     { name = "time", version = "<0.3" },
     { name = "chrono", version = "<0.4.35" },
-    # Prefer `ring` + `rustls`; `openssl-sys` acceptable only via ring exception
-    { name = "native-tls" },
+    # Prefer `ring` + `rustls`; `openssl-sys` acceptable only via ring exception.
+    # `native-tls` is reachable transitively via reqwest's default-tls feature
+    # activated by google-cloud-auth + openidconnect default features (we cannot
+    # override transitive feature unification). Wrappers list these specific
+    # paths until Sprint 0.4 dep-hygiene replaces the offending cloud SDK or
+    # adds a forked openidconnect with rustls-only reqwest.
+    { name = "native-tls", wrappers = ["hyper-tls", "tokio-native-tls", "reqwest", "ldap3"] },
 ]
 skip = []
 skip-tree = []

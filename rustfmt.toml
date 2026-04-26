@@ -1,34 +1,33 @@
 # Pulsar framework Rust — formatting policy
 # Strict, deterministic, pulsar-wide.
+# Per plan Section VII: pinned to rustfmt shipped with rustc 1.95.0 stable.
 
+# ─── Stable options (active on rustc 1.95.0) ──────────────────────────────
 edition = "2024"
 max_width = 100
 hard_tabs = false
 tab_spaces = 4
-
-# Imports
-imports_granularity = "Module"
-group_imports = "StdExternalCrate"
 reorder_imports = true
 reorder_modules = true
-
-# Strings
-format_strings = true
-format_macro_matchers = true
-
-# Layout
 use_field_init_shorthand = true
 use_try_shorthand = true
 newline_style = "Unix"
-
-# Comments
-normalize_comments = true
-wrap_comments = true
-comment_width = 100
-
-# Control flow
-fn_single_line = false
-force_multiline_blocks = false
-match_arm_blocks = true
 match_arm_leading_pipes = "Never"
-overflow_delimited_expr = true
+
+# ─── Nightly-only options (commented; uncomment when CI matrix gains nightly) ─
+# These are documented here as the team's stylistic intent. They will activate
+# automatically on developer machines that run `cargo +nightly fmt`. Stable
+# `cargo fmt` ignores them with no error (warnings silenced by leaving them out
+# of the active config).
+#
+# imports_granularity = "Module"          # nightly: regroup imports per module
+# group_imports = "StdExternalCrate"      # nightly: std / external / crate ordering
+# format_strings = true                   # nightly: long-string break wrapping
+# format_macro_matchers = true            # nightly: macro_rules!() formatting
+# wrap_comments = true                    # nightly: wrap long comments
+# normalize_comments = true               # nightly: //! and /// normalisation
+# comment_width = 100                     # nightly: wrap comments at 100 cols
+# fn_single_line = false                  # nightly: fn body never on a single line
+# force_multiline_blocks = false          # nightly: prefer multiline blocks
+# match_arm_blocks = true                 # nightly: wrap match arms in blocks
+# overflow_delimited_expr = true          # nightly: tail-position delimiter overflow

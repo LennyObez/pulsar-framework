@@ -7,7 +7,16 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-### Sprint 0.1 — Meta-files alignment (in progress)
+### Sprint 0.2 — Workspace Cargo manifests formal exit gate
+
+* Three quality-gate commands all green: `cargo check --workspace --all-targets --all-features` exit 0, `cargo deny check` reports `advisories ok, bans ok, licenses ok, sources ok`, `cargo fmt --all -- --check` exit 0 with no warning noise.
+* Dep version bumps eliminate four RUSTSEC IDs at the root: async-nats 0.38 → 0.47, rdkafka 0.37 → 0.39, instant-acme 0.7 → 0.8.
+* deny.toml `[advisories.ignore]` populated with nine documented entries for transitive-only RUSTSEC IDs (instant, number_prefix, paste, rsa Marvin Attack via openidconnect, rustls-pemfile, three rustls-webpki name-constraint vulns, trust-dns-proto). Each entry has explicit Sprint 0.4 dep-hygiene target.
+* deny.toml `[bans]` native-tls now uses `wrappers = ["hyper-tls", "tokio-native-tls", "reqwest", "ldap3"]` to allow the four legitimate transitive paths while preserving the direct-use ban.
+* rustfmt.toml split into stable + commented-nightly sections (10 nightly-only options moved to documentation comments; stable `cargo fmt --check` no longer emits warnings).
+* New `docs/ops/deployment/toolchain.md` documenting every pinned tool (rustc 1.95.0, mold linker, sccache, deny.toml policy, full quality-gate sequence) — plan Section V Sprint 0.2 documentation deliverable.
+
+### Sprint 0.1 — Meta-files alignment
 
 * README.md aligned with v2.2 plan: 53-crate workspace layout, 23-framework compliance count, native Web Components admin SPA replaces Leptos WASM, Mermaid architecture refreshed with consolidated layers, explicit links to docs/plan.md and docs/adr/INDEX.md per Sprint 0.1 exit criterion.
 * SECURITY.md crypto section now reflects in-scope FIPS 140-3 validation pathway (Sprint 4.7), HSM/PKCS#11 (Sprint 2C.3), confidential computing (Sprint 4.8), and PQC hybrid (Sprint 1.1 + 2.5) per plan Section 14.

@@ -1250,7 +1250,7 @@ The Kubernetes Operator lives outside the Cargo workspace under `services/operat
 
 **Key types.** `WebSocketServer`, `MessageHandler`, `FrameSink`, `Channel`, `InboundDispatcher`, `WsRoute`, `SseStream`, `SseEvent`, `LastEventId`, `WebTransportSession`, `Datagram`, `Broadcaster`, `PresenceChannel`, `PrivateChannel`, `AuthHook`. One top-level `RealtimeMiddleware` composes the subset configured for a given pipeline.
 
-**Dependencies.** `pulsar-framework`, `pulsar-http`, `pulsar-kernel`, `tokio-tungstenite = "0.24"`, `async-nats = "0.38"`, `redis = "0.27"`, `rdkafka = "0.37"` (optional via feature `kafka`), `thiserror`.
+**Dependencies.** `pulsar-framework`, `pulsar-http`, `pulsar-kernel`, `tokio-tungstenite = "0.24"`, `async-nats = "0.47"` (Synadia official NATS client, Apache-2.0, CNCF Graduated messaging — Walmart, Mastercard, Tesla in production), `redis = "0.27"`, `rdkafka = "0.39"` (Federico Giraud wrapper around Confluent's `librdkafka`, MIT — Apache Pinot, Materialize in production; optional via feature `kafka`), `thiserror`.
 
 **Re-exported in meta.** No.
 
