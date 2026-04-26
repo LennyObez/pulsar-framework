@@ -3577,6 +3577,15 @@ W3C Verifiable Credentials Data Model v2.0; W3C Decentralized Identifiers Core v
 **16.1.4 FIDO attestation chain + passkey sync UX** (folds into Sprint 2.5).
 Device attestation verification against the FIDO Metadata Service, passkey cross-device synchronisation UX (iCloud Keychain, Google Password Manager, 1Password), autofill priming, conditional mediation.
 
+**16.1.5 eIDAS 2 EUDI Wallet integration** (folds into Sprint 2C `pulsar-identity-standards` and Sprint 2.5 `pulsar-auth`).
+End-to-end interoperability with the European Digital Identity Wallet (EUDI Wallet) per Regulation (EU) 2024/1183 (eIDAS 2): Architecture Reference Framework (ARF) compliant attribute attestation; Wallet-Initiated and Cross-Device authentication flows (OpenID4VP for verifiable presentations, OpenID4VCI for verifiable credential issuance); SD-JWT VC and ISO/IEC 18013-5 mDOC credential formats; LSP (Large Scale Pilot) interoperability profiles; Status List 2021 revocation; PID (Person Identification Data) handling with explicit-consent gating via `pulsar-consent`. Required for any Pulsar deployment that authenticates EU citizens against government, banking, or healthcare services post-2026 EUDI mandate. Acceptance: deployment passes the eIDAS 2 LSP conformance suite; PID requests trigger consent ledger entries; revocation propagation under one minute end-to-end.
+
+**16.1.6 FAPI 2.0 Open Banking conformance** (folds into Sprint 2.5 `pulsar-auth` and Sprint 2.6 `pulsar-compliance`).
+OpenID Foundation Financial-grade API (FAPI) 2.0 Security Profile compliance for Open Banking deployments: PAR (Pushed Authorisation Requests), DPoP (Demonstrating Proof-of-Possession) sender-constrained tokens, JAR (JWT-Secured Authorisation Requests), JARM (JWT-Secured Authorisation Response Mode), mTLS-bound client authentication, certificate-bound access tokens, RAR (Rich Authorisation Requests) for fine-grained scope, asymmetric DPoP keys per session. Aligned with UK Open Banking, Berlin Group NextGenPSD2, STET PSD2, FDX (Financial Data Exchange in the US), and Australia CDR profile. Acceptance: passes the OIDF FAPI 2.0 conformance suite for advanced security profile; reference deployment integrates with at least three production-grade Open Banking sandboxes (UK, Berlin Group, FDX).
+
+**16.1.7 PSD2 Strong Customer Authentication (SCA) flows** (folds into Sprint 2.5 `pulsar-auth` and Sprint 2.6 `pulsar-compliance`).
+Explicit PSD2 SCA flow primitives per RTS Article 4 and EBA Guidelines: two-of-three factor enforcement (knowledge, possession, inherence), dynamic linking of payee + amount via secure-element transaction signing, transaction risk analysis (TRA) exemption thresholds with audit trail, low-value exemption (≤ €30 / €100 cumulative), trusted-beneficiary exemption with explicit registration ceremony, secure communication channel via QSEAL/QWAC eIDAS-compliant certificates. Decoupled, decoupled-app, and embedded SCA UX patterns. Acceptance: SCA flow passes EBA Q&A reference scenarios; dynamic-linking signature validation rejects 100 % of payee-tampered authorisation requests across adversarial corpus; TRA exemption decisions are auditable in `pulsar-audit`.
+
 ### 16.2 Audit, Trust, Integrity
 
 **16.2.1 Interoperable signature formats** (folds into Sprint 1.2).
@@ -3678,6 +3687,12 @@ Retrieval-quality metrics (recall@k, MRR, NDCG), retrieval-trace audit in `pulsa
 **16.8.5 Batch inference pipeline** (folds into Sprint 3C.1 + Sprint 2B.4 queue integration).
 Batch embedding generation, off-line report generation, scheduled batch jobs via `pulsar-scheduler`, cost-tracking aggregation.
 
+**16.8.6 NIST AI Risk Management Framework integration** (folds into Sprint 3C.3 `pulsar-ai-governance`).
+First-class implementation of NIST AI RMF 1.0 (NIST.AI.100-1) four-function structure: **Govern** (organisational AI governance — policies, roles, accountability), **Map** (context, AI capabilities, intended uses, third-party data and components), **Measure** (analyse, assess, benchmark, monitor — bias, robustness, security, privacy metrics), **Manage** (allocate resources, document risk responses, communicate). Each function exposes a typed `NistAiRmfMapping` API consumed by `pulsar-ai-governance` to emit a structured risk register per model, audited via `pulsar-audit`. NIST AI RMF profile categories (Generative AI Profile, AI 600-1) baked in as first-class taxonomy entries. Acceptance: every model registered in `pulsar-ai-governance::ModelRegistry` carries a complete RMF mapping covering all four functions; risk register exportable as JSON-LD per NIST RMF Profile schema; cross-walk to ISO 42001:2023 controls auto-generated.
+
+**16.8.7 OWASP LLM Top 10 alignment** (folds into Sprint 3C.3 `pulsar-ai-governance`).
+Runtime controls for the 2025 OWASP Top 10 for LLM Applications: **LLM01 Prompt Injection** (structured-I/O schema enforcement, system-prompt isolation, instruction-injection detector), **LLM02 Sensitive Information Disclosure** (PII redactor + DLP rules), **LLM03 Supply Chain** (model-card provenance via `pulsar-audit`, signed model artefacts), **LLM04 Data and Model Poisoning** (training-data integrity hashing, drift detector), **LLM05 Improper Output Handling** (sanitiser middleware before downstream sinks), **LLM06 Excessive Agency** (capability-scoped tool execution via `pulsar-authz`), **LLM07 System Prompt Leakage** (prompt redaction in logs and audit), **LLM08 Vector and Embedding Weaknesses** (hybrid retrieval + re-ranker re-validation in `pulsar-vector-search`), **LLM09 Misinformation** (retrieval-grounding scorer, hallucination flagger), **LLM10 Unbounded Consumption** (cost ceiling + token budget per session, request rate-limit via `pulsar-guard::ratelimit`). Acceptance: each LLM01–LLM10 control passes its dedicated adversarial test suite; the `OwaspLlmTopTenCheck` API returns a per-application conformance report.
+
 ### 16.9 Compliance runtime automation
 
 **16.9.1 DORA ICT incident reporting workflow** (folds into Sprint 2.6 and Sprint 2C).
@@ -3714,6 +3729,9 @@ Ansible roles for bare-metal and VM deployments.
 
 **16.10.5 Container image signing + supply-chain attestation** (folds into 14.6 SLSA 4).
 Every container image is signed via Cosign; in-toto attestations generated; Rekor transparency log publication.
+
+**16.10.6 Cross-platform binary distribution** (folds into Sprint 4.2 `pulsar-cli` + Sprint 4.6 release).
+Reproducible cross-platform binary distribution for `pulsar-cli` plus the `pulsar serve` runtime artefact: target matrix `x86_64-unknown-linux-gnu` (glibc), `x86_64-unknown-linux-musl` (static, Alpine-friendly, container-distroless), `aarch64-unknown-linux-gnu`, `aarch64-unknown-linux-musl`, `x86_64-apple-darwin`, `aarch64-apple-darwin`, `x86_64-pc-windows-msvc`, `x86_64-unknown-freebsd`. Built via the `publish.yml` workflow with `cross` (per-target Docker image) plus reproducible-build determinism enforced (R-020). Distribution channels: GitHub Releases (signed tarballs + Cosign signatures + Rekor log entries), Homebrew tap `lennyobez/pulsar` for macOS and Linux, Scoop bucket for Windows, `apt` repository (pulsar-framework.com/apt for Debian/Ubuntu), `dnf` repository (pulsar-framework.com/dnf for Fedora/RHEL/Rocky/Alma), and a one-line install script (`curl ... | sh`) that verifies Cosign signatures before installation. SBOM (CycloneDX) attached to every release artefact per 14.6. Acceptance: every supported target platform installs, runs `pulsar-cli --version`, and passes the smoke-test scenario; Homebrew, Scoop, apt, dnf channels each ship the same versioned artefact within thirty minutes of GitHub Release publication; reproducible build verifier produces matching digests across two independent CI runners.
 
 ### 16.11 Developer Experience / Tooling
 
@@ -3755,6 +3773,16 @@ Lint rule forbidding `bincode::deserialize`, `rmp_serde::from_slice`, `ciborium:
 **16.12.7 Typosquatting detection** (folds into Sprint 0.4 CI).
 Proc-macro input paths validated against typosquatting lists; warning on proc-macro invocation with unusual crate names.
 
+**16.12.8 OpenSSF Scorecard + Best Practices Badge gold tier** (folds into Sprint 0.4 CI `audit.yml` + Sprint 4.5 docs).
+Continuous OpenSSF Scorecard evaluation via the `ossf/scorecard-action` (uploaded as SARIF to GitHub Security tab and to the Scorecard public dashboard) targeting **score ≥ 9.0 / 10** at GA. Concrete checks already passing by construction or planned: Branch-Protection (Section 8.4 protected `main` and `develop`), Code-Review (Section 8.2 `/review` skill), Maintained, License (Apache-2.0 in `LICENSE`), Pinned-Dependencies (Cargo workspace pins + cargo-deny), SAST (clippy + Semgrep), Signed-Releases (Sigstore + GPG-signed tags per Decision 2.30), Vulnerabilities (cargo-audit + OSV-Scanner zero open), Token-Permissions (workflow-scoped `permissions:` blocks), Webhooks (none external), Dependency-Update-Tool (Dependabot enabled), Fuzzing (cargo-fuzz parsers per Sprint quality gates), CII-Best-Practices (badge gold tier — see below), CI-Tests (every push runs `ci.yml`). Parallel pursuit of the **OpenSSF Best Practices Badge gold tier** (formerly CII Best Practices): meet the 100 % criteria of the gold profile (passing + silver + gold), publish the badge in `README.md`. Acceptance: Scorecard ≥ 9.0 sustained for 30 days before GA; Best Practices Badge gold tier issued and publicly verifiable.
+
+**16.12.9 CIS Benchmarks + STIG (DISA) compliance alignment** (folds into Sprint 2.6 `pulsar-compliance` + Sprint 4.5 docs).
+Hardening guidance and runtime checks aligned with two operator-facing compliance baselines:
+- **CIS Benchmarks** — alignment with CIS Distribution Independent Linux Benchmark, CIS Docker Benchmark, CIS Kubernetes Benchmark, CIS PostgreSQL 16 Benchmark, and CIS NGINX Benchmark for the Pulsar reference deployment topology. The `pulsar-compliance::CisProfile` API exposes a typed mapping between Pulsar configuration parameters and CIS controls; `pulsar-cli doctor cis` runs an automated benchmark scan and emits a CIS-CSAT-compatible report. Reference Helm charts + Terraform modules pre-configured to default-pass every CIS Level 1 control and pre-document Level 2 deviations.
+- **STIG (DISA Security Technical Implementation Guides)** — alignment with the DISA Application Security and Development STIG, RHEL 9 STIG (or Ubuntu STIG when available), and Container Platform STIG. The `pulsar-compliance::StigProfile` API mirrors the CIS surface for STIG controls. Required for US Federal, DoD, and FedRAMP High deployments. SCAP (Security Content Automation Protocol) content emitted as XCCDF + OVAL bundles; reproducible against `oscap` (OpenSCAP) scanner.
+
+Acceptance: CIS Level 1 100 % pass on the reference Helm chart deployment; STIG Cat I (severity high) controls 100 % addressed; SCAP bundles validated by `oscap xccdf eval`; documentation in `docs/compliance/cis/` and `docs/compliance/stig/` cross-walked to the matrix in Section 4.8.
+
 ### 16.13 Removals from v2 scope
 
 The following v2 items are removed or deferred to align with cohesive framework-core scope:
@@ -3781,32 +3809,41 @@ To reduce cross-crate friction without sacrificing architectural clarity, four c
 
 Regulatory reporting automation (DORA, NIS2, EU AI Act human oversight, EU Data Act, MiCA, HIPAA BAA, PCI-DSS tokenisation, FINRA, FFIEC) folds into `pulsar-compliance` (Section 4.8 extended scope).
 
-Post-consolidation workspace crate count: **fifty-four crates**.
+Post-consolidation workspace crate count: **fifty-three first-party Rust crates** (Section IV crate specs 4.1 through 4.53), plus the polyglot sub-projects `services/admin/` (native Web Components SPA) and `services/operator/` (Go kubebuilder Kubernetes Operator) outside the Cargo workspace.
 
 ### 16.15 Summary matrix — Section XVI items
 
 | Item | Area | Phase | Folded into / new crate |
 |------|------|-------|--------------------------|
 | 16.1.1 | Enterprise SSO (SAML/LDAP/Kerberos) | 2A | Sprint 2.5 |
-| 16.1.2 | ReBAC `pulsar-authz` | 2A | New sub-crate under 2.6 |
-| 16.1.3 | Verifiable Credentials + DIDs | 2C | New `pulsar-identity-standards` |
+| 16.1.2 | ReBAC `pulsar-authz` | 2A | New `pulsar-authz` (4.28), Sprint 2.6 |
+| 16.1.3 | Verifiable Credentials + DIDs | 2C | New `pulsar-identity-standards` (4.29) |
 | 16.1.4 | FIDO attestation + passkey UX | 2A | Sprint 2.5 |
+| 16.1.5 | eIDAS 2 EUDI Wallet integration | 2A + 2C | Sprint 2.5 + `pulsar-identity-standards` |
+| 16.1.6 | FAPI 2.0 Open Banking conformance | 2A | Sprint 2.5 + Sprint 2.6 |
+| 16.1.7 | PSD2 Strong Customer Authentication | 2A | Sprint 2.5 + Sprint 2.6 |
 | 16.2.1 | JWS + COSE signatures | 1 | Sprint 1.2 |
 | 16.2.2 | Merkle transparency log | 1 + 4 | Sprint 1.2 + 4.6 |
 | 16.2.3 | WORM export | 2A | Sprint 2.4 |
-| 16.3.1 | WebTransport | 3B | `pulsar-realtime` |
-| 16.3.2 | Server-Sent Events | 2A | Sprint 2.1 |
+| 16.3.1 | WebTransport | 3B | `pulsar-realtime::webtransport` |
+| 16.3.2 | Server-Sent Events | 3B | `pulsar-realtime::sse` |
 | 16.3.3 | AsyncAPI | 3B | Sprint 3B.1 |
 | 16.3.4 | OData v4.01 | 3B | Sprint 3B.1 feature flag |
 | 16.4.1–5 | ORM modernisation | 2A | Sprint 2.3 |
 | 16.5.1–5 | Observability state-of-art | 2A | Sprint 2.7 |
 | 16.6.1–3 | Runtime performance | 2A | Across Phase 2A + 2B |
 | 16.7.1–4 | Frontend / a11y / i18n depth | 3A + 3D | Across Phase 3A + 3D |
-| 16.8.1–5 | AI beyond providers | 3C | Sprints 3C.1–3 + new 3C.4 |
-| 16.9.1–6 | Compliance runtime automation | 2C | `pulsar-regtech` |
-| 16.10.1–5 | Operations / deployment | 3E + 4 | `pulsar-operator` + docs |
+| 16.8.1 | Agentic framework | 3C | New `pulsar-ai-agents` (4.42), Sprint 3C.4 |
+| 16.8.2–5 | Fine-tuning + Guardrails + RAG observability + Batch | 3C | Sprints 3C.1–3 |
+| 16.8.6 | NIST AI Risk Management Framework | 3C | Sprint 3C.3 |
+| 16.8.7 | OWASP LLM Top 10 alignment | 3C | Sprint 3C.3 |
+| 16.9.1–6 | Compliance runtime automation | 2A + 2C | `pulsar-compliance` (folded per 2.45) |
+| 16.10.1–5 | Operations / deployment | 3E + 4 | `services/operator/` (Go) + Helm + Terraform + Ansible |
+| 16.10.6 | Cross-platform binary distribution + packaging | 4 | Sprint 4.2 + Sprint 4.6 |
 | 16.11.1–5 | Developer experience | 3D + 4 | Across |
 | 16.12.1–7 | Security beyond Phase 1.5 | 1.5 + 0.4 CI | `pulsar-guard` |
+| 16.12.8 | OpenSSF Scorecard + Best Practices Badge gold | 0 + 4 | `audit.yml` + Sprint 4.5 |
+| 16.12.9 | CIS Benchmarks + STIG (DISA) | 2A + 4 | `pulsar-compliance` + Sprint 4.5 |
 
 ---
 
