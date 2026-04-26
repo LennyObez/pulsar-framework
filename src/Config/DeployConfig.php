@@ -129,7 +129,23 @@ readonly class DeployConfig
         $result = [];
         $isProduction = $environment->resolveMode() === EnvironmentMode::Production;
 
-        foreach ($defaults as $name => $defaultConfig) {
+        // F26.5: walk the union of default check names AND user-defined
+        // names so an extension that registers its own deploy check
+        // (e.g. `payments-webhook-secret`, custom org gate) can declare
+        // its severity via `config/deploy.php` instead of being silently
+        // dropped because the framework's DEFAULT_CHECKS list does not
+        // know about it. The check itself still has to be registered
+        // through `DeployCheckRegistry`; this method only carries the
+        // configuration.
+        $names = array_keys($defaults);
+        foreach (array_keys($rawChecks) as $userName) {
+            if (is_string($userName) && !in_array($userName, $names, true)) {
+                $names[] = $userName;
+            }
+        }
+
+        foreach ($names as $name) {
+            $defaultConfig = $defaults[$name] ?? ['enabled' => true, 'severity' => 'warn'];
             $config = $defaultConfig;
 
             if (isset($rawChecks[$name]) && is_array($rawChecks[$name])) {
