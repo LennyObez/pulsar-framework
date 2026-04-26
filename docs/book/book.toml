@@ -1,0 +1,97 @@
+# mdBook configuration for Pulsar Framework — the "Pulsar Book".
+#
+# Sprint 4.5 will land the prose; this scaffold lands at Phase 0 so the
+# build pipeline + deployment to GitHub Pages + dead-link checking are
+# wired before the first chapter exists. Every PR runs `mdbook build`
+# and `mdbook test` so doc-tests in the book stay compileable.
+
+[book]
+title       = "The Pulsar Book"
+authors     = ["Pulsar Framework contributors"]
+description = "The official narrative documentation for the Pulsar Framework — concepts, guides, recipes, and reference material complementing rustdoc."
+language    = "en"
+multilingual = false
+src         = "src"
+
+[rust]
+edition = "2024"
+
+[build]
+build-dir            = "../book-output"
+# Phase 0 posture: chapters land progressively across Sprints 1.x — 4.5.
+# `create-missing = true` lets mdbook auto-create empty stubs for the
+# SUMMARY.md placeholders so the book builds end-to-end before all
+# chapters exist. Will flip to `false` at Sprint 4.5 sprint-exit.
+create-missing       = true
+extra-watch-dirs     = []
+use-default-preprocessors = true
+
+[output.html]
+default-theme        = "rust"
+preferred-dark-theme = "navy"
+git-repository-url   = "https://github.com/LennyObez/pulsar-framework"
+git-repository-icon  = "fa-github"
+edit-url-template    = "https://github.com/LennyObez/pulsar-framework/edit/develop/docs/book/{path}"
+no-section-label     = false
+mathjax-support      = true
+copy-fonts           = true
+additional-css       = []
+additional-js        = []
+hash-files           = true
+input-404            = "404.md"
+site-url             = "/pulsar-framework/"
+
+[output.html.print]
+enable     = true
+page-break = true
+
+[output.html.fold]
+enable = true
+level  = 1
+
+[output.html.search]
+enable                = true
+limit-results         = 30
+teaser-word-count     = 30
+use-boolean-and       = true
+boost-title           = 2
+boost-hierarchy       = 1
+boost-paragraph       = 1
+expand                = true
+heading-split-level   = 3
+
+[output.html.playground]
+editable    = false
+copyable    = true
+copy-js     = true
+line-numbers = false
+runnable    = false  # mdBook playground proxies to play.rust-lang.org;
+                    # we keep examples local-only because some examples
+                    # use unstable APIs that play.rust-lang.org cannot resolve.
+
+# mdbook-linkcheck — fails the build on broken external links (run in CI).
+[output.linkcheck]
+optional         = false
+follow-web-links = true
+warning-policy   = "error"
+exclude          = []
+cache-timeout    = 86400
+http-headers     = ["pulsar-framework.com: User-Agent: mdbook-linkcheck"]
+
+# mdbook-toc — auto-generates a per-page table of contents.
+[preprocessor.toc]
+command = "mdbook-toc"
+renderer = ["html"]
+
+# mdbook-mermaid — inline Mermaid diagrams.
+[preprocessor.mermaid]
+command = "mdbook-mermaid"
+
+# mdbook-admonish — callout boxes (note / warning / danger / tip).
+[preprocessor.admonish]
+command = "mdbook-admonish"
+assets_version = "3.0.0"
+
+# Deny warnings in CI to keep prose discipline.
+[output.html.code]
+hidelines = { rust = "## " }
