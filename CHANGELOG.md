@@ -7,6 +7,18 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Sprint 0.8 — v0.0.1-alpha.0 namespace-reservation publish (deferred to push)
+
+* All 53 crate `README.md` files standardised to the spec wording: "**Status:** Placeholder release for namespace reservation. The implementation ships in 0.1.0. See [`docs/plan.md`](../../docs/plan.md) Section IV for the per-crate spec and Section V for the implementing sprint."
+* Annotated GPG-signed tag `v0.0.1-alpha.0` created locally on `develop` (HEAD) — annotated per plan Section VIII.3 tag-naming convention; signed with the maintainer's Ed25519 key per Decision 2.30.
+* **Push + crates.io publish deferred to explicit user authorisation** per CLAUDE.md operator-manual rule "Never push unless the user explicitly requests it." Once the user authorises, the publish flow is:
+  1. `git push origin develop` — push the develop branch to the GitHub remote.
+  2. `git push origin v0.0.1-alpha.0` — push the annotated tag, which triggers `.github/workflows/publish.yml`.
+  3. The `publish.yml` Trusted Publisher OIDC step authenticates against crates.io (requires the repo's `crates-io` environment to be configured with OIDC trust on crates.io — a one-time setup).
+  4. The dependency-ordered publish step iterates the 53-crate `ORDER` array and runs `cargo publish --package <crate> --no-verify` for each, ending with `pulsar-framework` (meta-crate).
+  5. The `github-release` job extracts release notes from `CHANGELOG.md` and creates a GitHub Release with `prerelease: true` (because the tag contains `-`).
+* Phase 0 closure tag — Phase 1 (kernel) starts on the next commit on `develop`.
+
 ### Sprint 0.7 — Plan committed + trademark policy
 
 * `docs/plan.md` v2.2 already committed (throughout Phase 1-11 reconciliation + Sprint 0.1-0.6 refinements); the master plan is the authoritative reference for every Phase 0 decision.

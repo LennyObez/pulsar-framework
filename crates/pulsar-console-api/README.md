@@ -2,7 +2,7 @@
 
 Server-side admin API and static-asset server for services/admin SPA.
 
-**Status:** placeholder for namespace reservation. See [`docs/plan.md`](../../docs/plan.md) for the implementation sprint and exit criteria.
+**Status:** Placeholder release for namespace reservation. The implementation ships in 0.1.0. See [`docs/plan.md`](../../docs/plan.md) Section IV for the per-crate spec and Section V for the implementing sprint.
 
 ## Licence
 
