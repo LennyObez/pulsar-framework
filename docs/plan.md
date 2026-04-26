@@ -33,7 +33,7 @@ The rewrite is cadenced by exit criteria and quality gates rather than by calend
 
 The merge strategy is big-bang: the full rewrite develops on the `develop` branch across every sprint of every phase; the PHP codebase receives the terminal tag `v0.99.0-php-final` and is frozen; on completion of Phase 4 the single `develop → main` pull request undergoes `/ultrareview` and becomes the new `main` head. No partial integration and no hybrid operation is planned: the PHP tree is preserved for historical auditability but receives no further maintenance, no bug fixes, and no security patches beyond the freeze tag. The same GitHub repository URL, `LennyObez/pulsar-framework`, hosts both histories.
 
-The quantitative success metrics for 1.0.0 GA are: one hundred percent line, branch, and condition coverage on kernel, security, and compliance crates; at least ninety-five percent line/branch coverage across every other crate; mutation-testing score of at least ninety-five percent per `cargo-mutants`; ten million fuzzing iterations with zero crashes per parser with `cargo-fuzz`; a minimum of sixty property-based tests on value objects; at least twenty named chaos-engineering scenarios; nine TLA+ specifications covering crypto, router, session, audit, middleware, OAuth2, saga, workflow, and WebSocket inbound dispatcher; at least eighty percent Creusot contract coverage across kernel functions; zero `cargo-audit` findings at any severity; median hello-world latency under 100 microseconds; 99th-percentile HTTP latency under one millisecond; 99.99th-percentile tail latency under five milliseconds; per-request peak memory below one megabyte; idle process memory below fifty megabytes; sustained load-test throughput of one thousand requests per second over one hour; stripped release binary below fifty megabytes; at least sixty Architecture Decision Records; complete mdBook coverage across Getting Started, Concepts, Guide, Cookbook, and API Reference chapters; at least twenty Grafana dashboards and alerting rules committed to `docs/observability/`; compliance mappings for sixteen nominal frameworks (eighteen enumerated, as detailed in Section V); **all fifty-plus first-party crates covering strict PHP parity per Section XV plus state-of-art extensions per Section XIV**; and at least three of the seven downstream Obez-network projects migrated to the Rust edition before GA.
+The quantitative success metrics for 1.0.0 GA are: one hundred percent line, branch, and condition coverage on kernel, security, and compliance crates; at least ninety-five percent line/branch coverage across every other crate; mutation-testing score of at least ninety-five percent per `cargo-mutants`; ten million fuzzing iterations with zero crashes per parser with `cargo-fuzz`; a minimum of sixty property-based tests on value objects; at least twenty named chaos-engineering scenarios; nine TLA+ specifications covering crypto, router, session, audit, middleware, OAuth 2.1 with PKCE, SAML SSO, websocket inbound dispatch, and orchestration (workflow + saga); at least eighty percent Creusot contract coverage across kernel functions; zero `cargo-audit` findings at any severity; median hello-world latency under 100 microseconds; 99th-percentile HTTP latency under one millisecond; 99.99th-percentile tail latency under five milliseconds; per-request peak memory below one megabyte; idle process memory below fifty megabytes; sustained load-test throughput of one thousand requests per second over one hour; stripped release binary below fifty megabytes; at least sixty Architecture Decision Records; complete mdBook coverage across Getting Started, Concepts, Guide, Cookbook, and API Reference chapters; at least twenty Grafana dashboards and alerting rules committed to `docs/observability/`; compliance mappings for twenty-three frameworks (twenty-two mandatory plus MiCA opt-in for crypto-asset deployments); **exactly fifty-three first-party Rust crates covering strict PHP parity per Section XV plus state-of-art extensions per Section XIV and Section XVI**; and at least three of the seven downstream Obez-network projects migrated to the Rust edition before GA.
 
 ---
 
@@ -171,7 +171,7 @@ Every sixty `src/` module and every thirty-one first-party extension of the PHP 
 
 ### 2.32 Extended crate catalogue — 50+ crates
 
-The workspace hosts approximately fifty first-party crates, grouped in seven layers: kernel (1), core foundation (8), security controls (5), application infrastructure (14), data protection (2), application extensions (4), API paradigms (6), AI surface (3), reactive and developer experience (2), domain extensions (8), infrastructure adapters (5). Rationale: strict PHP parity requires migrating thirty-plus horizontal subsystems (mail, queue, scheduler, cache, config, storage, form, webhook, idempotency, notification, pagination, feature flag, i18n, tenancy, dataprotection, consent, workflow, saga, websocket, broadcasting, api, graphql, grpc, mcp-server, ai, ai-governance, vector-search, live, studio, accessibility, analytics, cloud, edge, supervisor, service-discovery, deploy, tickets, feedback, booking, devices, releases, importexport, resilience, csrf, sri, incident, ratelimit) that the v1 plan omitted. Alternatives considered: three meta-crates aggregating per layer (rejected: coarsens version boundaries and couples unrelated subsystems); monolithic `pulsar` crate (rejected: catastrophic compile-time cost, forced feature-flag explosion).
+The workspace hosts **exactly fifty-three first-party Rust crates** (post-consolidation per Section 16.14, post-removal per Section 16.13), grouped in twelve layers: meta (1: `pulsar-framework`), kernel (1: `pulsar-kernel`), core foundation (8: http, engine, orm, audit, auth, compliance, observability, search), security controls (1: `pulsar-guard` consolidating six former crates), application infrastructure (14: mail, queue, scheduler, cache, config, storage, form, webhook, idempotency, notification, pagination, feature-flag, i18n, tenancy), data protection + authorisation + identity (4: dataprotection, consent, authz, identity-standards), application extensions (4: cms, forum, payments, console-api), API paradigms (5: api, graphql, grpc, mcp-server, realtime consolidating websocket + sse + webtransport + broadcasting), AI surface (4: ai, ai-governance, vector-search, ai-agents), reactive and developer experience (4: live, studio, analytics, accessibility), orchestration (1: `pulsar-orchestration` consolidating workflow + saga), infrastructure adapters (4: cloud, edge, cluster consolidating supervisor + service-discovery, deploy), CLI + test utilities (2: cli, test). Rationale: strict PHP parity requires migrating thirty-plus horizontal subsystems that the v1 plan omitted; the four consolidations (`pulsar-guard`, `pulsar-realtime`, `pulsar-orchestration`, `pulsar-cluster` per Section 16.14) prevent crate-count inflation while preserving sub-module clarity, and the six removals (tickets, feedback, booking, devices, releases, importexport per Section 16.13) keep the framework core focused on truly horizontal infrastructure. Alternatives considered: three meta-crates aggregating per layer (rejected: coarsens version boundaries and couples unrelated subsystems); monolithic `pulsar` crate (rejected: catastrophic compile-time cost, forced feature-flag explosion).
 
 ### 2.33 No calendar; cadence driven by exit criteria and quality gates
 
@@ -219,7 +219,7 @@ Ship `pulsar-vector-search` built on `pgvector` (PostgreSQL extension) as defaul
 
 ### 2.44 Security controls as dedicated layer — Phase 1.5
 
-Security controls (`pulsar-csrf`, `pulsar-sri`, `pulsar-incident`, `pulsar-ratelimit`, `pulsar-resilience`) ship as a dedicated phase between kernel and core. Rationale: these are horizontal concerns that the HTTP framework, ORM, and auth suite all consume; shipping them after core would force retrofits. Alternatives considered: fold into `pulsar-http` (rejected: coupling, size); community crates (rejected: no unified integration into audit chain and policy engine).
+Security controls ship as a dedicated phase between kernel and core via the consolidated `pulsar-guard` crate (six sub-modules `guard::csrf`, `guard::sri`, `guard::incident`, `guard::ratelimit`, `guard::resilience`, `guard::ssrf` per Section 16.14). Rationale: these are horizontal concerns that the HTTP framework, ORM, and auth suite all consume; shipping them after core would force retrofits; and consolidating six related crates into one with sub-modules avoids six identical CI pipelines and duplicate middleware-composition surfaces while preserving discoverability through the sub-module namespace. Alternatives considered: fold into `pulsar-http` (rejected: coupling, size); community crates (rejected: no unified integration into audit chain and policy engine); keep six separate crates (rejected: duplicate plumbing, see Section 16.14 consolidation rationale).
 
 ### 2.45 Data protection runtime automation — pulsar-dataprotection + pulsar-consent
 
@@ -530,16 +530,16 @@ pulsar-framework/
 │   │
 │   ├── pulsar-cli/               # 4.52 CLI tool
 │   └── pulsar-test/              # 4.53 testing utilities
-├── spec/
-│   ├── crypto.tla                # TLA+ spec for key lifecycle
-│   ├── router.tla                # TLA+ spec for route resolution
-│   ├── session.tla               # TLA+ spec for session transitions
-│   ├── audit.tla                 # TLA+ spec for chain append/verify
-│   ├── middleware.tla            # TLA+ spec for pipeline ordering
-│   ├── oauth2.tla                # TLA+ spec for OAuth2 flows
-│   ├── websocket.tla             # TLA+ spec for inbound dispatch lifecycle
-│   ├── workflow.tla              # TLA+ spec for workflow state-machine correctness
-│   └── saga.tla                  # TLA+ spec for saga compensation ordering
+├── spec/                         # nine TLA+ specifications (Section XII metric)
+│   ├── crypto.tla                # key lifecycle (Sprint 1.1)
+│   ├── router.tla                # route resolution (Sprint 1.4)
+│   ├── session.tla               # session state-machine transitions (Sprint 1.3)
+│   ├── audit.tla                 # HMAC chain append + verify + tamper detection (Sprint 1.2)
+│   ├── middleware.tla            # pipeline ordering and reentrancy (Sprint 1.5)
+│   ├── oauth2.tla                # OAuth 2.1 authorisation code flow with PKCE (Sprint 2.5)
+│   ├── saml.tla                  # SAML SSO with assertion replay defence (Sprint 2.5)
+│   ├── websocket.tla             # inbound dispatch lifecycle (Sprint 3B.2 pulsar-realtime)
+│   └── orchestration.tla         # workflow state reachability + saga compensation ordering (Sprint 3E.1 pulsar-orchestration)
 ├── tools/
 │   ├── xtask/                    # workspace-local build tasks
 │   └── scripts/                  # shell helpers (read-only helpers only)
@@ -1385,7 +1385,7 @@ The Kubernetes Operator lives outside the Cargo workspace under `services/operat
 
 **PHP parity.** `src/Workflow/` (3 759 LOC) + `src/Saga/` (1 858 LOC) in PHP, ADR-0027.
 
-**Status.** Planned (Phase 3E scope, single consolidated sprint). **TLA+ specifications required** (`spec/workflow.tla` covers state-machine reachability, `spec/saga.tla` covers compensation ordering).
+**Status.** Planned (Phase 3E scope, single consolidated sprint). **TLA+ specification required** (`spec/orchestration.tla` covers both workflow state-machine reachability and saga compensation ordering — the ninth and final TLA+ spec per Section XII).
 
 ### 4.48 pulsar-cloud (AWS/Azure/GCP adapters)
 
@@ -2497,11 +2497,10 @@ Phase 3E delivers the consolidated orchestration crate (workflow + saga per Sect
 - **`orchestration::workflow`** — Typed workflow engine with state-machine steps, declarative transitions with guards and actions, compensating actions, persistence via `pulsar-orm`, audit-chain linkage per transition, cron and event triggers, parallel and sequential composition, human-approval gates. TLA+ specification on state-machine reachability. Property tests on reachability; chaos scenarios for crash mid-transition. ADR-0066 Workflow Engine.
 - **`orchestration::saga`** — Saga pattern: step definitions with forward and compensating actions, saga coordinator with at-least-once execution and idempotent compensation, failure recovery, orchestration on top of the workflow engine or choreography on top of `pulsar-realtime::broadcasting`. TLA+ specification on compensation ordering. Chaos scenarios for failure at each compensation step; property tests on compensation idempotency. ADR-0067 Saga Orchestration.
 
-**Deliverables:** Code: `pulsar_orchestration::{Workflow, State, Transition, Guard, Action, HumanGate, Saga, Step, Compensation, SagaCoordinator, RecoveryPolicy}`. Tests: integrated suite across the two sub-modules including end-to-end workflow-saga composition. Documentation: ADR-0066 + ADR-0067 (preserved); unified book chapter `guide/orchestration.md`. Formal: TLA+ specs `spec/workflow.tla` and `spec/saga.tla`.
+**Deliverables:** Code: `pulsar_orchestration::{Workflow, State, Transition, Guard, Action, HumanGate, Saga, Step, Compensation, SagaCoordinator, RecoveryPolicy}`. Tests: integrated suite across the two sub-modules including end-to-end workflow-saga composition. Documentation: ADR-0066 + ADR-0067 (preserved); unified book chapter `guide/orchestration.md`. Formal: TLA+ spec `spec/orchestration.tla` covering both workflow state-reachability invariants and saga compensation-ordering invariants in a single specification (counted as the ninth and final TLA+ spec per Section XII metric).
 
 **Exit criteria:**
-- TLC passes on `spec/workflow.tla` state-reachability invariants.
-- TLC passes on `spec/saga.tla` compensation-ordering invariants.
+- TLC passes on `spec/orchestration.tla` for both workflow state-reachability and saga compensation-ordering invariants.
 - Property tests confirm idempotent compensation across at-least-once execution.
 - Workflow human-approval gates intercept 100 % of high-risk transitions.
 - All workspace quality gates pass.
@@ -3065,7 +3064,7 @@ Nine gating checkpoints bracket the rewrite. Eight fire at the exit of a phase (
 | Fuzz iterations per parser (zero crash)    | 10,000,000                                                   | `cargo fuzz run <target>`                               |
 | Property tests on value objects            | ≥ 60                                                         | `proptest` test inventory                               |
 | Chaos scenarios                            | ≥ 20                                                         | `docs/ops/chaos/` inventory                             |
-| TLA+ specifications                        | 9 (crypto, router, session, audit, middleware, OAuth2, WebSocket, workflow, saga) | `spec/` directory             |
+| TLA+ specifications                        | 9 (crypto, router, session, audit, middleware, OAuth2, SAML, websocket, orchestration covering workflow + saga) | `spec/` directory             |
 | Creusot contract coverage (kernel + security controls) | ≥ 80%                                            | Annotated-function ratio                                |
 | cargo-audit                                | 0 at any severity                                            | `cargo audit`                                           |
 | P50 hello-world latency                    | < 100 µs                                                     | Criterion                                               |
@@ -3079,8 +3078,8 @@ Nine gating checkpoints bracket the rewrite. Eight fire at the exit of a phase (
 | mdBook chapters                            | Complete across Getting Started / Concepts / Guide / Cookbook / API Reference | mdBook index                   |
 | Grafana dashboards                         | ≥ 20                                                         | `docs/observability/dashboards/`                        |
 | Alerting rules                             | Committed                                                    | `docs/observability/alerts/`                            |
-| Compliance framework mappings              | 16 nominal (18 enumerated)                                   | `docs/compliance/matrix.md`                             |
-| First-party crates published at 1.0.0      | ≥ 50                                                         | crates.io under `pulsar-*` namespace                    |
+| Compliance framework mappings              | 23 (22 mandatory + MiCA opt-in)                              | `docs/compliance/matrix.md` + `docs/compliance/frameworks/` |
+| First-party crates published at 1.0.0      | exactly 53                                                   | crates.io under `pulsar-*` namespace                    |
 | PHP `src/` modules covered by Rust crates  | 60 of 60 (100%)                                              | Section XV parity matrix                                |
 | PHP extensions covered or superseded       | 31 of 31 (100%)                                              | Section XV parity matrix                                |
 | Silent PHP feature regressions             | 0                                                            | Section XV parity matrix                                |
@@ -3423,10 +3422,10 @@ This matrix enumerates every PHP `src/` module and every PHP extension from the 
 | Attribute | 24 | Rust `#[attr]` + proc-macros | N | N | Rust-idiomatic replacement; stability tiers via ADR-0008 |
 | Audit | 127 | `pulsar-audit` + `pulsar-kernel::audit` | 1.2 + 2.4 | C | Improved: TLA+ spec + Creusot contracts |
 | Auth | 5 452 | `pulsar-auth` | 2.5 | C | Improved: WebAuthn + 40+ SSO + OAuth2 PKCE formally verified |
-| Broadcasting | 367 | `pulsar-broadcasting` | 3B.3 | C | Improved: multi-backend (Redis/NATS/Kafka/in-process) |
+| Broadcasting | 367 | `pulsar-realtime` (`realtime::broadcasting` sub-module) | 3B.2 | C | Consolidated into `pulsar-realtime`; multi-backend (Redis/NATS/Kafka/in-process); Section 16.14 |
 | Build | 1 051 | Workspace CI + `cargo xtask` | 0.4 | S | Cargo build model supersedes custom pipeline |
 | Cache | 6 567 | `pulsar-cache` | 2B.2 | C | Multi-tier (Moka + Redis + CDN) |
-| Cloud | 4 207 | `pulsar-cloud` | 3E.9 | C | Productionises PHP embryonic state |
+| Cloud | 4 207 | `pulsar-cloud` | 3E.2 | C | Productionises PHP embryonic state |
 | Codegen | 3 617 | `pulsar-orm` proc-macros + `tools/xtask` | 2.3 | S | Rust proc-macros supersede runtime codegen |
 | Compliance | 7 680 | `pulsar-compliance` | 2.6 | C | 18 frameworks + runtime policy engine |
 | Concurrency | 167 | `tokio` | 2A baseline | S | Async runtime supersedes Fiber scheduler (ADR of inversion) |
@@ -3437,19 +3436,19 @@ This matrix enumerates every PHP `src/` module and every PHP extension from the 
 | Core | 5 752 | `pulsar-framework` composition root + `pulsar-http` server | 4.1 (framework) + 2.1 | C | Composition root in meta-crate |
 | DataProtection | 1 906 | `pulsar-dataprotection` + `pulsar-consent` | 2C.2 + 2C.1 | C | Productionises: DSAR workflow + RtbF two-phase commit + consent ledger |
 | Database | 8 699 | `pulsar-orm` | 2.3 | C | Improved: 15 derive attributes including `#[EventSourced]` |
-| Deploy | 2 711 | `pulsar-deploy` | 3E.13 | C | Rolling + blue-green + canary |
+| Deploy | 2 711 | `pulsar-deploy` | 3E.5 | C | Rolling + blue-green + canary |
 | Dev | 2 202 | `pulsar-studio` + `pulsar-cli doctor` | 3D.2 + 4.2 | C | Dev tooling distributed |
 | Documentation | 220 | mdBook pipeline + `pulsar-cli` | 4.5 | C | mdBook supersedes custom generator |
-| Edge | 398 | `pulsar-edge` | 3E.10 | C | Cloudflare Workers + Fastly Compute@Edge |
-| ErrorHandling | 1 826 | `thiserror` per-crate + `pulsar-incident` | 1.5.3 | C | Typed errors + incident pipeline |
-| Event | 1 778 | Event bus in `pulsar-framework` + `pulsar-broadcasting` | 4.1 (meta) + 3B.3 | C | Typed event bus; broadcast via broadcasting |
+| Edge | 398 | `pulsar-edge` | 3E.3 | C | Cloudflare Workers + Fastly Compute@Edge |
+| ErrorHandling | 1 826 | `thiserror` per-crate + `pulsar-guard` (`guard::incident` sub-module) | 1.5 | C | Typed errors + incident pipeline (consolidated into pulsar-guard per Section 16.14) |
+| Event | 1 778 | Event bus in `pulsar-framework` + `pulsar-realtime::broadcasting` | 4.1 (meta) + 3B.2 | C | Typed event bus; broadcast via consolidated realtime crate |
 | Extensibility | 3 341 | `pulsar-kernel::sandbox` + trust tiers in ADR | 4.1 | C | WASM + capability table + trust tiers |
 | Extension | 553 | `pulsar-kernel::sandbox` + extension lifecycle in `pulsar-cli` | 4.1 + 4.2 | C | Lifecycle primitives in kernel, CLI commands in cli |
 | FeatureFlag | 821 | `pulsar-feature-flag` | 2B.12 | C | OpenFeature-compatible |
-| Http | 18 089 | `pulsar-http` + `pulsar-csrf` + `pulsar-sri` + `pulsar-ratelimit` + `pulsar-api` | 2.1 + 1.5.1/2/4 + 3B.1 | C | Surface split across focused crates |
+| Http | 18 089 | `pulsar-http` + `pulsar-guard` (csrf + sri + ratelimit sub-modules) + `pulsar-api` | 2.1 + 1.5 + 3B.1 | C | Surface split across focused crates; security controls consolidated into pulsar-guard per Section 16.14 |
 | I18n | 3 715 | `pulsar-i18n` | 2B.13 | C | Dedicated crate; dot-notation + ICU plurals + RTL + fallback chains |
 | Idempotency | 355 | `pulsar-idempotency` | 2B.9 | C | Primitive middleware |
-| ImportExport | 768 | `pulsar-importexport` | 3E.8 | C | CSV/JSON/XML/Excel/Parquet |
+| ImportExport | 768 | `pulsar-cli` subcommands + `pulsar-orm` helpers | 4.2 + 2.3 | C | Absorbed into pulsar-cli per Section 16.13; CSV/JSON/XML/Excel/Parquet support via calamine + polars |
 | Inertia | 297 | `pulsar-live` | 3D.1 | S | `pulsar-live` supersedes Inertia.js adapter |
 | Integrity | 1 003 | `pulsar-kernel::crypto` + SLSA 4 (14.6) + `pulsar-sri` | 1.1 + 4.6 + 1.5.2 | C | Integrity across build, runtime, and asset |
 | Introspection | 1 311 | `cargo doc` + reflection utilities + `pulsar-studio` | 3D.2 | C | Admin-surface introspection in studio |
@@ -3461,19 +3460,19 @@ This matrix enumerates every PHP `src/` module and every PHP extension from the 
 | Pagination | 527 | `pulsar-pagination` | 2B.11 | C | Cursor + offset |
 | Queue | 6 564 | `pulsar-queue` | 2B.4 | C | Redis + msgpack + AEAD subkey 10 |
 | Rendering | 738 | `pulsar-engine` | 2.2 | C | Template engine (Pulse → pulsar-engine) |
-| Resilience | 1 525 | `pulsar-resilience` | 1.5.5 | C | Circuit breaker + bulkhead + retry + hedge |
+| Resilience | 1 525 | `pulsar-guard` (`guard::resilience` sub-module) | 1.5 | C | Circuit breaker + bulkhead + retry + hedge (consolidated into pulsar-guard per Section 16.14) |
 | Routing | 3 268 | `pulsar-kernel::router` | 1.4 | C | Improved: TLA+ spec |
 | Runtime | 4 413 | `tokio` + deploy-target-specific adapters | 2A baseline | S | Tokio supersedes FPM/FrankenPHP/RoadRunner |
-| Saga | 1 858 | `pulsar-saga` | 3E.2 | C | Improved: TLA+ spec for compensation ordering |
+| Saga | 1 858 | `pulsar-orchestration` (`orchestration::saga` sub-module) | 3E.1 | C | Consolidated into pulsar-orchestration per Section 16.14; TLA+ spec for compensation ordering folded into spec/orchestration.tla |
 | Scheduler | 1 603 | `pulsar-scheduler` | 2B.5 | C | Distributed locks + audit linkage |
 | Security/Crypto | subset of 309 | `pulsar-kernel::crypto` + `pulsar-kernel::hsm` | 1.1 + 2C.3 | C | Improved: ring + PQC hybrid + HSM integration |
-| Security/Csrf | subset | `pulsar-csrf` | 1.5.1 | C | Formalised with Creusot |
+| Security/Csrf | subset | `pulsar-guard` (`guard::csrf` sub-module) | 1.5 | C | Formalised with Creusot; consolidated into pulsar-guard per Section 16.14 |
 | Security/Session | subset | `pulsar-kernel::session` | 1.3 | C | Improved: typed state machine + TLA+ |
-| Security/Sri | subset | `pulsar-sri` | 1.5.2 | C | First-class CSP + SRI emission |
-| Security/Incident | subset | `pulsar-incident` | 1.5.3 | C | First-class pipeline |
-| ServiceDiscovery | 962 | `pulsar-service-discovery` | 3E.12 | C | Consul + etcd + K8s + DNS-SD |
+| Security/Sri | subset | `pulsar-guard` (`guard::sri` sub-module) | 1.5 | C | First-class CSP + SRI emission; consolidated into pulsar-guard per Section 16.14 |
+| Security/Incident | subset | `pulsar-guard` (`guard::incident` sub-module) | 1.5 | C | First-class pipeline; consolidated into pulsar-guard per Section 16.14 |
+| ServiceDiscovery | 962 | `pulsar-cluster` (`cluster::discovery` sub-module) | 3E.4 | C | Consolidated into pulsar-cluster per Section 16.14; Consul + etcd + K8s + DNS-SD |
 | Storage | 1 141 | `pulsar-storage` | 2B.3 | C | S3 + Azure Blob + GCS + MinIO + local |
-| Supervisor | 1 013 | `pulsar-supervisor` | 3E.11 | C | K8s and Nomad probes |
+| Supervisor | 1 013 | `pulsar-cluster` (`cluster::supervisor` sub-module) | 3E.4 | C | Consolidated into pulsar-cluster per Section 16.14; K8s and Nomad probes |
 | SupplyChain | 2 172 | SLSA 4 + SBOM + Sigstore (14.6) | 0.4 + 4.6 | C | Improved: Rekor transparency log |
 | Support | 4 164 | Rust `std` + per-crate helpers | N | N | Rust idioms supersede PHP helpers |
 | Tenancy | 913 | `pulsar-tenancy` | 2B.14 | C | Row + schema + database isolation |
@@ -3481,9 +3480,9 @@ This matrix enumerates every PHP `src/` module and every PHP extension from the 
 | Ui | 580 | `services/admin/` Web Components + `pulsar-accessibility` | 3.1 + 3D.4 | C | Native HTML5 + ES2025 + Web Components, no framework dependency, hand-rolled signals + router primitives |
 | Uid | 234 | `uuid` crate + wrappers in `pulsar-orm` | 2.3 baseline | C | UUIDv7 RFC 9562 |
 | View | 6 473 | `pulsar-engine` | 2.2 | C | Template engine + design-system primitives |
-| WebSocket | 1 675 | `pulsar-websocket` | 3B.2 | C | Inbound + outbound + TLA+ spec; closes VOID DRIFT gap #13 |
+| WebSocket | 1 675 | `pulsar-realtime` (`realtime::websocket` sub-module) | 3B.2 | C | Consolidated into pulsar-realtime per Section 16.14; inbound + outbound + TLA+ spec/websocket.tla; closes VOID DRIFT gap #13 |
 | Webhook | 555 | `pulsar-webhook` | 2B.8 | C | Generic primitive (distinct from per-extension webhooks) |
-| Workflow | 3 759 | `pulsar-workflow` | 3E.1 | C | Improved: TLA+ spec on state reachability |
+| Workflow | 3 759 | `pulsar-orchestration` (`orchestration::workflow` sub-module) | 3E.1 | C | Consolidated into pulsar-orchestration per Section 16.14; TLA+ spec on state reachability folded into spec/orchestration.tla |
 
 ### 15.2 Extensions (31)
 
@@ -3494,19 +3493,19 @@ This matrix enumerates every PHP `src/` module and every PHP extension from the 
 | ai-governance | `pulsar-ai-governance` | 3C.3 | C | ISO 42001:2023 + EU AI Act runtime |
 | analytics | `pulsar-analytics` | 3D.3 | C | CSP-compliant + consent-gated |
 | auth | `pulsar-auth` | 2.5 | C | OAuth2 + Social SSO + WebAuthn |
-| booking | `pulsar-booking` | 3E.5 | C | Calendar sync (Google + Microsoft Graph) |
+| booking | downstream application (out of framework core) | post-GA | S | Removed from framework core per Section 16.13; downstream applications consume `pulsar-scheduler` + `pulsar-notification` + `pulsar-auth` for calendar OAuth2 |
 | cms | `pulsar-cms` | 3.2 | C | Full CMS parity including experimentation + newsletter + business profile |
 | compliance (sub-extensions) | `pulsar-compliance` + per-framework guides in `docs/compliance/frameworks/` | 2.6 | C | Dora/eIDAS/FHIR/medical-devices/PSD2/DSA/Data Act as compliance guides |
-| devices | `pulsar-devices` | 3E.6 | C | Device registry + trust scoring |
+| devices | `pulsar-auth` (devices sub-module) | 2.5 | C | Absorbed into pulsar-auth per Section 16.13; device registry + trust scoring as auth sub-module |
 | example | `examples/` tree + `pulsar-cli new` templates | 0.3 + 4.2 | N | Example template replaces PHP example extension |
-| feedback | `pulsar-feedback` | 3E.4 | C | Form + GitHub issue linking |
+| feedback | downstream application (out of framework core) | post-GA | S | Removed from framework core per Section 16.13; downstream applications consume `pulsar-form` + `pulsar-webhook` |
 | form | `pulsar-form` | 2B.10 | C | Builder + validation + MIME sniffer |
 | forum | `pulsar-forum` | 3.3 | C | Threaded + moderation + full-text search |
-| graphql | `pulsar-graphql` | 3B.4 | C | async-graphql + Dataloader + subscriptions |
-| grpc | `pulsar-grpc` | 3B.5 | C | tonic + interceptors + health + reflection |
-| health-status | `pulsar-supervisor` + `/healthz` `/readyz` endpoints in `pulsar-http` | 3E.11 + 2.1 | C | Distributed health |
-| mcp-server | `pulsar-mcp-server` | 3B.6 | C | MCP 2025-03-26 baseline |
-| messaging | `pulsar-notification` + `pulsar-broadcasting` | 2B.7 + 3B.3 | C | Messaging split into notification (per-user) and broadcasting (per-channel) |
+| graphql | `pulsar-graphql` | 3B.3 | C | async-graphql + Dataloader + subscriptions over pulsar-realtime::websocket |
+| grpc | `pulsar-grpc` | 3B.4 | C | tonic + interceptors + health + reflection |
+| health-status | `pulsar-cluster` (`cluster::supervisor`) + `/healthz` `/readyz` endpoints in `pulsar-http` | 3E.4 + 2.1 | C | Distributed health (consolidated into pulsar-cluster per Section 16.14) |
+| mcp-server | `pulsar-mcp-server` | 3B.5 | C | MCP 2025-03-26 baseline |
+| messaging | `pulsar-notification` + `pulsar-realtime::broadcasting` | 2B.7 + 3B.2 | C | Messaging split into notification (per-user) and broadcasting (per-channel via consolidated realtime crate) |
 | oauth2 | `pulsar-auth` (OAuth2 subset) | 2.5 | C | League Adapter equivalent |
 | observability | `pulsar-observability` | 2.7 | C | Tracing + metrics + logs |
 | observability-export | `pulsar-observability` (OTLP exporter) + SLO panels (14.9) | 2.7 + 14.9 | C | Prometheus + OTLP |
@@ -3514,19 +3513,19 @@ This matrix enumerates every PHP `src/` module and every PHP extension from the 
 | orm | `pulsar-orm` | 2.3 | C | sqlx + 15 attributes |
 | payments | `pulsar-payments` | 3.4 | C | Stripe + Braintree + Mollie + PayPal + Adyen |
 | psr7-bridge | — | — | N | Rust HTTP types differ fundamentally from PSR-7 |
-| releases | `pulsar-releases` | 3E.7 | C | Beta signup + release train + release notes |
+| releases | downstream application (out of framework core) | post-GA | S | Removed from framework core per Section 16.13; downstream applications consume `pulsar-feature-flag` + `pulsar-notification` + `pulsar-cms` |
 | social-sso | `pulsar-auth` (Social SSO subset) | 2.5 | C | 40+ providers |
 | studio | `pulsar-studio` | 3D.2 | C | Dev Studio IDE |
 | subscriptions | `pulsar-payments` (subscriptions subset) | 3.4 | C | Proration + trials + dunning |
-| tickets | `pulsar-tickets` | 3E.3 | C | Lifecycle + SLA + assignment |
+| tickets | downstream application (out of framework core) | post-GA | S | Removed from framework core per Section 16.13; downstream applications consume `pulsar-orchestration` + `pulsar-notification` + `pulsar-audit` |
 | webauthn | `pulsar-auth` (WebAuthn subset) | 2.5 | C | FIDO2 |
 
 ### 15.3 Coverage summary
 
 - PHP `src/` modules: **60 of 60** mapped (57 C, 3 S).
-- PHP extensions: **31 of 31** mapped (28 C, 1 S, 2 N).
-- Silent drops: **0**.
-- Improvements noted against PHP baseline: formal verification (kernel + security), typed state machines (session + workflow + saga), multi-backend infrastructure (cache + queue + storage + broadcasting + service-discovery + cloud), supply-chain hardening (SLSA 4 + Sigstore), HSM integration, PQC hybrid, FIPS 140-3 validation pathway, confidential computing.
+- PHP extensions: **31 of 31** mapped (24 C, 5 S, 2 N) — five extensions (booking, feedback, releases, tickets, devices) explicitly superseded by downstream applications or absorbed into existing crates per Section 16.13.
+- Silent drops: **0** — every PHP feature is either covered, superseded with explicit ADR, or marked N/A with rationale.
+- Improvements noted against PHP baseline: formal verification (kernel + security), typed state machines (session + workflow + saga + orchestration), consolidated realtime + guard + cluster crates reducing surface friction, multi-backend infrastructure (cache + queue + storage + realtime broadcasting + cluster discovery + cloud), supply-chain hardening (SLSA 4 + Sigstore + OpenSSF Scorecard ≥ 9.0 + CIS Benchmarks + STIG), HSM integration, PQC hybrid, FIPS 140-3 validation pathway, confidential computing, NIST AI RMF + OWASP LLM Top 10, eIDAS 2 EUDI + FAPI 2.0 + PSD2 SCA, agentic framework (pulsar-ai-agents), Verifiable Credentials + DIDs.
 
 ### 15.4 ADR carry-over
 
@@ -3560,9 +3559,9 @@ The thirty PHP ADRs map to Rust ADRs as follows. Rust ADR IDs are assigned on me
 | 0024 Templating engine + design system | Template + design | Sprint 2.2; Rust ADR ADR-0016 (engine); design-system ADR at Sprint 3.1 (console) |
 | 0025 OAuth2/OIDC/WebAuthn adapters | Auth adapters | Sprint 2.5; Rust ADR ADR-0019 |
 | 0026 Database enhancements | Database | Sprint 2.3; Rust ADR ADR-0017 |
-| 0027 Workflow + saga | Workflow + saga | Sprints 3E.1 and 3E.2; Rust ADRs ADR-0066 and ADR-0067 |
+| 0027 Workflow + saga | Workflow + saga | Consolidated Sprint 3E.1 (`pulsar-orchestration`); Rust ADRs ADR-0066 and ADR-0067 preserved as sub-module documentation per Section 16.14 |
 | 0028 Codegen + control packs | Codegen | Proc-macro strategy; Rust ADR at Sprint 2.3 |
-| 0029 Service discovery post-GA | Service discovery | Sprint 3E.12 (delivered at GA, not post-GA); Rust ADR ADR-0077 |
+| 0029 Service discovery post-GA | Service discovery | Consolidated Sprint 3E.4 `pulsar-cluster` (delivered at GA, not post-GA); Rust ADR ADR-0077 preserved per Section 16.14 |
 
 ### 15.5 VOID DRIFT gaps (downstream issues)
 
@@ -3571,11 +3570,11 @@ The eight open PHP VOID DRIFT gaps receive explicit Rust resolution:
 | Gap | PHP status | Rust resolution | Sprint |
 |---|---|---|:---:|
 | #4 i18n per-language HTML links | Pending | `pulsar-i18n` Sprint 2B.13 exit criteria | 2B.13 |
-| #7 Rate limiter sliding window + Redis + graceful | Exists unvalidated | `pulsar-ratelimit` Sprint 1.5.4 exit criteria | 1.5.4 |
+| #7 Rate limiter sliding window + Redis + graceful | Exists unvalidated | `pulsar-guard` (`guard::ratelimit` sub-module) Sprint 1.5 exit criteria | 1.5 |
 | #8 `pulsar lint` CLI | Pending | `pulsar-cli` Sprint 4.2 `lint` subcommand | 4.2 |
 | #9 DI auto-wiring | Pending | `pulsar-kernel::container` Sprint 1.6 + future proc-macro in 1.1 | 1.6 (constructor) |
 | #10 `dropColumn()` portable SQLite < 3.35 | Pending | `pulsar-orm` Sprint 2.3 migration runner with SQLite fallback emulation | 2.3 |
-| #13 WebSocket inbound MessageHandler | Closed in PHP April 2026 | `pulsar-websocket` Sprint 3B.2 + TLA+ spec | 3B.2 |
+| #13 WebSocket inbound MessageHandler | Closed in PHP April 2026 | `pulsar-realtime::websocket` Sprint 3B.2 + TLA+ spec/websocket.tla | 3B.2 |
 | #14 DeterministicRng cross-language | Pending | `pulsar-test::DeterministicRng` with golden fixtures shared with TypeScript via JSON | cross-phase |
 | #15 Observability Timer hardening | Partial | `pulsar-observability` Sprint 2.7 + SLO panels 14.9 | 2.7 |
 
