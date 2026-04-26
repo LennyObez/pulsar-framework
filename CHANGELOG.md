@@ -7,6 +7,16 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Sprint 0.6 — Architecture diagrams (6 Mermaid)
+
+* `docs/architecture/overview.md` — entry point linking the six diagrams + ADR roadmap + plan section cross-references.
+* `docs/architecture/diagrams/01-layered.md` — twelve-layer composition + dependency rule + event bus cross-cuts + WASM sandbox at the periphery.
+* `docs/architecture/diagrams/02-crate-dependency-graph.md` — 53-crate DAG, hub crates (kernel, audit, orm, http), consolidation impact (Section 16.14).
+* `docs/architecture/diagrams/03-request-lifecycle.md` — sequence diagram tracing `POST /api/v1/posts` through every quality-relevant subsystem with TLA+/Creusot anchors and latency budget.
+* `docs/architecture/diagrams/04-event-bus-topology.md` — typed events publishers/subscribers, partitioning, delivery semantics (at-least-once + transactional outbox + at-most-once opt-in), schema evolution.
+* `docs/architecture/diagrams/05-wasm-sandbox-isolation.md` — trusted core vs sandbox trust boundary, capability table, crash isolation, performance budget, component-model interop.
+* `docs/architecture/diagrams/06-process-model.md` — multi-instance production deployment, stateful tier (PostgreSQL Patroni + Redis + Tantivy + S3 + ClickHouse), external systems, observability flow, deployment topologies (single-tenant, multi-tenant, multi-region, edge, air-gapped).
+
 ### Sprint 0.5 — Initial 8 ADRs + INDEX.md
 
 * `docs/adr/0000-template.md` — MADR-style template with Status, Context, Decision, Consequences (positive/negative/neutral), Alternatives considered, References, optional Compliance mapping. Every future ADR uses this template.
