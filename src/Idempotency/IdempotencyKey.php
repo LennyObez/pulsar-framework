@@ -49,6 +49,10 @@ final readonly class IdempotencyKey
      * inputs that themselves contain the delimiter (e.g. `['a|b', 'c']`
      * vs `['a', 'b', 'c']`); length-prefixing eliminates both classes.
      *
+     * F25.20: the returned key's `->value` is exactly 64 hexadecimal
+     * characters (BLAKE2b 32-byte digest in hex). Downstream stores
+     * with a column-length limit on the key field can size accordingly.
+     *
      * @throws SodiumException
      */
     #[NoDiscard]
