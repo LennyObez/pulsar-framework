@@ -1,0 +1,25 @@
+[package]
+name = "pulsar-cloud-aws"
+description = "AWS adapter for pulsar-cloud — S3, Lambda, SES, KMS, IAM, SecretsManager."
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+readme = "README.md"
+keywords = ["pulsar", "cloud", "aws", "s3", "kms"]
+categories = ["web-programming", "asynchronous"]
+
+[dependencies]
+pulsar-kernel = { path = "../pulsar-kernel", version = "=0.0.1-alpha.0" }
+pulsar-cloud = { path = "../pulsar-cloud", version = "=0.0.1-alpha.0" }
+aws-sdk-s3 = { workspace = true }
+aws-config = { workspace = true }
+tokio = { workspace = true }
+thiserror = { workspace = true }
+
+[lints]
+workspace = true

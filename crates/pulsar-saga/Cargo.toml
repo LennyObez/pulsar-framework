@@ -1,0 +1,25 @@
+[package]
+name = "pulsar-saga"
+description = "Saga compensation engine: forward + compensating actions across distributed boundaries (Garcia-Molina + Salem 1987)."
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+readme = "README.md"
+keywords = ["pulsar", "saga", "compensation", "distributed", "tla-plus"]
+categories = ["asynchronous", "data-structures"]
+
+[dependencies]
+pulsar-kernel = { path = "../pulsar-kernel", version = "=0.0.1-alpha.0" }
+pulsar-audit = { path = "../pulsar-audit", version = "=0.0.1-alpha.0" }
+pulsar-workflow = { path = "../pulsar-workflow", version = "=0.0.1-alpha.0" }
+tokio = { workspace = true }
+serde = { workspace = true }
+thiserror = { workspace = true }
+
+[lints]
+workspace = true

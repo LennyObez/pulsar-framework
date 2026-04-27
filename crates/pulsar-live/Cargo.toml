@@ -14,7 +14,7 @@ keywords.workspace = true
 categories.workspace = true
 
 [dependencies]
-pulsar-realtime = { path = "../pulsar-realtime", version = "=0.0.1-alpha.0" }
+pulsar-broadcasting = { path = "../pulsar-broadcasting", version = "=0.0.1-alpha.0" }
 pulsar-engine = { path = "../pulsar-engine", version = "=0.0.1-alpha.0" }
 serde = { workspace = true }
 serde_json = { workspace = true }

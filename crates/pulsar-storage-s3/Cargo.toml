@@ -1,0 +1,24 @@
+[package]
+name = "pulsar-storage-s3"
+description = "S3-compatible object storage backend for pulsar-storage — works with AWS S3, MinIO, Backblaze B2, Wasabi."
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+readme = "README.md"
+keywords = ["pulsar", "storage", "s3", "minio", "object-storage"]
+categories = ["filesystem", "asynchronous"]
+
+[dependencies]
+pulsar-kernel = { path = "../pulsar-kernel", version = "=0.0.1-alpha.0" }
+pulsar-storage = { path = "../pulsar-storage", version = "=0.0.1-alpha.0" }
+aws-sdk-s3 = { workspace = true }
+tokio = { workspace = true }
+thiserror = { workspace = true }
+
+[lints]
+workspace = true

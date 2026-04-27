@@ -15,7 +15,7 @@ categories.workspace = true
 
 [dependencies]
 pulsar-feature-flag = { path = "../pulsar-feature-flag", version = "=0.0.1-alpha.0" }
-pulsar-cluster = { path = "../pulsar-cluster", version = "=0.0.1-alpha.0" }
+pulsar-supervisor = { path = "../pulsar-supervisor", version = "=0.0.1-alpha.0" }
 pulsar-audit = { path = "../pulsar-audit", version = "=0.0.1-alpha.0" }
 serde = { workspace = true }
 thiserror = { workspace = true }

@@ -1,0 +1,24 @@
+[package]
+name = "pulsar-sri"
+description = "Subresource Integrity (SRI) digest enforcement for inline + external assets per W3C SRI Recommendation."
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+readme = "README.md"
+keywords = ["pulsar", "sri", "security", "integrity", "w3c"]
+categories = ["web-programming", "cryptography"]
+
+[dependencies]
+pulsar-kernel = { path = "../pulsar-kernel", version = "=0.0.1-alpha.0" }
+pulsar-engine = { path = "../pulsar-engine", version = "=0.0.1-alpha.0" }
+ring = { workspace = true }
+serde = { workspace = true }
+thiserror = { workspace = true }
+
+[lints]
+workspace = true

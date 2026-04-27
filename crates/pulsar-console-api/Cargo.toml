@@ -19,7 +19,7 @@ pulsar-auth = { path = "../pulsar-auth", version = "=0.0.1-alpha.0" }
 pulsar-authz = { path = "../pulsar-authz", version = "=0.0.1-alpha.0" }
 pulsar-compliance = { path = "../pulsar-compliance", version = "=0.0.1-alpha.0" }
 pulsar-audit = { path = "../pulsar-audit", version = "=0.0.1-alpha.0" }
-pulsar-realtime = { path = "../pulsar-realtime", version = "=0.0.1-alpha.0" }
+pulsar-websocket = { path = "../pulsar-websocket", version = "=0.0.1-alpha.0" }
 serde = { workspace = true }
 thiserror = { workspace = true }
 

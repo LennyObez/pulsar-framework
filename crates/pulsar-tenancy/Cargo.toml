@@ -17,7 +17,7 @@ categories.workspace = true
 pulsar-kernel = { path = "../pulsar-kernel", version = "=0.0.1-alpha.0" }
 pulsar-orm = { path = "../pulsar-orm", version = "=0.0.1-alpha.0" }
 pulsar-cache = { path = "../pulsar-cache", version = "=0.0.1-alpha.0" }
-pulsar-guard = { path = "../pulsar-guard", version = "=0.0.1-alpha.0" }
+pulsar-csrf = { path = "../pulsar-csrf", version = "=0.0.1-alpha.0" }
 pulsar-audit = { path = "../pulsar-audit", version = "=0.0.1-alpha.0" }
 serde = { workspace = true }
 thiserror = { workspace = true }

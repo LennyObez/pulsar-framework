@@ -1,0 +1,25 @@
+[package]
+name = "pulsar-websocket"
+description = "WebSocket inbound dispatch + lifecycle + per-message backpressure, formally specified in spec/websocket.tla per Decision 2.59."
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+readme = "README.md"
+keywords = ["pulsar", "websocket", "realtime", "rfc6455", "tla-plus"]
+categories = ["web-programming::websocket", "asynchronous"]
+
+[dependencies]
+pulsar-kernel = { path = "../pulsar-kernel", version = "=0.0.1-alpha.0" }
+pulsar-http = { path = "../pulsar-http", version = "=0.0.1-alpha.0" }
+tokio = { workspace = true }
+tokio-tungstenite = { workspace = true }
+serde = { workspace = true }
+thiserror = { workspace = true }
+
+[lints]
+workspace = true

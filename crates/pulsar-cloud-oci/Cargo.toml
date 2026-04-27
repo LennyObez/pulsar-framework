@@ -1,0 +1,25 @@
+[package]
+name = "pulsar-cloud-oci"
+description = "Oracle Cloud Infrastructure adapter for pulsar-cloud — Object Storage, Vault, Functions."
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+readme = "README.md"
+keywords = ["pulsar", "cloud", "oci", "oracle", "vault"]
+categories = ["web-programming", "asynchronous"]
+
+[dependencies]
+pulsar-kernel = { path = "../pulsar-kernel", version = "=0.0.1-alpha.0" }
+pulsar-cloud = { path = "../pulsar-cloud", version = "=0.0.1-alpha.0" }
+reqwest = { workspace = true }
+tokio = { workspace = true }
+ring = { workspace = true }
+thiserror = { workspace = true }
+
+[lints]
+workspace = true

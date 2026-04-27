@@ -1,0 +1,24 @@
+[package]
+name = "pulsar-storage-azure"
+description = "Azure Blob Storage backend for pulsar-storage."
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+readme = "README.md"
+keywords = ["pulsar", "storage", "azure", "blob", "object-storage"]
+categories = ["filesystem", "asynchronous"]
+
+[dependencies]
+pulsar-kernel = { path = "../pulsar-kernel", version = "=0.0.1-alpha.0" }
+pulsar-storage = { path = "../pulsar-storage", version = "=0.0.1-alpha.0" }
+azure_core = { workspace = true }
+tokio = { workspace = true }
+thiserror = { workspace = true }
+
+[lints]
+workspace = true
