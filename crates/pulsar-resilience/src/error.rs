@@ -16,11 +16,17 @@ pub enum Error {
 
     /// Per-call timeout elapsed before downstream completed.
     #[error("call timeout after {elapsed_ms} ms")]
-    Timeout { elapsed_ms: u64 },
+    Timeout {
+        /// Milliseconds elapsed when the timeout fired (should match the configured per-call deadline).
+        elapsed_ms: u64,
+    },
 
     /// Retry budget exceeded after {attempts} attempts.
     #[error("retry budget exceeded after {attempts} attempts")]
-    RetryBudgetExceeded { attempts: u32 },
+    RetryBudgetExceeded {
+        /// Total number of attempts (initial + retries) before the budget was exhausted.
+        attempts: u32,
+    },
 }
 
 /// Crate-local `Result` alias per plan Section XVII.7.

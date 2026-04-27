@@ -8,11 +8,21 @@ use thiserror::Error;
 pub enum Error {
     /// Activity exhausted its retry budget without success.
     #[error("activity '{activity}' exceeded retry budget after {attempts} attempts")]
-    ActivityRetryExhausted { activity: String, attempts: u32 },
+    ActivityRetryExhausted {
+        /// Logical activity name as registered with the workflow runtime.
+        activity: String,
+        /// Total number of execution attempts (initial + retries) before the budget was exhausted.
+        attempts: u32,
+    },
 
     /// Workflow timed out (per-workflow or per-activity deadline).
     #[error("workflow timeout: {scope} (elapsed {elapsed_ms} ms)")]
-    Timeout { scope: &'static str, elapsed_ms: u64 },
+    Timeout {
+        /// Static scope identifier indicating which deadline elapsed (`workflow`, `activity`, `step`).
+        scope: &'static str,
+        /// Milliseconds elapsed when the timeout fired.
+        elapsed_ms: u64,
+    },
 
     /// Durability backend (PostgreSQL by default) read/write failed.
     #[error("workflow state-store unavailable")]
@@ -24,7 +34,12 @@ pub enum Error {
 
     /// Signal received for a workflow not in a state that accepts it.
     #[error("signal '{signal}' rejected: workflow in state '{state}'")]
-    SignalRejected { signal: String, state: String },
+    SignalRejected {
+        /// Signal name as published by the caller (rejected because the workflow is not in an accepting state).
+        signal: String,
+        /// Current workflow state name (in which signals are not accepted, e.g. `Completed`, `Failed`, `Compensating`).
+        state: String,
+    },
 }
 
 /// Crate-local `Result` alias per plan Section XVII.7.

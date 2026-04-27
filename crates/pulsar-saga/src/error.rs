@@ -8,11 +8,17 @@ use thiserror::Error;
 pub enum Error {
     /// Forward step failed; saga entered compensation phase.
     #[error("saga forward step '{step}' failed; compensation triggered")]
-    ForwardStepFailed { step: String },
+    ForwardStepFailed {
+        /// Logical name of the saga step that failed during forward execution (matches the step's registered identifier).
+        step: String,
+    },
 
     /// Compensating step itself failed — escalation required (manual intervention).
     #[error("saga compensation step '{step}' failed; escalation required")]
-    CompensationFailed { step: String },
+    CompensationFailed {
+        /// Logical name of the saga step whose compensating action itself failed (manual intervention required per the saga semantics).
+        step: String,
+    },
 
     /// Saga journal corruption / inconsistency detected at compensation replay.
     #[error("saga journal inconsistent at replay")]

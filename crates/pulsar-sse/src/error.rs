@@ -16,7 +16,10 @@ pub enum Error {
 
     /// Replay window for `Last-Event-ID` exhausted; client must reload state.
     #[error("SSE replay window exhausted (last seen {last_id})")]
-    ReplayExhausted { last_id: String },
+    ReplayExhausted {
+        /// Most recent event ID the client successfully received per the WHATWG `Last-Event-ID` reconnection protocol — the requested replay range starts after this ID and falls outside the configured retention window.
+        last_id: String,
+    },
 }
 
 /// Crate-local `Result` alias per plan Section XVII.7.

@@ -16,16 +16,10 @@ pub enum Error {
 
     /// IAM permission denied.
     #[error("AWS permission denied: {action}")]
-    PermissionDenied { action: String },
-
-    #[doc(hidden)]
-    #[error("placeholder smoke variant")]
-    __PlaceholderSmokeOnly,
-}
-
-impl Error {
-    #[doc(hidden)]
-    pub(crate) fn __placeholder_smoke_only() -> Self { Self::__PlaceholderSmokeOnly }
+    PermissionDenied {
+        /// IAM action identifier the caller attempted (e.g. `s3:GetObject`, `kms:Decrypt`, `secretsmanager:GetSecretValue`).
+        action: String,
+    },
 }
 
 /// Crate-local `Result` alias per plan Section XVII.7.

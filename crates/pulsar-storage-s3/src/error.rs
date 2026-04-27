@@ -12,20 +12,21 @@ pub enum Error {
 
     /// Multipart upload aborted mid-stream.
     #[error("S3 multipart upload aborted at part {part}: {reason}")]
-    MultipartAborted { part: u32, reason: String },
+    MultipartAborted {
+        /// One-based part number (per RFC 5546) that triggered the abort.
+        part: u32,
+        /// Free-form reason the abort was triggered (e.g. `checksum-mismatch`, `network-timeout`, `caller-cancelled`).
+        reason: String,
+    },
 
     /// Object not found at the requested key.
     #[error("S3 object not found: {bucket}/{key}")]
-    NotFound { bucket: String, key: String },
-
-    #[doc(hidden)]
-    #[error("placeholder smoke variant")]
-    __PlaceholderSmokeOnly,
-}
-
-impl Error {
-    #[doc(hidden)]
-    pub(crate) fn __placeholder_smoke_only() -> Self { Self::__PlaceholderSmokeOnly }
+    NotFound {
+        /// S3-compatible bucket name (`my-bucket`).
+        bucket: String,
+        /// Object key within the bucket (`path/to/object.bin`).
+        key: String,
+    },
 }
 
 /// Crate-local `Result` alias per plan Section XVII.7.

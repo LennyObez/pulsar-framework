@@ -8,7 +8,12 @@ use thiserror::Error;
 pub enum Error {
     /// Computed digest does not match the expected `integrity` attribute value.
     #[error("SRI digest mismatch (expected {expected}, computed {computed})")]
-    DigestMismatch { expected: String, computed: String },
+    DigestMismatch {
+        /// Hex-encoded digest declared by the `integrity="<algo>-<base64>"` attribute on the asset reference.
+        expected: String,
+        /// Hex-encoded digest computed over the actually-loaded asset bytes.
+        computed: String,
+    },
 
     /// Algorithm prefix (`sha256-` / `sha384-` / `sha512-`) is malformed or unsupported.
     #[error("SRI algorithm prefix invalid or unsupported: {0}")]

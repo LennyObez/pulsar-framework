@@ -8,7 +8,10 @@ use thiserror::Error;
 pub enum Error {
     /// Quota exhausted; the caller should retry after the indicated wait.
     #[error("quota exhausted (retry after {retry_after_ms} ms)")]
-    QuotaExhausted { retry_after_ms: u64 },
+    QuotaExhausted {
+        /// Milliseconds the caller should wait before retrying — derived from the token-bucket refill rate per the formal specification in `spec/ratelimit.tla`.
+        retry_after_ms: u64,
+    },
 
     /// Backend (Redis) connection failure or timeout.
     #[error("rate-limit backend unavailable")]

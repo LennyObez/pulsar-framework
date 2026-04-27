@@ -4,4 +4,5 @@
 //! bypass the atomic refill+consume invariant proven in
 //! `spec/ratelimit.tla`.
 
+#[allow(dead_code)]  // placeholder until per-sprint public traits use Sealed
 pub(crate) trait Sealed {}

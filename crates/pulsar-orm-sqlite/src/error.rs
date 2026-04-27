@@ -17,15 +17,6 @@ pub enum Error {
     /// Migration failed.
     #[error("sqlite migration failed: {0}")]
     Migration(String),
-
-    #[doc(hidden)]
-    #[error("placeholder smoke variant")]
-    __PlaceholderSmokeOnly,
-}
-
-impl Error {
-    #[doc(hidden)]
-    pub(crate) fn __placeholder_smoke_only() -> Self { Self::__PlaceholderSmokeOnly }
 }
 
 /// Crate-local `Result` alias per plan Section XVII.7.

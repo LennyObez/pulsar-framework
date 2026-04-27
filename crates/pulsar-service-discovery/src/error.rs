@@ -8,15 +8,26 @@ use thiserror::Error;
 pub enum Error {
     /// Discovery backend (DNS / Consul / etcd / k8s) unreachable.
     #[error("discovery backend unavailable: {backend}")]
-    BackendUnavailable { backend: String },
+    BackendUnavailable {
+        /// Backend identifier (`dns-sd`, `consul`, `etcd`, `kubernetes-endpoints`).
+        backend: String,
+    },
 
     /// Service name resolved to zero healthy endpoints.
     #[error("no healthy endpoints for service: {service}")]
-    NoHealthyEndpoints { service: String },
+    NoHealthyEndpoints {
+        /// Logical service name the resolver was asked about (e.g. `payments-api`, `auth-server`).
+        service: String,
+    },
 
     /// Health-check probe failed for a known endpoint.
     #[error("health probe failed for endpoint {endpoint}: {reason}")]
-    HealthProbeFailed { endpoint: String, reason: String },
+    HealthProbeFailed {
+        /// Endpoint identifier in `host:port` form (the endpoint that failed health checks).
+        endpoint: String,
+        /// Free-form reason returned by the health-check protocol (e.g. HTTP status code, gRPC status, TCP connect refused).
+        reason: String,
+    },
 }
 
 /// Crate-local `Result` alias per plan Section XVII.7.

@@ -12,20 +12,19 @@ pub enum Error {
 
     /// Object not found.
     #[error("GCS object not found: {bucket}/{name}")]
-    NotFound { bucket: String, name: String },
+    NotFound {
+        /// Google Cloud Storage bucket name.
+        bucket: String,
+        /// Object name within the bucket.
+        name: String,
+    },
 
     /// Retention-policy violation (deletion prevented by retention period).
     #[error("GCS retention violation: {reason}")]
-    RetentionViolation { reason: String },
-
-    #[doc(hidden)]
-    #[error("placeholder smoke variant")]
-    __PlaceholderSmokeOnly,
-}
-
-impl Error {
-    #[doc(hidden)]
-    pub(crate) fn __placeholder_smoke_only() -> Self { Self::__PlaceholderSmokeOnly }
+    RetentionViolation {
+        /// Free-form reason the operation violated the retention policy (e.g. `retention-period-not-elapsed`, `event-based-hold-active`, `temporary-hold-active`).
+        reason: String,
+    },
 }
 
 /// Crate-local `Result` alias per plan Section XVII.7.

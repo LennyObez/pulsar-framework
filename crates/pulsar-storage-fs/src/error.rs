@@ -16,16 +16,12 @@ pub enum Error {
 
     /// Sidecar checksum mismatch on read.
     #[error("filesystem checksum mismatch (expected {expected}, computed {computed})")]
-    ChecksumMismatch { expected: String, computed: String },
-
-    #[doc(hidden)]
-    #[error("placeholder smoke variant")]
-    __PlaceholderSmokeOnly,
-}
-
-impl Error {
-    #[doc(hidden)]
-    pub(crate) fn __placeholder_smoke_only() -> Self { Self::__PlaceholderSmokeOnly }
+    ChecksumMismatch {
+        /// Hex-encoded SHA-256 digest read from the `.sha256` sidecar file at write-time.
+        expected: String,
+        /// Hex-encoded SHA-256 digest computed over the file's actual bytes at read-time (mismatch indicates corruption / tampering).
+        computed: String,
+    },
 }
 
 /// Crate-local `Result` alias per plan Section XVII.7.

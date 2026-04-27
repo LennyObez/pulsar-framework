@@ -9,17 +9,23 @@
 --  Linked into pulsar-kernel + pulsar-audit via the C ABI declared at
 --  the bottom of this spec.
 
-pragma SPARK_Mode (On);
-pragma Pure;
+with System;
+with System.Storage_Elements; use System.Storage_Elements;
 
-package Audit_Chain_Append_Only is
+package Audit_Chain_Append_Only
+  with SPARK_Mode => On,
+       Pure
+is
 
    --  RFC 6962 Merkle root: 32-byte opaque hash.
    type Merkle_Root is array (1 .. 32) of Storage_Element;
 
    --  Audit log entry: opaque byte sequence (the canonicalised + Ed25519-
-   --  signed payload). Bounded to 64 KiB for proof tractability.
-   type Audit_Entry is array (Natural range <>) of Storage_Element;
+   --  signed payload). Bounded to 64 KiB (65 536 bytes) for GNATprove
+   --  tractability per Decision 2.54 — long entries are rejected at the
+   --  pulsar-audit boundary before they reach this verifier.
+   subtype Bounded_Entry_Length is Natural range 0 .. 65_536;
+   type Audit_Entry is array (Bounded_Entry_Length range <>) of Storage_Element;
 
    --  Verify that New_Root is the unique RFC 6962 Merkle root extending
    --  Prev_Root with Entry.

@@ -893,15 +893,29 @@ The Kubernetes Operator lives outside the Cargo workspace under `services/operat
 
 ### 4.2 pulsar-kernel (formally verified primitives)
 
-**Purpose.** Hosts the six kernel subsystems under formal verification: crypto primitives, audit HMAC chain, session state machine, router trie, middleware pipeline, DI container. Every public function carries Creusot contracts where tractable; every protocol carries a TLA+ specification in `spec/`.
+**Purpose.** Hosts the six kernel subsystems under formal verification: crypto primitives, audit HMAC chain (now Ed25519 + Merkle + RFC 6962 per ADR-0013), session state machine, router trie, middleware pipeline, DI container. Every public function carries Creusot contracts where tractable; every protocol carries a TLA+ specification in `spec/`. Cryptographic primitives are sourced from HACL\* via FFI per ADR-0009 + Decision 2.53; the SPARK 2014 capability-token + audit-chain invariants in `services/spark-invariants/` are linked via the C ABI per ADR-0010 + Decision 2.54.
 
 **Key types.** `Crypto`, `KeyId`, `Ciphertext`, `Nonce`, `AuditChain`, `AuditEntry`, `Session<S: State>`, `Router`, `Route`, `Middleware`, `Pipeline`, `Container`, `ServiceId`.
 
-**Dependencies.** `ring = "0.17"`, `subtle = "2.5"`, `zeroize = "1.8"`, `secrecy = "0.10"`, `thiserror = "2"`, `tracing = "0.1"`.
+**Dependencies.** `pulsar-crypto-hacl-bindings = "=0.0.1-alpha.0"` (HACL\* FFI per ADR-0009 — replaces direct `ring` + `subtle` from v2.2 baseline), `zeroize = "1.8"`, `secrecy = "0.10"`, `thiserror = "2"`, `tracing = "0.1"`. The legacy-compatibility AEAD primitives kept for v0.9.x migration tooling depend on `ring = "0.17"` + `subtle = "2.6"` directly via the `legacy-compat` Cargo feature (deprecated at 1.0).
 
 **Re-exported in meta.** Yes.
 
 **Status.** Planned (Phase 1 scope).
+
+### 4.2.5 pulsar-crypto-hacl-bindings (HACL\* FFI binding crate — v2.3 lock-in per Decision 2.53 + ADR-0009)
+
+**Purpose.** `*-sys`-style FFI binding crate that vendors the HACL\* C distribution under `hacl-c/` and exposes Rust FFI declarations for the formally-verified cryptographic primitives `pulsar-kernel::crypto` re-exports under safety wrappers + Creusot contracts + capability gating.
+
+**Primitives wrapped (16 total).** AEAD: AES-128-GCM, AES-256-GCM, ChaCha20-Poly1305. Key agreement: Curve25519 (X25519), P-256 (NIST). Signatures: Ed25519, ML-DSA-65, ML-DSA-87 (NIST FIPS 204). KEM: ML-KEM-768, ML-KEM-1024 (NIST FIPS 203). Hashes: SHA-2-256/384/512, SHA-3-256/384/512, BLAKE2b, BLAKE2s. KDFs: HKDF (over SHA-2 family), HMAC.
+
+**Build.** `build.rs` compiles `hacl-c/` via the `cc` crate + generates Rust FFI declarations via `bindgen`. At Phase 0 the `hacl-c/` directory is a placeholder; Sprint 1.1 (kernel crypto) lands the actual extracted C sources from the upstream HACL\* repository (vendored to ensure SLSA Level 4 reproducibility per Decision 2.57).
+
+**Dependencies.** `thiserror = "2"` (FFI-side error type). `[build-dependencies]`: `cc = "1.2"`, `bindgen = "0.71"`. `links = "hacl_pulsar"` for cargo's collision-free static-library namespacing.
+
+**Re-exported in meta.** No. Downstream consumers depend on `pulsar-kernel::crypto` (the safe surface), not on the FFI binding crate directly.
+
+**Status.** Placeholder (Phase 0 stub); implementation Sprint 1.1.
 
 ### 4.3 pulsar-http (HTTP framework on hyper)
 

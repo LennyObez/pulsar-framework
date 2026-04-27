@@ -12,20 +12,19 @@ pub enum Error {
 
     /// Blob not found.
     #[error("Azure Blob not found: {container}/{blob}")]
-    NotFound { container: String, blob: String },
+    NotFound {
+        /// Azure Blob Storage container name.
+        container: String,
+        /// Blob name within the container.
+        blob: String,
+    },
 
     /// Immutability policy violation (legal hold or time-based retention).
     #[error("Azure Blob immutability violation: {reason}")]
-    ImmutabilityViolation { reason: String },
-
-    #[doc(hidden)]
-    #[error("placeholder smoke variant")]
-    __PlaceholderSmokeOnly,
-}
-
-impl Error {
-    #[doc(hidden)]
-    pub(crate) fn __placeholder_smoke_only() -> Self { Self::__PlaceholderSmokeOnly }
+    ImmutabilityViolation {
+        /// Free-form reason the operation violated the immutability policy (e.g. `legal-hold`, `time-based-retention`, `version-level-immutability`).
+        reason: String,
+    },
 }
 
 /// Crate-local `Result` alias per plan Section XVII.7.

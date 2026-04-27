@@ -71,7 +71,7 @@ The eight v2.3 frameworks added in this expansion each get a dedicated section b
 | § 500.7 | Access privileges + capability gating | `pulsar-authz` + `pulsar-kernel::capability` | ADR-0010 |
 | § 500.8 | Application security (SDLC) | `docs/security/threat-model.md` + `pulsar-guard` sub-module suite | ADR-0011 |
 | § 500.9 | Risk assessment | `pulsar-compliance::risk` | Decision 2.52 |
-| § 500.11 | Third-party service-provider security policy | `cargo-deny` + Trusted Publisher OIDC + SLSA L3+L4 + in-toto | ADR-0006, Decision 2.57 |
+| § 500.11 | Third-party service-provider security policy | `cargo-deny` + Trusted Publisher OIDC + SLSA L3+L4 + in-toto | ADR-0006 (namespace + Trusted Publisher), ADR-0007 (status checks incl. cargo-deny), Decision 2.57 (SLSA + in-toto) |
 | § 500.12 | Multi-factor authentication | `pulsar-auth::mfa` (WebAuthn/Passkey/TOTP/SMS-as-fallback) | (Sprint 2.5 ADR) |
 | § 500.13 | Limitations on data retention | `pulsar-dataprotection::retention` (RtbF two-phase commit + retention timer) | ADR-0010 spec/rtbf.tla |
 | § 500.14 | Training + monitoring | (organisational — Pulsar produces the audit-chain evidence) | — |

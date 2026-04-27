@@ -407,42 +407,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "async-nats"
-version = "0.47.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "07d6f157065c3461096d51aacde0c326fa49f3f6e0199e204c566842cdaa5299"
-dependencies = [
- "base64 0.22.1",
- "bytes",
- "futures-util",
- "memchr",
- "nkeys",
- "nuid",
- "pin-project",
- "portable-atomic",
- "rand 0.8.6",
- "regex",
- "ring",
- "rustls-native-certs 0.8.3",
- "rustls-pki-types",
- "rustls-webpki 0.103.13",
- "serde",
- "serde_json",
- "serde_nanos",
- "serde_repr",
- "thiserror 1.0.69",
- "time",
- "tokio",
- "tokio-rustls 0.26.4",
- "tokio-stream",
- "tokio-util",
- "tokio-websockets",
- "tracing",
- "tryhard",
- "url",
-]
-
-[[package]]
 name = "async-stream"
 version = "0.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -525,6 +489,36 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c08606f8c3cbf4ce6ec8e28fb0014a2c086708fe954eaa885384a6165172e7e8"
 
 [[package]]
+name = "aws-config"
+version = "1.8.16"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "50f156acdd2cf55f5aa53ee416c4ac851cf1222694506c0b1f78c85695e9ca9d"
+dependencies = [
+ "aws-credential-types",
+ "aws-runtime",
+ "aws-sdk-sso",
+ "aws-sdk-ssooidc",
+ "aws-sdk-sts",
+ "aws-smithy-async",
+ "aws-smithy-http 0.63.6",
+ "aws-smithy-json 0.62.5",
+ "aws-smithy-runtime",
+ "aws-smithy-runtime-api",
+ "aws-smithy-types",
+ "aws-types",
+ "bytes",
+ "fastrand 2.4.1",
+ "hex",
+ "http 1.4.0",
+ "sha1",
+ "time",
+ "tokio",
+ "tracing",
+ "url",
+ "zeroize",
+]
+
+[[package]]
 name = "aws-credential-types"
 version = "1.2.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -600,7 +594,7 @@ dependencies = [
  "aws-smithy-checksums",
  "aws-smithy-eventstream",
  "aws-smithy-http 0.62.6",
- "aws-smithy-json",
+ "aws-smithy-json 0.61.9",
  "aws-smithy-runtime",
  "aws-smithy-runtime-api",
  "aws-smithy-types",
@@ -619,6 +613,79 @@ dependencies = [
  "sha2 0.10.9",
  "tracing",
  "url",
+]
+
+[[package]]
+name = "aws-sdk-sso"
+version = "1.98.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d69c77aafa20460c68b6b3213c84f6423b6e76dbf89accd3e1789a686ffd9489"
+dependencies = [
+ "aws-credential-types",
+ "aws-runtime",
+ "aws-smithy-async",
+ "aws-smithy-http 0.63.6",
+ "aws-smithy-json 0.62.5",
+ "aws-smithy-observability",
+ "aws-smithy-runtime",
+ "aws-smithy-runtime-api",
+ "aws-smithy-types",
+ "aws-types",
+ "bytes",
+ "fastrand 2.4.1",
+ "http 0.2.12",
+ "http 1.4.0",
+ "regex-lite",
+ "tracing",
+]
+
+[[package]]
+name = "aws-sdk-ssooidc"
+version = "1.100.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1c7e7b09346d5ca22a2a08267555843a6a0127fb20d8964cb6ecfb8fdb190225"
+dependencies = [
+ "aws-credential-types",
+ "aws-runtime",
+ "aws-smithy-async",
+ "aws-smithy-http 0.63.6",
+ "aws-smithy-json 0.62.5",
+ "aws-smithy-observability",
+ "aws-smithy-runtime",
+ "aws-smithy-runtime-api",
+ "aws-smithy-types",
+ "aws-types",
+ "bytes",
+ "fastrand 2.4.1",
+ "http 0.2.12",
+ "http 1.4.0",
+ "regex-lite",
+ "tracing",
+]
+
+[[package]]
+name = "aws-sdk-sts"
+version = "1.103.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c2249b81a2e73a8027c41c378463a81ec39b8510f184f2caab87de912af0f49b"
+dependencies = [
+ "aws-credential-types",
+ "aws-runtime",
+ "aws-smithy-async",
+ "aws-smithy-http 0.63.6",
+ "aws-smithy-json 0.62.5",
+ "aws-smithy-observability",
+ "aws-smithy-query",
+ "aws-smithy-runtime",
+ "aws-smithy-runtime-api",
+ "aws-smithy-types",
+ "aws-smithy-xml",
+ "aws-types",
+ "fastrand 2.4.1",
+ "http 0.2.12",
+ "http 1.4.0",
+ "regex-lite",
+ "tracing",
 ]
 
 [[package]]
@@ -774,12 +841,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "aws-smithy-json"
+version = "0.62.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9648b0bb82a2eedd844052c6ad2a1a822d1f8e3adee5fbf668366717e428856a"
+dependencies = [
+ "aws-smithy-types",
+]
+
+[[package]]
 name = "aws-smithy-observability"
 version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a06c2315d173edbf1920da8ba3a7189695827002e4c0fc961973ab1c54abca9c"
 dependencies = [
  "aws-smithy-runtime-api",
+]
+
+[[package]]
+name = "aws-smithy-query"
+version = "0.60.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1a56d79744fb3edb5d722ef79d86081e121d3b9422cb209eb03aea6aa4f21ebd"
+dependencies = [
+ "aws-smithy-types",
+ "urlencoding",
 ]
 
 [[package]]
@@ -2315,7 +2401,6 @@ dependencies = [
  "ed25519",
  "serde",
  "sha2 0.10.9",
- "signature 2.2.0",
  "subtle",
  "zeroize",
 ]
@@ -2439,22 +2524,6 @@ checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
  "windows-sys 0.61.2",
-]
-
-[[package]]
-name = "etcd-client"
-version = "0.14.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fc0452bcc559431b16f472b7ab86e2f9ccd5f3c2da3795afbd6b773665e047fe"
-dependencies = [
- "http 1.4.0",
- "prost 0.13.5",
- "tokio",
- "tokio-stream",
- "tonic 0.12.3",
- "tonic-build 0.12.3",
- "tower 0.4.13",
- "tower-service",
 ]
 
 [[package]]
@@ -3430,7 +3499,7 @@ dependencies = [
  "tokio",
  "tokio-rustls 0.26.4",
  "tower-service",
- "webpki-roots 1.0.7",
+ "webpki-roots",
 ]
 
 [[package]]
@@ -4236,19 +4305,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "k8s-openapi"
-version = "0.24.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2c75b990324f09bef15e791606b7b7a296d02fc88a344f6eba9390970a870ad5"
-dependencies = [
- "base64 0.22.1",
- "chrono",
- "serde",
- "serde-value",
- "serde_json",
-]
-
-[[package]]
 name = "lazy_static"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4321,7 +4377,7 @@ dependencies = [
  "tokio",
  "tokio-rustls 0.26.4",
  "url",
- "webpki-roots 1.0.7",
+ "webpki-roots",
 ]
 
 [[package]]
@@ -4371,18 +4427,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2e99fb7a497b1e3339bc746195567ed8d3e24945ecd636e3619d20b9de9e9149"
 dependencies = [
  "cc",
- "pkg-config",
- "vcpkg",
-]
-
-[[package]]
-name = "libz-sys"
-version = "1.1.28"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fc3a226e576f50782b3305c5ccf458698f92798987f551c6a02efe8276721e22"
-dependencies = [
- "cc",
- "libc",
  "pkg-config",
  "vcpkg",
 ]
@@ -4766,21 +4810,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "nkeys"
-version = "0.4.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "879011babc47a1c7fdf5a935ae3cfe94f34645ca0cac1c7f6424b36fc743d1bf"
-dependencies = [
- "data-encoding",
- "ed25519",
- "ed25519-dalek",
- "getrandom 0.2.17",
- "log",
- "rand 0.8.6",
- "signatory",
-]
-
-[[package]]
 name = "nom"
 version = "7.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4824,15 +4853,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7957b9740744892f114936ab4a57b3f487491bbeafaf8083688b16841a4240e5"
 dependencies = [
  "windows-sys 0.61.2",
-]
-
-[[package]]
-name = "nuid"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fc895af95856f929163a0aa20c26a78d26bfdc839f51b9d5aa7a5b79e52b7e83"
-dependencies = [
- "rand 0.8.6",
 ]
 
 [[package]]
@@ -4931,28 +4951,6 @@ checksum = "91df4bbde75afed763b708b7eee1e8e7651e02d97f6d5dd763e89367e957b23b"
 dependencies = [
  "hermit-abi",
  "libc",
-]
-
-[[package]]
-name = "num_enum"
-version = "0.7.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5d0bca838442ec211fa11de3a8b0e0e8f3a4522575b5c4c06ed722e005036f26"
-dependencies = [
- "num_enum_derive",
- "rustversion",
-]
-
-[[package]]
-name = "num_enum_derive"
-version = "0.7.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "680998035259dcfcafe653688bf2aa6d3e2dc05e98be6ab46afb089dc84f1df8"
-dependencies = [
- "proc-macro-crate",
- "proc-macro2",
- "quote",
- "syn 2.0.117",
 ]
 
 [[package]]
@@ -6420,6 +6418,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "pulsar-broadcasting"
+version = "0.0.1-alpha.0"
+dependencies = [
+ "pulsar-http",
+ "pulsar-kernel",
+ "pulsar-sse",
+ "pulsar-websocket",
+ "redis",
+ "serde",
+ "thiserror 2.0.18",
+ "tokio",
+]
+
+[[package]]
 name = "pulsar-cache"
 version = "0.0.1-alpha.0"
 dependencies = [
@@ -6457,14 +6469,46 @@ dependencies = [
 ]
 
 [[package]]
-name = "pulsar-cluster"
+name = "pulsar-cloud-aws"
 version = "0.0.1-alpha.0"
 dependencies = [
- "etcd-client",
- "hickory-resolver",
- "k8s-openapi",
- "pulsar-http",
- "pulsar-observability",
+ "aws-config",
+ "aws-sdk-s3",
+ "pulsar-cloud",
+ "pulsar-kernel",
+ "thiserror 2.0.18",
+ "tokio",
+]
+
+[[package]]
+name = "pulsar-cloud-azure"
+version = "0.0.1-alpha.0"
+dependencies = [
+ "azure_core",
+ "pulsar-cloud",
+ "pulsar-kernel",
+ "thiserror 2.0.18",
+ "tokio",
+]
+
+[[package]]
+name = "pulsar-cloud-gcp"
+version = "0.0.1-alpha.0"
+dependencies = [
+ "google-cloud-storage",
+ "pulsar-cloud",
+ "pulsar-kernel",
+ "thiserror 2.0.18",
+ "tokio",
+]
+
+[[package]]
+name = "pulsar-cloud-oci"
+version = "0.0.1-alpha.0"
+dependencies = [
+ "pulsar-cloud",
+ "pulsar-kernel",
+ "reqwest",
  "thiserror 2.0.18",
  "tokio",
 ]
@@ -6476,8 +6520,8 @@ dependencies = [
  "chrono",
  "pulsar-engine",
  "pulsar-feature-flag",
- "pulsar-orchestration",
  "pulsar-search",
+ "pulsar-workflow",
  "serde",
  "thiserror 2.0.18",
 ]
@@ -6523,8 +6567,29 @@ dependencies = [
  "pulsar-authz",
  "pulsar-compliance",
  "pulsar-http",
- "pulsar-realtime",
+ "pulsar-websocket",
  "serde",
+ "thiserror 2.0.18",
+]
+
+[[package]]
+name = "pulsar-crypto-hacl-bindings"
+version = "0.0.1-alpha.0"
+dependencies = [
+ "bindgen",
+ "cc",
+ "thiserror 2.0.18",
+]
+
+[[package]]
+name = "pulsar-csrf"
+version = "0.0.1-alpha.0"
+dependencies = [
+ "pulsar-http",
+ "pulsar-kernel",
+ "ring",
+ "serde",
+ "subtle",
  "thiserror 2.0.18",
 ]
 
@@ -6546,8 +6611,8 @@ name = "pulsar-deploy"
 version = "0.0.1-alpha.0"
 dependencies = [
  "pulsar-audit",
- "pulsar-cluster",
  "pulsar-feature-flag",
+ "pulsar-supervisor",
  "serde",
  "thiserror 2.0.18",
 ]
@@ -6589,7 +6654,7 @@ name = "pulsar-form"
 version = "0.0.1-alpha.0"
 dependencies = [
  "infer 0.16.0",
- "pulsar-guard",
+ "pulsar-csrf",
  "serde",
  "thiserror 2.0.18",
  "validator",
@@ -6616,16 +6681,22 @@ dependencies = [
  "pulsar-authz",
  "pulsar-compliance",
  "pulsar-consent",
+ "pulsar-csrf",
  "pulsar-dataprotection",
  "pulsar-engine",
- "pulsar-guard",
  "pulsar-http",
  "pulsar-identity-standards",
+ "pulsar-incident",
  "pulsar-kernel",
  "pulsar-observability",
- "pulsar-orchestration",
  "pulsar-orm",
+ "pulsar-ratelimit",
+ "pulsar-resilience",
+ "pulsar-saga",
  "pulsar-search",
+ "pulsar-sri",
+ "pulsar-ssrf-guard",
+ "pulsar-workflow",
 ]
 
 [[package]]
@@ -6634,7 +6705,7 @@ version = "0.0.1-alpha.0"
 dependencies = [
  "async-graphql",
  "pulsar-api",
- "pulsar-realtime",
+ "pulsar-websocket",
  "serde",
  "thiserror 2.0.18",
 ]
@@ -6646,25 +6717,7 @@ dependencies = [
  "prost 0.13.5",
  "thiserror 2.0.18",
  "tonic 0.13.1",
- "tonic-build 0.13.1",
-]
-
-[[package]]
-name = "pulsar-guard"
-version = "0.0.1-alpha.0"
-dependencies = [
- "pulsar-audit",
- "pulsar-engine",
- "pulsar-http",
- "pulsar-kernel",
- "redis",
- "reqwest",
- "ring",
- "serde",
- "subtle",
- "thiserror 2.0.18",
- "tokio",
- "tower 0.5.3",
+ "tonic-build",
 ]
 
 [[package]]
@@ -6722,6 +6775,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "pulsar-incident"
+version = "0.0.1-alpha.0"
+dependencies = [
+ "pulsar-audit",
+ "pulsar-kernel",
+ "reqwest",
+ "serde",
+ "thiserror 2.0.18",
+ "tokio",
+]
+
+[[package]]
 name = "pulsar-kernel"
 version = "0.0.1-alpha.0"
 dependencies = [
@@ -6737,8 +6802,8 @@ dependencies = [
 name = "pulsar-live"
 version = "0.0.1-alpha.0"
 dependencies = [
+ "pulsar-broadcasting",
  "pulsar-engine",
- "pulsar-realtime",
  "serde",
  "serde_json",
  "thiserror 2.0.18",
@@ -6796,18 +6861,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pulsar-orchestration"
-version = "0.0.1-alpha.0"
-dependencies = [
- "pulsar-audit",
- "pulsar-orm",
- "pulsar-realtime",
- "pulsar-scheduler",
- "serde",
- "thiserror 2.0.18",
-]
-
-[[package]]
 name = "pulsar-orm"
 version = "0.0.1-alpha.0"
 dependencies = [
@@ -6822,6 +6875,50 @@ dependencies = [
  "syn 2.0.117",
  "thiserror 2.0.18",
  "uuid",
+]
+
+[[package]]
+name = "pulsar-orm-clickhouse"
+version = "0.0.1-alpha.0"
+dependencies = [
+ "clickhouse",
+ "pulsar-kernel",
+ "pulsar-orm",
+ "thiserror 2.0.18",
+ "tokio",
+]
+
+[[package]]
+name = "pulsar-orm-mysql"
+version = "0.0.1-alpha.0"
+dependencies = [
+ "pulsar-kernel",
+ "pulsar-orm",
+ "sqlx",
+ "thiserror 2.0.18",
+ "tokio",
+]
+
+[[package]]
+name = "pulsar-orm-postgres"
+version = "0.0.1-alpha.0"
+dependencies = [
+ "pulsar-kernel",
+ "pulsar-orm",
+ "sqlx",
+ "thiserror 2.0.18",
+ "tokio",
+]
+
+[[package]]
+name = "pulsar-orm-sqlite"
+version = "0.0.1-alpha.0"
+dependencies = [
+ "pulsar-kernel",
+ "pulsar-orm",
+ "sqlx",
+ "thiserror 2.0.18",
+ "tokio",
 ]
 
 [[package]]
@@ -6858,18 +6955,38 @@ dependencies = [
 ]
 
 [[package]]
-name = "pulsar-realtime"
+name = "pulsar-ratelimit"
 version = "0.0.1-alpha.0"
 dependencies = [
- "async-nats",
  "pulsar-http",
  "pulsar-kernel",
- "rdkafka",
  "redis",
  "serde",
  "thiserror 2.0.18",
  "tokio",
- "tokio-tungstenite",
+]
+
+[[package]]
+name = "pulsar-resilience"
+version = "0.0.1-alpha.0"
+dependencies = [
+ "pulsar-kernel",
+ "serde",
+ "thiserror 2.0.18",
+ "tokio",
+ "tower 0.5.3",
+]
+
+[[package]]
+name = "pulsar-saga"
+version = "0.0.1-alpha.0"
+dependencies = [
+ "pulsar-audit",
+ "pulsar-kernel",
+ "pulsar-workflow",
+ "serde",
+ "thiserror 2.0.18",
+ "tokio",
 ]
 
 [[package]]
@@ -6895,12 +7012,100 @@ dependencies = [
 ]
 
 [[package]]
+name = "pulsar-service-discovery"
+version = "0.0.1-alpha.0"
+dependencies = [
+ "hickory-resolver",
+ "pulsar-kernel",
+ "reqwest",
+ "serde",
+ "thiserror 2.0.18",
+ "tokio",
+]
+
+[[package]]
+name = "pulsar-sri"
+version = "0.0.1-alpha.0"
+dependencies = [
+ "pulsar-engine",
+ "pulsar-kernel",
+ "ring",
+ "serde",
+ "thiserror 2.0.18",
+]
+
+[[package]]
+name = "pulsar-sse"
+version = "0.0.1-alpha.0"
+dependencies = [
+ "pulsar-http",
+ "pulsar-kernel",
+ "serde",
+ "thiserror 2.0.18",
+ "tokio",
+]
+
+[[package]]
+name = "pulsar-ssrf-guard"
+version = "0.0.1-alpha.0"
+dependencies = [
+ "hickory-resolver",
+ "pulsar-kernel",
+ "reqwest",
+ "serde",
+ "thiserror 2.0.18",
+]
+
+[[package]]
 name = "pulsar-storage"
 version = "0.0.1-alpha.0"
 dependencies = [
  "bytes",
  "object_store",
  "pulsar-kernel",
+ "thiserror 2.0.18",
+ "tokio",
+]
+
+[[package]]
+name = "pulsar-storage-azure"
+version = "0.0.1-alpha.0"
+dependencies = [
+ "azure_core",
+ "pulsar-kernel",
+ "pulsar-storage",
+ "thiserror 2.0.18",
+ "tokio",
+]
+
+[[package]]
+name = "pulsar-storage-fs"
+version = "0.0.1-alpha.0"
+dependencies = [
+ "pulsar-kernel",
+ "pulsar-storage",
+ "thiserror 2.0.18",
+ "tokio",
+]
+
+[[package]]
+name = "pulsar-storage-gcs"
+version = "0.0.1-alpha.0"
+dependencies = [
+ "google-cloud-storage",
+ "pulsar-kernel",
+ "pulsar-storage",
+ "thiserror 2.0.18",
+ "tokio",
+]
+
+[[package]]
+name = "pulsar-storage-s3"
+version = "0.0.1-alpha.0"
+dependencies = [
+ "aws-sdk-s3",
+ "pulsar-kernel",
+ "pulsar-storage",
  "thiserror 2.0.18",
  "tokio",
 ]
@@ -6917,12 +7122,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "pulsar-supervisor"
+version = "0.0.1-alpha.0"
+dependencies = [
+ "pulsar-kernel",
+ "serde",
+ "thiserror 2.0.18",
+ "tokio",
+]
+
+[[package]]
 name = "pulsar-tenancy"
 version = "0.0.1-alpha.0"
 dependencies = [
  "pulsar-audit",
  "pulsar-cache",
- "pulsar-guard",
+ "pulsar-csrf",
  "pulsar-kernel",
  "pulsar-orm",
  "serde",
@@ -6962,6 +7177,40 @@ dependencies = [
  "ring",
  "serde",
  "thiserror 2.0.18",
+]
+
+[[package]]
+name = "pulsar-websocket"
+version = "0.0.1-alpha.0"
+dependencies = [
+ "pulsar-http",
+ "pulsar-kernel",
+ "serde",
+ "thiserror 2.0.18",
+ "tokio",
+ "tokio-tungstenite",
+]
+
+[[package]]
+name = "pulsar-webtransport"
+version = "0.0.1-alpha.0"
+dependencies = [
+ "pulsar-http",
+ "pulsar-kernel",
+ "serde",
+ "thiserror 2.0.18",
+ "tokio",
+]
+
+[[package]]
+name = "pulsar-workflow"
+version = "0.0.1-alpha.0"
+dependencies = [
+ "pulsar-audit",
+ "pulsar-kernel",
+ "serde",
+ "thiserror 2.0.18",
+ "tokio",
 ]
 
 [[package]]
@@ -7287,36 +7536,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "rdkafka"
-version = "0.39.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d7956f9ac12b5712e50372d9749a3102f4810a8d42481c5eae3748d36d585bcf"
-dependencies = [
- "futures-channel",
- "futures-util",
- "libc",
- "log",
- "rdkafka-sys",
- "serde",
- "serde_derive",
- "serde_json",
- "slab",
- "tokio",
-]
-
-[[package]]
-name = "rdkafka-sys"
-version = "4.10.0+2.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e234cf318915c1059d4921ef7f75616b5219b10b46e9f3a511a15eb4b56a3f77"
-dependencies = [
- "libc",
- "libz-sys",
- "num_enum",
- "pkg-config",
-]
-
-[[package]]
 name = "recursive"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7502,7 +7721,7 @@ dependencies = [
  "wasm-bindgen-futures",
  "wasm-streams",
  "web-sys",
- "webpki-roots 1.0.7",
+ "webpki-roots",
 ]
 
 [[package]]
@@ -8093,15 +8312,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "serde_nanos"
-version = "0.1.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a93142f0367a4cc53ae0fead1bcda39e85beccfad3dcd717656cacab94b12985"
-dependencies = [
- "serde",
-]
-
-[[package]]
 name = "serde_path_to_error"
 version = "0.1.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8130,17 +8340,6 @@ dependencies = [
  "percent-encoding",
  "serde",
  "thiserror 1.0.69",
-]
-
-[[package]]
-name = "serde_repr"
-version = "0.1.20"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "175ee3e80ae9982737ca543e96133087cbd9a485eecc3bc4de9c1a37b47ea59c"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.117",
 ]
 
 [[package]]
@@ -8257,18 +8456,6 @@ checksum = "c4db69cba1110affc0e9f7bcd48bbf87b3f4fc7c61fc9155afd4c469eb3d6c1b"
 dependencies = [
  "errno",
  "libc",
-]
-
-[[package]]
-name = "signatory"
-version = "0.27.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c1e303f8205714074f6068773f0e29527e0453937fe837c9717d066635b65f31"
-dependencies = [
- "pkcs8 0.10.2",
- "rand_core 0.6.4",
- "signature 2.2.0",
- "zeroize",
 ]
 
 [[package]]
@@ -9238,27 +9425,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "tokio-websockets"
-version = "0.10.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f591660438b3038dd04d16c938271c79e7e06260ad2ea2885a4861bfb238605d"
-dependencies = [
- "base64 0.22.1",
- "bytes",
- "futures-core",
- "futures-sink",
- "http 1.4.0",
- "httparse",
- "rand 0.8.6",
- "ring",
- "rustls-pki-types",
- "tokio",
- "tokio-rustls 0.26.4",
- "tokio-util",
- "webpki-roots 0.26.11",
-]
-
-[[package]]
 name = "toml"
 version = "0.8.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -9411,20 +9577,6 @@ dependencies = [
  "tower-layer",
  "tower-service",
  "tracing",
-]
-
-[[package]]
-name = "tonic-build"
-version = "0.12.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9557ce109ea773b399c9b9e5dca39294110b74f1f342cb347a80d1fce8c26a11"
-dependencies = [
- "prettyplease",
- "proc-macro2",
- "prost-build",
- "prost-types",
- "quote",
- "syn 2.0.117",
 ]
 
 [[package]]
@@ -9644,16 +9796,6 @@ name = "try-lock"
 version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e421abadd41a4225275504ea4d6566923418b7f05506fbc9c0fe86ba7396114b"
-
-[[package]]
-name = "tryhard"
-version = "0.5.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9fe58ebd5edd976e0fe0f8a14d2a04b7c81ef153ea9a54eebc42e67c2c23b4e5"
-dependencies = [
- "pin-project-lite",
- "tokio",
-]
 
 [[package]]
 name = "tungstenite"
@@ -10213,15 +10355,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f31141ce3fc3e300ae89b78c0dd67f9708061d1d2eda54b8209346fd6be9a92c"
 dependencies = [
  "rustls-pki-types",
-]
-
-[[package]]
-name = "webpki-roots"
-version = "0.26.11"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "521bc38abb08001b01866da9f51eb7c5d647a19260e00054a8c7fd5f9e57f7a9"
-dependencies = [
- "webpki-roots 1.0.7",
 ]
 
 [[package]]

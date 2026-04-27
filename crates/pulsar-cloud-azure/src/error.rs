@@ -16,16 +16,10 @@ pub enum Error {
 
     /// Azure RBAC permission denied.
     #[error("Azure permission denied: {action}")]
-    PermissionDenied { action: String },
-
-    #[doc(hidden)]
-    #[error("placeholder smoke variant")]
-    __PlaceholderSmokeOnly,
-}
-
-impl Error {
-    #[doc(hidden)]
-    pub(crate) fn __placeholder_smoke_only() -> Self { Self::__PlaceholderSmokeOnly }
+    PermissionDenied {
+        /// Azure RBAC action the caller attempted (e.g. `Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read`, `Microsoft.KeyVault/vaults/secrets/getSecret/action`).
+        action: String,
+    },
 }
 
 /// Crate-local `Result` alias per plan Section XVII.7.

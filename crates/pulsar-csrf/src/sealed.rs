@@ -9,4 +9,5 @@
 /// Crate-private sealing trait per the standard sealed-trait pattern
 /// (RFC 0445). Public traits declare `: sealed::Sealed` in their where
 /// clause; downstream `impl` blocks fail because `Sealed` is unreachable.
+#[allow(dead_code)]  // placeholder until per-sprint public traits use Sealed
 pub(crate) trait Sealed {}

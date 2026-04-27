@@ -13,6 +13,13 @@
 fn main() {
     println!("cargo:rerun-if-changed=hacl-c/");
 
+    // Declare the `hacl_placeholder` cfg so Rust 1.80+ does not emit the
+    // `unexpected_cfgs` lint. Required because the workspace lints policy
+    // promotes warnings to errors via RUSTFLAGS="-D warnings". Without
+    // this declaration `cargo check` would fail at the workspace lint
+    // gate even when the cfg is never set.
+    println!("cargo::rustc-check-cfg=cfg(hacl_placeholder)");
+
     // Detect whether HACL* C sources are present.
     let hacl_c_dir = std::path::Path::new("hacl-c");
     let has_sources = hacl_c_dir

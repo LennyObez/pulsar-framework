@@ -8,15 +8,26 @@ use thiserror::Error;
 pub enum Error {
     /// Outbound webhook to an alerting backend failed (network, 5xx, timeout).
     #[error("escalation backend unreachable: {backend}")]
-    BackendUnreachable { backend: String },
+    BackendUnreachable {
+        /// Identifier of the failing backend (e.g. `pagerduty`, `opsgenie`, `victorops`, `slack`).
+        backend: String,
+    },
 
     /// Backend returned a 4xx (auth failure, malformed payload, rate-limit).
     #[error("escalation backend rejected payload: {backend} (HTTP {status})")]
-    BackendRejected { backend: String, status: u16 },
+    BackendRejected {
+        /// Identifier of the rejecting backend.
+        backend: String,
+        /// HTTP status code returned by the backend (typically 4xx).
+        status: u16,
+    },
 
     /// Capability token does not authorise the requested severity level.
     #[error("caller lacks capability for severity {severity}")]
-    Forbidden { severity: u8 },
+    Forbidden {
+        /// Numeric severity level the caller attempted (1 = Sev1 paging, 4 = Sev4 informational).
+        severity: u8,
+    },
 }
 
 /// Crate-local `Result` alias per plan Section XVII.7.

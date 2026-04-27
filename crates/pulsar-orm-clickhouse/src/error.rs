@@ -16,16 +16,12 @@ pub enum Error {
 
     /// Bulk insert failed mid-batch.
     #[error("clickhouse bulk insert failed at row {row}: {reason}")]
-    BulkInsert { row: usize, reason: String },
-
-    #[doc(hidden)]
-    #[error("placeholder smoke variant")]
-    __PlaceholderSmokeOnly,
-}
-
-impl Error {
-    #[doc(hidden)]
-    pub(crate) fn __placeholder_smoke_only() -> Self { Self::__PlaceholderSmokeOnly }
+    BulkInsert {
+        /// Zero-based row index within the bulk-insert batch where the failure occurred.
+        row: usize,
+        /// Free-form reason returned by the ClickHouse server (typically a constraint violation or column-type mismatch).
+        reason: String,
+    },
 }
 
 /// Crate-local `Result` alias per plan Section XVII.7.

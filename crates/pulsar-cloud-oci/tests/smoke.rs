@@ -14,7 +14,7 @@ fn version_matches_cargo_pkg_version() {
 
 #[test]
 fn result_alias_resolves() {
-    fn _signature() -> Result<()> { Err(Error::__placeholder_smoke_only()) }
+    fn _signature() -> Result<()> { Err(Error::Signature) }
     let _ = _signature();
 }
 

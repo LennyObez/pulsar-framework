@@ -16,16 +16,10 @@ pub enum Error {
 
     /// GCP IAM permission denied.
     #[error("GCP permission denied: {action}")]
-    PermissionDenied { action: String },
-
-    #[doc(hidden)]
-    #[error("placeholder smoke variant")]
-    __PlaceholderSmokeOnly,
-}
-
-impl Error {
-    #[doc(hidden)]
-    pub(crate) fn __placeholder_smoke_only() -> Self { Self::__PlaceholderSmokeOnly }
+    PermissionDenied {
+        /// GCP IAM permission the caller attempted (e.g. `storage.objects.get`, `cloudkms.cryptoKeyVersions.useToDecrypt`).
+        action: String,
+    },
 }
 
 /// Crate-local `Result` alias per plan Section XVII.7.

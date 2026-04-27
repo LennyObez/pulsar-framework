@@ -17,15 +17,6 @@ pub enum Error {
     /// OCI signature v1 generation failed (private-key parse, hash mismatch).
     #[error("OCI request signature failed")]
     Signature,
-
-    #[doc(hidden)]
-    #[error("placeholder smoke variant")]
-    __PlaceholderSmokeOnly,
-}
-
-impl Error {
-    #[doc(hidden)]
-    pub(crate) fn __placeholder_smoke_only() -> Self { Self::__PlaceholderSmokeOnly }
 }
 
 /// Crate-local `Result` alias per plan Section XVII.7.

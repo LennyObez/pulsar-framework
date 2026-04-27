@@ -4,4 +4,5 @@
 //! through the macro-generated path (which carries the lifecycle invariant
 //! `spec/websocket.tla` proves).
 
+#[allow(dead_code)]  // placeholder until per-sprint public traits use Sealed
 pub(crate) trait Sealed {}

@@ -9,10 +9,13 @@
 --  this spec (`pragma Export`). Sprint 1.2 (kernel capability sprint)
 --  consumes the proven verifier from Rust.
 
-pragma SPARK_Mode (On);
-pragma Pure;
+with System;
+with System.Storage_Elements; use System.Storage_Elements;
 
-package Capability_Unforgeability is
+package Capability_Unforgeability
+  with SPARK_Mode => On,
+       Pure
+is
 
    --  Capability token: opaque 32-byte opaque blob (HMAC-tagged outside
    --  this module). Treated as a value type for proof purposes.

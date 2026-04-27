@@ -4,9 +4,12 @@
 --  a placeholder for Sprint 1.2 (audit + capability sprint). At Phase 0
 --  the FFI symbol exists but always returns "verification declined".
 
-pragma SPARK_Mode (On);
+with System;
+with System.Storage_Elements; use System.Storage_Elements;
 
-package body Audit_Chain_Append_Only is
+package body Audit_Chain_Append_Only
+  with SPARK_Mode => On
+is
 
    function Verify_Append
      (Prev_Root : Merkle_Root;

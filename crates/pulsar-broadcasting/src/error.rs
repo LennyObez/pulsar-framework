@@ -12,7 +12,10 @@ pub enum Error {
 
     /// Subscribe capability check failed.
     #[error("subscribe capability rejected for channel: {channel}")]
-    SubscribeRejected { channel: String },
+    SubscribeRejected {
+        /// Channel name the caller attempted to subscribe to (e.g. `tenant-42:notifications`).
+        channel: String,
+    },
 
     /// Channel name does not match the configured naming convention (e.g. tenant-prefix).
     #[error("invalid channel name: {0}")]

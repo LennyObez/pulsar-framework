@@ -6,9 +6,12 @@
 --  but the proven implementation lands at Sprint 1.2 along with the
 --  kernel capability table.
 
-pragma SPARK_Mode (On);
+with System;
+with System.Storage_Elements; use System.Storage_Elements;
 
-package body Capability_Unforgeability is
+package body Capability_Unforgeability
+  with SPARK_Mode => On
+is
 
    --  Ghost membership predicate. Refines to "Tok is in Set's bytes" at
    --  Sprint 1.2; at Phase 0 unspecified body for the abstract type.
