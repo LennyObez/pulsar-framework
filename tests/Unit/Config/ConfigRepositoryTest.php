@@ -148,4 +148,35 @@ final class ConfigRepositoryTest extends TestCase
         self::assertSame($config, $repo->get(AppConfig::class));
         self::assertSame($repo->get(AppConfig::class), $repo->get(AppConfig::class));
     }
+
+    /**
+     * F26.2 / F26.18: ConfigRepository must never grow magic
+     * methods that participate in serialization or destruction.
+     * `__wakeup` / `__unserialize` would re-enable the
+     * deserialization-as-instantiation gadget closed in F26.2;
+     * `__destruct` would let an attacker trigger arbitrary code
+     * by deserializing a finalized payload. The list is
+     * intentionally narrow — `__construct`, `__toString` etc.
+     * remain allowed because they cannot be reached from a
+     * crafted serialized payload alone.
+     *
+     * This is a regression test, not a feature: it pins the
+     * absence so a future PR adding any of these methods fails
+     * CI before reopening the F26.2 vulnerability.
+     */
+    #[Test]
+    public function repositoryHasNoSerializationMagicMethods(): void
+    {
+        $reflection = new \ReflectionClass(ConfigRepository::class);
+
+        foreach (['__wakeup', '__unserialize', '__serialize', '__destruct'] as $method) {
+            self::assertFalse(
+                $reflection->hasMethod($method),
+                sprintf(
+                    'ConfigRepository must not declare %s — it would re-open F26.2 (deserialization as instantiation).',
+                    $method,
+                ),
+            );
+        }
+    }
 }
