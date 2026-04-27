@@ -1,9 +1,8 @@
 <?php
-/**
- * @var \Pulsar\Extension\HealthStatus\Domain\HealthSnapshot $snapshot
- */
-
+use Pulsar\Extension\HealthStatus\Domain\HealthSnapshot;
 use Pulsar\Resilience\HealthCheck\HealthStatus;
+
+assert($snapshot instanceof HealthSnapshot);
 
 $statusClass = match ($snapshot->overallStatus) {
     HealthStatus::Healthy => 'healthy',

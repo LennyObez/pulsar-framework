@@ -1,10 +1,6 @@
 <?php
-/**
- * @var string $title Page title
- * @var string $content Main content block
- */
-$typedTitle = $title ?? 'System Status';
-$typedContent = $content ?? '';
+$typedTitle = isset($title) && is_string($title) ? $title : 'System Status';
+$typedContent = isset($content) && is_string($content) ? $content : '';
 $currentYear = (int) date('Y');
 $timestamp = date('Y-m-d\TH:i:sP');
 $displayTime = date('M j, Y H:i:s T');
