@@ -109,18 +109,21 @@ final readonly class DbOrderRepository implements OrderRepositoryInterface
         /** @var array<string, mixed> $bindings */
         $bindings = [];
 
+        /** @var mixed $rawStatus */
         $rawStatus = $filters['status'] ?? null;
         if (is_string($rawStatus)) {
             $sql .= ' AND status = :status';
             $bindings['status'] = $rawStatus;
         }
 
+        /** @var mixed $rawCustomerId */
         $rawCustomerId = $filters['customerId'] ?? null;
         if (is_string($rawCustomerId)) {
             $sql .= ' AND customer_id = :customer_id';
             $bindings['customer_id'] = $rawCustomerId;
         }
 
+        /** @var mixed $rawTenantId */
         $rawTenantId = $filters['tenantId'] ?? null;
         if (is_string($rawTenantId)) {
             $sql .= ' AND tenant_id = :tenant_id';
@@ -130,12 +133,14 @@ final readonly class DbOrderRepository implements OrderRepositoryInterface
             $bindings['tenant_id'] = $this->tenantId;
         }
 
+        /** @var mixed $rawDateFrom */
         $rawDateFrom = $filters['dateFrom'] ?? null;
         if (is_string($rawDateFrom)) {
             $sql .= ' AND created_at >= :date_from';
             $bindings['date_from'] = $rawDateFrom;
         }
 
+        /** @var mixed $rawDateTo */
         $rawDateTo = $filters['dateTo'] ?? null;
         if (is_string($rawDateTo)) {
             $sql .= ' AND created_at <= :date_to';
