@@ -46,7 +46,9 @@ fn main() {
     if c_sources.is_empty() {
         // Phase 0 placeholder: HACL* C distribution lands at Sprint 1.1.
         println!("cargo:rustc-cfg=hacl_placeholder");
-        println!("cargo:warning=pulsar-crypto-hacl-bindings: hacl-c/src/ has no .c files (Phase 0 placeholder); FFI symbols will be unavailable until Sprint 1.1.");
+        println!(
+            "cargo:warning=pulsar-crypto-hacl-bindings: hacl-c/src/ has no .c files (Phase 0 placeholder); FFI symbols will be unavailable until Sprint 1.1."
+        );
         return;
     }
 

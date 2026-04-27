@@ -1,11 +1,11 @@
-# ADR-0009: HACL\* via FFI for cryptographic primitives in `pulsar-kernel`
+# ADR-0009: HACL\* via FFI for the classical cryptographic-primitive surface in `pulsar-kernel`
 
-* **Status:** Accepted
-* **Date:** 2026-04-27
+* **Status:** Accepted (amended 2026-04-27 per Decision 2.60 — initial draft incorrectly assumed HACL\* upstream shipped NIST ML-KEM/ML-DSA; the PQC primitives are sourced from libcrux per Decision 2.60)
+* **Date:** 2026-04-27 (amended 2026-04-27)
 * **Driver:** Lenny Obez
-* **Related Section II decision(s):** Decision 2.53 (Kernel cryptographic primitives: HACL\* via FFI), Decision 2.20 (Formal verification: Creusot + TLA+ + HACL\* + SPARK 2014), Decision 2.14 (Crypto primitives: ring + subtle + zeroize + secrecy — superseded by 2.53)
-* **Sprint:** Sprint 0.9-bis (v2.3 reconciliation closure); implementation Sprint 1.1 (kernel crypto)
-* **Supersedes:** none (extends Decision 2.14)
+* **Related Section II decision(s):** Decision 2.53 (Kernel classical cryptographic primitives: HACL\* via FFI), Decision 2.60 (Multi-source formally-verified crypto stack — HACL\* classical + libcrux PQC + RustCrypto Argon2id), Decision 2.58 (Hybrid PQC from Sprint 1.1), Decision 2.20 (Formal verification: Creusot + TLA+ + HACL\* + SPARK 2014), Decision 2.14 (Crypto primitives: ring + subtle + zeroize + secrecy — superseded by 2.53)
+* **Sprint:** Sprint 0.9-bis (v2.3 reconciliation closure); Sprint 1.1.0 (multi-source amendment); implementation Sprint 1.1 (kernel crypto)
+* **Supersedes:** none (extends Decision 2.14; jointly with Decision 2.60 supersedes the single-source HACL\* assumption from the initial v2.3 draft)
 
 ## Context
 
@@ -17,28 +17,28 @@ In 2026 only one widely-deployed cryptographic library ships machine-verified pr
 
 ## Decision
 
-The **cryptographic primitives in `pulsar-kernel` are sourced from HACL\*** via a `*-sys`-style FFI binding crate `pulsar-crypto-hacl-bindings` introduced in v2.3 per Decision 2.51. The Rust-side `pulsar-kernel::crypto` module re-exports the primitive API, layered with sealed-trait safety wrappers + Creusot contracts on the lifecycle invariants + capability-token gating on the public surface.
+The **classical cryptographic primitives in `pulsar-kernel`** are sourced from HACL\* via a `*-sys`-style FFI binding crate `pulsar-crypto-hacl-bindings` introduced in v2.3 per Decision 2.51. The Rust-side `pulsar-kernel::crypto` module re-exports the primitive API, layered with sealed-trait safety wrappers + Creusot contracts on the lifecycle invariants + capability-token gating on the public surface. The four NIST PQC primitives (ML-KEM-768/1024, ML-DSA-65/87) are sourced from libcrux Rust-native crates per Decision 2.60 because HACL\* upstream as of 2026Q2 does not ship them — the same Cryspen / hax / F\* verification provenance is preserved without single-source dependency.
 
-Primitives sourced from HACL\* (16 total, per Section XII success metric):
+Primitives sourced from HACL\* (12 — classical surface):
 
-| Family | Primitive | NIST FIPS | HACL\* coverage |
-|--------|-----------|-----------|------------------|
+| Family | Primitive | NIST FIPS | HACL\* upstream coverage |
+|--------|-----------|-----------|---------------------------|
 | AEAD | AES-128-GCM, AES-256-GCM | FIPS 197 + SP 800-38D | yes |
 | AEAD | ChaCha20-Poly1305 | RFC 8439 | yes |
 | Key agreement | Curve25519 (X25519) | RFC 7748 | yes |
 | Key agreement | P-256 (NIST) | FIPS 186-5 | yes |
 | Signature | Ed25519 | RFC 8032 | yes |
-| Signature | ML-DSA-65, ML-DSA-87 | FIPS 204 (Aug 2024) | yes |
-| KEM | ML-KEM-768, ML-KEM-1024 | FIPS 203 (Aug 2024) | yes |
 | Hash | SHA-2-256/384/512 | FIPS 180-4 | yes |
 | Hash | SHA-3-256/384/512 | FIPS 202 | yes |
 | Hash | BLAKE2b, BLAKE2s | RFC 7693 | yes |
 | KDF | HKDF (over SHA-2 family) | RFC 5869 | yes |
 | MAC | HMAC | FIPS 198-1 | yes |
 
-Primitives kept on `ring` + `subtle` + `argon2` + auxiliary crates:
+Primitives sourced from companion crates (per Decision 2.60):
 
-* **Argon2id** — HACL\* does not yet ship Argon2 as of 2026Q1; `argon2` crate (audited, the canonical Rust implementation) provides the KDF for password hashing.
+* **ML-KEM-768, ML-KEM-1024** (FIPS 203, finalised August 2024) — `libcrux-ml-kem` Rust-native crate from Cryspen, hax + F\* verified ("portable and AVX2 code for field arithmetic, NTT polynomial arithmetic, serialization, and the generic code for high-level algorithms is formally verified using hax and F\*"). Same verification provenance as HACL\* (Cryspen team), distributed as Rust extraction rather than C extraction. NOT in HACL\* upstream as of 2026Q2.
+* **ML-DSA-65, ML-DSA-87** (FIPS 204, finalised August 2024) — `libcrux-ml-dsa` Rust-native crate, hax + F\* verified, same provenance as `libcrux-ml-kem`. NOT in HACL\* upstream as of 2026Q2.
+* **Argon2id** — HACL\* does not ship Argon2 as of 2026Q2; libcrux does not ship Argon2; the `argon2` RustCrypto crate (audited, canonical Rust implementation) provides the KDF for password hashing. Argon2id is the only audited-but-not-formally-verified primitive in the stack and is explicitly scoped (not used for key material requiring formal verification — only for password hashing where audit-level assurance is industry-standard).
 * **`subtle::ConstantTimeEq`** — HACL\* internals already use `subtle`; explicit re-export for downstream code that needs constant-time byte comparison primitives directly.
 * **Legacy compatibility AEADs** for migration — AES-256-CBC + HMAC-SHA256 composite preserved at v0.9.x for migration tooling reading PHP-era stored material; deprecated at 1.0.
 
@@ -46,19 +46,19 @@ Primitives kept on `ring` + `subtle` + `argon2` + auxiliary crates:
 
 ### Positive
 
-* Cryptographic surface gains formal verification — strictly stronger than `ring`'s audited posture. Defects in the verified primitives (correctness, memory safety, constant-time / secret independence) are excluded for all admissible inputs by construction.
-* Production deployment evidence is strong — Mozilla NSS + Linux WireGuard + Tezos + Azure VPN + Zcash all ship HACL\* in production. Pulsar joins an established consumer set.
-* Aligns with Decision 2.20 formal-verification scope (microkernel layer); HACL\* extends that scope to the cryptographic primitives layer.
-* PQC primitives (ML-KEM-768/1024, ML-DSA-65/87) are HACL\*-verified — no separate dependency for the post-quantum migration path per Decision 2.58.
-* FedRAMP / NIST SP 800-53 / EU CRA procurement evaluations strengthen significantly — the formal-verification claim is auditable against published HACL\* proofs.
+* Classical cryptographic surface gains formal verification — strictly stronger than `ring`'s audited posture. Defects in the verified primitives (correctness, memory safety, constant-time / secret independence) are excluded for all admissible inputs by construction.
+* Production deployment evidence for the classical surface is strong — Mozilla NSS + Linux WireGuard + Tezos + Azure VPN + Zcash all ship HACL\* in production. Pulsar joins an established consumer set.
+* Aligns with Decision 2.20 formal-verification scope (microkernel layer); HACL\* extends that scope to the classical cryptographic primitives layer.
+* PQC primitives (ML-KEM-768/1024, ML-DSA-65/87) sourced from libcrux per Decision 2.60 retain the same Cryspen / hax / F\* verification provenance as HACL\* — multi-source posture preserves verification while closing the upstream-coverage gap.
+* FedRAMP / NIST SP 800-53 / EU CRA procurement evaluations strengthen significantly — the formal-verification claim is auditable against published HACL\* proofs (classical) and libcrux hax + F\* proofs (PQC).
 
 ### Negative
 
-* Build pipeline gains a C compiler dependency (HACL\* extracts to C). Mitigated by the `cc` crate which handles cross-platform C compilation via `build.rs`.
-* SLSA Level 4 reproducibility requires vendoring the HACL\* C distribution under `pulsar-crypto-hacl-bindings/hacl-c/` with a pinned tag, which adds ~50 MB to the repository. Mitigated by the `*-sys` pattern's standard handling.
+* Build pipeline gains a C compiler dependency (HACL\* extracts to C). Mitigated by the `cc` crate which handles cross-platform C compilation via `build.rs`. Note: the libcrux PQC dependencies per Decision 2.60 are pure Rust and add no FFI burden.
+* SLSA Level 4 reproducibility requires vendoring the HACL\* C distribution under `pulsar-crypto-hacl-bindings/hacl-c/` with a pinned commit + checksum, which adds ~10-15 MB after selective vendoring of the twelve classical primitives only (the full HACL\* dist is ~50 MB but most extractions are unused). Mitigated by the `*-sys` pattern's standard handling.
 * Bindgen-generated FFI surface is unsafe Rust; the safe wrappers in `pulsar-kernel::crypto` add an audit boundary that requires careful Creusot contracts.
-* HACL\* receives roughly biannual upstream releases; Pulsar must track these for security fixes + new primitives.
-* `argon2` (KDF) remains outside the formal-verification boundary until HACL\* upstream adds it (no published timeline as of 2026Q1).
+* HACL\* receives roughly biannual upstream releases; Pulsar must track these for security fixes + new primitives. libcrux has independent release cadence (per-crate `0.0.x` releases in the libcrux-ml-kem / libcrux-ml-dsa namespaces).
+* The formal-verification-vs-audit boundary is explicit: HACL\* (classical) + libcrux (PQC) are formally verified; `argon2` (KDF) remains audited-only. Argon2id is scoped to password hashing where audit-level assurance is industry-standard; key material requiring formal verification never flows through Argon2id.
 
 ### Neutral
 
@@ -69,14 +69,18 @@ Primitives kept on `ring` + `subtle` + `argon2` + auxiliary crates:
 
 * **Keep ring + subtle as v2.2 (no HACL\*)**.
   Rejected: leaves the formal-verification gap on the most regulator-evaluated layer of the framework. The marginal cost of HACL\* adoption (one C compiler + bindgen) is small relative to the marginal gain (formal verification on the regulator-evaluated surface).
-* **Adopt liboqs for PQC primitives only, keep ring for classical primitives**.
-  Rejected: HACL\* now ships ML-KEM (FIPS 203) + ML-DSA (FIPS 204) finalised August 2024 with formal proofs. liboqs (the Open Quantum Safe project) is C with optional Rust bindings but not formally verified — strictly weaker than HACL\* on the same primitive set.
+* **HACL\*-only sourcing for all sixteen primitives (initial v2.3 draft assumption)**.
+  Rejected: HACL\* upstream as of 2026Q2 does not ship NIST ML-KEM/ML-DSA. Frodo (a non-NIST PQC scheme) and K256 ECDSA are present; ML-KEM-768/1024 and ML-DSA-65/87 are not. Single-sourcing through HACL\* would either require waiting for HACL\* upstream — no published timeline — or Pulsar maintaining its own F\* extraction of the NIST primitives — years of effort. Decision 2.60 (multi-source verification stack) supersedes this assumption.
+* **Adopt liboqs for PQC primitives only, keep HACL\* for classical primitives**.
+  Rejected: liboqs (the Open Quantum Safe project) is C with optional Rust bindings but not formally verified. libcrux per Decision 2.60 provides the same NIST PQC primitive set (ML-KEM-768/1024, ML-DSA-65/87) with hax + F\* verification (same Cryspen team / methodology as HACL\*) — strictly stronger than liboqs and with zero FFI burden (Rust-native).
+* **libcrux for everything (drop HACL\*)**.
+  Rejected: HACL\*'s production deployment evidence (Mozilla NSS + Linux WireGuard + Tezos + Azure VPN + Zcash) is unmatched in the verified-Rust ecosystem. libcrux is younger and lacks the multi-decade hardening that HACL\* has accumulated through real-world deployment. The combined sourcing per Decision 2.60 (HACL\* for classical, libcrux for PQC) gets the best of both.
 * **Write Pulsar's own crypto in pure Rust with Creusot contracts**.
-  Rejected: years of effort, and even with Creusot would lack HACL\*'s production deployment evidence (Mozilla NSS / Linux / Tezos / Azure). Creusot contracts on cryptographic primitives are research-tier in 2026; HACL\* is industry-tier.
+  Rejected: years of effort, and even with Creusot would lack HACL\*'s production deployment evidence (Mozilla NSS / Linux / Tezos / Azure). Creusot contracts on cryptographic primitives are research-tier in 2026; HACL\* + libcrux are industry-tier.
 * **Use BoringSSL or libsodium**.
   Rejected: BoringSSL is C without formal proofs; libsodium is C audited but not formally verified. Both strictly weaker than HACL\* on the same primitive coverage.
 * **Adopt RustCrypto suite (RustCrypto/aes-gcm, RustCrypto/chacha20poly1305, etc.)**.
-  Rejected: RustCrypto is excellent but pure-Rust without formal proofs. Kept as fallback dependency for Argon2 (where HACL\* has no coverage).
+  Rejected: RustCrypto is excellent but pure-Rust without formal proofs. Kept as fallback dependency for Argon2id (where HACL\* + libcrux have no coverage).
 * **Adopt `pulsar-spark-crypto/` SPARK 2014 implementation of crypto primitives**.
   Rejected: no published SPARK implementation of the AEAD + KEM + signature surface comparable to HACL\* exists. Building one would be years of effort and would lack production-deployment evidence.
 

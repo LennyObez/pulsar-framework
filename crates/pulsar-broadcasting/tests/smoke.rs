@@ -4,7 +4,10 @@ use pulsar_broadcasting::error::{Error, Result};
 
 #[test]
 fn version_is_non_empty() {
-    assert!(!pulsar_broadcasting::VERSION.is_empty(), "VERSION must be a non-empty const");
+    assert!(
+        !pulsar_broadcasting::VERSION.is_empty(),
+        "VERSION must be a non-empty const"
+    );
 }
 
 #[test]
@@ -14,7 +17,9 @@ fn version_matches_cargo_pkg_version() {
 
 #[test]
 fn result_alias_resolves() {
-    fn _signature() -> Result<()> { Err(Error::BackendUnavailable) }
+    fn _signature() -> Result<()> {
+        Err(Error::BackendUnavailable)
+    }
     let _ = _signature();
 }
 

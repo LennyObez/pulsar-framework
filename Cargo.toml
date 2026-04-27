@@ -314,7 +314,13 @@ tower-http = { version = "0.6", features = ["full"] }
 reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "json", "stream"] }
 
 # ──────────────────────────────────────────────────────────────────────────
-# Crypto primitives (audited)
+# Crypto primitives — multi-source verification stack per Decision 2.60
+#   - HACL* via FFI (`pulsar-crypto-hacl-bindings`) for the 12 classical primitives
+#   - libcrux Rust-native for the 4 NIST PQC primitives (ML-KEM, ML-DSA)
+#   - RustCrypto `argon2` for password hashing (audited, not formally verified)
+#   - `ring` + `subtle` retained at workspace level for legacy-compat AEADs +
+#     constant-time byte equality re-export. Direct kernel use is replaced by
+#     `pulsar-crypto-hacl-bindings` per ADR-0009 + Decision 2.53.
 # ──────────────────────────────────────────────────────────────────────────
 ring = "0.17"
 rustls = "0.23"
@@ -329,6 +335,13 @@ blake3 = "1.8"
 hmac = "0.12"
 sha2 = "0.10"
 hkdf = "0.12"
+
+# PQC — Cryspen libcrux Rust-native verified primitives per Decision 2.60.
+# hax + F* verification of field arithmetic, NTT polynomial arithmetic,
+# serialization, and high-level algorithm composition. FIPS 203 / 204
+# conformance. Pure Rust → no FFI burden.
+libcrux-ml-kem = "0.0.8"
+libcrux-ml-dsa = "0.0.6"
 
 # ──────────────────────────────────────────────────────────────────────────
 # Serialization

@@ -4,5 +4,5 @@
 //! register through the macro path (carries the per-stream + per-datagram
 //! backpressure invariants).
 
-#[allow(dead_code)]  // placeholder until per-sprint public traits use Sealed
+#[allow(dead_code)] // placeholder until per-sprint public traits use Sealed
 pub(crate) trait Sealed {}

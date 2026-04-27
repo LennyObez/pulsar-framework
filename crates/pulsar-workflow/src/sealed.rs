@@ -4,5 +4,5 @@
 //! through the macro path (which carries the deterministic-replay contract
 //! `spec/orchestration.tla` proves).
 
-#[allow(dead_code)]  // placeholder until per-sprint public traits use Sealed
+#[allow(dead_code)] // placeholder until per-sprint public traits use Sealed
 pub(crate) trait Sealed {}

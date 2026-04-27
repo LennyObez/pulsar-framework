@@ -4,7 +4,10 @@ use pulsar_sri::error::{Error, Result};
 
 #[test]
 fn version_is_non_empty() {
-    assert!(!pulsar_sri::VERSION.is_empty(), "VERSION must be a non-empty const");
+    assert!(
+        !pulsar_sri::VERSION.is_empty(),
+        "VERSION must be a non-empty const"
+    );
 }
 
 #[test]

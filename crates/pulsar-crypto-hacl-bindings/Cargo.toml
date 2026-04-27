@@ -1,6 +1,6 @@
 [package]
 name = "pulsar-crypto-hacl-bindings"
-description = "Rust FFI bindings to HACL* — the formally verified cryptographic library written in F* and extracted to constant-time C. Wraps AEAD, KDF, signatures, hashes, and ML-KEM/ML-DSA primitives."
+description = "Rust FFI bindings to HACL* (formally verified F* → C) for the twelve classical cryptographic primitives Pulsar uses (AEAD, X25519, P-256, Ed25519, SHA-2/3, BLAKE2, HKDF, HMAC). NIST PQC primitives flow through libcrux per Decision 2.60."
 version.workspace = true
 edition.workspace = true
 authors.workspace = true

@@ -5,10 +5,16 @@
 
 #[test]
 fn version_is_non_empty() {
-    assert!(!pulsar_identity_standards::VERSION.is_empty(), "VERSION must be a non-empty const");
+    assert!(
+        !pulsar_identity_standards::VERSION.is_empty(),
+        "VERSION must be a non-empty const"
+    );
 }
 
 #[test]
 fn version_matches_cargo_pkg_version() {
-    assert_eq!(pulsar_identity_standards::VERSION, env!("CARGO_PKG_VERSION"));
+    assert_eq!(
+        pulsar_identity_standards::VERSION,
+        env!("CARGO_PKG_VERSION")
+    );
 }

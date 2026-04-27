@@ -96,10 +96,7 @@ fn repro_build() -> Result<()> {
 /// Placeholder for publish-order topological sort across the 53-crate workspace.
 fn publish_order() -> Result<()> {
     let manifest = workspace_root_manifest_path()?;
-    println!(
-        "Workspace root manifest at {}",
-        manifest.display()
-    );
+    println!("Workspace root manifest at {}", manifest.display());
     anyhow::bail!(
         "Topological sort + ORDER array generation not yet implemented; \
          hand-curated ORDER list in .github/workflows/publish.yml is authoritative \

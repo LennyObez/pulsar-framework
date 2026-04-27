@@ -4,7 +4,10 @@ use pulsar_incident::error::{Error, Result};
 
 #[test]
 fn version_is_non_empty() {
-    assert!(!pulsar_incident::VERSION.is_empty(), "VERSION must be a non-empty const");
+    assert!(
+        !pulsar_incident::VERSION.is_empty(),
+        "VERSION must be a non-empty const"
+    );
 }
 
 #[test]
