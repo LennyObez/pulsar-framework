@@ -85,7 +85,9 @@ final readonly class AudioMetadataExtractor
 
         $duration = self::toFloat($format['duration'] ?? $audioStream['duration'] ?? null);
         $fileSize = isset($format['size']) && is_numeric($format['size']) ? (int) $format['size'] : null;
-        $formatName = is_string($format['format_name'] ?? null) ? $format['format_name'] : null;
+        /** @var mixed $rawFormatName */
+        $rawFormatName = $format['format_name'] ?? null;
+        $formatName = is_string($rawFormatName) ? $rawFormatName : null;
         $bitrate = isset($format['bit_rate']) && is_numeric($format['bit_rate']) ? (int) $format['bit_rate'] : null;
 
         return new AudioMetadata(

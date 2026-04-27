@@ -78,14 +78,20 @@ final readonly class VideoMetadataExtractor
 
         $duration = self::toFloat($format['duration'] ?? $videoStream['duration'] ?? null);
         $fileSize = isset($format['size']) && is_numeric($format['size']) ? (int) $format['size'] : null;
-        $formatName = is_string($format['format_name'] ?? null) ? $format['format_name'] : null;
+        /** @var mixed $rawFormatName */
+        $rawFormatName = $format['format_name'] ?? null;
+        $formatName = is_string($rawFormatName) ? $rawFormatName : null;
+        /** @var mixed $rawVideoCodec */
+        $rawVideoCodec = $videoStream['codec_name'] ?? null;
+        /** @var mixed $rawAudioCodec */
+        $rawAudioCodec = $audioStream['codec_name'] ?? null;
 
         return new VideoMetadata(
             duration: $duration,
             width: isset($videoStream['width']) && is_numeric($videoStream['width']) ? (int) $videoStream['width'] : null,
             height: isset($videoStream['height']) && is_numeric($videoStream['height']) ? (int) $videoStream['height'] : null,
-            videoCodec: is_string($videoStream['codec_name'] ?? null) ? $videoStream['codec_name'] : null,
-            audioCodec: is_string($audioStream['codec_name'] ?? null) ? $audioStream['codec_name'] : null,
+            videoCodec: is_string($rawVideoCodec) ? $rawVideoCodec : null,
+            audioCodec: is_string($rawAudioCodec) ? $rawAudioCodec : null,
             framerate: $this->parseFramerate($videoStream['r_frame_rate'] ?? $videoStream['avg_frame_rate'] ?? null),
             videoBitrate: isset($videoStream['bit_rate']) && is_numeric($videoStream['bit_rate']) ? (int) $videoStream['bit_rate'] : null,
             audioBitrate: isset($audioStream['bit_rate']) && is_numeric($audioStream['bit_rate']) ? (int) $audioStream['bit_rate'] : null,

@@ -64,7 +64,9 @@ final class CoreTransforms
             'paragraph',
             'list',
             static function (array $data): array {
-                $text = is_string($data['text'] ?? null) ? $data['text'] : '';
+                /** @var mixed $rawText */
+                $rawText = $data['text'] ?? null;
+                $text = is_string($rawText) ? $rawText : '';
                 $items = array_filter(explode("\n", $text), static fn(string $s): bool => $s !== '');
 
                 return [
