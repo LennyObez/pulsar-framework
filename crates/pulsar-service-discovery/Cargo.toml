@@ -1,0 +1,25 @@
+[package]
+name = "pulsar-service-discovery"
+description = "Service discovery + health checking with DNS-SD, Consul, etcd, and Kubernetes Endpoints backends."
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+readme = "README.md"
+keywords = ["pulsar", "discovery", "consul", "etcd", "kubernetes"]
+categories = ["network-programming", "asynchronous"]
+
+[dependencies]
+pulsar-kernel = { path = "../pulsar-kernel", version = "=0.0.1-alpha.0" }
+tokio = { workspace = true }
+serde = { workspace = true }
+reqwest = { workspace = true }
+hickory-resolver = { workspace = true }
+thiserror = { workspace = true }
+
+[lints]
+workspace = true

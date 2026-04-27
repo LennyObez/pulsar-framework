@@ -77,3 +77,17 @@ The decision is a **full rewrite, not a hybrid deployment, not a foreign-functio
   * Leroy, X. "Formal verification of a realistic compiler." (CompCert), CACM 2009.
   * SQLite project. "How SQLite Is Tested." sqlite.org/testing.html.
   * Rust Project. "rust-toolchain.toml" reference. rust-lang.github.io/rustup/overrides.html.
+
+## Compliance mapping
+
+The language choice is upstream of every regulatory clause that demands memory safety, predictable execution, or supply-chain provenance. Rust 1.95.0 stable + edition 2024 is the technical control that makes the following mappings tractable for downstream certifications:
+
+* **ISO/IEC 27001:2022 A.8.28** (secure coding) — Rust ownership + borrow checker + `#![forbid(unsafe_code)]` enforcement at the workspace lints policy is the canonical secure-coding control. Spatial + temporal memory bugs (use-after-free, double-free, data races) are eliminated by language design rather than deferred to runtime checks.
+* **ISO/IEC 27034-1:2011** (application security) — Rust's compile-time type system encodes invariants (typed-state sessions, sealed-trait middleware, capability tokens) that ISO 27034 requires to be either documented or enforced; we choose enforced.
+* **ISO/IEC 25010:2011** (system / software quality model) — directly improves Reliability sub-characteristic (Maturity, Fault Tolerance) and Performance Efficiency sub-characteristic (Time Behaviour, Resource Utilisation) over the PHP baseline. Per Decision 2.27, P99 < 1 ms + P99.99 < 5 ms targets are unreachable in PHP.
+* **NIST SSDF (NIST SP 800-218) PW.1** (Design software to meet security requirements and mitigate security risks) — the language change is the most impactful design-level mitigation available.
+* **NIST SP 800-53 Rev. 5 SA-15** (development process, standards, and tools) — Rust + Cargo + `cargo-deny` + `cargo-audit` collectively constitute the standardised development tooling required by SA-15 for moderate + high baselines.
+* **NIST SP 800-53 Rev. 5 SI-16** (memory protection) — language-level enforcement satisfies SI-16 without the OS-level mitigations (DEP/NX, ASLR variants) typically required for C/C++ codebases.
+* **BSI TR-03145 v2.0** (secure software development for German federal use) — pre-requirement is "use of memory-safe languages" (TR-03145 § 4.2.1); Rust meets this; PHP did not.
+* **CRA — EU Cyber Resilience Act (Regulation (EU) 2024/2847) Annex I** (essential cybersecurity requirements) — § 1(d) "designed, developed and produced to limit attack surfaces, including external interfaces"; the Rust type system + capability-bound public API is the mechanism that limits attack surfaces at the language level.
+* **CISA "The Case for Memory Safe Roadmaps"** (December 2023, joint with NSA / FBI / Five Eyes partners) — explicit guidance that new safety-critical software MUST adopt memory-safe languages; ADR-0001 is Pulsar's documented adoption.

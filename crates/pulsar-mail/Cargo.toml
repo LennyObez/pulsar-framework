@@ -19,3 +19,6 @@ rustls = { workspace = true }
 mrml = { workspace = true }
 serde = { workspace = true }
 thiserror = { workspace = true }
+
+[lints]
+workspace = true

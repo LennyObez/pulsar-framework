@@ -21,3 +21,6 @@ pulsar-scheduler = { path = "../pulsar-scheduler", version = "=0.0.1-alpha.0" }
 serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
+
+[lints]
+workspace = true

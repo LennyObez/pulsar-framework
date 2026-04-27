@@ -1,0 +1,80 @@
+name: cross-platform
+
+# Per plan Section 16.10.6 cross-platform binary distribution + Section II
+# Decision 2.27 resource budgets — verify the workspace compiles + smoke-tests
+# pass on every supported target platform. Phase 0 baseline: Linux glibc +
+# Linux musl + macOS x86_64/aarch64 + Windows MSVC. FreeBSD and additional
+# Linux musl arches activate as the 16.10.6 distribution matrix matures.
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    branches: [develop, main]
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "rust-toolchain.toml"
+      - ".cargo/config.toml"
+      - "crates/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  RUSTFLAGS: "-D warnings"
+
+jobs:
+  cross-check:
+    name: ${{ matrix.os }} / ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+          - os: macos-latest
+            target: aarch64-apple-darwin
+          - os: macos-13       # Intel macOS runner for x86_64 coverage
+            target: x86_64-apple-darwin
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: "1.95.0"
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: "cross-${{ matrix.target }}"
+
+      # mold linker on Linux only — macOS and Windows fall back to platform
+      # default linkers per .cargo/config.toml
+      - name: Install mold (Linux only)
+        if: contains(matrix.os, 'ubuntu')
+        run: sudo apt-get install -y mold clang
+
+      # musl tooling
+      - name: Install musl tools
+        if: matrix.target == 'x86_64-unknown-linux-musl'
+        run: sudo apt-get install -y musl-tools
+
+      - name: cargo check
+        run: cargo check --workspace --target ${{ matrix.target }}
+
+      # Test only on platforms with native runners (cross-compiled musl can
+      # build but cannot test without QEMU; skip test for musl)
+      - name: cargo test
+        if: matrix.target != 'x86_64-unknown-linux-musl'
+        run: cargo test --workspace --target ${{ matrix.target }} --no-fail-fast

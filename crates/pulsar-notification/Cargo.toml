@@ -20,3 +20,6 @@ pulsar-audit = { path = "../pulsar-audit", version = "=0.0.1-alpha.0" }
 reqwest = { workspace = true }
 serde = { workspace = true }
 thiserror = { workspace = true }
+
+[lints]
+workspace = true

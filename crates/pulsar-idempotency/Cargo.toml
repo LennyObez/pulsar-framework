@@ -19,3 +19,6 @@ redis = { workspace = true }
 ring = { workspace = true }
 serde = { workspace = true }
 thiserror = { workspace = true }
+
+[lints]
+workspace = true

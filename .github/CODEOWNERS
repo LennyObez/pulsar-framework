@@ -1,0 +1,53 @@
+# Pulsar Framework — CODEOWNERS
+#
+# Per ADR-0007 + ADR-0008 sprint feature branch contract, every PR is reviewed
+# under the /review skill, and the terminal develop -> main merge under
+# /ultrareview. This file auto-assigns review on PRs.
+#
+# Solo-maintainer phase per Decision 2.48 + risk R-009: every path resolves to
+# the maintainer. Per Section 2.48 + R-013/R-017 a second committer is
+# pre-authorised at any checkpoint where solo velocity falls below sustainable
+# target. When that happens, this file is updated to share ownership.
+#
+# Format: <pattern> <owner1> <owner2> ...
+# Documentation: https://docs.github.com/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owner for everything
+* @LennyObez
+
+# Critical-coverage-tier crates (Section XII success metrics + Decision 2.56:
+# 100 % line + branch + MC/DC + 99 % mutation kill rate on these surfaces)
+/crates/pulsar-kernel/                @LennyObez
+/crates/pulsar-crypto-hacl-bindings/  @LennyObez
+# Security controls (un-fused per ADR-0011 v2.3 — was pulsar-guard in v2.2)
+/crates/pulsar-csrf/                  @LennyObez
+/crates/pulsar-sri/                   @LennyObez
+/crates/pulsar-incident/              @LennyObez
+/crates/pulsar-ratelimit/             @LennyObez
+/crates/pulsar-resilience/            @LennyObez
+/crates/pulsar-ssrf-guard/            @LennyObez
+# Compliance + data protection + audit + auth
+/crates/pulsar-compliance/            @LennyObez
+/crates/pulsar-dataprotection/        @LennyObez
+/crates/pulsar-audit/                 @LennyObez
+/crates/pulsar-auth/                  @LennyObez
+
+# Formal verification artefacts
+/spec/                        @LennyObez
+
+# Plan + ADRs + governance docs
+/docs/plan.md                 @LennyObez
+/docs/adr/                    @LennyObez
+/docs/trademark-policy.md     @LennyObez
+/docs/security/               @LennyObez
+
+# CI + supply chain
+/.github/                     @LennyObez
+/Cargo.toml                   @LennyObez
+/Cargo.lock                   @LennyObez
+/deny.toml                    @LennyObez
+/rust-toolchain.toml          @LennyObez
+
+# Polyglot sub-projects (per Decision 2.46 + 2.8)
+/services/admin/              @LennyObez
+/services/operator/           @LennyObez

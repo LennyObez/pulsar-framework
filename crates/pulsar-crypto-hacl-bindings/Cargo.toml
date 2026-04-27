@@ -1,0 +1,26 @@
+[package]
+name = "pulsar-crypto-hacl-bindings"
+description = "Rust FFI bindings to HACL* — the formally verified cryptographic library written in F* and extracted to constant-time C. Wraps AEAD, KDF, signatures, hashes, and ML-KEM/ML-DSA primitives."
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+readme = "README.md"
+keywords = ["pulsar", "hacl", "crypto", "fips", "formal-verification"]
+categories = ["cryptography", "external-ffi-bindings"]
+build = "build.rs"
+links = "hacl_pulsar"
+
+[dependencies]
+thiserror = { workspace = true }
+
+[build-dependencies]
+cc = "1.2"
+bindgen = "0.71"
+
+[lints]
+workspace = true

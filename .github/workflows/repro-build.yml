@@ -1,0 +1,91 @@
+name: repro-build
+
+# Reproducible-build verifier per plan Section 14.6 SLSA Level 4 requirement
+# "reproducible-build smoke test in CI compares digests from two fresh
+# builders". Two parallel matrix jobs build the workspace from a clean
+# checkout on independent runners; a third job compares the resulting binary
+# digests and fails if they diverge.
+
+on:
+  push:
+    branches: [develop]
+  pull_request:
+    branches: [develop]
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "rust-toolchain.toml"
+      - ".cargo/config.toml"
+      - "crates/**/Cargo.toml"
+      - "crates/**/src/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  RUSTFLAGS: "-D warnings"
+
+jobs:
+  build:
+    name: builder-${{ matrix.builder }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        builder: [a, b]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: "1.95.0"
+      - uses: Swatinem/rust-cache@v2
+        with:
+          # Force isolated cache per matrix branch to surface non-determinism
+          shared-key: "repro-${{ matrix.builder }}"
+      - name: Build pulsar-cli release binary
+        run: cargo build --release --package pulsar-cli --bin pulsar
+      - name: Compute digest
+        id: digest
+        run: |
+          BIN=target/release/pulsar
+          if [ ! -f "$BIN" ]; then
+            echo "::error::pulsar binary not produced at $BIN"
+            exit 1
+          fi
+          DIGEST=$(sha256sum "$BIN" | awk '{print $1}')
+          echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
+          echo "Builder ${{ matrix.builder }} digest: $DIGEST"
+      - name: Upload digest artefact
+        uses: actions/upload-artifact@v4
+        with:
+          name: digest-${{ matrix.builder }}
+          path: |
+            target/release/pulsar
+          retention-days: 1
+
+  compare:
+    name: compare-digests
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: digests
+      - name: Compare SHA-256 digests
+        run: |
+          DIGEST_A=$(sha256sum digests/digest-a/pulsar | awk '{print $1}')
+          DIGEST_B=$(sha256sum digests/digest-b/pulsar | awk '{print $1}')
+          echo "Builder A digest: $DIGEST_A"
+          echo "Builder B digest: $DIGEST_B"
+          if [ "$DIGEST_A" != "$DIGEST_B" ]; then
+            echo "::error::Reproducible-build divergence detected — non-deterministic input in the build pipeline."
+            echo "::error::Investigate: timestamps in build.rs, SystemTime::now() in proc-macros, embedded git hashes, non-deterministic dep features."
+            exit 1
+          fi
+          echo "::notice::Reproducible-build verified: digests match across two independent builders."

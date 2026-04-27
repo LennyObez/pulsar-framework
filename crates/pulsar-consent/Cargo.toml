@@ -17,3 +17,6 @@ categories.workspace = true
 pulsar-audit = { path = "../pulsar-audit", version = "=0.0.1-alpha.0" }
 serde = { workspace = true }
 thiserror = { workspace = true }
+
+[lints]
+workspace = true

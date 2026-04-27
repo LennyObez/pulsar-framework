@@ -1,0 +1,194 @@
+# Citation File Format 1.2.0 — https://citation-file-format.github.io
+#
+# Allows researchers, regulators, and downstream projects to cite Pulsar
+# Framework reproducibly. Validated by `cffconvert --validate` in CI
+# (will be wired into ci.yml at Sprint 0.10).
+#
+# Update on every release: bump `version` and `date-released`; if author
+# composition changes, update `authors`.
+
+cff-version: 1.2.0
+title: "Pulsar Framework"
+message: >-
+  If you use this software in research, regulated production, or
+  derivative academic work, please cite it using the metadata in this
+  file. Cross-reference the specific version you depend on (the SemVer
+  version is the canonical identifier; the Git commit SHA is the
+  fallback when bisecting compliance audits).
+type: software
+
+abstract: >-
+  Pulsar Framework is a Rust-native, formally-verified, regulated-domain
+  web framework. It targets banking (retail + corporate), healthcare
+  (private + public), legal technology, and government digital services
+  with state-of-art engineering rigour: formal verification at the kernel
+  (TLA+ specifications + Creusot function contracts), capability-based
+  security across crate boundaries, compile-time compliance enforcement
+  for 22 mandatory regulatory frameworks (plus MiCA opt-in), and SLSA
+  Level 4 supply-chain provenance with reproducible builds. Pulsar
+  succeeds the PHP 8.5 Pulsar Framework (`1.0.0-rc.11` baseline)
+  reimagined for compile-time correctness over runtime checks.
+
+authors:
+  - family-names: "Obez"
+    given-names: "Lenny"
+    email: "lenny@pulsar-framework.com"
+    affiliation: "Pulsar Framework — sole maintainer (Phase 0)"
+    # ORCID intentionally omitted until the maintainer registers one;
+    # the CFF spec accepts authors without ORCID.
+    website: "https://github.com/LennyObez"
+
+# Update both `version` and `date-released` at every tagged release.
+# Phase 0 baseline: v0.0.1-alpha.0 — namespace-reservation publish.
+version: "0.0.1-alpha.0"
+date-released: "2026-04-25"
+
+# Apache-2.0 with EUIPO trademark protection per ADR-0005 + Decision 2.50.
+license: "Apache-2.0"
+license-url: "https://www.apache.org/licenses/LICENSE-2.0.txt"
+
+# Identifiers — DOI to be assigned at GA (1.0.0) via Zenodo
+# integration; until then only repository + commit hash apply.
+identifiers:
+  - type: url
+    value: "https://github.com/LennyObez/pulsar-framework"
+    description: "Canonical repository"
+  - type: url
+    value: "https://crates.io/crates/pulsar-framework"
+    description: "crates.io meta-crate"
+
+repository-code: "https://github.com/LennyObez/pulsar-framework"
+repository-artifact: "https://crates.io/crates/pulsar-framework"
+url: "https://pulsar-framework.com"
+
+keywords:
+  - rust
+  - web-framework
+  - banking
+  - healthcare
+  - legaltech
+  - govtech
+  - regulated-domains
+  - formal-verification
+  - tla-plus
+  - creusot
+  - capability-security
+  - slsa-level-4
+  - reproducible-builds
+  - sigstore
+  - compliance-as-code
+  - gdpr
+  - hipaa
+  - pci-dss
+  - psd2
+  - dora
+  - mica
+  - soc2
+  - iso-27001
+  - apache-2-0
+  - eupio-trademark
+
+# References — academic + canonical inspirations the framework draws from.
+# These appear in Citation.cff so downstream readers can navigate the
+# theoretical lineage of the framework's design choices.
+references:
+  - type: article
+    authors:
+      - family-names: "Klein"
+        given-names: "Gerwin"
+      - family-names: "Elphinstone"
+        given-names: "Kevin"
+      - family-names: "Heiser"
+        given-names: "Gernot"
+    title: "seL4: Formal Verification of an OS Kernel"
+    year: 2009
+    journal: "ACM SOSP '09"
+    doi: "10.1145/1629575.1629596"
+    notes: >-
+      Methodology lineage for `pulsar-kernel` formal verification —
+      capability-based microkernel design + machine-checked refinement
+      proofs.
+
+  - type: article
+    authors:
+      - family-names: "Leroy"
+        given-names: "Xavier"
+    title: "Formal Verification of a Realistic Compiler"
+    year: 2009
+    journal: "Communications of the ACM"
+    doi: "10.1145/1538788.1538814"
+    notes: >-
+      CompCert lineage for compile-time correctness discipline.
+
+  - type: software
+    title: "TLA+ Tools (TLC model checker)"
+    authors:
+      - family-names: "Lamport"
+        given-names: "Leslie"
+    url: "https://github.com/tlaplus/tlaplus"
+    notes: >-
+      Specification language for the nine TLA+ specs in `spec/`.
+
+  - type: article
+    authors:
+      - family-names: "Thompson"
+        given-names: "Martin"
+    title: "Disruptor: High Performance Alternative to Bounded Queues"
+    year: 2011
+    notes: >-
+      LMAX Disruptor pattern referenced in `pulsar-realtime` lock-free
+      ringbuffer design.
+
+  - type: software
+    title: "SQLite"
+    url: "https://sqlite.org"
+    notes: >-
+      Test discipline lineage — 100% MC/DC coverage as the floor for
+      `pulsar-kernel`, `pulsar-guard`, `pulsar-compliance`,
+      `pulsar-dataprotection`.
+
+  - type: software
+    title: "Erlang/OTP"
+    url: "https://erlang.org/doc/system_principles/system_principles.html"
+    notes: >-
+      Supervisor + let-it-crash lineage referenced in `pulsar-cluster`
+      supervisor-tree design.
+
+  - type: report
+    title: "SLSA Framework — Levels 1-4 Definition"
+    year: 2025
+    url: "https://slsa.dev/spec/v1.0/levels"
+    notes: >-
+      Source-to-binary supply-chain provenance baseline mandated by
+      Section 14.6 + ADR-0007.
+
+  - type: report
+    title: "OWASP ASVS L3 + OWASP API Top 10:2023 + OWASP LLM Top 10:2023"
+    url: "https://owasp.org/www-project-application-security-verification-standard/"
+    notes: >-
+      Threat-model baselines for `pulsar-guard`, `pulsar-api`, and
+      `pulsar-ai` respectively.
+
+  - type: report
+    title: "NIST SP 800-30 Rev. 1 — Risk Assessment"
+    url: "https://csrc.nist.gov/pubs/sp/800/30/r1/final"
+    notes: >-
+      Risk-assessment methodology cited by `docs/security/threat-model.md`.
+
+  - type: report
+    title: "ISO/IEC 27005:2022 — Information Security Risk Management"
+    url: "https://www.iso.org/standard/80585.html"
+    notes: >-
+      Risk-management methodology cited by `docs/security/threat-model.md`.
+
+# Preferred citation — when downstream cite-tools have a single slot.
+preferred-citation:
+  type: software
+  title: "Pulsar Framework"
+  authors:
+    - family-names: "Obez"
+      given-names: "Lenny"
+  version: "0.0.1-alpha.0"
+  date-released: "2026-04-25"
+  url: "https://github.com/LennyObez/pulsar-framework"
+  license: "Apache-2.0"

@@ -1,5 +1,18 @@
 [workspace]
 resolver = "3"
+# v2.3 architecture: 76 first-party Rust crates (per Decision 2.51).
+# Net change vs v2.2 (53 crates):
+#   - 4 meta-crates removed (pulsar-guard, pulsar-realtime,
+#     pulsar-orchestration, pulsar-cluster — per Decision 2.51 dé-fusion)
+#   - 14 sub-module crates added (csrf + sri + incident + ratelimit +
+#     resilience + ssrf-guard ; websocket + sse + webtransport +
+#     broadcasting ; workflow + saga ; supervisor + service-discovery)
+#   - 12 driver crates added (orm-postgres/mysql/sqlite/clickhouse ;
+#     cloud-aws/azure/gcp/oci ; storage-s3/azure/gcs/fs)
+#   - 1 HACL* FFI binding crate added (pulsar-crypto-hacl-bindings —
+#     *-sys-style; safe Rust wrappers + Creusot contracts live in
+#     pulsar-kernel per ADR-0009 + Decision 2.53)
+# Total: 53 - 4 + 14 + 12 + 1 = 76 crates.
 members = [
     # ─────────────────────────────────────────────────────────────────────
     # Meta-crate (re-exports stable public surface)
@@ -10,6 +23,7 @@ members = [
     # Kernel layer — formally verified, minimum surface
     # ─────────────────────────────────────────────────────────────────────
     "crates/pulsar-kernel",
+    "crates/pulsar-crypto-hacl-bindings",  # v2.3 *-sys FFI to HACL* per Decision 2.53
 
     # ─────────────────────────────────────────────────────────────────────
     # Core foundation crates
@@ -17,6 +31,10 @@ members = [
     "crates/pulsar-http",
     "crates/pulsar-engine",
     "crates/pulsar-orm",
+    "crates/pulsar-orm-postgres",          # v2.3 sqlx-pattern driver
+    "crates/pulsar-orm-mysql",             # v2.3 sqlx-pattern driver
+    "crates/pulsar-orm-sqlite",            # v2.3 sqlx-pattern driver
+    "crates/pulsar-orm-clickhouse",        # v2.3 sqlx-pattern driver
     "crates/pulsar-audit",
     "crates/pulsar-auth",
     "crates/pulsar-compliance",
@@ -24,9 +42,14 @@ members = [
     "crates/pulsar-search",
 
     # ─────────────────────────────────────────────────────────────────────
-    # Security controls layer (consolidated per Section 16.14)
+    # Security controls layer (un-fused per Decision 2.51 — was pulsar-guard in v2.2)
     # ─────────────────────────────────────────────────────────────────────
-    "crates/pulsar-guard",
+    "crates/pulsar-csrf",                  # v2.3 dé-fusion of pulsar-guard
+    "crates/pulsar-sri",                   # v2.3 dé-fusion of pulsar-guard
+    "crates/pulsar-incident",              # v2.3 dé-fusion of pulsar-guard
+    "crates/pulsar-ratelimit",             # v2.3 dé-fusion of pulsar-guard
+    "crates/pulsar-resilience",            # v2.3 dé-fusion of pulsar-guard
+    "crates/pulsar-ssrf-guard",            # v2.3 dé-fusion of pulsar-guard
 
     # ─────────────────────────────────────────────────────────────────────
     # Application infrastructure layer
@@ -37,6 +60,10 @@ members = [
     "crates/pulsar-cache",
     "crates/pulsar-config",
     "crates/pulsar-storage",
+    "crates/pulsar-storage-s3",            # v2.3 sqlx-pattern driver
+    "crates/pulsar-storage-azure",         # v2.3 sqlx-pattern driver
+    "crates/pulsar-storage-gcs",           # v2.3 sqlx-pattern driver
+    "crates/pulsar-storage-fs",            # v2.3 sqlx-pattern driver
     "crates/pulsar-form",
     "crates/pulsar-webhook",
     "crates/pulsar-idempotency",
@@ -63,13 +90,16 @@ members = [
     "crates/pulsar-console-api",
 
     # ─────────────────────────────────────────────────────────────────────
-    # API paradigms
+    # API paradigms (un-fused realtime per Decision 2.51 — was pulsar-realtime in v2.2)
     # ─────────────────────────────────────────────────────────────────────
     "crates/pulsar-api",
     "crates/pulsar-graphql",
     "crates/pulsar-grpc",
     "crates/pulsar-mcp-server",
-    "crates/pulsar-realtime",
+    "crates/pulsar-websocket",             # v2.3 dé-fusion of pulsar-realtime
+    "crates/pulsar-sse",                   # v2.3 dé-fusion of pulsar-realtime
+    "crates/pulsar-webtransport",          # v2.3 dé-fusion of pulsar-realtime
+    "crates/pulsar-broadcasting",          # v2.3 dé-fusion of pulsar-realtime
 
     # ─────────────────────────────────────────────────────────────────────
     # AI surface
@@ -88,16 +118,22 @@ members = [
     "crates/pulsar-accessibility",
 
     # ─────────────────────────────────────────────────────────────────────
-    # Orchestration (consolidated workflow + saga per Section 16.14)
+    # Orchestration (un-fused per Decision 2.51 — was pulsar-orchestration in v2.2)
     # ─────────────────────────────────────────────────────────────────────
-    "crates/pulsar-orchestration",
+    "crates/pulsar-workflow",              # v2.3 dé-fusion of pulsar-orchestration
+    "crates/pulsar-saga",                  # v2.3 dé-fusion of pulsar-orchestration
 
     # ─────────────────────────────────────────────────────────────────────
     # Infrastructure adapters
     # ─────────────────────────────────────────────────────────────────────
     "crates/pulsar-cloud",
+    "crates/pulsar-cloud-aws",             # v2.3 sqlx-pattern driver
+    "crates/pulsar-cloud-azure",           # v2.3 sqlx-pattern driver
+    "crates/pulsar-cloud-gcp",             # v2.3 sqlx-pattern driver
+    "crates/pulsar-cloud-oci",             # v2.3 sqlx-pattern driver
     "crates/pulsar-edge",
-    "crates/pulsar-cluster",
+    "crates/pulsar-supervisor",            # v2.3 dé-fusion of pulsar-cluster
+    "crates/pulsar-service-discovery",     # v2.3 dé-fusion of pulsar-cluster
     "crates/pulsar-deploy",
 
     # ─────────────────────────────────────────────────────────────────────
@@ -105,30 +141,51 @@ members = [
     # ─────────────────────────────────────────────────────────────────────
     "crates/pulsar-cli",
     "crates/pulsar-test",
+
+    # ─────────────────────────────────────────────────────────────────────
+    # Workspace-local automation (cargo-xtask pattern; not published)
+    # ─────────────────────────────────────────────────────────────────────
+    "tools/xtask",
 ]
 
 # Note: the Kubernetes Operator lives in `services/operator/` in Go (Decision 2.46), not as a Rust crate.
 # Note: the admin SPA lives in `services/admin/` in native HTML5 + ES2025 + Web Components (Decision 2.8), not as a Rust crate.
+# Note: tools/xtask is in [workspace.members] so `cargo run -p xtask` works, but excluded from
+# [workspace.default-members] so `cargo build` / `cargo test` skip it.
 
 # Default members run on `cargo build` / `cargo test` without --package.
 default-members = [
     "crates/pulsar-framework",
     "crates/pulsar-kernel",
+    "crates/pulsar-crypto-hacl-bindings",
     "crates/pulsar-http",
     "crates/pulsar-engine",
     "crates/pulsar-orm",
+    "crates/pulsar-orm-postgres",
+    "crates/pulsar-orm-mysql",
+    "crates/pulsar-orm-sqlite",
+    "crates/pulsar-orm-clickhouse",
     "crates/pulsar-audit",
     "crates/pulsar-auth",
     "crates/pulsar-compliance",
     "crates/pulsar-observability",
     "crates/pulsar-search",
-    "crates/pulsar-guard",
+    "crates/pulsar-csrf",
+    "crates/pulsar-sri",
+    "crates/pulsar-incident",
+    "crates/pulsar-ratelimit",
+    "crates/pulsar-resilience",
+    "crates/pulsar-ssrf-guard",
     "crates/pulsar-mail",
     "crates/pulsar-queue",
     "crates/pulsar-scheduler",
     "crates/pulsar-cache",
     "crates/pulsar-config",
     "crates/pulsar-storage",
+    "crates/pulsar-storage-s3",
+    "crates/pulsar-storage-azure",
+    "crates/pulsar-storage-gcs",
+    "crates/pulsar-storage-fs",
     "crates/pulsar-form",
     "crates/pulsar-webhook",
     "crates/pulsar-idempotency",
@@ -149,7 +206,10 @@ default-members = [
     "crates/pulsar-graphql",
     "crates/pulsar-grpc",
     "crates/pulsar-mcp-server",
-    "crates/pulsar-realtime",
+    "crates/pulsar-websocket",
+    "crates/pulsar-sse",
+    "crates/pulsar-webtransport",
+    "crates/pulsar-broadcasting",
     "crates/pulsar-ai",
     "crates/pulsar-ai-governance",
     "crates/pulsar-vector-search",
@@ -158,10 +218,16 @@ default-members = [
     "crates/pulsar-studio",
     "crates/pulsar-analytics",
     "crates/pulsar-accessibility",
-    "crates/pulsar-orchestration",
+    "crates/pulsar-workflow",
+    "crates/pulsar-saga",
     "crates/pulsar-cloud",
+    "crates/pulsar-cloud-aws",
+    "crates/pulsar-cloud-azure",
+    "crates/pulsar-cloud-gcp",
+    "crates/pulsar-cloud-oci",
     "crates/pulsar-edge",
-    "crates/pulsar-cluster",
+    "crates/pulsar-supervisor",
+    "crates/pulsar-service-discovery",
     "crates/pulsar-deploy",
     "crates/pulsar-cli",
     "crates/pulsar-test",
@@ -179,6 +245,52 @@ documentation = "https://docs.rs/pulsar-framework"
 readme = "README.md"
 keywords = ["web", "framework", "regulated", "banking", "healthcare"]
 categories = ["web-programming::http-server", "web-programming"]
+
+# ──────────────────────────────────────────────────────────────────────────
+# Workspace-level lints (Cargo 1.74+ unified lint policy per Section XVII).
+# Per-crate `lib.rs` opts into these via `[lints] workspace = true`. Overrides
+# for crates that need exceptions (e.g. proc-macro crates) are per-crate.
+# ──────────────────────────────────────────────────────────────────────────
+[workspace.lints.rust]
+# Safety: Section XVII.23 unsafe-code policy
+unsafe_code = "forbid"
+# Documentation: Section XVII.21 every public item documented
+missing_docs = "deny"
+# Soundness: idiomatic Rust 2024 hygiene
+rust_2024_compatibility = "deny"
+unused_must_use = "deny"
+unused_lifetimes = "warn"
+unused_imports = "warn"
+unused_extern_crates = "warn"
+trivial_casts = "warn"
+trivial_numeric_casts = "warn"
+unreachable_pub = "warn"
+
+[workspace.lints.clippy]
+# Pedantic + nursery + cargo lints; project-specific allows below
+all = { level = "deny", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+nursery = { level = "warn", priority = -1 }
+cargo = { level = "warn", priority = -1 }
+# Section XVII.7 error strategy: forbid panics in library code
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+todo = "deny"
+unimplemented = "deny"
+# Section XVII.5 method naming
+get_unwrap = "deny"
+# Allow legitimate cases that pedantic flags noisily
+module_name_repetitions = "allow"
+must_use_candidate = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+multiple_crate_versions = "allow"  # see deny.toml multiple-versions = "warn" instead
+
+[workspace.lints.rustdoc]
+broken_intra_doc_links = "deny"
+private_intra_doc_links = "warn"
+missing_crate_level_docs = "deny"
 
 [workspace.dependencies]
 # ──────────────────────────────────────────────────────────────────────────
@@ -350,6 +462,7 @@ k8s-openapi = { version = "0.24", features = ["latest"] }
 # Cloud SDKs (AWS, Azure, GCP) — for pulsar-cloud
 # ──────────────────────────────────────────────────────────────────────────
 aws-sdk-s3 = "1.56"
+aws-config = "1.5"  # v2.3 — required by pulsar-cloud-aws + pulsar-storage-s3 driver crates per Decision 2.51
 azure_core = "0.21"
 google-cloud-storage = "0.22"
 

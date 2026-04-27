@@ -7,10 +7,13 @@ This document describes the five GitHub Actions workflows that gate every push, 
 | Workflow | Trigger | Runner | Concurrency | Caching | Main jobs |
 |----------|---------|--------|-------------|---------|-----------|
 | `ci.yml` | push to `develop`, PR to `develop`/`main`, manual | `ubuntu-latest` | per `${{ github.workflow }}-${{ github.ref }}`, cancel-in-progress | `Swatinem/rust-cache@v2` per job + `taiki-e/install-action@v2` for tooling | fmt, clippy, check, nextest, doc-tests, llvm-cov, cargo-deny, cargo-audit, cargo-machete, rustdoc, ADR-index integrity, CHANGELOG-entry enforcement |
+| `cross-platform.yml` | push to `develop`/`main`, PR (Cargo deps changed), manual | matrix `ubuntu-latest` + `macos-latest` + `macos-13` + `windows-latest` | per workflow + ref, cancel-in-progress | `Swatinem/rust-cache@v2` keyed per target | cargo check + cargo test across 5 target triples (linux glibc + linux musl + macOS x86_64 + macOS aarch64 + Windows MSVC) per plan Section 16.10.6 |
 | `nightly.yml` | cron `0 2 * * *` (02:00 UTC) + manual | `ubuntu-latest` | (none — single run) | `Swatinem/rust-cache@v2` | cargo-mutants on diff, cargo-fuzz short runs (10 min/target), Miri on kernel with `MIRIFLAGS="-Zmiri-strict-provenance"`, cargo-semver-checks on workflow_dispatch |
 | `audit.yml` | cron `0 6 * * *` (06:00 UTC), Cargo.toml/Cargo.lock changes, manual | `ubuntu-latest` | (none) | (advisory DB cache via action) | cargo-audit (RustSec), cargo-deny (advisories+bans+licenses+sources), Google OSV-Scanner, OpenSSF Scorecard with SARIF upload |
 | `benchmark.yml` | push to `develop`, PR to `develop`, manual | `ubuntu-latest` | (none) | `Swatinem/rust-cache@v2` | cargo-bench (criterion), comparison vs baseline in `docs/perf/baselines/develop`, fail-on-alert at 105% regression |
-| `publish.yml` | tag match `v[0-9]+.[0-9]+.[0-9]+*`, manual (dry-run flag) | `ubuntu-latest` (env: `crates-io`) | (none) | `Swatinem/rust-cache@v2` | guard against bypass tags, pre-publish gates (fmt+clippy+test+doc-tests), Trusted Publisher OIDC auth, dependency-ordered publish across 53 crates, GitHub Release with CHANGELOG-extracted notes |
+| `repro-build.yml` | push to `develop`, PR (Cargo/lib changes), manual | `ubuntu-latest` (matrix builders A + B → compare) | per workflow + ref, cancel-in-progress | `Swatinem/rust-cache@v2` keyed per builder | Two independent release builds of `pulsar-cli`; SHA-256 digest comparison fails on byte divergence (per plan Section 14.6 SLSA Level 4) |
+| `actionlint.yml` | push/PR (workflows changed), manual | `ubuntu-latest` | per workflow + ref, cancel-in-progress | (n/a) | actionlint via `raven-actions/actionlint@v2` — YAML syntax + GitHub Actions expression syntax + shellcheck on every `run:` block + context-availability + matrix expansion + deprecated `set-output` warnings |
+| `publish.yml` | tag match `v[0-9]+.[0-9]+.[0-9]+*`, manual (dry-run flag) | `ubuntu-latest` (env: `crates-io`) | (none) | `Swatinem/rust-cache@v2` | guard against bypass tags, pre-publish gates (fmt+clippy+test+doc-tests), Trusted Publisher OIDC auth, dependency-ordered publish across 53 crates, **CycloneDX SBOM + Cosign keyless signing (Sigstore Fulcio + Rekor transparency log) + SLSA Level 3 build provenance attestation**, GitHub Release with CHANGELOG-extracted notes + supply-chain artefact attachment |
 
 Detailed job breakdown follows.
 
@@ -132,4 +135,84 @@ The two yellow ☑ items are not blockers — they are remote-run gate verificat
 
 ## Workflow update cadence
 
-Per plan risk R-016 (Rust ecosystem drift), workflow action versions are reviewed at every checkpoint exit. Action pins are intentionally floating (`@v4`, `@v2`, etc.) on major version markers — this matches the GitHub Actions ecosystem convention and surfaces breaking changes through the GitHub change log. Strict SHA pinning is a Sprint 0.4+ extension consideration once the supply-chain attestation pipeline (per plan Section 16.10.5) is in place.
+Per plan risk R-016 (Rust ecosystem drift) and Section 16.12.8 OpenSSF Scorecard ≥ 9.0 target, GitHub Actions versions are managed at two layers:
+
+* **Major-tag pinning today** (e.g. `actions/checkout@v4`, `Swatinem/rust-cache@v2`) — matches the GitHub Actions ecosystem convention and surfaces breaking changes through the action's CHANGELOG. Acceptable baseline for Phase 0.
+* **SHA pinning planned** for Sprint 0.4+ extension to satisfy OpenSSF Scorecard "Pinned-Dependencies" check. The `actionlint.yml` workflow surfaces deprecated action usage; a follow-up automation will rewrite `@v<N>` to `@<sha>` references and `dependabot.yml` then handles SHA bumps automatically.
+
+`dependabot.yml` already covers GitHub Actions (weekly Monday updates with patch+minor grouping), so the day-to-day churn is automated regardless of whether pinning is by tag or by SHA.
+
+## Supply-chain pipeline (publish.yml `supply-chain` job)
+
+Per plan Section 14.6 SLSA Level 4 + Section 16.10.5 container image signing + Section 16.12.8 OpenSSF Scorecard:
+
+| Artefact | Tool | Output | Verification |
+|----------|------|--------|--------------|
+| SBOM | `cargo cyclonedx` (CycloneDX 1.6) | `bom.cdx.json` per crate + workspace aggregate, attached to GitHub Release | `cyclonedx-cli validate` |
+| Cosign signature | `sigstore/cosign-installer@v3` + `cosign sign-blob --yes` (keyless via Fulcio) | `.sig` + `.crt` per artefact, transparency-log entry on Rekor | `cosign verify-blob --certificate-identity ...` |
+| SLSA build provenance | `actions/attest-build-provenance@v1` | Predicate signed by GitHub OIDC, attached to GitHub artefact | `gh attestation verify <file> --owner LennyObez` |
+
+The supply-chain job runs after `publish-crates` (so it cosigns the actual published surface, not a pre-publish staging) and writes its outputs as additional Release assets. `github-release` job then composes the final Release notes from CHANGELOG + an appended supply-chain section pointing at the assets.
+
+## Reproducible-build verification (repro-build.yml)
+
+Per plan Section 14.6 SLSA Level 4 reproducibility requirement: two parallel matrix jobs (`builder-a`, `builder-b`) compile `pulsar-cli` release binary from a clean checkout on independent runners. A third `compare-digests` job downloads both artefacts and asserts SHA-256 equality. Divergence indicates non-deterministic build inputs (typical culprits: `SystemTime::now()` in build.rs or proc-macros, embedded git hashes, non-deterministic dep features, `rand` usage outside `cfg(test)`). The lint policy in `Cargo.toml` `[workspace.lints]` and the `cargo deny` ban list catch the most common cases at PR review; this workflow is the runtime verifier.
+
+## SLSA Source Level 3 + in-toto layout (v2.3 expansion per Decision 2.57)
+
+The supply-chain attestation pipeline gains two layers in v2.3 beyond the v2.2 SLSA Build L3 + Cosign + SBOM baseline:
+
+### SLSA Source Level 3
+
+Source Level 3 requires:
+
+1. **Source identity bound to the maintainer's signing key.** Pulsar enforces GPG-signed commits with the maintainer's Ed25519 key per Decision 2.30 + ADR-0007.
+2. **Branch protection enforcing signed commits + status checks.** GitHub branch protection rules on `develop` + `main` block unsigned merges + block merges that fail any required status check (`fmt`, `clippy`, `check`, `nextest`, `llvm-cov`, `deny`, `audit`, `machete`, `docs`, `adr-index`, `changelog-entry`).
+3. **Immutable history.** No force-push, no rebase post-merge — `develop` and `main` are append-only branches.
+4. **18-month retention of the signing-key audit trail.** The maintainer's Ed25519 audit-chain key history (key-id transitions, revocations) is retained for 18 months minimum per the SLSA Source L3 specification.
+
+The `supply-chain` job in `publish.yml` writes a textual attestation (`slsa/source-l3-attestation.txt`) capturing the signing identity of every commit reachable from the release tag, the branch protection state, the workflow ref + job workflow SHA. This text file is Cosign-signed (Sigstore keyless) so verifiers can establish trust via the maintainer's GitHub OIDC issuer.
+
+### in-toto layout
+
+The in-toto layout (`attestations/pulsar-framework.layout.template`) declares the full **source → build → SBOM → sign → publish** chain:
+
+```
+source-checkout    →    build-rust    →    sbom-emit    →    cosign-sign    →    publish-cratesio
+   git clone           cargo build          cargo cyclonedx    cosign sign-blob       cargo publish
+```
+
+Each step has an expected signer (Sigstore Fulcio CA via OIDC) + expected output (file pattern). Verifiers run `in-toto-verify --layout pulsar-framework.layout.template --layout-keys <maintainer-fulcio-cert>` against the released attestations to validate that:
+
+- The published `.crate` files came from the source tagged at `v0.0.X`.
+- No untrusted intermediate step modified the artefact between source and crates.io.
+- The Cosign signature on the SBOM matches the SBOM that was emitted from the build that produced the published `.crate`.
+
+This is the layered provenance model used by `kubernetes-sigs`, Sigstore, and GUAC. Combined with the SLSA Source L3 + Build L4 attestations, no single compromise (hijacked CI runner, leaked signing key, malicious dependency) can subvert the chain — the verifier replay surfaces the inconsistency.
+
+### Federated mirror to Sigstore Rekor
+
+Every Cosign keyless signature operation publishes a transparency-log entry to Sigstore Rekor automatically. Downstream consumers who prefer the Sigstore trust root (rather than the Pulsar Foundation's first-party audit-key) verify against Rekor. The first-party transparency log at `logs.pulsar-framework.com` (per ADR-0013) provides the same evidence chain for jurisdictions that require self-hosted attestation.
+
+### Verification — downstream consumer recipe
+
+```bash
+# 1. Verify SLSA Build L4 provenance attestation
+gh attestation verify pulsar-cli-0.1.0.crate \
+  --owner LennyObez --predicate-type slsa-provenance/v1.0
+
+# 2. Verify Cosign keyless signature on SBOM
+cosign verify-blob \
+  --certificate-identity-regexp 'https://github.com/LennyObez/pulsar-framework' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  --signature pulsar-framework-workspace.cdx.json.sig \
+  --certificate pulsar-framework-workspace.cdx.json.crt \
+  pulsar-framework-workspace.cdx.json
+
+# 3. Verify in-toto layout
+in-toto-verify \
+  --layout pulsar-framework.layout.template \
+  --layout-keys <maintainer-fulcio-cert>
+```
+
+If any of the three verifications fails, the artefact is rejected — the chain has been broken somewhere between the maintainer's commit and the consumer's local copy.

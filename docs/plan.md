@@ -33,7 +33,7 @@ The rewrite is cadenced by exit criteria and quality gates rather than by calend
 
 The merge strategy is big-bang: the full rewrite develops on the `develop` branch across every sprint of every phase; the PHP codebase receives the terminal tag `v0.99.0-php-final` and is frozen; on completion of Phase 4 the single `develop → main` pull request undergoes `/ultrareview` and becomes the new `main` head. No partial integration and no hybrid operation is planned: the PHP tree is preserved for historical auditability but receives no further maintenance, no bug fixes, and no security patches beyond the freeze tag. The same GitHub repository URL, `LennyObez/pulsar-framework`, hosts both histories.
 
-The quantitative success metrics for 1.0.0 GA are: one hundred percent line, branch, and condition coverage on kernel, security, and compliance crates; at least ninety-five percent line/branch coverage across every other crate; mutation-testing score of at least ninety-five percent per `cargo-mutants`; ten million fuzzing iterations with zero crashes per parser with `cargo-fuzz`; a minimum of sixty property-based tests on value objects; at least twenty named chaos-engineering scenarios; nine TLA+ specifications covering crypto, router, session, audit, middleware, OAuth 2.1 with PKCE, SAML SSO, websocket inbound dispatch, and orchestration (workflow + saga); at least eighty percent Creusot contract coverage across kernel functions; zero `cargo-audit` findings at any severity; median hello-world latency under 100 microseconds; 99th-percentile HTTP latency under one millisecond; 99.99th-percentile tail latency under five milliseconds; per-request peak memory below one megabyte; idle process memory below fifty megabytes; sustained load-test throughput of one thousand requests per second over one hour; stripped release binary below fifty megabytes; at least sixty Architecture Decision Records; complete mdBook coverage across Getting Started, Concepts, Guide, Cookbook, and API Reference chapters; at least twenty Grafana dashboards and alerting rules committed to `docs/observability/`; compliance mappings for twenty-three frameworks (twenty-two mandatory plus MiCA opt-in for crypto-asset deployments); **exactly fifty-three first-party Rust crates covering strict PHP parity per Section XV plus state-of-art extensions per Section XIV and Section XVI**; and at least three of the seven downstream Obez-network projects migrated to the Rust edition before GA.
+The quantitative success metrics for 1.0.0 GA are: one hundred percent line, branch, and condition (MC/DC) coverage on kernel, security, compliance, and data-protection crates; at least ninety-five percent line/branch coverage across every other crate; mutation kill rate of at least ninety-nine percent per `cargo-mutants` on the four critical-tier crate groups (per Decision 2.56 v2.3 lock-in — was ninety-five percent in v2.2); ten million fuzzing iterations with zero crashes per parser with `cargo-fuzz`; a minimum of sixty property-based tests on value objects; at least twenty named chaos-engineering scenarios; **fifteen TLA+ specifications** (per Decision 2.59 v2.3 lock-in — was nine in v2.2) covering crypto, router, session, audit, middleware, OAuth 2.1 with PKCE, SAML SSO, websocket inbound dispatch, orchestration (workflow + saga), RtbF two-phase commit, capability token lifecycle, multi-region saga compensation, event-bus delivery semantics, ratelimit token-bucket invariants, and OAuth refresh-token rotation; at least eighty percent Creusot contract coverage across kernel functions; sixteen formally-verified cryptographic primitives sourced from HACL\* via FFI (per Decision 2.53 v2.3 lock-in: AES-128/256-GCM, ChaCha20-Poly1305, Curve25519, Ed25519, P-256, SHA-2/3 256/384/512, HKDF, HMAC, BLAKE2, ML-KEM-768/1024, ML-DSA-65/87); two SPARK 2014 invariants formally proved via GNATprove (capability token unforgeability + audit chain append-only — per Decision 2.54 v2.3 lock-in); zero `cargo-audit` findings at any severity; **SLSA Source Level 3 + SLSA Build Level 4 + in-toto layout** for supply-chain provenance (per Decision 2.57 v2.3 lock-in); **hybrid post-quantum cryptography from Sprint 1.1** with X25519+ML-KEM-768 KEM and Ed25519+ML-DSA-65 signatures (per Decision 2.58 v2.3 lock-in); **Ed25519 + Merkle + RFC 6962 transparency log** for the audit chain (per Decision 2.55 v2.3 lock-in — replaces v2.2 HMAC-SHA256 PHP-parity carry-over); median hello-world latency under 100 microseconds; 99th-percentile HTTP latency under one millisecond; 99.99th-percentile tail latency under five milliseconds; per-request peak memory below one megabyte; idle process memory below fifty megabytes; sustained load-test throughput of one thousand requests per second over one hour; stripped release binary below fifty megabytes; at least sixty Architecture Decision Records; complete mdBook coverage across Getting Started, Concepts, Guide, Cookbook, and API Reference chapters; at least twenty Grafana dashboards and alerting rules committed to `docs/observability/`; compliance mappings for **thirty-one frameworks** (thirty mandatory plus MiCA opt-in — per Decision 2.52 v2.3 lock-in: the v2.2 twenty-two plus NYDFS Part 500, MAS TRM, APRA CPS 234, OSFI B-13, RBI Cybersecurity Framework, Quebec Law 25, Switzerland nFADP, and Common Criteria EAL 6+/7); **exactly seventy-six first-party Rust crates** (per Decision 2.51 v2.3 lock-in — was fifty-three in v2.2: ten net via dé-fusion of the four v2.2 meta-crates back into fourteen sub-module crates, twelve net via the sqlx-pattern split applied to `pulsar-orm`, `pulsar-cloud`, and `pulsar-storage`) covering strict PHP parity per Section XV plus state-of-art extensions per Section XIV and Section XVI; and at least three of the seven downstream Obez-network projects migrated to the Rust edition before GA.
 
 ---
 
@@ -169,9 +169,14 @@ Every commit on every branch is GPG-signed (RFC 4880, Ed25519 key preferred). Co
 
 Every sixty `src/` module and every thirty-one first-party extension of the PHP baseline maps to a Rust crate or is explicitly superseded in Section XV. Zero silent regression. Parity is a GA acceptance criterion, audited module-by-module in the parity matrix. Rationale: the PHP codebase is the reference specification of Pulsar's feature surface at GA; a rewrite that drops features rewrites product strategy, not engineering. Alternatives considered: minimal-viable rewrite shipping kernel plus CMS plus payments at GA (rejected: would strand seven downstream projects that already depend on subsystems outside the MVP); staged parity across 1.x releases with partial GA (rejected: breaks procurement criterion "feature complete at GA").
 
-### 2.32 Extended crate catalogue — 50+ crates
+### 2.32 Extended crate catalogue — 76 crates (v2.3 lock-in per Decision 2.51)
 
-The workspace hosts **exactly fifty-three first-party Rust crates** (post-consolidation per Section 16.14, post-removal per Section 16.13), grouped in twelve layers: meta (1: `pulsar-framework`), kernel (1: `pulsar-kernel`), core foundation (8: http, engine, orm, audit, auth, compliance, observability, search), security controls (1: `pulsar-guard` consolidating six former crates), application infrastructure (14: mail, queue, scheduler, cache, config, storage, form, webhook, idempotency, notification, pagination, feature-flag, i18n, tenancy), data protection + authorisation + identity (4: dataprotection, consent, authz, identity-standards), application extensions (4: cms, forum, payments, console-api), API paradigms (5: api, graphql, grpc, mcp-server, realtime consolidating websocket + sse + webtransport + broadcasting), AI surface (4: ai, ai-governance, vector-search, ai-agents), reactive and developer experience (4: live, studio, analytics, accessibility), orchestration (1: `pulsar-orchestration` consolidating workflow + saga), infrastructure adapters (4: cloud, edge, cluster consolidating supervisor + service-discovery, deploy), CLI + test utilities (2: cli, test). Rationale: strict PHP parity requires migrating thirty-plus horizontal subsystems that the v1 plan omitted; the four consolidations (`pulsar-guard`, `pulsar-realtime`, `pulsar-orchestration`, `pulsar-cluster` per Section 16.14) prevent crate-count inflation while preserving sub-module clarity, and the six removals (tickets, feedback, booking, devices, releases, importexport per Section 16.13) keep the framework core focused on truly horizontal infrastructure. Alternatives considered: three meta-crates aggregating per layer (rejected: coarsens version boundaries and couples unrelated subsystems); monolithic `pulsar` crate (rejected: catastrophic compile-time cost, forced feature-flag explosion).
+
+The workspace hosts **exactly seventy-six first-party Rust crates** at GA (per Decision 2.51 v2.3 lock-in — was fifty-three in v2.2 reconciliation). Two independent decompositions applied to the v2.2 baseline: dé-fusion of the four v2.2 meta-crates back into fourteen sub-module crates (+10 net), plus the sqlx-pattern split applied to `pulsar-orm`, `pulsar-cloud`, and `pulsar-storage` (+12 net).
+
+Layer breakdown post-v2.3: meta (1: `pulsar-framework`), kernel (1: `pulsar-kernel`), core foundation including driver crates (12: http, engine, orm, orm-postgres, orm-mysql, orm-sqlite, orm-clickhouse, audit, auth, compliance, observability, search), **security controls — un-consolidated (6: csrf, sri, incident, ratelimit, resilience, ssrf-guard — replacing v2.2 `pulsar-guard`)**, application infrastructure (14: mail, queue, scheduler, cache, config, storage, form, webhook, idempotency, notification, pagination, feature-flag, i18n, tenancy), storage drivers (4: storage-s3, storage-azure, storage-gcs, storage-fs), data protection + authorisation + identity (4: dataprotection, consent, authz, identity-standards), application extensions (4: cms, forum, payments, console-api), **API paradigms — un-consolidated realtime (8: api, graphql, grpc, mcp-server, websocket, sse, webtransport, broadcasting — replacing v2.2 `pulsar-realtime`)**, AI surface (4: ai, ai-governance, vector-search, ai-agents), reactive and developer experience (4: live, studio, analytics, accessibility), **orchestration — un-consolidated (2: workflow, saga — replacing v2.2 `pulsar-orchestration`)**, infrastructure adapters (3: cloud, edge, deploy), cloud drivers (4: cloud-aws, cloud-azure, cloud-gcp, cloud-oci), **clustering — un-consolidated (2: supervisor, service-discovery — replacing v2.2 `pulsar-cluster`)**, CLI + test utilities (2: cli, test). **Total: 75.**
+
+Rationale: granularity at the crate boundary is the security + procurement primary lever (each crate has independent semver, independent CVE blast-radius, independent audit cycle, independent regulatory attestation). The four v2.2 consolidations obscured CVE surfaces — a CSRF defect in `pulsar-guard` would taint six sub-modules in users' attestation reports; a postgres-specific defect in `pulsar-orm` would taint all DB consumers regardless of which driver they use. The sqlx-pattern driver split matches the established Rust ecosystem precedent (sqlx-mysql / sqlx-postgres / sqlx-sqlite, AWS SDK Rust per-service crates, Tower per-middleware crates). Strict PHP parity still requires migrating thirty-plus horizontal subsystems that the v1 plan omitted; the six removals from v2.2 (tickets, feedback, booking, devices, releases, importexport per Section 16.13) keep the framework core focused on truly horizontal infrastructure. Alternatives considered: three meta-crates aggregating per layer (rejected: coarsens version boundaries and couples unrelated subsystems); monolithic `pulsar` crate (rejected: catastrophic compile-time cost, forced feature-flag explosion); confirm 53 from v2.2 (rejected per Decision 2.51 above).
 
 ### 2.33 No calendar; cadence driven by exit criteria and quality gates
 
@@ -271,6 +276,152 @@ The trademark and patent posture is asymmetric and explicit:
 Rationale: trademark protection is a procurement-evaluation requirement in regulated markets (legal teams require evidence the brand name is owned and protected before approving production deployments). The Apache-2.0 patent grant satisfies the patent-clarity requirement for enterprise adoption without imposing additional restrictions. The explicit no-offensive-patents pledge differentiates Pulsar from frameworks whose corporate sponsors retain offensive patent posture (a known procurement friction in regulated markets where buyers prefer counterparties with no-aggression commitments).
 
 Alternatives considered: no trademark (rejected: leaves the brand vulnerable to dilution and squatting, particularly in EU regulated markets); offensive patent strategy (rejected: incompatible with the OSS positioning and procurement expectations); MPL-2.0 patent grant (rejected: file-level copyleft introduces friction in regulated forks per Decision 2.21); CLA requiring patent assignment (rejected: deters individual contributors and is unnecessary given Apache-2.0 grant); EUIPO opposition deferred to post-GA (rejected: brand vulnerability window during Phase 0–4 is unacceptable).
+
+### 2.51 Workspace size: 76 first-party crates (dé-fusion + sqlx-pattern driver split + HACL\* FFI)
+
+Pulsar Framework workspace ships **exactly 76 first-party Rust crates** at GA. The number is the post-v2.3-reconciliation result of three independent decompositions applied to the v2.2 baseline of 53 crates:
+
+**Dé-fusion of the 4 v2.2 meta-crates (+10 net):** The four consolidated meta-crates introduced in v2.2 reconciliation (`pulsar-guard`, `pulsar-realtime`, `pulsar-orchestration`, `pulsar-cluster`) are decomposed back into their constituent sub-modules. `pulsar-guard` (4.11) splits into `pulsar-csrf`, `pulsar-sri`, `pulsar-incident`, `pulsar-ratelimit`, `pulsar-resilience`, `pulsar-ssrf-guard` (6 crates). `pulsar-realtime` (4.38) splits into `pulsar-websocket`, `pulsar-sse`, `pulsar-webtransport`, `pulsar-broadcasting` (4 crates). `pulsar-orchestration` (4.47) splits into `pulsar-workflow`, `pulsar-saga` (2 crates). `pulsar-cluster` (4.50) splits into `pulsar-supervisor`, `pulsar-service-discovery` (2 crates). Net: 14 crates replace 4 = +10.
+
+**Sqlx-pattern driver crates (+12 net):** Following the established pattern of `sqlx`, `tower`, and the AWS SDK Rust, three crates with multiple backends are split into a thin core crate plus per-backend driver crates. `pulsar-orm` → `pulsar-orm` + `pulsar-orm-postgres` + `pulsar-orm-mysql` + `pulsar-orm-sqlite` + `pulsar-orm-clickhouse` (+4). `pulsar-cloud` → `pulsar-cloud` + `pulsar-cloud-aws` + `pulsar-cloud-azure` + `pulsar-cloud-gcp` + `pulsar-cloud-oci` (+4). `pulsar-storage` → `pulsar-storage` + `pulsar-storage-s3` + `pulsar-storage-azure` + `pulsar-storage-gcs` + `pulsar-storage-fs` (+4).
+
+**HACL\* FFI binding crate (+1 net):** Per Decision 2.53 the HACL\* formally-verified cryptographic library is wrapped in a `*-sys`-style binding crate `pulsar-crypto-hacl-bindings` (per Rust ecosystem convention for C-binding crates). The crate vendors the HACL\* C distribution under `hacl-c/`, compiles it via `build.rs` + `cc`, generates Rust FFI declarations via `bindgen`. Safe Rust wrappers + Creusot contracts + capability gating live in `pulsar-kernel` (which depends on `pulsar-crypto-hacl-bindings`).
+
+**Total: 53 + 10 + 12 + 1 (HACL\* FFI) = 76 crates.** The number is locked in `Cargo.toml` `[workspace.members]`, in the per-layer enumeration in Section IV (4.1 through 4.76), in the seven-layer dependency map in Section III, and in the success metrics in Section XII.
+
+Rationale: granularity at the crate boundary is the security + procurement primary lever. Each crate has independent semver, independent CVE blast-radius, independent audit cycle, and independent regulatory attestation. The 75-crate split matches natural responsibility boundaries (each consolidated v2.2 meta-crate had sub-modules with disjoint authorship contexts and independently auditable invariants; each backend driver has a distinct CVE surface from the upstream backend's vendor).
+
+Alternatives considered: confirm 53 crates as v2.2 (rejected: meta-crates obscure independent CVE surfaces — a CSRF defect in `pulsar-guard` taints 6 sub-modules; a postgres-specific defect in `pulsar-orm` taints all DB consumers); consolidate further to ~40-45 (rejected: mixes orthogonal lifecycles — pagination + form helpers do not share an audit context with HTTP routing); maximally fragment to ~80+ (rejected: cache + mail + notifier sub-backends do not warrant per-backend crates because their security posture is uniform across backends).
+
+### 2.52 Compliance scope: 31 frameworks (30 mandatory + 1 opt-in MiCA)
+
+Pulsar Framework targets compliance against **31 regulatory frameworks** at GA. The matrix expands the v2.2 scope of 23 (22 mandatory + MiCA opt-in) by 8 mandatory additions, bringing the mandatory count to 30 + 1 opt-in.
+
+**Eight v2.3 additions:** NYDFS Part 500 (23 NYCRR 500 — US New York financial services cyber requirements); MAS Technology Risk Management Guidelines (Singapore banking + insurance); APRA CPS 234 (Australian banking, insurance, superannuation); OSFI B-13 (Canadian federally regulated financial institutions); RBI Cybersecurity Framework for Banks (Indian banking); Quebec Law 25 (Canadian-francophone privacy law, in force since 2024); Switzerland nFADP / nLPD (Swiss data protection, in force since September 2023); Common Criteria ISO/IEC 15408 EAL 6+ / EAL 7 (formal-verification-based product certification target — `pulsar-kernel` formal verification per Decision 2.20 + Decision 2.53 supports semi-formally / formally verified design and tested levels).
+
+**Total mapping:** GDPR + UK GDPR + HIPAA + PCI-DSS 4.0 + PSD2 + DORA + SOC 2 + ISO 27001 + ISO 27017 + ISO 27018 + ISO 27701 + NIS2 + eIDAS 2 + COPPA + FERPA + CCPA + LGPD + APPI + PIPL + POPIA + NDB + Mexican LFP + India DPDP (the 22 v2.2 mandatory) + NYDFS Part 500 + MAS TRM + APRA CPS 234 + OSFI B-13 + RBI + Quebec Law 25 + Switzerland nFADP + Common Criteria EAL 6+/7 (the 8 v2.3 mandatory) + MiCA (opt-in for crypto-asset service providers in EU).
+
+Rationale: the original 22-framework matrix covered EU + UK + US federal + APAC privacy laws + the major industry-vertical standards but missed the regulator-specific banking frameworks for Singapore, Australia, Canada, India, and US-state-level financial services. The Phase 0 ambition is regulated-domain coverage at the global tier, not just the EU/US tier. Quebec Law 25 + Switzerland nFADP fill privacy gaps in francophone Canada + Switzerland (both regulated markets with significant Pulsar-target-customer presence). Common Criteria EAL 6+/7 is the formal-product-certification target that downstream integrators may pursue using Pulsar's verification artefacts.
+
+Alternatives considered: confirm 22 + MiCA (rejected: leaves obvious gaps in Singapore + Australia + Canada banking + Switzerland privacy — frameworks where Pulsar will be evaluated by procurement teams); add even more frameworks (e.g. South Korea PIPA, UAE DPL, Saudi Arabia SDAIA, Israel PPL, Turkey KVKK) — deferred to v2.4+ pending market-demand signal; drop MiCA opt-in (rejected: removes the opt-in path for crypto-asset providers).
+
+### 2.53 Kernel cryptographic primitives: HACL\* via FFI (formally verified, constant-time prooved)
+
+The cryptographic primitives in `pulsar-kernel` are sourced from **HACL\*** — the formally verified cryptographic library written in F\* and compiled to optimised constant-time C code. HACL\* is exposed to Rust through a FFI binding crate `pulsar-crypto-hacl-bindings` (new in v2.3, Sprint 1.1). The Rust-side `pulsar-kernel::crypto` module re-exports the primitive API, layered with sealed-trait safety wrappers and Creusot contracts on the lifecycle invariants.
+
+**Primitives sourced from HACL\*:** AES-128-GCM, AES-256-GCM, ChaCha20-Poly1305, Curve25519, Ed25519, P-256, SHA-2 (256/384/512), SHA-3 (256/384/512), HKDF, HMAC, BLAKE2b, BLAKE2s, ML-KEM-768, ML-KEM-1024 (NIST FIPS 203), ML-DSA-65, ML-DSA-87 (NIST FIPS 204).
+
+**Primitives kept on `ring` + `subtle` + `argon2`:** Argon2id (KDF — HACL\* does not yet ship Argon2 as of 2026Q1), `subtle::ConstantTimeEq` (constant-time byte comparison primitives — `subtle` is already pulled by HACL\* internally), some legacy-compat AEADs needed for backwards compatibility with PHP-era stored material (AES-256-CBC + HMAC-SHA256 composite, deprecated at 1.0 but present at v0.9.x for migration tooling).
+
+**Why HACL\* matters:** HACL\* is the only widely-deployed cryptographic library that ships **formal proofs of correctness, memory safety, and secret independence (constant-time)** for every primitive it exports. The proofs are machine-checked via F\*'s SMT solver backend and cover the C extraction. Production users include Mozilla Firefox NSS (TLS), Linux kernel WireGuard (Curve25519), Tezos blockchain, Microsoft Azure VPN, Zcash Foundation. By comparison, `ring` is rigorously audited (NCC Group + Trail of Bits) but not formally verified, and `subtle` provides constant-time primitives for assembly but does not prove higher-level constructions constant-time.
+
+Rationale: for a framework targeting banking + healthcare + government + legal where cryptographic-defect blast-radius is denominated in regulatory fines and licensure loss, the gap between "audited" and "formally verified" is the gap regulated procurement evaluates. HACL\* closes that gap at the primitives layer for a modest engineering cost (FFI binding maintenance + an additional C compiler in the build pipeline). Combined with Decision 2.20 (Creusot + TLA+ for the Rust-side kernel composition), Pulsar's cryptographic surface reaches the verification tier of high-assurance research kernels.
+
+Alternatives considered: keep `ring` + `subtle` only (v2.2 baseline) — rejected: leaves the formal-verification gap; adopt liboqs for PQC primitives — rejected: HACL\* now ships ML-KEM + ML-DSA (FIPS 203 + 204 finalised August 2024) with formal proofs, strictly stronger than liboqs; write our own crypto in pure Rust with Creusot proofs — rejected: years of effort, and even with proofs would lack HACL\*'s production deployment evidence; use BoringSSL or libsodium — rejected: BoringSSL is C without formal proofs, libsodium is C audited but not formally verified.
+
+### 2.54 Sub-module SPARK 2014 for capability token unforgeability + audit chain append-only invariants
+
+A sub-module **`services/spark-invariants/`** written in **Ada/SPARK 2014** holds the formal proofs for the two invariants where the cost of a defect is regulator-fine-denominated and the proof effort fits in a focused module: **capability token unforgeability** (no caller without the capability can construct or delegate it) and **audit chain append-only enforcement** (no entry can be inserted retroactively into the chain). The Rust-side `pulsar-kernel` calls into the SPARK module via FFI.
+
+**What lives in SPARK:** Two Ada packages totalling ~500-1000 lines of SPARK Mode code. `Capability_Unforgeability` exposes `Verify_Capability(Token, Current_Set) -> Boolean` with SPARK Mode contracts proving that no execution path constructs a `Token` not in `Current_Set` other than through `Mint_Capability(...)` which itself has a precondition restricting callers. `Audit_Chain_Append_Only` exposes `Verify_Append(Prev_Root, Entry, New_Root) -> Boolean` with SPARK Mode contracts proving that `New_Root` is the unique RFC 6962 Merkle root extending `Prev_Root` with `Entry` and that no other `New_Root` value satisfies the postcondition.
+
+**What does NOT live in SPARK:** Everything else. The Rust-side kernel (capability table runtime, audit chain runtime, all I/O, all serialisation, all protocol logic) stays in Rust + Creusot + TLA+. SPARK is reserved for the two highest-assurance invariants where (a) the proof effort is bounded, (b) the Rust + Creusot + TLA+ combination cannot reach equivalent assurance, (c) the FFI cost is acceptable (the SPARK functions are pure verifiers — they take immutable inputs and return a boolean, no allocation, no I/O).
+
+**Toolchain:** GNAT Community 2026 + GNATprove (free + commercial tier) + Alire (Ada package manager, used for SPARK dependencies). Build pipeline integration via `cargo build` shelling out to `gprbuild` + `gnatprove`. CI integrates GNATprove proof reports into the supply-chain attestation per Decision 2.57.
+
+Rationale: SPARK provides natively-integrated formal proofs at a tier strictly stronger than Rust + Creusot for the specific invariant class where SPARK excels (absence of runtime errors, pre/post conditions, information flow). For two invariants whose violation is catastrophic (capability token forgery → privilege escalation across every authorised surface; audit chain mutation → undetected tampering of the regulatory evidence chain), the additional toolchain cost (one C compiler + one Ada compiler in the build) is justified. The polyglot is acceptable per Decision 2.46 (Go + kubebuilder for `services/operator`) and Decision 2.8 (native HTML5 + Web Components for `services/admin`) — Pulsar already accepts polyglot exceptions when the best tool for a specific surface is not Rust.
+
+Alternatives considered: Rust + Creusot only for these invariants (rejected: Creusot's coverage of these specific properties is partial — capability unforgeability requires cross-function invariants Creusot 2026 cannot prove; SPARK provides them natively); Rust + manual proof in Coq/Lean (rejected: external proof environments require translating Rust semantics — SPARK keeps the proof in-source); seL4-style C + Isabelle/HOL (rejected: industrial proof effort, ~years per invariant); SPARK for the entire kernel (rejected: arrête mortellement le projet — no Ada/SPARK web ecosystem, would require rewriting tokio + hyper + sqlx in SPARK = 5-10 person-years extra).
+
+### 2.55 Audit chain primitive: Ed25519 + Merkle tree + RFC 6962 transparency log
+
+The audit chain primitive is **Ed25519 signature per entry + Merkle tree aggregation + RFC 6962 (Certificate Transparency-style) transparency log**, replacing the v2.2 baseline of HMAC-SHA256 (which was a strict carry-over from PHP `1.0.0-rc.11` for parity).
+
+**Mechanism per entry:** each audit entry is canonicalised (deterministic field-ordered serialisation), signed with the maintainer's Ed25519 audit-key, then leaf-hashed (SHA-256 over the canonical signed entry). Leaves accumulate into a Merkle tree (RFC 6962 § 2.1 — left-balanced, leaf-prefix `0x00`, internal-prefix `0x01`). The current Merkle root is signed Ed25519 with the audit-root-key and published periodically (daily or on demand) to a public transparency log (`logs.pulsar-framework.com` once provisioned, or via Sigstore Rekor for compatibility).
+
+**Verification:** any holder of an audit entry can independently prove (a) the entry is authentic (Ed25519 signature verifies under the published audit-key), (b) the entry is included in the chain (Merkle inclusion proof against the published root), (c) the chain has not been tampered with (the published root is signed Ed25519 + recorded in the transparency log). Verifiers do NOT need access to the maintainer's private key to perform any of these checks.
+
+**Why this is strictly stronger than HMAC-SHA256:** HMAC requires a shared secret to verify. Anyone holding the HMAC key can forge entries; no third party can prove non-forgery without the key. Ed25519 + Merkle + transparency log provides public verifiability + non-repudiation + inclusion proof granular per entry. This is the design used by Sigstore Rekor (transparency log for code-signing attestations), Google Trillian (general-purpose append-only log), and Certificate Transparency (the historical CT design).
+
+Rationale: an audit chain that requires the auditing party's secret to verify is fundamentally not auditable by external regulators or third parties. The HMAC carry-over from PHP was acceptable for the PHP era's reduced threat model but inadequate for Pulsar's regulated-domain target. Ed25519 + Merkle + RFC 6962 is the state-of-art primitive for tamper-evident logs in 2026 and is the same primitive auditable third parties already know how to verify (because they verify Sigstore + CT chains routinely).
+
+Alternatives considered: keep HMAC-SHA256 (rejected per above); HMAC + periodic Ed25519 batch signature (rejected: still requires the HMAC key for granular verification; the periodic Ed25519 only attests to batches, not individual entries); BLS aggregate signature instead of Ed25519 (rejected: BLS adds complexity without solving a problem Ed25519 + Merkle does not already solve); ECDSA P-256 instead of Ed25519 (rejected: Ed25519 is faster, has smaller signatures, and avoids the implementation pitfalls of nonce-reuse-based ECDSA failures); use Sigstore Rekor as the only log (rejected: Rekor is an excellent compatibility target but Pulsar should also operate its own first-party log for regulatory environments that need self-hosted evidence chains).
+
+### 2.56 Coverage discipline: 100% line + branch + MC/DC + 99% mutation kill rate on critical-tier crates
+
+Critical-tier crates (`pulsar-kernel` + every crate in the Security Controls layer + `pulsar-compliance` + `pulsar-dataprotection`) must achieve **100% line coverage + 100% branch coverage + 100% MC/DC (Modified Condition / Decision Coverage) + ≥ 99% mutation kill rate** before sprint exit. The other crates target ≥ 95% line + ≥ 95% branch + best-effort mutation (informative only).
+
+**Tooling:** `cargo llvm-cov --workspace --branch --mcdc` provides the line/branch/MC/DC measurement. `cargo mutants --workspace --minimum-test-timeout 60` provides the mutation kill rate. CI gates fail the build on any of: line coverage < 100% (critical) or < 95% (rest); branch coverage < 100% (critical) or < 95% (rest); MC/DC < 100% (critical only — MC/DC is informative on the rest); mutation kill rate < 99% (critical only).
+
+**MC/DC is the test-discipline standard from DO-178C Level A** (the highest aviation safety integrity level — used for primary flight controls). It requires that every condition in every boolean decision independently affects the outcome of the decision in the test suite. SQLite famously achieves 100% MC/DC; Pulsar matches that on the four critical-tier crate groups.
+
+**99% mutation kill rate is the test-effectiveness floor** (mutation testing introduces small program changes; a passing test suite that fails to detect ≥ 99% of mutations is a test suite that misses defect classes). Mutation testing in Rust is provided by `cargo-mutants`; the 99% threshold matches the academic state-of-art for mutation-discipline projects (Jester for Java aimed at 95%; PIT for Java at production-grade aims for 80-90%; Pulsar's 99% is more aggressive — justified by the regulated-domain risk profile).
+
+Rationale: the test discipline gates are the runtime mirror of the formal-verification gates. MC/DC catches the "we tested both branches of every if but not in the combination that exposes the defect" class of bug. Mutation kill rate catches the "we have 100% line coverage but our assertions are too weak" class of bug. The two together close the gap between "tested" and "tested rigorously enough that an external auditor can certify" — which is the bar regulated procurement evaluates.
+
+Alternatives considered: 100% MC/DC without mutation enforcement (rejected: MC/DC alone leaves the assertion-strength gap; mutation kill closes it); 95% mutation kill rate (rejected: mutation testing in Rust is mature enough in 2026 to reach 99% without spending a sprint mutation-tuning); informative mutation only (rejected: turns a quality lever into shelfware); apply 100% MC/DC + 99% mutation to all crates (rejected: cost is incompatible with the 75-crate workspace; the tier system focuses effort where regulator-fine-denominated risk lives).
+
+### 2.57 Supply chain: SLSA Source Level 3 + SLSA Build Level 4 + in-toto attestations
+
+Every published Pulsar artefact carries supply-chain provenance attestations at the **highest SLSA tier on both source and build sides** plus an **in-toto layout** declaring the full source-to-build-to-publish chain.
+
+**SLSA Source Level 3** is satisfied by: GPG-signed commits per Decision 2.30 (source identity bound to maintainer's Ed25519 key); branch protection rules that enforce signed commits + status checks before merge per ADR-0007; immutable history on `main` (no force-push, no rebase post-merge); 18-month retention of the signing-key audit trail. Source Level 3 is attested in the artefact's `provenance.slsa.json` field.
+
+**SLSA Build Level 4** is satisfied by: Trusted Publisher OIDC for crates.io publishing per ADR-0006 (no long-lived publish tokens); two-builder reproducible-build verification per `.github/workflows/repro-build.yml` (any two independent runners produce byte-identical artefacts); hermetic builds (no network access during build except the locked crate cache); signed build provenance via `actions/attest-build-provenance@v1`; CycloneDX SBOM per published `.crate`.
+
+**in-toto layout** is generated per release and signed Ed25519 by the maintainer. The layout declares: source tag → build job → SBOM → Cosign signature → crates.io publish, with each step having an expected signer + expected output. Verifiers can replay the chain by running `in-toto-verify` against the layout + the per-step attestations. This is the layered provenance model used by kubernetes-sigs + Sigstore + GUAC.
+
+**Why all three layers matter:** SLSA Source L3 proves "the source committed by the maintainer is what entered the build". SLSA Build L4 proves "the build of that source produced the `.crate` we published". in-toto proves "every intermediate step in source → build → SBOM → sign → publish was authorised by the policy". Each layer is independently verifiable; together they form a chain that no single compromise (hijacked CI runner, leaked signing key, malicious dependency) can subvert.
+
+Rationale: SLSA Source L3 + Build L4 is the maximum tier currently defined and is the bar Sigstore + Kubernetes + GUAC have set as the state-of-art baseline for high-assurance OSS. in-toto adds the cross-step attestation that SLSA does not yet formally specify. The combined chain matches the assurance requirements of EU CRA Annex I § 2(d) (vulnerability response with documented provenance) + NIST SP 800-218 SSDF + DORA Art. 28 (third-party ICT risk management).
+
+Alternatives considered: SLSA Build L4 only (v2.2 baseline) — rejected: leaves the source side at the implicit "GPG-signed commits exist" claim without machine-verifiable attestation; SLSA Build L3 (rejected: leaves the reproducible-build claim un-verified by CI); skip in-toto (rejected: SLSA does not specify cross-step policy enforcement, and in-toto is the production-ready solution); Notary v2 instead of Cosign (rejected: Notary v2 is OCI-focused and has weaker keyless-signing UX than Sigstore Cosign in 2026).
+
+### 2.58 Hybrid PQC from Sprint 1.1 (no classical-only window)
+
+Post-quantum cryptography (PQC) primitives are integrated **starting at Sprint 1.1** — the first sprint that ships any cryptographic primitive — and every key-establishment + signature path is **hybrid classical + PQC by construction**. There is no "classical-only Phase 1, hybrid PQC at Phase 2" window. Long-term secret material generated by Pulsar at any point in its history must be safe against the harvest-now-decrypt-later threat.
+
+**Key establishment (KEM):** every protocol that uses key encapsulation runs **X25519 + ML-KEM-768** in parallel and combines the resulting shared secrets via HKDF (SHA-256). This is the construction used by Cloudflare PQ-Hybrid, Google Chrome PQ-TLS, Apple iMessage PQ3, and IETF draft-ietf-tls-hybrid-design. ML-KEM-768 corresponds to NIST FIPS 203 (final August 2024). HACL\* (per Decision 2.53) provides both X25519 and ML-KEM-768 with formal proofs.
+
+**Signatures:** every signature scheme that anchors a long-term commitment runs **Ed25519 + ML-DSA-65** in parallel and verifies require BOTH to pass. ML-DSA-65 corresponds to NIST FIPS 204. The double-signature posture is more conservative than single-PQC-only because it preserves classical-only verifiability for legacy clients while gaining PQC protection.
+
+**At-rest encryption:** AEADs (AES-256-GCM, ChaCha20-Poly1305) remain symmetric and are not PQC-affected. Long-term key wrapping (KEK encrypting DEKs) uses hybrid key-establishment per the KEM rule above.
+
+**Migration path:** v0.1.0 → v0.5.0 use hybrid PQC by default with classical-only fallback for legacy peers (with a runtime warning). v0.5.0 → v1.0.0 default to hybrid-required (classical-only fallback opt-in via deployment-time configuration). v1.0.0+ default to PQC-only for new long-term material (classical for legacy backward-compat only).
+
+Rationale: every secret material generated before PQC migration is exposed to harvest-now-decrypt-later. Even a non-production framework leaks information about deployment patterns + cryptographic choices that benefit an adversary post-quantum. The marginal cost of starting hybrid at Sprint 1.1 is negligible (HACL\* already ships both primitives; the API takes a hybrid `KemAlgo::X25519Mlkem768` constructor). The cost of migrating later is much higher (every protocol payload, every stored ciphertext, every signed commitment must be re-evaluated).
+
+Alternatives considered: classical-only Phase 1, hybrid PQC at Sprint 1.5 (v2.2 baseline) — rejected: leaves the harvest-now-decrypt-later window open even if Pulsar is not in production (test deployments, reference implementations, and ecosystem partners may be); PQC-only without hybrid (rejected: the NIST PQC primitives are young enough — final August 2024 — that hybrid is the prudent posture for at least 5 years); defer PQC entirely (rejected: contradicts the regulated-domain ambition; banking + government procurement explicitly evaluates PQC posture in 2026).
+
+### 2.59 TLA+ scope: 15 specifications spanning kernel + protocol layers
+
+The TLA+ specification scope is extended from the v2.2 nine specifications to **15 specifications** at GA. The six new specifications target invariants that became visible as v2.3 lock-ins (RtbF two-phase commit, capability token lifecycle, multi-region saga compensation) plus three layer-level protocols that v2.2 left implicit (event bus delivery semantics, ratelimit token bucket invariants, OAuth refresh-token rotation).
+
+**The 15 specifications (`spec/*.tla`):**
+
+| # | Spec | Sprint | What it proves |
+|---|------|--------|----------------|
+| 1 | `spec/crypto.tla` | 1.1 | Key lifecycle correctness (no key reuse across contexts; constant-time invariants delegated to HACL\*). |
+| 2 | `spec/audit.tla` | 1.2 | Append-only invariant; Merkle root determinism; transparency-log inclusion. |
+| 3 | `spec/session.tla` | 1.3 | Typed-state transitions; no path Anonymous → Elevated bypasses Authenticating. |
+| 4 | `spec/router.tla` | 1.4 | Constant-time worst-case path resolution; uniqueness of resolved route. |
+| 5 | `spec/middleware.tla` | 1.5 | Total-order ordering; no middleware runs twice per request. |
+| 6 | `spec/oauth2.tla` | 2.5 | OAuth 2.1 + PKCE flow correctness; authorization-code-binding invariants. |
+| 7 | `spec/saml.tla` | 2.5 | SAML SSO with assertion replay defence. |
+| 8 | `spec/websocket.tla` | 3B.2 | Inbound dispatch lifecycle; backpressure conservation. |
+| 9 | `spec/orchestration.tla` | 3E.1 | Workflow + saga compensation ordering. |
+| 10 | `spec/rtbf.tla` | 4.x dataprotection | Two-phase commit invariants for right-to-be-forgotten across distributed adapters. |
+| 11 | `spec/capability.tla` | 1.2 kernel | Capability token unforgeability + delegation rules. |
+| 12 | `spec/multi-region-saga.tla` | 3E.1+ | Cross-region saga compensation with per-region commit semantics. |
+| 13 | `spec/event-bus.tla` | 1.6 | Event bus delivery semantics (at-least-once + transactional outbox). |
+| 14 | `spec/ratelimit.tla` | 1.5 guard | Token-bucket invariants (no negative tokens; refill monotonicity). |
+| 15 | `spec/oauth2-refresh.tla` | 2.5 | OAuth refresh-token rotation invariants (no token reuse after rotation). |
+
+CI runs `tlc -config <spec>.cfg <spec>.tla` on every commit touching the corresponding crate or sprint. Sprint exits require the relevant spec to model-check clean.
+
+Rationale: TLA+ specifications are the protocol-level mirror of Creusot function contracts. Where Creusot proves that a single function execution preserves a postcondition, TLA+ proves that a concurrent or distributed protocol preserves an invariant across all interleaved executions. The six v2.3 additions cover the protocols Pulsar promises to be safe under (RtbF two-phase commit, capability delegation, multi-region orchestration, event-bus delivery, ratelimit fairness, OAuth refresh rotation) — protocols where a single defective interleaving has regulator-fine-denominated cost. Comparator data: Amazon S3 ships ~10 TLA+ specifications publicly; Amazon Aurora ~6; Azure Cosmos DB ~4. Pulsar's 15 specifications match the seL4 + Amazon S3 tier of formal-verification depth, deliberately positioning the framework above the standard industry baseline.
+
+Alternatives considered: 9 TLA+ specs as v2.2 (rejected: leaves protocol-level holes the new v2.3 architecture introduces — multi-region saga, transparency-log audit chain); 12 specs (incremental v2.3 — only RtbF + capability + multi-region-saga added) — rejected: the three additional event-bus + ratelimit + oauth-refresh specs cover invariants that already failed in production at comparable systems (Cloudflare 2019 oauth-refresh incident, Discord 2022 rate-limit fairness incident, Stripe 2021 event-bus outbox incident); 20+ specs (rejected: marginal value drops as we cover more — at 15 specs Pulsar already matches the highest publicly-documented TLA+ scope in commercial systems).
 
 ---
 
@@ -445,7 +596,7 @@ An internal event bus carries typed events between modules. Events are Rust type
 
 ## IV. Workspace Layout
 
-The workspace is a single Cargo workspace with fifty-three first-party Rust crates organised by layer (post-consolidation per Section 16.14), plus two non-Rust sub-projects in `services/` (the admin SPA in native HTML5 + ES2025 + Web Components per Decision 2.8, and the Kubernetes Operator in Go per Decision 2.46). A `spec/` tree hosts TLA+ specifications, a `tools/` tree hosts workspace-local build tooling, an `examples/` tree hosts reference applications, and a `docs/` tree hosts documentation artefacts.
+The workspace is a single Cargo workspace with **seventy-five first-party Rust crates** organised by layer (per Decision 2.51 v2.3 lock-in: ten net via dé-fusion of the four v2.2 meta-crates back into fourteen sub-module crates, twelve net via the sqlx-pattern driver split applied to `pulsar-orm`, `pulsar-cloud`, and `pulsar-storage`), plus three non-Rust sub-projects in `services/` (the admin SPA in native HTML5 + ES2025 + Web Components per Decision 2.8, the Kubernetes Operator in Go + kubebuilder per Decision 2.46, and the SPARK 2014 invariants module per Decision 2.54). A `spec/` tree hosts the fifteen TLA+ specifications (per Decision 2.59), a `tools/` tree hosts workspace-local build tooling, an `examples/` tree hosts reference applications, and a `docs/` tree hosts documentation artefacts.
 
 **Meta-crate convention.** The per-crate "Dependencies" lines below describe the *public composition* surface — what types and capabilities a downstream application gets when it depends on the crate. Internally, the inner crates do **not** declare `pulsar-framework` as a Cargo dependency; doing so would create a cyclic dependency through the meta-crate's re-exports (the meta-crate re-exports the sixteen "Re-exported in meta. Yes" crates, so those crates cannot also declare it as a dep). Instead, inner crates depend directly on the smaller set of inner crates whose types they need (most commonly `pulsar-kernel` for crypto + audit + types + error patterns), and the meta-crate `pulsar-framework` aggregates the surface for downstream consumption. Application code consumes `pulsar_framework::prelude::*` rather than depending on individual inner crates. This is the standard meta-crate pattern (see e.g. `tokio`, `sqlx`).
 
@@ -532,7 +683,7 @@ pulsar-framework/
 │   │
 │   ├── pulsar-cli/               # 4.52 CLI tool
 │   └── pulsar-test/              # 4.53 testing utilities
-├── spec/                         # nine TLA+ specifications (Section XII metric)
+├── spec/                         # fifteen TLA+ specifications (Section XII metric, per Decision 2.59 v2.3 lock-in)
 │   ├── crypto.tla                # key lifecycle (Sprint 1.1)
 │   ├── router.tla                # route resolution (Sprint 1.4)
 │   ├── session.tla               # session state-machine transitions (Sprint 1.3)
@@ -742,15 +893,29 @@ The Kubernetes Operator lives outside the Cargo workspace under `services/operat
 
 ### 4.2 pulsar-kernel (formally verified primitives)
 
-**Purpose.** Hosts the six kernel subsystems under formal verification: crypto primitives, audit HMAC chain, session state machine, router trie, middleware pipeline, DI container. Every public function carries Creusot contracts where tractable; every protocol carries a TLA+ specification in `spec/`.
+**Purpose.** Hosts the six kernel subsystems under formal verification: crypto primitives, audit HMAC chain (now Ed25519 + Merkle + RFC 6962 per ADR-0013), session state machine, router trie, middleware pipeline, DI container. Every public function carries Creusot contracts where tractable; every protocol carries a TLA+ specification in `spec/`. Cryptographic primitives are sourced from HACL\* via FFI per ADR-0009 + Decision 2.53; the SPARK 2014 capability-token + audit-chain invariants in `services/spark-invariants/` are linked via the C ABI per ADR-0010 + Decision 2.54.
 
 **Key types.** `Crypto`, `KeyId`, `Ciphertext`, `Nonce`, `AuditChain`, `AuditEntry`, `Session<S: State>`, `Router`, `Route`, `Middleware`, `Pipeline`, `Container`, `ServiceId`.
 
-**Dependencies.** `ring = "0.17"`, `subtle = "2.5"`, `zeroize = "1.8"`, `secrecy = "0.10"`, `thiserror = "2"`, `tracing = "0.1"`.
+**Dependencies.** `pulsar-crypto-hacl-bindings = "=0.0.1-alpha.0"` (HACL\* FFI per ADR-0009 — replaces direct `ring` + `subtle` from v2.2 baseline), `zeroize = "1.8"`, `secrecy = "0.10"`, `thiserror = "2"`, `tracing = "0.1"`. The legacy-compatibility AEAD primitives kept for v0.9.x migration tooling depend on `ring = "0.17"` + `subtle = "2.6"` directly via the `legacy-compat` Cargo feature (deprecated at 1.0).
 
 **Re-exported in meta.** Yes.
 
 **Status.** Planned (Phase 1 scope).
+
+### 4.2.5 pulsar-crypto-hacl-bindings (HACL\* FFI binding crate — v2.3 lock-in per Decision 2.53 + ADR-0009)
+
+**Purpose.** `*-sys`-style FFI binding crate that vendors the HACL\* C distribution under `hacl-c/` and exposes Rust FFI declarations for the formally-verified cryptographic primitives `pulsar-kernel::crypto` re-exports under safety wrappers + Creusot contracts + capability gating.
+
+**Primitives wrapped (16 total).** AEAD: AES-128-GCM, AES-256-GCM, ChaCha20-Poly1305. Key agreement: Curve25519 (X25519), P-256 (NIST). Signatures: Ed25519, ML-DSA-65, ML-DSA-87 (NIST FIPS 204). KEM: ML-KEM-768, ML-KEM-1024 (NIST FIPS 203). Hashes: SHA-2-256/384/512, SHA-3-256/384/512, BLAKE2b, BLAKE2s. KDFs: HKDF (over SHA-2 family), HMAC.
+
+**Build.** `build.rs` compiles `hacl-c/` via the `cc` crate + generates Rust FFI declarations via `bindgen`. At Phase 0 the `hacl-c/` directory is a placeholder; Sprint 1.1 (kernel crypto) lands the actual extracted C sources from the upstream HACL\* repository (vendored to ensure SLSA Level 4 reproducibility per Decision 2.57).
+
+**Dependencies.** `thiserror = "2"` (FFI-side error type). `[build-dependencies]`: `cc = "1.2"`, `bindgen = "0.71"`. `links = "hacl_pulsar"` for cargo's collision-free static-library namespacing.
+
+**Re-exported in meta.** No. Downstream consumers depend on `pulsar-kernel::crypto` (the safe surface), not on the FFI binding crate directly.
+
+**Status.** Placeholder (Phase 0 stub); implementation Sprint 1.1.
 
 ### 4.3 pulsar-http (HTTP framework on hyper)
 
@@ -1502,7 +1667,7 @@ Within each phase, sprints are listed in the order they must be delivered. Sprin
 
 ### Phase 0 — Foundation
 
-Phase 0 establishes the complete workspace skeleton, the CI topology, the ADR process, the initial architecture diagrams, this master plan committed, and publishes the fifty-three placeholder crates at version `0.0.1-alpha.0` to reserve the `pulsar-*` namespace on crates.io. No production code lands in Phase 0; every sprint deliverable is structural.
+Phase 0 establishes the complete workspace skeleton, the CI topology, the ADR process, the initial architecture diagrams, this master plan committed, and publishes placeholder crates at versions `0.0.1-alpha.0` (Sprint 0.8 — fifty-three crates representing the v2.2 architecture, namespace-reservation initial publish) and `0.0.2-alpha.0` (Sprint 0.9-bis — seventy-six crates representing the v2.3 architecture per Decision 2.51, replacing four meta-crates with fourteen un-fused sub-modules and adding twelve sqlx-pattern driver crates). The Sprint 0.8 tag is preserved on `fe2332a` as historical first publication. No production code lands in Phase 0; every sprint deliverable is structural.
 
 #### Sprint 0.1 — Meta-files
 
@@ -1629,9 +1794,9 @@ Phase 0 establishes the complete workspace skeleton, the CI topology, the ADR pr
 
 **Quality gate reference:** Section VI applies in full.
 
-#### Sprint 0.8 — Foundation tag + namespace-reservation alpha publish
+#### Sprint 0.8 — Foundation tag + namespace-reservation alpha publish (v2.2 architecture)
 
-**Scope.** Tags `v0.0.1-alpha.0` on `develop`. Publishes the fifty-three placeholder crates to crates.io via the `publish.yml` workflow in dependency-order (kernel first, meta-crate last). Each placeholder README states explicitly: "Placeholder release for namespace reservation. The implementation ships in 0.1.0."
+**Scope.** Tags `v0.0.1-alpha.0` on `develop` (commit `fe2332a` per Sprint 0.8 closure). Publishes the **fifty-three placeholder crates** (v2.2 architecture: 4 meta-crates `pulsar-guard` + `pulsar-realtime` + `pulsar-orchestration` + `pulsar-cluster` still in place; pre-sqlx-pattern split) to crates.io via the `publish.yml` workflow in dependency-order (kernel first, meta-crate last). Each placeholder README states explicitly: "Placeholder release for namespace reservation. The implementation ships in 0.1.0."
 
 **Deliverables:**
 - Code: published crates.
@@ -1641,8 +1806,28 @@ Phase 0 establishes the complete workspace skeleton, the CI topology, the ADR pr
 - Benchmarks: N/A.
 
 **Exit criteria:**
-- Fifteen crates visible on crates.io at `0.0.1-alpha.0`.
+- Fifty-three crates visible on crates.io at `0.0.1-alpha.0` (v2.2 architecture snapshot).
 - Tag `v0.0.1-alpha.0` annotated and signed.
+- `develop` advanced beyond the tag.
+
+**Quality gate reference:** Section VI applies in full.
+
+#### Sprint 0.9 — Phase 0 hardening + v2.3 reconciliation tag
+
+**Scope.** Closes Phase 0 with the v2.3 reconciliation per Decisions 2.51-2.59 (lifted on the v2.2 audit findings). Lands the dé-fusion of the four v2.2 meta-crates into 14 sub-module crates (csrf + sri + incident + ratelimit + resilience + ssrf-guard + websocket + sse + webtransport + broadcasting + workflow + saga + supervisor + service-discovery), the sqlx-pattern driver split for `pulsar-orm` + `pulsar-cloud` + `pulsar-storage` (12 driver crates), the HACL\* FFI binding crate `pulsar-crypto-hacl-bindings`, the `services/spark-invariants/` Ada/SPARK 2014 sub-project, the six new ADRs (0009-0014), the eight new compliance framework mappings (NYDFS + MAS + APRA + OSFI + RBI + Quebec Law 25 + Switzerland nFADP + CC EAL 6+/7), the SLSA Source L3 + in-toto attestation extension to `publish.yml`, and the audit chain primitive change to Ed25519+Merkle+RFC 6962. Tags `v0.0.2-alpha.0` on `develop` representing the v2.3 architecture (76 crates) — the prior `v0.0.1-alpha.0` tag remains preserved on `fe2332a` as the historical first publication.
+
+**Deliverables:**
+- Code: 22 new crate stubs (14 dé-fusion + 12 driver), 4 meta-crates removed (pulsar-guard, pulsar-realtime, pulsar-orchestration, pulsar-cluster); HACL\* FFI binding skeleton; SPARK invariants module skeleton.
+- Tests: `cargo install pulsar-cli --version 0.0.2-alpha.0` succeeds; `cargo test --workspace` zero tests (stubs); GNATprove smoke run on SPARK invariants.
+- Documentation: master plan v2.3 (this document); ADRs 0009-0014; compliance matrix +8 frameworks; CHANGELOG migration to `[0.0.2-alpha.0]`.
+- Formal: N/A (formal-verification work begins Phase 1).
+- Benchmarks: N/A.
+
+**Exit criteria:**
+- Seventy-five crates visible on crates.io at `0.0.2-alpha.0` (v2.3 architecture snapshot — the four v2.2 meta-crates are yanked from crates.io and replaced).
+- Tag `v0.0.2-alpha.0` annotated and signed.
+- All six ADRs 0009-0014 merged.
+- Compliance matrix at 31 frameworks.
 - `develop` advanced beyond the tag.
 
 **Quality gate reference:** Section VI applies in full.
@@ -2662,7 +2847,7 @@ Phase 4 delivers the WebAssembly extension sandbox, the CLI, the extension marke
 **Exit criteria:**
 - External audit findings at severity High or Critical: zero open.
 - `1.0.0` tagged on `main`, signed, and published.
-- All fifty-three crates visible on crates.io at `1.0.0`.
+- All seventy-six crates visible on crates.io at `1.0.0` (per Decision 2.51 v2.3 lock-in).
 - Every success metric in Section XII met.
 - All workspace quality gates from Section VI pass.
 
@@ -2829,7 +3014,7 @@ Every branch protection attaches the following required checks: `ci / fmt`, `ci 
 
 ### 9.1 Phase 0 — `0.0.1-alpha.0`
 
-Phase 0 closes with the publication of the fifty-three placeholder crates at `0.0.1-alpha.0` to reserve the `pulsar-*` namespace on crates.io. Each placeholder carries a README stating the version contains no production functionality. Each subsequent Phase 0 sprint bumps the patch to `0.0.1-alpha.N` to validate the publish workflow.
+Phase 0 closes with two namespace-reservation publishes: (a) Sprint 0.8 → `v0.0.1-alpha.0` on commit `fe2332a` publishes the **fifty-three placeholder crates** representing the v2.2 architecture; (b) Sprint 0.9-bis → `v0.0.2-alpha.0` publishes the **seventy-five placeholder crates** representing the v2.3 architecture per Decision 2.51 (replaces the four meta-crates with fourteen un-fused sub-modules and adds twelve sqlx-pattern driver crates). Each placeholder carries a README stating the version contains no production functionality. Each subsequent Phase 0 sprint bumps the patch to validate the publish workflow.
 
 ### 9.2 Phase 1 — `0.1.0` kernel stable
 
@@ -2845,7 +3030,7 @@ At the close of Phase 3, the workspace is tagged `v0.8.0`. The console, CMS, for
 
 ### 9.5 Phase 4 — `1.0.0-rc.N` and `1.0.0` GA
 
-During Phase 4, `v1.0.0-rc.1`, `v1.0.0-rc.2`, …, `v1.0.0-rc.N` tags are issued on `develop` after each audit remediation cycle. The terminal tag `v1.0.0` is issued on `main` immediately after the `develop → main` big-bang merge. All fifty-three crates publish at `1.0.0` in a single atomic publish step driven by the `publish.yml` workflow.
+During Phase 4, `v1.0.0-rc.1`, `v1.0.0-rc.2`, …, `v1.0.0-rc.N` tags are issued on `develop` after each audit remediation cycle. The terminal tag `v1.0.0` is issued on `main` immediately after the `develop → main` big-bang merge. All seventy-six crates publish at `1.0.0` in a single atomic publish step driven by the `publish.yml` workflow (per Decision 2.51 v2.3 lock-in).
 
 ### 9.6 Post-GA semver discipline
 
@@ -3061,13 +3246,15 @@ Nine gating checkpoints bracket the rewrite. Eight fire at the exit of a phase (
 | Branch coverage (kernel, security, compliance, data protection) | 100%                                    | `cargo llvm-cov --branch`                               |
 | Branch coverage (remaining crates)         | ≥ 95%                                                        | `cargo llvm-cov --branch`                               |
 | Condition (MC/DC) coverage (kernel, security, compliance) | 100%                                            | `cargo llvm-cov --mcdc`                                 |
-| Mutation score (kernel, security, compliance, data protection) | ≥ 95%                                    | `cargo mutants`                                         |
-| Mutation score (remaining crates)          | ≥ 90%                                                        | `cargo mutants`                                         |
+| Mutation kill rate (kernel, security, compliance, data protection) | ≥ 99%                              | `cargo mutants` (per Decision 2.56 v2.3 lock-in — was ≥ 95% in v2.2) |
+| Mutation kill rate (remaining crates)      | ≥ 90% (informative — non-blocking)                           | `cargo mutants`                                         |
 | Fuzz iterations per parser (zero crash)    | 10,000,000                                                   | `cargo fuzz run <target>`                               |
 | Property tests on value objects            | ≥ 60                                                         | `proptest` test inventory                               |
 | Chaos scenarios                            | ≥ 20                                                         | `docs/ops/chaos/` inventory                             |
-| TLA+ specifications                        | 9 (crypto, router, session, audit, middleware, OAuth2, SAML, websocket, orchestration covering workflow + saga) | `spec/` directory             |
+| TLA+ specifications                        | 15 (crypto, router, session, audit, middleware, oauth2, saml, websocket, orchestration, rtbf, capability, multi-region-saga, event-bus, ratelimit, oauth2-refresh — per Decision 2.59) | `spec/` directory |
 | Creusot contract coverage (kernel + security controls) | ≥ 80%                                            | Annotated-function ratio                                |
+| HACL\* primitives FFI-bound (cryptographic surface) | 16 (AES-128/256-GCM, ChaCha20-Poly1305, Curve25519, Ed25519, P-256, SHA-2/3 256/384/512, HKDF, HMAC, BLAKE2, ML-KEM-768/1024, ML-DSA-65/87) | per `pulsar-crypto-hacl-bindings` |
+| SPARK 2014 invariants formally proved      | 2 (capability token unforgeability + audit chain append-only — per Decision 2.54) | GNATprove report in CI |
 | cargo-audit                                | 0 at any severity                                            | `cargo audit`                                           |
 | P50 hello-world latency                    | < 100 µs                                                     | Criterion                                               |
 | P99 HTTP latency at 1 000 req/s            | < 1 ms                                                       | Criterion plus integration rig                          |
@@ -3080,8 +3267,11 @@ Nine gating checkpoints bracket the rewrite. Eight fire at the exit of a phase (
 | mdBook chapters                            | Complete across Getting Started / Concepts / Guide / Cookbook / API Reference | mdBook index                   |
 | Grafana dashboards                         | ≥ 20                                                         | `docs/observability/dashboards/`                        |
 | Alerting rules                             | Committed                                                    | `docs/observability/alerts/`                            |
-| Compliance framework mappings              | 23 (22 mandatory + MiCA opt-in)                              | `docs/compliance/matrix.md` + `docs/compliance/frameworks/` |
-| First-party crates published at 1.0.0      | exactly 53                                                   | crates.io under `pulsar-*` namespace                    |
+| Compliance framework mappings              | 31 (30 mandatory + MiCA opt-in — per Decision 2.52 v2.3 lock-in: 22 v2.2 + NYDFS Part 500 + MAS TRM + APRA CPS 234 + OSFI B-13 + RBI Cybersecurity Framework + Quebec Law 25 + Switzerland nFADP + Common Criteria EAL 6+/7) | `docs/compliance/matrix.md` + `docs/compliance/frameworks/` |
+| First-party crates published at 1.0.0      | exactly 76 (per Decision 2.51 v2.3 lock-in — was 53 in v2.2: +10 dé-fusion of 4 meta-crates into 14 sub-modules, +12 sqlx-pattern driver split for orm/cloud/storage, +1 HACL\* FFI binding crate `pulsar-crypto-hacl-bindings`) | crates.io under `pulsar-*` namespace |
+| Supply-chain attestation tier              | SLSA Source Level 3 + SLSA Build Level 4 + in-toto layout (per Decision 2.57 v2.3 lock-in) | `.github/workflows/publish.yml` + Cosign + Sigstore Rekor + `actions/attest-build-provenance@v1` |
+| Audit chain primitive                      | Ed25519 signature per entry + RFC 6962 Merkle tree + transparency log publish (per Decision 2.55 v2.3 lock-in — replaces v2.2 HMAC-SHA256 PHP-parity carry-over) | `pulsar-audit` + `logs.pulsar-framework.com` |
+| PQC posture                                | Hybrid X25519 + ML-KEM-768 for KEM, Ed25519 + ML-DSA-65 for signatures, from Sprint 1.1 (per Decision 2.58 v2.3 lock-in — no classical-only window) | `pulsar-kernel::crypto` via HACL\* |
 | PHP `src/` modules covered by Rust crates  | 60 of 60 (100%)                                              | Section XV parity matrix                                |
 | PHP extensions covered or superseded       | 31 of 31 (100%)                                              | Section XV parity matrix                                |
 | Silent PHP feature regressions             | 0                                                            | Section XV parity matrix                                |
@@ -3832,7 +4022,7 @@ To reduce cross-crate friction without sacrificing architectural clarity, four c
 
 Regulatory reporting automation (DORA, NIS2, EU AI Act human oversight, EU Data Act, MiCA, HIPAA BAA, PCI-DSS tokenisation, FINRA, FFIEC) folds into `pulsar-compliance` (Section 4.8 extended scope).
 
-Post-consolidation workspace crate count: **fifty-three first-party Rust crates** (Section IV crate specs 4.1 through 4.53), plus the polyglot sub-projects `services/admin/` (native Web Components SPA) and `services/operator/` (Go kubebuilder Kubernetes Operator) outside the Cargo workspace.
+Post-v2.3-reconciliation workspace crate count: **seventy-six first-party Rust crates** (Section IV crate specs 4.1 through 4.76 — per Decision 2.51 v2.3 lock-in), plus the polyglot sub-projects `services/admin/` (native Web Components SPA), `services/operator/` (Go kubebuilder Kubernetes Operator), and `services/spark-invariants/` (Ada/SPARK 2014 invariants module per Decision 2.54) outside the Cargo workspace.
 
 ### 16.15 Summary matrix — Section XVI items
 

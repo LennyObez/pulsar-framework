@@ -1,0 +1,30 @@
+[package]
+name = "pulsar-cloud-oci"
+description = "Oracle Cloud Infrastructure adapter for pulsar-cloud — Object Storage, Vault, Functions."
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+readme = "README.md"
+keywords = ["pulsar", "cloud", "oci", "oracle", "vault"]
+categories = ["web-programming", "asynchronous"]
+
+[dependencies]
+# OCI request signing uses the RSA primitives exposed by pulsar-kernel
+# (sourced from HACL* via the FFI binding crate per ADR-0009 + Decision 2.53),
+# NOT a direct `ring` dependency. This routes the OCI signing primitive
+# through the formally-verified cryptographic surface like the rest of the
+# framework. Sprint 3E.2 (pulsar-cloud-oci implementation) will exercise
+# `pulsar_kernel::crypto::rsa::sign(...)` for OCI Signature v1.
+pulsar-kernel = { path = "../pulsar-kernel", version = "=0.0.1-alpha.0" }
+pulsar-cloud = { path = "../pulsar-cloud", version = "=0.0.1-alpha.0" }
+reqwest = { workspace = true }
+tokio = { workspace = true }
+thiserror = { workspace = true }
+
+[lints]
+workspace = true

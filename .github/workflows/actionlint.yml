@@ -1,0 +1,40 @@
+name: actionlint
+
+on:
+  push:
+    branches: [develop, main]
+    paths:
+      - ".github/workflows/**"
+      - ".github/actions/**"
+  pull_request:
+    branches: [develop, main]
+    paths:
+      - ".github/workflows/**"
+      - ".github/actions/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  actionlint:
+    name: actionlint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run actionlint
+        uses: raven-actions/actionlint@v2
+        with:
+          fail_on_error: true
+          flags: "-color"
+          # Lints every .github/workflows/*.yml file:
+          # - YAML syntax
+          # - GitHub Actions expression syntax
+          # - shellcheck on every `run:` block
+          # - context-availability check (e.g. ${{ secrets.X }} only in jobs.<id>.steps)
+          # - matrix expansion sanity
+          # - deprecated `set-output` / `save-state` warnings

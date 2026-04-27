@@ -1,0 +1,50 @@
+--  GNAT project file for the Pulsar SPARK 2014 invariants module.
+--
+--  Per Decision 2.54 (v2.3 lock-in): the two highest-assurance kernel
+--  invariants — capability token unforgeability + audit chain append-only
+--  enforcement — are formally proven in SPARK 2014 via GNATprove. The
+--  proven functions are linked into pulsar-kernel via FFI.
+--
+--  Build:
+--      gprbuild -P pulsar_invariants.gpr
+--  Prove:
+--      gnatprove -P pulsar_invariants.gpr -j0 --level=4
+
+project Pulsar_Invariants is
+
+   for Languages use ("Ada");
+   for Source_Dirs use ("src");
+   for Object_Dir use "obj";
+   for Library_Dir use "lib";
+   for Library_Name use "pulsar_invariants";
+   for Library_Kind use "static";
+   for Library_Standalone use "no";
+
+   --  SPARK 2014 strict subset; see Section II Decision 2.54 + ADR-0010.
+   for Languages use ("Ada");
+
+   package Compiler is
+      --  -gnata: enable assertions ; -gnatwa: maximal warnings ;
+      --  -gnatVa: maximal validity checks ; -gnatyM100: max 100 cols.
+      for Default_Switches ("Ada") use
+         ("-gnatwa", "-gnata", "-gnatVa", "-gnatyM100",
+          "-gnat2022",   --  Ada 2022 + SPARK 2014 features
+          "-O2",
+          "-g");
+   end Compiler;
+
+   package Prove is
+      --  Reference proof level. Sprint 1.2 (kernel capability) targets
+      --  level 4 (deepest exploration) for verify_capability + verify_append_only.
+      for Proof_Switches ("Ada") use ("--level=4", "--prover=z3,cvc5,altergo");
+   end Prove;
+
+   package Builder is
+      for Default_Switches ("Ada") use ("-j0", "-g");
+   end Builder;
+
+   package Binder is
+      for Default_Switches ("Ada") use ("-Es");
+   end Binder;
+
+end Pulsar_Invariants;

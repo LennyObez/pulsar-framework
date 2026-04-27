@@ -94,3 +94,18 @@ CI runs `cargo creusot` on every kernel sprint exit and `tlc -config <spec>.cfg 
   * Creusot project. "Creusot: a verifier for Rust programs." creusot-rs.github.io.
   * Z3 SMT solver. github.com/Z3Prover/z3.
   * CVC5 SMT solver. cvc5.github.io.
+
+## Compliance mapping
+
+Formal verification at the kernel layer is the technical artefact that satisfies the highest-rigour evidentiary requirements in regulated procurement. Every TLA+ spec + Creusot contract is a machine-checkable demonstration that an invariant holds for all admissible inputs — a strictly stronger claim than test-based coverage.
+
+* **Common Criteria ISO/IEC 15408 — EAL 6+ / EAL 7** (semi-formally / formally verified design and tested) — `pulsar-kernel` is the locus that, once formally verified, supports ATE_DPT.4 (testing: depth — implementation representation) + ADV_FSP.6 (functional specification with complete formal presentation) + ADV_TDS.6 (TOE design with complete formal presentation). Pulsar does not pursue a full CC certification; the artefacts position downstream integrators to do so.
+* **NIST FIPS 140-3** (cryptographic-module security) — Level 4 demands "formal model is shown to be consistent with policy". Crypto primitives in `pulsar-kernel` carry Creusot contracts on key-lifecycle invariants + TLA+ spec `spec/crypto.tla`; `subtle`+`ring` deliver constant-time guarantees underneath. FIPS 140-3 validation pathway begins Sprint 4.7.
+* **ISO/IEC 27001:2022 A.8.27** (secure system architecture and engineering principles) — TLA+ specs documenting kernel-subsystem invariants ARE the secure-architecture documentation A.8.27 demands.
+* **ISO/IEC 27034-3:2018** (application security — application security management process) — § 7 application security verification is satisfied by automated formal-verification gates in CI.
+* **PCI-DSS 4.0 Req. 6.2.3.1** (custom and bespoke software is reviewed and approved before being released) — Creusot contracts + TLA+ model-checker results are the machine-readable evidence of pre-release verification.
+* **PSD2 RTS Art. 4** (security requirements for payment service providers — strong customer authentication) — `spec/oauth2.tla` covers the SCA flow's session-state-machine invariants. Authentication state transitions are proven safe at the protocol level.
+* **DORA Art. 9(2)** (ICT-related incident management — root-cause analysis) — formal-verification artefacts let post-incident root-cause analysis discriminate "verified subsystem (root cause is upstream/configuration)" from "non-verified subsystem (root cause is implementation defect)".
+* **DORA Art. 26-27** (digital operational resilience testing — advanced testing with TLPT) — formal-verification reports complement Threat-Led Penetration Testing by ruling out entire defect classes from the test scope.
+* **EU AI Act Art. 15(1)** (high-risk AI systems — accuracy, robustness, cybersecurity) — `pulsar-ai-governance` policy decisions cross the verified kernel; the kernel's verification supports Art. 15(1) cybersecurity claims by construction.
+* **NIST SP 800-160 Vol. 1 Rev. 1** (engineering trustworthy secure systems) — § 3.4.4 "Verification" clause is satisfied at the highest tier (formal proof) for the kernel surface.

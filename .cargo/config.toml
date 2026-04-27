@@ -78,6 +78,9 @@ fuzz-kernel = "fuzz run fuzz_router"
 # Sprint quality-gate sequence (per CLAUDE.md Section 3)
 sprint-gate = "check --workspace --all-targets --all-features"
 
+# Workspace automation via tools/xtask
+xtask = "run --package xtask --"
+
 # ──────────────────────────────────────────────────────────────────────────────
 # Networking
 # ──────────────────────────────────────────────────────────────────────────────

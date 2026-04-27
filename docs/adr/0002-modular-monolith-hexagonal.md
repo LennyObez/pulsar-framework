@@ -75,3 +75,18 @@ The hexagonal port discipline is the architectural mechanism that makes the twen
   * Cockburn, A. "Hexagonal Architecture." alistair.cockburn.us, 2005.
   * Martin, R. "The Clean Architecture." 2012.
   * Evans, E. "Domain-Driven Design: Tackling Complexity in the Heart of Software." Addison-Wesley, 2003.
+
+## Compliance mapping
+
+The hexagonal port discipline is the architectural mechanism that turns the 23-framework compliance matrix into a tractable engineering problem. Jurisdictions demanding region-restricted adapters, HSM-backed key storage, FIPS-validated cryptographic providers, or sovereignty-bound storage swap adapters at compile-time without modifying the verified inner core.
+
+* **ISO/IEC 27001:2022 A.5.23** (information security for use of cloud services) — adapter swapping at the storage + cache + queue boundaries lets the same Pulsar binary run against region-restricted cloud services without core modification.
+* **ISO/IEC 27001:2022 A.8.30** (outsourced development) — port traits live in inner crates owned by the maintainer; adapter implementations may live in third-party crates without compromising the core. The trust boundary is an interface contract, not a code-review boundary.
+* **ISO/IEC 27017:2015** (cloud-services security controls) — A.4.1 cloud-service-customer responsibilities are encoded in adapter selection; the customer controls which adapter implementation is composed at the binary build.
+* **GDPR Art. 25** (data protection by design and by default) — port traits define the minimum data footprint; adapters cannot widen what the port exposes. The compile-time port surface IS the documented data-protection boundary.
+* **GDPR Art. 28** (processor) — adapters that integrate with sub-processors (cloud KMS, managed databases) are explicitly identified at compile time, supporting Art. 28(2) sub-processor disclosure obligations.
+* **HIPAA 45 CFR § 164.308(a)(4)** (information access management) — capability tokens crossing port boundaries are auditable + revocable; adapter implementations cannot bypass the capability check defined at the port.
+* **PCI-DSS 4.0 Req. 6.2.4** (software development processes — defined and documented) — the port-and-adapter pattern is a documented architectural rule enforced via `cargo deny` rulesets in CI.
+* **DORA Art. 9** (ICT risk management framework — segregation of functions) — layering rule (dependencies flow inward, never reverse) implements DORA's segregation-of-functions requirement at the framework level rather than the deployment level.
+* **NIS2 Art. 21(2)(d)** (supply-chain security) — adapters are versioned + signed independently of the core; jurisdiction-specific adapters can be sourced and audited separately.
+* **EU AI Act Art. 9** (risk management system for high-risk AI systems) — `pulsar-ai` is a port; adapter implementations (OpenAI / Anthropic / Azure OpenAI / Vertex / on-premises) are swappable, supporting the AI Act's requirement that risk-management measures cover the full lifecycle including supplier dependencies.

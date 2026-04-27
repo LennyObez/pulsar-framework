@@ -24,3 +24,10 @@ polars = { workspace = true }
 tokio = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
+
+[lints]
+workspace = true
+
+[[bin]]
+name = "pulsar"
+path = "src/main.rs"

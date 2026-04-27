@@ -1,0 +1,24 @@
+[package]
+name = "pulsar-orm-postgres"
+description = "PostgreSQL driver for pulsar-orm via sqlx-postgres with pgvector + JSONB support."
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+readme = "README.md"
+keywords = ["pulsar", "orm", "postgres", "sqlx", "pgvector"]
+categories = ["database", "asynchronous"]
+
+[dependencies]
+pulsar-kernel = { path = "../pulsar-kernel", version = "=0.0.1-alpha.0" }
+pulsar-orm = { path = "../pulsar-orm", version = "=0.0.1-alpha.0" }
+sqlx = { workspace = true, features = ["postgres", "runtime-tokio", "macros"] }
+tokio = { workspace = true }
+thiserror = { workspace = true }
+
+[lints]
+workspace = true

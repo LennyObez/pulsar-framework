@@ -19,3 +19,6 @@ pulsar-notification = { path = "../pulsar-notification", version = "=0.0.1-alpha
 chrono = { workspace = true }
 serde = { workspace = true }
 thiserror = { workspace = true }
+
+[lints]
+workspace = true

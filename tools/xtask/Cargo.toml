@@ -1,0 +1,15 @@
+[package]
+name = "xtask"
+description = "Workspace-local build automation per the cargo-xtask pattern."
+version = "0.0.1-alpha.0"
+edition = "2024"
+rust-version = "1.95"
+license = "Apache-2.0"
+publish = false  # Never published — workspace-internal only
+
+[dependencies]
+anyhow = { workspace = true }
+clap = { workspace = true }
+
+[lints]
+workspace = true

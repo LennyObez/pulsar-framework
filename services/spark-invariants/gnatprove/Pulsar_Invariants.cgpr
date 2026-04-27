@@ -1,0 +1,9 @@
+--  Coverage / proof level configuration for GNATprove.
+--  Sprint 1.2 (capability + audit kernel sprint) requires:
+--    - Verify_Capability: prove all VCs at level 4
+--    - Verify_Append:     prove all VCs at level 4
+--    - All other:         best-effort
+
+project Pulsar_Invariants_Coverage is
+   for Source_Files use ();
+end Pulsar_Invariants_Coverage;

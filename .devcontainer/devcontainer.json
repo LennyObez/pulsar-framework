@@ -1,0 +1,170 @@
+{
+  "$schema": "https://raw.githubusercontent.com/devcontainers/spec/main/schemas/devContainer.schema.json",
+  "name": "Pulsar Framework — Rust 1.95.0",
+
+  // Per plan Section 14.6 reproducibility + Decision 2.7 toolchain pinning,
+  // the devcontainer mirrors flake.nix as closely as possible. Contributors
+  // who use VS Code Remote Containers (or GitHub Codespaces) get a Rust
+  // toolchain identical to CI without installing anything host-side.
+  //
+  // Two delivery modes coexist:
+  //   1. Nix-first: `flake.nix` is the canonical environment spec.
+  //   2. Devcontainer (this file): mounts a Debian-stable image preloaded
+  //      with the same toolchain — useful for Codespaces, Coder, GitPod,
+  //      and JetBrains Gateway, which don't all support flakes natively.
+
+  "image": "mcr.microsoft.com/devcontainers/rust:1-bookworm",
+
+  "features": {
+    // Pin rustup-managed toolchain to match rust-toolchain.toml.
+    // Dev Container Rust feature ignores rust-toolchain.toml on first run
+    // (it installs the latest stable), so we override here. The first
+    // `cargo build` re-applies rust-toolchain.toml afterwards.
+    "ghcr.io/devcontainers/features/rust:1": {
+      "version": "1.95.0",
+      "profile": "default",
+      "components": "rustfmt,clippy,rust-analyzer,rust-src,llvm-tools-preview"
+    },
+    "ghcr.io/devcontainers/features/git:1": { "version": "latest" },
+    "ghcr.io/devcontainers/features/github-cli:1": { "version": "latest" },
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": "true",
+      "configureZshAsDefaultShell": "true",
+      "installOhMyZsh": "true",
+      "upgradePackages": "true"
+    },
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    // Nix support so `nix develop` also works inside the devcontainer
+    // for cross-validation against flake.nix.
+    "ghcr.io/devcontainers/features/nix:1": {
+      "extraNixConfig": "experimental-features = nix-command flakes",
+      "version": "latest"
+    }
+  },
+
+  "remoteUser": "vscode",
+
+  "mounts": [
+    // Persist cargo + sccache state across rebuilds (huge time saving).
+    "source=pulsar-cargo-cache,target=/usr/local/cargo,type=volume",
+    "source=pulsar-target-cache,target=${containerWorkspaceFolder}/target,type=volume",
+    "source=pulsar-sccache-cache,target=/home/vscode/.cache/sccache,type=volume"
+  ],
+
+  "containerEnv": {
+    "CARGO_TERM_COLOR": "always",
+    "RUSTC_WRAPPER": "sccache",
+    "SCCACHE_CACHE_SIZE": "10G",
+    "RUST_BACKTRACE": "short"
+  },
+
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "postStartCommand": "echo 'Pulsar Framework devcontainer ready. Run `cargo check --workspace` to warm the cache.'",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        // Rust core
+        "rust-lang.rust-analyzer",
+        "tamasfe.even-better-toml",
+        "vadimcn.vscode-lldb",
+        "fill-labs.dependi",
+        "serayuzgur.crates",
+        "swellaby.vscode-rust-test-adapter",
+
+        // Quality + formatting
+        "EditorConfig.EditorConfig",
+        "DavidAnson.vscode-markdownlint",
+        "redhat.vscode-yaml",
+        "tekumara.typos-vscode",
+        "streetsidesoftware.code-spell-checker",
+
+        // Git + signing
+        "GitHub.vscode-pull-request-github",
+        "GitHub.vscode-github-actions",
+        "eamodio.gitlens",
+        "mhutchie.git-graph",
+
+        // mdBook + diagrams
+        "yzhang.markdown-all-in-one",
+        "bierner.markdown-mermaid",
+        "bpruitt-goddard.mermaid-markdown-syntax-highlighting",
+
+        // TLA+
+        "alygin.vscode-tlaplus",
+
+        // Polyglot sub-projects
+        "golang.go",                    // services/operator
+        "esbenp.prettier-vscode",       // services/admin
+        "dbaeumer.vscode-eslint"
+      ],
+
+      "settings": {
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": { "source.fixAll": "explicit" },
+        "files.eol": "\n",
+        "files.insertFinalNewline": true,
+        "files.trimFinalNewlines": true,
+        "files.trimTrailingWhitespace": true,
+        "rust-analyzer.cargo.features": "all",
+        "rust-analyzer.checkOnSave": true,
+        "rust-analyzer.check.command": "clippy",
+        "rust-analyzer.check.allTargets": true,
+        "rust-analyzer.completion.autoimport.enable": true,
+        "rust-analyzer.imports.granularity.group": "module",
+        "rust-analyzer.imports.prefix": "crate",
+        "[rust]": {
+          "editor.defaultFormatter": "rust-lang.rust-analyzer",
+          "editor.formatOnSave": true,
+          "editor.semanticHighlighting.enabled": true
+        },
+        "[toml]": {
+          "editor.defaultFormatter": "tamasfe.even-better-toml",
+          "editor.formatOnSave": true
+        },
+        "[yaml]": {
+          "editor.defaultFormatter": "redhat.vscode-yaml",
+          "editor.tabSize": 2
+        },
+        "[markdown]": {
+          "editor.wordWrap": "on",
+          "editor.quickSuggestions": { "comments": "off", "strings": "off", "other": "off" }
+        },
+        "git.alwaysSignOff": false,
+        "git.enableCommitSigning": true,
+        "githubPullRequests.fileListLayout": "tree",
+        "telemetry.telemetryLevel": "off"
+      }
+    },
+    "codespaces": {
+      "openFiles": [
+        "README.md",
+        "docs/plan.md"
+      ]
+    }
+  },
+
+  "forwardPorts": [
+    // Pulsar HTTP listener defaults
+    8080,  // pulsar-http dev server
+    8443,  // pulsar-http TLS dev server
+    9090,  // pulsar-observability Prometheus exporter
+    4317,  // pulsar-observability OTLP gRPC
+    4318,  // pulsar-observability OTLP HTTP
+    9000   // pulsar-console-api admin API
+  ],
+  "portsAttributes": {
+    "8080": { "label": "pulsar-http",         "onAutoForward": "notify" },
+    "8443": { "label": "pulsar-http TLS",     "onAutoForward": "silent" },
+    "9090": { "label": "Prometheus exporter", "onAutoForward": "silent" },
+    "4317": { "label": "OTLP gRPC",           "onAutoForward": "silent" },
+    "4318": { "label": "OTLP HTTP",           "onAutoForward": "silent" },
+    "9000": { "label": "pulsar-console-api",  "onAutoForward": "openBrowser" }
+  },
+
+  "hostRequirements": {
+    "cpus": 4,
+    "memory": "8gb",
+    "storage": "32gb"
+  }
+}

@@ -1,0 +1,25 @@
+[package]
+name = "pulsar-incident"
+description = "Incident escalation + alert dispatch + on-call paging with PagerDuty / Opsgenie / VictorOps webhook adapters."
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+readme = "README.md"
+keywords = ["pulsar", "incident", "alerting", "pagerduty", "oncall"]
+categories = ["asynchronous", "web-programming"]
+
+[dependencies]
+pulsar-kernel = { path = "../pulsar-kernel", version = "=0.0.1-alpha.0" }
+pulsar-audit = { path = "../pulsar-audit", version = "=0.0.1-alpha.0" }
+serde = { workspace = true }
+tokio = { workspace = true }
+reqwest = { workspace = true }
+thiserror = { workspace = true }
+
+[lints]
+workspace = true
