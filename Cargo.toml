@@ -256,8 +256,9 @@ categories = ["web-programming::http-server", "web-programming"]
 unsafe_code = "forbid"
 # Documentation: Section XVII.21 every public item documented
 missing_docs = "deny"
-# Soundness: idiomatic Rust 2024 hygiene
-rust_2024_compatibility = "deny"
+# Soundness: idiomatic Rust 2024 hygiene. Lint group → explicit priority below
+# the individual lints in this section so per-lint overrides take precedence.
+rust_2024_compatibility = { level = "deny", priority = -1 }
 unused_must_use = "deny"
 unused_lifetimes = "warn"
 unused_imports = "warn"
