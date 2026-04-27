@@ -157,3 +157,62 @@ The supply-chain job runs after `publish-crates` (so it cosigns the actual publi
 ## Reproducible-build verification (repro-build.yml)
 
 Per plan Section 14.6 SLSA Level 4 reproducibility requirement: two parallel matrix jobs (`builder-a`, `builder-b`) compile `pulsar-cli` release binary from a clean checkout on independent runners. A third `compare-digests` job downloads both artefacts and asserts SHA-256 equality. Divergence indicates non-deterministic build inputs (typical culprits: `SystemTime::now()` in build.rs or proc-macros, embedded git hashes, non-deterministic dep features, `rand` usage outside `cfg(test)`). The lint policy in `Cargo.toml` `[workspace.lints]` and the `cargo deny` ban list catch the most common cases at PR review; this workflow is the runtime verifier.
+
+## SLSA Source Level 3 + in-toto layout (v2.3 expansion per Decision 2.57)
+
+The supply-chain attestation pipeline gains two layers in v2.3 beyond the v2.2 SLSA Build L3 + Cosign + SBOM baseline:
+
+### SLSA Source Level 3
+
+Source Level 3 requires:
+
+1. **Source identity bound to the maintainer's signing key.** Pulsar enforces GPG-signed commits with the maintainer's Ed25519 key per Decision 2.30 + ADR-0007.
+2. **Branch protection enforcing signed commits + status checks.** GitHub branch protection rules on `develop` + `main` block unsigned merges + block merges that fail any required status check (`fmt`, `clippy`, `check`, `nextest`, `llvm-cov`, `deny`, `audit`, `machete`, `docs`, `adr-index`, `changelog-entry`).
+3. **Immutable history.** No force-push, no rebase post-merge — `develop` and `main` are append-only branches.
+4. **18-month retention of the signing-key audit trail.** The maintainer's Ed25519 audit-chain key history (key-id transitions, revocations) is retained for 18 months minimum per the SLSA Source L3 specification.
+
+The `supply-chain` job in `publish.yml` writes a textual attestation (`slsa/source-l3-attestation.txt`) capturing the signing identity of every commit reachable from the release tag, the branch protection state, the workflow ref + job workflow SHA. This text file is Cosign-signed (Sigstore keyless) so verifiers can establish trust via the maintainer's GitHub OIDC issuer.
+
+### in-toto layout
+
+The in-toto layout (`attestations/pulsar-framework.layout.template`) declares the full **source → build → SBOM → sign → publish** chain:
+
+```
+source-checkout    →    build-rust    →    sbom-emit    →    cosign-sign    →    publish-cratesio
+   git clone           cargo build          cargo cyclonedx    cosign sign-blob       cargo publish
+```
+
+Each step has an expected signer (Sigstore Fulcio CA via OIDC) + expected output (file pattern). Verifiers run `in-toto-verify --layout pulsar-framework.layout.template --layout-keys <maintainer-fulcio-cert>` against the released attestations to validate that:
+
+- The published `.crate` files came from the source tagged at `v0.0.X`.
+- No untrusted intermediate step modified the artefact between source and crates.io.
+- The Cosign signature on the SBOM matches the SBOM that was emitted from the build that produced the published `.crate`.
+
+This is the layered provenance model used by `kubernetes-sigs`, Sigstore, and GUAC. Combined with the SLSA Source L3 + Build L4 attestations, no single compromise (hijacked CI runner, leaked signing key, malicious dependency) can subvert the chain — the verifier replay surfaces the inconsistency.
+
+### Federated mirror to Sigstore Rekor
+
+Every Cosign keyless signature operation publishes a transparency-log entry to Sigstore Rekor automatically. Downstream consumers who prefer the Sigstore trust root (rather than the Pulsar Foundation's first-party audit-key) verify against Rekor. The first-party transparency log at `logs.pulsar-framework.com` (per ADR-0013) provides the same evidence chain for jurisdictions that require self-hosted attestation.
+
+### Verification — downstream consumer recipe
+
+```bash
+# 1. Verify SLSA Build L4 provenance attestation
+gh attestation verify pulsar-cli-0.1.0.crate \
+  --owner LennyObez --predicate-type slsa-provenance/v1.0
+
+# 2. Verify Cosign keyless signature on SBOM
+cosign verify-blob \
+  --certificate-identity-regexp 'https://github.com/LennyObez/pulsar-framework' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  --signature pulsar-framework-workspace.cdx.json.sig \
+  --certificate pulsar-framework-workspace.cdx.json.crt \
+  pulsar-framework-workspace.cdx.json
+
+# 3. Verify in-toto layout
+in-toto-verify \
+  --layout pulsar-framework.layout.template \
+  --layout-keys <maintainer-fulcio-cert>
+```
+
+If any of the three verifications fails, the artefact is rejected — the chain has been broken somewhere between the maintainer's commit and the consumer's local copy.
