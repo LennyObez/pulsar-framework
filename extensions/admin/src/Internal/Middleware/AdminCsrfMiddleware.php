@@ -17,6 +17,7 @@ use Pulsar\Http\ResponseStatus;
 use function bin2hex;
 use function hash_equals;
 use function in_array;
+use function is_array;
 use function is_string;
 use function random_bytes;
 
@@ -26,10 +27,19 @@ use function random_bytes;
  * Validates a CSRF token on POST/PUT/PATCH/DELETE requests.
  * When csrf_rotation is enabled, a fresh token is returned in the
  * X-CSRF-Token response header after each mutation.
+ *
+ * F33.4: the token can be supplied either as the `X-CSRF-Token`
+ * header (preferred for SPA / fetch / XHR workflows) or as the
+ * `_csrf_token` POST body field (fallback for plain HTML forms,
+ * including the noscript path). Both are checked under the same
+ * constant-time hash_equals, with the header winning when both
+ * are present.
  */
 #[Internal]
 final readonly class AdminCsrfMiddleware implements MiddlewareInterface
 {
+    private const string POST_FIELD = '_csrf_token';
+
     public function __construct(
         private AdminConfig $config,
     ) {}
@@ -40,7 +50,7 @@ final readonly class AdminCsrfMiddleware implements MiddlewareInterface
         $method = $request->getMethod();
 
         if ($this->isMutation($method)) {
-            $token = $request->getHeaderLine('X-CSRF-Token');
+            $token = $this->extractToken($request);
             $sessionToken = $request->getAttribute('csrf_token');
 
             if ($token === '' || !is_string($sessionToken)) {
@@ -66,6 +76,24 @@ final readonly class AdminCsrfMiddleware implements MiddlewareInterface
         }
 
         return $response;
+    }
+
+    private function extractToken(ServerRequestInterface $request): string
+    {
+        $header = $request->getHeaderLine('X-CSRF-Token');
+        if ($header !== '') {
+            return $header;
+        }
+
+        // F33.4: HTML form fallback. Plain `<form>` POSTs cannot
+        // set a header, so the canonical CSRF-token-in-hidden-input
+        // pattern (`_csrf_token`) is honoured here too.
+        $body = $request->getParsedBody();
+        if (is_array($body) && isset($body[self::POST_FIELD]) && is_string($body[self::POST_FIELD])) {
+            return $body[self::POST_FIELD];
+        }
+
+        return '';
     }
 
     private function isMutation(string $method): bool
