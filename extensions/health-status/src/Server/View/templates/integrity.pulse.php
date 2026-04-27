@@ -1,9 +1,8 @@
 <?php
-/**
- * @var \Pulsar\Integrity\VerificationResult $result Verification result from ManifestVerifierInterface
- */
-
 use Pulsar\Integrity\FileVerificationStatus;
+use Pulsar\Integrity\VerificationResult;
+
+assert($result instanceof VerificationResult);
 
 $totalFiles = count($result->files);
 ?>
