@@ -1,9 +1,8 @@
 <?php
-/**
- * @var \Pulsar\Extension\HealthStatus\Domain\Incident $incident
- */
-
+use Pulsar\Extension\HealthStatus\Domain\Incident;
 use Pulsar\Extension\HealthStatus\Domain\IncidentSeverity;
+
+assert($incident instanceof Incident);
 
 $severityClass = match ($incident->severity) {
     IncidentSeverity::Minor => 'minor',
