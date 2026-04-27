@@ -22,5 +22,47 @@ thiserror = { workspace = true }
 cc = "1.2"
 bindgen = "0.71"
 
-[lints]
-workspace = true
+[lints.rust]
+# This *-sys-style binding crate cannot inherit the workspace `unsafe_code
+# = "forbid"` policy: bindgen-generated FFI declarations are inherently
+# `unsafe extern "C"` blocks. Safe wrappers + Creusot contracts +
+# capability gating live in `pulsar-kernel::crypto`, where the workspace
+# `forbid` policy applies. Hygiene lints are inherited individually
+# below to keep this crate aligned with the rest of the workspace.
+unsafe_code = "allow"
+missing_docs = "deny"
+unused_must_use = "deny"
+unused_lifetimes = "warn"
+unused_imports = "warn"
+unused_extern_crates = "warn"
+trivial_casts = "warn"
+trivial_numeric_casts = "warn"
+unreachable_pub = "warn"
+rust_2024_compatibility = { level = "deny", priority = -1 }
+
+[lints.clippy]
+# Mirror the workspace clippy posture (deny `clippy::all`, warn pedantic /
+# nursery / cargo, ban unwrap / expect / panic / todo / unimplemented in
+# library code, allow noisy pedantic patterns the workspace already
+# allows). The bindgen-generated `bindings.rs` carries its own outer
+# attributes silencing clippy entirely on the FFI surface.
+all = { level = "deny", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+nursery = { level = "warn", priority = -1 }
+cargo = { level = "warn", priority = -1 }
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+todo = "deny"
+unimplemented = "deny"
+get_unwrap = "deny"
+module_name_repetitions = "allow"
+must_use_candidate = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+multiple_crate_versions = "allow"
+# Doc-comments in this crate refer to many technical terms (architectures
+# x86_64 / aarch64 / powerpc64, primitive names AES-GCM / ChaCha20-Poly1305 /
+# X25519 / Ed25519, F* / hax / EverCrypt / Vale / Lib_IntVector_Intrinsics).
+# Backticking every term would harm readability without security benefit.
+doc_markdown = "allow"
