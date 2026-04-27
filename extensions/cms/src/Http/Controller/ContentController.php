@@ -467,9 +467,13 @@ final readonly class ContentController
         // Fallback to inline HTML when no template engine is available
         /** @var array<string, mixed> $translation */
         $translation = $data['translation'] ?? [];
+        /** @var mixed $rawTitle */
         $rawTitle = $translation['title'] ?? null;
+        /** @var mixed $rawBody */
         $rawBody = $translation['body'] ?? null;
+        /** @var mixed $rawMetaTitle */
         $rawMetaTitle = $translation['meta_title'] ?? null;
+        /** @var mixed $rawMetaDescription */
         $rawMetaDescription = $translation['meta_description'] ?? null;
         $title = htmlspecialchars(is_string($rawTitle) ? $rawTitle : '', ENT_QUOTES | ENT_HTML5, 'UTF-8');
         $body = $this->safeHtmlPolicy->sanitize(is_string($rawBody) ? $rawBody : '');
@@ -514,10 +518,12 @@ final readonly class ContentController
             }
         }
 
+        /** @var mixed $rawLocale */
         $rawLocale = $translation['locale'] ?? null;
         $locale = htmlspecialchars(is_string($rawLocale) ? $rawLocale : 'en', ENT_QUOTES | ENT_HTML5, 'UTF-8');
 
         // Build canonical URL and Open Graph tags
+        /** @var mixed $rawPath */
         $rawPath = $translation['path'] ?? null;
         $path = is_string($rawPath) ? $rawPath : '';
         $canonicalUrl = htmlspecialchars($baseUrl . '/' . ltrim($path, '/'), ENT_QUOTES | ENT_HTML5, 'UTF-8');
