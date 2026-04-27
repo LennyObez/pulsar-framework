@@ -222,11 +222,13 @@ final readonly class ImportParser
 
                 if (!$dryRun) {
                     $taxonomyId = UuidGenerator::v7();
+                    /** @var mixed $rawHierarchical */
+                    $rawHierarchical = $taxData['hierarchical'] ?? null;
                     $taxonomy = new Taxonomy(
                         id: $taxonomyId,
                         tenantId: $tenantId,
                         slug: $slug,
-                        hierarchical: is_bool($taxData['hierarchical'] ?? null) ? $taxData['hierarchical'] : false,
+                        hierarchical: is_bool($rawHierarchical) ? $rawHierarchical : false,
                         createdAt: new DateTimeImmutable(),
                     );
                     $translations = [];
@@ -451,8 +453,12 @@ final readonly class ImportParser
         $slug = $this->resolveSlug($firstTranslation, $importId);
 
         // Also check 'path' as a last resort before import_id
-        if ($slug === null && is_string($firstTranslation['path'] ?? null)) {
-            $slug = $firstTranslation['path'];
+        if ($slug === null) {
+            /** @var mixed $rawPath */
+            $rawPath = $firstTranslation['path'] ?? null;
+            if (is_string($rawPath)) {
+                $slug = $rawPath;
+            }
         }
 
         // Allow empty slug_segment for homepage (root page).
