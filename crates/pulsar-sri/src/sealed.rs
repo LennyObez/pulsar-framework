@@ -4,5 +4,5 @@
 //! (asset-pipeline storage adapter) so third-party backends cannot bypass
 //! the manifest-verification path.
 
-#[allow(dead_code)]  // placeholder until per-sprint public traits use Sealed
+#[allow(dead_code)] // placeholder until per-sprint public traits use Sealed
 pub(crate) trait Sealed {}

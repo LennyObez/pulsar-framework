@@ -4,7 +4,10 @@ use pulsar_cloud_oci::error::{Error, Result};
 
 #[test]
 fn version_is_non_empty() {
-    assert!(!pulsar_cloud_oci::VERSION.is_empty(), "VERSION must be a non-empty const");
+    assert!(
+        !pulsar_cloud_oci::VERSION.is_empty(),
+        "VERSION must be a non-empty const"
+    );
 }
 
 #[test]
@@ -14,7 +17,9 @@ fn version_matches_cargo_pkg_version() {
 
 #[test]
 fn result_alias_resolves() {
-    fn _signature() -> Result<()> { Err(Error::Signature) }
+    fn _signature() -> Result<()> {
+        Err(Error::Signature)
+    }
     let _ = _signature();
 }
 

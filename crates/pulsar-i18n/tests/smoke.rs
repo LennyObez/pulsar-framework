@@ -5,7 +5,10 @@
 
 #[test]
 fn version_is_non_empty() {
-    assert!(!pulsar_i18n::VERSION.is_empty(), "VERSION must be a non-empty const");
+    assert!(
+        !pulsar_i18n::VERSION.is_empty(),
+        "VERSION must be a non-empty const"
+    );
 }
 
 #[test]

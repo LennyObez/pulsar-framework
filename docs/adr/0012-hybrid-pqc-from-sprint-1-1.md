@@ -1,10 +1,10 @@
 # ADR-0012: Hybrid PQC (X25519 + ML-KEM-768 / Ed25519 + ML-DSA-65) from Sprint 1.1
 
-* **Status:** Accepted
-* **Date:** 2026-04-27
+* **Status:** Accepted (amended 2026-04-27 per Decision 2.60 — initial draft assumed HACL\* upstream shipped NIST ML-KEM/ML-DSA; the PQC primitives are sourced from libcrux per Decision 2.60)
+* **Date:** 2026-04-27 (amended 2026-04-27)
 * **Driver:** Lenny Obez
-* **Related Section II decision(s):** Decision 2.58 (Hybrid PQC from Sprint 1.1 — no classical-only window), Decision 2.53 (Kernel cryptographic primitives: HACL\* via FFI), Decision 2.20 (Formal verification scope), Section 14.1 (Post-quantum cryptography)
-* **Sprint:** Sprint 0.9-bis (v2.3 reconciliation closure); implementation Sprint 1.1 (kernel crypto)
+* **Related Section II decision(s):** Decision 2.58 (Hybrid PQC from Sprint 1.1 — no classical-only window), Decision 2.60 (Multi-source formally-verified crypto stack — HACL\* classical + libcrux PQC), Decision 2.53 (Kernel classical cryptographic primitives: HACL\* via FFI), Decision 2.20 (Formal verification scope), Section 14.1 (Post-quantum cryptography)
+* **Sprint:** Sprint 0.9-bis (v2.3 reconciliation closure); Sprint 1.1.0 (multi-source amendment); implementation Sprint 1.1 (kernel crypto)
 * **Supersedes:** Section 14.1 v2.2 phasing ("hybrid PQC at Sprint 1.5 after classical primitives") — now lifted to Sprint 1.1.
 
 ## Context
@@ -28,7 +28,7 @@ NIST finalised three PQC standards in **August 2024**:
 * **FIPS 204** — ML-DSA (Module-Lattice-Based Digital Signature Algorithm), based on CRYSTALS-Dilithium. Three security levels: ML-DSA-44, ML-DSA-65 (recommended baseline), ML-DSA-87.
 * **FIPS 205** — SLH-DSA (Stateless Hash-Based Digital Signature Algorithm), based on SPHINCS+. Useful where ML-DSA's signature size is acceptable but mathematical-assumption diversity is desired.
 
-HACL\* (per ADR-0009) ships ML-KEM-768/1024 + ML-DSA-65/87 with formal proofs as of 2026Q1. The integration cost in Pulsar is **negligible**: HACL\* exposes the same C ABI shape for classical and PQC primitives, and the Rust safe wrappers in `pulsar-kernel::crypto` can implement hybrid constructions trivially via HKDF combination (for KEM) or dual-signature concatenation (for signatures).
+PQC primitive sourcing per Decision 2.60 (multi-source verification stack): the four NIST PQC primitives are **not in HACL\* upstream** as of 2026Q2 (only Frodo + K256 ECDSA are present in HACL\* on the post-quantum / non-NIST surface). The same Cryspen team that develops HACL\* maintains **libcrux** as a parallel verified-Rust ecosystem where the NIST PQC primitives are extracted: `libcrux-ml-kem` exposes ML-KEM-512/768/1024 with FIPS 203 conformance and machine-checked proofs ("portable and AVX2 code for field arithmetic, NTT polynomial arithmetic, serialization, and the generic code for high-level algorithms is formally verified using hax and F\*"); `libcrux-ml-dsa` exposes ML-DSA-44/65/87 with the same posture for FIPS 204. The integration cost in Pulsar is **negligible**: classical primitives (X25519, Ed25519) come from HACL\* via FFI, PQC primitives come from libcrux as Rust-native dependencies (no FFI burden), and the Rust safe wrappers in `pulsar-kernel::crypto` implement hybrid constructions trivially via HKDF combination (for KEM) or dual-signature concatenation (for signatures). The verification provenance is unified (Cryspen / hax / F\*) even though the distribution is split (C extraction for HACL\*, Rust extraction for libcrux).
 
 ## Decision
 
@@ -42,7 +42,11 @@ shared_secret = HKDF(salt, X25519_secret || ML-KEM-768_secret, info, 32)
 
 The hybrid construction inherits the security guarantees of **both** primitives — an attacker must break both the classical and the post-quantum primitive to recover the shared secret.
 
+**Sourcing (per Decision 2.60):** X25519 from HACL\* via `pulsar-crypto-hacl-bindings` FFI; ML-KEM-768 from `libcrux-ml-kem` Rust-native crate; HKDF-SHA-256 from HACL\* via FFI. Same Cryspen / hax / F\* verification provenance across all three.
+
 **Signatures:** every signature scheme that anchors a long-term commitment runs **Ed25519 + ML-DSA-65 in parallel**. Verification requires **both** signatures to validate. The dual-signature posture preserves classical-only verifiability for legacy clients (which can ignore the ML-DSA portion via standard signature-format extensibility) while gaining PQC protection for any verifier that checks both.
+
+**Sourcing (per Decision 2.60):** Ed25519 from HACL\* via `pulsar-crypto-hacl-bindings` FFI; ML-DSA-65 from `libcrux-ml-dsa` Rust-native crate. Same Cryspen / hax / F\* verification provenance.
 
 **At-rest encryption:** AEADs (AES-256-GCM, ChaCha20-Poly1305) remain symmetric and are not PQC-affected (Grover's algorithm against AES-256 still requires ~2^128 work — practically infeasible). Long-term key wrapping (KEK encrypting DEKs) uses hybrid key-establishment per the KEM rule above.
 
@@ -59,7 +63,7 @@ The hybrid construction inherits the security guarantees of **both** primitives 
 * No HNDL window. Every secret material Pulsar generates from Sprint 1.1 onward is safe against retroactive quantum decryption.
 * Aligns with Cloudflare + Google Chrome + Apple iMessage + AWS KMS production deployments — Pulsar is in good company, not pioneering a risky novel construction.
 * Hybrid construction inherits security guarantees of **both** primitives — strictly stronger than PQC-only or classical-only.
-* HACL\* per ADR-0009 ships the PQC primitives formally verified — Pulsar's PQC posture is grounded in machine-verified primitives, not just NIST-finalist code.
+* libcrux per Decision 2.60 ships the NIST PQC primitives formally verified (hax + F\*) — Pulsar's PQC posture is grounded in machine-verified primitives, not just NIST-finalist code. Same Cryspen / hax / F\* verification provenance as HACL\* (classical), so the multi-source posture preserves verification while routing around the upstream-coverage gap in HACL\*.
 * Banking + healthcare + government procurement (which increasingly evaluates PQC posture in 2026) sees the strongest available story.
 * No future "PQC migration" project — the migration is "always already done" from day one.
 
@@ -88,13 +92,17 @@ The hybrid construction inherits the security guarantees of **both** primitives 
 
 ## References
 
-* Plan section(s): `docs/plan.md` Section II Decision 2.58 + 2.53 + 2.20, Section 14.1 (Post-quantum cryptography phasing — superseded by this ADR), Section XII success metrics (PQC posture row).
+* Plan section(s): `docs/plan.md` Section II Decision 2.58 + 2.60 + 2.53 + 2.20, Section 14.1 (Post-quantum cryptography phasing — superseded by this ADR), Section XII success metrics (PQC posture row).
 * Risk register entries: R-007 (cryptographic primitive break — hybrid posture mitigates).
-* Related ADRs: ADR-0003 (microkernel formal verification — PQC primitives formally verified via HACL\*), ADR-0009 (HACL\* crypto — provides PQC primitives), ADR-0010 (SPARK invariants — capability tokens secured by HACL\*-verified Ed25519 + ML-DSA-65 dual signatures).
+* Related ADRs: ADR-0003 (microkernel formal verification — classical primitives formally verified via HACL\*, PQC primitives via libcrux per Decision 2.60), ADR-0009 (HACL\* classical surface), ADR-0010 (SPARK invariants — capability tokens secured by HACL\*-verified Ed25519 + libcrux-verified ML-DSA-65 dual signatures).
 * External:
   * NIST FIPS 203 (ML-KEM): https://csrc.nist.gov/pubs/fips/203/final
   * NIST FIPS 204 (ML-DSA): https://csrc.nist.gov/pubs/fips/204/final
   * NIST FIPS 205 (SLH-DSA): https://csrc.nist.gov/pubs/fips/205/final
+  * libcrux upstream: https://github.com/cryspen/libcrux
+  * libcrux-ml-kem crate: https://crates.io/crates/libcrux-ml-kem
+  * libcrux-ml-dsa crate: https://crates.io/crates/libcrux-ml-dsa
+  * Cryspen hax tool: https://github.com/hacspec/hax
   * Cloudflare PQ-Hybrid blog post: https://blog.cloudflare.com/post-quantum-for-all/
   * Google Chrome PQ-TLS announcement: https://chromiumdash.appspot.com/schedule
   * Apple iMessage PQ3 paper: https://security.apple.com/blog/imessage-pq3/

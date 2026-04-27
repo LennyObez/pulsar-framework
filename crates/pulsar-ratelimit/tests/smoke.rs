@@ -4,7 +4,10 @@ use pulsar_ratelimit::error::{Error, Result};
 
 #[test]
 fn version_is_non_empty() {
-    assert!(!pulsar_ratelimit::VERSION.is_empty(), "VERSION must be a non-empty const");
+    assert!(
+        !pulsar_ratelimit::VERSION.is_empty(),
+        "VERSION must be a non-empty const"
+    );
 }
 
 #[test]
@@ -15,7 +18,9 @@ fn version_matches_cargo_pkg_version() {
 #[test]
 fn result_alias_resolves() {
     fn _signature() -> Result<()> {
-        Err(Error::QuotaExhausted { retry_after_ms: 1000 })
+        Err(Error::QuotaExhausted {
+            retry_after_ms: 1000,
+        })
     }
     let _ = _signature();
 }

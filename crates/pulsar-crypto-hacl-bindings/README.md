@@ -1,23 +1,28 @@
 # pulsar-crypto-hacl-bindings
 
-Rust FFI bindings to **HACL\*** — the formally verified cryptographic library written in F\* and extracted to constant-time C. Wraps AEAD, KDF, signatures, hashes, and ML-KEM/ML-DSA primitives that `pulsar-kernel` re-exports under safety wrappers + Creusot contracts.
+Rust FFI bindings to **HACL\*** — the formally verified cryptographic library written in F\* and extracted to constant-time C. Wraps the **twelve classical primitives** Pulsar uses (AEAD, key agreement, classical signatures, hashes, KDFs, MAC). The four NIST PQC primitives (ML-KEM-768/1024, ML-DSA-65/87) are sourced from the libcrux Rust-native crates per Decision 2.60 and do **not** flow through this FFI binding crate.
 
 ## What
 
-A `*-sys`-style crate that vendors the HACL\* C distribution + provides Rust FFI declarations for each primitive Pulsar uses:
+A `*-sys`-style crate that vendors the HACL\* C distribution + provides Rust FFI declarations for the **classical primitive surface** Pulsar uses:
 
 * AEAD: AES-128-GCM, AES-256-GCM, ChaCha20-Poly1305.
 * Key agreement: Curve25519 (X25519), P-256 (NIST).
-* Signatures: Ed25519, ML-DSA-65, ML-DSA-87 (NIST FIPS 204).
-* KEM: ML-KEM-768, ML-KEM-1024 (NIST FIPS 203).
+* Signature: Ed25519.
 * Hashes: SHA-2-256/384/512, SHA-3-256/384/512, BLAKE2b, BLAKE2s.
 * KDFs: HKDF (over SHA-2 family), HMAC.
 
+**Out of scope (sourced elsewhere per Decision 2.60):**
+
+* ML-KEM-768/1024 (FIPS 203) → `libcrux-ml-kem` Rust-native crate.
+* ML-DSA-65/87 (FIPS 204) → `libcrux-ml-dsa` Rust-native crate.
+* Argon2id → `argon2` RustCrypto crate (audited, not formally verified).
+
 ## Why
 
-HACL\* is the only widely-deployed cryptographic library that ships **machine-verified proofs of correctness, memory safety, and secret independence (constant-time)** for every primitive. Production users include Mozilla Firefox NSS (TLS), Linux kernel WireGuard (Curve25519), Tezos blockchain, Microsoft Azure VPN, ZcashFoundation. By comparison, `ring` is rigorously audited (NCC Group + Trail of Bits) but not formally verified.
+HACL\* is the only widely-deployed cryptographic library that ships **machine-verified proofs of correctness, memory safety, and secret independence (constant-time)** for every primitive in the classical surface. Production users include Mozilla Firefox NSS (TLS), Linux kernel WireGuard (Curve25519), Tezos blockchain, Microsoft Azure VPN, ZcashFoundation. By comparison, `ring` is rigorously audited (NCC Group + Trail of Bits) but not formally verified.
 
-Pulsar adopts HACL\* per Decision 2.53 to close the "audited" → "formally verified" gap on its cryptographic surface. This is the marginal improvement that puts Pulsar's cryptographic assurance on the seL4 + HACL\* tier — the highest-rigour combination achievable in the Rust ecosystem in 2026 without rewriting tokio + hyper + sqlx in Ada/SPARK (per Decision 2.54 rejected alternative).
+Pulsar adopts HACL\* per Decision 2.53 for the classical primitives to close the "audited" → "formally verified" gap. The PQC primitives flow through libcrux per Decision 2.60 (multi-source verification stack) because HACL\* upstream as of 2026Q2 does not ship NIST ML-KEM/ML-DSA — Cryspen maintains libcrux as the verified-Rust ecosystem where these are extracted, with the same hax + F\* verification provenance. The combined stack puts Pulsar's cryptographic assurance on the seL4 + HACL\* tier for classical primitives, with Cryspen-grade verification for the PQC surface.
 
 ## How
 

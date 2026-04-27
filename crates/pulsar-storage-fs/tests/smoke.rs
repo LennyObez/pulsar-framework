@@ -4,7 +4,10 @@ use pulsar_storage_fs::error::{Error, Result};
 
 #[test]
 fn version_is_non_empty() {
-    assert!(!pulsar_storage_fs::VERSION.is_empty(), "VERSION must be a non-empty const");
+    assert!(
+        !pulsar_storage_fs::VERSION.is_empty(),
+        "VERSION must be a non-empty const"
+    );
 }
 
 #[test]
@@ -14,7 +17,9 @@ fn version_matches_cargo_pkg_version() {
 
 #[test]
 fn result_alias_resolves() {
-    fn _signature() -> Result<()> { Err(Error::Io(String::from("smoke-test placeholder"))) }
+    fn _signature() -> Result<()> {
+        Err(Error::Io(String::from("smoke-test placeholder")))
+    }
     let _ = _signature();
 }
 

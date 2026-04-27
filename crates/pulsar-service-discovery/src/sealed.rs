@@ -3,5 +3,5 @@
 //! `Resolver` will be sealed so third-party adapters cannot bypass the
 //! health-check + capability invariants the macro path enforces.
 
-#[allow(dead_code)]  // placeholder until per-sprint public traits use Sealed
+#[allow(dead_code)] // placeholder until per-sprint public traits use Sealed
 pub(crate) trait Sealed {}
