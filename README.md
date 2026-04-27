@@ -7,11 +7,11 @@ A 100% Rust web framework engineered for regulated, mission-critical domains: ba
 ## Principles
 
 - **Formally verified microkernel** for cryptography, audit, session, routing, middleware composition, and dependency injection — **fifteen TLA+ specifications** under `spec/` (per Decision 2.59 v2.3 lock-in) covering crypto, router, session, audit, middleware, OAuth 2.1 + PKCE, SAML SSO, websocket dispatch, orchestration (workflow + saga), RtbF two-phase commit, capability token lifecycle, multi-region saga compensation, event-bus delivery semantics, ratelimit token-bucket invariants, and OAuth refresh-token rotation. Plus **two formally-proven SPARK 2014 invariants** (capability token unforgeability + audit chain append-only) per ADR-0010 + Decision 2.54.
-- **Memory-safe end-to-end** via Rust ownership, with **HACL\*-formally-verified cryptographic primitives** (per ADR-0009 + Decision 2.53) and audited primitives (`rustls`, `sqlx`, `hyper`, `tokio`, `wasmtime`, `tantivy`).
+- **Memory-safe end-to-end** via Rust ownership, with **formally-verified cryptographic primitives sourced from a multi-source verification stack** (per Decision 2.60: HACL\* via FFI for the 12 classical primitives — AEAD, X25519, P-256, Ed25519, SHA-2/3, BLAKE2, HKDF, HMAC; libcrux Rust-native for the 4 NIST PQC primitives — ML-KEM-768/1024, ML-DSA-65/87; RustCrypto `argon2` for password hashing — all 16 verified primitives sharing the same Cryspen / hax / F\* verification provenance) plus audited primitives (`rustls`, `sqlx`, `hyper`, `tokio`, `wasmtime`, `tantivy`).
 - **Modular monolith with hexagonal architecture** and WASM-sandboxed third-party extensions with capability-based security.
 - **100% line + branch + MC/DC coverage + 99% mutation kill rate** on kernel, security, compliance, and data protection crates (per ADR-0014 + Decision 2.56); ≥ 95% line + branch on the rest; 10 M fuzz iterations per parser zero crash.
 - **31 compliance frameworks mapped** (30 mandatory plus MiCA opt-in for crypto-asset deployments per Decision 2.52 v2.3 lock-in): GDPR, UK GDPR, HIPAA, PCI-DSS 4.0, PSD2, DORA, SOC 2, ISO 27001/27017/27018/27701, NIS2, eIDAS 2 (incl. EUDI Wallet), COPPA, FERPA, CCPA, LGPD, APPI, PIPL, POPIA, NDB, Mexican LFP, India DPDP — plus the **8 v2.3 additions**: NYDFS Part 500, MAS TRM, APRA CPS 234, OSFI B-13, RBI Cybersecurity Framework, Quebec Law 25, Switzerland nFADP, and Common Criteria EAL 6+/7. Opt-in MiCA. Plus FAPI 2.0 Open Banking conformance, OWASP LLM Top 10, OpenSSF Scorecard ≥ 9.0 + Best Practices Badge gold tier, CIS Benchmarks, STIG (DISA). Full mapping in [docs/compliance/matrix.md](docs/compliance/matrix.md).
-- **Hybrid post-quantum cryptography from Sprint 1.1** (per ADR-0012 + Decision 2.58) — X25519 + ML-KEM-768 KEM + Ed25519 + ML-DSA-65 signatures from the first cryptographic primitive. No harvest-now-decrypt-later window.
+- **Hybrid post-quantum cryptography from Sprint 1.1** (per ADR-0012 + Decision 2.58 + Decision 2.60) — X25519 + ML-KEM-768 KEM + Ed25519 + ML-DSA-65 signatures from the first cryptographic primitive. Classical primitives via HACL\* (FFI); PQC primitives via `libcrux-ml-kem` + `libcrux-ml-dsa` (Rust-native, hax + F\* verified). No harvest-now-decrypt-later window.
 - **SLSA Source Level 3 + Build Level 4 + in-toto layout** supply-chain attestation (per ADR-0011 + Decision 2.57). Cosign keyless signing via Sigstore Fulcio + Rekor transparency log + CycloneDX SBOM + Trusted Publisher OIDC for crates.io publish.
 - **Minimal CPU, RAM, and I/O footprint**: release binary under 50 MB, per-request memory under 1 MB, idle footprint under 50 MB.
 - **Polyglot best-tool-per-job**: **76 first-party Rust crates** (per Decision 2.51 v2.3 lock-in) plus three non-Rust sub-projects in `services/` — a native HTML5 + ES2025 + Web Components admin SPA (zero framework dependency, per Decision 2.8), a Go + kubebuilder Kubernetes Operator (per Decision 2.46), and an Ada/SPARK 2014 invariants module (per Decision 2.54).
@@ -80,7 +80,7 @@ graph TD
     end
 
     subgraph KER[Kernel — Formally Verified]
-        CRY[crypto<br/>HACL* via FFI]
+        CRY[crypto<br/>HACL* classical via FFI<br/>+ libcrux PQC Rust-native]
         AUDK[audit chain<br/>Ed25519 + Merkle + RFC 6962]
         SES[session]
         ROU[routing]
@@ -112,14 +112,14 @@ Full architectural overview: [docs/architecture/overview.md](docs/architecture/o
 
 ## Workspace layout
 
-**76 first-party Rust crates** organised in twelve layers (per Decision 2.51 v2.3 lock-in: dé-fusion of the four v2.2 meta-crates back into 14 sub-module crates per ADR-0011 + sqlx-pattern driver split applied to `pulsar-orm`, `pulsar-cloud`, `pulsar-storage` per ADR-0011 + HACL\* FFI binding crate per ADR-0009):
+**76 first-party Rust crates** organised in twelve layers (per Decision 2.51 v2.3 lock-in: dé-fusion of the four v2.2 meta-crates back into 14 sub-module crates per ADR-0011 + sqlx-pattern driver split applied to `pulsar-orm`, `pulsar-cloud`, `pulsar-storage` per ADR-0011 + HACL\* FFI binding crate scoped to 12 classical primitives per ADR-0009 + Decision 2.60 — PQC primitives sourced from libcrux Rust-native crates as workspace dependencies):
 
 ```
 crates/
   # Meta + Kernel
   pulsar-framework/             Meta-crate re-exporting the stable public surface
   pulsar-kernel/                Formally verified kernel primitives (Rust + Creusot + TLA+)
-  pulsar-crypto-hacl-bindings/  HACL* FFI binding crate (per ADR-0009 + Decision 2.53)
+  pulsar-crypto-hacl-bindings/  HACL* FFI binding crate, 12 classical primitives only (per ADR-0009 + Decision 2.53 + Decision 2.60 — PQC primitives via libcrux Rust-native workspace deps)
 
   # Core Foundation
   pulsar-http/                  HTTP/1+2+3 framework on hyper

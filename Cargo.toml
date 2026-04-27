@@ -339,7 +339,10 @@ hkdf = "0.12"
 # PQC — Cryspen libcrux Rust-native verified primitives per Decision 2.60.
 # hax + F* verification of field arithmetic, NTT polynomial arithmetic,
 # serialization, and high-level algorithm composition. FIPS 203 / 204
-# conformance. Pure Rust → no FFI burden.
+# conformance. Pure Rust → no FFI burden. Per-crate independent release
+# cadence at Cryspen — pin the latest published patch each (ml-kem at
+# 0.0.8, ml-dsa at 0.0.6 as of 2026Q2; bump together at Sprint 1.1.C
+# integration if Cryspen ships compatible newer patches).
 libcrux-ml-kem = "0.0.8"
 libcrux-ml-dsa = "0.0.6"
 
