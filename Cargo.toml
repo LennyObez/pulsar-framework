@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-# v2.3 architecture: 75 first-party Rust crates (per Decision 2.51).
+# v2.3 architecture: 76 first-party Rust crates (per Decision 2.51).
 # Net change vs v2.2 (53 crates):
 #   - 4 meta-crates removed (pulsar-guard, pulsar-realtime,
 #     pulsar-orchestration, pulsar-cluster — per Decision 2.51 dé-fusion)
@@ -9,8 +9,10 @@ resolver = "3"
 #     broadcasting ; workflow + saga ; supervisor + service-discovery)
 #   - 12 driver crates added (orm-postgres/mysql/sqlite/clickhouse ;
 #     cloud-aws/azure/gcp/oci ; storage-s3/azure/gcs/fs)
-# HACL* C-source FFI lives within pulsar-kernel (build.rs + src/crypto/hacl_ffi.rs)
-# rather than as a separate crate, keeping the count at exactly 75.
+#   - 1 HACL* FFI binding crate added (pulsar-crypto-hacl-bindings —
+#     *-sys-style; safe Rust wrappers + Creusot contracts live in
+#     pulsar-kernel per ADR-0009 + Decision 2.53)
+# Total: 53 - 4 + 14 + 12 + 1 = 76 crates.
 members = [
     # ─────────────────────────────────────────────────────────────────────
     # Meta-crate (re-exports stable public surface)

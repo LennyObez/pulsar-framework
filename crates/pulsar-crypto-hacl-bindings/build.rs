@@ -20,17 +20,33 @@ fn main() {
     // gate even when the cfg is never set.
     println!("cargo::rustc-check-cfg=cfg(hacl_placeholder)");
 
-    // Detect whether HACL* C sources are present.
-    let hacl_c_dir = std::path::Path::new("hacl-c");
-    let has_sources = hacl_c_dir
+    // Detect whether HACL* C sources are present. We specifically look for
+    // .c files under hacl-c/src/ (the canonical layout HACL* ships) rather
+    // than "any non-.gitkeep entry" — the latter would flip to true as soon
+    // as a stray hacl-c/include/ directory is created without actual source
+    // vendoring, which would disable `hacl_placeholder` while still
+    // producing no native library. This stricter detection ensures Sprint
+    // 1.1 cannot land in a half-vendored "neither placeholder nor compiled"
+    // state.
+    let hacl_src_dir = std::path::Path::new("hacl-c/src");
+    let c_sources: Vec<_> = hacl_src_dir
         .read_dir()
-        .map(|mut iter| iter.any(|e| e.map(|e| e.file_name() != ".gitkeep").unwrap_or(false)))
-        .unwrap_or(false);
+        .into_iter()
+        .flatten()
+        .flatten()
+        .filter(|e| {
+            e.path()
+                .extension()
+                .and_then(|ext| ext.to_str())
+                .is_some_and(|ext| ext == "c")
+        })
+        .map(|e| e.path())
+        .collect();
 
-    if !has_sources {
+    if c_sources.is_empty() {
         // Phase 0 placeholder: HACL* C distribution lands at Sprint 1.1.
         println!("cargo:rustc-cfg=hacl_placeholder");
-        println!("cargo:warning=pulsar-crypto-hacl-bindings: hacl-c/ is empty (Phase 0 placeholder); FFI symbols will be unavailable until Sprint 1.1.");
+        println!("cargo:warning=pulsar-crypto-hacl-bindings: hacl-c/src/ has no .c files (Phase 0 placeholder); FFI symbols will be unavailable until Sprint 1.1.");
         return;
     }
 
@@ -42,8 +58,9 @@ fn main() {
         .flag_if_supported("-Wextra")
         .flag_if_supported("-O3");
 
-    // Sprint 1.1 will enumerate the .c files explicitly (HACL* ships per-primitive
-    // .c files under hacl-c/src/) — this stub does not enumerate to keep the
-    // placeholder footprint zero.
-    let _ = build;
+    for src in &c_sources {
+        build.file(src);
+    }
+
+    build.compile("hacl_pulsar");
 }

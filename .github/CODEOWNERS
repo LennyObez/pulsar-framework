@@ -15,13 +15,22 @@
 # Default owner for everything
 * @LennyObez
 
-# Critical-coverage-tier crates (Section XII success metrics)
-/crates/pulsar-kernel/        @LennyObez
-/crates/pulsar-guard/         @LennyObez
-/crates/pulsar-compliance/    @LennyObez
-/crates/pulsar-dataprotection/ @LennyObez
-/crates/pulsar-audit/         @LennyObez
-/crates/pulsar-auth/          @LennyObez
+# Critical-coverage-tier crates (Section XII success metrics + Decision 2.56:
+# 100 % line + branch + MC/DC + 99 % mutation kill rate on these surfaces)
+/crates/pulsar-kernel/                @LennyObez
+/crates/pulsar-crypto-hacl-bindings/  @LennyObez
+# Security controls (un-fused per ADR-0011 v2.3 — was pulsar-guard in v2.2)
+/crates/pulsar-csrf/                  @LennyObez
+/crates/pulsar-sri/                   @LennyObez
+/crates/pulsar-incident/              @LennyObez
+/crates/pulsar-ratelimit/             @LennyObez
+/crates/pulsar-resilience/            @LennyObez
+/crates/pulsar-ssrf-guard/            @LennyObez
+# Compliance + data protection + audit + auth
+/crates/pulsar-compliance/            @LennyObez
+/crates/pulsar-dataprotection/        @LennyObez
+/crates/pulsar-audit/                 @LennyObez
+/crates/pulsar-auth/                  @LennyObez
 
 # Formal verification artefacts
 /spec/                        @LennyObez
