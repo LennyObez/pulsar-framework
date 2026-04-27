@@ -1,11 +1,10 @@
 <?php
-/**
- * @var \Pulsar\Extension\HealthStatus\Domain\HealthSnapshot $current Current health snapshot
- * @var list<\Pulsar\Extension\HealthStatus\Domain\HealthSnapshot> $history Recent snapshots
- * @var list<\Pulsar\Extension\HealthStatus\Domain\Incident> $incidents Active incidents
- */
-
+use Pulsar\Extension\HealthStatus\Domain\HealthSnapshot;
 use Pulsar\Resilience\HealthCheck\HealthStatus;
+
+assert($current instanceof HealthSnapshot);
+assert(is_array($history));
+assert(is_array($incidents));
 
 $overallClass = match ($current->overallStatus) {
     HealthStatus::Healthy => 'healthy',
