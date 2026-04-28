@@ -131,6 +131,15 @@ impl MlDsa65VerificationKey {
     pub const LEN: usize = sizes::VERIFICATION_KEY_LEN;
 
     /// Construct from a 1 952-byte buffer.
+    ///
+    /// `const fn`: callers can build a `static` or `const`
+    /// `MlDsa65VerificationKey` from a literal byte array — useful
+    /// for embedding a known root verification key (e.g., a release-
+    /// signing root) at compile time. Does NOT validate the
+    /// structure of the bytes; the verification key's structural
+    /// check happens at [`verify`](Self::verify) time (libcrux 0.0.6
+    /// does not expose a standalone `validate_verification_key`
+    /// function — unlike `MlKem768PublicKey::validate`).
     #[must_use]
     pub const fn from_bytes(bytes: [u8; Self::LEN]) -> Self {
         Self {
@@ -229,10 +238,14 @@ impl MlDsa65SigningKey {
     }
 
     /// Sign `message` with optional domain-separation `context` under
-    /// this signing key, drawing 32 bytes of CSPRNG randomness for
-    /// the rejection-sampling loop. Per FIPS 204 § 5.4, ML-DSA
-    /// signing is randomised by default — the same `(key, message,
-    /// context)` triple yields different signatures across calls.
+    /// this signing key, drawing 32 bytes of CSPRNG randomness as the
+    /// FIPS 204 § 5.4 `rnd` input. The `rnd` value is hashed into the
+    /// commitment-derivation chain (`mu = H(prefix || rnd || M)`), so
+    /// it influences both the rejection-sampling loop and the
+    /// commitment generation — the spec calls this the "hedged"
+    /// signing mode. Per FIPS 204 § 5.4, ML-DSA signing is randomised
+    /// by default: the same `(key, message, context)` triple yields
+    /// different signatures across calls.
     ///
     /// # Errors
     ///
