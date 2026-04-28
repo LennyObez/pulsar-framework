@@ -146,6 +146,34 @@ fn ml_kem_768_validate_against_accepts_authentic_pair() {
         .expect("authentic (key, ct) pair must validate");
 }
 
+/// `MlKem768PrivateKey::validate_against` rejects a corrupted private
+/// key. libcrux's `validate_private_key` implements the FIPS 203 §
+/// 7.3 step 3 hash check (`H(ek) == stored_hash`); an all-zeros
+/// private key fails this check because the embedded `stored_hash`
+/// region is zero but `H(zero-encapsulation-key-region)` is not.
+/// This test pins the new `Error::InvalidPrivateKey` variant
+/// introduced for private-key validation failures (distinct from
+/// `Error::InvalidPublicKey`).
+#[test]
+fn ml_kem_768_validate_against_rejects_corrupted_private_key() {
+    use pulsar_kernel::error::Error;
+
+    // All-zeros 2400-byte buffer is structurally length-valid but
+    // fails the FIPS 203 § 7.3 hash self-consistency check.
+    let bogus_sk = seed_box(&[0_u8; 2400]);
+    let bogus_private = MlKem768PrivateKey::from_bytes(bogus_sk)
+        .expect("length-valid bytes should construct (validation is at use time)");
+
+    // Build any 1088-byte ciphertext — the validate_private_key path
+    // checks the private key's internal hash, not the ciphertext.
+    let dummy_ct = MlKem768Ciphertext::from_bytes([0_u8; 1088]);
+
+    match bogus_private.validate_against(&dummy_ct) {
+        Err(Error::InvalidPrivateKey) => {} // expected
+        other => panic!("expected InvalidPrivateKey for corrupted key; got {other:?}"),
+    }
+}
+
 /// FIPS 203 § 7.3 implicit rejection — decapsulating a tampered
 /// ciphertext under a genuine private key yields a deterministic-but-
 /// uncorrelated shared secret. The decapsulation never errors; the
@@ -223,7 +251,7 @@ fn ml_kem_768_private_key_rejects_wrong_length() {
 
     let too_short = seed_box(&[0_u8; 2399]);
 
-    match MlKem768PrivateKey::from_bytes(&too_short) {
+    match MlKem768PrivateKey::from_bytes(too_short) {
         Err(Error::InvalidKeyLength {
             expected: 2400,
             actual: 2399,

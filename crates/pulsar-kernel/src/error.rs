@@ -109,6 +109,15 @@ pub enum Error {
     #[error("public key validation failed (off-curve, malformed, or out of range)")]
     InvalidPublicKey,
 
+    /// Private key fails the structural validation step required before
+    /// key-material use. Distinct from [`Error::InvalidPublicKey`]
+    /// because the failing structural check (e.g., FIPS 203 § 7.3
+    /// implicit-rejection-recovery hash mismatch on a `(private_key,
+    /// ciphertext)` pair) is on the private key itself, not on a
+    /// peer-supplied public key.
+    #[error("private key validation failed (malformed, mismatched, or out of range)")]
+    InvalidPrivateKey,
+
     /// HACL\* / EverCrypt FFI surface returned a non-success status code
     /// that doesn't map to a more specific variant above. The wrapped
     /// [`pulsar_crypto_hacl_bindings::error::Error`] preserves the

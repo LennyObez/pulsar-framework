@@ -60,29 +60,36 @@
 //!
 //! Following the canonical pattern from Phase 1.1.B.3:
 //!
-//! - **Private keys** wrap the libcrux `MlKem768PrivateKey` inside a
-//!   `secrecy::SecretBox`-style struct with manual `Debug` redaction.
-//!   The wrapper holds the libcrux value directly (rather than
-//!   re-wrapping the raw bytes in `SecretBox<[u8]>`) because the
-//!   libcrux type is `Clone` but does not implement `Zeroize` —
-//!   Pulsar's wrapper provides explicit zeroization on drop via
-//!   `zeroize::Zeroize` over the inner byte array.
-//! - **Public keys, ciphertexts, shared secrets** are unwrapped types
-//!   in line with their non-secret semantics, EXCEPT the shared
-//!   secret which is wrapped in `SecretBox<[u8]>` so downstream HKDF
-//!   derivation operates on `expose_secret()` without intermediate
-//!   cleartext copies.
+//! - **Private keys** store the 2 400-byte buffer in
+//!   [`secrecy::SecretBox<[u8]>`] (zeroize-on-drop) — the same
+//!   convention used by `Ed25519PrivateKey` / `X25519PrivateKey`. The
+//!   wrapper materialises libcrux's `MlKem768PrivateKey` value
+//!   transiently for each `decapsulate` / `validate_against` call;
+//!   the transient libcrux instance lives ~µs on the stack and falls
+//!   out of scope without explicit zeroization (libcrux 0.0.8 does
+//!   not implement `Zeroize`). Stack-side intermediate copies are
+//!   wrapped in [`zeroize::Zeroizing`] so the only un-zeroized
+//!   secret-bearing memory is the libcrux transient — acceptable
+//!   under the regulated-domain audit posture because the trust
+//!   window is microseconds and subsequent stack frames overwrite
+//!   the bytes.
+//! - **Shared secrets** returned from encapsulate / decapsulate are
+//!   wrapped in [`SecretBox<[u8]>`] so downstream HKDF derivation
+//!   operates on `expose_secret()` without intermediate cleartext
+//!   copies.
+//! - **Public keys + ciphertexts** are unwrapped types in line with
+//!   their non-secret semantics per the KEM threat model.
 //! - **Generation + encapsulation seeds** are wrapped in
-//!   `SecretBox<[u8]>` when caller-supplied (the seed is sensitive
-//!   during the operation; once the keypair / ciphertext is produced
-//!   the seed should be dropped).
+//!   [`SecretBox<[u8]>`] when caller-supplied; the internal stack
+//!   buffers are wrapped in [`Zeroizing`] for explicit
+//!   zeroize-on-drop.
 
 use crate::crypto::rng;
 use crate::error::{Error, Result};
 use libcrux_ml_kem::mlkem768 as libcrux;
 use libcrux_ml_kem::{ENCAPS_SEED_SIZE, KEY_GENERATION_SEED_SIZE, SHARED_SECRET_SIZE};
 use secrecy::{ExposeSecret, SecretBox};
-use zeroize::Zeroize;
+use zeroize::Zeroizing;
 
 /// FIPS 203 ML-KEM-768 fixed sizes — re-exposed as public constants on
 /// the wrapper for caller-side allocation sizing decisions.
@@ -175,9 +182,14 @@ impl MlKem768PublicKey {
     /// - [`Error::RngFailure`] — the OS CSPRNG returned an error
     ///   during seed generation.
     pub fn try_encapsulate(&self) -> Result<(MlKem768Ciphertext, SecretBox<[u8]>)> {
-        let mut seed = [0_u8; ENCAPS_SEED_SIZE];
-        rng::try_random_into(&mut seed)?;
-        Ok(self.encapsulate_with_seed_bytes(seed))
+        // Wrap the seed buffer in `Zeroizing` so the 32-byte CSPRNG
+        // output is zeroized on drop even if the function returns
+        // early due to a libcrux panic. The `Zeroizing` newtype
+        // emits a volatile-store + compiler-fence on `Drop` so LLVM
+        // cannot elide the zero-write.
+        let mut seed = Zeroizing::new([0_u8; ENCAPS_SEED_SIZE]);
+        rng::try_random_into(seed.as_mut_slice())?;
+        Ok(self.encapsulate_with_seed_bytes(*seed))
     }
 
     /// Encapsulate against this public key with a caller-supplied
@@ -199,9 +211,11 @@ impl MlKem768PublicKey {
                 actual: bytes.len(),
             });
         }
-        let mut seed_array = [0_u8; ENCAPS_SEED_SIZE];
+        // Stack copy of the encap seed wrapped in `Zeroizing` so the
+        // intermediate is zeroized before the function returns.
+        let mut seed_array = Zeroizing::new([0_u8; ENCAPS_SEED_SIZE]);
         seed_array.copy_from_slice(bytes);
-        Ok(self.encapsulate_with_seed_bytes(seed_array))
+        Ok(self.encapsulate_with_seed_bytes(*seed_array))
     }
 
     /// Internal encapsulation entry point that takes the seed as a
@@ -220,12 +234,17 @@ impl MlKem768PublicKey {
 
 /// ML-KEM-768 private (decapsulation) key.
 ///
-/// Wraps the libcrux `MlKem768PrivateKey` (a 2 400-byte array). The
-/// inner bytes are zeroized on drop via the `zeroize::Zeroize`
-/// trait — the libcrux type does not implement `Zeroize` upstream, so
-/// the wrapper handles it explicitly.
+/// Stores the 2 400-byte private key in [`secrecy::SecretBox<[u8]>`]
+/// — the same zeroize-on-drop convention used by
+/// [`crate::crypto::signature::Ed25519PrivateKey`] and
+/// [`crate::crypto::kem::X25519PrivateKey`]. libcrux's
+/// `MlKem768PrivateKey` value is materialised transiently for each
+/// `decapsulate` / `validate_against` call; the transient instance
+/// lives microseconds on the stack and is acceptable under the
+/// regulated-domain audit posture (subsequent stack frames overwrite
+/// the bytes; the persistent storage is properly zeroized).
 pub struct MlKem768PrivateKey {
-    inner: libcrux::MlKem768PrivateKey,
+    bytes: SecretBox<[u8]>,
 }
 
 impl core::fmt::Debug for MlKem768PrivateKey {
@@ -235,66 +254,47 @@ impl core::fmt::Debug for MlKem768PrivateKey {
     }
 }
 
-impl Drop for MlKem768PrivateKey {
-    /// Zeroize the inner private-key bytes on drop. The libcrux
-    /// `MlKem768PrivateKey` type does not implement `Zeroize`
-    /// upstream as of `libcrux-ml-kem 0.0.8`; the wrapper provides
-    /// the explicit zeroization that Pulsar's audit posture
-    /// requires for private-key material.
-    fn drop(&mut self) {
-        // Take a mutable reference to the inner byte array and
-        // zeroize. SAFETY (no `unsafe`): `inner.value` is the public
-        // field of the generic `MlKem*Key` struct exposed through
-        // libcrux's `as_ref`/`as_slice` accessors; we reach it via
-        // the AsRef-like `as_slice` and re-zero through a
-        // pointer-cast-free zeroize helper.
-        //
-        // Since libcrux exposes `as_slice() -> &[u8; SIZE]` (immutable),
-        // we instead clone-replace with a zeroed instance — the
-        // original allocation is dropped, after which the new
-        // zeroed instance is itself dropped at end of scope.
-        let mut zeroed = [0_u8; sizes::PRIVATE_KEY_LEN];
-        zeroed.zeroize();
-        self.inner = libcrux::MlKem768PrivateKey::from(zeroed);
-    }
-}
-
 impl MlKem768PrivateKey {
     /// Private-key length in bytes (FIPS 203 ML-KEM-768).
     pub const LEN: usize = sizes::PRIVATE_KEY_LEN;
 
-    /// Construct from a 2 400-byte buffer wrapped in `SecretBox<[u8]>`.
+    /// Construct from a 2 400-byte buffer wrapped in [`SecretBox<[u8]>`].
     /// Does NOT validate the structure of the bytes — call
     /// [`validate_against`](Self::validate_against) with a paired
     /// ciphertext to confirm the private key matches before relying
     /// on its decapsulation output.
     ///
-    /// Takes `&SecretBox<[u8]>` (borrowed) rather than consuming the
-    /// SecretBox — libcrux requires copying the bytes into its own
-    /// fixed-size array regardless, so consuming would offer no
-    /// lifecycle benefit. The wrapper's [`Drop`] impl zeroizes the
-    /// libcrux-side bytes when the [`MlKem768PrivateKey`] is dropped.
-    /// This deviates from the
-    /// [`crate::crypto::signature::Ed25519PrivateKey::from_bytes`]
-    /// consume-pattern documented in `crypto::mod` for primitives
-    /// that store the `SecretBox` directly.
+    /// Consumes the input [`SecretBox`] (matches the canonical
+    /// consume-pattern for private-key wrappers documented in
+    /// `crypto::mod`) — the caller's `SecretBox` becomes our
+    /// persistent storage with zero copies.
     ///
     /// # Errors
     ///
     /// - [`Error::InvalidKeyLength`] — `secret.expose_secret().len() != 2400`.
-    pub fn from_bytes(secret: &SecretBox<[u8]>) -> Result<Self> {
-        let bytes = secret.expose_secret();
-        if bytes.len() != Self::LEN {
+    pub fn from_bytes(secret: SecretBox<[u8]>) -> Result<Self> {
+        if secret.expose_secret().len() != Self::LEN {
             return Err(Error::InvalidKeyLength {
                 expected: Self::LEN,
-                actual: bytes.len(),
+                actual: secret.expose_secret().len(),
             });
         }
-        let mut buf = [0_u8; Self::LEN];
-        buf.copy_from_slice(bytes);
-        Ok(Self {
-            inner: libcrux::MlKem768PrivateKey::from(buf),
-        })
+        Ok(Self { bytes: secret })
+    }
+
+    /// Materialise libcrux's `MlKem768PrivateKey` value from our
+    /// `SecretBox<[u8]>` storage. The returned [`Zeroizing`] holds a
+    /// stack copy of the 2 400-byte private key that is zeroized on
+    /// drop; the libcrux value built from it is dropped after the
+    /// caller's libcrux invocation returns. The libcrux value's
+    /// internal bytes are NOT zeroized (libcrux 0.0.8 does not
+    /// implement `Zeroize`), but the trust window is the duration of
+    /// the single decap / validate call (microseconds).
+    fn materialize(&self) -> (libcrux::MlKem768PrivateKey, Zeroizing<[u8; Self::LEN]>) {
+        let mut buf = Zeroizing::new([0_u8; Self::LEN]);
+        buf.copy_from_slice(self.bytes.expose_secret());
+        let inner = libcrux::MlKem768PrivateKey::from(*buf);
+        (inner, buf)
     }
 
     /// Validate the private key against a paired ciphertext per FIPS
@@ -303,17 +303,14 @@ impl MlKem768PrivateKey {
     ///
     /// # Errors
     ///
-    /// - [`Error::InvalidPublicKey`] — the (private key, ciphertext)
-    ///   pair fails validation. (`InvalidPublicKey` is overloaded
-    ///   here to mean "structural validation failed"; the variant
-    ///   name reflects that the embedded encapsulation key must be
-    ///   on-curve, not that the private key itself is the public
-    ///   key.)
+    /// - [`Error::InvalidPrivateKey`] — the (private key, ciphertext)
+    ///   pair fails validation.
     pub fn validate_against(&self, ciphertext: &MlKem768Ciphertext) -> Result<()> {
-        if libcrux::validate_private_key(&self.inner, &ciphertext.inner) {
+        let (inner, _zeroizing_guard) = self.materialize();
+        if libcrux::validate_private_key(&inner, &ciphertext.inner) {
             Ok(())
         } else {
-            Err(Error::InvalidPublicKey)
+            Err(Error::InvalidPrivateKey)
         }
     }
 
@@ -332,7 +329,8 @@ impl MlKem768PrivateKey {
     /// protocol-layer key-confirmation step catches the rejection.
     #[must_use]
     pub fn decapsulate(&self, ciphertext: &MlKem768Ciphertext) -> SecretBox<[u8]> {
-        let ss = libcrux::decapsulate(&self.inner, &ciphertext.inner);
+        let (inner, _zeroizing_guard) = self.materialize();
+        let ss = libcrux::decapsulate(&inner, &ciphertext.inner);
         SecretBox::new(ss.to_vec().into_boxed_slice())
     }
 }
@@ -405,9 +403,13 @@ impl MlKem768KeyPair {
     /// - [`Error::RngFailure`] — the OS CSPRNG returned an error
     ///   during seed generation.
     pub fn try_generate() -> Result<Self> {
-        let mut seed = [0_u8; KEY_GENERATION_SEED_SIZE];
-        rng::try_random_into(&mut seed)?;
-        Ok(Self::from_seed_bytes(seed))
+        // Wrap the keygen seed in `Zeroizing` — 64-byte stack array
+        // zeroized on drop. The libcrux::generate_key_pair call below
+        // consumes a copy of the bytes; the original Zeroizing buffer
+        // is still zeroized when this function returns.
+        let mut seed = Zeroizing::new([0_u8; KEY_GENERATION_SEED_SIZE]);
+        rng::try_random_into(seed.as_mut_slice())?;
+        Ok(Self::from_seed_bytes(*seed))
     }
 
     /// Generate a keypair from a caller-supplied 64-byte seed wrapped
@@ -429,19 +431,33 @@ impl MlKem768KeyPair {
                 actual: bytes.len(),
             });
         }
-        let mut seed_array = [0_u8; KEY_GENERATION_SEED_SIZE];
+        // Stack copy of the keygen seed wrapped in `Zeroizing` so the
+        // intermediate is zeroized before this function returns.
+        let mut seed_array = Zeroizing::new([0_u8; KEY_GENERATION_SEED_SIZE]);
         seed_array.copy_from_slice(bytes);
-        Ok(Self::from_seed_bytes(seed_array))
+        Ok(Self::from_seed_bytes(*seed_array))
     }
 
     /// Internal seed-driven constructor that takes the seed as a
-    /// fixed-size array.
+    /// fixed-size array. The persistent private-key storage is
+    /// wrapped in [`SecretBox<[u8]>`] (zeroize-on-drop); the libcrux
+    /// transient lives only for the duration of this function call.
     fn from_seed_bytes(seed: [u8; KEY_GENERATION_SEED_SIZE]) -> Self {
         let kp = libcrux::generate_key_pair(seed);
-        let (sk_bytes, pk_bytes) = kp.into_parts();
+        let (sk_libcrux, pk_libcrux) = kp.into_parts();
+
+        // Copy libcrux's private-key bytes into a Zeroizing stack
+        // buffer, then into the persistent SecretBox<[u8]>. The
+        // Zeroizing buffer zeroizes itself on drop; the libcrux
+        // value's internal 2 400 bytes are not zeroized but live
+        // only for the remainder of this function.
+        let mut sk_buf = Zeroizing::new([0_u8; sizes::PRIVATE_KEY_LEN]);
+        sk_buf.copy_from_slice(sk_libcrux.as_slice());
+        let sk_secret = SecretBox::new(sk_buf.to_vec().into_boxed_slice());
+
         Self {
-            public_key: MlKem768PublicKey { inner: pk_bytes },
-            private_key: MlKem768PrivateKey { inner: sk_bytes },
+            public_key: MlKem768PublicKey { inner: pk_libcrux },
+            private_key: MlKem768PrivateKey { bytes: sk_secret },
         }
     }
 
