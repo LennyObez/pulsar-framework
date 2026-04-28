@@ -7,7 +7,48 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-### Sprint 1.1 — kernel crypto (Phase 1.1.C.3: hybrid X25519+ML-KEM-768 KEM, in progress)
+### Sprint 1.1 — kernel crypto (Phase 1.1.C.4: hybrid Ed25519+ML-DSA-65 signature, in progress)
+
+Fourth sub-phase of Phase 1.1.C — and the second hybrid construction. Lands `pulsar-kernel::crypto::hybrid_sig` per Decision 2.58: every signature scheme that anchors a long-term commitment runs Ed25519 + ML-DSA-65 in parallel and verifies REQUIRE BOTH to pass. Pairs with Phase 1.1.C.3's hybrid X25519+ML-KEM-768 KEM; together they complete Pulsar's hybrid-PQC surface for both key establishment and digital signatures. This sub-phase closes the cryptographic primitive surface for Sprint 1.1 — Phase 1.1.D adds Creusot contracts + the spec/crypto.tla TLA+ specification, and Phase 1.1.E adds benchmarks + the sprint exit gate.
+
+* **`pulsar-kernel::crypto::hybrid_sig`** — typed safe wrappers orchestrating the Ed25519 + ML-DSA-65 primitives shipped by Phase 1.1.B.3 and Phase 1.1.C.2. `HybridSigKeyPair::try_generate()` independently generates an Ed25519 keypair (32-byte CSPRNG seed) and an ML-DSA-65 keypair (32-byte CSPRNG seed) — the two share no entropy. `HybridSigPrivateKey::try_sign(message, context)` produces `(sig_ed25519, sig_mldsa)` over the same message; the Ed25519 share signs a prefix-transformed input, the ML-DSA share uses the native FIPS 204 § 5.2 context binding. `HybridSigPublicKey::verify(message, context, &signature)` returns `Ok(())` iff BOTH constituent verifications pass; either failure collapses to a single `Error::SignatureVerifyFailed`.
+* **Combining strategy: parallel + AND-verify** — the hybrid signature is the wire-format concatenation `sig_ed25519 || sig_mldsa` (64 + 3 309 = 3 373 bytes). Sign produces both signatures independently; verify requires BOTH to pass. Either tampered share fails the hybrid verification.
+* **Context binding via Ed25519 prefix transformation** — Ed25519 (RFC 8032) has no native context parameter; ML-DSA-65 (FIPS 204 § 5.2) does. To bind the same context to both halves, the Ed25519 share signs `HYBRID_LABEL || context_len_byte || context || message` where `HYBRID_LABEL = "pulsar-hybrid-sig-ed25519-mldsa65-v1"`. The single-byte length prefix ensures unambiguous parsing; the label provides domain separation against bare Ed25519 signatures using the same signing key — a hybrid Ed25519 share will NOT verify under a bare Ed25519 verifier on the raw message bytes (test pinned: `hybrid_sig_ed25519_share_not_valid_for_raw_message`). ML-DSA-65 receives `(message, context)` directly and applies its native FIPS 204 § 5.2 context binding internally.
+* **Wire format** — verification key `vk_ed25519 || vk_mldsa` (32 + 1 952 = 1 984 bytes), signature `sig_ed25519 || sig_mldsa` (64 + 3 309 = 3 373 bytes). `to_bytes` / `from_bytes` round-trip verified by tests. Signing-key wire-format length 4 064 bytes (32 + 4 032) — though held in memory as `(Ed25519PrivateKey, MlDsa65SigningKey)` rather than serialised.
+* **Constituent-primitive zeroization** — the hybrid private key holds an `Ed25519PrivateKey` (SecretBox-wrapped 32-byte seed) alongside an `MlDsa65SigningKey` (SecretBox-wrapped 4 032-byte private key). Both inherit the canonical Pulsar zeroize-on-drop posture from Phase 1.1.B.3 / Phase 1.1.C.2 — no new private-key storage introduced.
+* **Context length bound** — `context.len()` ≤ 255 enforced at both sign and verify entry points (FIPS 204 § 5.2 native bound + single-byte length prefix in the Ed25519 input transformation). Excess-length → `Error::InputTooLong`.
+* **Module re-exports** in `pulsar-kernel::crypto::mod` and `pulsar-kernel::prelude`: `HybridSigKeyPair`, `HybridSigPublicKey`, `HybridSigPrivateKey`, `HybridSigSignature`. The `sizes` sub-module is reachable via `pulsar_kernel::crypto::hybrid_sig::sizes`.
+
+**Tests** (18 new tests across two integration test files):
+
+* **`tests/hybrid_sig_kat.rs`** (14 tests):
+  - sizes match the hybrid Ed25519+ML-DSA-65 convention (1984 / 4064 / 3373 / 255) — pinned via constants
+  - sign/verify round-trip with empty context
+  - sign/verify round-trip with non-empty context (exercises FIPS 204 § 5.2 native binding + Ed25519 prefix transformation)
+  - verification-key wire format round-trip preserves both halves
+  - signature wire format round-trip preserves verifiability
+  - BOTH-must-pass — tampered Ed25519 share → `SignatureVerifyFailed`
+  - BOTH-must-pass — tampered ML-DSA share → `SignatureVerifyFailed` (Ed25519 share still valid in isolation, but hybrid rejects)
+  - tampered message → `SignatureVerifyFailed`
+  - context mismatch (sign with context A, verify with context B) → `SignatureVerifyFailed`
+  - cross-key rejection (signature from key A under verification key B) → `SignatureVerifyFailed`
+  - oversize context (256 bytes) at sign → `InputTooLong`
+  - oversize context (256 bytes) at verify → `InputTooLong`
+  - **domain separation invariant** — a hybrid signature's Ed25519 share does NOT verify under a bare Ed25519 verifier on the raw message bytes (validates HYBRID_LABEL + length-prefix transformation prevents downgrade attacks)
+  - `Debug` redaction on hybrid private key
+* **`tests/hybrid_sig_property.rs`** (4 iteration-tests, 16 iterations each — hybrid sign + verify cost ~500 µs):
+  - sign/verify round-trip across CSPRNG-driven keypairs
+  - distinct keypairs yield distinct verification keys
+  - distinct sign calls yield distinct signatures (ML-DSA-65 hedged signing draws fresh randomness per call; Ed25519 is deterministic; combined wire-format differs)
+  - wire-format `to_bytes` / `from_bytes` is a perfect round-trip preserving signature correctness
+
+Quality gates verified locally:
+  - cargo fmt --all -- --check ✓
+  - cargo clippy -p pulsar-kernel --all-targets -- -D warnings ✓
+  - cargo nextest run -p pulsar-kernel (196/196 PASS, +18 from this phase) ✓
+  - cargo test -p pulsar-kernel --doc ✓
+
+### Sprint 1.1 — kernel crypto (Phase 1.1.C.3: hybrid X25519+ML-KEM-768 KEM — merged 2026-04-28 as `df44b9eb`)
 
 Third sub-phase of Phase 1.1.C. Lands `pulsar-kernel::crypto::hybrid_kem` — the **hybrid X25519+ML-KEM-768 key-encapsulation mechanism** per Decision 2.58 (every Pulsar protocol that uses key encapsulation runs both KEMs in parallel and combines the shared secrets via HKDF-SHA-256). Defence-in-depth posture: a future quantum adversary cannot break the ML-KEM-768 share, and a future structural attack against ML-KEM-768 leaves the X25519 share at 128-bit-equivalent classical security. The two schemes share neither hardness assumption nor implementation surface. Phase 1.1.C.4 will land the symmetric Ed25519+ML-DSA-65 hybrid signature.
 

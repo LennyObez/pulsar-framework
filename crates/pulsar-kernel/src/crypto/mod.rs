@@ -64,6 +64,7 @@ pub mod hash;
 pub mod hkdf;
 pub mod hmac;
 pub mod hybrid_kem;
+pub mod hybrid_sig;
 pub mod kem;
 pub mod ml_dsa;
 pub mod ml_kem;
@@ -78,6 +79,9 @@ pub use hash::{sha256, sha384, sha512};
 pub use hmac::{HmacAlgorithm, HmacKey};
 pub use hybrid_kem::{
     HybridKemCiphertext, HybridKemKeyPair, HybridKemPrivateKey, HybridKemPublicKey,
+};
+pub use hybrid_sig::{
+    HybridSigKeyPair, HybridSigPrivateKey, HybridSigPublicKey, HybridSigSignature,
 };
 pub use kem::{X25519PrivateKey, X25519PublicKey};
 pub use ml_dsa::{MlDsa65KeyPair, MlDsa65Signature, MlDsa65SigningKey, MlDsa65VerificationKey};
