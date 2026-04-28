@@ -51,6 +51,12 @@ use std::sync::Once;
 /// per process. HACL\* docs guarantee idempotence on repeated calls;
 /// `Once` avoids the redundant atomic synchronisation cost on the
 /// hot path.
+///
+/// HACL\* contract reference:
+/// `crates/pulsar-crypto-hacl-bindings/hacl-c/include/EverCrypt_AutoConfig2.h`
+/// declares `EverCrypt_AutoConfig2_init` as the canonical initialiser;
+/// the upstream HACL\* test harness (`hacl-star/tests/`) and Mozilla NSS
+/// production usage both rely on the documented idempotence.
 static AUTOCONFIG_INIT: Once = Once::new();
 
 fn ensure_initialized() {
@@ -107,6 +113,11 @@ impl HashAlgorithm {
 
     /// Map to the HACL\* / EverCrypt algorithm-id byte.
     ///
+    /// Returns the bindgen-generated `Spec_Hash_Definitions_hash_alg`
+    /// type alias rather than a raw `u8` so any future change to the
+    /// underlying typedef in `Hacl_Spec.h` propagates as a Rust-level
+    /// type mismatch rather than silently produce wrong values.
+    ///
     /// Reference: `crates/pulsar-crypto-hacl-bindings/hacl-c/include/Hacl_Spec.h`:
     /// ```c
     /// #define Spec_Hash_Definitions_SHA2_256 1
@@ -120,7 +131,7 @@ impl HashAlgorithm {
     /// ```
     /// SHA-2-224, SHA-3-224, SHA-1, MD5 are not exposed via this enum;
     /// pulsar-kernel never accepts them via its public surface.
-    const fn to_ffi(self) -> u8 {
+    const fn to_ffi(self) -> ffi::Spec_Hash_Definitions_hash_alg {
         match self {
             Self::Sha256 => 1,
             Self::Sha384 => 2,
@@ -134,19 +145,28 @@ impl HashAlgorithm {
     }
 }
 
-/// Compute the cryptographic hash of `input` using `algo` in one shot.
+/// Compute the cryptographic hash of `input` into a caller-provided
+/// buffer.
 ///
-/// Returns a fresh `Vec<u8>` of length [`HashAlgorithm::digest_len`].
-/// Constant-time relative to message contents; total runtime depends
-/// on `input.len()` linearly (per HACL\*'s F\* proofs of secret
-/// independence — message length is public).
+/// The buffer must be at least [`HashAlgorithm::digest_len`] bytes
+/// long; only that prefix is written. Used internally by both [`hash`]
+/// (which allocates a `Vec<u8>`) and the algorithm-specific convenience
+/// aliases (which write directly into a stack-allocated array). Keeps
+/// the FFI invocation in a single place so soundness arguments need
+/// only be made once.
 ///
 /// # Errors
 ///
-/// - [`Error::InputTooLong`] — `input.len() > u32::MAX`. HACL\*'s
-///   single-shot API takes a 32-bit length parameter; 4 GiB exceeds
-///   any plausible Pulsar payload size.
-pub fn hash(algo: HashAlgorithm, input: &[u8]) -> Result<Vec<u8>> {
+/// - [`Error::InvalidOutputLength`] — `output.len() < algo.digest_len()`.
+/// - [`Error::InputTooLong`] — `input.len() > u32::MAX`.
+fn hash_into_slice(algo: HashAlgorithm, input: &[u8], output: &mut [u8]) -> Result<()> {
+    if output.len() < algo.digest_len() {
+        return Err(Error::InvalidOutputLength {
+            expected: algo.digest_len(),
+            actual: output.len(),
+        });
+    }
+
     ensure_initialized();
 
     let len = u32::try_from(input.len()).map_err(|_| Error::InputTooLong {
@@ -154,13 +174,11 @@ pub fn hash(algo: HashAlgorithm, input: &[u8]) -> Result<Vec<u8>> {
         max: u32::MAX as usize,
     })?;
 
-    let mut digest = vec![0_u8; algo.digest_len()];
-
     // SAFETY: EverCrypt_Hash_Incremental_hash preconditions:
     //   - `a` is a valid Spec_Hash_Definitions_hash_alg constant — guaranteed
     //     by HashAlgorithm::to_ffi enumerating only modern hashes.
-    //   - `output` points to at least `digest_len` writable bytes — `digest`
-    //     is freshly allocated to that exact length above.
+    //   - `output` points to at least `digest_len` writable bytes — checked
+    //     against output.len() at function entry above.
     //   - `input` may be a dangling-but-non-null pointer when input_len = 0
     //     per HACL*'s contract; HACL* does not dereference when len = 0.
     //     `<[u8]>::as_ptr` returns a non-null pointer for empty slices
@@ -171,13 +189,35 @@ pub fn hash(algo: HashAlgorithm, input: &[u8]) -> Result<Vec<u8>> {
     unsafe {
         ffi::EverCrypt_Hash_Incremental_hash(
             algo.to_ffi(),
-            digest.as_mut_ptr(),
+            output.as_mut_ptr(),
             input.as_ptr().cast_mut(),
             len,
         );
     }
 
-    Ok(digest)
+    Ok(())
+}
+
+/// Compute the cryptographic hash of `input` using `algo` in one shot.
+///
+/// Returns a fresh `Vec<u8>` of length [`HashAlgorithm::digest_len`].
+/// Constant-time relative to message contents; total runtime depends
+/// on `input.len()` linearly (per HACL\*'s F\* proofs of secret
+/// independence — message length is public).
+///
+/// For algorithm-specific call sites that already know the digest size
+/// at compile time, the convenience aliases ([`sha256`], [`sha384`],
+/// etc.) avoid the heap allocation.
+///
+/// # Errors
+///
+/// - [`Error::InputTooLong`] — `input.len() > u32::MAX`. HACL\*'s
+///   single-shot API takes a 32-bit length parameter; 4 GiB exceeds
+///   any plausible Pulsar payload size.
+pub fn hash(algo: HashAlgorithm, input: &[u8]) -> Result<Vec<u8>> {
+    let mut output = vec![0_u8; algo.digest_len()];
+    hash_into_slice(algo, input, &mut output)?;
+    Ok(output)
 }
 
 /// Streaming hash computation for chunked input.
@@ -201,6 +241,17 @@ pub struct Hasher {
 // thread-safe per-instance (would require a lock), but Send is fine
 // because ownership transfer is single-threaded by definition.
 unsafe impl Send for Hasher {}
+
+impl core::fmt::Debug for Hasher {
+    /// Print only the algorithm — the FFI state pointer is uninteresting
+    /// to debug consumers and would expose internal layout details that
+    /// belong on the audit boundary, not in formatted output.
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("Hasher")
+            .field("algorithm", &self.algo)
+            .finish_non_exhaustive()
+    }
+}
 
 impl Hasher {
     /// Allocate a new hasher state for the chosen algorithm.
@@ -263,37 +314,68 @@ impl Hasher {
             Ok(())
         } else {
             // EverCrypt_Error_MaximumLengthExceeded = 2 (per
-            // hacl-c/include/EverCrypt_Error.h). Map to a typed
-            // pulsar-crypto-hacl-bindings Error variant once that
-            // crate's error mapping fleshes out in a follow-up.
-            Err(Error::InputTooLong {
-                actual: chunk.len(),
-                max: u32::MAX as usize,
-            })
+            // hacl-c/include/EverCrypt_Error.h). The only realistic
+            // non-success status from `_update` for the hash dispatcher
+            // is the cumulative-length overflow; other EverCrypt error
+            // codes (UnsupportedAlgorithm = 1, InvalidKey = 3,
+            // AuthenticationFailure = 4, InvalidIVLength = 5) cannot
+            // arise on this code path because the algorithm parameter
+            // was validated at `Hasher::new` time and the API takes no
+            // key/IV inputs. A future binding-crate error-mapping
+            // refresh can map specific codes to typed variants; for
+            // now, any non-zero status is treated as a length overflow.
+            Err(Error::HashInputLimitExceeded)
         }
     }
 
-    /// Compute the digest from the current state and consume the hasher.
+    /// Compute the digest from the current state without consuming the
+    /// hasher.
     ///
-    /// Note: HACL\*'s `digest` operation does not invalidate the state
-    /// (the C contract permits further `update` calls). This wrapper
-    /// consumes `self` because Pulsar's safe surface treats one-shot
-    /// finalization as the canonical ergonomic path; if streaming
-    /// then re-finalizing is needed, allocate a new `Hasher`.
+    /// HACL\*'s `digest` operation operates on an internal copy of the
+    /// state (per the C contract documented in `EverCrypt_Hash.h`), so
+    /// subsequent [`Hasher::update`] calls continue from the
+    /// pre-finalize state. Useful for transcript-hashing patterns where
+    /// a provisional digest is needed before more bytes arrive (TLS
+    /// handshake transcripts, Merkle-tree intermediate roots, etc.).
     #[must_use]
-    pub fn finalize(self) -> Vec<u8> {
-        let mut digest = vec![0_u8; self.algo.digest_len()];
+    pub fn digest(&self) -> Vec<u8> {
+        let mut output = vec![0_u8; self.algo.digest_len()];
 
         // SAFETY: EverCrypt_Hash_Incremental_digest preconditions:
         //   - `state` is valid (held in NonNull until Drop).
         //   - `output` points to at least digest_len writable bytes —
-        //     `digest` is freshly allocated to that exact length.
-        // Drop runs at end of this function (self is consumed) and frees
-        // the FFI state.
+        //     freshly allocated above to that exact length.
+        // The C function does not modify the state externally
+        // observable; safe to call repeatedly.
         unsafe {
-            ffi::EverCrypt_Hash_Incremental_digest(self.state.as_ptr(), digest.as_mut_ptr());
+            ffi::EverCrypt_Hash_Incremental_digest(self.state.as_ptr(), output.as_mut_ptr());
         }
-        digest
+        output
+    }
+
+    /// Compute the digest and consume the hasher.
+    ///
+    /// Equivalent to [`Hasher::digest`] followed by drop. Use this when
+    /// no further updates are needed — the consumed `self` makes the
+    /// no-further-use intent explicit at the call site.
+    #[must_use]
+    pub fn finalize(self) -> Vec<u8> {
+        self.digest()
+    }
+
+    /// Reset the hasher state to the initial empty-input position
+    /// without re-allocating the FFI state.
+    ///
+    /// Useful for long-running services that hash many messages with the
+    /// same algorithm — `reset` avoids the per-message
+    /// `EverCrypt_Hash_Incremental_malloc + _free` allocation cycle. The
+    /// algorithm is preserved across resets.
+    pub fn reset(&mut self) {
+        // SAFETY: `state` is valid (held in NonNull throughout the
+        // Hasher lifetime). EverCrypt_Hash_Incremental_reset does not
+        // free or reallocate; it re-initialises the state buffer in
+        // place per the C contract documented in EverCrypt_Hash.h.
+        unsafe { ffi::EverCrypt_Hash_Incremental_reset(self.state.as_ptr()) };
     }
 }
 
@@ -309,27 +391,37 @@ impl Drop for Hasher {
 // ──────────────────────────────────────────────────────────────────────
 // Algorithm-specific convenience aliases — one per supported hash.
 // Each performs the one-shot computation with a fixed algorithm and
-// returns a stack-allocatable fixed-size array for ergonomic use.
-//
-// These are NOT preconditioned by `ensure_initialized()` separately —
-// the call to `hash()` does that internally. Each alias is a thin
-// wrapper that converts the `Vec<u8>` result to a fixed-size array;
-// the conversion is infallible because `hash()` always returns a
-// `Vec` of exactly `algo.digest_len()` bytes.
+// returns a stack-allocated fixed-size array. Implemented via
+// `hash_into_slice` so no `Vec<u8>` is allocated on the hot path —
+// preferred over `hash()` for performance-sensitive call sites where
+// the digest size is known at compile time.
 // ──────────────────────────────────────────────────────────────────────
 
+/// Internal helper: hash to a stack-allocated fixed-size array.
+///
+/// `N` must equal `algo.digest_len()` — the convenience aliases below
+/// pass the correct (algorithm, N) pair so the `InvalidOutputLength`
+/// error path is unreachable from these call sites.
+fn hash_to_array<const N: usize>(algo: HashAlgorithm, input: &[u8]) -> Result<[u8; N]> {
+    debug_assert_eq!(
+        N,
+        algo.digest_len(),
+        "convenience alias requires N == algo.digest_len(); this is a bug if it fires",
+    );
+    let mut output = [0_u8; N];
+    hash_into_slice(algo, input, &mut output)?;
+    Ok(output)
+}
+
 /// SHA-2-256 of `input` per FIPS 180-4. 32-byte digest. Convenience
-/// alias for `hash(HashAlgorithm::Sha256, input)`.
+/// alias for `hash(HashAlgorithm::Sha256, input)` that avoids the
+/// `Vec<u8>` heap allocation by writing directly into a stack array.
 ///
 /// # Errors
 ///
 /// See [`hash`].
 pub fn sha256(input: &[u8]) -> Result<[u8; 32]> {
-    hash(HashAlgorithm::Sha256, input).map(|v| {
-        let mut out = [0_u8; 32];
-        out.copy_from_slice(&v);
-        out
-    })
+    hash_to_array(HashAlgorithm::Sha256, input)
 }
 
 /// SHA-2-384 of `input` per FIPS 180-4. 48-byte digest.
@@ -338,11 +430,7 @@ pub fn sha256(input: &[u8]) -> Result<[u8; 32]> {
 ///
 /// See [`hash`].
 pub fn sha384(input: &[u8]) -> Result<[u8; 48]> {
-    hash(HashAlgorithm::Sha384, input).map(|v| {
-        let mut out = [0_u8; 48];
-        out.copy_from_slice(&v);
-        out
-    })
+    hash_to_array(HashAlgorithm::Sha384, input)
 }
 
 /// SHA-2-512 of `input` per FIPS 180-4. 64-byte digest.
@@ -351,11 +439,7 @@ pub fn sha384(input: &[u8]) -> Result<[u8; 48]> {
 ///
 /// See [`hash`].
 pub fn sha512(input: &[u8]) -> Result<[u8; 64]> {
-    hash(HashAlgorithm::Sha512, input).map(|v| {
-        let mut out = [0_u8; 64];
-        out.copy_from_slice(&v);
-        out
-    })
+    hash_to_array(HashAlgorithm::Sha512, input)
 }
 
 /// SHA-3-256 of `input` per FIPS 202. 32-byte digest.
@@ -364,11 +448,7 @@ pub fn sha512(input: &[u8]) -> Result<[u8; 64]> {
 ///
 /// See [`hash`].
 pub fn sha3_256(input: &[u8]) -> Result<[u8; 32]> {
-    hash(HashAlgorithm::Sha3_256, input).map(|v| {
-        let mut out = [0_u8; 32];
-        out.copy_from_slice(&v);
-        out
-    })
+    hash_to_array(HashAlgorithm::Sha3_256, input)
 }
 
 /// SHA-3-384 of `input` per FIPS 202. 48-byte digest.
@@ -377,11 +457,7 @@ pub fn sha3_256(input: &[u8]) -> Result<[u8; 32]> {
 ///
 /// See [`hash`].
 pub fn sha3_384(input: &[u8]) -> Result<[u8; 48]> {
-    hash(HashAlgorithm::Sha3_384, input).map(|v| {
-        let mut out = [0_u8; 48];
-        out.copy_from_slice(&v);
-        out
-    })
+    hash_to_array(HashAlgorithm::Sha3_384, input)
 }
 
 /// SHA-3-512 of `input` per FIPS 202. 64-byte digest.
@@ -390,11 +466,7 @@ pub fn sha3_384(input: &[u8]) -> Result<[u8; 48]> {
 ///
 /// See [`hash`].
 pub fn sha3_512(input: &[u8]) -> Result<[u8; 64]> {
-    hash(HashAlgorithm::Sha3_512, input).map(|v| {
-        let mut out = [0_u8; 64];
-        out.copy_from_slice(&v);
-        out
-    })
+    hash_to_array(HashAlgorithm::Sha3_512, input)
 }
 
 /// BLAKE2b of `input` per RFC 7693. 64-byte digest (the algorithm's
@@ -404,11 +476,7 @@ pub fn sha3_512(input: &[u8]) -> Result<[u8; 64]> {
 ///
 /// See [`hash`].
 pub fn blake2b512(input: &[u8]) -> Result<[u8; 64]> {
-    hash(HashAlgorithm::Blake2b512, input).map(|v| {
-        let mut out = [0_u8; 64];
-        out.copy_from_slice(&v);
-        out
-    })
+    hash_to_array(HashAlgorithm::Blake2b512, input)
 }
 
 /// BLAKE2s-256 of `input` per RFC 7693. 32-byte digest.
@@ -417,9 +485,5 @@ pub fn blake2b512(input: &[u8]) -> Result<[u8; 64]> {
 ///
 /// See [`hash`].
 pub fn blake2s256(input: &[u8]) -> Result<[u8; 32]> {
-    hash(HashAlgorithm::Blake2s256, input).map(|v| {
-        let mut out = [0_u8; 32];
-        out.copy_from_slice(&v);
-        out
-    })
+    hash_to_array(HashAlgorithm::Blake2s256, input)
 }

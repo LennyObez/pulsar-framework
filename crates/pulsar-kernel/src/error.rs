@@ -24,6 +24,17 @@ pub enum Error {
         max: usize,
     },
 
+    /// Hash input cumulative length exceeded the algorithm's per-message
+    /// limit. EverCrypt's incremental hash returns
+    /// `EverCrypt_Error_MaximumLengthExceeded` when the sum of all
+    /// `update` chunk lengths since `init` exceeds the algorithm-specific
+    /// ceiling: 2^61 − 1 bytes for SHA-2-256, 2^64 − 1 bytes for SHA-2-
+    /// 384/512 + SHA-3 + BLAKE2. The limits are practically unreachable
+    /// (2^61 bytes ≈ 2 EiB) but the variant exists for completeness of
+    /// the FFI status-code mapping.
+    #[error("hash input cumulative length exceeded the algorithm's per-message limit")]
+    HashInputLimitExceeded,
+
     /// Cryptographic key length does not match the algorithm's expected length.
     #[error("invalid key length: expected {expected}, got {actual}")]
     InvalidKeyLength {

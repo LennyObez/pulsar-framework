@@ -250,6 +250,99 @@ fn blake2s_abc_rfc_7693() {
 // fixed-size array; the tests below verify the wrapper does not corrupt
 // the output.
 
+/// `Hasher::digest()` (non-consuming) returns the same result as
+/// `Hasher::finalize()` (consuming) at the same state. Verifies the
+/// HACL\* contract that `_digest` operates on an internal copy and
+/// does not invalidate the state.
+#[test]
+fn hasher_digest_non_consuming_matches_finalize() {
+    let input = b"the quick brown fox jumps over the lazy dog";
+
+    for &algo in &[
+        HashAlgorithm::Sha256,
+        HashAlgorithm::Sha512,
+        HashAlgorithm::Sha3_256,
+        HashAlgorithm::Blake2b512,
+    ] {
+        // Path 1: digest non-consumingly, then continue with another update.
+        let mut hasher_digest = Hasher::new(algo).expect("Hasher::new should succeed");
+        hasher_digest.update(input).expect("update should succeed");
+        let digest_via_digest = hasher_digest.digest();
+
+        // Path 2: same input + finalize (consuming).
+        let mut hasher_finalize = Hasher::new(algo).expect("Hasher::new should succeed");
+        hasher_finalize
+            .update(input)
+            .expect("update should succeed");
+        let digest_via_finalize = hasher_finalize.finalize();
+
+        assert_eq!(
+            digest_via_digest, digest_via_finalize,
+            "{algo:?} digest() must match finalize() at the same state",
+        );
+
+        // Path 3: digest, then continue updating, then digest again — the
+        // HACL* contract permits this; verify the post-continuation
+        // digest differs from the pre-continuation one.
+        let mut hasher_continued = Hasher::new(algo).expect("Hasher::new should succeed");
+        hasher_continued
+            .update(input)
+            .expect("update should succeed");
+        let provisional = hasher_continued.digest();
+        hasher_continued
+            .update(b"more bytes")
+            .expect("continued update should succeed");
+        let final_digest = hasher_continued.finalize();
+        assert_ne!(
+            provisional, final_digest,
+            "{algo:?} digest after additional update must differ from provisional",
+        );
+    }
+}
+
+/// `Hasher::reset()` returns the state to the initial empty-input
+/// position. After reset, the hasher computes the empty-input digest
+/// matching the one-shot `hash(algo, b"")`.
+#[test]
+fn hasher_reset_returns_to_initial_state() {
+    for &algo in &[
+        HashAlgorithm::Sha256,
+        HashAlgorithm::Sha512,
+        HashAlgorithm::Sha3_256,
+        HashAlgorithm::Blake2b512,
+    ] {
+        let empty_digest = hash(algo, b"").expect("hash(empty) should succeed");
+
+        let mut hasher = Hasher::new(algo).expect("Hasher::new should succeed");
+        hasher
+            .update(b"some data that gets discarded")
+            .expect("update should succeed");
+        hasher.reset();
+        let after_reset = hasher.finalize();
+
+        assert_eq!(
+            after_reset, empty_digest,
+            "{algo:?} hasher after reset must match empty-input digest",
+        );
+    }
+}
+
+/// `Hasher` has a manual `Debug` impl that surfaces the algorithm
+/// without exposing the FFI state pointer.
+#[test]
+fn hasher_debug_redacts_state_pointer() {
+    let hasher = Hasher::new(HashAlgorithm::Sha256).expect("Hasher::new should succeed");
+    let formatted = format!("{hasher:?}");
+    assert!(
+        formatted.contains("Sha256"),
+        "Hasher Debug must mention the algorithm; got: {formatted}",
+    );
+    assert!(
+        !formatted.contains("0x"),
+        "Hasher Debug must not leak the state pointer (hex address); got: {formatted}",
+    );
+}
+
 #[test]
 fn convenience_aliases_match_agile_api() {
     use pulsar_kernel::crypto::hash::{
