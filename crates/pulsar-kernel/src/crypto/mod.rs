@@ -5,7 +5,7 @@
 //! and lifecycle invariants enforced by the type system:
 //!
 //! - [`hash`]   — SHA-2 (256/384/512), SHA-3 (256/384/512), BLAKE2b/2s
-//! - `aead`     — AES-128/256-GCM, ChaCha20-Poly1305 (Phase 1.1.B.2)
+//! - [`aead`]   — AES-128/256-GCM, ChaCha20-Poly1305
 //! - `signature` — Ed25519 (Phase 1.1.B.3); ML-DSA-65 hybrid via libcrux (Phase 1.1.C)
 //! - `kem`      — X25519 (Phase 1.1.B.3); ML-KEM-768 hybrid via libcrux (Phase 1.1.C)
 //! - `hkdf`     — HKDF over SHA-2 family (Phase 1.1.B.4)
@@ -31,8 +31,10 @@
 //! its compliance posture (NIST SP 800-131A "FIPS-approved hash functions"
 //! plus BLAKE2 for non-FIPS deployments).
 
+pub mod aead;
 pub mod hash;
 
+pub use aead::{AeadAlgorithm, AeadKey};
 pub use hash::{HashAlgorithm, Hasher, blake2b512, blake2s256};
 pub use hash::{sha3_256, sha3_384, sha3_512};
 pub use hash::{sha256, sha384, sha512};

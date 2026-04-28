@@ -7,7 +7,43 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-### Sprint 1.1 — kernel crypto (Phase 1.1.B.1: hash family safe wrappers, in progress)
+### Sprint 1.1 — kernel crypto (Phase 1.1.B.2: AEAD safe wrappers, in progress)
+
+Second sub-phase of Phase 1.1.B (safe Rust wrappers over the HACL\* FFI). Lands `pulsar-kernel::crypto::aead` module with the three AEAD primitives Pulsar standardises on: AES-128-GCM, AES-256-GCM, ChaCha20-Poly1305. Subsequent sub-phases extend the surface: 1.1.B.3 signature + KEM (Ed25519 + X25519 + P-256), 1.1.B.4 HKDF + HMAC + Argon2id.
+
+* **`pulsar-kernel::crypto::aead`** — typed safe wrappers over `EverCrypt_AEAD_*` FFI declarations. `AeadKey::new(algo, key)` allocates the EverCrypt state holding expanded round keys (AES-GCM) or per-key pre-computation (ChaCha20-Poly1305). `AeadKey::encrypt(nonce, aad, plaintext) -> Vec<u8>` returns `ciphertext || tag` packed in a single allocation. `AeadKey::decrypt(nonce, aad, ciphertext_with_tag) -> Vec<u8>` verifies the tag in constant time and returns the recovered plaintext (or `Error::AeadAuthFailed` on tampered input).
+* **`AeadAlgorithm` enum** is `#[non_exhaustive]` and includes only AES-128-GCM, AES-256-GCM, ChaCha20-Poly1305. AES-128-CCM, AES-256-CCM, AES-128-CCM8, AES-256-CCM8 are exposed by the underlying HACL\* dispatcher but deliberately excluded — Pulsar standardises on GCM and ChaCha20-Poly1305 for the regulated-domain compliance surface (NIST SP 800-38D and RFC 8439); CCM variants land only if a specific regulatory framework requires them.
+* **Nonce length fixed at 12 bytes** for all three algorithms. ChaCha20-Poly1305 mandates 12 bytes per RFC 8439; AES-GCM permits other lengths but 12 is the FIPS-recommended length per NIST SP 800-38D § 5.2.1.1. Pulsar enforces 12 bytes uniformly so callers can write algorithm-agnostic code. Tag length is fixed at 16 bytes for all three.
+* **Module-level documentation flags nonce-reuse as catastrophic** (per the AEAD security model — repeated `(key, nonce)` pairs leak plaintext XOR and enable forgery in GCM). The wrapper enforces only length checks; nonce-uniqueness invariants are wired up at the protocol level by Sprint 1.6 capability tokens and Sprint 2.5 session adapters.
+* **Lifecycle**: `AeadKey` holds a `NonNull<EverCrypt_AEAD_state_s>` heap-allocated by `EverCrypt_AEAD_create_in`; `Drop` calls `EverCrypt_AEAD_free` (HACL\* zeroes the expanded state internally per F\* secret-independence postcondition). `Send` is impl'd with explicit SAFETY comment justifying single-owner lifecycle (encrypt/decrypt take `&self` because the state is read-only after creation; `Sync` not impl'd because HACL\* documentation does not guarantee concurrent-call safety on a shared state). Manual `Debug` impl prints only the algorithm field, omitting the FFI state pointer.
+* **Error mapping** — `EverCrypt_Error_AuthenticationFailure` (status 3) maps to `Error::AeadAuthFailed`; `InvalidIVLength` (status 4) maps to `Error::InvalidNonceLength` (defensive — should be unreachable since the wrapper rejects wrong-length nonces before the FFI call); other status codes map to `Error::Hacl { source: UnknownStatus(rc) }` for diagnostic logging. The wrapper enforces length validation client-side so the FFI layer should only ever return Success or AuthenticationFailure.
+
+**Tests** (14 new tests across two integration test files):
+
+* **`tests/aead_kat.rs`** — 9 known-answer tests verifying canonical specifications:
+  - AES-128-GCM Test Cases 1 + 2 from NIST SP 800-38D Annex B
+  - AES-256-GCM Test Case 7 from NIST SP 800-38D Annex B
+  - ChaCha20-Poly1305 example from RFC 8439 § 2.8.2 ("Ladies and Gentlemen of the class of '99")
+  - Wrong-length key rejection (15 / 17 bytes vs expected 16) → `Error::InvalidKeyLength`
+  - Wrong-length nonce rejection (11 / 13 bytes vs expected 12) → `Error::InvalidNonceLength`
+  - Truncated ciphertext rejection (10 bytes < tag length 16) → `Error::InvalidOutputLength`
+  - Algorithm constants verification (`key_len`, `nonce_len`, `tag_len`)
+  - `AeadKey` Debug impl redacts state pointer
+* **`tests/aead_property.rs`** — 5 property tests using `proptest`:
+  - Encrypt/decrypt round-trip recovers original plaintext
+  - Single-bit flip in ciphertext → `Error::AeadAuthFailed` (validates tag mechanism)
+  - AAD tampering between encrypt and decrypt → `Error::AeadAuthFailed`
+  - Distinct keys produce distinct ciphertexts (probabilistic correctness)
+  - Distinct nonces produce distinct ciphertexts under same key
+  
+  Inputs span 0-1024-byte plaintexts + 0-128-byte AAD across all three algorithms; per-test default is 256 cases, totalling ~3840 random inputs across all properties.
+
+Quality gates verified locally:
+  - cargo fmt --all -- --check ✓
+  - cargo clippy -p pulsar-kernel --all-targets -- -D warnings ✓
+  - cargo nextest run -p pulsar-kernel (42/42 PASS, +14 from this phase) ✓
+
+### Sprint 1.1 — kernel crypto (Phase 1.1.B.1: hash family safe wrappers — merged 2026-04-28 as `799e3531`)
 
 First sub-phase of Phase 1.1.B (safe Rust wrappers over the HACL\* FFI). Lands `pulsar-kernel::crypto` module with the hash family — SHA-2 (256/384/512), SHA-3 (256/384/512), BLAKE2b (64-byte), BLAKE2s (32-byte). Subsequent sub-phases extend the surface: 1.1.B.2 AEAD, 1.1.B.3 signature + KEM (Ed25519 + X25519 + P-256), 1.1.B.4 HKDF + HMAC + Argon2id.
 
