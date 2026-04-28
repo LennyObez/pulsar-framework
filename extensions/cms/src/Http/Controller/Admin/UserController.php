@@ -55,9 +55,15 @@ final readonly class UserController extends AbstractAdminController
         $this->authorize($identity, 'cms.users.view');
 
         $params = $request->getQueryParams();
-        $page = max(1, is_int($params['page'] ?? null) ? $params['page'] : 1);
-        $perPage = min(100, max(1, is_int($params['per_page'] ?? null) ? $params['per_page'] : 20));
-        $role = is_string($params['role'] ?? null) ? $params['role'] : null;
+        /** @var mixed $rawPage */
+        $rawPage = $params['page'] ?? null;
+        $page = max(1, is_int($rawPage) ? $rawPage : 1);
+        /** @var mixed $rawPerPage */
+        $rawPerPage = $params['per_page'] ?? null;
+        $perPage = min(100, max(1, is_int($rawPerPage) ? $rawPerPage : 20));
+        /** @var mixed $rawRole */
+        $rawRole = $params['role'] ?? null;
+        $role = is_string($rawRole) ? $rawRole : null;
 
         /** @var string|null $tenantId */
         $tenantId = $request->getAttribute('tenant_id');
