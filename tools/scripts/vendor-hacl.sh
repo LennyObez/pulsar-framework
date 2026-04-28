@@ -13,6 +13,7 @@
 # Usage:
 #   tools/scripts/vendor-hacl.sh                        # re-vendor at the pinned commit (default)
 #   tools/scripts/vendor-hacl.sh <commit-sha>           # re-vendor at a different commit (then update HACL_VERSION)
+#   tools/scripts/vendor-hacl.sh --verify               # verify the committed MANIFEST.sha256 matches the current hacl-c/ tree (CI-friendly, no clone)
 #
 # The script is idempotent: re-running on an already-vendored tree
 # overwrites the tree from a fresh upstream clone, regenerates
@@ -26,13 +27,44 @@
 
 set -euo pipefail
 
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+HACL_C_DIR="$REPO_ROOT/crates/pulsar-crypto-hacl-bindings/hacl-c"
+
+# ── --verify mode: recompute manifest, compare against committed ──
+# Detects byte-level tampering with hacl-c/ without needing network or
+# HACL* upstream clone. Suitable for CI verification on every push.
+if [[ "${1:-}" == "--verify" ]]; then
+  if [[ ! -f "$HACL_C_DIR/MANIFEST.sha256" ]]; then
+    echo "✗ MANIFEST.sha256 missing under $HACL_C_DIR/ — cannot verify." >&2
+    exit 2
+  fi
+  EXPECTED="$HACL_C_DIR/MANIFEST.sha256"
+  ACTUAL="$(mktemp -t hacl-manifest-actual-XXXXXX)"
+  trap 'rm -f "$ACTUAL"' EXIT
+  ( cd "$HACL_C_DIR" && \
+    find src include -type f \( -name '*.c' -o -name '*.h' -o -name '*.S' -o -name '*.asm' \) -print0 \
+      | sort -z \
+      | xargs -0 sha256sum > "$ACTUAL" )
+  if diff --brief "$EXPECTED" "$ACTUAL" > /dev/null 2>&1; then
+    ENTRIES=$(wc -l < "$EXPECTED")
+    echo "✓ MANIFEST.sha256 verified — $ENTRIES files match committed manifest."
+    exit 0
+  else
+    echo "✗ MANIFEST.sha256 mismatch — vendored hacl-c/ tree drifted from committed manifest." >&2
+    echo "  Expected manifest: $EXPECTED" >&2
+    echo "  Recomputed manifest: $ACTUAL" >&2
+    echo "  Diff (lines unique to expected ↑ / actual ↓):" >&2
+    diff "$EXPECTED" "$ACTUAL" | head -40 >&2
+    exit 1
+  fi
+fi
+
+# ── Default mode: re-vendor at the pinned (or override) commit ──
 # Default upstream commit — the pin captured in HACL_VERSION at the
 # Sprint 1.1.A initial vendoring. Override via CLI argument.
 DEFAULT_COMMIT="504c2987452f87fe44bce9b9f12e19d6e051761f"
 COMMIT="${1:-$DEFAULT_COMMIT}"
 
-REPO_ROOT="$(git rev-parse --show-toplevel)"
-HACL_C_DIR="$REPO_ROOT/crates/pulsar-crypto-hacl-bindings/hacl-c"
 WORK_DIR="$(mktemp -d -t hacl-vendoring-XXXXXX)"
 trap 'rm -rf "$WORK_DIR"' EXIT
 

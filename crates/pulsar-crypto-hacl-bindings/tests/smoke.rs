@@ -80,8 +80,16 @@ fn sha256_empty_input_matches_fips_180_4_test_vector() {
     // The hash-alg parameter is `uint8_t` C-side but bindgen emits the
     // module-const enum variants as `u32` (default `EnumVariation::ModuleConsts`
     // representation). All Spec_Hash_Definitions_* constants are < 16, so
-    // narrowing to u8 is information-preserving.
-    #[allow(clippy::cast_possible_truncation)]
+    // narrowing to u8 is information-preserving. `#[expect]` (vs `allow`)
+    // means the build fails if a future bindgen restructure makes the
+    // suppression unnecessary — defensive against silent suppression drift.
+    #[expect(
+        clippy::cast_possible_truncation,
+        reason = "bindgen ModuleConsts emits Spec_Hash_Definitions_* as u32; the \
+                  C-side typedef is uint8_t and all defined constants are < 16, \
+                  so the cast is information-preserving. Re-evaluate when bindgen \
+                  config moves to constified_enum_module per Phase 1.1.A.9 follow-up."
+    )]
     let alg = ffi::Spec_Hash_Definitions_SHA2_256 as u8;
     unsafe {
         ffi::EverCrypt_Hash_Incremental_hash(alg, digest.as_mut_ptr(), &raw mut empty_marker, 0);

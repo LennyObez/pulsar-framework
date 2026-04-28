@@ -24,7 +24,7 @@ First implementation phase of Sprint 1.1: vendors the HACL\* C distribution at t
 
 This phase delivers the FFI substrate. Phase 1.1.B (safe Rust wrappers + Creusot contracts) consumes the FFI surface this phase exposes. Phase 1.1.C (libcrux PQC + hybrid constructions) adds the PQC primitives in parallel.
 
-### Sprint 1.1 — kernel crypto (Phase 1.1.0: multi-source verification stack amendment, in progress)
+### Sprint 1.1 — kernel crypto (Phase 1.1.0: multi-source verification stack amendment — merged 2026-04-27 as `ca9a54b7`)
 
 Pre-implementation amendment landed on `feat/sprint-1-1-crypto` branch before any vendoring or code work. An upstream-state audit during Sprint 1.1 kickoff established that **HACL\* upstream as of 2026Q2** (commit `504c298` dated 2026-04-10) **does not** ship NIST ML-KEM-768/1024 or ML-DSA-65/87 — the post-quantum surface in HACL\* is limited to Frodo (a non-NIST scheme) and K256 ECDSA. The initial v2.3 lock-in (Decision 2.53 + ADR-0009 + ADR-0012) stated otherwise; the amendment corrects the sourcing to a multi-source verification stack while preserving the formally-verified posture across all sixteen primitives.
 
@@ -39,7 +39,7 @@ Pre-implementation amendment landed on `feat/sprint-1-1-crypto` branch before an
 
 This amendment is the prerequisite to Phase 1.1.A (HACL\* selective vendoring) and Phase 1.1.C (libcrux PQC integration). No code changes — purely a strategic re-scoping captured in ADRs + plan + workspace dependencies. The amendment commit precedes the FFI vendoring commit so the architecture is locked before any C source lands.
 
-### Sprint 0.9-bis — v2.3 reconciliation (in progress)
+### Sprint 0.9-bis — v2.3 reconciliation (merged 2026-04-27 as `bfd00a43`)
 
 After Sprint 0.9 hardening (commits A-G), an interactive validation pass on the v2.2 audit findings produced **nine new Section II decisions** (Decisions 2.51-2.59) lifting the framework to 100% best-possible / state-of-art. The v2.3 reconciliation lands these decisions in commits H1-H9:
 
@@ -60,7 +60,7 @@ After Sprint 0.9 hardening (commits A-G), an interactive validation pass on the 
 
 The Sprint 0.9-bis closure prepares the `v0.0.2-alpha.0` namespace-reservation publish (76 crates representing the v2.3 architecture). The prior `v0.0.1-alpha.0` tag remains preserved on commit `fe2332a` as the historical first publication (53 crates representing v2.2 architecture).
 
-### Sprint 0.9 — Phase 0 hardening (in progress)
+### Sprint 0.9 — Phase 0 hardening (folded into Sprint 0.9-bis merge `bfd00a43`)
 
 * **Commit A — workspace tooling baseline:** `.gitattributes` enforcing LF on all text files (SLSA 4 reproducibility prerequisite); `.editorconfig` for cross-IDE consistency (4-space Rust, 2-space YAML/JSON, tab Go); `[workspace.lints]` table in root `Cargo.toml` centralising rust + clippy + rustdoc lint policy (Cargo 1.74+ workspace-lint feature, eliminating per-crate `#![deny(missing_docs)]` + `#![forbid(unsafe_code)]` repetition); `tools/xtask/` workspace member with five subcommand stubs (`adr-index`, `api-surface`, `quality-gate`, `repro-build`, `publish-order`); `tools/scripts/regenerate-adr-index.sh` and `regenerate-api-surface.sh` placeholders.
 * **Commit B+C — Section XVII module layout + scaffolds + repo config:** every crate in `crates/pulsar-*/src/` gains `prelude.rs` + `error.rs` + `sealed.rs` per Section XVII catalogue; every crate gains `tests/smoke.rs` (two tests verifying `VERSION` is non-empty and matches `CARGO_PKG_VERSION`); every crate `Cargo.toml` gains `[lints] workspace = true`; `spec/README.md` documents the nine planned TLA+ specifications; `examples/` gains 10 example skeletons and a top-level README; `pulsar-cli` gains `src/main.rs` + `[[bin]] name = "pulsar"` so the binary entry exists; `.github/CODEOWNERS` auto-assigns `@LennyObez` to critical-coverage-tier crates + `spec/` + `docs/plan.md` + `docs/adr/` + CI configuration; `.github/dependabot.yml` weekly Cargo + GitHub Actions + Go + npm dependency scanning with patch+minor grouped + major individual; `.github/FUNDING.yml` registers GitHub Sponsors per Decision 2.49; `.github/ISSUE_TEMPLATE/security.yml` redirects security reporters to the private GitHub Security Advisory channel.

@@ -37,7 +37,16 @@
 // `type_complexity` is allowed because the Vale ASM dispatch table is
 // build-time configuration data; flattening it via type aliases would
 // add indirection without runtime impact.
-#![allow(clippy::unwrap_used, clippy::expect_used, clippy::type_complexity)]
+//
+// `panic` is allowed because the partial-vendoring detection panics
+// loudly to surface a build-time integrity failure (per /review 400
+// item #5) — silent fallback to placeholder mode would mask a real bug.
+#![allow(
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::panic,
+    clippy::type_complexity
+)]
 
 use std::io::Write;
 use std::path::{Path, PathBuf};
@@ -88,6 +97,16 @@ const HACL_C_SOURCES_PORTABLE: &[&str] = &[
     // algorithms; the symbols exist only to satisfy the dispatcher's
     // link surface. The 12 primitives Pulsar exposes per Decision 2.60
     // remain unchanged.
+    //
+    // Phase 1.1.B safe-wrappers will encode the supported-hash invariant
+    // in code via a `pub(crate) const SUPPORTED_HASHES` allow-list +
+    // exhaustive `match` on `Spec_Hash_Definitions_*` so MD5 + SHA-1
+    // cannot reach any public API even if EverCrypt's dispatcher accepts
+    // them. This compile-time assertion lives in `pulsar-kernel::crypto`
+    // because that's where the typed wrapper boundary sits — the C
+    // compile order here has no equivalent enforcement mechanism beyond
+    // selective compilation, which the deprecated-hash dispatcher
+    // dependency rules out.
     "Hacl_Hash_MD5.c",
     "Hacl_Hash_SHA1.c",
     // HKDF + HMAC + Streaming HMAC (portable)
@@ -196,19 +215,39 @@ fn main() {
     let krml_include_dir = hacl_include_dir.join("krml");
     let krmllib_minimal_dir = hacl_include_dir.join("krmllib/dist/minimal");
 
-    // Phase 0 escape hatch: if the curated portable sources are absent
-    // (manifest-clean scratch checkout), fall back to placeholder
-    // compilation so the workspace gates (cargo check / clippy / fmt)
-    // still pass.
-    let has_sources = HACL_C_SOURCES_PORTABLE
+    // Three vendoring states:
+    //   - all 0 portable sources present → fully-vendored, compile normally
+    //   - 0 portable sources present     → manifest-clean checkout, placeholder
+    //   - partial vendoring              → fail loudly (someone added sources
+    //                                       to the curated list without
+    //                                       vendoring them, or `hacl-c/src/`
+    //                                       is corrupted; either way silent
+    //                                       fallback to placeholder would
+    //                                       mask a real bug).
+    let present_count = HACL_C_SOURCES_PORTABLE
         .iter()
-        .all(|s| hacl_src_dir.join(s).is_file());
-    if !has_sources {
+        .filter(|s| hacl_src_dir.join(s).is_file())
+        .count();
+    if present_count == 0 {
         println!("cargo:rustc-cfg=hacl_placeholder");
         println!(
-            "cargo:warning=pulsar-crypto-hacl-bindings: hacl-c/src/ vendored sources absent (Phase 0 placeholder); FFI symbols unavailable until tools/scripts/vendor-hacl.sh runs."
+            "cargo:warning=pulsar-crypto-hacl-bindings: hacl-c/src/ empty (Phase 0 placeholder); FFI symbols unavailable until tools/scripts/vendor-hacl.sh runs."
         );
         return;
+    }
+    if present_count != HACL_C_SOURCES_PORTABLE.len() {
+        let missing: Vec<&&str> = HACL_C_SOURCES_PORTABLE
+            .iter()
+            .filter(|s| !hacl_src_dir.join(s).is_file())
+            .collect();
+        panic!(
+            "pulsar-crypto-hacl-bindings: partial HACL* vendoring detected — \
+             {} of {} curated sources missing from hacl-c/src/. Re-run \
+             tools/scripts/vendor-hacl.sh or update HACL_C_SOURCES_PORTABLE \
+             in build.rs. Missing files: {missing:?}",
+            HACL_C_SOURCES_PORTABLE.len() - present_count,
+            HACL_C_SOURCES_PORTABLE.len(),
+        );
     }
 
     let target_os = std::env::var("CARGO_CFG_TARGET_OS").unwrap_or_default();
@@ -388,11 +427,15 @@ const WRAPPER_HEADER_CONTENTS: &str = r#"#include "EverCrypt_AEAD.h"
 
 /// Configure a `cc::Build` with the shared compile flags + include paths.
 fn base_build(
-    hacl_include_dir: &Path,
-    krml_include_dir: &Path,
-    krmllib_minimal_dir: &Path,
-    out_dir: &Path,
+    hacl_include_dir: impl AsRef<Path>,
+    krml_include_dir: impl AsRef<Path>,
+    krmllib_minimal_dir: impl AsRef<Path>,
+    out_dir: impl AsRef<Path>,
 ) -> cc::Build {
+    let hacl_include_dir = hacl_include_dir.as_ref();
+    let krml_include_dir = krml_include_dir.as_ref();
+    let krmllib_minimal_dir = krmllib_minimal_dir.as_ref();
+    let out_dir = out_dir.as_ref();
     let mut build = cc::Build::new();
     build
         .include(out_dir) // for generated config.h
@@ -440,8 +483,16 @@ impl TargetConfig {
     /// without runtime probing, Vale ASM enabled only on x86_64.
     fn for_target(target_arch: &str, target_os: &str) -> Self {
         match (target_arch, target_os) {
-            // x86_64 Linux / macOS / Windows: full feature set.
-            ("x86_64", "linux" | "macos" | "windows") => Self {
+            // x86_64 across all hosted OSes: full feature set. Modern x86_64
+            // CPUs ship AVX/AVX2 + Vale-applicable patterns regardless of
+            // operating system; the Vale ASM dispatch table below picks the
+            // appropriate per-(os, arch) variant or falls back to portable C
+            // when no ASM is bundled (e.g., x86_64 FreeBSD / OpenBSD /
+            // NetBSD / illumos use the linux-style .S files at link time).
+            // The ASM lookup is permissive: if no match exists for the
+            // target tuple, the portable C fallback inside
+            // HACL_C_SOURCES_PORTABLE remains correct.
+            ("x86_64", _) => Self {
                 target_arch_id: "TARGET_ARCHITECTURE_ID_X64",
                 intrinsics: 1,
                 vale: true,
