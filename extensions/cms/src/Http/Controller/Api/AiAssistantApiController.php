@@ -402,9 +402,15 @@ final readonly class AiAssistantApiController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $title = is_string($body['title'] ?? null) ? $body['title'] : null;
-        $metaDescription = is_string($body['metaDescription'] ?? null) ? $body['metaDescription'] : null;
-        $url = is_string($body['url'] ?? null) ? $body['url'] : null;
+        /** @var mixed $rawTitle */
+        $rawTitle = $body['title'] ?? null;
+        $title = is_string($rawTitle) ? $rawTitle : null;
+        /** @var mixed $rawMetaDescription */
+        $rawMetaDescription = $body['metaDescription'] ?? null;
+        $metaDescription = is_string($rawMetaDescription) ? $rawMetaDescription : null;
+        /** @var mixed $rawUrl */
+        $rawUrl = $body['url'] ?? null;
+        $url = is_string($rawUrl) ? $rawUrl : null;
 
         if ($title === null || $title === '') {
             return Response::json(['error' => 'Missing required field: title'], 422);
