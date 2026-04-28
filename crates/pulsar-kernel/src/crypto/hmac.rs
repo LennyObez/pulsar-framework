@@ -47,25 +47,11 @@
 
 #![allow(unsafe_code)]
 
+use crate::crypto::ensure_initialized;
 use crate::error::{Error, Result};
 use pulsar_crypto_hacl_bindings::ffi;
 use secrecy::{ExposeSecret, SecretBox};
-use std::sync::Once;
 use subtle::ConstantTimeEq;
-
-/// Ensure EverCrypt's CPU dispatcher is initialised — same `Once`
-/// pattern as the rest of `crypto`.
-static AUTOCONFIG_INIT: Once = Once::new();
-
-fn ensure_initialized() {
-    AUTOCONFIG_INIT.call_once(|| {
-        // SAFETY: idempotent C function with no caller-side state to
-        // clean up. HACL* documents the call as safe to invoke multiple
-        // times; the `Once` wrapper enforces single-call semantics
-        // anyway.
-        unsafe { ffi::EverCrypt_AutoConfig2_init() };
-    });
-}
 
 /// HMAC algorithm identifier.
 ///
@@ -104,10 +90,12 @@ impl HmacAlgorithm {
     /// Map to the HACL\* / EverCrypt algorithm-id byte.
     ///
     /// Returns the bindgen-generated `Spec_Hash_Definitions_hash_alg`
-    /// type alias. Mirrors [`crate::crypto::hash::HashAlgorithm::to_ffi`]
-    /// so the same identifier values flow through HMAC and the bare
-    /// hash dispatcher.
-    const fn to_ffi(self) -> ffi::Spec_Hash_Definitions_hash_alg {
+    /// type alias. Mirrors the mapping inside
+    /// [`crate::crypto::hash::HashAlgorithm`] so the same identifier
+    /// values flow through HMAC, HKDF, and the bare hash dispatcher.
+    /// Exposed as `pub(crate)` so [`crate::crypto::hkdf`] can reuse the
+    /// canonical mapping without duplication.
+    pub(crate) const fn to_ffi(self) -> ffi::Spec_Hash_Definitions_hash_alg {
         match self {
             Self::Sha256 => 1,
             Self::Sha384 => 2,

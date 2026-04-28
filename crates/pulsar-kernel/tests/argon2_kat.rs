@@ -18,7 +18,10 @@
 
 #![allow(clippy::expect_used, clippy::unwrap_used, clippy::panic)]
 
-use pulsar_kernel::crypto::argon2::{Argon2idParams, derive_key, hash_password, verify_password};
+use pulsar_kernel::crypto::argon2::{
+    Argon2idParams, Argon2idVerifyLimits, derive_key, hash_password, verify_password,
+    verify_password_with_limits,
+};
 use pulsar_kernel::error::Error;
 use secrecy::SecretBox;
 
@@ -129,7 +132,7 @@ fn argon2id_params_validation_below_minimum() {
         Err(Error::InvalidArgon2Params { .. }) => {}
         other => panic!("expected InvalidArgon2Params for t_cost=0; got {other:?}"),
     }
-    // m_cost < 8 * p_cost (8 lanes * 8 KiB minimum = 64; m=63 fails)
+    // m_cost < 8 * p_cost: with p_cost=1 the floor is 8 KiB; m=7 fails.
     match Argon2idParams::new(7, 2, 1, 32).validate() {
         Err(Error::InvalidArgon2Params { .. }) => {}
         other => panic!("expected InvalidArgon2Params for m_cost < 8*p_cost; got {other:?}"),
@@ -197,4 +200,133 @@ fn argon2id_default_params_validate() {
     assert_eq!(params.p_cost, 1);
     assert_eq!(params.output_len, 32);
     params.validate().expect("default params should validate");
+}
+
+/// `Argon2idVerifyLimits::DEFAULT` exposes the documented ceilings.
+#[test]
+fn argon2id_verify_limits_defaults() {
+    let limits = Argon2idVerifyLimits::DEFAULT;
+    assert_eq!(limits.max_m_cost, 1_048_576);
+    assert_eq!(limits.max_t_cost, 10);
+    assert_eq!(limits.max_p_cost, 16);
+    assert_eq!(limits.max_output_len, 64);
+
+    let via_default = Argon2idVerifyLimits::default();
+    assert_eq!(via_default, limits);
+}
+
+/// `verify_password` rejects a PHC string whose embedded `m_cost`
+/// exceeds the default ceiling, before any KDF work runs. Crucial
+/// safeguard: an attacker-controlled PHC string with `m_cost = 4 GiB`
+/// would otherwise force a 4 GiB allocation per verify call.
+#[test]
+fn argon2id_verify_rejects_over_limit_m_cost() {
+    let password = password_box(b"any password");
+    // PHC string with m=2_097_152 KiB (= 2 GiB) — twice the
+    // DEFAULT.max_m_cost ceiling. Salt + hash bytes are placeholders;
+    // the limits check fires before the comparison runs.
+    let over_limit_phc = "$argon2id$v=19$m=2097152,t=2,p=1$c29tZXNhbHRzYWx0eQ$LpdRztpFlULY7XCIugWomYIVXm9Ws9zQTRZkFXWaqvI";
+
+    match verify_password(&password, over_limit_phc) {
+        Err(Error::InvalidArgon2Params { reason }) => {
+            assert!(
+                reason.contains("m_cost"),
+                "expected m_cost-related reason; got: {reason}",
+            );
+        }
+        other => panic!("expected InvalidArgon2Params(m_cost); got {other:?}"),
+    }
+}
+
+/// `verify_password` rejects PHC strings whose embedded `t_cost`
+/// exceeds the default ceiling. Defends against degenerate iteration
+/// counts (e.g., `t_cost = u32::MAX`) that would force the KDF to run
+/// effectively forever.
+#[test]
+fn argon2id_verify_rejects_over_limit_t_cost() {
+    let password = password_box(b"any password");
+    // t=100 — ten times DEFAULT.max_t_cost.
+    let over_limit_phc = "$argon2id$v=19$m=4096,t=100,p=1$c29tZXNhbHRzYWx0eQ$LpdRztpFlULY7XCIugWomYIVXm9Ws9zQTRZkFXWaqvI";
+
+    match verify_password(&password, over_limit_phc) {
+        Err(Error::InvalidArgon2Params { reason }) => {
+            assert!(
+                reason.contains("t_cost"),
+                "expected t_cost-related reason; got: {reason}",
+            );
+        }
+        other => panic!("expected InvalidArgon2Params(t_cost); got {other:?}"),
+    }
+}
+
+/// `verify_password` rejects PHC strings whose embedded `p_cost`
+/// exceeds the default ceiling.
+#[test]
+fn argon2id_verify_rejects_over_limit_p_cost() {
+    let password = password_box(b"any password");
+    // p=32 — twice DEFAULT.max_p_cost.
+    let over_limit_phc = "$argon2id$v=19$m=4096,t=2,p=32$c29tZXNhbHRzYWx0eQ$LpdRztpFlULY7XCIugWomYIVXm9Ws9zQTRZkFXWaqvI";
+
+    match verify_password(&password, over_limit_phc) {
+        Err(Error::InvalidArgon2Params { reason }) => {
+            assert!(
+                reason.contains("p_cost"),
+                "expected p_cost-related reason; got: {reason}",
+            );
+        }
+        other => panic!("expected InvalidArgon2Params(p_cost); got {other:?}"),
+    }
+}
+
+/// `verify_password_with_limits` accepts caller-tightened ceilings —
+/// a PHC string whose params satisfy the default but exceed a
+/// caller-specified tighter limit is rejected as
+/// `InvalidArgon2Params`.
+#[test]
+fn argon2id_verify_with_tightened_limits_rejects() {
+    let password = password_box(b"correct horse battery staple");
+    let salt = b"sixteen-byte-salt-for-tests";
+    // Authentic PHC string built with default params (m=19456) — the
+    // bare verify_password would accept this (well under 1 GiB
+    // ceiling), but the tightened limit below is m=10000, which the
+    // PHC's m=19456 exceeds.
+    let phc = hash_password(&password, salt, Argon2idParams::default())
+        .expect("hash_password should succeed");
+
+    let tight = Argon2idVerifyLimits {
+        max_m_cost: 10_000,
+        max_t_cost: 10,
+        max_p_cost: 16,
+        max_output_len: 64,
+    };
+
+    match verify_password_with_limits(&password, &phc, tight) {
+        Err(Error::InvalidArgon2Params { reason }) => {
+            assert!(reason.contains("m_cost"), "got: {reason}");
+        }
+        other => panic!("expected InvalidArgon2Params(m_cost); got {other:?}"),
+    }
+}
+
+/// `verify_password_with_limits` with the same (m, t, p, output) used
+/// at hashing time accepts the authentic password — limits are an
+/// upper bound, not a parameter mismatch check.
+#[test]
+fn argon2id_verify_with_matching_limits_accepts_authentic() {
+    let password = password_box(b"correct horse battery staple");
+    let salt = b"sixteen-byte-salt-for-tests";
+    let phc = hash_password(&password, salt, Argon2idParams::default())
+        .expect("hash_password should succeed");
+
+    // Limits at exactly the OWASP default — must accept the authentic
+    // password produced with the default params.
+    let exact = Argon2idVerifyLimits {
+        max_m_cost: 19_456,
+        max_t_cost: 2,
+        max_p_cost: 1,
+        max_output_len: 32,
+    };
+
+    verify_password_with_limits(&password, &phc, exact)
+        .expect("verify with limits-at-defaults should accept authentic password");
 }

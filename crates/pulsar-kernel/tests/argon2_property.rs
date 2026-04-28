@@ -1,11 +1,14 @@
 //! Property tests for `pulsar_kernel::crypto::argon2`.
 //!
 //! Argon2id is intentionally memory-hard, so property tests use the
-//! minimum admissible parameters (m=8, t=1, p=1, output=8) to keep
-//! per-case latency around ~1 ms. Default proptest configuration runs
-//! 256 cases per property; with 5 properties × ~1 ms ≈ 1.3 s total
-//! latency budget. Production callers should use [`Argon2idParams::default`]
-//! (or stronger) — these test parameters are NOT secure for production
+//! minimum admissible parameters (m=8, t=1, p=1, output=16) to keep
+//! per-case latency around ~1 ms. Output is 16 bytes — above
+//! `password_hash::Output::MIN_LENGTH` (10 bytes — the lower bound the
+//! `argon2` crate's PHC encoder enforces) and well above RFC 9106 §
+//! 3.1's spec floor of 4. This module runs 32 cases per property; with
+//! 6 properties × 32 cases × ~1 ms ≈ 200 ms total latency budget.
+//! Production callers should use [`Argon2idParams::default`] (or
+//! stronger) — these test parameters are NOT secure for production
 //! use.
 
 #![allow(clippy::expect_used, clippy::unwrap_used)]
@@ -61,7 +64,7 @@ proptest::proptest! {
 
     /// Distinct passwords (with same salt + params) yield distinct
     /// outputs. Probabilistic — for random passwords ≥ 1 byte the
-    /// chance of identical 8-byte outputs is ~2⁻⁶⁴.
+    /// chance of identical 16-byte outputs is ~2⁻¹²⁸.
     #[test]
     fn distinct_passwords_yield_distinct_outputs(
         password_a_bytes in proptest::collection::vec(any::<u8>(), 1..64),

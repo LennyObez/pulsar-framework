@@ -1,14 +1,17 @@
 //! Property tests for `pulsar_kernel::crypto::hmac`.
 //!
 //! Per plan Section XVII.19 testing convention. Each property is run
-//! by `proptest` against randomly-generated keys + messages across the
-//! full range of inputs the FFI surface accepts. The properties below
+//! by `proptest` against randomly-generated keys + messages drawn from
+//! the bounded strategies defined in this file. The properties below
 //! are the security-critical HMAC invariants: round-trip recovery,
 //! determinism, slice-API parity, single-bit tamper detection, and
 //! distinctness across keys + messages.
 //!
 //! Inputs cover all five supported algorithms (HMAC-SHA-2-256/384/512
-//! plus HMAC-BLAKE2b/2s); BLAKE2 paths get coverage via property tests
+//! plus HMAC-BLAKE2b/2s). Keys are fixed at 32 bytes of random material
+//! (above the security floor for SHA-256 / BLAKE2s and meeting the
+//! recommendation for the 64-byte-output algorithms); messages span
+//! 0–1024 random bytes. BLAKE2 paths get coverage via property tests
 //! since RFC 7693 lacks reference KATs.
 
 #![allow(clippy::expect_used, clippy::unwrap_used)]

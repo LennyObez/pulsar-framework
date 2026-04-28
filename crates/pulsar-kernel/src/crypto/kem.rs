@@ -37,22 +37,10 @@
 
 #![allow(unsafe_code)]
 
-use crate::crypto::hex_encode_short;
+use crate::crypto::{ensure_initialized, hex_encode_short};
 use crate::error::{Error, Result};
 use pulsar_crypto_hacl_bindings::ffi;
 use secrecy::{ExposeSecret, SecretBox};
-use std::sync::Once;
-
-/// Ensure EverCrypt's CPU dispatcher is initialised — same `Once`
-/// pattern as the rest of `crypto`.
-static AUTOCONFIG_INIT: Once = Once::new();
-
-fn ensure_initialized() {
-    AUTOCONFIG_INIT.call_once(|| {
-        // SAFETY: idempotent C function with no caller-side state.
-        unsafe { ffi::EverCrypt_AutoConfig2_init() };
-    });
-}
 
 /// X25519 private scalar (32 bytes).
 pub struct X25519PrivateKey {

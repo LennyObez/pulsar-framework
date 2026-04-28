@@ -52,36 +52,11 @@
 
 #![allow(unsafe_code)]
 
+use crate::crypto::ensure_initialized;
 use crate::crypto::hmac::HmacAlgorithm;
 use crate::error::{Error, Result};
 use pulsar_crypto_hacl_bindings::ffi;
 use secrecy::{ExposeSecret, SecretBox};
-use std::sync::Once;
-
-/// Ensure EverCrypt's CPU dispatcher is initialised — same `Once`
-/// pattern as the rest of `crypto`.
-static AUTOCONFIG_INIT: Once = Once::new();
-
-fn ensure_initialized() {
-    AUTOCONFIG_INIT.call_once(|| {
-        // SAFETY: idempotent C function with no caller-side state. HACL*
-        // documents the call as safe to invoke multiple times.
-        unsafe { ffi::EverCrypt_AutoConfig2_init() };
-    });
-}
-
-/// Map an [`HmacAlgorithm`] to the HACL\* algorithm-id byte expected by
-/// `EverCrypt_HKDF_*`. Mirrors the mapping inside
-/// [`crate::crypto::hmac`] — both flow through the same FFI typedef.
-const fn algo_to_ffi(algo: HmacAlgorithm) -> ffi::Spec_Hash_Definitions_hash_alg {
-    match algo {
-        HmacAlgorithm::Sha256 => 1,
-        HmacAlgorithm::Sha384 => 2,
-        HmacAlgorithm::Sha512 => 3,
-        HmacAlgorithm::Blake2s256 => 6,
-        HmacAlgorithm::Blake2b512 => 7,
-    }
-}
 
 /// Maximum HKDF output length per RFC 5869 § 2.3 — 255 hash blocks.
 const fn max_output_len(algo: HmacAlgorithm) -> usize {
@@ -121,9 +96,9 @@ pub fn extract(algo: HmacAlgorithm, salt: &[u8], ikm: &SecretBox<[u8]>) -> Resul
 
     // SAFETY: EverCrypt_HKDF_extract preconditions:
     //   - `a` is a valid Spec_Hash_Definitions_hash_alg constant —
-    //     guaranteed by `algo_to_ffi` enumerating only HMAC-supported
-    //     hashes (RFC 5869 explicitly supports SHA-2 and BLAKE2 via
-    //     HACL*).
+    //     guaranteed by `HmacAlgorithm::to_ffi` enumerating only
+    //     HMAC-supported hashes (RFC 5869 explicitly supports SHA-2
+    //     and BLAKE2 via HACL*).
     //   - `prk` points to `HashLen` writable bytes — `prk` is sized
     //     exactly `algo.tag_len()` above.
     //   - `salt` points to `salt_len` readable bytes; may be a
@@ -136,7 +111,7 @@ pub fn extract(algo: HmacAlgorithm, salt: &[u8], ikm: &SecretBox<[u8]>) -> Resul
     // are sound: HACL* documents salt + ikm as read-only.
     unsafe {
         ffi::EverCrypt_HKDF_extract(
-            algo_to_ffi(algo),
+            algo.to_ffi(),
             prk.as_mut_ptr(),
             salt.as_ptr().cast_mut(),
             salt_len,
@@ -212,7 +187,7 @@ pub fn expand(
     // prk + info as read-only.
     unsafe {
         ffi::EverCrypt_HKDF_expand(
-            algo_to_ffi(algo),
+            algo.to_ffi(),
             okm.as_mut_ptr(),
             prk_bytes.as_ptr().cast_mut(),
             prk_len,

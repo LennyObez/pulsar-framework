@@ -199,11 +199,13 @@ fn argon2id_with(params: Argon2idParams) -> Result<Argon2<'static>> {
 ///
 /// # Errors
 ///
-/// - [`Error::InvalidArgon2Params`] — `params.validate()` failed.
+/// - [`Error::InvalidArgon2Params`] — `params.validate()` failed, or
+///   the underlying `argon2` crate rejected the `(password, salt,
+///   params)` inputs at hashing time. `derive_key` does NOT process
+///   PHC strings; failures inside the raw KDF path map to
+///   `InvalidArgon2Params` (not `InvalidPhcString`) so callers can
+///   match the error against the right error domain.
 /// - [`Error::InvalidOutputLength`] — `output.len() != params.output_len`.
-/// - [`Error::InvalidPhcString`] — only as a defensive catch-all if
-///   `argon2` returns an unexpected error from the raw KDF path; not
-///   reachable on validated inputs.
 pub fn derive_key(
     password: &SecretBox<[u8]>,
     salt: &[u8],
@@ -224,7 +226,9 @@ pub fn derive_key(
     let argon2 = argon2id_with(params)?;
     argon2
         .hash_password_into(password.expose_secret(), salt, output)
-        .map_err(|_| Error::InvalidPhcString)
+        .map_err(|_| Error::InvalidArgon2Params {
+            reason: "argon2 KDF rejected the (password, salt, params) inputs",
+        })
 }
 
 /// Argon2id password hashing — produce a PHC-string-encoded hash
@@ -264,22 +268,114 @@ pub fn hash_password(
     Ok(hash.to_string())
 }
 
-/// Verify that `password` matches the hash encoded in `phc_string`.
-/// The PHC string carries its own algorithm + parameters + salt, so no
-/// out-of-band [`Argon2idParams`] is required for verification.
+/// Upper-bound limits on the cost parameters embedded in a PHC string
+/// during [`verify_password`].
 ///
-/// Comparison is constant-time via [`argon2::PasswordVerifier::verify_password`]
-/// (which delegates to `subtle`-backed byte comparison internally).
+/// The PHC format is self-describing — the stored hash carries its own
+/// `(m, t, p, output_len)` and the verifier re-runs the KDF using
+/// those values. A caller that accepts any PHC string without bounding
+/// the embedded parameters would let an attacker (with control over
+/// the stored hash via DB compromise, SQL injection bypass,
+/// multi-tenant input, or a session-token substitution) request an
+/// arbitrarily expensive verification — which the constant-time
+/// comparison alone does not protect against.
+///
+/// [`Argon2idVerifyLimits::DEFAULT`] sets generous-but-bounded ceilings
+/// that accommodate any reasonable production parameter choice while
+/// capping the per-verification resource footprint. Production callers
+/// with tighter operational SLOs should pass stricter limits via
+/// [`verify_password_with_limits`].
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
+pub struct Argon2idVerifyLimits {
+    /// Maximum admissible `m_cost` (KiB). PHC strings declaring more
+    /// memory than this are rejected before the KDF runs.
+    pub max_m_cost: u32,
+    /// Maximum admissible `t_cost` (iterations).
+    pub max_t_cost: u32,
+    /// Maximum admissible `p_cost` (lanes).
+    pub max_p_cost: u32,
+    /// Maximum admissible `output_len` (bytes). PHC strings encoding a
+    /// hash longer than this are rejected.
+    pub max_output_len: usize,
+}
+
+impl Argon2idVerifyLimits {
+    /// Default verification ceilings:
+    ///
+    /// - `max_m_cost`: 1 048 576 KiB (≈ 1 GiB) — a single verify call
+    ///   cannot allocate more than 1 GiB of working memory.
+    /// - `max_t_cost`: 10 — bounds the iteration count at ~10× the
+    ///   OWASP-recommended `t=2` profile, sufficient for any
+    ///   realistic over-hardening choice.
+    /// - `max_p_cost`: 16 lanes — sufficient for any realistic
+    ///   parallelism profile while bounding fan-out.
+    /// - `max_output_len`: 64 bytes — covers SHA-512-sized hashes,
+    ///   well above the 32-byte typical case.
+    ///
+    /// These ceilings comfortably accommodate every production
+    /// parameter profile in the OWASP / RFC 9106 guidance while
+    /// rejecting the obvious attacker-friendly extremes (m = 4 GiB,
+    /// t = u32::MAX, etc.). Tight-SLO deployments should override.
+    pub const DEFAULT: Self = Self {
+        max_m_cost: 1_048_576,
+        max_t_cost: 10,
+        max_p_cost: 16,
+        max_output_len: 64,
+    };
+}
+
+impl Default for Argon2idVerifyLimits {
+    fn default() -> Self {
+        Self::DEFAULT
+    }
+}
+
+/// Verify that `password` matches the hash encoded in `phc_string`,
+/// bounding the PHC-embedded cost parameters against
+/// [`Argon2idVerifyLimits::DEFAULT`].
+///
+/// The PHC string carries its own algorithm + parameters + salt, so no
+/// out-of-band [`Argon2idParams`] is required for verification — but
+/// the wrapper does NOT trust those parameters blindly. A PHC string
+/// declaring `m_cost = 4_000_000` would otherwise force a 4 GiB
+/// allocation per verify call; this function rejects such strings as
+/// [`Error::InvalidArgon2Params`] before any KDF work runs.
+///
+/// Comparison is constant-time via
+/// [`argon2::PasswordVerifier::verify_password`] (which delegates to
+/// `subtle`-backed byte comparison internally).
+///
+/// For tighter operational ceilings, use
+/// [`verify_password_with_limits`].
 ///
 /// # Errors
 ///
-/// - [`Error::InvalidPhcString`] — `phc_string` is malformed, encodes
-///   an unsupported algorithm (e.g., raw Argon2d / Argon2i instead of
-///   Argon2id), or specifies parameters outside the wrapper's
-///   admissible range.
-/// - [`Error::PasswordVerifyFailed`] — `phc_string` parses correctly
-///   but the recomputed hash does not match the stored one.
+/// - [`Error::InvalidPhcString`] — `phc_string` is malformed or
+///   encodes a non-Argon2id algorithm (Argon2d / Argon2i refused).
+/// - [`Error::InvalidArgon2Params`] — PHC-embedded `m/t/p/output_len`
+///   exceeds the corresponding default ceiling.
+/// - [`Error::PasswordVerifyFailed`] — `phc_string` parses + bounds
+///   are satisfied but the recomputed hash does not match the stored
+///   one.
 pub fn verify_password(password: &SecretBox<[u8]>, phc_string: &str) -> Result<()> {
+    verify_password_with_limits(password, phc_string, Argon2idVerifyLimits::DEFAULT)
+}
+
+/// Variant of [`verify_password`] with caller-supplied limits.
+///
+/// Takes [`Argon2idVerifyLimits`] for tighter operational ceilings.
+/// The PHC string's `m/t/p/output_len` are checked against `limits`
+/// before the KDF runs; over-limit values are rejected as
+/// [`Error::InvalidArgon2Params`].
+///
+/// # Errors
+///
+/// Same set as [`verify_password`].
+pub fn verify_password_with_limits(
+    password: &SecretBox<[u8]>,
+    phc_string: &str,
+    limits: Argon2idVerifyLimits,
+) -> Result<()> {
     let parsed = PasswordHash::new(phc_string).map_err(|_| Error::InvalidPhcString)?;
     // Reject non-Argon2id PHC strings — the wrapper exposes only
     // Argon2id and silently accepting Argon2d / Argon2i would let a
@@ -287,6 +383,39 @@ pub fn verify_password(password: &SecretBox<[u8]>, phc_string: &str) -> Result<(
     if parsed.algorithm.as_str() != argon2::ARGON2ID_IDENT.as_str() {
         return Err(Error::InvalidPhcString);
     }
+
+    // Extract the cost parameters embedded in the PHC string and
+    // bound them against the wrapper-level ceilings before the KDF
+    // runs. Without this check, an attacker who controls phc_string
+    // (DB compromise, SQL-injection bypass, multi-tenant verify
+    // endpoint, session-token substitution) could request a
+    // verification with attacker-chosen `(m, t, p)` cost — the
+    // constant-time comparison alone does not protect the resource
+    // footprint of the KDF call itself.
+    let phc_params = Params::try_from(&parsed).map_err(|_| Error::InvalidPhcString)?;
+    if phc_params.m_cost() > limits.max_m_cost {
+        return Err(Error::InvalidArgon2Params {
+            reason: "PHC-embedded m_cost exceeds verification ceiling",
+        });
+    }
+    if phc_params.t_cost() > limits.max_t_cost {
+        return Err(Error::InvalidArgon2Params {
+            reason: "PHC-embedded t_cost exceeds verification ceiling",
+        });
+    }
+    if phc_params.p_cost() > limits.max_p_cost {
+        return Err(Error::InvalidArgon2Params {
+            reason: "PHC-embedded p_cost exceeds verification ceiling",
+        });
+    }
+    if let Some(len) = phc_params.output_len()
+        && len > limits.max_output_len
+    {
+        return Err(Error::InvalidArgon2Params {
+            reason: "PHC-embedded output_len exceeds verification ceiling",
+        });
+    }
+
     let argon2 = Argon2::default();
     argon2
         .verify_password(password.expose_secret(), &parsed)

@@ -1,7 +1,7 @@
 //! Known-answer tests for `pulsar_kernel::crypto::hmac`.
 //!
-//! RFC 4231 § 4 reference vectors for HMAC-SHA-2-256/384/512 (Test Case
-//! 1 + Test Case 2). RFC 7693 does not specify KAT vectors for
+//! RFC 4231 § 4 reference vectors for HMAC-SHA-2-256/384/512 (Test
+//! Cases 1, 2, 3). RFC 7693 does not specify KAT vectors for
 //! HMAC-BLAKE2; the BLAKE2 algorithms are exercised via the property
 //! tests in `hmac_property.rs` instead.
 

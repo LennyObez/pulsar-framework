@@ -79,31 +79,11 @@
 // conditions against the upstream HACL* contract.
 #![allow(unsafe_code)]
 
+use crate::crypto::ensure_initialized;
 use crate::error::{Error, Result};
 use core::ptr::{self, NonNull};
 use pulsar_crypto_hacl_bindings::ffi;
 use secrecy::{ExposeSecret, SecretBox};
-use std::sync::Once;
-
-/// Initialise EverCrypt's runtime CPU-feature dispatcher exactly once
-/// per process. Same `Once` instance pattern as `crypto::hash` — the
-/// underlying `EverCrypt_AutoConfig2_init` is idempotent at the C
-/// layer; `Once` avoids redundant atomic synchronisation on the hot
-/// path. Each crypto sub-module owns its own `Once` rather than
-/// sharing a crate-level singleton because the AEAD path is
-/// independent from the hash path (different EverCrypt sub-modules).
-static AUTOCONFIG_INIT: Once = Once::new();
-
-fn ensure_initialized() {
-    AUTOCONFIG_INIT.call_once(|| {
-        // SAFETY: `EverCrypt_AutoConfig2_init` takes no arguments,
-        // returns void, and has no caller-side state to clean up. HACL\*
-        // documents it as safe to call multiple times — `Once` enforces
-        // the "exactly once" semantic without runtime cost on subsequent
-        // AEAD invocations.
-        unsafe { ffi::EverCrypt_AutoConfig2_init() };
-    });
-}
 
 /// Authenticated-encryption algorithms supported by `pulsar-kernel::crypto`.
 ///
