@@ -1,0 +1,11 @@
+upstream_repo: https://github.com/hacl-star/hacl-star
+upstream_commit: 504c2987452f87fe44bce9b9f12e19d6e051761f
+upstream_date: 2026-04-10T15:41:24Z
+upstream_branch: main
+extracted_subtree: dist/gcc-compatible (selective) + dist/karamel/include + dist/karamel/krmllib/dist/minimal
+toolchain:
+  fstar_version: 7b347386330d0e5a331a220535b6f15288903234
+  karamel_version: 254e099bd586b17461845f6b0cab44c3ef5080e9
+  vale_version: 0.3.19
+vendored_at: 2026-04-27
+license: Apache-2.0 (see LICENSE.txt)

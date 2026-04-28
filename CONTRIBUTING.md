@@ -19,6 +19,14 @@ cargo binstall --no-confirm cargo-watch cargo-nextest cargo-llvm-cov cargo-mutan
 rustup component add clippy rustfmt rust-analyzer rust-src llvm-tools-preview
 ```
 
+### Vendored cryptographic sources
+
+The repository vendors the **HACL\*** C distribution under `crates/pulsar-crypto-hacl-bindings/hacl-c/` for SLSA Level 4 reproducibility per ADR-0009 + Decision 2.57 + Decision 2.60. This adds **~5 MB / ~260 files** to the clone footprint (one-time cost on first checkout). The vendored tree is byte-pinned via `crates/pulsar-crypto-hacl-bindings/hacl-c/MANIFEST.sha256` (commit-pinned upstream SHA in `HACL_VERSION`); any tampering is detectable via `tools/scripts/vendor-hacl.sh --verify`.
+
+If you prefer a shallow clone for first interaction, `git clone --depth=1` works fine — full history is only required for branch-divergence analysis (gitflow squash-merges). The vendored sources are not affected by clone depth.
+
+To update the HACL\* pin (security fixes, new primitive support), re-run `tools/scripts/vendor-hacl.sh <new-commit-sha>`, review the diff, and commit. Do not edit `hacl-c/` directly — the manifest verification will catch any drift.
+
 ## Branch model
 
 ```
