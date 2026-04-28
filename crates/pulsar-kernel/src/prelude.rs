@@ -5,5 +5,5 @@
 //! frequently used items per sub-module — algorithm enums, hash entry
 //! points, error type, and the `Result` alias.
 
-pub use crate::crypto::{HashAlgorithm, Hasher};
+pub use crate::crypto::{AeadAlgorithm, AeadKey, HashAlgorithm, Hasher};
 pub use crate::error::{Error, Result};
