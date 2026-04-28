@@ -8,9 +8,9 @@
 //! - [`aead`]   — AES-128/256-GCM, ChaCha20-Poly1305
 //! - [`signature`] — Ed25519 (RFC 8032); ML-DSA-65 hybrid via libcrux (Phase 1.1.C)
 //! - [`kem`]    — X25519 (RFC 7748); ML-KEM-768 hybrid via libcrux (Phase 1.1.C)
-//! - `hkdf`     — HKDF over SHA-2 family (Phase 1.1.B.4)
-//! - `hmac`     — HMAC over SHA-2 + BLAKE2 family (Phase 1.1.B.4)
-//! - `argon2`   — Argon2id password hashing via RustCrypto (Phase 1.1.B.4)
+//! - [`hmac`]   — HMAC over SHA-2 + BLAKE2 family (RFC 4231 / FIPS 198-1 / RFC 7693)
+//! - [`hkdf`]   — HKDF over SHA-2 + BLAKE2 family (RFC 5869)
+//! - [`argon2`] — Argon2id password hashing via RustCrypto (RFC 9106)
 //!
 //! The surface is intentionally agile: every primitive family has an
 //! algorithm-parameterised public API plus algorithm-specific convenience
@@ -59,14 +59,19 @@
 //! discards, consume when the wrapper retains the secret across calls.
 
 pub mod aead;
+pub mod argon2;
 pub mod hash;
+pub mod hkdf;
+pub mod hmac;
 pub mod kem;
 pub mod signature;
 
 pub use aead::{AeadAlgorithm, AeadKey};
+pub use argon2::Argon2idParams;
 pub use hash::{HashAlgorithm, Hasher, blake2b512, blake2s256};
 pub use hash::{sha3_256, sha3_384, sha3_512};
 pub use hash::{sha256, sha384, sha512};
+pub use hmac::{HmacAlgorithm, HmacKey};
 pub use kem::{X25519PrivateKey, X25519PublicKey};
 pub use signature::{Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature};
 
