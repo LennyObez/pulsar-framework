@@ -15,7 +15,9 @@ use Pulsar\Http\Message\Response;
 use Throwable;
 
 use function is_int;
+use function is_numeric;
 use function is_string;
+use function strtoupper;
 
 /**
  * REST API controller for subscription management.
@@ -43,14 +45,24 @@ final readonly class SubscriptionController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $planId = is_string($body['plan_id'] ?? null) ? $body['plan_id'] : '';
-        $cycleValue = is_string($body['billing_cycle'] ?? null) ? $body['billing_cycle'] : '';
+        /** @var mixed $rawPlanId */
+        $rawPlanId = $body['plan_id'] ?? null;
+        $planId = is_string($rawPlanId) ? $rawPlanId : '';
+        /** @var mixed $rawCycle */
+        $rawCycle = $body['billing_cycle'] ?? null;
+        $cycleValue = is_string($rawCycle) ? $rawCycle : '';
+        /** @var mixed $amountRaw */
         $amountRaw = $body['amount'] ?? null;
-        $amount = is_int($amountRaw) ? $amountRaw : (is_numeric($amountRaw) ? (int) $amountRaw : 0);
-        $currencyCode = is_string($body['currency'] ?? null) ? strtoupper($body['currency']) : 'USD';
-        $gateway = is_string($body['gateway'] ?? null) ? $body['gateway'] : '';
+        $amount = is_int($amountRaw) ? $amountRaw : (is_string($amountRaw) && is_numeric($amountRaw) ? (int) $amountRaw : 0);
+        /** @var mixed $rawCurrency */
+        $rawCurrency = $body['currency'] ?? null;
+        $currencyCode = is_string($rawCurrency) ? strtoupper($rawCurrency) : 'USD';
+        /** @var mixed $rawGateway */
+        $rawGateway = $body['gateway'] ?? null;
+        $gateway = is_string($rawGateway) ? $rawGateway : '';
+        /** @var mixed $trialRaw */
         $trialRaw = $body['trial_days'] ?? null;
-        $trialDays = is_int($trialRaw) ? $trialRaw : (is_numeric($trialRaw) ? (int) $trialRaw : null);
+        $trialDays = is_int($trialRaw) ? $trialRaw : (is_string($trialRaw) && is_numeric($trialRaw) ? (int) $trialRaw : null);
 
         if ($planId === '') {
             return Response::json(['error' => 'plan_id is required'], 422);
@@ -114,7 +126,8 @@ final readonly class SubscriptionController
      */
     public function cancel(ServerRequestInterface $request): Response
     {
-        $subscriptionId = is_string($request->getAttribute('id')) ? $request->getAttribute('id') : '';
+        $rawId = $request->getAttribute('id');
+        $subscriptionId = is_string($rawId) ? $rawId : '';
 
         if ($subscriptionId === '') {
             return Response::json(['error' => 'Missing subscription ID'], 400);
@@ -139,7 +152,8 @@ final readonly class SubscriptionController
      */
     public function pause(ServerRequestInterface $request): Response
     {
-        $subscriptionId = is_string($request->getAttribute('id')) ? $request->getAttribute('id') : '';
+        $rawId = $request->getAttribute('id');
+        $subscriptionId = is_string($rawId) ? $rawId : '';
 
         if ($subscriptionId === '') {
             return Response::json(['error' => 'Missing subscription ID'], 400);
@@ -164,7 +178,8 @@ final readonly class SubscriptionController
      */
     public function resume(ServerRequestInterface $request): Response
     {
-        $subscriptionId = is_string($request->getAttribute('id')) ? $request->getAttribute('id') : '';
+        $rawId = $request->getAttribute('id');
+        $subscriptionId = is_string($rawId) ? $rawId : '';
 
         if ($subscriptionId === '') {
             return Response::json(['error' => 'Missing subscription ID'], 400);
