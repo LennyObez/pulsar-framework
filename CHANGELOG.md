@@ -7,7 +7,53 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-### Sprint 1.1 — kernel crypto (Phase 1.1.B.2: AEAD safe wrappers, in progress)
+### Sprint 1.1 — kernel crypto (Phase 1.1.B.3: Ed25519 + X25519 safe wrappers, in progress)
+
+Third sub-phase of Phase 1.1.B (safe Rust wrappers over the HACL\* FFI). Lands `pulsar-kernel::crypto::signature` (Ed25519 per RFC 8032) and `pulsar-kernel::crypto::kem` (X25519 per RFC 7748). P-256 ECDSA + ECDH deferred to follow-up sub-phase 1.1.B.3-bis (requires deterministic-nonce machinery per RFC 6979 + secure RNG infrastructure).
+
+* **`pulsar-kernel::crypto::signature`** — Ed25519 wrappers over `EverCrypt_Ed25519_*`. `Ed25519PrivateKey::from_bytes(SecretBox<[u8]>)` constructs from a 32-byte seed wrapped in `secrecy::SecretBox<[u8]>` (zeroize-on-drop per the canonical pattern from Phase 1.1.B.2). `public_key()` derives the 32-byte verifying key. `sign(message)` produces a 64-byte deterministic signature (RFC 8032 § 5.1.6 — Ed25519 signatures are inherently deterministic, no nonce-reuse risk). `Ed25519PublicKey::verify(message, signature)` returns `Ok(())` on valid / `Err(SignatureVerifyFailed)` on invalid (no information leaked about which step failed — HACL\*'s constant-time invariant covers success/failure paths uniformly).
+* **`pulsar-kernel::crypto::kem`** — X25519 wrappers over `EverCrypt_Curve25519_*`. `X25519PrivateKey::from_bytes(SecretBox<[u8]>)` constructs from a 32-byte scalar (clamped per RFC 7748 § 5 internally by HACL\*). `public_key()` derives the 32-byte u-coordinate. `diffie_hellman(peer)` returns the 32-byte shared secret wrapped in `SecretBox<[u8]>` so downstream HKDF derivation operates on `expose_secret()` without accidental cleartext copies. Small-order public keys (e.g., u = 0) are rejected as `Error::InvalidPublicKey` per HACL\*'s F\* postcondition.
+* **All `Debug` impls redact secret material**. `Ed25519PrivateKey` and `X25519PrivateKey` print only the type name; public keys + signatures show a short hex prefix (8 bytes) + length suffix for identification without dumping the full bytes.
+* **Module re-exports** in `pulsar-kernel::crypto::mod` and `pulsar-kernel::prelude`: `Ed25519PrivateKey`, `Ed25519PublicKey`, `Ed25519Signature`, `X25519PrivateKey`, `X25519PublicKey`.
+
+**Tests** (21 new tests across four integration test files):
+
+* **`tests/signature_kat.rs`** (6 tests):
+  - RFC 8032 § 7.1 TEST 1 (empty message) — verifies key derivation, signing produces canonical signature, both produced + reference signature verify
+  - RFC 8032 § 7.1 TEST 2 (1-byte message 0x72) — same coverage
+  - Tampered-message verify rejection → `SignatureVerifyFailed`
+  - Wrong-public-key verify rejection (signature produced under key A, verified under key B) → `SignatureVerifyFailed`
+  - Wrong-length seed rejection (31/33 bytes vs 32) → `InvalidKeyLength`
+  - Debug impl redacts seed bytes
+* **`tests/signature_property.rs`** (7 properties using `proptest`):
+  - Sign/verify round-trip across random `(seed, message)` pairs
+  - Signing is deterministic per RFC 8032 § 5.1.6 — same `(key, message)` always yields the same 64-byte signature
+  - Distinct messages under the same key produce distinct signatures (probabilistic)
+  - Distinct seeds derive distinct public keys (probabilistic)
+  - Verifying a signature produced by key A under key B's public key fails with `SignatureVerifyFailed`
+  - Single-bit message tampering after signing → `SignatureVerifyFailed`
+  - Single-bit signature tampering → `SignatureVerifyFailed`
+* **`tests/kem_kat.rs`** (3 tests):
+  - RFC 7748 § 6.1 — Alice + Bob derive the same shared secret matching the reference vector; both public keys match the RFC-computed values
+  - Small-order public key (u = 0) rejection → `InvalidPublicKey`
+  - Wrong-length scalar rejection → `InvalidKeyLength`
+* **`tests/kem_property.rs`** (5 properties using `proptest`):
+  - Public-key derivation is deterministic — same seed yields byte-identical public point
+  - Distinct seeds derive distinct public keys (probabilistic)
+  - DH symmetry — `Alice.dh(Bob.pub)` and `Bob.dh(Alice.pub)` produce byte-identical shared secrets
+  - Distinct private keys against the same peer produce distinct shared secrets (probabilistic)
+  - DH is deterministic for fixed `(private, peer)` inputs
+
+Inputs span 0-1024-byte messages across random 32-byte seeds; per-property default is 256 cases, totalling ~3000 random inputs across all properties.
+
+**Code organisation** — `hex_encode_short` `Debug`-formatting helper hoisted from `signature.rs` + `kem.rs` into `crypto::mod` as `pub(crate) fn` (single source of truth, prevents future divergence). Module-level documentation in `crypto::mod` formalises the `SecretBox` parameter convention: `&SecretBox<[u8]>` borrowed by `AeadKey::new` (FFI immediately copies into expanded state, caller retains ownership) versus `SecretBox<[u8]>` consumed by `Ed25519PrivateKey::from_bytes` + `X25519PrivateKey::from_bytes` (wrapper retains the seed for repeated `sign` / `diffie_hellman` calls so zeroize-on-drop ownership transfers exactly once).
+
+Quality gates verified locally:
+  - cargo fmt --all -- --check ✓
+  - cargo clippy -p pulsar-kernel --all-targets -- -D warnings ✓
+  - cargo nextest run -p pulsar-kernel (68/68 PASS, +21 from this phase) ✓
+
+### Sprint 1.1 — kernel crypto (Phase 1.1.B.2: AEAD safe wrappers — merged 2026-04-28 as `833f6c9a`)
 
 Second sub-phase of Phase 1.1.B (safe Rust wrappers over the HACL\* FFI). Lands `pulsar-kernel::crypto::aead` module with the three AEAD primitives Pulsar standardises on: AES-128-GCM, AES-256-GCM, ChaCha20-Poly1305. Subsequent sub-phases extend the surface: 1.1.B.3 signature + KEM (Ed25519 + X25519 + P-256), 1.1.B.4 HKDF + HMAC + Argon2id.
 
