@@ -31,6 +31,7 @@
 
 #![allow(unsafe_code)]
 
+use crate::crypto::hex_encode_short;
 use crate::error::{Error, Result};
 use pulsar_crypto_hacl_bindings::ffi;
 use secrecy::{ExposeSecret, SecretBox};
@@ -254,18 +255,4 @@ impl Ed25519Signature {
     pub const fn as_bytes(&self) -> &[u8; 64] {
         &self.bytes
     }
-}
-
-/// Hex-encode a byte slice with a length-truncated suffix for `Debug`
-/// formatting. Avoids dumping full key/signature bytes into log output
-/// while still showing enough to identify the value.
-fn hex_encode_short(bytes: &[u8]) -> String {
-    use core::fmt::Write;
-    let n = bytes.len().min(8);
-    let mut out = String::with_capacity(n * 2 + 16);
-    for b in &bytes[..n] {
-        let _ = write!(out, "{b:02x}");
-    }
-    let _ = write!(out, "…({} bytes)", bytes.len());
-    out
 }

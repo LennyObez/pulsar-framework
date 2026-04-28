@@ -106,6 +106,32 @@ fn ed25519_verify_rejects_tampered_message() {
     }
 }
 
+/// Verifying a signature under an unrelated public key fails. Signs
+/// `message` under key A and attempts verification under key B's public
+/// key — expects `SignatureVerifyFailed` regardless of whether the
+/// (message, key A) signature was otherwise authentic.
+#[test]
+fn ed25519_verify_rejects_wrong_public_key() {
+    use pulsar_kernel::error::Error;
+
+    // Key A — RFC 8032 § 7.1 TEST 1 seed
+    let private_a =
+        private_from_hex("9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60");
+    // Key B — RFC 8032 § 7.1 TEST 2 seed (distinct from A)
+    let private_b =
+        private_from_hex("4ccd089b28ff96da9db6c346ec114e0f5b8a319f35aba624da8cf6ed4fb8a6fb");
+
+    let public_b = private_b.public_key();
+    let signature_a = private_a
+        .sign(b"cross-key check")
+        .expect("sign should succeed");
+
+    match public_b.verify(b"cross-key check", &signature_a) {
+        Err(Error::SignatureVerifyFailed) => {} // expected
+        other => panic!("expected SignatureVerifyFailed; got {other:?}"),
+    }
+}
+
 /// Wrong-length seed → InvalidKeyLength.
 #[test]
 fn ed25519_private_key_rejects_wrong_seed_length() {
