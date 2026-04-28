@@ -15,12 +15,26 @@
 //! `EverCrypt_AEAD_free`. Multiple encrypt/decrypt calls on the same
 //! `AeadKey` share the expanded state — no per-call key expansion cost.
 //!
-//! # Output format
+//! # Output formats
 //!
-//! Encrypt returns `ciphertext || tag` packed in a single `Vec<u8>`.
-//! Decrypt expects the same packed format on input. Tag length is
-//! always 16 bytes for the three supported algorithms; ciphertext
-//! length equals plaintext length per the AEAD construction.
+//! Encrypt has two output shapes:
+//!
+//! - [`AeadKey::encrypt`] returns `ciphertext || tag` packed in a
+//!   single `Vec<u8>`. Convenient for one-shot use.
+//! - [`AeadKey::encrypt_into`] writes to a caller-provided `&mut [u8]`
+//!   buffer (must be `plaintext.len() + tag_len()` long). Avoids the
+//!   heap allocation on hot paths.
+//!
+//! Decrypt has two input shapes:
+//!
+//! - [`AeadKey::decrypt`] takes `ciphertext_with_tag` (the verbatim
+//!   output of [`AeadKey::encrypt`]).
+//! - [`AeadKey::decrypt_separate`] takes `ciphertext` and `tag` as
+//!   distinct slices. Common in protocols (TLS 1.3, Noise, MLS) that
+//!   carry the two parts in separate fields.
+//!
+//! Tag length is always 16 bytes for the three supported algorithms;
+//! ciphertext length equals plaintext length per the AEAD construction.
 //!
 //! # Nonce safety (CRITICAL)
 //!
@@ -38,6 +52,27 @@
 //! other lengths but 12 bytes is the FIPS-recommended length per NIST
 //! SP 800-38D § 5.2.1.1. Pulsar enforces 12 bytes uniformly so callers
 //! can write algorithm-agnostic code.
+//!
+//! # Key-material handling
+//!
+//! [`AeadKey::new`] takes the key wrapped in [`secrecy::SecretBox<[u8]>`]
+//! (also known as [`secrecy::SecretSlice<u8>`]) — callers must construct
+//! the secret wrapper before invoking the constructor. The wrapper:
+//!
+//! - Zeroizes the key bytes when the [`SecretBox`] is dropped (per the
+//!   `secrecy` crate's `ZeroizeOnDrop` impl).
+//! - Forces explicit `expose_secret()` access at the FFI call site,
+//!   making accidental clones / logging visible at code-review time.
+//!
+//! Once `AeadKey::new` returns, the key bytes are passed once into
+//! `EverCrypt_AEAD_create_in` which copies them into the FFI state's
+//! expanded key buffer. The original `SecretBox` continues to own the
+//! input bytes; the caller can drop it after `new` returns and the
+//! zeroize-on-drop will fire. The expanded state inside the FFI is
+//! NOT zeroized by `EverCrypt_AEAD_free` (HACL\* upstream limitation —
+//! see [`AeadKey`] Drop SAFETY comment). Sensitive deployments that
+//! need expanded-state zeroization should track the upstream HACL\*
+//! issue or fork the binding crate to add explicit zeroization.
 
 // `unsafe_code` is allowed only in this module (the FFI boundary). Each
 // `unsafe` block carries a SAFETY comment documenting its pre/post-
@@ -47,6 +82,7 @@
 use crate::error::{Error, Result};
 use core::ptr::{self, NonNull};
 use pulsar_crypto_hacl_bindings::ffi;
+use secrecy::{ExposeSecret, SecretBox};
 use std::sync::Once;
 
 /// Initialise EverCrypt's runtime CPU-feature dispatcher exactly once
@@ -145,30 +181,52 @@ impl AeadAlgorithm {
 /// AEAD key handle holding the EverCrypt state allocated by
 /// `EverCrypt_AEAD_create_in`.
 ///
-/// The state contains algorithm-specific pre-computation (expanded
-/// round keys for AES-GCM, key for ChaCha20-Poly1305). Multiple
-/// `encrypt`/`decrypt` calls on the same `AeadKey` reuse the expanded
-/// state — no per-call cost. Freed via `EverCrypt_AEAD_free` in `Drop`.
+/// The state contains algorithm-specific pre-computation: expanded
+/// round keys for AES-GCM (the round-key portion is read-only across
+/// encrypt/decrypt calls), the key for ChaCha20-Poly1305, plus a
+/// per-state scratch region used as transient working memory during
+/// each encrypt/decrypt call. Multiple `encrypt`/`decrypt` calls on the
+/// same `AeadKey` reuse the expanded state — no per-call key expansion
+/// cost. Freed via `EverCrypt_AEAD_free` in `Drop`.
 ///
-/// **Key material zeroization**: HACL\*'s `EverCrypt_AEAD_free` is
-/// expected to zeroize the expanded state internally per F\* secret-
-/// independence proofs. The original key bytes passed to
-/// [`AeadKey::new`] are NOT held by `AeadKey` — caller is responsible
-/// for zeroizing the input slice (e.g., via `secrecy::Secret` +
-/// `zeroize`).
+/// **Expanded-state zeroization** — `EverCrypt_AEAD_free` (per the
+/// HACL\* C source `crates/pulsar-crypto-hacl-bindings/hacl-c/src/EverCrypt_AEAD.c`)
+/// frees the heap-allocated expanded-key buffer via `KRML_HOST_FREE`
+/// (i.e., `free(3)`) **without zeroizing it first**. Sensitive
+/// deployments that require zero-on-free for the expanded round keys
+/// must track upstream HACL\* hardening or fork the binding crate to
+/// add an explicit zeroization step. Pulsar's mitigation: keep the
+/// expanded state alive only as long as needed (drop the `AeadKey`
+/// promptly on session end); the original key bytes passed to
+/// [`AeadKey::new`] are owned by the caller's [`SecretBox`] and ARE
+/// zeroized on drop per the `secrecy` crate contract.
 pub struct AeadKey {
     algo: AeadAlgorithm,
     state: NonNull<ffi::EverCrypt_AEAD_state_s>,
 }
 
-// SAFETY: AeadKey owns its FFI state pointer exclusively. No internal
-// shared mutability; encrypt/decrypt take `&self` (HACL*'s state is
-// read-only after creation — the expanded round keys do not change
-// across encrypt/decrypt calls), so concurrent calls on the same
-// instance are sound. Sync would require the FFI state to be
-// thread-safe under concurrent access; HACL* documentation does not
-// guarantee this for the AEAD state, so Sync is NOT impl'd. Send is
-// fine because ownership transfer is single-threaded by definition.
+// SAFETY: `AeadKey` owns its FFI state pointer exclusively (single-owner
+// lifecycle — `new` constructs, `Drop` frees, no aliasing). Send is
+// sound because ownership transfer to another thread is single-threaded
+// by definition (Rust move semantics).
+//
+// `Sync` is INTENTIONALLY NOT impl'd. The HACL* AEAD state contains a
+// scratch region (per `crates/pulsar-crypto-hacl-bindings/hacl-c/src/EverCrypt_AEAD.c`,
+// the `(*s).ek` buffer used as `scratch_b` at offset 304U / 368U
+// during AES-GCM encrypt/decrypt) that is mutated during each
+// operation. Concurrent calls from multiple threads to `&self.encrypt(...)`
+// or `&self.decrypt(...)` would race on this scratch region —
+// catastrophic for correctness even though the round keys themselves
+// are read-only. `!Sync` prevents this at the type system level: a
+// shared `&AeadKey` cannot be observed simultaneously from multiple
+// threads. The expanded round keys and per-key pre-computation
+// (immutable parts of the state) ARE safe to read concurrently, but
+// the scratch region's mutability rules out a blanket Sync impl.
+//
+// Within a single thread, multiple `&self` borrows can coexist (per
+// Rust's borrow rules) and call encrypt/decrypt sequentially — the
+// scratch region is reused but never aliased because each call
+// completes before the next.
 unsafe impl Send for AeadKey {}
 
 impl core::fmt::Debug for AeadKey {
@@ -183,7 +241,17 @@ impl core::fmt::Debug for AeadKey {
 }
 
 impl AeadKey {
-    /// Construct an AEAD key from raw key bytes.
+    /// Construct an AEAD key from a [`SecretBox`]-wrapped key byte
+    /// slice.
+    ///
+    /// The [`SecretBox<[u8]>`] wrapper enforces zeroize-on-drop on the
+    /// caller's input bytes via the `secrecy` crate's
+    /// `ZeroizeOnDrop` impl, and forces explicit `expose_secret()`
+    /// access at the FFI call site. Pulsar establishes this as the
+    /// canonical pattern across all crypto primitives that consume key
+    /// material; subsequent sprint phases (1.1.B.3 Ed25519/X25519
+    /// private keys, 1.1.B.4 HKDF/HMAC keys, Argon2id passwords) wrap
+    /// their key inputs the same way for consistency.
     ///
     /// # Errors
     ///
@@ -194,11 +262,12 @@ impl AeadKey {
     /// - Other [`Error`] variants if EverCrypt returns a non-success
     ///   status code (e.g., `UnsupportedAlgorithm` if the algorithm-id
     ///   mapping drifts — should be unreachable given the closed match).
-    pub fn new(algo: AeadAlgorithm, key: &[u8]) -> Result<Self> {
-        if key.len() != algo.key_len() {
+    pub fn new(algo: AeadAlgorithm, key: &SecretBox<[u8]>) -> Result<Self> {
+        let key_bytes: &[u8] = key.expose_secret();
+        if key_bytes.len() != algo.key_len() {
             return Err(Error::InvalidKeyLength {
                 expected: algo.key_len(),
-                actual: key.len(),
+                actual: key_bytes.len(),
             });
         }
 
@@ -210,9 +279,10 @@ impl AeadKey {
         //   - `a` is a valid Spec_Agile_AEAD_alg constant — guaranteed
         //     by AeadAlgorithm::to_ffi enumerating only supported algos.
         //   - `dst` is a valid pointer to a writable `*mut state_s`
-        //     location — `&mut state_ptr` is a stack-allocated mut ref.
+        //     location — `&raw mut state_ptr` is a stack-allocated mut
+        //     raw pointer.
         //   - `k` points to at least `algo.key_len()` readable bytes —
-        //     checked above against key.len().
+        //     checked above against key_bytes.len().
         // The cast from `*const u8` to `*mut u8` is sound: HACL*
         // documents the key as read-only despite the C signature
         // lacking `const`.
@@ -220,7 +290,7 @@ impl AeadKey {
             ffi::EverCrypt_AEAD_create_in(
                 algo.to_ffi(),
                 &raw mut state_ptr,
-                key.as_ptr().cast_mut(),
+                key_bytes.as_ptr().cast_mut(),
             )
         };
 
@@ -230,10 +300,10 @@ impl AeadKey {
             //   3 = AuthenticationFailure, 4 = InvalidIVLength,
             //   5 = DecodeError, 6 = MaximumLengthExceeded.
             // For `_create_in`, only Success + UnsupportedAlgorithm are
-            // documented as possible. Both should be unreachable here:
-            // - UnsupportedAlgorithm requires an out-of-range alg byte,
-            //   blocked by AeadAlgorithm::to_ffi's closed match.
-            // Map to a typed binding-crate error for diagnostic logging.
+            // documented as possible. Both should be unreachable here
+            // (UnsupportedAlgorithm requires an out-of-range alg byte,
+            // blocked by AeadAlgorithm::to_ffi's closed match). Map to
+            // a defensive default for diagnostic logging.
             return Err(Error::StateAllocationFailed);
         }
 
@@ -251,7 +321,13 @@ impl AeadKey {
     /// producing `ciphertext || tag` packed in a single `Vec<u8>`.
     ///
     /// Returned vector length is `plaintext.len() + algo.tag_len()`.
-    /// Pass the output verbatim to [`AeadKey::decrypt`] for round-trip.
+    /// Pass the output verbatim to [`AeadKey::decrypt`] for round-trip,
+    /// or split into ciphertext + tag at offset `plaintext.len()` for
+    /// [`AeadKey::decrypt_separate`].
+    ///
+    /// For hot paths that need to avoid the heap allocation, use
+    /// [`AeadKey::encrypt_into`] which writes directly into a caller-
+    /// provided buffer.
     ///
     /// # Errors
     ///
@@ -259,6 +335,39 @@ impl AeadKey {
     /// - [`Error::InputTooLong`] — any of `nonce`, `aad`, `plaintext`
     ///   exceeds `u32::MAX` bytes (HACL\*'s API takes 32-bit lengths).
     pub fn encrypt(&self, nonce: &[u8], aad: &[u8], plaintext: &[u8]) -> Result<Vec<u8>> {
+        let mut output = vec![0_u8; plaintext.len() + self.algo.tag_len()];
+        self.encrypt_into(nonce, aad, plaintext, &mut output)?;
+        Ok(output)
+    }
+
+    /// Encrypt `plaintext` into a caller-provided `output` buffer.
+    ///
+    /// `output` must have length exactly `plaintext.len() +
+    /// algo.tag_len()`; on success the buffer holds `ciphertext || tag`
+    /// in place. Useful for high-throughput call sites where the
+    /// per-call heap allocation in [`AeadKey::encrypt`] dominates the
+    /// AEAD primitive cost (audit-chain entry encryption, per-message
+    /// session encryption, etc.).
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::InvalidNonceLength`] — `nonce.len() != algo.nonce_len()`.
+    /// - [`Error::InvalidOutputLength`] — `output.len() != plaintext.len() + tag_len()`.
+    /// - [`Error::InputTooLong`] — input exceeds u32::MAX bytes.
+    pub fn encrypt_into(
+        &self,
+        nonce: &[u8],
+        aad: &[u8],
+        plaintext: &[u8],
+        output: &mut [u8],
+    ) -> Result<()> {
+        let expected_output_len = plaintext.len() + self.algo.tag_len();
+        if output.len() != expected_output_len {
+            return Err(Error::InvalidOutputLength {
+                expected: expected_output_len,
+                actual: output.len(),
+            });
+        }
         if nonce.len() != self.algo.nonce_len() {
             return Err(Error::InvalidNonceLength {
                 expected: self.algo.nonce_len(),
@@ -270,8 +379,8 @@ impl AeadKey {
         let aad_len = u32_len(aad.len())?;
         let plain_len = u32_len(plaintext.len())?;
 
-        let mut output = vec![0_u8; plaintext.len() + self.algo.tag_len()];
         let (cipher_buf, tag_buf) = output.split_at_mut(plaintext.len());
+        debug_assert_eq!(tag_buf.len(), self.algo.tag_len());
 
         // SAFETY: EverCrypt_AEAD_encrypt preconditions:
         //   - `s` is a valid AeadKey state (held in NonNull until Drop).
@@ -281,7 +390,7 @@ impl AeadKey {
         //   - `cipher` points to at least `plain_len` writable bytes —
         //     `cipher_buf` is the prefix of `output` of exact length.
         //   - `tag` points to 16 writable bytes — `tag_buf` is the
-        //     16-byte suffix of `output`.
+        //     16-byte suffix of `output` (split point + length checked).
         //   - All length params fit in u32 — checked via u32_len.
         // Casts from `*const u8` to `*mut u8` are sound: HACL* documents
         // iv/ad/plain as read-only despite the C signature lacking `const`.
@@ -302,14 +411,14 @@ impl AeadKey {
         if rc != 0 {
             // For `EverCrypt_AEAD_encrypt`, only Success + InvalidKey
             // are documented as possible. InvalidKey occurs iff `s` is
-            // NULL — blocked by NonNull above. Should be unreachable;
-            // map to a generic FFI error for diagnostics.
+            // NULL — blocked by NonNull. Should be unreachable; map to
+            // a generic FFI error for diagnostics.
             return Err(Error::Hacl {
                 source: pulsar_crypto_hacl_bindings::error::Error::UnknownStatus(i32::from(rc)),
             });
         }
 
-        Ok(output)
+        Ok(())
     }
 
     /// Decrypt `ciphertext_with_tag` (the concatenated output of
@@ -322,6 +431,10 @@ impl AeadKey {
     /// [`Error::AeadAuthFailed`] with no information about which byte
     /// of the tag mismatched.
     ///
+    /// Use [`AeadKey::decrypt_separate`] when ciphertext and tag arrive
+    /// in distinct slices (TLS 1.3 record layer, Noise transport
+    /// messages, MLS application messages, etc.).
+    ///
     /// # Errors
     ///
     /// - [`Error::InvalidNonceLength`] — `nonce.len() != algo.nonce_len()`.
@@ -330,13 +443,6 @@ impl AeadKey {
     /// - [`Error::AeadAuthFailed`] — authentication tag verification failed.
     /// - [`Error::InputTooLong`] — any input exceeds `u32::MAX` bytes.
     pub fn decrypt(&self, nonce: &[u8], aad: &[u8], ciphertext_with_tag: &[u8]) -> Result<Vec<u8>> {
-        if nonce.len() != self.algo.nonce_len() {
-            return Err(Error::InvalidNonceLength {
-                expected: self.algo.nonce_len(),
-                actual: nonce.len(),
-            });
-        }
-
         let tag_len = self.algo.tag_len();
         if ciphertext_with_tag.len() < tag_len {
             return Err(Error::InvalidOutputLength {
@@ -344,27 +450,68 @@ impl AeadKey {
                 actual: ciphertext_with_tag.len(),
             });
         }
-
         let cipher_len_bytes = ciphertext_with_tag.len() - tag_len;
         let (cipher_part, tag_part) = ciphertext_with_tag.split_at(cipher_len_bytes);
+        self.decrypt_separate(nonce, aad, cipher_part, tag_part)
+    }
+
+    /// Decrypt `ciphertext` and verify `tag` under `nonce` with
+    /// associated data `aad`, returning the recovered plaintext.
+    ///
+    /// The packed `ciphertext_with_tag` form is convenient for one-shot
+    /// in-memory use; the separate form matches protocols that carry
+    /// ciphertext and tag in distinct fields (TLS 1.3 record layer,
+    /// Noise / MLS transport messages).
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::InvalidNonceLength`] — `nonce.len() != algo.nonce_len()`.
+    /// - [`Error::InvalidOutputLength`] — `tag.len() != algo.tag_len()`.
+    /// - [`Error::AeadAuthFailed`] — authentication tag verification failed.
+    /// - [`Error::InputTooLong`] — any input exceeds `u32::MAX` bytes.
+    pub fn decrypt_separate(
+        &self,
+        nonce: &[u8],
+        aad: &[u8],
+        ciphertext: &[u8],
+        tag: &[u8],
+    ) -> Result<Vec<u8>> {
+        if nonce.len() != self.algo.nonce_len() {
+            return Err(Error::InvalidNonceLength {
+                expected: self.algo.nonce_len(),
+                actual: nonce.len(),
+            });
+        }
+        if tag.len() != self.algo.tag_len() {
+            return Err(Error::InvalidOutputLength {
+                expected: self.algo.tag_len(),
+                actual: tag.len(),
+            });
+        }
 
         let nonce_len = u32_len(nonce.len())?;
         let aad_len = u32_len(aad.len())?;
-        let cipher_len = u32_len(cipher_len_bytes)?;
+        let cipher_len = u32_len(ciphertext.len())?;
 
-        let mut plaintext = vec![0_u8; cipher_len_bytes];
+        let mut plaintext = vec![0_u8; ciphertext.len()];
 
         // SAFETY: EverCrypt_AEAD_decrypt preconditions:
         //   - `s` is a valid AeadKey state.
         //   - `iv` points to `iv_len` readable bytes.
         //   - `ad` points to `ad_len` readable bytes.
         //   - `cipher` points to `cipher_len` readable bytes.
-        //   - `tag` points to 16 readable bytes — `tag_part` is the
-        //     16-byte suffix of `ciphertext_with_tag` (length checked).
+        //   - `tag` points to 16 readable bytes — checked above against
+        //     algo.tag_len().
         //   - `dst` points to at least `cipher_len` writable bytes —
         //     `plaintext` is freshly allocated to that exact length.
-        // On authentication failure, HACL* zeroes the dst buffer per
-        // F* postcondition (no plaintext leak on tag mismatch).
+        // On authentication failure, HACL* leaves the dst buffer in an
+        // unspecified state per the C function's contract. The wrapper
+        // returns Err(AeadAuthFailed) so the caller never observes the
+        // buffer; the Vec drops without exposure. Defensive note:
+        // future versions of pulsar-kernel should explicitly zeroize
+        // `plaintext` on the auth-failure path before dropping it, in
+        // case some compiler optimisation leaves a residual copy
+        // somewhere — tracked for the Phase 1.1.D Creusot-contracts pass.
         let rc = unsafe {
             ffi::EverCrypt_AEAD_decrypt(
                 self.state.as_ptr(),
@@ -372,9 +519,9 @@ impl AeadKey {
                 nonce_len,
                 aad.as_ptr().cast_mut(),
                 aad_len,
-                cipher_part.as_ptr().cast_mut(),
+                ciphertext.as_ptr().cast_mut(),
                 cipher_len,
-                tag_part.as_ptr().cast_mut(),
+                tag.as_ptr().cast_mut(),
                 plaintext.as_mut_ptr(),
             )
         };
@@ -403,10 +550,18 @@ impl AeadKey {
 impl Drop for AeadKey {
     fn drop(&mut self) {
         // SAFETY: `state` is valid (held in NonNull throughout the
-        // AeadKey lifetime). EverCrypt_AEAD_free is the matching
-        // deallocator for EverCrypt_AEAD_create_in. HACL* zeroes the
-        // expanded key state internally before freeing per F* secret-
-        // independence postcondition.
+        // AeadKey lifetime). `EverCrypt_AEAD_free` is the matching
+        // deallocator for `EverCrypt_AEAD_create_in`. NOTE: Per the
+        // HACL* C source `crates/pulsar-crypto-hacl-bindings/hacl-c/src/EverCrypt_AEAD.c`,
+        // the free function calls `KRML_HOST_FREE` (i.e., `free(3)`)
+        // on the expanded-key buffer + state struct WITHOUT explicit
+        // zeroization. The expanded round keys / pre-computation for
+        // ChaCha20 may be recoverable from heap memory until the OS
+        // recycles the pages. Sensitive deployments should track
+        // upstream HACL* hardening to add a `memset_s` / `explicit_bzero`
+        // call in `EverCrypt_AEAD_free`. The wrapper's mitigation is to
+        // hold AeadKey instances no longer than necessary so the heap
+        // window of exposure is short.
         unsafe { ffi::EverCrypt_AEAD_free(self.state.as_ptr()) };
     }
 }

@@ -19,9 +19,19 @@
 #![allow(clippy::expect_used, clippy::unwrap_used, clippy::panic)]
 
 use pulsar_kernel::crypto::aead::{AeadAlgorithm, AeadKey};
+use secrecy::SecretBox;
+
+/// Helper: wrap raw key bytes in a `SecretBox<[u8]>`. Tests need to
+/// produce the secret-wrapped form from hex-decoded bytes; this keeps
+/// the boilerplate to one function call.
+fn secret_key(bytes: Vec<u8>) -> SecretBox<[u8]> {
+    SecretBox::new(bytes.into_boxed_slice())
+}
 
 /// Helper: assert encrypt(key, nonce, aad, plaintext) produces the
-/// expected ciphertext+tag bytes; assert decrypt round-trips back.
+/// expected ciphertext+tag bytes; assert decrypt round-trips back via
+/// both [`AeadKey::decrypt`] (joined input) and
+/// [`AeadKey::decrypt_separate`] (split input).
 ///
 /// Seven parameters (key + nonce + aad + plaintext + expected ct +
 /// expected tag + algo) are intentional — each test vector is a tuple
@@ -37,7 +47,7 @@ fn assert_kat(
     expected_ciphertext_hex: &str,
     expected_tag_hex: &str,
 ) {
-    let key = hex::decode(key_hex).expect("key hex must be valid");
+    let key = secret_key(hex::decode(key_hex).expect("key hex must be valid"));
     let nonce = hex::decode(nonce_hex).expect("nonce hex must be valid");
     let aad = hex::decode(aad_hex).expect("aad hex must be valid");
     let plaintext = hex::decode(plaintext_hex).expect("plaintext hex must be valid");
@@ -47,7 +57,7 @@ fn assert_kat(
 
     let aead_key = AeadKey::new(algo, &key).expect("AeadKey::new should succeed for valid key");
 
-    // Encrypt path
+    // Path A — agile encrypt (allocates Vec).
     let actual_output = aead_key
         .encrypt(&nonce, &aad, &plaintext)
         .expect("encrypt should succeed");
@@ -66,11 +76,33 @@ fn assert_kat(
         hex::encode(actual_tag),
     );
 
-    // Decrypt path — round-trip back to original plaintext
-    let recovered = aead_key
+    // Path B — encrypt_into (no Vec alloc).
+    let mut into_output = vec![0_u8; plaintext.len() + algo.tag_len()];
+    aead_key
+        .encrypt_into(&nonce, &aad, &plaintext, &mut into_output)
+        .expect("encrypt_into should succeed");
+    assert_eq!(
+        into_output, actual_output,
+        "{algo:?} encrypt_into output must match encrypt output",
+    );
+
+    // Path C — decrypt (joined input) round-trip.
+    let recovered_joined = aead_key
         .decrypt(&nonce, &aad, &actual_output)
         .expect("decrypt should succeed on authentic ciphertext");
-    assert_eq!(recovered, plaintext, "{algo:?} decrypt round-trip mismatch");
+    assert_eq!(
+        recovered_joined, plaintext,
+        "{algo:?} decrypt round-trip mismatch",
+    );
+
+    // Path D — decrypt_separate (split input) round-trip.
+    let recovered_separate = aead_key
+        .decrypt_separate(&nonce, &aad, actual_ciphertext, actual_tag)
+        .expect("decrypt_separate should succeed on authentic ciphertext");
+    assert_eq!(
+        recovered_separate, plaintext,
+        "{algo:?} decrypt_separate round-trip mismatch",
+    );
 }
 
 // ─── NIST SP 800-38D Annex B AES-GCM ──────────────────────────────────
@@ -160,8 +192,8 @@ fn aead_key_new_rejects_wrong_key_length() {
     use pulsar_kernel::error::Error;
 
     // AES-128-GCM expects 16-byte key
-    let too_short = vec![0_u8; 15];
-    let too_long = vec![0_u8; 17];
+    let too_short = secret_key(vec![0_u8; 15]);
+    let too_long = secret_key(vec![0_u8; 17]);
 
     match AeadKey::new(AeadAlgorithm::Aes128Gcm, &too_short) {
         Err(Error::InvalidKeyLength {
@@ -185,7 +217,7 @@ fn aead_key_new_rejects_wrong_key_length() {
 fn aead_encrypt_rejects_wrong_nonce_length() {
     use pulsar_kernel::error::Error;
 
-    let key = vec![0_u8; 16];
+    let key = secret_key(vec![0_u8; 16]);
     let aead_key = AeadKey::new(AeadAlgorithm::Aes128Gcm, &key).expect("valid key");
 
     let too_short_nonce = vec![0_u8; 11];
@@ -218,7 +250,7 @@ fn aead_encrypt_rejects_wrong_nonce_length() {
 fn aead_decrypt_rejects_truncated_input() {
     use pulsar_kernel::error::Error;
 
-    let key = vec![0_u8; 16];
+    let key = secret_key(vec![0_u8; 16]);
     let nonce = vec![0_u8; 12];
     let aead_key = AeadKey::new(AeadAlgorithm::Aes128Gcm, &key).expect("valid key");
 
@@ -231,6 +263,77 @@ fn aead_decrypt_rejects_truncated_input() {
         }) => {}
         other => {
             panic!("expected InvalidOutputLength {{ expected: 16, actual: 10 }}, got {other:?}")
+        }
+    }
+}
+
+/// `encrypt_into` with wrong-length output buffer returns
+/// `Error::InvalidOutputLength`.
+#[test]
+fn aead_encrypt_into_rejects_wrong_output_length() {
+    use pulsar_kernel::error::Error;
+
+    let key = secret_key(vec![0_u8; 16]);
+    let nonce = vec![0_u8; 12];
+    let aead_key = AeadKey::new(AeadAlgorithm::Aes128Gcm, &key).expect("valid key");
+
+    let plaintext = b"hello";
+    // Expected output length = 5 + 16 = 21 bytes
+    let mut too_small = vec![0_u8; 20];
+    let mut too_big = vec![0_u8; 22];
+
+    match aead_key.encrypt_into(&nonce, b"", plaintext, &mut too_small) {
+        Err(Error::InvalidOutputLength {
+            expected: 21,
+            actual: 20,
+        }) => {}
+        other => {
+            panic!("expected InvalidOutputLength {{ expected: 21, actual: 20 }}, got {other:?}")
+        }
+    }
+
+    match aead_key.encrypt_into(&nonce, b"", plaintext, &mut too_big) {
+        Err(Error::InvalidOutputLength {
+            expected: 21,
+            actual: 22,
+        }) => {}
+        other => {
+            panic!("expected InvalidOutputLength {{ expected: 21, actual: 22 }}, got {other:?}")
+        }
+    }
+}
+
+/// `decrypt_separate` with wrong-length tag returns
+/// `Error::InvalidOutputLength`.
+#[test]
+fn aead_decrypt_separate_rejects_wrong_tag_length() {
+    use pulsar_kernel::error::Error;
+
+    let key = secret_key(vec![0_u8; 16]);
+    let nonce = vec![0_u8; 12];
+    let aead_key = AeadKey::new(AeadAlgorithm::Aes128Gcm, &key).expect("valid key");
+
+    let ciphertext = b"abc";
+    let too_short_tag = vec![0_u8; 15];
+    let too_long_tag = vec![0_u8; 17];
+
+    match aead_key.decrypt_separate(&nonce, b"", ciphertext, &too_short_tag) {
+        Err(Error::InvalidOutputLength {
+            expected: 16,
+            actual: 15,
+        }) => {}
+        other => {
+            panic!("expected InvalidOutputLength {{ expected: 16, actual: 15 }}, got {other:?}")
+        }
+    }
+
+    match aead_key.decrypt_separate(&nonce, b"", ciphertext, &too_long_tag) {
+        Err(Error::InvalidOutputLength {
+            expected: 16,
+            actual: 17,
+        }) => {}
+        other => {
+            panic!("expected InvalidOutputLength {{ expected: 16, actual: 17 }}, got {other:?}")
         }
     }
 }
@@ -258,7 +361,7 @@ fn aead_algorithm_constants() {
 /// FFI state pointer.
 #[test]
 fn aead_key_debug_redacts_state_pointer() {
-    let key = vec![0_u8; 32];
+    let key = secret_key(vec![0_u8; 32]);
     let aead_key = AeadKey::new(AeadAlgorithm::ChaCha20Poly1305, &key).expect("valid key");
     let formatted = format!("{aead_key:?}");
     assert!(
@@ -269,4 +372,43 @@ fn aead_key_debug_redacts_state_pointer() {
         !formatted.contains("0x"),
         "AeadKey Debug must not leak the state pointer; got: {formatted}",
     );
+}
+
+/// Large-input round-trip — exercises HACL\*'s SIMD paths over a
+/// 1-MiB plaintext to catch any block-boundary edge cases that
+/// 1024-byte property tests would miss.
+#[test]
+fn aead_large_input_round_trip() {
+    let key = secret_key(vec![0xAA; 32]);
+    let nonce = vec![0xBB; 12];
+    let aad = vec![0xCC; 256];
+    let plaintext: Vec<u8> = (0_u32..(1024 * 1024))
+        .map(|i| u8::try_from(i & 0xFF).unwrap_or(0))
+        .collect();
+
+    for algo in [
+        AeadAlgorithm::Aes128Gcm,
+        AeadAlgorithm::Aes256Gcm,
+        AeadAlgorithm::ChaCha20Poly1305,
+    ] {
+        let key = if algo.key_len() == 16 {
+            secret_key(vec![0xAA; 16])
+        } else {
+            secret_key(vec![0xAA; 32])
+        };
+        // shadow `key` is fine; suppress the unused-binding lint via _ prefix
+        let aead_key = AeadKey::new(algo, &key).expect("AeadKey::new should succeed");
+
+        let ciphertext = aead_key
+            .encrypt(&nonce, &aad, &plaintext)
+            .expect("encrypt should succeed on 1 MiB plaintext");
+        assert_eq!(ciphertext.len(), plaintext.len() + algo.tag_len());
+
+        let recovered = aead_key
+            .decrypt(&nonce, &aad, &ciphertext)
+            .expect("decrypt should succeed on 1 MiB ciphertext");
+        assert_eq!(recovered, plaintext, "{algo:?} 1 MiB round-trip mismatch");
+    }
+    // suppress unused warning for the outer `key` binding
+    drop(key);
 }
