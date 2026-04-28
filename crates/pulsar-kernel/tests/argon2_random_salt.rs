@@ -18,15 +18,35 @@ fn password_box(bytes: &[u8]) -> SecretBox<[u8]> {
 }
 
 /// Round-trip — produce a PHC string with a random salt and verify
-/// the original password against it.
+/// the original password against it. PHC structure is asserted via
+/// the `password_hash` parser + `argon2::Params` extractor rather
+/// than a fragile `starts_with` prefix check (per /review 405 #3) —
+/// robust against any whitespace or field-order variation in the
+/// upstream PHC encoder.
 #[test]
 fn argon2id_random_salt_round_trip() {
+    use argon2::Params;
+    use argon2::password_hash::PasswordHash;
+
     let password = password_box(b"correct horse battery staple");
     let phc = hash_password_with_random_salt(&password, Argon2idParams::default())
         .expect("hash_password_with_random_salt should succeed");
 
-    // PHC string must declare the OWASP-default cost parameters.
-    assert!(phc.starts_with("$argon2id$v=19$m=19456,t=2,p=1$"));
+    // Parse the PHC string and assert structural fields rather than
+    // matching against a hardcoded prefix.
+    let parsed = PasswordHash::new(&phc).expect("PHC string should parse");
+    assert_eq!(parsed.algorithm.as_str(), "argon2id");
+    assert_eq!(parsed.version, Some(19));
+
+    let argon2_params = Params::try_from(&parsed).expect("Argon2 params should parse from PHC");
+    assert_eq!(argon2_params.m_cost(), 19_456);
+    assert_eq!(argon2_params.t_cost(), 2);
+    assert_eq!(argon2_params.p_cost(), 1);
+
+    // Salt must be present (non-empty) — this is the property the
+    // random-salt convenience guarantees.
+    let salt = parsed.salt.expect("PHC must include a salt field");
+    assert!(!salt.as_str().is_empty(), "salt field must be non-empty");
 
     verify_password(&password, &phc).expect("verify of authentic password should succeed");
 }

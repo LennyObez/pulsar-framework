@@ -37,15 +37,14 @@
 //! Callers that already hold a [`rand::CryptoRng`] (e.g., a
 //! deterministic test seed via `rand_chacha::ChaCha20Rng`) may use the
 //! underlying primitives directly via the re-exports [`CryptoRng`] and
-//! [`RngCoreTrait`]. Test infrastructure relies on this for
+//! [`RngCore`]. Test infrastructure relies on this for
 //! reproducible-failure debugging; production paths should use the
 //! concrete `OsRng`-backed helpers above.
 
 use crate::error::{Error, Result};
-use rand::RngCore;
 use rand::rngs::OsRng;
 
-pub use rand::{CryptoRng, RngCore as RngCoreTrait};
+pub use rand::{CryptoRng, RngCore};
 
 /// Fill a caller-provided slice with cryptographically-secure random
 /// bytes from the OS CSPRNG.
