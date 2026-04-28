@@ -546,6 +546,9 @@ insta = { version = "1.42", features = ["json", "yaml"] }
 wiremock = "0.6"
 scraper = "0.20"
 thirtyfour = "0.34"
+# hex decoding for FIPS / RFC cryptographic test vectors. Used by
+# pulsar-kernel::crypto smoke + property tests (Sprint 1.1.B+).
+hex = "0.4"
 
 [profile.release]
 opt-level = 3

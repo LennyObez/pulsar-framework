@@ -14,12 +14,58 @@ keywords.workspace = true
 categories.workspace = true
 
 [dependencies]
-ring = { workspace = true }
+# Cryptographic primitives — multi-source verification stack per Decision 2.60.
+# Classical primitives via HACL* FFI (Phase 1.1.B+); PQC primitives via libcrux
+# Rust-native (Phase 1.1.C); Argon2id via RustCrypto (Phase 1.1.B.4).
+pulsar-crypto-hacl-bindings = { path = "../pulsar-crypto-hacl-bindings", version = "=0.0.1-alpha.0" }
 subtle = { workspace = true }
 zeroize = { workspace = true }
 secrecy = { workspace = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }
 
-[lints]
-workspace = true
+[dev-dependencies]
+# Hex decoding for FIPS / RFC test vectors in smoke + property tests.
+hex = { workspace = true }
+proptest = { workspace = true }
+
+[lints.rust]
+# pulsar-kernel cannot inherit `unsafe_code = "forbid"` because the
+# crypto module wraps the HACL* FFI surface (per Decision 2.53 + 2.60 +
+# ADR-0009). Each `unsafe` call site is gated by a module-level
+# `#![allow(unsafe_code)]` with a SAFETY comment justifying the
+# pre/post-conditions. Audit, session, router, middleware sub-modules
+# must NOT use `unsafe` and rely on the crate-level `deny` to enforce
+# this — `deny` (vs `forbid`) permits per-module override only at the
+# explicitly-allowed crypto + future audit/session FFI boundaries.
+unsafe_code = "deny"
+missing_docs = "deny"
+unused_must_use = "deny"
+unused_lifetimes = "warn"
+unused_imports = "warn"
+unused_extern_crates = "warn"
+trivial_casts = "warn"
+trivial_numeric_casts = "warn"
+unreachable_pub = "warn"
+rust_2024_compatibility = { level = "deny", priority = -1 }
+
+[lints.clippy]
+all = { level = "deny", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+nursery = { level = "warn", priority = -1 }
+cargo = { level = "warn", priority = -1 }
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+todo = "deny"
+unimplemented = "deny"
+get_unwrap = "deny"
+module_name_repetitions = "allow"
+must_use_candidate = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+multiple_crate_versions = "allow"
+# Doc-comments here refer extensively to algorithm names + standards
+# (HACL*, EverCrypt, F*, FIPS 180-4, RFC 7693, etc.). Backticking every
+# acronym would harm readability with no security benefit.
+doc_markdown = "allow"

@@ -7,7 +7,41 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-### Sprint 1.1 — kernel crypto (Phase 1.1.A: HACL\* selective vendoring + bindgen + cc build, in progress)
+### Sprint 1.1 — kernel crypto (Phase 1.1.B.1: hash family safe wrappers, in progress)
+
+First sub-phase of Phase 1.1.B (safe Rust wrappers over the HACL\* FFI). Lands `pulsar-kernel::crypto` module with the hash family — SHA-2 (256/384/512), SHA-3 (256/384/512), BLAKE2b (64-byte), BLAKE2s (32-byte). Subsequent sub-phases extend the surface: 1.1.B.2 AEAD, 1.1.B.3 signature + KEM (Ed25519 + X25519 + P-256), 1.1.B.4 HKDF + HMAC + Argon2id.
+
+* **`pulsar-kernel::crypto::hash`** — typed safe wrappers over `EverCrypt_Hash_Incremental_*` FFI declarations. Two API surfaces: one-shot `hash(algo, input) -> Vec<u8>` for in-memory data, and streaming `Hasher::new(algo).update(chunk).finalize()` for chunked input where the full message doesn't fit in memory. Convenience aliases (`sha256`, `sha384`, `sha512`, `sha3_256`, `sha3_384`, `sha3_512`, `blake2b512`, `blake2s256`) return fixed-size arrays for ergonomic call sites.
+* **`HashAlgorithm` enum** is `#[non_exhaustive]` and explicitly omits MD5 + SHA-1. The C-level symbols for those deprecated hashes are linked into the static archive (per ADR-0009 amendment) only because EverCrypt's runtime dispatcher requires them; the Rust public API rejects them at the type system level since no enum variant maps to either. SHA-2-224 + SHA-3-224 are also omitted as Pulsar standardises on the 256/384/512-bit security levels.
+* **`EverCrypt_AutoConfig2_init`** is invoked exactly once per process via `std::sync::Once`. HACL\*'s contract guarantees idempotence on repeated calls; the `Once` wrapper avoids redundant atomic synchronisation on the hot path. The CPU-feature dispatcher initialises lazily on first hash invocation.
+* **`Hasher` lifecycle**: heap-allocated FFI state held in `NonNull<EverCrypt_Hash_Incremental_state_t>`; freed automatically in `Drop` (whether normal or panic-unwind path). `Send` is implemented (single-owner lifecycle, no internal sharing); `update(&mut self)` prevents concurrent access via the borrow checker.
+* **Per-crate lints override**: `pulsar-kernel/Cargo.toml` declares its own `[lints.rust]` + `[lints.clippy]` because the workspace `unsafe_code = "forbid"` policy cannot be applied at the FFI boundary. Override sets `unsafe_code = "deny"` (vs `forbid`) crate-wide so non-FFI sub-modules (audit, session, router, middleware) still reject `unsafe`; the `crypto::hash` module file overrides with `#![allow(unsafe_code)]` at the FFI boundary, with `SAFETY:` comments per call site documenting pre/post-conditions against HACL\*'s contract. `doc_markdown = "allow"` follows the same rationale as `pulsar-crypto-hacl-bindings` (heavily-technical surface; backticking every algorithm name + standard reference would harm readability).
+* **Workspace `Cargo.toml`** adds `hex = "0.4"` to `[workspace.dependencies]` (used by KAT tests for hex-decoding the FIPS / RFC test vectors).
+* **`pulsar-kernel/Cargo.toml`** drops `ring = { workspace = true }` (per ADR-0009: kernel crypto migrates from `ring` to HACL\* via FFI) and adds `pulsar-crypto-hacl-bindings = { path = "../pulsar-crypto-hacl-bindings", version = "=0.0.1-alpha.0" }` as the new crypto-primitive source. `subtle` + `zeroize` + `secrecy` + `thiserror` + `tracing` retained.
+
+**Tests** (25 new tests across two integration test files):
+
+* **`tests/hash_kat.rs`** — 17 known-answer tests verifying the canonical FIPS / RFC test vectors:
+  - SHA-2-256/384/512 of "" + "abc" against FIPS 180-4 § B.1 (6 tests)
+  - SHA-3-256/384/512 of "" + "abc" against FIPS 202 (6 tests)
+  - BLAKE2b (64-byte) + BLAKE2s (32-byte) of "" + "abc" against RFC 7693 Appendix A (4 tests)
+  - Convenience-alias parity vs the agile API (1 test exercising all 8 aliases)
+  Each KAT asserts all three API surfaces (one-shot + streaming-single-chunk + streaming-split-chunks) for the same input/output pair so a regression in any path fails loudly.
+* **`tests/hash_property.rs`** — 6 property tests using `proptest`:
+  - Output length matches `algo.digest_len()` for every supported algorithm
+  - Determinism across repeated invocations
+  - Streaming single-chunk equals one-shot
+  - Streaming two-chunks equals one-shot regardless of split point
+  - Streaming per-byte updates equal one-shot (adversarial fragmentation)
+  - Distinct inputs yield distinct digests (weak collision-resistance hint)
+  Inputs span 0-4096 bytes; per-test default is 256 cases, totalling ~12 800 random inputs across all properties.
+
+Quality gates verified locally:
+  - cargo fmt --all -- --check ✓
+  - cargo clippy -p pulsar-kernel --all-targets -- -D warnings ✓
+  - cargo nextest run -p pulsar-kernel (25/25 PASS) ✓
+
+### Sprint 1.1 — kernel crypto (Phase 1.1.A: HACL\* selective vendoring + bindgen + cc build — merged 2026-04-28 as `1e187504`)
 
 First implementation phase of Sprint 1.1: vendors the HACL\* C distribution at the pinned upstream commit, sets up the per-target build pipeline (cc::Build + bindgen), and validates the FFI surface end-to-end via a FIPS 180-4 SHA-256 test vector. No safe Rust wrappers, Creusot contracts, or TLA+ specs yet — those land in Phases 1.1.B / 1.1.D.
 
