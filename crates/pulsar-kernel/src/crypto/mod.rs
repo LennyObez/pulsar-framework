@@ -6,8 +6,8 @@
 //!
 //! - [`hash`]   — SHA-2 (256/384/512), SHA-3 (256/384/512), BLAKE2b/2s
 //! - [`aead`]   — AES-128/256-GCM, ChaCha20-Poly1305
-//! - `signature` — Ed25519 (Phase 1.1.B.3); ML-DSA-65 hybrid via libcrux (Phase 1.1.C)
-//! - `kem`      — X25519 (Phase 1.1.B.3); ML-KEM-768 hybrid via libcrux (Phase 1.1.C)
+//! - [`signature`] — Ed25519 (RFC 8032); ML-DSA-65 hybrid via libcrux (Phase 1.1.C)
+//! - [`kem`]    — X25519 (RFC 7748); ML-KEM-768 hybrid via libcrux (Phase 1.1.C)
 //! - `hkdf`     — HKDF over SHA-2 family (Phase 1.1.B.4)
 //! - `hmac`     — HMAC over SHA-2 + BLAKE2 family (Phase 1.1.B.4)
 //! - `argon2`   — Argon2id password hashing via RustCrypto (Phase 1.1.B.4)
@@ -33,8 +33,12 @@
 
 pub mod aead;
 pub mod hash;
+pub mod kem;
+pub mod signature;
 
 pub use aead::{AeadAlgorithm, AeadKey};
 pub use hash::{HashAlgorithm, Hasher, blake2b512, blake2s256};
 pub use hash::{sha3_256, sha3_384, sha3_512};
 pub use hash::{sha256, sha384, sha512};
+pub use kem::{X25519PrivateKey, X25519PublicKey};
+pub use signature::{Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature};
