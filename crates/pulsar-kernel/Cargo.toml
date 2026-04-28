@@ -19,6 +19,7 @@ categories.workspace = true
 # Rust-native (Phase 1.1.C); Argon2id via RustCrypto (Phase 1.1.B.4).
 pulsar-crypto-hacl-bindings = { path = "../pulsar-crypto-hacl-bindings", version = "=0.0.1-alpha.0" }
 argon2 = { workspace = true }
+libcrux-ml-dsa = { workspace = true }
 libcrux-ml-kem = { workspace = true }
 rand = { workspace = true }
 subtle = { workspace = true }
