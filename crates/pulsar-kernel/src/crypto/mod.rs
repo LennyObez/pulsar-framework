@@ -63,6 +63,7 @@ pub mod argon2;
 pub mod hash;
 pub mod hkdf;
 pub mod hmac;
+pub mod hybrid_kem;
 pub mod kem;
 pub mod ml_dsa;
 pub mod ml_kem;
@@ -75,6 +76,9 @@ pub use hash::{HashAlgorithm, Hasher, blake2b512, blake2s256};
 pub use hash::{sha3_256, sha3_384, sha3_512};
 pub use hash::{sha256, sha384, sha512};
 pub use hmac::{HmacAlgorithm, HmacKey};
+pub use hybrid_kem::{
+    HybridKemCiphertext, HybridKemKeyPair, HybridKemPrivateKey, HybridKemPublicKey,
+};
 pub use kem::{X25519PrivateKey, X25519PublicKey};
 pub use ml_dsa::{MlDsa65KeyPair, MlDsa65Signature, MlDsa65SigningKey, MlDsa65VerificationKey};
 pub use ml_kem::{MlKem768Ciphertext, MlKem768KeyPair, MlKem768PrivateKey, MlKem768PublicKey};
