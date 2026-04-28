@@ -16,6 +16,7 @@ use Pulsar\Http\Message\Response;
 use Pulsar\View\Engine\TemplateEngineInterface;
 
 use function array_map;
+use function is_numeric;
 use function is_string;
 
 /**
@@ -88,7 +89,9 @@ final readonly class CategoryController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $slug = is_string($body['slug'] ?? null) ? $body['slug'] : '';
+        /** @var mixed $rawSlug */
+        $rawSlug = $body['slug'] ?? null;
+        $slug = is_string($rawSlug) ? $rawSlug : '';
 
         if ($slug === '') {
             return Response::json(['error' => 'Slug is required'], 422);
@@ -96,8 +99,12 @@ final readonly class CategoryController
 
         /** @var string|null $tenantId */
         $tenantId = $request->getAttribute('tenant_id');
-        $parentId = is_string($body['parent_id'] ?? null) ? $body['parent_id'] : null;
-        $sortOrder = is_numeric($body['sort_order'] ?? null) ? (int) $body['sort_order'] : 0;
+        /** @var mixed $rawParentId */
+        $rawParentId = $body['parent_id'] ?? null;
+        $parentId = is_string($rawParentId) ? $rawParentId : null;
+        /** @var mixed $rawSortOrder */
+        $rawSortOrder = $body['sort_order'] ?? null;
+        $sortOrder = is_numeric($rawSortOrder) ? (int) $rawSortOrder : 0;
 
         $category = Category::create(
             id: UuidGenerator::v7(),
@@ -109,9 +116,15 @@ final readonly class CategoryController
 
         $this->categoryRepository->save($category);
 
-        $name = is_string($body['name'] ?? null) ? $body['name'] : $slug;
-        $description = is_string($body['description'] ?? null) ? $body['description'] : '';
-        $locale = is_string($body['locale'] ?? null) ? $body['locale'] : 'en';
+        /** @var mixed $rawName */
+        $rawName = $body['name'] ?? null;
+        $name = is_string($rawName) ? $rawName : $slug;
+        /** @var mixed $rawDescription */
+        $rawDescription = $body['description'] ?? null;
+        $description = is_string($rawDescription) ? $rawDescription : '';
+        /** @var mixed $rawLocale */
+        $rawLocale = $body['locale'] ?? null;
+        $locale = is_string($rawLocale) ? $rawLocale : 'en';
 
         $translation = CategoryTranslation::create(
             id: UuidGenerator::v7(),
