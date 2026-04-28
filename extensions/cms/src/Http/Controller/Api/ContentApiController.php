@@ -53,12 +53,16 @@ final readonly class ContentApiController
     {
         $params = $request->getQueryParams();
 
+        /** @var mixed $rawLocale */
         $rawLocale = $params['locale'] ?? null;
         $locale = is_string($rawLocale) ? $rawLocale : $this->config->defaultLocale;
+        /** @var mixed $rawType */
         $rawType = $params['type'] ?? null;
         $contentType = is_string($rawType) ? $rawType : null;
+        /** @var mixed $rawPage */
         $rawPage = $params['page'] ?? null;
         $page = max(1, is_int($rawPage) ? $rawPage : 1);
+        /** @var mixed $rawPerPage */
         $rawPerPage = $params['per_page'] ?? null;
         $perPage = min(100, max(1, is_int($rawPerPage) ? $rawPerPage : 20));
 
@@ -99,6 +103,7 @@ final readonly class ContentApiController
         }
 
         $params = $request->getQueryParams();
+        /** @var mixed $rawLocale */
         $rawLocale = $params['locale'] ?? null;
         $locale = is_string($rawLocale) ? $rawLocale : $this->config->defaultLocale;
 
@@ -162,6 +167,7 @@ final readonly class ContentApiController
             ], 422);
         }
 
+        /** @var mixed $rawContentTypeValue */
         $rawContentTypeValue = $body['content_type'] ?? null;
         $contentTypeStr = is_string($rawContentTypeValue) ? $rawContentTypeValue : 'page';
         $contentType = ContentType::tryFrom($contentTypeStr);
@@ -174,18 +180,27 @@ final readonly class ContentApiController
             ], 422);
         }
 
+        /** @var mixed $rawLocaleBody */
         $rawLocaleBody = $body['locale'] ?? null;
         $locale = is_string($rawLocaleBody) ? $rawLocaleBody : $this->config->defaultLocale;
-        $title = (is_string($body['title']) ? $body['title'] : '');
-        $slugSegment = (is_string($body['slug']) ? $body['slug'] : '');
+        /** @var mixed $rawTitle */
+        $rawTitle = $body['title'] ?? null;
+        $title = is_string($rawTitle) ? $rawTitle : '';
+        /** @var mixed $rawSlug */
+        $rawSlug = $body['slug'] ?? null;
+        $slugSegment = is_string($rawSlug) ? $rawSlug : '';
+        /** @var mixed $rawBody */
         $rawBody = $body['body'] ?? null;
         $bodyContent = is_string($rawBody) ? $rawBody : '';
 
         /** @var string|null $tenantId */
         $tenantId = $request->getAttribute('tenant_id');
 
+        /** @var mixed $rawAuthorId */
         $rawAuthorId = $body['author_id'] ?? null;
+        /** @var mixed $rawTemplate */
         $rawTemplate = $body['template'] ?? null;
+        /** @var mixed $rawParentId */
         $rawParentId = $body['parent_id'] ?? null;
         $contentId = UuidGenerator::v7();
         $content = Content::create(
@@ -220,9 +235,9 @@ final readonly class ContentApiController
                 slugSegment: $slugSegment,
                 path: $path,
                 body: $bodyContent,
-                excerpt: is_string($body['excerpt'] ?? null) ? $body['excerpt'] : null,
-                metaTitle: is_string($body['meta_title'] ?? null) ? $body['meta_title'] : null,
-                metaDescription: is_string($body['meta_description'] ?? null) ? $body['meta_description'] : null,
+                excerpt: is_string($rawExcerpt = $body['excerpt'] ?? null) ? $rawExcerpt : null,
+                metaTitle: is_string($rawMetaTitle = $body['meta_title'] ?? null) ? $rawMetaTitle : null,
+                metaDescription: is_string($rawMetaDescription = $body['meta_description'] ?? null) ? $rawMetaDescription : null,
             );
         } catch (CmsException $e) {
             return Response::json([
@@ -256,16 +271,24 @@ final readonly class ContentApiController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $locale = is_string($body['locale'] ?? null) ? $body['locale'] : $this->config->defaultLocale;
+        /** @var mixed $rawLocale */
+        $rawLocale = $body['locale'] ?? null;
+        $locale = is_string($rawLocale) ? $rawLocale : $this->config->defaultLocale;
         $translation = $this->translationRepository->findByContentAndLocale($id, $locale);
 
         if ($translation === null) {
             return Response::json(['error' => 'Translation not found for locale', 'status' => 404], 404);
         }
 
-        $title = is_string($body['title'] ?? null) ? $body['title'] : $translation->title;
-        $bodyContent = is_string($body['body'] ?? null) ? $body['body'] : $translation->body;
-        $slugSegment = is_string($body['slug'] ?? null) ? $body['slug'] : $translation->slugSegment;
+        /** @var mixed $rawTitle */
+        $rawTitle = $body['title'] ?? null;
+        $title = is_string($rawTitle) ? $rawTitle : $translation->title;
+        /** @var mixed $rawBody */
+        $rawBody = $body['body'] ?? null;
+        $bodyContent = is_string($rawBody) ? $rawBody : $translation->body;
+        /** @var mixed $rawSlug */
+        $rawSlug = $body['slug'] ?? null;
+        $slugSegment = is_string($rawSlug) ? $rawSlug : $translation->slugSegment;
 
         $path = $translation->path;
 
@@ -289,9 +312,9 @@ final readonly class ContentApiController
                 slugSegment: $slugSegment,
                 path: $path,
                 body: $bodyContent,
-                excerpt: is_string($body['excerpt'] ?? null) ? $body['excerpt'] : $translation->excerpt,
-                metaTitle: is_string($body['meta_title'] ?? null) ? $body['meta_title'] : $translation->metaTitle,
-                metaDescription: is_string($body['meta_description'] ?? null) ? $body['meta_description'] : $translation->metaDescription,
+                excerpt: is_string($rawExcerpt = $body['excerpt'] ?? null) ? $rawExcerpt : $translation->excerpt,
+                metaTitle: is_string($rawMetaTitle = $body['meta_title'] ?? null) ? $rawMetaTitle : $translation->metaTitle,
+                metaDescription: is_string($rawMetaDescription = $body['meta_description'] ?? null) ? $rawMetaDescription : $translation->metaDescription,
             );
         } catch (CmsException $e) {
             return Response::json([
