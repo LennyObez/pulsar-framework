@@ -268,6 +268,39 @@ pub fn hash_password(
     Ok(hash.to_string())
 }
 
+/// Argon2id password hashing with a fresh CSPRNG-generated salt.
+///
+/// Equivalent to [`hash_password`] but generates the 16-byte salt
+/// internally via [`crate::crypto::rng::try_random_bytes`]
+/// — sufficient for password storage per OWASP's "≥ 16 bytes from a
+/// CSPRNG" recommendation. Each call produces a unique PHC string
+/// even for the same `(password, params)` input.
+///
+/// This is the preferred call site for password storage because it
+/// removes the per-call salt-generation responsibility from the
+/// caller (the most common implementation defect in password
+/// handling).
+///
+/// # Errors
+///
+/// - [`Error::InvalidArgon2Params`] — `params.validate()` failed.
+/// - [`Error::InvalidPhcString`] — `argon2`'s PHC-encoder rejected the
+///   salt (not reachable for the 16-byte CSPRNG output).
+/// - [`Error::RngFailure`] — the OS CSPRNG returned an error during
+///   salt generation (very rare — early boot, sandbox blocking the
+///   `getrandom` syscall, exhausted entropy pool).
+pub fn hash_password_with_random_salt(
+    password: &SecretBox<[u8]>,
+    params: Argon2idParams,
+) -> Result<String> {
+    // 16-byte CSPRNG-generated salt — RFC 9106 § 3.1 minimum is 8;
+    // OWASP recommends ≥ 16 for production. The salt is allocated
+    // here so callers get the recommended length without per-call
+    // sizing decisions.
+    let salt = crate::crypto::rng::try_random_bytes(16)?;
+    hash_password(password, &salt, params)
+}
+
 /// Upper-bound limits on the cost parameters embedded in a PHC string
 /// during [`verify_password`].
 ///

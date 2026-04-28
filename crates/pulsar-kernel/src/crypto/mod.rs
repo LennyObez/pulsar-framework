@@ -64,6 +64,7 @@ pub mod hash;
 pub mod hkdf;
 pub mod hmac;
 pub mod kem;
+pub mod rng;
 pub mod signature;
 
 pub use aead::{AeadAlgorithm, AeadKey};

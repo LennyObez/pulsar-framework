@@ -7,7 +7,36 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-### Sprint 1.1 — kernel crypto (Phase 1.1.B.4: HMAC + HKDF + Argon2id safe wrappers, in progress)
+### Sprint 1.1 — kernel crypto (Phase 1.1.B.5: CSPRNG abstraction + Argon2id random-salt convenience, in progress)
+
+Fifth sub-phase of Phase 1.1.B. Lands `pulsar-kernel::crypto::rng` — the kernel-level CSPRNG abstraction over the OS entropy source (`getrandom(2)` on Linux, `BCryptGenRandom` on Windows, `SecRandomCopyBytes` on macOS) via the `rand` / `rand_core` ecosystem's `OsRng`. The OS interface is the only entropy source Pulsar uses for cryptographic operations — no userspace PRNG is permitted on the cryptographic-key path per the regulated-domain audit posture. Phase 1.1.C lands the libcrux post-quantum primitives (ML-KEM-768 + ML-DSA-65) which depend on this RNG abstraction for keypair generation and ML-KEM encapsulation.
+
+* **`pulsar-kernel::crypto::rng`** — CSPRNG entry points. `try_random_bytes(n: usize) -> Result<Vec<u8>>` allocates a fresh `Vec<u8>` filled with `n` cryptographically-secure random bytes; `try_random_into(&mut [u8]) -> Result<()>` writes random bytes into a caller-provided slice (slice-API parity with the Vec-allocating form, suitable for stack buffers). Both surfaces are fallible — the OS-level call can fail under documented degenerate cases (very early boot, exhausted entropy pool on minimal kernels, sandboxes blocking the syscall) and the failure is surfaced as `Error::RngFailure`. Pulsar deliberately does NOT expose `rand::RngCore::fill_bytes`-style infallible variants per the project's "no panics in library code" policy.
+* **Custom RNG injection** — `rand::CryptoRng` and `rand::RngCore` are re-exported as `crypto::rng::CryptoRng` and `crypto::rng::RngCoreTrait` for callers (test infrastructure, deterministic-failure debugging) that pass a seeded RNG; production paths should use the concrete `OsRng`-backed helpers above.
+* **`crypto::argon2::hash_password_with_random_salt`** — Argon2id PHC-string password hashing with a fresh CSPRNG-generated 16-byte salt. Equivalent to [`hash_password`] but generates the salt internally via [`crypto::rng::try_random_bytes`], removing the per-call salt-generation responsibility from the caller (the most common implementation defect in password handling). Each call produces a unique PHC string even for the same `(password, params)` input. OWASP "≥ 16 bytes from a CSPRNG" recommendation enforced at the call site.
+* **Error enum extension** — one new variant: `RngFailure` (CSPRNG entropy source failed). Documented as fatal-but-transient — production code should abort the in-flight operation rather than retry with reduced entropy.
+
+**Tests** (9 new tests across two integration test files):
+
+* **`tests/rng_property.rs`** (4 properties using `proptest` + 2 unit tests):
+  - `random_bytes` length matches request across `[0, 1024)`
+  - distinct calls yield distinct 32-byte outputs (probabilistic)
+  - `random_into` fills the entire slice (non-zero output for n ≥ 1)
+  - slice-API parity (`try_random_into` and `try_random_bytes` produce same-length output)
+  - zero-length `try_random_bytes(0)` returns empty `Vec` without panic
+  - zero-length `try_random_into(&mut [])` is a no-op without panic
+* **`tests/argon2_random_salt.rs`** (3 tests):
+  - round-trip — produce PHC string with random salt, verify original password
+  - distinct PHC strings — two calls with same `(password, params)` produce different outputs (different salts)
+  - wrong-password rejection still fires when salt was randomly generated → `PasswordVerifyFailed`
+
+Quality gates verified locally:
+  - cargo fmt --all -- --check ✓
+  - cargo clippy -p pulsar-kernel --all-targets -- -D warnings ✓
+  - cargo nextest run -p pulsar-kernel (131/131 PASS, +9 from this phase) ✓
+  - cargo test -p pulsar-kernel --doc ✓
+
+### Sprint 1.1 — kernel crypto (Phase 1.1.B.4: HMAC + HKDF + Argon2id safe wrappers — merged 2026-04-28 as `2da454a1`)
 
 Fourth sub-phase of Phase 1.1.B. Lands `pulsar-kernel::crypto::hmac` (HMAC-SHA-2 + HMAC-BLAKE2 per RFC 4231 / FIPS 198-1 / RFC 7693), `pulsar-kernel::crypto::hkdf` (HKDF per RFC 5869 over the same HMAC algorithm enum), and `pulsar-kernel::crypto::argon2` (Argon2id per RFC 9106 via RustCrypto's audited `argon2` 0.5 crate per Decision 2.60). Phase 1.1.B sub-phases now cover hash + AEAD + signature + KEM + HMAC + HKDF + Argon2id; Phase 1.1.C ships the post-quantum primitives (ML-KEM-768 + ML-DSA-65) via libcrux.
 

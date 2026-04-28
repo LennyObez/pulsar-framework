@@ -124,6 +124,18 @@ pub enum Error {
     /// `*_malloc` constructor). Out-of-memory at the C layer.
     #[error("EverCrypt state allocation failed")]
     StateAllocationFailed,
+
+    /// Cryptographically-secure random-byte generation failed. The
+    /// kernel surfaces this when the OS-level entropy source
+    /// (`getrandom(2)` on Linux, `BCryptGenRandom` on Windows,
+    /// `SecRandomCopyBytes` on macOS, etc.) returns an error. In
+    /// practice this only fires on very early boot, exhausted entropy
+    /// pools on minimal kernels, or sandboxed environments where the
+    /// system call is blocked. Production code paths should treat this
+    /// as a fatal-but-transient condition and abort the in-flight
+    /// operation rather than retrying with reduced entropy.
+    #[error("CSPRNG entropy source failed")]
+    RngFailure,
 }
 
 /// Crate-local `Result` alias per plan Section XVII.7.
