@@ -1,0 +1,7 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 3dd194b48bfd0d97bf8effae4009987de75e6563a933e4c6ee98b324091b536e # shrinks to algo = Sha256, salt = [], ikm_bytes = [35, 65, 18, 113, 183, 74, 150, 234, 197, 5, 239, 251, 85, 112, 167, 192, 158, 44, 208, 197, 188, 74, 86, 246, 231], info_a = [2, 30, 67, 156, 88, 236, 138, 182, 64, 45, 174, 185, 195, 62, 181, 192, 113, 201, 221, 63, 36, 65, 155, 45, 250, 16], info_b = [70, 76, 217, 33, 95, 197, 63, 108, 207, 235, 160, 134, 242, 35, 98, 244, 97, 49], length = 1

@@ -78,7 +78,12 @@ proptest::proptest! {
 
     /// Distinct IKMs (with same salt + info + length) produce distinct
     /// OKMs. Probabilistic — for random IKMs the chance of identical
-    /// OKMs is negligible (≈ 2⁻⁸ᴸ where L is the requested output).
+    /// OKMs is bounded by 2⁻⁸ᴸ where L is the requested output. Lower
+    /// bound on `length` is 8 bytes (≈ 2⁻⁶⁴ collision probability,
+    /// effectively zero across realistic test budgets) — short
+    /// outputs (1–7 bytes) trip false positives at observable rates
+    /// because `prop_assume!(ikm_a != ikm_b)` does not enforce
+    /// distinct OKMs, only distinct inputs.
     #[test]
     fn distinct_ikm_yields_distinct_okm(
         algo in proptest::sample::select(ALGORITHMS),
@@ -86,7 +91,7 @@ proptest::proptest! {
         ikm_a_bytes in proptest::collection::vec(any::<u8>(), 1..64),
         ikm_b_bytes in proptest::collection::vec(any::<u8>(), 1..64),
         info in proptest::collection::vec(any::<u8>(), 0..32),
-        length in 1_usize..64,
+        length in 8_usize..64,
     ) {
         proptest::prop_assume!(ikm_a_bytes != ikm_b_bytes);
 
@@ -104,7 +109,9 @@ proptest::proptest! {
 
     /// Distinct salts (with same IKM + info + length) produce distinct
     /// OKMs. The salt is mixed into the PRK via HMAC(salt, IKM), so
-    /// any change in salt cascades into the OKM.
+    /// any change in salt cascades into the OKM. Same 8-byte
+    /// `length` floor as `distinct_ikm_yields_distinct_okm` to bound
+    /// false positives at ~2⁻⁶⁴.
     #[test]
     fn distinct_salt_yields_distinct_okm(
         algo in proptest::sample::select(ALGORITHMS),
@@ -112,7 +119,7 @@ proptest::proptest! {
         salt_b in proptest::collection::vec(any::<u8>(), 1..32),
         ikm_bytes in proptest::collection::vec(any::<u8>(), 1..64),
         info in proptest::collection::vec(any::<u8>(), 0..32),
-        length in 1_usize..64,
+        length in 8_usize..64,
     ) {
         proptest::prop_assume!(salt_a != salt_b);
 
@@ -129,7 +136,8 @@ proptest::proptest! {
 
     /// Distinct infos (with same salt + IKM + length) produce distinct
     /// OKMs. The info string parameterises the expand step's domain
-    /// separation per RFC 5869 § 3.2.
+    /// separation per RFC 5869 § 3.2. Same 8-byte `length` floor as
+    /// the IKM / salt distinctness properties.
     #[test]
     fn distinct_info_yields_distinct_okm(
         algo in proptest::sample::select(ALGORITHMS),
@@ -137,7 +145,7 @@ proptest::proptest! {
         ikm_bytes in proptest::collection::vec(any::<u8>(), 1..64),
         info_a in proptest::collection::vec(any::<u8>(), 1..32),
         info_b in proptest::collection::vec(any::<u8>(), 1..32),
-        length in 1_usize..64,
+        length in 8_usize..64,
     ) {
         proptest::prop_assume!(info_a != info_b);
 

@@ -6794,6 +6794,7 @@ dependencies = [
  "hex",
  "proptest",
  "pulsar-crypto-hacl-bindings",
+ "rand 0.8.6",
  "secrecy",
  "subtle",
  "thiserror 2.0.18",
