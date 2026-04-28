@@ -80,10 +80,12 @@ impl X25519PrivateKey {
 
     /// Generate a fresh X25519 private key using the OS CSPRNG.
     ///
-    /// Draws 32 bytes via [`crate::crypto::rng::try_random_into`] and
-    /// wraps them in [`SecretBox<[u8]>`]. HACL\*'s clamping (RFC 7748
-    /// § 5) is applied internally on first use, so any 32-byte
-    /// random input is acceptable as a scalar.
+    /// Draws 32 bytes via [`crate::crypto::rng::try_random_bytes`]
+    /// (a heap-allocating `Vec<u8>` that becomes the
+    /// [`SecretBox<[u8]>`] backing storage in a single allocation —
+    /// no intermediate stack copy). HACL\*'s clamping (RFC 7748 § 5)
+    /// is applied internally on first use, so any 32-byte random
+    /// input is acceptable as a scalar.
     ///
     /// # Errors
     ///

@@ -152,7 +152,6 @@ fn hybrid_kem_validate_accepts_fresh_public_key() {
 #[test]
 fn hybrid_kem_decap_rejects_small_order_x25519_in_ciphertext() {
     use pulsar_kernel::crypto::kem::X25519PublicKey;
-    use pulsar_kernel::crypto::ml_kem::MlKem768Ciphertext;
     use pulsar_kernel::error::Error;
 
     let kp = HybridKemKeyPair::try_generate().expect("keypair should succeed");
@@ -169,11 +168,8 @@ fn hybrid_kem_decap_rejects_small_order_x25519_in_ciphertext() {
 
     match kp.private_key().try_decapsulate(&tampered) {
         Err(Error::InvalidPublicKey) => {} // expected
-        other => panic!("expected InvalidPublicKey for small-order X25519 share; got {other:?}",),
+        other => panic!("expected InvalidPublicKey for small-order X25519 share; got {other:?}"),
     }
-
-    // For coverage: drop unused import warnings on MlKem768Ciphertext (used implicitly)
-    let _: Option<MlKem768Ciphertext> = None;
 }
 
 /// Tampering the ML-KEM share in the ciphertext yields a divergent
@@ -242,9 +238,9 @@ fn hybrid_kem_decap_diverges_on_tampered_x25519_share() {
     );
 }
 
-/// `Debug` impls do not leak signing-key bytes. Hybrid private key
+/// `Debug` impls do not leak private-key bytes. Hybrid private key
 /// uses `finish_non_exhaustive`; constituent shares delegate to their
-/// own redacting Debug impls.
+/// own redacting Debug impls (X25519 + ML-KEM private keys).
 #[test]
 fn hybrid_kem_debug_redacts_private_key() {
     let kp = HybridKemKeyPair::try_generate().expect("keypair should succeed");

@@ -79,11 +79,12 @@ impl Ed25519PrivateKey {
 
     /// Generate a fresh Ed25519 private key using the OS CSPRNG.
     ///
-    /// Draws 32 bytes via [`crate::crypto::rng::try_random_into`] and
-    /// wraps them in [`SecretBox<[u8]>`]. The seed is hashed via
-    /// SHA-512 internally on first use to derive the actual signing
-    /// scalar (RFC 8032 § 5.1.5), so any 32-byte random input is
-    /// acceptable.
+    /// Draws 32 bytes via [`crate::crypto::rng::try_random_bytes`]
+    /// (a heap-allocating `Vec<u8>` that becomes the
+    /// [`SecretBox<[u8]>`] backing storage in a single allocation —
+    /// no intermediate stack copy). The seed is hashed via SHA-512
+    /// internally on first use to derive the actual signing scalar
+    /// (RFC 8032 § 5.1.5), so any 32-byte random input is acceptable.
     ///
     /// # Errors
     ///

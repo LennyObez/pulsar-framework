@@ -68,7 +68,7 @@ use crate::crypto::kem::{X25519PrivateKey, X25519PublicKey};
 use crate::crypto::ml_kem::{
     MlKem768Ciphertext, MlKem768KeyPair, MlKem768PrivateKey, MlKem768PublicKey,
 };
-use crate::error::Result;
+use crate::error::{Error, Result};
 use secrecy::{ExposeSecret, SecretBox};
 
 /// HKDF salt used as the hybrid-KEM domain-separation label. Versioned
@@ -173,25 +173,26 @@ impl HybridKemPublicKey {
         out
     }
 
-    /// Validate the hybrid public key. Validates the ML-KEM-768 share
-    /// per FIPS 203 § 7.2 (modulus check); the X25519 share is
-    /// validated lazily at encapsulation time via HACL\*'s
-    /// small-order-rejection check inside `diffie_hellman`.
+    /// Validate the hybrid public key.
+    ///
+    /// **Scope**: validates ONLY the ML-KEM-768 share per FIPS 203 §
+    /// 7.2 (modulus check). The X25519 share has no spec-mandated
+    /// pre-DH validation step — RFC 7748 specifies small-order
+    /// rejection at Diffie-Hellman time, which HACL\* enforces inside
+    /// [`X25519PrivateKey::diffie_hellman`] via its F\* postcondition
+    /// (returning [`Error::InvalidPublicKey`] from
+    /// [`try_encapsulate`](Self::try_encapsulate) when the X25519
+    /// share is small-order). Callers that need eager X25519
+    /// validation must probe via a dummy DH against a fresh
+    /// ephemeral key — Pulsar's wrapper deliberately defers this to
+    /// keep `validate()` free of latency-introducing dummy operations.
     ///
     /// # Errors
     ///
     /// - [`Error::InvalidPublicKey`] — the ML-KEM share fails its
-    ///   FIPS-203 modulus check, or the X25519 share is the
-    ///   small-order all-zeros point (caught at encapsulation time).
+    ///   FIPS-203 § 7.2 modulus check.
     pub fn validate(&self) -> Result<()> {
-        // ML-KEM has explicit FIPS 203 § 7.2 validation.
-        self.pqc.validate()?;
-        // X25519 has no spec-mandated explicit validation step
-        // (RFC 7748 says small-order checks are at DH time, which
-        // HACL* handles via Error::InvalidPublicKey from diffie_hellman).
-        // We could probe by doing a dummy DH against a fresh ephemeral
-        // key, but that adds ~µs per call; defer to actual encap.
-        Ok(())
+        self.pqc.validate()
     }
 
     /// Encapsulate against this hybrid public key.
@@ -207,9 +208,18 @@ impl HybridKemPublicKey {
     /// # Errors
     ///
     /// - [`Error::RngFailure`] — the OS CSPRNG returned an error
-    ///   during ephemeral-keypair or ML-KEM seed generation.
-    /// - [`Error::InvalidPublicKey`] — the X25519 share is a
-    ///   small-order point (HACL\*'s F\* postcondition).
+    ///   during EITHER the ephemeral X25519 keypair generation (32
+    ///   bytes via [`X25519PrivateKey::try_generate`]) OR the ML-KEM
+    ///   encapsulation seed generation (32 bytes via
+    ///   [`MlKem768PublicKey::try_encapsulate`]). Both call sites
+    ///   route through [`crate::crypto::rng::try_random_into`].
+    /// - [`Error::InvalidPublicKey`] — the stored X25519 public key
+    ///   share is a small-order point that the ephemeral DH cannot
+    ///   produce a useful shared secret against (HACL\*'s F\*
+    ///   postcondition rejects small-order peers).
+    /// - [`Error::InvalidKeyLength`] — defensive check inside the
+    ///   HKDF combiner; not reachable on the happy path because the
+    ///   constituent shared secrets are spec-fixed at 32 bytes.
     pub fn try_encapsulate(&self) -> Result<(HybridKemCiphertext, SecretBox<[u8]>)> {
         // 1. Ephemeral X25519 keypair.
         let ephemeral_secret = X25519PrivateKey::try_generate()?;
@@ -220,7 +230,7 @@ impl HybridKemPublicKey {
         let (ct_mlkem, ss_mlkem) = self.pqc.try_encapsulate()?;
 
         // 3. Combine via HKDF-SHA-256. IKM = ss_x25519 || ss_mlkem.
-        let combined_ikm = combine_ikm(ss_x25519.expose_secret(), ss_mlkem.expose_secret());
+        let combined_ikm = combine_ikm(ss_x25519.expose_secret(), ss_mlkem.expose_secret())?;
         let shared_secret = hkdf::hkdf(
             HmacAlgorithm::Sha256,
             HYBRID_SALT,
@@ -289,6 +299,9 @@ impl HybridKemPrivateKey {
     /// - [`Error::InvalidPublicKey`] — the X25519 ephemeral share in
     ///   `ciphertext` is a small-order point (HACL\*'s F\*
     ///   postcondition rejects this).
+    /// - [`Error::InvalidKeyLength`] — defensive check inside the
+    ///   HKDF combiner; not reachable on the happy path because the
+    ///   constituent shared secrets are spec-fixed at 32 bytes.
     pub fn try_decapsulate(&self, ciphertext: &HybridKemCiphertext) -> Result<SecretBox<[u8]>> {
         // 1. X25519 DH against the ciphertext's ephemeral share.
         let ss_x25519 = self.classical.diffie_hellman(&ciphertext.classical)?;
@@ -302,7 +315,7 @@ impl HybridKemPrivateKey {
         let ss_mlkem = self.pqc.decapsulate(&ciphertext.pqc);
 
         // 3. Combine via HKDF-SHA-256.
-        let combined_ikm = combine_ikm(ss_x25519.expose_secret(), ss_mlkem.expose_secret());
+        let combined_ikm = combine_ikm(ss_x25519.expose_secret(), ss_mlkem.expose_secret())?;
         hkdf::hkdf(
             HmacAlgorithm::Sha256,
             HYBRID_SALT,
@@ -444,12 +457,47 @@ impl HybridKemKeyPair {
     }
 }
 
+/// Expected length of the X25519 shared-secret share fed into the
+/// hybrid combiner (RFC 7748 § 5).
+const X25519_SHARED_LEN: usize = 32;
+
+/// Expected length of the ML-KEM-768 shared-secret share fed into
+/// the hybrid combiner (FIPS 203 § 6.1).
+const MLKEM_SHARED_LEN: usize = 32;
+
 /// Combine two 32-byte shared secrets into a 64-byte HKDF input
 /// keying material wrapped in [`SecretBox<[u8]>`]. Order is
 /// `ss_classical || ss_pqc` per the IETF X25519MLKEM768 convention.
-fn combine_ikm(ss_classical: &[u8], ss_pqc: &[u8]) -> SecretBox<[u8]> {
+///
+/// Validates input lengths against the spec-fixed
+/// [`X25519_SHARED_LEN`] / [`MLKEM_SHARED_LEN`] constants — a future
+/// refactor that accidentally passes wrong-length material fails fast
+/// with [`Error::InvalidKeyLength`] instead of silently deriving a
+/// different shared secret. In normal operation both inputs always
+/// satisfy the length invariant by construction (HACL\* X25519 DH
+/// always returns 32 bytes; libcrux ML-KEM-768 decap always returns
+/// 32 bytes), so the check is defence-in-depth, not load-bearing on
+/// the happy path.
+///
+/// # Errors
+///
+/// - [`Error::InvalidKeyLength`] — `ss_classical.len() != 32` or
+///   `ss_pqc.len() != 32`.
+fn combine_ikm(ss_classical: &[u8], ss_pqc: &[u8]) -> Result<SecretBox<[u8]>> {
+    if ss_classical.len() != X25519_SHARED_LEN {
+        return Err(Error::InvalidKeyLength {
+            expected: X25519_SHARED_LEN,
+            actual: ss_classical.len(),
+        });
+    }
+    if ss_pqc.len() != MLKEM_SHARED_LEN {
+        return Err(Error::InvalidKeyLength {
+            expected: MLKEM_SHARED_LEN,
+            actual: ss_pqc.len(),
+        });
+    }
     let mut combined = Vec::with_capacity(ss_classical.len() + ss_pqc.len());
     combined.extend_from_slice(ss_classical);
     combined.extend_from_slice(ss_pqc);
-    SecretBox::new(combined.into_boxed_slice())
+    Ok(SecretBox::new(combined.into_boxed_slice()))
 }
