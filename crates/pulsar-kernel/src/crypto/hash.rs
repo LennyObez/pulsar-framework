@@ -42,33 +42,10 @@
 // `unsafe_code = deny` — none of them touch FFI directly.
 #![allow(unsafe_code)]
 
+use crate::crypto::ensure_initialized;
 use crate::error::{Error, Result};
 use core::ptr::NonNull;
 use pulsar_crypto_hacl_bindings::ffi;
-use std::sync::Once;
-
-/// Initialise EverCrypt's runtime CPU-feature dispatcher exactly once
-/// per process. HACL\* docs guarantee idempotence on repeated calls;
-/// `Once` avoids the redundant atomic synchronisation cost on the
-/// hot path.
-///
-/// HACL\* contract reference:
-/// `crates/pulsar-crypto-hacl-bindings/hacl-c/include/EverCrypt_AutoConfig2.h`
-/// declares `EverCrypt_AutoConfig2_init` as the canonical initialiser;
-/// the upstream HACL\* test harness (`hacl-star/tests/`) and Mozilla NSS
-/// production usage both rely on the documented idempotence.
-static AUTOCONFIG_INIT: Once = Once::new();
-
-fn ensure_initialized() {
-    AUTOCONFIG_INIT.call_once(|| {
-        // SAFETY: `EverCrypt_AutoConfig2_init` takes no arguments,
-        // returns void, and has no caller-side state to clean up. HACL\*
-        // documents it as safe to call multiple times — `Once` enforces
-        // the "exactly once" semantic without runtime cost on subsequent
-        // hash invocations.
-        unsafe { ffi::EverCrypt_AutoConfig2_init() };
-    });
-}
 
 /// Cryptographic hash algorithms supported by `pulsar-kernel::crypto`.
 ///

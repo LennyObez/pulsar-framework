@@ -69,9 +69,39 @@ pub enum Error {
     #[error("AEAD authentication failed (tag mismatch or wrong key)")]
     AeadAuthFailed,
 
+    /// HMAC verification failed — message was tampered with or the wrong
+    /// key was used. The wrapper performs constant-time tag comparison
+    /// (`subtle::ConstantTimeEq`) so the failure path leaks no timing
+    /// information about which byte position differed.
+    #[error("MAC verification failed (tag mismatch or wrong key)")]
+    MacVerifyFailed,
+
     /// Digital-signature verification failed.
     #[error("signature verification failed")]
     SignatureVerifyFailed,
+
+    /// Argon2id password verification failed — supplied password did
+    /// not match the stored hash. Returned in constant time relative to
+    /// the comparison step (`argon2::PasswordVerifier::verify_password`
+    /// performs constant-time comparison internally).
+    #[error("Argon2id password verification failed")]
+    PasswordVerifyFailed,
+
+    /// Argon2id parameters fall outside the RFC 9106 § 3.1 admissible
+    /// range. Specific bounds are documented on
+    /// [`crate::crypto::argon2::Argon2idParams::validate`].
+    #[error("Argon2id parameters out of range: {reason}")]
+    InvalidArgon2Params {
+        /// Human-readable reason summarising which bound was violated.
+        reason: &'static str,
+    },
+
+    /// Argon2id PHC string format is malformed or references unsupported
+    /// algorithm/version parameters. Wrapped from
+    /// [`argon2::password_hash::Error`] without preserving the upstream
+    /// variant — Pulsar's surface treats every parse failure uniformly.
+    #[error("Argon2id PHC string is malformed or unsupported")]
+    InvalidPhcString,
 
     /// Public key fails the on-curve / format / range validation step
     /// required before key-material use (per FIPS 203/204 + RFC 7748 +

@@ -31,23 +31,10 @@
 
 #![allow(unsafe_code)]
 
-use crate::crypto::hex_encode_short;
+use crate::crypto::{ensure_initialized, hex_encode_short};
 use crate::error::{Error, Result};
 use pulsar_crypto_hacl_bindings::ffi;
 use secrecy::{ExposeSecret, SecretBox};
-use std::sync::Once;
-
-/// Ensure EverCrypt's CPU dispatcher is initialised — same `Once`
-/// pattern as `crypto::hash` and `crypto::aead`.
-static AUTOCONFIG_INIT: Once = Once::new();
-
-fn ensure_initialized() {
-    AUTOCONFIG_INIT.call_once(|| {
-        // SAFETY: idempotent C function, no caller-side state to clean
-        // up. HACL* documents the call as safe to invoke multiple times.
-        unsafe { ffi::EverCrypt_AutoConfig2_init() };
-    });
-}
 
 /// Ed25519 private signing key (32-byte seed) per RFC 8032.
 ///
