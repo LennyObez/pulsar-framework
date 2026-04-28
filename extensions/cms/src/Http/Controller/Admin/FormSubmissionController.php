@@ -52,9 +52,15 @@ final readonly class FormSubmissionController extends AbstractAdminController
         $tenantId = $this->validateTenantAccess($request);
         $params = $request->getQueryParams();
 
-        $filter = is_string($params['filter'] ?? null) ? $params['filter'] : 'all';
-        $page = max(1, is_int($params['page'] ?? null) ? $params['page'] : 1);
-        $perPage = min(100, max(1, is_int($params['per_page'] ?? null) ? $params['per_page'] : 20));
+        /** @var mixed $rawFilter */
+        $rawFilter = $params['filter'] ?? null;
+        $filter = is_string($rawFilter) ? $rawFilter : 'all';
+        /** @var mixed $rawPage */
+        $rawPage = $params['page'] ?? null;
+        $page = max(1, is_int($rawPage) ? $rawPage : 1);
+        /** @var mixed $rawPerPage */
+        $rawPerPage = $params['per_page'] ?? null;
+        $perPage = min(100, max(1, is_int($rawPerPage) ? $rawPerPage : 20));
         $offset = ($page - 1) * $perPage;
 
         // Push all filtering to the repository query instead of fetching then filtering in PHP
