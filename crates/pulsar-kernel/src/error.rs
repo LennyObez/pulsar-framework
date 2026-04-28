@@ -1,6 +1,100 @@
 //! Crate-level error type per plan Section XVII.7 error strategy.
 //!
-//! Placeholder pending the per-sprint API surface landing. The implementation
-//! exposes exactly one public `Error` enum derived via `thiserror::Error`,
-//! plus the crate-local `type Result<T> = std::result::Result<T, Error>;`
-//! alias as documented in Section XVII.7.
+//! Every fallible kernel operation returns [`Result<T>`] where the [`Error`]
+//! enum is the single source of truth for failure modes. The variants are
+//! `#[non_exhaustive]` so future sprints can add variants without breaking
+//! downstream `match` exhaustiveness assumptions.
+
+use thiserror::Error;
+
+/// Kernel-level error type per plan Section XVII.7.
+#[derive(Debug, Error)]
+#[non_exhaustive]
+pub enum Error {
+    /// Cryptographic input length exceeds the protocol-specified maximum.
+    /// Currently emitted at the FFI boundary when input length overflows
+    /// `u32` (HACL\*'s incremental hash + AEAD APIs accept `u32` lengths;
+    /// 4 GiB is the practical ceiling, well above any plausible Pulsar
+    /// payload).
+    #[error("input length {actual} exceeds maximum {max}")]
+    InputTooLong {
+        /// The actual input length that caused the overflow.
+        actual: usize,
+        /// The maximum length accepted by the underlying primitive.
+        max: usize,
+    },
+
+    /// Hash input cumulative length exceeded the algorithm's per-message
+    /// limit. EverCrypt's incremental hash returns
+    /// `EverCrypt_Error_MaximumLengthExceeded` when the sum of all
+    /// `update` chunk lengths since `init` exceeds the algorithm-specific
+    /// ceiling: 2^61 − 1 bytes for SHA-2-256, 2^64 − 1 bytes for SHA-2-
+    /// 384/512 + SHA-3 + BLAKE2. The limits are practically unreachable
+    /// (2^61 bytes ≈ 2 EiB) but the variant exists for completeness of
+    /// the FFI status-code mapping.
+    #[error("hash input cumulative length exceeded the algorithm's per-message limit")]
+    HashInputLimitExceeded,
+
+    /// Cryptographic key length does not match the algorithm's expected length.
+    #[error("invalid key length: expected {expected}, got {actual}")]
+    InvalidKeyLength {
+        /// Algorithm-required key length in bytes.
+        expected: usize,
+        /// Length supplied by the caller.
+        actual: usize,
+    },
+
+    /// Cryptographic nonce / IV length does not match the algorithm's expected length.
+    #[error("invalid nonce length: expected {expected}, got {actual}")]
+    InvalidNonceLength {
+        /// Algorithm-required nonce length in bytes.
+        expected: usize,
+        /// Length supplied by the caller.
+        actual: usize,
+    },
+
+    /// Output buffer length does not match the algorithm's expected length.
+    /// Emitted when caller-allocated buffers are sized incorrectly.
+    #[error("invalid output buffer length: expected {expected}, got {actual}")]
+    InvalidOutputLength {
+        /// Algorithm-required output length in bytes.
+        expected: usize,
+        /// Length supplied by the caller.
+        actual: usize,
+    },
+
+    /// AEAD authentication tag verification failed — ciphertext was tampered
+    /// with or the wrong key was used. Returned in constant time relative to
+    /// the tag-comparison step (per HACL\*'s constant-time invariant).
+    #[error("AEAD authentication failed (tag mismatch or wrong key)")]
+    AeadAuthFailed,
+
+    /// Digital-signature verification failed.
+    #[error("signature verification failed")]
+    SignatureVerifyFailed,
+
+    /// Public key fails the on-curve / format / range validation step
+    /// required before key-material use (per FIPS 203/204 + RFC 7748 +
+    /// RFC 8032 validation requirements).
+    #[error("public key validation failed (off-curve, malformed, or out of range)")]
+    InvalidPublicKey,
+
+    /// HACL\* / EverCrypt FFI surface returned a non-success status code
+    /// that doesn't map to a more specific variant above. The wrapped
+    /// [`pulsar_crypto_hacl_bindings::error::Error`] preserves the
+    /// underlying status for diagnostic logging.
+    #[error("HACL* FFI returned an error: {source}")]
+    Hacl {
+        /// The underlying FFI error code from the binding crate.
+        #[from]
+        source: pulsar_crypto_hacl_bindings::error::Error,
+    },
+
+    /// EverCrypt failed to allocate state (returned NULL from the
+    /// `*_malloc` constructor). Out-of-memory at the C layer.
+    #[error("EverCrypt state allocation failed")]
+    StateAllocationFailed,
+}
+
+/// Crate-local `Result` alias per plan Section XVII.7.
+pub type Result<T> = core::result::Result<T, Error>;
