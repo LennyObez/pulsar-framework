@@ -52,9 +52,15 @@ final readonly class CommentController extends AbstractAdminController
         $this->authorize($identity, 'cms.comments.moderate');
 
         $params = $request->getQueryParams();
-        $statusFilter = is_string($params['status'] ?? null) ? $params['status'] : 'pending';
-        $page = max(1, is_int($params['page'] ?? null) ? $params['page'] : 1);
-        $perPage = min(100, max(1, is_int($params['per_page'] ?? null) ? $params['per_page'] : 20));
+        /** @var mixed $rawStatus */
+        $rawStatus = $params['status'] ?? null;
+        $statusFilter = is_string($rawStatus) ? $rawStatus : 'pending';
+        /** @var mixed $rawPage */
+        $rawPage = $params['page'] ?? null;
+        $page = max(1, is_int($rawPage) ? $rawPage : 1);
+        /** @var mixed $rawPerPage */
+        $rawPerPage = $params['per_page'] ?? null;
+        $perPage = min(100, max(1, is_int($rawPerPage) ? $rawPerPage : 20));
 
         /** @var string|null $tenantId */
         $tenantId = $request->getAttribute('tenant_id');
@@ -89,9 +95,15 @@ final readonly class CommentController extends AbstractAdminController
         $this->authorize($identity, 'cms.comments.moderate');
 
         $params = $request->getQueryParams();
-        $filter = is_string($params['filter'] ?? null) ? $params['filter'] : 'pending';
-        $page = max(1, is_int($params['page'] ?? null) ? $params['page'] : 1);
-        $perPage = min(100, max(1, is_int($params['per_page'] ?? null) ? $params['per_page'] : 20));
+        /** @var mixed $rawFilter */
+        $rawFilter = $params['filter'] ?? null;
+        $filter = is_string($rawFilter) ? $rawFilter : 'pending';
+        /** @var mixed $rawPage */
+        $rawPage = $params['page'] ?? null;
+        $page = max(1, is_int($rawPage) ? $rawPage : 1);
+        /** @var mixed $rawPerPage */
+        $rawPerPage = $params['per_page'] ?? null;
+        $perPage = min(100, max(1, is_int($rawPerPage) ? $rawPerPage : 20));
 
         /** @var string|null $tenantId */
         $tenantId = $request->getAttribute('tenant_id');
