@@ -7,7 +7,46 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-### Sprint 1.1 — kernel crypto (Phase 1.1.C.1: ML-KEM-768 safe wrapper + KATs, in progress)
+### Sprint 1.1 — kernel crypto (Phase 1.1.C.2: ML-DSA-65 safe wrapper + KATs, in progress)
+
+Second sub-phase of Phase 1.1.C (post-quantum safe wrappers per Decision 2.60). Lands `pulsar-kernel::crypto::ml_dsa` — the FIPS 204 ML-DSA-65 digital-signature primitive sourced from `libcrux-ml-dsa 0.0.6` (Cryspen Rust-native, hax + F\* verified). NIST security category 3 ≈ AES-192. Pairs with Phase 1.1.C.1's ML-KEM-768; together they cover NIST's two PQC standards (FIPS 203 KEM + FIPS 204 signature). Phase 1.1.C.3 will combine ML-DSA-65 with Ed25519 to form the Ed25519+ML-DSA-65 hybrid signature per Decision 2.58.
+
+* **`pulsar-kernel::crypto::ml_dsa`** — typed safe wrappers over `libcrux_ml_dsa::ml_dsa_65`. `MlDsa65KeyPair::try_generate()` draws 32 bytes via the Pulsar CSPRNG; `try_from_seed(&seed)` takes a caller-supplied 32-byte seed for deterministic test-vector replay. `MlDsa65SigningKey::try_sign(message, context)` draws 32 bytes of CSPRNG randomness for FIPS 204 § 5.4's randomised-by-default signing; `try_sign_with_seed(message, context, &seed)` lets callers inject the randomness for testing. `MlDsa65VerificationKey::verify(message, context, &signature)` returns `Ok(())` on valid / `Err(SignatureVerifyFailed)` on invalid (collapses every libcrux `VerificationError` variant into a single error with no information leaked about which sub-step failed — matches the [`Ed25519PublicKey::verify`] posture).
+* **Context parameter (FIPS 204 § 5.2 domain separation)** — `sign` / `verify` accept a `&[u8]` context of length ≤ 255 used to separate signing-key reuse across protocols. Empty context (`b""`) is the no-domain-separation default. Mismatched contexts at sign vs verify time cause verification to fail. Excess-length contexts (> 255 bytes) are rejected as `Error::InputTooLong { actual, max: 255 }` at both sign and verify entry points.
+* **Sizes (FIPS 204 ML-DSA-65)** — verification (public) key 1 952 bytes, signing (private) key 4 032 bytes, signature 3 309 bytes, keypair-generation seed 32 bytes, signing randomness seed 32 bytes, max context 255 bytes. Re-exposed as `pulsar_kernel::crypto::ml_dsa::sizes::*` constants.
+* **Key-material handling** — signing keys store the 4 032-byte private key in `secrecy::SecretBox<[u8]>` (zeroize-on-drop) per the canonical Pulsar convention, matching `Ed25519PrivateKey` / `X25519PrivateKey` / `MlKem768PrivateKey`. The wrapper materialises libcrux's `MLDSA65SigningKey` value transiently for each `try_sign*` call via a `zeroize::Zeroizing<[u8; 4032]>` stack buffer; the libcrux transient lives ~µs and falls out of scope without explicit zeroization (libcrux 0.0.6 does not implement `Zeroize`). Stack-side intermediate copies (keygen seeds, signing randomness seeds, signing-key conversion buffers) are wrapped in `Zeroizing`. Verification keys + signatures are unwrapped (non-secret per the digital-signature threat model). `MlDsa65SigningKey::from_bytes` consumes the input `SecretBox<[u8]>` (matches the canonical consume-pattern documented in `crypto::mod`).
+* **Error enum extension** — one new variant: `SigningFailed` (libcrux's rejection-sampling loop in FIPS 204 § 5.4 exceeded the maximum number of attempts — vanishingly rare; treat as fatal-but-transient).
+* **Module re-exports** in `pulsar-kernel::crypto::mod` and `pulsar-kernel::prelude`: `MlDsa65KeyPair`, `MlDsa65SigningKey`, `MlDsa65VerificationKey`, `MlDsa65Signature`. The `sizes` sub-module is reachable via `pulsar_kernel::crypto::ml_dsa::sizes`.
+
+**Tests** (17 new tests across two integration test files):
+
+* **`tests/ml_dsa_kat.rs`** (12 tests):
+  - sizes match FIPS 204 ML-DSA-65 (4032/1952/3309/32/32/255) — pinned via constants
+  - sign/verify round-trip with fixed seed (reproducible across CI runs)
+  - seed-driven keypair generation is deterministic (same seed → same verification key)
+  - signing with a fixed randomness seed is deterministic (same `(sk, message, context, signing_seed)` → same signature)
+  - verification rejects tampered messages → `SignatureVerifyFailed`
+  - verification rejects tampered signatures (single-bit flip) → `SignatureVerifyFailed`
+  - FIPS 204 § 5.2 domain separation — context mismatch at sign vs verify → `SignatureVerifyFailed`
+  - verification rejects wrong (unrelated) verification keys
+  - signing rejects oversize context (256 bytes) → `InputTooLong { actual: 256, max: 255 }`
+  - verifying rejects oversize context → `InputTooLong { actual: 256, max: 255 }`
+  - length-validation paths for keygen seed (31 vs 32), signing key (4031 vs 4032), signing seed (31 vs 32) → `InvalidKeyLength`
+  - `Debug` redacts signing-key bytes (`finish_non_exhaustive` `..` marker), verification-key Debug shows hex prefix
+* **`tests/ml_dsa_property.rs`** (5 properties using `proptest`, 32 cases each — ML-DSA ops cost 100s of µs):
+  - sign/verify round-trip across random `(keygen_seed, signing_seed, message)` triples
+  - distinct keygen seeds yield distinct verification keys (probabilistic — collision bounded by 2⁻¹⁵⁰⁰⁰ish on 1 952-byte keys)
+  - distinct signing seeds yield distinct signatures under same `(sk, message, context)` (FIPS 204 § 5.4 randomised signing)
+  - verification rejects tampered messages (single-bit flip) → `SignatureVerifyFailed`
+  - verification rejects signatures verified under wrong verification keys
+
+Quality gates verified locally:
+  - cargo fmt --all -- --check ✓
+  - cargo clippy -p pulsar-kernel --all-targets -- -D warnings ✓
+  - cargo nextest run -p pulsar-kernel (164/164 PASS, +17 from this phase) ✓
+  - cargo test -p pulsar-kernel --doc ✓
+
+### Sprint 1.1 — kernel crypto (Phase 1.1.C.1: ML-KEM-768 safe wrapper + KATs — merged 2026-04-28 as `a8854e7b`)
 
 First sub-phase of Phase 1.1.C (post-quantum safe wrappers per Decision 2.60). Lands `pulsar-kernel::crypto::ml_kem` — the FIPS 203 ML-KEM-768 key-encapsulation primitive sourced from `libcrux-ml-kem 0.0.8` (Cryspen Rust-native, hax + F\* verified, NIST security category 3 ≈ AES-192). Phase 1.1.C.2 lands ML-DSA-65 (FIPS 204) and Phase 1.1.C.3 the hybrid X25519+ML-KEM-768 / Ed25519+ML-DSA-65 constructions per Decision 2.58.
 

@@ -80,6 +80,16 @@ pub enum Error {
     #[error("signature verification failed")]
     SignatureVerifyFailed,
 
+    /// Digital-signature signing failed at the primitive layer. ML-DSA
+    /// returns this for rejection-sampling overflow (the rejection
+    /// loop in FIPS 204 § 5.4 exceeds the maximum number of
+    /// attempts) — a probabilistic but vanishingly rare runtime
+    /// condition. Callers should treat this as fatal-but-transient
+    /// and abort the in-flight operation rather than retrying with
+    /// the same `(key, message, context)` triple.
+    #[error("signing failed at the primitive layer")]
+    SigningFailed,
+
     /// Argon2id password verification failed — supplied password did
     /// not match the stored hash. Returned in constant time relative to
     /// the comparison step (`argon2::PasswordVerifier::verify_password`
