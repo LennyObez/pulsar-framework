@@ -64,6 +64,7 @@ pub mod hash;
 pub mod hkdf;
 pub mod hmac;
 pub mod kem;
+pub mod ml_kem;
 pub mod rng;
 pub mod signature;
 
@@ -74,6 +75,7 @@ pub use hash::{sha3_256, sha3_384, sha3_512};
 pub use hash::{sha256, sha384, sha512};
 pub use hmac::{HmacAlgorithm, HmacKey};
 pub use kem::{X25519PrivateKey, X25519PublicKey};
+pub use ml_kem::{MlKem768Ciphertext, MlKem768KeyPair, MlKem768PrivateKey, MlKem768PublicKey};
 pub use signature::{Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature};
 
 /// Ensure HACL\*'s runtime CPU-feature dispatcher
