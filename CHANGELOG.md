@@ -7,7 +7,43 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-### Sprint 1.1 — kernel crypto (Phase 1.1.B.5: CSPRNG abstraction + Argon2id random-salt convenience, in progress)
+### Sprint 1.1 — kernel crypto (Phase 1.1.C.1: ML-KEM-768 safe wrapper + KATs, in progress)
+
+First sub-phase of Phase 1.1.C (post-quantum safe wrappers per Decision 2.60). Lands `pulsar-kernel::crypto::ml_kem` — the FIPS 203 ML-KEM-768 key-encapsulation primitive sourced from `libcrux-ml-kem 0.0.8` (Cryspen Rust-native, hax + F\* verified, NIST security category 3 ≈ AES-192). Phase 1.1.C.2 lands ML-DSA-65 (FIPS 204) and Phase 1.1.C.3 the hybrid X25519+ML-KEM-768 / Ed25519+ML-DSA-65 constructions per Decision 2.58.
+
+* **`pulsar-kernel::crypto::ml_kem`** — typed safe wrappers over `libcrux_ml_kem::mlkem768`. `MlKem768KeyPair::try_generate()` draws 64 bytes via the Pulsar CSPRNG (Phase 1.1.B.5) and returns `(public_key, private_key)`; `try_from_seed(&seed)` takes a caller-supplied 64-byte seed for deterministic test-vector replay. `MlKem768PublicKey::try_encapsulate()` draws 32 bytes of CSPRNG randomness and returns `(ciphertext, shared_secret)`; `try_encapsulate_with_seed(&seed)` lets callers inject randomness. `MlKem768PrivateKey::decapsulate(&ct)` is deterministic and infallible — FIPS 203 § 7.3 implicit rejection means tampered ciphertexts yield deterministic-but-uncorrelated shared secrets that the protocol layer treats as authentication failure. `validate()` on the public key + `validate_against(&ct)` on the private key surface the FIPS 203 § 7.2/7.3 structural checks for untrusted-input paths.
+* **Sizes (FIPS 203 ML-KEM-768)** — public key 1 184 bytes, private key 2 400 bytes, ciphertext 1 088 bytes, shared secret 32 bytes, keypair-generation seed 64 bytes, encapsulation seed 32 bytes. Re-exposed as `pulsar_kernel::crypto::ml_kem::sizes::*` constants for caller-side allocation sizing.
+* **Key-material handling** — private keys hold the libcrux `MlKem768PrivateKey` directly with a custom `Drop` impl that explicitly zeroizes the inner 2 400-byte array on drop (libcrux 0.0.8 does not implement `Zeroize` upstream — Pulsar provides explicit zeroization for the regulated-domain audit posture). Shared secrets returned from encapsulate/decapsulate are wrapped in `secrecy::SecretBox<[u8]>` so downstream HKDF derivation operates on `expose_secret()` without intermediate cleartext copies. Public keys + ciphertexts are unwrapped (non-secret per the KEM threat model). `MlKem768PrivateKey::from_bytes` takes `&SecretBox<[u8]>` (borrowed) — deviates from the consume-pattern documented in `crypto::mod` because libcrux requires copying into a fixed-size array regardless, so consuming the SecretBox would offer no lifecycle benefit; the `Drop` impl handles zeroization on the libcrux side.
+* **Module re-exports** in `pulsar-kernel::crypto::mod` and `pulsar-kernel::prelude`: `MlKem768KeyPair`, `MlKem768PublicKey`, `MlKem768PrivateKey`, `MlKem768Ciphertext`. The `sizes` sub-module is reachable via `pulsar_kernel::crypto::ml_kem::sizes`.
+
+**Tests** (16 new tests across two integration test files):
+
+* **`tests/ml_kem_kat.rs`** (10 tests):
+  - sizes match FIPS 203 ML-KEM-768 (1184/2400/1088/32/64/32) — pinned via constants
+  - encap/decap round-trip with fixed seed (reproducible across CI runs)
+  - seed-driven keypair generation is deterministic (same seed → same keypair)
+  - encapsulation with the same `(pk, encap_seed)` is deterministic (same ciphertext + shared secret on repeat calls)
+  - `validate()` accepts authentic public keys
+  - `validate_against()` accepts authentic `(private_key, ciphertext)` pairs
+  - FIPS 203 § 7.3 implicit rejection — tampered ciphertext under genuine private key yields deterministic-but-uncorrelated shared secret (≠ encapsulator's secret + identical across repeat decap calls)
+  - `try_from_seed` rejects wrong-length seeds (63/65 vs 64) → `InvalidKeyLength`
+  - `from_bytes` rejects wrong-length private keys (2399 vs 2400) → `InvalidKeyLength`
+  - `try_encapsulate_with_seed` rejects wrong-length encap seeds (31 vs 32) → `InvalidKeyLength`
+  - `Debug` redacts private-key bytes (`finish_non_exhaustive` `..` marker), public-key Debug shows hex prefix
+* **`tests/ml_kem_property.rs`** (5 properties using `proptest`, 32 cases each — ML-KEM operations cost 10s of µs):
+  - encap/decap round-trip across random `(keygen_seed, encap_seed)` pairs
+  - distinct keygen seeds yield distinct public keys (probabilistic — collision bounded by 2⁻⁹⁰⁰⁰ish on 1184-byte keys)
+  - distinct encap seeds yield distinct ciphertexts under same public key (probabilistic — bounded by 2⁻⁸⁷⁰⁴)
+  - implicit rejection is deterministic — single-bit ciphertext flip + repeat decap yields byte-identical rejection secrets
+  - implicit rejection secret differs from authentic encapsulator secret (probabilistic — bounded by 2⁻²⁵⁶)
+
+Quality gates verified locally:
+  - cargo fmt --all -- --check ✓
+  - cargo clippy -p pulsar-kernel --all-targets -- -D warnings ✓
+  - cargo nextest run -p pulsar-kernel (146/146 PASS, +16 from this phase) ✓
+  - cargo test -p pulsar-kernel --doc ✓
+
+### Sprint 1.1 — kernel crypto (Phase 1.1.B.5: CSPRNG abstraction + Argon2id random-salt convenience — merged 2026-04-28 as `a9778a73`)
 
 Fifth sub-phase of Phase 1.1.B. Lands `pulsar-kernel::crypto::rng` — the kernel-level CSPRNG abstraction over the OS entropy source (`getrandom(2)` on Linux, `BCryptGenRandom` on Windows, `SecRandomCopyBytes` on macOS) via the `rand` / `rand_core` ecosystem's `OsRng`. The OS interface is the only entropy source Pulsar uses for cryptographic operations — no userspace PRNG is permitted on the cryptographic-key path per the regulated-domain audit posture. Phase 1.1.C lands the libcrux post-quantum primitives (ML-KEM-768 + ML-DSA-65) which depend on this RNG abstraction for keypair generation and ML-KEM encapsulation.
 
