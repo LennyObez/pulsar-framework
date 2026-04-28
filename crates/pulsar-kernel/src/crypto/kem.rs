@@ -78,6 +78,21 @@ impl X25519PrivateKey {
         Ok(Self { secret })
     }
 
+    /// Generate a fresh X25519 private key using the OS CSPRNG.
+    ///
+    /// Draws 32 bytes via [`crate::crypto::rng::try_random_into`] and
+    /// wraps them in [`SecretBox<[u8]>`]. HACL\*'s clamping (RFC 7748
+    /// § 5) is applied internally on first use, so any 32-byte
+    /// random input is acceptable as a scalar.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::RngFailure`] — the OS CSPRNG returned an error.
+    pub fn try_generate() -> Result<Self> {
+        let bytes = crate::crypto::rng::try_random_bytes(Self::SCALAR_LEN)?;
+        Self::from_bytes(SecretBox::new(bytes.into_boxed_slice()))
+    }
+
     /// Derive the public key corresponding to this private scalar.
     /// Computes `[k]G` where `k` is the clamped scalar and `G` is the
     /// Curve25519 base point (u = 9).

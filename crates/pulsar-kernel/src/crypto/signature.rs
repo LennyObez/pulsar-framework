@@ -77,6 +77,22 @@ impl Ed25519PrivateKey {
         Ok(Self { seed })
     }
 
+    /// Generate a fresh Ed25519 private key using the OS CSPRNG.
+    ///
+    /// Draws 32 bytes via [`crate::crypto::rng::try_random_into`] and
+    /// wraps them in [`SecretBox<[u8]>`]. The seed is hashed via
+    /// SHA-512 internally on first use to derive the actual signing
+    /// scalar (RFC 8032 § 5.1.5), so any 32-byte random input is
+    /// acceptable.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::RngFailure`] — the OS CSPRNG returned an error.
+    pub fn try_generate() -> Result<Self> {
+        let bytes = crate::crypto::rng::try_random_bytes(Self::SEED_LEN)?;
+        Self::from_bytes(SecretBox::new(bytes.into_boxed_slice()))
+    }
+
     /// Derive the public key corresponding to this private seed.
     /// Computes the elliptic-curve scalar multiplication
     /// `[s]B` where `s` is the SHA-512-derived scalar from the seed

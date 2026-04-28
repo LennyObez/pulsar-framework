@@ -7,7 +7,43 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-### Sprint 1.1 — kernel crypto (Phase 1.1.C.2: ML-DSA-65 safe wrapper + KATs, in progress)
+### Sprint 1.1 — kernel crypto (Phase 1.1.C.3: hybrid X25519+ML-KEM-768 KEM, in progress)
+
+Third sub-phase of Phase 1.1.C. Lands `pulsar-kernel::crypto::hybrid_kem` — the **hybrid X25519+ML-KEM-768 key-encapsulation mechanism** per Decision 2.58 (every Pulsar protocol that uses key encapsulation runs both KEMs in parallel and combines the shared secrets via HKDF-SHA-256). Defence-in-depth posture: a future quantum adversary cannot break the ML-KEM-768 share, and a future structural attack against ML-KEM-768 leaves the X25519 share at 128-bit-equivalent classical security. The two schemes share neither hardness assumption nor implementation surface. Phase 1.1.C.4 will land the symmetric Ed25519+ML-DSA-65 hybrid signature.
+
+* **`pulsar-kernel::crypto::hybrid_kem`** — typed safe wrappers orchestrating the X25519 + ML-KEM-768 primitives shipped by Phase 1.1.B.3 and Phase 1.1.C.1. `HybridKemKeyPair::try_generate()` independently generates an X25519 keypair (32-byte CSPRNG scalar) and an ML-KEM-768 keypair (64-byte CSPRNG seed) — the two share no entropy. `HybridKemPublicKey::try_encapsulate()` generates an ephemeral X25519 keypair, computes `ss_x25519 = eph_sk.dh(peer_x25519)` + runs `ML-KEM-768::encapsulate(peer_mlkem)`, then combines via HKDF-SHA-256 (salt = `pulsar-hybrid-kem-x25519-mlkem768-v1`, IKM = `ss_x25519 || ss_mlkem`). `HybridKemPrivateKey::try_decapsulate(&ct)` is symmetric. `validate()` on the public key delegates to `MlKem768PublicKey::validate` (FIPS 203 § 7.2); the X25519 share is validated lazily at encapsulation time via HACL\*'s small-order rejection.
+* **Wire format** — IETF X25519MLKEM768 codepoint convention: `pk_x25519 || pk_mlkem` (32 + 1 184 = 1 216 bytes), ciphertext `eph_pk_x25519 || ct_mlkem` (32 + 1 088 = 1 120 bytes). `to_bytes` / `from_bytes` round-trip verified by tests. Wire-format private-key length 2 432 bytes (32 + 2 400) — though the hybrid private key is held in memory as `(X25519PrivateKey, MlKem768PrivateKey)` rather than a serialized buffer.
+* **HKDF combiner (Decision 2.58)** — `HKDF-SHA-256(salt = pulsar-hybrid-kem-x25519-mlkem768-v1, IKM = ss_x25519 || ss_mlkem, info = "", length = 32)`. The salt label provides domain separation against any other Pulsar HKDF use of the same IKM material. The combiner is structurally HKDF-Extract followed by HKDF-Expand to 32 bytes (calls into the existing `crypto::hkdf::hkdf` convenience helper).
+* **Constituent-primitive zeroization** — the hybrid private key holds an `X25519PrivateKey` (SecretBox-wrapped 32-byte scalar) alongside an `MlKem768PrivateKey` (SecretBox-wrapped 2 400-byte private key). Both inherit the canonical Pulsar zeroize-on-drop posture from Phase 1.1.B.3 / Phase 1.1.C.1 — no new private-key storage introduced.
+* **`X25519PrivateKey::try_generate()`** — added in this phase to support hybrid-KEM ephemeral keypair generation. Draws 32 bytes via `crate::crypto::rng::try_random_bytes` and constructs via `from_bytes`. Same convenience API also added to `Ed25519PrivateKey::try_generate()` for the upcoming Phase 1.1.C.4 hybrid signature.
+* **Module re-exports** in `pulsar-kernel::crypto::mod` and `pulsar-kernel::prelude`: `HybridKemKeyPair`, `HybridKemPublicKey`, `HybridKemPrivateKey`, `HybridKemCiphertext`. The `sizes` sub-module is reachable via `pulsar_kernel::crypto::hybrid_kem::sizes`.
+
+**Tests** (14 new tests across two integration test files):
+
+* **`tests/hybrid_kem_kat.rs`** (10 tests):
+  - sizes match IETF X25519MLKEM768 codepoint (1216 / 2432 / 1120 / 32) — pinned via constants
+  - encap/decap round-trip — encapsulator's combined shared secret equals decapsulator's combined shared secret
+  - public-key wire format round-trip (`to_bytes` ↔ `from_bytes`) — preserves both X25519 and ML-KEM shares byte-identically
+  - ciphertext wire format round-trip — recovered ciphertext decapsulates to identical shared secret
+  - distinct hybrid keypairs yield distinct public keys (probabilistic)
+  - `validate()` accepts a fresh hybrid public key (delegates to ML-KEM § 7.2 modulus check)
+  - tampered X25519 ephemeral share (replaced with all-zeros small-order point) → `InvalidPublicKey` from HACL\*'s F\* postcondition rejection
+  - tampered ML-KEM share (single-bit flip) → divergent shared secret per FIPS 203 § 7.3 implicit rejection (decap doesn't error, just produces uncorrelated output)
+  - tampered X25519 share (non-small-order single-bit flip) → divergent shared secret (validates that the HKDF combiner actually mixes the X25519 share — a wrapper bug that ignored `ss_x25519` would produce identical output despite tampering)
+  - `Debug` redaction on hybrid private key (`finish_non_exhaustive`)
+* **`tests/hybrid_kem_property.rs`** (4 properties using `proptest`, 32 cases each — hybrid ops cost ~250 µs):
+  - encap/decap round-trip across CSPRNG-driven keypairs
+  - distinct keypairs yield distinct public keys
+  - distinct encap calls under same public key yield distinct ciphertexts (both X25519 ephemeral and ML-KEM seed are fresh per call)
+  - wire-format `to_bytes` / `from_bytes` is a perfect round-trip preserving KEM correctness
+
+Quality gates verified locally:
+  - cargo fmt --all -- --check ✓
+  - cargo clippy -p pulsar-kernel --all-targets -- -D warnings ✓
+  - cargo nextest run -p pulsar-kernel (178/178 PASS, +14 from this phase) ✓
+  - cargo test -p pulsar-kernel --doc ✓
+
+### Sprint 1.1 — kernel crypto (Phase 1.1.C.2: ML-DSA-65 safe wrapper + KATs — merged 2026-04-28 as `60521c16`)
 
 Second sub-phase of Phase 1.1.C (post-quantum safe wrappers per Decision 2.60). Lands `pulsar-kernel::crypto::ml_dsa` — the FIPS 204 ML-DSA-65 digital-signature primitive sourced from `libcrux-ml-dsa 0.0.6` (Cryspen Rust-native, hax + F\* verified). NIST security category 3 ≈ AES-192. Pairs with Phase 1.1.C.1's ML-KEM-768; together they cover NIST's two PQC standards (FIPS 203 KEM + FIPS 204 signature). Phase 1.1.C.3 will combine ML-DSA-65 with Ed25519 to form the Ed25519+ML-DSA-65 hybrid signature per Decision 2.58.
 
