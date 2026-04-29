@@ -92,9 +92,15 @@ final readonly class LiveCssController extends AbstractAdminController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $themeId = is_string($body['theme_id'] ?? null) ? $body['theme_id'] : '';
-        $cssContent = is_string($body['css_content'] ?? null) ? $body['css_content'] : '';
-        $reason = is_string($body['reason'] ?? null) ? $body['reason'] : '';
+        /** @var mixed $rawThemeId */
+        $rawThemeId = $body['theme_id'] ?? null;
+        $themeId = is_string($rawThemeId) ? $rawThemeId : '';
+        /** @var mixed $rawCss */
+        $rawCss = $body['css_content'] ?? null;
+        $cssContent = is_string($rawCss) ? $rawCss : '';
+        /** @var mixed $rawReason */
+        $rawReason = $body['reason'] ?? null;
+        $reason = is_string($rawReason) ? $rawReason : '';
 
         if ($themeId === '') {
             return Response::json(['error' => 'Theme ID is required'], 400);
@@ -149,8 +155,12 @@ final readonly class LiveCssController extends AbstractAdminController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $overrideId = is_string($body['override_id'] ?? null) ? $body['override_id'] : '';
-        $reason = is_string($body['reason'] ?? null) ? $body['reason'] : '';
+        /** @var mixed $rawOverrideId */
+        $rawOverrideId = $body['override_id'] ?? null;
+        $overrideId = is_string($rawOverrideId) ? $rawOverrideId : '';
+        /** @var mixed $rawReason */
+        $rawReason = $body['reason'] ?? null;
+        $reason = is_string($rawReason) ? $rawReason : '';
 
         if ($overrideId === '') {
             return Response::json(['error' => 'Override ID is required'], 400);
