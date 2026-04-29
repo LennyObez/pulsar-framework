@@ -87,7 +87,9 @@ final readonly class ThreadApiController
             return Response::json(['error' => 'Validation failed', 'status' => 422, 'details' => $errors], 422);
         }
 
-        $type = ThreadType::tryFrom(is_string($body['type'] ?? null) ? $body['type'] : 'discussion');
+        /** @var mixed $rawType */
+        $rawType = $body['type'] ?? null;
+        $type = ThreadType::tryFrom(is_string($rawType) ? $rawType : 'discussion');
 
         if ($type === null) {
             return Response::json(['error' => 'Validation failed', 'status' => 422, 'details' => ['type' => 'Invalid thread type']], 422);
@@ -97,17 +99,27 @@ final readonly class ThreadApiController
         $tenantId = $request->getAttribute('tenant_id');
 
         $serverParams = $request->getServerParams();
-        $ipHash = hash('xxh3', is_string($serverParams['REMOTE_ADDR'] ?? null) ? $serverParams['REMOTE_ADDR'] : 'unknown');
+        /** @var mixed $rawRemoteAddr */
+        $rawRemoteAddr = $serverParams['REMOTE_ADDR'] ?? null;
+        $ipHash = hash('xxh3', is_string($rawRemoteAddr) ? $rawRemoteAddr : 'unknown');
         $userAgentHash = hash('xxh3', $request->getHeaderLine('User-Agent'));
 
-        $rawBody = is_string($body['body'] ?? null) ? $body['body'] : '';
+        /** @var mixed $rawBodyText */
+        $rawBodyText = $body['body'] ?? null;
+        $rawBody = is_string($rawBodyText) ? $rawBodyText : '';
+        /** @var mixed $rawCategoryId */
+        $rawCategoryId = $body['category_id'] ?? null;
+        /** @var mixed $rawTitle */
+        $rawTitle = $body['title'] ?? null;
+        /** @var mixed $rawSlug */
+        $rawSlug = $body['slug'] ?? null;
 
         try {
             $thread = $this->forumService->createThread(
-                categoryId: is_string($body['category_id'] ?? null) ? $body['category_id'] : '',
+                categoryId: is_string($rawCategoryId) ? $rawCategoryId : '',
                 authorId: $identity->id(),
-                title: is_string($body['title'] ?? null) ? $body['title'] : '',
-                slug: is_string($body['slug'] ?? null) ? $body['slug'] : '',
+                title: is_string($rawTitle) ? $rawTitle : '',
+                slug: is_string($rawSlug) ? $rawSlug : '',
                 type: $type,
                 body: $rawBody,
                 bodyHtml: $this->bodyPolicy->sanitize($this->markdown->render($rawBody)),
@@ -162,8 +174,12 @@ final readonly class ThreadApiController
         /** @var array<string, mixed> $body */
         $body = $parsed;
 
-        $title = is_string($body['title'] ?? null) ? $body['title'] : $thread->title;
-        $slug = is_string($body['slug'] ?? null) ? $body['slug'] : $thread->slug;
+        /** @var mixed $rawTitle */
+        $rawTitle = $body['title'] ?? null;
+        $title = is_string($rawTitle) ? $rawTitle : $thread->title;
+        /** @var mixed $rawSlug */
+        $rawSlug = $body['slug'] ?? null;
+        $slug = is_string($rawSlug) ? $rawSlug : $thread->slug;
 
         $updated = $thread->editTitle($title, $slug);
         $this->threadRepository->save($updated);
