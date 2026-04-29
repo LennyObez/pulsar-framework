@@ -87,8 +87,10 @@ final readonly class PromotionController extends AbstractAdminController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
+        /** @var mixed $rawName */
         $rawName = $body['name'] ?? null;
         $name = is_string($rawName) ? $rawName : '';
+        /** @var mixed $rawTypeStr */
         $rawTypeStr = $body['type'] ?? null;
         $typeStr = is_string($rawTypeStr) ? $rawTypeStr : '';
 
@@ -102,6 +104,7 @@ final readonly class PromotionController extends AbstractAdminController
             return Response::json(['error' => 'Invalid promotion type'], 400);
         }
 
+        /** @var mixed $rawValue */
         $rawValue = $body['value'] ?? null;
         $value = is_int($rawValue) ? $rawValue : 0;
 
@@ -112,11 +115,13 @@ final readonly class PromotionController extends AbstractAdminController
         /** @var string|null $tenantId */
         $tenantId = $request->getAttribute('tenant_id');
 
+        /** @var mixed $rawStartsAt */
         $rawStartsAt = $body['starts_at'] ?? null;
         $startsAt = is_string($rawStartsAt) && $rawStartsAt !== ''
             ? new DateTimeImmutable($rawStartsAt)
             : null;
 
+        /** @var mixed $rawExpiresAt */
         $rawExpiresAt = $body['expires_at'] ?? null;
         $expiresAt = is_string($rawExpiresAt) && $rawExpiresAt !== ''
             ? new DateTimeImmutable($rawExpiresAt)
@@ -158,15 +163,25 @@ final readonly class PromotionController extends AbstractAdminController
         $couponData = is_array($body['coupons'] ?? null) ? $body['coupons'] : [];
 
         foreach ($couponData as $cd) {
-            if (!is_array($cd) || !is_string($cd['code'] ?? null) || $cd['code'] === '') {
+            if (!is_array($cd)) {
                 continue;
             }
+
+            /** @var mixed $rawCode */
+            $rawCode = $cd['code'] ?? null;
+
+            if (!is_string($rawCode) || $rawCode === '') {
+                continue;
+            }
+
+            /** @var mixed $rawSingleUse */
+            $rawSingleUse = $cd['single_use'] ?? null;
 
             $coupon = new Coupon(
                 id: UuidGenerator::v7(),
                 promotionId: $promotionId,
-                code: $cd['code'],
-                isSingleUse: is_bool($cd['single_use'] ?? null) ? $cd['single_use'] : false,
+                code: $rawCode,
+                isSingleUse: is_bool($rawSingleUse) ? $rawSingleUse : false,
                 usedAt: null,
                 usedBy: null,
             );
@@ -228,12 +243,16 @@ final readonly class PromotionController extends AbstractAdminController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $name = is_string($body['name'] ?? null) && $body['name'] !== '' ? $body['name'] : $promotion->name;
+        /** @var mixed $rawName */
+        $rawName = $body['name'] ?? null;
+        $name = is_string($rawName) && $rawName !== '' ? $rawName : $promotion->name;
 
         $type = $promotion->type;
 
-        if (is_string($body['type'] ?? null) && $body['type'] !== '') {
-            $parsed = PromotionType::tryFrom($body['type']);
+        /** @var mixed $rawType */
+        $rawType = $body['type'] ?? null;
+        if (is_string($rawType) && $rawType !== '') {
+            $parsed = PromotionType::tryFrom($rawType);
 
             if ($parsed === null) {
                 return Response::json(['error' => 'Invalid promotion type'], 400);
@@ -244,14 +263,18 @@ final readonly class PromotionController extends AbstractAdminController
 
         $startsAt = $promotion->startsAt;
 
-        if (is_string($body['starts_at'] ?? null) && $body['starts_at'] !== '') {
-            $startsAt = new DateTimeImmutable($body['starts_at']);
+        /** @var mixed $rawStartsAt */
+        $rawStartsAt = $body['starts_at'] ?? null;
+        if (is_string($rawStartsAt) && $rawStartsAt !== '') {
+            $startsAt = new DateTimeImmutable($rawStartsAt);
         }
 
         $expiresAt = $promotion->expiresAt;
 
-        if (is_string($body['expires_at'] ?? null) && $body['expires_at'] !== '') {
-            $expiresAt = new DateTimeImmutable($body['expires_at']);
+        /** @var mixed $rawExpiresAt */
+        $rawExpiresAt = $body['expires_at'] ?? null;
+        if (is_string($rawExpiresAt) && $rawExpiresAt !== '') {
+            $expiresAt = new DateTimeImmutable($rawExpiresAt);
         }
 
         $updated = new Promotion(
