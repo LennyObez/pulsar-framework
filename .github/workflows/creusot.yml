@@ -59,6 +59,7 @@ jobs:
     name: proof-discharge
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    needs: [feature-flag-build]
     if: github.event_name == 'workflow_dispatch'
     steps:
       - uses: actions/checkout@v4
@@ -81,6 +82,12 @@ jobs:
         run: tools/scripts/install-creusot.sh
 
       - name: Discharge contracts
+        # `cargo creusot prove` is the upstream subcommand for proof
+        # discharge (verified against creusot-rs/creusot v0.11.0
+        # cargo-creusot/src/main.rs:248). Cargo flags pass-through is
+        # `last = true, global = true` clap binding — `--features` lives
+        # AFTER the `--` per the upstream usage example
+        # (creusot-rs/creusot t:160).
         run: |
           cd crates/pulsar-kernel
-          cargo creusot --features formal-verification prove
+          cargo creusot prove -- --features formal-verification

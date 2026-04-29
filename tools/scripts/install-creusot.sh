@@ -32,6 +32,26 @@ CREUSOT_VERSION="${CREUSOT_VERSION:-0.11.0}"
 CREUSOT_REPO="https://github.com/creusot-rs/creusot.git"
 CREUSOT_CHECKOUT_DIR="${CREUSOT_CHECKOUT_DIR:-${HOME}/.local/share/creusot/src}"
 
+# Commit-SHA pin per supported CREUSOT_VERSION. The git tag alone is
+# mutable (a maintainer with repo-write access could move it); pinning
+# the commit SHA closes that window. A pin is REQUIRED for every
+# supported version: missing pin AND mismatched checkout-SHA are both
+# hard failures — defense-in-depth against silent supply-chain tag
+# move, mirroring the spec/tools/install-tla.sh SHA-256 pin pattern.
+# To support a new version, add a 'CREUSOT_SHA_<version>' line below
+# before bumping the default.
+# shellcheck disable=SC2034  # consumed via indirect expansion below
+CREUSOT_SHA_0_11_0="2640af77e4cf3686b428b5b252d7909ac1f48847"
+CREUSOT_SHA_VAR="CREUSOT_SHA_${CREUSOT_VERSION//./_}"
+CREUSOT_SHA="${!CREUSOT_SHA_VAR:-}"
+
+if [ -z "$CREUSOT_SHA" ]; then
+    echo "[install-creusot] FATAL: no pinned commit SHA for v${CREUSOT_VERSION}" >&2
+    echo "[install-creusot]   add 'CREUSOT_SHA_${CREUSOT_VERSION//./_}=<commit-sha>' to ${BASH_SOURCE[0]}" >&2
+    echo "[install-creusot]   look it up via: gh api repos/creusot-rs/creusot/git/refs/tags/v${CREUSOT_VERSION}" >&2
+    exit 1
+fi
+
 log() { echo "[install-creusot] $*" >&2; }
 fatal() { log "FATAL: $*"; exit 1; }
 
@@ -59,14 +79,29 @@ opam --cli=2.1 var --global in-creusot-ci=true >/dev/null
 # -----------------------------------------------------------------------------
 # Step 3 — Creusot source checkout (pinned to CREUSOT_VERSION)
 # -----------------------------------------------------------------------------
-log "Step 3/4: ensuring Creusot v${CREUSOT_VERSION} source is checked out..."
+log "Step 3/4: ensuring Creusot v${CREUSOT_VERSION} source is checked out + commit-SHA verified..."
 mkdir -p "$(dirname "${CREUSOT_CHECKOUT_DIR}")"
 if [ ! -d "${CREUSOT_CHECKOUT_DIR}/.git" ]; then
-    git clone --branch "v${CREUSOT_VERSION}" --depth 1 "${CREUSOT_REPO}" "${CREUSOT_CHECKOUT_DIR}"
-else
-    log "  (already cloned at ${CREUSOT_CHECKOUT_DIR})"
-    (cd "${CREUSOT_CHECKOUT_DIR}" && git fetch --depth 1 origin "v${CREUSOT_VERSION}" && git checkout -q "v${CREUSOT_VERSION}")
+    # Fetch by commit SHA directly to bypass any possible tag mutation
+    # between clone time and verification. --filter=blob:none keeps the
+    # clone shallow on blob content (we need the full tree at HEAD only).
+    git clone --filter=blob:none --no-checkout "${CREUSOT_REPO}" "${CREUSOT_CHECKOUT_DIR}"
 fi
+
+(
+    cd "${CREUSOT_CHECKOUT_DIR}"
+    git fetch --depth 1 origin "${CREUSOT_SHA}"
+    git checkout -q "${CREUSOT_SHA}"
+
+    actual_sha="$(git rev-parse HEAD)"
+    if [ "$actual_sha" != "${CREUSOT_SHA}" ]; then
+        echo "[install-creusot] FATAL: checkout SHA mismatch" >&2
+        echo "[install-creusot]   expected: ${CREUSOT_SHA}" >&2
+        echo "[install-creusot]   actual:   ${actual_sha}" >&2
+        exit 1
+    fi
+    log "  (verified at ${CREUSOT_SHA})"
+)
 
 # -----------------------------------------------------------------------------
 # Step 4 — INSTALL via cargo-driven creusot-install

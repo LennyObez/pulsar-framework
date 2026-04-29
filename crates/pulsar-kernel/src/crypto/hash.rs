@@ -80,10 +80,20 @@ pub enum HashAlgorithm {
 impl HashAlgorithm {
     /// Digest output length in bytes for this algorithm.
     ///
-    /// Phase 1.1.D.2.a smoke-test contract: `digest_len` always returns
-    /// one of the three valid output lengths {32, 48, 64} for every
-    /// admissible variant of [`HashAlgorithm`]. Discharged by Creusot
-    /// when the `formal-verification` feature is enabled.
+    /// Phase 1.1.D.2.a smoke-test contract: asserts `digest_len` always
+    /// returns one of the three valid output lengths {32, 48, 64} for
+    /// every admissible variant of [`HashAlgorithm`]. Discharged by
+    /// Creusot when the `formal-verification` feature is enabled.
+    ///
+    /// **Note (smoke test, not production-grade postcondition).** This
+    /// `#[ensures]` exists to validate the cfg_attr + macro-expansion
+    /// pipeline end-to-end. Constant propagation through the match
+    /// makes Creusot discharge it without any SMT solving — useful as
+    /// a "toolchain works" signal but vacuous as an algorithm
+    /// invariant. Phase 1.1.D.2.b will replace it with a stronger
+    /// postcondition tying `digest_len` to a `spec_digest_len` ghost
+    /// function on `HashAlgorithm` that is referenced by every
+    /// downstream length-bearing primitive (HMAC, HKDF, AEAD).
     #[must_use]
     #[cfg_attr(
         feature = "formal-verification",
