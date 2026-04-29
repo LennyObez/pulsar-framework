@@ -81,7 +81,9 @@ final readonly class CheckoutController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $email = is_string($body['email'] ?? null) ? $body['email'] : '';
+        /** @var mixed $rawEmail */
+        $rawEmail = $body['email'] ?? null;
+        $email = is_string($rawEmail) ? $rawEmail : '';
 
         if ($email === '' || !$this->isValidEmail($email)) {
             return Response::json(['error' => 'A valid email address is required'], 400);
@@ -104,8 +106,10 @@ final readonly class CheckoutController
         /** @var array{line1: string, line2?: string, city: string, region?: string, postalCode: string, country: string}|null $shippingAddress */
         $shippingAddress = is_array($body['shipping_address'] ?? null) ? $body['shipping_address'] : null;
 
-        $couponCode = is_string($body['coupon_code'] ?? null) && $body['coupon_code'] !== ''
-            ? $body['coupon_code']
+        /** @var mixed $rawCouponCode */
+        $rawCouponCode = $body['coupon_code'] ?? null;
+        $couponCode = is_string($rawCouponCode) && $rawCouponCode !== ''
+            ? $rawCouponCode
             : null;
 
         /** @var string|null $customerId */
@@ -158,7 +162,9 @@ final readonly class CheckoutController
     public function success(ServerRequestInterface $request): Response
     {
         $params = $request->getQueryParams();
-        $orderId = is_string($params['order_id'] ?? null) ? $params['order_id'] : '';
+        /** @var mixed $rawOrderId */
+        $rawOrderId = $params['order_id'] ?? null;
+        $orderId = is_string($rawOrderId) ? $rawOrderId : '';
 
         if ($orderId === '') {
             if ($this->wantsJson($request)) {
@@ -205,6 +211,7 @@ final readonly class CheckoutController
         ?string $error = null,
     ): Response {
         if ($this->templateEngine !== null) {
+            /** @var mixed $csrfToken */
             $csrfToken = $request->getAttribute('csrf_token', '');
 
             $html = $this->templateEngine->render('cms::checkout.show', [

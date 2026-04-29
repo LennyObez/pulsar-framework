@@ -53,10 +53,15 @@ final readonly class CheckoutController
             return Response::json(['error' => $e->getMessage()], 400);
         }
 
+        /** @var mixed $amountRaw */
         $amountRaw = $body['amount'] ?? null;
-        $amount = is_int($amountRaw) ? $amountRaw : (is_numeric($amountRaw) ? (int) $amountRaw : 0);
-        $currencyCode = is_string($body['currency'] ?? null) ? strtoupper($body['currency']) : 'USD';
-        $methodValue = is_string($body['method'] ?? null) ? $body['method'] : 'card';
+        $amount = is_int($amountRaw) ? $amountRaw : (is_string($amountRaw) && is_numeric($amountRaw) ? (int) $amountRaw : 0);
+        /** @var mixed $rawCurrency */
+        $rawCurrency = $body['currency'] ?? null;
+        $currencyCode = is_string($rawCurrency) ? strtoupper($rawCurrency) : 'USD';
+        /** @var mixed $rawMethod */
+        $rawMethod = $body['method'] ?? null;
+        $methodValue = is_string($rawMethod) ? $rawMethod : 'card';
 
         if ($amount <= 0) {
             return Response::json(['error' => 'Amount must be positive'], 422);
@@ -106,7 +111,9 @@ final readonly class CheckoutController
      */
     public function capture(ServerRequestInterface $request): Response
     {
-        $intentId = is_string($request->getAttribute('intentId')) ? $request->getAttribute('intentId') : '';
+        /** @var mixed $rawIntentId */
+        $rawIntentId = $request->getAttribute('intentId');
+        $intentId = is_string($rawIntentId) ? $rawIntentId : '';
 
         if ($intentId === '') {
             return Response::json(['error' => 'Missing intent ID'], 400);
