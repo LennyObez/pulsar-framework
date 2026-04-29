@@ -50,11 +50,14 @@ final readonly class ReleaseController
         $rawPerPage = $params['per_page'] ?? 20;
         $perPage = min(100, max(1, (int) $rawPerPage));
 
-        $platformFilter = is_string($params['platform'] ?? null)
-            ? ReleasePlatform::tryFrom($params['platform'])
+        /** @var mixed $rawPlatform */
+        $rawPlatform = $params['platform'] ?? null;
+        $platformFilter = is_string($rawPlatform)
+            ? ReleasePlatform::tryFrom($rawPlatform)
             : null;
 
         $includeBeta = null;
+        /** @var mixed $includeBetaRaw */
         $includeBetaRaw = $params['include_beta'] ?? null;
 
         if (is_string($includeBetaRaw)) {
@@ -102,8 +105,12 @@ final readonly class ReleaseController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $version = is_string($body['version'] ?? null) ? $body['version'] : '';
-        $platformValue = is_string($body['platform'] ?? null) ? $body['platform'] : '';
+        /** @var mixed $rawVersion */
+        $rawVersion = $body['version'] ?? null;
+        $version = is_string($rawVersion) ? $rawVersion : '';
+        /** @var mixed $rawPlatform */
+        $rawPlatform = $body['platform'] ?? null;
+        $platformValue = is_string($rawPlatform) ? $rawPlatform : '';
         $platform = ReleasePlatform::tryFrom($platformValue);
 
         if ($platform === null) {
@@ -113,20 +120,28 @@ final readonly class ReleaseController
             ], 422);
         }
 
-        $releaseDateStr = is_string($body['release_date'] ?? null) ? $body['release_date'] : '';
+        /** @var mixed $rawReleaseDate */
+        $rawReleaseDate = $body['release_date'] ?? null;
+        $releaseDateStr = is_string($rawReleaseDate) ? $rawReleaseDate : '';
         $releaseDate = $releaseDateStr !== '' ? new DateTimeImmutable($releaseDateStr) : new DateTimeImmutable();
 
-        $releaseNotes = is_string($body['release_notes'] ?? null) ? $body['release_notes'] : '';
-        $minimumOsVersion = is_string($body['minimum_os_version'] ?? null) ? $body['minimum_os_version'] : '';
-        $downloadUrl = is_string($body['download_url'] ?? null) ? $body['download_url'] : null;
+        /** @var mixed $rawReleaseNotes */
+        $rawReleaseNotes = $body['release_notes'] ?? null;
+        $releaseNotes = is_string($rawReleaseNotes) ? $rawReleaseNotes : '';
+        /** @var mixed $rawMinOs */
+        $rawMinOs = $body['minimum_os_version'] ?? null;
+        $minimumOsVersion = is_string($rawMinOs) ? $rawMinOs : '';
+        /** @var mixed $rawDownloadUrl */
+        $rawDownloadUrl = $body['download_url'] ?? null;
+        $downloadUrl = is_string($rawDownloadUrl) ? $rawDownloadUrl : null;
 
-        $isBeta = ($body['is_beta'] ?? false) === true
-            || ($body['is_beta'] ?? false) === 'true'
-            || ($body['is_beta'] ?? false) === 1;
+        /** @var mixed $rawIsBeta */
+        $rawIsBeta = $body['is_beta'] ?? false;
+        $isBeta = $rawIsBeta === true || $rawIsBeta === 'true' || $rawIsBeta === 1;
 
-        $isStable = ($body['is_stable'] ?? false) === true
-            || ($body['is_stable'] ?? false) === 'true'
-            || ($body['is_stable'] ?? false) === 1;
+        /** @var mixed $rawIsStable */
+        $rawIsStable = $body['is_stable'] ?? false;
+        $isStable = $rawIsStable === true || $rawIsStable === 'true' || $rawIsStable === 1;
 
         try {
             $release = $this->service->createRelease(
