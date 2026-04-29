@@ -46,9 +46,15 @@ final readonly class SubscriptionController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $storeValue = is_string($body['store'] ?? null) ? $body['store'] : '';
-        $purchaseToken = is_string($body['purchase_token'] ?? null) ? $body['purchase_token'] : '';
-        $plan = is_string($body['plan'] ?? null) ? $body['plan'] : '';
+        /** @var mixed $rawStore */
+        $rawStore = $body['store'] ?? null;
+        $storeValue = is_string($rawStore) ? $rawStore : '';
+        /** @var mixed $rawPurchaseToken */
+        $rawPurchaseToken = $body['purchase_token'] ?? null;
+        $purchaseToken = is_string($rawPurchaseToken) ? $rawPurchaseToken : '';
+        /** @var mixed $rawPlan */
+        $rawPlan = $body['plan'] ?? null;
+        $plan = is_string($rawPlan) ? $rawPlan : '';
 
         $store = Store::tryFrom($storeValue);
 
@@ -129,9 +135,15 @@ final readonly class SubscriptionController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $storeValue = is_string($body['store'] ?? null) ? $body['store'] : '';
-        $purchaseToken = is_string($body['purchase_token'] ?? null) ? $body['purchase_token'] : '';
-        $plan = is_string($body['plan'] ?? null) ? $body['plan'] : '';
+        /** @var mixed $rawStore */
+        $rawStore = $body['store'] ?? null;
+        $storeValue = is_string($rawStore) ? $rawStore : '';
+        /** @var mixed $rawPurchaseToken */
+        $rawPurchaseToken = $body['purchase_token'] ?? null;
+        $purchaseToken = is_string($rawPurchaseToken) ? $rawPurchaseToken : '';
+        /** @var mixed $rawPlan */
+        $rawPlan = $body['plan'] ?? null;
+        $plan = is_string($rawPlan) ? $rawPlan : '';
 
         $store = Store::tryFrom($storeValue);
 

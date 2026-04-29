@@ -126,6 +126,7 @@ final readonly class SubscriptionController
      */
     public function cancel(ServerRequestInterface $request): Response
     {
+        /** @var mixed $rawId */
         $rawId = $request->getAttribute('id');
         $subscriptionId = is_string($rawId) ? $rawId : '';
 
@@ -152,6 +153,7 @@ final readonly class SubscriptionController
      */
     public function pause(ServerRequestInterface $request): Response
     {
+        /** @var mixed $rawId */
         $rawId = $request->getAttribute('id');
         $subscriptionId = is_string($rawId) ? $rawId : '';
 
@@ -178,6 +180,7 @@ final readonly class SubscriptionController
      */
     public function resume(ServerRequestInterface $request): Response
     {
+        /** @var mixed $rawId */
         $rawId = $request->getAttribute('id');
         $subscriptionId = is_string($rawId) ? $rawId : '';
 
@@ -199,6 +202,7 @@ final readonly class SubscriptionController
 
     private function resolveUserId(ServerRequestInterface $request): ?string
     {
+        /** @var mixed $userId */
         $userId = $request->getAttribute('user_id');
 
         return is_string($userId) && $userId !== '' ? $userId : null;
