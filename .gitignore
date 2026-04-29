@@ -49,3 +49,6 @@ credentials.toml
 # Claude Code operator files (offline, never committed)
 CLAUDE.md
 .claude/
+
+# TLA+ Tools — downloaded JAR + TLC state cache (regenerated locally + in CI)
+/spec/tools/cache/

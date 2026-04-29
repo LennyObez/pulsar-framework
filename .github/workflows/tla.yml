@@ -1,0 +1,55 @@
+name: tla+
+
+on:
+  push:
+    branches: [develop]
+    paths:
+      - 'spec/**'
+      - '.github/workflows/tla.yml'
+  pull_request:
+    branches: [develop, main]
+    paths:
+      - 'spec/**'
+      - '.github/workflows/tla.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  TLA_VERSION: "1.8.0"
+
+jobs:
+  tlc:
+    name: tlc ${{ matrix.spec }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        # Each spec is checked independently. As Sprint 1.2 / 1.3 / 1.4 /
+        # 1.5 / 2.5 / 3B.2 / 3E.1 land their respective .tla + .cfg, add
+        # the spec basename to this matrix.
+        spec:
+          - crypto
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Cache TLA+ Tools jar
+        uses: actions/cache@v4
+        with:
+          path: spec/tools/cache
+          key: tla-tools-${{ env.TLA_VERSION }}
+
+      - name: Run TLC on ${{ matrix.spec }}.tla
+        run: spec/tools/run-tlc.sh ${{ matrix.spec }}

@@ -7,7 +7,20 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-### Sprint 1.1 — kernel crypto (Phase 1.1.C.4: hybrid Ed25519+ML-DSA-65 signature, in progress)
+### Sprint 1.1 — kernel crypto (Phase 1.1.D.1: TLA+ spec/crypto.tla + tooling + CI, in progress)
+
+First sub-phase of Phase 1.1.D — the formal-verification phase that follows the cryptographic-primitive surface (Phases 1.1.A through 1.1.C). Lands the TLA+ specification of cryptographic key lifecycle plus the supporting tooling + CI integration. Creusot contracts on the Rust-side wrappers are deferred to subsequent sub-phases (1.1.D.2 — toolchain + hash/HMAC/KDF contracts; 1.1.D.3 — AEAD + signatures; 1.1.D.4 — KEM + ML-DSA + hybrids).
+
+* **`spec/crypto.tla`** — the first of fifteen TLA+ specifications targeted at GA per Decision 2.59 v2.3 lock-in. Models the abstract state machine that every secret-bearing key handle in `pulsar-kernel::crypto` traverses, regardless of underlying primitive (AEAD / HMAC / Ed25519 / X25519 / ML-KEM-768 / ML-DSA-65 / hybrids). States: `Zeroised → Fresh → InUse → Rotating → Zeroised`. Six safety invariants (`TypeOK`, `ZeroisedHasNoSuccessor`, `NonRotatingHasNoSuccessor`, `RotatingHasLiveSuccessor`, `NoSelfSuccessor`, `SuccessorIsUnique`) plus the liveness property `RotatingEventuallyZeroised`. Bounded model check at `MaxKeys = 4` covers two concurrent rotations with their successors — TLC explores 2 821 states (345 distinct, depth 11) in under five seconds, no error found. The cryptographic operations themselves remain anchored in HACL\* (classical, Decision 2.53) + libcrux (PQC, Decision 2.60); this spec covers the engineering-level state machine that wraps every primitive and binds it to a lifecycle that holds under any concurrent interleaving.
+* **TLA+ Tools v1.8.0 download + verification pipeline** — `spec/tools/install-tla.sh` fetches `tla2tools.jar` from the upstream GitHub release (https://github.com/tlaplus/tlaplus/releases/tag/v1.8.0) into `spec/tools/cache/` (gitignored), with pinned SHA-256 verification (`accf1505b3a27679b532753e0430dbea1673c9935d7991dc2536b99ce69976fa`) — defense-in-depth against supply-chain JAR swap. `spec/tools/run-tlc.sh <spec-name>` is the convenience wrapper that runs `java -cp tla2tools.jar tlc2.TLC -config <name>.cfg -workers auto <name>.tla` from `spec/`. Both scripts are idempotent and POSIX-compatible.
+* **`.github/workflows/tla.yml`** — new CI workflow that runs TLC on every spec in its matrix on every push to `develop` and every PR. Installs Temurin JDK 21 + caches the JAR + invokes the wrapper. The matrix currently covers `crypto` only; subsequent sprints (1.2 audit, 1.3 session, 1.4 router, 1.5 middleware, 2.5 oauth2/saml, 3B.2 websocket, 3E.1 orchestration) extend the matrix as their respective `.tla` + `.cfg` pairs land. Path-filtered to `spec/**` + the workflow file itself, so the TLC step does not run on Rust-only changes.
+* **`spec/README.md`** — refreshed catalogue with v2.3 status (15 specs at GA) and a new `Local runs` section documenting the JDK ≥ 17 prerequisite + the `spec/tools/run-tlc.sh crypto` invocation.
+
+The TLC bounded check is added to the kernel-sprint quality-gate sequence per CLAUDE.md §3 (`tlc -config <spec>.cfg <spec>.tla`); locally the equivalent invocation is `spec/tools/run-tlc.sh <spec-name>`.
+
+Refs: `docs/plan.md` Section II Decision 2.20 (Creusot + TLA+), Decision 2.59 v2.3 (15 TLA+ specs at GA), Decision 2.57 v2.3 (SLSA Source L3 + Build L4), Section VI quality gates, Section XII success metrics.
+
+### Sprint 1.1 — kernel crypto (Phase 1.1.C.4: hybrid Ed25519+ML-DSA-65 signature, merged 2026-04-29 as `31a20bc7`)
 
 Fourth sub-phase of Phase 1.1.C — and the second hybrid construction. Lands `pulsar-kernel::crypto::hybrid_sig` per Decision 2.58: every signature scheme that anchors a long-term commitment runs Ed25519 + ML-DSA-65 in parallel and verifies REQUIRE BOTH to pass. Pairs with Phase 1.1.C.3's hybrid X25519+ML-KEM-768 KEM; together they complete Pulsar's hybrid-PQC surface for both key establishment and digital signatures. This sub-phase closes the cryptographic primitive surface for Sprint 1.1 — Phase 1.1.D adds Creusot contracts + the spec/crypto.tla TLA+ specification, and Phase 1.1.E adds benchmarks + the sprint exit gate.
 
