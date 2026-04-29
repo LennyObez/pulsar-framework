@@ -26,6 +26,7 @@ final readonly class GoalController
     public function index(ServerRequestInterface $request): Response
     {
         $params = $request->getQueryParams();
+        /** @var mixed $rawSiteId */
         $rawSiteId = $params['site_id'] ?? null;
         $siteId = is_string($rawSiteId) ? $rawSiteId : '';
 
@@ -52,10 +53,18 @@ final readonly class GoalController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $siteId = is_string($body['site_id'] ?? null) ? $body['site_id'] : '';
-        $name = is_string($body['name'] ?? null) ? $body['name'] : '';
-        $goalTypeStr = is_string($body['goal_type'] ?? null) ? $body['goal_type'] : '';
-        $targetValue = is_string($body['target_value'] ?? null) ? $body['target_value'] : '';
+        /** @var mixed $rawSiteId */
+        $rawSiteId = $body['site_id'] ?? null;
+        $siteId = is_string($rawSiteId) ? $rawSiteId : '';
+        /** @var mixed $rawName */
+        $rawName = $body['name'] ?? null;
+        $name = is_string($rawName) ? $rawName : '';
+        /** @var mixed $rawGoalType */
+        $rawGoalType = $body['goal_type'] ?? null;
+        $goalTypeStr = is_string($rawGoalType) ? $rawGoalType : '';
+        /** @var mixed $rawTargetValue */
+        $rawTargetValue = $body['target_value'] ?? null;
+        $targetValue = is_string($rawTargetValue) ? $rawTargetValue : '';
 
         if ($siteId === '' || $name === '' || $goalTypeStr === '' || $targetValue === '') {
             return Response::json(['error' => 'site_id, name, goal_type, and target_value are required'], 400);
@@ -102,9 +111,15 @@ final readonly class GoalController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $name = is_string($body['name'] ?? null) ? $body['name'] : '';
-        $goalTypeStr = is_string($body['goal_type'] ?? null) ? $body['goal_type'] : '';
-        $targetValue = is_string($body['target_value'] ?? null) ? $body['target_value'] : '';
+        /** @var mixed $rawName */
+        $rawName = $body['name'] ?? null;
+        $name = is_string($rawName) ? $rawName : '';
+        /** @var mixed $rawGoalType */
+        $rawGoalType = $body['goal_type'] ?? null;
+        $goalTypeStr = is_string($rawGoalType) ? $rawGoalType : '';
+        /** @var mixed $rawTargetValue */
+        $rawTargetValue = $body['target_value'] ?? null;
+        $targetValue = is_string($rawTargetValue) ? $rawTargetValue : '';
 
         if ($name === '' || $goalTypeStr === '' || $targetValue === '') {
             return Response::json(['error' => 'name, goal_type, and target_value are required'], 400);
