@@ -14,6 +14,7 @@ use Pulsar\Extension\Analytics\Exception\AnalyticsException;
 use Pulsar\Http\Message\Response;
 
 use function is_array;
+use function is_int;
 use function is_string;
 
 /**
@@ -29,6 +30,7 @@ final readonly class FunnelController
     public function index(ServerRequestInterface $request): Response
     {
         $params = $request->getQueryParams();
+        /** @var mixed $rawSiteId */
         $rawSiteId = $params['site_id'] ?? null;
         $siteId = is_string($rawSiteId) ? $rawSiteId : '';
 
@@ -59,9 +61,15 @@ final readonly class FunnelController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $siteId = is_string($body['site_id'] ?? null) ? $body['site_id'] : '';
-        $name = is_string($body['name'] ?? null) ? $body['name'] : '';
-        $rawSteps = is_array($body['steps'] ?? null) ? $body['steps'] : [];
+        /** @var mixed $rawSiteId */
+        $rawSiteId = $body['site_id'] ?? null;
+        $siteId = is_string($rawSiteId) ? $rawSiteId : '';
+        /** @var mixed $rawName */
+        $rawName = $body['name'] ?? null;
+        $name = is_string($rawName) ? $rawName : '';
+        /** @var mixed $rawStepsRaw */
+        $rawStepsRaw = $body['steps'] ?? null;
+        $rawSteps = is_array($rawStepsRaw) ? $rawStepsRaw : [];
 
         if ($siteId === '' || $name === '' || $rawSteps === []) {
             return Response::json(['error' => 'site_id, name, and steps are required'], 400);
@@ -69,15 +77,22 @@ final readonly class FunnelController
 
         $steps = [];
 
+        /** @var mixed $rawStep */
         foreach ($rawSteps as $i => $rawStep) {
-            if (!is_array($rawStep)) {
+            if (!is_array($rawStep) || !is_int($i)) {
                 continue;
             }
             /** @var array<string, mixed> $rawStep */
 
-            $stepName = is_string($rawStep['name'] ?? null) ? $rawStep['name'] : '';
-            $stepTypeStr = is_string($rawStep['type'] ?? null) ? $rawStep['type'] : '';
-            $stepValue = is_string($rawStep['value'] ?? null) ? $rawStep['value'] : '';
+            /** @var mixed $rawStepName */
+            $rawStepName = $rawStep['name'] ?? null;
+            $stepName = is_string($rawStepName) ? $rawStepName : '';
+            /** @var mixed $rawStepType */
+            $rawStepType = $rawStep['type'] ?? null;
+            $stepTypeStr = is_string($rawStepType) ? $rawStepType : '';
+            /** @var mixed $rawStepValue */
+            $rawStepValue = $rawStep['value'] ?? null;
+            $stepValue = is_string($rawStepValue) ? $rawStepValue : '';
             $stepType = FunnelStepType::tryFrom($stepTypeStr);
 
             if ($stepName === '' || $stepType === null || $stepValue === '') {
@@ -105,7 +120,9 @@ final readonly class FunnelController
     public function evaluate(ServerRequestInterface $request, string $id): Response
     {
         $params = $request->getQueryParams();
+        /** @var mixed $rawFrom */
         $rawFrom = $params['from'] ?? null;
+        /** @var mixed $rawTo */
         $rawTo = $params['to'] ?? null;
         $from = new DateTimeImmutable(is_string($rawFrom) ? $rawFrom : '-30 days');
         $to = new DateTimeImmutable(is_string($rawTo) ? $rawTo : 'now');
