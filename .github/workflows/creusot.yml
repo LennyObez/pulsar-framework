@@ -1,0 +1,93 @@
+name: creusot
+
+on:
+  push:
+    branches: [develop]
+    paths:
+      - 'crates/pulsar-kernel/**'
+      - 'tools/scripts/install-creusot.sh'
+      - '.github/workflows/creusot.yml'
+  pull_request:
+    branches: [develop, main]
+    paths:
+      - 'crates/pulsar-kernel/**'
+      - 'tools/scripts/install-creusot.sh'
+      - '.github/workflows/creusot.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  RUST_BACKTRACE: short
+
+jobs:
+  # Smoke-test that pulsar-kernel still builds with the
+  # `formal-verification` feature enabled — the feature pulls in
+  # `creusot-std` and activates the `#[ensures]` / `#[requires]` macro
+  # bodies on every contract-bearing function. On stable rustc the
+  # macros expand to no-ops (full proof discharge requires the Creusot
+  # driver run via the `proof-discharge` job below).
+  feature-flag-build:
+    name: feature-flag-build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: "1.95.0"
+      - uses: Swatinem/rust-cache@v2
+      - name: cargo check -p pulsar-kernel --features formal-verification
+        run: cargo check -p pulsar-kernel --features formal-verification
+        env:
+          RUSTFLAGS: "-D warnings"
+
+  # Proof-discharge job — installs the full Creusot toolchain (opam +
+  # Why3 + Z3 + CVC5 + Creusot driver) and runs `cargo creusot prove`
+  # on `pulsar-kernel`. Manually-triggered for Phase 1.1.D.2.a since
+  # no production contracts exist yet (only a single smoke-test
+  # `#[ensures]` on `HashAlgorithm::digest_len`). Phase 1.1.D.2.b
+  # flips this to auto-trigger once the hash family contracts land.
+  proof-discharge:
+    name: proof-discharge
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    needs: [feature-flag-build]
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install apt prerequisites
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq opam libzmq3-dev z3 cvc5
+
+      - name: Cache opam switch
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/creusot/_opam
+          key: creusot-opam-${{ runner.os }}-v0.11.0
+
+      - name: Initialise opam (no sandboxing — runner is already isolated)
+        run: |
+          opam init --bare --disable-sandboxing -y --no-setup
+          opam --cli=2.1 var --global in-creusot-ci=true
+
+      - name: Install Creusot toolchain
+        run: tools/scripts/install-creusot.sh
+
+      - name: Discharge contracts
+        # `cargo creusot prove` is the upstream subcommand for proof
+        # discharge (verified against creusot-rs/creusot v0.11.0
+        # cargo-creusot/src/main.rs:248). Cargo flags pass-through is
+        # `last = true, global = true` clap binding — `--features` lives
+        # AFTER the `--` per the upstream usage example
+        # (creusot-rs/creusot t:160).
+        run: |
+          cd crates/pulsar-kernel
+          cargo creusot prove -- --features formal-verification

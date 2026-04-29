@@ -28,10 +28,26 @@ secrecy = { workspace = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }
 
+# Creusot specification + standard-library contracts per ADR-0015 +
+# Decision 2.20. Activated only by the `formal-verification` feature;
+# without it the dependency is not pulled in. With it, the proc-macro
+# attributes (#[ensures], #[requires], #[invariant], etc.) are in scope
+# and expand to no-ops on stable rustc. Proof discharge requires the
+# Creusot driver — see tools/scripts/install-creusot.sh + ADR-0015.
+creusot-std = { workspace = true, optional = true }
+
 [dev-dependencies]
 # Hex decoding for FIPS / RFC test vectors in smoke + property tests.
 hex = { workspace = true }
 proptest = { workspace = true }
+
+[features]
+# Activates the Creusot specification macros for proof discharge. Without
+# this feature, the macros (annotation attributes on functions) are not
+# in scope and the Pearlite contract bodies — gated via cfg_attr — are
+# also not compiled. Production + standard test builds run with the
+# feature off.
+formal-verification = ["dep:creusot-std"]
 
 [lints.rust]
 # pulsar-kernel cannot inherit `unsafe_code = "forbid"` because the

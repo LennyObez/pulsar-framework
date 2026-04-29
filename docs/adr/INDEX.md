@@ -24,6 +24,7 @@ Per plan Section XII success metrics, **at least sixty ADRs** are merged before 
 | [ADR-0012](0012-hybrid-pqc-from-sprint-1-1.md) | Hybrid PQC (X25519 + ML-KEM-768 / Ed25519 + ML-DSA-65) from Sprint 1.1 | A | 2026-04-27 | 0.9-bis | 2.58, 2.53, 2.20 | Section 14.1 v2.2 phasing |
 | [ADR-0013](0013-audit-chain-ed25519-merkle-transparency-log.md) | Audit chain primitive — Ed25519 + Merkle tree + RFC 6962 transparency log | A | 2026-04-27 | 0.9-bis | 2.55, 2.20, 2.54, 2.31 | Section 16.5 v2.2 audit-chain |
 | [ADR-0014](0014-mcdc-coverage-and-mutation-kill-rate.md) | 100% line + branch + MC/DC coverage + 99% mutation kill rate on critical-tier crates | A | 2026-04-27 | 0.9-bis | 2.56, 2.28, 2.20 | Section VI v2.2 mutation threshold |
+| [ADR-0015](0015-creusot-kernel-function-contracts.md) | Creusot v0.11.0 for kernel function contracts (operationalises Decision 2.20) | A | 2026-04-29 | 1.1 / 1.1.D.2.a | 2.20, 2.59, 2.53, 2.60 | — |
 
 ## Roadmap
 
