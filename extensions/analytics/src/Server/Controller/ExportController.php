@@ -10,6 +10,7 @@ use Pulsar\Api\Internal;
 use Pulsar\Extension\Analytics\Contracts\PageViewRepositoryInterface;
 use Pulsar\Http\Message\Response;
 
+use function in_array;
 use function is_string;
 use function sprintf;
 use function str_contains;
@@ -28,6 +29,7 @@ final readonly class ExportController
     public function export(ServerRequestInterface $request): Response
     {
         $params = $request->getQueryParams();
+        /** @var mixed $rawSiteId */
         $rawSiteId = $params['site_id'] ?? null;
         $siteId = is_string($rawSiteId) ? $rawSiteId : '';
 
@@ -35,7 +37,9 @@ final readonly class ExportController
             return Response::json(['error' => 'site_id is required'], 400);
         }
 
+        /** @var mixed $rawFrom */
         $rawFrom = $params['from'] ?? null;
+        /** @var mixed $rawTo */
         $rawTo = $params['to'] ?? null;
         $from = new DateTimeImmutable(is_string($rawFrom) ? $rawFrom : '-30 days');
         $to = new DateTimeImmutable(is_string($rawTo) ? $rawTo : 'now');
@@ -83,7 +87,7 @@ final readonly class ExportController
     private function escapeCsv(string $value): string
     {
         // Prevent CSV formula injection: prefix dangerous start characters
-        if ($value !== '' && str_contains("=+-@\t\r", $value[0])) {
+        if ($value !== '' && in_array($value[0], ['=', '+', '-', '@', "\t", "\r"], true)) {
             $value = "\t" . $value;
         }
 
