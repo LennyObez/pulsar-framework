@@ -21,7 +21,19 @@ readonly class ProvidesConfig
     /**
      * @param list<string> $services Service class names provided
      * @param list<string> $commands Command class names provided
-     * @param bool $routes Whether the extension provides routes
+     * @param bool $routes Whether the extension contributes HTTP routes.
+     *        F3.15: this field is **declarative metadata** that
+     *        tooling (route-cache compiler, dependency graph,
+     *        documentation generator) uses to decide whether to
+     *        scan the extension's `routes/` directory at build /
+     *        boot time. It does NOT prevent an extension whose
+     *        manifest sets `routes: false` from calling `Router::get()`
+     *        at runtime — that would require hooking every Router
+     *        write through the registry, which the architecture
+     *        doesn't currently do. Treat the field as a contract
+     *        the operator self-attests to: setting it to `false`
+     *        when the extension does register routes is a manifest
+     *        bug, not a runtime safeguard.
      * @param list<string> $middleware Middleware class names provided
      * @param list<string> $migrations Relative paths to migration directories
      */
