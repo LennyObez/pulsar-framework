@@ -119,8 +119,6 @@ pub mod sizes {
     /// Maximum context-string length (FIPS 204 § 5.2 + single-byte
     /// length prefix in the Ed25519 input transformation).
     pub const MAX_CONTEXT_LEN: usize = 255;
-    /// Ed25519 share offset within the verification key (`[0..32]`).
-    pub const ED25519_OFFSET: usize = 0;
     /// Ed25519 share length within the verification key.
     pub const ED25519_VK_LEN: usize = 32;
     /// ML-DSA-65 share offset within the verification key.
