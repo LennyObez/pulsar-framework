@@ -79,7 +79,16 @@ pub enum HashAlgorithm {
 
 impl HashAlgorithm {
     /// Digest output length in bytes for this algorithm.
+    ///
+    /// Phase 1.1.D.2.a smoke-test contract: `digest_len` always returns
+    /// one of the three valid output lengths {32, 48, 64} for every
+    /// admissible variant of [`HashAlgorithm`]. Discharged by Creusot
+    /// when the `formal-verification` feature is enabled.
     #[must_use]
+    #[cfg_attr(
+        feature = "formal-verification",
+        ::creusot_std::macros::ensures(result == 32usize || result == 48usize || result == 64usize)
+    )]
     pub const fn digest_len(self) -> usize {
         match self {
             Self::Sha256 | Self::Sha3_256 | Self::Blake2s256 => 32,

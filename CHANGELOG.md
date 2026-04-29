@@ -7,7 +7,43 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-### Sprint 1.1 — kernel crypto (Phase 1.1.D.1: TLA+ spec/crypto.tla + tooling + CI, in progress)
+### Sprint 1.1 — kernel crypto (Phase 1.1.D.2.a: Creusot toolchain skeleton + smoke-test contract, in progress)
+
+First micro-slice of Phase 1.1.D.2 — toolchain integration only. Lands the Creusot v0.11.0 deductive-verification machinery (install script + ADR + workspace dev-dep + `formal-verification` Cargo feature + CI workflow + developer guide) plus a single smoke-test `#[ensures]` contract on `HashAlgorithm::digest_len` to validate end-to-end pipeline. **No production contracts** in this PR — those land progressively in Phase 1.1.D.2.b (hash family), 1.1.D.2.c (HMAC + HKDF + Argon2id), 1.1.D.3 (AEAD + signatures), 1.1.D.4 (KEM + ML-DSA + hybrids).
+
+* **ADR-0015** — formal policy for Creusot adoption: tooling pin (Creusot v0.11.0, `creusot-std` v0.11.0, Why3 + Z3/CVC5 SMT solvers, Rust nightly-2026-04-21 for proof discharge), integration shape (feature-gated dev-dep, `cfg_attr` contract attributes, trusted-boundary annotations on HACL\* FFI calls), what lives inside contracts (output-length invariants, determinism, error-path completeness, lifecycle-state matching `spec/crypto.tla`) vs what does NOT (constant-time / side-channels — anchored in HACL\* + libcrux F\* / hax verification per ADR-0009 + Decision 2.60; capability + audit-chain unforgeability — SPARK 2014 per ADR-0010).
+* **`tools/scripts/install-creusot.sh`** — idempotent installer for the Creusot toolchain: apt prerequisites (`opam`, `libzmq3-dev`, `z3`, `cvc5`), opam initialisation (`--bare --disable-sandboxing` for WSL2 + rootless-container compatibility), Creusot driver via `git clone --branch v0.11.0` + `./INSTALL` (delegates Why3 install to opam under `~/.local/share/creusot/_opam`). First-run cost ~15-25 minutes; idempotent on re-run.
+* **`Cargo.toml` workspace** — `creusot-std = "0.11"` declared in `[workspace.dependencies]` with `default-features = false, features = ["std"]`. Pulled in only when the `formal-verification` feature is active on a consuming crate.
+* **`crates/pulsar-kernel/Cargo.toml`** — adds `creusot-std = { workspace = true, optional = true }` as a regular optional dep (NOT a dev-dep — Cargo forbids `optional` on dev-deps); adds `formal-verification = ["dep:creusot-std"]` Cargo feature. With the feature off, `creusot-std` is not pulled in and contract bodies are `cfg_attr`-skipped — production builds carry zero runtime + compile overhead.
+* **`crates/pulsar-kernel/src/crypto/hash.rs`** — single smoke-test contract:
+  ```rust
+  #[cfg_attr(
+      feature = "formal-verification",
+      ::creusot_std::macros::ensures(result == 32usize || result == 48usize || result == 64usize)
+  )]
+  pub const fn digest_len(self) -> usize { ... }
+  ```
+  Asserts that `HashAlgorithm::digest_len` always returns one of the three valid output lengths {32, 48, 64} for every admissible variant. The fully-qualified path (`::creusot_std::macros::ensures`) avoids a glob `use` at the contract site, keeping non-formal-verification builds free of unused-import warnings.
+* **`.github/workflows/creusot.yml`** — new CI workflow with two jobs:
+  - `feature-flag-build` (auto on every PR touching `crates/pulsar-kernel/**` or workflow itself) — runs `cargo check -p pulsar-kernel --features formal-verification` to ensure the feature wiring stays clean.
+  - `proof-discharge` (`workflow_dispatch`-only at this stage) — installs the full Creusot toolchain via `tools/scripts/install-creusot.sh` and runs `cargo creusot --features formal-verification prove`. Phase 1.1.D.2.b flips this to auto-trigger once production contracts land.
+* **`docs/development/creusot-contracts.md`** — developer guide covering local install, contract-authoring boilerplate (cfg_attr pattern), Pearlite syntax notes, common attributes (requires / ensures / invariant / variant / trusted), trusted-boundary policy on FFI + macros + secrecy, coverage target (≥ 80 % at GA per Section XII).
+
+Quality gates verified locally:
+  - `cargo check -p pulsar-kernel` ✓ (default features)
+  - `cargo check -p pulsar-kernel --features formal-verification` ✓ (with Creusot macros expanding to no-ops on stable rustc)
+  - `cargo fmt --all -- --check` ✓
+  - `cargo clippy -p pulsar-kernel --all-targets -- -D warnings` ✓
+  - `cargo nextest run -p pulsar-kernel` — 196/196 PASS ✓
+  - `cargo test -p pulsar-kernel --doc` ✓
+  - `shellcheck tools/scripts/install-creusot.sh` ✓
+  - `python3 -c 'yaml.safe_load(...)'` on workflow YAML ✓
+
+Note: `proof-discharge` is NOT validated end-to-end on local WSL because Creusot's `creusot-install` panics during the Why3 install step in the WSL environment (likely tooling / library compatibility issue under WSL2). The CI workflow runs on GitHub-hosted runners which match the upstream Creusot project's own CI environment exactly — that is where end-to-end validation will occur. If CI also fails, Phase 1.1.D.2.a is re-scoped to documentation-only and the `proof-discharge` job is removed until a workable install path is found.
+
+Refs: `docs/plan.md` Section II Decision 2.20 (Creusot + TLA+), Section XII success metrics (≥ 80 % Creusot contract coverage at GA), Section 17.27 (formal-verification scope per crate); ADR-0015 (Creusot for kernel function contracts); ADR-0009 (HACL\* via FFI — Creusot annotates the Rust-side wrappers, not the C primitives); ADR-0010 (SPARK 2014 disjoint scope).
+
+### Sprint 1.1 — kernel crypto (Phase 1.1.D.1: TLA+ spec/crypto.tla + tooling + CI, merged 2026-04-29 as `2213eb2c`)
 
 First sub-phase of Phase 1.1.D — the formal-verification phase that follows the cryptographic-primitive surface (Phases 1.1.A through 1.1.C). Lands the TLA+ specification of cryptographic key lifecycle plus the supporting tooling + CI integration. Creusot contracts on the Rust-side wrappers are deferred to subsequent sub-phases (1.1.D.2 — toolchain + hash/HMAC/KDF contracts; 1.1.D.3 — AEAD + signatures; 1.1.D.4 — KEM + ML-DSA + hybrids).
 

@@ -550,6 +550,16 @@ thirtyfour = "0.34"
 # pulsar-kernel::crypto smoke + property tests (Sprint 1.1.B+).
 hex = "0.4"
 
+# Creusot deductive-verification specification macros + standard-library
+# contracts per Decision 2.20 + ADR-0015. The crate's macros expand to
+# no-ops when the `creusot` cfg flag is not set, so the workspace builds
+# normally on stable rustc; proof discharge requires the Creusot driver
+# (cargo creusot — see tools/scripts/install-creusot.sh + ADR-0015).
+# Phase 1.1.D.2.a wires this as a feature-gated dev-dep in pulsar-kernel
+# only; later phases extend coverage to pulsar-guard sub-modules + the
+# pulsar-dataprotection RtbF two-phase commit.
+creusot-std = { version = "0.11", default-features = false, features = ["std"] }
+
 [profile.release]
 opt-level = 3
 lto = "fat"
