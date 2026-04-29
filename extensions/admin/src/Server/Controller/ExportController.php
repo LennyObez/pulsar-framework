@@ -28,6 +28,7 @@ final readonly class ExportController
     {
         $queryParams = $request->getQueryParams();
 
+        /** @var mixed $formatStr */
         $formatStr = $queryParams['format'] ?? null;
         $format = is_string($formatStr) ? ExportFormat::tryFrom($formatStr) : null;
         if ($format === null) {
@@ -35,6 +36,7 @@ final readonly class ExportController
         }
 
         $filters = [];
+        /** @var mixed $rawFilters */
         $rawFilters = $queryParams['filters'] ?? null;
         if (is_string($rawFilters)) {
             /** @var array<string, mixed> $decoded */
