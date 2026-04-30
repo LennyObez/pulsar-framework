@@ -49,8 +49,12 @@ final readonly class RedirectController extends AbstractAdminController
         $this->authorize($identity, 'cms.seo.view');
 
         $params = $request->getQueryParams();
-        $page = max(1, is_int($params['page'] ?? null) ? $params['page'] : 1);
-        $perPage = min(100, max(1, is_int($params['per_page'] ?? null) ? $params['per_page'] : 50));
+        /** @var mixed $rawPage */
+        $rawPage = $params['page'] ?? null;
+        $page = max(1, is_int($rawPage) ? $rawPage : 1);
+        /** @var mixed $rawPerPage */
+        $rawPerPage = $params['per_page'] ?? null;
+        $perPage = min(100, max(1, is_int($rawPerPage) ? $rawPerPage : 50));
 
         /** @var string|null $tenantId */
         $tenantId = $request->getAttribute('tenant_id');
@@ -90,11 +94,21 @@ final readonly class RedirectController extends AbstractAdminController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $fromPath = is_string($body['from_path'] ?? null) ? $body['from_path'] : '';
-        $toPath = is_string($body['to_path'] ?? null) ? $body['to_path'] : '';
-        $statusCode = is_int($body['status_code'] ?? null) ? $body['status_code'] : 301;
-        $locale = is_string($body['locale'] ?? null) && $body['locale'] !== '' ? $body['locale'] : null;
-        $reason = is_string($body['reason'] ?? null) ? $body['reason'] : 'Created via admin';
+        /** @var mixed $rawFromPath */
+        $rawFromPath = $body['from_path'] ?? null;
+        $fromPath = is_string($rawFromPath) ? $rawFromPath : '';
+        /** @var mixed $rawToPath */
+        $rawToPath = $body['to_path'] ?? null;
+        $toPath = is_string($rawToPath) ? $rawToPath : '';
+        /** @var mixed $rawStatusCode */
+        $rawStatusCode = $body['status_code'] ?? null;
+        $statusCode = is_int($rawStatusCode) ? $rawStatusCode : 301;
+        /** @var mixed $rawLocale */
+        $rawLocale = $body['locale'] ?? null;
+        $locale = is_string($rawLocale) && $rawLocale !== '' ? $rawLocale : null;
+        /** @var mixed $rawReason */
+        $rawReason = $body['reason'] ?? null;
+        $reason = is_string($rawReason) ? $rawReason : 'Created via admin';
 
         if ($fromPath === '' || $toPath === '') {
             return Response::json(['error' => 'Both from_path and to_path are required'], 400);
