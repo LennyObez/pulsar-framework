@@ -203,8 +203,9 @@ final readonly class SchemaApiController
     {
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
+        /** @var mixed $limitRaw */
         $limitRaw = $body['limit'] ?? 100;
-        $limit = is_numeric($limitRaw) ? (int) $limitRaw : 100;
+        $limit = (is_int($limitRaw) || is_string($limitRaw)) && is_numeric($limitRaw) ? (int) $limitRaw : 100;
         $entries = $this->changeLog->recent($limit);
 
         $entryData = array_map(
@@ -355,6 +356,7 @@ final readonly class SchemaApiController
         /** @var list<string> $columns */
         $columns = $i['columns'] ?? [];
 
+        /** @var mixed $nameRaw */
         $nameRaw = $i['name'] ?? '';
         return new SchemaIndex(
             name: is_string($nameRaw) ? $nameRaw : '',
