@@ -44,11 +44,19 @@ final readonly class SiteController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $domain = is_string($body['domain'] ?? null) ? $body['domain'] : '';
-        $name = is_string($body['name'] ?? null) ? $body['name'] : '';
-        $timezone = is_string($body['timezone'] ?? null) ? $body['timezone'] : 'UTC';
+        /** @var mixed $rawDomain */
+        $rawDomain = $body['domain'] ?? null;
+        $domain = is_string($rawDomain) ? $rawDomain : '';
+        /** @var mixed $rawName */
+        $rawName = $body['name'] ?? null;
+        $name = is_string($rawName) ? $rawName : '';
+        /** @var mixed $rawTimezone */
+        $rawTimezone = $body['timezone'] ?? null;
+        $timezone = is_string($rawTimezone) ? $rawTimezone : 'UTC';
+        /** @var mixed $rawSettings */
+        $rawSettings = $body['settings'] ?? null;
         /** @var array<string, mixed> $settings */
-        $settings = is_array($body['settings'] ?? null) ? $body['settings'] : [];
+        $settings = is_array($rawSettings) ? $rawSettings : [];
 
         if ($domain === '' || $name === '') {
             return Response::json(['error' => 'domain and name are required'], 400);
@@ -91,11 +99,19 @@ final readonly class SiteController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $domain = is_string($body['domain'] ?? null) ? $body['domain'] : '';
-        $name = is_string($body['name'] ?? null) ? $body['name'] : '';
-        $timezone = is_string($body['timezone'] ?? null) ? $body['timezone'] : 'UTC';
+        /** @var mixed $rawDomain */
+        $rawDomain = $body['domain'] ?? null;
+        $domain = is_string($rawDomain) ? $rawDomain : '';
+        /** @var mixed $rawName */
+        $rawName = $body['name'] ?? null;
+        $name = is_string($rawName) ? $rawName : '';
+        /** @var mixed $rawTimezone */
+        $rawTimezone = $body['timezone'] ?? null;
+        $timezone = is_string($rawTimezone) ? $rawTimezone : 'UTC';
+        /** @var mixed $rawSettings */
+        $rawSettings = $body['settings'] ?? null;
         /** @var array<string, mixed> $settings */
-        $settings = is_array($body['settings'] ?? null) ? $body['settings'] : [];
+        $settings = is_array($rawSettings) ? $rawSettings : [];
 
         if ($domain === '' || $name === '') {
             return Response::json(['error' => 'domain and name are required'], 400);
