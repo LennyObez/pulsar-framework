@@ -93,6 +93,17 @@ Configure allowed IP ranges at the infrastructure level (reverse proxy, load bal
 
 `AdminCsrfMiddleware` enforces CSRF protection on all mutating requests (POST, PUT, PATCH, DELETE). When `csrf_rotation` is enabled, the CSRF token is rotated after every successful mutation to prevent token reuse.
 
+The middleware accepts the token in two forms:
+
+| Source                  | Use case                                                              |
+| ----------------------- | --------------------------------------------------------------------- |
+| `X-CSRF-Token` header   | SPA / fetch / XHR clients (preferred — no body parsing required)      |
+| `_csrf_token` POST body | Plain HTML `<form>` submissions, including the `<noscript>` fallback  |
+
+When both are present the header value wins, so a client that supplies both for resilience does not get tripped by a mismatched body field. Both paths run through the same constant-time `hash_equals` comparison against the session-attached token, so neither form leaks timing information about the expected value.
+
+Operators who want to lock the admin panel to a JS-only flow can simply omit the body parser configuration on the admin route group; the header path continues to work and the body fallback becomes inert.
+
 ### Error hygiene
 
 `AdminSafetyMode` sanitizes error responses in production. Internal details are stripped:
