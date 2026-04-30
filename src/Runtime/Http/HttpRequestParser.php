@@ -297,7 +297,13 @@ final class HttpRequestParser
     {
         $lower = strtolower($name);
 
-        return array_find($headers, static fn(string $_value, string $key): bool => strtolower($key) === $lower);
+        foreach ($headers as $key => $value) {
+            if (strtolower($key) === $lower) {
+                return $value;
+            }
+        }
+
+        return null;
     }
 
     /**
