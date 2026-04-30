@@ -84,13 +84,17 @@ final readonly class CartController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $productId = is_string($body['product_id'] ?? null) ? $body['product_id'] : '';
+        /** @var mixed $rawProductId */
+        $rawProductId = $body['product_id'] ?? null;
+        $productId = is_string($rawProductId) ? $rawProductId : '';
 
         if ($productId === '') {
             return Response::json(['error' => 'payments.cart.product_id_required'], 422);
         }
 
-        $productName = is_string($body['product_name'] ?? null) ? $body['product_name'] : '';
+        /** @var mixed $rawProductName */
+        $rawProductName = $body['product_name'] ?? null;
+        $productName = is_string($rawProductName) ? $rawProductName : '';
 
         if ($productName === '') {
             return Response::json(['error' => 'payments.cart.product_name_required'], 422);
@@ -104,7 +108,9 @@ final readonly class CartController
             return Response::json(['error' => 'payments.cart.unit_price_required'], 422);
         }
 
-        $currencyCode = is_string($body['currency'] ?? null) ? $body['currency'] : 'EUR';
+        /** @var mixed $rawCurrency */
+        $rawCurrency = $body['currency'] ?? null;
+        $currencyCode = is_string($rawCurrency) ? $rawCurrency : 'EUR';
         $currency = Currency::tryFrom($currencyCode);
 
         if ($currency === null) {
@@ -201,7 +207,9 @@ final readonly class CartController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $couponCode = is_string($body['coupon_code'] ?? null) ? $body['coupon_code'] : '';
+        /** @var mixed $rawCouponCode */
+        $rawCouponCode = $body['coupon_code'] ?? null;
+        $couponCode = is_string($rawCouponCode) ? $rawCouponCode : '';
 
         if ($couponCode === '') {
             return Response::json(['error' => 'payments.cart.coupon_code_required'], 422);
