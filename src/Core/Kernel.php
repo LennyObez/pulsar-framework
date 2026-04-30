@@ -451,12 +451,16 @@ final class Kernel implements KernelInterface
      *
      * @param PsrMiddlewareInterface|class-string<PsrMiddlewareInterface> $middleware
      *
-     * @throws RuntimeException When called after `boot()` has run.
+     * @throws \LogicException When called after `boot()` has run.
      */
     public function addMiddleware(PsrMiddlewareInterface|string $middleware): self
     {
         if ($this->booted) {
-            throw new RuntimeException(
+            // F2.18: a programming error, not a runtime
+            // condition — caller registered middleware in the
+            // wrong phase of the lifecycle. LogicException
+            // is the right base class.
+            throw new \LogicException(
                 'addMiddleware() cannot be called after the kernel has booted; '
                 . 'register all middleware before the first handle() invocation.',
             );
