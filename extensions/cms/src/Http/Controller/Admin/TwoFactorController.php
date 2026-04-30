@@ -82,8 +82,12 @@ final readonly class TwoFactorController extends AbstractAdminController
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
-        $accountName = is_string($body['account_name'] ?? null) ? $body['account_name'] : $identity->id();
-        $issuer = is_string($body['issuer'] ?? null) ? $body['issuer'] : 'PulsarCMS';
+        /** @var mixed $rawAccountName */
+        $rawAccountName = $body['account_name'] ?? null;
+        $accountName = is_string($rawAccountName) ? $rawAccountName : $identity->id();
+        /** @var mixed $rawIssuer */
+        $rawIssuer = $body['issuer'] ?? null;
+        $issuer = is_string($rawIssuer) ? $rawIssuer : 'PulsarCMS';
 
         // Generate a new TOTP secret
         $secret = $this->totpGenerator->generateSecret();
@@ -136,8 +140,12 @@ final readonly class TwoFactorController extends AbstractAdminController
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
-        $code = is_string($body['code'] ?? null) ? $body['code'] : '';
-        $secret = is_string($body['secret'] ?? null) ? $body['secret'] : '';
+        /** @var mixed $rawCode */
+        $rawCode = $body['code'] ?? null;
+        $code = is_string($rawCode) ? $rawCode : '';
+        /** @var mixed $rawSecret */
+        $rawSecret = $body['secret'] ?? null;
+        $secret = is_string($rawSecret) ? $rawSecret : '';
 
         if ($code === '' || $secret === '') {
             return Response::json(['error' => 'Both code and secret are required'], 400);
@@ -194,8 +202,12 @@ final readonly class TwoFactorController extends AbstractAdminController
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
-        $code = is_string($body['code'] ?? null) ? $body['code'] : '';
-        $secret = is_string($body['secret'] ?? null) ? $body['secret'] : '';
+        /** @var mixed $rawCode */
+        $rawCode = $body['code'] ?? null;
+        $code = is_string($rawCode) ? $rawCode : '';
+        /** @var mixed $rawSecret */
+        $rawSecret = $body['secret'] ?? null;
+        $secret = is_string($rawSecret) ? $rawSecret : '';
 
         if ($code === '' || $secret === '') {
             return Response::json(['error' => 'Both code and secret are required'], 400);
