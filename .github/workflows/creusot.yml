@@ -63,7 +63,12 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install apt prerequisites
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq opam libzmq3-dev z3 cvc5
+        # `mold` + `clang` mirror cross-platform.yml — `cargo creusot prove`
+        # runs a full `cargo build` (not `cargo check`), which invokes the
+        # linker per .cargo/config.toml's `linker = "clang", -fuse-ld=mold`
+        # x86_64-linux-gnu rustflags. The `build` job in this workflow uses
+        # `cargo check` and so doesn't need them.
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq opam libzmq3-dev z3 cvc5 mold clang
 
       - name: Cache opam switch
         uses: actions/cache@v4
