@@ -281,7 +281,15 @@ impl Hasher {
     }
 
     /// Algorithm this hasher was constructed for.
+    ///
+    /// The `#[ensures(result == self.algo)]` postcondition is needed by
+    /// downstream contracts on `update` / `reset` / `digest` /
+    /// `finalize` — they reference `self.algorithm()` in their post-
+    /// conditions, and Creusot needs the explicit equality to the
+    /// underlying field to discharge the algorithm-preservation
+    /// invariants.
     #[must_use]
+    #[ensures(result == self.algo)]
     pub const fn algorithm(&self) -> HashAlgorithm {
         self.algo
     }
@@ -394,6 +402,12 @@ impl Hasher {
 }
 
 impl Drop for Hasher {
+    /// Trusted: the FFI deallocator matches the FFI allocator from
+    /// `Hasher::new` (per the HACL\* C contract documented in
+    /// `EverCrypt_Hash.h`). Creusot v0.11 cannot reason about
+    /// `unsafe extern "C"` calls; trust is anchored in the upstream
+    /// HACL\* F\* verification per ADR-0009.
+    #[trusted]
     fn drop(&mut self) {
         // SAFETY: `state` is valid (held in NonNull throughout the
         // Hasher lifetime). EverCrypt_Hash_Incremental_free is the
