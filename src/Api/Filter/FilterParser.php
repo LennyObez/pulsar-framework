@@ -75,6 +75,7 @@ final readonly class FilterParser
             }
 
             // Cast and validate value
+            /** @var mixed $typedValue */
             $typedValue = $this->castValue($value, $definition, $operator, $field);
 
             $expressions[] = FilterExpression::create($definition->column, $operator, $typedValue);
