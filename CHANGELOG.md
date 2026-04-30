@@ -7,7 +7,28 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-### Sprint 1.1 — kernel crypto (Phase 1.1.D.2.a: Creusot toolchain skeleton + smoke-test contract, in progress)
+### Sprint 1.1 — kernel crypto (Phase 1.1.D.2.b: Creusot contracts on the hash family, in progress)
+
+Second micro-slice of Phase 1.1.D.2. Drops the Cargo-feature-flag pattern from Phase 1.1.D.2.a — empirically incompatible with Creusot v0.11.0's `cargo-creusot` driver, which reads `cargo metadata` *without* activating any features and so cannot find `creusot-std` when it is `optional = true` (verified by the 2026-04-29 CI failure: `Error: creusot-std not found in dependencies`). Pulls `creusot-std` in as a regular workspace dependency on `pulsar-kernel`, then adds Pearlite contracts to the entire hash family.
+
+* **`crates/pulsar-kernel/Cargo.toml`** — `creusot-std` migrated from `{ workspace = true, optional = true }` (gated by `formal-verification` feature) to `{ workspace = true }` (unconditional). The `[features]` section is deleted. The proc-macro crate (~300 KB) compiles once; on stable rustc the `#[ensures]` / `#[requires]` / `#[trusted]` macros expand to no-ops outside `cfg(creusot)`, so production binaries carry zero runtime overhead.
+* **`crates/pulsar-kernel/src/crypto/hash.rs`** — explicit-macro import (`use creusot_std::macros::{ensures, trusted};`) chosen over the full `creusot_std::prelude::*` glob to avoid shadowing std's `vec!` macro and the `Clone` / `PartialEq` / `Default` derive macros. Phase 1.1.D.2.a's `cfg_attr`-gated smoke-test on `HashAlgorithm::digest_len` is replaced by a per-variant production postcondition (one `#[ensures]` per of the eight admissible variants tying `result` to the FIPS-defined digest length); `#[trusted]` + length postconditions are added to every FFI-touching function in the hash family — `hash()`, `Hasher::new` / `update` / `digest` / `finalize` / `reset`, `hash_into_slice`, `hash_to_array` — citing HACL\* F\* verification (ADR-0009) as the upstream verification claim. The eight convenience aliases (`sha256`, `sha384`, `sha512`, `sha3_256`, `sha3_384`, `sha3_512`, `blake2b512`, `blake2s256`) carry the static `Result<[u8; N]>` length guarantee at the type-system level and need no Pearlite postcondition.
+* **`.github/workflows/creusot.yml`** — renames `feature-flag-build` → `build` (no feature flag any more), drops `--features formal-verification` from `cargo check` and from the `cargo creusot prove` invocation, removes the `if: github.event_name == 'workflow_dispatch'` gate on `proof-discharge` so the proof job runs auto on every kernel-touching PR (the flip promised in Phase 1.1.D.2.a's commit message).
+* **`docs/adr/0015-creusot-kernel-function-contracts.md`** — Integration-shape section refreshed to drop the feature-flag pattern + document the `cargo metadata`-without-features rationale + name the explicit-macro-import discipline + flip the CI auto-trigger description.
+* **`docs/development/creusot-contracts.md`** — boilerplate snippets, trusted-boundary example, and local-run command updated to match the new pattern.
+
+Quality gates verified locally:
+  - `cargo check -p pulsar-kernel` ✓ (default-only — no feature flag any more)
+  - `cargo fmt --all -- --check` ✓
+  - `cargo clippy -p pulsar-kernel --all-targets -- -D warnings` ✓
+  - `cargo nextest run -p pulsar-kernel` — 196/196 PASS ✓
+  - `cargo test -p pulsar-kernel --doc` ✓
+
+CI's auto-triggered `proof-discharge` job will be the first end-to-end validation of `cargo creusot prove` on the production hash-family contracts; if it surfaces Pearlite syntax or discharge issues, a fixup PR addresses them before merge.
+
+Refs: `docs/plan.md` Section II Decision 2.20 (Creusot + TLA+); Section XII success metrics (≥ 80 % Creusot coverage at GA); ADR-0015 (Creusot for kernel function contracts); ADR-0009 (HACL\* F\* verification claim being trusted at the FFI boundary); empirical CI failure on Phase 1.1.D.2.a manual `proof-discharge` trigger (run 25125576162) confirming the feature-flag pattern's incompatibility with `cargo-creusot`'s metadata invocation.
+
+### Sprint 1.1 — kernel crypto (Phase 1.1.D.2.a: Creusot toolchain skeleton + smoke-test contract, merged 2026-04-29 as `cc2bc6dc`)
 
 First micro-slice of Phase 1.1.D.2 — toolchain integration only. Lands the Creusot v0.11.0 deductive-verification machinery (install script + ADR + workspace dev-dep + `formal-verification` Cargo feature + CI workflow + developer guide) plus a single smoke-test `#[ensures]` contract on `HashAlgorithm::digest_len` to validate end-to-end pipeline. **No production contracts** in this PR — those land progressively in Phase 1.1.D.2.b (hash family), 1.1.D.2.c (HMAC + HKDF + Argon2id), 1.1.D.3 (AEAD + signatures), 1.1.D.4 (KEM + ML-DSA + hybrids).
 

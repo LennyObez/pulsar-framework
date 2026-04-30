@@ -45,6 +45,12 @@
 use crate::crypto::ensure_initialized;
 use crate::error::{Error, Result};
 use core::ptr::NonNull;
+// Pearlite specification macros only — `creusot_std::prelude` would
+// shadow std's `vec!` macro and various derive macros, which conflicts
+// with the existing kernel code. Phase 1.1.D.2.b imports the macros
+// directly to keep the contract surface explicit without disturbing
+// the std-prelude identifiers downstream code already binds to.
+use creusot_std::macros::{ensures, trusted};
 use pulsar_crypto_hacl_bindings::ffi;
 
 /// Cryptographic hash algorithms supported by `pulsar-kernel::crypto`.
@@ -80,25 +86,25 @@ pub enum HashAlgorithm {
 impl HashAlgorithm {
     /// Digest output length in bytes for this algorithm.
     ///
-    /// Phase 1.1.D.2.a smoke-test contract: asserts `digest_len` always
-    /// returns one of the three valid output lengths {32, 48, 64} for
-    /// every admissible variant of [`HashAlgorithm`]. Discharged by
-    /// Creusot when the `formal-verification` feature is enabled.
-    ///
-    /// **Note (smoke test, not production-grade postcondition).** This
-    /// `#[ensures]` exists to validate the cfg_attr + macro-expansion
-    /// pipeline end-to-end. Constant propagation through the match
-    /// makes Creusot discharge it without any SMT solving — useful as
-    /// a "toolchain works" signal but vacuous as an algorithm
-    /// invariant. Phase 1.1.D.2.b will replace it with a stronger
-    /// postcondition tying `digest_len` to a `spec_digest_len` ghost
-    /// function on `HashAlgorithm` that is referenced by every
-    /// downstream length-bearing primitive (HMAC, HKDF, AEAD).
+    /// Per-variant postconditions tie each variant to its FIPS-defined
+    /// digest length. Downstream contracts (the `hash()` one-shot,
+    /// `Hasher::digest` / `finalize`, the convenience aliases) call
+    /// `digest_len` in their own postconditions to express the fact
+    /// that "the returned digest has exactly the algorithm's output
+    /// length". Once Creusot v0.11+ supports `#[logic]` reasoning over
+    /// `const fn`s natively, this can collapse to a single
+    /// `result@ == self.spec_digest_len()` postcondition referencing a
+    /// ghost-function spec; the per-variant form is the v0.11.0
+    /// best-fit.
     #[must_use]
-    #[cfg_attr(
-        feature = "formal-verification",
-        ::creusot_std::macros::ensures(result == 32usize || result == 48usize || result == 64usize)
-    )]
+    #[ensures((self == HashAlgorithm::Sha256) ==> result == 32usize)]
+    #[ensures((self == HashAlgorithm::Sha384) ==> result == 48usize)]
+    #[ensures((self == HashAlgorithm::Sha512) ==> result == 64usize)]
+    #[ensures((self == HashAlgorithm::Sha3_256) ==> result == 32usize)]
+    #[ensures((self == HashAlgorithm::Sha3_384) ==> result == 48usize)]
+    #[ensures((self == HashAlgorithm::Sha3_512) ==> result == 64usize)]
+    #[ensures((self == HashAlgorithm::Blake2b512) ==> result == 64usize)]
+    #[ensures((self == HashAlgorithm::Blake2s256) ==> result == 32usize)]
     pub const fn digest_len(self) -> usize {
         match self {
             Self::Sha256 | Self::Sha3_256 | Self::Blake2s256 => 32,
@@ -155,6 +161,7 @@ impl HashAlgorithm {
 ///
 /// - [`Error::InvalidOutputLength`] — `output.len() < algo.digest_len()`.
 /// - [`Error::InputTooLong`] — `input.len() > u32::MAX`.
+#[trusted]
 fn hash_into_slice(algo: HashAlgorithm, input: &[u8], output: &mut [u8]) -> Result<()> {
     if output.len() < algo.digest_len() {
         return Err(Error::InvalidOutputLength {
@@ -210,6 +217,8 @@ fn hash_into_slice(algo: HashAlgorithm, input: &[u8], output: &mut [u8]) -> Resu
 /// - [`Error::InputTooLong`] — `input.len() > u32::MAX`. HACL\*'s
 ///   single-shot API takes a 32-bit length parameter; 4 GiB exceeds
 ///   any plausible Pulsar payload size.
+#[trusted]
+#[ensures(forall<v: Vec<u8>> result == Ok(v) ==> v@.len() == algo.digest_len()@)]
 pub fn hash(algo: HashAlgorithm, input: &[u8]) -> Result<Vec<u8>> {
     let mut output = vec![0_u8; algo.digest_len()];
     hash_into_slice(algo, input, &mut output)?;
@@ -256,6 +265,8 @@ impl Hasher {
     ///
     /// - [`Error::StateAllocationFailed`] — HACL\*'s `*_malloc` returned NULL
     ///   (out-of-memory at the C layer). Should not occur under normal load.
+    #[trusted]
+    #[ensures(forall<h: Self> result == Ok(h) ==> h.algorithm() == algo)]
     pub fn new(algo: HashAlgorithm) -> Result<Self> {
         ensure_initialized();
 
@@ -287,6 +298,8 @@ impl Hasher {
     ///   (e.g., the cumulative input exceeded the algorithm's
     ///   per-message limit: 2^61-1 bytes for SHA-2-256, 2^64-1 bytes
     ///   for SHA-2-384/512 + SHA-3 + BLAKE2 — practically unreachable).
+    #[trusted]
+    #[ensures((^self).algorithm() == self.algorithm())]
     pub fn update(&mut self, chunk: &[u8]) -> Result<()> {
         let len = u32::try_from(chunk.len()).map_err(|_| Error::InputTooLong {
             actual: chunk.len(),
@@ -334,6 +347,8 @@ impl Hasher {
     /// a provisional digest is needed before more bytes arrive (TLS
     /// handshake transcripts, Merkle-tree intermediate roots, etc.).
     #[must_use]
+    #[trusted]
+    #[ensures(result@.len() == self.algorithm().digest_len()@)]
     pub fn digest(&self) -> Vec<u8> {
         let mut output = vec![0_u8; self.algo.digest_len()];
 
@@ -355,6 +370,7 @@ impl Hasher {
     /// no further updates are needed — the consumed `self` makes the
     /// no-further-use intent explicit at the call site.
     #[must_use]
+    #[ensures(result@.len() == self.algorithm().digest_len()@)]
     pub fn finalize(self) -> Vec<u8> {
         self.digest()
     }
@@ -366,6 +382,8 @@ impl Hasher {
     /// same algorithm — `reset` avoids the per-message
     /// `EverCrypt_Hash_Incremental_malloc + _free` allocation cycle. The
     /// algorithm is preserved across resets.
+    #[trusted]
+    #[ensures((^self).algorithm() == self.algorithm())]
     pub fn reset(&mut self) {
         // SAFETY: `state` is valid (held in NonNull throughout the
         // Hasher lifetime). EverCrypt_Hash_Incremental_reset does not
@@ -398,6 +416,7 @@ impl Drop for Hasher {
 /// `N` must equal `algo.digest_len()` — the convenience aliases below
 /// pass the correct (algorithm, N) pair so the `InvalidOutputLength`
 /// error path is unreachable from these call sites.
+#[trusted]
 fn hash_to_array<const N: usize>(algo: HashAlgorithm, input: &[u8]) -> Result<[u8; N]> {
     debug_assert_eq!(
         N,

@@ -2,7 +2,7 @@
 
 This guide documents how to author, build, and discharge Creusot function contracts in the Pulsar Framework. Decision context lives in **ADR-0015** (Creusot for kernel function contracts) + plan Section II Decision 2.20 (Creusot + TLA+).
 
-> **Status:** Phase 1.1.D.2.a (toolchain skeleton + smoke-test contract). Production contracts on hash / HMAC / KDF / AEAD / signatures / KEM / hybrids land progressively in Phases 1.1.D.2.b → 1.1.D.4.
+> **Status:** Phase 1.1.D.2.b (production contracts on the hash family + cargo-feature-flag pattern dropped per the empirical CI failure on Phase 1.1.D.2.a). Production contracts on HMAC / KDF / AEAD / signatures / KEM / hybrids land progressively in Phases 1.1.D.2.c → 1.1.D.4.
 
 ## Overview
 
@@ -10,11 +10,11 @@ Creusot is a deductive-verification tool for Rust. Function contracts are writte
 
 In Pulsar:
 
-* Contracts are **gated behind the `formal-verification` Cargo feature** on `pulsar-kernel`. With the feature off, `creusot-std` is not pulled in and contract attributes are skipped via `cfg_attr` — production builds carry zero overhead.
-* Proof discharge requires the **Creusot driver** (`cargo creusot prove`) which is NOT shipped via crates.io; it lives in the `creusot-rs/creusot` GitHub workspace and is installed via the canonical `./INSTALL` script.
+* `creusot-std` is a **regular (non-optional) workspace dependency** of `pulsar-kernel`. The proc-macro crate (~300 KB) compiles once; on stable rustc the `#[ensures]` / `#[requires]` / `#[trusted]` macros expand to no-ops outside `cfg(creusot)`, so production binaries carry zero runtime overhead. The `cfg_attr` + `optional = true` + feature-flag pattern attempted in Phase 1.1.D.2.a was rejected because `cargo-creusot`'s `get_contracts_version` reads `cargo metadata` without activating any features — an optional-feature-gated `creusot-std` is invisible to the proof driver.
+* Proof discharge requires the **Creusot driver** (`cargo creusot prove`) which is NOT shipped via crates.io; it lives in the `creusot-rs/creusot` GitHub workspace and is installed via the canonical `./INSTALL` script (mirrored by `tools/scripts/install-creusot.sh`).
 * The CI workflow `.github/workflows/creusot.yml` runs:
-  - `feature-flag-build` automatically — verifies `cargo check -p pulsar-kernel --features formal-verification` is clean
-  - `proof-discharge` on `workflow_dispatch` only (Phase 1.1.D.2.a — flips to auto-trigger when production contracts land in Phase 1.1.D.2.b)
+  - `build` automatically — verifies `cargo check -p pulsar-kernel` is clean (catches contract-syntax regressions cheaply)
+  - `proof-discharge` automatically (since 1.1.D.2.b) — installs the toolchain (cached) and runs `cargo creusot prove` on every kernel-touching PR
 
 ## Local installation (one-time)
 
@@ -55,20 +55,21 @@ which creusot-rustc        # should be in $HOME/.local/bin or similar
 
 ### Boilerplate
 
-Every module that uses Creusot contracts gates the import behind the feature flag:
+Every module that uses Creusot contracts imports the specific macros it needs at the top:
 
 ```rust
-#[cfg(feature = "formal-verification")]
-use creusot_std::prelude::*;
+use creusot_std::macros::{ensures, trusted};
+// add `requires`, `invariant`, `variant`, `logic`, etc. as needed
 ```
 
-Each contract attribute is gated via `cfg_attr` so it is only applied when the feature is active:
+The full `creusot_std::prelude::*` glob is avoided — it shadows std's `vec!` macro and several derive macros (`Clone`, `PartialEq`, `Default`), which conflicts with existing kernel code. The explicit-macro import keeps the contract surface explicit and the std-prelude identifiers untouched.
+
+Each contract attribute is then applied directly without any cfg-gating:
 
 ```rust
-#[cfg_attr(
-    feature = "formal-verification",
-    ::creusot_std::macros::ensures(result == 32usize || result == 48usize || result == 64usize)
-)]
+#[ensures((self == HashAlgorithm::Sha256) ==> result == 32usize)]
+#[ensures((self == HashAlgorithm::Sha384) ==> result == 48usize)]
+// ... one ensures per variant
 pub const fn digest_len(self) -> usize {
     match self {
         Self::Sha256 | Self::Sha3_256 | Self::Blake2s256 => 32,
@@ -78,7 +79,7 @@ pub const fn digest_len(self) -> usize {
 }
 ```
 
-The fully-qualified path (`::creusot_std::macros::ensures`) avoids needing a glob `use` at the contract site, which keeps non-formal-verification builds free of unused-import warnings.
+On stable rustc the macros expand to no-ops; only `cargo creusot prove` actually evaluates the Pearlite expressions inside the attributes.
 
 ### Common attributes
 
@@ -89,7 +90,8 @@ The fully-qualified path (`::creusot_std::macros::ensures`) avoids needing a glo
 | `#[ensures(\|x\| Q(x))]` | Post-condition with explicit return-value name |
 | `#[invariant(I)]` | Loop invariant `I` |
 | `#[variant(V)]` | Loop / recursion termination measure (decreases on each iteration) |
-| `#[creusot::trusted]` | Mark the function as trusted — no proof obligations are generated. Use sparingly + cite the upstream verification claim being relied on (e.g. HACL\* F\* proofs for FFI-bridge functions) |
+| `#[trusted]` | Mark the function as trusted — no proof obligations are generated. Use sparingly + cite the upstream verification claim being relied on (e.g. HACL\* F\* proofs for FFI-bridge functions) |
+| `#[logic]` | Mark the function as a pure logical / ghost function callable from contracts |
 
 ### Pearlite syntax notes
 
@@ -108,24 +110,27 @@ Once the toolchain is installed:
 
 ```bash
 cd crates/pulsar-kernel
-cargo creusot --features formal-verification prove
+cargo creusot prove
 ```
 
-Discharge time scales with contract count + complexity. A clean `pulsar-kernel` discharge with the smoke-test contract (Phase 1.1.D.2.a) takes < 30 seconds.
+Discharge time scales with contract count + complexity. A clean `pulsar-kernel` discharge with the Phase 1.1.D.2.b hash-family contracts takes < 60 seconds.
 
 ## Trusted boundaries (FFI, macros)
 
 Some Pulsar code cannot be proven by Creusot v0.11 directly:
 
-1. **HACL\* FFI calls** — `unsafe extern "C"` cannot be reasoned about. Each safe wrapper that crosses the FFI boundary carries `#[creusot::trusted]` with a comment naming the upstream verification claim:
+1. **HACL\* FFI calls** — `unsafe extern "C"` cannot be reasoned about. Each safe wrapper that crosses the FFI boundary carries `#[trusted]` with a comment naming the upstream verification claim:
 
    ```rust
-   #[cfg_attr(feature = "formal-verification", ::creusot_std::macros::trusted)]
+   #[trusted]
+   #[ensures(forall<v: Vec<u8>> result == Ok(v) ==> v@.len() == algo.digest_len()@)]
    /// Trusted: relies on HACL* F* verification of EverCrypt_Hash_Incremental_hash
    /// per ADR-0009. The Rust safe wrapper enforces the FFI preconditions
    /// (output buffer size + input length range) before the unsafe call.
-   pub fn hash_into_slice(...) { ... }
+   pub fn hash(algo: HashAlgorithm, input: &[u8]) -> Result<Vec<u8>> { ... }
    ```
+
+   The postcondition is meaningful even though the function is trusted — callers see and rely on it; trust applies only to proving that the body actually upholds the postcondition (Creusot accepts that as an axiom rather than checking the FFI body).
 
 2. **`zeroize`-derive proc-macro generated `Drop`** — the macro-expanded `Drop` impl is opaque to Creusot. Trust the proc-macro semantics + cite the upstream documented behaviour.
 
