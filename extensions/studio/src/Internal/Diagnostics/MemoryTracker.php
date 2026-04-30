@@ -121,7 +121,9 @@ final class MemoryTracker
         $slope = (($n * $sumXy) - ($sumX * $sumY)) / $denominator;
 
         $first = $this->snapshots[0];
-        $last = $this->snapshots[$n - 1];
+        $lastIndex = $n - 1;
+        assert($lastIndex >= 0);
+        $last = $this->snapshots[$lastIndex];
         $totalGrowth = $last->usageBytes - $first->usageBytes;
 
         // Positive slope + total growth above threshold = potential leak

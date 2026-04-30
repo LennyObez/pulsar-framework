@@ -103,6 +103,7 @@ final class AstInterpreter
      */
     private function evaluateOutput(AstNode $node, array $data): void
     {
+        /** @var mixed $value */
         $value = $this->resolveExpression($node->value, $data);
         $stringValue = match (true) {
             is_string($value) => $value,
