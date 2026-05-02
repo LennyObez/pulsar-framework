@@ -41,9 +41,15 @@ final readonly class MediaApiController
     {
         $params = $request->getQueryParams();
 
-        $page = max(1, is_int($params['page'] ?? null) ? $params['page'] : 1);
-        $perPage = min(100, max(1, is_int($params['per_page'] ?? null) ? $params['per_page'] : 20));
-        $mimeType = is_string($params['mime'] ?? null) ? $params['mime'] : null;
+        /** @var mixed $rawPage */
+        $rawPage = $params['page'] ?? null;
+        $page = max(1, is_int($rawPage) ? $rawPage : 1);
+        /** @var mixed $rawPerPage */
+        $rawPerPage = $params['per_page'] ?? null;
+        $perPage = min(100, max(1, is_int($rawPerPage) ? $rawPerPage : 20));
+        /** @var mixed $rawMime */
+        $rawMime = $params['mime'] ?? null;
+        $mimeType = is_string($rawMime) ? $rawMime : null;
 
         /** @var string|null $tenantId */
         $tenantId = $request->getAttribute('tenant_id');
