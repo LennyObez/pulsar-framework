@@ -107,14 +107,16 @@ final class BcBreakDetector
 
     /**
      * @param array<string, mixed> $snapshot
-     * @return array<mixed>
+     * @return array<string, array<string, mixed>>
      */
     private function extractClasses(array $snapshot): array
     {
         $classes = [];
 
+        /** @var mixed $value */
         foreach ($snapshot as $key => $value) {
             if (is_string($key) && is_array($value)) {
+                /** @var array<string, mixed> $value */
                 $classes[$key] = $value;
             }
         }
@@ -124,7 +126,7 @@ final class BcBreakDetector
 
     /**
      * @param mixed $classData
-     * @return array<mixed>
+     * @return array<string, array<string, mixed>>
      */
     private function extractMethods(mixed $classData): array
     {
@@ -132,14 +134,30 @@ final class BcBreakDetector
             return [];
         }
 
+        /** @var mixed $methods */
         $methods = $classData['methods'] ?? [];
 
-        return is_array($methods) ? $methods : [];
+        if (!is_array($methods)) {
+            return [];
+        }
+
+        $result = [];
+
+        /** @var mixed $methodData */
+        foreach ($methods as $methodName => $methodData) {
+            if (is_string($methodName) && is_array($methodData)) {
+                /** @var array<string, mixed> $methodData */
+                $result[$methodName] = $methodData;
+            }
+        }
+
+        return $result;
     }
 
     private function getStability(mixed $data): string
     {
         if (is_array($data)) {
+            /** @var mixed $stability */
             $stability = $data['stability'] ?? 'stable';
 
             return is_string($stability) ? $stability : 'stable';
@@ -151,6 +169,7 @@ final class BcBreakDetector
     private function getSignature(mixed $data): string
     {
         if (is_array($data)) {
+            /** @var mixed $sig */
             $sig = $data['signature'] ?? '';
 
             return is_string($sig) ? $sig : '';
