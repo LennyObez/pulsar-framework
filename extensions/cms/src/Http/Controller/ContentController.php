@@ -678,7 +678,7 @@ final readonly class ContentController
             'baseUrl' => $baseUrl,
             'currentUrl' => $canonicalUrl,
             'canonicalUrl' => $canonicalUrl,
-            'ogImage' => $translationObj?->ogImageId !== null ? '/media/' . $translationObj->ogImageId : null,
+            'ogImage' => ($translationObj !== null && $translationObj->ogImageId !== null) ? '/media/' . $translationObj->ogImageId : null,
             'jsonLd' => $seoData['jsonLd'] ?? '',
         ]);
     }
