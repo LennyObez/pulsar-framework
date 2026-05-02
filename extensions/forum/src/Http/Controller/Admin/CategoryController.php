@@ -158,36 +158,48 @@ final readonly class CategoryController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        if (is_string($body['slug'] ?? null) && $body['slug'] !== $category->slug) {
-            $category = $category->changeSlug($body['slug']);
+        /** @var mixed $rawSlug */
+        $rawSlug = $body['slug'] ?? null;
+        if (is_string($rawSlug) && $rawSlug !== $category->slug) {
+            $category = $category->changeSlug($rawSlug);
         }
 
-        if (isset($body['sort_order'])) {
-            $category = $category->reorder(is_numeric($body['sort_order']) ? (int) $body['sort_order'] : 0);
+        /** @var mixed $rawSortOrder */
+        $rawSortOrder = $body['sort_order'] ?? null;
+        if ($rawSortOrder !== null) {
+            $category = $category->reorder(is_numeric($rawSortOrder) ? (int) $rawSortOrder : 0);
         }
 
-        if (isset($body['is_locked'])) {
-            $category = $body['is_locked'] ? $category->lock() : $category->unlock();
+        /** @var mixed $rawIsLocked */
+        $rawIsLocked = $body['is_locked'] ?? null;
+        if ($rawIsLocked !== null) {
+            $category = $rawIsLocked ? $category->lock() : $category->unlock();
         }
 
         $this->categoryRepository->save($category);
 
-        $locale = is_string($body['locale'] ?? null) ? $body['locale'] : 'en';
+        /** @var mixed $rawLocale */
+        $rawLocale = $body['locale'] ?? null;
+        $locale = is_string($rawLocale) ? $rawLocale : 'en';
+        /** @var mixed $rawName */
+        $rawName = $body['name'] ?? null;
+        /** @var mixed $rawDescription */
+        $rawDescription = $body['description'] ?? null;
 
-        if (is_string($body['name'] ?? null) || is_string($body['description'] ?? null)) {
+        if (is_string($rawName) || is_string($rawDescription)) {
             $translation = $this->translationRepository->findByCategoryAndLocale($id, $locale);
 
             if ($translation !== null) {
-                $name = is_string($body['name'] ?? null) ? $body['name'] : $translation->name;
-                $description = is_string($body['description'] ?? null) ? $body['description'] : $translation->description;
+                $name = is_string($rawName) ? $rawName : $translation->name;
+                $description = is_string($rawDescription) ? $rawDescription : $translation->description;
                 $translation = $translation->update($name, $description);
             } else {
                 $translation = CategoryTranslation::create(
                     id: UuidGenerator::v7(),
                     categoryId: $id,
                     locale: $locale,
-                    name: is_string($body['name'] ?? null) ? $body['name'] : $category->slug,
-                    description: is_string($body['description'] ?? null) ? $body['description'] : '',
+                    name: is_string($rawName) ? $rawName : $category->slug,
+                    description: is_string($rawDescription) ? $rawDescription : '',
                 );
             }
 
