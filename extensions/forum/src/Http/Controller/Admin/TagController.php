@@ -78,14 +78,20 @@ final readonly class TagController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $name = is_string($body['name'] ?? null) ? $body['name'] : '';
-        $slug = is_string($body['slug'] ?? null) ? $body['slug'] : '';
+        /** @var mixed $rawName */
+        $rawName = $body['name'] ?? null;
+        $name = is_string($rawName) ? $rawName : '';
+        /** @var mixed $rawSlug */
+        $rawSlug = $body['slug'] ?? null;
+        $slug = is_string($rawSlug) ? $rawSlug : '';
 
         if ($name === '' || $slug === '') {
             return Response::json(['error' => 'Name and slug are required'], 422);
         }
 
-        $description = is_string($body['description'] ?? null) ? $body['description'] : null;
+        /** @var mixed $rawDescription */
+        $rawDescription = $body['description'] ?? null;
+        $description = is_string($rawDescription) ? $rawDescription : null;
 
         $tag = $this->tagService->createTag($name, $slug, $description);
 
@@ -109,14 +115,21 @@ final readonly class TagController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        if (is_string($body['name'] ?? null) || is_string($body['slug'] ?? null)) {
-            $name = is_string($body['name'] ?? null) ? $body['name'] : $tag->name;
-            $slug = is_string($body['slug'] ?? null) ? $body['slug'] : $tag->slug;
+        /** @var mixed $rawName */
+        $rawName = $body['name'] ?? null;
+        /** @var mixed $rawSlug */
+        $rawSlug = $body['slug'] ?? null;
+
+        if (is_string($rawName) || is_string($rawSlug)) {
+            $name = is_string($rawName) ? $rawName : $tag->name;
+            $slug = is_string($rawSlug) ? $rawSlug : $tag->slug;
             $tag = $tag->rename($name, $slug);
         }
 
-        if (is_string($body['description'] ?? null)) {
-            $tag = $tag->describe($body['description']);
+        /** @var mixed $rawDescription */
+        $rawDescription = $body['description'] ?? null;
+        if (is_string($rawDescription)) {
+            $tag = $tag->describe($rawDescription);
         }
 
         $this->tagRepository->save($tag);
