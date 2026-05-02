@@ -204,6 +204,7 @@ final class StreamedResponse implements ResponseInterface
         // Callers that need streaming should use getSource() instead.
         $content = '';
 
+        /** @var mixed $chunk */
         foreach ($this->source as $chunk) {
             $content .= (is_string($chunk) ? $chunk : '');
         }
