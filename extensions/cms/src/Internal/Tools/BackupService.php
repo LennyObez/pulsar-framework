@@ -189,8 +189,12 @@ final readonly class BackupService implements BackupServiceInterface
         /** @var array<string, mixed> $meta */
         $meta = json_decode($metaJson, true, flags: JSON_THROW_ON_ERROR);
 
-        $storagePath = is_string($meta['storage_path'] ?? null) ? $meta['storage_path'] : '';
-        $expectedHash = is_string($meta['hash'] ?? null) ? $meta['hash'] : '';
+        /** @var mixed $rawStoragePath */
+        $rawStoragePath = $meta['storage_path'] ?? null;
+        $storagePath = is_string($rawStoragePath) ? $rawStoragePath : '';
+        /** @var mixed $rawHash */
+        $rawHash = $meta['hash'] ?? null;
+        $expectedHash = is_string($rawHash) ? $rawHash : '';
 
         if (!$this->disk->exists($storagePath)) {
             throw CmsException::backupNotFound($backupId);
@@ -322,13 +326,20 @@ final readonly class BackupService implements BackupServiceInterface
                 continue;
             }
 
+            /** @var mixed $rawStoragePath */
             $rawStoragePath = $meta['storage_path'] ?? null;
+            /** @var mixed $rawHash */
             $rawHash = $meta['hash'] ?? null;
+            /** @var mixed $rawSize */
             $rawSize = $meta['size'] ?? null;
+            /** @var mixed $rawCreatedAt */
             $rawCreatedAt = $meta['created_at'] ?? null;
+            /** @var mixed $rawCreatedBy */
             $rawCreatedBy = $meta['created_by'] ?? null;
+            /** @var mixed $rawId */
+            $rawId = $meta['id'];
             $backups[] = new Backup(
-                id: is_string($meta['id']) ? $meta['id'] : '',
+                id: is_string($rawId) ? $rawId : '',
                 scope: $scope,
                 storagePath: is_string($rawStoragePath) ? $rawStoragePath : '',
                 hash: is_string($rawHash) ? $rawHash : '',
