@@ -87,11 +87,17 @@ final readonly class PostApiController
         $tenantId = $request->getAttribute('tenant_id');
 
         $serverParams = $request->getServerParams();
-        $ipHash = hash('xxh3', is_string($serverParams['REMOTE_ADDR'] ?? null) ? $serverParams['REMOTE_ADDR'] : 'unknown');
+        /** @var mixed $rawRemoteAddr */
+        $rawRemoteAddr = $serverParams['REMOTE_ADDR'] ?? null;
+        $ipHash = hash('xxh3', is_string($rawRemoteAddr) ? $rawRemoteAddr : 'unknown');
         $userAgentHash = hash('xxh3', $request->getHeaderLine('User-Agent'));
-        $parentId = is_string($body['parent_id'] ?? null) ? $body['parent_id'] : null;
+        /** @var mixed $rawParentId */
+        $rawParentId = $body['parent_id'] ?? null;
+        $parentId = is_string($rawParentId) ? $rawParentId : null;
 
-        $rawBody = is_string($body['body'] ?? null) ? $body['body'] : '';
+        /** @var mixed $rawBodyText */
+        $rawBodyText = $body['body'] ?? null;
+        $rawBody = is_string($rawBodyText) ? $rawBodyText : '';
 
         try {
             $post = $this->forumService->createPost(
@@ -149,7 +155,9 @@ final readonly class PostApiController
             ], 422);
         }
 
-        $rawBody = is_string($body['body'] ?? null) ? $body['body'] : '';
+        /** @var mixed $rawBodyText */
+        $rawBodyText = $body['body'] ?? null;
+        $rawBody = is_string($rawBodyText) ? $rawBodyText : '';
 
         $isModerator = $this->gate !== null && $this->gate->allows($identity, 'forum.moderate');
 
