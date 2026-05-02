@@ -138,6 +138,7 @@ final readonly class HtmxResponse
     public function withTrigger(string $event, mixed $detail = null): self
     {
         $events = $this->triggerEvents;
+        /** @var mixed $detail */
         $events[$event] = $detail;
 
         return clone($this, ['triggerEvents' => $events]);
@@ -150,6 +151,7 @@ final readonly class HtmxResponse
     public function withTriggerAfterSettle(string $event, mixed $detail = null): self
     {
         $events = $this->triggerAfterSettle;
+        /** @var mixed $detail */
         $events[$event] = $detail;
 
         return clone($this, ['triggerAfterSettle' => $events]);
@@ -162,6 +164,7 @@ final readonly class HtmxResponse
     public function withTriggerAfterSwap(string $event, mixed $detail = null): self
     {
         $events = $this->triggerAfterSwap;
+        /** @var mixed $detail */
         $events[$event] = $detail;
 
         return clone($this, ['triggerAfterSwap' => $events]);
