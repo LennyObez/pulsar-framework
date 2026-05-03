@@ -173,7 +173,7 @@ final class BuildCommand extends Command
         }
 
         if (!is_dir($cacheDir)) {
-            mkdir($cacheDir, 0o755, true);
+            mkdir($cacheDir, 0o750, true);
         }
 
         $strict = $input->hasOption('strict');

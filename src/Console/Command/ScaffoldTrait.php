@@ -46,7 +46,7 @@ trait ScaffoldTrait
     ): bool {
         foreach ($directories as $dir) {
             $path = $basePath . ($dir !== '' ? DIRECTORY_SEPARATOR . $dir : '');
-            if (!mkdir($path, 0o755, true)) {
+            if (!mkdir($path, 0o750, true)) {
                 $output->errorln('Failed to create directory: ' . $path);
                 return false;
             }
@@ -191,7 +191,7 @@ trait ScaffoldTrait
         foreach ($subdirs as $dir) {
             $fullDir = $testBase . DIRECTORY_SEPARATOR . $dir;
             if (!is_dir($fullDir)) {
-                mkdir($fullDir, 0o755, true);
+                mkdir($fullDir, 0o750, true);
             }
         }
 
