@@ -7,7 +7,31 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-### Sprint 1.1 — kernel crypto (Phase 1.1.D.2.b: state-of-art Creusot contracts on the hash family, in progress)
+### Sprint 1.1 — kernel crypto (Phase 1.1.D.2.b-bis: kernel-wide Creusot compatibility, in progress)
+
+Phase 1.1.D.2.b-bis closes the byte-string-const limitation that blocked end-to-end `cargo creusot prove` on Phase 1.1.D.2.b's first auto-trigger attempt (CI run 25308601251, 2026-05-04 — *"Unsupported constant value: Scalar(alloc) of type &[u8; 36]"* on `HYBRID_SIG_LABEL` in `hybrid_sig.rs:108` and `HYBRID_SALT` in `hybrid_kem.rs:77`). With this sub-phase the proof-discharge job auto-triggers on every kernel-touching PR — the original Phase 1.1.D.2.b promise that had to be reverted in `e2246a39`.
+
+* **Root-cause analysis.** Creusot v0.11.0's `creusot/src/translation/constant.rs:value_to_term` handles only three MIR `ConstValue` variants — `Scalar(Scalar::Int(...))`, `ZeroSized`, and `Slice {}` *if the deref-peeled type satisfies `is_str()`*. Byte-string constants of type `&[u8]` (or the pre-coercion `&[u8; N]` form) hit the catch-all error branch because they're `Scalar(Ptr)` of an array type, not `Scalar(Int)`, and not `&str`. The arm covering `Slice {}` excludes them by the `is_str()` guard.
+* **Workaround applied.** `HYBRID_SIG_LABEL` (`hybrid_sig.rs:108`) and `HYBRID_SALT` (`hybrid_kem.rs:77`) migrate from `const X: &[u8] = b"..."` to `const X: &str = "..."`. Both labels are pure-ASCII payloads so the byte representation is unchanged. Call sites recover the byte slice via `.as_bytes()`:
+  - `ed25519_input` (hybrid_sig.rs): `let label_bytes = HYBRID_SIG_LABEL.as_bytes();` then `extend_from_slice(label_bytes)` and capacity uses `label_bytes.len()` (identical to `HYBRID_SIG_LABEL.len()` for ASCII).
+  - Two `hkdf::hkdf(...)` callers (hybrid_kem.rs lines 245 + 330): `HYBRID_SALT` argument becomes `HYBRID_SALT.as_bytes()`.
+* **`.github/workflows/creusot.yml`** — `proof-discharge` job's `if: github.event_name == 'workflow_dispatch'` gate is removed; the job auto-triggers on every kernel-touching PR. Comment at the job-level documents the byte-string workaround so future contributors don't re-introduce `&[u8]` consts.
+* **No production-code semantic change.** The labels' byte values are identical pre/post-migration. The 14 hybrid-KEM KAT tests + the 14 hybrid-sig KAT tests + every property test continue to pass. The HKDF salt and the Ed25519 input prefix are byte-identical at the FFI boundary.
+
+Future-contributor convention: top-level byte-string constants that may be encountered by `cargo creusot prove` SHOULD be declared as `&str` (or as a `[u8; N]` array if non-ASCII) and converted to `&[u8]` at use sites. Direct `const X: &[u8] = b"..."` triggers the v0.11.0 limitation. Once Creusot upstream extends `value_to_term`'s `Slice {}` arm to cover `&[u8]` (or removes the `is_str()` guard), this workaround can be reverted.
+
+Quality gates verified locally:
+  - `cargo check -p pulsar-kernel` ✓
+  - `cargo fmt --all -- --check` ✓
+  - `cargo clippy -p pulsar-kernel --all-targets -- -D warnings` ✓
+  - `cargo nextest run -p pulsar-kernel` — 196/196 PASS ✓
+  - `cargo test -p pulsar-kernel --doc` ✓
+
+CI's auto-triggered `proof-discharge` job is the validation signal — if it goes green on this PR, the kernel-wide Creusot compatibility is operational and Phase 1.1.D.2.c (HMAC + HKDF + Argon2id contracts, task #144) can proceed with auto-gated proof discharge from the start.
+
+Refs: ADR-0015 (Creusot for kernel function contracts); empirical CI failure on Phase 1.1.D.2.b (run 25308601251) confirming the byte-string-const limitation; Creusot v0.11.0 source at `creusot/src/translation/constant.rs:value_to_term`.
+
+### Sprint 1.1 — kernel crypto (Phase 1.1.D.2.b: state-of-art Creusot contracts on the hash family, merged 2026-05-04 as `393940c6`)
 
 Second micro-slice of Phase 1.1.D.2. Drops the Cargo-feature-flag pattern from Phase 1.1.D.2.a — empirically incompatible with Creusot v0.11.0's `cargo-creusot` driver, which reads `cargo metadata` *without* activating any features and so cannot find `creusot-std` when it is `optional = true` (verified by the 2026-04-29 CI failure: `Error: creusot-std not found in dependencies`). Pulls `creusot-std` in as a regular workspace dependency on `pulsar-kernel`, then adds **state-of-art Pearlite contracts** to the entire hash family using the `View` + `#[logic]` ghost-function patterns from upstream Creusot conventions.
 

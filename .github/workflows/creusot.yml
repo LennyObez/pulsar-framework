@@ -53,22 +53,33 @@ jobs:
   # Why3 + Z3 + CVC5 + Creusot driver) and runs `cargo creusot prove`
   # on `pulsar-kernel`.
   #
-  # Trigger model: workflow_dispatch-only as of Phase 1.1.D.2.b run
-  # 25308601251 (2026-05-04). The auto-trigger flip promised in
-  # 1.1.D.2.b's commit message had to be reverted because Creusot
-  # v0.11.0 hits "Unsupported constant value: Scalar(alloc) of type
-  # &[u8; 36]" on byte-string constants present in OTHER pulsar-kernel
-  # modules (HYBRID_SIG_LABEL in hybrid_sig.rs, HYBRID_SALT in
-  # hybrid_kem.rs) — `cargo creusot prove` analyses the entire crate,
-  # not just the module under contract development, so the entire
-  # discharge chokes on these constants until the v0.11 const-byte-
-  # string limitation is worked around at the kernel level.
+  # Trigger model: workflow_dispatch-only as of Phase 1.1.D.2.b-bis
+  # (commit follow-up to 66f1b678). The 1.1.D.2.b auto-trigger flip
+  # promised in 1.1.D.2.b's commit message had to be reverted twice:
   #
-  # The contracts in hash.rs ARE the specification; they expand to
-  # no-ops on stable rustc and the build job validates that they
-  # compile cleanly. End-to-end proof discharge waits for the
-  # kernel-wide Creusot compatibility cleanup tracked in task #145
-  # (Phase 1.1.D.2.b-bis).
+  # 1. Phase 1.1.D.2.b CI run 25308601251 (2026-05-04):
+  #    "Unsupported constant value: Scalar(alloc) of type &[u8; 36]"
+  #    on byte-string consts — fixed in 66f1b678 by migrating
+  #    HYBRID_SIG_LABEL + HYBRID_SALT to &str.
+  #
+  # 2. Phase 1.1.D.2.b-bis CI run 25309936315 (2026-05-04):
+  #    "Unsupported constant value: Scalar(alloc) of type &Once"
+  #    — `std::sync::Once` is a sync primitive with internal mutability
+  #    Creusot v0.11.0 doesn't model. Worked around by adding
+  #    `#[creusot::no_translate]` on `ensure_initialized` (mod.rs).
+  #
+  # Each fix unveils the next Creusot v0.11 limitation. The realistic
+  # path to "kernel-wide cargo creusot prove succeeds" requires either
+  # (a) iterative bisection through every incompatible Rust idiom in
+  # the kernel (multi-day investigation, unbounded scope), or (b)
+  # Creusot upstream maturation (LazyLock / Once / complex consts). In
+  # the meantime: contracts in hash.rs ARE the specification, the
+  # `build` job validates compile-cleanness, and this job stays
+  # workflow_dispatch-only so contributor PRs aren't gated on what is
+  # effectively a moving target.
+  #
+  # Phase 1.1.E sprint exit gate revisits this — by then Creusot
+  # v0.12+ may resolve several of the outstanding limitations.
   proof-discharge:
     name: proof-discharge
     runs-on: ubuntu-latest

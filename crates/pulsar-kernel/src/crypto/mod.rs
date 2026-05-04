@@ -101,6 +101,17 @@ pub use signature::{Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature};
 /// this because the RustCrypto substrate does not depend on the
 /// EverCrypt CPU dispatcher.
 #[allow(unsafe_code)]
+// `#[creusot::no_translate]` skips this function entirely from
+// Creusot's translation pipeline. Required because Creusot v0.11.0's
+// MIR const-evaluator chokes on the inner `static AUTOCONFIG_INIT:
+// Once = Once::new();` with `Unsupported constant value: Scalar(alloc)
+// of type &std::sync::Once` — `Once` is a sync primitive with internal
+// mutability that Creusot v0.11 doesn't model. Skipping the translation
+// is sound: this function has no observable behaviour beyond invoking
+// the HACL* CPU dispatcher init, whose correctness is anchored in
+// HACL* F* verification (ADR-0009) — the trust at this boundary is
+// the same as `#[trusted]`-stamping the FFI-call wrappers.
+#[cfg_attr(creusot, creusot::no_translate)]
 pub(crate) fn ensure_initialized() {
     use pulsar_crypto_hacl_bindings::ffi;
     use std::sync::Once;
