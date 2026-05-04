@@ -55,10 +55,28 @@
 use crate::crypto::ensure_initialized;
 use crate::crypto::hmac::HmacAlgorithm;
 use crate::error::{Error, Result};
+// Pearlite specification macros — explicit-import pattern from D.2.b
+// + D.2.c. Only `trusted` is needed in this module: HKDF returns
+// `SecretBox<[u8]>` everywhere which is logic-opaque to Creusot v0.11
+// (no View / DeepModel impl on `secrecy::SecretBox`), so the
+// per-function postconditions we'd want (PRK / OKM length) cannot be
+// expressed without first modelling SecretBox in Pearlite. That
+// modelling is deferred to a future sprint; here we apply
+// `#[trusted]` at the FFI boundary with documentation citing HACL\*
+// F\* verification (ADR-0009).
+use creusot_std::macros::trusted;
 use pulsar_crypto_hacl_bindings::ffi;
 use secrecy::{ExposeSecret, SecretBox};
 
 /// Maximum HKDF output length per RFC 5869 § 2.3 — 255 hash blocks.
+///
+/// No Pearlite postcondition: this internal helper isn't called from
+/// any contract, and a postcondition referring to a cross-module ghost
+/// like `crypto::hmac::spec_tag_len` would require re-exporting it,
+/// which the `#[logic(open)]` macro doesn't do on stable rustc. The
+/// program-side correctness of the 255× multiplication is covered by
+/// the existing KAT tests (HKDF max-output rejection at length =
+/// 255 × tag_len + 1).
 const fn max_output_len(algo: HmacAlgorithm) -> usize {
     255 * algo.tag_len()
 }
@@ -79,6 +97,16 @@ const fn max_output_len(algo: HmacAlgorithm) -> usize {
 ///   `ikm.expose_secret().len() > u32::MAX`. Practically unreachable
 ///   on 64-bit hosts but the wrapper surfaces the FFI ceiling
 ///   explicitly for clarity.
+///
+/// `#[trusted]` because the body crosses the HACL\* FFI boundary
+/// (`EverCrypt_HKDF_extract`) and the return type `SecretBox<[u8]>`
+/// is logic-opaque to Creusot v0.11 (no View / DeepModel
+/// implementation on `secrecy::SecretBox`). Trust anchored in HACL\*
+/// F\* verification of HKDF-Extract per ADR-0009; the safe-wrapper
+/// layer enforces only the FFI length-bound preconditions. Useful
+/// postconditions on the PRK byte content require modelling
+/// `SecretBox` in Pearlite which is deferred to a future sprint.
+#[trusted]
 pub fn extract(algo: HmacAlgorithm, salt: &[u8], ikm: &SecretBox<[u8]>) -> Result<SecretBox<[u8]>> {
     ensure_initialized();
 
@@ -142,6 +170,12 @@ pub fn extract(algo: HmacAlgorithm, salt: &[u8], ikm: &SecretBox<[u8]>) -> Resul
 ///   producing zero bytes of key material almost always have a bug.
 /// - [`Error::InputTooLong`] — `prk.expose_secret().len() > u32::MAX`,
 ///   `info.len() > u32::MAX`, or `length > u32::MAX`.
+///
+/// `#[trusted]` per the same rationale as [`extract`] — FFI body
+/// (`EverCrypt_HKDF_expand`) + `SecretBox<[u8]>` return type that
+/// Creusot v0.11 cannot model. Trust in HACL\* F\* verification of
+/// HKDF-Expand per ADR-0009.
+#[trusted]
 pub fn expand(
     algo: HmacAlgorithm,
     prk: &SecretBox<[u8]>,
@@ -211,6 +245,12 @@ pub fn expand(
 ///
 /// Same as [`extract`] and [`expand`] — propagated from the underlying
 /// calls.
+///
+/// `#[trusted]` because both transitive calls (`extract`, `expand`)
+/// are themselves trusted; Creusot can't compose their (absent)
+/// postconditions into a useful one for this wrapper. Trust posture
+/// inherited from the constituent calls per ADR-0009.
+#[trusted]
 pub fn hkdf(
     algo: HmacAlgorithm,
     salt: &[u8],

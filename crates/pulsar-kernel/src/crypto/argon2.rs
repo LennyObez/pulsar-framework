@@ -63,6 +63,16 @@
 use crate::error::{Error, Result};
 use argon2::password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, Salt, SaltString};
 use argon2::{Algorithm, Argon2, Params, Version};
+// Pearlite specification macros — explicit-import pattern from D.2.b
+// + D.2.c. `ensures` for the proven postconditions on `validate()` /
+// `new()` (pure logic, no FFI); `trusted` for the functions that call
+// into the RustCrypto `argon2` crate (derive_key / hash_password* /
+// verify_password*) — citation pattern documents the *audit* tier
+// (RustCrypto v0.5+ audit + RFC 9106 compliance) rather than the
+// HACL\* F\* verification tier used elsewhere, per ADR-0009 + Decision
+// 2.60 acknowledging that no production-ready formally-verified
+// Argon2id implementation exists as of 2026Q2.
+use creusot_std::macros::{ensures, trusted};
 use secrecy::{ExposeSecret, SecretBox};
 
 /// Argon2id parameter set. Encapsulates the four tunable cost
@@ -105,7 +115,15 @@ impl Argon2idParams {
     /// Construct an Argon2id parameter set without validation. Callers
     /// should subsequently invoke [`validate`](Self::validate) before
     /// passing the parameters to [`derive_key`] / [`hash_password`].
+    ///
+    /// Postconditions express the trivial "fields equal arguments"
+    /// invariant — useful for downstream contracts that reason about
+    /// validate() outcomes against caller-supplied inputs.
     #[must_use]
+    #[ensures(result.m_cost == m_cost)]
+    #[ensures(result.t_cost == t_cost)]
+    #[ensures(result.p_cost == p_cost)]
+    #[ensures(result.output_len == output_len)]
     pub const fn new(m_cost: u32, t_cost: u32, p_cost: u32, output_len: usize) -> Self {
         Self {
             m_cost,
@@ -123,6 +141,26 @@ impl Argon2idParams {
     ///
     /// - [`Error::InvalidArgon2Params`] with a `reason` string that
     ///   identifies which bound was violated.
+    ///
+    /// Pure-logic function (no FFI, no `#[trusted]`) — callers can rely
+    /// on the forward-implication postcondition: a successful
+    /// `validate()` guarantees all six RFC 9106 § 3.1 admissibility
+    /// bounds hold simultaneously. Using `@` to promote field values
+    /// to Pearlite's `Int` so the `8 * p_cost` comparison is in
+    /// unbounded arithmetic — the program-side `8 * self.p_cost` u32
+    /// multiplication doesn't overflow in practice because the
+    /// earlier `p_cost <= 0x00FF_FFFF` guard caps the product at
+    /// `0x07FF_FFF8`, but the contract speaks at the semantic level.
+    #[ensures(
+        result.is_ok() ==> (
+            self.t_cost@ >= 1
+            && self.p_cost@ >= 1
+            && self.p_cost@ <= 0x00FF_FFFF
+            && self.m_cost@ >= 8 * self.p_cost@
+            && self.output_len@ >= 4
+            && self.output_len@ <= 0xFFFF_FFFF
+        )
+    )]
     pub const fn validate(&self) -> Result<()> {
         if self.t_cost < 1 {
             return Err(Error::InvalidArgon2Params {
@@ -176,6 +214,12 @@ impl Argon2idParams {
 /// Construct a configured [`Argon2`] instance from validated
 /// parameters. The resulting hasher is bound to Argon2id v0x13 (RFC
 /// 9106 v1.3, the only version widely deployed in 2024+).
+///
+/// `#[trusted]` because the body calls into the RustCrypto `argon2`
+/// crate (`Argon2::new` + `Params::new`); RustCrypto v0.5+ is
+/// audit-tier per Decision 2.60 + ADR-0009 ("Argon2id is the only
+/// audited-but-not-formally-verified primitive in the stack").
+#[trusted]
 fn argon2id_with(params: Argon2idParams) -> Result<Argon2<'static>> {
     params.validate()?;
     let argon2_params = params.to_argon2_params()?;
@@ -206,6 +250,13 @@ fn argon2id_with(params: Argon2idParams) -> Result<Argon2<'static>> {
 ///   `InvalidArgon2Params` (not `InvalidPhcString`) so callers can
 ///   match the error against the right error domain.
 /// - [`Error::InvalidOutputLength`] — `output.len() != params.output_len`.
+///
+/// `#[trusted]` per the Argon2 trust posture documented in
+/// `argon2id_with` — the underlying KDF executes in the RustCrypto
+/// `argon2` crate (audit tier per RFC 9106 + Decision 2.60); the
+/// safe-wrapper layer enforces only the output-length and salt-length
+/// preconditions before delegating.
+#[trusted]
 pub fn derive_key(
     password: &SecretBox<[u8]>,
     salt: &[u8],
@@ -250,6 +301,9 @@ pub fn derive_key(
 /// - [`Error::InvalidPhcString`] — `argon2`'s PHC-encoder rejected the
 ///   salt (e.g., salt encoding produced an invalid base64 length); not
 ///   reachable on RFC-9106-conformant 8+ byte salts.
+///
+/// `#[trusted]` per the Argon2 trust posture (RustCrypto audit tier).
+#[trusted]
 pub fn hash_password(
     password: &SecretBox<[u8]>,
     salt: &[u8],
@@ -289,6 +343,10 @@ pub fn hash_password(
 /// - [`Error::RngFailure`] — the OS CSPRNG returned an error during
 ///   salt generation (very rare — early boot, sandbox blocking the
 ///   `getrandom` syscall, exhausted entropy pool).
+///
+/// `#[trusted]` because the body composes `try_random_bytes` (OS
+/// CSPRNG, FFI-equivalent) with `hash_password` (already trusted).
+#[trusted]
 pub fn hash_password_with_random_salt(
     password: &SecretBox<[u8]>,
     params: Argon2idParams,
@@ -390,6 +448,11 @@ impl Default for Argon2idVerifyLimits {
 /// - [`Error::PasswordVerifyFailed`] — `phc_string` parses + bounds
 ///   are satisfied but the recomputed hash does not match the stored
 ///   one.
+///
+/// `#[trusted]` because the body delegates to
+/// `verify_password_with_limits` which is itself trusted (PHC parsing
+/// + RustCrypto KDF execution).
+#[trusted]
 pub fn verify_password(password: &SecretBox<[u8]>, phc_string: &str) -> Result<()> {
     verify_password_with_limits(password, phc_string, Argon2idVerifyLimits::DEFAULT)
 }
@@ -404,6 +467,15 @@ pub fn verify_password(password: &SecretBox<[u8]>, phc_string: &str) -> Result<(
 /// # Errors
 ///
 /// Same set as [`verify_password`].
+///
+/// `#[trusted]` because the body uses RustCrypto's
+/// `PasswordHash::new` (PHC-string parser) and the underlying
+/// `Argon2::verify_password` (constant-time comparison) — both at the
+/// audit tier per Decision 2.60. The wrapper-level limits-bounding
+/// (m_cost / t_cost / p_cost / output_len) is itself proof-tractable
+/// pure logic, but the surrounding PHC parsing + KDF execution
+/// dominate the trust budget here.
+#[trusted]
 pub fn verify_password_with_limits(
     password: &SecretBox<[u8]>,
     phc_string: &str,
