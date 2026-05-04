@@ -50,8 +50,33 @@ use core::ptr::NonNull;
 // with the existing kernel code. Phase 1.1.D.2.b imports the macros
 // directly to keep the contract surface explicit without disturbing
 // the std-prelude identifiers downstream code already binds to.
-use creusot_std::macros::{ensures, trusted};
+// `Int` (creusot's mathematical-integer logical type) is referenced by
+// `spec_digest_len`'s return type but the `#[logic(open)]` macro strips
+// the signature on stable rustc — the bare `use creusot_std::logic::Int;`
+// would warn as unused. The fully-qualified path keeps the signature
+// readable for cargo creusot prove without triggering stable-rustc lints.
+use creusot_std::macros::{ensures, logic, trusted};
+use creusot_std::model::View;
 use pulsar_crypto_hacl_bindings::ffi;
+
+/// Logical / ghost-function spec for [`HashAlgorithm::digest_len`].
+///
+/// Pearlite forbids calling program functions from logic contexts
+/// (`#[ensures]`, `#[requires]`, etc.), so the spec is mirrored as an
+/// `#[logic(open)]` function callable from contracts. `digest_len`'s
+/// program-side postcondition (`result@ == spec_digest_len(self)`)
+/// ties the two definitions; downstream contracts on `hash()`,
+/// `Hasher::digest`, and `Hasher::finalize` reference
+/// `spec_digest_len(...)` directly to express the "returned digest has
+/// exactly the algorithm's output length" invariant.
+#[logic(open)]
+pub fn spec_digest_len(algo: HashAlgorithm) -> creusot_std::logic::Int {
+    match algo {
+        HashAlgorithm::Sha256 | HashAlgorithm::Sha3_256 | HashAlgorithm::Blake2s256 => 32,
+        HashAlgorithm::Sha384 | HashAlgorithm::Sha3_384 => 48,
+        HashAlgorithm::Sha512 | HashAlgorithm::Sha3_512 | HashAlgorithm::Blake2b512 => 64,
+    }
+}
 
 /// Cryptographic hash algorithms supported by `pulsar-kernel::crypto`.
 ///
@@ -97,14 +122,7 @@ impl HashAlgorithm {
     /// ghost-function spec; the per-variant form is the v0.11.0
     /// best-fit.
     #[must_use]
-    #[ensures((self == HashAlgorithm::Sha256) ==> result == 32usize)]
-    #[ensures((self == HashAlgorithm::Sha384) ==> result == 48usize)]
-    #[ensures((self == HashAlgorithm::Sha512) ==> result == 64usize)]
-    #[ensures((self == HashAlgorithm::Sha3_256) ==> result == 32usize)]
-    #[ensures((self == HashAlgorithm::Sha3_384) ==> result == 48usize)]
-    #[ensures((self == HashAlgorithm::Sha3_512) ==> result == 64usize)]
-    #[ensures((self == HashAlgorithm::Blake2b512) ==> result == 64usize)]
-    #[ensures((self == HashAlgorithm::Blake2s256) ==> result == 32usize)]
+    #[ensures(result@ == spec_digest_len(self))]
     pub const fn digest_len(self) -> usize {
         match self {
             Self::Sha256 | Self::Sha3_256 | Self::Blake2s256 => 32,
@@ -218,7 +236,7 @@ fn hash_into_slice(algo: HashAlgorithm, input: &[u8], output: &mut [u8]) -> Resu
 ///   single-shot API takes a 32-bit length parameter; 4 GiB exceeds
 ///   any plausible Pulsar payload size.
 #[trusted]
-#[ensures(forall<v: Vec<u8>> result == Ok(v) ==> v@.len() == algo.digest_len()@)]
+#[ensures(forall<v: Vec<u8>> result == Ok(v) ==> v@.len() == spec_digest_len(algo))]
 pub fn hash(algo: HashAlgorithm, input: &[u8]) -> Result<Vec<u8>> {
     let mut output = vec![0_u8; algo.digest_len()];
     hash_into_slice(algo, input, &mut output)?;
@@ -247,6 +265,29 @@ pub struct Hasher {
 // because ownership transfer is single-threaded by definition.
 unsafe impl Send for Hasher {}
 
+// Logical model of [`Hasher`] = the algorithm it was constructed for.
+// Phase 1.1.D.2.b uses this `View` impl so contracts on `Hasher::*`
+// methods can refer to `self@` (sugar for `View::view(*self)`) instead
+// of the private `algo` field — encapsulation preserved while still
+// letting callers outside the module reason about algorithm
+// preservation across `update` / `reset` and length-tying through
+// `digest` / `finalize`. The body is `#[trusted]` + `#[logic(opaque)]`
+// per the upstream Vec<T> View pattern (creusot-std/src/std/vec.rs):
+// the `algo` field is private, so the body can't be made
+// `#[logic(open)]` (would expose private state via the unfolded body).
+// `algorithm()`'s `#[ensures(result == self@)]` postcondition is the
+// trusted bridge between the program-side accessor and the logical
+// model.
+impl View for Hasher {
+    type ViewTy = HashAlgorithm;
+
+    #[trusted]
+    #[logic(opaque)]
+    fn view(self) -> Self::ViewTy {
+        self.algo
+    }
+}
+
 impl core::fmt::Debug for Hasher {
     /// Print only the algorithm — the FFI state pointer is uninteresting
     /// to debug consumers and would expose internal layout details that
@@ -266,7 +307,7 @@ impl Hasher {
     /// - [`Error::StateAllocationFailed`] — HACL\*'s `*_malloc` returned NULL
     ///   (out-of-memory at the C layer). Should not occur under normal load.
     #[trusted]
-    #[ensures(forall<h: Self> result == Ok(h) ==> h.algorithm() == algo)]
+    #[ensures(forall<h: Self> result == Ok(h) ==> h@ == algo)]
     pub fn new(algo: HashAlgorithm) -> Result<Self> {
         ensure_initialized();
 
@@ -282,14 +323,17 @@ impl Hasher {
 
     /// Algorithm this hasher was constructed for.
     ///
-    /// The `#[ensures(result == self.algo)]` postcondition is needed by
-    /// downstream contracts on `update` / `reset` / `digest` /
-    /// `finalize` — they reference `self.algorithm()` in their post-
-    /// conditions, and Creusot needs the explicit equality to the
-    /// underlying field to discharge the algorithm-preservation
-    /// invariants.
+    /// The `#[ensures(result == self@)]` postcondition is the bridge
+    /// between the program-side accessor and the logical model
+    /// `View::view` (whose body is `#[trusted] #[logic(opaque)]`
+    /// because it would otherwise expose the private `algo` field via
+    /// the unfolded body). Downstream contracts on `update` / `reset`
+    /// / `digest` / `finalize` reference `self@` directly; this
+    /// `algorithm()` postcondition lets program code that calls
+    /// `algorithm()` reason about its return value being equal to
+    /// the logical model.
     #[must_use]
-    #[ensures(result == self.algo)]
+    #[ensures(result == self@)]
     pub const fn algorithm(&self) -> HashAlgorithm {
         self.algo
     }
@@ -307,7 +351,7 @@ impl Hasher {
     ///   per-message limit: 2^61-1 bytes for SHA-2-256, 2^64-1 bytes
     ///   for SHA-2-384/512 + SHA-3 + BLAKE2 — practically unreachable).
     #[trusted]
-    #[ensures((^self).algorithm() == self.algorithm())]
+    #[ensures((^self)@ == self@)]
     pub fn update(&mut self, chunk: &[u8]) -> Result<()> {
         let len = u32::try_from(chunk.len()).map_err(|_| Error::InputTooLong {
             actual: chunk.len(),
@@ -356,7 +400,7 @@ impl Hasher {
     /// handshake transcripts, Merkle-tree intermediate roots, etc.).
     #[must_use]
     #[trusted]
-    #[ensures(result@.len() == self.algorithm().digest_len()@)]
+    #[ensures(result@.len() == spec_digest_len(self@))]
     pub fn digest(&self) -> Vec<u8> {
         let mut output = vec![0_u8; self.algo.digest_len()];
 
@@ -378,7 +422,7 @@ impl Hasher {
     /// no further updates are needed — the consumed `self` makes the
     /// no-further-use intent explicit at the call site.
     #[must_use]
-    #[ensures(result@.len() == self.algorithm().digest_len()@)]
+    #[ensures(result@.len() == spec_digest_len(self@))]
     pub fn finalize(self) -> Vec<u8> {
         self.digest()
     }
@@ -391,7 +435,7 @@ impl Hasher {
     /// `EverCrypt_Hash_Incremental_malloc + _free` allocation cycle. The
     /// algorithm is preserved across resets.
     #[trusted]
-    #[ensures((^self).algorithm() == self.algorithm())]
+    #[ensures((^self)@ == self@)]
     pub fn reset(&mut self) {
         // SAFETY: `state` is valid (held in NonNull throughout the
         // Hasher lifetime). EverCrypt_Hash_Incremental_reset does not
