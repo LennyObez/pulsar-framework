@@ -21,6 +21,8 @@ use Pulsar\Http\Message\Response;
 use function array_map;
 use function in_array;
 use function is_array;
+use function is_int;
+use function is_numeric;
 use function is_string;
 use function max;
 use function min;
@@ -46,9 +48,15 @@ final readonly class ModerationApiController
         $this->requireModerator($request);
 
         $params = $request->getQueryParams();
-        $statusFilter = is_string($params['status'] ?? null) ? $params['status'] : 'pending';
-        $page = max(1, is_numeric($params['page'] ?? null) ? (int) $params['page'] : 1);
-        $perPage = min(100, max(1, is_numeric($params['per_page'] ?? null) ? (int) $params['per_page'] : 20));
+        /** @var mixed $rawStatus */
+        $rawStatus = $params['status'] ?? null;
+        $statusFilter = is_string($rawStatus) ? $rawStatus : 'pending';
+        /** @var mixed $rawPage */
+        $rawPage = $params['page'] ?? null;
+        $page = max(1, (is_int($rawPage) || is_string($rawPage)) && is_numeric($rawPage) ? (int) $rawPage : 1);
+        /** @var mixed $rawPerPage */
+        $rawPerPage = $params['per_page'] ?? null;
+        $perPage = min(100, max(1, (is_int($rawPerPage) || is_string($rawPerPage)) && is_numeric($rawPerPage) ? (int) $rawPerPage : 20));
 
         $status = ReportStatus::tryFrom($statusFilter) ?? ReportStatus::Pending;
 
@@ -103,9 +111,15 @@ final readonly class ModerationApiController
         /** @var array<string, mixed> $body */
         $body = $parsed;
 
-        $action = is_string($body['action'] ?? null) ? $body['action'] : '';
-        $note = is_string($body['note'] ?? null) ? $body['note'] : '';
-        $type = is_string($body['type'] ?? null) ? $body['type'] : 'thread';
+        /** @var mixed $rawAction */
+        $rawAction = $body['action'] ?? null;
+        $action = is_string($rawAction) ? $rawAction : '';
+        /** @var mixed $rawNote */
+        $rawNote = $body['note'] ?? null;
+        $note = is_string($rawNote) ? $rawNote : '';
+        /** @var mixed $rawType */
+        $rawType = $body['type'] ?? null;
+        $type = is_string($rawType) ? $rawType : 'thread';
 
         if (!in_array($action, ['action', 'dismiss'], true)) {
             return Response::json([
@@ -160,7 +174,9 @@ final readonly class ModerationApiController
         /** @var array<string, mixed> $body */
         $body = $parsed;
 
-        $reason = is_string($body['reason'] ?? null) ? $body['reason'] : '';
+        /** @var mixed $rawReason */
+        $rawReason = $body['reason'] ?? null;
+        $reason = is_string($rawReason) ? $rawReason : '';
 
         if ($reason === '') {
             return Response::json([
@@ -170,8 +186,10 @@ final readonly class ModerationApiController
             ], 422);
         }
 
-        $expiresAt = is_string($body['expires_at'] ?? null) && $body['expires_at'] !== ''
-            ? new DateTimeImmutable($body['expires_at'])
+        /** @var mixed $rawExpiresAt */
+        $rawExpiresAt = $body['expires_at'] ?? null;
+        $expiresAt = is_string($rawExpiresAt) && $rawExpiresAt !== ''
+            ? new DateTimeImmutable($rawExpiresAt)
             : null;
 
         try {
