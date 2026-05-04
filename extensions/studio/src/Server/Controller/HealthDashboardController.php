@@ -93,7 +93,7 @@ final readonly class HealthDashboardController
                 'free_bytes' => $diskFree !== false ? (int) $diskFree : 0,
                 'total_bytes' => $diskTotal !== false ? (int) $diskTotal : 0,
                 'used_percent' => $diskTotal !== false && $diskTotal > 0 && $diskFree !== false
-                    ? round((1.0 - (float) $diskFree / (float) $diskTotal) * 100.0, 1)
+                    ? round((1.0 - $diskFree / $diskTotal) * 100.0, 1)
                     : 0.0,
             ],
             'queue' => [
