@@ -113,7 +113,9 @@ final readonly class UserController extends AbstractAdminController
         }
 
         $params = $request->getQueryParams();
-        $activeSection = is_string($params['section'] ?? null) ? $params['section'] : 'details';
+        /** @var mixed $rawSection */
+        $rawSection = $params['section'] ?? null;
+        $activeSection = is_string($rawSection) ? $rawSection : 'details';
 
         // Collect extension-contributed sections (orders, forum activity, etc.)
         $sections = $this->sectionRegistry?->getSections($id) ?? [];
@@ -228,7 +230,9 @@ final readonly class UserController extends AbstractAdminController
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
-        $reason = is_string($body['reason'] ?? null) ? $body['reason'] : '';
+        /** @var mixed $rawReason */
+        $rawReason = $body['reason'] ?? null;
+        $reason = is_string($rawReason) ? $rawReason : '';
 
         if (strlen($reason) < 10) {
             return Response::json([
