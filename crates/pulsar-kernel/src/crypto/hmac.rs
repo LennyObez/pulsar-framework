@@ -49,9 +49,36 @@
 
 use crate::crypto::ensure_initialized;
 use crate::error::{Error, Result};
+// Pearlite specification macros — explicit-import pattern from D.2.b
+// (avoids the prelude glob shadowing std's vec! + derive macros). The
+// fully-qualified `creusot_std::logic::Int` is used at the
+// `spec_tag_len` return type because the bare `use Int;` would warn as
+// unused on stable rustc (the `#[logic(open)]` macro strips the
+// signature outside `cfg(creusot)`).
+use creusot_std::macros::{ensures, logic, trusted};
+use creusot_std::model::View;
 use pulsar_crypto_hacl_bindings::ffi;
 use secrecy::{ExposeSecret, SecretBox};
 use subtle::ConstantTimeEq;
+
+/// Logical / ghost-function spec for [`HmacAlgorithm::tag_len`].
+///
+/// HMAC tag length equals the underlying hash digest length (RFC 2104
+/// § 2). Pulsar's HMAC family covers SHA-2-256/384/512 + BLAKE2b/2s,
+/// so the tag-length set is the same {32, 48, 64} as the hash family
+/// — but we keep `spec_tag_len` separate from `crypto::hash::spec_digest_len`
+/// (the algorithm-id sets are disjoint enums; consolidating into a
+/// single ghost would require a `From<HmacAlgorithm> for HashAlgorithm`
+/// or similar which adds a coupling we don't want at the wrapper
+/// layer).
+#[logic(open)]
+pub fn spec_tag_len(algo: HmacAlgorithm) -> creusot_std::logic::Int {
+    match algo {
+        HmacAlgorithm::Sha256 | HmacAlgorithm::Blake2s256 => 32,
+        HmacAlgorithm::Sha384 => 48,
+        HmacAlgorithm::Sha512 | HmacAlgorithm::Blake2b512 => 64,
+    }
+}
 
 /// HMAC algorithm identifier.
 ///
@@ -78,7 +105,14 @@ impl HmacAlgorithm {
     /// HMAC tag length in bytes for this algorithm. Equal to the
     /// underlying hash's digest length (HMAC outputs a tag the same
     /// size as the hash output per RFC 2104 § 2).
+    ///
+    /// The `#[ensures(result@ == spec_tag_len(self))]` postcondition
+    /// ties the program function to its `#[logic(open)]` ghost spec
+    /// (defined at module top) so downstream contracts on `HmacKey`
+    /// methods can express output-length invariants via
+    /// `spec_tag_len(self@)`.
     #[must_use]
+    #[ensures(result@ == spec_tag_len(self))]
     pub const fn tag_len(self) -> usize {
         match self {
             Self::Sha256 | Self::Blake2s256 => 32,
@@ -122,6 +156,22 @@ pub struct HmacKey {
     key_len_u32: u32,
 }
 
+// Logical model of [`HmacKey`] = the algorithm it was constructed for.
+// Mirrors the View impl on `Hasher` from Phase 1.1.D.2.b — `#[trusted]
+// + #[logic(opaque)]` because making `view()` transparent would expose
+// the private `algo` field via the unfolded body. Contracts on
+// `HmacKey::*` methods reference `self@` instead of `self.algo`;
+// `algorithm()`'s `#[ensures(result == self@)]` is the trusted bridge.
+impl View for HmacKey {
+    type ViewTy = HmacAlgorithm;
+
+    #[trusted]
+    #[logic(opaque)]
+    fn view(self) -> Self::ViewTy {
+        self.algo
+    }
+}
+
 impl core::fmt::Debug for HmacKey {
     /// Print only the algorithm — never the key bytes nor the length
     /// (length alone is a weak side-channel about key origin).
@@ -142,6 +192,8 @@ impl HmacKey {
     /// # Errors
     ///
     /// - [`Error::InputTooLong`] — `key.expose_secret().len() > u32::MAX`.
+    #[trusted]
+    #[ensures(forall<h: Self> result == Ok(h) ==> h@ == algo)]
     pub fn new(algo: HmacAlgorithm, key: SecretBox<[u8]>) -> Result<Self> {
         let key_len_u32 =
             u32::try_from(key.expose_secret().len()).map_err(|_| Error::InputTooLong {
@@ -156,7 +208,12 @@ impl HmacKey {
     }
 
     /// Return the algorithm associated with this key.
+    ///
+    /// `#[ensures(result == self@)]` is the trusted bridge between the
+    /// program-side accessor and the View::view logical model — same
+    /// pattern as `Hasher::algorithm` in Phase 1.1.D.2.b.
     #[must_use]
+    #[ensures(result == self@)]
     pub const fn algorithm(&self) -> HmacAlgorithm {
         self.algo
     }
@@ -169,6 +226,8 @@ impl HmacKey {
     /// # Errors
     ///
     /// - [`Error::InputTooLong`] — `data.len() > u32::MAX`.
+    #[trusted]
+    #[ensures(forall<v: Vec<u8>> result == Ok(v) ==> v@.len() == spec_tag_len(self@))]
     pub fn compute(&self, data: &[u8]) -> Result<Vec<u8>> {
         let mut tag = vec![0_u8; self.algo.tag_len()];
         self.compute_into(data, &mut tag)?;
@@ -183,6 +242,7 @@ impl HmacKey {
     ///
     /// - [`Error::InvalidOutputLength`] — `output.len() < tag_len()`.
     /// - [`Error::InputTooLong`] — `data.len() > u32::MAX`.
+    #[trusted]
     pub fn compute_into(&self, data: &[u8], output: &mut [u8]) -> Result<()> {
         if output.len() < self.algo.tag_len() {
             return Err(Error::InvalidOutputLength {
@@ -243,6 +303,7 @@ impl HmacKey {
     /// - [`Error::InputTooLong`] — `data.len() > u32::MAX`.
     /// - [`Error::MacVerifyFailed`] — the recomputed tag does not match
     ///   `expected_tag` byte-for-byte.
+    #[trusted]
     pub fn verify(&self, data: &[u8], expected_tag: &[u8]) -> Result<()> {
         if expected_tag.len() != self.algo.tag_len() {
             return Err(Error::InvalidOutputLength {

@@ -7,7 +7,36 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-### Sprint 1.1 — kernel crypto (Phase 1.1.D.2.b-bis: kernel-wide Creusot compatibility, in progress)
+### Sprint 1.1 — kernel crypto (Phase 1.1.D.2.c: Creusot contracts on HMAC + HKDF + Argon2id, in progress)
+
+Third micro-slice of Phase 1.1.D.2. Extends the View + spec-ghost-function pattern from 1.1.D.2.b across the remaining keyed-hashing and KDF surfaces. Trust posture is concentrated at the FFI and audited-substrate boundaries; pure-logic paths (parameter validation) carry proven postconditions.
+
+* **`crates/pulsar-kernel/src/crypto/hmac.rs`** — full Pearlite contract surface:
+  - `spec_tag_len(algo) -> Int` ghost function (`#[logic(open)]`) tying HMAC tag length to the algorithm; mirrors `crypto::hash::spec_digest_len` (kept separate because the algorithm enums are disjoint).
+  - `HmacAlgorithm::tag_len`: `#[ensures(result@ == spec_tag_len(self))]` — single-line postcondition replacing per-variant arms.
+  - `impl View for HmacKey` (`ViewTy = HmacAlgorithm`, `#[trusted] #[logic(opaque)]`) encapsulating the private `algo` field — same pattern as `Hasher` from D.2.b.
+  - `HmacKey::new`: `#[trusted]` + `#[ensures(forall<h> result == Ok(h) ==> h@ == algo)]`.
+  - `HmacKey::algorithm`: `#[ensures(result == self@)]` — bridge between accessor and view.
+  - `HmacKey::compute`: `#[trusted]` + length postcondition `forall<v> result == Ok(v) ==> v@.len() == spec_tag_len(self@)`.
+  - `HmacKey::compute_into` + `HmacKey::verify`: `#[trusted]` (FFI / `subtle::ConstantTimeEq` external).
+* **`crates/pulsar-kernel/src/crypto/hkdf.rs`** — `#[trusted]` on `extract`, `expand`, and the composed `hkdf` with documented trust justification (HACL\* F\* verification per ADR-0009). The return type `SecretBox<[u8]>` is logic-opaque to Creusot v0.11 (no `View` / `DeepModel` impl on `secrecy::SecretBox`), so non-trivial postconditions on PRK / OKM byte content require modelling SecretBox in Pearlite — deferred to a future sprint. The `max_output_len` internal helper carries no Pearlite postcondition because cross-module `#[logic(open)]` references don't compose on stable rustc (the program-side correctness is covered by existing KAT tests).
+* **`crates/pulsar-kernel/src/crypto/argon2.rs`** — mixed trust posture per Decision 2.60 + ADR-0009 (Argon2id is the only audited-but-not-formally-verified primitive in the kernel; no production-ready F\*-verified Argon2id implementation exists as of 2026Q2):
+  - `Argon2idParams::new`: `#[ensures]` propagating field assignments — useful for downstream contracts.
+  - `Argon2idParams::validate`: **proven** (no `#[trusted]`) forward-implication postcondition `result.is_ok() ==> (all six RFC 9106 § 3.1 admissibility bounds hold)`. Uses `@` to promote `u32` / `usize` field values to Pearlite's `Int` so `8 * p_cost` is in unbounded arithmetic.
+  - `argon2id_with`, `derive_key`, `hash_password`, `hash_password_with_random_salt`, `verify_password`, `verify_password_with_limits`: `#[trusted]` with citation of the *audit-tier* RustCrypto v0.5+ + RFC 9106 + ADR-0009 rationale (distinct from the F\* tier used for HACL\*-backed primitives).
+
+Quality gates verified locally:
+  - `cargo fmt --all -- --check` ✓
+  - `cargo check -p pulsar-kernel` ✓
+  - `cargo clippy -p pulsar-kernel --all-targets -- -D warnings` ✓
+  - `cargo nextest run -p pulsar-kernel` — 196/196 PASS ✓
+  - `cargo test -p pulsar-kernel --doc` ✓
+
+The `proof-discharge` CI job remains `workflow_dispatch`-only per Phase 1.1.D.2.b-bis (kernel-wide Creusot v0.11 compatibility constraints documented inline at the job level). Contracts are aspirational specifications + future-proofing; macro expansion is no-op on stable rustc. Section 1.1.D.3 (AEAD + signatures) and 1.1.D.4 (KEM + ML-DSA + hybrids) follow the same pattern.
+
+Refs: `docs/plan.md` Section II Decision 2.20 (Creusot + TLA+); ADR-0015 (Creusot for kernel function contracts); ADR-0009 (HACL\* + Argon2 audit-vs-verification distinction); RFC 2104 (HMAC), RFC 5869 (HKDF), RFC 9106 (Argon2).
+
+### Sprint 1.1 — kernel crypto (Phase 1.1.D.2.b-bis: kernel-wide Creusot compatibility, merged 2026-05-04 as `c60ddab2`)
 
 Phase 1.1.D.2.b-bis closes the byte-string-const limitation that blocked end-to-end `cargo creusot prove` on Phase 1.1.D.2.b's first auto-trigger attempt (CI run 25308601251, 2026-05-04 — *"Unsupported constant value: Scalar(alloc) of type &[u8; 36]"* on `HYBRID_SIG_LABEL` in `hybrid_sig.rs:108` and `HYBRID_SALT` in `hybrid_kem.rs:77`). With this sub-phase the proof-discharge job auto-triggers on every kernel-touching PR — the original Phase 1.1.D.2.b promise that had to be reverted in `e2246a39`.
 
