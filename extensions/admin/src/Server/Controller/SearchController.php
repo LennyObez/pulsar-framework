@@ -29,6 +29,7 @@ final readonly class SearchController
 
     public function search(ServerRequestInterface $request): Response
     {
+        /** @var mixed $query */
         $query = $request->getQueryParams()['q'] ?? null;
         $queryStr = is_string($query) ? $query : '';
 
