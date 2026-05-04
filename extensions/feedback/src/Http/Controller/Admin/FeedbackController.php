@@ -53,12 +53,16 @@ final readonly class FeedbackController
         $rawPerPage = $params['per_page'] ?? 20;
         $perPage = min(100, max(1, (int) $rawPerPage));
 
-        $categoryFilter = is_string($params['category'] ?? null)
-            ? FeedbackCategory::tryFrom($params['category'])
+        /** @var mixed $rawCategory */
+        $rawCategory = $params['category'] ?? null;
+        $categoryFilter = is_string($rawCategory)
+            ? FeedbackCategory::tryFrom($rawCategory)
             : null;
 
-        $statusFilter = is_string($params['status'] ?? null)
-            ? FeedbackStatus::tryFrom($params['status'])
+        /** @var mixed $rawStatus */
+        $rawStatus = $params['status'] ?? null;
+        $statusFilter = is_string($rawStatus)
+            ? FeedbackStatus::tryFrom($rawStatus)
             : null;
 
         $result = $this->repository->findAll($page, $perPage, $categoryFilter, $statusFilter);
@@ -95,7 +99,9 @@ final readonly class FeedbackController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $statusValue = is_string($body['status'] ?? null) ? $body['status'] : '';
+        /** @var mixed $rawStatus */
+        $rawStatus = $body['status'] ?? null;
+        $statusValue = is_string($rawStatus) ? $rawStatus : '';
         $status = FeedbackStatus::tryFrom($statusValue);
 
         if ($status === null) {
