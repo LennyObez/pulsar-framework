@@ -224,8 +224,12 @@ final readonly class CommentController extends AbstractAdminController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $action = is_string($body['action'] ?? null) ? $body['action'] : '';
-        $reason = is_string($body['reason'] ?? null) ? $body['reason'] : '';
+        /** @var mixed $rawAction */
+        $rawAction = $body['action'] ?? null;
+        $action = is_string($rawAction) ? $rawAction : '';
+        /** @var mixed $rawReason */
+        $rawReason = $body['reason'] ?? null;
+        $reason = is_string($rawReason) ? $rawReason : '';
 
         if (!in_array($action, ['approve', 'reject', 'spam'], true)) {
             return Response::json(['error' => 'Invalid action. Must be: approve, reject, or spam'], 400);
@@ -282,8 +286,12 @@ final readonly class CommentController extends AbstractAdminController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $action = is_string($body['bulk_action'] ?? null) ? $body['bulk_action'] : '';
-        $rawIds = is_array($body['ids'] ?? null) ? $body['ids'] : [];
+        /** @var mixed $rawAction */
+        $rawAction = $body['bulk_action'] ?? null;
+        $action = is_string($rawAction) ? $rawAction : '';
+        /** @var mixed $rawIdsRaw */
+        $rawIdsRaw = $body['ids'] ?? null;
+        $rawIds = is_array($rawIdsRaw) ? $rawIdsRaw : [];
 
         if (!in_array($action, ['approve', 'reject', 'spam'], true)) {
             return Response::json(['error' => 'Invalid bulk action. Must be: approve, reject, or spam'], 400);
@@ -292,6 +300,7 @@ final readonly class CommentController extends AbstractAdminController
         $processed = 0;
         $failed = 0;
 
+        /** @var mixed $id */
         foreach ($rawIds as $id) {
             if (!is_string($id)) {
                 continue;
