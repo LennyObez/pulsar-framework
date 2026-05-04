@@ -29,25 +29,22 @@ thiserror = { workspace = true }
 tracing = { workspace = true }
 
 # Creusot specification + standard-library contracts per ADR-0015 +
-# Decision 2.20. Activated only by the `formal-verification` feature;
-# without it the dependency is not pulled in. With it, the proc-macro
-# attributes (#[ensures], #[requires], #[invariant], etc.) are in scope
-# and expand to no-ops on stable rustc. Proof discharge requires the
-# Creusot driver — see tools/scripts/install-creusot.sh + ADR-0015.
-creusot-std = { workspace = true, optional = true }
+# Decision 2.20. Regular (non-optional) dependency: cargo-creusot's
+# version check (cargo-creusot/src/main.rs:get_contracts_version)
+# inspects `cargo metadata` output WITHOUT activating any feature, so
+# an `optional = true` + feature-gated creusot-std would never be seen
+# by the proof driver and `cargo creusot prove` would fail with
+# "creusot-std not found in dependencies" — confirmed empirically on
+# the Phase 1.1.D.2.a CI run (2026-04-29). Cost of the unconditional
+# dep: ~300 KB of proc-macro crate compiled once; the macros expand to
+# no-ops outside `cfg(creusot)`, so production binaries carry zero
+# runtime overhead. See ADR-0015 (Creusot toolchain integration).
+creusot-std = { workspace = true }
 
 [dev-dependencies]
 # Hex decoding for FIPS / RFC test vectors in smoke + property tests.
 hex = { workspace = true }
 proptest = { workspace = true }
-
-[features]
-# Activates the Creusot specification macros for proof discharge. Without
-# this feature, the macros (annotation attributes on functions) are not
-# in scope and the Pearlite contract bodies — gated via cfg_attr — are
-# also not compiled. Production + standard test builds run with the
-# feature off.
-formal-verification = ["dep:creusot-std"]
 
 [lints.rust]
 # pulsar-kernel cannot inherit `unsafe_code = "forbid"` because the

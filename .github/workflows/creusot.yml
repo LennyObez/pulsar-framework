@@ -28,14 +28,14 @@ env:
   RUST_BACKTRACE: short
 
 jobs:
-  # Smoke-test that pulsar-kernel still builds with the
-  # `formal-verification` feature enabled — the feature pulls in
-  # `creusot-std` and activates the `#[ensures]` / `#[requires]` macro
-  # bodies on every contract-bearing function. On stable rustc the
-  # macros expand to no-ops (full proof discharge requires the Creusot
-  # driver run via the `proof-discharge` job below).
-  feature-flag-build:
-    name: feature-flag-build
+  # Smoke-test that pulsar-kernel builds with `creusot-std` linked in —
+  # the kernel's regular dep on creusot-std (per ADR-0015) means every
+  # build pulls the proc-macro crate; the `#[ensures]` / `#[requires]`
+  # / `#[trusted]` attribute macros expand to no-ops on stable rustc
+  # (full proof discharge requires the Creusot driver run via the
+  # `proof-discharge` job below).
+  build:
+    name: build
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -44,28 +44,47 @@ jobs:
         with:
           toolchain: "1.95.0"
       - uses: Swatinem/rust-cache@v2
-      - name: cargo check -p pulsar-kernel --features formal-verification
-        run: cargo check -p pulsar-kernel --features formal-verification
+      - name: cargo check -p pulsar-kernel
+        run: cargo check -p pulsar-kernel
         env:
           RUSTFLAGS: "-D warnings"
 
   # Proof-discharge job — installs the full Creusot toolchain (opam +
   # Why3 + Z3 + CVC5 + Creusot driver) and runs `cargo creusot prove`
-  # on `pulsar-kernel`. Manually-triggered for Phase 1.1.D.2.a since
-  # no production contracts exist yet (only a single smoke-test
-  # `#[ensures]` on `HashAlgorithm::digest_len`). Phase 1.1.D.2.b
-  # flips this to auto-trigger once the hash family contracts land.
+  # on `pulsar-kernel`.
+  #
+  # Trigger model: workflow_dispatch-only as of Phase 1.1.D.2.b run
+  # 25308601251 (2026-05-04). The auto-trigger flip promised in
+  # 1.1.D.2.b's commit message had to be reverted because Creusot
+  # v0.11.0 hits "Unsupported constant value: Scalar(alloc) of type
+  # &[u8; 36]" on byte-string constants present in OTHER pulsar-kernel
+  # modules (HYBRID_SIG_LABEL in hybrid_sig.rs, HYBRID_SALT in
+  # hybrid_kem.rs) — `cargo creusot prove` analyses the entire crate,
+  # not just the module under contract development, so the entire
+  # discharge chokes on these constants until the v0.11 const-byte-
+  # string limitation is worked around at the kernel level.
+  #
+  # The contracts in hash.rs ARE the specification; they expand to
+  # no-ops on stable rustc and the build job validates that they
+  # compile cleanly. End-to-end proof discharge waits for the
+  # kernel-wide Creusot compatibility cleanup tracked in task #145
+  # (Phase 1.1.D.2.b-bis).
   proof-discharge:
     name: proof-discharge
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    needs: [feature-flag-build]
+    needs: [build]
     if: github.event_name == 'workflow_dispatch'
     steps:
       - uses: actions/checkout@v4
 
       - name: Install apt prerequisites
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq opam libzmq3-dev z3 cvc5
+        # `mold` + `clang` mirror cross-platform.yml — `cargo creusot prove`
+        # runs a full `cargo build` (not `cargo check`), which invokes the
+        # linker per .cargo/config.toml's `linker = "clang", -fuse-ld=mold`
+        # x86_64-linux-gnu rustflags. The `build` job in this workflow uses
+        # `cargo check` and so doesn't need them.
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq opam libzmq3-dev z3 cvc5 mold clang
 
       - name: Cache opam switch
         uses: actions/cache@v4
@@ -84,10 +103,12 @@ jobs:
       - name: Discharge contracts
         # `cargo creusot prove` is the upstream subcommand for proof
         # discharge (verified against creusot-rs/creusot v0.11.0
-        # cargo-creusot/src/main.rs:248). Cargo flags pass-through is
-        # `last = true, global = true` clap binding — `--features` lives
-        # AFTER the `--` per the upstream usage example
-        # (creusot-rs/creusot t:160).
+        # cargo-creusot/src/main.rs:248). No feature flags needed —
+        # creusot-std is a regular workspace dep so cargo-creusot's
+        # version check (which reads `cargo metadata` without features)
+        # finds it natively. Phase 1.1.D.2.a's `--features`-gated
+        # approach was rejected per the empirical CI failure on
+        # 2026-04-29 ("creusot-std not found in dependencies").
         run: |
           cd crates/pulsar-kernel
-          cargo creusot prove -- --features formal-verification
+          cargo creusot prove

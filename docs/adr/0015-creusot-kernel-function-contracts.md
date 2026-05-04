@@ -41,11 +41,11 @@ The Pulsar Framework adopts **Creusot v0.11.0** (released 2026-04-20) as the fun
 
 **Integration shape:**
 
-1. **Workspace dev-dep** — `creusot-std = "0.11"` declared in `[workspace.dependencies]`; consumed by `pulsar-kernel` only at this stage.
-2. **Feature flag** — `formal-verification` feature in `pulsar-kernel` (off by default) activates `creusot-std` import + the contract macros. Production builds compile contracts as no-ops (Pearlite macros expand to nothing without the `creusot` cfg flag).
-3. **CI workflow** — `.github/workflows/creusot.yml` installs the toolchain (cached), runs `cargo creusot --features formal-verification` on every PR touching `crates/pulsar-kernel/`. Workflow scopes to that path-filter to keep non-kernel PRs cheap.
-4. **Trust annotations** — Functions calling HACL\* FFI carry `#[creusot::trusted]` with a comment naming the upstream verification claim being relied on (e.g. *"trusts HACL\* SHA-256 implementation per F\* verification, ADR-0009"*).
-5. **Roadmap** — Contracts land progressively per the D.2.a / D.2.b / D.2.c / D.3 / D.4 micro-slicing of Phase 1.1.D. Phase 1.1.E exit gate measures coverage and enforces the ≥ 80 % threshold.
+1. **Workspace dep** — `creusot-std = "0.11"` declared in `[workspace.dependencies]`; consumed by `pulsar-kernel` as a *regular* (non-optional) dependency. The `cfg_attr` + `optional = true` + feature-flag pattern attempted in Phase 1.1.D.2.a is rejected per the empirical CI failure on 2026-04-29: `cargo-creusot`'s `get_contracts_version` (cargo-creusot/src/main.rs:get_contracts_version) reads `cargo metadata` *without* activating any features, so an optional-feature-gated `creusot-std` is never seen by the proof driver and `cargo creusot prove` errors with `creusot-std not found in dependencies`. Cost of the unconditional dep: the proc-macro crate (~300 KB) compiles once; on stable rustc the macros expand to no-ops outside `cfg(creusot)`, so production binaries carry zero runtime overhead.
+2. **Macro import** — every contract-bearing module imports the specific macros it uses: `use creusot_std::macros::{ensures, trusted};`. The full `creusot_std::prelude::*` glob is avoided because it shadows std's `vec!` macro and several derive macros (`Clone`, `PartialEq`, `Default`) — the explicit-macro import keeps existing kernel code unaffected by the new dep.
+3. **CI workflow** — `.github/workflows/creusot.yml` runs `build` (auto on every kernel-touching PR — `cargo check -p pulsar-kernel`) and `proof-discharge` (auto on every kernel-touching PR since 1.1.D.2.b — installs the toolchain and runs `cargo creusot prove`). Path-filtered to `crates/pulsar-kernel/**` + the workflow + the install script, so non-kernel PRs don't pay the cost.
+4. **Trust annotations** — functions calling HACL\* FFI carry `#[trusted]` (imported from `creusot_std::macros`) with a comment naming the upstream verification claim being relied on (e.g. *"trusts HACL\* SHA-256 implementation per F\* verification, ADR-0009"*). The trusted set is audited at the Phase 1.1.E sprint exit gate.
+5. **Roadmap** — contracts land progressively per the D.2.a / D.2.b / D.2.c / D.3 / D.4 micro-slicing of Phase 1.1.D. Phase 1.1.E exit gate measures coverage and enforces the ≥ 80 % threshold.
 
 **What lives inside Creusot contracts:**
 
