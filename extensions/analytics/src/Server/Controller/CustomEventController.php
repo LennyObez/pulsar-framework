@@ -25,6 +25,7 @@ final readonly class CustomEventController
     public function names(ServerRequestInterface $request): Response
     {
         $params = $request->getQueryParams();
+        /** @var mixed $rawSiteId */
         $rawSiteId = $params['site_id'] ?? null;
         $siteId = is_string($rawSiteId) ? $rawSiteId : '';
 
@@ -32,7 +33,9 @@ final readonly class CustomEventController
             return Response::json(['error' => 'site_id is required'], 400);
         }
 
+        /** @var mixed $rawFrom */
         $rawFrom = $params['from'] ?? null;
+        /** @var mixed $rawTo */
         $rawTo = $params['to'] ?? null;
         $from = new DateTimeImmutable(is_string($rawFrom) ? $rawFrom : '-30 days');
         $to = new DateTimeImmutable(is_string($rawTo) ? $rawTo : 'now');
@@ -45,8 +48,10 @@ final readonly class CustomEventController
     public function properties(ServerRequestInterface $request): Response
     {
         $params = $request->getQueryParams();
+        /** @var mixed $rawSiteId */
         $rawSiteId = $params['site_id'] ?? null;
         $siteId = is_string($rawSiteId) ? $rawSiteId : '';
+        /** @var mixed $rawEventName */
         $rawEventName = $params['event_name'] ?? null;
         $eventName = is_string($rawEventName) ? $rawEventName : '';
 
@@ -54,7 +59,9 @@ final readonly class CustomEventController
             return Response::json(['error' => 'site_id and event_name are required'], 400);
         }
 
+        /** @var mixed $rawFrom */
         $rawFrom = $params['from'] ?? null;
+        /** @var mixed $rawTo */
         $rawTo = $params['to'] ?? null;
         $from = new DateTimeImmutable(is_string($rawFrom) ? $rawFrom : '-30 days');
         $to = new DateTimeImmutable(is_string($rawTo) ? $rawTo : 'now');
@@ -67,8 +74,10 @@ final readonly class CustomEventController
     public function timeseries(ServerRequestInterface $request): Response
     {
         $params = $request->getQueryParams();
+        /** @var mixed $rawSiteId */
         $rawSiteId = $params['site_id'] ?? null;
         $siteId = is_string($rawSiteId) ? $rawSiteId : '';
+        /** @var mixed $rawEventName */
         $rawEventName = $params['event_name'] ?? null;
         $eventName = is_string($rawEventName) ? $rawEventName : '';
 
@@ -76,7 +85,9 @@ final readonly class CustomEventController
             return Response::json(['error' => 'site_id and event_name are required'], 400);
         }
 
+        /** @var mixed $rawFrom */
         $rawFrom = $params['from'] ?? null;
+        /** @var mixed $rawTo */
         $rawTo = $params['to'] ?? null;
         $from = new DateTimeImmutable(is_string($rawFrom) ? $rawFrom : '-30 days');
         $to = new DateTimeImmutable(is_string($rawTo) ? $rawTo : 'now');
