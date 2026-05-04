@@ -49,14 +49,15 @@ final readonly class FormSubmissionController
             '_form_rendered_at' => $body['_form_rendered_at'] ?? null,
             'ip' => self::extractIp($request),
             'user_agent' => $request->getHeaderLine('User-Agent'),
-            'form_block_id' => is_string($body['_form_block_id'] ?? null) ? $body['_form_block_id'] : '',
-            'content_id' => is_string($body['_content_id'] ?? null) ? $body['_content_id'] : '',
+            'form_block_id' => is_string($rawFormBlockId = $body['_form_block_id'] ?? null) ? $rawFormBlockId : '',
+            'content_id' => is_string($rawContentId = $body['_content_id'] ?? null) ? $rawContentId : '',
             'tenant_id' => $request->getAttribute('tenant_id'),
         ];
 
         // Strip internal fields from user data
         $formData = [];
 
+        /** @var mixed $value */
         foreach ($body as $key => $value) {
             if (str_starts_with($key, '_')) {
                 continue;
@@ -65,8 +66,10 @@ final readonly class FormSubmissionController
             $formData[$key] = $value;
         }
 
+        /** @var mixed $rawRedirect */
+        $rawRedirect = $body['_redirect'] ?? null;
         $redirectUrl = self::sanitizeRedirectUrl(
-            is_string($body['_redirect'] ?? null) ? $body['_redirect'] : '/',
+            is_string($rawRedirect) ? $rawRedirect : '/',
         );
 
         try {
