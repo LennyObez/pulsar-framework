@@ -61,6 +61,7 @@ final readonly class StripeGateway implements PaymentProviderInterface
             'capture_method' => 'manual',
         ];
 
+        /** @var mixed $value */
         foreach ($metadata as $key => $value) {
             $params["metadata[$key]"] = is_scalar($value) ? (string) $value : '';
         }
@@ -266,8 +267,12 @@ final readonly class StripeGateway implements PaymentProviderInterface
             if (isset($decoded['error'])) {
                 /** @var array<string, mixed> $error */
                 $error = $decoded['error'];
-                $message = is_string($error['message'] ?? null) ? $error['message'] : 'Unknown Stripe error';
-                $type = is_string($error['type'] ?? null) ? $error['type'] : 'api_error';
+                /** @var mixed $rawMessage */
+                $rawMessage = $error['message'] ?? null;
+                $message = is_string($rawMessage) ? $rawMessage : 'Unknown Stripe error';
+                /** @var mixed $rawType */
+                $rawType = $error['type'] ?? null;
+                $type = is_string($rawType) ? $rawType : 'api_error';
 
                 if ($type === 'card_error') {
                     throw PaymentProviderException::declined($message);
@@ -302,6 +307,7 @@ final readonly class StripeGateway implements PaymentProviderInterface
      */
     private static function strVal(array $data, string $key, string $default): string
     {
+        /** @var mixed $value */
         $value = $data[$key] ?? null;
 
         return is_string($value) ? $value : $default;
@@ -312,6 +318,7 @@ final readonly class StripeGateway implements PaymentProviderInterface
      */
     private static function intVal(array $data, string $key, int $default): int
     {
+        /** @var mixed $value */
         $value = $data[$key] ?? null;
 
         if (is_int($value)) {
