@@ -55,6 +55,11 @@ proptest = { workspace = true }
 # must NOT use `unsafe` and rely on the crate-level `deny` to enforce
 # this — `deny` (vs `forbid`) permits per-module override only at the
 # explicitly-allowed crypto + future audit/session FFI boundaries.
+# Register the `creusot` cfg flag set by the Creusot driver during
+# proof discharge (see crypto/mod.rs `ensure_initialized` which uses
+# `cfg_attr(creusot, creusot::no_translate)` to skip translation of
+# the std::sync::Once initialiser per ADR-0015).
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(creusot)'] }
 unsafe_code = "deny"
 missing_docs = "deny"
 unused_must_use = "deny"
