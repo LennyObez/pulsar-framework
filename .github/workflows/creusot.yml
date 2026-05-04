@@ -51,30 +51,23 @@ jobs:
 
   # Proof-discharge job — installs the full Creusot toolchain (opam +
   # Why3 + Z3 + CVC5 + Creusot driver) and runs `cargo creusot prove`
-  # on `pulsar-kernel`.
-  #
-  # Trigger model: workflow_dispatch-only as of Phase 1.1.D.2.b run
-  # 25308601251 (2026-05-04). The auto-trigger flip promised in
-  # 1.1.D.2.b's commit message had to be reverted because Creusot
-  # v0.11.0 hits "Unsupported constant value: Scalar(alloc) of type
-  # &[u8; 36]" on byte-string constants present in OTHER pulsar-kernel
-  # modules (HYBRID_SIG_LABEL in hybrid_sig.rs, HYBRID_SALT in
-  # hybrid_kem.rs) — `cargo creusot prove` analyses the entire crate,
-  # not just the module under contract development, so the entire
-  # discharge chokes on these constants until the v0.11 const-byte-
-  # string limitation is worked around at the kernel level.
-  #
-  # The contracts in hash.rs ARE the specification; they expand to
-  # no-ops on stable rustc and the build job validates that they
-  # compile cleanly. End-to-end proof discharge waits for the
-  # kernel-wide Creusot compatibility cleanup tracked in task #145
-  # (Phase 1.1.D.2.b-bis).
+  # on `pulsar-kernel`. Auto-triggered on every kernel-touching PR
+  # since Phase 1.1.D.2.b-bis: the byte-string-const limitation that
+  # blocked the original auto-trigger flip (Phase 1.1.D.2.b CI run
+  # 25308601251, "Unsupported constant value: Scalar(alloc) of type
+  # &[u8; 36]") is worked around by storing HYBRID_SIG_LABEL +
+  # HYBRID_SALT as `&str` instead of `&[u8]` — `cargo metadata`-style
+  # crate-wide `cargo creusot prove` now sees only str-typed labels,
+  # which Creusot v0.11.0's MIR const-evaluator handles via the
+  # `Slice {} if is_str()` arm in
+  # `creusot/src/translation/constant.rs:value_to_term`. Call sites
+  # use `.as_bytes()` to recover `&[u8]` for the FFI / hash-input
+  # interface; pure ASCII payload preserves the byte representation.
   proof-discharge:
     name: proof-discharge
     runs-on: ubuntu-latest
     timeout-minutes: 60
     needs: [build]
-    if: github.event_name == 'workflow_dispatch'
     steps:
       - uses: actions/checkout@v4
 

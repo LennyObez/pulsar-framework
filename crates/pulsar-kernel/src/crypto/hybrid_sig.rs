@@ -105,7 +105,16 @@ use zeroize::Zeroizing;
 /// Domain-separation label prefixed to the Ed25519 input. Versioned
 /// so a future transformation change can revise the label without
 /// colliding with stored signatures derived from the v1 scheme.
-const HYBRID_SIG_LABEL: &[u8] = b"pulsar-hybrid-sig-ed25519-mldsa65-v1";
+///
+/// Stored as `&str` (not `&[u8]`) so Creusot v0.11.0's MIR const-
+/// evaluator handles it via the `Slice {} if is_str()` arm in
+/// `creusot/src/translation/constant.rs:value_to_term` — the `&[u8]`
+/// form was rejected with `Unsupported constant value: Scalar(alloc)
+/// of type &[u8; 36]` because the slice-of-byte form falls into the
+/// catch-all error branch (Phase 1.1.D.2.b CI run 25308601251). Pure
+/// ASCII payload so the byte representation is unchanged; call sites
+/// use `.as_bytes()` to recover the `&[u8]` for FFI / hash-input use.
+const HYBRID_SIG_LABEL: &str = "pulsar-hybrid-sig-ed25519-mldsa65-v1";
 
 /// Hybrid Ed25519 + ML-DSA-65 fixed sizes — re-exposed as public
 /// constants for caller-side allocation sizing.
@@ -147,8 +156,9 @@ pub mod sizes {
 /// zeroize-on-drop covers any incidental retention concerns.
 fn ed25519_input(context: &[u8], message: &[u8]) -> Zeroizing<Vec<u8>> {
     debug_assert!(context.len() <= sizes::MAX_CONTEXT_LEN);
-    let mut buf = Vec::with_capacity(HYBRID_SIG_LABEL.len() + 1 + context.len() + message.len());
-    buf.extend_from_slice(HYBRID_SIG_LABEL);
+    let label_bytes = HYBRID_SIG_LABEL.as_bytes();
+    let mut buf = Vec::with_capacity(label_bytes.len() + 1 + context.len() + message.len());
+    buf.extend_from_slice(label_bytes);
     // Length-prefix the context (single byte) so the Ed25519 input is
     // unambiguously parseable. The cast is sound because the caller
     // has already verified `context.len() <= 255`.

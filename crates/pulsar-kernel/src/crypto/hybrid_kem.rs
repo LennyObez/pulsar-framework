@@ -74,7 +74,16 @@ use secrecy::{ExposeSecret, SecretBox};
 /// HKDF salt used as the hybrid-KEM domain-separation label. Versioned
 /// so a future combiner change can revise the salt without colliding
 /// with stored material derived from the v1 combiner.
-const HYBRID_SALT: &[u8] = b"pulsar-hybrid-kem-x25519-mlkem768-v1";
+///
+/// Stored as `&str` (not `&[u8]`) so Creusot v0.11.0's MIR const-
+/// evaluator handles it via the `Slice {} if is_str()` arm in
+/// `creusot/src/translation/constant.rs:value_to_term` — the `&[u8]`
+/// form was rejected with `Unsupported constant value: Scalar(alloc)
+/// of type &[u8; 36]` because the slice-of-byte form falls into the
+/// catch-all error branch (Phase 1.1.D.2.b CI run 25308601251). Pure
+/// ASCII payload so the byte representation is unchanged; call sites
+/// use `.as_bytes()` to recover the `&[u8]` for HKDF salt input.
+const HYBRID_SALT: &str = "pulsar-hybrid-kem-x25519-mlkem768-v1";
 
 /// Hybrid X25519 + ML-KEM-768 fixed sizes — re-exposed as public
 /// constants for caller-side allocation sizing.
@@ -233,7 +242,7 @@ impl HybridKemPublicKey {
         let combined_ikm = combine_ikm(ss_x25519.expose_secret(), ss_mlkem.expose_secret())?;
         let shared_secret = hkdf::hkdf(
             HmacAlgorithm::Sha256,
-            HYBRID_SALT,
+            HYBRID_SALT.as_bytes(),
             &combined_ikm,
             &[],
             sizes::SHARED_SECRET_LEN,
@@ -318,7 +327,7 @@ impl HybridKemPrivateKey {
         let combined_ikm = combine_ikm(ss_x25519.expose_secret(), ss_mlkem.expose_secret())?;
         hkdf::hkdf(
             HmacAlgorithm::Sha256,
-            HYBRID_SALT,
+            HYBRID_SALT.as_bytes(),
             &combined_ikm,
             &[],
             sizes::SHARED_SECRET_LEN,
