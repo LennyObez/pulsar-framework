@@ -226,6 +226,13 @@ final readonly class ContentApiController
 
         $translationId = UuidGenerator::v7();
 
+        /** @var mixed $rawExcerpt */
+        $rawExcerpt = $body['excerpt'] ?? null;
+        /** @var mixed $rawMetaTitle */
+        $rawMetaTitle = $body['meta_title'] ?? null;
+        /** @var mixed $rawMetaDescription */
+        $rawMetaDescription = $body['meta_description'] ?? null;
+
         try {
             $translation = ContentTranslation::create(
                 id: $translationId,
@@ -235,9 +242,9 @@ final readonly class ContentApiController
                 slugSegment: $slugSegment,
                 path: $path,
                 body: $bodyContent,
-                excerpt: is_string($rawExcerpt = $body['excerpt'] ?? null) ? $rawExcerpt : null,
-                metaTitle: is_string($rawMetaTitle = $body['meta_title'] ?? null) ? $rawMetaTitle : null,
-                metaDescription: is_string($rawMetaDescription = $body['meta_description'] ?? null) ? $rawMetaDescription : null,
+                excerpt: is_string($rawExcerpt) ? $rawExcerpt : null,
+                metaTitle: is_string($rawMetaTitle) ? $rawMetaTitle : null,
+                metaDescription: is_string($rawMetaDescription) ? $rawMetaDescription : null,
             );
         } catch (CmsException $e) {
             return Response::json([
@@ -303,6 +310,13 @@ final readonly class ContentApiController
             }
         }
 
+        /** @var mixed $rawExcerpt */
+        $rawExcerpt = $body['excerpt'] ?? null;
+        /** @var mixed $rawMetaTitle */
+        $rawMetaTitle = $body['meta_title'] ?? null;
+        /** @var mixed $rawMetaDescription */
+        $rawMetaDescription = $body['meta_description'] ?? null;
+
         try {
             $updatedTranslation = ContentTranslation::create(
                 id: $translation->id,
@@ -312,9 +326,9 @@ final readonly class ContentApiController
                 slugSegment: $slugSegment,
                 path: $path,
                 body: $bodyContent,
-                excerpt: is_string($rawExcerpt = $body['excerpt'] ?? null) ? $rawExcerpt : $translation->excerpt,
-                metaTitle: is_string($rawMetaTitle = $body['meta_title'] ?? null) ? $rawMetaTitle : $translation->metaTitle,
-                metaDescription: is_string($rawMetaDescription = $body['meta_description'] ?? null) ? $rawMetaDescription : $translation->metaDescription,
+                excerpt: is_string($rawExcerpt) ? $rawExcerpt : $translation->excerpt,
+                metaTitle: is_string($rawMetaTitle) ? $rawMetaTitle : $translation->metaTitle,
+                metaDescription: is_string($rawMetaDescription) ? $rawMetaDescription : $translation->metaDescription,
             );
         } catch (CmsException $e) {
             return Response::json([
