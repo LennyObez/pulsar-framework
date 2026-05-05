@@ -57,7 +57,9 @@ final class ResumeJsonLdGenerator
         if (isset($resumeData['experience']) && is_array($resumeData['experience'])) {
             $person['hasOccupation'] = array_map(static function (mixed $exp): array {
                 $exp = is_array($exp) ? $exp : [];
+                /** @var mixed $rawTitle */
                 $rawTitle = $exp['title'] ?? '';
+                /** @var mixed $rawLocation */
                 $rawLocation = $exp['location'] ?? '';
 
                 return [
@@ -74,6 +76,7 @@ final class ResumeJsonLdGenerator
         if (isset($resumeData['education']) && is_array($resumeData['education'])) {
             $person['alumniOf'] = array_map(static function (mixed $edu): array {
                 $edu = is_array($edu) ? $edu : [];
+                /** @var mixed $rawInstitution */
                 $rawInstitution = $edu['institution'] ?? '';
 
                 return [
@@ -87,8 +90,10 @@ final class ResumeJsonLdGenerator
             /** @var list<string> $allSkills */
             $allSkills = [];
 
+            /** @var mixed $category */
             foreach ($resumeData['skills'] as $category) {
                 if (is_array($category) && isset($category['items']) && is_array($category['items'])) {
+                    /** @var mixed $skill */
                     foreach ($category['items'] as $skill) {
                         $allSkills[] = is_string($skill) ? $skill : '';
                     }
@@ -104,6 +109,7 @@ final class ResumeJsonLdGenerator
             $person['knowsLanguage'] = array_map(
                 static function (mixed $lang): string {
                     $lang = is_array($lang) ? $lang : [];
+                    /** @var mixed $rawLanguage */
                     $rawLanguage = $lang['language'] ?? '';
 
                     return is_string($rawLanguage) ? $rawLanguage : '';
