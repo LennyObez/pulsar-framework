@@ -74,7 +74,9 @@ final readonly class TwoFactorController extends AbstractAdminController
         $this->authorize($identity, 'cms.users.manage');
         $this->requireStepUp($request);
 
-        if ($this->rateLimiter !== null && !$this->rateLimiter->attempt('2fa_enroll:' . $identity->id(), self::RATE_LIMIT_PER_MINUTE)) {
+        // SEC-2FA-02: fail-closed. A missing limiter denies the admin 2FA flow
+        // instead of allowing unlimited tries — production wires a real one.
+        if ($this->rateLimiter === null || !$this->rateLimiter->attempt('2fa_enroll:' . $identity->id(), self::RATE_LIMIT_PER_MINUTE)) {
             return Response::json(['error' => 'Too many requests'], 429);
         }
 
@@ -128,7 +130,7 @@ final readonly class TwoFactorController extends AbstractAdminController
         $this->authorize($identity, 'cms.users.manage');
         $this->requireStepUp($request);
 
-        if ($this->rateLimiter !== null && !$this->rateLimiter->attempt('2fa_confirm:' . $identity->id(), self::RATE_LIMIT_PER_MINUTE)) {
+        if ($this->rateLimiter === null || !$this->rateLimiter->attempt('2fa_confirm:' . $identity->id(), self::RATE_LIMIT_PER_MINUTE)) {
             return Response::json(['error' => 'Too many requests'], 429);
         }
 
@@ -186,7 +188,7 @@ final readonly class TwoFactorController extends AbstractAdminController
     {
         $identity = $this->requireIdentity($request);
 
-        if ($this->rateLimiter !== null && !$this->rateLimiter->attempt('2fa_verify:' . $identity->id(), self::RATE_LIMIT_PER_MINUTE)) {
+        if ($this->rateLimiter === null || !$this->rateLimiter->attempt('2fa_verify:' . $identity->id(), self::RATE_LIMIT_PER_MINUTE)) {
             return Response::json(['error' => 'Too many requests'], 429);
         }
 
@@ -243,7 +245,7 @@ final readonly class TwoFactorController extends AbstractAdminController
         $this->authorize($identity, 'cms.users.manage');
         $this->requireStepUp($request);
 
-        if ($this->rateLimiter !== null && !$this->rateLimiter->attempt('2fa_disable:' . $identity->id(), self::RATE_LIMIT_PER_MINUTE)) {
+        if ($this->rateLimiter === null || !$this->rateLimiter->attempt('2fa_disable:' . $identity->id(), self::RATE_LIMIT_PER_MINUTE)) {
             return Response::json(['error' => 'Too many requests'], 429);
         }
 
