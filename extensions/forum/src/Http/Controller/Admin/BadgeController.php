@@ -84,8 +84,12 @@ final readonly class BadgeController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $userId = is_string($body['user_id'] ?? null) ? $body['user_id'] : '';
-        $badgeValue = is_string($body['badge'] ?? null) ? $body['badge'] : '';
+        /** @var mixed $rawUserId */
+        $rawUserId = $body['user_id'] ?? null;
+        $userId = is_string($rawUserId) ? $rawUserId : '';
+        /** @var mixed $rawBadge */
+        $rawBadge = $body['badge'] ?? null;
+        $badgeValue = is_string($rawBadge) ? $rawBadge : '';
 
         if ($userId === '' || $badgeValue === '') {
             return Response::json(['error' => 'user_id and badge are required'], 422);
@@ -129,8 +133,12 @@ final readonly class BadgeController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $userId = is_string($body['user_id'] ?? null) ? $body['user_id'] : '';
-        $badgeValue = is_string($body['badge'] ?? null) ? $body['badge'] : '';
+        /** @var mixed $rawUserId */
+        $rawUserId = $body['user_id'] ?? null;
+        $userId = is_string($rawUserId) ? $rawUserId : '';
+        /** @var mixed $rawBadge */
+        $rawBadge = $body['badge'] ?? null;
+        $badgeValue = is_string($rawBadge) ? $rawBadge : '';
 
         if ($userId === '' || $badgeValue === '') {
             return Response::json(['error' => 'user_id and badge are required'], 422);
