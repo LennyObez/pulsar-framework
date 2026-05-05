@@ -36,16 +36,15 @@ final readonly class AdminServiceController
         );
 
         $services = [];
-        foreach ($result as $row) {
-            /** @var array{id: string, name: string, description: string, duration: int|string, base_price: int|string, base_currency: string, deposit_percent: int|string, category_id: string|null, active: int|string} $row */
+        foreach ($result->rows as $row) {
             $services[] = [
-                'id' => $row['id'],
-                'name' => $row['name'],
-                'description' => $row['description'],
-                'duration' => (int) $row['duration'],
-                'base_price' => Money::of((int) $row['base_price'], Currency::from($row['base_currency']))->format(),
-                'deposit_percent' => (int) $row['deposit_percent'],
-                'active' => (bool) $row['active'],
+                'id' => $row->getString('id'),
+                'name' => $row->getString('name'),
+                'description' => $row->getString('description'),
+                'duration' => $row->getInt('duration'),
+                'base_price' => Money::of($row->getInt('base_price'), Currency::from($row->getString('base_currency')))->format(),
+                'deposit_percent' => $row->getInt('deposit_percent'),
+                'active' => (bool) $row->getInt('active'),
             ];
         }
 
@@ -64,7 +63,8 @@ final readonly class AdminServiceController
         $basePrice = (int) ($request->post['base_price'] ?? 0);
         $currency = (string) ($request->post['currency'] ?? 'USD');
         $depositPercent = (int) ($request->post['deposit_percent'] ?? 20);
-        $categoryId = ($request->post['category_id'] ?? null);
+        /** @var mixed $categoryId */
+        $categoryId = $request->post['category_id'] ?? null;
         $categoryIdStr = is_string($categoryId) ? $categoryId : null;
 
         if ($name === '') {
@@ -144,13 +144,12 @@ final readonly class AdminServiceController
         );
 
         $categories = [];
-        foreach ($result as $row) {
-            /** @var array{id: string, name: string, slug: string, sort_order: int|string} $row */
+        foreach ($result->rows as $row) {
             $categories[] = [
-                'id' => $row['id'],
-                'name' => $row['name'],
-                'slug' => $row['slug'],
-                'sort_order' => (int) $row['sort_order'],
+                'id' => $row->getString('id'),
+                'name' => $row->getString('name'),
+                'slug' => $row->getString('slug'),
+                'sort_order' => $row->getInt('sort_order'),
             ];
         }
 
