@@ -97,8 +97,8 @@ final readonly class DefaultCertificateValidator implements CertificateValidator
         }
 
         // Extract PSD2-specific fields from extensions
+        /** @var mixed $rawExtensions */
         $rawExtensions = $parsed['extensions'] ?? [];
-        /** @var array<string, mixed> $extensions */
         $extensions = is_array($rawExtensions) ? $rawExtensions : [];
 
         $psd2Roles = $this->extractPsd2Roles($extensions);
@@ -174,8 +174,9 @@ final readonly class DefaultCertificateValidator implements CertificateValidator
         // For the framework, we extract from subject/extensions hints
         $roles = [];
 
-        foreach ($extensions as $oid => $value) {
-            if (!is_string($oid) || !is_string($value)) {
+        /** @var mixed $value */
+        foreach ($extensions as $value) {
+            if (!is_string($value)) {
                 continue;
             }
 
@@ -207,6 +208,7 @@ final readonly class DefaultCertificateValidator implements CertificateValidator
      */
     private function extractAuthorizationNumber(array $extensions): string
     {
+        /** @var mixed $value */
         foreach ($extensions as $value) {
             if (!is_string($value)) {
                 continue;
@@ -226,6 +228,7 @@ final readonly class DefaultCertificateValidator implements CertificateValidator
      */
     private function extractNcaName(array $extensions): string
     {
+        /** @var mixed $value */
         foreach ($extensions as $value) {
             if (is_string($value) && str_contains($value, 'NCA')) {
                 return $value;
@@ -240,8 +243,9 @@ final readonly class DefaultCertificateValidator implements CertificateValidator
      */
     private function extractNcaId(array $extensions): string
     {
+        /** @var mixed $value */
         foreach ($extensions as $oid => $value) {
-            if (is_string($oid) && is_string($value) && str_contains($oid, 'NCAId')) {
+            if (is_string($value) && str_contains((string) $oid, 'NCAId')) {
                 return $value;
             }
         }
@@ -256,13 +260,16 @@ final readonly class DefaultCertificateValidator implements CertificateValidator
      */
     private function checkQualification(array $extensions): bool
     {
+        /** @var mixed $value */
         foreach ($extensions as $oid => $value) {
-            if (!is_string($oid) || !is_string($value)) {
+            if (!is_string($value)) {
                 continue;
             }
 
+            $oidStr = (string) $oid;
+
             // QcStatements OID: 1.3.6.1.5.5.7.1.3
-            if (str_contains($oid, '1.3.6.1.5.5.7.1.3')) {
+            if (str_contains($oidStr, '1.3.6.1.5.5.7.1.3')) {
                 return true;
             }
 
