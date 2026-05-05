@@ -62,9 +62,15 @@ final readonly class CustomerController extends AbstractAdminController
         $this->authorize($identity, 'cms.customers.view');
 
         $params = $request->getQueryParams();
-        $page = max(1, is_int($params['page'] ?? null) ? $params['page'] : 1);
-        $perPage = min(100, max(1, is_int($params['per_page'] ?? null) ? $params['per_page'] : 20));
-        $search = is_string($params['search'] ?? null) ? $params['search'] : null;
+        /** @var mixed $rawPage */
+        $rawPage = $params['page'] ?? null;
+        $page = max(1, is_int($rawPage) ? $rawPage : 1);
+        /** @var mixed $rawPerPage */
+        $rawPerPage = $params['per_page'] ?? null;
+        $perPage = min(100, max(1, is_int($rawPerPage) ? $rawPerPage : 20));
+        /** @var mixed $rawSearch */
+        $rawSearch = $params['search'] ?? null;
+        $search = is_string($rawSearch) ? $rawSearch : null;
 
         /** @var string|null $tenantId */
         $tenantId = $request->getAttribute('tenant_id');
@@ -110,7 +116,9 @@ final readonly class CustomerController extends AbstractAdminController
 
         // Get the active section tab (default: overview)
         $params = $request->getQueryParams();
-        $activeSection = is_string($params['section'] ?? null) ? $params['section'] : 'overview';
+        /** @var mixed $rawSection */
+        $rawSection = $params['section'] ?? null;
+        $activeSection = is_string($rawSection) ? $rawSection : 'overview';
 
         // Collect sections from all extensions
         $userId = $customer->userId ?? $customer->id;
@@ -182,7 +190,9 @@ final readonly class CustomerController extends AbstractAdminController
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
-        $note = is_string($body['note'] ?? null) ? $body['note'] : '';
+        /** @var mixed $rawNote */
+        $rawNote = $body['note'] ?? null;
+        $note = is_string($rawNote) ? $rawNote : '';
 
         if ($note === '') {
             return Response::json(['error' => 'Note content is required'], 400);
