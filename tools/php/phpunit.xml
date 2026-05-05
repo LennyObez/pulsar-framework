@@ -17,12 +17,9 @@
             <directory>../../extensions/accessibility/tests/Unit</directory>
             <directory>../../extensions/ai-governance/tests/Unit</directory>
             <directory>../../extensions/cms/tests/Unit</directory>
-            <directory>../../extensions/social-sso/tests/Unit</directory>
             <directory>../../extensions/analytics/tests/Unit</directory>
             <directory>../../extensions/auth/tests/Unit</directory>
             <directory>../../extensions/admin/tests/Unit</directory>
-            <directory>../../extensions/oauth2/tests/Unit</directory>
-            <directory>../../extensions/webauthn/tests/Unit</directory>
             <directory>../../extensions/payments/tests/Unit</directory>
             <directory>../../extensions/orm/tests/Unit</directory>
             <directory>../../extensions/graphql/tests/Unit</directory>
@@ -72,10 +69,7 @@
             <directory>../../extensions/opentelemetry/src</directory>
             <directory>../../extensions/observability/src</directory>
             <directory>../../extensions/observability-export/src</directory>
-            <directory>../../extensions/oauth2/src</directory>
             <directory>../../extensions/form/src</directory>
-            <directory>../../extensions/webauthn/src</directory>
-            <directory>../../extensions/social-sso/src</directory>
             <directory>../../extensions/subscriptions/src</directory>
             <directory>../../extensions/cms/src</directory>
             <directory>../../extensions/graphql/src</directory>

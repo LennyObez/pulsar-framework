@@ -1,0 +1,4532 @@
+diff --git a/docs/ARCHITECTURE.md b/docs/ARCHITECTURE.md
+index 30950823..22c9c94c 100644
+--- a/docs/ARCHITECTURE.md
++++ b/docs/ARCHITECTURE.md
+@@ -96,6 +96,42 @@ Extension lifecycle:
+ 3. Register (bind services, routes, commands)
+ 4. Boot (initialize extension)
+ 
++### Configuration (`src/Config/`)
++
++Typed configuration system with deterministic load order.
++
++Pipeline:
++1. OS environment variables (highest priority)
++2. `.env` file (optional, never overrides OS vars)
++3. PHP config files (`config/app.php`, `config/observability.php`)
++4. Runtime overrides (`ConfigOverrides`, merged via `array_replace_recursive`)
++5. Typed DTO construction (`AppConfig::fromArray()`, `ObservabilityConfig::fromArray()`)
++
++Components:
++- `Environment` — loads and merges env vars from OS + `.env` file
++- `EnvironmentMode` — backed enum (`Local`, `Staging`, `Production`) with debug defaults
++- `AppConfig` / `ObservabilityConfig` — readonly DTOs with `fromArray()` factories
++- `ConfigRepository` — typed store keyed by class name
++- `ConfigManager` — orchestrator that runs the full pipeline
++- `ConfigLoaderInterface` — extension point for custom config DTOs (not consumed by core in 0.3.0)
++
++### Error Handling (`src/ErrorHandling/`)
++
++Centralized exception handling with environment-aware rendering.
++
++Flow: Exception → resolve HTTP status → resolve headers → log with context → render response body.
++
++Components:
++- `ExceptionHandler` — central handler resolving status, headers, logging, and rendering
++- `HttpException` / `HttpExceptionInterface` — exceptions that map to specific HTTP status codes
++- `DevelopmentRenderer` — detailed HTML with trace, request details, previous exceptions (debug=true)
++- `ProductionRenderer` — safe generic HTML, no sensitive info exposed (debug=false)
++
++Status resolution:
++- `HttpExceptionInterface` → its `getStatusCode()`
++- `RoutingException` 404 → `NotFound`, 405 → `MethodNotAllowed` with `Allow` header
++- Default → `InternalServerError` (500)
++
+ ### Security (`src/Security/`)
+ 
+ Security primitives:
+@@ -112,6 +148,24 @@ In-house observability suite:
+ - Distributed tracing
+ - Audit logging
+ 
++#### Logging (`src/Observability/Log/`)
++
++PSR-3 compliant structured logging with JSON lines output.
++
++Components:
++- `Logger` — implements `Psr\Log\LoggerInterface` with level threshold filtering
++- `LogLevel` — backed string enum with numeric severity (0=emergency..7=debug) and `meetsThreshold()`
++- `LogEntry` — readonly value object with UTC timestamp, level, message, context, channel
++- `LogFormatter` — JSON line formatter with PSR-3 `{placeholder}` interpolation and `Throwable` serialization
++- `LogSinkInterface` — output destination contract
++- `FileSink` — appends JSON lines to file, creates directories, uses `LOCK_EX`
++- `StreamSink` — writes JSON lines to PHP streams (`php://stderr`, etc.)
++
++Design decisions:
++- Sink write failures are silently swallowed (logging never crashes a request)
++- `Logger::fromConfig()` factory builds a configured logger from `ObservabilityConfig`
++- Registered in container as both `Psr\Log\LoggerInterface` and `Pulsar\Observability\Log\Logger`
++
+ ## Module System (HMVC)
+ 
+ Pulsar uses Hierarchical Model-View-Controller for large applications.
+@@ -137,15 +191,19 @@ modules/<module-name>/
+ ## Request Lifecycle
+ 
+ 1. Web server receives request
+-2. `public/index.php` creates kernel
+-3. Kernel boots (loads config, container, extensions)
++2. `public/index.php` creates kernel (optionally with `ConfigManager`)
++3. Kernel boots:
++   a. If `ConfigManager` provided: load config → register config services → create logger → create exception handler
++   b. Register extensions
++   c. Boot extensions
+ 4. Request is parsed and wrapped
+ 5. Router matches route
+ 6. Middleware pipeline executes
+ 7. Controller handles request
+ 8. Response is returned through middleware
+-9. Response is sent
+-10. Kernel shuts down
++9. If an exception occurs and `ExceptionHandler` is present: log exception, render error response
++10. Response is sent
++11. Kernel shuts down
+ 
+ ## Directory Layout
+ 
+diff --git a/docs/CONFIGURATION.md b/docs/CONFIGURATION.md
+new file mode 100644
+index 00000000..93eaec9a
+--- /dev/null
++++ b/docs/CONFIGURATION.md
+@@ -0,0 +1,148 @@
++# Configuration
++
++Pulsar 0.3.0 introduces a typed configuration system that loads settings from PHP files, environment variables, and optional `.env` files. Configuration is deterministic, explicit, and available to the entire framework before extensions boot.
++
++## Load Order
++
++Configuration follows a strict precedence chain:
++
++1. **OS environment variables** — always present, highest priority
++2. **`.env` file** — optional, loaded only if a path is provided. File values never override existing OS vars.
++3. **Config PHP files** — `config/app.php`, `config/observability.php` — return raw arrays
++4. **Runtime overrides** — `ConfigOverrides` applied via `array_replace_recursive` on raw arrays
++5. **Typed DTO construction** — `AppConfig::fromArray()`, `ObservabilityConfig::fromArray()` — env vars override array values inside the factory methods
++
++## Environment Class
++
++`Pulsar\Config\Environment` loads and merges env vars:
++
++```php
++$env = Environment::load('/path/to/.env'); // .env is optional
++
++$env->get('APP_ENV');                   // nullable
++$env->get('DB_HOST', 'localhost');       // with default
++$env->require('SECRET_KEY');             // throws ConfigException if missing
++$env->has('REDIS_URL');                  // boolean
++$env->resolveMode();                    // returns EnvironmentMode enum
++```
++
++The `.env` parser supports:
++- `KEY=VALUE` pairs
++- `#` comment lines
++- Blank lines
++- Single and double quoted values (quotes stripped)
++- No interpolation
++
++## EnvironmentMode Enum
++
++```php
++enum EnvironmentMode: string
++{
++    case Local = 'local';
++    case Staging = 'staging';
++    case Production = 'production';
++}
++```
++
++`isDebugByDefault()` returns `true` only for `Local`.
++
++## Typed Config DTOs
++
++### AppConfig
++
++Loaded from `config/app.php`. Fields:
++
++| Property | Type | Env Override | Default |
++|----------|------|-------------|---------|
++| `name` | `string` | `APP_NAME` | `'Pulsar'` |
++| `mode` | `EnvironmentMode` | `APP_ENV` | `Local` |
++| `debug` | `bool` | `APP_DEBUG` | Mode default |
++| `timezone` | `string` | — | `'UTC'` |
++| `locale` | `string` | — | `'en'` |
++
++Debug resolution: `APP_DEBUG` env var > file `debug` key > `EnvironmentMode::isDebugByDefault()`.
++
++### ObservabilityConfig
++
++Loaded from `config/observability.php` (logging section). Fields:
++
++| Property | Type | Env Override | Default |
++|----------|------|-------------|---------|
++| `defaultLoggingChannel` | `string` | `LOG_CHANNEL` | `'file'` |
++| `loggingLevel` | `string` | `LOG_LEVEL` | `'info'` |
++| `loggingChannels` | `list<LoggingChannelConfig>` | — | From file |
++
++### LoggingChannelConfig
++
++Readonly DTO for each channel entry:
++
++| Property | Type |
++|----------|------|
++| `name` | `string` |
++| `driver` | `string` (`'file'` or `'stream'`) |
++| `path` | `?string` |
++| `stream` | `?string` |
++
++## ConfigRepository
++
++The `ConfigRepository` is a typed store keyed by DTO class name:
++
++```php
++$repo->set($appConfig);                           // stores by class name
++$repo->get(AppConfig::class);                      // returns AppConfig
++$repo->has(ObservabilityConfig::class);             // boolean
++```
++
++Accessing a missing config throws `ConfigException`.
++
++## ConfigOverrides
++
++Runtime overrides applied before DTO construction:
++
++```php
++$overrides = new ConfigOverrides();
++$overrides->add('app', ['debug' => true]);
++$overrides->add('observability', ['logging' => ['level' => 'error']]);
++```
++
++Overrides merge recursively via `array_replace_recursive`.
++
++## ConfigManager
++
++Orchestrates the full pipeline:
++
++```php
++$manager = new ConfigManager(
++    configPath: __DIR__ . '/config',
++    envFilePath: __DIR__ . '/.env',
++    overrides: $overrides,
++);
++$manager->load();
++
++$appConfig = $manager->repository()->get(AppConfig::class);
++$environment = $manager->environment();
++```
++
++## Env Var Precedence Table
++
++| Variable | Overrides | Used By |
++|----------|-----------|---------|
++| `APP_NAME` | `config/app.php` → `name` | `AppConfig` |
++| `APP_ENV` | `config/app.php` → `env` | `AppConfig`, `Environment` |
++| `APP_DEBUG` | `config/app.php` → `debug` | `AppConfig` |
++| `LOG_LEVEL` | `config/observability.php` → `logging.level` | `ObservabilityConfig` |
++| `LOG_CHANNEL` | `config/observability.php` → `logging.default_channel` | `ObservabilityConfig` |
++
++## Extension Config Pattern
++
++The `ConfigLoaderInterface` establishes the pattern for extensions to provide their own typed configs:
++
++```php
++interface ConfigLoaderInterface
++{
++    public function configClass(): string;
++    public function load(array $data, Environment $environment): object;
++}
++```
++
++Not consumed by core in 0.3.0. Extensions can implement this interface to integrate with future config discovery.
+diff --git a/docs/ERROR_HANDLING.md b/docs/ERROR_HANDLING.md
+new file mode 100644
+index 00000000..d7c57288
+--- /dev/null
++++ b/docs/ERROR_HANDLING.md
+@@ -0,0 +1,129 @@
++# Error Handling
++
++Pulsar 0.3.0 introduces centralized exception handling with separate development and production renderers. All exceptions flow through a single `ExceptionHandler` that resolves HTTP status codes, logs context, and renders appropriate responses.
++
++## ExceptionHandler Flow
++
++```
++Exception thrown
++    │
++    ├── Resolve HTTP status from exception type
++    │     ├── HttpExceptionInterface → its getStatusCode()
++    │     ├── RoutingException (404) → NotFound
++    │     ├── RoutingException (405) → MethodNotAllowed
++    │     └── Default → InternalServerError (500)
++    │
++    ├── Resolve response headers
++    │     ├── HttpExceptionInterface → its getHeaders()
++    │     ├── RoutingException (405) → Allow header
++    │     └── Default → none
++    │
++    ├── Log exception with structured context
++    │     ├── 5xx → logger->error()
++    │     └── 4xx → logger->warning()
++    │
++    └── Render response body via ExceptionRendererInterface
++          ├── DevelopmentRenderer (debug=true)
++          └── ProductionRenderer (debug=false)
++```
++
++## Dev vs Prod Renderers
++
++The renderer choice is made once at kernel boot based on `AppConfig::$debug`:
++
++- **DevelopmentRenderer**: Detailed HTML page with exception class/message, full stack trace, request details (method, URI, headers, query), and chained previous exceptions. All values HTML-escaped. Inline CSS.
++- **ProductionRenderer**: Safe generic HTML. No class names, stack traces, or file paths exposed. Generic messages per status category.
++
++### Production Messages
++
++| Status | Message |
++|--------|---------|
++| 404 | "The page you are looking for could not be found." |
++| 403 | "You do not have permission to access this resource." |
++| 405 | "The request method is not supported for this resource." |
++| 4xx | "The request could not be processed." |
++| 5xx | "An internal error occurred. Please try again later." |
++
++## HttpException
++
++Use `HttpException` to throw exceptions that map to specific HTTP status codes:
++
++```php
++throw HttpException::notFound('User not found');
++throw HttpException::forbidden('Insufficient permissions');
++throw HttpException::badRequest('Invalid email format');
++throw HttpException::serviceUnavailable('Database maintenance');
++
++// Custom status with headers
++throw new HttpException(
++    ResponseStatus::TooManyRequests,
++    'Rate limit exceeded',
++    ['Retry-After' => '60'],
++);
++```
++
++## HttpExceptionInterface
++
++Implement this interface for custom exception types that should map to specific HTTP responses:
++
++```php
++class PaymentRequiredException extends RuntimeException implements HttpExceptionInterface
++{
++    public function getStatusCode(): ResponseStatus
++    {
++        return ResponseStatus::PaymentRequired;
++    }
++
++    public function getHeaders(): array
++    {
++        return [];
++    }
++}
++```
++
++## RoutingException Handling
++
++`RoutingException` thrown by the router is automatically handled:
++
++- **404 (Not Found)**: Status `NotFound`, no extra headers
++- **405 (Method Not Allowed)**: Status `MethodNotAllowed`, `Allow` header with permitted methods
++
++## Logger Integration
++
++Every exception is logged with structured context:
++
++```json
++{
++  "exception": "<Throwable instance>",
++  "status": 500,
++  "method": "GET",
++  "uri": "/api/data"
++}
++```
++
++5xx exceptions log at `error` level. 4xx exceptions log at `warning` level.
++
++## Kernel Integration
++
++When a `ConfigManager` is provided to the Kernel, the exception handler is created during boot and catches all exceptions from the middleware pipeline and route dispatch:
++
++```php
++$kernel = new Kernel(configManager: new ConfigManager(
++    configPath: __DIR__ . '/config',
++));
++```
++
++When no `ConfigManager` is provided (e.g. in tests), exceptions propagate as before — full backward compatibility.
++
++## Custom Renderers
++
++Implement `ExceptionRendererInterface` to create custom renderers:
++
++```php
++interface ExceptionRendererInterface
++{
++    public function render(Throwable $exception, Request $request, ResponseStatus $status): string;
++}
++```
++
++Custom renderers can be injected into `ExceptionHandler` directly for specialized use cases (JSON API errors, CLI rendering, etc.).
+diff --git a/docs/LOGGING.md b/docs/LOGGING.md
+new file mode 100644
+index 00000000..7f8038b8
+--- /dev/null
++++ b/docs/LOGGING.md
+@@ -0,0 +1,131 @@
++# Logging
++
++Pulsar 0.3.0 introduces a PSR-3 compliant structured logging system. Log output is JSON lines format, suitable for log aggregation systems.
++
++## PSR-3 Compliance
++
++`Pulsar\Observability\Log\Logger` implements `Psr\Log\LoggerInterface`:
++
++```php
++$logger->emergency('System failure', ['component' => 'db']);
++$logger->alert('Action required');
++$logger->critical('Critical failure');
++$logger->error('Operation failed', ['exception' => $e]);
++$logger->warning('Deprecated feature used');
++$logger->notice('User logged in');
++$logger->info('Request processed');
++$logger->debug('Query executed', ['sql' => $query]);
++```
++
++## LogLevel Enum
++
++Backed string enum mapping PSR-3 levels with numeric severity:
++
++| Level | Severity | Value |
++|-------|----------|-------|
++| Emergency | 0 | `'emergency'` |
++| Alert | 1 | `'alert'` |
++| Critical | 2 | `'critical'` |
++| Error | 3 | `'error'` |
++| Warning | 4 | `'warning'` |
++| Notice | 5 | `'notice'` |
++| Info | 6 | `'info'` |
++| Debug | 7 | `'debug'` |
++
++Lower severity number = more severe. Level filtering via `meetsThreshold()`: a log entry is written only if its severity is at least as severe as the configured threshold.
++
++## Structured JSON Format
++
++Each log entry is a single JSON line:
++
++```json
++{"timestamp":"2026-02-03T12:00:00.000000+00:00","level":"error","channel":"app","message":"Something failed","context":{"exception":{"class":"RuntimeException","message":"DB connection lost","code":0,"file":"/app/src/Service.php","line":42,"trace":"#0 ..."}}}
++```
++
++Fields:
++- `timestamp` — ISO 8601 with microseconds, always UTC
++- `level` — PSR-3 level string
++- `channel` — logger channel name
++- `message` — interpolated message
++- `context` — optional, present only when non-empty
++
++## Sinks
++
++Sinks are output destinations implementing `LogSinkInterface`:
++
++### FileSink
++
++Appends JSON lines to a file. Creates the directory if missing. Uses `LOCK_EX` for concurrent safety.
++
++```php
++$sink = new FileSink('/var/logs/app.log');
++```
++
++### StreamSink
++
++Writes JSON lines to a PHP stream.
++
++```php
++$sink = new StreamSink('php://stderr');
++```
++
++## Configuration
++
++Logging is configured via `config/observability.php`:
++
++```php
++'logging' => [
++    'default_channel' => 'file',
++    'level' => 'info',
++    'channels' => [
++        'file' => ['driver' => 'file', 'path' => 'var/logs/pulsar.log'],
++        'stderr' => ['driver' => 'stream', 'stream' => 'php://stderr'],
++    ],
++],
++```
++
++Env var overrides:
++- `LOG_LEVEL` overrides `logging.level`
++- `LOG_CHANNEL` overrides `logging.default_channel`
++
++## Logger::fromConfig Factory
++
++Build a configured logger from `ObservabilityConfig`:
++
++```php
++$logger = Logger::fromConfig($observabilityConfig);
++```
++
++This creates sinks for all configured channels and sets the threshold from `loggingLevel`.
++
++## Context Serialization
++
++### PSR-3 Placeholder Interpolation
++
++```php
++$logger->info('User {name} logged in from {ip}', [
++    'name' => 'Alice',
++    'ip' => '192.168.1.1',
++]);
++// Message: "User Alice logged in from 192.168.1.1"
++```
++
++### Exception Serialization
++
++`Throwable` instances in context are serialized to structured arrays:
++
++```php
++$logger->error('Operation failed', ['exception' => $e]);
++// Context serialized as:
++// {"exception": {"class": "RuntimeException", "message": "...", "code": 0, "file": "...", "line": 42, "trace": "..."}}
++```
++
++## Sink Failure Behavior
++
++Sink write failures are silently swallowed. Logging must never crash a request. If a sink throws, the exception is caught and ignored, and remaining sinks still receive the entry.
++
++## Container Registration
++
++When a `ConfigManager` is provided to the Kernel, the logger is registered in the container as both:
++- `Psr\Log\LoggerInterface`
++- `Pulsar\Observability\Log\Logger`
+diff --git a/docs/PHP_FEATURE_MATRIX.md b/docs/PHP_FEATURE_MATRIX.md
+index b753f8e2..22eff0d6 100644
+--- a/docs/PHP_FEATURE_MATRIX.md
++++ b/docs/PHP_FEATURE_MATRIX.md
+@@ -18,22 +18,22 @@ This matrix maps features to their actual usage in the codebase, ensuring covera
+ 
+ | Feature | Used | Location(s) | Rationale |
+ |---------|------|-------------|-----------|
+-| Named arguments | Yes | `src/Http/Request.php`, `src/Http/Response.php` | Improved readability for constructor calls with many parameters |
++| Named arguments | Yes | `src/Http/Request.php`, `src/Http/Response.php`, `src/Config/AppConfig.php`, `src/Observability/Log/LogEntry.php`, `src/ErrorHandling/HttpException.php` | Improved readability for constructor calls with many parameters |
+ | Attributes | Yes | `tests/Unit/**/*Test.php` | PHPUnit test configuration (#[Test], #[CoversClass]) |
+-| Constructor property promotion | Yes | `src/Http/Request.php`, `src/Http/Response.php`, `src/Http/HeaderBag.php`, `src/Routing/Route.php`, `src/Routing/MatchedRoute.php`, `src/Http/Middleware/MiddlewarePipeline.php` | Reduced boilerplate for value objects |
++| Constructor property promotion | Yes | `src/Http/Request.php`, `src/Http/Response.php`, `src/Http/HeaderBag.php`, `src/Routing/Route.php`, `src/Routing/MatchedRoute.php`, `src/Http/Middleware/MiddlewarePipeline.php`, `src/Config/AppConfig.php`, `src/Config/LoggingChannelConfig.php`, `src/Observability/Log/LogEntry.php`, `src/ErrorHandling/HttpException.php`, `src/ErrorHandling/ExceptionHandler.php` | Reduced boilerplate for value objects and service classes |
+ | Union types | Yes | `src/Container/ContainerInterface.php`, `src/Container/Container.php`, `src/Http/Middleware/MiddlewarePipeline.php` | Precise type declarations for flexible APIs |
+-| Match expression | Yes | `src/Http/Method.php`, `src/Http/ResponseStatus.php` | Cleaner exhaustive enum matching |
++| Match expression | Yes | `src/Http/Method.php`, `src/Http/ResponseStatus.php`, `src/Config/EnvironmentMode.php`, `src/Config/AppConfig.php`, `src/Observability/Log/LogLevel.php` | Cleaner exhaustive enum matching |
+ | Nullsafe operator (`?->`) | Planned | - | Null handling |
+-| `str_contains`, `str_starts_with`, `str_ends_with` | Yes | `src/Http/HeaderBag.php`, `src/Routing/Route.php` | Native string operations |
++| `str_contains`, `str_starts_with`, `str_ends_with` | Yes | `src/Http/HeaderBag.php`, `src/Routing/Route.php`, `src/Config/Environment.php` | Native string operations |
+ | `throw` as expression | Planned | - | Inline error handling |
+ 
+ ### PHP 8.1 Features
+ 
+ | Feature | Used | Location(s) | Rationale |
+ |---------|------|-------------|-----------|
+-| Enums | Yes | `src/Container/BindingType.php`, `src/Http/Method.php`, `src/Http/ResponseStatus.php` | Type-safe constants with methods |
++| Enums | Yes | `src/Container/BindingType.php`, `src/Http/Method.php`, `src/Http/ResponseStatus.php`, `src/Config/EnvironmentMode.php`, `src/Observability/Log/LogLevel.php` | Type-safe constants with methods |
+ | Fibers | Planned | - | Async operations (scheduler, jobs) |
+-| Readonly properties | Yes | `src/Http/HeaderBag.php`, `src/Http/Request.php`, `src/Http/Response.php`, `src/Routing/Route.php`, `src/Routing/MatchedRoute.php` | Immutability for value objects |
++| Readonly properties | Yes | `src/Http/HeaderBag.php`, `src/Http/Request.php`, `src/Http/Response.php`, `src/Routing/Route.php`, `src/Routing/MatchedRoute.php`, `src/ErrorHandling/HttpException.php`, `src/ErrorHandling/ExceptionHandler.php` | Immutability for value objects and service fields |
+ | First-class callables | Yes | `src/Core/Kernel.php`, `src/Http/Middleware/MiddlewarePipeline.php` | Clean callback passing with `fn()` syntax |
+ | Intersection types | Planned | - | Precise typing |
+ | `never` return type | Planned | - | Exit/throw functions |
+@@ -44,7 +44,7 @@ This matrix maps features to their actual usage in the codebase, ensuring covera
+ 
+ | Feature | Used | Location(s) | Rationale |
+ |---------|------|-------------|-----------|
+-| Readonly classes | Yes | `src/Http/HeaderBag.php`, `src/Http/Request.php`, `src/Http/Response.php`, `src/Routing/Route.php`, `src/Routing/MatchedRoute.php` | Fully immutable value objects |
++| Readonly classes | Yes | `src/Http/HeaderBag.php`, `src/Http/Request.php`, `src/Http/Response.php`, `src/Routing/Route.php`, `src/Routing/MatchedRoute.php`, `src/Config/AppConfig.php`, `src/Config/ObservabilityConfig.php`, `src/Config/LoggingChannelConfig.php`, `src/Observability/Log/LogEntry.php` | Fully immutable value objects and config DTOs |
+ | `true`, `false`, `null` as standalone types | Planned | - | Precise return types |
+ | Disjunctive Normal Form (DNF) types | Planned | - | Complex type constraints |
+ | Traits with constants | Planned | - | Shared constants |
+diff --git a/src/Config/AppConfig.php b/src/Config/AppConfig.php
+new file mode 100644
+index 00000000..a786e692
+--- /dev/null
++++ b/src/Config/AppConfig.php
+@@ -0,0 +1,67 @@
++<?php
++
++declare(strict_types=1);
++
++namespace Pulsar\Config;
++
++/**
++ * Typed configuration DTO for `config/app.php`.
++ *
++ * Environment variables `APP_NAME`, `APP_ENV`, `APP_DEBUG` override file values.
++ */
++readonly class AppConfig
++{
++    public function __construct(
++        public string $name,
++        public EnvironmentMode $mode,
++        public bool $debug,
++        public string $timezone,
++        public string $locale,
++    ) {}
++
++    /**
++     * Build an AppConfig from a raw config array and environment.
++     *
++     * @param array<string, mixed> $data Raw array from config/app.php
++     */
++    public static function fromArray(array $data, Environment $environment): self
++    {
++        // Resolve mode: env var overrides file value
++        $envValue = $environment->get('APP_ENV');
++        $modeString = $envValue ?? (string) ($data['env'] ?? 'local'); // @phpstan-ignore cast.string
++        $mode = EnvironmentMode::tryFrom($modeString) ?? EnvironmentMode::Local;
++
++        // Resolve name: env var overrides file value
++        $name = $environment->get('APP_NAME') ?? (string) ($data['name'] ?? 'Pulsar'); // @phpstan-ignore cast.string
++
++        // Resolve debug: env var overrides file value, which overrides mode default
++        $debugEnv = $environment->get('APP_DEBUG');
++
++        if ($debugEnv !== null) {
++            $debug = self::parseBool($debugEnv);
++        } elseif (isset($data['debug'])) {
++            $debug = (bool) $data['debug'];
++        } else {
++            $debug = $mode->isDebugByDefault();
++        }
++
++        $timezone = (string) ($data['timezone'] ?? 'UTC'); // @phpstan-ignore cast.string
++        $locale = (string) ($data['locale'] ?? 'en'); // @phpstan-ignore cast.string
++
++        return new self(
++            name: $name,
++            mode: $mode,
++            debug: $debug,
++            timezone: $timezone,
++            locale: $locale,
++        );
++    }
++
++    private static function parseBool(string $value): bool
++    {
++        return match (strtolower($value)) {
++            '1', 'true', 'yes', 'on' => true,
++            default => false,
++        };
++    }
++}
+diff --git a/src/Config/ConfigLoaderInterface.php b/src/Config/ConfigLoaderInterface.php
+new file mode 100644
+index 00000000..f8b129db
+--- /dev/null
++++ b/src/Config/ConfigLoaderInterface.php
+@@ -0,0 +1,28 @@
++<?php
++
++declare(strict_types=1);
++
++namespace Pulsar\Config;
++
++/**
++ * Extension point for custom configuration loading.
++ *
++ * Not consumed by core in 0.3.0. Establishes the pattern for extensions
++ * that provide their own typed config DTOs.
++ */
++interface ConfigLoaderInterface
++{
++    /**
++     * The config DTO class this loader produces.
++     *
++     * @return class-string
++     */
++    public function configClass(): string;
++
++    /**
++     * Load and build a typed config DTO from raw data and environment.
++     *
++     * @param array<string, mixed> $data
++     */
++    public function load(array $data, Environment $environment): object;
++}
+diff --git a/src/Config/ConfigManager.php b/src/Config/ConfigManager.php
+new file mode 100644
+index 00000000..4ee061db
+--- /dev/null
++++ b/src/Config/ConfigManager.php
+@@ -0,0 +1,127 @@
++<?php
++
++declare(strict_types=1);
++
++namespace Pulsar\Config;
++
++use function is_array;
++use function is_file;
++
++use Pulsar\Config\Exception\ConfigException;
++
++/**
++ * Configuration orchestrator.
++ *
++ * Manages the full config loading pipeline:
++ * 1. OS env vars (always present)
++ * 2. `.env` file (if provided) — file values never override existing OS vars
++ * 3. Config PHP files (return raw arrays)
++ * 4. Runtime overrides (applied via array_replace_recursive)
++ * 5. Typed DTO construction (env vars override array values inside factories)
++ */
++final class ConfigManager
++{
++    private ?Environment $environment = null;
++    private ?ConfigRepository $repository = null;
++
++    public function __construct(
++        private readonly ?string $configPath = null,
++        private readonly ?string $envFilePath = null,
++        private readonly ?ConfigOverrides $overrides = null,
++    ) {}
++
++    /**
++     * Load all configuration.
++     *
++     * Creates Environment, reads config files, applies overrides,
++     * and builds typed DTOs into the ConfigRepository.
++     */
++    public function load(): void
++    {
++        $this->environment = Environment::load($this->envFilePath);
++        $this->repository = new ConfigRepository();
++
++        // Load app config
++        $appData = $this->loadConfigFile('app');
++        $appConfig = AppConfig::fromArray($appData, $this->environment);
++        $this->repository->set($appConfig);
++
++        // Load observability config
++        $observabilityData = $this->loadConfigFile('observability');
++        $observabilityConfig = ObservabilityConfig::fromArray($observabilityData, $this->environment);
++        $this->repository->set($observabilityConfig);
++    }
++
++    /**
++     * Get the Environment instance.
++     *
++     * @throws ConfigException If load() has not been called.
++     */
++    public function environment(): Environment
++    {
++        if ($this->environment === null) {
++            throw ConfigException::missingRequired('environment', 'ConfigManager (call load() first)');
++        }
++
++        return $this->environment;
++    }
++
++    /**
++     * Get the ConfigRepository instance.
++     *
++     * @throws ConfigException If load() has not been called.
++     */
++    public function repository(): ConfigRepository
++    {
++        if ($this->repository === null) {
++            throw ConfigException::missingRequired('repository', 'ConfigManager (call load() first)');
++        }
++
++        return $this->repository;
++    }
++
++    /**
++     * Load a config PHP file, apply overrides, and return the raw array.
++     *
++     * @return array<string, mixed>
++     *
++     * @throws ConfigException If the file doesn't exist or doesn't return an array.
++     */
++    private function loadConfigFile(string $name): array
++    {
++        if ($this->configPath === null) {
++            return $this->applyOverrides($name, []);
++        }
++
++        $path = $this->configPath . DIRECTORY_SEPARATOR . $name . '.php';
++
++        if (!is_file($path)) {
++            throw ConfigException::fileNotFound($path);
++        }
++
++        /** @var mixed $data */
++        $data = require $path;
++
++        if (!is_array($data)) {
++            throw ConfigException::invalidValue($path, 'file must return an array');
++        }
++
++        /** @var array<string, mixed> $data */
++        return $this->applyOverrides($name, $data);
++    }
++
++    /**
++     * Apply runtime overrides if present.
++     *
++     * @param array<string, mixed> $data
++     * @return array<string, mixed>
++     */
++    private function applyOverrides(string $domain, array $data): array
++    {
++        if ($this->overrides === null) {
++            return $data;
++        }
++
++        return $this->overrides->apply($domain, $data);
++    }
++}
+diff --git a/src/Config/ConfigOverrides.php b/src/Config/ConfigOverrides.php
+new file mode 100644
+index 00000000..f9657543
+--- /dev/null
++++ b/src/Config/ConfigOverrides.php
+@@ -0,0 +1,61 @@
++<?php
++
++declare(strict_types=1);
++
++namespace Pulsar\Config;
++
++/**
++ * Runtime configuration override bag.
++ *
++ * Allows overriding raw config arrays before typed DTO construction.
++ * Overrides are applied via `array_replace_recursive` per domain.
++ */
++final class ConfigOverrides
++{
++    /**
++     * @var array<string, array<string, mixed>>
++     */
++    private array $overrides = [];
++
++    /**
++     * Add override values for a config domain (e.g. 'app', 'observability').
++     *
++     * @param array<string, mixed> $values
++     */
++    public function add(string $domain, array $values): void
++    {
++        if (!isset($this->overrides[$domain])) {
++            $this->overrides[$domain] = $values;
++        } else {
++            /** @var array<string, mixed> $merged */
++            $merged = array_replace_recursive($this->overrides[$domain], $values);
++            $this->overrides[$domain] = $merged;
++        }
++    }
++
++    /**
++     * Apply overrides to a raw config array for the given domain.
++     *
++     * @param array<string, mixed> $data
++     * @return array<string, mixed>
++     */
++    public function apply(string $domain, array $data): array
++    {
++        if (!isset($this->overrides[$domain])) {
++            return $data;
++        }
++
++        /** @var array<string, mixed> $merged */
++        $merged = array_replace_recursive($data, $this->overrides[$domain]);
++
++        return $merged;
++    }
++
++    /**
++     * Check if overrides exist for a domain.
++     */
++    public function has(string $domain): bool
++    {
++        return isset($this->overrides[$domain]);
++    }
++}
+diff --git a/src/Config/ConfigRepository.php b/src/Config/ConfigRepository.php
+new file mode 100644
+index 00000000..7948bd95
+--- /dev/null
++++ b/src/Config/ConfigRepository.php
+@@ -0,0 +1,59 @@
++<?php
++
++declare(strict_types=1);
++
++namespace Pulsar\Config;
++
++use Pulsar\Config\Exception\ConfigException;
++
++/**
++ * Typed configuration store.
++ *
++ * Stores configuration DTOs keyed by class name and retrieves them
++ * with full type information.
++ *
++ */
++final class ConfigRepository
++{
++    /**
++     * @var array<class-string, object>
++     */
++    private array $configs = [];
++
++    /**
++     * Store a config DTO instance.
++     */
++    public function set(object $config): void
++    {
++        $this->configs[$config::class] = $config;
++    }
++
++    /**
++     * Retrieve a config DTO by class name.
++     *
++     * @template C of object
++     * @param class-string<C> $class
++     * @return C
++     *
++     * @throws ConfigException If the config class has not been registered.
++     */
++    public function get(string $class): object
++    {
++        if (!isset($this->configs[$class])) {
++            throw ConfigException::missingRequired($class, 'config repository');
++        }
++
++        /** @var C */
++        return $this->configs[$class];
++    }
++
++    /**
++     * Check if a config DTO has been registered.
++     *
++     * @param class-string $class
++     */
++    public function has(string $class): bool
++    {
++        return isset($this->configs[$class]);
++    }
++}
+diff --git a/src/Config/Environment.php b/src/Config/Environment.php
+new file mode 100644
+index 00000000..3c25ae16
+--- /dev/null
++++ b/src/Config/Environment.php
+@@ -0,0 +1,185 @@
++<?php
++
++declare(strict_types=1);
++
++namespace Pulsar\Config;
++
++use function array_key_exists;
++use function is_file;
++use function is_readable;
++
++use Pulsar\Config\Exception\ConfigException;
++
++/**
++ * Loads environment variables from the OS and an optional `.env` file.
++ *
++ * OS environment variables always take precedence over `.env` file values.
++ * The `.env` parser supports `KEY=VALUE` lines, `#` comments, and blank lines.
++ * No interpolation is performed.
++ */
++final class Environment
++{
++    /**
++     * Merged environment variables (OS + file, OS wins).
++     *
++     * @var array<string, string>
++     */
++    private array $variables;
++
++    /**
++     * @param array<string, string> $variables
++     */
++    private function __construct(array $variables)
++    {
++        $this->variables = $variables;
++    }
++
++    /**
++     * Create an Environment instance from OS env vars and an optional `.env` file.
++     *
++     * OS vars are read first. If an `.env` file path is provided and exists,
++     * its values are loaded but never override existing OS vars.
++     */
++    public static function load(?string $envFilePath = null): self
++    {
++        $osVars = self::readOsVars();
++        $fileVars = [];
++
++        if ($envFilePath !== null && is_file($envFilePath) && is_readable($envFilePath)) {
++            $fileVars = self::parseEnvFile($envFilePath);
++        }
++
++        // OS vars take precedence: file vars fill in gaps only
++        $merged = $fileVars;
++        foreach ($osVars as $key => $value) {
++            $merged[$key] = $value;
++        }
++
++        return new self($merged);
++    }
++
++    /**
++     * Get an environment variable value.
++     */
++    public function get(string $key, ?string $default = null): ?string
++    {
++        return $this->variables[$key] ?? $default;
++    }
++
++    /**
++     * Get a required environment variable or throw.
++     *
++     * @throws ConfigException If the variable is not set.
++     */
++    public function require(string $key): string
++    {
++        if (!array_key_exists($key, $this->variables)) {
++            throw ConfigException::missingRequired($key, 'environment');
++        }
++
++        return $this->variables[$key];
++    }
++
++    /**
++     * Check if an environment variable is set.
++     */
++    public function has(string $key): bool
++    {
++        return array_key_exists($key, $this->variables);
++    }
++
++    /**
++     * Resolve the application environment mode.
++     */
++    public function resolveMode(): EnvironmentMode
++    {
++        $env = $this->get('APP_ENV');
++
++        if ($env === null) {
++            return EnvironmentMode::Local;
++        }
++
++        $mode = EnvironmentMode::tryFrom($env);
++
++        return $mode ?? EnvironmentMode::Local;
++    }
++
++    /**
++     * Get all environment variables.
++     *
++     * @return array<string, string>
++     */
++    public function all(): array
++    {
++        return $this->variables;
++    }
++
++    /**
++     * Read OS-level environment variables.
++     *
++     * @return array<string, string>
++     */
++    private static function readOsVars(): array
++    {
++        /** @var array<string, string> $env */
++        $env = getenv();
++
++        return $env;
++    }
++
++    /**
++     * Parse a `.env` file into key-value pairs.
++     *
++     * Supports:
++     * - `KEY=VALUE`
++     * - `#` comments
++     * - Blank lines
++     * - Quoted values (single and double quotes stripped from both ends)
++     *
++     * @return array<string, string>
++     */
++    private static function parseEnvFile(string $path): array
++    {
++        $contents = file_get_contents($path);
++
++        if ($contents === false) {
++            return [];
++        }
++
++        $vars = [];
++        $lines = explode("\n", $contents);
++
++        foreach ($lines as $line) {
++            $line = trim($line);
++
++            // Skip blank lines and comments
++            if ($line === '' || str_starts_with($line, '#')) {
++                continue;
++            }
++
++            $equalsPos = strpos($line, '=');
++
++            if ($equalsPos === false) {
++                continue;
++            }
++
++            $key = trim(substr($line, 0, $equalsPos));
++            $value = trim(substr($line, $equalsPos + 1));
++
++            // Strip surrounding quotes
++            if (
++                ($value !== '')
++                && (($value[0] === '"' && str_ends_with($value, '"'))
++                    || ($value[0] === "'" && str_ends_with($value, "'")))
++            ) {
++                $value = substr($value, 1, -1);
++            }
++
++            if ($key !== '') {
++                $vars[$key] = $value;
++            }
++        }
++
++        return $vars;
++    }
++}
+diff --git a/src/Config/EnvironmentMode.php b/src/Config/EnvironmentMode.php
+new file mode 100644
+index 00000000..07ce7bc4
+--- /dev/null
++++ b/src/Config/EnvironmentMode.php
+@@ -0,0 +1,27 @@
++<?php
++
++declare(strict_types=1);
++
++namespace Pulsar\Config;
++
++/**
++ * Application environment mode.
++ */
++enum EnvironmentMode: string
++{
++    case Local = 'local';
++    case Staging = 'staging';
++    case Production = 'production';
++
++    /**
++     * Whether debug mode should be enabled by default for this environment.
++     */
++    public function isDebugByDefault(): bool
++    {
++        return match ($this) {
++            self::Local => true,
++            self::Staging => false,
++            self::Production => false,
++        };
++    }
++}
+diff --git a/src/Config/Exception/ConfigException.php b/src/Config/Exception/ConfigException.php
+new file mode 100644
+index 00000000..2bc661c5
+--- /dev/null
++++ b/src/Config/Exception/ConfigException.php
+@@ -0,0 +1,39 @@
++<?php
++
++declare(strict_types=1);
++
++namespace Pulsar\Config\Exception;
++
++use RuntimeException;
++
++use function sprintf;
++
++/**
++ * Exception thrown for configuration errors.
++ */
++final class ConfigException extends RuntimeException
++{
++    /**
++     * Config file not found at path.
++     */
++    public static function fileNotFound(string $path): self
++    {
++        return new self(sprintf('Configuration file not found: "%s"', $path));
++    }
++
++    /**
++     * Config file did not return an array.
++     */
++    public static function invalidValue(string $path, string $reason): self
++    {
++        return new self(sprintf('Invalid configuration value in "%s": %s', $path, $reason));
++    }
++
++    /**
++     * Required config key is missing.
++     */
++    public static function missingRequired(string $key, string $context): self
++    {
++        return new self(sprintf('Missing required configuration key "%s" in %s', $key, $context));
++    }
++}
+diff --git a/src/Config/LoggingChannelConfig.php b/src/Config/LoggingChannelConfig.php
+new file mode 100644
+index 00000000..a4cd5d97
+--- /dev/null
++++ b/src/Config/LoggingChannelConfig.php
+@@ -0,0 +1,18 @@
++<?php
++
++declare(strict_types=1);
++
++namespace Pulsar\Config;
++
++/**
++ * Typed DTO for a single logging channel configuration.
++ */
++readonly class LoggingChannelConfig
++{
++    public function __construct(
++        public string $name,
++        public string $driver,
++        public ?string $path = null,
++        public ?string $stream = null,
++    ) {}
++}
+diff --git a/src/Config/ObservabilityConfig.php b/src/Config/ObservabilityConfig.php
+new file mode 100644
+index 00000000..701269f3
+--- /dev/null
++++ b/src/Config/ObservabilityConfig.php
+@@ -0,0 +1,60 @@
++<?php
++
++declare(strict_types=1);
++
++namespace Pulsar\Config;
++
++/**
++ * Typed configuration DTO for the logging section of `config/observability.php`.
++ *
++ * Environment variables `LOG_LEVEL` and `LOG_CHANNEL` override file values.
++ */
++readonly class ObservabilityConfig
++{
++    /**
++     * @param list<LoggingChannelConfig> $loggingChannels
++     */
++    public function __construct(
++        public string $defaultLoggingChannel,
++        public string $loggingLevel,
++        public array $loggingChannels,
++    ) {}
++
++    /**
++     * Build from the raw observability config array and environment.
++     *
++     * @param array<string, mixed> $data Raw array from config/observability.php
++     */
++    public static function fromArray(array $data, Environment $environment): self
++    {
++        /** @var array<string, mixed> $logging */
++        $logging = $data['logging'] ?? [];
++
++        // Env overrides for channel and level
++        $defaultChannel = $environment->get('LOG_CHANNEL')
++            ?? (string) ($logging['default_channel'] ?? 'file'); // @phpstan-ignore cast.string
++
++        $level = $environment->get('LOG_LEVEL')
++            ?? (string) ($logging['level'] ?? 'info'); // @phpstan-ignore cast.string
++
++        // Build channel DTOs
++        /** @var array<string, array<string, mixed>> $channels */
++        $channels = $logging['channels'] ?? [];
++        $channelConfigs = [];
++
++        foreach ($channels as $name => $channelData) {
++            $channelConfigs[] = new LoggingChannelConfig(
++                name: $name,
++                driver: (string) ($channelData['driver'] ?? 'file'), // @phpstan-ignore cast.string
++                path: isset($channelData['path']) ? (string) $channelData['path'] : null, // @phpstan-ignore cast.string
++                stream: isset($channelData['stream']) ? (string) $channelData['stream'] : null, // @phpstan-ignore cast.string
++            );
++        }
++
++        return new self(
++            defaultLoggingChannel: $defaultChannel,
++            loggingLevel: $level,
++            loggingChannels: $channelConfigs,
++        );
++    }
++}
+diff --git a/src/Console/Command/DiagnosticsCommand.php b/src/Console/Command/DiagnosticsCommand.php
+index 15e0d5c2..036d17a2 100644
+--- a/src/Console/Command/DiagnosticsCommand.php
++++ b/src/Console/Command/DiagnosticsCommand.php
+@@ -133,6 +133,6 @@ private function formatBytes(int $bytes): string
+             $unit++;
+         }
+ 
+-        return sprintf('%.2f %s', $size, $units[$unit] ?? 'B');
++        return sprintf('%.2f %s', $size, $units[$unit]);
+     }
+ }
+diff --git a/src/Core/Kernel.php b/src/Core/Kernel.php
+index ea595bc7..281c973a 100644
+--- a/src/Core/Kernel.php
++++ b/src/Core/Kernel.php
+@@ -8,22 +8,32 @@
+ use function is_callable;
+ use function is_string;
+ 
++use Psr\Log\LoggerInterface;
++use Pulsar\Config\AppConfig;
++use Pulsar\Config\ConfigManager;
++use Pulsar\Config\ConfigRepository;
++use Pulsar\Config\Environment;
++use Pulsar\Config\ObservabilityConfig;
+ use Pulsar\Container\Container;
+ use Pulsar\Container\ContainerInterface;
++use Pulsar\ErrorHandling\DevelopmentRenderer;
++use Pulsar\ErrorHandling\ExceptionHandler;
++use Pulsar\ErrorHandling\ProductionRenderer;
+ use Pulsar\Extensibility\ExtensionBootstrap;
+ use Pulsar\Http\Middleware\MiddlewareInterface;
+ use Pulsar\Http\Middleware\MiddlewarePipeline;
+ use Pulsar\Http\Request;
+ use Pulsar\Http\Response;
+ use Pulsar\Http\ResponseEmitter;
+-use Pulsar\Http\ResponseStatus;
++use Pulsar\Observability\Log\Logger;
+ use Pulsar\Routing\MatchedRoute;
+ use Pulsar\Routing\Router;
+-use Pulsar\Routing\RoutingException;
+ use RuntimeException;
+ 
+ use function sprintf;
+ 
++use Throwable;
++
+ /**
+  * Pulsar Kernel
+  *
+@@ -37,16 +47,20 @@ final class Kernel
+     private Router $router;
+     private MiddlewarePipeline $middleware;
+     private ?ExtensionBootstrap $extensionBootstrap;
++    private ?ConfigManager $configManager;
++    private ?ExceptionHandler $exceptionHandler = null;
+ 
+     public function __construct(
+         ?ContainerInterface $container = null,
+         ?Router $router = null,
+         ?ExtensionBootstrap $extensionBootstrap = null,
++        ?ConfigManager $configManager = null,
+     ) {
+         $this->container = $container ?? new Container();
+         $this->router = $router ?? new Router();
+         $this->middleware = new MiddlewarePipeline($this->container);
+         $this->extensionBootstrap = $extensionBootstrap;
++        $this->configManager = $configManager;
+ 
+         // Register core services in container
+         $this->container->instance(ContainerInterface::class, $this->container);
+@@ -63,9 +77,10 @@ public function __construct(
+      * Boot the kernel.
+      *
+      * This method initializes all core services and prepares
+-     * the application for handling requests. Extension lifecycle:
+-     * 1. Register phase: All extensions register services
+-     * 2. Boot phase: All extensions boot (routes, etc.)
++     * the application for handling requests. Boot pipeline:
++     * 1. Config loading (if ConfigManager provided)
++     * 2. Extension register phase
++     * 3. Extension boot phase
+      */
+     public function boot(): void
+     {
+@@ -73,6 +88,14 @@ public function boot(): void
+             return;
+         }
+ 
++        // Config phase: load config, create logger, create exception handler
++        if ($this->configManager !== null) {
++            $this->configManager->load();
++            $this->registerConfigServices();
++            $this->createLogger();
++            $this->createExceptionHandler();
++        }
++
+         // Extension register phase (all extensions)
+         $this->extensionBootstrap?->register($this->container);
+ 
+@@ -90,6 +113,14 @@ public function extensionBootstrap(): ?ExtensionBootstrap
+         return $this->extensionBootstrap;
+     }
+ 
++    /**
++     * Get the config manager instance.
++     */
++    public function configManager(): ?ConfigManager
++    {
++        return $this->configManager;
++    }
++
+     /**
+      * Check if the kernel has been booted.
+      */
+@@ -132,7 +163,15 @@ public function handle(Request $request): Response
+     {
+         $this->boot();
+ 
+-        return $this->middleware->handle($request, fn(Request $req) => $this->dispatchRoute($req));
++        try {
++            return $this->middleware->handle($request, fn(Request $req) => $this->dispatchRoute($req));
++        } catch (Throwable $e) {
++            if ($this->exceptionHandler !== null) {
++                return $this->exceptionHandler->handle($e, $request);
++            }
++
++            throw $e;
++        }
+     }
+ 
+     /**
+@@ -152,26 +191,22 @@ public function run(): void
+      */
+     private function dispatchRoute(Request $request): Response
+     {
+-        try {
+-            $matched = $this->router->match($request->method, $request->path);
+-
+-            // Add route parameters to request attributes
+-            $request = $this->addRouteAttributesToRequest($request, $matched);
+-
+-            // Apply route-specific middleware
+-            if ($matched->getMiddleware() !== []) {
+-                $pipeline = new MiddlewarePipeline($this->container);
+-                foreach ($matched->getMiddleware() as $middleware) {
+-                    /** @var MiddlewareInterface|class-string<MiddlewareInterface> $middleware */
+-                    $pipeline->pipe($middleware);
+-                }
+-                return $pipeline->handle($request, fn(Request $req) => $this->invokeHandler($req, $matched));
+-            }
++        $matched = $this->router->match($request->method, $request->path);
++
++        // Add route parameters to request attributes
++        $request = $this->addRouteAttributesToRequest($request, $matched);
+ 
+-            return $this->invokeHandler($request, $matched);
+-        } catch (RoutingException $e) {
+-            return $this->handleRoutingException($e);
++        // Apply route-specific middleware
++        if ($matched->getMiddleware() !== []) {
++            $pipeline = new MiddlewarePipeline($this->container);
++            foreach ($matched->getMiddleware() as $middleware) {
++                /** @var MiddlewareInterface|class-string<MiddlewareInterface> $middleware */
++                $pipeline->pipe($middleware);
++            }
++            return $pipeline->handle($request, fn(Request $req) => $this->invokeHandler($req, $matched));
+         }
++
++        return $this->invokeHandler($request, $matched);
+     }
+ 
+     /**
+@@ -248,25 +283,66 @@ private function resolveController(string $class): object
+     }
+ 
+     /**
+-     * Handle routing exceptions.
++     * Register config DTOs and related services in the container.
+      */
+-    private function handleRoutingException(RoutingException $exception): Response
++    private function registerConfigServices(): void
+     {
+-        if ($exception->isNotFound()) {
+-            return Response::html(
+-                '<h1>404 Not Found</h1><p>The requested resource was not found.</p>',
+-                ResponseStatus::NotFound,
+-            );
+-        }
++        /** @var ConfigManager $configManager Already checked non-null before calling */
++        $configManager = $this->configManager;
++        $repository = $configManager->repository();
++        $environment = $configManager->environment();
++
++        $this->container->instance(ConfigManager::class, $configManager);
++        $this->container->instance(ConfigRepository::class, $repository);
++        $this->container->instance(Environment::class, $environment);
++
++        /** @var AppConfig $appConfig */
++        $appConfig = $repository->get(AppConfig::class);
++        $this->container->instance(AppConfig::class, $appConfig);
++
++        /** @var ObservabilityConfig $observabilityConfig */
++        $observabilityConfig = $repository->get(ObservabilityConfig::class);
++        $this->container->instance(ObservabilityConfig::class, $observabilityConfig);
++    }
+ 
+-        if ($exception->isMethodNotAllowed()) {
+-            return Response::html(
+-                '<h1>405 Method Not Allowed</h1><p>' . htmlspecialchars($exception->getMessage()) . '</p>',
+-                ResponseStatus::MethodNotAllowed,
+-            )->withHeader('Allow', $exception->getAllowHeader());
+-        }
++    /**
++     * Create the logger from config and register in the container.
++     */
++    private function createLogger(): void
++    {
++        /** @var ConfigManager $configManager */
++        $configManager = $this->configManager;
++
++        /** @var ObservabilityConfig $observabilityConfig */
++        $observabilityConfig = $configManager->repository()->get(ObservabilityConfig::class);
++        $logger = Logger::fromConfig($observabilityConfig);
++
++        $this->container->instance(LoggerInterface::class, $logger);
++        $this->container->instance(Logger::class, $logger);
++    }
++
++    /**
++     * Create the exception handler from config and register in the container.
++     */
++    private function createExceptionHandler(): void
++    {
++        /** @var ConfigManager $configManager */
++        $configManager = $this->configManager;
++
++        /** @var AppConfig $appConfig */
++        $appConfig = $configManager->repository()->get(AppConfig::class);
++
++        $renderer = $appConfig->debug
++            ? new DevelopmentRenderer()
++            : new ProductionRenderer();
++
++        $logger = $this->container->has(LoggerInterface::class)
++            ? $this->container->get(LoggerInterface::class)
++            : null;
+ 
+-        throw $exception;
++        /** @var LoggerInterface|null $logger */
++        $this->exceptionHandler = new ExceptionHandler($renderer, $logger);
++        $this->container->instance(ExceptionHandler::class, $this->exceptionHandler);
+     }
+ 
+     /**
+diff --git a/src/Core/Version.php b/src/Core/Version.php
+index e5ff0c69..ec6fd722 100644
+--- a/src/Core/Version.php
++++ b/src/Core/Version.php
+@@ -10,7 +10,7 @@
+ final class Version
+ {
+     public const MAJOR = 0;
+-    public const MINOR = 2;
++    public const MINOR = 3;
+     public const PATCH = 0;
+     public const PRERELEASE = '';
+ 
+diff --git a/src/ErrorHandling/DevelopmentRenderer.php b/src/ErrorHandling/DevelopmentRenderer.php
+new file mode 100644
+index 00000000..460805aa
+--- /dev/null
++++ b/src/ErrorHandling/DevelopmentRenderer.php
+@@ -0,0 +1,182 @@
++<?php
++
++declare(strict_types=1);
++
++namespace Pulsar\ErrorHandling;
++
++use function htmlspecialchars;
++
++use Pulsar\Http\Request;
++use Pulsar\Http\ResponseStatus;
++
++use function sprintf;
++
++use Throwable;
++
++/**
++ * Detailed HTML error page for development.
++ *
++ * Shows exception class/message, full stack trace, request details, and
++ * chained previous exceptions. All values are HTML-escaped. Inline CSS, no external deps.
++ */
++final class DevelopmentRenderer implements ExceptionRendererInterface
++{
++    public function render(Throwable $exception, Request $request, ResponseStatus $status): string
++    {
++        $title = sprintf('%d %s', $status->value, $this->escape($status->reasonPhrase()));
++        $exceptionClass = $this->escape($exception::class);
++        $exceptionMessage = $this->escape($exception->getMessage());
++        $file = $this->escape($exception->getFile());
++        $line = $exception->getLine();
++        $trace = $this->escape($exception->getTraceAsString());
++
++        $requestMethod = $this->escape($request->method->value);
++        $requestUri = $this->escape($request->uri);
++
++        $headersHtml = $this->renderHeaders($request);
++        $queryHtml = $this->renderArray($request->query);
++        $previousHtml = $this->renderPreviousExceptions($exception);
++
++        return <<<HTML
++            <!DOCTYPE html>
++            <html lang="en">
++            <head>
++                <meta charset="utf-8">
++                <meta name="viewport" content="width=device-width, initial-scale=1">
++                <title>{$title}</title>
++                <style>
++                    * { margin: 0; padding: 0; box-sizing: border-box; }
++                    body { font-family: system-ui, -apple-system, sans-serif; background: #1a1a2e; color: #e0e0e0; padding: 2rem; }
++                    .container { max-width: 960px; margin: 0 auto; }
++                    .header { background: #c0392b; color: #fff; padding: 1.5rem; border-radius: 8px 8px 0 0; }
++                    .header h1 { font-size: 1.25rem; font-weight: 600; }
++                    .header .status { font-size: 0.875rem; opacity: 0.9; margin-top: 0.25rem; }
++                    .section { background: #16213e; padding: 1.5rem; border-bottom: 1px solid #0f3460; }
++                    .section:last-child { border-radius: 0 0 8px 8px; border-bottom: none; }
++                    .section h2 { font-size: 1rem; color: #e94560; margin-bottom: 1rem; }
++                    .meta { font-size: 0.875rem; color: #a0a0a0; }
++                    pre { background: #0a0a1a; padding: 1rem; border-radius: 4px; overflow-x: auto; font-size: 0.8125rem; line-height: 1.6; white-space: pre-wrap; word-break: break-all; }
++                    .label { color: #e94560; font-weight: 600; }
++                    table { width: 100%; border-collapse: collapse; font-size: 0.8125rem; }
++                    td { padding: 0.375rem 0.75rem; border-bottom: 1px solid #0f3460; vertical-align: top; }
++                    td:first-child { width: 30%; color: #e94560; font-weight: 500; }
++                    .previous { margin-top: 1rem; padding: 1rem; background: #0a0a1a; border-radius: 4px; }
++                    .previous h3 { font-size: 0.875rem; color: #e94560; margin-bottom: 0.5rem; }
++                </style>
++            </head>
++            <body>
++                <div class="container">
++                    <div class="header">
++                        <h1>{$exceptionClass}</h1>
++                        <div class="status">{$title}</div>
++                    </div>
++
++                    <div class="section">
++                        <h2>Exception</h2>
++                        <p>{$exceptionMessage}</p>
++                        <p class="meta" style="margin-top: 0.5rem;">{$file}:{$line}</p>
++                    </div>
++
++                    <div class="section">
++                        <h2>Stack Trace</h2>
++                        <pre>{$trace}</pre>
++                    </div>
++
++                    <div class="section">
++                        <h2>Request</h2>
++                        <table>
++                            <tr><td class="label">Method</td><td>{$requestMethod}</td></tr>
++                            <tr><td class="label">URI</td><td>{$requestUri}</td></tr>
++                        </table>
++                    </div>
++
++                    <div class="section">
++                        <h2>Headers</h2>
++                        <table>{$headersHtml}</table>
++                    </div>
++
++                    <div class="section">
++                        <h2>Query Parameters</h2>
++                        <table>{$queryHtml}</table>
++                    </div>
++
++                    {$previousHtml}
++                </div>
++            </body>
++            </html>
++            HTML;
++    }
++
++    private function renderHeaders(Request $request): string
++    {
++        $html = '';
++
++        foreach ($request->headers->toArray() as $name => $values) {
++            $escapedName = $this->escape($name);
++            $escapedValue = $this->escape(implode(', ', $values));
++            $html .= "<tr><td>{$escapedName}</td><td>{$escapedValue}</td></tr>";
++        }
++
++        return $html !== '' ? $html : '<tr><td colspan="2">None</td></tr>';
++    }
++
++    /**
++     * @param array<string, mixed> $data
++     */
++    private function renderArray(array $data): string
++    {
++        if ($data === []) {
++            return '<tr><td colspan="2">None</td></tr>';
++        }
++
++        $html = '';
++
++        foreach ($data as $key => $value) {
++            $escapedKey = $this->escape($key);
++            $escapedValue = $this->escape((string) $value); // @phpstan-ignore cast.string
++            $html .= "<tr><td>{$escapedKey}</td><td>{$escapedValue}</td></tr>";
++        }
++
++        return $html;
++    }
++
++    private function renderPreviousExceptions(Throwable $exception): string
++    {
++        $previous = $exception->getPrevious();
++
++        if ($previous === null) {
++            return '';
++        }
++
++        $html = '<div class="section"><h2>Previous Exceptions</h2>';
++        $current = $previous;
++
++        while ($current !== null) {
++            $class = $this->escape($current::class);
++            $message = $this->escape($current->getMessage());
++            $file = $this->escape($current->getFile());
++            $line = $current->getLine();
++            $trace = $this->escape($current->getTraceAsString());
++
++            $html .= <<<BLOCK
++                <div class="previous">
++                    <h3>{$class}</h3>
++                    <p>{$message}</p>
++                    <p class="meta">{$file}:{$line}</p>
++                    <pre style="margin-top: 0.5rem;">{$trace}</pre>
++                </div>
++                BLOCK;
++
++            $current = $current->getPrevious();
++        }
++
++        $html .= '</div>';
++
++        return $html;
++    }
++
++    private function escape(string $value): string
++    {
++        return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
++    }
++}
+diff --git a/src/ErrorHandling/Exception/ErrorHandlingException.php b/src/ErrorHandling/Exception/ErrorHandlingException.php
+new file mode 100644
+index 00000000..910e44bc
+--- /dev/null
++++ b/src/ErrorHandling/Exception/ErrorHandlingException.php
+@@ -0,0 +1,23 @@
++<?php
++
++declare(strict_types=1);
++
++namespace Pulsar\ErrorHandling\Exception;
++
++use RuntimeException;
++
++use function sprintf;
++
++/**
++ * Exception thrown for error handling subsystem failures.
++ */
++final class ErrorHandlingException extends RuntimeException
++{
++    /**
++     * The renderer failed to produce output.
++     */
++    public static function renderFailed(string $reason): self
++    {
++        return new self(sprintf('Exception render failed: %s', $reason));
++    }
++}
+diff --git a/src/ErrorHandling/ExceptionHandler.php b/src/ErrorHandling/ExceptionHandler.php
+new file mode 100644
+index 00000000..d0772a9a
+--- /dev/null
++++ b/src/ErrorHandling/ExceptionHandler.php
+@@ -0,0 +1,130 @@
++<?php
++
++declare(strict_types=1);
++
++namespace Pulsar\ErrorHandling;
++
++use Psr\Log\LoggerInterface;
++use Pulsar\Http\Request;
++use Pulsar\Http\Response;
++use Pulsar\Http\ResponseStatus;
++use Pulsar\Routing\RoutingException;
++
++use function sprintf;
++
++use Throwable;
++
++/**
++ * Central exception handler.
++ *
++ * Resolves HTTP status from exception type, logs every exception
++ * with structured context, and renders an error response.
++ */
++final class ExceptionHandler
++{
++    public function __construct(
++        private readonly ExceptionRendererInterface $renderer,
++        private readonly ?LoggerInterface $logger = null,
++    ) {}
++
++    /**
++     * Handle an exception and produce an HTTP response.
++     */
++    public function handle(Throwable $exception, Request $request): Response
++    {
++        $status = $this->resolveStatus($exception);
++        $headers = $this->resolveHeaders($exception);
++
++        $this->logException($exception, $request, $status);
++
++        try {
++            $body = $this->renderer->render($exception, $request, $status);
++        } catch (Throwable) {
++            // Fallback: renderer itself failed
++            $body = $this->fallbackBody($status);
++        }
++
++        $response = Response::html($body, $status);
++
++        foreach ($headers as $name => $value) {
++            $response = $response->withHeader($name, $value);
++        }
++
++        return $response;
++    }
++
++    /**
++     * Resolve HTTP status code from exception type.
++     */
++    private function resolveStatus(Throwable $exception): ResponseStatus
++    {
++        if ($exception instanceof HttpExceptionInterface) {
++            return $exception->getStatusCode();
++        }
++
++        if ($exception instanceof RoutingException) {
++            if ($exception->isNotFound()) {
++                return ResponseStatus::NotFound;
++            }
++
++            if ($exception->isMethodNotAllowed()) {
++                return ResponseStatus::MethodNotAllowed;
++            }
++        }
++
++        return ResponseStatus::InternalServerError;
++    }
++
++    /**
++     * Resolve additional response headers from exception.
++     *
++     * @return array<string, string>
++     */
++    private function resolveHeaders(Throwable $exception): array
++    {
++        if ($exception instanceof HttpExceptionInterface) {
++            return $exception->getHeaders();
++        }
++
++        if ($exception instanceof RoutingException && $exception->isMethodNotAllowed()) {
++            return ['Allow' => $exception->getAllowHeader()];
++        }
++
++        return [];
++    }
++
++    /**
++     * Log the exception with structured context.
++     */
++    private function logException(Throwable $exception, Request $request, ResponseStatus $status): void
++    {
++        if ($this->logger === null) {
++            return;
++        }
++
++        $context = [
++            'exception' => $exception,
++            'status' => $status->value,
++            'method' => $request->method->value,
++            'uri' => $request->uri,
++        ];
++
++        if ($status->isServerError()) {
++            $this->logger->error($exception->getMessage(), $context);
++        } else {
++            $this->logger->warning($exception->getMessage(), $context);
++        }
++    }
++
++    /**
++     * Minimal fallback when the renderer itself fails.
++     */
++    private function fallbackBody(ResponseStatus $status): string
++    {
++        return sprintf(
++            '<h1>%d %s</h1>',
++            $status->value,
++            htmlspecialchars($status->reasonPhrase(), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
++        );
++    }
++}
+diff --git a/src/ErrorHandling/ExceptionRendererInterface.php b/src/ErrorHandling/ExceptionRendererInterface.php
+new file mode 100644
+index 00000000..70c36e09
+--- /dev/null
++++ b/src/ErrorHandling/ExceptionRendererInterface.php
+@@ -0,0 +1,20 @@
++<?php
++
++declare(strict_types=1);
++
++namespace Pulsar\ErrorHandling;
++
++use Pulsar\Http\Request;
++use Pulsar\Http\ResponseStatus;
++use Throwable;
++
++/**
++ * Contract for rendering exceptions as response bodies.
++ */
++interface ExceptionRendererInterface
++{
++    /**
++     * Render an exception as an HTML string.
++     */
++    public function render(Throwable $exception, Request $request, ResponseStatus $status): string;
++}
+diff --git a/src/ErrorHandling/HttpException.php b/src/ErrorHandling/HttpException.php
+new file mode 100644
+index 00000000..4bf4de73
+--- /dev/null
++++ b/src/ErrorHandling/HttpException.php
+@@ -0,0 +1,72 @@
++<?php
++
++declare(strict_types=1);
++
++namespace Pulsar\ErrorHandling;
++
++use Pulsar\Http\ResponseStatus;
++use RuntimeException;
++use Throwable;
++
++/**
++ * General HTTP exception with status code and optional headers.
++ */
++class HttpException extends RuntimeException implements HttpExceptionInterface
++{
++    /**
++     * @param array<string, string> $headers
++     */
++    public function __construct(
++        private readonly ResponseStatus $statusCode,
++        string $message = '',
++        private readonly array $headers = [],
++        ?Throwable $previous = null,
++    ) {
++        parent::__construct($message, $statusCode->value, $previous);
++    }
++
++    public function getStatusCode(): ResponseStatus
++    {
++        return $this->statusCode;
++    }
++
++    /**
++     * @return array<string, string>
++     */
++    public function getHeaders(): array
++    {
++        return $this->headers;
++    }
++
++    /**
++     * 404 Not Found.
++     */
++    public static function notFound(string $message = 'Not Found'): self
++    {
++        return new self(ResponseStatus::NotFound, $message);
++    }
++
++    /**
++     * 403 Forbidden.
++     */
++    public static function forbidden(string $message = 'Forbidden'): self
++    {
++        return new self(ResponseStatus::Forbidden, $message);
++    }
++
++    /**
++     * 400 Bad Request.
++     */
++    public static function badRequest(string $message = 'Bad Request'): self
++    {
++        return new self(ResponseStatus::BadRequest, $message);
++    }
++
++    /**
++     * 503 Service Unavailable.
++     */
++    public static function serviceUnavailable(string $message = 'Service Unavailable'): self
++    {
++        return new self(ResponseStatus::ServiceUnavailable, $message);
++    }
++}
+diff --git a/src/ErrorHandling/HttpExceptionInterface.php b/src/ErrorHandling/HttpExceptionInterface.php
+new file mode 100644
+index 00000000..2ec50be5
+--- /dev/null
++++ b/src/ErrorHandling/HttpExceptionInterface.php
+@@ -0,0 +1,25 @@
++<?php
++
++declare(strict_types=1);
++
++namespace Pulsar\ErrorHandling;
++
++use Pulsar\Http\ResponseStatus;
++
++/**
++ * Contract for exceptions that map to HTTP status codes.
++ */
++interface HttpExceptionInterface
++{
++    /**
++     * Get the HTTP status code for this exception.
++     */
++    public function getStatusCode(): ResponseStatus;
++
++    /**
++     * Get additional HTTP headers for the response.
++     *
++     * @return array<string, string>
++     */
++    public function getHeaders(): array;
++}
+diff --git a/src/ErrorHandling/ProductionRenderer.php b/src/ErrorHandling/ProductionRenderer.php
+new file mode 100644
+index 00000000..0fd99031
+--- /dev/null
++++ b/src/ErrorHandling/ProductionRenderer.php
+@@ -0,0 +1,84 @@
++<?php
++
++declare(strict_types=1);
++
++namespace Pulsar\ErrorHandling;
++
++use function htmlspecialchars;
++
++use Pulsar\Http\Request;
++use Pulsar\Http\ResponseStatus;
++
++use function sprintf;
++
++use Throwable;
++
++/**
++ * Safe production error renderer.
++ *
++ * Never exposes exception class names, stack traces, or file paths.
++ * Shows only generic, user-safe error messages per status category.
++ */
++final class ProductionRenderer implements ExceptionRendererInterface
++{
++    public function render(Throwable $exception, Request $request, ResponseStatus $status): string
++    {
++        $statusCode = $status->value;
++        $title = sprintf('%d %s', $statusCode, $this->escape($status->reasonPhrase()));
++        $message = $this->genericMessage($status);
++
++        return <<<HTML
++            <!DOCTYPE html>
++            <html lang="en">
++            <head>
++                <meta charset="utf-8">
++                <meta name="viewport" content="width=device-width, initial-scale=1">
++                <title>{$title}</title>
++                <style>
++                    * { margin: 0; padding: 0; box-sizing: border-box; }
++                    body { font-family: system-ui, -apple-system, sans-serif; background: #f8f9fa; color: #333; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
++                    .error { text-align: center; padding: 2rem; }
++                    .error h1 { font-size: 3rem; font-weight: 700; color: #dee2e6; }
++                    .error p { font-size: 1.125rem; margin-top: 1rem; color: #6c757d; }
++                </style>
++            </head>
++            <body>
++                <div class="error">
++                    <h1>{$statusCode}</h1>
++                    <p>{$message}</p>
++                </div>
++            </body>
++            </html>
++            HTML;
++    }
++
++    private function genericMessage(ResponseStatus $status): string
++    {
++        if ($status === ResponseStatus::NotFound) {
++            return 'The page you are looking for could not be found.';
++        }
++
++        if ($status === ResponseStatus::Forbidden) {
++            return 'You do not have permission to access this resource.';
++        }
++
++        if ($status === ResponseStatus::MethodNotAllowed) {
++            return 'The request method is not supported for this resource.';
++        }
++
++        if ($status->isClientError()) {
++            return 'The request could not be processed.';
++        }
++
++        if ($status->isServerError()) {
++            return 'An internal error occurred. Please try again later.';
++        }
++
++        return 'An unexpected error occurred.';
++    }
++
++    private function escape(string $value): string
++    {
++        return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
++    }
++}
+diff --git a/src/Observability/Log/Exception/LogException.php b/src/Observability/Log/Exception/LogException.php
+new file mode 100644
+index 00000000..ee1c4a31
+--- /dev/null
++++ b/src/Observability/Log/Exception/LogException.php
+@@ -0,0 +1,31 @@
++<?php
++
++declare(strict_types=1);
++
++namespace Pulsar\Observability\Log\Exception;
++
++use RuntimeException;
++
++use function sprintf;
++
++/**
++ * Exception thrown for logging errors.
++ */
++final class LogException extends RuntimeException
++{
++    /**
++     * A sink failed to write a log entry.
++     */
++    public static function sinkWriteFailed(string $sink, string $reason): self
++    {
++        return new self(sprintf('Log sink "%s" write failed: %s', $sink, $reason));
++    }
++
++    /**
++     * An invalid log driver was specified.
++     */
++    public static function invalidDriver(string $driver): self
++    {
++        return new self(sprintf('Invalid log driver: "%s"', $driver));
++    }
++}
+diff --git a/src/Observability/Log/LogEntry.php b/src/Observability/Log/LogEntry.php
+new file mode 100644
+index 00000000..a4f593a8
+--- /dev/null
++++ b/src/Observability/Log/LogEntry.php
+@@ -0,0 +1,45 @@
++<?php
++
++declare(strict_types=1);
++
++namespace Pulsar\Observability\Log;
++
++use DateTimeImmutable;
++use DateTimeZone;
++
++/**
++ * Immutable log entry value object.
++ */
++readonly class LogEntry
++{
++    /**
++     * @param array<string, mixed> $context
++     */
++    public function __construct(
++        public LogLevel $level,
++        public string $message,
++        public array $context,
++        public string $channel,
++        public DateTimeImmutable $timestamp,
++    ) {}
++
++    /**
++     * Create a new log entry with UTC timestamp.
++     *
++     * @param array<string, mixed> $context
++     */
++    public static function create(
++        LogLevel $level,
++        string $message,
++        array $context = [],
++        string $channel = 'app',
++    ): self {
++        return new self(
++            level: $level,
++            message: $message,
++            context: $context,
++            channel: $channel,
++            timestamp: new DateTimeImmutable('now', new DateTimeZone('UTC')),
++        );
++    }
++}
+diff --git a/src/Observability/Log/LogFormatter.php b/src/Observability/Log/LogFormatter.php
+new file mode 100644
+index 00000000..f492f555
+--- /dev/null
++++ b/src/Observability/Log/LogFormatter.php
+@@ -0,0 +1,99 @@
++<?php
++
++declare(strict_types=1);
++
++namespace Pulsar\Observability\Log;
++
++use function is_object;
++use function is_string;
++
++use Throwable;
++
++/**
++ * Formats LogEntry instances as JSON lines.
++ *
++ * Handles PSR-3 `{placeholder}` interpolation and serializes Throwable
++ * instances in context to structured arrays.
++ */
++final class LogFormatter
++{
++    /**
++     * Format a log entry as a JSON line.
++     */
++    public function format(LogEntry $entry): string
++    {
++        $context = $this->normalizeContext($entry->context);
++        $message = $this->interpolate($entry->message, $entry->context);
++
++        $data = [
++            'timestamp' => $entry->timestamp->format('Y-m-d\TH:i:s.uP'),
++            'level' => $entry->level->value,
++            'channel' => $entry->channel,
++            'message' => $message,
++        ];
++
++        if ($context !== []) {
++            $data['context'] = $context;
++        }
++
++        $json = json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
++
++        return ($json !== false ? $json : '{}') . "\n";
++    }
++
++    /**
++     * Interpolate PSR-3 `{placeholder}` tokens in the message.
++     *
++     * @param array<string, mixed> $context
++     */
++    private function interpolate(string $message, array $context): string
++    {
++        $replacements = [];
++
++        foreach ($context as $key => $value) {
++            if (is_string($value) || (is_object($value) && method_exists($value, '__toString'))) {
++                $replacements['{' . $key . '}'] = (string) $value;
++            }
++        }
++
++        return strtr($message, $replacements);
++    }
++
++    /**
++     * Normalize context values for JSON serialization.
++     *
++     * @param array<string, mixed> $context
++     * @return array<string, mixed>
++     */
++    private function normalizeContext(array $context): array
++    {
++        $normalized = [];
++
++        foreach ($context as $key => $value) {
++            if ($value instanceof Throwable) {
++                $normalized[$key] = $this->serializeThrowable($value);
++            } else {
++                $normalized[$key] = $value;
++            }
++        }
++
++        return $normalized;
++    }
++
++    /**
++     * Serialize a Throwable to a structured array.
++     *
++     * @return array<string, mixed>
++     */
++    private function serializeThrowable(Throwable $throwable): array
++    {
++        return [
++            'class' => $throwable::class,
++            'message' => $throwable->getMessage(),
++            'code' => $throwable->getCode(),
++            'file' => $throwable->getFile(),
++            'line' => $throwable->getLine(),
++            'trace' => $throwable->getTraceAsString(),
++        ];
++    }
++}
+diff --git a/src/Observability/Log/LogLevel.php b/src/Observability/Log/LogLevel.php
+new file mode 100644
+index 00000000..31369b21
+--- /dev/null
++++ b/src/Observability/Log/LogLevel.php
+@@ -0,0 +1,64 @@
++<?php
++
++declare(strict_types=1);
++
++namespace Pulsar\Observability\Log;
++
++/**
++ * Log severity levels mapping PSR-3 levels.
++ *
++ * Lower severity value = more severe (0 = emergency, 7 = debug).
++ */
++enum LogLevel: string
++{
++    case Emergency = 'emergency';
++    case Alert = 'alert';
++    case Critical = 'critical';
++    case Error = 'error';
++    case Warning = 'warning';
++    case Notice = 'notice';
++    case Info = 'info';
++    case Debug = 'debug';
++
++    /**
++     * Numeric severity (0 = most severe, 7 = least severe).
++     */
++    public function severity(): int
++    {
++        return match ($this) {
++            self::Emergency => 0,
++            self::Alert => 1,
++            self::Critical => 2,
++            self::Error => 3,
++            self::Warning => 4,
++            self::Notice => 5,
++            self::Info => 6,
++            self::Debug => 7,
++        };
++    }
++
++    /**
++     * Check if this level meets or exceeds the given threshold.
++     *
++     * A level meets the threshold when its severity value is <= the threshold's value
++     * (i.e. it is at least as severe).
++     */
++    public function meetsThreshold(self $threshold): bool
++    {
++        return $this->severity() <= $threshold->severity();
++    }
++
++    /**
++     * Create a LogLevel from a PSR-3 level string or value.
++     */
++    public static function fromPsrLevel(mixed $level): self
++    {
++        if ($level instanceof self) {
++            return $level;
++        }
++
++        $levelString = (string) $level; // @phpstan-ignore cast.string
++
++        return self::tryFrom($levelString) ?? self::Debug;
++    }
++}
+diff --git a/src/Observability/Log/LogSinkInterface.php b/src/Observability/Log/LogSinkInterface.php
+new file mode 100644
+index 00000000..6a0ab0e1
+--- /dev/null
++++ b/src/Observability/Log/LogSinkInterface.php
+@@ -0,0 +1,16 @@
++<?php
++
++declare(strict_types=1);
++
++namespace Pulsar\Observability\Log;
++
++/**
++ * Contract for log output destinations.
++ */
++interface LogSinkInterface
++{
++    /**
++     * Write a log entry to this sink.
++     */
++    public function write(LogEntry $entry): void;
++}
+diff --git a/src/Observability/Log/Logger.php b/src/Observability/Log/Logger.php
+new file mode 100644
+index 00000000..9b2469a0
+--- /dev/null
++++ b/src/Observability/Log/Logger.php
+@@ -0,0 +1,133 @@
++<?php
++
++declare(strict_types=1);
++
++namespace Pulsar\Observability\Log;
++
++use Psr\Log\LoggerInterface;
++use Pulsar\Config\LoggingChannelConfig;
++use Pulsar\Config\ObservabilityConfig;
++use Pulsar\Observability\Log\Sink\FileSink;
++use Pulsar\Observability\Log\Sink\StreamSink;
++use Stringable;
++use Throwable;
++
++/**
++ * PSR-3 compliant logger.
++ *
++ * Dispatches log entries to one or more sinks. Level filtering is applied
++ * via the configured threshold. Sink failures are silently swallowed —
++ * logging must never crash a request.
++ */
++final class Logger implements LoggerInterface
++{
++    /**
++     * @param list<LogSinkInterface> $sinks
++     */
++    public function __construct(
++        private readonly array $sinks,
++        private readonly LogLevel $threshold,
++        private readonly string $channel = 'app',
++    ) {}
++
++    /**
++     * Build a Logger from ObservabilityConfig.
++     */
++    public static function fromConfig(ObservabilityConfig $config): self
++    {
++        $threshold = LogLevel::fromPsrLevel($config->loggingLevel);
++        $sinks = [];
++
++        foreach ($config->loggingChannels as $channelConfig) {
++            $sink = self::createSink($channelConfig);
++
++            if ($sink !== null) {
++                $sinks[] = $sink;
++            }
++        }
++
++        return new self(
++            sinks: $sinks,
++            threshold: $threshold,
++            channel: $config->defaultLoggingChannel,
++        );
++    }
++
++    public function emergency(string|Stringable $message, array $context = []): void
++    {
++        $this->log(LogLevel::Emergency, $message, $context);
++    }
++
++    public function alert(string|Stringable $message, array $context = []): void
++    {
++        $this->log(LogLevel::Alert, $message, $context);
++    }
++
++    public function critical(string|Stringable $message, array $context = []): void
++    {
++        $this->log(LogLevel::Critical, $message, $context);
++    }
++
++    public function error(string|Stringable $message, array $context = []): void
++    {
++        $this->log(LogLevel::Error, $message, $context);
++    }
++
++    public function warning(string|Stringable $message, array $context = []): void
++    {
++        $this->log(LogLevel::Warning, $message, $context);
++    }
++
++    public function notice(string|Stringable $message, array $context = []): void
++    {
++        $this->log(LogLevel::Notice, $message, $context);
++    }
++
++    public function info(string|Stringable $message, array $context = []): void
++    {
++        $this->log(LogLevel::Info, $message, $context);
++    }
++
++    public function debug(string|Stringable $message, array $context = []): void
++    {
++        $this->log(LogLevel::Debug, $message, $context);
++    }
++
++    public function log(mixed $level, string|Stringable $message, array $context = []): void
++    {
++        $logLevel = LogLevel::fromPsrLevel($level);
++
++        if (!$logLevel->meetsThreshold($this->threshold)) {
++            return;
++        }
++
++        /** @var array<string, mixed> $context */
++        $entry = LogEntry::create(
++            level: $logLevel,
++            message: (string) $message,
++            context: $context,
++            channel: $this->channel,
++        );
++
++        foreach ($this->sinks as $sink) {
++            try {
++                $sink->write($entry);
++            } catch (Throwable) {
++                // Sink failures are silently swallowed — logging never crashes a request
++            }
++        }
++    }
++
++    private static function createSink(LoggingChannelConfig $config): ?LogSinkInterface
++    {
++        try {
++            return match ($config->driver) {
++                'file' => new FileSink($config->path ?? 'var/logs/pulsar.log'),
++                'stream' => new StreamSink($config->stream ?? 'php://stderr'),
++                default => null,
++            };
++        } catch (Throwable) {
++            return null;
++        }
++    }
++}
+diff --git a/src/Observability/Log/Sink/FileSink.php b/src/Observability/Log/Sink/FileSink.php
+new file mode 100644
+index 00000000..f7213afb
+--- /dev/null
++++ b/src/Observability/Log/Sink/FileSink.php
+@@ -0,0 +1,41 @@
++<?php
++
++declare(strict_types=1);
++
++namespace Pulsar\Observability\Log\Sink;
++
++use function dirname;
++use function is_dir;
++
++use Pulsar\Observability\Log\LogEntry;
++use Pulsar\Observability\Log\LogFormatter;
++use Pulsar\Observability\Log\LogSinkInterface;
++
++/**
++ * Log sink that appends JSON lines to a file.
++ *
++ * Creates the directory if missing. Uses LOCK_EX for concurrent safety.
++ */
++final class FileSink implements LogSinkInterface
++{
++    private readonly LogFormatter $formatter;
++
++    public function __construct(
++        private readonly string $path,
++        ?LogFormatter $formatter = null,
++    ) {
++        $this->formatter = $formatter ?? new LogFormatter();
++    }
++
++    public function write(LogEntry $entry): void
++    {
++        $directory = dirname($this->path);
++
++        if (!is_dir($directory)) {
++            mkdir($directory, 0o775, true);
++        }
++
++        $line = $this->formatter->format($entry);
++        file_put_contents($this->path, $line, FILE_APPEND | LOCK_EX);
++    }
++}
+diff --git a/src/Observability/Log/Sink/StreamSink.php b/src/Observability/Log/Sink/StreamSink.php
+new file mode 100644
+index 00000000..0a9aa38e
+--- /dev/null
++++ b/src/Observability/Log/Sink/StreamSink.php
+@@ -0,0 +1,47 @@
++<?php
++
++declare(strict_types=1);
++
++namespace Pulsar\Observability\Log\Sink;
++
++use Pulsar\Observability\Log\Exception\LogException;
++use Pulsar\Observability\Log\LogEntry;
++use Pulsar\Observability\Log\LogFormatter;
++use Pulsar\Observability\Log\LogSinkInterface;
++
++/**
++ * Log sink that writes JSON lines to a PHP stream (e.g. `php://stderr`).
++ */
++final class StreamSink implements LogSinkInterface
++{
++    private readonly LogFormatter $formatter;
++
++    /**
++     * @var resource
++     */
++    private mixed $stream;
++
++    /**
++     * @throws LogException If the stream cannot be opened.
++     */
++    public function __construct(
++        string $streamUri,
++        ?LogFormatter $formatter = null,
++    ) {
++        $this->formatter = $formatter ?? new LogFormatter();
++
++        $stream = @fopen($streamUri, 'a');
++
++        if ($stream === false) {
++            throw LogException::invalidDriver($streamUri);
++        }
++
++        $this->stream = $stream;
++    }
++
++    public function write(LogEntry $entry): void
++    {
++        $line = $this->formatter->format($entry);
++        fwrite($this->stream, $line);
++    }
++}
+diff --git a/tests/Integration/ErrorHandling/KernelErrorHandlingTest.php b/tests/Integration/ErrorHandling/KernelErrorHandlingTest.php
+new file mode 100644
+index 00000000..21678b96
+--- /dev/null
++++ b/tests/Integration/ErrorHandling/KernelErrorHandlingTest.php
+@@ -0,0 +1,228 @@
++<?php
++
++declare(strict_types=1);
++
++namespace Pulsar\Tests\Integration\ErrorHandling;
++
++use PHPUnit\Framework\Attributes\CoversClass;
++use PHPUnit\Framework\Attributes\Test;
++use PHPUnit\Framework\TestCase;
++use Pulsar\Config\ConfigManager;
++use Pulsar\Core\Kernel;
++use Pulsar\ErrorHandling\ExceptionHandler;
++use Pulsar\ErrorHandling\HttpException;
++use Pulsar\Http\HeaderBag;
++use Pulsar\Http\Method;
++use Pulsar\Http\Middleware\MiddlewareInterface;
++use Pulsar\Http\Request;
++use Pulsar\Http\Response;
++use Pulsar\Http\ResponseStatus;
++use RuntimeException;
++
++#[CoversClass(Kernel::class)]
++#[CoversClass(ExceptionHandler::class)]
++final class KernelErrorHandlingTest extends TestCase
++{
++    private string $tempDir;
++
++    protected function setUp(): void
++    {
++        $this->tempDir = sys_get_temp_dir() . '/pulsar_kernel_err_test_' . uniqid();
++        mkdir($this->tempDir, 0o775, true);
++        $this->writeConfigFiles(debug: true);
++
++        putenv('APP_NAME');
++        putenv('APP_ENV');
++        putenv('APP_DEBUG');
++        putenv('LOG_LEVEL');
++        putenv('LOG_CHANNEL');
++    }
++
++    protected function tearDown(): void
++    {
++        putenv('APP_NAME');
++        putenv('APP_ENV');
++        putenv('APP_DEBUG');
++        putenv('LOG_LEVEL');
++        putenv('LOG_CHANNEL');
++
++        $this->cleanDir($this->tempDir);
++    }
++
++    private function cleanDir(string $dir): void
++    {
++        if (!is_dir($dir)) {
++            return;
++        }
++        $items = scandir($dir);
++        if ($items !== false) {
++            foreach ($items as $item) {
++                if ($item === '.' || $item === '..') {
++                    continue;
++                }
++                $path = $dir . DIRECTORY_SEPARATOR . $item;
++                if (is_dir($path)) {
++                    $this->cleanDir($path);
++                } else {
++                    unlink($path);
++                }
++            }
++        }
++        rmdir($dir);
++    }
++
++    private function writeConfigFiles(bool $debug = true): void
++    {
++        $debugStr = $debug ? 'true' : 'false';
++        file_put_contents($this->tempDir . '/app.php', "<?php return [
++            'name' => 'TestApp',
++            'env' => 'local',
++            'debug' => {$debugStr},
++            'timezone' => 'UTC',
++            'locale' => 'en',
++        ];");
++
++        file_put_contents($this->tempDir . '/observability.php', '<?php return [
++            "logging" => [
++                "default_channel" => "stderr",
++                "level" => "debug",
++                "channels" => [
++                    "stderr" => ["driver" => "stream", "stream" => "php://stderr"],
++                ],
++            ],
++        ];');
++    }
++
++    private function createRequest(
++        Method $method = Method::GET,
++        string $path = '/',
++    ): Request {
++        return new Request(
++            method: $method,
++            uri: $path,
++            path: $path,
++            queryString: '',
++            headers: new HeaderBag(),
++            body: '',
++        );
++    }
++
++    private function createKernel(bool $debug = true): Kernel
++    {
++        $this->writeConfigFiles(debug: $debug);
++        $configManager = new ConfigManager(configPath: $this->tempDir);
++
++        return new Kernel(configManager: $configManager);
++    }
++
++    #[Test]
++    public function handlerThrowsReturnsErrorResponse(): void
++    {
++        $kernel = $this->createKernel();
++        $kernel->router()->get('/error', fn() => throw new RuntimeException('Handler failed'));
++
++        $response = $kernel->handle($this->createRequest(path: '/error'));
++
++        self::assertSame(ResponseStatus::InternalServerError, $response->status);
++    }
++
++    #[Test]
++    public function missingRouteReturns404(): void
++    {
++        $kernel = $this->createKernel();
++        $kernel->router()->get('/', fn() => Response::text('home'));
++
++        $response = $kernel->handle($this->createRequest(path: '/nonexistent'));
++
++        self::assertSame(ResponseStatus::NotFound, $response->status);
++    }
++
++    #[Test]
++    public function wrongMethodReturns405(): void
++    {
++        $kernel = $this->createKernel();
++        $kernel->router()->get('/test', fn() => Response::text('ok'));
++
++        $response = $kernel->handle($this->createRequest(Method::POST, '/test'));
++
++        self::assertSame(ResponseStatus::MethodNotAllowed, $response->status);
++        self::assertNotNull($response->headers->first('Allow'));
++    }
++
++    #[Test]
++    public function debugModeShowsTrace(): void
++    {
++        $kernel = $this->createKernel(debug: true);
++        $kernel->router()->get('/error', fn() => throw new RuntimeException('Debug visible'));
++
++        $response = $kernel->handle($this->createRequest(path: '/error'));
++
++        self::assertStringContainsString('Debug visible', $response->body);
++        self::assertStringContainsString('RuntimeException', $response->body);
++    }
++
++    #[Test]
++    public function productionModeHidesDetails(): void
++    {
++        $kernel = $this->createKernel(debug: false);
++        $kernel->router()->get('/error', fn() => throw new RuntimeException('Secret error info'));
++
++        $response = $kernel->handle($this->createRequest(path: '/error'));
++
++        self::assertStringNotContainsString('Secret error info', $response->body);
++        self::assertStringNotContainsString('RuntimeException', $response->body);
++    }
++
++    #[Test]
++    public function middlewareExceptionCaught(): void
++    {
++        $kernel = $this->createKernel();
++        $kernel->addMiddleware(new ThrowingMiddleware());
++        $kernel->router()->get('/', fn() => Response::text('ok'));
++
++        $response = $kernel->handle($this->createRequest());
++
++        self::assertSame(ResponseStatus::InternalServerError, $response->status);
++    }
++
++    #[Test]
++    public function httpExceptionUsesCustomStatus(): void
++    {
++        $kernel = $this->createKernel();
++        $kernel->router()->get('/forbidden', fn() => throw HttpException::forbidden('No access'));
++
++        $response = $kernel->handle($this->createRequest(path: '/forbidden'));
++
++        self::assertSame(ResponseStatus::Forbidden, $response->status);
++    }
++
++    #[Test]
++    public function kernelWithoutConfigManagerPropagatesExceptions(): void
++    {
++        $kernel = new Kernel();
++        $kernel->router()->get('/error', fn() => throw new RuntimeException('No handler'));
++
++        $this->expectException(RuntimeException::class);
++        $this->expectExceptionMessage('No handler');
++        $kernel->handle($this->createRequest(path: '/error'));
++    }
++
++    #[Test]
++    public function configManagerAccessor(): void
++    {
++        $kernel = $this->createKernel();
++
++        self::assertNotNull($kernel->configManager());
++    }
++}
++
++/**
++ * @internal Middleware that always throws.
++ */
++final class ThrowingMiddleware implements MiddlewareInterface
++{
++    public function process(Request $request, callable $next): Response
++    {
++        throw new RuntimeException('Middleware failure');
++    }
++}
+diff --git a/tests/Integration/Kernel/RequestHandlingTest.php b/tests/Integration/Kernel/RequestHandlingTest.php
+index a9c29bc7..77b75321 100644
+--- a/tests/Integration/Kernel/RequestHandlingTest.php
++++ b/tests/Integration/Kernel/RequestHandlingTest.php
+@@ -16,6 +16,7 @@
+ use Pulsar\Http\Response;
+ use Pulsar\Http\ResponseStatus;
+ use Pulsar\Routing\Router;
++use Pulsar\Routing\RoutingException;
+ 
+ #[CoversClass(Kernel::class)]
+ final class RequestHandlingTest extends TestCase
+@@ -126,27 +127,23 @@ public function kernelAddsRouteParametersToRequestAttributes(): void
+     }
+ 
+     #[Test]
+-    public function kernelReturns404ForUnknownRoute(): void
++    public function kernelThrows404ForUnknownRouteWithoutErrorHandler(): void
+     {
+         $kernel = new Kernel();
+         $kernel->router()->get('/', fn() => Response::text('home'));
+ 
+-        $response = $kernel->handle($this->createRequest(path: '/unknown'));
+-
+-        self::assertSame(ResponseStatus::NotFound, $response->status);
+-        self::assertStringContainsString('404', $response->body);
++        $this->expectException(RoutingException::class);
++        $kernel->handle($this->createRequest(path: '/unknown'));
+     }
+ 
+     #[Test]
+-    public function kernelReturns405ForMethodNotAllowed(): void
++    public function kernelThrows405ForMethodNotAllowedWithoutErrorHandler(): void
+     {
+         $kernel = new Kernel();
+         $kernel->router()->get('/test', fn() => Response::text('ok'));
+ 
+-        $response = $kernel->handle($this->createRequest(Method::POST, '/test'));
+-
+-        self::assertSame(ResponseStatus::MethodNotAllowed, $response->status);
+-        self::assertNotNull($response->headers->first('Allow'));
++        $this->expectException(RoutingException::class);
++        $kernel->handle($this->createRequest(Method::POST, '/test'));
+     }
+ 
+     #[Test]
+diff --git a/tests/Unit/Config/AppConfigTest.php b/tests/Unit/Config/AppConfigTest.php
+new file mode 100644
+index 00000000..cb74cd0e
+--- /dev/null
++++ b/tests/Unit/Config/AppConfigTest.php
+@@ -0,0 +1,146 @@
++<?php
++
++declare(strict_types=1);
++
++namespace Pulsar\Tests\Unit\Config;
++
++use PHPUnit\Framework\Attributes\CoversClass;
++use PHPUnit\Framework\Attributes\Test;
++use PHPUnit\Framework\TestCase;
++use Pulsar\Config\AppConfig;
++use Pulsar\Config\Environment;
++use Pulsar\Config\EnvironmentMode;
++
++#[CoversClass(AppConfig::class)]
++final class AppConfigTest extends TestCase
++{
++    private string $tempDir;
++
++    protected function setUp(): void
++    {
++        $this->tempDir = sys_get_temp_dir() . '/pulsar_appconfig_test_' . uniqid();
++        mkdir($this->tempDir, 0o775, true);
++
++        // Clear env vars that may interfere
++        putenv('APP_NAME');
++        putenv('APP_ENV');
++        putenv('APP_DEBUG');
++    }
++
++    protected function tearDown(): void
++    {
++        putenv('APP_NAME');
++        putenv('APP_ENV');
++        putenv('APP_DEBUG');
++
++        $files = glob($this->tempDir . '/*');
++        if ($files !== false) {
++            foreach ($files as $file) {
++                unlink($file);
++            }
++        }
++        rmdir($this->tempDir);
++    }
++
++    #[Test]
++    public function constructsFromArray(): void
++    {
++        $env = Environment::load();
++
++        $config = AppConfig::fromArray([
++            'name' => 'MyApp',
++            'env' => 'production',
++            'debug' => false,
++            'timezone' => 'America/New_York',
++            'locale' => 'fr',
++        ], $env);
++
++        self::assertSame('MyApp', $config->name);
++        self::assertSame(EnvironmentMode::Production, $config->mode);
++        self::assertFalse($config->debug);
++        self::assertSame('America/New_York', $config->timezone);
++        self::assertSame('fr', $config->locale);
++    }
++
++    #[Test]
++    public function appliesDefaults(): void
++    {
++        $env = Environment::load();
++
++        $config = AppConfig::fromArray([], $env);
++
++        self::assertSame('Pulsar', $config->name);
++        self::assertSame(EnvironmentMode::Local, $config->mode);
++        self::assertSame('UTC', $config->timezone);
++        self::assertSame('en', $config->locale);
++    }
++
++    #[Test]
++    public function debugDefaultsByMode(): void
++    {
++        $env = Environment::load();
++
++        // Local mode: debug defaults to true
++        $config = AppConfig::fromArray(['env' => 'local'], $env);
++        self::assertTrue($config->debug);
++
++        // Production mode: debug defaults to false
++        $config = AppConfig::fromArray(['env' => 'production'], $env);
++        self::assertFalse($config->debug);
++
++        // Staging mode: debug defaults to false
++        $config = AppConfig::fromArray(['env' => 'staging'], $env);
++        self::assertFalse($config->debug);
++    }
++
++    #[Test]
++    public function envVarOverridesDebug(): void
++    {
++        putenv('APP_DEBUG=true');
++        $env = Environment::load();
++
++        // Even with production mode, env var forces debug on
++        $config = AppConfig::fromArray([
++            'env' => 'production',
++            'debug' => false,
++        ], $env);
++
++        self::assertTrue($config->debug);
++    }
++
++    #[Test]
++    public function envVarOverridesName(): void
++    {
++        putenv('APP_NAME=OverriddenApp');
++        $env = Environment::load();
++
++        $config = AppConfig::fromArray(['name' => 'OriginalApp'], $env);
++
++        self::assertSame('OverriddenApp', $config->name);
++    }
++
++    #[Test]
++    public function envVarOverridesMode(): void
++    {
++        putenv('APP_ENV=staging');
++        $env = Environment::load();
++
++        $config = AppConfig::fromArray(['env' => 'production'], $env);
++
++        self::assertSame(EnvironmentMode::Staging, $config->mode);
++    }
++
++    #[Test]
++    public function fileLevelDebugOverridesModeDefault(): void
++    {
++        $env = Environment::load();
++
++        // Local mode normally defaults debug to true, but file says false
++        $config = AppConfig::fromArray([
++            'env' => 'local',
++            'debug' => false,
++        ], $env);
++
++        self::assertFalse($config->debug);
++    }
++}
+diff --git a/tests/Unit/Config/ConfigManagerTest.php b/tests/Unit/Config/ConfigManagerTest.php
+new file mode 100644
+index 00000000..a52eb168
+--- /dev/null
++++ b/tests/Unit/Config/ConfigManagerTest.php
+@@ -0,0 +1,225 @@
++<?php
++
++declare(strict_types=1);
++
++namespace Pulsar\Tests\Unit\Config;
++
++use PHPUnit\Framework\Attributes\CoversClass;
++use PHPUnit\Framework\Attributes\Test;
++use PHPUnit\Framework\TestCase;
++use Pulsar\Config\AppConfig;
++use Pulsar\Config\ConfigManager;
++use Pulsar\Config\ConfigOverrides;
++use Pulsar\Config\Exception\ConfigException;
++use Pulsar\Config\ObservabilityConfig;
++
++#[CoversClass(ConfigManager::class)]
++final class ConfigManagerTest extends TestCase
++{
++    private string $tempDir;
++
++    protected function setUp(): void
++    {
++        $this->tempDir = sys_get_temp_dir() . '/pulsar_configmgr_test_' . uniqid();
++        mkdir($this->tempDir, 0o775, true);
++
++        // Clear env vars
++        putenv('APP_NAME');
++        putenv('APP_ENV');
++        putenv('APP_DEBUG');
++        putenv('LOG_LEVEL');
++        putenv('LOG_CHANNEL');
++    }
++
++    protected function tearDown(): void
++    {
++        putenv('APP_NAME');
++        putenv('APP_ENV');
++        putenv('APP_DEBUG');
++        putenv('LOG_LEVEL');
++        putenv('LOG_CHANNEL');
++
++        $this->cleanDir($this->tempDir);
++    }
++
++    private function cleanDir(string $dir): void
++    {
++        if (!is_dir($dir)) {
++            return;
++        }
++        $items = scandir($dir);
++        if ($items !== false) {
++            foreach ($items as $item) {
++                if ($item === '.' || $item === '..') {
++                    continue;
++                }
++                $path = $dir . DIRECTORY_SEPARATOR . $item;
++                if (is_dir($path)) {
++                    $this->cleanDir($path);
++                } else {
++                    unlink($path);
++                }
++            }
++        }
++        rmdir($dir);
++    }
++
++    private function writeConfigFiles(): void
++    {
++        file_put_contents($this->tempDir . '/app.php', '<?php return [
++            "name" => "TestApp",
++            "env" => "local",
++            "debug" => true,
++            "timezone" => "UTC",
++            "locale" => "en",
++        ];');
++
++        file_put_contents($this->tempDir . '/observability.php', '<?php return [
++            "logging" => [
++                "default_channel" => "file",
++                "level" => "debug",
++                "channels" => [
++                    "file" => ["driver" => "file", "path" => "var/logs/test.log"],
++                    "stderr" => ["driver" => "stream", "stream" => "php://stderr"],
++                ],
++            ],
++        ];');
++    }
++
++    #[Test]
++    public function loadsConfigFilesInOrder(): void
++    {
++        $this->writeConfigFiles();
++
++        $manager = new ConfigManager(configPath: $this->tempDir);
++        $manager->load();
++
++        $repo = $manager->repository();
++        self::assertTrue($repo->has(AppConfig::class));
++        self::assertTrue($repo->has(ObservabilityConfig::class));
++
++        $appConfig = $repo->get(AppConfig::class);
++        self::assertSame('TestApp', $appConfig->name);
++    }
++
++    #[Test]
++    public function envOverridesFileValues(): void
++    {
++        $this->writeConfigFiles();
++
++        putenv('APP_NAME=EnvApp');
++        putenv('LOG_LEVEL=error');
++
++        $manager = new ConfigManager(configPath: $this->tempDir);
++        $manager->load();
++
++        $appConfig = $manager->repository()->get(AppConfig::class);
++        self::assertSame('EnvApp', $appConfig->name);
++
++        $obsConfig = $manager->repository()->get(ObservabilityConfig::class);
++        self::assertSame('error', $obsConfig->loggingLevel);
++    }
++
++    #[Test]
++    public function overridesAppliedLast(): void
++    {
++        $this->writeConfigFiles();
++
++        $overrides = new ConfigOverrides();
++        $overrides->add('app', ['name' => 'OverriddenApp']);
++
++        $manager = new ConfigManager(
++            configPath: $this->tempDir,
++            overrides: $overrides,
++        );
++        $manager->load();
++
++        $appConfig = $manager->repository()->get(AppConfig::class);
++        self::assertSame('OverriddenApp', $appConfig->name);
++    }
++
++    #[Test]
++    public function throwsForMissingConfigFile(): void
++    {
++        // Directory exists but no files
++        $manager = new ConfigManager(configPath: $this->tempDir);
++
++        $this->expectException(ConfigException::class);
++        $manager->load();
++    }
++
++    #[Test]
++    public function throwsForNonArrayReturn(): void
++    {
++        file_put_contents($this->tempDir . '/app.php', '<?php return "not an array";');
++        file_put_contents($this->tempDir . '/observability.php', '<?php return [];');
++
++        $manager = new ConfigManager(configPath: $this->tempDir);
++
++        $this->expectException(ConfigException::class);
++        $manager->load();
++    }
++
++    #[Test]
++    public function repositoryAccessibleAfterLoad(): void
++    {
++        $this->writeConfigFiles();
++
++        $manager = new ConfigManager(configPath: $this->tempDir);
++        $manager->load();
++
++        $repo = $manager->repository();
++        $env = $manager->environment();
++
++        self::assertInstanceOf(AppConfig::class, $repo->get(AppConfig::class));
++        self::assertInstanceOf(ObservabilityConfig::class, $repo->get(ObservabilityConfig::class));
++        self::assertInstanceOf(\Pulsar\Config\Environment::class, $env);
++    }
++
++    #[Test]
++    public function throwsWhenAccessingRepositoryBeforeLoad(): void
++    {
++        $manager = new ConfigManager(configPath: $this->tempDir);
++
++        $this->expectException(ConfigException::class);
++        $manager->repository();
++    }
++
++    #[Test]
++    public function throwsWhenAccessingEnvironmentBeforeLoad(): void
++    {
++        $manager = new ConfigManager(configPath: $this->tempDir);
++
++        $this->expectException(ConfigException::class);
++        $manager->environment();
++    }
++
++    #[Test]
++    public function worksWithNullConfigPath(): void
++    {
++        $manager = new ConfigManager();
++        $manager->load();
++
++        // Should work with empty defaults
++        $repo = $manager->repository();
++        self::assertTrue($repo->has(AppConfig::class));
++    }
++
++    #[Test]
++    public function loadsEnvFile(): void
++    {
++        $this->writeConfigFiles();
++
++        $envFile = $this->tempDir . '/.env';
++        file_put_contents($envFile, "APP_NAME=FromEnvFile\n");
++
++        $manager = new ConfigManager(
++            configPath: $this->tempDir,
++            envFilePath: $envFile,
++        );
++        $manager->load();
++
++        $appConfig = $manager->repository()->get(AppConfig::class);
++        self::assertSame('FromEnvFile', $appConfig->name);
++    }
++}
+diff --git a/tests/Unit/Config/ConfigRepositoryTest.php b/tests/Unit/Config/ConfigRepositoryTest.php
+new file mode 100644
+index 00000000..8ebdcba0
+--- /dev/null
++++ b/tests/Unit/Config/ConfigRepositoryTest.php
+@@ -0,0 +1,62 @@
++<?php
++
++declare(strict_types=1);
++
++namespace Pulsar\Tests\Unit\Config;
++
++use PHPUnit\Framework\Attributes\CoversClass;
++use PHPUnit\Framework\Attributes\Test;
++use PHPUnit\Framework\TestCase;
++use Pulsar\Config\AppConfig;
++use Pulsar\Config\ConfigRepository;
++use Pulsar\Config\EnvironmentMode;
++use Pulsar\Config\Exception\ConfigException;
++
++#[CoversClass(ConfigRepository::class)]
++final class ConfigRepositoryTest extends TestCase
++{
++    #[Test]
++    public function storesAndRetrievesByClass(): void
++    {
++        $repo = new ConfigRepository();
++        $config = new AppConfig(
++            name: 'Test',
++            mode: EnvironmentMode::Local,
++            debug: true,
++            timezone: 'UTC',
++            locale: 'en',
++        );
++
++        $repo->set($config);
++        $retrieved = $repo->get(AppConfig::class);
++
++        self::assertSame($config, $retrieved);
++    }
++
++    #[Test]
++    public function throwsForMissingConfig(): void
++    {
++        $repo = new ConfigRepository();
++
++        $this->expectException(ConfigException::class);
++        $repo->get(AppConfig::class);
++    }
++
++    #[Test]
++    public function hasReturnsAccurately(): void
++    {
++        $repo = new ConfigRepository();
++
++        self::assertFalse($repo->has(AppConfig::class));
++
++        $repo->set(new AppConfig(
++            name: 'Test',
++            mode: EnvironmentMode::Local,
++            debug: true,
++            timezone: 'UTC',
++            locale: 'en',
++        ));
++
++        self::assertTrue($repo->has(AppConfig::class));
++    }
++}
+diff --git a/tests/Unit/Config/EnvironmentTest.php b/tests/Unit/Config/EnvironmentTest.php
+new file mode 100644
+index 00000000..9b23a436
+--- /dev/null
++++ b/tests/Unit/Config/EnvironmentTest.php
+@@ -0,0 +1,169 @@
++<?php
++
++declare(strict_types=1);
++
++namespace Pulsar\Tests\Unit\Config;
++
++use PHPUnit\Framework\Attributes\CoversClass;
++use PHPUnit\Framework\Attributes\Test;
++use PHPUnit\Framework\TestCase;
++use Pulsar\Config\Environment;
++use Pulsar\Config\EnvironmentMode;
++use Pulsar\Config\Exception\ConfigException;
++
++#[CoversClass(Environment::class)]
++final class EnvironmentTest extends TestCase
++{
++    private string $tempDir;
++
++    protected function setUp(): void
++    {
++        $this->tempDir = sys_get_temp_dir() . '/pulsar_env_test_' . uniqid();
++        mkdir($this->tempDir, 0o775, true);
++    }
++
++    protected function tearDown(): void
++    {
++        // glob doesn't match dotfiles on Windows; use scandir
++        if (is_dir($this->tempDir)) {
++            $items = scandir($this->tempDir);
++            if ($items !== false) {
++                foreach ($items as $item) {
++                    if ($item === '.' || $item === '..') {
++                        continue;
++                    }
++                    $path = $this->tempDir . DIRECTORY_SEPARATOR . $item;
++                    if (is_file($path)) {
++                        unlink($path);
++                    }
++                }
++            }
++            rmdir($this->tempDir);
++        }
++    }
++
++    #[Test]
++    public function readsOsEnvironmentVariables(): void
++    {
++        $env = Environment::load();
++
++        // PATH is virtually always set in OS env
++        self::assertNotNull($env->get('PATH', null) ?? $env->get('Path', null));
++    }
++
++    #[Test]
++    public function returnsDefaultForMissingVariable(): void
++    {
++        $env = Environment::load();
++
++        self::assertNull($env->get('PULSAR_TEST_NONEXISTENT_VAR'));
++        self::assertSame('fallback', $env->get('PULSAR_TEST_NONEXISTENT_VAR', 'fallback'));
++    }
++
++    #[Test]
++    public function requireThrowsForMissingVariable(): void
++    {
++        $env = Environment::load();
++
++        $this->expectException(ConfigException::class);
++        $env->require('PULSAR_TEST_NONEXISTENT_VAR');
++    }
++
++    #[Test]
++    public function parsesEnvFile(): void
++    {
++        $envFile = $this->tempDir . '/.env';
++        file_put_contents($envFile, "PULSAR_TEST_KEY=hello\nPULSAR_TEST_NUM=42\n");
++
++        $env = Environment::load($envFile);
++
++        self::assertSame('hello', $env->get('PULSAR_TEST_KEY'));
++        self::assertSame('42', $env->get('PULSAR_TEST_NUM'));
++    }
++
++    #[Test]
++    public function osVariablesOverrideFileValues(): void
++    {
++        // Set an OS env var
++        putenv('PULSAR_TEST_OVERRIDE=from_os');
++
++        $envFile = $this->tempDir . '/.env';
++        file_put_contents($envFile, "PULSAR_TEST_OVERRIDE=from_file\n");
++
++        $env = Environment::load($envFile);
++
++        self::assertSame('from_os', $env->get('PULSAR_TEST_OVERRIDE'));
++
++        putenv('PULSAR_TEST_OVERRIDE'); // Clean up
++    }
++
++    #[Test]
++    public function ignoresCommentsAndBlankLines(): void
++    {
++        $envFile = $this->tempDir . '/.env';
++        file_put_contents($envFile, "# This is a comment\n\nPULSAR_VALID=yes\n\n# Another comment\n");
++
++        $env = Environment::load($envFile);
++
++        self::assertSame('yes', $env->get('PULSAR_VALID'));
++    }
++
++    #[Test]
++    public function stripsQuotesFromValues(): void
++    {
++        $envFile = $this->tempDir . '/.env';
++        file_put_contents($envFile, "PULSAR_DOUBLE=\"double quoted\"\nPULSAR_SINGLE='single quoted'\n");
++
++        $env = Environment::load($envFile);
++
++        self::assertSame('double quoted', $env->get('PULSAR_DOUBLE'));
++        self::assertSame('single quoted', $env->get('PULSAR_SINGLE'));
++    }
++
++    #[Test]
++    public function resolvesModeFromAppEnv(): void
++    {
++        putenv('APP_ENV=production');
++
++        $env = Environment::load();
++        self::assertSame(EnvironmentMode::Production, $env->resolveMode());
++
++        putenv('APP_ENV=staging');
++        $env = Environment::load();
++        self::assertSame(EnvironmentMode::Staging, $env->resolveMode());
++
++        putenv('APP_ENV'); // Clean up
++    }
++
++    #[Test]
++    public function resolvesLocalModeAsDefault(): void
++    {
++        // Ensure APP_ENV is unset
++        putenv('APP_ENV');
++
++        $env = Environment::load();
++
++        self::assertSame(EnvironmentMode::Local, $env->resolveMode());
++    }
++
++    #[Test]
++    public function hasChecksVariableExistence(): void
++    {
++        $envFile = $this->tempDir . '/.env';
++        file_put_contents($envFile, "PULSAR_EXISTS=1\n");
++
++        $env = Environment::load($envFile);
++
++        self::assertTrue($env->has('PULSAR_EXISTS'));
++        self::assertFalse($env->has('PULSAR_NOT_EXISTS_ABC'));
++    }
++
++    #[Test]
++    public function handlesNonexistentEnvFile(): void
++    {
++        $env = Environment::load('/nonexistent/path/.env');
++
++        // Should not throw; file is optional
++        self::assertInstanceOf(Environment::class, $env);
++    }
++}
+diff --git a/tests/Unit/Core/VersionTest.php b/tests/Unit/Core/VersionTest.php
+index 1cb85f3f..fa692258 100644
+--- a/tests/Unit/Core/VersionTest.php
++++ b/tests/Unit/Core/VersionTest.php
+@@ -56,11 +56,11 @@ public function versionConstantsAreCorrectTypes(): void
+     }
+ 
+     #[Test]
+-    public function currentVersionIs020(): void
++    public function currentVersionIs030(): void
+     {
+         self::assertSame(0, Version::MAJOR);
+-        self::assertSame(2, Version::MINOR);
++        self::assertSame(3, Version::MINOR);
+         self::assertSame(0, Version::PATCH);
+-        self::assertSame('0.2.0', Version::short());
++        self::assertSame('0.3.0', Version::short());
+     }
+ }
+diff --git a/tests/Unit/ErrorHandling/DevelopmentRendererTest.php b/tests/Unit/ErrorHandling/DevelopmentRendererTest.php
+new file mode 100644
+index 00000000..c03ada34
+--- /dev/null
++++ b/tests/Unit/ErrorHandling/DevelopmentRendererTest.php
+@@ -0,0 +1,138 @@
++<?php
++
++declare(strict_types=1);
++
++namespace Pulsar\Tests\Unit\ErrorHandling;
++
++use PHPUnit\Framework\Attributes\CoversClass;
++use PHPUnit\Framework\Attributes\Test;
++use PHPUnit\Framework\TestCase;
++use Pulsar\ErrorHandling\DevelopmentRenderer;
++use Pulsar\Http\HeaderBag;
++use Pulsar\Http\Method;
++use Pulsar\Http\Request;
++use Pulsar\Http\ResponseStatus;
++use RuntimeException;
++
++#[CoversClass(DevelopmentRenderer::class)]
++final class DevelopmentRendererTest extends TestCase
++{
++    private function createRequest(string $path = '/'): Request
++    {
++        return new Request(
++            method: Method::GET,
++            uri: $path,
++            path: $path,
++            queryString: 'foo=bar',
++            headers: new HeaderBag(['X-Test' => 'value']),
++            body: '',
++            query: ['foo' => 'bar'],
++        );
++    }
++
++    #[Test]
++    public function outputContainsExceptionMessage(): void
++    {
++        $renderer = new DevelopmentRenderer();
++        $exception = new RuntimeException('Something went wrong');
++
++        $html = $renderer->render($exception, $this->createRequest(), ResponseStatus::InternalServerError);
++
++        self::assertStringContainsString('Something went wrong', $html);
++    }
++
++    #[Test]
++    public function outputContainsExceptionClass(): void
++    {
++        $renderer = new DevelopmentRenderer();
++        $exception = new RuntimeException('test');
++
++        $html = $renderer->render($exception, $this->createRequest(), ResponseStatus::InternalServerError);
++
++        self::assertStringContainsString('RuntimeException', $html);
++    }
++
++    #[Test]
++    public function outputContainsStackTrace(): void
++    {
++        $renderer = new DevelopmentRenderer();
++        $exception = new RuntimeException('test');
++
++        $html = $renderer->render($exception, $this->createRequest(), ResponseStatus::InternalServerError);
++
++        // Stack trace should contain this test file
++        self::assertStringContainsString('DevelopmentRendererTest', $html);
++    }
++
++    #[Test]
++    public function outputContainsRequestDetails(): void
++    {
++        $renderer = new DevelopmentRenderer();
++        $exception = new RuntimeException('test');
++
++        $html = $renderer->render($exception, $this->createRequest('/api/test'), ResponseStatus::InternalServerError);
++
++        self::assertStringContainsString('GET', $html);
++        self::assertStringContainsString('/api/test', $html);
++    }
++
++    #[Test]
++    public function outputContainsRequestHeaders(): void
++    {
++        $renderer = new DevelopmentRenderer();
++        $exception = new RuntimeException('test');
++
++        $html = $renderer->render($exception, $this->createRequest(), ResponseStatus::InternalServerError);
++
++        self::assertStringContainsString('X-Test', $html);
++    }
++
++    #[Test]
++    public function outputContainsQueryParameters(): void
++    {
++        $renderer = new DevelopmentRenderer();
++        $exception = new RuntimeException('test');
++
++        $html = $renderer->render($exception, $this->createRequest(), ResponseStatus::InternalServerError);
++
++        self::assertStringContainsString('foo', $html);
++        self::assertStringContainsString('bar', $html);
++    }
++
++    #[Test]
++    public function htmlEscapesValues(): void
++    {
++        $renderer = new DevelopmentRenderer();
++        $exception = new RuntimeException('Error with <script>alert("xss")</script>');
++
++        $html = $renderer->render($exception, $this->createRequest(), ResponseStatus::InternalServerError);
++
++        self::assertStringNotContainsString('<script>', $html);
++        self::assertStringContainsString('&lt;script&gt;', $html);
++    }
++
++    #[Test]
++    public function showsPreviousException(): void
++    {
++        $renderer = new DevelopmentRenderer();
++        $previous = new RuntimeException('Root cause');
++        $exception = new RuntimeException('Wrapper', 0, $previous);
++
++        $html = $renderer->render($exception, $this->createRequest(), ResponseStatus::InternalServerError);
++
++        self::assertStringContainsString('Root cause', $html);
++        self::assertStringContainsString('Previous Exceptions', $html);
++    }
++
++    #[Test]
++    public function showsStatusCode(): void
++    {
++        $renderer = new DevelopmentRenderer();
++        $exception = new RuntimeException('not found');
++
++        $html = $renderer->render($exception, $this->createRequest(), ResponseStatus::NotFound);
++
++        self::assertStringContainsString('404', $html);
++        self::assertStringContainsString('Not Found', $html);
++    }
++}
+diff --git a/tests/Unit/ErrorHandling/ExceptionHandlerTest.php b/tests/Unit/ErrorHandling/ExceptionHandlerTest.php
+new file mode 100644
+index 00000000..b8a5e312
+--- /dev/null
++++ b/tests/Unit/ErrorHandling/ExceptionHandlerTest.php
+@@ -0,0 +1,210 @@
++<?php
++
++declare(strict_types=1);
++
++namespace Pulsar\Tests\Unit\ErrorHandling;
++
++use PHPUnit\Framework\Attributes\CoversClass;
++use PHPUnit\Framework\Attributes\Test;
++use PHPUnit\Framework\TestCase;
++use Psr\Log\LoggerInterface;
++use Pulsar\ErrorHandling\DevelopmentRenderer;
++use Pulsar\ErrorHandling\ExceptionHandler;
++use Pulsar\ErrorHandling\HttpException;
++use Pulsar\Http\HeaderBag;
++use Pulsar\Http\Method;
++use Pulsar\Http\Request;
++use Pulsar\Http\ResponseStatus;
++use Pulsar\Routing\RoutingException;
++use RuntimeException;
++use Stringable;
++
++#[CoversClass(ExceptionHandler::class)]
++final class ExceptionHandlerTest extends TestCase
++{
++    private function createRequest(string $path = '/'): Request
++    {
++        return new Request(
++            method: Method::GET,
++            uri: $path,
++            path: $path,
++            queryString: '',
++            headers: new HeaderBag(),
++            body: '',
++        );
++    }
++
++    #[Test]
++    public function genericExceptionReturns500(): void
++    {
++        $handler = new ExceptionHandler(new DevelopmentRenderer());
++
++        $response = $handler->handle(
++            new RuntimeException('Unexpected error'),
++            $this->createRequest(),
++        );
++
++        self::assertSame(ResponseStatus::InternalServerError, $response->status);
++    }
++
++    #[Test]
++    public function routingException404ReturnsNotFound(): void
++    {
++        $handler = new ExceptionHandler(new DevelopmentRenderer());
++
++        $response = $handler->handle(
++            RoutingException::notFound('/missing'),
++            $this->createRequest('/missing'),
++        );
++
++        self::assertSame(ResponseStatus::NotFound, $response->status);
++    }
++
++    #[Test]
++    public function routingException405ReturnsMethodNotAllowedWithAllowHeader(): void
++    {
++        $handler = new ExceptionHandler(new DevelopmentRenderer());
++
++        $response = $handler->handle(
++            RoutingException::methodNotAllowed('/test', Method::POST, [Method::GET, Method::PUT]),
++            $this->createRequest('/test'),
++        );
++
++        self::assertSame(ResponseStatus::MethodNotAllowed, $response->status);
++        self::assertSame('GET, PUT', $response->headers->first('Allow'));
++    }
++
++    #[Test]
++    public function httpExceptionStatusUsed(): void
++    {
++        $handler = new ExceptionHandler(new DevelopmentRenderer());
++
++        $response = $handler->handle(
++            HttpException::forbidden('No access'),
++            $this->createRequest(),
++        );
++
++        self::assertSame(ResponseStatus::Forbidden, $response->status);
++    }
++
++    #[Test]
++    public function httpExceptionHeadersIncluded(): void
++    {
++        $handler = new ExceptionHandler(new DevelopmentRenderer());
++
++        $exception = new HttpException(
++            ResponseStatus::TooManyRequests,
++            'Rate limited',
++            ['Retry-After' => '60'],
++        );
++
++        $response = $handler->handle($exception, $this->createRequest());
++
++        self::assertSame('60', $response->headers->first('Retry-After'));
++    }
++
++    #[Test]
++    public function logsExceptionWithContext(): void
++    {
++        $logger = new TestLogger();
++        $handler = new ExceptionHandler(new DevelopmentRenderer(), $logger);
++
++        $handler->handle(
++            new RuntimeException('Server error'),
++            $this->createRequest('/api/data'),
++        );
++
++        self::assertCount(1, $logger->logs);
++        self::assertSame('error', $logger->logs[0]['level']);
++        self::assertSame('Server error', $logger->logs[0]['message']);
++        self::assertSame(500, $logger->logs[0]['context']['status']);
++        self::assertSame('/api/data', $logger->logs[0]['context']['uri']);
++    }
++
++    #[Test]
++    public function logs404AsWarning(): void
++    {
++        $logger = new TestLogger();
++        $handler = new ExceptionHandler(new DevelopmentRenderer(), $logger);
++
++        $handler->handle(
++            RoutingException::notFound('/missing'),
++            $this->createRequest('/missing'),
++        );
++
++        self::assertSame('warning', $logger->logs[0]['level']);
++    }
++
++    #[Test]
++    public function worksWithoutLogger(): void
++    {
++        $handler = new ExceptionHandler(new DevelopmentRenderer());
++
++        $response = $handler->handle(
++            new RuntimeException('No logger'),
++            $this->createRequest(),
++        );
++
++        // Should not throw, should produce a response
++        self::assertSame(ResponseStatus::InternalServerError, $response->status);
++    }
++}
++
++/**
++ * @internal Test helper: collects log calls.
++ */
++final class TestLogger implements LoggerInterface
++{
++    /** @var list<array{level: string, message: string, context: array<string, mixed>}> */
++    public array $logs = [];
++
++    public function emergency(string|Stringable $message, array $context = []): void
++    {
++        $this->log('emergency', $message, $context);
++    }
++
++    public function alert(string|Stringable $message, array $context = []): void
++    {
++        $this->log('alert', $message, $context);
++    }
++
++    public function critical(string|Stringable $message, array $context = []): void
++    {
++        $this->log('critical', $message, $context);
++    }
++
++    public function error(string|Stringable $message, array $context = []): void
++    {
++        $this->log('error', $message, $context);
++    }
++
++    public function warning(string|Stringable $message, array $context = []): void
++    {
++        $this->log('warning', $message, $context);
++    }
++
++    public function notice(string|Stringable $message, array $context = []): void
++    {
++        $this->log('notice', $message, $context);
++    }
++
++    public function info(string|Stringable $message, array $context = []): void
++    {
++        $this->log('info', $message, $context);
++    }
++
++    public function debug(string|Stringable $message, array $context = []): void
++    {
++        $this->log('debug', $message, $context);
++    }
++
++    public function log(mixed $level, string|Stringable $message, array $context = []): void
++    {
++        /** @var array<string, mixed> $context */
++        $this->logs[] = [
++            'level' => (string) $level, // @phpstan-ignore cast.string
++            'message' => (string) $message,
++            'context' => $context,
++        ];
++    }
++}
+diff --git a/tests/Unit/ErrorHandling/ProductionRendererTest.php b/tests/Unit/ErrorHandling/ProductionRendererTest.php
+new file mode 100644
+index 00000000..1538a9b9
+--- /dev/null
++++ b/tests/Unit/ErrorHandling/ProductionRendererTest.php
+@@ -0,0 +1,113 @@
++<?php
++
++declare(strict_types=1);
++
++namespace Pulsar\Tests\Unit\ErrorHandling;
++
++use PHPUnit\Framework\Attributes\CoversClass;
++use PHPUnit\Framework\Attributes\Test;
++use PHPUnit\Framework\TestCase;
++use Pulsar\ErrorHandling\ProductionRenderer;
++use Pulsar\Http\HeaderBag;
++use Pulsar\Http\Method;
++use Pulsar\Http\Request;
++use Pulsar\Http\ResponseStatus;
++use RuntimeException;
++
++#[CoversClass(ProductionRenderer::class)]
++final class ProductionRendererTest extends TestCase
++{
++    private function createRequest(string $path = '/'): Request
++    {
++        return new Request(
++            method: Method::GET,
++            uri: $path,
++            path: $path,
++            queryString: '',
++            headers: new HeaderBag(),
++            body: '',
++        );
++    }
++
++    #[Test]
++    public function doesNotContainExceptionMessage(): void
++    {
++        $renderer = new ProductionRenderer();
++        $exception = new RuntimeException('Sensitive database error: connection to db01.internal failed');
++
++        $html = $renderer->render($exception, $this->createRequest(), ResponseStatus::InternalServerError);
++
++        self::assertStringNotContainsString('Sensitive database error', $html);
++        self::assertStringNotContainsString('db01.internal', $html);
++    }
++
++    #[Test]
++    public function doesNotContainStackTrace(): void
++    {
++        $renderer = new ProductionRenderer();
++        $exception = new RuntimeException('test');
++
++        $html = $renderer->render($exception, $this->createRequest(), ResponseStatus::InternalServerError);
++
++        self::assertStringNotContainsString('ProductionRendererTest', $html);
++        self::assertStringNotContainsString('#0', $html);
++    }
++
++    #[Test]
++    public function doesNotContainExceptionClassName(): void
++    {
++        $renderer = new ProductionRenderer();
++        $exception = new RuntimeException('test');
++
++        $html = $renderer->render($exception, $this->createRequest(), ResponseStatus::InternalServerError);
++
++        self::assertStringNotContainsString('RuntimeException', $html);
++    }
++
++    #[Test]
++    public function shows404Message(): void
++    {
++        $renderer = new ProductionRenderer();
++        $exception = new RuntimeException('not found');
++
++        $html = $renderer->render($exception, $this->createRequest(), ResponseStatus::NotFound);
++
++        self::assertStringContainsString('could not be found', $html);
++        self::assertStringContainsString('404', $html);
++    }
++
++    #[Test]
++    public function shows500Message(): void
++    {
++        $renderer = new ProductionRenderer();
++        $exception = new RuntimeException('server error');
++
++        $html = $renderer->render($exception, $this->createRequest(), ResponseStatus::InternalServerError);
++
++        self::assertStringContainsString('internal error', $html);
++        self::assertStringContainsString('try again later', $html);
++    }
++
++    #[Test]
++    public function showsForbiddenMessage(): void
++    {
++        $renderer = new ProductionRenderer();
++        $exception = new RuntimeException('forbidden');
++
++        $html = $renderer->render($exception, $this->createRequest(), ResponseStatus::Forbidden);
++
++        self::assertStringContainsString('permission', $html);
++    }
++
++    #[Test]
++    public function doesNotExposeFilePaths(): void
++    {
++        $renderer = new ProductionRenderer();
++        $exception = new RuntimeException('test');
++
++        $html = $renderer->render($exception, $this->createRequest(), ResponseStatus::InternalServerError);
++
++        self::assertStringNotContainsString('.php', $html);
++        self::assertStringNotContainsString('src/', $html);
++    }
++}
+diff --git a/tests/Unit/Observability/Log/LogEntryTest.php b/tests/Unit/Observability/Log/LogEntryTest.php
+new file mode 100644
+index 00000000..8e5c98a6
+--- /dev/null
++++ b/tests/Unit/Observability/Log/LogEntryTest.php
+@@ -0,0 +1,70 @@
++<?php
++
++declare(strict_types=1);
++
++namespace Pulsar\Tests\Unit\Observability\Log;
++
++use DateTimeImmutable;
++use DateTimeZone;
++use PHPUnit\Framework\Attributes\CoversClass;
++use PHPUnit\Framework\Attributes\Test;
++use PHPUnit\Framework\TestCase;
++use Pulsar\Observability\Log\LogEntry;
++use Pulsar\Observability\Log\LogLevel;
++
++#[CoversClass(LogEntry::class)]
++final class LogEntryTest extends TestCase
++{
++    #[Test]
++    public function createsWithUtcTimestamp(): void
++    {
++        $entry = LogEntry::create(LogLevel::Info, 'test message');
++
++        self::assertSame('UTC', $entry->timestamp->getTimezone()->getName());
++    }
++
++    #[Test]
++    public function preservesLevelAndMessage(): void
++    {
++        $entry = LogEntry::create(LogLevel::Error, 'Something failed');
++
++        self::assertSame(LogLevel::Error, $entry->level);
++        self::assertSame('Something failed', $entry->message);
++    }
++
++    #[Test]
++    public function preservesContext(): void
++    {
++        $context = ['key' => 'value', 'count' => 42];
++        $entry = LogEntry::create(LogLevel::Debug, 'test', $context);
++
++        self::assertSame($context, $entry->context);
++    }
++
++    #[Test]
++    public function preservesChannel(): void
++    {
++        $entry = LogEntry::create(LogLevel::Info, 'test', channel: 'custom');
++
++        self::assertSame('custom', $entry->channel);
++    }
++
++    #[Test]
++    public function defaultsToAppChannel(): void
++    {
++        $entry = LogEntry::create(LogLevel::Info, 'test');
++
++        self::assertSame('app', $entry->channel);
++    }
++
++    #[Test]
++    public function timestampIsRecentUtc(): void
++    {
++        $before = new DateTimeImmutable('now', new DateTimeZone('UTC'));
++        $entry = LogEntry::create(LogLevel::Info, 'test');
++        $after = new DateTimeImmutable('now', new DateTimeZone('UTC'));
++
++        self::assertGreaterThanOrEqual($before, $entry->timestamp);
++        self::assertLessThanOrEqual($after, $entry->timestamp);
++    }
++}
+diff --git a/tests/Unit/Observability/Log/LoggerTest.php b/tests/Unit/Observability/Log/LoggerTest.php
+new file mode 100644
+index 00000000..9077c7c3
+--- /dev/null
++++ b/tests/Unit/Observability/Log/LoggerTest.php
+@@ -0,0 +1,196 @@
++<?php
++
++declare(strict_types=1);
++
++namespace Pulsar\Tests\Unit\Observability\Log;
++
++use PHPUnit\Framework\Attributes\CoversClass;
++use PHPUnit\Framework\Attributes\Test;
++use PHPUnit\Framework\TestCase;
++use Pulsar\Config\LoggingChannelConfig;
++use Pulsar\Config\ObservabilityConfig;
++use Pulsar\Observability\Log\LogEntry;
++use Pulsar\Observability\Log\Logger;
++use Pulsar\Observability\Log\LogLevel;
++use Pulsar\Observability\Log\LogSinkInterface;
++use RuntimeException;
++
++#[CoversClass(Logger::class)]
++final class LoggerTest extends TestCase
++{
++    #[Test]
++    public function logsAtThreshold(): void
++    {
++        $sink = new CollectingSink();
++        $logger = new Logger([$sink], LogLevel::Info);
++
++        $logger->info('test message');
++
++        self::assertCount(1, $sink->entries);
++        self::assertSame('test message', $sink->entries[0]->message);
++    }
++
++    #[Test]
++    public function logsAboveThreshold(): void
++    {
++        $sink = new CollectingSink();
++        $logger = new Logger([$sink], LogLevel::Info);
++
++        $logger->error('error message');
++
++        self::assertCount(1, $sink->entries);
++        self::assertSame(LogLevel::Error, $sink->entries[0]->level);
++    }
++
++    #[Test]
++    public function filtersBelowThreshold(): void
++    {
++        $sink = new CollectingSink();
++        $logger = new Logger([$sink], LogLevel::Warning);
++
++        $logger->info('should be filtered');
++        $logger->debug('also filtered');
++
++        self::assertCount(0, $sink->entries);
++    }
++
++    #[Test]
++    public function allPsr3LevelsWork(): void
++    {
++        $sink = new CollectingSink();
++        $logger = new Logger([$sink], LogLevel::Debug);
++
++        $logger->emergency('emergency');
++        $logger->alert('alert');
++        $logger->critical('critical');
++        $logger->error('error');
++        $logger->warning('warning');
++        $logger->notice('notice');
++        $logger->info('info');
++        $logger->debug('debug');
++
++        self::assertCount(8, $sink->entries);
++    }
++
++    #[Test]
++    public function interpolatesPlaceholders(): void
++    {
++        $sink = new CollectingSink();
++        $logger = new Logger([$sink], LogLevel::Debug);
++
++        $logger->info('Hello {name}, you are {age}', ['name' => 'Alice', 'age' => '30']);
++
++        // The entry message is raw; interpolation happens in the formatter
++        // Logger passes through to sinks; let's verify the context is preserved
++        self::assertSame(['name' => 'Alice', 'age' => '30'], $sink->entries[0]->context);
++    }
++
++    #[Test]
++    public function exceptionInContextPreserved(): void
++    {
++        $sink = new CollectingSink();
++        $logger = new Logger([$sink], LogLevel::Debug);
++        $exception = new RuntimeException('test error');
++
++        $logger->error('failed', ['exception' => $exception]);
++
++        self::assertSame($exception, $sink->entries[0]->context['exception']);
++    }
++
++    #[Test]
++    public function multipleSinksReceiveEntry(): void
++    {
++        $sink1 = new CollectingSink();
++        $sink2 = new CollectingSink();
++        $logger = new Logger([$sink1, $sink2], LogLevel::Debug);
++
++        $logger->info('broadcast');
++
++        self::assertCount(1, $sink1->entries);
++        self::assertCount(1, $sink2->entries);
++    }
++
++    #[Test]
++    public function sinkFailureDoesNotThrow(): void
++    {
++        $failingSink = new FailingSink();
++        $collectingSink = new CollectingSink();
++        $logger = new Logger([$failingSink, $collectingSink], LogLevel::Debug);
++
++        // Should not throw
++        $logger->error('test');
++
++        // Second sink still receives the entry
++        self::assertCount(1, $collectingSink->entries);
++    }
++
++    #[Test]
++    public function fromConfigFactory(): void
++    {
++        $config = new ObservabilityConfig(
++            defaultLoggingChannel: 'stderr',
++            loggingLevel: 'warning',
++            loggingChannels: [
++                new LoggingChannelConfig(
++                    name: 'stderr',
++                    driver: 'stream',
++                    stream: 'php://stderr',
++                ),
++            ],
++        );
++
++        $logger = Logger::fromConfig($config);
++
++        // Should create without error
++        self::assertInstanceOf(Logger::class, $logger);
++    }
++
++    #[Test]
++    public function logMethodAcceptsPsrLevelString(): void
++    {
++        $sink = new CollectingSink();
++        $logger = new Logger([$sink], LogLevel::Debug);
++
++        $logger->log('error', 'string level');
++
++        self::assertCount(1, $sink->entries);
++        self::assertSame(LogLevel::Error, $sink->entries[0]->level);
++    }
++
++    #[Test]
++    public function logMethodAcceptsLogLevelEnum(): void
++    {
++        $sink = new CollectingSink();
++        $logger = new Logger([$sink], LogLevel::Debug);
++
++        $logger->log(LogLevel::Warning, 'enum level');
++
++        self::assertCount(1, $sink->entries);
++        self::assertSame(LogLevel::Warning, $sink->entries[0]->level);
++    }
++}
++
++/**
++ * @internal Test helper: collects log entries in memory.
++ */
++final class CollectingSink implements LogSinkInterface
++{
++    /** @var list<LogEntry> */
++    public array $entries = [];
++
++    public function write(LogEntry $entry): void
++    {
++        $this->entries[] = $entry;
++    }
++}
++
++/**
++ * @internal Test helper: always throws when writing.
++ */
++final class FailingSink implements LogSinkInterface
++{
++    public function write(LogEntry $entry): void
++    {
++        throw new RuntimeException('Sink failure');
++    }
++}
+diff --git a/tests/Unit/Observability/Log/Sink/FileSinkTest.php b/tests/Unit/Observability/Log/Sink/FileSinkTest.php
+new file mode 100644
+index 00000000..81474bc0
+--- /dev/null
++++ b/tests/Unit/Observability/Log/Sink/FileSinkTest.php
+@@ -0,0 +1,107 @@
++<?php
++
++declare(strict_types=1);
++
++namespace Pulsar\Tests\Unit\Observability\Log\Sink;
++
++use PHPUnit\Framework\Attributes\CoversClass;
++use PHPUnit\Framework\Attributes\Test;
++use PHPUnit\Framework\TestCase;
++use Pulsar\Observability\Log\LogEntry;
++use Pulsar\Observability\Log\LogLevel;
++use Pulsar\Observability\Log\Sink\FileSink;
++
++#[CoversClass(FileSink::class)]
++final class FileSinkTest extends TestCase
++{
++    private string $tempDir;
++
++    protected function setUp(): void
++    {
++        $this->tempDir = sys_get_temp_dir() . '/pulsar_filesink_test_' . uniqid();
++    }
++
++    protected function tearDown(): void
++    {
++        $this->cleanDir($this->tempDir);
++    }
++
++    private function cleanDir(string $dir): void
++    {
++        if (!is_dir($dir)) {
++            return;
++        }
++        $items = scandir($dir);
++        if ($items !== false) {
++            foreach ($items as $item) {
++                if ($item === '.' || $item === '..') {
++                    continue;
++                }
++                $path = $dir . DIRECTORY_SEPARATOR . $item;
++                if (is_dir($path)) {
++                    $this->cleanDir($path);
++                } else {
++                    unlink($path);
++                }
++            }
++        }
++        rmdir($dir);
++    }
++
++    #[Test]
++    public function writesJsonLine(): void
++    {
++        $path = $this->tempDir . '/test.log';
++        $sink = new FileSink($path);
++
++        $entry = LogEntry::create(LogLevel::Info, 'test message');
++        $sink->write($entry);
++
++        $contents = file_get_contents($path);
++        self::assertNotFalse($contents);
++
++        $data = json_decode(trim($contents), true);
++        self::assertIsArray($data);
++        self::assertSame('info', $data['level']);
++        self::assertSame('test message', $data['message']);
++    }
++
++    #[Test]
++    public function createsDirectory(): void
++    {
++        $path = $this->tempDir . '/nested/dir/test.log';
++        $sink = new FileSink($path);
++
++        $entry = LogEntry::create(LogLevel::Debug, 'mkdir test');
++        $sink->write($entry);
++
++        self::assertFileExists($path);
++    }
++
++    #[Test]
++    public function appendsToExistingFile(): void
++    {
++        $path = $this->tempDir . '/append.log';
++        $sink = new FileSink($path);
++
++        $entry1 = LogEntry::create(LogLevel::Info, 'first');
++        $entry2 = LogEntry::create(LogLevel::Warning, 'second');
++
++        $sink->write($entry1);
++        $sink->write($entry2);
++
++        $contents = file_get_contents($path);
++        self::assertNotFalse($contents);
++
++        $lines = array_filter(explode("\n", trim($contents)));
++        self::assertCount(2, $lines);
++
++        $first = json_decode($lines[0], true);
++        $second = json_decode($lines[1], true);
++
++        self::assertIsArray($first);
++        self::assertIsArray($second);
++        self::assertSame('first', $first['message']);
++        self::assertSame('second', $second['message']);
++    }
++}
+diff --git a/tests/Unit/Observability/Log/Sink/StreamSinkTest.php b/tests/Unit/Observability/Log/Sink/StreamSinkTest.php
+new file mode 100644
+index 00000000..9bfa6a38
+--- /dev/null
++++ b/tests/Unit/Observability/Log/Sink/StreamSinkTest.php
+@@ -0,0 +1,65 @@
++<?php
++
++declare(strict_types=1);
++
++namespace Pulsar\Tests\Unit\Observability\Log\Sink;
++
++use PHPUnit\Framework\Attributes\CoversClass;
++use PHPUnit\Framework\Attributes\Test;
++use PHPUnit\Framework\TestCase;
++use Pulsar\Observability\Log\Exception\LogException;
++use Pulsar\Observability\Log\LogEntry;
++use Pulsar\Observability\Log\LogLevel;
++use Pulsar\Observability\Log\Sink\StreamSink;
++
++#[CoversClass(StreamSink::class)]
++final class StreamSinkTest extends TestCase
++{
++    private string $tempDir;
++
++    protected function setUp(): void
++    {
++        $this->tempDir = sys_get_temp_dir() . '/pulsar_streamsink_test_' . uniqid();
++        mkdir($this->tempDir, 0o775, true);
++    }
++
++    protected function tearDown(): void
++    {
++        $files = glob($this->tempDir . '/*');
++        if ($files !== false) {
++            foreach ($files as $file) {
++                unlink($file);
++            }
++        }
++        rmdir($this->tempDir);
++    }
++
++    #[Test]
++    public function writesToStream(): void
++    {
++        // Use a temp file as a writable stream
++        $path = $this->tempDir . '/stream_output.log';
++        file_put_contents($path, '');
++
++        $sink = new StreamSink($path);
++
++        $entry = LogEntry::create(LogLevel::Error, 'stream test');
++        $sink->write($entry);
++
++        $contents = file_get_contents($path);
++        self::assertNotFalse($contents);
++
++        $data = json_decode(trim($contents), true);
++        self::assertIsArray($data);
++        self::assertSame('error', $data['level']);
++        self::assertSame('stream test', $data['message']);
++    }
++
++    #[Test]
++    public function throwsForInvalidStream(): void
++    {
++        $this->expectException(LogException::class);
++
++        new StreamSink('invalid://nonexistent_stream_uri');
++    }
++}

@@ -31,6 +31,8 @@ use Pulsar\Extension\Auth\OAuth2\Oidc\JwtSigner;
 use Pulsar\Extension\Auth\OAuth2\Oidc\OidcConfig;
 use Pulsar\Extension\Auth\OAuth2\Oidc\OidcDiscovery;
 use Pulsar\Extension\Auth\OAuth2\Oidc\UserInfoEndpoint;
+use Pulsar\Database\ConnectionInterface;
+use Pulsar\Extension\Auth\OAuth2\Token\DbAuthorizationCodeRepository;
 use Pulsar\Extension\Auth\OAuth2\Token\InMemoryAccessTokenRepository;
 use Pulsar\Extension\Auth\OAuth2\Token\InMemoryAuthorizationCodeRepository;
 use Pulsar\Extension\Auth\OAuth2\Token\InMemoryRefreshTokenRepository;
@@ -227,14 +229,32 @@ final class AuthServiceProvider implements ServiceProviderInterface
         $container->bind(ConsentRepositoryInterface::class, InMemoryConsentRepository::class);
         $container->bind(AccessTokenRepositoryInterface::class, InMemoryAccessTokenRepository::class);
         $container->bind(RefreshTokenRepositoryInterface::class, InMemoryRefreshTokenRepository::class);
-        $container->bind(AuthorizationCodeRepositoryInterface::class, InMemoryAuthorizationCodeRepository::class);
+        // F385.12: production deployments select `database` so codes survive
+        // worker restarts; in-memory remains the dev/test default.
+        $container->bind(AuthorizationCodeRepositoryInterface::class, static function () use ($container): AuthorizationCodeRepositoryInterface {
+            /** @var OAuth2Config $config */
+            $config = $container->get(OAuth2Config::class);
 
-        // JWT signing
+            if ($config->authorizationCodeStore === 'database' && $container->has(ConnectionInterface::class)) {
+                /** @var ConnectionInterface $connection */
+                $connection = $container->get(ConnectionInterface::class);
+                $repo = new DbAuthorizationCodeRepository($connection);
+                $repo->installSchema();
+
+                return $repo;
+            }
+
+            return new InMemoryAuthorizationCodeRepository();
+        });
+
+        // JWT signing (RS256 via KeyRing-managed RSA private keys)
         $container->bind(JwtSigner::class, static function () use ($container): JwtSigner {
             /** @var KeyRingInterface $keyRing */
             $keyRing = $container->get(KeyRingInterface::class);
+            /** @var OidcConfig $oidcConfig */
+            $oidcConfig = $container->get(OidcConfig::class);
 
-            return new JwtSigner($keyRing);
+            return new JwtSigner($keyRing, $oidcConfig);
         });
 
         // Grant handlers
