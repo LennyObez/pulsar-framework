@@ -61,9 +61,15 @@ final readonly class ExperimentController extends AbstractAdminController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $name = is_string($body['name'] ?? null) ? $body['name'] : '';
-        $contentId = is_string($body['content_id'] ?? null) ? $body['content_id'] : '';
-        $trafficPercentage = is_float($body['traffic_percentage'] ?? null) ? $body['traffic_percentage'] : (float) 1.0;
+        /** @var mixed $rawName */
+        $rawName = $body['name'] ?? null;
+        $name = is_string($rawName) ? $rawName : '';
+        /** @var mixed $rawContentId */
+        $rawContentId = $body['content_id'] ?? null;
+        $contentId = is_string($rawContentId) ? $rawContentId : '';
+        /** @var mixed $rawTrafficPercentage */
+        $rawTrafficPercentage = $body['traffic_percentage'] ?? null;
+        $trafficPercentage = is_float($rawTrafficPercentage) ? $rawTrafficPercentage : 1.0;
 
         if ($name === '' || $contentId === '') {
             return Response::json(['error' => 'Name and content_id are required'], 400);
