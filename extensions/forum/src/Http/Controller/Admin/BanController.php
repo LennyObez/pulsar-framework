@@ -121,8 +121,12 @@ final readonly class BanController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $userId = is_string($body['user_id'] ?? null) ? $body['user_id'] : '';
-        $reason = is_string($body['reason'] ?? null) ? $body['reason'] : '';
+        /** @var mixed $rawUserId */
+        $rawUserId = $body['user_id'] ?? null;
+        $userId = is_string($rawUserId) ? $rawUserId : '';
+        /** @var mixed $rawReason */
+        $rawReason = $body['reason'] ?? null;
+        $reason = is_string($rawReason) ? $rawReason : '';
 
         if ($userId === '' || $reason === '') {
             return Response::json([
@@ -135,14 +139,18 @@ final readonly class BanController
             ], 422);
         }
 
-        $typeValue = is_string($body['type'] ?? null) ? $body['type'] : 'temporary';
+        /** @var mixed $rawType */
+        $rawType = $body['type'] ?? null;
+        $typeValue = is_string($rawType) ? $rawType : 'temporary';
         $type = BanType::tryFrom($typeValue) ?? BanType::Temporary;
 
         $expiresAt = null;
 
-        if ($type === BanType::Temporary && is_string($body['expires_at'] ?? null) && $body['expires_at'] !== '') {
+        /** @var mixed $rawExpiresAt */
+        $rawExpiresAt = $body['expires_at'] ?? null;
+        if ($type === BanType::Temporary && is_string($rawExpiresAt) && $rawExpiresAt !== '') {
             try {
-                $expiresAt = new DateTimeImmutable($body['expires_at']);
+                $expiresAt = new DateTimeImmutable($rawExpiresAt);
             } catch (Exception) {
                 return Response::json([
                     'error' => 'Validation failed',
