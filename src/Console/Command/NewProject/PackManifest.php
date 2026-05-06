@@ -73,10 +73,14 @@ final readonly class PackManifest
             ));
         }
 
-        $name = $data['name'];
-        $description = $data['description'];
-        $version = $data['version'];
-        $requiredPulsarVersion = $data['requiredPulsarVersion'];
+        /** @var mixed $name */
+        $name = $data['name'] ?? null;
+        /** @var mixed $description */
+        $description = $data['description'] ?? null;
+        /** @var mixed $version */
+        $version = $data['version'] ?? null;
+        /** @var mixed $requiredPulsarVersion */
+        $requiredPulsarVersion = $data['requiredPulsarVersion'] ?? null;
 
         if (!is_string($name) || $name === '') {
             throw new InvalidArgumentException('Pack manifest field "name" must be a non-empty string.');
@@ -94,27 +98,33 @@ final readonly class PackManifest
             throw new InvalidArgumentException('Pack manifest field "requiredPulsarVersion" must be a non-empty string.');
         }
 
-        $compliancePresets = $data['compliancePresets'] ?? [];
-        if (!is_array($compliancePresets)) {
+        /** @var mixed $compliancePresetsRaw */
+        $compliancePresetsRaw = $data['compliancePresets'] ?? [];
+        if (!is_array($compliancePresetsRaw)) {
             throw new InvalidArgumentException('Pack manifest field "compliancePresets" must be an array.');
         }
 
-        $files = $data['files'] ?? [];
-        if (!is_array($files)) {
+        /** @var mixed $filesRaw */
+        $filesRaw = $data['files'] ?? [];
+        if (!is_array($filesRaw)) {
             throw new InvalidArgumentException('Pack manifest field "files" must be an array.');
         }
 
-        $postInstallCommands = $data['postInstallCommands'] ?? [];
-        if (!is_array($postInstallCommands)) {
+        /** @var mixed $postInstallCommandsRaw */
+        $postInstallCommandsRaw = $data['postInstallCommands'] ?? [];
+        if (!is_array($postInstallCommandsRaw)) {
             throw new InvalidArgumentException('Pack manifest field "postInstallCommands" must be an array.');
         }
 
         /** @var list<string> $compliancePresets */
+        $compliancePresets = $compliancePresetsRaw;
         /** @var list<string> $postInstallCommands */
+        $postInstallCommands = $postInstallCommandsRaw;
 
         /** @var array<string, string> $typedFiles */
         $typedFiles = [];
-        foreach ($files as $key => $value) {
+        /** @var mixed $value */
+        foreach ($filesRaw as $key => $value) {
             $stringKey = is_string($key) ? $key : (string) $key;
             if (!is_string($value) && !is_int($value)) {
                 throw new InvalidArgumentException(sprintf('Pack manifest "files" value for key "%s" must be a string.', $stringKey));
