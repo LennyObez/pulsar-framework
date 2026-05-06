@@ -7,11 +7,18 @@ namespace Pulsar\Extension\Auth\OAuth2\Token;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Auth\OAuth2\Contract\RefreshTokenRepositoryInterface;
 
+use function random_bytes;
+use function sodium_bin2hex;
+use function sodium_crypto_generichash;
+
+use const SODIUM_CRYPTO_GENERICHASH_KEYBYTES;
+
 /**
  * In-memory refresh token repository with rotation and replay detection.
  *
- * Tokens are stored hashed (SHA-256). When a consumed (rotated-out) token is
- * reused, the entire token family is revoked as a breach indicator.
+ * SEC-CRYPTO-01: BLAKE2b keyed (libsodium) index, per-instance random key.
+ * When a consumed (rotated-out) token is reused, the entire token family is
+ * revoked as a breach indicator.
  */
 #[Internal(reason: 'In-memory implementation for testing; not for production use')]
 final class InMemoryRefreshTokenRepository implements RefreshTokenRepositoryInterface
@@ -19,7 +26,7 @@ final class InMemoryRefreshTokenRepository implements RefreshTokenRepositoryInte
     /** @var array<string, RefreshToken> Keyed by token ID */
     private array $tokensById = [];
 
-    /** @var array<string, string> Hash(tokenValue) => token ID */
+    /** @var array<string, string> BLAKE2b-keyed(tokenValue) (hex) => token ID */
     private array $hashIndex = [];
 
     /** @var array<string, bool> Token IDs that have been revoked */
@@ -34,14 +41,20 @@ final class InMemoryRefreshTokenRepository implements RefreshTokenRepositoryInte
     /** @var bool Whether replay was detected on the last consume() call */
     private bool $lastConsumeWasReplay = false;
 
+    private readonly string $indexKey;
+
+    public function __construct()
+    {
+        $this->indexKey = random_bytes(SODIUM_CRYPTO_GENERICHASH_KEYBYTES);
+    }
+
     public function persist(RefreshToken $token): void
     {
         $this->tokensById[$token->id] = $token;
         $this->families[$token->familyId][] = $token->id;
 
         if ($token->tokenValue !== null) {
-            $hash = hash('sha256', $token->tokenValue);
-            $this->hashIndex[$hash] = $token->id;
+            $this->hashIndex[$this->hashTokenForIndex($token->tokenValue)] = $token->id;
         }
     }
 
@@ -49,7 +62,7 @@ final class InMemoryRefreshTokenRepository implements RefreshTokenRepositoryInte
     {
         $this->lastConsumeWasReplay = false;
 
-        $hash = hash('sha256', $tokenValue);
+        $hash = $this->hashTokenForIndex($tokenValue);
         $tokenId = $this->hashIndex[$hash] ?? null;
 
         if ($tokenId === null) {
@@ -143,5 +156,10 @@ final class InMemoryRefreshTokenRepository implements RefreshTokenRepositoryInte
     public function isRevoked(string $tokenId): bool
     {
         return isset($this->revoked[$tokenId]);
+    }
+
+    private function hashTokenForIndex(string $tokenValue): string
+    {
+        return sodium_bin2hex(sodium_crypto_generichash($tokenValue, $this->indexKey, 32));
     }
 }

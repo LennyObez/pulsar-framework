@@ -254,6 +254,7 @@ final class TwoFactorManagerTest extends TestCase
             recoveryCodeGenerator: $this->recoveryCodeGenerator,
             recoveryCodeVerifier: $this->recoveryCodeVerifier,
             secretStore: $secretStore,
+            rateLimiter: new \Pulsar\Auth\TwoFactor\AllowAllTwoFactorRateLimiter(),
         );
 
         $secret = $this->generator->generateSecret();
@@ -288,6 +289,7 @@ final class TwoFactorManagerTest extends TestCase
             recoveryCodeVerifier: $this->recoveryCodeVerifier,
             replayGuard: $this->replayGuard,
             auditLogger: $auditLogger,
+            rateLimiter: new \Pulsar\Auth\TwoFactor\AllowAllTwoFactorRateLimiter(),
         );
 
         $secret = $this->generator->generateSecret();
@@ -316,6 +318,7 @@ final class TwoFactorManagerTest extends TestCase
             recoveryCodeVerifier: $this->recoveryCodeVerifier,
             replayGuard: $this->replayGuard,
             auditLogger: $auditLogger,
+            rateLimiter: new \Pulsar\Auth\TwoFactor\AllowAllTwoFactorRateLimiter(),
         );
 
         $manager->verifyCodeWithSecret('user-1', $this->generator->generateSecret(), '000000');
@@ -342,6 +345,7 @@ final class TwoFactorManagerTest extends TestCase
             recoveryCodeVerifier: $this->recoveryCodeVerifier,
             replayGuard: $this->replayGuard,
             eventCollector: $collector,
+            rateLimiter: new \Pulsar\Auth\TwoFactor\AllowAllTwoFactorRateLimiter(),
         );
 
         $secret = $this->generator->generateSecret();
@@ -379,6 +383,7 @@ final class TwoFactorManagerTest extends TestCase
             recoveryCodeVerifier: $this->recoveryCodeVerifier,
             replayGuard: $this->replayGuard,
             eventCollector: $collector,
+            rateLimiter: new \Pulsar\Auth\TwoFactor\AllowAllTwoFactorRateLimiter(),
         );
 
         $secret = $this->generator->generateSecret();
@@ -422,6 +427,7 @@ final class TwoFactorManagerTest extends TestCase
             recoveryCodeVerifier: $this->recoveryCodeVerifier,
             replayGuard: $this->replayGuard,
             session: $session,
+            rateLimiter: new \Pulsar\Auth\TwoFactor\AllowAllTwoFactorRateLimiter(),
         );
 
         $secret = $this->generator->generateSecret();
@@ -442,6 +448,7 @@ final class TwoFactorManagerTest extends TestCase
             recoveryCodeGenerator: $this->recoveryCodeGenerator,
             recoveryCodeVerifier: $this->recoveryCodeVerifier,
             session: $session,
+            rateLimiter: new \Pulsar\Auth\TwoFactor\AllowAllTwoFactorRateLimiter(),
         );
 
         $manager->verifyCodeWithSecret('user-1', $this->generator->generateSecret(), '000000');
@@ -462,6 +469,7 @@ final class TwoFactorManagerTest extends TestCase
             recoveryCodeVerifier: $this->recoveryCodeVerifier,
             recoveryCodeHasher: $hasher,
             recoveryCodeStore: $store,
+            rateLimiter: new \Pulsar\Auth\TwoFactor\AllowAllTwoFactorRateLimiter(),
         );
 
         $result = $manager->rotateRecoveryCodes('user-1');
@@ -493,6 +501,7 @@ final class TwoFactorManagerTest extends TestCase
             recoveryCodeVerifier: $this->recoveryCodeVerifier,
             recoveryCodeHasher: $hasher,
             recoveryCodeStore: $store,
+            rateLimiter: new \Pulsar\Auth\TwoFactor\AllowAllTwoFactorRateLimiter(),
         );
 
         $result = $manager->rotateRecoveryCodes('user-1');
@@ -522,6 +531,7 @@ final class TwoFactorManagerTest extends TestCase
             recoveryCodeVerifier: $this->recoveryCodeVerifier,
             recoveryCodeHasher: $hasher,
             recoveryCodeStore: $store,
+            rateLimiter: new \Pulsar\Auth\TwoFactor\AllowAllTwoFactorRateLimiter(),
         );
 
         $manager->rotateRecoveryCodes('user-1');
@@ -549,6 +559,7 @@ final class TwoFactorManagerTest extends TestCase
             recoveryCodeHasher: $hasher,
             recoveryCodeStore: $store,
             session: $session,
+            rateLimiter: new \Pulsar\Auth\TwoFactor\AllowAllTwoFactorRateLimiter(),
         );
 
         $result = $manager->rotateRecoveryCodes('user-1');
@@ -677,6 +688,7 @@ final class TwoFactorManagerTest extends TestCase
             recoveryCodeHasher: $hasher,
             recoveryCodeStore: $store,
             auditLogger: $auditLogger,
+            rateLimiter: new \Pulsar\Auth\TwoFactor\AllowAllTwoFactorRateLimiter(),
         );
 
         $result = $manager->rotateRecoveryCodes('user-1');
@@ -739,6 +751,7 @@ final class TwoFactorManagerTest extends TestCase
             recoveryCodeHasher: $hasher,
             recoveryCodeStore: $store,
             auditLogger: $auditLogger,
+            rateLimiter: new \Pulsar\Auth\TwoFactor\AllowAllTwoFactorRateLimiter(),
         );
 
         $manager->rotateRecoveryCodes('user-1');
@@ -783,6 +796,7 @@ final class TwoFactorManagerTest extends TestCase
             recoveryCodeHasher: $hasher,
             recoveryCodeStore: $store,
             eventCollector: $collector,
+            rateLimiter: new \Pulsar\Auth\TwoFactor\AllowAllTwoFactorRateLimiter(),
         );
 
         $result = $manager->rotateRecoveryCodes('user-1');
@@ -800,6 +814,7 @@ final class TwoFactorManagerTest extends TestCase
             recoveryCodeGenerator: $this->recoveryCodeGenerator,
             recoveryCodeVerifier: $this->recoveryCodeVerifier,
             recoveryCodeStore: $store,
+            rateLimiter: new \Pulsar\Auth\TwoFactor\AllowAllTwoFactorRateLimiter(),
         );
 
         $result = $manager->rotateRecoveryCodes('user-1');
@@ -827,6 +842,7 @@ final class TwoFactorManagerTest extends TestCase
             recoveryCodeGenerator: $this->recoveryCodeGenerator,
             recoveryCodeVerifier: $this->recoveryCodeVerifier,
             auditLogger: $auditLogger,
+            rateLimiter: new \Pulsar\Auth\TwoFactor\AllowAllTwoFactorRateLimiter(),
         );
 
         $manager->rotateRecoveryCodes('user-1');
@@ -856,6 +872,7 @@ final class TwoFactorManagerTest extends TestCase
             recoveryCodeVerifier: $this->recoveryCodeVerifier,
             secretStore: $secretStore,
             auditLogger: $auditLogger,
+            rateLimiter: new \Pulsar\Auth\TwoFactor\AllowAllTwoFactorRateLimiter(),
         );
 
         $result = $manager->verifyCode('user-1', '000000');
@@ -881,6 +898,7 @@ final class TwoFactorManagerTest extends TestCase
             recoveryCodeVerifier: $this->recoveryCodeVerifier,
             replayGuard: $replayGuard,
             secretStore: $secretStore,
+            rateLimiter: new \Pulsar\Auth\TwoFactor\AllowAllTwoFactorRateLimiter(),
         );
 
         $result = $manager->verifyCode('user-1', $code, TwoFactorPurpose::StepUp);
