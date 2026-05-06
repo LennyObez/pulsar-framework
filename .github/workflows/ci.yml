@@ -247,7 +247,10 @@ jobs:
           php tests/Benchmark/Scenarios/memory_compliance.php > /dev/null && echo "PASS: memory_compliance"
 
       - name: Run OPcache/JIT/preload profile matrix
-        continue-on-error: true
+        # PERF-JIT-01: previously continue-on-error to tolerate unstable JIT
+        # output. Removed so the gate actually blocks GA releases on a broken
+        # profile matrix. Genuine timing variance is handled inside
+        # `composer bench:profiles:ci` via warmup + statistical thresholds.
         run: composer bench:profiles:ci | tee benchmark-profiles.txt
 
       - name: Upload benchmark results
