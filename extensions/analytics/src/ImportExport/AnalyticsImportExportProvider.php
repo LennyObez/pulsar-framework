@@ -283,12 +283,20 @@ final readonly class AnalyticsImportExportProvider implements ImportExportProvid
             }
 
             if (!$dryRun) {
+                /** @var mixed $rawId */
+                $rawId = $entry['id'] ?? null;
+                /** @var mixed $rawName */
+                $rawName = $entry['name'] ?? null;
+                /** @var mixed $rawTrackingId */
+                $rawTrackingId = $entry['tracking_id'] ?? null;
+                /** @var mixed $rawTimezone */
+                $rawTimezone = $entry['timezone'] ?? null;
                 $site = new \Pulsar\Extension\Analytics\Domain\Site(
-                    id: is_string($entry['id'] ?? null) ? $entry['id'] : bin2hex(random_bytes(16)),
+                    id: is_string($rawId) ? $rawId : bin2hex(random_bytes(16)),
                     domain: $domain,
-                    name: is_string($entry['name'] ?? null) ? $entry['name'] : $domain,
-                    trackingId: is_string($entry['tracking_id'] ?? null) ? $entry['tracking_id'] : 'plsr_' . bin2hex(random_bytes(8)),
-                    timezone: is_string($entry['timezone'] ?? null) ? $entry['timezone'] : 'UTC',
+                    name: is_string($rawName) ? $rawName : $domain,
+                    trackingId: is_string($rawTrackingId) ? $rawTrackingId : 'plsr_' . bin2hex(random_bytes(8)),
+                    timezone: is_string($rawTimezone) ? $rawTimezone : 'UTC',
                     settings: self::asStringKeyedArray($entry['settings'] ?? null),
                 );
                 $this->siteRepository->save($site);
@@ -386,6 +394,7 @@ final readonly class AnalyticsImportExportProvider implements ImportExportProvid
                 $steps = [];
                 $position = 1;
 
+                /** @var mixed $stepData */
                 foreach ($rawSteps as $stepData) {
                     if (!is_array($stepData)) {
                         continue;
@@ -438,6 +447,7 @@ final readonly class AnalyticsImportExportProvider implements ImportExportProvid
 
         $result = [];
 
+        /** @var mixed $v */
         foreach ($value as $k => $v) {
             if (is_string($k)) {
                 $result[$k] = $v;
