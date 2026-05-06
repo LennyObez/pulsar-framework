@@ -61,7 +61,9 @@ final readonly class PreviewController extends AbstractAdminController
         $this->authorize($identity, 'cms.content.edit');
 
         $params = $request->getQueryParams();
-        $locale = self::sanitizeLocale(is_string($params['locale'] ?? null) ? $params['locale'] : 'en');
+        /** @var mixed $rawLocale */
+        $rawLocale = $params['locale'] ?? null;
+        $locale = self::sanitizeLocale(is_string($rawLocale) ? $rawLocale : 'en');
 
         $content = $this->contentRepository->findById($id);
 
@@ -121,7 +123,9 @@ final readonly class PreviewController extends AbstractAdminController
         $this->authorize($identity, 'cms.content.edit');
 
         $params = $request->getQueryParams();
-        $locale = self::sanitizeLocale(is_string($params['locale'] ?? null) ? $params['locale'] : 'en');
+        /** @var mixed $rawLocale */
+        $rawLocale = $params['locale'] ?? null;
+        $locale = self::sanitizeLocale(is_string($rawLocale) ? $rawLocale : 'en');
 
         // For POST requests (live preview), use the submitted body
         $method = $request->getMethod();
@@ -133,10 +137,18 @@ final readonly class PreviewController extends AbstractAdminController
         if ($method === 'POST') {
             /** @var array<string, mixed> $postData */
             $postData = (array) ($request->getParsedBody() ?? []);
-            $title = trim(is_string($postData['title'] ?? null) ? $postData['title'] : '');
-            $body = is_string($postData['body'] ?? null) ? $postData['body'] : '';
-            $excerpt = trim(is_string($postData['excerpt'] ?? null) ? $postData['excerpt'] : '');
-            $blocksJson = is_string($postData['blocks_json'] ?? null) ? $postData['blocks_json'] : '';
+            /** @var mixed $rawTitle */
+            $rawTitle = $postData['title'] ?? null;
+            $title = trim(is_string($rawTitle) ? $rawTitle : '');
+            /** @var mixed $rawBody */
+            $rawBody = $postData['body'] ?? null;
+            $body = is_string($rawBody) ? $rawBody : '';
+            /** @var mixed $rawExcerpt */
+            $rawExcerpt = $postData['excerpt'] ?? null;
+            $excerpt = trim(is_string($rawExcerpt) ? $rawExcerpt : '');
+            /** @var mixed $rawBlocksJson */
+            $rawBlocksJson = $postData['blocks_json'] ?? null;
+            $blocksJson = is_string($rawBlocksJson) ? $rawBlocksJson : '';
         } else {
             $translation = $this->translationRepository->findByContentAndLocale($id, $locale);
 
