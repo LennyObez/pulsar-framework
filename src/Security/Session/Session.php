@@ -90,6 +90,7 @@ final class Session implements SessionInterface
     {
         $this->ensureStarted();
 
+        /** @var mixed $value */
         $value = $_SESSION[$key] ?? null;
 
         return is_string($value) ? $value : $default;
@@ -101,6 +102,7 @@ final class Session implements SessionInterface
     {
         $this->ensureStarted();
 
+        /** @var mixed $value */
         $value = $_SESSION[$key] ?? null;
 
         return is_string($value) ? $value : null;
@@ -112,6 +114,7 @@ final class Session implements SessionInterface
     {
         $this->ensureStarted();
 
+        /** @var mixed $value */
         $value = $_SESSION[$key] ?? null;
 
         if (is_int($value)) {
@@ -127,6 +130,7 @@ final class Session implements SessionInterface
     {
         $this->ensureStarted();
 
+        /** @var mixed $value */
         $value = $_SESSION[$key] ?? null;
 
         return is_bool($value) ? $value : $default;

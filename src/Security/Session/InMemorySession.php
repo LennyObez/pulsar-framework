@@ -90,6 +90,7 @@ final class InMemorySession implements SessionInterface
     #[NoDiscard]
     public function getString(string $key, string $default = ''): string
     {
+        /** @var mixed $value */
         $value = $this->data[$key] ?? null;
 
         return is_string($value) ? $value : $default;
@@ -99,6 +100,7 @@ final class InMemorySession implements SessionInterface
     #[NoDiscard]
     public function getNullableString(string $key): ?string
     {
+        /** @var mixed $value */
         $value = $this->data[$key] ?? null;
 
         return is_string($value) ? $value : null;
@@ -108,6 +110,7 @@ final class InMemorySession implements SessionInterface
     #[NoDiscard]
     public function getInt(string $key, int $default = 0): int
     {
+        /** @var mixed $value */
         $value = $this->data[$key] ?? null;
 
         if (is_int($value)) {
@@ -121,6 +124,7 @@ final class InMemorySession implements SessionInterface
     #[NoDiscard]
     public function getBool(string $key, bool $default = false): bool
     {
+        /** @var mixed $value */
         $value = $this->data[$key] ?? null;
 
         return is_bool($value) ? $value : $default;
