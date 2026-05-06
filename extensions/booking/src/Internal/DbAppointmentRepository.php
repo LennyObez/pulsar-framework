@@ -8,6 +8,8 @@ use DateTimeImmutable;
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Result;
+use Pulsar\Database\Row;
 use Pulsar\Extension\Booking\Contracts\AppointmentRepositoryInterface;
 use Pulsar\Extension\Booking\Domain\Appointment;
 use Pulsar\Extension\Booking\Domain\AppointmentStatus;
@@ -32,12 +34,9 @@ final readonly class DbAppointmentRepository implements AppointmentRepositoryInt
             ['id' => $id],
         );
 
-        foreach ($result as $row) {
-            /** @var array<string, mixed> $row */
-            return $this->hydrate($row);
-        }
+        $row = $result->first();
 
-        return null;
+        return $row !== null ? $this->hydrate($row) : null;
     }
 
     #[Override]
@@ -48,12 +47,9 @@ final readonly class DbAppointmentRepository implements AppointmentRepositoryInt
             ['booking_number' => $bookingNumber],
         );
 
-        foreach ($result as $row) {
-            /** @var array<string, mixed> $row */
-            return $this->hydrate($row);
-        }
+        $row = $result->first();
 
-        return null;
+        return $row !== null ? $this->hydrate($row) : null;
     }
 
     #[Override]
@@ -184,57 +180,49 @@ final readonly class DbAppointmentRepository implements AppointmentRepositoryInt
         );
 
         $counts = [];
-        foreach ($result as $row) {
-            /** @var array{status: string, count: int|string} $row */
-            $counts[$row['status']] = (int) $row['count'];
+        foreach ($result->rows as $row) {
+            $counts[$row->getString('status')] = $row->getInt('count');
         }
 
         return $counts;
     }
 
-    /**
-     * @param array<string, mixed> $row
-     */
-    private function hydrate(array $row): Appointment
+    private function hydrate(Row $row): Appointment
     {
-        $depositAmount = null;
-        if (isset($row['deposit_amount'], $row['deposit_currency']) && $row['deposit_amount'] !== null) {
-            $depositAmount = Money::of(
-                (int) $row['deposit_amount'],
-                Currency::from((string) $row['deposit_currency']),
-            );
-        }
+        $depositAmountRaw = $row->getNullableInt('deposit_amount');
+        $depositCurrencyRaw = $row->getNullableString('deposit_currency');
+        $depositAmount = $depositAmountRaw !== null && $depositCurrencyRaw !== null
+            ? Money::of($depositAmountRaw, Currency::from($depositCurrencyRaw))
+            : null;
 
         return new Appointment(
-            id: (string) $row['id'],
-            bookingNumber: (string) $row['booking_number'],
-            serviceId: (string) $row['service_id'],
-            customerId: (string) $row['customer_id'],
-            customerName: (string) $row['customer_name'],
-            customerEmail: (string) $row['customer_email'],
-            customerPhone: (string) $row['customer_phone'],
-            status: AppointmentStatus::from((string) $row['status']),
-            scheduledAt: new DateTimeImmutable((string) $row['scheduled_at']),
-            duration: (int) $row['duration'],
+            id: $row->getString('id'),
+            bookingNumber: $row->getString('booking_number'),
+            serviceId: $row->getString('service_id'),
+            customerId: $row->getString('customer_id'),
+            customerName: $row->getString('customer_name'),
+            customerEmail: $row->getString('customer_email'),
+            customerPhone: $row->getString('customer_phone'),
+            status: AppointmentStatus::from($row->getString('status')),
+            scheduledAt: new DateTimeImmutable($row->getString('scheduled_at')),
+            duration: $row->getInt('duration'),
             depositAmount: $depositAmount,
-            depositPaid: (bool) $row['deposit_paid'],
-            notes: (string) ($row['notes'] ?? ''),
-            reminderSent: (bool) $row['reminder_sent'],
-            createdAt: new DateTimeImmutable((string) $row['created_at']),
-            updatedAt: new DateTimeImmutable((string) $row['updated_at']),
+            depositPaid: (bool) $row->getInt('deposit_paid'),
+            notes: $row->getNullableString('notes') ?? '',
+            reminderSent: (bool) $row->getInt('reminder_sent'),
+            createdAt: new DateTimeImmutable($row->getString('created_at')),
+            updatedAt: new DateTimeImmutable($row->getString('updated_at')),
         );
     }
 
     /**
-     * @param iterable<array<string, mixed>> $result
      * @return list<Appointment>
      */
-    private function hydrateAll(iterable $result): array
+    private function hydrateAll(Result $result): array
     {
         $appointments = [];
 
-        foreach ($result as $row) {
-            /** @var array<string, mixed> $row */
+        foreach ($result->rows as $row) {
             $appointments[] = $this->hydrate($row);
         }
 
