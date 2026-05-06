@@ -77,13 +77,6 @@ final readonly class SqliteVecStore implements VectorStoreInterface
     {
         $vectorJson = $this->toVectorJson($vector);
 
-        // sqlite-vec uses vec_distance_cosine, vec_distance_L2
-        $distanceFunc = match ($this->metric) {
-            DistanceMetric::Cosine => 'distance',
-            DistanceMetric::L2 => 'distance',
-            DistanceMetric::InnerProduct => 'distance',
-        };
-
         // Use the KNN query syntax for vec0
         $sql = sprintf(
             'SELECT v.id, v.distance AS dist, m.content, m.metadata FROM %s_vec v JOIN %s_meta m ON v.id = m.id WHERE v.embedding MATCH :query AND k = :limit ORDER BY v.distance',
@@ -109,6 +102,7 @@ final readonly class SqliteVecStore implements VectorStoreInterface
                 DistanceMetric::InnerProduct => -$distance,
             };
 
+            /** @var mixed $metadataDecoded */
             $metadataDecoded = json_decode($row->getString('metadata'), true);
             /** @var array<string, mixed> $metadata */
             $metadata = is_array($metadataDecoded) ? $metadataDecoded : [];
@@ -187,6 +181,7 @@ final readonly class SqliteVecStore implements VectorStoreInterface
         $bindings = [];
         $i = 0;
 
+        /** @var mixed $value */
         foreach ($filter as $key => $value) {
             self::assertSafeIdentifier($key);
             $paramName = ':filter_' . $i;
@@ -233,6 +228,7 @@ final readonly class SqliteVecStore implements VectorStoreInterface
         $bindings = [];
         $i = 0;
 
+        /** @var mixed $value */
         foreach ($filter as $key => $value) {
             self::assertSafeIdentifier($key);
             $paramName = ':filter_' . $i;
