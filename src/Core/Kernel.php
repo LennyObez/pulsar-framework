@@ -650,20 +650,24 @@ final class Kernel implements KernelInterface
      */
     private function invokeHandler(ServerRequestInterface $request, MatchedRoute $matched): ResponseInterface
     {
+        /** @var mixed $handler */
         $handler = $matched->getHandler();
 
         if (is_callable($handler)) {
+            /** @var mixed $response */
             $response = $handler($request, $matched->parameters);
         } elseif (is_array($handler) && isset($handler[0], $handler[1]) && is_string($handler[0]) && is_string($handler[1]) && class_exists($handler[0])) {
             $class = $handler[0];
             $method = $handler[1];
             $controller = $this->resolveController($class);
             $args = $this->resolveHandlerArguments($class, $method, $request, $matched->parameters);
+            /** @var mixed $response */
             $response = $controller->$method(...$args);
         } elseif (is_string($handler) && class_exists($handler)) {
             $controller = $this->resolveController($handler);
             if (method_exists($controller, '__invoke')) {
                 $args = $this->resolveHandlerArguments($handler, '__invoke', $request, $matched->parameters);
+                /** @var mixed $response */
                 $response = $controller(...$args);
             } else {
                 throw RoutingException::invalidHandler($handler);
