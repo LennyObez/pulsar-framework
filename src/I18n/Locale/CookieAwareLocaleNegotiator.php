@@ -39,6 +39,7 @@ final readonly class CookieAwareLocaleNegotiator implements LocaleNegotiatorInte
 
         // 1. Cookie
         $cookies = $request->getCookieParams();
+        /** @var mixed $cookieLocale */
         $cookieLocale = $cookies[self::COOKIE_NAME] ?? null;
 
         if (is_string($cookieLocale) && $cookieLocale !== '' && in_array($cookieLocale, $supported, true)) {
@@ -46,6 +47,7 @@ final readonly class CookieAwareLocaleNegotiator implements LocaleNegotiatorInte
         }
 
         // 2. Session attribute
+        /** @var mixed $sessionLocale */
         $sessionLocale = $request->getAttribute('session_locale');
 
         if (is_string($sessionLocale) && $sessionLocale !== '' && in_array($sessionLocale, $supported, true)) {
