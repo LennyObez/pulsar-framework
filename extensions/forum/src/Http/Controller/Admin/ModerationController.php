@@ -19,6 +19,8 @@ use Pulsar\View\Engine\TemplateEngineInterface;
 
 use function array_map;
 use function in_array;
+use function is_int;
+use function is_numeric;
 use function is_string;
 use function max;
 use function min;
@@ -48,9 +50,15 @@ final readonly class ModerationController
         $this->authorize($identity, 'forum.admin.moderate');
 
         $params = $request->getQueryParams();
-        $statusFilter = is_string($params['status'] ?? null) ? $params['status'] : 'pending';
-        $page = max(1, is_numeric($params['page'] ?? null) ? (int) $params['page'] : 1);
-        $perPage = min(100, max(1, is_numeric($params['per_page'] ?? null) ? (int) $params['per_page'] : 20));
+        /** @var mixed $rawStatus */
+        $rawStatus = $params['status'] ?? null;
+        $statusFilter = is_string($rawStatus) ? $rawStatus : 'pending';
+        /** @var mixed $rawPage */
+        $rawPage = $params['page'] ?? null;
+        $page = max(1, (is_int($rawPage) || is_string($rawPage)) && is_numeric($rawPage) ? (int) $rawPage : 1);
+        /** @var mixed $rawPerPage */
+        $rawPerPage = $params['per_page'] ?? null;
+        $perPage = min(100, max(1, (is_int($rawPerPage) || is_string($rawPerPage)) && is_numeric($rawPerPage) ? (int) $rawPerPage : 20));
 
         $status = ReportStatus::tryFrom($statusFilter) ?? ReportStatus::Pending;
 
@@ -96,8 +104,12 @@ final readonly class ModerationController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $action = is_string($body['action'] ?? null) ? $body['action'] : '';
-        $note = is_string($body['note'] ?? null) ? $body['note'] : '';
+        /** @var mixed $rawAction */
+        $rawAction = $body['action'] ?? null;
+        $action = is_string($rawAction) ? $rawAction : '';
+        /** @var mixed $rawNote */
+        $rawNote = $body['note'] ?? null;
+        $note = is_string($rawNote) ? $rawNote : '';
 
         if (!in_array($action, ['action', 'dismiss'], true)) {
             return Response::json(['error' => 'Invalid action. Must be: action or dismiss'], 400);
@@ -131,8 +143,12 @@ final readonly class ModerationController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $action = is_string($body['action'] ?? null) ? $body['action'] : '';
-        $note = is_string($body['note'] ?? null) ? $body['note'] : '';
+        /** @var mixed $rawAction */
+        $rawAction = $body['action'] ?? null;
+        $action = is_string($rawAction) ? $rawAction : '';
+        /** @var mixed $rawNote */
+        $rawNote = $body['note'] ?? null;
+        $note = is_string($rawNote) ? $rawNote : '';
 
         if (!in_array($action, ['action', 'dismiss'], true)) {
             return Response::json(['error' => 'Invalid action. Must be: action or dismiss'], 400);
