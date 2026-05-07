@@ -64,6 +64,7 @@ final readonly class EmbeddingVector
         $count = count($this->values);
 
         for ($i = 0; $i < $count; $i++) {
+            assert($i >= 0);
             $a = $this->values[$i];
             $b = $other->values[$i] ?? 0.0;
             $dot += $a * $b;
