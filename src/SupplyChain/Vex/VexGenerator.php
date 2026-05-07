@@ -218,6 +218,7 @@ final readonly class VexGenerator
                 continue;
             }
 
+            /** @var mixed $advisory */
             foreach ($packageAdvisories as $advisory) {
                 if (!is_array($advisory)) {
                     continue;
@@ -282,7 +283,9 @@ final readonly class VexGenerator
             $isReachable = $found;
         }
 
-        $title = is_string($advisory['title'] ?? null) ? $advisory['title'] : '';
+        /** @var mixed $rawTitle */
+        $rawTitle = $advisory['title'] ?? null;
+        $title = is_string($rawTitle) ? $rawTitle : '';
 
         if ($isReachable) {
             return new VexStatement(
