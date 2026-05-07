@@ -185,25 +185,29 @@ final readonly class GooglePlayVerifier implements MobileVerifierInterface
             }
 
             /** @var array<string, mixed> $data */
-            $state = is_string($data['subscriptionState'] ?? null) ? $data['subscriptionState'] : '';
+            /** @var mixed $rawState */
+            $rawState = $data['subscriptionState'] ?? null;
+            $state = is_string($rawState) ? $rawState : '';
             $isValid = $state === 'SUBSCRIPTION_STATE_ACTIVE'
                 || $state === 'SUBSCRIPTION_STATE_IN_GRACE_PERIOD';
 
+            /** @var mixed $rawLineItems */
+            $rawLineItems = $data['lineItems'] ?? null;
             /** @var list<array<string, mixed>> $lineItems */
-            $lineItems = is_array($data['lineItems'] ?? null) ? $data['lineItems'] : [];
+            $lineItems = is_array($rawLineItems) ? $rawLineItems : [];
             $firstItem = $lineItems[0] ?? [];
 
-            $expiryTimeMillis = is_string($firstItem['expiryTime'] ?? null)
-                ? $firstItem['expiryTime']
-                : null;
+            /** @var mixed $rawExpiry */
+            $rawExpiry = $firstItem['expiryTime'] ?? null;
+            $expiryTimeMillis = is_string($rawExpiry) ? $rawExpiry : null;
 
             $expiresAt = $expiryTimeMillis !== null
                 ? new DateTimeImmutable($expiryTimeMillis)
                 : null;
 
-            $productId = is_string($firstItem['productId'] ?? null)
-                ? $firstItem['productId']
-                : '';
+            /** @var mixed $rawProductId */
+            $rawProductId = $firstItem['productId'] ?? null;
+            $productId = is_string($rawProductId) ? $rawProductId : '';
 
             /** @var array<string, mixed> $autoRenewData */
             $autoRenewData = is_array($firstItem['autoRenewingPlan'] ?? null)
