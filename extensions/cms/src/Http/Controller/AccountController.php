@@ -94,7 +94,9 @@ final readonly class AccountController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $displayName = is_string($body['display_name'] ?? null) ? $body['display_name'] : $customer->displayName;
+        /** @var mixed $rawDisplayName */
+        $rawDisplayName = $body['display_name'] ?? null;
+        $displayName = is_string($rawDisplayName) ? $rawDisplayName : $customer->displayName;
 
         /** @var array<string, mixed>|null $billingAddress */
         $billingAddress = isset($body['billing_address']) && is_array($body['billing_address'])

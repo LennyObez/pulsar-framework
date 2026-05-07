@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Messaging\Http\Controller;
 
 use InvalidArgumentException;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Api;
 use Pulsar\Extension\Messaging\Contracts\ConversationRepositoryInterface;
 use Pulsar\Extension\Messaging\Contracts\MessagingServiceInterface;
 use Pulsar\Extension\Messaging\Domain\ConversationType;
-use Pulsar\Http\JsonResponse;
-use Pulsar\Http\RequestInterface;
-use Pulsar\Http\ResponseInterface;
+use Pulsar\Http\Message\Response;
 
 use function in_array;
 use function is_array;
@@ -32,12 +32,13 @@ final readonly class ConversationController
     /**
      * List conversations for the authenticated user.
      */
-    public function index(RequestInterface $request): ResponseInterface
+    public function index(ServerRequestInterface $request): ResponseInterface
     {
-        $userId = $request->attribute('user_id');
+        /** @var mixed $userId */
+        $userId = $request->getAttribute('user_id');
 
         if (!is_string($userId)) {
-            return JsonResponse::create(['error' => 'Authentication required'], 401);
+            return Response::json(['error' => 'Authentication required'], 401);
         }
 
         $conversations = $this->conversationRepository->findByParticipant($userId);
@@ -54,50 +55,56 @@ final readonly class ConversationController
             ];
         }
 
-        return JsonResponse::create(['conversations' => $items]);
+        return Response::json(['conversations' => $items]);
     }
 
     /**
      * Create a new conversation.
      */
-    public function create(RequestInterface $request): ResponseInterface
+    public function create(ServerRequestInterface $request): ResponseInterface
     {
-        $userId = $request->attribute('user_id');
+        /** @var mixed $userId */
+        $userId = $request->getAttribute('user_id');
 
         if (!is_string($userId)) {
-            return JsonResponse::create(['error' => 'Authentication required'], 401);
+            return Response::json(['error' => 'Authentication required'], 401);
         }
 
-        $body = $request->parsedBody();
+        $body = $request->getParsedBody();
 
         if (!is_array($body)) {
-            return JsonResponse::create(['error' => 'Invalid request body'], 400);
+            return Response::json(['error' => 'Invalid request body'], 400);
         }
 
-        $typeValue = $body['type'] ?? 'direct';
-        $type = ConversationType::tryFrom((string) $typeValue);
+        /** @var mixed $rawType */
+        $rawType = $body['type'] ?? 'direct';
+        $type = ConversationType::tryFrom(is_string($rawType) ? $rawType : 'direct');
 
         if ($type === null) {
-            return JsonResponse::create(['error' => 'Invalid conversation type'], 400);
+            return Response::json(['error' => 'Invalid conversation type'], 400);
         }
 
+        /** @var mixed $rawParticipantIds */
+        $rawParticipantIds = $body['participant_ids'] ?? null;
         /** @var list<string> $participantIds */
-        $participantIds = is_array($body['participant_ids'] ?? null) ? $body['participant_ids'] : [];
+        $participantIds = is_array($rawParticipantIds) ? $rawParticipantIds : [];
 
         // Ensure the creator is a participant
         if (!in_array($userId, $participantIds, true)) {
             $participantIds[] = $userId;
         }
 
-        $title = is_string($body['title'] ?? null) ? $body['title'] : null;
+        /** @var mixed $rawTitle */
+        $rawTitle = $body['title'] ?? null;
+        $title = is_string($rawTitle) ? $rawTitle : null;
 
         try {
             $conversation = $this->messagingService->createConversation($type, $participantIds, $title);
         } catch (InvalidArgumentException $e) {
-            return JsonResponse::create(['error' => $e->getMessage()], 422);
+            return Response::json(['error' => $e->getMessage()], 422);
         }
 
-        return JsonResponse::create([
+        return Response::json([
             'id' => $conversation->id,
             'type' => $conversation->type->value,
             'title' => $conversation->title,
@@ -109,26 +116,28 @@ final readonly class ConversationController
     /**
      * Get a single conversation.
      */
-    public function show(RequestInterface $request): ResponseInterface
+    public function show(ServerRequestInterface $request): ResponseInterface
     {
-        $userId = $request->attribute('user_id');
-        $conversationId = $request->attribute('id');
+        /** @var mixed $userId */
+        $userId = $request->getAttribute('user_id');
+        /** @var mixed $conversationId */
+        $conversationId = $request->getAttribute('id');
 
         if (!is_string($userId)) {
-            return JsonResponse::create(['error' => 'Authentication required'], 401);
+            return Response::json(['error' => 'Authentication required'], 401);
         }
 
         if (!is_string($conversationId)) {
-            return JsonResponse::create(['error' => 'Missing conversation ID'], 400);
+            return Response::json(['error' => 'Missing conversation ID'], 400);
         }
 
         $conversation = $this->conversationRepository->findById($conversationId);
 
         if ($conversation === null || !$conversation->hasParticipant($userId)) {
-            return JsonResponse::create(['error' => 'Conversation not found'], 404);
+            return Response::json(['error' => 'Conversation not found'], 404);
         }
 
-        return JsonResponse::create([
+        return Response::json([
             'id' => $conversation->id,
             'type' => $conversation->type->value,
             'title' => $conversation->title,
