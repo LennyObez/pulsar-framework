@@ -63,21 +63,33 @@ final readonly class SignatureManifestSerializer
 
         $manifests = [];
 
-        /** @var list<array<string, mixed>> $signatures */
-        $signatures = is_array($data['signatures'] ?? null) ? $data['signatures'] : [];
+        /** @var mixed $rawSignatures */
+        $rawSignatures = $data['signatures'] ?? null;
+        $signatures = is_array($rawSignatures) ? $rawSignatures : [];
 
+        /** @var mixed $entry */
         foreach ($signatures as $entry) {
             if (!is_array($entry)) {
                 continue;
             }
 
-            $artifactPath = is_string($entry['artifact_path'] ?? null) ? $entry['artifact_path'] : '';
-            $signature = is_string($entry['signature'] ?? null) ? $entry['signature'] : '';
-            $publicKey = is_string($entry['public_key'] ?? null) ? $entry['public_key'] : '';
-            $timestamp = is_string($entry['timestamp'] ?? null)
-                ? new DateTimeImmutable($entry['timestamp'])
+            /** @var mixed $rawArtifactPath */
+            $rawArtifactPath = $entry['artifact_path'] ?? null;
+            $artifactPath = is_string($rawArtifactPath) ? $rawArtifactPath : '';
+            /** @var mixed $rawSignature */
+            $rawSignature = $entry['signature'] ?? null;
+            $signature = is_string($rawSignature) ? $rawSignature : '';
+            /** @var mixed $rawPublicKey */
+            $rawPublicKey = $entry['public_key'] ?? null;
+            $publicKey = is_string($rawPublicKey) ? $rawPublicKey : '';
+            /** @var mixed $rawTimestamp */
+            $rawTimestamp = $entry['timestamp'] ?? null;
+            $timestamp = is_string($rawTimestamp)
+                ? new DateTimeImmutable($rawTimestamp)
                 : new DateTimeImmutable();
-            $algorithm = is_string($entry['algorithm'] ?? null) ? $entry['algorithm'] : 'ed25519';
+            /** @var mixed $rawAlgorithm */
+            $rawAlgorithm = $entry['algorithm'] ?? null;
+            $algorithm = is_string($rawAlgorithm) ? $rawAlgorithm : 'ed25519';
 
             $manifests[] = new SignatureManifest(
                 artifactPath: $artifactPath,
