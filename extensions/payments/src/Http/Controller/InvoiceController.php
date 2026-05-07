@@ -63,7 +63,9 @@ final readonly class InvoiceController
      */
     public function show(ServerRequestInterface $request): Response
     {
-        $invoiceId = is_string($request->getAttribute('id')) ? $request->getAttribute('id') : '';
+        /** @var mixed $rawInvoiceId */
+        $rawInvoiceId = $request->getAttribute('id');
+        $invoiceId = is_string($rawInvoiceId) ? $rawInvoiceId : '';
 
         if ($invoiceId === '') {
             return Response::json(['error' => 'Missing invoice ID'], 400);
@@ -118,7 +120,9 @@ final readonly class InvoiceController
      */
     public function download(ServerRequestInterface $request): Response
     {
-        $invoiceId = is_string($request->getAttribute('id')) ? $request->getAttribute('id') : '';
+        /** @var mixed $rawInvoiceId */
+        $rawInvoiceId = $request->getAttribute('id');
+        $invoiceId = is_string($rawInvoiceId) ? $rawInvoiceId : '';
 
         if ($invoiceId === '') {
             return Response::json(['error' => 'Missing invoice ID'], 400);
@@ -144,6 +148,7 @@ final readonly class InvoiceController
 
     private function resolveCustomerId(ServerRequestInterface $request): ?string
     {
+        /** @var mixed $userId */
         $userId = $request->getAttribute('user_id');
 
         return is_string($userId) && $userId !== '' ? $userId : null;
