@@ -46,9 +46,15 @@ final readonly class SubscriptionApiController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $storeValue = is_string($body['store'] ?? null) ? $body['store'] : '';
-        $purchaseToken = is_string($body['purchase_token'] ?? null) ? $body['purchase_token'] : '';
-        $planId = is_string($body['plan_id'] ?? null) ? $body['plan_id'] : '';
+        /** @var mixed $rawStore */
+        $rawStore = $body['store'] ?? null;
+        $storeValue = is_string($rawStore) ? $rawStore : '';
+        /** @var mixed $rawPurchaseToken */
+        $rawPurchaseToken = $body['purchase_token'] ?? null;
+        $purchaseToken = is_string($rawPurchaseToken) ? $rawPurchaseToken : '';
+        /** @var mixed $rawPlanId */
+        $rawPlanId = $body['plan_id'] ?? null;
+        $planId = is_string($rawPlanId) ? $rawPlanId : '';
 
         $store = MobileStore::tryFrom($storeValue);
 
@@ -137,6 +143,7 @@ final readonly class SubscriptionApiController
 
     private function resolveUserId(ServerRequestInterface $request): ?string
     {
+        /** @var mixed $userId */
         $userId = $request->getAttribute('user_id');
 
         return is_string($userId) && $userId !== '' ? $userId : null;
