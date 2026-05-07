@@ -196,10 +196,11 @@ final readonly class TicketDetailController
             return Response::json(['error' => 'Message body is required.'], 422);
         }
 
+        $displayName = $identity->displayName();
         $message = $this->ticketService->addMessage(
             ticketId: $id,
             authorId: $identity->id(),
-            authorName: $identity->displayName() ?? 'Agent',
+            authorName: $displayName !== '' ? $displayName : 'Agent',
             body: $messageBody,
         );
 
@@ -228,10 +229,11 @@ final readonly class TicketDetailController
             return Response::json(['error' => 'Note body is required.'], 422);
         }
 
+        $displayName = $identity->displayName();
         $message = $this->ticketService->addInternalNote(
             ticketId: $id,
             authorId: $identity->id(),
-            authorName: $identity->displayName() ?? 'Agent',
+            authorName: $displayName !== '' ? $displayName : 'Agent',
             body: $noteBody,
         );
 
