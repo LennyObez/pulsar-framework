@@ -17,6 +17,8 @@ use Pulsar\Extension\Forum\Thread\ThreadRepositoryInterface;
 use Pulsar\Http\Message\Response;
 
 use function array_map;
+use function is_int;
+use function is_numeric;
 use function is_string;
 use function max;
 use function min;
@@ -44,7 +46,9 @@ final readonly class CategoryApiController
 
         $categories = $this->categoryRepository->findRoots($tenantId);
         $params = $request->getQueryParams();
-        $locale = is_string($params['locale'] ?? null) ? $params['locale'] : 'en';
+        /** @var mixed $rawLocale */
+        $rawLocale = $params['locale'] ?? null;
+        $locale = is_string($rawLocale) ? $rawLocale : 'en';
 
         $data = array_map(
             fn(Category $c) => $this->serializeCategory($c, $locale),
@@ -66,7 +70,9 @@ final readonly class CategoryApiController
         }
 
         $params = $request->getQueryParams();
-        $locale = is_string($params['locale'] ?? null) ? $params['locale'] : 'en';
+        /** @var mixed $rawLocale */
+        $rawLocale = $params['locale'] ?? null;
+        $locale = is_string($rawLocale) ? $rawLocale : 'en';
 
         $children = $this->categoryRepository->findByParent($id);
 
@@ -93,11 +99,19 @@ final readonly class CategoryApiController
         }
 
         $params = $request->getQueryParams();
-        $page = max(1, is_numeric($params['page'] ?? null) ? (int) $params['page'] : 1);
-        $perPage = min(100, max(1, is_numeric($params['per_page'] ?? null) ? (int) $params['per_page'] : $this->config->threadsPerPage));
+        /** @var mixed $rawPage */
+        $rawPage = $params['page'] ?? null;
+        $page = max(1, (is_int($rawPage) || is_string($rawPage)) && is_numeric($rawPage) ? (int) $rawPage : 1);
+        /** @var mixed $rawPerPage */
+        $rawPerPage = $params['per_page'] ?? null;
+        $perPage = min(100, max(1, (is_int($rawPerPage) || is_string($rawPerPage)) && is_numeric($rawPerPage) ? (int) $rawPerPage : $this->config->threadsPerPage));
 
-        $status = is_string($params['status'] ?? null) ? ThreadStatus::tryFrom($params['status']) : null;
-        $type = is_string($params['type'] ?? null) ? ThreadType::tryFrom($params['type']) : null;
+        /** @var mixed $rawStatus */
+        $rawStatus = $params['status'] ?? null;
+        $status = is_string($rawStatus) ? ThreadStatus::tryFrom($rawStatus) : null;
+        /** @var mixed $rawType */
+        $rawType = $params['type'] ?? null;
+        $type = is_string($rawType) ? ThreadType::tryFrom($rawType) : null;
 
         $result = $this->threadRepository->findByCategory($id, $page, $perPage, $status, $type);
 
