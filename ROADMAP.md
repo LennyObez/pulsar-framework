@@ -86,7 +86,56 @@
 - 6 documentation files (install, extensions, cli-reference, upgrade, public-api, performance-budgets)
 - Coverage threshold raised to 70%
 
-### 1.0.0-rc.2 through rc.11 - Hardening
+### rc.12 → 1.0.0 - GA gating work
+
+external audit (2026-05-11) and the in-flight Pulsar audit cycle leave the
+following work between rc.11 and the 1.0.0 GA tag. Each item links to its
+audit finding ID in `.claude/findings.md` and the PRD entry in
+`docs/PRD-1.0.0.md`.
+
+**Blockers (GA tag cannot be cut while open)**
+
+- **SEC-WA-01 / ADR-0030** — WebAuthn extension migrated to
+  `web-auth/webauthn-lib`. The current homegrown adapter cannot ship under
+  1.0.0 per ADR-0030. 2–4 sprint weeks of engineer time + external security
+  audit.
+- **SEC-SC-01 / ADR-0025** — composer.json `require` adds
+  `league/oauth2-server`, `web-auth/webauthn-lib`,
+  `web-token/jwt-framework`. Internal OAuth2/OIDC/WebAuthn implementations
+  become adapters over these libraries.
+- **F385.M4** — Independent security engineer signs off on the
+  OAuth2/WebAuthn/auth surface (memo archived under `docs/audit/`).
+
+**High-priority (close to ship)**
+
+- **SEC-EXT-01** — extension autoload restructure (composer.json mappings
+  → manifest-driven registry).
+- **SEC-EXT-02** — CMS plugin signature enforcement in production.
+- **TOOL-DEP-01/02** — deploy check refuses production startup when
+  artifact signature is missing or invalid.
+- **QUAL-STA-01 / QUAL-PSA-01** — PHPStan baseline + Psalm suppression
+  ratchet to zero (or ≤ N documented entries).
+
+**Quality / coverage ramp**
+
+- **QUAL-COV-01** — CI coverage gate ramp: rc.12 80 (done), rc.13 per-
+  module 95 for auth/security/crypto/audit, 1.0.0 GA 90 global.
+- **QUAL-COV-02** — Infection MSI ramp: rc.12 80 (done),
+  rc.13 90 for src/Auth, src/Security, src/Audit.
+- **TOOL-GATE-01** — composer qa already enriched with `@security:lint`
+  (semgrep) in rc.12; `qa:full` adds `@mutation` + `@test:coverage`.
+
+**Documentation and process**
+
+- Final security audit pass evidence published under `docs/audit/`.
+- Release notes + upgrade guide for `rc.11 → 1.0.0`.
+- Long-term maintenance and supported-versions policy.
+- Performance baseline documentation for production deployments.
+- All ADRs reviewed for code-vs-doc drift (ARCH-DRIFT-01 fixed).
+
+PRD reference: `docs/PRD-1.0.0.md`.
+
+### Previous releases
 
 - rc.2: OpenMetrics rename, public API snapshot system
 - rc.3: Pulsar Studio observability subsystem
@@ -98,16 +147,7 @@
 - rc.9: Boundary violations resolved, post-audit remediation (12 phases), social SSO, key rotation, compliance matrix
 - rc.10: MCP server, ORM, Admin extension
 - rc.11: DI container, application cache (PSR-6/PSR-16), i18n, OpenTelemetry, zero-trust architecture, OAuth2/WebAuthn, queue system, mail/notifications, form extension, API tooling, CMS extension, PHPUnit 13
-
-### 1.0.0 - First stable release
-
-Remaining work before GA:
-
-- Final security audit pass
-- Release notes and upgrade guide from rc.11
-- Long-term maintenance plan and supported versions policy
-- Performance baseline documentation for production deployments
-- All documentation reviewed for accuracy against final codebase
+- rc.12: Auth fork consolidation, OAuth2 JWKS RS256, 2FA fail-closed, BLAKE2b token indices, PSR-7 CRLF guard, body cap, audit fail-closed deploy check, subprocess env allowlist, Semgrep export rule, ASVS L2 matrix stub, eIDAS production deploy gate, GDPR analytics defaults, Infection MSI ramp, coverage threshold ramp
 
 ## Commit message convention
 
