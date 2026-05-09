@@ -93,18 +93,22 @@ following work between rc.11 and the 1.0.0 GA tag. Each item links to its
 audit finding ID in `.claude/findings.md` and the PRD entry in
 `docs/PRD-1.0.0.md`.
 
-**Blockers (GA tag cannot be cut while open)**
+**Blockers (GA tag cannot be cut while open)** — per **ADR-0032** (2026-05-12,
+supersedes ADR-0025 + ADR-0030):
 
-- **SEC-WA-01 / ADR-0030** — WebAuthn extension migrated to
-  `web-auth/webauthn-lib`. The current homegrown adapter cannot ship under
-  1.0.0 per ADR-0030. 2–4 sprint weeks of engineer time + external security
-  audit.
-- **SEC-SC-01 / ADR-0025** — composer.json `require` adds
-  `league/oauth2-server`, `web-auth/webauthn-lib`,
-  `web-token/jwt-framework`. Internal OAuth2/OIDC/WebAuthn implementations
-  become adapters over these libraries.
-- **F385.M4** — Independent security engineer signs off on the
-  OAuth2/WebAuthn/auth surface (memo archived under `docs/audit/`).
+- **VECTORS-WA-01** — W3C WebAuthn conformance vector suite imported and
+  running green in CI. Source: <https://github.com/web-auth/webauthn-test-
+  vectors> + W3C Level 2/3 corpus. Coverage: 7 attestation formats +
+  authentication ceremony + counter monotonicity.
+- **VECTORS-OAUTH-01** — OAuth2 / OIDC conformance vector suite imported
+  and green. Source: OpenID Foundation Self-Certification + RFC 6749/7636/
+  7662/8176 examples + OAuth-in-the-Wild attack corpus.
+- **VECTORS-JOSE-01** — JOSE / JWT conformance vector suite imported and
+  green. Source: RFC 7515-7519 examples + the JWT attack corpus (alg:none,
+  RS256→HS256 confusion, kid traversal, critical header bypass).
+- **F385.M4** — moved to **1.1.0 blocker** per ADR-0032. The 1.0.0 GA tag
+  may be cut with the conformance vector suite in place; the external
+  security audit memo lands before 1.1.0.
 
 **High-priority (close to ship)**
 
