@@ -178,6 +178,7 @@ final readonly class SubscriptionController
 
     private function resolveUserId(ServerRequestInterface $request): ?string
     {
+        /** @var mixed $userId */
         $userId = $request->getAttribute('user_id');
 
         return is_string($userId) && $userId !== '' ? $userId : null;
