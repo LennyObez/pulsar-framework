@@ -189,9 +189,15 @@ final readonly class LiveCssController extends AbstractAdminController
         $this->authorize($identity, 'cms.themes.view');
 
         $params = $request->getQueryParams();
-        $themeId = is_string($params['theme_id'] ?? null) ? $params['theme_id'] : '';
-        $page = max(1, is_int($params['page'] ?? null) ? $params['page'] : 1);
-        $perPage = min(100, max(1, is_int($params['per_page'] ?? null) ? $params['per_page'] : 20));
+        /** @var mixed $rawThemeId */
+        $rawThemeId = $params['theme_id'] ?? null;
+        $themeId = is_string($rawThemeId) ? $rawThemeId : '';
+        /** @var mixed $rawPage */
+        $rawPage = $params['page'] ?? null;
+        $page = max(1, is_int($rawPage) ? $rawPage : 1);
+        /** @var mixed $rawPerPage */
+        $rawPerPage = $params['per_page'] ?? null;
+        $perPage = min(100, max(1, is_int($rawPerPage) ? $rawPerPage : 20));
 
         if ($themeId === '') {
             return Response::json(['error' => 'Theme ID is required'], 400);
