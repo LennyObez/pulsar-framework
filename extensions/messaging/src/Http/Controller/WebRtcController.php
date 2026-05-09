@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Messaging\Http\Controller;
 
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Api;
 use Pulsar\Extension\Messaging\WebSocket\SignalingHandler;
-use Pulsar\Http\JsonResponse;
-use Pulsar\Http\RequestInterface;
-use Pulsar\Http\ResponseInterface;
+use Pulsar\Http\Message\Response;
 
 use function is_string;
 
@@ -26,15 +26,16 @@ final readonly class WebRtcController
     /**
      * Get ICE server configuration for the client.
      */
-    public function iceServers(RequestInterface $request): ResponseInterface
+    public function iceServers(ServerRequestInterface $request): ResponseInterface
     {
-        $userId = $request->attribute('user_id');
+        /** @var mixed $userId */
+        $userId = $request->getAttribute('user_id');
 
         if (!is_string($userId)) {
-            return JsonResponse::create(['error' => 'Authentication required'], 401);
+            return Response::json(['error' => 'Authentication required'], 401);
         }
 
-        return JsonResponse::create([
+        return Response::json([
             'ice_servers' => $this->signalingHandler->getIceServers(),
         ]);
     }
@@ -42,31 +43,33 @@ final readonly class WebRtcController
     /**
      * Get the status of an active call.
      */
-    public function callStatus(RequestInterface $request): ResponseInterface
+    public function callStatus(ServerRequestInterface $request): ResponseInterface
     {
-        $userId = $request->attribute('user_id');
-        $callId = $request->attribute('callId');
+        /** @var mixed $userId */
+        $userId = $request->getAttribute('user_id');
+        /** @var mixed $callId */
+        $callId = $request->getAttribute('callId');
 
         if (!is_string($userId)) {
-            return JsonResponse::create(['error' => 'Authentication required'], 401);
+            return Response::json(['error' => 'Authentication required'], 401);
         }
 
         if (!is_string($callId)) {
-            return JsonResponse::create(['error' => 'Missing call ID'], 400);
+            return Response::json(['error' => 'Missing call ID'], 400);
         }
 
         $session = $this->signalingHandler->getCallSession($callId);
 
         if ($session === null) {
-            return JsonResponse::create(['error' => 'Call not found'], 404);
+            return Response::json(['error' => 'Call not found'], 404);
         }
 
         // Only allow participants to check call status
         if ($session->callerId !== $userId && $session->calleeId !== $userId) {
-            return JsonResponse::create(['error' => 'Access denied'], 403);
+            return Response::json(['error' => 'Access denied'], 403);
         }
 
-        return JsonResponse::create([
+        return Response::json([
             'id' => $session->id,
             'caller_id' => $session->callerId,
             'callee_id' => $session->calleeId,
