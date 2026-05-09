@@ -35,6 +35,7 @@ final readonly class LocaleNegotiator implements LocaleNegotiatorInterface
         }
 
         // 1. Query parameter
+        /** @var mixed $queryLocale */
         $queryLocale = $request->getQueryParams()['locale'] ?? null;
 
         if (is_string($queryLocale) && $queryLocale !== '') {
@@ -46,6 +47,7 @@ final readonly class LocaleNegotiator implements LocaleNegotiatorInterface
         }
 
         // 2. Request attribute (route parameter)
+        /** @var mixed $attrLocale */
         $attrLocale = $request->getAttribute('_locale');
 
         if (is_string($attrLocale) && $attrLocale !== '') {
@@ -95,7 +97,13 @@ final readonly class LocaleNegotiator implements LocaleNegotiatorInterface
         }
 
         // Reverse: 'fr' matches supported 'fr_CA'
-        return array_find($supported, fn(string $locale): bool => $this->extractLanguage($locale) === $language);
+        foreach ($supported as $locale) {
+            if ($this->extractLanguage($locale) === $language) {
+                return $locale;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -143,6 +151,7 @@ final readonly class LocaleNegotiator implements LocaleNegotiatorInterface
         $limit = min($count, self::MAX_ACCEPT_LANGUAGE_TOKENS);
 
         for ($i = 0; $i < $limit; $i++) {
+            assert($i >= 0);
             $tag = str_replace('-', '_', $matches[1][$i]);
             $rawQ = $matches[2][$i];
             $quality = 1.0;
