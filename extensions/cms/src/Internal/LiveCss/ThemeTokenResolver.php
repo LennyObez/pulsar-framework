@@ -70,13 +70,18 @@ final readonly class ThemeTokenResolver implements ThemeTokenResolverInterface
             }
 
             /** @var array<string, mixed> $def */
+            /** @var mixed $rawConstraints */
             $rawConstraints = $def['constraints'] ?? [];
             /** @var array<string, mixed> $constraintsArray */
             $constraintsArray = is_array($rawConstraints) ? $rawConstraints : [];
 
+            /** @var mixed $rawDefault */
             $rawDefault = $def['default'] ?? null;
+            /** @var mixed $rawLabel */
             $rawLabel = $def['label'] ?? null;
+            /** @var mixed $rawLabelName */
             $rawLabelName = $def['name'] ?? null;
+            /** @var mixed $rawGroup */
             $rawGroup = $def['group'] ?? null;
             $tokens[] = new ThemeToken(
                 name: (is_string($def['name']) ? $def['name'] : ''),
@@ -166,6 +171,7 @@ final readonly class ThemeTokenResolver implements ThemeTokenResolverInterface
         $numericValue = (float) $matches[1];
 
         if (array_key_exists('min', $token->constraints)) {
+            /** @var mixed $min */
             $min = $token->constraints['min'];
 
             if (is_numeric($min) && $numericValue < (float) $min) {
@@ -174,6 +180,7 @@ final readonly class ThemeTokenResolver implements ThemeTokenResolverInterface
         }
 
         if (array_key_exists('max', $token->constraints)) {
+            /** @var mixed $max */
             $max = $token->constraints['max'];
 
             if (is_numeric($max) && $numericValue > (float) $max) {
