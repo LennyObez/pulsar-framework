@@ -227,8 +227,11 @@ final readonly class TrackingService implements TrackingServiceInterface
             $yesterdayVisitorId,
         );
 
+        /** @var mixed $rawEventProps */
+        $rawEventProps = $payload['event_props'] ?? null;
         /** @var array<string, mixed> $eventProps */
-        $eventProps = is_array($payload['event_props'] ?? null) ? $payload['event_props'] : [];
+        $eventProps = is_array($rawEventProps) ? $rawEventProps : [];
+        /** @var mixed $rawRevenue */
         $rawRevenue = $payload['revenue_value'] ?? null;
         $revenueValue = is_float($rawRevenue) || is_int($rawRevenue) ? (float) $rawRevenue : null;
 
@@ -258,6 +261,7 @@ final readonly class TrackingService implements TrackingServiceInterface
      */
     private function resolveSite(ServerRequestInterface $request, array $payload): ?Site
     {
+        /** @var mixed $site */
         $site = $request->getAttribute('analytics.site');
 
         if ($site instanceof Site) {
@@ -283,6 +287,7 @@ final readonly class TrackingService implements TrackingServiceInterface
     private function getClientIp(ServerRequestInterface $request): string
     {
         $serverParams = $request->getServerParams();
+        /** @var mixed $raw */
         $raw = $serverParams['REMOTE_ADDR'] ?? null;
         $remoteAddr = is_string($raw) ? $raw : '127.0.0.1';
 
@@ -416,6 +421,7 @@ final readonly class TrackingService implements TrackingServiceInterface
      */
     private static function str(array $data, string $key, string $default = ''): string
     {
+        /** @var mixed $value */
         $value = $data[$key] ?? null;
 
         return is_string($value) ? $value : $default;
@@ -426,6 +432,7 @@ final readonly class TrackingService implements TrackingServiceInterface
      */
     private static function intVal(array $data, string $key, int $default = 0): int
     {
+        /** @var mixed $value */
         $value = $data[$key] ?? null;
 
         return is_int($value) ? $value : $default;
