@@ -14,7 +14,11 @@ use Pulsar\Extension\Admin\Features\ListResource\ListResourceHandler;
 use Pulsar\Extension\Admin\Features\ListResource\ListResourceRequest;
 use Pulsar\Http\Message\Response;
 
+use function is_int;
+use function is_numeric;
 use function is_string;
+use function max;
+use function min;
 use function str_contains;
 
 /**
@@ -36,6 +40,7 @@ final readonly class ResourceListController
         $queryParams = $request->getQueryParams();
 
         $filters = [];
+        /** @var mixed $rawFilters */
         $rawFilters = $queryParams['filters'] ?? null;
         if (is_string($rawFilters)) {
             /** @var array<string, mixed> $decoded */
@@ -43,19 +48,23 @@ final readonly class ResourceListController
             $filters = $decoded;
         }
 
+        /** @var mixed $sortField */
         $sortField = $queryParams['sort_field'] ?? null;
+        /** @var mixed $sortDir */
         $sortDir = $queryParams['sort_dir'] ?? null;
         /** @var array<string, string> $sort */
         $sort = (is_string($sortField) && $sortField !== '')
             ? [$sortField => is_string($sortDir) ? $sortDir : 'asc']
             : [];
 
+        /** @var mixed $pageRaw */
         $pageRaw = $queryParams['page'] ?? 1;
-        $page = max(1, is_numeric($pageRaw) ? (int) $pageRaw : 1);
+        $page = max(1, (is_int($pageRaw) || is_string($pageRaw)) && is_numeric($pageRaw) ? (int) $pageRaw : 1);
+        /** @var mixed $perPageRaw */
         $perPageRaw = $queryParams['per_page'] ?? 25;
         $perPage = min(
             $this->config->pagination->maxPerPage,
-            max(1, is_numeric($perPageRaw) ? (int) $perPageRaw : 25),
+            max(1, (is_int($perPageRaw) || is_string($perPageRaw)) && is_numeric($perPageRaw) ? (int) $perPageRaw : 25),
         );
 
         try {
