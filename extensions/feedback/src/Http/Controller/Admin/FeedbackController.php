@@ -134,7 +134,9 @@ final readonly class FeedbackController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $response = is_string($body['response'] ?? null) ? $body['response'] : '';
+        /** @var mixed $rawResponse */
+        $rawResponse = $body['response'] ?? null;
+        $response = is_string($rawResponse) ? $rawResponse : '';
 
         if ($response === '') {
             return Response::json([
@@ -164,7 +166,9 @@ final readonly class FeedbackController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $githubRepo = is_string($body['github_repo'] ?? null) ? $body['github_repo'] : '';
+        /** @var mixed $rawGithubRepo */
+        $rawGithubRepo = $body['github_repo'] ?? null;
+        $githubRepo = is_string($rawGithubRepo) ? $rawGithubRepo : '';
 
         if ($githubRepo === '') {
             return Response::json([
