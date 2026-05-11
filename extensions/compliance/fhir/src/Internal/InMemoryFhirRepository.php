@@ -58,7 +58,9 @@ final class InMemoryFhirRepository implements FhirRepositoryInterface
     #[Override]
     public function create(string $resourceType, array $resource): array
     {
-        $id = is_string($resource['id'] ?? null) ? $resource['id'] : bin2hex(random_bytes(8));
+        /** @var mixed $rawId */
+        $rawId = $resource['id'] ?? null;
+        $id = is_string($rawId) ? $rawId : bin2hex(random_bytes(8));
         $resource['id'] = $id;
         $resource['resourceType'] = $resourceType;
         $resource['meta'] = $this->buildMeta();
@@ -112,7 +114,9 @@ final class InMemoryFhirRepository implements FhirRepositoryInterface
             if ($param === '_lastUpdated') {
                 /** @var array<string, mixed> $meta */
                 $meta = $resource['meta'] ?? [];
-                $lastUpdated = is_string($meta['lastUpdated'] ?? null) ? $meta['lastUpdated'] : '';
+                /** @var mixed $rawLastUpdated */
+                $rawLastUpdated = $meta['lastUpdated'] ?? null;
+                $lastUpdated = is_string($rawLastUpdated) ? $rawLastUpdated : '';
                 if (!str_contains($lastUpdated, $value)) {
                     return false;
                 }
@@ -120,6 +124,7 @@ final class InMemoryFhirRepository implements FhirRepositoryInterface
             }
 
             // Handle dotted paths (e.g. subject.reference)
+            /** @var mixed $fieldValue */
             $fieldValue = $this->resolveField($resource, $param);
             if ($fieldValue === null) {
                 return false;
@@ -141,12 +146,14 @@ final class InMemoryFhirRepository implements FhirRepositoryInterface
     private function resolveField(array $resource, string $path): mixed
     {
         $parts = explode('.', $path);
+        /** @var mixed $current */
         $current = $resource;
 
         foreach ($parts as $part) {
             if (!is_array($current) || !array_key_exists($part, $current)) {
                 return null;
             }
+            /** @var mixed $current */
             $current = $current[$part];
         }
 
