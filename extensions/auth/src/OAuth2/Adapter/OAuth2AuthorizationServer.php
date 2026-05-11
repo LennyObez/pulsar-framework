@@ -133,8 +133,11 @@ final readonly class OAuth2AuthorizationServer implements AuthorizationServerInt
         $redirectUri = $this->extractRequiredQueryParam($params, 'redirect_uri');
         $responseType = $this->extractRequiredQueryParam($params, 'response_type');
         $codeChallenge = $this->extractRequiredQueryParam($params, 'code_challenge');
+        /** @var mixed $codeChallengeMethod */
         $codeChallengeMethod = $params['code_challenge_method'] ?? 'S256';
+        /** @var mixed $state */
         $state = $params['state'] ?? null;
+        /** @var mixed $nonce */
         $nonce = $params['nonce'] ?? null;
 
         if ($responseType !== 'code') {
@@ -296,11 +299,13 @@ final readonly class OAuth2AuthorizationServer implements AuthorizationServerInt
         $body = $request->getParsedBody();
         $body = is_array($body) ? $body : [];
 
+        /** @var mixed $token */
         $token = $body['token'] ?? null;
         if (!is_string($token) || $token === '') {
             throw OAuth2Exception::invalidRequest('Missing required parameter: token');
         }
 
+        /** @var mixed $tokenTypeHint */
         $tokenTypeHint = $body['token_type_hint'] ?? null;
 
         // Try to revoke based on hint or try both types
@@ -353,7 +358,9 @@ final readonly class OAuth2AuthorizationServer implements AuthorizationServerInt
 
         // Fall back to body parameters
         if ($clientId === null) {
+            /** @var mixed $clientId */
             $clientId = $body['client_id'] ?? null;
+            /** @var mixed $clientSecret */
             $clientSecret = $body['client_secret'] ?? null;
 
             if (!is_string($clientId) || $clientId === '') {
@@ -457,6 +464,7 @@ final readonly class OAuth2AuthorizationServer implements AuthorizationServerInt
      */
     private function extractSubjectFromRequest(ServerRequestInterface $request): ?string
     {
+        /** @var mixed $subject */
         $subject = $request->getAttribute('subject_id');
 
         return is_string($subject) ? $subject : null;
@@ -468,8 +476,11 @@ final readonly class OAuth2AuthorizationServer implements AuthorizationServerInt
     private function buildErrorRedirectOrJson(ServerRequestInterface $request, OAuth2Exception $e): ResponseInterface
     {
         $params = $request->getQueryParams();
+        /** @var mixed $redirectUri */
         $redirectUri = $params['redirect_uri'] ?? null;
+        /** @var mixed $clientId */
         $clientId = $params['client_id'] ?? null;
+        /** @var mixed $state */
         $state = $params['state'] ?? null;
 
         // Only redirect if we have a valid redirect URI registered for this client
