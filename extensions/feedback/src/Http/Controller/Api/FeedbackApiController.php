@@ -58,7 +58,9 @@ final readonly class FeedbackApiController
         $body = (array) ($request->getParsedBody() ?? []);
 
         // Validate category
-        $categoryValue = is_string($body['category'] ?? null) ? $body['category'] : '';
+        /** @var mixed $rawCategory */
+        $rawCategory = $body['category'] ?? null;
+        $categoryValue = is_string($rawCategory) ? $rawCategory : '';
         $category = FeedbackCategory::tryFrom($categoryValue);
 
         if ($category === null) {
@@ -71,7 +73,9 @@ final readonly class FeedbackApiController
         }
 
         // Validate description
-        $description = is_string($body['description'] ?? null) ? $body['description'] : '';
+        /** @var mixed $rawDescription */
+        $rawDescription = $body['description'] ?? null;
+        $description = is_string($rawDescription) ? $rawDescription : '';
         $descriptionLength = mb_strlen($description);
 
         if ($descriptionLength < 10 || $descriptionLength > 5000) {

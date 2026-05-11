@@ -51,9 +51,15 @@ final readonly class NewsletterApiController
             return Response::json(['status' => 'ok', 'message' => 'Subscription received']);
         }
 
-        $email = is_string($body['email'] ?? null) ? trim($body['email']) : '';
-        $locale = is_string($body['locale'] ?? null) ? trim($body['locale']) : 'en';
-        $source = is_string($body['source'] ?? null) ? trim($body['source']) : 'form';
+        /** @var mixed $rawEmail */
+        $rawEmail = $body['email'] ?? null;
+        $email = is_string($rawEmail) ? trim($rawEmail) : '';
+        /** @var mixed $rawLocale */
+        $rawLocale = $body['locale'] ?? null;
+        $locale = is_string($rawLocale) ? trim($rawLocale) : 'en';
+        /** @var mixed $rawSource */
+        $rawSource = $body['source'] ?? null;
+        $source = is_string($rawSource) ? trim($rawSource) : 'form';
 
         if ($email === '' || filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
             return Response::json(['error' => 'A valid email address is required'], 422);
@@ -63,9 +69,9 @@ final readonly class NewsletterApiController
         $tenantId = $request->getAttribute('tenant_id');
 
         $serverParams = $request->getServerParams();
-        $ipAddress = is_string($serverParams['REMOTE_ADDR'] ?? null)
-            ? $serverParams['REMOTE_ADDR']
-            : '0.0.0.0';
+        /** @var mixed $rawIp */
+        $rawIp = $serverParams['REMOTE_ADDR'] ?? null;
+        $ipAddress = is_string($rawIp) ? $rawIp : '0.0.0.0';
 
         try {
             $subscriber = $this->subscriptionService->subscribe(

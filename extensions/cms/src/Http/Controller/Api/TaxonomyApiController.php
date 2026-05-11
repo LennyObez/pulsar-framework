@@ -66,8 +66,12 @@ final readonly class TaxonomyApiController
         }
 
         $params = $request->getQueryParams();
-        $locale = is_string($params['locale'] ?? null) ? $params['locale'] : $this->config->defaultLocale;
-        $parentId = is_string($params['parent_id'] ?? null) ? $params['parent_id'] : null;
+        /** @var mixed $rawLocale */
+        $rawLocale = $params['locale'] ?? null;
+        $locale = is_string($rawLocale) ? $rawLocale : $this->config->defaultLocale;
+        /** @var mixed $rawParentId */
+        $rawParentId = $params['parent_id'] ?? null;
+        $parentId = is_string($rawParentId) ? $rawParentId : null;
 
         $terms = $this->repository->findTerms($taxonomy->id, $locale, $parentId);
 
