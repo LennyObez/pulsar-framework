@@ -140,6 +140,7 @@ final readonly class BreakTheGlassMiddleware implements MiddlewareInterface
 
     private function extractActorId(ServerRequestInterface $request): string
     {
+        /** @var mixed $actor */
         $actor = $request->getAttribute('actor_id');
 
         return is_string($actor) ? $actor : 'unknown';
@@ -147,6 +148,7 @@ final readonly class BreakTheGlassMiddleware implements MiddlewareInterface
 
     private function extractActorName(ServerRequestInterface $request): string
     {
+        /** @var mixed $name */
         $name = $request->getAttribute('actor_name');
 
         return is_string($name) ? $name : '';
@@ -154,6 +156,7 @@ final readonly class BreakTheGlassMiddleware implements MiddlewareInterface
 
     private function extractActorRole(ServerRequestInterface $request): string
     {
+        /** @var mixed $role */
         $role = $request->getAttribute('actor_role');
 
         return is_string($role) ? $role : '';
@@ -161,6 +164,7 @@ final readonly class BreakTheGlassMiddleware implements MiddlewareInterface
 
     private function extractResourceType(ServerRequestInterface $request): string
     {
+        /** @var mixed $type */
         $type = $request->getAttribute('resource_type');
 
         return is_string($type) ? $type : 'http_endpoint';
@@ -168,6 +172,7 @@ final readonly class BreakTheGlassMiddleware implements MiddlewareInterface
 
     private function extractResourceId(ServerRequestInterface $request): string
     {
+        /** @var mixed $id */
         $id = $request->getAttribute('resource_id');
 
         return is_string($id) ? $id : $request->getUri()->getPath();
@@ -175,6 +180,7 @@ final readonly class BreakTheGlassMiddleware implements MiddlewareInterface
 
     private function extractSessionId(ServerRequestInterface $request): string
     {
+        /** @var mixed $sessionId */
         $sessionId = $request->getAttribute('session_id');
 
         return is_string($sessionId) ? $sessionId : '';
@@ -183,6 +189,7 @@ final readonly class BreakTheGlassMiddleware implements MiddlewareInterface
     private function extractIpAddress(ServerRequestInterface $request): string
     {
         $serverParams = $request->getServerParams();
+        /** @var mixed $ip */
         $ip = $serverParams['REMOTE_ADDR'] ?? null;
 
         return is_string($ip) ? $ip : '';
