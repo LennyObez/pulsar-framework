@@ -138,9 +138,12 @@ final readonly class BancontactWebhookHandler
     private function extractPaymentMethodType(array $object): string
     {
         // Check payment_method_types array
+        /** @var mixed $rawTypes */
+        $rawTypes = $object['payment_method_types'] ?? null;
         /** @var list<mixed> $types */
-        $types = is_array($object['payment_method_types'] ?? null) ? $object['payment_method_types'] : [];
+        $types = is_array($rawTypes) ? $rawTypes : [];
 
+        /** @var mixed $type */
         foreach ($types as $type) {
             if ($type === 'bancontact') {
                 return 'bancontact';
