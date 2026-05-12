@@ -27,6 +27,7 @@ final readonly class EventDataExtractor
 
     public function eventType(): string
     {
+        /** @var mixed $raw */
         $raw = $this->event['event_type'] ?? 'unknown';
 
         return is_string($raw) ? $raw : 'unknown';
@@ -34,6 +35,7 @@ final readonly class EventDataExtractor
 
     public function eventId(): string
     {
+        /** @var mixed $raw */
         $raw = $this->event['event_id'] ?? '';
 
         return is_string($raw) ? $raw : '';
@@ -41,13 +43,15 @@ final readonly class EventDataExtractor
 
     public function timestampUs(): int
     {
+        /** @var mixed $raw */
         $raw = $this->event['timestamp_us'] ?? 0;
 
-        return is_int($raw) ? $raw : (is_numeric($raw) ? (int) $raw : 0);
+        return is_int($raw) ? $raw : (is_string($raw) && is_numeric($raw) ? (int) $raw : 0);
     }
 
     public function requestId(): string
     {
+        /** @var mixed $raw */
         $raw = $this->event['request_id'] ?? '';
 
         return is_string($raw) ? $raw : '';
@@ -55,9 +59,10 @@ final readonly class EventDataExtractor
 
     public function id(): int
     {
+        /** @var mixed $raw */
         $raw = $this->event['id'] ?? 0;
 
-        return is_int($raw) ? $raw : (is_numeric($raw) ? (int) $raw : 0);
+        return is_int($raw) ? $raw : (is_string($raw) && is_numeric($raw) ? (int) $raw : 0);
     }
 
     /**
