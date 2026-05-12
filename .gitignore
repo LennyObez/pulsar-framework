@@ -8,6 +8,9 @@ nul
 *.swo
 *.stackdump
 
+# Audit working notes — kept local only, never published
+docs/audit/
+
 # PHP / Composer
 /vendor/
 .phpunit.result.cache
