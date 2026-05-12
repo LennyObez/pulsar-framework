@@ -146,6 +146,6 @@
 ## Machine-readable form
 
 This matrix is **stub markdown** to ensure the audit gap is closed. The
-machine-readable YAML form (planned, also under ASVS-MATRIX in `.claude/findings.md`)
+machine-readable YAML form (planned, also under ASVS-MATRIX in the internal findings register)
 is a follow-up that wires each control row to its automated test + CI gate.
 For now, treat this document as the authoritative manual mapping.

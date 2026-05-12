@@ -69,8 +69,8 @@ docs (`docs/compliance/<framework>.md`).
 - CI gate: line coverage ≥ 80% (ramps to 90 at GA), Infection MSI ≥ 80.
 - PHPStan baseline + Psalm suppressions reduced to documented zero (or ≤ N
   with rationale).
-- Every external audit finding in `.claude/findings.md` is either closed or
-  has an explicit waiver in this PRD.
+- Every external audit finding in the internal findings register is either
+  closed or has an explicit waiver in this PRD.
 - External security audit memo (F385.M4) archived under `docs/audit/`.
 
 ## Out-of-scope for 1.0.0

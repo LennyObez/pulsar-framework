@@ -50,7 +50,7 @@ Anything else is a bundling violation and the release PR is rejected.
 
 ### 4. Title and prefix MUST reflect scope.
 
-Conventional Commits is already project policy (CLAUDE.md). The strict additional rule for PRs:
+Conventional Commits is already project policy. The strict additional rule for PRs:
 
 - A PR that introduces a new module under `src/<NewModule>/` or a new `src/<Existing>/<NewSubsystem>/` MUST use the `feat(...)` prefix.
 - `chore(...)`, `docs(...)`, `refactor(...)` prefixes MUST NOT be used on PRs that add features. F387.M2 (`chore:` on a PR introducing 4 core modules) is the canonical violation.
@@ -80,7 +80,7 @@ Specifically:
 
 ### Phase 2: backlog audit (during rc.12 cycle)
 
-- Open the rc.11 release-PR meta-issue: enumerate the 50 commits in PR #385 and assign each to a reviewer for retrospective review. Findings flow back into `.claude/findings.md` under the `Session 10 long-tail` heading.
+- Open the rc.11 release-PR meta-issue: enumerate the 50 commits in PR #385 and assign each to a reviewer for retrospective review. Findings flow back into the internal findings register under a rc.11 long-tail heading.
 
 ### Phase 3: GA gate (before tagging 1.0.0)
 
@@ -116,6 +116,6 @@ Specifically:
 
 ## Cross-references
 
-- CLAUDE.md "Commit & Branch Workflow" — refines that section's scope policy.
+- Project commit & branch workflow conventions — refined by this ADR's scope policy.
 - ADR-0001 governance — this ADR is a derived implementation of the "documented architectural commitment" principle.
 - ADR-0030 (WebAuthn library adoption) — also a 1.0.0 GA blocker; both ADRs gate the same tag.
