@@ -124,11 +124,17 @@ final class Collection implements Countable, IteratorAggregate
 
         foreach ($this->items as $item) {
             if (is_array($item) && array_key_exists($key, $item)) {
-                $result[] = $item[$key];
+                /** @var mixed $value */
+                $value = $item[$key];
+                $result[] = $value;
             } elseif (is_object($item) && property_exists($item, $key)) {
-                $result[] = $item->{$key};
+                /** @var mixed $value */
+                $value = $item->{$key};
+                $result[] = $value;
             } elseif (is_object($item) && method_exists($item, $key)) {
-                $result[] = $item->{$key}();
+                /** @var mixed $value */
+                $value = $item->{$key}();
+                $result[] = $value;
             }
         }
 
@@ -270,8 +276,10 @@ final class Collection implements Countable, IteratorAggregate
         foreach ($this->items as $item) {
             if (is_string($keyOrCallback)) {
                 if (is_array($item)) {
+                    /** @var mixed $raw */
                     $raw = $item[$keyOrCallback] ?? '';
                 } elseif (is_object($item) && property_exists($item, $keyOrCallback)) {
+                    /** @var mixed $raw */
                     $raw = $item->{$keyOrCallback};
                 } else {
                     $raw = '';
