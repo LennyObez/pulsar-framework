@@ -48,8 +48,12 @@ final readonly class PayconiqWebhookHandler
         /** @var array<string, mixed> $event */
         $event = json_decode($payload, true, 32, JSON_THROW_ON_ERROR);
 
-        $paymentId = is_string($event['paymentId'] ?? null) ? $event['paymentId'] : '';
-        $status = is_string($event['status'] ?? null) ? $event['status'] : '';
+        /** @var mixed $rawPaymentId */
+        $rawPaymentId = $event['paymentId'] ?? null;
+        $paymentId = is_string($rawPaymentId) ? $rawPaymentId : '';
+        /** @var mixed $rawStatus */
+        $rawStatus = $event['status'] ?? null;
+        $status = is_string($rawStatus) ? $rawStatus : '';
 
         if ($paymentId === '' || $status === '') {
             return ['verified' => true, 'payment_id' => $paymentId, 'status' => $status, 'processed' => false];
