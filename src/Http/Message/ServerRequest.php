@@ -925,6 +925,7 @@ final class ServerRequest implements ServerRequestInterface
         }
 
         try {
+            /** @var mixed $decoded */
             $decoded = json_decode($body, true, flags: JSON_THROW_ON_ERROR);
 
             /** @var array<string, mixed> */
@@ -1020,6 +1021,7 @@ final class ServerRequest implements ServerRequestInterface
     {
         $normalized = [];
 
+        /** @var mixed $value */
         foreach ($files as $key => $value) {
             if ($value instanceof UploadedFile) {
                 $normalized[$key] = $value;
