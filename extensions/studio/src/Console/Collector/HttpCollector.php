@@ -101,7 +101,9 @@ final class HttpCollector implements MiddlewareInterface, CollectorInterface
         /** @var array<string, string> $headers */
         $headers = array_map(static fn(array $values): string => $values[0] ?? '', $request->getHeaders());
 
+        /** @var mixed $remoteAddr */
         $remoteAddr = $request->getServerParams()['REMOTE_ADDR'] ?? null;
+        /** @var mixed $routeName */
         $routeName = $request->getAttribute('_route_name');
 
         $bodyContents = (string) $request->getBody();
@@ -143,6 +145,7 @@ final class HttpCollector implements MiddlewareInterface, CollectorInterface
 
         $body = (string) $response?->getBody();
 
+        /** @var mixed $responseRouteName */
         $responseRouteName = $request->getAttribute('_route_name');
         $contentType = $response?->getHeaderLine('Content-Type') ?: null;
 
@@ -170,6 +173,7 @@ final class HttpCollector implements MiddlewareInterface, CollectorInterface
 
     private function extractTraceId(ServerRequestInterface $request): ?string
     {
+        /** @var mixed $traceContext */
         $traceContext = $request->getAttribute('_trace_context');
 
         if ($traceContext instanceof TraceId) {
@@ -190,6 +194,7 @@ final class HttpCollector implements MiddlewareInterface, CollectorInterface
 
     private function extractSpanId(ServerRequestInterface $request): ?string
     {
+        /** @var mixed $spanId */
         $spanId = $request->getAttribute('_span_id');
 
         if (is_string($spanId)) {
