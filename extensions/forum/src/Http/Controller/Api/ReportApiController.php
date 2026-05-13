@@ -40,7 +40,9 @@ final readonly class ReportApiController
         /** @var array<string, mixed> $body */
         $body = $parsed;
 
-        $reason = is_string($body['reason'] ?? null) ? $body['reason'] : '';
+        /** @var mixed $rawReason */
+        $rawReason = $body['reason'] ?? null;
+        $reason = is_string($rawReason) ? $rawReason : '';
 
         if ($reason === '') {
             return Response::json([
@@ -89,7 +91,9 @@ final readonly class ReportApiController
         /** @var array<string, mixed> $body */
         $body = $parsed;
 
-        $reason = is_string($body['reason'] ?? null) ? $body['reason'] : '';
+        /** @var mixed $rawReason */
+        $rawReason = $body['reason'] ?? null;
+        $reason = is_string($rawReason) ? $rawReason : '';
 
         if ($reason === '') {
             return Response::json([
