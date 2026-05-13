@@ -16,6 +16,8 @@ use Pulsar\Extension\Auth\Social\Exception\SsoException;
 use function http_build_query;
 use function implode;
 use function is_array;
+use function is_int;
+use function is_numeric;
 use function is_scalar;
 use function is_string;
 use function json_decode;
@@ -70,15 +72,24 @@ final readonly class GitHubProvider implements OAuthProviderInterface
         /** @var array<string, mixed> $data */
         $data = json_decode($response, true, 16, JSON_THROW_ON_ERROR);
 
-        if (!is_string($data['access_token'] ?? null)) {
+        /** @var mixed $rawAccessToken */
+        $rawAccessToken = $data['access_token'] ?? null;
+        if (!is_string($rawAccessToken)) {
             throw SsoException::tokenExchangeFailed();
         }
 
+        /** @var mixed $rawTokenType */
+        $rawTokenType = $data['token_type'] ?? null;
+        /** @var mixed $rawExpiresIn */
+        $rawExpiresIn = $data['expires_in'] ?? null;
+        /** @var mixed $rawRefreshToken */
+        $rawRefreshToken = $data['refresh_token'] ?? null;
+
         return new OAuthTokenSet(
-            accessToken: $data['access_token'],
-            tokenType: is_string($data['token_type'] ?? null) ? $data['token_type'] : 'bearer',
-            expiresIn: is_numeric($data['expires_in'] ?? null) ? (int) $data['expires_in'] : null,
-            refreshToken: is_string($data['refresh_token'] ?? null) ? $data['refresh_token'] : null,
+            accessToken: $rawAccessToken,
+            tokenType: is_string($rawTokenType) ? $rawTokenType : 'bearer',
+            expiresIn: (is_int($rawExpiresIn) || is_string($rawExpiresIn)) && is_numeric($rawExpiresIn) ? (int) $rawExpiresIn : null,
+            refreshToken: is_string($rawRefreshToken) ? $rawRefreshToken : null,
         );
     }
 
@@ -93,19 +104,30 @@ final readonly class GitHubProvider implements OAuthProviderInterface
         /** @var array<string, mixed> $user */
         $user = json_decode($userJson, true, 16, JSON_THROW_ON_ERROR);
 
-        $email = is_string($user['email'] ?? null) ? $user['email'] : null;
+        /** @var mixed $rawEmail */
+        $rawEmail = $user['email'] ?? null;
+        $email = is_string($rawEmail) ? $rawEmail : null;
 
         // If email is not public, fetch from /user/emails endpoint
         if ($email === null || $email === '') {
             $email = $this->fetchPrimaryEmail($tokenSet->accessToken);
         }
 
+        /** @var mixed $rawId */
+        $rawId = $user['id'] ?? null;
+        /** @var mixed $rawName */
+        $rawName = $user['name'] ?? null;
+        /** @var mixed $rawLogin */
+        $rawLogin = $user['login'] ?? null;
+        /** @var mixed $rawAvatarUrl */
+        $rawAvatarUrl = $user['avatar_url'] ?? null;
+
         return new SocialIdentity(
             provider: 'github',
-            providerUserId: is_scalar($user['id'] ?? null) ? (string) $user['id'] : '',
+            providerUserId: is_scalar($rawId) ? (string) $rawId : '',
             email: $email,
-            name: is_string($user['name'] ?? null) ? $user['name'] : (is_string($user['login'] ?? null) ? $user['login'] : null),
-            avatarUrl: is_string($user['avatar_url'] ?? null) ? $user['avatar_url'] : null,
+            name: is_string($rawName) ? $rawName : (is_string($rawLogin) ? $rawLogin : null),
+            avatarUrl: is_string($rawAvatarUrl) ? $rawAvatarUrl : null,
             rawAttributes: $user,
         );
     }
@@ -124,9 +146,10 @@ final readonly class GitHubProvider implements OAuthProviderInterface
         }
         /** @var list<array<string, mixed>> $emails */
 
+        /** @var mixed $entry */
         foreach ($emails as $entry) {
-            if (is_array($entry) && ($entry['primary'] ?? false) === true && is_string($entry['email'] ?? null)) {
-                return $entry['email'];
+            if (is_array($entry) && ($entry['primary'] ?? false) === true && is_string($rawEntryEmail = $entry['email'] ?? null)) {
+                return $rawEntryEmail;
             }
         }
 
