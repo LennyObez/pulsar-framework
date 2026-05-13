@@ -41,17 +41,33 @@ final readonly class FormSubmissionController
         // Separate internal metadata from user-submitted form data.
         // All _-prefixed fields are extracted here because the stripping loop
         // below removes them from $formData before it reaches spam detectors.
+        /** @var mixed $rawCsrf */
+        $rawCsrf = $body['_csrf_token'] ?? null;
+        /** @var mixed $rawHp */
+        $rawHp = $body['_hp_field'] ?? null;
+        /** @var mixed $rawPowNonce */
+        $rawPowNonce = $body['_pow_nonce'] ?? null;
+        /** @var mixed $rawPowChallenge */
+        $rawPowChallenge = $body['_pow_challenge'] ?? null;
+        /** @var mixed $rawFormRenderedAt */
+        $rawFormRenderedAt = $body['_form_rendered_at'] ?? null;
+        /** @var mixed $rawFormBlockId */
+        $rawFormBlockId = $body['_form_block_id'] ?? null;
+        /** @var mixed $rawContentId */
+        $rawContentId = $body['_content_id'] ?? null;
+        /** @var mixed $rawTenantId */
+        $rawTenantId = $request->getAttribute('tenant_id');
         $meta = [
-            '_csrf_token' => is_string($body['_csrf_token'] ?? null) ? $body['_csrf_token'] : '',
-            '_hp_field' => is_string($body['_hp_field'] ?? null) ? $body['_hp_field'] : '',
-            '_pow_nonce' => is_string($body['_pow_nonce'] ?? null) ? $body['_pow_nonce'] : '',
-            '_pow_challenge' => is_string($body['_pow_challenge'] ?? null) ? $body['_pow_challenge'] : '',
-            '_form_rendered_at' => $body['_form_rendered_at'] ?? null,
+            '_csrf_token' => is_string($rawCsrf) ? $rawCsrf : '',
+            '_hp_field' => is_string($rawHp) ? $rawHp : '',
+            '_pow_nonce' => is_string($rawPowNonce) ? $rawPowNonce : '',
+            '_pow_challenge' => is_string($rawPowChallenge) ? $rawPowChallenge : '',
+            '_form_rendered_at' => $rawFormRenderedAt,
             'ip' => self::extractIp($request),
             'user_agent' => $request->getHeaderLine('User-Agent'),
-            'form_block_id' => is_string($rawFormBlockId = $body['_form_block_id'] ?? null) ? $rawFormBlockId : '',
-            'content_id' => is_string($rawContentId = $body['_content_id'] ?? null) ? $rawContentId : '',
-            'tenant_id' => $request->getAttribute('tenant_id'),
+            'form_block_id' => is_string($rawFormBlockId) ? $rawFormBlockId : '',
+            'content_id' => is_string($rawContentId) ? $rawContentId : '',
+            'tenant_id' => is_string($rawTenantId) ? $rawTenantId : null,
         ];
 
         // Strip internal fields from user data
@@ -109,7 +125,9 @@ final readonly class FormSubmissionController
     private static function extractIp(ServerRequestInterface $request): string
     {
         $serverParams = $request->getServerParams();
-        $remoteAddr = is_string($serverParams['REMOTE_ADDR'] ?? null) ? $serverParams['REMOTE_ADDR'] : '0.0.0.0';
+        /** @var mixed $rawRemoteAddr */
+        $rawRemoteAddr = $serverParams['REMOTE_ADDR'] ?? null;
+        $remoteAddr = is_string($rawRemoteAddr) ? $rawRemoteAddr : '0.0.0.0';
 
         // Only trust X-Forwarded-For if the request came through a known proxy
         if ($request->getAttribute('trusted_proxy') === true) {
