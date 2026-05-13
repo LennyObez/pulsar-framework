@@ -46,7 +46,9 @@ final readonly class ReleaseApiController
     public function latestVersion(ServerRequestInterface $request): Response
     {
         $params = $request->getQueryParams();
-        $platformValue = is_string($params['platform'] ?? null) ? $params['platform'] : '';
+        /** @var mixed $rawPlatform */
+        $rawPlatform = $params['platform'] ?? null;
+        $platformValue = is_string($rawPlatform) ? $rawPlatform : '';
         $platform = ReleasePlatform::tryFrom($platformValue);
 
         if ($platform === null) {
@@ -92,11 +94,14 @@ final readonly class ReleaseApiController
         $rawPerPage = $params['per_page'] ?? 20;
         $perPage = min(100, max(1, (int) $rawPerPage));
 
-        $platformFilter = is_string($params['platform'] ?? null)
-            ? ReleasePlatform::tryFrom($params['platform'])
+        /** @var mixed $rawPlatform */
+        $rawPlatform = $params['platform'] ?? null;
+        $platformFilter = is_string($rawPlatform)
+            ? ReleasePlatform::tryFrom($rawPlatform)
             : null;
 
         $includeBeta = null;
+        /** @var mixed $includeBetaRaw */
         $includeBetaRaw = $params['include_beta'] ?? null;
 
         if (is_string($includeBetaRaw)) {
