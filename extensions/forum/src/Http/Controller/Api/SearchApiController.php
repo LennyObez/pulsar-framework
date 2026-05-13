@@ -12,6 +12,8 @@ use Pulsar\Extension\Forum\Thread\ThreadRepositoryInterface;
 use Pulsar\Http\Message\Response;
 
 use function array_map;
+use function is_int;
+use function is_numeric;
 use function is_string;
 use function max;
 use function min;
@@ -39,7 +41,9 @@ final readonly class SearchApiController
     {
         $params = $request->getQueryParams();
 
-        $query = is_string($params['q'] ?? null) ? trim($params['q']) : '';
+        /** @var mixed $rawQuery */
+        $rawQuery = $params['q'] ?? null;
+        $query = is_string($rawQuery) ? trim($rawQuery) : '';
 
         if ($query === '') {
             return Response::json([
@@ -49,8 +53,12 @@ final readonly class SearchApiController
             ], 422);
         }
 
-        $page = max(1, is_numeric($params['page'] ?? null) ? (int) $params['page'] : 1);
-        $perPage = min(100, max(1, is_numeric($params['per_page'] ?? null) ? (int) $params['per_page'] : $this->config->threadsPerPage));
+        /** @var mixed $rawPage */
+        $rawPage = $params['page'] ?? null;
+        $page = max(1, (is_int($rawPage) || is_string($rawPage)) && is_numeric($rawPage) ? (int) $rawPage : 1);
+        /** @var mixed $rawPerPage */
+        $rawPerPage = $params['per_page'] ?? null;
+        $perPage = min(100, max(1, (is_int($rawPerPage) || is_string($rawPerPage)) && is_numeric($rawPerPage) ? (int) $rawPerPage : $this->config->threadsPerPage));
 
         /** @var string|null $tenantId */
         $tenantId = $request->getAttribute('tenant_id');

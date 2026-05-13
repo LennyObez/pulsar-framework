@@ -172,7 +172,9 @@ final readonly class VoteApiController
      */
     private function parseDirection(array $body): ?VoteDirection
     {
-        $raw = is_string($body['direction'] ?? null) ? $body['direction'] : null;
+        /** @var mixed $rawDirection */
+        $rawDirection = $body['direction'] ?? null;
+        $raw = is_string($rawDirection) ? $rawDirection : null;
 
         return match ($raw) {
             'up' => VoteDirection::Up,
