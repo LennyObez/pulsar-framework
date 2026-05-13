@@ -67,10 +67,18 @@ final readonly class RegisterController
         /** @var array<string, mixed> $body */
         $body = $parsed;
 
-        $displayName = is_string($body['display_name'] ?? null) ? trim($body['display_name']) : '';
-        $email = is_string($body['email'] ?? null) ? trim($body['email']) : '';
-        $password = is_string($body['password'] ?? null) ? $body['password'] : '';
-        $passwordConfirm = is_string($body['password_confirm'] ?? null) ? $body['password_confirm'] : '';
+        /** @var mixed $rawDisplayName */
+        $rawDisplayName = $body['display_name'] ?? null;
+        $displayName = is_string($rawDisplayName) ? trim($rawDisplayName) : '';
+        /** @var mixed $rawEmail */
+        $rawEmail = $body['email'] ?? null;
+        $email = is_string($rawEmail) ? trim($rawEmail) : '';
+        /** @var mixed $rawPassword */
+        $rawPassword = $body['password'] ?? null;
+        $password = is_string($rawPassword) ? $rawPassword : '';
+        /** @var mixed $rawPasswordConfirm */
+        $rawPasswordConfirm = $body['password_confirm'] ?? null;
+        $passwordConfirm = is_string($rawPasswordConfirm) ? $rawPasswordConfirm : '';
 
         $errors = $this->validate($displayName, $email, $password, $passwordConfirm);
 
