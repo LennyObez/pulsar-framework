@@ -364,7 +364,9 @@ final readonly class BackupService implements BackupServiceInterface
         /** @var array<string, mixed> $meta */
         $meta = json_decode($metaJson, true, flags: JSON_THROW_ON_ERROR);
 
-        $storagePath = is_string($meta['storage_path'] ?? null) ? $meta['storage_path'] : null;
+        /** @var mixed $rawStoragePath */
+        $rawStoragePath = $meta['storage_path'] ?? null;
+        $storagePath = is_string($rawStoragePath) ? $rawStoragePath : null;
 
         if ($storagePath !== null && $this->disk->exists($storagePath)) {
             $this->disk->delete($storagePath);
@@ -482,9 +484,11 @@ final readonly class BackupService implements BackupServiceInterface
 
         if ($this->disk->exists($indexPath)) {
             $indexJson = $this->disk->read($indexPath);
+            /** @var mixed $index */
             $index = json_decode($indexJson, true);
 
             if (is_array($index)) {
+                /** @var mixed $id */
                 foreach ($index as $id) {
                     $metaPath = self::BACKUP_DIR . '/' . (is_string($id) ? $id : '') . '.meta.json';
 
@@ -508,6 +512,7 @@ final readonly class BackupService implements BackupServiceInterface
 
         if ($this->disk->exists($indexPath)) {
             $indexJson = $this->disk->read($indexPath);
+            /** @var mixed $decoded */
             $decoded = json_decode($indexJson, true);
 
             if (is_array($decoded)) {
