@@ -99,6 +99,7 @@ final readonly class ThemeManifest
 
         $result = [];
 
+        /** @var mixed $item */
         foreach ($value as $item) {
             $result[] = is_string($item) ? $item : (is_scalar($item) ? (string) $item : '');
         }
@@ -117,6 +118,7 @@ final readonly class ThemeManifest
 
         $result = [];
 
+        /** @var mixed $item */
         foreach ($value as $key => $item) {
             $strKey = is_string($key) ? $key : (string) $key;
             $result[$strKey] = is_string($item) ? $item : (is_scalar($item) ? (string) $item : '');
