@@ -219,6 +219,7 @@ final readonly class SvgSanitizer
         $this->walkTree($dom->documentElement);
 
         // Remove processing instructions at root level (e.g., xml-stylesheet PIs)
+        /** @var mixed $child */
         foreach (iterator_to_array($dom->childNodes) as $child) {
             if ($child instanceof DOMProcessingInstruction) {
                 $dom->removeChild($child);
@@ -247,10 +248,12 @@ final readonly class SvgSanitizer
         // Process children first (depth-first), collecting in reverse to avoid index shifting
         $children = [];
 
+        /** @var mixed $child */
         foreach (iterator_to_array($node->childNodes) as $child) {
             $children[] = $child;
         }
 
+        /** @var mixed $child */
         foreach ($children as $child) {
             if ($child instanceof DOMElement) {
                 $tagName = strtolower($child->localName ?? $child->nodeName);
@@ -288,6 +291,10 @@ final readonly class SvgSanitizer
     {
         $toRemove = [];
         $attributes = $element->attributes;
+
+        if ($attributes === null) {
+            return;
+        }
 
         /** @var DOMAttr $attr */
         foreach (iterator_to_array($attributes) as $attr) {
