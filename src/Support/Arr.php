@@ -72,6 +72,7 @@ final class Arr
     public static function set(array $array, string $key, mixed $value): array
     {
         $segments = explode('.', $key);
+        /** @var array<string, mixed> $current */
         $current = &$array;
 
         foreach ($segments as $i => $segment) {
@@ -127,17 +128,14 @@ final class Arr
     #[NoDiscard]
     public static function pluck(array $array, string $key): array
     {
+        /** @var list<mixed> $result */
         $result = [];
 
         foreach ($array as $item) {
             if (is_array($item) && array_key_exists($key, $item)) {
-                /** @var mixed $pluckedArr */
-                $pluckedArr = $item[$key];
-                $result[] = $pluckedArr;
+                $result[] = $item[$key];
             } elseif (is_object($item) && property_exists($item, $key)) {
-                /** @var mixed $pluckedObj */
-                $pluckedObj = $item->{$key};
-                $result[] = $pluckedObj;
+                $result[] = $item->{$key};
             }
         }
 
@@ -167,6 +165,7 @@ final class Arr
     #[NoDiscard]
     public static function flatten(array $array, int $depth = PHP_INT_MAX): array
     {
+        /** @var list<mixed> $result */
         $result = [];
 
         /** @var mixed $item */
@@ -298,13 +297,12 @@ final class Arr
     #[NoDiscard]
     public static function only(array $array, array $keys): array
     {
+        /** @var array<string, mixed> $result */
         $result = [];
 
         foreach ($keys as $key) {
             if (array_key_exists($key, $array)) {
-                /** @var mixed $onlyValue */
-                $onlyValue = $array[$key];
-                $result[$key] = $onlyValue;
+                $result[$key] = $array[$key];
             }
         }
 
@@ -322,6 +320,7 @@ final class Arr
     #[NoDiscard]
     public static function where(array $array, Closure $callback): array
     {
+        /** @var list<mixed> $result */
         $result = [];
 
         /** @var mixed $item */
