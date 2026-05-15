@@ -482,6 +482,7 @@ final class Container implements AdvancedContainerInterface
         }
 
         $parameters = $constructor->getParameters();
+        /** @var list<mixed> $dependencies */
         $dependencies = [];
 
         foreach ($parameters as $parameter) {
@@ -654,6 +655,7 @@ final class Container implements AdvancedContainerInterface
     public function call(callable $callable, array $params = []): mixed
     {
         $reflection = CallableReflector::reflect($callable);
+        /** @var list<mixed> $arguments */
         $arguments = [];
 
         foreach ($reflection->getParameters() as $parameter) {
