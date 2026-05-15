@@ -122,6 +122,7 @@ final class AstInterpreter
      */
     private function evaluateIf(AstNode $node, array $data): void
     {
+        /** @var mixed $condition */
         $condition = $this->resolveExpression($node->value, $data);
 
         if ($condition) {
@@ -145,6 +146,7 @@ final class AstInterpreter
             throw ViewException::invalidDirective('foreach', 'invalid expression: ' . $node->value);
         }
 
+        /** @var mixed $collection */
         $collection = $this->resolveExpression($parts['collection'], $data);
 
         if (!is_iterable($collection)) {
@@ -153,6 +155,10 @@ final class AstInterpreter
 
         $iterationCount = 0;
 
+        /**
+         * @var mixed $key
+         * @var mixed $value
+         */
         foreach ($collection as $key => $value) {
             $iterationCount++;
 
@@ -245,7 +251,9 @@ final class AstInterpreter
             $pos = strpos($expr, " $op ");
 
             if ($pos !== false) {
+                /** @var mixed $left */
                 $left = $this->resolveExpression(substr($expr, 0, $pos), $data);
+                /** @var mixed $right */
                 $right = $this->resolveExpression(substr($expr, $pos + strlen($op) + 2), $data);
 
                 return match ($op) {
@@ -297,10 +305,12 @@ final class AstInterpreter
 
         // Dot notation: $user.name → $data['user']['name']
         $parts = explode('.', $key);
+        /** @var mixed $current */
         $current = $data;
 
         foreach ($parts as $part) {
             if (is_array($current) && array_key_exists($part, $current)) {
+                /** @var mixed $current */
                 $current = $current[$part];
             } else {
                 return null;
