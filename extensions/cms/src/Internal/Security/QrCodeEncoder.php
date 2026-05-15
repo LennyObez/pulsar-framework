@@ -178,6 +178,8 @@ final readonly class QrCodeEncoder
      */
     private function encodeData(string $data, int $version): array
     {
+        assert($version >= 1 && $version <= 10);
+        $versionIndex = $version - 1;
         $bits = [];
 
         // Mode indicator: 0100 (byte mode)
@@ -201,9 +203,9 @@ final readonly class QrCodeEncoder
         }
 
         // Terminator (up to 4 zero bits)
-        $ecBlocks = self::VERSION_EC_BLOCKS[$version - 1];
-        $ecPerBlock = self::VERSION_EC_CODEWORDS_PER_BLOCK[$version - 1];
-        $totalDataCodewords = self::VERSION_DATA_CODEWORDS[$version - 1] - ($ecBlocks * $ecPerBlock);
+        $ecBlocks = self::VERSION_EC_BLOCKS[$versionIndex];
+        $ecPerBlock = self::VERSION_EC_CODEWORDS_PER_BLOCK[$versionIndex];
+        $totalDataCodewords = self::VERSION_DATA_CODEWORDS[$versionIndex] - ($ecBlocks * $ecPerBlock);
         $totalDataBits = $totalDataCodewords * 8;
         $terminatorBits = min(4, $totalDataBits - count($bits));
 
@@ -264,6 +266,7 @@ final readonly class QrCodeEncoder
      */
     private function computeErrorCorrection(array $data, int $version): array
     {
+        assert($version >= 1 && $version <= 10);
         $ecBlocks = self::VERSION_EC_BLOCKS[$version - 1];
         $ecPerBlock = self::VERSION_EC_CODEWORDS_PER_BLOCK[$version - 1];
         $totalData = count($data);
@@ -403,6 +406,7 @@ final readonly class QrCodeEncoder
      */
     private function interleave(array $dataCodewords, array $ecBlocks, int $version): array
     {
+        assert($version >= 1 && $version <= 10);
         $numBlocks = self::VERSION_EC_BLOCKS[$version - 1];
         $totalData = count($dataCodewords);
         $dataPerBlock = intdiv($totalData, $numBlocks);
