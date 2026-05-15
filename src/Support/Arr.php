@@ -82,6 +82,7 @@ final class Arr
                     $current[$segment] = [];
                 }
 
+                /** @var array<string, mixed> $current */
                 $current = &$current[$segment];
             }
         }
@@ -130,9 +131,13 @@ final class Arr
 
         foreach ($array as $item) {
             if (is_array($item) && array_key_exists($key, $item)) {
-                $result[] = $item[$key];
+                /** @var mixed $pluckedArr */
+                $pluckedArr = $item[$key];
+                $result[] = $pluckedArr;
             } elseif (is_object($item) && property_exists($item, $key)) {
-                $result[] = $item->{$key};
+                /** @var mixed $pluckedObj */
+                $pluckedObj = $item->{$key};
+                $result[] = $pluckedObj;
             }
         }
 
@@ -164,6 +169,7 @@ final class Arr
     {
         $result = [];
 
+        /** @var mixed $item */
         foreach ($array as $item) {
             if (is_array($item) && $depth > 0) {
                 $result = array_merge($result, self::flatten($item, $depth - 1));
@@ -188,6 +194,7 @@ final class Arr
         $groups = [];
 
         foreach ($array as $item) {
+            /** @var mixed $raw */
             $raw = $item[$key] ?? '';
             $group = is_string($raw) || is_int($raw) ? (string) $raw : '';
             $groups[$group][] = $item;
@@ -223,6 +230,7 @@ final class Arr
             return $array[0] ?? null;
         }
 
+        /** @var mixed $item */
         foreach ($array as $item) {
             if ($callback($item)) {
                 return $item;
@@ -248,6 +256,7 @@ final class Arr
 
         $reversed = array_reverse($array);
 
+        /** @var mixed $item */
         foreach ($reversed as $item) {
             if ($callback($item)) {
                 return $item;
@@ -293,7 +302,9 @@ final class Arr
 
         foreach ($keys as $key) {
             if (array_key_exists($key, $array)) {
-                $result[$key] = $array[$key];
+                /** @var mixed $onlyValue */
+                $onlyValue = $array[$key];
+                $result[$key] = $onlyValue;
             }
         }
 
@@ -313,6 +324,7 @@ final class Arr
     {
         $result = [];
 
+        /** @var mixed $item */
         foreach ($array as $index => $item) {
             if ($callback($item, $index)) {
                 $result[] = $item;
