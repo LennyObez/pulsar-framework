@@ -153,6 +153,7 @@ final readonly class ExpressionCompiler
         $bindings = [];
         foreach ($expressions as $expr) {
             $sqls[] = $expr->sql;
+            /** @var mixed $value */
             foreach ($expr->bindings as $param => $value) {
                 $bindings[$param] = $value;
             }
@@ -175,6 +176,7 @@ final readonly class ExpressionCompiler
         $bindings = [];
         foreach ($expressions as $expr) {
             $sqls[] = $expr->sql;
+            /** @var mixed $value */
             foreach ($expr->bindings as $param => $value) {
                 $bindings[$param] = $value;
             }
