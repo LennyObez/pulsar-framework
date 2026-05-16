@@ -67,17 +67,21 @@ final readonly class WebhookHandler implements WebhookHandlerInterface
             );
         }
 
+        /** @var mixed $decoded */
         $decoded = json_decode($request->payload, true, flags: JSON_THROW_ON_ERROR);
         /** @var array<string, mixed> $data */
         $data = is_array($decoded) ? $decoded : [];
 
+        /** @var mixed $rawEventId */
         $rawEventId = $data['event_id'] ?? '';
         $eventId = is_string($rawEventId) ? $rawEventId : '';
 
+        /** @var mixed $rawEventType */
         $rawEventType = $data['event_type'] ?? '';
         $eventType = WebhookEventType::tryFrom(is_string($rawEventType) ? $rawEventType : '')
             ?? WebhookEventType::Delivery;
 
+        /** @var mixed $rawMessageId */
         $rawMessageId = $data['message_id'] ?? null;
         $messageId = is_string($rawMessageId) ? $rawMessageId : null;
 
