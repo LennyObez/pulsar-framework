@@ -7,7 +7,7 @@ namespace Pulsar\Tests\Unit\Extension\WebAuthn\Ceremony;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Extension\WebAuthn\Ceremony\AuthenticationResult;
+use Pulsar\Extension\Auth\WebAuthn\Ceremony\AuthenticationResult;
 
 #[CoversClass(AuthenticationResult::class)]
 final class AuthenticationResultTest extends TestCase

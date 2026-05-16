@@ -9,19 +9,19 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Audit\AuditLoggerInterface;
-use Pulsar\Extension\OAuth2\Client\OAuthClient;
-use Pulsar\Extension\OAuth2\Contract\ScopeRepositoryInterface;
-use Pulsar\Extension\OAuth2\Exception\OAuth2Exception;
-use Pulsar\Extension\OAuth2\Grant\AuthorizationCodeGrant;
-use Pulsar\Extension\OAuth2\Grant\ClientCredentialsGrant;
-use Pulsar\Extension\OAuth2\Grant\RefreshTokenGrant;
-use Pulsar\Extension\OAuth2\Token\AccessToken;
-use Pulsar\Extension\OAuth2\Token\AuthorizationCode;
-use Pulsar\Extension\OAuth2\Token\InMemoryAccessTokenRepository;
-use Pulsar\Extension\OAuth2\Token\InMemoryAuthorizationCodeRepository;
-use Pulsar\Extension\OAuth2\Token\InMemoryRefreshTokenRepository;
-use Pulsar\Extension\OAuth2\Token\RefreshToken;
-use Pulsar\Extension\OAuth2\Token\Scope;
+use Pulsar\Extension\Auth\OAuth2\Client\OAuthClient;
+use Pulsar\Extension\Auth\OAuth2\Contract\ScopeRepositoryInterface;
+use Pulsar\Extension\Auth\OAuth2\Exception\OAuth2Exception;
+use Pulsar\Extension\Auth\OAuth2\Grant\AuthorizationCodeGrant;
+use Pulsar\Extension\Auth\OAuth2\Grant\ClientCredentialsGrant;
+use Pulsar\Extension\Auth\OAuth2\Grant\RefreshTokenGrant;
+use Pulsar\Extension\Auth\OAuth2\Token\AccessToken;
+use Pulsar\Extension\Auth\OAuth2\Token\AuthorizationCode;
+use Pulsar\Extension\Auth\OAuth2\Token\InMemoryAccessTokenRepository;
+use Pulsar\Extension\Auth\OAuth2\Token\InMemoryAuthorizationCodeRepository;
+use Pulsar\Extension\Auth\OAuth2\Token\InMemoryRefreshTokenRepository;
+use Pulsar\Extension\Auth\OAuth2\Token\RefreshToken;
+use Pulsar\Extension\Auth\OAuth2\Token\Scope;
 
 /**
  * Adversarial security tests for the OAuth2 extension.

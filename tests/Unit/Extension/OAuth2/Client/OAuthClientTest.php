@@ -8,7 +8,7 @@ use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Extension\OAuth2\Client\OAuthClient;
+use Pulsar\Extension\Auth\OAuth2\Client\OAuthClient;
 
 #[CoversClass(OAuthClient::class)]
 final class OAuthClientTest extends TestCase

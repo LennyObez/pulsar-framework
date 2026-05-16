@@ -7,7 +7,7 @@ namespace Pulsar\Tests\Unit\Extension\OAuth2\Grant;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Extension\OAuth2\Grant\TokenResponse;
+use Pulsar\Extension\Auth\OAuth2\Grant\TokenResponse;
 
 #[CoversClass(TokenResponse::class)]
 final class TokenResponseTest extends TestCase

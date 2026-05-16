@@ -8,7 +8,7 @@ use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Extension\OAuth2\Consent\ConsentRecord;
+use Pulsar\Extension\Auth\OAuth2\Consent\ConsentRecord;
 
 #[CoversClass(ConsentRecord::class)]
 final class ConsentRecordTest extends TestCase

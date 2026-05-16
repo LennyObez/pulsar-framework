@@ -7,7 +7,7 @@ namespace Pulsar\Tests\Unit\Extension\OAuth2\Exception;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Extension\OAuth2\Exception\OAuth2Exception;
+use Pulsar\Extension\Auth\OAuth2\Exception\OAuth2Exception;
 use RuntimeException;
 
 #[CoversClass(OAuth2Exception::class)]
