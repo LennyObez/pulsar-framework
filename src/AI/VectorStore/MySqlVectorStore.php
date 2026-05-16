@@ -79,6 +79,7 @@ final readonly class MySqlVectorStore implements VectorStoreInterface
             $conditions = [];
             $i = 0;
 
+            /** @var mixed $value */
             foreach ($filter as $key => $value) {
                 self::assertSafeIdentifier($key);
                 $paramName = ':filter_' . $i;
@@ -101,6 +102,7 @@ final readonly class MySqlVectorStore implements VectorStoreInterface
         $result = $this->connection->query($sql, $bindings);
 
         return $result->map(function (Row $row): SearchResult {
+            /** @var mixed $metadataDecoded */
             $metadataDecoded = json_decode($row->getString('metadata'), true);
             /** @var array<string, mixed> $metadata */
             $metadata = is_array($metadataDecoded) ? $metadataDecoded : [];
@@ -153,6 +155,7 @@ final readonly class MySqlVectorStore implements VectorStoreInterface
         $bindings = [];
         $i = 0;
 
+        /** @var mixed $value */
         foreach ($filter as $key => $value) {
             self::assertSafeIdentifier($key);
             $paramName = ':filter_' . $i;
@@ -183,6 +186,7 @@ final readonly class MySqlVectorStore implements VectorStoreInterface
         $bindings = [];
         $i = 0;
 
+        /** @var mixed $value */
         foreach ($filter as $key => $value) {
             self::assertSafeIdentifier($key);
             $paramName = ':filter_' . $i;
