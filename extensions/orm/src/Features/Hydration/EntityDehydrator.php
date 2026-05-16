@@ -54,6 +54,7 @@ final class EntityDehydrator
     {
         $metadata = $this->metadataRegistry->get($entity::class);
         $reflectionData = self::reflectionFor($entity::class);
+        /** @var array<string, mixed> $values */
         $values = [];
 
         foreach ($metadata->insertableColumns() as $col) {
@@ -86,15 +87,18 @@ final class EntityDehydrator
     {
         $metadata = $this->metadataRegistry->get($entity::class);
         $reflectionData = self::reflectionFor($entity::class);
+        /** @var array<string, mixed> $values */
         $values = [];
 
         foreach ($metadata->updatableColumns() as $col) {
+            /** @var mixed $value */
             $value = $this->extractValue($reflectionData, $entity, $col);
             $values[$col->columnName] = $value;
 
             // Update blind index if encrypted
             if ($col->encrypted && $col->blindIndexColumn !== null && $this->encryptor !== null) {
                 $rawProp = self::propertyFor($reflectionData, $col->propertyName);
+                /** @var mixed $rawValue */
                 $rawValue = $rawProp->getValue($entity);
                 if ($rawValue !== null) {
                     $strValue = is_string($rawValue) ? $rawValue : (is_scalar($rawValue) ? (string) $rawValue : '');
