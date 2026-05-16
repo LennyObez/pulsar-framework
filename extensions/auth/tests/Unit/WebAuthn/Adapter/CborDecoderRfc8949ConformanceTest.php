@@ -10,6 +10,8 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Auth\WebAuthn\Adapter\CborDecoder;
 
+use function sprintf;
+
 /**
  * F385.18: RFC 8949 §A — Examples of Encoded CBOR Data Items.
  *
@@ -50,12 +52,12 @@ final class CborDecoderRfc8949ConformanceTest extends TestCase
         yield '1'                  => ['01', 1];
         yield '10'                 => ['0a', 10];
         yield '23 (last 1-byte)'   => ['17', 23];
-        yield '24 (uint8 boundary)'=> ['1818', 24];
+        yield '24 (uint8 boundary)' => ['1818', 24];
         yield '25'                 => ['1819', 25];
         yield '100'                => ['1864', 100];
         yield '1000 (uint16)'      => ['1903e8', 1000];
         yield '1000000 (uint32)'   => ['1a000f4240', 1000000];
-        yield '1000000000000 (u64)'=> ['1b000000e8d4a51000', 1000000000000];
+        yield '1000000000000 (u64)' => ['1b000000e8d4a51000', 1000000000000];
     }
 
     /**
@@ -67,8 +69,8 @@ final class CborDecoderRfc8949ConformanceTest extends TestCase
         // computes `-1 - n` from the n-encoded unsigned int.
         yield '-1'   => ['20', -1];
         yield '-10' => ['29', -10];
-        yield '-100'=> ['3863', -100];
-        yield '-1000'=> ['3903e7', -1000];
+        yield '-100' => ['3863', -100];
+        yield '-1000' => ['3903e7', -1000];
     }
 
     /**

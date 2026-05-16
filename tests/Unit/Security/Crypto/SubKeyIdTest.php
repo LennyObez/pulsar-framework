@@ -9,6 +9,8 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Security\Crypto\SubKeyId;
 
+use function sprintf;
+
 #[CoversClass(SubKeyId::class)]
 final class SubKeyIdTest extends TestCase
 {

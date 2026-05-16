@@ -11,6 +11,9 @@ use Pulsar\Config\AppConfig;
 use Pulsar\Config\ConfigRepository;
 use Pulsar\Config\EnvironmentMode;
 use Pulsar\Config\Exception\ConfigException;
+use ReflectionClass;
+
+use function sprintf;
 
 #[CoversClass(ConfigRepository::class)]
 final class ConfigRepositoryTest extends TestCase
@@ -167,7 +170,7 @@ final class ConfigRepositoryTest extends TestCase
     #[Test]
     public function repositoryHasNoSerializationMagicMethods(): void
     {
-        $reflection = new \ReflectionClass(ConfigRepository::class);
+        $reflection = new ReflectionClass(ConfigRepository::class);
 
         foreach (['__wakeup', '__unserialize', '__serialize', '__destruct'] as $method) {
             self::assertFalse(

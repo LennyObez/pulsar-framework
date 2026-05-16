@@ -16,7 +16,6 @@ use Pulsar\ErrorHandling\DevelopmentRenderer;
 use Pulsar\ErrorHandling\ExceptionHandler;
 use Pulsar\ErrorHandling\HttpException;
 use Pulsar\Http\Message\ServerRequest;
-use Pulsar\Http\Method;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Routing\RoutingException;
 use RuntimeException;

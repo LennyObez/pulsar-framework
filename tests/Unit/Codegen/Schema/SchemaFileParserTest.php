@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Codegen\Schema\SchemaFileParser;
+use RuntimeException;
 
 use const JSON_THROW_ON_ERROR;
 
@@ -196,7 +197,7 @@ final class SchemaFileParserTest extends TestCase
     {
         $parser = new SchemaFileParser();
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('only .pulsar.json files are accepted');
 
         (void) $parser->parseFile(__DIR__ . '/fixture.json');
@@ -218,12 +219,12 @@ final class SchemaFileParserTest extends TestCase
                 allowedRoot: __DIR__,
             );
 
-            $this->expectException(\RuntimeException::class);
+            $this->expectException(RuntimeException::class);
             $this->expectExceptionMessage('outside the allowed root');
 
             (void) $parser->parseFile($tempFile);
         } finally {
-            (new \Symfony\Component\Filesystem\Filesystem())->remove($tempFile);
+            new \Symfony\Component\Filesystem\Filesystem()->remove($tempFile);
         }
     }
 

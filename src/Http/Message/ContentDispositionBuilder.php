@@ -7,11 +7,10 @@ namespace Pulsar\Http\Message;
 use InvalidArgumentException;
 use Pulsar\Api\Internal;
 
+use function is_string;
 use function ord;
-use function preg_match;
 use function preg_replace;
 use function rawurlencode;
-use function str_replace;
 use function strlen;
 
 /**

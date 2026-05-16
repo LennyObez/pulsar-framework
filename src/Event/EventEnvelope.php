@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Event;
 
-use InvalidArgumentException;
 use JsonException;
 use NoDiscard;
 use Pulsar\Api\Api;

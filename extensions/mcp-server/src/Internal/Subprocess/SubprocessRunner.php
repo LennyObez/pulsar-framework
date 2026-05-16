@@ -10,10 +10,13 @@ use Pulsar\Extension\McpServer\Contracts\McpRedactionPipelineInterface;
 use Pulsar\Extension\McpServer\Domain\ToolResult;
 
 use function array_merge;
+use function defined;
 use function fclose;
 use function fread;
 use function getenv;
 use function hrtime;
+use function is_array;
+use function is_int;
 use function is_resource;
 use function max;
 use function proc_close;
