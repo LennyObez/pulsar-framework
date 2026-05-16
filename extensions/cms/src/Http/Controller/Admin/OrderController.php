@@ -198,7 +198,9 @@ final readonly class OrderController extends AbstractAdminController
 
         /** @var array<string, mixed> $params */
         $params = $request->getQueryParams();
-        $format = is_string($params['format'] ?? null) ? $params['format'] : '';
+        /** @var mixed $rawFormat */
+        $rawFormat = $params['format'] ?? null;
+        $format = is_string($rawFormat) ? $rawFormat : '';
 
         // GET with no format renders the export form data
         if ($format === '') {
@@ -215,16 +217,22 @@ final readonly class OrderController extends AbstractAdminController
         /** @var array<string, mixed> $filters */
         $filters = [];
 
-        if (is_string($params['status'] ?? null) && $params['status'] !== '') {
-            $filters['status'] = $params['status'];
+        /** @var mixed $rawStatus */
+        $rawStatus = $params['status'] ?? null;
+        if (is_string($rawStatus) && $rawStatus !== '') {
+            $filters['status'] = $rawStatus;
         }
 
-        if (is_string($params['date_from'] ?? null) && $params['date_from'] !== '') {
-            $filters['dateFrom'] = $params['date_from'];
+        /** @var mixed $rawDateFrom */
+        $rawDateFrom = $params['date_from'] ?? null;
+        if (is_string($rawDateFrom) && $rawDateFrom !== '') {
+            $filters['dateFrom'] = $rawDateFrom;
         }
 
-        if (is_string($params['date_to'] ?? null) && $params['date_to'] !== '') {
-            $filters['dateTo'] = $params['date_to'];
+        /** @var mixed $rawDateTo */
+        $rawDateTo = $params['date_to'] ?? null;
+        if (is_string($rawDateTo) && $rawDateTo !== '') {
+            $filters['dateTo'] = $rawDateTo;
         }
 
         /** @var string|null $tenantId */
