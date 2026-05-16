@@ -99,6 +99,7 @@ trait ImportFieldResolverTrait
      */
     private static function asString(array $data, string $key, string $default = ''): string
     {
+        /** @var mixed $value */
         $value = $data[$key] ?? null;
 
         return is_string($value) ? $value : $default;
@@ -111,6 +112,7 @@ trait ImportFieldResolverTrait
      */
     private static function asNullableString(array $data, string $key): ?string
     {
+        /** @var mixed $value */
         $value = $data[$key] ?? null;
 
         return is_string($value) ? $value : null;
@@ -123,6 +125,7 @@ trait ImportFieldResolverTrait
      */
     private static function asInt(array $data, string $key, int $default = 0): int
     {
+        /** @var mixed $value */
         $value = $data[$key] ?? null;
 
         return is_int($value) ? $value : $default;
@@ -135,6 +138,7 @@ trait ImportFieldResolverTrait
      */
     private static function asBool(array $data, string $key, bool $default = false): bool
     {
+        /** @var mixed $value */
         $value = $data[$key] ?? null;
 
         return is_bool($value) ? $value : $default;
