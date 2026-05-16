@@ -90,6 +90,7 @@ final class ArrayInput implements InputInterface
     #[Override]
     public function getStringOption(string $name, string $default = ''): string
     {
+        /** @var mixed $value */
         $value = $this->options[$name] ?? null;
 
         return is_string($value) ? $value : $default;
@@ -98,6 +99,7 @@ final class ArrayInput implements InputInterface
     #[Override]
     public function getNullableStringOption(string $name): ?string
     {
+        /** @var mixed $value */
         $value = $this->options[$name] ?? null;
 
         return is_string($value) ? $value : null;
@@ -106,6 +108,7 @@ final class ArrayInput implements InputInterface
     #[Override]
     public function getIntOption(string $name, int $default = 0): int
     {
+        /** @var mixed $value */
         $value = $this->options[$name] ?? null;
 
         if (is_int($value)) {
@@ -118,6 +121,7 @@ final class ArrayInput implements InputInterface
     #[Override]
     public function getBoolOption(string $name, bool $default = false): bool
     {
+        /** @var mixed $value */
         $value = $this->options[$name] ?? null;
 
         return is_bool($value) ? $value : $default;

@@ -157,6 +157,7 @@ final readonly class ClassifiedContext
     public function serialize(?EncryptorInterface $encryptor = null): array
     {
         $classificationStrings = [];
+        /** @var array<string, mixed> $serializedValues */
         $serializedValues = [];
         $encryptedFields = [];
 
