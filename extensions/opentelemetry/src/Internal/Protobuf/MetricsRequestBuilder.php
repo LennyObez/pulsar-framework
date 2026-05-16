@@ -221,6 +221,7 @@ final readonly class MetricsRequestBuilder
 
         // HistogramDataPoint.bucket_counts (field 6, repeated fixed64)
         if (isset($dp['bucket_counts']) && is_array($dp['bucket_counts'])) {
+            /** @var mixed $count */
             foreach ($dp['bucket_counts'] as $count) {
                 if (is_int($count)) {
                     $w->writeFixed64Field(OtlpFieldNumbers::HDP_BUCKET_COUNTS, $count);
@@ -230,6 +231,7 @@ final readonly class MetricsRequestBuilder
 
         // HistogramDataPoint.explicit_bounds (field 7, repeated double)
         if (isset($dp['explicit_bounds']) && is_array($dp['explicit_bounds'])) {
+            /** @var mixed $bound */
             foreach ($dp['explicit_bounds'] as $bound) {
                 if (is_float($bound) || is_int($bound)) {
                     $w->writeDoubleField(OtlpFieldNumbers::HDP_EXPLICIT_BOUNDS, (float) $bound);
