@@ -12,7 +12,7 @@ OAuth2-authenticated identities are **scope-based**, not role-based.
 
 `Identity::roles` is the framework's role-based access control axis. Local-account policies (`UserService` etc.) populate it from the application's own user store: a user has the `editor` role because the operator marked them as such in the admin UI.
 
-OAuth2 / OIDC tokens come from an external IdP. The IdP does not know about the relying party's role taxonomy — it knows about *scopes* (`profile`, `email`, `payments:write`, `admin:audit`, …). Mapping IdP scope → RP role is a per-deployment decision: `payments:write` might mean `cashier` for one tenant and `treasurer` for another. Forcing every consumer through a synthetic role mapping at the resolver level would either:
+OAuth2 / OIDC tokens come from an external IdP. The IdP does not know about the relying party's role taxonomy — it knows about _scopes_ (`profile`, `email`, `payments:write`, `admin:audit`, …). Mapping IdP scope → RP role is a per-deployment decision: `payments:write` might mean `cashier` for one tenant and `treasurer` for another. Forcing every consumer through a synthetic role mapping at the resolver level would either:
 
 - be too lenient (one-fits-all `oauth2_user` role grants nothing useful), or
 - be too coercive (custom mapping logic baked into the framework would need extension hooks for every relying party).
@@ -21,11 +21,11 @@ Leaving `roles: []` is an explicit decision: **OAuth2 grants assert authenticati
 
 ## Identity attributes populated by OAuth2TokenResolver
 
-| Attribute | Type | Source |
-|---|---|---|
-| `oauth2_client_id` | `string` | `AccessToken::clientId` — the OAuth2 client that requested the grant. |
-| `oauth2_scopes` | `list<string>` | `AccessToken::scopes` — the granted OIDC scopes (`openid`, `profile`, …). |
-| `oauth2_token_id` | `string` | `AccessToken::id` — the introspection identifier. |
+| Attribute          | Type           | Source                                                                    |
+| ------------------ | -------------- | ------------------------------------------------------------------------- |
+| `oauth2_client_id` | `string`       | `AccessToken::clientId` — the OAuth2 client that requested the grant.     |
+| `oauth2_scopes`    | `list<string>` | `AccessToken::scopes` — the granted OIDC scopes (`openid`, `profile`, …). |
+| `oauth2_token_id`  | `string`       | `AccessToken::id` — the introspection identifier.                         |
 
 `twoFactorStatus` is derived from the token's `amr` / `acr` claims (RFC 8176 / OIDC Core 5.1.1.1, see [`OAuth2TokenResolver::deriveTwoFactorStatus()`](../extensions/oauth2/src/Adapter/OAuth2TokenResolver.php) and audit finding F385.7).
 

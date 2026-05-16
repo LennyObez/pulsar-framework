@@ -64,7 +64,7 @@ gate before the GA tag can be cut:
      full + self, fido-u2f, android-key, android-safetynet, apple, tpm) +
      authentication ceremony × counter monotonicity + resident credential.
    - Target file: `extensions/auth/tests/Unit/WebAuthn/Ceremony/
-     W3cConformanceVectorTest.php` (scaffold ships in the ADR-accepting
+W3cConformanceVectorTest.php` (scaffold ships in the ADR-accepting
      commit; population is a multi-PR follow-up).
 
 2. **OAuth2 / OIDC conformance vectors**

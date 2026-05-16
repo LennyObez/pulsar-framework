@@ -16,9 +16,6 @@ class PulsarE2eeClient {
   /** @type {CryptoKeyPair|null} */
   #keyPair = null;
 
-  /** @type {CryptoKey|null} */
-  #identityKey = null;
-
   /** @type {Map<string, CryptoKey>} */
   #conversationKeys = new Map();
 
@@ -247,7 +244,6 @@ class PulsarE2eeClient {
    */
   clear() {
     this.#keyPair = null;
-    this.#identityKey = null;
     this.#conversationKeys.clear();
   }
 

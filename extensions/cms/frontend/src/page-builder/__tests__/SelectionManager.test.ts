@@ -21,7 +21,7 @@ function addBlock(canvas: HTMLElement, id: string, type = 'paragraph'): HTMLElem
 
 describe('SelectionManager', () => {
   let canvas: HTMLElement;
-  let onSelectionChange: ReturnType<typeof vi.fn>;
+  let onSelectionChange: ReturnType<typeof vi.fn<(state: SelectionState) => void>>;
   let manager: SelectionManager;
   const blockIds = ['block-1', 'block-2', 'block-3'];
 

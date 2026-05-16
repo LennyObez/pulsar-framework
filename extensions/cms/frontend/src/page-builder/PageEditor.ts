@@ -22,7 +22,7 @@ import { ClipboardManager } from './ClipboardManager.js';
 import { BlockTemplateManager } from './BlockTemplates.js';
 import { SelectionManager } from './SelectionManager.js';
 import { BlockToolbar } from './BlockToolbar.js';
-import { BlockTransformMenu, blockTransformRegistry } from './BlockTransform.js';
+import { BlockTransformMenu } from './BlockTransform.js';
 import { PatternInserterPanel, type PatternBlockDefinition } from './PatternInserter.js';
 
 const AUTOSAVE_DEBOUNCE_MS = 2000;
