@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Extension\OpenTelemetry\Export\JsonLines\Metrics;
+namespace Pulsar\Extension\ObservabilityExport\Metrics;
 
 use Override;
 use Pulsar\Api\Api;
-use Pulsar\Extension\OpenTelemetry\Export\JsonLines\Internal\JsonLinesFileWriter;
-use Pulsar\Extension\OpenTelemetry\Export\JsonLines\Schema\MetricSchema;
+use Pulsar\Extension\ObservabilityExport\Internal\JsonLinesFileWriter;
+use Pulsar\Extension\ObservabilityExport\Schema\MetricSchema;
 use Pulsar\Observability\Metrics\MetricSnapshot;
 
 use function count;

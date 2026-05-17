@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Extension\OpenTelemetry\Export\JsonLines\Span;
+namespace Pulsar\Extension\ObservabilityExport\Span;
 
 use Override;
 use Pulsar\Api\Api;
-use Pulsar\Extension\OpenTelemetry\Export\JsonLines\Internal\JsonLinesFileWriter;
-use Pulsar\Extension\OpenTelemetry\Export\JsonLines\Schema\SpanSchema;
+use Pulsar\Extension\ObservabilityExport\Internal\JsonLinesFileWriter;
+use Pulsar\Extension\ObservabilityExport\Schema\SpanSchema;
 use Pulsar\Observability\Tracing\Span;
 
 use function count;
