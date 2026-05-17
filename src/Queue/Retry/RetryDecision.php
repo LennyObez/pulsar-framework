@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Outcome of a retry policy evaluation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum RetryDecision: string

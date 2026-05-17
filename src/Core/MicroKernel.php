@@ -36,6 +36,7 @@ use function is_string;
  * $app->get('/hello/{name}', fn(ServerRequestInterface $r, string $name) => "Hello, $name!");
  * $app->run();
  * ```
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class MicroKernel

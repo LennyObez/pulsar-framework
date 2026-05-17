@@ -9,6 +9,7 @@ use Pulsar\Api\Pagination\PaginationResult;
 
 /**
  * Repository interface for customer account persistence.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface CustomerRepositoryInterface

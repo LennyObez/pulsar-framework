@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Each check analyzes a submission context and returns a result
  * indicating whether the check passed, failed, or was skipped.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface AntiSpamCheckInterface

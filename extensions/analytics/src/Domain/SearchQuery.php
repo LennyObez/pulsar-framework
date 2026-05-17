@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * An internal site search query with result metrics.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SearchQuery

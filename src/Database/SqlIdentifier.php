@@ -13,6 +13,7 @@ use function sprintf;
 /**
  * Validates and quotes SQL identifiers to prevent SQL injection
  * via table names, column names, and other schema identifiers.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class SqlIdentifier

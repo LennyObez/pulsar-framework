@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public enum referenced by PluginManifest::capabilities; consumed
  *            by manifest validator and admin views.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum PluginCapability: string

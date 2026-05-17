@@ -14,6 +14,7 @@ use Pulsar\Api\Api;
  * Under GDPR Article 15, data subjects have the right to obtain a copy
  * of their personal data within 30 days. This DTO tracks the request
  * through its lifecycle from submission to fulfillment.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DsarRequest

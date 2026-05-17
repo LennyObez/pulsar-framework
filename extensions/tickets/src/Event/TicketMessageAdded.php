@@ -10,6 +10,7 @@ use Pulsar\Extension\Tickets\Domain\TicketMessage;
 
 /**
  * Dispatched when a message is added to a ticket.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TicketMessageAdded

@@ -12,6 +12,7 @@ use function is_int;
 
 /**
  * Cardinality limiting configuration.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CardinalityConfig

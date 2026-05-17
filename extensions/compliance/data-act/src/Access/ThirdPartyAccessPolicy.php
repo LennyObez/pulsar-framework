@@ -16,6 +16,7 @@ use function in_array;
  * Evaluates whether a third-party data access request meets the
  * conditions for authorized access, including purpose limitation,
  * data minimization, and contractual basis.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ThirdPartyAccessPolicy

@@ -15,6 +15,7 @@ use function min;
 
 /**
  * Aggregate result from the full anti-spam pipeline.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AntiSpamResult

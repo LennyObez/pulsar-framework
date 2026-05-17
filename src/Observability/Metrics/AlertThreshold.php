@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * When the metric value exceeds (or falls below) the threshold for the
  * configured duration, the alert fires.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AlertThreshold

@@ -23,6 +23,7 @@ use function sprintf;
  * consult the Federal Reserve.
  *
  * @see https://www.aba.com/routing-number
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RoutingNumber implements RuleInterface

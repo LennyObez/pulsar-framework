@@ -9,6 +9,7 @@ use Pulsar\Console\OutputInterface;
 
 /**
  * Formats tabular data for console output.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class TableFormatter

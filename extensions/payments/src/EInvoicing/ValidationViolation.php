@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * A single EN 16931 validation violation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ValidationViolation

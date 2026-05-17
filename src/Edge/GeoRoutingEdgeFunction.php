@@ -13,6 +13,7 @@ use Pulsar\Api\Api;
  * Redirects users to localized content based on their country code.
  * Useful for serving localized marketing pages, compliance-restricted
  * content, or regional pricing pages.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class GeoRoutingEdgeFunction implements EdgeFunctionInterface

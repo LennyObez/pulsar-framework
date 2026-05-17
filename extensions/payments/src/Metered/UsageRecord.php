@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * A recorded usage event for metered billing.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class UsageRecord

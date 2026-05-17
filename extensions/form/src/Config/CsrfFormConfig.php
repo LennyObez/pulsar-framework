@@ -13,6 +13,7 @@ use function is_string;
 
 /**
  * CSRF configuration for form-specific token binding.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CsrfFormConfig

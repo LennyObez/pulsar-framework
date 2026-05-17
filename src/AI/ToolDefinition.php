@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Defines a tool/function that the AI model can call.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ToolDefinition

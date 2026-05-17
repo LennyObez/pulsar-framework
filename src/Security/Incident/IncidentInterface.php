@@ -14,6 +14,7 @@ use Pulsar\Api\Api;
  * such as failed authentication spikes, unauthorized access attempts,
  * data breaches, or integrity violations. Implementations should be
  * immutable value objects.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface IncidentInterface

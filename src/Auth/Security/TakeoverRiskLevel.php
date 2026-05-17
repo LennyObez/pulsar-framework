@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Risk level classification for account takeover assessment.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum TakeoverRiskLevel: string

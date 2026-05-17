@@ -10,6 +10,7 @@ use function is_int;
 
 /**
  * Reputation system configuration with point values and thresholds.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ReputationConfig

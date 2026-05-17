@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Supported payment method types.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum PaymentMethod: string

@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Patterns allow content creators to insert pre-configured block compositions
  * (e.g., Hero + CTA + Testimonials) with a single action.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class BlockPattern

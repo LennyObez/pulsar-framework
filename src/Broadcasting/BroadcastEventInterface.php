@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Events implementing this interface are dispatched by the BroadcastManager
  * to all subscribers of the returned channels.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface BroadcastEventInterface

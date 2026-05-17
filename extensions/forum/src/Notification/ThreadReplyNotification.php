@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Notification sent to thread subscribers when a new reply is posted.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ThreadReplyNotification implements ForumNotificationInterface

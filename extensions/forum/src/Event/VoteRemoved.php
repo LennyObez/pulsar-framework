@@ -9,6 +9,7 @@ use Pulsar\Extension\Forum\Domain\VoteDirection;
 
 /**
  * Dispatched when a user removes their vote from a thread or post.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class VoteRemoved

@@ -14,6 +14,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public enum referenced by Content::contentType; user-land
  *            extensions match against its cases.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum ContentType: string

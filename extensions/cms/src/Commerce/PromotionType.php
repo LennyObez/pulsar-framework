@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Types of promotional discounts that can be applied to orders.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum PromotionType: string

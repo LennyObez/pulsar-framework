@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Summary of a stored payment method for display in the billing portal.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PaymentMethodSummary

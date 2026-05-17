@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Product aggregate root representing a purchasable item in the commerce catalog.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Product

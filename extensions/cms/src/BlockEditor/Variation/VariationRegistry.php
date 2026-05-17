@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Registry for block variations.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class VariationRegistry

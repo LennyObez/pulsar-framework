@@ -25,6 +25,7 @@ use function substr;
  * Each entry's HMAC covers all fields plus the previous entry's HMAC,
  * creating a chain where modifying or deleting any entry invalidates all
  * subsequent HMACs.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AuditEntry

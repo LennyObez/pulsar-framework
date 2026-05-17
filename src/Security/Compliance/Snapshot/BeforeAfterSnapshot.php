@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * Supports controls for SOX audit trail requirements by preserving
  * a paired snapshot of entity state across a mutation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class BeforeAfterSnapshot

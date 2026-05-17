@@ -9,6 +9,7 @@ use Pulsar\Api\Pagination\PaginationResult;
 
 /**
  * Repository interface for forum posts.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface PostRepositoryInterface

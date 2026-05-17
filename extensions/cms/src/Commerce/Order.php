@@ -10,6 +10,7 @@ use Pulsar\Extension\Cms\Content\DataClassification;
 
 /**
  * Order aggregate root representing a customer purchase.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Order

@@ -14,6 +14,7 @@ use function is_string;
 
 /**
  * Top-level cloud configuration for provider selection and shared settings.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CloudConfig

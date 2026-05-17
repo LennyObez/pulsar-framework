@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Action to take when sensitive data is detected.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum DlpAction: string

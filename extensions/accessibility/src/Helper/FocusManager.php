@@ -13,6 +13,7 @@ use function sprintf;
  *
  * These attributes are consumed by client-side scripts to implement
  * focus trapping, focus restoration, roving tabindex, and skip-to behavior.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class FocusManager

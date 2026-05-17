@@ -15,6 +15,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public DTO constructed by admin controllers and serialized into
  *            the X-CMS-Toast response header for the front-end JS reader.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Toast implements JsonSerializable

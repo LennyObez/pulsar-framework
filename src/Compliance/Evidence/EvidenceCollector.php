@@ -16,6 +16,7 @@ use function bin2hex;
  *
  * Evidence proves that a control is implemented and operational.
  * Collectors can be registered per evidence type to automate collection.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class EvidenceCollector

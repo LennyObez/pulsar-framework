@@ -17,6 +17,7 @@ use function is_string;
 
 /**
  * PSR-17 server request factory.
+ * @api
  */
 #[Api(since: '1.0.0-rc.11')]
 final class ServerRequestFactory implements ServerRequestFactoryInterface

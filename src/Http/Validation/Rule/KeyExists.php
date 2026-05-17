@@ -16,6 +16,7 @@ use function sprintf;
 
 /**
  * Specified keys must exist in the array value. Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class KeyExists implements RuleInterface

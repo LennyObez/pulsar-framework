@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Event class — dispatched after invoice issuance through
  *            the EventDispatcher.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class InvoiceGenerated

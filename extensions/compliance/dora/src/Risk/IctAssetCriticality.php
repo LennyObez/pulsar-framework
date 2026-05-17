@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Criticality classification for ICT assets per DORA Article 8.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum IctAssetCriticality: string

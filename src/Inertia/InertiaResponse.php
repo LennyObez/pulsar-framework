@@ -24,6 +24,7 @@ use const JSON_UNESCAPED_UNICODE;
  * data inside the root HTML template for initial load.
  *
  * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement: Psalm does not yet infer clone() return type
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class InertiaResponse

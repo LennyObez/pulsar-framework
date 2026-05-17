@@ -30,6 +30,7 @@ use Pulsar\Container\ContainerInterface;
  *
  * Phase ordering: register → preBoot → boot → postBoot →
  * (request lifecycle) → shutdown.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ShutdownAwareExtensionInterface

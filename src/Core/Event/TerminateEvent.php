@@ -17,6 +17,7 @@ use Pulsar\Api\Api;
  *
  * This event is essential for persistent runtimes (RoadRunner, FrankenPHP)
  * where the process survives between requests and cleanup must be explicit.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TerminateEvent

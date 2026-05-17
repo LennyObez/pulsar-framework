@@ -19,6 +19,7 @@ use const UPLOAD_ERR_OK;
 /**
  * Value must be a valid uploaded file array with expected keys and no upload error.
  * Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class FileRule implements RuleInterface

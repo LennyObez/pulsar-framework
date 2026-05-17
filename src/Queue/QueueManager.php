@@ -40,6 +40,7 @@ use function time;
  * propagation, effect enforcement, encryption), serializes envelopes,
  * and pushes them onto the resolved queue driver. Emits lifecycle events
  * and records dispatch metrics when the respective services are available.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class QueueManager

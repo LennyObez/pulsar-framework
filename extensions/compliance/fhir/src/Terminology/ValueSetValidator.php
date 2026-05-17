@@ -14,6 +14,7 @@ use Pulsar\Api\Api;
  * a given code + system combination is part of a defined ValueSet.
  *
  * @see https://www.hl7.org/fhir/valueset.html
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ValueSetValidator

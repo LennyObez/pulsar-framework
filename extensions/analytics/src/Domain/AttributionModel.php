@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Attribution models for conversion credit assignment.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum AttributionModel: string

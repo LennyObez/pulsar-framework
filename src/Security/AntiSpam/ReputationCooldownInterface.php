@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * New users face longer cooldowns between submissions while
  * established users and moderators get shorter or no cooldowns.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ReputationCooldownInterface extends AntiSpamCheckInterface {}

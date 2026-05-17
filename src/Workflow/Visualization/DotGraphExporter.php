@@ -28,6 +28,7 @@ use function str_replace;
  *
  * When an instance is provided, the current state node receives a
  * highlighted fill to indicate the active position in the workflow.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class DotGraphExporter implements DotGraphExporterInterface

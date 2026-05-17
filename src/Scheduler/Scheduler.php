@@ -21,6 +21,7 @@ use function sprintf;
 
 /**
  * Job scheduler that evaluates due jobs and executes them.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Scheduler

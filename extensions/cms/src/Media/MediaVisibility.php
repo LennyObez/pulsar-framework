@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Visibility level for media assets.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum MediaVisibility: string

@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Groups related routes with a common prefix and attributes.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class RouteGroup

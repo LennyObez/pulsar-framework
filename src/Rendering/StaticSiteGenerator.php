@@ -22,6 +22,7 @@ use function sprintf;
  * Crawls registered routes and renders them to static HTML files
  * for CDN serving. Supports sitemap generation and selective
  * route inclusion/exclusion.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class StaticSiteGenerator

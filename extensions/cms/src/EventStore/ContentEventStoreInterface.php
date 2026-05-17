@@ -13,6 +13,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public binding contract; implemented by DbContentEventRepository
  *            and consumed by content services in event-sourcing mode.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ContentEventStoreInterface

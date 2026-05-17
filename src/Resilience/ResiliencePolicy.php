@@ -24,6 +24,7 @@ use function microtime;
  *   4. Retry: innermost, retries transient failures
  *
  * Each layer is optional; only configured strategies are applied.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ResiliencePolicy

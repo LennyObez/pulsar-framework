@@ -14,6 +14,7 @@ use function time;
 
 /**
  * Immutable session metadata tracked alongside session data.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SessionMetadata

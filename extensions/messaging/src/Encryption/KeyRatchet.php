@@ -21,6 +21,7 @@ use const SODIUM_CRYPTO_SECRETBOX_KEYBYTES;
  * ensuring that compromise of a future key cannot decrypt past messages.
  *
  * Uses BLAKE2b for key derivation in the ratchet chain.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class KeyRatchet

@@ -10,6 +10,7 @@ use Pulsar\Extension\Booking\Exception\BookingException;
 
 /**
  * Contract for Google Calendar synchronization.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface GoogleCalendarSyncInterface

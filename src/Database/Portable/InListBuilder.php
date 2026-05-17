@@ -16,6 +16,7 @@ use function sprintf;
  *
  * PostgreSQL: "column = ANY(:param)" with array parameter
  * MySQL/SQLite: "column IN (:param_0, :param_1, ...)" with expanded parameters
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class InListBuilder

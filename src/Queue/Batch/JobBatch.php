@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Tracks the aggregate state of all jobs dispatched as part of a batch,
  * including pending/failed counts and cancellation status.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class JobBatch

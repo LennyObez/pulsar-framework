@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * A single step in a conversion funnel.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class FunnelStep

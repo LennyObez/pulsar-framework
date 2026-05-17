@@ -27,6 +27,7 @@ use const JSON_THROW_ON_ERROR;
  * Every field in the context is tagged with a ClassificationLevel, enabling
  * selective redaction on export and enforcement of classification policies
  * in regulated presets.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ClassifiedContext

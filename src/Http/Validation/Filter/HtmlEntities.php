@@ -12,6 +12,7 @@ use function is_string;
 
 /**
  * Encodes HTML special characters in string values. Non-strings pass through unchanged.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class HtmlEntities implements FilterInterface

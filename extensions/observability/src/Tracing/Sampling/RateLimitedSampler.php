@@ -17,6 +17,7 @@ use function sprintf;
  *
  * Refills tokens at a constant rate and allows bursts up to maxBurst.
  * Uses monotonic hrtime for accurate timing.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class RateLimitedSampler implements SamplerInterface

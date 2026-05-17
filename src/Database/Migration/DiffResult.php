@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Result of a schema diff operation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DiffResult

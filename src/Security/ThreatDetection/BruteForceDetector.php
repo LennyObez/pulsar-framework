@@ -28,6 +28,7 @@ use function time;
  *
  * Compliance: DORA Art.17 (incident detection), NIS2 Art.21(b),
  * PCI-DSS Req.8.3.4 (account lockout).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class BruteForceDetector implements ThreatDetectorInterface

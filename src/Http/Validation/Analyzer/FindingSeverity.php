@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Severity levels for policy analyzer findings.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum FindingSeverity: string

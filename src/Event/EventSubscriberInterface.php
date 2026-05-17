@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
  * Interface for event subscribers that declare multiple event listeners.
  *
  * Subscribers return a map of event class names to [method, priority] pairs.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface EventSubscriberInterface

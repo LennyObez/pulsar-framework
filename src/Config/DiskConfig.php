@@ -11,6 +11,7 @@ use function is_string;
 
 /**
  * Per-disk storage configuration.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DiskConfig

@@ -13,6 +13,7 @@ use Pulsar\Mail\Mailable;
  *
  * Concrete notifications extend this class and implement the delivery
  * methods for channels they support (toMail, toSms, etc.).
+ * @api
  */
 #[Api(since: '1.0.0')]
 abstract class Notification

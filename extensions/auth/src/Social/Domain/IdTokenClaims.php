@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Contains the standard claims extracted from a verified ID token JWT.
  * Additional provider-specific claims are available via the $claims array.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class IdTokenClaims

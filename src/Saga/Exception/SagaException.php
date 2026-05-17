@@ -12,6 +12,7 @@ use function sprintf;
 
 /**
  * Base exception for saga orchestration errors.
+ * @api
  */
 #[Api(since: '1.0.0')]
 class SagaException extends RuntimeException

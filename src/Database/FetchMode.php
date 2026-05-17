@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Fetch mode for query results.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum FetchMode: int

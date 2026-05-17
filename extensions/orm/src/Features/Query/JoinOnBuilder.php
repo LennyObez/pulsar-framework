@@ -16,6 +16,7 @@ use function sprintf;
  * Builder for JOIN ON conditions.
  *
  * All column references must be qualified (alias.column) to avoid ambiguity.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class JoinOnBuilder

@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Implementations may store device records in a database or proxy
  * to EUDAMED or other device registries.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface UdiRegistryInterface

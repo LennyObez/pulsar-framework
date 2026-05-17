@@ -9,6 +9,7 @@ use Pulsar\Live\LiveForm;
 
 /**
  * Typed form object for the signup page.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class SignupForm extends LiveForm

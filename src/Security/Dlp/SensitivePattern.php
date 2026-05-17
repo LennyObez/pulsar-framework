@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * A registered sensitive data pattern with its type and validation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SensitivePattern

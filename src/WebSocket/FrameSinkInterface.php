@@ -16,6 +16,7 @@ use Pulsar\Api\Api;
  *
  * The test harness ships `Testing\FakeFrameSink` that records frames in
  * memory for assertions.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface FrameSinkInterface

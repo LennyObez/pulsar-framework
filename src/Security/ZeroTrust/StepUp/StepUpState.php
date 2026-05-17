@@ -14,6 +14,7 @@ use Pulsar\Api\Api;
  * Records attempt history to enforce rate limiting, cooldown periods,
  * and lockout thresholds. Immutable: each state transition returns
  * a new instance.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class StepUpState

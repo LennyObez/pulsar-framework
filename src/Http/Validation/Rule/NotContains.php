@@ -15,6 +15,7 @@ use function str_contains;
 
 /**
  * Value must not contain the given substring. Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class NotContains implements RuleInterface

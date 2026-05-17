@@ -14,6 +14,7 @@ use Pulsar\Extension\Auth\OAuth2\Exception\OAuth2Exception;
  *
  * Each grant type (authorization_code, client_credentials, refresh_token)
  * implements this interface to handle token requests for that grant.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface GrantInterface

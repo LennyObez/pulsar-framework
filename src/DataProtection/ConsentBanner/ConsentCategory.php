@@ -15,6 +15,7 @@ use function is_string;
  *
  * Each category groups related cookies/tracking purposes together.
  * Categories marked as "required" cannot be opted out of (e.g. session cookies).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ConsentCategory

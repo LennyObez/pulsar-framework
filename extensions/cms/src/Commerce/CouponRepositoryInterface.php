@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Repository interface for coupon persistence.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface CouponRepositoryInterface

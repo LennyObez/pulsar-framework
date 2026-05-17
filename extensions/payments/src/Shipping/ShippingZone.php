@@ -16,6 +16,7 @@ use function strtoupper;
  *
  * Zones enable region-specific shipping rates (e.g., "EU Zone" with
  * standard and express methods, "Rest of World" with only standard).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ShippingZone

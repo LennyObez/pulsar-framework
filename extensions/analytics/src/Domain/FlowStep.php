@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * A single step in a user navigation flow path.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class FlowStep

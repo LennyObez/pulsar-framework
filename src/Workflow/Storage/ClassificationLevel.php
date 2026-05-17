@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * Determines visibility and retention rules for individual fields
  * stored in a workflow instance context. Higher levels indicate
  * more sensitive data requiring stricter access controls.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum ClassificationLevel: string

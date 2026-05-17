@@ -19,6 +19,7 @@ use function json_validate;
 
 /**
  * Readonly DTO representing an extension's pulsar.json manifest.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ExtensionManifest

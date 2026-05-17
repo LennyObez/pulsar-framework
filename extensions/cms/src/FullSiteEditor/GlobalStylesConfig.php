@@ -19,6 +19,7 @@ use function is_string;
  *
  * @psalm-api Public DTO persisted via GlobalStylesRepositoryInterface;
  *            consumed by full-site editor and theme rendering.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class GlobalStylesConfig

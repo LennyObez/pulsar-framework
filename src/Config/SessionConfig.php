@@ -15,6 +15,7 @@ use function is_string;
  * Typed configuration DTO for session settings.
  *
  * Maps from the `session` key of `config/security.php`.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SessionConfig

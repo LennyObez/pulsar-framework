@@ -21,6 +21,7 @@ use function is_string;
  * Checks include:
  * - IP address changes mid-session (configurable: invalidate, warn, or challenge)
  * - User-agent changes (always invalidate; indicates session replay)
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class HijackDetector

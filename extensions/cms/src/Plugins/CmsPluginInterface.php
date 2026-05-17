@@ -15,6 +15,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public extension contract; implementations are loaded by name from
  *            installed plugin packages by CmsPluginManager.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface CmsPluginInterface

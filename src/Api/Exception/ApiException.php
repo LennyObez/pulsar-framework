@@ -14,6 +14,7 @@ use function sprintf;
  * Base exception for all API resource errors.
  *
  * Provides static factory methods for specific API error scenarios.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ApiException extends RuntimeException

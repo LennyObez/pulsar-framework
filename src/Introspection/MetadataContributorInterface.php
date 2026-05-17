@@ -13,6 +13,7 @@ use Pulsar\Api\Api;
  * runtime information (bindings, configuration, state) to the introspection
  * layer. Each contributor is identified by a unique string ID and populates
  * a scoped {@see ProjectMetadataBuilder}.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface MetadataContributorInterface

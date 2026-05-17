@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Severity classification for cyber threat indicators.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum ThreatSeverity: string

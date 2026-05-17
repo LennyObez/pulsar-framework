@@ -24,6 +24,7 @@ use function stream_context_create;
  * By default, private/internal IP addresses are allowed since health checks
  * typically target internal services. Set $allowPrivateNetworks to false
  * to enforce SSRF protection for external-facing health checks.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class HttpHealthCheck implements HealthCheckInterface

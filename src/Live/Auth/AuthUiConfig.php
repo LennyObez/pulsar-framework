@@ -17,6 +17,7 @@ use function is_string;
  *
  * Controls branding, social providers, field visibility, and routing
  * for the drop-in authentication components.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AuthUiConfig

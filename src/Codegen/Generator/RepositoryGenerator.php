@@ -30,6 +30,7 @@ use function ucfirst;
  *
  * Custom finders are generated for filterable, non-primary string/int columns.
  * All queries use parameterized bindings: SQL injection is impossible by construction.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class RepositoryGenerator extends AbstractGenerator

@@ -27,6 +27,7 @@ use function usort;
  *
  * All methods are pure and static: no mutable state.
  * Supports dot-notation access for nested structures.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class Arr

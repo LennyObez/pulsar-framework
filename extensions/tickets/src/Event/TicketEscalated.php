@@ -10,6 +10,7 @@ use Pulsar\Extension\Tickets\Domain\Ticket;
 
 /**
  * Dispatched when a ticket is escalated due to SLA breach.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TicketEscalated

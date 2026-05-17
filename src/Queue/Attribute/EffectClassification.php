@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * Every job must declare exactly one effect classification via the corresponding
  * attribute: #[Idempotent], #[ReadOnly], or #[NonIdempotent]. The classification
  * drives retry policy and regulated-preset enforcement.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum EffectClassification: string

@@ -12,6 +12,7 @@ use Pulsar\Extension\Tickets\Domain\TicketStatus;
 
 /**
  * Repository interface for the Ticket aggregate root.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface TicketRepositoryInterface

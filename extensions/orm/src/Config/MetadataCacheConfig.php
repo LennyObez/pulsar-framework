@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Metadata cache configuration DTO.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class MetadataCacheConfig

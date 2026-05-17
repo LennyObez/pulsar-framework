@@ -11,6 +11,7 @@ use function in_array;
 
 /**
  * Request DTO for an export operation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ExportRequest

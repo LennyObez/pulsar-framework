@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Persistence contract for subscription entities.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface SubscriptionRepositoryInterface

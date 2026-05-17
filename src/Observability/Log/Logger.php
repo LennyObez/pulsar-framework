@@ -40,6 +40,7 @@ use function sprintf;
  * F4.3: sink construction failures are routed through the same channel —
  * `createSink()` no longer returns null when the constructor throws; the
  * failure is announced via `error_log` and the channel is dropped.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Logger implements LoggerInterface

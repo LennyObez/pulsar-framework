@@ -18,6 +18,7 @@ use Pulsar\Extension\Auth\WebAuthn\Ceremony\RegistrationResult;
  *
  * All ceremonies use challenge-response pattern with one-time challenges.
  * All ceremony events are audit-logged (Finding D).
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface WebAuthnServerInterface

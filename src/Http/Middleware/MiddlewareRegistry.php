@@ -18,6 +18,7 @@ use function sprintf;
  *
  * Groups map a single name to an ordered list of middleware.
  * Aliases map a short name to a single middleware class-string or instance.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class MiddlewareRegistry

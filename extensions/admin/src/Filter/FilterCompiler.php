@@ -22,6 +22,7 @@ use function is_string;
  *
  * @psalm-api Resolved from the DI container by admin list/search
  *            controllers; never instantiated by name.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class FilterCompiler

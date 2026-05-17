@@ -14,6 +14,7 @@ use Pulsar\Extension\AiGovernance\Dto\DataQualityReport;
  *
  * ISO 42001:2023 Clause 8.3 requires organizations to manage data quality,
  * track data provenance, and ensure appropriate consent for AI training data.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface AiDataGovernanceInterface

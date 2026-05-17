@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * A purchasable variant of a product (e.g. size, color combination).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ProductVariant

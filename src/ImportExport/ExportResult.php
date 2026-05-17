@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Result of an export operation from a single provider.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ExportResult

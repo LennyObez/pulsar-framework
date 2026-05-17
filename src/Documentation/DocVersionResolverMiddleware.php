@@ -18,6 +18,7 @@ use function preg_match;
  *
  * Matches URLs like /docs/{version}/{slug} and attaches the resolved
  * DocVersion to the request attributes.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DocVersionResolverMiddleware implements MiddlewareInterface

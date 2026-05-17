@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * An event broadcast to connected clients via SSE/WebSocket.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RealtimeEvent

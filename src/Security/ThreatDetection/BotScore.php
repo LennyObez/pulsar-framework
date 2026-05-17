@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * Score range: 0 (definitely human) to 100 (definitely bot).
  * Individual signal scores are accumulated and clamped to [0, 100].
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class BotScore

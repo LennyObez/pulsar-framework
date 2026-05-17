@@ -21,6 +21,7 @@ use function count;
  * Produced by signal providers and consumed by the policy engine.
  *
  * @implements IteratorAggregate<int, Claim>
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ClaimSet implements Countable, IteratorAggregate

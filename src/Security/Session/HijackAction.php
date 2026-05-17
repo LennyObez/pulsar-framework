@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Action recommended by the hijack detector.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum HijackAction: string

@@ -14,6 +14,7 @@ use Pulsar\Workflow\Exception\ConcurrentTransitionException;
  *
  * Provides CRUD operations for workflow instances with optimistic
  * locking via compare-and-swap on state transitions.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface WorkflowStorageInterface

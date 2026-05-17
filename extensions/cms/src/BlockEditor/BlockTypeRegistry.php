@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Block types are registered during the extension boot phase. Plugins and
  * themes may register additional custom block types via the container.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class BlockTypeRegistry

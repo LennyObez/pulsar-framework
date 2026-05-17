@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * An audience segment definition for filtering analytics data.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Segment

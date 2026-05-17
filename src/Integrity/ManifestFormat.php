@@ -22,6 +22,7 @@ use const JSON_UNESCAPED_SLASHES;
 
 /**
  * Serializes and deserializes integrity manifests to/from JSON.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ManifestFormat

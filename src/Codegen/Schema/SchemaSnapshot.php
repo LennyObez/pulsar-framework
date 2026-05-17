@@ -29,6 +29,7 @@ use const JSON_UNESCAPED_UNICODE;
  *     version: string,
  *     entities: array<string, array<string, mixed>>,
  * }
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SchemaSnapshot

@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Classification of operations requiring elevated security checks.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum SensitiveOperation: string

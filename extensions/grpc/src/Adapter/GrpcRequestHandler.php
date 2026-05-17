@@ -12,6 +12,7 @@ use Pulsar\Extension\Grpc\Interceptor\InterceptorResult;
  *
  * The adapter unpacks the wire-format request and delegates to this handler,
  * which runs the interceptor pipeline and service dispatch.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface GrpcRequestHandler

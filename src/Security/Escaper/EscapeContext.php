@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Output contexts for context-aware escaping.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum EscapeContext: string

@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Response for the grpc.health.v1.Health/Check RPC.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class HealthCheckResponse

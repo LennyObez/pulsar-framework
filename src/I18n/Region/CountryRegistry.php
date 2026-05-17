@@ -25,6 +25,7 @@ use function usort;
  * Language lists per country represent the national/official languages
  * the framework has translations for, plus English as a universal fallback.
  * Countries without any supported national language show English only.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class CountryRegistry

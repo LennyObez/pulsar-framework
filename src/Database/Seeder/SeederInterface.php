@@ -12,6 +12,7 @@ use Pulsar\Database\ConnectionInterface;
  *
  * Seeders populate database tables with initial or test data.
  * Each seeder class handles one logical unit of seeding.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface SeederInterface

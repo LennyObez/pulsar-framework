@@ -19,6 +19,7 @@ use function is_string;
  * pseudonym, along with the encrypted salt used during derivation.
  * This mapping supports controls for GDPR Article 4(5) pseudonymization
  * requirements.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PseudonymMapping

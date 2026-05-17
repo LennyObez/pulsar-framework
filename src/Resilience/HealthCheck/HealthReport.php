@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Aggregated report from running all health checks.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class HealthReport

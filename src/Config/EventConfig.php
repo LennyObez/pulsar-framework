@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Typed configuration DTO for `config/event.php`.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class EventConfig

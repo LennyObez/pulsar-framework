@@ -16,6 +16,7 @@ use Pulsar\Event\EnvelopeRequiredEvent;
  * regulation identification and event typing on all concrete implementations.
  *
  * Every event carries a nonce and timestamp for replay safety (Finding D).
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]

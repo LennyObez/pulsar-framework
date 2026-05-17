@@ -10,6 +10,7 @@ use Pulsar\Extension\Analytics\Domain\BreakdownDimension;
 
 /**
  * Query aggregated analytics statistics.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface StatsServiceInterface

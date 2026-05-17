@@ -13,6 +13,7 @@ use Pulsar\Security\ZeroTrust\Claim\ClaimSet;
  * The trust score is a normalized value (0.0-1.0) derived from the weighted
  * contributions of all claims in the set. The explanation array provides
  * per-claim breakdowns for debugging and audit purposes.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TrustScoreResult

@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public binding contract; implemented by FullSiteEditor service
  *            and consumed by admin controllers.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface GlobalStylesRepositoryInterface

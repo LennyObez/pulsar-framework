@@ -13,6 +13,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public DTO returned from CssOverrideRepositoryInterface and
  *            LiveCssServiceInterface; consumed by template rendering.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CssOverride

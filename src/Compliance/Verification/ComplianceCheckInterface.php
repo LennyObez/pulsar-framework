@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Implementations inspect runtime configuration, environment settings,
  * or system state to determine whether a control is active.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ComplianceCheckInterface

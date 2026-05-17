@@ -19,6 +19,7 @@ use const JSON_THROW_ON_ERROR;
  *
  * @psalm-api Public DTO returned from FormSubmissionRepositoryInterface;
  *            consumed by admin templates and notification mailables.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class FormSubmission

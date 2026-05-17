@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Represents the delimiter-balance state of a partially entered expression.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class MultiLineState

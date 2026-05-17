@@ -23,6 +23,7 @@ use function str_contains;
 /**
  * Collects metrics from the MetricRegistry, applies cardinality protection,
  * converts to OTLP format, and enqueues for batch export.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class OtlpMeterBridge

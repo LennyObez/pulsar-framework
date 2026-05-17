@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Provides the expected audience, issuer, nonce, and acceptable clock
  * skew when validating ID token claims and signature.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class IdTokenVerificationContext

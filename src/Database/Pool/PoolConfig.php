@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * Connection pooling is intended for persistent runtimes only (e.g., Swoole,
  * RoadRunner). Under traditional FPM, no pool is created.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PoolConfig

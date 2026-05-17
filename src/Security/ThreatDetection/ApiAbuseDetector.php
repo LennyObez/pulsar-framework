@@ -24,6 +24,7 @@ use function time;
  * - Excessive request volume from a single source
  *
  * Compliance: PCI-DSS Req.11 (security monitoring), ISO 27001 A.8.16.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ApiAbuseDetector implements ThreatDetectorInterface

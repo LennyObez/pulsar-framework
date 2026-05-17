@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * A single contributing factor to an AI-assisted decision.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DecisionFactor

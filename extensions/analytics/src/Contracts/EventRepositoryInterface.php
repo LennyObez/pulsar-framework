@@ -10,6 +10,7 @@ use Pulsar\Extension\Analytics\Domain\CustomEvent;
 
 /**
  * Persistence interface for custom event records.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface EventRepositoryInterface

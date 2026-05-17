@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * Maps identity verification strength to authentication guard requirements.
  * Low corresponds to single-factor auth, Substantial to multi-factor,
  * and High to hardware-backed or qualified certificate authentication.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum LevelOfAssurance: string

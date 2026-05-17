@@ -20,6 +20,7 @@ use function preg_replace;
  * for correlation, query duration, row count, and classification. Raw
  * bindings are only logged when explicitly enabled with environment
  * confirmation and PII values remain masked even then.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SqlLogger implements SqlLoggerInterface

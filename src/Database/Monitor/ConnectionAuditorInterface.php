@@ -9,6 +9,7 @@ use Pulsar\Database\Driver;
 
 /**
  * Audits connection lifecycle events for observability and compliance.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ConnectionAuditorInterface

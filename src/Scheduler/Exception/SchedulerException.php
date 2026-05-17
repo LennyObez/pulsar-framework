@@ -12,6 +12,7 @@ use function sprintf;
 
 /**
  * Exception for scheduler errors.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class SchedulerException extends RuntimeException

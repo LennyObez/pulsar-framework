@@ -10,6 +10,7 @@ use function is_string;
 
 /**
  * Validation rule for an admin resource field.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ValidationRule

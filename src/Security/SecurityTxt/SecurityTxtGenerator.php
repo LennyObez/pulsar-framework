@@ -18,6 +18,7 @@ use function implode;
  * Generates and serves /.well-known/security.txt per RFC 9116.
  *
  * Wire this as a route handler for GET /.well-known/security.txt.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SecurityTxtGenerator implements RequestHandlerInterface

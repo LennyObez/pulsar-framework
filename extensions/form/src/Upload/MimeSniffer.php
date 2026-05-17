@@ -17,6 +17,7 @@ use function substr;
  *
  * Does NOT trust the Content-Type header from the client.
  * Validates actual file content against known magic byte signatures.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class MimeSniffer

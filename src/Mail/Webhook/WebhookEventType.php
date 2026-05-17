@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Types of webhook events from mail providers.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum WebhookEventType: string

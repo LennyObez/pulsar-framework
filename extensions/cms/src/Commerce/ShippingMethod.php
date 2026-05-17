@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Available shipping methods for order fulfillment.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum ShippingMethod: string

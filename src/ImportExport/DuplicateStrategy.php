@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Strategy for handling duplicate entries during import.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum DuplicateStrategy: string

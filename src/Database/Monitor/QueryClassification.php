@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Classifies a SQL statement by its primary operation type.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum QueryClassification: string

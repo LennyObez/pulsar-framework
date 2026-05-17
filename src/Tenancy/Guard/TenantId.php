@@ -12,6 +12,7 @@ use function sprintf;
 
 /**
  * Immutable tenant identifier value object.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TenantId

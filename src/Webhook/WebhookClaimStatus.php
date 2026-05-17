@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Status of a webhook event claim.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum WebhookClaimStatus

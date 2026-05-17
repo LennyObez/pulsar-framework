@@ -15,6 +15,7 @@ use Pulsar\Saga\Step\StepResult;
  * Persisted after each step to survive process restarts. The state tracks
  * which step the saga is on, the results of completed steps, and the
  * overall execution context.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SagaState

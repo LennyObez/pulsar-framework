@@ -12,6 +12,7 @@ use Pulsar\Extension\Analytics\Domain\FunnelStep;
 
 /**
  * Multi-step conversion funnel analysis.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface FunnelServiceInterface

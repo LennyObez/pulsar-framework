@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Supported runtime drivers.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum RuntimeType: string

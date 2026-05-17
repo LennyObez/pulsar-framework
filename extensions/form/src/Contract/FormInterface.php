@@ -12,6 +12,7 @@ use Pulsar\Http\Validation\ValidationResult;
  *
  * A form holds fields, manages submission data, runs validation,
  * and tracks its submission state.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface FormInterface

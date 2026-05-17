@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Result of an API request signature verification.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SignatureVerificationResult

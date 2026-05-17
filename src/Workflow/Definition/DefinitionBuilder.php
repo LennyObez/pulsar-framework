@@ -25,6 +25,7 @@ use Pulsar\Workflow\Exception\WorkflowException;
  *         ->transition('reject', 'pending_review', 'rejected')
  *         ->transition('complete', 'approved', 'completed')
  *         ->build();
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class DefinitionBuilder

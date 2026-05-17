@@ -14,6 +14,7 @@ use function array_values;
  *
  * Preserves immutable originals so downstream code can compare
  * sanitized vs. original values when needed.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SanitizationPipeline

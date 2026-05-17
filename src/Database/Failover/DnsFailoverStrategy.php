@@ -17,6 +17,7 @@ use const DNS_A;
  *
  * Uses DNS lookup to discover the current IP address of the given hostname,
  * which is useful when cloud/RDS endpoints update DNS records on failover.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DnsFailoverStrategy implements FailoverStrategyInterface

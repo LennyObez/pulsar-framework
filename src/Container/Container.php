@@ -35,6 +35,7 @@ use function sprintf;
  * Implements PSR-11 and provides singleton/factory binding support,
  * service tags, contextual bindings, scoped lifetimes, lazy proxies,
  * decorator chains, deferred providers, and compiler pass support.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class Container implements AdvancedContainerInterface

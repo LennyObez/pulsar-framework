@@ -35,6 +35,7 @@ use const PHP_URL_SCHEME;
  *         $instrumentation->error($ctx, $e);
  *         throw $e;
  *     }
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class HttpClientInstrumentation

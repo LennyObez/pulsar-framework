@@ -15,6 +15,7 @@ use Pulsar\Api\Api;
  * - Cancelled: user explicitly cancelled; access may continue until expiry
  * - BillingRetry: payment declined, store retrying outside grace period
  * - Revoked: store revoked access (e.g. refund, policy violation)
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum SubscriptionStatus: string

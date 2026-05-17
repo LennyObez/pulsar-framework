@@ -15,6 +15,7 @@ use function in_array;
  * This is a bidirectional mapping: given a feature name, you can find which
  * controls it provides coverage for; given a control ID, you can find which
  * features address it.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ControlMapping

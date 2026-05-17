@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Identifies situations where too many critical functions depend
  * on a single third-party provider, creating systemic risk.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ConcentrationRiskResult

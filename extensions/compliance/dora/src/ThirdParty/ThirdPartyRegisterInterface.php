@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Contract for the ICT third-party provider register per DORA Article 28.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ThirdPartyRegisterInterface

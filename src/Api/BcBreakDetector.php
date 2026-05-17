@@ -13,6 +13,7 @@ use function is_string;
  *
  * Compares two API snapshots to detect removed classes, removed methods,
  * changed signatures, and narrowed return types on stable APIs.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class BcBreakDetector

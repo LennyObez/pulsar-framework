@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
  * Immutable description of an MCP tool for the wire protocol.
  *
  * Maps directly to the MCP tools/list response shape.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ToolDefinition

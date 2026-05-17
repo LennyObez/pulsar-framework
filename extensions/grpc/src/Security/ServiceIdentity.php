@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Represents a trusted peer service identified by its certificate SAN,
  * with a trust level and a permission set controlling method access.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ServiceIdentity

@@ -26,6 +26,7 @@ use function str_contains;
  *   $http->stub('https://api.example.com/users', new FakeHttpResponse(200, '{"ok":true}'));
  *   // ... run code that makes HTTP requests ...
  *   $http->assertSent('GET', 'https://api.example.com/users');
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class HttpClientFake

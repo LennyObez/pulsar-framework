@@ -25,6 +25,7 @@ use function ucwords;
  * - `{{name|kebab-case}}`
  *
  * No eval(). No arbitrary code execution. Deterministic output.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TemplateRenderer

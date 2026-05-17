@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Describes a single registered route (methods, path, handler, middleware).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RouteEntry

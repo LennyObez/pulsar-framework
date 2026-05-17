@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Defines a single field within an entity for code generation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class FieldDefinition

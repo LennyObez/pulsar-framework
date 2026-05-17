@@ -13,6 +13,7 @@ use Pulsar\Extension\Payments\Domain\Money;
  *
  * All monetary values use the {@see Money} value object with integer
  * minor units to avoid floating-point precision issues.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CartItem

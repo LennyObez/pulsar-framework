@@ -14,6 +14,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public DTO returned from FieldRegistryRepositoryInterface and
  *            ContentTypeBuilder; consumed by admin form rendering.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ContentTypeField

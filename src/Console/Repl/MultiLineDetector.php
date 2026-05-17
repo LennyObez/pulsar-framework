@@ -15,6 +15,7 @@ use function substr;
  *
  * Tracks unclosed braces, parentheses, brackets, and string literals
  * to determine if the user needs to continue input on the next line.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class MultiLineDetector

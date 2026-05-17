@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Device type preference for beta signup participants.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum DeviceType: string

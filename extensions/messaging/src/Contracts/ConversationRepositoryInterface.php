@@ -9,6 +9,7 @@ use Pulsar\Extension\Messaging\Domain\Conversation;
 
 /**
  * Repository for conversation persistence.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ConversationRepositoryInterface

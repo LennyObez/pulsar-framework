@@ -10,6 +10,7 @@ use Pulsar\Extension\Booking\Domain\TimeSlot;
 
 /**
  * Manages time slot availability.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface TimeSlotManagerInterface

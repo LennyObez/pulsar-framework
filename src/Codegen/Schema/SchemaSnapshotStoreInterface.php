@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Contract for schema snapshot persistence.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface SchemaSnapshotStoreInterface

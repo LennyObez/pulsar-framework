@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * A dynamic (parameterized) route with its pre-compiled regex pattern.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CompiledDynamicRoute

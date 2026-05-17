@@ -16,6 +16,7 @@ use Pulsar\Extension\Payments\Exception\PaymentProviderException;
  *
  * Implementations wrap vendor-specific APIs behind this uniform interface.
  * Idempotency keys pass through to providers (belt-and-suspenders with the gateway).
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface PaymentProviderInterface

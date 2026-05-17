@@ -11,6 +11,7 @@ use Pulsar\View\ViewException;
  * Core contract for the Pulsar template engine.
  *
  * Implementations handle template rendering, compilation, and existence checks.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface TemplateEngineInterface

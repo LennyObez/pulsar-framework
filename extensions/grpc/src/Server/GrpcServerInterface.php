@@ -12,6 +12,7 @@ use Pulsar\Extension\Grpc\Adapter\GrpcRequestHandler;
  *
  * Decouples the server lifecycle from the concrete implementation,
  * allowing CLI commands and tests to depend on the interface.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface GrpcServerInterface extends GrpcRequestHandler

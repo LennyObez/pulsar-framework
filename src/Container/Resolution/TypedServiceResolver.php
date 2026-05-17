@@ -41,6 +41,7 @@ use function sprintf;
  *
  * Service providers should call this helper from the `default =>` arm of
  * any `match` over a config-string-driven dispatch.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class TypedServiceResolver

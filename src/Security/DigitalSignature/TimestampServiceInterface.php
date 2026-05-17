@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Implements the RFC 3161 Time-Stamp Protocol for obtaining qualified
  * electronic time stamps from a trusted Time Stamp Authority (TSA).
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface TimestampServiceInterface

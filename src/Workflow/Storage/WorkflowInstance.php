@@ -13,6 +13,7 @@ use Pulsar\Api\Api;
  *
  * Maps to the `workflow_instances` table schema. The version field
  * supports optimistic locking via compare-and-swap semantics.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class WorkflowInstance

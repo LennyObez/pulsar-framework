@@ -10,6 +10,7 @@ use Pulsar\Tenancy\TenantResolverStrategy;
 
 /**
  * Typed configuration DTO for `config/tenancy.php`.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TenancyConfig

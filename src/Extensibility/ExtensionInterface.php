@@ -16,6 +16,7 @@ use Pulsar\Routing\RouterInterface;
  * - Register services in the DI container
  * - Register routes in the router
  * - Provide service providers for deferred loading
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ExtensionInterface

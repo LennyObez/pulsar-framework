@@ -14,6 +14,7 @@ use Pulsar\Api\Api;
  *
  * Workflow: multiple states may be active concurrently; transitions can fork
  * into parallel branches and join back.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum WorkflowType: string

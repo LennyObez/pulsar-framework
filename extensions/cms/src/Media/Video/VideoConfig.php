@@ -14,6 +14,7 @@ use function is_string;
 
 /**
  * Configuration for video processing and transcoding.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class VideoConfig

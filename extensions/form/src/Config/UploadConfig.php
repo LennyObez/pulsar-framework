@@ -13,6 +13,7 @@ use function is_string;
 
 /**
  * File upload security configuration.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class UploadConfig

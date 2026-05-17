@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Provides a baseline ruleset covering common web attack categories.
  * Rule IDs follow CRS convention: 9xxxxx for SQLi, 941xxx for XSS, etc.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class OwaspCoreRuleSet

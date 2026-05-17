@@ -10,6 +10,7 @@ use Pulsar\Extension\Eidas\Exception\EidasException;
 
 /**
  * Timestamp service per eIDAS Art. 41-42 and RFC 3161.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface TimestampServiceInterface

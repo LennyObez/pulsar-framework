@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  * Represents an API key for authenticating CMS content API requests.
  *
  * Keys are stored as SHA-256 hashes; raw key material is never persisted.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ApiKey

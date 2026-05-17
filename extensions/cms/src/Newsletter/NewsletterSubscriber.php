@@ -19,6 +19,7 @@ use function sodium_crypto_generichash;
  *
  * @psalm-api Public DTO returned from NewsletterSubscriberRepositoryInterface;
  *            consumed by subscription service and admin views.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class NewsletterSubscriber

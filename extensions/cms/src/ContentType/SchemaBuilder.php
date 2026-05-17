@@ -35,6 +35,7 @@ use function trim;
  *
  * @psalm-api Resolved by the SchemaBuilder admin controller from the
  *            DI container; not new'd by name.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SchemaBuilder

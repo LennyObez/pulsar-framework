@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Types of compliance evidence that can be collected.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum EvidenceType: string

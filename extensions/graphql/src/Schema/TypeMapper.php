@@ -9,6 +9,7 @@ use Pulsar\Extension\Cms\Content\ContentType;
 
 /**
  * Maps CMS field types and content types to GraphQL type names.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TypeMapper

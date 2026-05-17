@@ -20,6 +20,7 @@ use Pulsar\Api\Api;
  *
  * Configuration is provided through overridable methods, not constructor injection,
  * to keep setup minimal for typical usage.
+ * @api
  */
 #[Api(since: '1.0.0')]
 abstract class BrowserTestCase extends TestCase

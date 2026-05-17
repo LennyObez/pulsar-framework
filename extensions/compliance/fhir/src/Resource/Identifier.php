@@ -12,6 +12,7 @@ use function is_string;
  * A technical identifier for a resource, distinct from the resource's FHIR ID.
  *
  * @see https://www.hl7.org/fhir/datatypes.html#Identifier
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Identifier

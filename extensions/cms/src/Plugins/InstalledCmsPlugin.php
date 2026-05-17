@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public DTO returned from CmsPluginRepositoryInterface; consumed
  *            by CmsPluginManager and admin plugin views.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class InstalledCmsPlugin

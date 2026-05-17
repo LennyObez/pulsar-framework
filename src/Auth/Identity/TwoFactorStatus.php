@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Represents the two-factor authentication status of an identity.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum TwoFactorStatus: string

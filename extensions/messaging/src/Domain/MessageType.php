@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Types of messages that can be sent in a conversation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum MessageType: string

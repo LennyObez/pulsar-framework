@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Result for a single funnel step evaluation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class FunnelStepResult

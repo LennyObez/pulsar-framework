@@ -16,6 +16,7 @@ use function is_string;
  * Records completion of a digital operational resilience test.
  *
  * Supports controls for DORA Article 24 testing of ICT tools and systems.
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]

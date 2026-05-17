@@ -29,6 +29,7 @@ use function sprintf;
  *
  * @see https://www.w3.org/TR/SRI/
  * @see https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SubresourceIntegrityHasher

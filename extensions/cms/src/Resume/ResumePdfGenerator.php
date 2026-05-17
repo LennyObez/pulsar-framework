@@ -21,6 +21,7 @@ use const ENT_QUOTES;
  *
  * @psalm-api Public service resolved from the DI container by resume
  *            export endpoints; not instantiated by name.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ResumePdfGenerator

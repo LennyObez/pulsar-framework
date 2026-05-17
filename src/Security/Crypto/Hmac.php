@@ -20,6 +20,7 @@ use function strlen;
  *
  * Provides keyed hashing for integrity verification and tamper detection.
  * Supports an optional CipherSuiteInterface for pluggable MAC algorithms.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class Hmac

@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * An e-commerce transaction tracked by the analytics system.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class EcommerceTransaction

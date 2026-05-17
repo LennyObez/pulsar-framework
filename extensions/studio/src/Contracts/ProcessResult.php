@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Immutable result of a process execution.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ProcessResult

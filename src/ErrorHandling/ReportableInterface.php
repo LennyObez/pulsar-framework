@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * When the ExceptionHandler encounters a reportable exception,
  * it calls report() before the normal logging pipeline.
  * Return false from report() to suppress default logging.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ReportableInterface

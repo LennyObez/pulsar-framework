@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Represents a single accessibility violation found during validation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AccessibilityViolation

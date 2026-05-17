@@ -15,6 +15,7 @@ use function sprintf;
  * Within a single unit-of-work (request), the same entity row always
  * maps to the same PHP object reference. This prevents inconsistencies
  * from multiple queries loading the same row into separate objects.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class IdentityMap

@@ -11,6 +11,7 @@ use Pulsar\Extension\Analytics\Domain\SegmentFilter;
 
 /**
  * Audience segmentation service.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface SegmentServiceInterface

@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * A user's vote on a poll option.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PollVote

@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public binding contract; implemented by CssValidator and
  *            consumed by LiveCssService.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface CssValidatorInterface

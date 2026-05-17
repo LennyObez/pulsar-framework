@@ -16,6 +16,7 @@ use const FILTER_VALIDATE_EMAIL;
 
 /**
  * Value must be a valid email address via FILTER_VALIDATE_EMAIL. Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Email implements RuleInterface

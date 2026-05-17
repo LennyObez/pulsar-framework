@@ -20,6 +20,7 @@ use Pulsar\Idempotency\Exception\IdempotencyException;
  * by the implementation into `IdempotencyException::serializationFailed()`
  * so consumers only need to catch the two domain exceptions declared
  * below (F22.6).
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface PaymentGatewayInterface

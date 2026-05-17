@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  * Per-request options for AI completions.
  *
  * Overrides the global AiConfig defaults for a single request.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AiRequestOptions

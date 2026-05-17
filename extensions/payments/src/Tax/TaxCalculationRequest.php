@@ -9,6 +9,7 @@ use Pulsar\Extension\Payments\Domain\Money;
 
 /**
  * Request DTO for tax calculation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TaxCalculationRequest

@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Dispatches threat events to registered listeners.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ThreatEventDispatcherInterface

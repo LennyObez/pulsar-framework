@@ -25,6 +25,7 @@ use const STR_PAD_RIGHT;
  *
  * Produces human-readable (colored) or machine-readable (JSON) output
  * suitable for `pulsar compliance:verify` and CI pipelines.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ComplianceDiagnostic

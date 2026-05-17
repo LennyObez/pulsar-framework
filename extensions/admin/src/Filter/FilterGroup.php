@@ -15,6 +15,7 @@ use function is_string;
  *
  * Supports nesting for complex filter expressions:
  *   (name = 'John' AND age > 18) OR (role = 'admin')
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class FilterGroup

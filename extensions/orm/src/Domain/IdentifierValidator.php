@@ -11,6 +11,7 @@ use function preg_match;
 
 /**
  * Validates SQL identifiers (table names, column names, aliases) at method-call time.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class IdentifierValidator

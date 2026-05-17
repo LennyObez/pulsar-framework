@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Represents a single documentation page within a version.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DocPage

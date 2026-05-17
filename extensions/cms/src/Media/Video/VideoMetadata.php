@@ -14,6 +14,7 @@ use function sprintf;
 
 /**
  * Structured metadata extracted from a video file.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class VideoMetadata

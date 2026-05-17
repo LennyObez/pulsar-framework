@@ -15,6 +15,7 @@ use function sprintf;
 
 /**
  * Value must contain only alphabetic characters. Supports optional unicode mode. Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Alpha implements RuleInterface

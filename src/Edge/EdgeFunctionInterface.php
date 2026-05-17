@@ -16,6 +16,7 @@ use Pulsar\Api\Api;
  *
  * Implementations must be serializable for deployment to edge
  * platforms (Cloudflare Workers, Vercel Edge, etc.).
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface EdgeFunctionInterface

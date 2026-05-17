@@ -13,6 +13,7 @@ use function is_string;
  * Typed configuration DTO for authentication and authorization.
  *
  * Maps from the `auth` key of `config/security.php`.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AuthConfig

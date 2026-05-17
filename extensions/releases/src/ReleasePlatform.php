@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Platform classification for application releases.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum ReleasePlatform: string

@@ -28,6 +28,7 @@ use function count;
  * @template T of object
  * @implements IteratorAggregate<int, T>
  * @implements ArrayAccess<int, T>
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class LazyRelationProxy implements IteratorAggregate, Countable, ArrayAccess

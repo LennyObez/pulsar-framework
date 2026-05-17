@@ -29,6 +29,7 @@ use function trim;
  * Emits spans for query() and execute() calls with privacy-safe attributes.
  * Only exports db.system, db.name, and db.operation by default. Statement
  * export is controlled by DbStatementExport policy.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class InstrumentedConnection implements ConnectionInterface

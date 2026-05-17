@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Controls whether a notification type is delivered in-app, via email,
  * and the email batching frequency.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class NotificationPreference

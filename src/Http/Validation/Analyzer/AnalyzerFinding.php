@@ -11,6 +11,7 @@ use function sprintf;
 
 /**
  * A single finding from a policy analyzer.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AnalyzerFinding

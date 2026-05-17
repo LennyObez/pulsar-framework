@@ -15,6 +15,7 @@ use function usort;
  *
  * Filters definitions by tag name and sorts by (priority DESC, id ASC)
  * for deterministic ordering.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class TagCollector

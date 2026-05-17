@@ -12,6 +12,7 @@ use function in_array;
 
 /**
  * A messaging conversation (direct, group, or channel).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Conversation

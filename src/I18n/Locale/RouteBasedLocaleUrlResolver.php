@@ -14,6 +14,7 @@ use Pulsar\Config\I18nConfig;
  * Resolves alternate-locale URLs by replacing the locale prefix in the
  * current path. Extensions (e.g. CMS) may register a content-aware
  * implementation that resolves translated slugs instead.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RouteBasedLocaleUrlResolver implements LocaleUrlResolverInterface

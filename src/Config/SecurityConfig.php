@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  * Top-level typed configuration DTO for `config/security.php`.
  *
  * Composes sub-config DTOs for session, CSRF, security headers, and rate limiting.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SecurityConfig

@@ -12,6 +12,7 @@ use function is_string;
 
 /**
  * Booking extension configuration DTO.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class BookingConfig

@@ -28,6 +28,7 @@ use const JSON_THROW_ON_ERROR;
  * Processes arbitrarily large JSON files in constant memory by yielding
  * parsed items as they are found. Supports both standard JSON arrays
  * and NDJSON (newline-delimited JSON) formats.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class JsonStreamReader

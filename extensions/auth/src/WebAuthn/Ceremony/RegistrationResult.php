@@ -9,6 +9,7 @@ use Pulsar\Extension\Auth\WebAuthn\PublicKey\CredentialSource;
 
 /**
  * Result of a successful WebAuthn registration ceremony.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RegistrationResult

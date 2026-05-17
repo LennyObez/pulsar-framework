@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * Provides non-repudiation evidence that data was sent and received,
  * protecting both sender and recipient against denial of transmission
  * or receipt.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface RegisteredDeliveryServiceInterface

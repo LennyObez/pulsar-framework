@@ -15,6 +15,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public DTO produced by MenuRepositoryInterface during locale
  *            resolution; consumed by navigation templates.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class MenuItemResolved

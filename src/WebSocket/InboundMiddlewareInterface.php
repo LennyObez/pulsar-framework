@@ -39,6 +39,7 @@ use Pulsar\Api\Api;
  *     }
  * }
  * ```
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface InboundMiddlewareInterface

@@ -9,6 +9,7 @@ use Pulsar\Notification\Exception\NotificationException;
 
 /**
  * Application notification manager: public API for sending notifications.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface NotificationManagerInterface

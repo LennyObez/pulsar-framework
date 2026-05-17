@@ -13,6 +13,7 @@ use function is_string;
  * Measurements and simple assertions made about a patient or other subject.
  *
  * @see https://www.hl7.org/fhir/observation.html
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Observation extends FhirResource

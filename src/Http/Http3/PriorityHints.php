@@ -18,6 +18,7 @@ use function count;
  *
  * @see https://web.dev/articles/fetch-priority
  * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/fetchPriority
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class PriorityHints

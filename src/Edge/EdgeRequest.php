@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Contains only the information available at the CDN edge:
  * URL, headers, cookies, and geo/client metadata.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class EdgeRequest

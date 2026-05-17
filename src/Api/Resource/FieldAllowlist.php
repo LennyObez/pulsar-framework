@@ -19,6 +19,7 @@ use function in_array;
  *
  * Ensures that only fields explicitly marked with {@see Attribute\Expose} can be
  * requested. Unknown fields produce a 400 Bad Request response.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class FieldAllowlist

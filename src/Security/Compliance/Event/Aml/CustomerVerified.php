@@ -18,6 +18,7 @@ use function is_string;
  * Records completion of a customer verification (KYC).
  *
  * Supports controls for AML/KYC customer due diligence requirements.
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]

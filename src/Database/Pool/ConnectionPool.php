@@ -22,6 +22,7 @@ use function time;
  * Manages a set of reusable database connections, enforcing limits on
  * pool size, idle timeouts, maximum connection lifetime, and periodic
  * health checks.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ConnectionPool implements ConnectionPoolInterface

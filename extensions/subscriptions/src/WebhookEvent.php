@@ -15,6 +15,7 @@ use function random_bytes;
  *
  * The raw payload is encrypted at rest. Signature verification status
  * is recorded at ingestion time. Processing is deferred to queued jobs.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class WebhookEvent

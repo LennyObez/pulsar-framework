@@ -19,6 +19,7 @@ use function is_string;
  *     localKey: string,
  *     pivotTable: string|null,
  * }
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RelationshipDefinition

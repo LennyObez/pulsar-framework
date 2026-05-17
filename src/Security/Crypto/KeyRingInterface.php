@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
  * Key ring for resolving cryptographic keys by their identifier.
  *
  * Supports key rotation by maintaining multiple keys indexed by kid.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface KeyRingInterface

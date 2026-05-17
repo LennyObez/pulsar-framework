@@ -42,6 +42,7 @@ use Pulsar\Extension\Admin\Features\ViewResource\ViewResourceResult;
  *
  * Delegates to feature handlers for each operation, providing a single
  * entry point for programmatic admin interactions.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AdminGateway

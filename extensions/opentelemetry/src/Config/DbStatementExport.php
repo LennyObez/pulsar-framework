@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Controls how database statements are exported in span attributes.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum DbStatementExport: string

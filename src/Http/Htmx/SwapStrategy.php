@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
  * Content swap strategies for hypermedia responses.
  *
  * Maps to px-swap attribute values on HTML elements.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum SwapStrategy: string

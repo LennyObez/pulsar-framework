@@ -13,6 +13,7 @@ use Pulsar\Api\Api;
  * Encodes net payment days, early payment discount incentives,
  * and late payment interest penalties. Supports Peppol UNTDID 4461
  * payment means codes for e-invoicing interoperability.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PaymentTerms

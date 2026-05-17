@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Each privilege requires the user to have reached a certain reputation
  * level (and score) before the action is unlocked.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum ForumPrivilege: string

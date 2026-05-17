@@ -17,6 +17,7 @@ use function array_keys;
  * Detects added, removed, and modified entities. For modified entities,
  * detects column-level additions, removals, and modifications.
  * Produces a DiffResult with operations in dependency order.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SchemaDiff

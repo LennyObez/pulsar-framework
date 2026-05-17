@@ -35,6 +35,7 @@ use function sprintf;
  *     `MessageHandlerInterface::onError()`. The dispatcher does not swallow
  *     exceptions silently.
  *  4. If `onError` itself throws, the server logs and closes 1011.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class InboundDispatcher

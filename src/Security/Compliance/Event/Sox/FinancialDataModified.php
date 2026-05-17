@@ -17,6 +17,7 @@ use function is_string;
  * Records modification of financial data requiring SOX audit trail.
  *
  * Supports controls for SOX Section 302 internal controls over financial reporting.
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]

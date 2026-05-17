@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Promotional discount rule with usage limits and scheduling.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Promotion

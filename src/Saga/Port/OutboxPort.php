@@ -15,6 +15,7 @@ use Pulsar\Api\Api;
  * In regulated presets, this is the ONLY allowed mechanism for emitting
  * integration events from saga step handlers. Direct use of
  * {@see IntegrationEventBusPort} is forbidden.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface OutboxPort

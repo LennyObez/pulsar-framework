@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Result of an admin action (create, update, delete, bulk).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ActionResult

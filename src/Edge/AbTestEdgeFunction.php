@@ -17,6 +17,7 @@ use function crc32;
  * Assigns users to experiment variants based on a cookie. If no
  * cookie exists, assigns deterministically from the IP address.
  * Redirects to the variant URL without a round-trip to origin.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AbTestEdgeFunction implements EdgeFunctionInterface

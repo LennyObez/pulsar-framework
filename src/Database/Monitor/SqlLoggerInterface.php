@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Logs SQL query executions with safe defaults that never expose
  * raw parameter values in production environments.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface SqlLoggerInterface

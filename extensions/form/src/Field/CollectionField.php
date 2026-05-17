@@ -17,6 +17,7 @@ use function is_array;
  *
  * Allows dynamic add/remove of repeated field groups
  * (e.g., multiple addresses, phone numbers).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class CollectionField implements FieldInterface

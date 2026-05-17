@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Implementations connect to database-backed vector indexes
  * (pgvector, MySQL 9.0+ VECTOR, sqlite-vec) for nearest-neighbor retrieval.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface VectorStoreInterface

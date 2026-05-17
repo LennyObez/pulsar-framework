@@ -16,6 +16,7 @@ use function in_array;
  * Cloud service providers and data processing services must publish
  * interoperability specifications including supported data formats,
  * API standards, and open interfaces.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class InteroperabilityProfile

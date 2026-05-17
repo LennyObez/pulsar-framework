@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Actions a moderator can take on forum content or users.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum ModerationAction: string

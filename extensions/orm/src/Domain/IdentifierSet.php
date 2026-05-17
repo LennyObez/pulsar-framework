@@ -12,6 +12,7 @@ use function in_array;
 
 /**
  * Unique set of validated identifiers (for column lists, etc.).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class IdentifierSet

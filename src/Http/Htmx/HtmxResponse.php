@@ -23,6 +23,7 @@ use const JSON_UNESCAPED_UNICODE;
  * to control swapping, retargeting, history, and event triggers.
  *
  * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement: Psalm does not yet infer clone() return type
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class HtmxResponse

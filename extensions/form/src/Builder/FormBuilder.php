@@ -28,6 +28,7 @@ use function array_key_exists;
  *     ->add(new PasswordField('password', 'Password'))
  *     ->csrf()
  *     ->build();
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class FormBuilder

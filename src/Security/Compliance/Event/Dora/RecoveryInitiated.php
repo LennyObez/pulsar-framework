@@ -16,6 +16,7 @@ use function is_string;
  * Records initiation of a recovery procedure following an ICT incident.
  *
  * Supports controls for DORA Article 11 business continuity management.
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]

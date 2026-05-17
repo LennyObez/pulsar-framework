@@ -17,6 +17,7 @@ use const ENT_QUOTES;
  *
  * Renders a colored badge with status text and optional icon.
  * Works as <pulsar-status-badge> custom element.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class StatusBadgeComponent extends EmbeddableComponent

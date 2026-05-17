@@ -24,6 +24,7 @@ use Pulsar\Api\Api;
  *           return '<div>Count: ' . $this->count . '</div>';
  *       }
  *   }
+ * @api
  */
 #[Api(since: '1.0.0')]
 abstract class LiveComponent

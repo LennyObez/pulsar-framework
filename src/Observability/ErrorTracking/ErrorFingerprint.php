@@ -36,6 +36,7 @@ use function substr;
  *  - message: strip numeric / hex / quoted-string / UUID tokens.
  *  - file: strip the longest common project root (`..../src/Foo.php` →
  *    `src/Foo.php`) and force forward slashes so Windows + Linux agree.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ErrorFingerprint

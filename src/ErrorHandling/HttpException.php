@@ -13,6 +13,7 @@ use Throwable;
 
 /**
  * General HTTP exception with status code and optional headers.
+ * @api
  */
 #[Api(since: '1.0.0')]
 class HttpException extends RuntimeException implements HttpExceptionInterface

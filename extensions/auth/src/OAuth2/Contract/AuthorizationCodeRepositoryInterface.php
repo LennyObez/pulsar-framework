@@ -12,6 +12,7 @@ use Pulsar\Extension\Auth\OAuth2\Token\AuthorizationCode;
  *
  * Authorization codes are one-time use, short-lived (default 10 min),
  * bound to client + redirect_uri + PKCE verifier, and stored hashed.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface AuthorizationCodeRepositoryInterface

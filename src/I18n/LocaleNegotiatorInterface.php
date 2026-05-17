@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * Determines the best locale for a request based on client
  * preferences and server-supported locales.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface LocaleNegotiatorInterface

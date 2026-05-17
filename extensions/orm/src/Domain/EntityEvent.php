@@ -14,6 +14,7 @@ use Pulsar\Api\Api;
  *
  * Pre-events (creating/updating/deleting) can prevent the operation
  * by returning false from the observer.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum EntityEvent: string

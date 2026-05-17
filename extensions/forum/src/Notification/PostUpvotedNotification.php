@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Notification sent to a post author when their post receives an upvote.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PostUpvotedNotification implements ForumNotificationInterface

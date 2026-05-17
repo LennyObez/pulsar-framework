@@ -35,6 +35,7 @@ use function urldecode;
  *
  * Uses a 5-step pipeline: DOM parsing, tree walk, attribute filtering,
  * URL sanitization, and serialization with defense-in-depth validation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ForumBodyPolicy

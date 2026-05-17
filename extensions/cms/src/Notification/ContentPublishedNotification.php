@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Constructed by CmsNotificationDispatcher and dispatched through
  *            the framework notification manager.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ContentPublishedNotification implements CmsNotificationInterface

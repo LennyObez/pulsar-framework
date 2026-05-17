@@ -32,6 +32,7 @@ use const SODIUM_CRYPTO_SIGN_SECRETKEYBYTES;
  *
  * All file paths are validated against directory traversal (CWE-22)
  * before any I/O operation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ArtifactSigner

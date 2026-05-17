@@ -11,6 +11,7 @@ use function sprintf;
 
 /**
  * Thrown when a table or column identifier fails validation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class InvalidIdentifierException extends InvalidArgumentException

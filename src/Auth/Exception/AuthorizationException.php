@@ -12,6 +12,7 @@ use function sprintf;
 
 /**
  * Exception for authorization failures.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class AuthorizationException extends RuntimeException

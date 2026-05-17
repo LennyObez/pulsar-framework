@@ -28,6 +28,7 @@ use Pulsar\Extension\Payments\Domain\Invoice;
  * - BR-09: At least one invoice line
  * - BR-10: Payment terms or due date
  * - BR-CO-15: Tax breakdown present when tax > 0
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class En16931Validator

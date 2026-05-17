@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
  * Defines which CMS data categories to include in a backup.
  *
  * @psalm-api Public DTO passed to BackupServiceInterface::createBackup().
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class BackupScope

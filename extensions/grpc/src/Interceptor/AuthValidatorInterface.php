@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Implementations verify bearer tokens (typically JWT) and return the
  * authenticated identity string on success, or null on failure.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface AuthValidatorInterface

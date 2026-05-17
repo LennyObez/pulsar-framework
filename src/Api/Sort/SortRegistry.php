@@ -16,6 +16,7 @@ use function array_keys;
  *
  * Sorts must be explicitly registered. Unregistered fields are rejected
  * with 400 Bad Request.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class SortRegistry

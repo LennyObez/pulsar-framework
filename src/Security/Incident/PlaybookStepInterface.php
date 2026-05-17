@@ -12,6 +12,7 @@ use Pulsar\Security\ThreatDetection\ThreatEvent;
  *
  * Each step receives the triggering threat event and returns whether
  * execution should continue to the next step.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface PlaybookStepInterface

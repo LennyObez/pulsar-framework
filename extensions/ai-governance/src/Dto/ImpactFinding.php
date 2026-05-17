@@ -13,6 +13,7 @@ use Pulsar\Extension\AiGovernance\Enum\ImpactSeverity;
  *
  * Represents an identified risk, concern, or observation from evaluating
  * an AI system against ISO 42001:2023 impact categories.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ImpactFinding

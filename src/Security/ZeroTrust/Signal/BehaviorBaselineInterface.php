@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Implementations are responsible for building and persisting baseline profiles
  * from historical activity data. Returns null when no baseline has been established.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface BehaviorBaselineInterface

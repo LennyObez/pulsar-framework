@@ -9,6 +9,7 @@ use Pulsar\Database\Result;
 
 /**
  * Caches query results with tag-based invalidation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface QueryCacheInterface

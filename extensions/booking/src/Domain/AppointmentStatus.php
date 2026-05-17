@@ -20,6 +20,7 @@ use function in_array;
  *   DepositPaid --> Rescheduled
  *   Reminded --> InProgress --> NoShow
  *   InProgress --> NoShow
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum AppointmentStatus: string

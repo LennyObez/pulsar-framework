@@ -12,6 +12,7 @@ use Pulsar\Extension\Cms\Content\Content;
  *
  * @psalm-api Public binding contract; implemented by BreadcrumbGenerator
  *            and consumed by content templates.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface BreadcrumbGeneratorInterface

@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * Extensions use this interface to add middleware without depending on
  * the concrete MiddlewarePipeline implementation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface MiddlewarePipelineInterface

@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Contract for authorizing access to private and presence channels.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ChannelAuthorizerInterface

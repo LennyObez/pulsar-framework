@@ -13,6 +13,7 @@ use function is_string;
  * A clinical condition, problem, diagnosis, or other event/situation/issue.
  *
  * @see https://www.hl7.org/fhir/condition.html
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Condition extends FhirResource

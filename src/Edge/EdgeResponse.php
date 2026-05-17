@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  * Response from an edge function.
  *
  * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class EdgeResponse

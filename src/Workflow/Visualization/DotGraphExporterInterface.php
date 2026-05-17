@@ -13,6 +13,7 @@ use Pulsar\Workflow\Storage\WorkflowInstance;
  *
  * The output is a valid DOT language string that can be rendered by
  * Graphviz tools (dot, neato, etc.) into SVG, PNG, or PDF.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface DotGraphExporterInterface

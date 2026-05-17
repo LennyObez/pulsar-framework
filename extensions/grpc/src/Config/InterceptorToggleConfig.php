@@ -15,6 +15,7 @@ use function is_bool;
  * The interceptor execution order is fixed (Tracing -> Auth -> RateLimit ->
  * Validation -> Logging) and cannot be changed. This config only controls
  * which interceptors are active.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class InterceptorToggleConfig

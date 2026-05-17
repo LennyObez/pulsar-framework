@@ -13,6 +13,7 @@ use function is_string;
  * An order or request for supply of medication and administration instructions.
  *
  * @see https://www.hl7.org/fhir/medicationrequest.html
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class MedicationRequest extends FhirResource

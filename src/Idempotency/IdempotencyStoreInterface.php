@@ -10,6 +10,7 @@ use Pulsar\Idempotency\Exception\IdempotencyException;
 
 /**
  * Atomic claim-based idempotency store contract.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface IdempotencyStoreInterface

@@ -18,6 +18,7 @@ use function is_string;
  * as required by DSA Articles 11-13. The platform_type determines which
  * obligations apply: intermediary (basic), hosting (+ notice-and-action),
  * platform (+ transparency, trusted flaggers), vlop (+ systemic risk).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DsaConfig

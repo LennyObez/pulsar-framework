@@ -14,6 +14,7 @@ use Throwable;
  *
  * Uses `SELECT 1` to verify that the underlying connection is alive
  * and responding within the configured timeout.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ConnectionHealthChecker implements ConnectionHealthCheckerInterface

@@ -26,6 +26,7 @@ use const JSON_THROW_ON_ERROR;
  * that encodes the position of the last seen item.
  *
  * @template T
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CursorPaginator

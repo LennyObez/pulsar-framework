@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Persistence layer for compliance evidence records.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface EvidenceStoreInterface

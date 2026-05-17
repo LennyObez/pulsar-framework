@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  * Describes a security scheme for the OpenAPI specification.
  *
  * Supports OAuth2 (with flows), HTTP Bearer, and API key schemes.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SecuritySchemeDefinition

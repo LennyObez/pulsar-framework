@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * An emoji reaction on a post.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Reaction

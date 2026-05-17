@@ -17,6 +17,7 @@ use function sprintf;
  *
  * Rewrites the envelope queue name to `{baseQueue}:tenant:{tenantId}`, ensuring
  * tenant workloads are isolated at the queue level. Can be disabled for shared queues.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TenantQueueRouter implements JobMiddlewareInterface

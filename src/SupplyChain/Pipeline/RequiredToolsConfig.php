@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Defines which tools must be present in at least one workflow
  * and the patterns used to detect them.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RequiredToolsConfig

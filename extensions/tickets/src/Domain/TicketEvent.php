@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Domain events emitted during ticket lifecycle transitions.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum TicketEvent: string

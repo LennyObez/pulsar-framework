@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Result of a tool-calling pipeline execution.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ToolCallingResult

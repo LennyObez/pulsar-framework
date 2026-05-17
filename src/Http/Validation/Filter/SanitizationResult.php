@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Immutable result of sanitization, preserving original values in memory.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SanitizationResult

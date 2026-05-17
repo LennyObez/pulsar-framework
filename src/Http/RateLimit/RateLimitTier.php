@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Rate limit configuration for a specific tier or route group.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RateLimitTier

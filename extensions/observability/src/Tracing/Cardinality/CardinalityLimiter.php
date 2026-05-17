@@ -15,6 +15,7 @@ use function count;
  *
  * When a metric exceeds its series limit, new label combinations are
  * collapsed into a single overflow bucket to prevent unbounded memory growth.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class CardinalityLimiter

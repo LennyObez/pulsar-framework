@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Financial entities shall identify, classify, and document all ICT assets
  * including those managed by third-party providers.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface IctAssetRegistryInterface

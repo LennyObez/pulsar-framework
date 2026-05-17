@@ -19,6 +19,7 @@ use function is_string;
  * Configuration is loaded from an array (typically from a config file)
  * and stored in memory. Suitable for single-instance deployments and
  * as the default backend.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class StaticConfigCenter implements ConfigCenterInterface

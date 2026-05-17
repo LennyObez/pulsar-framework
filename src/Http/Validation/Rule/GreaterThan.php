@@ -14,6 +14,7 @@ use function sprintf;
 
 /**
  * Value must be greater than the given threshold. Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class GreaterThan implements RuleInterface

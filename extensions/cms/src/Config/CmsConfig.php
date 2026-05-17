@@ -23,6 +23,7 @@ use function is_string;
  * Loaded from config/cms.php during the preBoot phase. All values have
  * sensible defaults for non-regulated environments; regulated deployments
  * should enable editorialWorkflow, eventSourcing, and atomicSnapshots.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CmsConfig

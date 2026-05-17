@@ -22,6 +22,7 @@ use function is_string;
  *
  * Accepted metric names: lcp, fid, cls, page_load, dom_content_loaded,
  * ttfb, js_error, unhandled_rejection.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RumCollector

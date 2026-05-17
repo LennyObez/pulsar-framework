@@ -22,6 +22,7 @@ use function rtrim;
  *
  * Creates a form class with fields matching entity properties.
  * Includes CSRF protection by default.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class FormGenerator extends AbstractGenerator

@@ -13,6 +13,7 @@ use function is_string;
 
 /**
  * Configuration for Pulsar Live components.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class LiveConfig

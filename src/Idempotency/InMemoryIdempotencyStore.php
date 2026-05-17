@@ -14,6 +14,7 @@ use Pulsar\Idempotency\Exception\IdempotencyException;
  *
  * Uses an internal in-flight map to prevent interleaved Fiber execution
  * from double-processing the same key.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class InMemoryIdempotencyStore implements IdempotencyStoreInterface

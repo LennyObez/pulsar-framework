@@ -34,6 +34,7 @@ use function unpack;
  * Only data written by this store with the correct HMAC key will be accepted.
  *
  * Requires ext-shmop.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class SharedMemoryConfigStore

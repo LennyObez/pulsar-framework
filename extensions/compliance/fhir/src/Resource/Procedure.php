@@ -13,6 +13,7 @@ use function is_string;
  * An action that is performed on or for a patient.
  *
  * @see https://www.hl7.org/fhir/procedure.html
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Procedure extends FhirResource

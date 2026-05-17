@@ -9,6 +9,7 @@ use Throwable;
 
 /**
  * Emitted when a cache operation encounters an error.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CacheErrorEvent extends CacheEvent

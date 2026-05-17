@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * The type of an RPC method.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum MethodType: string

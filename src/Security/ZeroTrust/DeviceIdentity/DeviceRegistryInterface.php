@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * Manages device enrollment, lookup, and cryptographic proof verification.
  * Implementations handle the storage backend and attestation format specifics
  * (e.g., WebAuthn, client certificates).
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface DeviceRegistryInterface

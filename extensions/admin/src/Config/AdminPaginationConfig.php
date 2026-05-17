@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Pagination configuration for the admin panel.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AdminPaginationConfig

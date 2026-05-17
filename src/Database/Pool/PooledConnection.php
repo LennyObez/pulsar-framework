@@ -18,6 +18,7 @@ use Pulsar\Database\Transaction;
  * All connection methods delegate to the wrapped connection.
  * Calling {@see disconnect()} returns the connection to the pool
  * instead of closing the underlying database link.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class PooledConnection implements ConnectionInterface

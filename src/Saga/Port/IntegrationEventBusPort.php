@@ -13,6 +13,7 @@ use Pulsar\Api\Api;
  * directly: they must use {@see OutboxPort} instead to ensure atomic
  * event emission. This is enforced by a PHPStan rule and an optional
  * runtime container guard.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface IntegrationEventBusPort

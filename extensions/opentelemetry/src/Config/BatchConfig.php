@@ -11,6 +11,7 @@ use function is_int;
 
 /**
  * Batch exporter configuration.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class BatchConfig

@@ -14,6 +14,7 @@ use Pulsar\Api\Api;
  * instead of reading their own scattered config keys. The provider resolves
  * values from the core config repository with optional fallback to extension
  * settings (for backward compatibility during migration).
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface BusinessProfileProviderInterface

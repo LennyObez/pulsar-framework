@@ -25,6 +25,7 @@ use function str_starts_with;
  *
  * Driver-aware: uses appropriate quoting, type mapping, and syntax
  * for MySQL/MariaDB, PostgreSQL, and SQLite.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DdlCompiler

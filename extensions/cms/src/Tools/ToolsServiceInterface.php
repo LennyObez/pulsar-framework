@@ -14,6 +14,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public binding contract; implemented by ToolsService and consumed
  *            by admin GDPR / data-rights controllers.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ToolsServiceInterface

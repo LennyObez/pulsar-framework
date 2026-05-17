@@ -15,6 +15,7 @@ use Pulsar\Extension\Auth\WebAuthn\Config\WebAuthnConfig;
  *
  * Aggregates social SSO, OAuth2 server, and WebAuthn configurations
  * into a single top-level config DTO.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AuthConfig

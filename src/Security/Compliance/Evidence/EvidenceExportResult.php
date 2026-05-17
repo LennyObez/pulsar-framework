@@ -14,6 +14,7 @@ use Pulsar\Api\Api;
  * Contains the archive identifier, record count, integrity hash manifest,
  * operator identity (chain-of-custody), export timestamp, and whether
  * the export was encrypted.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class EvidenceExportResult

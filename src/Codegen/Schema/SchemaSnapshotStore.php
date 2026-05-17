@@ -27,6 +27,7 @@ use const JSON_UNESCAPED_UNICODE;
  * Reads and writes schema snapshots to disk.
  *
  * Default storage path: `database/.schema-snapshot.json`.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SchemaSnapshotStore implements SchemaSnapshotStoreInterface

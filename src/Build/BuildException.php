@@ -14,6 +14,7 @@ use function sprintf;
 
 /**
  * Exception thrown during build pipeline operations.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class BuildException extends RuntimeException

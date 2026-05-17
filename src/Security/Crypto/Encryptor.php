@@ -25,6 +25,7 @@ use function strlen;
  *
  * Supports an optional previous key for transparent fallback decryption
  * during key rotation windows.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class Encryptor implements EncryptorInterface

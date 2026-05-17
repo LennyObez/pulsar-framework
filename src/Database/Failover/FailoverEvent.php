@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * Captures all information required for audit trails in regulated
  * environments, including correlation IDs for distributed tracing.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class FailoverEvent

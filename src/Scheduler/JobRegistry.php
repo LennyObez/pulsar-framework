@@ -16,6 +16,7 @@ use function count;
 
 /**
  * Registry of scheduled jobs.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class JobRegistry

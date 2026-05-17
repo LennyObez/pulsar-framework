@@ -20,6 +20,7 @@ use function sprintf;
  * Configurable per country for jurisdiction-specific patterns.
  *
  * @see https://www.icao.int/publications/pages/publication.aspx?docnum=9303
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PassportNumber implements RuleInterface

@@ -6,6 +6,7 @@ namespace Pulsar\Api;
 
 /**
  * Represents a single backward-compatibility break found by the detector.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class BcBreak

@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Represents a property in a TypeScript interface definition.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PropertyDefinition

@@ -19,6 +19,7 @@ use function is_string;
  *
  * Carries correlation, causation, actor, tenant, and occurrence timestamp.
  * Created from RequestContext for automatic propagation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class EventMetadata

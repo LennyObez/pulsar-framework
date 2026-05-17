@@ -16,6 +16,7 @@ use function function_exists;
  *
  * Each check returns a CheckResult. The verifier is stateless; all
  * configuration/state is injected via constructor parameters.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RuntimeVerifier

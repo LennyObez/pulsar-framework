@@ -14,6 +14,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public extension contract; implementations are dispatched by
  *            the framework notification manager.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface CmsNotificationInterface

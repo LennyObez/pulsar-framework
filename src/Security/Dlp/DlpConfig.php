@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Configuration for the Data Loss Prevention engine.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DlpConfig

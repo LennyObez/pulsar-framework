@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Listeners can use this for monitoring step-up frequency,
  * detecting brute-force patterns, and audit logging.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class StepUpAttemptedEvent

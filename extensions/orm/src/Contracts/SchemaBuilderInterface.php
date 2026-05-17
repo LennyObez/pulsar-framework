@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Schema management interface for creating and modifying database tables.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface SchemaBuilderInterface

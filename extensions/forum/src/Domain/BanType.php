@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Type of forum user ban.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum BanType: string

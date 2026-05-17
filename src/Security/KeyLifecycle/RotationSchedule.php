@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Defines the rotation schedule for a specific key.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RotationSchedule

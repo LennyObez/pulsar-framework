@@ -15,6 +15,7 @@ use function sprintf;
  *
  * Each static factory produces a semantically typed exception with a machine-readable
  * error type for structured error handling and logging.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class SsoException extends RuntimeException

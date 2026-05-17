@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * ISO 42001:2023 Clause 6.1.2 requires risk assessment. These levels
  * align with the EU AI Act tiered risk framework.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum AiModelRiskLevel: string

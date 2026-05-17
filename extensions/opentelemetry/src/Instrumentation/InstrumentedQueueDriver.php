@@ -30,6 +30,7 @@ use const JSON_THROW_ON_ERROR;
  *
  * Creates messaging.publish spans for push() and messaging.process spans
  * for pop(). Propagates trace context in the job payload.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class InstrumentedQueueDriver implements QueueDriverInterface

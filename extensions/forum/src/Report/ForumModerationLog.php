@@ -14,6 +14,7 @@ use Pulsar\Extension\Forum\Support\UuidGenerator;
  *
  * Tracks what action was taken, against which target (post, thread, or user),
  * by whom, and when. Used for audit trails and moderator accountability.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ForumModerationLog

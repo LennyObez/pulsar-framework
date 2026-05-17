@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Persistence contract for DSAR requests.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface DsarStoreInterface

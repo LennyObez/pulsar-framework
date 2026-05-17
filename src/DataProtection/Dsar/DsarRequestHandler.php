@@ -19,6 +19,7 @@ use function bin2hex;
  * Manages the lifecycle of a DSAR from submission through data
  * collection, packaging, and delivery. Enforces the 30-day GDPR
  * deadline and coordinates all registered data collectors.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class DsarRequestHandler

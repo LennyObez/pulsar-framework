@@ -25,6 +25,7 @@ use function is_string;
  *     "meta": { ... },
  *     "links": { ... }
  * }
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class JsonApiRenderer implements ResponseRendererInterface

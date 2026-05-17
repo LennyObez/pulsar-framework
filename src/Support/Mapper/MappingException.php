@@ -15,6 +15,7 @@ use function sprintf;
 
 /**
  * Exception thrown when object mapping fails.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class MappingException extends RuntimeException

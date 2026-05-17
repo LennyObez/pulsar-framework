@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Result of a single compliance check execution.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CheckResult

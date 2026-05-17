@@ -12,6 +12,7 @@ use function is_string;
 
 /**
  * Configuration for static site generation (SSG).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class StaticSiteConfig

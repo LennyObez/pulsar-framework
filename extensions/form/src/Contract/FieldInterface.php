@@ -12,6 +12,7 @@ use Pulsar\Http\Validation\RuleInterface;
  *
  * Each field knows its name, label, type, HTML attributes,
  * and the validation rules that apply to it.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface FieldInterface

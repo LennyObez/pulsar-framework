@@ -15,6 +15,7 @@ use function sprintf;
 
 /**
  * Value must be a date within the given inclusive range. Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DateBetween implements RuleInterface

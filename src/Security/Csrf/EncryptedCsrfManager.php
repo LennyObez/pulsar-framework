@@ -32,6 +32,7 @@ use const JSON_THROW_ON_ERROR;
  *
  * Uses the existing Encryptor (libsodium secretbox) for authenticated
  * encryption with built-in nonce management and key rotation support.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class EncryptedCsrfManager implements CsrfTokenManagerInterface

@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Standard emoji reactions available on forum posts.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum ReactionType: string

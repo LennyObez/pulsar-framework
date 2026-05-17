@@ -24,6 +24,7 @@ use const JSON_THROW_ON_ERROR;
  * Messages arrive encrypted from the client. The handler persists them
  * and broadcasts the ciphertext to conversation participants: the server
  * never decrypts message content.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class MessagingWebSocketHandler

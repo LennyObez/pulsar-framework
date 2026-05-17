@@ -16,6 +16,7 @@ use function count;
  * Runs registered verification callbacks against controls to determine
  * whether controls are active and satisfied. Uses "control coverage"
  * language, not "compliance guaranteed."
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ControlVerifier

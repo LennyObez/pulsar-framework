@@ -14,6 +14,7 @@ use Pulsar\Security\ZeroTrust\Claim\ClaimSet;
  * Contains the decision, the rules that were evaluated, which claims were
  * missing or insufficient, and a snapshot of the claims at evaluation time
  * for audit purposes.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PolicyEvaluationResult

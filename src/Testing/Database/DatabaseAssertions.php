@@ -20,6 +20,7 @@ use function sprintf;
  * with detailed failure messages showing expected criteria vs actual records.
  *
  * Requires a `getConnection(): PDO` method on the using class.
+ * @api
  */
 #[Api(since: '1.0.0')]
 trait DatabaseAssertions

@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Implementations wrap external libraries or HSM/TSP integrations to produce
  * advanced or qualified electronic signatures in standard formats (XAdES, PAdES, CAdES, JAdES).
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface DigitalSignatureServiceInterface

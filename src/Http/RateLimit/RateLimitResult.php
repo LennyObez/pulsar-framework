@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Result of a rate limit check.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RateLimitResult

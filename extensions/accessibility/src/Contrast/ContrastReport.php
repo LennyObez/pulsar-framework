@@ -10,6 +10,7 @@ use function count;
 
 /**
  * Aggregated report of contrast ratio checks across design token pairs.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ContrastReport

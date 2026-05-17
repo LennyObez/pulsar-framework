@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Stores CSP violation reports for aggregation and analysis.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface CspReportCollectorInterface

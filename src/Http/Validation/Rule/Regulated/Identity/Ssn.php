@@ -24,6 +24,7 @@ use function sprintf;
  * verification, consult the SSA.
  *
  * @see https://www.ssa.gov/employer/stateweb.htm
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Ssn implements RuleInterface

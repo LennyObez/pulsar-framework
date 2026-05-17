@@ -18,6 +18,7 @@ use function is_string;
  * Records completion of a transaction screening against AML rules.
  *
  * Supports controls for AML transaction monitoring requirements.
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]

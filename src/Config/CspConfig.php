@@ -17,6 +17,7 @@ use function is_string;
  * Typed configuration DTO for Content Security Policy headers.
  *
  * Maps from the `csp` key within the `headers` section of `config/security.php`.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CspConfig

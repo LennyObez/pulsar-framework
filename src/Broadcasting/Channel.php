@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Public broadcast channel: anyone can subscribe.
+ * @api
  */
 #[Api(since: '1.0.0')]
 readonly class Channel

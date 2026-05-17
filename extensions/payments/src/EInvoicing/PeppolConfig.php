@@ -13,6 +13,7 @@ use function is_string;
  * Peppol Access Point configuration.
  *
  * @param string $senderScheme Peppol participant scheme (e.g., "0088" for GLN, "9925" for VAT BE)
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PeppolConfig

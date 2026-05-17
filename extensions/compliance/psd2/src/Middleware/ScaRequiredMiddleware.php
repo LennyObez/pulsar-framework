@@ -20,6 +20,7 @@ use function str_contains;
  *
  * Checks the request for a valid SCA verification token. If missing or
  * invalid, returns 403 with details on the required SCA flow.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ScaRequiredMiddleware implements MiddlewareInterface

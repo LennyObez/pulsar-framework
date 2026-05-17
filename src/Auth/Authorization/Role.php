@@ -12,6 +12,7 @@ use function array_map;
 
 /**
  * Immutable value object representing a role with its associated permissions.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Role

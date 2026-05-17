@@ -24,6 +24,7 @@ use function sprintf;
  * or persist CVV values.
  *
  * @see https://www.pcisecuritystandards.org/
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Cvv implements RuleInterface

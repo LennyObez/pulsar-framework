@@ -15,6 +15,7 @@ use function sprintf;
  * This indicates that another process modified the workflow instance
  * between the read and the attempted write. The caller should retry
  * the operation with a fresh read.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ConcurrentTransitionException extends WorkflowException

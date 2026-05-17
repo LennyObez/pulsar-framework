@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Result of attribution analysis for a single channel/source.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AttributionResult

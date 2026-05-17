@@ -27,6 +27,7 @@ use function trim;
  * Negotiates encoding via Accept-Encoding and compresses response bodies
  * using gzip, brotli (if ext-brotli available), or zstd (if ext-zstd available).
  * Skips already-compressed content types (images, video, fonts, archives).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CompressionMiddleware implements MiddlewareInterface

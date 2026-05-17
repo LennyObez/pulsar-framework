@@ -28,6 +28,7 @@ use const T_STRING;
  *
  * Extracts keys from `__('key')`, `trans('key')`, and
  * `$translator->translate('key')` calls using PHP's tokenizer.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class TranslationExtractor

@@ -13,6 +13,7 @@ use function sprintf;
 
 /**
  * Executes aggregate queries (COUNT, SUM, MIN, MAX, AVG) efficiently.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AggregateBuilder

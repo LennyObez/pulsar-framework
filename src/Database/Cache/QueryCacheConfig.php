@@ -13,6 +13,7 @@ use Pulsar\Api\Api;
  * In regulated environments, caching is disabled by default to prevent
  * stale authorization data from leaking between requests. The sensitive
  * table and authorization column lists drive automatic cache invalidation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class QueryCacheConfig

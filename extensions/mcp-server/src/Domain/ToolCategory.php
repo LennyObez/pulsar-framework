@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Read tools are safe to execute without explicit user approval.
  * Action tools may modify state and require permission checks.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum ToolCategory: string

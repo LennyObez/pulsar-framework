@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Result of a control verification check.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class VerificationResult

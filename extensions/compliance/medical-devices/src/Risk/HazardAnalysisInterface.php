@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Contract for hazard analysis per ISO 14971.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface HazardAnalysisInterface

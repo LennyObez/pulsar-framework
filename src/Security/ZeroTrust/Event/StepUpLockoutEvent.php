@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * This is a high-severity security event. Listeners should trigger alerts
  * and potentially escalate to security teams.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class StepUpLockoutEvent

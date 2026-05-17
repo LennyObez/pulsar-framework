@@ -24,6 +24,7 @@ use const JSON_UNESCAPED_UNICODE;
  *       ->withHeader('Accept', 'application/json')
  *       ->withToken('test-bearer-token')
  *       ->build();
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class TestRequestBuilder

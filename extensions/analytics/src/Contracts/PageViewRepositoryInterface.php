@@ -10,6 +10,7 @@ use Pulsar\Extension\Analytics\Domain\PageView;
 
 /**
  * Persistence interface for page view records.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface PageViewRepositoryInterface

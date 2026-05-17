@@ -19,6 +19,7 @@ use function is_string;
  * Captures who accessed what, when, why, and from where. Forms the
  * core audit trail for purpose-bound data access required by PCI-DSS,
  * HIPAA, GDPR, PSD2, DORA, and SOC 2.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class JustificationRecord

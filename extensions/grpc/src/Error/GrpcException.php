@@ -13,6 +13,7 @@ use Throwable;
  *
  * Thrown from service handlers to signal gRPC errors. The interceptor
  * pipeline catches these and maps them to the appropriate gRPC response.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class GrpcException extends RuntimeException

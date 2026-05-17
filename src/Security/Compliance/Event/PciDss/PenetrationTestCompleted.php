@@ -17,6 +17,7 @@ use function is_string;
  * Records completion of a penetration test.
  *
  * Supports controls for PCI-DSS Requirement 11.3 penetration testing.
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]

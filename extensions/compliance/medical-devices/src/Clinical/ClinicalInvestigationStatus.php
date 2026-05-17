@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Status of a clinical investigation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum ClinicalInvestigationStatus: string

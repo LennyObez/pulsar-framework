@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * Implementations handle timeout enforcement, output capping, and sanitization.
  * Studio components depend on this interface instead of directly importing
  * process execution classes from other extensions.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ProcessRunnerInterface

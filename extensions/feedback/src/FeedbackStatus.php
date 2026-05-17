@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Lifecycle status for a feedback item during admin triage.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum FeedbackStatus: string

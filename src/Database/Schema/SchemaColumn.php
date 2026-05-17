@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Column definition for schema DDL operations.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SchemaColumn

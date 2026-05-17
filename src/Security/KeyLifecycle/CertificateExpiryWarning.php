@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
 
 /**
  * Warning about an upcoming certificate expiration.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CertificateExpiryWarning

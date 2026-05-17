@@ -17,6 +17,7 @@ use function is_string;
  * Records completion of a HIPAA audit review.
  *
  * Supports controls for HIPAA Security Rule evaluation (45 CFR 164.308(a)(8)).
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]

@@ -12,6 +12,7 @@ use function is_string;
  * A name of a human with text, parts, and usage information.
  *
  * @see https://www.hl7.org/fhir/datatypes.html#HumanName
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class HumanName

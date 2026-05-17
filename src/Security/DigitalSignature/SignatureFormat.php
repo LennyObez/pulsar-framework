@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Each format corresponds to a standard defined by ETSI for
  * creating qualified or advanced electronic signatures.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum SignatureFormat: string

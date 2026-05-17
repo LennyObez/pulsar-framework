@@ -15,6 +15,7 @@ use function sprintf;
  * Qualified column reference (alias.column).
  *
  * Used in JOIN ON clauses where unqualified references are ambiguous.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class QualifiedRef

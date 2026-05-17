@@ -18,6 +18,7 @@ use function microtime;
  *
  * Designed to be called periodically (e.g., every 10 seconds from a
  * scheduler or health check loop).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ThresholdEvaluator

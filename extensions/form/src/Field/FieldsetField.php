@@ -16,6 +16,7 @@ use function is_array;
  * Fieldset grouping related fields together.
  *
  * Contains child fields and renders as an HTML <fieldset> with <legend>.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class FieldsetField implements FieldInterface

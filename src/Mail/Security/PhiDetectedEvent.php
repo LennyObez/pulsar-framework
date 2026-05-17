@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Emitted when PHI is detected in a mail field during HIPAA-mode scrubbing.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PhiDetectedEvent

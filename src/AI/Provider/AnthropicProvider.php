@@ -37,6 +37,7 @@ use const JSON_UNESCAPED_UNICODE;
  *
  * Supports chat, completion, structured output, and tool calling
  * via the Anthropic Messages API.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AnthropicProvider implements AiClientInterface

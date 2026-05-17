@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Storage backend for the HTTP response cache.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface CacheStorageInterface

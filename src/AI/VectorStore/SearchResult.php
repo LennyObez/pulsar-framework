@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * A single vector search result.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SearchResult

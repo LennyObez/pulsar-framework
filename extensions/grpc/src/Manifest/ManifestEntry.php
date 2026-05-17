@@ -12,6 +12,7 @@ use function is_string;
 
 /**
  * A single service entry in the compiled service manifest.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ManifestEntry

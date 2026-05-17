@@ -14,6 +14,7 @@ use Pulsar\Api\Api;
  * performance (faster than sha512 on most hardware, stronger than sha256).
  *
  * @see https://www.w3.org/TR/SRI/
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum SriAlgorithm: string

@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Aggregated reaction counts for a post.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ReactionSummary

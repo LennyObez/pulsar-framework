@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Contains all tracked file entries with their hashes and metadata
  * about when and how the manifest was generated.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class IntegrityManifest

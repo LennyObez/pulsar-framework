@@ -12,6 +12,7 @@ use function is_string;
 
 /**
  * Represents a tool/function call requested by an AI model.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ToolCall

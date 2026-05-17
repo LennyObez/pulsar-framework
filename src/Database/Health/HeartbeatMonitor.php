@@ -14,6 +14,7 @@ use Pulsar\Database\ConnectionInterface;
  * Designed for persistent runtimes where interval-based polling is meaningful.
  * Reports status changes via a configurable callback and removes dead connections
  * from tracking after a configurable number of consecutive failures.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class HeartbeatMonitor implements HeartbeatMonitorInterface

@@ -12,6 +12,7 @@ use Pulsar\Extension\Admin\Domain\FieldType;
  *
  * Displays as a searchable select that references another admin resource:
  *   RelationField::make('author_id')->resource('users')
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class RelationField extends Field

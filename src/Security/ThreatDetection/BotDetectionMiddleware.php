@@ -18,6 +18,7 @@ use Pulsar\Http\Middleware\MiddlewareInterface;
  *
  * Attaches the BotScore to the request as an attribute for downstream
  * use, and optionally blocks requests exceeding a configurable threshold.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class BotDetectionMiddleware implements MiddlewareInterface

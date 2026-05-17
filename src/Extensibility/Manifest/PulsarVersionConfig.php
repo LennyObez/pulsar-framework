@@ -16,6 +16,7 @@ use const E_USER_DEPRECATED;
 
 /**
  * Version constraint configuration for Pulsar framework compatibility.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PulsarVersionConfig

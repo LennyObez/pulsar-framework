@@ -14,6 +14,7 @@ use function sprintf;
 
 /**
  * Numeric value must be within inclusive range [min, max]. Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Between implements RuleInterface

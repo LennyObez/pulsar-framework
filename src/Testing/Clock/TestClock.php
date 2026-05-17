@@ -18,6 +18,7 @@ use function sprintf;
  *   $clock = TestClock::at('2024-01-15 10:00:00');   // freeze at specific time
  *   $clock->advance(seconds: 30);                    // move forward
  *   $clock->rewind(minutes: 5);                      // move backward
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class TestClock implements ClockInterface

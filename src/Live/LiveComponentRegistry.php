@@ -12,6 +12,7 @@ use function count;
  * Registry for live components.
  *
  * Maps component names to their class names for lookup during requests.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class LiveComponentRegistry

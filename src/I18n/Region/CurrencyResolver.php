@@ -18,6 +18,7 @@ use function in_array;
  * payment methods should be prominently displayed based on the
  * visitor's region. Integrates with the Payments extension's
  * per-country payment method configuration.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CurrencyResolver

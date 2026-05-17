@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Categories of self-healing actions the supervisor can perform.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum HealingActionType: string

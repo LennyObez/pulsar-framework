@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Reason codes for recovery code consume operations.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum ConsumeReason: string

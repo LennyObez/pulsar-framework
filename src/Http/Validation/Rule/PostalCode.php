@@ -16,6 +16,7 @@ use function sprintf;
 /**
  * Validates postal/ZIP codes per country-specific patterns.
  * Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PostalCode implements RuleInterface

@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Checkbox input field.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class CheckboxField extends AbstractField

@@ -16,6 +16,7 @@ use function is_string;
  * Typed configuration DTO for API tooling settings.
  *
  * Maps from the `api` key of `config/api.php`.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ApiConfig

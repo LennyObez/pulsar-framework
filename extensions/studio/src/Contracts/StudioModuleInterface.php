@@ -14,6 +14,7 @@ use Pulsar\Routing\RouterInterface;
  * and pages within the Studio development console. Each module owns its
  * routes under /studio/{moduleId}/ and provides navigation entries
  * for the Studio sidebar.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface StudioModuleInterface

@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Complete table definition for CREATE TABLE operations.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TableDefinition

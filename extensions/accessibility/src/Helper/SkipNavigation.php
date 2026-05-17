@@ -13,6 +13,7 @@ use function sprintf;
  *
  * The link is visually hidden by default (via pui-skip-link) and becomes
  * visible on focus, allowing keyboard users to bypass repetitive navigation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SkipNavigation

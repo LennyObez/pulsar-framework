@@ -32,6 +32,7 @@ use function unpack;
  *
  * Uses sodium_crypto_auth (HMAC-SHA-512/256) instead of hash_hmac
  * for constant-time verification and libsodium key management.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class StatelessCsrfManager implements CsrfTokenManagerInterface

@@ -9,6 +9,7 @@ use Pulsar\Extension\Tickets\Domain\Ticket;
 
 /**
  * Dispatched when a new ticket is created.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TicketCreated

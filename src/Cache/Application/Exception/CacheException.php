@@ -13,6 +13,7 @@ use function sprintf;
 
 /**
  * General cache exception for application cache operations.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class CacheException extends RuntimeException implements

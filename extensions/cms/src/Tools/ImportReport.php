@@ -14,6 +14,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public DTO returned from MediaBundleImporter::import(); consumed
  *            by the import-result view and audit logging.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ImportReport

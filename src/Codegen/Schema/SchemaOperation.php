@@ -20,6 +20,7 @@ use function ksort;
  *     column: string|null,
  *     metadata: array<string, mixed>,
  * }
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SchemaOperation

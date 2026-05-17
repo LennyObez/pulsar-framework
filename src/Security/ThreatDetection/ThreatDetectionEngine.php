@@ -21,6 +21,7 @@ use Pulsar\Security\Incident\IncidentSeverity;
  *
  * Compliance: DORA Art.17 (incident detection), NIS2 Art.21(b),
  * PCI-DSS Req.11, ISO 27001 A.8.16.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ThreatDetectionEngine

@@ -27,6 +27,7 @@ use function str_contains;
  * Canary tokens are invisible markers embedded in sensitive data.
  * When detected in an unauthorized location, they trigger alerts
  * to identify the source of a data leak.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class CanaryTokenService

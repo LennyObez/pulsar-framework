@@ -36,6 +36,7 @@ use const JSON_THROW_ON_ERROR;
  * The storage path is validated at construction time to prevent
  * path traversal. Only the hardcoded filename "maintenance.json"
  * is ever written or deleted.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class MaintenanceMode

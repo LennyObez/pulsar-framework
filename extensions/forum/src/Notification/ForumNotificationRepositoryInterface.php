@@ -9,6 +9,7 @@ use Pulsar\Api\Pagination\PaginationResult;
 
 /**
  * Repository interface for persisted forum notifications.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ForumNotificationRepositoryInterface

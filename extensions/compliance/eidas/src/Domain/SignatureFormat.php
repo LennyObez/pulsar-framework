@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Electronic signature formats supported per eIDAS standards.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum SignatureFormat: string

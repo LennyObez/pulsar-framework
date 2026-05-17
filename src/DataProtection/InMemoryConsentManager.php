@@ -17,6 +17,7 @@ use function array_values;
  * Stores consent records in a PHP array keyed by subject+purpose.
  * All data is lost when the process ends. Production deployments
  * should use a database-backed implementation.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class InMemoryConsentManager implements ConsentManagerInterface

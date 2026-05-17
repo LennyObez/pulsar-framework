@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Type of analytics goal trigger.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum GoalType: string

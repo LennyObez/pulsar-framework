@@ -19,6 +19,7 @@ use function is_string;
  * Records that a personal data breach has been detected.
  *
  * Supports controls for GDPR Article 33 breach notification to supervisory authority.
+ * @api
  */
 #[Api(since: '1.0.0')]
 #[RequiresEnvelope]

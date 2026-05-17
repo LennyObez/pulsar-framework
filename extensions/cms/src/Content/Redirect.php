@@ -15,6 +15,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public DTO returned from RedirectRepositoryInterface; consumed
  *            by CmsSlugRedirectMiddleware and admin redirect controllers.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Redirect

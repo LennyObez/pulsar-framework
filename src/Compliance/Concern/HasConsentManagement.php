@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
  * Shared compliance concern for frameworks that mandate consent management.
  *
  * Used by GDPR, HL7/FHIR, and others.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface HasConsentManagement

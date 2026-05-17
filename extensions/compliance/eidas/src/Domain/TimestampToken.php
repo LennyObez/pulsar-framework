@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
 
 /**
  * Represents a qualified timestamp token per RFC 3161.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TimestampToken

@@ -13,6 +13,7 @@ use Pulsar\Extension\Psd2\Exception\Psd2Exception;
  *
  * Implementations parse the X.509 certificate, extract PSD2-specific
  * QcStatements, validate the trust chain, and check revocation status.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface CertificateValidatorInterface

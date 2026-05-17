@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
  * Shared compliance concern for frameworks that mandate data retention policies.
  *
  * Used by PCI-DSS, GDPR, HIPAA, SOC 2, and others.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface HasDataRetention

@@ -23,6 +23,7 @@ use function usort;
  *
  * Seeders are PHP files in the configured seeder directory that return
  * an instance of SeederInterface (typically anonymous classes).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SeederRunner implements SeederRunnerInterface

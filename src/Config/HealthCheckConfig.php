@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Configuration for health checks.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class HealthCheckConfig

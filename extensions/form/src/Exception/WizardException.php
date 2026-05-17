@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Thrown when wizard state machine operations fail.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class WizardException extends FormException

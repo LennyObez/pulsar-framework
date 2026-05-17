@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * For rich entity definitions built from database introspection or entity mappings,
  * use {@see \Pulsar\Codegen\Schema\EntityDefinition} instead.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class EntityTemplate

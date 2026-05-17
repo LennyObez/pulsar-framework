@@ -12,6 +12,7 @@ use Pulsar\Security\ZeroTrust\Policy\PolicyEvaluationResult;
  *
  * Listeners can use this event for audit logging, metrics collection,
  * and anomaly detection based on access patterns.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PolicyDecisionEvent

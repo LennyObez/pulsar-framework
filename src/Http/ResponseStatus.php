@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
  * HTTP response status codes with reason phrases.
  *
  * @see https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum ResponseStatus: int

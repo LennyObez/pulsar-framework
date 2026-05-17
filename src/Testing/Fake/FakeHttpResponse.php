@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * A fake HTTP response returned by HttpClientFake stubs.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class FakeHttpResponse

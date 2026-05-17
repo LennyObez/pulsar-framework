@@ -11,6 +11,7 @@ use function sprintf;
 
 /**
  * A single resource priority hint.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class PriorityHint

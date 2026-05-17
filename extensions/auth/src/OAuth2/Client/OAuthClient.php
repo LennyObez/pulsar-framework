@@ -11,6 +11,7 @@ use function in_array;
 
 /**
  * OAuth2 client entity.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class OAuthClient

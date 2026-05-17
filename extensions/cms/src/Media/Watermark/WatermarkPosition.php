@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * 9-point grid positions for watermark placement.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum WatermarkPosition: string

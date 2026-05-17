@@ -20,6 +20,7 @@ use function strtolower;
  * Introspects database schema using driver-specific queries.
  *
  * Works directly with ConnectionInterface: no ORM required.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DatabaseIntrospector implements DatabaseIntrospectorInterface

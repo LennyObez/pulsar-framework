@@ -15,6 +15,7 @@ use function sprintf;
  * Static factories expose the exact failure mode so callers can pattern-match
  * on semantic intent (missing extension, filesystem write failure, service
  * provider misconfiguration) without string-parsing exception messages.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class GrpcException extends RuntimeException

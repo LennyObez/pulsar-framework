@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * Allows service handlers to detect cancellation and register
  * cleanup callbacks for graceful teardown of streaming RPCs.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class StreamContext

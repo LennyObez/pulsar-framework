@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Interface for broadcasting real-time events to connected clients.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface RealtimeBroadcasterInterface

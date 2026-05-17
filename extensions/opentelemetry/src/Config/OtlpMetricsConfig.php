@@ -13,6 +13,7 @@ use function is_string;
 
 /**
  * Metrics-specific OTLP configuration.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class OtlpMetricsConfig

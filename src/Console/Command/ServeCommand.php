@@ -42,6 +42,7 @@ use const STDOUT;
  * output streams directly to the terminal.
  *
  * For production, use `runtime:serve` with an async runtime instead.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ServeCommand extends Command

@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Sort orders for marketplace search results.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum MarketplaceSortOrder: string

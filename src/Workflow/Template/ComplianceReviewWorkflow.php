@@ -20,6 +20,7 @@ use Pulsar\Workflow\Guard\RoleGuard;
  * role authorization. Failed assessments can loop back to remediation.
  *
  * States: initial_assessment -> remediation -> verification -> certification -> certified | non_compliant
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ComplianceReviewWorkflow

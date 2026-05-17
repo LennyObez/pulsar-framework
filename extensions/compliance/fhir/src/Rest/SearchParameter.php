@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
  * Represents a FHIR search parameter definition.
  *
  * @see https://www.hl7.org/fhir/searchparameter.html
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SearchParameter

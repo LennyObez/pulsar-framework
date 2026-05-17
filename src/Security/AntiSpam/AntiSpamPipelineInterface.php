@@ -13,6 +13,7 @@ use Pulsar\Api\Api;
  * returns an aggregate result. Checks execute in registration order
  * and the pipeline short-circuits on the first hard failure when
  * configured to do so.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface AntiSpamPipelineInterface

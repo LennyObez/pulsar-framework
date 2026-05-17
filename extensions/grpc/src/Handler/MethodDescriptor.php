@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Describes a single RPC method within a gRPC service.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class MethodDescriptor

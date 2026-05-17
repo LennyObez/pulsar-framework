@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  * Implementations are responsible for persisting incident records and
  * optionally triggering notifications or escalation workflows based on
  * severity thresholds.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface IncidentReporterInterface

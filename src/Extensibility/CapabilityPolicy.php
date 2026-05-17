@@ -14,6 +14,7 @@ use function in_array;
  *
  * Use the defaults() factory for the standard Pulsar policy,
  * or construct with custom grants for testing or specialized deployments.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CapabilityPolicy

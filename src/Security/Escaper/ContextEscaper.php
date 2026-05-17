@@ -22,6 +22,7 @@ use function substr;
  *
  * This prevents XSS and injection attacks by ensuring that user-controlled
  * data is escaped appropriately for where it appears in the rendered output.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ContextEscaper

@@ -22,6 +22,7 @@ use const ENT_QUOTES;
  * Handles Markdown-to-HTML conversion, sanitization, and preview
  * generation. Works with the MarkdownRenderer for the actual
  * Markdown parsing, adding security sanitization on top.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RichTextProcessor

@@ -13,6 +13,7 @@ use Pulsar\Queue\QueueableInterface;
  *
  * Collects jobs and callbacks, then produces a {@see JobBatch} when dispatched.
  * The builder is mutable; the resulting batch is immutable.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class PendingBatch

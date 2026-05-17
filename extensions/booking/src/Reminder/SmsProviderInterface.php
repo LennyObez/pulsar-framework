@@ -9,6 +9,7 @@ use Pulsar\Extension\Booking\Exception\BookingException;
 
 /**
  * Contract for SMS delivery providers.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface SmsProviderInterface

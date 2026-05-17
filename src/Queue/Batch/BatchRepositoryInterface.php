@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Implementations must provide atomic updates for concurrent job completion
  * tracking within a batch.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface BatchRepositoryInterface

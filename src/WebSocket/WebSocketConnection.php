@@ -33,6 +33,7 @@ use const JSON_UNESCAPED_UNICODE;
  *
  * Outbound writes are routed through a `FrameSinkInterface`, which lets the
  * test harness swap in an in-memory sink.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class WebSocketConnection

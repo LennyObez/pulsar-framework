@@ -17,6 +17,7 @@ use function sprintf;
 /**
  * Field is required unless another field equals an expected value.
  * Does NOT skip null; it checks the condition and fails if required and missing.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class RequiredUnless implements RuleInterface

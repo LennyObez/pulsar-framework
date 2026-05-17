@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Defines a bulk action available on an admin resource.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class BulkAction

@@ -18,6 +18,7 @@ use function sprintf;
  * Stores token→encrypted(original) mappings in a configurable table.
  * The original values are encrypted by the TokenizationService before
  * being passed to this store, so the database never sees plaintext.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class DatabaseTokenStore implements TokenStoreInterface

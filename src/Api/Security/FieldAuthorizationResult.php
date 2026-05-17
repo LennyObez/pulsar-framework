@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Result of a field-level authorization check.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum FieldAuthorizationResult

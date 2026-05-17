@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * Contains the artifact path, its Ed25519 detached signature,
  * the public key used for verification, and a timestamp.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SignatureManifest

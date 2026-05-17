@@ -16,6 +16,7 @@ use function sprintf;
 
 /**
  * Validates ISO 639-1 two-letter language codes. Skips null values.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class LanguageCode implements RuleInterface

@@ -17,6 +17,7 @@ use function is_scalar;
  *
  * Hydrates a DTO from form submission data with automatic type coercion,
  * and populates form fields from an existing DTO for editing scenarios.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class FormDataBinder

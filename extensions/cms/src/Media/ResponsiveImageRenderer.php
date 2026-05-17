@@ -17,6 +17,7 @@ use const ENT_QUOTES;
 
 /**
  * Renders responsive <picture> elements with WebP/AVIF sources and srcset.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ResponsiveImageRenderer

@@ -15,6 +15,7 @@ use Pulsar\Api\Api;
  * @psalm-api Public binding contract; implemented by ImportExportService and
  *            consumed by admin import/export controllers and the framework
  *            ImportExportProvider adapter.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ImportExportServiceInterface

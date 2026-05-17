@@ -13,6 +13,7 @@ use function is_string;
  * Typed configuration DTO for `config/app.php`.
  *
  * Environment variables `APP_NAME`, `APP_ENV`, `APP_DEBUG` override file values.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AppConfig

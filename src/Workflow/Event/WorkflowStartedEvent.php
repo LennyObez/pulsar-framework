@@ -10,6 +10,7 @@ use Pulsar\Workflow\ActorContext;
 
 /**
  * Dispatched when a new workflow instance is started.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class WorkflowStartedEvent

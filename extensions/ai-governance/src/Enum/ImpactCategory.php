@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Per ISO 42001:2023 Clause 6.1.2 and Annex B, impact assessments
  * must evaluate AI systems across these dimensions.
+ * @api
  */
 #[Api(since: '1.0.0')]
 enum ImpactCategory: string

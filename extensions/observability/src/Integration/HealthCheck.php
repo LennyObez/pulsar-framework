@@ -13,6 +13,7 @@ use Pulsar\Extension\Observability\Export\Otlp\SpanBatchExporter;
  *
  * Reports the health of OTLP and JSON Lines export pipelines,
  * including queue saturation and configuration status.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class HealthCheck

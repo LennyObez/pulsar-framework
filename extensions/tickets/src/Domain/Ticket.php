@@ -15,6 +15,7 @@ use Pulsar\Extension\Tickets\Exception\TicketException;
  * Supports status transitions, priority changes, assignment,
  * tagging, and SLA tracking. Immutable: all mutations return
  * a new instance via clone-with.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Ticket

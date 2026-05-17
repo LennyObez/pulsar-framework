@@ -12,6 +12,7 @@ use function sprintf;
 
 /**
  * Exception thrown for configuration errors.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class ConfigException extends RuntimeException

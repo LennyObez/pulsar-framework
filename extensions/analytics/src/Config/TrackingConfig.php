@@ -10,6 +10,7 @@ use function is_string;
 
 /**
  * Tracker script and endpoint configuration.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TrackingConfig

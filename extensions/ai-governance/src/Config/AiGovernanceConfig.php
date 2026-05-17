@@ -11,6 +11,7 @@ use function is_string;
 
 /**
  * Configuration DTO for the AI governance extension.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AiGovernanceConfig

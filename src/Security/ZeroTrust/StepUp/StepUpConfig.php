@@ -15,6 +15,7 @@ use function is_int;
  *
  * Controls how many step-up attempts are allowed before lockout,
  * the cooldown period between attempts, and the lockout duration.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class StepUpConfig

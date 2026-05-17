@@ -18,6 +18,7 @@ use function is_string;
  * Defines how long signal data (claims) from a given source are retained,
  * whether they should be pseudonymized before storage, and the legal basis
  * for retention (e.g., GDPR Article 6).
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class SignalRetentionPolicy

@@ -18,6 +18,7 @@ use const SORT_NUMERIC;
  *
  * Bucket keys are the string representation of boundary floats. PHP may
  * auto-cast integer-like numeric strings (e.g. '1', '10') to int keys.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class Histogram

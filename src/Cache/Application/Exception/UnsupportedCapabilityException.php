@@ -12,6 +12,7 @@ use function sprintf;
 
 /**
  * Thrown when a cache operation requires a capability the driver does not support.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class UnsupportedCapabilityException extends RuntimeException implements

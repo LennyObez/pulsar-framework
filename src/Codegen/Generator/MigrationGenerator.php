@@ -34,6 +34,7 @@ use function strtoupper;
  * ConnectionInterface::execute() with raw DDL statements.
  *
  * Filename format: `{YYYYMMDDHHMMSS}_description.php` matching MigrationRepository.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class MigrationGenerator extends AbstractGenerator

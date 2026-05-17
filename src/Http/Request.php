@@ -30,6 +30,7 @@ use const JSON_THROW_ON_ERROR;
 
 /**
  * Immutable HTTP request value object.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Request

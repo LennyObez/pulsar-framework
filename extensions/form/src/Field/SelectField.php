@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 /**
  * Single-select dropdown field.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final class SelectField extends AbstractField

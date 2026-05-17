@@ -16,6 +16,7 @@ use function sprintf;
  * Claims are immutable assertions about a request's context (e.g., "device is registered",
  * "IP is in known range"). Each claim carries a confidence score (0.0 = no confidence,
  * 1.0 = full confidence) and is tagged with the source that produced it.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class Claim

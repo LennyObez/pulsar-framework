@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Generates sequential ticket numbers.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface TicketNumberGeneratorInterface

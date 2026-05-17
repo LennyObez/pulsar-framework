@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * Emitted when a chain is broken due to a job failure.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ChainFailed

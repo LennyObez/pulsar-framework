@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * Translates message keys into localized strings, with optional
  * ICU MessageFormat parameter substitution.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface TranslatorInterface

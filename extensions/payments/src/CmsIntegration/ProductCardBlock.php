@@ -11,6 +11,7 @@ use function is_string;
 
 /**
  * CMS block: Product card with buy button.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ProductCardBlock

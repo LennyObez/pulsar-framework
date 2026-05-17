@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 
 /**
  * An access token and refresh token issued together.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class TokenPair

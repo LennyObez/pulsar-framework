@@ -12,6 +12,7 @@ use Pulsar\Api\Api;
  *
  * Carries all information checks need: the submission body, metadata,
  * and user identity information for reputation-based decisions.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AntiSpamContext

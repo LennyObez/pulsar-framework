@@ -13,6 +13,7 @@ use Pulsar\Security\ZeroTrust\Claim\ClaimSource;
  * Anomalies include sudden location changes, unusual access times,
  * device fingerprint mismatches, and behavioral deviations. Listeners
  * can trigger alerts, force re-authentication, or adjust trust scores.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class AnomalyDetectedEvent

@@ -14,6 +14,7 @@ use Pulsar\Api\Api;
  * This DTO is the output of ComplianceProfileResolver and can be injected
  * into SessionConfig, PasswordHasher, RetentionSchedule, IncidentReporter,
  * and other security-sensitive components to enforce regulatory requirements.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ComplianceProfile

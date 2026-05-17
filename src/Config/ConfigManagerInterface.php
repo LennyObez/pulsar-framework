@@ -13,6 +13,7 @@ use Pulsar\Config\Exception\ConfigException;
  * Provides access to the loaded ConfigRepository, Environment,
  * and the config directory path for extensions that need to
  * discover additional config files.
+ * @api
  */
 #[Api(since: '1.0.0')]
 interface ConfigManagerInterface

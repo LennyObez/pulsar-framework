@@ -11,6 +11,7 @@ use Pulsar\Api\Api;
  *
  * @psalm-api Public DTO returned from ThemeProvenanceVerifierInterface and
  *            PluginProvenanceVerifierInterface; consumed by ThemeManager.
+ * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class ProvenanceResult
