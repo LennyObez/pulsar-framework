@@ -21,13 +21,13 @@ final class SystemContextTest extends TestCase
     {
         $system = new SystemContext();
 
-        self::assertFalse($system->active);
+        self::assertFalse($system->isActive());
 
         $system->enter('test operation');
-        self::assertTrue($system->active);
+        self::assertTrue($system->isActive());
 
         $system->exit();
-        self::assertFalse($system->active);
+        self::assertFalse($system->isActive());
     }
 
     #[Test]
@@ -58,13 +58,13 @@ final class SystemContextTest extends TestCase
     {
         $system = new SystemContext();
 
-        self::assertFalse($system->active);
+        self::assertFalse($system->isActive());
 
         $system->enter('test');
-        self::assertTrue($system->active);
+        self::assertTrue($system->isActive());
 
         $system->exit();
-        self::assertFalse($system->active);
+        self::assertFalse($system->isActive());
     }
 
     #[Test]
@@ -118,6 +118,7 @@ final class SystemContextTest extends TestCase
 
         // Root remains active even though the Fiber entered + exited its own slot.
         self::assertTrue($system->isActive());
+        self::assertNotNull($observed, 'Fiber callback should have populated $observed');
         self::assertFalse($observed['initial']);
         self::assertTrue($observed['fiber_active']);
         self::assertFalse($observed['fiber_after_exit']);
@@ -155,14 +156,14 @@ final class SystemContextTest extends TestCase
         $system->enter('root');
 
         $fiber = new Fiber(function () use ($system): mixed {
-            return $system->active;
+            return $system->isActive();
         });
 
         $fiber->start();
 
         // The Fiber observes ITS OWN active flag (false), not the root's (true).
         self::assertFalse($fiber->getReturn());
-        self::assertTrue($system->active);
+        self::assertTrue($system->isActive());
 
         $system->exit();
     }

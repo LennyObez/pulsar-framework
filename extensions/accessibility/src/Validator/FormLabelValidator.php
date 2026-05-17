@@ -106,7 +106,7 @@ final readonly class FormLabelValidator implements ValidatorInterface
             // Group by name attribute
             $groups = [];
 
-            /** @var DOMNode $input */
+            /** @var \DOMNode $input */
             foreach ($inputs as $input) {
                 if (!$input instanceof DOMElement) {
                     continue;
