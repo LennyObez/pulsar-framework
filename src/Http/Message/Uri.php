@@ -24,7 +24,7 @@ use function strtolower;
  * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement: Psalm does not yet infer clone() return type
  */
 #[Api(since: '1.0.0-rc.11')]
-readonly class Uri implements UriInterface
+final readonly class Uri implements UriInterface
 {
     private const array DEFAULT_PORTS = [
         'http' => 80,

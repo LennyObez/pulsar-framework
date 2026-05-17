@@ -16,7 +16,7 @@ use function in_array;
  * or construct with custom grants for testing or specialized deployments.
  */
 #[Api(since: '1.0.0')]
-readonly class CapabilityPolicy
+final readonly class CapabilityPolicy
 {
     /**
      * @param array<string, list<ExtensionCapability>> $grants Tier value => granted capabilities

@@ -20,7 +20,7 @@ use function substr;
  * Given a subdomain suffix of '.example.com', a Host of 'acme.example.com'
  * resolves to tenant 'acme'.
  */
-readonly class SubdomainTenantResolver implements TenantResolverInterface
+final readonly class SubdomainTenantResolver implements TenantResolverInterface
 {
     public function __construct(
         private TenancyConfig $config,

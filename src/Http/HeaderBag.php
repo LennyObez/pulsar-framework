@@ -27,7 +27,7 @@ use function sprintf;
  * @implements IteratorAggregate<string, list<string>>
  */
 #[Api(since: '1.0.0')]
-readonly class HeaderBag implements IteratorAggregate
+final readonly class HeaderBag implements IteratorAggregate
 {
     /**
      * Headers stored with lowercase names.

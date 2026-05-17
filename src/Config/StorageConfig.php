@@ -13,7 +13,7 @@ use function is_string;
  * Typed configuration DTO for `config/storage.php`.
  */
 #[Api(since: '1.0.0')]
-readonly class StorageConfig
+final readonly class StorageConfig
 {
     /**
      * @param array<string, DiskConfig> $disks Disk configurations keyed by name

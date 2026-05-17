@@ -15,7 +15,7 @@ use Pulsar\Api\Api;
  * operator identity, and whether this was a dry-run.
  */
 #[Api(since: '1.0.0')]
-readonly class RetentionPurgeResult
+final readonly class RetentionPurgeResult
 {
     public function __construct(
         public string $policyId,

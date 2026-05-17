@@ -13,7 +13,7 @@ use Pulsar\Api\Api;
  * Describes a numbered page, a previous/next arrow, or an ellipsis gap.
  */
 #[Api(since: '1.0.0')]
-readonly class PageLink
+final readonly class PageLink
 {
     public function __construct(
         /** Page number this link targets (ignored for ellipsis). */

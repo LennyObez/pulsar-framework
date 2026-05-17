@@ -13,7 +13,7 @@ use function sprintf;
  * Base exception for all ticketing errors.
  */
 #[Api(since: '1.0.0')]
-class TicketException extends RuntimeException
+final class TicketException extends RuntimeException
 {
     public static function notFound(string $entity, string $id): self
     {

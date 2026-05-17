@@ -16,7 +16,7 @@ use function is_string;
  * Typed configuration DTO for `config/deploy.php`.
  */
 #[Api(since: '1.0.0')]
-readonly class DeployConfig
+final readonly class DeployConfig
 {
     /** Default check configuration used when no explicit config is provided. */
     private const array DEFAULT_CHECKS = [

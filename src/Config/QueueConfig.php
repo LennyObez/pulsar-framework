@@ -15,7 +15,7 @@ use function is_string;
  * Typed configuration DTO for `config/queue.php`.
  */
 #[Api(since: '1.0.0')]
-readonly class QueueConfig
+final readonly class QueueConfig
 {
     /**
      * @param array<string, mixed> $driverOptions Driver-specific configuration (host, port, credentials, etc.)

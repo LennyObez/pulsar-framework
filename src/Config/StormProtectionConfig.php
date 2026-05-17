@@ -16,7 +16,7 @@ use function min;
  * Storm protection sub-configuration for event dispatching.
  */
 #[Api(since: '1.0.0')]
-readonly class StormProtectionConfig
+final readonly class StormProtectionConfig
 {
     private const int MIN_DEPTH = 1;
     private const int MAX_DEPTH_CEILING = 1000;

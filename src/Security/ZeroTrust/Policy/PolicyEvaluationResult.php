@@ -16,7 +16,7 @@ use Pulsar\Security\ZeroTrust\Claim\ClaimSet;
  * for audit purposes.
  */
 #[Api(since: '1.0.0')]
-readonly class PolicyEvaluationResult
+final readonly class PolicyEvaluationResult
 {
     /**
      * @param PolicyDecision $decision The final policy decision

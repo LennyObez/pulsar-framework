@@ -14,7 +14,7 @@ use function is_string;
  * Configuration DTO for the AMQP queue driver.
  */
 #[Internal(reason: 'Driver configuration; use QueueConfig for public access')]
-readonly class AmqpDriverConfig
+final readonly class AmqpDriverConfig
 {
     public function __construct(
         public string $host = '127.0.0.1',

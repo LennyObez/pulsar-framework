@@ -15,7 +15,7 @@ use Pulsar\Api\Api;
  * required for regulated job processing.
  */
 #[Api(since: '1.0.0')]
-readonly class JobEnvelope
+final readonly class JobEnvelope
 {
     /**
      * @param string               $id                 Unique job identifier.

@@ -16,7 +16,7 @@ use function is_bool;
  * Configuration for what an extension provides.
  */
 #[Api(since: '1.0.0')]
-readonly class ProvidesConfig
+final readonly class ProvidesConfig
 {
     /**
      * @param list<string> $services Service class names provided

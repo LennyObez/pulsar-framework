@@ -14,7 +14,7 @@ use Pulsar\Api\Api;
  * Stores the device fingerprint, attestation data, and registration metadata.
  */
 #[Api(since: '1.0.0')]
-readonly class DeviceIdentity
+final readonly class DeviceIdentity
 {
     /**
      * @param string $deviceId Unique device identifier

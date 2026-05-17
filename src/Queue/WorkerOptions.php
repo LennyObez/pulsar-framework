@@ -12,7 +12,7 @@ use Pulsar\Config\QueueConfig;
  * Immutable options governing worker lifecycle and resource limits.
  */
 #[Api(since: '1.0.0')]
-readonly class WorkerOptions
+final readonly class WorkerOptions
 {
     public function __construct(
         public int $maxJobs = 1000,

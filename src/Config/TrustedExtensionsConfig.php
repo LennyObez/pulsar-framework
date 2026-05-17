@@ -22,7 +22,7 @@ use function is_string;
  * the host's allowed tier.
  */
 #[Api(since: '1.0.0')]
-readonly class TrustedExtensionsConfig
+final readonly class TrustedExtensionsConfig
 {
     /**
      * @param array<string, array{tier: TrustTier, additional_capabilities: list<ExtensionCapability>}> $extensions

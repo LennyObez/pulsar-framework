@@ -18,7 +18,7 @@ use function is_string;
  * Maps from the `api` key of `config/api.php`.
  */
 #[Api(since: '1.0.0')]
-readonly class ApiConfig
+final readonly class ApiConfig
 {
     public function __construct(
         public string $defaultFormat,

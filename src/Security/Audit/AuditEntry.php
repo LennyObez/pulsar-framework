@@ -27,7 +27,7 @@ use function substr;
  * subsequent HMACs.
  */
 #[Api(since: '1.0.0')]
-readonly class AuditEntry
+final readonly class AuditEntry
 {
     /**
      * @param array<string, mixed> $metadata

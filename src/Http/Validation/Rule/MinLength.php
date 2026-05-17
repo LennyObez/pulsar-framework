@@ -17,7 +17,7 @@ use function sprintf;
  * String length must be >= the given minimum. Skips null values.
  */
 #[Api(since: '1.0.0')]
-readonly class MinLength implements RuleInterface
+final readonly class MinLength implements RuleInterface
 {
     public function __construct(
         private int $min,

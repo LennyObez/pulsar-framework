@@ -10,7 +10,7 @@ use Pulsar\Api\Api;
  * Metadata for storage objects.
  */
 #[Api(since: '1.0.0')]
-readonly class StorageMetadata
+final readonly class StorageMetadata
 {
     /**
      * @param array<string, string> $customHeaders Additional headers/metadata

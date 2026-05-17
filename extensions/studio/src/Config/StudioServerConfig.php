@@ -14,7 +14,7 @@ use function is_int;
  * Server configuration for the Studio development server.
  */
 #[Internal]
-readonly class StudioServerConfig
+final readonly class StudioServerConfig
 {
     public function __construct(
         public string $host = '127.0.0.1',

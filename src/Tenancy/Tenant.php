@@ -15,7 +15,7 @@ use function sprintf;
  * Immutable tenant value object.
  */
 #[Api(since: '1.0.0')]
-readonly class Tenant
+final readonly class Tenant
 {
     /**
      * Allowed pattern for tenant IDs: alphanumeric, hyphens, and underscores only.

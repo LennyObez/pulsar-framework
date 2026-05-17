@@ -13,7 +13,7 @@ use function is_string;
  * Configuration DTO for the Google Cloud Pub/Sub queue driver.
  */
 #[Internal(reason: 'Driver configuration; use QueueConfig for public access')]
-readonly class PubSubDriverConfig
+final readonly class PubSubDriverConfig
 {
     public function __construct(
         public string $projectId = '',

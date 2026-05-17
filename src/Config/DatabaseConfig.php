@@ -19,7 +19,7 @@ use Pulsar\Database\Routing\ReadWriteConfig;
  * Composes per-connection DTOs and migration settings.
  */
 #[Api(since: '1.0.0')]
-readonly class DatabaseConfig
+final readonly class DatabaseConfig
 {
     /**
      * @param array<string, ConnectionConfig> $connections Keyed by connection name

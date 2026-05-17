@@ -14,7 +14,7 @@ use Pulsar\Api\Api;
  * and potentially escalate to security teams.
  */
 #[Api(since: '1.0.0')]
-readonly class StepUpLockoutEvent
+final readonly class StepUpLockoutEvent
 {
     /**
      * @param string $identityId Identity that has been locked out

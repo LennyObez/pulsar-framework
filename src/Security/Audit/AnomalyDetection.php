@@ -11,7 +11,7 @@ use Pulsar\Api\Api;
  * Immutable record of a detected anomaly.
  */
 #[Api(since: '1.0.0')]
-readonly class AnomalyDetection
+final readonly class AnomalyDetection
 {
     public function __construct(
         public AnomalyRule $rule,

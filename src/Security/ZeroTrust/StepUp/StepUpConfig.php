@@ -17,7 +17,7 @@ use function is_int;
  * the cooldown period between attempts, and the lockout duration.
  */
 #[Api(since: '1.0.0')]
-readonly class StepUpConfig
+final readonly class StepUpConfig
 {
     /**
      * @param int $maxAttempts Maximum step-up attempts before lockout (must be >= 1)

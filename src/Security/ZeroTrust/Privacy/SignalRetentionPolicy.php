@@ -20,7 +20,7 @@ use function is_string;
  * for retention (e.g., GDPR Article 6).
  */
 #[Api(since: '1.0.0')]
-readonly class SignalRetentionPolicy
+final readonly class SignalRetentionPolicy
 {
     /**
      * @param ClaimSource $source The signal source this policy applies to

@@ -17,7 +17,7 @@ use function is_string;
  * Maps from the `session` key of `config/security.php`.
  */
 #[Api(since: '1.0.0')]
-readonly class SessionConfig
+final readonly class SessionConfig
 {
     /**
      * @param array{

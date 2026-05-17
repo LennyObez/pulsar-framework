@@ -11,7 +11,7 @@ use Pulsar\Api\Api;
  * Configuration for circuit breakers.
  */
 #[Api(since: '1.0.0')]
-readonly class CircuitBreakerConfig
+final readonly class CircuitBreakerConfig
 {
     public function __construct(
         public int $failureThreshold = 5,

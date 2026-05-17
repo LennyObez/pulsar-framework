@@ -18,7 +18,7 @@ use function sprintf;
  * to evaluate whether a ClaimSet satisfies a rule's requirements.
  */
 #[Api(since: '1.0.0')]
-readonly class ClaimRequirement
+final readonly class ClaimRequirement
 {
     /**
      * @param string $claimName Required claim identifier (e.g., "device.registered")
