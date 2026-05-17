@@ -168,23 +168,6 @@ final class MigrationRepository
     }
 
     /**
-     * Check if a filename uses sequential numbering (1-13 digits, not a timestamp).
-     */
-    private function isSequentialVersion(string $filename): bool
-    {
-        // Timestamp formats start with 14 digits or YYYY_MM_DD pattern
-        if (preg_match('/^\d{14}_/', $filename) === 1) {
-            return false;
-        }
-        if (preg_match('/^\d{4}_\d{2}_\d{2}_\d{6}_/', $filename) === 1) {
-            return false;
-        }
-
-        // Sequential: 1-13 digits followed by underscore
-        return preg_match('/^\d{1,13}_/', $filename) === 1;
-    }
-
-    /**
      * Compute a short deterministic prefix from a directory path.
      *
      * Uses the first 4 hex chars of a CRC32 hash, giving 65,536 buckets.

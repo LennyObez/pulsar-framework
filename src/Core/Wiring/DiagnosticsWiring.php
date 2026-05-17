@@ -59,7 +59,7 @@ final readonly class DiagnosticsWiring implements ServiceWiringInterface
             if (!$guard->isAuthorized($request)) {
                 return Response::text(
                     'Diagnostics endpoint requires Bearer token from PULSAR_DIAGNOSTICS_TOKEN.',
-                    ResponseStatus::Unauthorized,
+                    ResponseStatus::Unauthorized->value,
                 )->withHeader('WWW-Authenticate', 'Bearer realm="pulsar-diagnostics"');
             }
 

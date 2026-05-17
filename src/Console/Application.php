@@ -365,31 +365,6 @@ final class Application
     }
 
     /**
-     * Group commands by namespace.
-     *
-     * @return array<string, list<CommandInterface>>
-     */
-    private function groupCommands(): array
-    {
-        $grouped = ['' => []];
-
-        foreach ($this->commands as $command) {
-            $name = $command->name;
-            $namespace = str_contains($name, ':') ? explode(':', $name)[0] : '';
-
-            $grouped[$namespace] ??= [];
-            $grouped[$namespace][] = $command;
-        }
-
-        // Sort commands within each namespace
-        foreach ($grouped as &$commands) {
-            usort($commands, fn(CommandInterface $a, CommandInterface $b) => strcmp($a->name, $b->name));
-        }
-
-        return $grouped;
-    }
-
-    /**
      * F3.17: pad a name to a target visual width using the
      * multi-byte character count, not byte count. `sprintf`'s
      * `%-20s` counts bytes, so a name with accents or CJK
