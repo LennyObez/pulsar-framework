@@ -15,7 +15,7 @@ use function sprintf;
  *
  * Executes a `SELECT 1` query and measures response time.
  */
-readonly class DatabaseHealthCheck implements HealthCheckInterface
+final readonly class DatabaseHealthCheck implements HealthCheckInterface
 {
     public function __construct(
         private ConnectionManagerInterface $connectionManager,

@@ -21,7 +21,7 @@ use const FILTER_VALIDATE_INT;
  * Skips null values.
  */
 #[Api(since: '1.0.0')]
-readonly class IntegerType implements TypeRuleInterface
+final readonly class IntegerType implements TypeRuleInterface
 {
     public function __construct(
         private string $message = '',

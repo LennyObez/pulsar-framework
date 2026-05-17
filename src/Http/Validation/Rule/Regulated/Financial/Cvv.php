@@ -26,7 +26,7 @@ use function sprintf;
  * @see https://www.pcisecuritystandards.org/
  */
 #[Api(since: '1.0.0')]
-readonly class Cvv implements RuleInterface
+final readonly class Cvv implements RuleInterface
 {
     public function __construct(
         private string $message = '',

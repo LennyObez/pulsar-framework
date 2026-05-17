@@ -19,7 +19,7 @@ use function sprintf;
  * Named DateTimeRule to avoid conflict with PHP's DateTime class.
  */
 #[Api(since: '1.0.0')]
-readonly class DateTimeRule implements RuleInterface
+final readonly class DateTimeRule implements RuleInterface
 {
     public function __construct(
         private string $format = 'Y-m-d H:i:s',

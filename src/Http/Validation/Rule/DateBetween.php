@@ -17,7 +17,7 @@ use function sprintf;
  * Value must be a date within the given inclusive range. Skips null values.
  */
 #[Api(since: '1.0.0')]
-readonly class DateBetween implements RuleInterface
+final readonly class DateBetween implements RuleInterface
 {
     private DateTimeImmutable $fromDate;
     private DateTimeImmutable $toDate;

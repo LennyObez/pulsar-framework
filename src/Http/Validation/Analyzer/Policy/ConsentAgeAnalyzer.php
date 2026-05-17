@@ -26,7 +26,7 @@ use function sprintf;
  * qualified compliance or legal personnel.
  */
 #[Api(since: '1.0.0')]
-readonly class ConsentAgeAnalyzer implements PolicyAnalyzerInterface
+final readonly class ConsentAgeAnalyzer implements PolicyAnalyzerInterface
 {
     public function __construct(
         private int $minimumAge = 13,

@@ -24,7 +24,7 @@ use function sprintf;
  * @see https://www.pcisecuritystandards.org/
  */
 #[Api(since: '1.0.0')]
-readonly class ExpirationDate implements RuleInterface
+final readonly class ExpirationDate implements RuleInterface
 {
     public function __construct(
         private string $message = '',

@@ -26,7 +26,7 @@ use function sprintf;
  * @see https://www.ssa.gov/employer/stateweb.htm
  */
 #[Api(since: '1.0.0')]
-readonly class Ssn implements RuleInterface
+final readonly class Ssn implements RuleInterface
 {
     public function __construct(
         private string $message = '',

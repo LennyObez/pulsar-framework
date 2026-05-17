@@ -17,7 +17,7 @@ use function sprintf;
  * All array elements must be unique (strict comparison). Skips null values.
  */
 #[Api(since: '1.0.0')]
-readonly class Distinct implements RuleInterface
+final readonly class Distinct implements RuleInterface
 {
     public function __construct(
         private string $message = '',

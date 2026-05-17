@@ -18,7 +18,7 @@ use function sprintf;
  * Skips null values.
  */
 #[Api(since: '1.0.0')]
-readonly class PostalCode implements RuleInterface
+final readonly class PostalCode implements RuleInterface
 {
     /** @var array<string, string> */
     private const array PATTERNS = [

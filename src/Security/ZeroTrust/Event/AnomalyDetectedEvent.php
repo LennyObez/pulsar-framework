@@ -15,7 +15,7 @@ use Pulsar\Security\ZeroTrust\Claim\ClaimSource;
  * can trigger alerts, force re-authentication, or adjust trust scores.
  */
 #[Api(since: '1.0.0')]
-readonly class AnomalyDetectedEvent
+final readonly class AnomalyDetectedEvent
 {
     /**
      * @param ClaimSource $source Signal source that detected the anomaly

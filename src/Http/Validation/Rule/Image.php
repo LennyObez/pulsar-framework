@@ -24,7 +24,7 @@ use const UPLOAD_ERR_OK;
  * Skips null values.
  */
 #[Api(since: '1.0.0')]
-readonly class Image implements RuleInterface
+final readonly class Image implements RuleInterface
 {
     public function __construct(
         private string $message = '',
