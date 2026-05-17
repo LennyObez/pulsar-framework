@@ -163,7 +163,7 @@ final readonly class OpenAiProvider implements AiClientInterface
                 continue;
             }
 
-            /** @var list<float> $embeddingValues */
+            /** @var list<mixed> $embeddingValues */
             $embeddingValues = is_array($item['embedding'] ?? null) ? $item['embedding'] : [];
 
             $floats = [];
