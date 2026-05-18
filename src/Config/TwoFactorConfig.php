@@ -7,9 +7,6 @@ namespace Pulsar\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_int;
-use function is_string;
-
 /**
  * Typed configuration DTO for two-factor authentication settings.
  * @api
@@ -33,41 +30,33 @@ final readonly class TwoFactorConfig
     /**
      * Build from a raw two-factor config array.
      *
-     * @param array<string, mixed> $data
+     * @param array{
+     *     enabled?: bool|int|string,
+     *     issuer?: string,
+     *     code_digits?: int,
+     *     code_period?: int,
+     *     verification_window?: int,
+     *     recovery_code_count?: int,
+     *     recovery_code_bytes?: int,
+     *     step_up_timeout_minutes?: int,
+     *     recovery_code_algorithm_version?: int,
+     *     allow_in_memory?: bool|int|string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $enabled = (bool) ($data['enabled'] ?? false);
-        $rawIssuer = $data['issuer'] ?? 'Pulsar';
-        $issuer = is_string($rawIssuer) ? $rawIssuer : 'Pulsar';
-        $rawCodeDigits = $data['code_digits'] ?? 6;
-        $codeDigits = is_int($rawCodeDigits) ? $rawCodeDigits : (int) (is_numeric($rawCodeDigits) ? $rawCodeDigits : 6);
-        $rawCodePeriod = $data['code_period'] ?? 30;
-        $codePeriod = is_int($rawCodePeriod) ? $rawCodePeriod : (int) (is_numeric($rawCodePeriod) ? $rawCodePeriod : 30);
-        $rawVerificationWindow = $data['verification_window'] ?? 1;
-        $verificationWindow = is_int($rawVerificationWindow) ? $rawVerificationWindow : (int) (is_numeric($rawVerificationWindow) ? $rawVerificationWindow : 1);
-        $rawRecoveryCodeCount = $data['recovery_code_count'] ?? 8;
-        $recoveryCodeCount = is_int($rawRecoveryCodeCount) ? $rawRecoveryCodeCount : (int) (is_numeric($rawRecoveryCodeCount) ? $rawRecoveryCodeCount : 8);
-        $rawRecoveryCodeBytes = $data['recovery_code_bytes'] ?? 8;
-        $recoveryCodeBytes = is_int($rawRecoveryCodeBytes) ? $rawRecoveryCodeBytes : (int) (is_numeric($rawRecoveryCodeBytes) ? $rawRecoveryCodeBytes : 8);
-        $rawStepUpTimeoutMinutes = $data['step_up_timeout_minutes'] ?? 15;
-        $stepUpTimeoutMinutes = is_int($rawStepUpTimeoutMinutes) ? $rawStepUpTimeoutMinutes : (int) (is_numeric($rawStepUpTimeoutMinutes) ? $rawStepUpTimeoutMinutes : 15);
-        $rawRecoveryCodeAlgorithmVersion = $data['recovery_code_algorithm_version'] ?? 2;
-        $recoveryCodeAlgorithmVersion = is_int($rawRecoveryCodeAlgorithmVersion) ? $rawRecoveryCodeAlgorithmVersion : (int) (is_numeric($rawRecoveryCodeAlgorithmVersion) ? $rawRecoveryCodeAlgorithmVersion : 2);
-        $allowInMemory = (bool) ($data['allow_in_memory'] ?? false);
-
         return new self(
-            enabled: $enabled,
-            issuer: $issuer,
-            codeDigits: $codeDigits,
-            codePeriod: $codePeriod,
-            verificationWindow: $verificationWindow,
-            recoveryCodeCount: $recoveryCodeCount,
-            recoveryCodeBytes: $recoveryCodeBytes,
-            stepUpTimeoutMinutes: $stepUpTimeoutMinutes,
-            recoveryCodeAlgorithmVersion: $recoveryCodeAlgorithmVersion,
-            allowInMemory: $allowInMemory,
+            enabled: (bool) ($data['enabled'] ?? false),
+            issuer: $data['issuer'] ?? 'Pulsar',
+            codeDigits: $data['code_digits'] ?? 6,
+            codePeriod: $data['code_period'] ?? 30,
+            verificationWindow: $data['verification_window'] ?? 1,
+            recoveryCodeCount: $data['recovery_code_count'] ?? 8,
+            recoveryCodeBytes: $data['recovery_code_bytes'] ?? 8,
+            stepUpTimeoutMinutes: $data['step_up_timeout_minutes'] ?? 15,
+            recoveryCodeAlgorithmVersion: $data['recovery_code_algorithm_version'] ?? 2,
+            allowInMemory: (bool) ($data['allow_in_memory'] ?? false),
         );
     }
 }
