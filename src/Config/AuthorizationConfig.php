@@ -26,19 +26,17 @@ final readonly class AuthorizationConfig
     /**
      * Build from a raw authorization config array.
      *
-     * @param array<string, mixed> $data
+     * @param array{
+     *     roles?: array<string, array<string, mixed>>,
+     *     super_roles?: list<string>,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var array<string, array<string, mixed>> $roles */
-        $roles = $data['roles'] ?? [];
-        /** @var list<string> $superRoles */
-        $superRoles = $data['super_roles'] ?? [];
-
         return new self(
-            roles: $roles,
-            superRoles: $superRoles,
+            roles: $data['roles'] ?? [],
+            superRoles: $data['super_roles'] ?? [],
         );
     }
 }
