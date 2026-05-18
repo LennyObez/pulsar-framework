@@ -7,8 +7,6 @@ namespace Pulsar\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_bool;
-use function is_int;
 use function max;
 use function min;
 
@@ -31,18 +29,18 @@ final readonly class StormProtectionConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     max_depth?: int,
+     *     loop_detection?: bool,
+     *     max_repeats_per_event?: int,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data, ?Environment $environment = null): self
     {
-        $rawMaxDepth = $data['max_depth'] ?? 32;
-        $rawLoopDetection = $data['loop_detection'] ?? true;
-        $rawMaxRepeats = $data['max_repeats_per_event'] ?? 3;
-
-        $maxDepth = is_int($rawMaxDepth) ? $rawMaxDepth : 32;
-        $loopDetection = is_bool($rawLoopDetection) ? $rawLoopDetection : true;
-        $maxRepeats = is_int($rawMaxRepeats) ? $rawMaxRepeats : 3;
+        $maxDepth = $data['max_depth'] ?? 32;
+        $loopDetection = $data['loop_detection'] ?? true;
+        $maxRepeats = $data['max_repeats_per_event'] ?? 3;
 
         // Environment variable overrides (applied after array, before clamping)
         if ($environment !== null) {
