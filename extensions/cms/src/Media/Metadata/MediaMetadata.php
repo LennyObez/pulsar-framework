@@ -156,48 +156,50 @@ final readonly class MediaMetadata
     /**
      * Reconstruct from a previously serialized array.
      *
-     * @param array<string, mixed> $data
+     * @param array{
+     *     date_taken?: string|null,
+     *     gps_latitude?: float|int|null,
+     *     gps_longitude?: float|int|null,
+     *     camera_make?: string|null,
+     *     camera_model?: string|null,
+     *     lens?: string|null,
+     *     focal_length?: string|null,
+     *     aperture?: string|null,
+     *     exposure_time?: string|null,
+     *     iso?: int|null,
+     *     flash?: string|null,
+     *     white_balance?: string|null,
+     *     orientation?: int|null,
+     *     color_space?: string|null,
+     *     x_resolution?: int|null,
+     *     y_resolution?: int|null,
+     *     software?: string|null,
+     *     copyright?: string|null,
+     *     description?: string|null,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
-        $rawDateTaken = $data['date_taken'] ?? null;
-        $rawCameraMake = $data['camera_make'] ?? null;
-        $rawCameraModel = $data['camera_model'] ?? null;
-        $rawLens = $data['lens'] ?? null;
-        $rawFocalLength = $data['focal_length'] ?? null;
-        $rawAperture = $data['aperture'] ?? null;
-        $rawExposureTime = $data['exposure_time'] ?? null;
-        $rawIso = $data['iso'] ?? null;
-        $rawFlash = $data['flash'] ?? null;
-        $rawWhiteBalance = $data['white_balance'] ?? null;
-        $rawOrientation = $data['orientation'] ?? null;
-        $rawColorSpace = $data['color_space'] ?? null;
-        $rawXResolution = $data['x_resolution'] ?? null;
-        $rawYResolution = $data['y_resolution'] ?? null;
-        $rawSoftware = $data['software'] ?? null;
-        $rawCopyright = $data['copyright'] ?? null;
-        $rawDescription = $data['description'] ?? null;
-
         return new self(
-            dateTaken: is_string($rawDateTaken) ? $rawDateTaken : null,
+            dateTaken: $data['date_taken'] ?? null,
             gpsLatitude: self::toNullableFloat($data['gps_latitude'] ?? null),
             gpsLongitude: self::toNullableFloat($data['gps_longitude'] ?? null),
-            cameraMake: is_string($rawCameraMake) ? $rawCameraMake : null,
-            cameraModel: is_string($rawCameraModel) ? $rawCameraModel : null,
-            lens: is_string($rawLens) ? $rawLens : null,
-            focalLength: is_string($rawFocalLength) ? $rawFocalLength : null,
-            aperture: is_string($rawAperture) ? $rawAperture : null,
-            exposureTime: is_string($rawExposureTime) ? $rawExposureTime : null,
-            iso: is_int($rawIso) ? $rawIso : null,
-            flash: is_string($rawFlash) ? $rawFlash : null,
-            whiteBalance: is_string($rawWhiteBalance) ? $rawWhiteBalance : null,
-            orientation: is_int($rawOrientation) ? $rawOrientation : null,
-            colorSpace: is_string($rawColorSpace) ? $rawColorSpace : null,
-            xResolution: is_int($rawXResolution) ? $rawXResolution : null,
-            yResolution: is_int($rawYResolution) ? $rawYResolution : null,
-            software: is_string($rawSoftware) ? $rawSoftware : null,
-            copyright: is_string($rawCopyright) ? $rawCopyright : null,
-            description: is_string($rawDescription) ? $rawDescription : null,
+            cameraMake: $data['camera_make'] ?? null,
+            cameraModel: $data['camera_model'] ?? null,
+            lens: $data['lens'] ?? null,
+            focalLength: $data['focal_length'] ?? null,
+            aperture: $data['aperture'] ?? null,
+            exposureTime: $data['exposure_time'] ?? null,
+            iso: $data['iso'] ?? null,
+            flash: $data['flash'] ?? null,
+            whiteBalance: $data['white_balance'] ?? null,
+            orientation: $data['orientation'] ?? null,
+            colorSpace: $data['color_space'] ?? null,
+            xResolution: $data['x_resolution'] ?? null,
+            yResolution: $data['y_resolution'] ?? null,
+            software: $data['software'] ?? null,
+            copyright: $data['copyright'] ?? null,
+            description: $data['description'] ?? null,
         );
     }
 
@@ -208,14 +210,23 @@ final readonly class MediaMetadata
     private static function extractString(array $data, array $keys): ?string
     {
         foreach ($keys as $key) {
-            if (is_string($data[$key] ?? null) && $data[$key] !== '') {
-                return $data[$key];
+            /** @var mixed $value */
+            $value = $data[$key] ?? null;
+            if (is_string($value) && $value !== '') {
+                return $value;
             }
 
             // Check inside EXIF/IFD0 sections
             foreach (['EXIF', 'IFD0', 'GPS', 'COMPUTED'] as $section) {
-                if (is_array($data[$section] ?? null) && is_string($data[$section][$key] ?? null) && $data[$section][$key] !== '') {
-                    return $data[$section][$key];
+                /** @var mixed $sectionData */
+                $sectionData = $data[$section] ?? null;
+                if (!is_array($sectionData)) {
+                    continue;
+                }
+                /** @var mixed $sectionValue */
+                $sectionValue = $sectionData[$key] ?? null;
+                if (is_string($sectionValue) && $sectionValue !== '') {
+                    return $sectionValue;
                 }
             }
         }
@@ -230,13 +241,22 @@ final readonly class MediaMetadata
     private static function extractInt(array $data, array $keys): ?int
     {
         foreach ($keys as $key) {
-            if (is_int($data[$key] ?? null)) {
-                return $data[$key];
+            /** @var mixed $value */
+            $value = $data[$key] ?? null;
+            if (is_int($value)) {
+                return $value;
             }
 
             foreach (['EXIF', 'IFD0'] as $section) {
-                if (is_array($data[$section] ?? null) && is_int($data[$section][$key] ?? null)) {
-                    return $data[$section][$key];
+                /** @var mixed $sectionData */
+                $sectionData = $data[$section] ?? null;
+                if (!is_array($sectionData)) {
+                    continue;
+                }
+                /** @var mixed $sectionValue */
+                $sectionValue = $sectionData[$key] ?? null;
+                if (is_int($sectionValue)) {
+                    return $sectionValue;
                 }
             }
         }
@@ -249,8 +269,12 @@ final readonly class MediaMetadata
      */
     private static function extractIso(array $exifData): ?int
     {
-        /** @var array<string, mixed> $exifSection */
-        $exifSection = is_array($exifData['EXIF'] ?? null) ? $exifData['EXIF'] : [];
+        /** @var mixed $exifSection */
+        $exifSection = $exifData['EXIF'] ?? null;
+        if (!is_array($exifSection)) {
+            $exifSection = [];
+        }
+        /** @var mixed $iso */
         $iso = $exifData['ISOSpeedRatings'] ?? $exifSection['ISOSpeedRatings'] ?? null;
 
         if (is_int($iso)) {
@@ -271,23 +295,34 @@ final readonly class MediaMetadata
      */
     private static function extractGpsCoordinate(array $data, string $coordKey, string $refKey): ?float
     {
-        $gpsSection = is_array($data['GPS'] ?? null) ? $data['GPS'] : $data;
+        /** @var mixed $gpsSection */
+        $gpsSection = $data['GPS'] ?? null;
+        if (!is_array($gpsSection)) {
+            $gpsSection = $data;
+        }
 
+        /** @var mixed $coord */
         $coord = $gpsSection[$coordKey] ?? null;
+        /** @var mixed $ref */
         $ref = $gpsSection[$refKey] ?? null;
 
         if (!is_array($coord) || !is_string($ref)) {
             return null;
         }
 
-        /** @var array<int, string> $coord */
         if (count($coord) < 3) {
             return null;
         }
 
-        $degrees = self::rationalToFloat($coord[0] ?? '0');
-        $minutes = self::rationalToFloat($coord[1] ?? '0');
-        $seconds = self::rationalToFloat($coord[2] ?? '0');
+        /** @var mixed $rawDeg */
+        $rawDeg = $coord[0] ?? '0';
+        /** @var mixed $rawMin */
+        $rawMin = $coord[1] ?? '0';
+        /** @var mixed $rawSec */
+        $rawSec = $coord[2] ?? '0';
+        $degrees = self::rationalToFloat(is_string($rawDeg) ? $rawDeg : '0');
+        $minutes = self::rationalToFloat(is_string($rawMin) ? $rawMin : '0');
+        $seconds = self::rationalToFloat(is_string($rawSec) ? $rawSec : '0');
 
         $decimal = $degrees + ($minutes / 60.0) + ($seconds / 3600.0);
 
