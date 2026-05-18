@@ -7,10 +7,6 @@ namespace Pulsar\Extension\Observability\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_array;
-use function is_bool;
-use function is_string;
-
 /**
  * Trace/span configuration for the observability extension.
  * @api
@@ -32,28 +28,21 @@ final readonly class TracingConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     enabled?: bool,
+     *     endpoint?: string,
+     *     attribute_allowlist?: array<string, list<string>>,
+     *     db_statement_export?: string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $rawEnabled = $data['enabled'] ?? true;
-        $rawEndpoint = $data['endpoint'] ?? '';
-        $rawAllowlist = $data['attribute_allowlist'] ?? [];
-        $rawDbStatement = $data['db_statement_export'] ?? 'none';
-
-        $dbStatementExport = is_string($rawDbStatement)
-            ? (DbStatementExport::tryFrom($rawDbStatement) ?? DbStatementExport::None)
-            : DbStatementExport::None;
-
-        /** @var array<string, list<string>> $allowlist */
-        $allowlist = is_array($rawAllowlist) ? $rawAllowlist : [];
-
         return new self(
-            enabled: is_bool($rawEnabled) ? $rawEnabled : true,
-            endpoint: is_string($rawEndpoint) ? $rawEndpoint : '',
-            attributeAllowlist: $allowlist,
-            dbStatementExport: $dbStatementExport,
+            enabled: $data['enabled'] ?? true,
+            endpoint: $data['endpoint'] ?? '',
+            attributeAllowlist: $data['attribute_allowlist'] ?? [],
+            dbStatementExport: DbStatementExport::tryFrom($data['db_statement_export'] ?? '') ?? DbStatementExport::None,
         );
     }
 }
