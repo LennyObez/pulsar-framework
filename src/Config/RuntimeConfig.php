@@ -7,10 +7,6 @@ namespace Pulsar\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_bool;
-use function is_int;
-use function is_string;
-
 /**
  * Configuration for the persistent HTTP runtime.
  * @api
@@ -38,40 +34,45 @@ final readonly class RuntimeConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     host?: string,
+     *     port?: int,
+     *     max_requests?: int,
+     *     memory_threshold_mb?: int,
+     *     time_limit_seconds?: int,
+     *     keep_alive?: bool,
+     *     keep_alive_timeout?: int,
+     *     header_timeout_seconds?: int,
+     *     body_timeout_seconds?: int,
+     *     fiber_concurrency?: int,
+     *     max_header_size?: int,
+     *     max_body_size?: int,
+     *     add_date_header?: bool,
+     *     driver?: string,
+     *     drain_timeout_seconds?: int,
+     *     health_endpoint?: bool,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data, Environment $environment): self
     {
-        $host = $environment->get('RUNTIME_HOST');
-        $hostValue = is_string($data['host'] ?? null) ? $data['host'] : '127.0.0.1';
-
-        $driver = $environment->get('RUNTIME_DRIVER');
-        $driverValue = is_string($data['driver'] ?? null) ? $data['driver'] : 'auto';
-
         return new self(
-            host: $host ?? $hostValue,
-            port: self::envInt($environment, 'RUNTIME_PORT')
-                ?? self::int($data, 'port', 8080),
-            maxRequests: self::envInt($environment, 'RUNTIME_MAX_REQUESTS')
-                ?? self::int($data, 'max_requests', 10_000),
-            memoryThresholdMb: self::envInt($environment, 'RUNTIME_MEMORY_THRESHOLD_MB')
-                ?? self::int($data, 'memory_threshold_mb', 256),
-            timeLimitSeconds: self::envInt($environment, 'RUNTIME_TIME_LIMIT_SECONDS')
-                ?? self::int($data, 'time_limit_seconds', 7200),
-            keepAlive: self::bool($data, 'keep_alive'),
-            keepAliveTimeout: self::int($data, 'keep_alive_timeout', 15),
-            headerTimeoutSeconds: self::int($data, 'header_timeout_seconds', 15),
-            bodyTimeoutSeconds: self::int($data, 'body_timeout_seconds', 60),
-            fiberConcurrency: self::envInt($environment, 'RUNTIME_FIBER_CONCURRENCY')
-                ?? self::int($data, 'fiber_concurrency', 0),
-            maxHeaderSize: self::int($data, 'max_header_size', 8192),
-            maxBodySize: self::int($data, 'max_body_size', 10_485_760),
-            addDateHeader: self::bool($data, 'add_date_header'),
-            driver: $driver ?? $driverValue,
-            drainTimeoutSeconds: self::envInt($environment, 'RUNTIME_DRAIN_TIMEOUT_SECONDS')
-                ?? self::int($data, 'drain_timeout_seconds', 30),
-            healthEndpoint: self::bool($data, 'health_endpoint'),
+            host: $environment->get('RUNTIME_HOST') ?? $data['host'] ?? '127.0.0.1',
+            port: self::envInt($environment, 'RUNTIME_PORT') ?? $data['port'] ?? 8080,
+            maxRequests: self::envInt($environment, 'RUNTIME_MAX_REQUESTS') ?? $data['max_requests'] ?? 10_000,
+            memoryThresholdMb: self::envInt($environment, 'RUNTIME_MEMORY_THRESHOLD_MB') ?? $data['memory_threshold_mb'] ?? 256,
+            timeLimitSeconds: self::envInt($environment, 'RUNTIME_TIME_LIMIT_SECONDS') ?? $data['time_limit_seconds'] ?? 7200,
+            keepAlive: $data['keep_alive'] ?? true,
+            keepAliveTimeout: $data['keep_alive_timeout'] ?? 15,
+            headerTimeoutSeconds: $data['header_timeout_seconds'] ?? 15,
+            bodyTimeoutSeconds: $data['body_timeout_seconds'] ?? 60,
+            fiberConcurrency: self::envInt($environment, 'RUNTIME_FIBER_CONCURRENCY') ?? $data['fiber_concurrency'] ?? 0,
+            maxHeaderSize: $data['max_header_size'] ?? 8192,
+            maxBodySize: $data['max_body_size'] ?? 10_485_760,
+            addDateHeader: $data['add_date_header'] ?? true,
+            driver: $environment->get('RUNTIME_DRIVER') ?? $data['driver'] ?? 'auto',
+            drainTimeoutSeconds: self::envInt($environment, 'RUNTIME_DRAIN_TIMEOUT_SECONDS') ?? $data['drain_timeout_seconds'] ?? 30,
+            healthEndpoint: $data['health_endpoint'] ?? true,
         );
     }
 
@@ -80,25 +81,5 @@ final readonly class RuntimeConfig
         $value = $environment->get($key);
 
         return $value !== null ? (int) $value : null;
-    }
-
-    /**
-     * @param array<string, mixed> $data
-     */
-    private static function int(array $data, string $key, int $default): int
-    {
-        $value = $data[$key] ?? null;
-
-        return is_int($value) ? $value : $default;
-    }
-
-    /**
-     * @param array<string, mixed> $data
-     */
-    private static function bool(array $data, string $key): bool
-    {
-        $value = $data[$key] ?? null;
-
-        return is_bool($value) ? $value : true;
     }
 }

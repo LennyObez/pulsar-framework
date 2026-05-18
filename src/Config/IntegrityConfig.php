@@ -7,8 +7,6 @@ namespace Pulsar\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_string;
-
 /**
  * Typed configuration DTO for `config/integrity.php`.
  * @api
@@ -29,7 +27,13 @@ final readonly class IntegrityConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data Raw array from config/integrity.php
+     * @param array{
+     *     enabled?: bool|int|string,
+     *     manifest_path?: string,
+     *     mode?: string,
+     *     include?: list<string>,
+     *     exclude?: list<string>,
+     * } $data Raw array from config/integrity.php
      */
     #[NoDiscard]
     public static function fromArray(array $data, Environment $environment): self
@@ -38,21 +42,12 @@ final readonly class IntegrityConfig
             ? $environment->get('INTEGRITY_ENABLED') === 'true'
             : (bool) ($data['enabled'] ?? false);
 
-        $modeValue = $data['mode'] ?? 'warn';
-        $mode = IntegrityPolicyMode::from(is_string($modeValue) ? $modeValue : 'warn');
-
-        /** @var list<string> $include */
-        $include = $data['include'] ?? ['src/**/*.php', 'config/**/*.php', 'bin/*'];
-
-        /** @var list<string> $exclude */
-        $exclude = $data['exclude'] ?? ['vendor/**', 'var/**', 'node_modules/**', '.git/**'];
-
         return new self(
             enabled: $enabled,
-            manifestPath: isset($data['manifest_path']) && is_string($data['manifest_path']) ? $data['manifest_path'] : 'var/integrity/manifest.json',
-            mode: $mode,
-            include: $include,
-            exclude: $exclude,
+            manifestPath: $data['manifest_path'] ?? 'var/integrity/manifest.json',
+            mode: IntegrityPolicyMode::from($data['mode'] ?? 'warn'),
+            include: $data['include'] ?? ['src/**/*.php', 'config/**/*.php', 'bin/*'],
+            exclude: $data['exclude'] ?? ['vendor/**', 'var/**', 'node_modules/**', '.git/**'],
         );
     }
 }

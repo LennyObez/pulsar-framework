@@ -7,8 +7,6 @@ namespace Pulsar\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_int;
-
 /**
  * Typed configuration DTO for `config/supervisor.php`.
  * @api
@@ -27,7 +25,19 @@ final readonly class SupervisorConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data Raw array from config/supervisor.php
+     * @param array{
+     *     enabled?: bool|int|string,
+     *     recycle?: array{
+     *         max_requests?: int,
+     *         memory_threshold_mb?: int,
+     *         time_limit_seconds?: int,
+     *     },
+     *     stuck_job?: array{
+     *         timeout_seconds?: int,
+     *         check_interval_seconds?: int,
+     *         move_to_dead_letter?: bool|int|string,
+     *     },
+     * } $data Raw array from config/supervisor.php
      */
     #[NoDiscard]
     public static function fromArray(array $data, Environment $environment): self
@@ -36,25 +46,16 @@ final readonly class SupervisorConfig
             ? $environment->get('SUPERVISOR_ENABLED') === 'true'
             : (bool) ($data['enabled'] ?? false);
 
-        /** @var array<string, mixed> $recycleData */
         $recycleData = $data['recycle'] ?? [];
-
-        /** @var array<string, mixed> $stuckData */
         $stuckData = $data['stuck_job'] ?? [];
-
-        $rawMaxRequests = $recycleData['max_requests'] ?? 10000;
-        $rawMemThreshold = $recycleData['memory_threshold_mb'] ?? 256;
-        $rawTimeLimit = $recycleData['time_limit_seconds'] ?? 7200;
-        $rawStuckTimeout = $stuckData['timeout_seconds'] ?? 300;
-        $rawCheckInterval = $stuckData['check_interval_seconds'] ?? 60;
 
         return new self(
             enabled: $enabled,
-            recycleMaxRequests: is_int($rawMaxRequests) ? $rawMaxRequests : 10000,
-            recycleMemoryThresholdMb: is_int($rawMemThreshold) ? $rawMemThreshold : 256,
-            recycleTimeLimitSeconds: is_int($rawTimeLimit) ? $rawTimeLimit : 7200,
-            stuckJobTimeoutSeconds: is_int($rawStuckTimeout) ? $rawStuckTimeout : 300,
-            stuckJobCheckIntervalSeconds: is_int($rawCheckInterval) ? $rawCheckInterval : 60,
+            recycleMaxRequests: $recycleData['max_requests'] ?? 10000,
+            recycleMemoryThresholdMb: $recycleData['memory_threshold_mb'] ?? 256,
+            recycleTimeLimitSeconds: $recycleData['time_limit_seconds'] ?? 7200,
+            stuckJobTimeoutSeconds: $stuckData['timeout_seconds'] ?? 300,
+            stuckJobCheckIntervalSeconds: $stuckData['check_interval_seconds'] ?? 60,
             stuckJobMoveToDeadLetter: (bool) ($stuckData['move_to_dead_letter'] ?? true),
         );
     }
