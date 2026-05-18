@@ -47,7 +47,15 @@ final readonly class CorsConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data Raw `cors` sub-array from config
+     * @param array{
+     *     enabled?: bool|int|string,
+     *     allowed_origins?: list<string>|string,
+     *     allowed_methods?: list<string>|string,
+     *     allowed_headers?: list<string>|string,
+     *     exposed_headers?: list<string>|string,
+     *     allow_credentials?: bool|int|string,
+     *     max_age?: int,
+     * } $data Raw `cors` sub-array from config
      *
      * @throws ConfigException If allowedOrigins=['*'] combined with allowCredentials=true
      */
@@ -80,7 +88,7 @@ final readonly class CorsConfig
             ),
             exposedHeaders: self::normalizeStringList($data['exposed_headers'] ?? []),
             allowCredentials: $allowCredentials,
-            maxAge: isset($data['max_age']) && is_int($data['max_age']) ? $data['max_age'] : 0,
+            maxAge: $data['max_age'] ?? 0,
         );
     }
 

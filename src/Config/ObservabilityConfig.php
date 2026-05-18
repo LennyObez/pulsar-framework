@@ -7,8 +7,6 @@ namespace Pulsar\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_string;
-
 /**
  * Typed configuration DTO for `config/observability.php`.
  *
@@ -34,68 +32,51 @@ final readonly class ObservabilityConfig
     /**
      * Build from the raw observability config array and environment.
      *
-     * @param array<string, mixed> $data Raw array from config/observability.php
+     * @param array{
+     *     logging?: array{
+     *         default_channel?: string,
+     *         level?: string,
+     *         channels?: array<string, array{
+     *             driver?: string,
+     *             path?: string|null,
+     *             stream?: string|null,
+     *         }>,
+     *     },
+     *     metrics?: array<string, mixed>,
+     *     tracing?: array<string, mixed>,
+     *     error_tracking?: array<string, mixed>,
+     *     audit?: array<string, mixed>,
+     * } $data Raw array from config/observability.php
      */
     #[NoDiscard]
     public static function fromArray(array $data, Environment $environment): self
     {
-        /** @var array<string, mixed> $logging */
         $logging = $data['logging'] ?? [];
 
-        // Env overrides for channel and level
-        $rawDefaultChannel = $logging['default_channel'] ?? 'file';
-        $defaultChannel = $environment->get('LOG_CHANNEL')
-            ?? (is_string($rawDefaultChannel) ? $rawDefaultChannel : 'file');
+        $defaultChannel = $environment->get('LOG_CHANNEL') ?? $logging['default_channel'] ?? 'file';
+        $level = $environment->get('LOG_LEVEL') ?? $logging['level'] ?? 'info';
 
-        $rawLevel = $logging['level'] ?? 'info';
-        $level = $environment->get('LOG_LEVEL')
-            ?? (is_string($rawLevel) ? $rawLevel : 'info');
-
-        // Build channel DTOs
-        /** @var array<string, array<string, mixed>> $channels */
-        $channels = $logging['channels'] ?? [];
         $channelConfigs = [];
-
-        foreach ($channels as $name => $channelData) {
-            $rawDriver = $channelData['driver'] ?? 'file';
-            $rawPath = $channelData['path'] ?? null;
-            $rawStream = $channelData['stream'] ?? null;
+        foreach ($logging['channels'] ?? [] as $name => $channelData) {
             $channelConfigs[] = new LoggingChannelConfig(
                 name: $name,
-                driver: is_string($rawDriver) ? $rawDriver : 'file',
-                path: is_string($rawPath) ? $rawPath : null,
-                stream: is_string($rawStream) ? $rawStream : null,
+                driver: $channelData['driver'] ?? 'file',
+                path: $channelData['path'] ?? null,
+                stream: $channelData['stream'] ?? null,
             );
         }
 
-        // Metrics config
-        /** @var array<string, mixed> $metricsData */
-        $metricsData = $data['metrics'] ?? [];
-        $metricsConfig = MetricsConfig::fromArray($metricsData);
-
-        // Tracing config
-        /** @var array<string, mixed> $tracingData */
-        $tracingData = $data['tracing'] ?? [];
-        $tracingConfig = TracingConfig::fromArray($tracingData);
-
-        // Error tracking config
-        /** @var array<string, mixed> $errorTrackingData */
-        $errorTrackingData = $data['error_tracking'] ?? [];
-        $errorTrackingConfig = ErrorTrackingConfig::fromArray($errorTrackingData);
-
-        // Build audit config
         /** @var array<string, mixed> $auditData */
         $auditData = $data['audit'] ?? [];
-        $auditConfig = AuditConfig::fromArray($auditData, $environment);
 
         return new self(
             defaultLoggingChannel: $defaultChannel,
             loggingLevel: $level,
             loggingChannels: $channelConfigs,
-            metrics: $metricsConfig,
-            tracing: $tracingConfig,
-            errorTracking: $errorTrackingConfig,
-            audit: $auditConfig,
+            metrics: MetricsConfig::fromArray($data['metrics'] ?? []),
+            tracing: TracingConfig::fromArray($data['tracing'] ?? []),
+            errorTracking: ErrorTrackingConfig::fromArray($data['error_tracking'] ?? []),
+            audit: AuditConfig::fromArray($auditData, $environment),
         );
     }
 }
