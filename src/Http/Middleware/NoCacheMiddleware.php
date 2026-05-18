@@ -69,9 +69,12 @@ final class NoCacheMiddleware implements MiddlewareInterface
 
         // Support "ClassName::methodName" string format
         if (is_string($handler) && str_contains($handler, '::')) {
-            [$class, $method] = explode('::', $handler, 2);
+            $parts = explode('::', $handler, 2);
+            if (!isset($parts[1])) {
+                return false;
+            }
 
-            return $this->hasNoCacheAttribute($class, $method);
+            return $this->hasNoCacheAttribute($parts[0], $parts[1]);
         }
 
         return false;
