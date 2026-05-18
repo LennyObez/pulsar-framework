@@ -870,6 +870,7 @@ final readonly class ImportParser
                 continue;
             }
 
+            /** @var mixed $rawOrder */
             $rawOrder = $blockData['sortOrder'] ?? $blockData['sort_order'] ?? 0;
             $sortOrder = is_int($rawOrder) ? $rawOrder : (is_string($rawOrder) ? (int) $rawOrder : 0);
 
@@ -1081,7 +1082,9 @@ final readonly class ImportParser
                     continue;
                 }
 
-                $name = is_string($transData['name'] ?? null) ? $transData['name'] : '';
+                /** @var mixed $rawName */
+                $rawName = $transData['name'] ?? null;
+                $name = is_string($rawName) ? $rawName : '';
 
                 if ($name !== '') {
                     $menuTranslations[] = new MenuTranslation(
@@ -1209,6 +1212,7 @@ final readonly class ImportParser
                 continue;
             }
 
+            /** @var mixed $value */
             foreach ($keys as $key => $value) {
                 /** @var mixed $existing */
                 $existing = $this->settingsService->get($group, (string) $key);
