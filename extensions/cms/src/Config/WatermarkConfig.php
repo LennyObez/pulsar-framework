@@ -7,10 +7,6 @@ namespace Pulsar\Extension\Cms\Config;
 use Pulsar\Api\Api;
 use Pulsar\Extension\Cms\Media\Watermark\WatermarkPosition;
 
-use function is_array;
-use function is_bool;
-use function is_int;
-use function is_string;
 use function max;
 use function min;
 
@@ -52,35 +48,34 @@ final readonly class WatermarkConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     enabled?: bool,
+     *     image_path?: string|null,
+     *     text?: string|null,
+     *     position?: string,
+     *     opacity?: int,
+     *     scale?: int,
+     *     margin?: int,
+     *     font_path?: string,
+     *     font_size?: int,
+     *     font_color?: string,
+     *     per_variant?: array<string, bool>,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
-        /** @var array<string, bool> $perVariant */
-        $perVariant = [];
-
-        if (is_array($data['per_variant'] ?? null)) {
-            foreach ($data['per_variant'] as $name => $enabled) {
-                if (is_string($name) && is_bool($enabled)) {
-                    $perVariant[$name] = $enabled;
-                }
-            }
-        }
-
         return new self(
-            enabled: is_bool($data['enabled'] ?? null) ? $data['enabled'] : false,
-            imagePath: is_string($data['image_path'] ?? null) ? $data['image_path'] : null,
-            text: is_string($data['text'] ?? null) ? $data['text'] : null,
-            position: is_string($data['position'] ?? null)
-                ? (WatermarkPosition::tryFrom($data['position']) ?? WatermarkPosition::BottomRight)
-                : WatermarkPosition::BottomRight,
-            opacity: min(100, max(0, is_int($data['opacity'] ?? null) ? $data['opacity'] : 50)),
-            scale: min(100, max(1, is_int($data['scale'] ?? null) ? $data['scale'] : 20)),
-            margin: max(0, is_int($data['margin'] ?? null) ? $data['margin'] : 10),
-            fontPath: is_string($data['font_path'] ?? null) ? $data['font_path'] : '',
-            fontSize: max(1, is_int($data['font_size'] ?? null) ? $data['font_size'] : 24),
-            fontColor: is_string($data['font_color'] ?? null) ? $data['font_color'] : '#FFFFFF',
-            perVariant: $perVariant,
+            enabled: $data['enabled'] ?? false,
+            imagePath: $data['image_path'] ?? null,
+            text: $data['text'] ?? null,
+            position: WatermarkPosition::tryFrom($data['position'] ?? '') ?? WatermarkPosition::BottomRight,
+            opacity: min(100, max(0, $data['opacity'] ?? 50)),
+            scale: min(100, max(1, $data['scale'] ?? 20)),
+            margin: max(0, $data['margin'] ?? 10),
+            fontPath: $data['font_path'] ?? '',
+            fontSize: max(1, $data['font_size'] ?? 24),
+            fontColor: $data['font_color'] ?? '#FFFFFF',
+            perVariant: $data['per_variant'] ?? [],
         );
     }
 
