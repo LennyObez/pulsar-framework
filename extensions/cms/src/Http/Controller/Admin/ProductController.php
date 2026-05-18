@@ -107,9 +107,12 @@ final readonly class ProductController extends AbstractAdminController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $sku = is_string($body['sku'] ?? null) ? $body['sku'] : '';
-        $priceAmount = is_int($body['price_amount'] ?? null) ? $body['price_amount'] : 0;
-        $priceCurrency = is_string($body['price_currency'] ?? null) ? $body['price_currency'] : '';
+        $rawSku = $body['sku'] ?? null;
+        $sku = is_string($rawSku) ? $rawSku : '';
+        $rawPriceAmount = $body['price_amount'] ?? null;
+        $priceAmount = is_int($rawPriceAmount) ? $rawPriceAmount : 0;
+        $rawPriceCurrency = $body['price_currency'] ?? null;
+        $priceCurrency = is_string($rawPriceCurrency) ? $rawPriceCurrency : '';
 
         if ($sku === '' || $priceCurrency === '') {
             return Response::json(['error' => 'SKU and price currency are required'], 400);
@@ -122,16 +125,20 @@ final readonly class ProductController extends AbstractAdminController
         /** @var string|null $tenantId */
         $tenantId = $request->getAttribute('tenant_id');
 
+        $rawTaxCategory = $body['tax_category'] ?? null;
+        $rawStockQuantity = $body['stock_quantity'] ?? null;
+        $rawDigital = $body['digital'] ?? null;
+        $rawContentId = $body['content_id'] ?? null;
         $product = Product::create(
             id: UuidGenerator::v7(),
             sku: $sku,
             priceAmount: $priceAmount,
             priceCurrency: $priceCurrency,
             tenantId: $tenantId,
-            taxCategory: is_string($body['tax_category'] ?? null) ? $body['tax_category'] : null,
-            stockQuantity: max(0, is_int($body['stock_quantity'] ?? null) ? $body['stock_quantity'] : 0),
-            digital: is_bool($body['digital'] ?? null) ? $body['digital'] : false,
-            contentId: is_string($body['content_id'] ?? null) ? $body['content_id'] : null,
+            taxCategory: is_string($rawTaxCategory) ? $rawTaxCategory : null,
+            stockQuantity: max(0, is_int($rawStockQuantity) ? $rawStockQuantity : 0),
+            digital: is_bool($rawDigital) ? $rawDigital : false,
+            contentId: is_string($rawContentId) ? $rawContentId : null,
         );
 
         $this->products->save($product);
