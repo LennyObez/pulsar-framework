@@ -20,19 +20,17 @@ final readonly class AdminStorageConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     driver?: string,
+     *     sqlite_path?: string|null,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var string $driver */
-        $driver = $data['driver'] ?? 'sqlite';
-        /** @var string|null $sqlitePath */
-        $sqlitePath = $data['sqlite_path'] ?? null;
-
         return new self(
-            driver: $driver,
-            sqlitePath: $sqlitePath,
+            driver: $data['driver'] ?? 'sqlite',
+            sqlitePath: $data['sqlite_path'] ?? null,
         );
     }
 }

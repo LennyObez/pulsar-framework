@@ -22,25 +22,21 @@ final readonly class AdminRateLimitConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     read_limit?: int,
+     *     write_limit?: int,
+     *     export_limit?: int,
+     *     window_seconds?: int,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var int $readLimit */
-        $readLimit = $data['read_limit'] ?? 120;
-        /** @var int $writeLimit */
-        $writeLimit = $data['write_limit'] ?? 30;
-        /** @var int $exportLimit */
-        $exportLimit = $data['export_limit'] ?? 5;
-        /** @var int $windowSeconds */
-        $windowSeconds = $data['window_seconds'] ?? 60;
-
         return new self(
-            readLimit: $readLimit,
-            writeLimit: $writeLimit,
-            exportLimit: $exportLimit,
-            windowSeconds: $windowSeconds,
+            readLimit: $data['read_limit'] ?? 120,
+            writeLimit: $data['write_limit'] ?? 30,
+            exportLimit: $data['export_limit'] ?? 5,
+            windowSeconds: $data['window_seconds'] ?? 60,
         );
     }
 }
