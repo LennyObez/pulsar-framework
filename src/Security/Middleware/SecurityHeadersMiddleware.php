@@ -130,7 +130,7 @@ final readonly class SecurityHeadersMiddleware implements MiddlewareInterface
     {
         $parts = explode('/', $cidr, 2);
         $subnet = $parts[0];
-        $bits = (int) $parts[1];
+        $bits = isset($parts[1]) ? (int) $parts[1] : 32;
 
         $ipBin = @inet_pton($ip);
         $subnetBin = @inet_pton($subnet);
