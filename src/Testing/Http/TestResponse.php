@@ -298,6 +298,7 @@ final class TestResponse
     {
         $json = $this->json();
 
+        /** @var mixed $value */
         foreach ($data as $key => $value) {
             Assert::assertArrayHasKey(
                 $key,
@@ -331,6 +332,7 @@ final class TestResponse
      */
     public function assertJsonPath(string $path, mixed $expected): self
     {
+        /** @var mixed $actual */
         $actual = $this->getJsonPath($path);
 
         Assert::assertSame(
