@@ -25,17 +25,18 @@ final readonly class RetentionConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     raw_days?: int,
+     *     aggregated_days?: int,
+     *     hourly_hours?: int,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
-        $rawDays = $data['raw_days'] ?? null;
-        $aggregatedDays = $data['aggregated_days'] ?? null;
-        $hourlyHours = $data['hourly_hours'] ?? null;
         return new self(
-            rawDays: $rawDays !== null ? (is_numeric($rawDays) ? (int) $rawDays : 0) : 90,
-            aggregatedDays: $aggregatedDays !== null ? (is_numeric($aggregatedDays) ? (int) $aggregatedDays : 0) : 730,
-            hourlyHours: $hourlyHours !== null ? (is_numeric($hourlyHours) ? (int) $hourlyHours : 0) : 48,
+            rawDays: $data['raw_days'] ?? 90,
+            aggregatedDays: $data['aggregated_days'] ?? 730,
+            hourlyHours: $data['hourly_hours'] ?? 48,
         );
     }
 }

@@ -6,7 +6,8 @@ namespace Pulsar\Extension\Analytics\Config;
 
 use Pulsar\Api\Api;
 
-use function is_array;
+use function array_filter;
+use function array_values;
 use function is_string;
 
 /**
@@ -39,41 +40,32 @@ final readonly class AnalyticsConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     enabled?: bool|int|string,
+     *     collection?: array{driver?: string},
+     *     trusted_proxies?: list<string>,
+     *     privacy?: array<string, mixed>,
+     *     tracking?: array<string, mixed>,
+     *     retention?: array<string, mixed>,
+     *     rate_limit?: array<string, mixed>,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
-        $collection = (array) ($data['collection'] ?? []);
-
-        $proxies = (array) ($data['trusted_proxies'] ?? []);
+        $collection = $data['collection'] ?? [];
+        $proxies = $data['trusted_proxies'] ?? [];
 
         return new self(
             enabled: (bool) ($data['enabled'] ?? true),
-            collectionDriver: is_string($collection['driver'] ?? null) ? $collection['driver'] : 'direct',
+            collectionDriver: $collection['driver'] ?? 'direct',
             trustedProxies: array_values(array_filter(
                 $proxies,
                 static fn(mixed $v): bool => is_string($v) && $v !== '',
             )),
-            privacy: PrivacyConfig::fromArray(self::extractSubArray($data, 'privacy')),
-            tracking: TrackingConfig::fromArray(self::extractSubArray($data, 'tracking')),
-            retention: RetentionConfig::fromArray(self::extractSubArray($data, 'retention')),
-            rateLimit: RateLimitConfig::fromArray(self::extractSubArray($data, 'rate_limit')),
+            privacy: PrivacyConfig::fromArray($data['privacy'] ?? []),
+            tracking: TrackingConfig::fromArray($data['tracking'] ?? []),
+            retention: RetentionConfig::fromArray($data['retention'] ?? []),
+            rateLimit: RateLimitConfig::fromArray($data['rate_limit'] ?? []),
         );
-    }
-
-    /**
-     * @param array<string, mixed> $data
-     * @return array<string, mixed>
-     */
-    private static function extractSubArray(array $data, string $key): array
-    {
-        $value = $data[$key] ?? [];
-
-        if (!is_array($value)) {
-            return [];
-        }
-
-        /** @var array<string, mixed> $value */
-        return $value;
     }
 }
