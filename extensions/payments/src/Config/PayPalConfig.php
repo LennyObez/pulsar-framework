@@ -22,25 +22,21 @@ final readonly class PayPalConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     client_id?: string,
+     *     client_secret?: string,
+     *     webhook_id?: string,
+     *     sandbox?: bool|int|string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var string $clientId */
-        $clientId = $data['client_id'] ?? '';
-        /** @var string $clientSecret */
-        $clientSecret = $data['client_secret'] ?? '';
-        /** @var string $webhookId */
-        $webhookId = $data['webhook_id'] ?? '';
-        /** @var bool $sandbox */
-        $sandbox = (bool) ($data['sandbox'] ?? true);
-
         return new self(
-            clientId: $clientId,
-            clientSecret: $clientSecret,
-            webhookId: $webhookId,
-            sandbox: $sandbox,
+            clientId: $data['client_id'] ?? '',
+            clientSecret: $data['client_secret'] ?? '',
+            webhookId: $data['webhook_id'] ?? '',
+            sandbox: (bool) ($data['sandbox'] ?? true),
         );
     }
 }

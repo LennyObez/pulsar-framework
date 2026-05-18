@@ -7,8 +7,6 @@ namespace Pulsar\Extension\Payments\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_string;
-
 /**
  * iDEAL payment gateway configuration.
  *
@@ -25,18 +23,17 @@ final readonly class IdealConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     enabled?: bool|int|string,
+     *     provider?: string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $enabled = (bool) ($data['enabled'] ?? false);
-        $providerVal = $data['provider'] ?? null;
-        $provider = is_string($providerVal) ? $providerVal : 'stripe';
-
         return new self(
-            enabled: $enabled,
-            provider: $provider,
+            enabled: (bool) ($data['enabled'] ?? false),
+            provider: $data['provider'] ?? 'stripe',
         );
     }
 }
