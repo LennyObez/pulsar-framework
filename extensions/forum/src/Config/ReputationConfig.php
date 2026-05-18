@@ -6,8 +6,6 @@ namespace Pulsar\Extension\Forum\Config;
 
 use Pulsar\Api\Api;
 
-use function is_int;
-
 /**
  * Reputation system configuration with point values and thresholds.
  * @api
@@ -32,23 +30,25 @@ final readonly class ReputationConfig
         public int $minReputationToDownvote = 50,
     ) {}
 
-    private static function int(mixed $value, int $default): int
-    {
-        return is_int($value) ? $value : $default;
-    }
-
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     points_per_thread?: int,
+     *     points_per_post?: int,
+     *     points_per_upvote?: int,
+     *     points_per_downvote?: int,
+     *     points_per_solution?: int,
+     *     min_reputation_to_downvote?: int,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
         return new self(
-            pointsPerThread: self::int($data['points_per_thread'] ?? null, 2),
-            pointsPerPost: self::int($data['points_per_post'] ?? null, 1),
-            pointsPerUpvote: self::int($data['points_per_upvote'] ?? null, 5),
-            pointsPerDownvote: self::int($data['points_per_downvote'] ?? null, -2),
-            pointsPerSolution: self::int($data['points_per_solution'] ?? null, 15),
-            minReputationToDownvote: self::int($data['min_reputation_to_downvote'] ?? null, 50),
+            pointsPerThread: $data['points_per_thread'] ?? 2,
+            pointsPerPost: $data['points_per_post'] ?? 1,
+            pointsPerUpvote: $data['points_per_upvote'] ?? 5,
+            pointsPerDownvote: $data['points_per_downvote'] ?? -2,
+            pointsPerSolution: $data['points_per_solution'] ?? 15,
+            minReputationToDownvote: $data['min_reputation_to_downvote'] ?? 50,
         );
     }
 }
