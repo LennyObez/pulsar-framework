@@ -42,6 +42,7 @@ final readonly class FormDataBinder
 
         $data = $form->getData();
 
+        /** @var mixed $value */
         foreach ($data as $field => $value) {
             if (!$reflection->hasProperty($field)) {
                 continue;
@@ -50,6 +51,7 @@ final readonly class FormDataBinder
             $property = $reflection->getProperty($field);
             $type = $property->getType();
 
+            /** @var mixed $coerced */
             $coerced = $type instanceof ReflectionNamedType
                 ? $this->coerce($value, $type)
                 : $value;
@@ -66,6 +68,7 @@ final readonly class FormDataBinder
     public function populate(FormInterface $form, object $dto): void
     {
         foreach ($form->getFields() as $name => $field) {
+            /** @var mixed $value */
             $value = $this->accessor->read($dto, $name);
 
             if ($value !== null) {
