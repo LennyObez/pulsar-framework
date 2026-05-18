@@ -121,8 +121,10 @@ final readonly class CmsPageCacheMiddleware implements MiddlewareInterface
 
     private function computeCacheKey(ServerRequestInterface $request): string
     {
+        /** @var mixed $rawTenantId */
         $rawTenantId = $request->getAttribute('tenant_id');
         $tenantId = is_string($rawTenantId) ? $rawTenantId : 'default';
+        /** @var mixed $rawLocale */
         $rawLocale = $request->getAttribute('locale');
         $locale = is_string($rawLocale) ? $rawLocale : 'en';
         $path = ltrim($request->getUri()->getPath(), '/');

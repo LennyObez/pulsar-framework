@@ -40,7 +40,9 @@ final readonly class RefundController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $chargeId = is_string($body['charge_id'] ?? null) ? $body['charge_id'] : '';
+        /** @var mixed $rawChargeId */
+        $rawChargeId = $body['charge_id'] ?? null;
+        $chargeId = is_string($rawChargeId) ? $rawChargeId : '';
 
         if ($chargeId === '') {
             return Response::json(['error' => 'charge_id is required'], 422);
@@ -49,8 +51,10 @@ final readonly class RefundController
         $amount = null;
 
         if (isset($body['amount'])) {
+            /** @var mixed $rawAmount */
             $rawAmount = $body['amount'];
             $amountValue = is_int($rawAmount) ? $rawAmount : (is_numeric($rawAmount) ? (int) $rawAmount : 0);
+            /** @var mixed $rawCurrency */
             $rawCurrency = $body['currency'] ?? null;
             $currencyCode = is_string($rawCurrency) ? strtoupper($rawCurrency) : 'USD';
             $currency = Currency::tryFrom($currencyCode);

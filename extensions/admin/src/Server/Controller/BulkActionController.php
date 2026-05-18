@@ -34,9 +34,12 @@ final readonly class BulkActionController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
+        /** @var mixed $actionRaw */
         $actionRaw = $body['action'] ?? '';
         $action = is_string($actionRaw) ? $actionRaw : '';
+        /** @var mixed $ids */
         $ids = $body['ids'] ?? [];
+        /** @var mixed $parameters */
         $parameters = $body['parameters'] ?? [];
 
         if (!is_array($ids)) {
