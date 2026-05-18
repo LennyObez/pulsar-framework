@@ -321,9 +321,12 @@ final readonly class ForumImportExportProvider implements ImportExportProviderIn
             }
 
             if (!$dryRun) {
-                $id = is_string($entry['id'] ?? null) ? $entry['id'] : bin2hex(random_bytes(16));
-                $parentId = is_string($entry['parent_id'] ?? null) ? $entry['parent_id'] : null;
-                $sortOrder = is_int($entry['sort_order'] ?? null) ? $entry['sort_order'] : 0;
+                $rawId = $entry['id'] ?? null;
+                $id = is_string($rawId) ? $rawId : bin2hex(random_bytes(16));
+                $rawParentId = $entry['parent_id'] ?? null;
+                $parentId = is_string($rawParentId) ? $rawParentId : null;
+                $rawSortOrder = $entry['sort_order'] ?? null;
+                $sortOrder = is_int($rawSortOrder) ? $rawSortOrder : 0;
                 $category = \Pulsar\Extension\Forum\Category\Category::create(
                     id: $id,
                     slug: $entry['slug'],
@@ -347,8 +350,10 @@ final readonly class ForumImportExportProvider implements ImportExportProviderIn
                             continue;
                         }
 
-                        $name = is_string($translationData['name'] ?? null) ? $translationData['name'] : '';
-                        $description = is_string($translationData['description'] ?? null) ? $translationData['description'] : '';
+                        $rawName = $translationData['name'] ?? null;
+                        $name = is_string($rawName) ? $rawName : '';
+                        $rawDescription = $translationData['description'] ?? null;
+                        $description = is_string($rawDescription) ? $rawDescription : '';
 
                         if ($name === '') {
                             $warnings[] = sprintf(
@@ -412,14 +417,20 @@ final readonly class ForumImportExportProvider implements ImportExportProviderIn
             }
 
             if (!$dryRun) {
-                $threadId = is_string($entry['id'] ?? null) ? $entry['id'] : bin2hex(random_bytes(16));
-                $categoryId = is_string($entry['category_id'] ?? null) ? $entry['category_id'] : '';
-                $authorId = is_string($entry['author_id'] ?? null) ? $entry['author_id'] : 'system';
-                $typeStr = is_string($entry['type'] ?? null) ? $entry['type'] : 'discussion';
+                $rawId = $entry['id'] ?? null;
+                $threadId = is_string($rawId) ? $rawId : bin2hex(random_bytes(16));
+                $rawCategoryId = $entry['category_id'] ?? null;
+                $categoryId = is_string($rawCategoryId) ? $rawCategoryId : '';
+                $rawAuthorId = $entry['author_id'] ?? null;
+                $authorId = is_string($rawAuthorId) ? $rawAuthorId : 'system';
+                $rawTypeStr = $entry['type'] ?? null;
+                $typeStr = is_string($rawTypeStr) ? $rawTypeStr : 'discussion';
                 $threadType = \Pulsar\Extension\Forum\Domain\ThreadType::tryFrom($typeStr) ?? \Pulsar\Extension\Forum\Domain\ThreadType::Discussion;
 
-                $ipHash = is_string($entry['ip_hash'] ?? null) ? $entry['ip_hash'] : '';
-                $userAgentHash = is_string($entry['user_agent_hash'] ?? null) ? $entry['user_agent_hash'] : '';
+                $rawIpHash = $entry['ip_hash'] ?? null;
+                $ipHash = is_string($rawIpHash) ? $rawIpHash : '';
+                $rawUserAgentHash = $entry['user_agent_hash'] ?? null;
+                $userAgentHash = is_string($rawUserAgentHash) ? $rawUserAgentHash : '';
 
                 $thread = \Pulsar\Extension\Forum\Thread\Thread::create(
                     id: $threadId,
@@ -467,9 +478,12 @@ final readonly class ForumImportExportProvider implements ImportExportProviderIn
             }
 
             if (!$dryRun) {
-                $tagId = is_string($entry['id'] ?? null) ? $entry['id'] : bin2hex(random_bytes(16));
-                $tagName = is_string($entry['name'] ?? null) ? $entry['name'] : $entry['slug'];
-                $tagDescription = is_string($entry['description'] ?? null) ? $entry['description'] : '';
+                $rawTagId = $entry['id'] ?? null;
+                $tagId = is_string($rawTagId) ? $rawTagId : bin2hex(random_bytes(16));
+                $rawTagName = $entry['name'] ?? null;
+                $tagName = is_string($rawTagName) ? $rawTagName : $entry['slug'];
+                $rawTagDescription = $entry['description'] ?? null;
+                $tagDescription = is_string($rawTagDescription) ? $rawTagDescription : '';
                 $tag = \Pulsar\Extension\Forum\Tag\Tag::create(
                     id: $tagId,
                     slug: $entry['slug'],
