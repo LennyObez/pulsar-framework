@@ -9,10 +9,8 @@ use Pulsar\Extension\Cms\Commerce\CommerceConfig;
 use Pulsar\Extension\Cms\LiveCss\LiveCssConfig;
 use Pulsar\Extension\Cms\Tools\ImportConfig;
 
-use function is_array;
-use function is_bool;
-use function is_int;
-use function is_string;
+use function array_filter;
+use function array_values;
 
 /**
  * Top-level CMS configuration DTO.
@@ -86,78 +84,69 @@ final readonly class CmsConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     site_name?: string,
+     *     default_locale?: string,
+     *     supported_locales?: list<string>,
+     *     default_locale_in_url?: bool,
+     *     editorial_workflow?: bool,
+     *     event_sourcing?: bool,
+     *     atomic_snapshots?: bool,
+     *     max_hierarchy_depth?: int,
+     *     homepage_content_id?: string|null,
+     *     cache?: array<string, mixed>,
+     *     media?: array<string, mixed>,
+     *     comments?: array<string, mixed>,
+     *     seo?: array<string, mixed>,
+     *     themes?: array<string, mixed>,
+     *     security?: array<string, mixed>,
+     *     commerce?: array<string, mixed>|null,
+     *     live_css?: array<string, mixed>,
+     *     import?: array<string, mixed>,
+     *     http_cache_ttl_seconds?: int,
+     *     public_rate_limit_content?: int,
+     *     public_rate_limit_checkout?: int,
+     *     api_key_required?: bool,
+     *     notifications?: array<string, mixed>,
+     *     ai?: array<string, mixed>,
+     *     publishing?: array<string, mixed>,
+     *     forms?: array<string, mixed>,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
-        /** @var array<string, mixed> $cacheData */
-        $cacheData = is_array($data['cache'] ?? null) ? $data['cache'] : [];
-        /** @var array<string, mixed> $mediaData */
-        $mediaData = is_array($data['media'] ?? null) ? $data['media'] : [];
-        /** @var array<string, mixed> $commentsData */
-        $commentsData = is_array($data['comments'] ?? null) ? $data['comments'] : [];
-        /** @var array<string, mixed> $seoData */
-        $seoData = is_array($data['seo'] ?? null) ? $data['seo'] : [];
-        /** @var array<string, mixed> $themesData */
-        $themesData = is_array($data['themes'] ?? null) ? $data['themes'] : [];
-        /** @var array<string, mixed> $securityData */
-        $securityData = is_array($data['security'] ?? null) ? $data['security'] : [];
-        /** @var array<string, mixed> $commerceData */
-        $commerceData = is_array($data['commerce'] ?? null) ? $data['commerce'] : [];
-        /** @var array<string, mixed> $liveCssData */
-        $liveCssData = is_array($data['live_css'] ?? null) ? $data['live_css'] : [];
-        /** @var array<string, mixed> $importData */
-        $importData = is_array($data['import'] ?? null) ? $data['import'] : [];
-        /** @var array<string, mixed> $notificationsData */
-        $notificationsData = is_array($data['notifications'] ?? null) ? $data['notifications'] : [];
-        /** @var array<string, mixed> $aiData */
-        $aiData = is_array($data['ai'] ?? null) ? $data['ai'] : [];
-        /** @var array<string, mixed> $publishingData */
-        $publishingData = is_array($data['publishing'] ?? null) ? $data['publishing'] : [];
-        /** @var array<string, mixed> $formsData */
-        $formsData = is_array($data['forms'] ?? null) ? $data['forms'] : [];
-
-        $rawSiteName = $data['site_name'] ?? null;
-        $rawDefaultLocale = $data['default_locale'] ?? null;
-        $rawSupportedLocales = $data['supported_locales'] ?? null;
-        $rawDefaultLocaleInUrl = $data['default_locale_in_url'] ?? null;
-        $rawEditorialWorkflow = $data['editorial_workflow'] ?? null;
-        $rawEventSourcing = $data['event_sourcing'] ?? null;
-        $rawAtomicSnapshots = $data['atomic_snapshots'] ?? null;
-        $rawMaxHierarchyDepth = $data['max_hierarchy_depth'] ?? null;
-        $rawHomepageContentId = $data['homepage_content_id'] ?? null;
-        $rawHttpCacheTtl = $data['http_cache_ttl_seconds'] ?? null;
-        $rawPublicRateLimitContent = $data['public_rate_limit_content'] ?? null;
-        $rawPublicRateLimitCheckout = $data['public_rate_limit_checkout'] ?? null;
-        $rawApiKeyRequired = $data['api_key_required'] ?? null;
+        $supportedLocales = $data['supported_locales'] ?? ['en'];
+        $supportedLocales = array_values(array_filter($supportedLocales, 'is_string'));
 
         return new self(
-            siteName: is_string($rawSiteName) ? $rawSiteName : 'Pulsar CMS',
-            defaultLocale: is_string($rawDefaultLocale) ? $rawDefaultLocale : 'en',
-            supportedLocales: is_array($rawSupportedLocales) ? array_values(array_filter($rawSupportedLocales, 'is_string')) : ['en'],
-            defaultLocaleInUrl: is_bool($rawDefaultLocaleInUrl) ? $rawDefaultLocaleInUrl : false,
-            editorialWorkflow: is_bool($rawEditorialWorkflow) ? $rawEditorialWorkflow : false,
-            eventSourcing: is_bool($rawEventSourcing) ? $rawEventSourcing : false,
-            atomicSnapshots: is_bool($rawAtomicSnapshots) ? $rawAtomicSnapshots : false,
-            maxHierarchyDepth: is_int($rawMaxHierarchyDepth) ? $rawMaxHierarchyDepth : 10,
-            homepageContentId: is_string($rawHomepageContentId) ? $rawHomepageContentId : null,
-            cache: CmsCacheConfig::fromArray($cacheData),
-            media: MediaConfig::fromArray($mediaData),
-            comments: CommentsConfig::fromArray($commentsData),
-            seo: SeoConfig::fromArray($seoData),
-            themes: ThemesConfig::fromArray($themesData),
-            security: CmsSecurityConfig::fromArray($securityData),
-            commerce: isset($data['commerce']) ? CommerceConfig::fromArray($commerceData) : null,
-            liveCss: LiveCssConfig::fromArray($liveCssData),
-            import: ImportConfig::fromArray($importData),
-            httpCacheTtlSeconds: is_int($rawHttpCacheTtl) ? $rawHttpCacheTtl : 300,
-            publicRateLimitContent: is_int($rawPublicRateLimitContent) ? $rawPublicRateLimitContent : 120,
-            publicRateLimitCheckout: is_int($rawPublicRateLimitCheckout) ? $rawPublicRateLimitCheckout : 30,
-            apiKeyRequired: is_bool($rawApiKeyRequired) ? $rawApiKeyRequired : false,
-            notifications: NotificationConfig::fromArray($notificationsData),
-            ai: AiConfig::fromArray($aiData),
-            publishing: PublishingConfig::fromArray($publishingData),
-            forms: FormsConfig::fromArray($formsData),
+            siteName: $data['site_name'] ?? 'Pulsar CMS',
+            defaultLocale: $data['default_locale'] ?? 'en',
+            supportedLocales: $supportedLocales,
+            defaultLocaleInUrl: $data['default_locale_in_url'] ?? false,
+            editorialWorkflow: $data['editorial_workflow'] ?? false,
+            eventSourcing: $data['event_sourcing'] ?? false,
+            atomicSnapshots: $data['atomic_snapshots'] ?? false,
+            maxHierarchyDepth: $data['max_hierarchy_depth'] ?? 10,
+            homepageContentId: $data['homepage_content_id'] ?? null,
+            cache: CmsCacheConfig::fromArray($data['cache'] ?? []),
+            media: MediaConfig::fromArray($data['media'] ?? []),
+            comments: CommentsConfig::fromArray($data['comments'] ?? []),
+            seo: SeoConfig::fromArray($data['seo'] ?? []),
+            themes: ThemesConfig::fromArray($data['themes'] ?? []),
+            security: CmsSecurityConfig::fromArray($data['security'] ?? []),
+            commerce: isset($data['commerce']) && $data['commerce'] !== null
+                ? CommerceConfig::fromArray($data['commerce'])
+                : null,
+            liveCss: LiveCssConfig::fromArray($data['live_css'] ?? []),
+            import: ImportConfig::fromArray($data['import'] ?? []),
+            httpCacheTtlSeconds: $data['http_cache_ttl_seconds'] ?? 300,
+            publicRateLimitContent: $data['public_rate_limit_content'] ?? 120,
+            publicRateLimitCheckout: $data['public_rate_limit_checkout'] ?? 30,
+            apiKeyRequired: $data['api_key_required'] ?? false,
+            notifications: NotificationConfig::fromArray($data['notifications'] ?? []),
+            ai: AiConfig::fromArray($data['ai'] ?? []),
+            publishing: PublishingConfig::fromArray($data['publishing'] ?? []),
+            forms: FormsConfig::fromArray($data['forms'] ?? []),
         );
     }
 }

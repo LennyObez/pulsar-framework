@@ -6,9 +6,10 @@ namespace Pulsar\Extension\Cms\Config;
 
 use Pulsar\Api\Api;
 
-use function is_array;
-use function is_bool;
+use function array_map;
+use function array_values;
 use function is_int;
+use function is_numeric;
 use function is_scalar;
 use function is_string;
 
@@ -83,26 +84,33 @@ final readonly class CmsSecurityConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     ssrf_enabled?: bool,
+     *     blocked_ip_ranges?: array<array-key, mixed>,
+     *     additional_blocked_ips?: array<array-key, mixed>,
+     *     allowed_outbound_ports?: array<array-key, mixed>,
+     *     max_redirects?: int,
+     *     connect_timeout_seconds?: int,
+     *     total_timeout_seconds?: int,
+     *     max_response_bytes?: int,
+     *     oembed_allowed_providers?: array<array-key, mixed>,
+     *     trusted_proxies?: array<array-key, mixed>,
+     *     forwarded_for_header?: string,
+     *     real_ip_header?: string,
+     *     cloudflare_mode?: bool,
+     *     step_up_ttl_minutes?: int,
+     *     trusted_public_keys?: array<array-key, mixed>,
+     *     require_signed_plugins?: bool,
+     *     integrity_check_on_boot?: bool,
+     *     ipv6_subnet_mask?: int,
+     *     hotlink_protection?: bool,
+     *     hotlink_allowed_domains?: array<array-key, mixed>,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
-        $rawSsrfEnabled = $data['ssrf_enabled'] ?? null;
-        $rawMaxRedirects = $data['max_redirects'] ?? null;
-        $rawConnectTimeout = $data['connect_timeout_seconds'] ?? null;
-        $rawTotalTimeout = $data['total_timeout_seconds'] ?? null;
-        $rawMaxResponseBytes = $data['max_response_bytes'] ?? null;
-        $rawForwardedForHeader = $data['forwarded_for_header'] ?? null;
-        $rawRealIpHeader = $data['real_ip_header'] ?? null;
-        $rawCloudflareMode = $data['cloudflare_mode'] ?? null;
-        $rawStepUpTtl = $data['step_up_ttl_minutes'] ?? null;
-        $rawRequireSignedPlugins = $data['require_signed_plugins'] ?? null;
-        $rawIntegrityCheckOnBoot = $data['integrity_check_on_boot'] ?? null;
-        $rawIpv6SubnetMask = $data['ipv6_subnet_mask'] ?? null;
-        $rawHotlinkProtection = $data['hotlink_protection'] ?? null;
-
         return new self(
-            ssrfEnabled: is_bool($rawSsrfEnabled) ? $rawSsrfEnabled : true,
+            ssrfEnabled: $data['ssrf_enabled'] ?? true,
             blockedIpRanges: self::toStringList($data['blocked_ip_ranges'] ?? null, [
                 '127.0.0.0/8', '10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16',
                 '169.254.0.0/16', '0.0.0.0/8', '100.64.0.0/10', '198.18.0.0/15',
@@ -110,56 +118,56 @@ final readonly class CmsSecurityConfig
             ]),
             additionalBlockedIps: self::toStringList($data['additional_blocked_ips'] ?? null, []),
             allowedOutboundPorts: self::toIntList($data['allowed_outbound_ports'] ?? null, [80, 443]),
-            maxRedirects: is_int($rawMaxRedirects) ? $rawMaxRedirects : 3,
-            connectTimeoutSeconds: is_int($rawConnectTimeout) ? $rawConnectTimeout : 5,
-            totalTimeoutSeconds: is_int($rawTotalTimeout) ? $rawTotalTimeout : 15,
-            maxResponseBytes: is_int($rawMaxResponseBytes) ? $rawMaxResponseBytes : 10_485_760,
+            maxRedirects: $data['max_redirects'] ?? 3,
+            connectTimeoutSeconds: $data['connect_timeout_seconds'] ?? 5,
+            totalTimeoutSeconds: $data['total_timeout_seconds'] ?? 15,
+            maxResponseBytes: $data['max_response_bytes'] ?? 10_485_760,
             oembedAllowedProviders: self::toStringList($data['oembed_allowed_providers'] ?? null, []),
             trustedProxies: self::toStringList($data['trusted_proxies'] ?? null, []),
-            forwardedForHeader: is_string($rawForwardedForHeader) ? $rawForwardedForHeader : 'X-Forwarded-For',
-            realIpHeader: is_string($rawRealIpHeader) ? $rawRealIpHeader : 'X-Real-IP',
-            cloudflareMode: is_bool($rawCloudflareMode) ? $rawCloudflareMode : false,
-            stepUpTtlMinutes: is_int($rawStepUpTtl) ? $rawStepUpTtl : 15,
+            forwardedForHeader: $data['forwarded_for_header'] ?? 'X-Forwarded-For',
+            realIpHeader: $data['real_ip_header'] ?? 'X-Real-IP',
+            cloudflareMode: $data['cloudflare_mode'] ?? false,
+            stepUpTtlMinutes: $data['step_up_ttl_minutes'] ?? 15,
             trustedPublicKeys: self::toStringList($data['trusted_public_keys'] ?? null, []),
-            requireSignedPlugins: is_bool($rawRequireSignedPlugins) ? $rawRequireSignedPlugins : false,
-            integrityCheckOnBoot: is_bool($rawIntegrityCheckOnBoot) ? $rawIntegrityCheckOnBoot : true,
-            ipv6SubnetMask: is_int($rawIpv6SubnetMask) ? $rawIpv6SubnetMask : 64,
-            hotlinkProtection: is_bool($rawHotlinkProtection) ? $rawHotlinkProtection : false,
+            requireSignedPlugins: $data['require_signed_plugins'] ?? false,
+            integrityCheckOnBoot: $data['integrity_check_on_boot'] ?? true,
+            ipv6SubnetMask: $data['ipv6_subnet_mask'] ?? 64,
+            hotlinkProtection: $data['hotlink_protection'] ?? false,
             hotlinkAllowedDomains: self::toStringList($data['hotlink_allowed_domains'] ?? null, []),
         );
     }
 
     /**
-     * @param list<string> $default
+     * @param array<array-key, mixed>|null $raw
+     * @param list<string>                 $default
      * @return list<string>
      */
-    private static function toStringList(mixed $raw, array $default): array
+    private static function toStringList(?array $raw, array $default): array
     {
-        if (!is_array($raw)) {
+        if ($raw === null) {
             return $default;
         }
-        $result = [];
-        foreach ($raw as $v) {
-            $result[] = is_string($v) ? $v : (is_scalar($v) ? (string) $v : '');
-        }
 
-        return $result;
+        return array_values(array_map(
+            static fn (mixed $v): string => is_string($v) ? $v : (is_scalar($v) ? (string) $v : ''),
+            $raw,
+        ));
     }
 
     /**
-     * @param list<int> $default
+     * @param array<array-key, mixed>|null $raw
+     * @param list<int>                    $default
      * @return list<int>
      */
-    private static function toIntList(mixed $raw, array $default): array
+    private static function toIntList(?array $raw, array $default): array
     {
-        if (!is_array($raw)) {
+        if ($raw === null) {
             return $default;
         }
-        $result = [];
-        foreach ($raw as $v) {
-            $result[] = is_int($v) ? $v : (is_numeric($v) ? (int) $v : 0);
-        }
 
-        return $result;
+        return array_values(array_map(
+            static fn (mixed $v): int => is_int($v) ? $v : (is_numeric($v) ? (int) $v : 0),
+            $raw,
+        ));
     }
 }
