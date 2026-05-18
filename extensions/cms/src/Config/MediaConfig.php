@@ -82,9 +82,23 @@ final readonly class MediaConfig
             }
         }
 
+        $rawDisk = $data['disk'] ?? null;
+        $rawMaxUploadSize = $data['max_upload_size'] ?? null;
+        $rawMaxImageWidth = $data['max_image_width'] ?? null;
+        $rawMaxImageHeight = $data['max_image_height'] ?? null;
+        $rawMaxPixelCount = $data['max_pixel_count'] ?? null;
+        $rawPreserveExif = $data['preserve_exif'] ?? null;
+        $rawJpegQuality = $data['jpeg_quality'] ?? null;
+        $rawWebpQuality = $data['webp_quality'] ?? null;
+        $rawAvifQuality = $data['avif_quality'] ?? null;
+        $rawAvifEnabled = $data['avif_enabled'] ?? null;
+        $rawStoragePath = $data['storage_path'] ?? null;
+        $rawProgressiveJpeg = $data['progressive_jpeg'] ?? null;
+        $rawPreserveOriginal = $data['preserve_original'] ?? null;
+
         return new self(
-            disk: is_string($data['disk'] ?? null) ? $data['disk'] : 'local',
-            maxUploadSize: is_int($data['max_upload_size'] ?? null) ? $data['max_upload_size'] : 52_428_800,
+            disk: is_string($rawDisk) ? $rawDisk : 'local',
+            maxUploadSize: is_int($rawMaxUploadSize) ? $rawMaxUploadSize : 52_428_800,
             allowedMimeTypes: self::toStringList($data['allowed_mime_types'] ?? null, [
                 'image/jpeg',
                 'image/png',
@@ -97,18 +111,18 @@ final readonly class MediaConfig
             allowedExtensions: self::toStringList($data['allowed_extensions'] ?? null, [
                 'jpg', 'jpeg', 'png', 'webp', 'avif', 'gif', 'svg', 'pdf',
             ]),
-            maxImageWidth: is_int($data['max_image_width'] ?? null) ? $data['max_image_width'] : 16384,
-            maxImageHeight: is_int($data['max_image_height'] ?? null) ? $data['max_image_height'] : 16384,
-            maxPixelCount: is_int($data['max_pixel_count'] ?? null) ? $data['max_pixel_count'] : 100_000_000,
-            preserveExif: is_bool($data['preserve_exif'] ?? null) ? $data['preserve_exif'] : false,
-            jpegQuality: is_int($data['jpeg_quality'] ?? null) ? $data['jpeg_quality'] : 85,
-            webpQuality: is_int($data['webp_quality'] ?? null) ? $data['webp_quality'] : 80,
-            avifQuality: is_int($data['avif_quality'] ?? null) ? $data['avif_quality'] : 60,
-            avifEnabled: is_bool($data['avif_enabled'] ?? null) ? $data['avif_enabled'] : true,
-            storagePath: is_string($data['storage_path'] ?? null) ? $data['storage_path'] : 'storage/cms/media',
+            maxImageWidth: is_int($rawMaxImageWidth) ? $rawMaxImageWidth : 16384,
+            maxImageHeight: is_int($rawMaxImageHeight) ? $rawMaxImageHeight : 16384,
+            maxPixelCount: is_int($rawMaxPixelCount) ? $rawMaxPixelCount : 100_000_000,
+            preserveExif: is_bool($rawPreserveExif) ? $rawPreserveExif : false,
+            jpegQuality: is_int($rawJpegQuality) ? $rawJpegQuality : 85,
+            webpQuality: is_int($rawWebpQuality) ? $rawWebpQuality : 80,
+            avifQuality: is_int($rawAvifQuality) ? $rawAvifQuality : 60,
+            avifEnabled: is_bool($rawAvifEnabled) ? $rawAvifEnabled : true,
+            storagePath: is_string($rawStoragePath) ? $rawStoragePath : 'storage/cms/media',
             imageVariants: $imageVariants,
-            progressiveJpeg: is_bool($data['progressive_jpeg'] ?? null) ? $data['progressive_jpeg'] : true,
-            preserveOriginal: is_bool($data['preserve_original'] ?? null) ? $data['preserve_original'] : true,
+            progressiveJpeg: is_bool($rawProgressiveJpeg) ? $rawProgressiveJpeg : true,
+            preserveOriginal: is_bool($rawPreserveOriginal) ? $rawPreserveOriginal : true,
         );
     }
 
