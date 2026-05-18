@@ -260,7 +260,8 @@ final readonly class ImportController extends AbstractAdminController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $policyValue = is_string($body['duplicate_policy'] ?? null) ? $body['duplicate_policy'] : 'skip';
+        $rawPolicyValue = $body['duplicate_policy'] ?? null;
+        $policyValue = is_string($rawPolicyValue) ? $rawPolicyValue : 'skip';
         $policy = DuplicateResolutionPolicy::tryFrom($policyValue) ?? DuplicateResolutionPolicy::Skip;
 
         $fileContent = $this->extractFileContent($request, 'import_file')
@@ -304,27 +305,39 @@ final readonly class ImportController extends AbstractAdminController
         $c = $item['content'];
         $t = $item['translation'];
         $contentId = UuidGenerator::v7();
-        $contentType = ContentType::tryFrom(is_string($c['content_type'] ?? null) ? $c['content_type'] : 'page') ?? ContentType::Page;
+        $rawContentType = $c['content_type'] ?? null;
+        $contentTypeStr = is_string($rawContentType) ? $rawContentType : 'page';
+        $contentType = ContentType::tryFrom($contentTypeStr) ?? ContentType::Page;
 
+        $rawAuthorId = $c['author_id'] ?? null;
         $content = Content::create(
             id: $contentId,
             contentType: $contentType,
-            authorId: is_string($c['author_id'] ?? null) ? $c['author_id'] : 'system',
+            authorId: is_string($rawAuthorId) ? $rawAuthorId : 'system',
         );
 
         $this->contentRepository->save($content);
 
+        $rawLocale = $t['locale'] ?? null;
+        $rawTitle = $t['title'] ?? null;
+        $rawSlug = $t['slug'] ?? null;
+        $rawPath = $t['path'] ?? null;
+        $rawBody = $t['body'] ?? null;
+        $rawExcerpt = $t['excerpt'] ?? null;
+        $rawMetaTitle = $t['meta_title'] ?? null;
+        $rawMetaDescription = $t['meta_description'] ?? null;
+        $slugSegmentFallback = is_string($rawSlug) ? $rawSlug : 'untitled';
         $translation = ContentTranslation::create(
             id: UuidGenerator::v7(),
             contentId: $contentId,
-            locale: is_string($t['locale'] ?? null) ? $t['locale'] : 'en',
-            title: is_string($t['title'] ?? null) ? $t['title'] : '',
-            slugSegment: is_string($t['slug'] ?? null) ? $t['slug'] : 'untitled',
-            path: is_string($t['path'] ?? null) ? $t['path'] : (is_string($t['slug'] ?? null) ? $t['slug'] : 'untitled'),
-            body: is_string($t['body'] ?? null) ? $t['body'] : '',
-            excerpt: is_string($t['excerpt'] ?? null) ? $t['excerpt'] : null,
-            metaTitle: is_string($t['meta_title'] ?? null) ? $t['meta_title'] : null,
-            metaDescription: is_string($t['meta_description'] ?? null) ? $t['meta_description'] : null,
+            locale: is_string($rawLocale) ? $rawLocale : 'en',
+            title: is_string($rawTitle) ? $rawTitle : '',
+            slugSegment: $slugSegmentFallback,
+            path: is_string($rawPath) ? $rawPath : $slugSegmentFallback,
+            body: is_string($rawBody) ? $rawBody : '',
+            excerpt: is_string($rawExcerpt) ? $rawExcerpt : null,
+            metaTitle: is_string($rawMetaTitle) ? $rawMetaTitle : null,
+            metaDescription: is_string($rawMetaDescription) ? $rawMetaDescription : null,
         );
 
         $this->translationRepository->save($translation);
