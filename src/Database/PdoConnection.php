@@ -203,6 +203,7 @@ final class PdoConnection implements ConnectionInterface
             ];
 
             $mergedOptions = $defaultOptions;
+            /** @var mixed $value */
             foreach ($this->options as $key => $value) {
                 $mergedOptions[$key] = $value;
             }
@@ -235,6 +236,7 @@ final class PdoConnection implements ConnectionInterface
      */
     private function bindValues(PDOStatement $stmt, array $bindings): void
     {
+        /** @var mixed $value */
         foreach ($bindings as $key => $value) {
             if ($value instanceof Param) {
                 $stmt->bindValue(':' . ltrim($key, ':'), $value->bytes(), $value->pdoType());
