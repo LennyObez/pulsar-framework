@@ -7,7 +7,7 @@ namespace Pulsar\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_string;
+use function array_map;
 
 /**
  * Typed configuration DTO for authentication and authorization.
@@ -31,32 +31,26 @@ final readonly class AuthConfig
     /**
      * Build from a raw auth config array.
      *
-     * @param array<string, mixed> $data
+     * @param array{
+     *     default_guard?: string,
+     *     guards?: list<array<string, mixed>>,
+     *     two_factor?: array<string, mixed>,
+     *     authorization?: array<string, mixed>,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $rawDefaultGuard = $data['default_guard'] ?? 'session';
-        $defaultGuard = is_string($rawDefaultGuard) ? $rawDefaultGuard : 'session';
-
-        /** @var list<array<string, mixed>> $guardsData */
-        $guardsData = $data['guards'] ?? [];
         $guards = array_map(
             static fn(array $guardData): AuthGuardConfig => AuthGuardConfig::fromArray($guardData),
-            $guardsData,
+            $data['guards'] ?? [],
         );
 
-        /** @var array<string, mixed> $twoFactorData */
-        $twoFactorData = $data['two_factor'] ?? [];
-
-        /** @var array<string, mixed> $authorizationData */
-        $authorizationData = $data['authorization'] ?? [];
-
         return new self(
-            defaultGuard: $defaultGuard,
+            defaultGuard: $data['default_guard'] ?? 'session',
             guards: $guards,
-            twoFactor: TwoFactorConfig::fromArray($twoFactorData),
-            authorization: AuthorizationConfig::fromArray($authorizationData),
+            twoFactor: TwoFactorConfig::fromArray($data['two_factor'] ?? []),
+            authorization: AuthorizationConfig::fromArray($data['authorization'] ?? []),
         );
     }
 }
