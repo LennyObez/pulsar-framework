@@ -6,10 +6,6 @@ namespace Pulsar\Extension\Cms\Config;
 
 use Pulsar\Api\Api;
 
-use function is_bool;
-use function is_int;
-use function is_string;
-
 /**
  * Comments system configuration.
  *
@@ -48,34 +44,34 @@ final readonly class CommentsConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     enabled?: bool,
+     *     auto_approve_authenticated?: bool,
+     *     edit_window_minutes?: int,
+     *     max_nesting_depth?: int,
+     *     rate_limit_per_minute?: int,
+     *     rate_limit_per_hour?: int,
+     *     guest_comments_allowed?: bool,
+     *     require_email?: bool,
+     *     max_body_length?: int,
+     *     max_links_per_comment?: int,
+     *     honeypot_field_name?: string,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
-        $rawEnabled = $data['enabled'] ?? null;
-        $rawAutoApprove = $data['auto_approve_authenticated'] ?? null;
-        $rawEditWindow = $data['edit_window_minutes'] ?? null;
-        $rawMaxNesting = $data['max_nesting_depth'] ?? null;
-        $rawRateLimitMinute = $data['rate_limit_per_minute'] ?? null;
-        $rawRateLimitHour = $data['rate_limit_per_hour'] ?? null;
-        $rawGuestAllowed = $data['guest_comments_allowed'] ?? null;
-        $rawRequireEmail = $data['require_email'] ?? null;
-        $rawMaxBodyLength = $data['max_body_length'] ?? null;
-        $rawMaxLinks = $data['max_links_per_comment'] ?? null;
-        $rawHoneypot = $data['honeypot_field_name'] ?? null;
-
         return new self(
-            enabled: is_bool($rawEnabled) ? $rawEnabled : true,
-            autoApproveAuthenticated: is_bool($rawAutoApprove) ? $rawAutoApprove : false,
-            editWindowMinutes: is_int($rawEditWindow) ? $rawEditWindow : 15,
-            maxNestingDepth: is_int($rawMaxNesting) ? $rawMaxNesting : 3,
-            rateLimitPerMinute: is_int($rawRateLimitMinute) ? $rawRateLimitMinute : 5,
-            rateLimitPerHour: is_int($rawRateLimitHour) ? $rawRateLimitHour : 30,
-            guestCommentsAllowed: is_bool($rawGuestAllowed) ? $rawGuestAllowed : true,
-            requireEmail: is_bool($rawRequireEmail) ? $rawRequireEmail : false,
-            maxBodyLength: is_int($rawMaxBodyLength) ? $rawMaxBodyLength : 10_000,
-            maxLinksPerComment: is_int($rawMaxLinks) ? $rawMaxLinks : 3,
-            honeypotFieldName: is_string($rawHoneypot) ? $rawHoneypot : 'website_url',
+            enabled: $data['enabled'] ?? true,
+            autoApproveAuthenticated: $data['auto_approve_authenticated'] ?? false,
+            editWindowMinutes: $data['edit_window_minutes'] ?? 15,
+            maxNestingDepth: $data['max_nesting_depth'] ?? 3,
+            rateLimitPerMinute: $data['rate_limit_per_minute'] ?? 5,
+            rateLimitPerHour: $data['rate_limit_per_hour'] ?? 30,
+            guestCommentsAllowed: $data['guest_comments_allowed'] ?? true,
+            requireEmail: $data['require_email'] ?? false,
+            maxBodyLength: $data['max_body_length'] ?? 10_000,
+            maxLinksPerComment: $data['max_links_per_comment'] ?? 3,
+            honeypotFieldName: $data['honeypot_field_name'] ?? 'website_url',
         );
     }
 }
