@@ -43,7 +43,7 @@ $method = $mode === 'create' ? 'POST' : 'PUT';
                 name="<?= $e($field->name) ?>"
                 class="admin-form__textarea"
                 placeholder="<?= $e($field->placeholder ?? '') ?>"
-            ><?php $fieldVal = $data[$field->name] ?? '';
+            ><?php /** @var mixed $fieldVal */ $fieldVal = $data[$field->name] ?? '';
                 echo $e(is_scalar($fieldVal) ? (string) $fieldVal : ''); ?></textarea>
             <?php elseif ($field->type === FieldType::Boolean): ?>
             <input
@@ -71,7 +71,7 @@ $method = $mode === 'create' ? 'POST' : 'PUT';
                 id="field-<?= $e($field->name) ?>"
                 name="<?= $e($field->name) ?>"
                 class="admin-form__input"
-                value="<?php $inputVal = $data[$field->name] ?? ''; ?><?= $e(is_scalar($inputVal) ? (string) $inputVal : '') ?>"
+                value="<?php /** @var mixed $inputVal */ $inputVal = $data[$field->name] ?? ''; ?><?= $e(is_scalar($inputVal) ? (string) $inputVal : '') ?>"
                 placeholder="<?= $e($field->placeholder ?? '') ?>"
             >
             <?php endif; ?>

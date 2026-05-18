@@ -41,7 +41,8 @@ $lastUpdatedDisplay = $current->capturedAt->format('M j, Y H:i:s T');
 <?php if ($incidents !== []): ?>
 <section class="incidents-section" aria-labelledby="incidents-heading">
     <h2 id="incidents-heading" class="status-section-title">Active Incidents</h2>
-<?php foreach ($incidents as $incident): ?>
+<?php /** @var mixed $incident */
+foreach ($incidents as $incident): ?>
     <?php include __DIR__ . '/partials/incident-banner.pulse.php'; ?>
 <?php endforeach; ?>
 </section>
@@ -57,7 +58,8 @@ $lastUpdatedDisplay = $current->capturedAt->format('M j, Y H:i:s T');
             <span><strong>Results</strong></span>
             <span><strong>Duration</strong></span>
         </div>
-<?php foreach ($history as $snapshot): ?>
+<?php /** @var mixed $snapshot */
+foreach ($history as $snapshot): ?>
         <?php include __DIR__ . '/partials/timeline-row.pulse.php'; ?>
 <?php endforeach; ?>
     </div>

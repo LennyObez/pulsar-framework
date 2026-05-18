@@ -45,9 +45,9 @@ $listFields = array_filter($fields, static fn($f): bool => $f->visibleOnList);
             <?php foreach ($result->data as $row): ?>
             <tr>
                 <?php foreach ($listFields as $field): ?>
-                <?php $cellVal = $row[$field->name] ?? ''; ?><td><?= $e(is_scalar($cellVal) ? (string) $cellVal : '') ?></td>
+                <?php /** @var mixed $cellVal */ $cellVal = $row[$field->name] ?? ''; ?><td><?= $e(is_scalar($cellVal) ? (string) $cellVal : '') ?></td>
                 <?php endforeach; ?>
-                <?php $pkVal = $row[$resource->primaryKey()] ?? '';
+                <?php /** @var mixed $pkVal */ $pkVal = $row[$resource->primaryKey()] ?? '';
                 $pkStr = is_scalar($pkVal) ? (string) $pkVal : ''; ?>
                 <td class="admin-table__actions">
                     <a href="/admin/resources/<?= $e($resource->name()) ?>/<?= $e($pkStr) ?>" data-t="admin.resource.view"><?= __('admin.resource.view') ?></a>

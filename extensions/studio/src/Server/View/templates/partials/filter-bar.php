@@ -6,7 +6,9 @@
  */
 /** @var list<string> $typedEventTypes */
 $typedEventTypes = $eventTypes ?? [];
+/** @var string $typedCurrentType */
 $typedCurrentType = $currentType ?? '';
+/** @var string $typedCurrentWindow */
 $typedCurrentWindow = $currentWindow ?? '1h';
 ?>
 <div class="filter-bar">
