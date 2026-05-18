@@ -8,10 +8,6 @@ use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Api\Resource\ComplexityLimits;
 
-use function is_array;
-use function is_int;
-use function is_string;
-
 /**
  * Typed configuration DTO for API tooling settings.
  *
@@ -34,45 +30,31 @@ final readonly class ApiConfig
     /**
      * Build from the raw API config array.
      *
-     * @param array<string, mixed> $data Raw array from config/api.php
+     * @param array{
+     *     default_format?: string,
+     *     pagination?: array{
+     *         type?: string,
+     *         default_size?: int,
+     *         max_size?: int,
+     *     },
+     *     versioning_strategy?: string,
+     *     complexity_limits?: array<string, mixed>,
+     *     entity_serialization_ban?: bool|int|string,
+     * } $data Raw array from config/api.php
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $rawFormat = $data['default_format'] ?? 'json';
-        $defaultFormat = is_string($rawFormat) ? $rawFormat : 'json';
-
-        $rawPagination = $data['pagination'] ?? [];
-        /** @var array<string, mixed> $pagination */
-        $pagination = is_array($rawPagination) ? $rawPagination : [];
-
-        $rawPaginationType = $pagination['type'] ?? 'offset';
-        $paginationType = is_string($rawPaginationType) ? $rawPaginationType : 'offset';
-
-        $rawPaginationDefault = $pagination['default_size'] ?? 25;
-        $paginationDefaultSize = is_int($rawPaginationDefault) ? $rawPaginationDefault : 25;
-
-        $rawPaginationMax = $pagination['max_size'] ?? 100;
-        $paginationMaxSize = is_int($rawPaginationMax) ? $rawPaginationMax : 100;
-
-        $rawVersioningStrategy = $data['versioning_strategy'] ?? 'url';
-        $versioningStrategy = is_string($rawVersioningStrategy) ? $rawVersioningStrategy : 'url';
-
-        $rawComplexity = $data['complexity_limits'] ?? [];
-        /** @var array<string, mixed> $complexityArray */
-        $complexityArray = is_array($rawComplexity) ? $rawComplexity : [];
-        $complexityLimits = ComplexityLimits::fromArray($complexityArray);
-
-        $entityBan = (bool) ($data['entity_serialization_ban'] ?? true);
+        $pagination = $data['pagination'] ?? [];
 
         return new self(
-            defaultFormat: $defaultFormat,
-            paginationType: $paginationType,
-            paginationDefaultSize: $paginationDefaultSize,
-            paginationMaxSize: $paginationMaxSize,
-            versioningStrategy: $versioningStrategy,
-            complexityLimits: $complexityLimits,
-            entitySerializationBanEnabled: $entityBan,
+            defaultFormat: $data['default_format'] ?? 'json',
+            paginationType: $pagination['type'] ?? 'offset',
+            paginationDefaultSize: $pagination['default_size'] ?? 25,
+            paginationMaxSize: $pagination['max_size'] ?? 100,
+            versioningStrategy: $data['versioning_strategy'] ?? 'url',
+            complexityLimits: ComplexityLimits::fromArray($data['complexity_limits'] ?? []),
+            entitySerializationBanEnabled: (bool) ($data['entity_serialization_ban'] ?? true),
         );
     }
 }

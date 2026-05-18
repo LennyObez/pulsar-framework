@@ -7,11 +7,6 @@ namespace Pulsar\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_array;
-use function is_bool;
-use function is_int;
-use function is_string;
-
 /**
  * Typed configuration DTO for `config/notification.php`.
  * @api
@@ -39,54 +34,43 @@ final readonly class NotificationConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data Raw array from config/notification.php
+     * @param array{
+     *     enabled?: bool,
+     *     default_channels?: list<string>,
+     *     rate_limit_per_minute?: int,
+     *     regulated?: bool,
+     *     audit_hash_enabled?: bool,
+     *     unsubscribe_url_pattern?: string|null,
+     *     fcm_server_key?: string|null,
+     *     fcm_project_id?: string|null,
+     *     fcm_oauth_token?: string|null,
+     * } $data Raw array from config/notification.php
      */
     #[NoDiscard]
     public static function fromArray(array $data, Environment $environment): self
     {
         $enabled = $environment->get('NOTIFICATION_ENABLED') !== null
             ? $environment->get('NOTIFICATION_ENABLED') === 'true'
-            : (is_bool($data['enabled'] ?? null) ? $data['enabled'] : false);
+            : ($data['enabled'] ?? false);
 
         $defaultChannels = [];
-        /** @var mixed $rawChannels */
-        $rawChannels = $data['default_channels'] ?? [];
-
-        if (is_array($rawChannels)) {
-            foreach ($rawChannels as $channel) {
-                if (is_string($channel)) {
-                    $type = NotificationChannelType::tryFrom($channel);
-
-                    if ($type !== null) {
-                        $defaultChannels[] = $type;
-                    }
-                }
+        foreach ($data['default_channels'] ?? [] as $channel) {
+            $type = NotificationChannelType::tryFrom($channel);
+            if ($type !== null) {
+                $defaultChannels[] = $type;
             }
         }
 
-        $rawRateLimit = $environment->get('NOTIFICATION_RATE_LIMIT')
-            ?? ($data['rate_limit_per_minute'] ?? 60);
-        $rateLimitPerMinute = is_int($rawRateLimit) ? $rawRateLimit : (is_string($rawRateLimit) ? (int) $rawRateLimit : 60);
+        $rawRateLimit = $environment->get('NOTIFICATION_RATE_LIMIT');
+        $rateLimitPerMinute = $rawRateLimit !== null ? (int) $rawRateLimit : ($data['rate_limit_per_minute'] ?? 60);
 
         $regulated = $environment->get('NOTIFICATION_REGULATED') !== null
             ? $environment->get('NOTIFICATION_REGULATED') === 'true'
-            : (is_bool($data['regulated'] ?? null) ? $data['regulated'] : false);
+            : ($data['regulated'] ?? false);
 
         $auditHashEnabled = $environment->get('NOTIFICATION_AUDIT_HASH') !== null
             ? $environment->get('NOTIFICATION_AUDIT_HASH') === 'true'
-            : (is_bool($data['audit_hash_enabled'] ?? null) ? $data['audit_hash_enabled'] : false);
-
-        $unsubscribeUrlPattern = $environment->get('NOTIFICATION_UNSUBSCRIBE_URL')
-            ?? (is_string($data['unsubscribe_url_pattern'] ?? null) ? $data['unsubscribe_url_pattern'] : null);
-
-        $fcmServerKey = $environment->get('NOTIFICATION_FCM_SERVER_KEY')
-            ?? (is_string($data['fcm_server_key'] ?? null) ? $data['fcm_server_key'] : null);
-
-        $fcmProjectId = $environment->get('NOTIFICATION_FCM_PROJECT_ID')
-            ?? (is_string($data['fcm_project_id'] ?? null) ? $data['fcm_project_id'] : null);
-
-        $fcmOAuthToken = $environment->get('NOTIFICATION_FCM_OAUTH_TOKEN')
-            ?? (is_string($data['fcm_oauth_token'] ?? null) ? $data['fcm_oauth_token'] : null);
+            : ($data['audit_hash_enabled'] ?? false);
 
         return new self(
             enabled: $enabled,
@@ -94,10 +78,10 @@ final readonly class NotificationConfig
             rateLimitPerMinute: $rateLimitPerMinute > 0 ? $rateLimitPerMinute : 60,
             regulated: $regulated,
             auditHashEnabled: $auditHashEnabled,
-            unsubscribeUrlPattern: $unsubscribeUrlPattern,
-            fcmServerKey: $fcmServerKey,
-            fcmProjectId: $fcmProjectId,
-            fcmOAuthToken: $fcmOAuthToken,
+            unsubscribeUrlPattern: $environment->get('NOTIFICATION_UNSUBSCRIBE_URL') ?? $data['unsubscribe_url_pattern'] ?? null,
+            fcmServerKey: $environment->get('NOTIFICATION_FCM_SERVER_KEY') ?? $data['fcm_server_key'] ?? null,
+            fcmProjectId: $environment->get('NOTIFICATION_FCM_PROJECT_ID') ?? $data['fcm_project_id'] ?? null,
+            fcmOAuthToken: $environment->get('NOTIFICATION_FCM_OAUTH_TOKEN') ?? $data['fcm_oauth_token'] ?? null,
         );
     }
 }
