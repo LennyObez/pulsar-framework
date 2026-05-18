@@ -30,7 +30,9 @@ final readonly class SubscriptionManagementController
      */
     public function cancel(ServerRequestInterface $request): Response
     {
-        $subscriptionId = is_string($request->getAttribute('id')) ? $request->getAttribute('id') : '';
+        /** @var mixed $rawId */
+        $rawId = $request->getAttribute('id');
+        $subscriptionId = is_string($rawId) ? $rawId : '';
 
         if ($subscriptionId === '') {
             return Response::json(['error' => 'Missing subscription ID'], 400);
@@ -56,7 +58,9 @@ final readonly class SubscriptionManagementController
      */
     public function updateStatus(ServerRequestInterface $request): Response
     {
-        $subscriptionId = is_string($request->getAttribute('id')) ? $request->getAttribute('id') : '';
+        /** @var mixed $rawId */
+        $rawId = $request->getAttribute('id');
+        $subscriptionId = is_string($rawId) ? $rawId : '';
 
         if ($subscriptionId === '') {
             return Response::json(['error' => 'Missing subscription ID'], 400);
@@ -64,7 +68,9 @@ final readonly class SubscriptionManagementController
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
-        $statusValue = is_string($body['status'] ?? null) ? $body['status'] : '';
+        /** @var mixed $rawStatus */
+        $rawStatus = $body['status'] ?? null;
+        $statusValue = is_string($rawStatus) ? $rawStatus : '';
         $status = SubscriptionStatus::tryFrom($statusValue);
 
         if ($status === null) {
