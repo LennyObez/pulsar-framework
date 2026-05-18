@@ -60,6 +60,7 @@ final readonly class CollectionController
             // Pass validated site via request attribute to avoid duplicate DB lookup
             $request = $request->withAttribute('analytics.site', $site);
 
+            /** @var mixed $type */
             $type = $payload['type'] ?? '';
 
             match ($type) {
@@ -86,6 +87,7 @@ final readonly class CollectionController
      */
     private function validateOrigin(ServerRequestInterface $request, array $payload): ?Site
     {
+        /** @var mixed $rawTrackingId */
         $rawTrackingId = $payload['site'] ?? '';
         $trackingId = is_string($rawTrackingId) ? $rawTrackingId : '';
 

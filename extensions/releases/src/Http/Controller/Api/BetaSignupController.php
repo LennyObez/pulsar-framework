@@ -49,7 +49,9 @@ final readonly class BetaSignupController
         $body = (array) ($request->getParsedBody() ?? []);
 
         // Validate email
-        $email = is_string($body['email'] ?? null) ? $body['email'] : '';
+        /** @var mixed $rawEmail */
+        $rawEmail = $body['email'] ?? null;
+        $email = is_string($rawEmail) ? $rawEmail : '';
 
         if ($email === '') {
             return Response::json([
@@ -59,7 +61,9 @@ final readonly class BetaSignupController
         }
 
         // Validate device_type
-        $deviceTypeValue = is_string($body['device_type'] ?? null) ? $body['device_type'] : '';
+        /** @var mixed $rawDeviceType */
+        $rawDeviceType = $body['device_type'] ?? null;
+        $deviceTypeValue = is_string($rawDeviceType) ? $rawDeviceType : '';
         $deviceType = DeviceType::tryFrom($deviceTypeValue);
 
         if ($deviceType === null) {
@@ -74,6 +78,7 @@ final readonly class BetaSignupController
         // Extract camera_brands
         /** @var list<string> $cameraBrands */
         $cameraBrands = [];
+        /** @var mixed $rawBrands */
         $rawBrands = $body['camera_brands'] ?? null;
 
         if (is_array($rawBrands)) {
