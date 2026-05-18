@@ -131,6 +131,7 @@ final readonly class SettingsService implements SettingsServiceInterface
         $globalSql = $sql . ' AND locale IS NULL';
         $globalResult = $this->db->query($globalSql, $bindings);
 
+        /** @var array<string, mixed> $settings */
         $settings = [];
 
         foreach ($globalResult->rows as $row) {
@@ -186,6 +187,7 @@ final readonly class SettingsService implements SettingsServiceInterface
         $sql .= ' ORDER BY "group", key, locale NULLS FIRST';
 
         $result = $this->db->query($sql, $bindings);
+        /** @var array<string, array<string, mixed>> $settings */
         $settings = [];
 
         foreach ($result->rows as $row) {
