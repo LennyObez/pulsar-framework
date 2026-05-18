@@ -198,6 +198,7 @@ final readonly class GraphqlExecutor
             return $data;
         }
 
+        /** @var array<string, mixed> $result */
         $result = [];
 
         foreach ($selections as $sel) {
@@ -205,6 +206,7 @@ final readonly class GraphqlExecutor
             $fieldName = $sel->name;
 
             if (array_key_exists($fieldName, $data)) {
+                /** @var mixed $value */
                 $value = $data[$fieldName];
 
                 // Handle list of items (e.g., ContentConnection.items)
@@ -212,6 +214,7 @@ final readonly class GraphqlExecutor
                     $itemType = $this->resolveListItemType($typeName, $fieldName);
                     $projected = [];
 
+                    /** @var mixed $item */
                     foreach ($value as $item) {
                         if (is_array($item)) {
                             /** @var array<string, mixed> $item */

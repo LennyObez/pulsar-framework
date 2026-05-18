@@ -51,9 +51,11 @@ final class ComponentHydrator
      */
     public function dehydrate(LiveComponent $component): array
     {
+        /** @var array<string, mixed> $state */
         $state = [];
 
         foreach ($this->describeComponent($component) as $descriptor) {
+            /** @var mixed $value */
             $value = $descriptor->property->getValue($component);
             $state[$descriptor->name] = $this->serializeValue($value);
         }
@@ -77,6 +79,7 @@ final class ComponentHydrator
                 continue;
             }
 
+            /** @var mixed $value */
             $value = $this->deserializeValue($state[$descriptor->name], $descriptor->typeName);
             $descriptor->property->setValue($component, $value);
         }
