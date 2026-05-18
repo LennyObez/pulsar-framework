@@ -107,7 +107,8 @@ final class DevServerBootstrap
      */
     public static function run(string $projectRoot, DevServerConfig $config): void
     {
-        $requestUri = is_string($_SERVER['REQUEST_URI'] ?? null) ? $_SERVER['REQUEST_URI'] : '/';
+        $rawRequestUri = $_SERVER['REQUEST_URI'] ?? null;
+        $requestUri = is_string($rawRequestUri) ? $rawRequestUri : '/';
         $path = parse_url($requestUri, PHP_URL_PATH) ?: '/';
 
         // 1. Serve static assets (fast path; no kernel boot needed)
@@ -152,11 +153,14 @@ final class DevServerBootstrap
         try {
             $response = $kernel->handle($request);
         } catch (Throwable $e) {
-            $port = is_numeric($_SERVER['REMOTE_PORT'] ?? null) ? (int) $_SERVER['REMOTE_PORT'] : 0;
+            $rawErrorPort = $_SERVER['REMOTE_PORT'] ?? null;
+            $errorPort = is_numeric($rawErrorPort) ? (int) $rawErrorPort : 0;
+            $rawErrorMethod = $_SERVER['REQUEST_METHOD'] ?? null;
+            $errorMethod = is_string($rawErrorMethod) ? $rawErrorMethod : 'GET';
             error_log(sprintf(
                 '[%d]: %s %s - 500 Internal Server Error: %s',
-                $port,
-                is_string($_SERVER['REQUEST_METHOD'] ?? null) ? $_SERVER['REQUEST_METHOD'] : 'GET',
+                $errorPort,
+                $errorMethod,
                 $requestUri,
                 $e->getMessage(),
             ));
@@ -167,8 +171,10 @@ final class DevServerBootstrap
         }
 
         // 8. Log and emit response
-        $port = is_numeric($_SERVER['REMOTE_PORT'] ?? null) ? (int) $_SERVER['REMOTE_PORT'] : 0;
-        $method = is_string($_SERVER['REQUEST_METHOD'] ?? null) ? $_SERVER['REQUEST_METHOD'] : 'GET';
+        $rawPort = $_SERVER['REMOTE_PORT'] ?? null;
+        $port = is_numeric($rawPort) ? (int) $rawPort : 0;
+        $rawMethod = $_SERVER['REQUEST_METHOD'] ?? null;
+        $method = is_string($rawMethod) ? $rawMethod : 'GET';
         error_log(sprintf('[%d]: %s %s - %d', $port, $method, $requestUri, $response->getStatusCode()));
 
         self::emitResponse($response);
