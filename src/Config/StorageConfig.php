@@ -7,8 +7,6 @@ namespace Pulsar\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_string;
-
 /**
  * Typed configuration DTO for `config/storage.php`.
  * @api
@@ -25,24 +23,21 @@ final readonly class StorageConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data Raw array from config/storage.php
+     * @param array{
+     *     default?: string,
+     *     disks?: array<string, array<string, mixed>>,
+     * } $data Raw array from config/storage.php
      */
     #[NoDiscard]
     public static function fromArray(array $data, Environment $environment): self
     {
-        $default = $environment->get('STORAGE_DISK') ?? ($data['default'] ?? 'local');
-
-        /** @var array<string, array<string, mixed>> $disksData */
-        $disksData = $data['disks'] ?? [];
-
         $disks = [];
-        foreach ($disksData as $name => $diskData) {
-            /** @var array<string, mixed> $diskData */
+        foreach ($data['disks'] ?? [] as $name => $diskData) {
             $disks[$name] = DiskConfig::fromArray($name, $diskData);
         }
 
         return new self(
-            default: is_string($default) ? $default : 'local',
+            default: $environment->get('STORAGE_DISK') ?? $data['default'] ?? 'local',
             disks: $disks,
         );
     }
