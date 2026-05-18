@@ -762,7 +762,9 @@ final class Kernel implements KernelInterface
             if (isset($routeParams[$entry['name']])) {
                 $args[] = $routeParams[$entry['name']];
             } elseif ($entry['hasDefault']) {
-                $args[] = $entry['default'];
+                /** @var mixed $entryDefault */
+                $entryDefault = $entry['default'];
+                $args[] = $entryDefault;
             }
             // If no route param and no default, skip: PHP will throw a clear error
         }
@@ -828,7 +830,9 @@ final class Kernel implements KernelInterface
                 }
 
                 if ($param->isDefaultValueAvailable()) {
-                    $args[] = $param->getDefaultValue();
+                    /** @var mixed $paramDefault */
+                    $paramDefault = $param->getDefaultValue();
+                    $args[] = $paramDefault;
 
                     continue;
                 }
@@ -995,7 +999,10 @@ final class Kernel implements KernelInterface
             $routeFile = $routesDir . DIRECTORY_SEPARATOR . $file;
 
             if (is_file($routeFile)) {
-                /** @psalm-suppress UnresolvableInclude */
+                /**
+                 * @psalm-suppress UnresolvableInclude
+                 * @var mixed $result
+                 */
                 $result = (function () use ($routeFile): mixed {
                     $router = $this->router;
                     $container = $this->container;
