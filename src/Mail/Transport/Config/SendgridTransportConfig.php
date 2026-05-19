@@ -8,8 +8,6 @@ use NoDiscard;
 use Pulsar\Api\Internal;
 use SensitiveParameter;
 
-use function is_string;
-
 /**
  * Configuration for the Sendgrid mail transport.
  */
@@ -22,13 +20,13 @@ final readonly class SendgridTransportConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{api_key?: string} $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            apiKey: is_string($data['api_key'] ?? null) ? $data['api_key'] : '',
+            apiKey: $data['api_key'] ?? '',
         );
     }
 }

@@ -8,9 +8,6 @@ use NoDiscard;
 use Pulsar\Api\Internal;
 use SensitiveParameter;
 
-use function is_int;
-use function is_string;
-
 /**
  * Configuration for the SMTP mail transport.
  */
@@ -29,19 +26,27 @@ final readonly class SmtpTransportConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     host?: string,
+     *     port?: int,
+     *     username?: string|null,
+     *     password?: string|null,
+     *     encryption?: string,
+     *     timeout?: int,
+     *     ehlo_hostname?: string|null,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            host: is_string($data['host'] ?? null) ? $data['host'] : 'localhost',
-            port: is_int($data['port'] ?? null) ? $data['port'] : 587,
-            username: is_string($data['username'] ?? null) ? $data['username'] : null,
-            password: is_string($data['password'] ?? null) ? $data['password'] : null,
-            encryption: is_string($data['encryption'] ?? null) ? $data['encryption'] : 'tls',
-            timeout: is_int($data['timeout'] ?? null) ? $data['timeout'] : 30,
-            ehloHostname: is_string($data['ehlo_hostname'] ?? null) ? $data['ehlo_hostname'] : null,
+            host: $data['host'] ?? 'localhost',
+            port: $data['port'] ?? 587,
+            username: $data['username'] ?? null,
+            password: $data['password'] ?? null,
+            encryption: $data['encryption'] ?? 'tls',
+            timeout: $data['timeout'] ?? 30,
+            ehloHostname: $data['ehlo_hostname'] ?? null,
         );
     }
 }
