@@ -6,8 +6,6 @@ namespace Pulsar\Extension\Fhir\Resource;
 
 use Pulsar\Api\Api;
 
-use function is_string;
-
 /**
  * An entry in a FHIR Bundle.
  *
@@ -56,22 +54,20 @@ final readonly class BundleEntry
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     fullUrl?: string|null,
+     *     resource?: array<string, mixed>|null,
+     *     request?: array<string, mixed>|null,
+     *     response?: array<string, mixed>|null,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
-        /** @var array<string, mixed>|null $resource */
-        $resource = $data['resource'] ?? null;
-        /** @var array<string, mixed>|null $request */
-        $request = $data['request'] ?? null;
-        /** @var array<string, mixed>|null $response */
-        $response = $data['response'] ?? null;
-
         return new self(
-            fullUrl: is_string($data['fullUrl'] ?? null) ? $data['fullUrl'] : null,
-            resource: $resource,
-            request: $request,
-            response: $response,
+            fullUrl: $data['fullUrl'] ?? null,
+            resource: $data['resource'] ?? null,
+            request: $data['request'] ?? null,
+            response: $data['response'] ?? null,
         );
     }
 }
