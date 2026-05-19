@@ -21,7 +21,6 @@ use function date;
 use function file_put_contents;
 use function getcwd;
 use function implode;
-use function is_string;
 use function sprintf;
 
 /**
@@ -52,11 +51,7 @@ final class IdeHelperCommand extends Command
     #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
-        $outputFile = $input->getOption('output', '_ide_helper.php');
-
-        if (!is_string($outputFile)) {
-            $outputFile = '_ide_helper.php';
-        }
+        $outputFile = $input->getStringOption('output', '_ide_helper.php');
 
         $cwd = getcwd();
 
