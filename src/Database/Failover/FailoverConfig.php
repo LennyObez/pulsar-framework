@@ -36,25 +36,22 @@ final readonly class FailoverConfig
     /**
      * Build from a raw config array.
      *
-     * @param array<string, mixed> $data
+     * @param array{
+     *     enabled?: bool|int|string,
+     *     failure_threshold?: int,
+     *     retry_interval_seconds?: int,
+     *     strategy?: 'dns'|'callback'|'config-reload',
+     *     compliance_events_enabled?: bool|int|string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var 'dns'|'callback'|'config-reload' $strategy */
-        $strategy = $data['strategy'] ?? 'dns';
-
-        /** @var int $failureThreshold */
-        $failureThreshold = $data['failure_threshold'] ?? 3;
-
-        /** @var int $retryInterval */
-        $retryInterval = $data['retry_interval_seconds'] ?? 5;
-
         return new self(
             enabled: (bool) ($data['enabled'] ?? false),
-            failureThreshold: $failureThreshold,
-            retryIntervalSeconds: $retryInterval,
-            strategy: $strategy,
+            failureThreshold: $data['failure_threshold'] ?? 3,
+            retryIntervalSeconds: $data['retry_interval_seconds'] ?? 5,
+            strategy: $data['strategy'] ?? 'dns',
             complianceEventsEnabled: (bool) ($data['compliance_events_enabled'] ?? false),
         );
     }
