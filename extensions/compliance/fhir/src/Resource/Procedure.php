@@ -7,7 +7,8 @@ namespace Pulsar\Extension\Fhir\Resource;
 use Override;
 use Pulsar\Api\Api;
 
-use function is_string;
+use function array_map;
+use function array_values;
 
 /**
  * An action that is performed on or for a patient.
@@ -128,48 +129,49 @@ final readonly class Procedure extends FhirResource
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     id?: string|null,
+     *     meta?: array<string, mixed>|null,
+     *     language?: string|null,
+     *     identifier?: list<array<string, mixed>>,
+     *     status?: string|null,
+     *     statusReason?: array<string, mixed>|null,
+     *     category?: array<string, mixed>|null,
+     *     code?: array<string, mixed>|null,
+     *     subject?: array<string, mixed>|null,
+     *     encounter?: array<string, mixed>|null,
+     *     performedDateTime?: string|null,
+     *     performedPeriod?: array<string, mixed>|null,
+     *     recorder?: array<string, mixed>|null,
+     *     asserter?: array<string, mixed>|null,
+     *     reasonCode?: list<array<string, mixed>>,
+     *     reasonReference?: list<array<string, mixed>>,
+     *     outcome?: array<string, mixed>|null,
+     *     report?: list<array<string, mixed>>,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
-        /** @var array<string, mixed>|null $metaData */
         $metaData = $data['meta'] ?? null;
-        /** @var list<array<string, mixed>> $identifierList */
-        $identifierList = $data['identifier'] ?? [];
-        /** @var array<string, mixed>|null $statusReasonData */
         $statusReasonData = $data['statusReason'] ?? null;
-        /** @var array<string, mixed>|null $categoryData */
         $categoryData = $data['category'] ?? null;
-        /** @var array<string, mixed>|null $codeData */
         $codeData = $data['code'] ?? null;
-        /** @var array<string, mixed>|null $subjectData */
         $subjectData = $data['subject'] ?? null;
-        /** @var array<string, mixed>|null $encounterData */
         $encounterData = $data['encounter'] ?? null;
-        /** @var array<string, mixed>|null $performedPeriodData */
         $performedPeriodData = $data['performedPeriod'] ?? null;
-        /** @var array<string, mixed>|null $recorderData */
         $recorderData = $data['recorder'] ?? null;
-        /** @var array<string, mixed>|null $asserterData */
         $asserterData = $data['asserter'] ?? null;
-        /** @var list<array<string, mixed>> $reasonCodeList */
-        $reasonCodeList = $data['reasonCode'] ?? [];
-        /** @var list<array<string, mixed>> $reasonRefList */
-        $reasonRefList = $data['reasonReference'] ?? [];
-        /** @var array<string, mixed>|null $outcomeData */
         $outcomeData = $data['outcome'] ?? null;
-        /** @var list<array<string, mixed>> $reportList */
-        $reportList = $data['report'] ?? [];
 
         return new self(
-            id: is_string($data['id'] ?? null) ? $data['id'] : null,
+            id: $data['id'] ?? null,
             meta: $metaData !== null ? Meta::fromArray($metaData) : null,
-            language: is_string($data['language'] ?? null) ? $data['language'] : null,
+            language: $data['language'] ?? null,
             identifier: array_values(array_map(
                 static fn(array $i): Identifier => Identifier::fromArray($i),
-                $identifierList,
+                $data['identifier'] ?? [],
             )),
-            status: is_string($data['status'] ?? null) ? $data['status'] : null,
+            status: $data['status'] ?? null,
             statusReason: $statusReasonData !== null
                 ? CodeableConcept::fromArray($statusReasonData)
                 : null,
@@ -177,7 +179,7 @@ final readonly class Procedure extends FhirResource
             code: $codeData !== null ? CodeableConcept::fromArray($codeData) : null,
             subject: $subjectData !== null ? Reference::fromArray($subjectData) : null,
             encounter: $encounterData !== null ? Reference::fromArray($encounterData) : null,
-            performedDateTime: is_string($data['performedDateTime'] ?? null) ? $data['performedDateTime'] : null,
+            performedDateTime: $data['performedDateTime'] ?? null,
             performedPeriod: $performedPeriodData !== null
                 ? Period::fromArray($performedPeriodData)
                 : null,
@@ -185,16 +187,16 @@ final readonly class Procedure extends FhirResource
             asserter: $asserterData !== null ? Reference::fromArray($asserterData) : null,
             reasonCode: array_values(array_map(
                 static fn(array $c): CodeableConcept => CodeableConcept::fromArray($c),
-                $reasonCodeList,
+                $data['reasonCode'] ?? [],
             )),
             reasonReference: array_values(array_map(
                 static fn(array $r): Reference => Reference::fromArray($r),
-                $reasonRefList,
+                $data['reasonReference'] ?? [],
             )),
             outcome: $outcomeData !== null ? CodeableConcept::fromArray($outcomeData) : null,
             report: array_values(array_map(
                 static fn(array $r): Reference => Reference::fromArray($r),
-                $reportList,
+                $data['report'] ?? [],
             )),
         );
     }
