@@ -75,7 +75,10 @@ final readonly class FeedController
     private function resolveLimit(ServerRequestInterface $request): int
     {
         $params = $request->getQueryParams();
+        /** @var mixed $rawLimit */
+        $rawLimit = $params['limit'] ?? null;
+        $limit = is_int($rawLimit) ? $rawLimit : 20;
 
-        return min(100, max(1, is_int($params['limit'] ?? null) ? $params['limit'] : 20));
+        return min(100, max(1, $limit));
     }
 }
