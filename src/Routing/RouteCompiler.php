@@ -322,15 +322,22 @@ final class RouteCompiler
         /** @var array<string, string> $constraints */
         $constraints = is_array($data['constraints'] ?? null) ? $data['constraints'] : [];
 
+        /** @var mixed $rawPath */
+        $rawPath = $data['path'] ?? null;
+        /** @var mixed $rawName */
+        $rawName = $data['name'] ?? null;
+        /** @var mixed $rawHost */
+        $rawHost = $data['host'] ?? null;
+
         return new CompiledRouteEntry(
             methods: $methods,
-            path: is_string($data['path'] ?? null) ? $data['path'] : '',
+            path: is_string($rawPath) ? $rawPath : '',
             handler: $handler,
-            name: is_string($data['name'] ?? null) ? $data['name'] : null,
+            name: is_string($rawName) ? $rawName : null,
             attributes: $attributes,
             middleware: $middleware,
             constraints: $constraints,
-            host: is_string($data['host'] ?? null) ? $data['host'] : null,
+            host: is_string($rawHost) ? $rawHost : null,
         );
     }
 }
