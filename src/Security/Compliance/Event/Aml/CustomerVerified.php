@@ -10,10 +10,6 @@ use Pulsar\Api\Api;
 use Pulsar\Event\Attribute\RequiresEnvelope;
 use Pulsar\Security\Compliance\ComplianceEvent;
 
-use function array_values;
-use function is_array;
-use function is_string;
-
 /**
  * Records completion of a customer verification (KYC).
  *
@@ -67,24 +63,33 @@ final readonly class CustomerVerified extends ComplianceEvent
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     event_id?: string,
+     *     occurred_at?: string,
+     *     correlation_id?: string,
+     *     nonce?: string,
+     *     verifier_identity?: string,
+     *     customer_pseudonym?: string,
+     *     verification_type?: string,
+     *     verification_level?: string,
+     *     document_types?: list<string>,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var list<string> $documentTypes */
-        $documentTypes = is_array($data['document_types'] ?? null) ? array_values($data['document_types']) : [];
+        $occurredAt = $data['occurred_at'] ?? null;
 
         return new self(
-            eventId: is_string($data['event_id'] ?? null) ? $data['event_id'] : '',
-            occurredAt: is_string($data['occurred_at'] ?? null) ? new DateTimeImmutable($data['occurred_at']) : new DateTimeImmutable(),
-            correlationId: is_string($data['correlation_id'] ?? null) ? $data['correlation_id'] : '',
-            nonce: is_string($data['nonce'] ?? null) ? $data['nonce'] : '',
-            verifierIdentity: is_string($data['verifier_identity'] ?? null) ? $data['verifier_identity'] : '',
-            customerPseudonym: is_string($data['customer_pseudonym'] ?? null) ? $data['customer_pseudonym'] : '',
-            verificationType: is_string($data['verification_type'] ?? null) ? $data['verification_type'] : '',
-            verificationLevel: is_string($data['verification_level'] ?? null) ? $data['verification_level'] : '',
-            documentTypes: $documentTypes,
+            eventId: $data['event_id'] ?? '',
+            occurredAt: $occurredAt !== null ? new DateTimeImmutable($occurredAt) : new DateTimeImmutable(),
+            correlationId: $data['correlation_id'] ?? '',
+            nonce: $data['nonce'] ?? '',
+            verifierIdentity: $data['verifier_identity'] ?? '',
+            customerPseudonym: $data['customer_pseudonym'] ?? '',
+            verificationType: $data['verification_type'] ?? '',
+            verificationLevel: $data['verification_level'] ?? '',
+            documentTypes: $data['document_types'] ?? [],
         );
     }
 }

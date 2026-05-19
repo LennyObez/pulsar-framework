@@ -10,10 +10,6 @@ use Pulsar\Api\Api;
 use Pulsar\Event\Attribute\RequiresEnvelope;
 use Pulsar\Security\Compliance\ComplianceEvent;
 
-use function is_float;
-use function is_int;
-use function is_string;
-
 /**
  * Records detection of suspicious activity requiring SAR filing.
  *
@@ -64,26 +60,33 @@ final readonly class SuspiciousActivityDetected extends ComplianceEvent
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     event_id?: string,
+     *     occurred_at?: string,
+     *     correlation_id?: string,
+     *     nonce?: string,
+     *     detector_identity?: string,
+     *     customer_pseudonym?: string,
+     *     activity_type?: string,
+     *     risk_score?: float|int,
+     *     description?: string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $riskScore = $data['risk_score'] ?? 0.0;
-        if (is_int($riskScore)) {
-            $riskScore = (float) $riskScore;
-        }
+        $occurredAt = $data['occurred_at'] ?? null;
 
         return new self(
-            eventId: is_string($data['event_id'] ?? null) ? $data['event_id'] : '',
-            occurredAt: is_string($data['occurred_at'] ?? null) ? new DateTimeImmutable($data['occurred_at']) : new DateTimeImmutable(),
-            correlationId: is_string($data['correlation_id'] ?? null) ? $data['correlation_id'] : '',
-            nonce: is_string($data['nonce'] ?? null) ? $data['nonce'] : '',
-            detectorIdentity: is_string($data['detector_identity'] ?? null) ? $data['detector_identity'] : '',
-            customerPseudonym: is_string($data['customer_pseudonym'] ?? null) ? $data['customer_pseudonym'] : '',
-            activityType: is_string($data['activity_type'] ?? null) ? $data['activity_type'] : '',
-            riskScore: is_float($riskScore) ? $riskScore : 0.0,
-            description: is_string($data['description'] ?? null) ? $data['description'] : '',
+            eventId: $data['event_id'] ?? '',
+            occurredAt: $occurredAt !== null ? new DateTimeImmutable($occurredAt) : new DateTimeImmutable(),
+            correlationId: $data['correlation_id'] ?? '',
+            nonce: $data['nonce'] ?? '',
+            detectorIdentity: $data['detector_identity'] ?? '',
+            customerPseudonym: $data['customer_pseudonym'] ?? '',
+            activityType: $data['activity_type'] ?? '',
+            riskScore: (float) ($data['risk_score'] ?? 0.0),
+            description: $data['description'] ?? '',
         );
     }
 }

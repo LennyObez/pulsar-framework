@@ -10,10 +10,6 @@ use Pulsar\Api\Api;
 use Pulsar\Event\Attribute\RequiresEnvelope;
 use Pulsar\Security\Compliance\ComplianceEvent;
 
-use function array_values;
-use function is_array;
-use function is_string;
-
 /**
  * Records completion of a transaction screening against AML rules.
  *
@@ -67,24 +63,33 @@ final readonly class TransactionScreened extends ComplianceEvent
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     event_id?: string,
+     *     occurred_at?: string,
+     *     correlation_id?: string,
+     *     nonce?: string,
+     *     screener_identity?: string,
+     *     transaction_id?: string,
+     *     customer_pseudonym?: string,
+     *     screening_result?: string,
+     *     matched_rules?: list<string>,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var list<string> $matchedRules */
-        $matchedRules = is_array($data['matched_rules'] ?? null) ? array_values($data['matched_rules']) : [];
+        $occurredAt = $data['occurred_at'] ?? null;
 
         return new self(
-            eventId: is_string($data['event_id'] ?? null) ? $data['event_id'] : '',
-            occurredAt: is_string($data['occurred_at'] ?? null) ? new DateTimeImmutable($data['occurred_at']) : new DateTimeImmutable(),
-            correlationId: is_string($data['correlation_id'] ?? null) ? $data['correlation_id'] : '',
-            nonce: is_string($data['nonce'] ?? null) ? $data['nonce'] : '',
-            screenerIdentity: is_string($data['screener_identity'] ?? null) ? $data['screener_identity'] : '',
-            transactionId: is_string($data['transaction_id'] ?? null) ? $data['transaction_id'] : '',
-            customerPseudonym: is_string($data['customer_pseudonym'] ?? null) ? $data['customer_pseudonym'] : '',
-            screeningResult: is_string($data['screening_result'] ?? null) ? $data['screening_result'] : '',
-            matchedRules: $matchedRules,
+            eventId: $data['event_id'] ?? '',
+            occurredAt: $occurredAt !== null ? new DateTimeImmutable($occurredAt) : new DateTimeImmutable(),
+            correlationId: $data['correlation_id'] ?? '',
+            nonce: $data['nonce'] ?? '',
+            screenerIdentity: $data['screener_identity'] ?? '',
+            transactionId: $data['transaction_id'] ?? '',
+            customerPseudonym: $data['customer_pseudonym'] ?? '',
+            screeningResult: $data['screening_result'] ?? '',
+            matchedRules: $data['matched_rules'] ?? [],
         );
     }
 }
