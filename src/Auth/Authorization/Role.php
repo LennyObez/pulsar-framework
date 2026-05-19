@@ -39,22 +39,17 @@ final readonly class Role
     /**
      * Build a Role from a raw array.
      *
-     * @param array<string, mixed> $data Expected keys: 'permissions' => list<string>
+     * @param array{permissions?: list<string>} $data
      */
     #[NoDiscard]
     public static function fromArray(string $name, array $data): self
     {
-        /** @var list<string> $permissionNames */
-        $permissionNames = $data['permissions'] ?? [];
-
-        $permissions = array_map(
-            static fn(string $name): Permission => new Permission($name),
-            $permissionNames,
-        );
-
         return new self(
             name: $name,
-            permissions: $permissions,
+            permissions: array_map(
+                static fn(string $name): Permission => new Permission($name),
+                $data['permissions'] ?? [],
+            ),
         );
     }
 }
