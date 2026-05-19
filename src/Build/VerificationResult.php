@@ -7,7 +7,6 @@ namespace Pulsar\Build;
 use Pulsar\Api\Api;
 
 use function array_map;
-use function is_array;
 use function is_string;
 
 /**
@@ -64,31 +63,30 @@ final readonly class VerificationResult
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     passed?: bool,
+     *     entries?: array<string, string>,
+     *     errors?: list<string>,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
         $entries = [];
 
-        if (isset($data['entries']) && is_array($data['entries'])) {
-            foreach ($data['entries'] as $key => $statusValue) {
-                if (is_string($key) && is_string($statusValue)) {
-                    $status = VerificationStatus::tryFrom($statusValue);
+        foreach ($data['entries'] ?? [] as $key => $statusValue) {
+            if (is_string($key)) {
+                $status = VerificationStatus::tryFrom($statusValue);
 
-                    if ($status !== null) {
-                        $entries[$key] = $status;
-                    }
+                if ($status !== null) {
+                    $entries[$key] = $status;
                 }
             }
         }
 
-        /** @var list<string> $errors */
-        $errors = isset($data['errors']) && is_array($data['errors']) ? $data['errors'] : [];
-
         return new self(
-            passed: isset($data['passed']) && $data['passed'] === true,
+            passed: ($data['passed'] ?? false) === true,
             entries: $entries,
-            errors: $errors,
+            errors: $data['errors'] ?? [],
         );
     }
 }
