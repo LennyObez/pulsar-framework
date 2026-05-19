@@ -7,8 +7,6 @@ namespace Pulsar\Extension\Compiler;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_string;
-
 /**
  * A single extension entry within a compiled extension manifest.
  * @api
@@ -31,21 +29,25 @@ final readonly class CompiledExtensionEntry
     /**
      * Create from array data.
      *
-     * @param array<string, mixed> $data
+     * @param array{
+     *     name?: string,
+     *     version?: string,
+     *     extensionClass?: string,
+     *     enabled?: bool|int|string,
+     *     dependencies?: list<string>,
+     *     trustTier?: string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var list<string> $dependencies */
-        $dependencies = $data['dependencies'] ?? [];
-
         return new self(
-            name: is_string($data['name'] ?? null) ? $data['name'] : '',
-            version: is_string($data['version'] ?? null) ? $data['version'] : '',
-            extensionClass: is_string($data['extensionClass'] ?? null) ? $data['extensionClass'] : '',
+            name: $data['name'] ?? '',
+            version: $data['version'] ?? '',
+            extensionClass: $data['extensionClass'] ?? '',
             enabled: (bool) ($data['enabled'] ?? true),
-            dependencies: $dependencies,
-            trustTier: is_string($data['trustTier'] ?? null) ? $data['trustTier'] : 'community',
+            dependencies: $data['dependencies'] ?? [],
+            trustTier: $data['trustTier'] ?? 'community',
         );
     }
 
