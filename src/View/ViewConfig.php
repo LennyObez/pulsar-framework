@@ -7,8 +7,6 @@ namespace Pulsar\View;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_array;
-use function is_int;
 use function is_string;
 
 /**
@@ -49,48 +47,38 @@ final readonly class ViewConfig
     /**
      * Build a ViewConfig from a raw config array.
      *
-     * @param array<string, mixed> $data Raw array from config/view.php
+     * @param array{
+     *     template_paths?: array<array-key, mixed>,
+     *     cache_path?: string,
+     *     auto_escape?: bool,
+     *     active_theme?: string,
+     *     php_directive_allowed?: bool,
+     *     sandbox_mode?: bool,
+     *     sandbox_step_limit?: int,
+     *     sandbox_loop_limit?: int,
+     *     sandbox_output_size_limit?: int,
+     *     sandbox_wall_clock_check_interval?: int,
+     * } $data Raw array from config/view.php
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $rawPaths = $data['template_paths'] ?? [];
-        $templatePaths = is_array($rawPaths) ? self::filterStringList($rawPaths) : [];
-
-        $rawCachePath = $data['cache_path'] ?? '';
-        $cachePath = is_string($rawCachePath) ? $rawCachePath : '';
-
-        $autoEscape = ($data['auto_escape'] ?? true) !== false;
-
-        $rawTheme = $data['active_theme'] ?? 'default';
-        $activeTheme = is_string($rawTheme) ? $rawTheme : 'default';
-
-        $phpDirectiveAllowed = ($data['php_directive_allowed'] ?? false) === true;
-        $sandboxMode = ($data['sandbox_mode'] ?? false) === true;
-
-        $rawStepLimit = $data['sandbox_step_limit'] ?? 10_000;
-        $sandboxStepLimit = is_int($rawStepLimit) && $rawStepLimit > 0 ? $rawStepLimit : 10_000;
-
-        $rawLoopLimit = $data['sandbox_loop_limit'] ?? 1_000;
-        $sandboxLoopLimit = is_int($rawLoopLimit) && $rawLoopLimit > 0 ? $rawLoopLimit : 1_000;
-
-        $rawOutputLimit = $data['sandbox_output_size_limit'] ?? 1_048_576;
-        $sandboxOutputSizeLimit = is_int($rawOutputLimit) && $rawOutputLimit > 0 ? $rawOutputLimit : 1_048_576;
-
-        $rawWallClockInterval = $data['sandbox_wall_clock_check_interval'] ?? 500;
-        $sandboxWallClockCheckInterval = is_int($rawWallClockInterval) && $rawWallClockInterval > 0 ? $rawWallClockInterval : 500;
+        $stepLimit = $data['sandbox_step_limit'] ?? 10_000;
+        $loopLimit = $data['sandbox_loop_limit'] ?? 1_000;
+        $outputLimit = $data['sandbox_output_size_limit'] ?? 1_048_576;
+        $wallClockInterval = $data['sandbox_wall_clock_check_interval'] ?? 500;
 
         return new self(
-            templatePaths: $templatePaths,
-            cachePath: $cachePath,
-            autoEscape: $autoEscape,
-            activeTheme: $activeTheme,
-            phpDirectiveAllowed: $phpDirectiveAllowed,
-            sandboxMode: $sandboxMode,
-            sandboxStepLimit: $sandboxStepLimit,
-            sandboxLoopLimit: $sandboxLoopLimit,
-            sandboxOutputSizeLimit: $sandboxOutputSizeLimit,
-            sandboxWallClockCheckInterval: $sandboxWallClockCheckInterval,
+            templatePaths: self::filterStringList($data['template_paths'] ?? []),
+            cachePath: $data['cache_path'] ?? '',
+            autoEscape: ($data['auto_escape'] ?? true) !== false,
+            activeTheme: $data['active_theme'] ?? 'default',
+            phpDirectiveAllowed: ($data['php_directive_allowed'] ?? false) === true,
+            sandboxMode: ($data['sandbox_mode'] ?? false) === true,
+            sandboxStepLimit: $stepLimit > 0 ? $stepLimit : 10_000,
+            sandboxLoopLimit: $loopLimit > 0 ? $loopLimit : 1_000,
+            sandboxOutputSizeLimit: $outputLimit > 0 ? $outputLimit : 1_048_576,
+            sandboxWallClockCheckInterval: $wallClockInterval > 0 ? $wallClockInterval : 500,
         );
     }
 
