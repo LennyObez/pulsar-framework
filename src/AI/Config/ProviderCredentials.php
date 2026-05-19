@@ -7,8 +7,6 @@ namespace Pulsar\AI\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_string;
-
 /**
  * API credentials and endpoint configuration for a single AI provider.
  * @api
@@ -28,15 +26,19 @@ final readonly class ProviderCredentials
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     api_key?: string,
+     *     base_url?: string,
+     *     organization?: string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            apiKey: is_string($data['api_key'] ?? null) ? $data['api_key'] : '',
-            baseUrl: is_string($data['base_url'] ?? null) ? $data['base_url'] : '',
-            organization: is_string($data['organization'] ?? null) ? $data['organization'] : '',
+            apiKey: $data['api_key'] ?? '',
+            baseUrl: $data['base_url'] ?? '',
+            organization: $data['organization'] ?? '',
         );
     }
 }

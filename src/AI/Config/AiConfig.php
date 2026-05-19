@@ -7,7 +7,6 @@ namespace Pulsar\AI\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_array;
 use function is_string;
 
 /**
@@ -46,29 +45,32 @@ final readonly class AiConfig
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     enabled?: bool|int|string,
+     *     default_provider?: string,
+     *     default_model?: string,
+     *     default_temperature?: float|int|string,
+     *     default_max_tokens?: int|string,
+     *     providers?: array<string, array<string, mixed>>,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var array<string, ProviderCredentials> $providers */
         $providers = [];
 
-        if (isset($data['providers']) && is_array($data['providers'])) {
-            foreach ($data['providers'] as $name => $providerData) {
-                if (is_string($name) && is_array($providerData)) {
-                    /** @var array<string, mixed> $providerData */
-                    $providers[$name] = ProviderCredentials::fromArray($providerData);
-                }
+        foreach ($data['providers'] ?? [] as $name => $providerData) {
+            if (is_string($name)) {
+                $providers[$name] = ProviderCredentials::fromArray($providerData);
             }
         }
 
         return new self(
             enabled: (bool) ($data['enabled'] ?? false),
-            defaultProvider: is_string($data['default_provider'] ?? null) ? $data['default_provider'] : 'anthropic',
-            defaultModel: is_string($data['default_model'] ?? null) ? $data['default_model'] : '',
-            defaultTemperature: is_numeric($data['default_temperature'] ?? null) ? (float) $data['default_temperature'] : 0.7,
-            defaultMaxTokens: is_numeric($data['default_max_tokens'] ?? null) ? (int) $data['default_max_tokens'] : 1024,
+            defaultProvider: $data['default_provider'] ?? 'anthropic',
+            defaultModel: $data['default_model'] ?? '',
+            defaultTemperature: (float) ($data['default_temperature'] ?? 0.7),
+            defaultMaxTokens: (int) ($data['default_max_tokens'] ?? 1024),
             providers: $providers,
         );
     }
