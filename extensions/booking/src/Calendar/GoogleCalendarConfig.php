@@ -7,8 +7,6 @@ namespace Pulsar\Extension\Booking\Calendar;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_string;
-
 /**
  * Google Calendar integration configuration.
  * @api
@@ -23,14 +21,18 @@ final readonly class GoogleCalendarConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     calendar_id?: string,
+     *     service_account_key_path?: string,
+     *     enabled?: bool|int|string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            calendarId: is_string($data['calendar_id'] ?? null) ? $data['calendar_id'] : '',
-            serviceAccountKeyPath: is_string($data['service_account_key_path'] ?? null) ? $data['service_account_key_path'] : '',
+            calendarId: $data['calendar_id'] ?? '',
+            serviceAccountKeyPath: $data['service_account_key_path'] ?? '',
             enabled: (bool) ($data['enabled'] ?? false),
         );
     }
