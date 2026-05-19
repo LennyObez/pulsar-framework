@@ -8,7 +8,6 @@ use NoDiscard;
 use Pulsar\Api\Api;
 
 use function getenv;
-use function is_string;
 
 /**
  * Configuration for GitHub-based integrity verification.
@@ -32,35 +31,27 @@ final readonly class GitHubIntegrityConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     enabled?: bool|int|string,
+     *     repository?: string,
+     *     branch?: string,
+     *     token?: string|null,
+     *     timeout_seconds?: int,
+     *     rate_limit_requests_per_hour?: int,
+     *     modified_file_suffix?: string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $explicitToken = $data['token'] ?? null;
-        $token = is_string($explicitToken) ? $explicitToken : self::tokenFromEnv();
-
-        /** @var bool|string $enabled */
-        $enabled = $data['enabled'] ?? false;
-        /** @var string $repository */
-        $repository = $data['repository'] ?? '';
-        /** @var string $branch */
-        $branch = $data['branch'] ?? 'main';
-        /** @var int|string $timeout */
-        $timeout = $data['timeout_seconds'] ?? 15;
-        /** @var int|string $rateLimit */
-        $rateLimit = $data['rate_limit_requests_per_hour'] ?? 30;
-        /** @var string $suffix */
-        $suffix = $data['modified_file_suffix'] ?? '.modified-backup';
-
         return new self(
-            enabled: (bool) $enabled,
-            repository: (string) $repository,
-            branch: (string) $branch,
-            token: $token,
-            timeoutSeconds: (int) $timeout,
-            rateLimitRequestsPerHour: (int) $rateLimit,
-            modifiedFileSuffix: (string) $suffix,
+            enabled: (bool) ($data['enabled'] ?? false),
+            repository: $data['repository'] ?? '',
+            branch: $data['branch'] ?? 'main',
+            token: $data['token'] ?? self::tokenFromEnv(),
+            timeoutSeconds: $data['timeout_seconds'] ?? 15,
+            rateLimitRequestsPerHour: $data['rate_limit_requests_per_hour'] ?? 30,
+            modifiedFileSuffix: $data['modified_file_suffix'] ?? '.modified-backup',
         );
     }
 

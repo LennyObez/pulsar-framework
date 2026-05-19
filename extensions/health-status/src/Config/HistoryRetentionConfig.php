@@ -21,22 +21,19 @@ final readonly class HistoryRetentionConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     max_age_days?: int,
+     *     max_rows?: int,
+     *     cleanup_interval_hours?: int,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var int|string $maxAgeDays */
-        $maxAgeDays = $data['max_age_days'] ?? 30;
-        /** @var int|string $maxRows */
-        $maxRows = $data['max_rows'] ?? 100_000;
-        /** @var int|string $cleanupIntervalHours */
-        $cleanupIntervalHours = $data['cleanup_interval_hours'] ?? 6;
-
         return new self(
-            maxAgeDays: (int) $maxAgeDays,
-            maxRows: (int) $maxRows,
-            cleanupIntervalHours: (int) $cleanupIntervalHours,
+            maxAgeDays: $data['max_age_days'] ?? 30,
+            maxRows: $data['max_rows'] ?? 100_000,
+            cleanupIntervalHours: $data['cleanup_interval_hours'] ?? 6,
         );
     }
 }
