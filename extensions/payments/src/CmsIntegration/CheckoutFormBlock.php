@@ -6,9 +6,6 @@ namespace Pulsar\Extension\Payments\CmsIntegration;
 
 use Pulsar\Api\Api;
 
-use function is_int;
-use function is_string;
-
 /**
  * CMS block: Embedded checkout form.
  *
@@ -29,31 +26,27 @@ final readonly class CheckoutFormBlock
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     gateway?: string,
+     *     publishable_key?: string,
+     *     success_url?: string,
+     *     cancel_url?: string,
+     *     fixed_amount?: int|string|null,
+     *     currency?: string,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
         $fixedAmountRaw = $data['fixed_amount'] ?? null;
-        $fixedAmount = is_int($fixedAmountRaw) ? $fixedAmountRaw : (is_numeric($fixedAmountRaw) ? (int) $fixedAmountRaw : null);
 
         return new self(
-            gateway: self::str($data, 'gateway', 'stripe'),
-            publishableKey: self::str($data, 'publishable_key', ''),
-            successUrl: self::str($data, 'success_url', '/checkout/success'),
-            cancelUrl: self::str($data, 'cancel_url', '/'),
-            fixedAmount: $fixedAmount,
-            currency: self::str($data, 'currency', 'USD'),
+            gateway: $data['gateway'] ?? 'stripe',
+            publishableKey: $data['publishable_key'] ?? '',
+            successUrl: $data['success_url'] ?? '/checkout/success',
+            cancelUrl: $data['cancel_url'] ?? '/',
+            fixedAmount: $fixedAmountRaw !== null ? (int) $fixedAmountRaw : null,
+            currency: $data['currency'] ?? 'USD',
         );
-    }
-
-    /**
-     * @param array<string, mixed> $data
-     */
-    private static function str(array $data, string $key, string $default): string
-    {
-        $value = $data[$key] ?? $default;
-
-        return is_string($value) ? $value : $default;
     }
 
     /**
