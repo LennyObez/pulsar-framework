@@ -6,10 +6,6 @@ namespace Pulsar\Extension\Form\Wizard;
 
 use Pulsar\Api\Internal;
 
-use function is_array;
-use function is_int;
-use function is_string;
-
 /**
  * Encrypted wizard state holding step data and anti-replay counter.
  */
@@ -42,24 +38,22 @@ final readonly class WizardState
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     wizard_id?: string,
+     *     current_step?: int,
+     *     step_counter?: int,
+     *     created_at?: int,
+     *     step_data?: array<int, array<string, mixed>>,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
-        $wizardId = isset($data['wizard_id']) && is_string($data['wizard_id']) ? $data['wizard_id'] : '';
-        $currentStep = isset($data['current_step']) && is_int($data['current_step']) ? $data['current_step'] : 0;
-        $stepCounter = isset($data['step_counter']) && is_int($data['step_counter']) ? $data['step_counter'] : 0;
-        $createdAt = isset($data['created_at']) && is_int($data['created_at']) ? $data['created_at'] : 0;
-
-        /** @var array<int, array<string, mixed>> $stepData */
-        $stepData = isset($data['step_data']) && is_array($data['step_data']) ? $data['step_data'] : [];
-
         return new self(
-            wizardId: $wizardId,
-            currentStep: $currentStep,
-            stepCounter: $stepCounter,
-            createdAt: $createdAt,
-            stepData: $stepData,
+            wizardId: $data['wizard_id'] ?? '',
+            currentStep: $data['current_step'] ?? 0,
+            stepCounter: $data['step_counter'] ?? 0,
+            createdAt: $data['created_at'] ?? 0,
+            stepData: $data['step_data'] ?? [],
         );
     }
 
