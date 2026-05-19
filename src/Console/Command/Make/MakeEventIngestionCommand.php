@@ -52,7 +52,7 @@ final class MakeEventIngestionCommand extends Command
 
         [$name, $module, $modulePath, $namespace] = $context;
 
-        $events = $this->parseCommaSeparatedOption($input->getOption('events', ''));
+        $events = $this->parseCommaSeparatedOption($input->getStringOption('events'));
 
         $output->writeln(sprintf('Creating event ingestion: %s in %s', $name, $module));
         $output->newLine();
