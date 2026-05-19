@@ -7,7 +7,8 @@ namespace Pulsar\Extension\Fhir\Resource;
 use DateTimeImmutable;
 use Pulsar\Api\Api;
 
-use function is_string;
+use function array_map;
+use function array_values;
 
 /**
  * FHIR Resource metadata.
@@ -73,31 +74,29 @@ final readonly class Meta
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     versionId?: string|null,
+     *     lastUpdated?: string|null,
+     *     source?: string|null,
+     *     profile?: list<string>,
+     *     security?: list<array<string, mixed>>,
+     *     tag?: list<array<string, mixed>>,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
-        /** @var list<string> $profile */
-        $profile = $data['profile'] ?? [];
-        /** @var list<array<string, mixed>> $securityList */
-        $securityList = $data['security'] ?? [];
-        /** @var list<array<string, mixed>> $tagList */
-        $tagList = $data['tag'] ?? [];
-
         return new self(
-            versionId: is_string($data['versionId'] ?? null) ? $data['versionId'] : null,
-            lastUpdated: is_string($data['lastUpdated'] ?? null)
-                ? new DateTimeImmutable($data['lastUpdated'])
-                : null,
-            source: is_string($data['source'] ?? null) ? $data['source'] : null,
-            profile: $profile,
+            versionId: $data['versionId'] ?? null,
+            lastUpdated: isset($data['lastUpdated']) ? new DateTimeImmutable($data['lastUpdated']) : null,
+            source: $data['source'] ?? null,
+            profile: $data['profile'] ?? [],
             security: array_values(array_map(
                 static fn(array $c): Coding => Coding::fromArray($c),
-                $securityList,
+                $data['security'] ?? [],
             )),
             tag: array_values(array_map(
                 static fn(array $c): Coding => Coding::fromArray($c),
-                $tagList,
+                $data['tag'] ?? [],
             )),
         );
     }

@@ -7,8 +7,8 @@ namespace Pulsar\Extension\Fhir\Resource;
 use Override;
 use Pulsar\Api\Api;
 
-use function is_bool;
-use function is_string;
+use function array_map;
+use function array_values;
 
 /**
  * Demographics and administrative information about an individual receiving care.
@@ -95,42 +95,47 @@ final readonly class Patient extends FhirResource
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     id?: string|null,
+     *     meta?: array<string, mixed>|null,
+     *     language?: string|null,
+     *     identifier?: list<array<string, mixed>>,
+     *     active?: bool|null,
+     *     name?: list<array<string, mixed>>,
+     *     telecom?: list<array<string, mixed>>,
+     *     gender?: string|null,
+     *     birthDate?: string|null,
+     *     deceasedBoolean?: bool|null,
+     *     deceasedDateTime?: string|null,
+     *     managingOrganization?: array<string, mixed>|null,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
-        /** @var array<string, mixed>|null $metaData */
         $metaData = $data['meta'] ?? null;
-        /** @var list<array<string, mixed>> $identifierList */
-        $identifierList = $data['identifier'] ?? [];
-        /** @var list<array<string, mixed>> $nameList */
-        $nameList = $data['name'] ?? [];
-        /** @var list<array<string, mixed>> $telecomList */
-        $telecomList = $data['telecom'] ?? [];
-        /** @var array<string, mixed>|null $managingOrgData */
         $managingOrgData = $data['managingOrganization'] ?? null;
 
         return new self(
-            id: is_string($data['id'] ?? null) ? $data['id'] : null,
+            id: $data['id'] ?? null,
             meta: $metaData !== null ? Meta::fromArray($metaData) : null,
-            language: is_string($data['language'] ?? null) ? $data['language'] : null,
+            language: $data['language'] ?? null,
             identifier: array_values(array_map(
                 static fn(array $i): Identifier => Identifier::fromArray($i),
-                $identifierList,
+                $data['identifier'] ?? [],
             )),
-            active: is_bool($data['active'] ?? null) ? $data['active'] : null,
+            active: $data['active'] ?? null,
             name: array_values(array_map(
                 static fn(array $n): HumanName => HumanName::fromArray($n),
-                $nameList,
+                $data['name'] ?? [],
             )),
             telecom: array_values(array_map(
                 static fn(array $t): ContactPoint => ContactPoint::fromArray($t),
-                $telecomList,
+                $data['telecom'] ?? [],
             )),
-            gender: is_string($data['gender'] ?? null) ? $data['gender'] : null,
-            birthDate: is_string($data['birthDate'] ?? null) ? $data['birthDate'] : null,
-            deceasedBoolean: is_bool($data['deceasedBoolean'] ?? null) ? $data['deceasedBoolean'] : null,
-            deceasedDateTime: is_string($data['deceasedDateTime'] ?? null) ? $data['deceasedDateTime'] : null,
+            gender: $data['gender'] ?? null,
+            birthDate: $data['birthDate'] ?? null,
+            deceasedBoolean: $data['deceasedBoolean'] ?? null,
+            deceasedDateTime: $data['deceasedDateTime'] ?? null,
             managingOrganization: $managingOrgData !== null ? Reference::fromArray($managingOrgData) : null,
         );
     }
