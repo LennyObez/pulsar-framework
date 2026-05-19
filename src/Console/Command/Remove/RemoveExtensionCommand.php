@@ -50,17 +50,13 @@ final class RemoveExtensionCommand extends Command
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $name = $input->getArgument(0);
-        $basePath = $input->getOption('path', 'extensions');
+        $basePath = $input->getStringOption('path', 'extensions');
         $force = $input->hasOption('force');
         $dryRun = $input->hasOption('dry-run');
 
         if (!is_string($name) || $name === '') {
             $output->errorln('Extension name is required.');
             return ExitCode::Invalid->value;
-        }
-
-        if (!is_string($basePath)) {
-            $basePath = 'extensions';
         }
 
         $dirName = $this->toKebabCase($name);
