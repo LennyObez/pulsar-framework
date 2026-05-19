@@ -8,8 +8,6 @@ use NoDiscard;
 use Pulsar\Api\Api;
 
 use function in_array;
-use function is_array;
-use function is_bool;
 use function is_int;
 use function is_string;
 
@@ -54,31 +52,41 @@ final readonly class DevConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     php_version?: string,
+     *     database?: string,
+     *     redis?: bool,
+     *     mailpit?: bool,
+     *     server_driver?: string,
+     *     app_port?: int,
+     *     db_port?: int,
+     *     redis_port?: int,
+     *     mailpit_smtp_port?: int,
+     *     mailpit_web_port?: int,
+     *     memory_limit?: int,
+     *     xdebug?: bool,
+     *     php_extensions?: list<string>,
+     *     project_name?: string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var list<string> $extensions */
-        $extensions = isset($data['php_extensions']) && is_array($data['php_extensions'])
-            ? array_values(array_filter($data['php_extensions'], 'is_string'))
-            : [];
-
         return new self(
-            phpVersion: is_string($data['php_version'] ?? null) ? $data['php_version'] : '8.5',
+            phpVersion: $data['php_version'] ?? '8.5',
             database: self::validDatabase($data['database'] ?? null),
-            redis: is_bool($data['redis'] ?? null) ? $data['redis'] : true,
-            mailpit: is_bool($data['mailpit'] ?? null) ? $data['mailpit'] : true,
+            redis: $data['redis'] ?? true,
+            mailpit: $data['mailpit'] ?? true,
             serverDriver: self::validServer($data['server_driver'] ?? null),
             appPort: self::validPort($data['app_port'] ?? null, 8080),
             dbPort: self::validPort($data['db_port'] ?? null, 5432),
             redisPort: self::validPort($data['redis_port'] ?? null, 6379),
             mailpitSmtpPort: self::validPort($data['mailpit_smtp_port'] ?? null, 1025),
             mailpitWebPort: self::validPort($data['mailpit_web_port'] ?? null, 8025),
-            memoryLimit: is_int($data['memory_limit'] ?? null) ? $data['memory_limit'] : 512,
-            xdebug: is_bool($data['xdebug'] ?? null) ? $data['xdebug'] : true,
-            phpExtensions: $extensions,
-            projectName: is_string($data['project_name'] ?? null) ? $data['project_name'] : 'pulsar',
+            memoryLimit: $data['memory_limit'] ?? 512,
+            xdebug: $data['xdebug'] ?? true,
+            phpExtensions: $data['php_extensions'] ?? [],
+            projectName: $data['project_name'] ?? 'pulsar',
         );
     }
 
