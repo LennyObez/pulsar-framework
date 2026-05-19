@@ -6,8 +6,6 @@ namespace Pulsar\Extension\Messaging\WebRTC;
 
 use Pulsar\Api\Api;
 
-use function is_array;
-use function is_int;
 use function is_string;
 
 /**
@@ -29,26 +27,30 @@ final readonly class WebRtcConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     ice_servers?: list<array{urls?: string, username?: string, credential?: string}>,
+     *     call_timeout?: int,
+     *     max_call_duration?: int,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
         $iceServers = [['urls' => 'stun:stun.l.google.com:19302']];
-        if (isset($data['ice_servers']) && is_array($data['ice_servers'])) {
+        if (isset($data['ice_servers'])) {
             $iceServers = [];
-            /** @var array<string, mixed> $server */
             foreach ($data['ice_servers'] as $server) {
-                if (!is_string($server['urls'] ?? null)) {
+                $urls = $server['urls'] ?? null;
+                if (!is_string($urls)) {
                     continue;
                 }
 
-                $entry = ['urls' => $server['urls']];
+                $entry = ['urls' => $urls];
 
-                if (is_string($server['username'] ?? null)) {
+                if (isset($server['username'])) {
                     $entry['username'] = $server['username'];
                 }
 
-                if (is_string($server['credential'] ?? null)) {
+                if (isset($server['credential'])) {
                     $entry['credential'] = $server['credential'];
                 }
 
@@ -58,8 +60,8 @@ final readonly class WebRtcConfig
 
         return new self(
             iceServers: $iceServers,
-            callTimeoutSeconds: is_int($data['call_timeout'] ?? null) ? $data['call_timeout'] : 30,
-            maxCallDurationSeconds: is_int($data['max_call_duration'] ?? null) ? $data['max_call_duration'] : 0,
+            callTimeoutSeconds: $data['call_timeout'] ?? 30,
+            maxCallDurationSeconds: $data['max_call_duration'] ?? 0,
         );
     }
 }

@@ -7,10 +7,6 @@ namespace Pulsar\Extension\Messaging\Config;
 use Pulsar\Api\Api;
 use Pulsar\Extension\Messaging\WebRTC\WebRtcConfig;
 
-use function is_array;
-use function is_bool;
-use function is_int;
-
 /**
  * Configuration DTO for the Messaging extension.
  * @api
@@ -38,20 +34,26 @@ final readonly class MessagingConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     e2ee_enabled?: bool,
+     *     max_conversation_participants?: int,
+     *     max_message_size_bytes?: int,
+     *     message_retention_days?: int,
+     *     shamir_threshold?: int,
+     *     shamir_total_shares?: int,
+     *     webrtc?: array<string, mixed>,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
-        $webRtcData = is_array($data['webrtc'] ?? null) ? $data['webrtc'] : [];
-
         return new self(
-            e2eeEnabled: is_bool($data['e2ee_enabled'] ?? null) ? $data['e2ee_enabled'] : true,
-            maxConversationParticipants: is_int($data['max_conversation_participants'] ?? null) ? $data['max_conversation_participants'] : 100,
-            maxMessageSizeBytes: is_int($data['max_message_size_bytes'] ?? null) ? $data['max_message_size_bytes'] : 65_536,
-            messageRetentionDays: is_int($data['message_retention_days'] ?? null) ? $data['message_retention_days'] : 0,
-            shamirThreshold: is_int($data['shamir_threshold'] ?? null) ? $data['shamir_threshold'] : 3,
-            shamirTotalShares: is_int($data['shamir_total_shares'] ?? null) ? $data['shamir_total_shares'] : 5,
-            webRtc: WebRtcConfig::fromArray($webRtcData),
+            e2eeEnabled: $data['e2ee_enabled'] ?? true,
+            maxConversationParticipants: $data['max_conversation_participants'] ?? 100,
+            maxMessageSizeBytes: $data['max_message_size_bytes'] ?? 65_536,
+            messageRetentionDays: $data['message_retention_days'] ?? 0,
+            shamirThreshold: $data['shamir_threshold'] ?? 3,
+            shamirTotalShares: $data['shamir_total_shares'] ?? 5,
+            webRtc: WebRtcConfig::fromArray($data['webrtc'] ?? []),
         );
     }
 }
