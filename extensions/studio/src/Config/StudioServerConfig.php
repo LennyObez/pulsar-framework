@@ -8,8 +8,6 @@ use NoDiscard;
 use Pulsar\Api\Internal;
 use Pulsar\Config\Environment;
 
-use function is_int;
-
 /**
  * Server configuration for the Studio development server.
  */
@@ -23,29 +21,24 @@ final readonly class StudioServerConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     host?: string,
+     *     port?: int,
+     *     document_root?: string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data, Environment $environment): self
     {
-        /** @var string $host */
-        $host = $environment->get('STUDIO_HOST') ?? ($data['host'] ?? '127.0.0.1');
+        $host = $environment->get('STUDIO_HOST') ?? $data['host'] ?? '127.0.0.1';
 
         $portEnv = $environment->get('STUDIO_PORT');
-        if ($portEnv !== null) {
-            $port = (int) $portEnv;
-        } else {
-            $rawPort = $data['port'] ?? 8585;
-            $port = is_int($rawPort) ? $rawPort : (int) (is_numeric($rawPort) ? $rawPort : 8585);
-        }
-
-        /** @var string $documentRoot */
-        $documentRoot = $data['document_root'] ?? 'extensions/studio/dev/public';
+        $port = $portEnv !== null ? (int) $portEnv : ($data['port'] ?? 8585);
 
         return new self(
             host: $host,
             port: $port,
-            documentRoot: $documentRoot,
+            documentRoot: $data['document_root'] ?? 'extensions/studio/dev/public',
         );
     }
 }
