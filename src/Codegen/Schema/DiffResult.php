@@ -9,7 +9,6 @@ use Pulsar\Api\Api;
 
 use function array_map;
 use function count;
-use function is_array;
 
 /**
  * Ordered list of schema operations produced by the diff engine.
@@ -68,7 +67,7 @@ final readonly class DiffResult
     }
 
     /**
-     * @param array<int, mixed> $data
+     * @param list<array<string, mixed>> $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
@@ -76,10 +75,7 @@ final readonly class DiffResult
         $operations = [];
 
         foreach ($data as $item) {
-            if (is_array($item)) {
-                /** @var array<string, mixed> $item */
-                $operations[] = SchemaOperation::fromArray($item);
-            }
+            $operations[] = SchemaOperation::fromArray($item);
         }
 
         return new self($operations);
