@@ -6,8 +6,7 @@ namespace Pulsar\Extension\Auth\OAuth2\Oidc;
 
 use Pulsar\Api\Api;
 
-use function is_array;
-use function is_string;
+use function array_values;
 
 /**
  * Configuration for the OpenID Connect provider.
@@ -30,23 +29,20 @@ final readonly class OidcConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     issuer?: string,
+     *     signing_algorithms?: list<string>,
+     *     pairwise_subjects?: bool|int|string,
+     *     signing_key_id?: string,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
-        /** @var string $issuer */
-        $issuer = isset($data['issuer']) && is_string($data['issuer']) ? $data['issuer'] : '';
-        $sigAlgsRaw = $data['signing_algorithms'] ?? null;
-        /** @var list<string> $sigAlgsList */
-        $sigAlgsList = is_array($sigAlgsRaw) ? array_values($sigAlgsRaw) : ['RS256', 'ES256'];
-        /** @var string $sigKeyId */
-        $sigKeyId = isset($data['signing_key_id']) && is_string($data['signing_key_id']) ? $data['signing_key_id'] : 'oauth_sign';
-
         return new self(
-            issuer: $issuer,
-            signingAlgorithms: $sigAlgsList,
+            issuer: $data['issuer'] ?? '',
+            signingAlgorithms: array_values($data['signing_algorithms'] ?? ['RS256', 'ES256']),
             pairwiseSubjects: (bool) ($data['pairwise_subjects'] ?? false),
-            signingKeyId: $sigKeyId,
+            signingKeyId: $data['signing_key_id'] ?? 'oauth_sign',
         );
     }
 }
