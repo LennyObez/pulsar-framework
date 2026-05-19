@@ -16,7 +16,6 @@ use function file_put_contents;
 use function hash_equals;
 use function is_array;
 use function is_file;
-use function is_int;
 use function is_string;
 use function json_decode;
 use function json_encode;
@@ -186,29 +185,29 @@ final class CacheManifest
     /**
      * Reconstruct a manifest from a verified array.
      *
-     * @param array<string, mixed> $data
+     * @param array{
+     *     schema_version?: int,
+     *     framework_version?: string,
+     *     app_env?: string,
+     *     generated_at?: int,
+     *     invalidation_key?: string,
+     *     allowed_classes_hash?: string,
+     *     caches?: array<string, array{sha256: string, hmac: string}>,
+     *     strict?: bool|int|string,
+     *     encrypted?: bool|int|string,
+     * } $data
      */
     private static function fromArray(array $data): ?self
     {
         try {
-            /** @var array<string, array{sha256: string, hmac: string}> $caches */
-            $caches = $data['caches'] ?? [];
-
-            $rawSchemaVersion = $data['schema_version'] ?? 0;
-            $rawFrameworkVersion = $data['framework_version'] ?? '';
-            $rawAppEnv = $data['app_env'] ?? '';
-            $rawGeneratedAt = $data['generated_at'] ?? 0;
-            $rawInvalidationKey = $data['invalidation_key'] ?? '';
-            $rawAllowedClassesHash = $data['allowed_classes_hash'] ?? '';
-
             return new self(
-                schemaVersion: is_int($rawSchemaVersion) ? $rawSchemaVersion : 0,
-                frameworkVersion: is_string($rawFrameworkVersion) ? $rawFrameworkVersion : '',
-                appEnv: is_string($rawAppEnv) ? $rawAppEnv : '',
-                generatedAt: is_int($rawGeneratedAt) ? $rawGeneratedAt : 0,
-                invalidationKey: is_string($rawInvalidationKey) ? $rawInvalidationKey : '',
-                allowedClassesHash: is_string($rawAllowedClassesHash) ? $rawAllowedClassesHash : '',
-                caches: $caches,
+                schemaVersion: $data['schema_version'] ?? 0,
+                frameworkVersion: $data['framework_version'] ?? '',
+                appEnv: $data['app_env'] ?? '',
+                generatedAt: $data['generated_at'] ?? 0,
+                invalidationKey: $data['invalidation_key'] ?? '',
+                allowedClassesHash: $data['allowed_classes_hash'] ?? '',
+                caches: $data['caches'] ?? [],
                 strict: (bool) ($data['strict'] ?? false),
                 encrypted: (bool) ($data['encrypted'] ?? false),
             );
