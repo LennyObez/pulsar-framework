@@ -72,45 +72,32 @@ final readonly class Incident
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     id: string,
+     *     check_name: string,
+     *     severity: string,
+     *     status: string,
+     *     message: string,
+     *     started_at: string,
+     *     acknowledged_at?: string|null,
+     *     resolved_at?: string|null,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var string|null $acknowledgedRaw */
         $acknowledgedRaw = $data['acknowledged_at'] ?? null;
-        $acknowledgedAt = $acknowledgedRaw !== null
-            ? new DateTimeImmutable($acknowledgedRaw)
-            : null;
-
-        /** @var string|null $resolvedRaw */
         $resolvedRaw = $data['resolved_at'] ?? null;
-        $resolvedAt = $resolvedRaw !== null
-            ? new DateTimeImmutable($resolvedRaw)
-            : null;
-
-        /** @var string $id */
-        $id = $data['id'];
-        /** @var string $checkName */
-        $checkName = $data['check_name'];
-        /** @var string $severity */
-        $severity = $data['severity'];
-        /** @var string $status */
-        $status = $data['status'];
-        /** @var string $message */
-        $message = $data['message'];
-        /** @var string $startedAt */
-        $startedAt = $data['started_at'];
 
         return new self(
-            id: $id,
-            checkName: $checkName,
-            severity: IncidentSeverity::from($severity),
-            status: IncidentStatus::from($status),
-            message: $message,
-            startedAt: new DateTimeImmutable($startedAt),
-            acknowledgedAt: $acknowledgedAt,
-            resolvedAt: $resolvedAt,
+            id: $data['id'],
+            checkName: $data['check_name'],
+            severity: IncidentSeverity::from($data['severity']),
+            status: IncidentStatus::from($data['status']),
+            message: $data['message'],
+            startedAt: new DateTimeImmutable($data['started_at']),
+            acknowledgedAt: $acknowledgedRaw !== null ? new DateTimeImmutable($acknowledgedRaw) : null,
+            resolvedAt: $resolvedRaw !== null ? new DateTimeImmutable($resolvedRaw) : null,
         );
     }
 }
