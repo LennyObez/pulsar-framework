@@ -7,10 +7,6 @@ namespace Pulsar\Extension\Psd2\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_array;
-use function is_bool;
-use function is_string;
-
 /**
  * PSD2 certificate validation configuration.
  * @api
@@ -29,19 +25,21 @@ final readonly class CertificateConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     require_qualified?: bool,
+     *     check_revocation?: bool,
+     *     trusted_issuers?: list<string>,
+     *     validator?: string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var list<string> $trustedIssuers */
-        $trustedIssuers = is_array($data['trusted_issuers'] ?? null) ? $data['trusted_issuers'] : [];
-
         return new self(
-            requireQualified: is_bool($data['require_qualified'] ?? null) ? $data['require_qualified'] : true,
-            checkRevocation: is_bool($data['check_revocation'] ?? null) ? $data['check_revocation'] : true,
-            trustedIssuers: $trustedIssuers,
-            validator: is_string($data['validator'] ?? null) ? $data['validator'] : 'default',
+            requireQualified: $data['require_qualified'] ?? true,
+            checkRevocation: $data['check_revocation'] ?? true,
+            trustedIssuers: $data['trusted_issuers'] ?? [],
+            validator: $data['validator'] ?? 'default',
         );
     }
 }
