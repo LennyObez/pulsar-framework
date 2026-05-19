@@ -10,7 +10,6 @@ use Pulsar\Api\Api;
 
 use function array_key_exists;
 use function array_keys;
-use function is_array;
 use function is_string;
 
 /**
@@ -36,7 +35,7 @@ final class StaticConfigCenter implements ConfigCenterInterface
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array<string, array<string, string>> $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
@@ -44,14 +43,10 @@ final class StaticConfigCenter implements ConfigCenterInterface
         $normalized = [];
 
         foreach ($data as $namespace => $entries) {
-            if (!is_array($entries)) {
-                continue;
-            }
-
             $normalized[$namespace] = [];
 
             foreach ($entries as $key => $value) {
-                if (is_string($key) && is_string($value)) {
+                if (is_string($key)) {
                     $normalized[$namespace][$key] = $value;
                 }
             }
