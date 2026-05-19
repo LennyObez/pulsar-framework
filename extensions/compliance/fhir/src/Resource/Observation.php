@@ -7,7 +7,8 @@ namespace Pulsar\Extension\Fhir\Resource;
 use Override;
 use Pulsar\Api\Api;
 
-use function is_string;
+use function array_map;
+use function array_values;
 
 /**
  * Measurements and simple assertions made about a patient or other subject.
@@ -123,66 +124,69 @@ final readonly class Observation extends FhirResource
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     id?: string|null,
+     *     meta?: array<string, mixed>|null,
+     *     language?: string|null,
+     *     identifier?: list<array<string, mixed>>,
+     *     status?: string|null,
+     *     category?: list<array<string, mixed>>,
+     *     code?: array<string, mixed>|null,
+     *     subject?: array<string, mixed>|null,
+     *     encounter?: array<string, mixed>|null,
+     *     effectiveDateTime?: string|null,
+     *     issued?: string|null,
+     *     performer?: list<array<string, mixed>>,
+     *     valueQuantity?: array<string, mixed>|null,
+     *     valueCodeableConcept?: array<string, mixed>|null,
+     *     valueString?: string|null,
+     *     dataAbsentReason?: array<string, mixed>|null,
+     *     basedOn?: list<array<string, mixed>>,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
-        /** @var array<string, mixed>|null $metaData */
         $metaData = $data['meta'] ?? null;
-        /** @var list<array<string, mixed>> $identifierList */
-        $identifierList = $data['identifier'] ?? [];
-        /** @var list<array<string, mixed>> $categoryList */
-        $categoryList = $data['category'] ?? [];
-        /** @var array<string, mixed>|null $codeData */
         $codeData = $data['code'] ?? null;
-        /** @var array<string, mixed>|null $subjectData */
         $subjectData = $data['subject'] ?? null;
-        /** @var array<string, mixed>|null $encounterData */
         $encounterData = $data['encounter'] ?? null;
-        /** @var list<array<string, mixed>> $performerList */
-        $performerList = $data['performer'] ?? [];
-        /** @var array<string, mixed>|null $valueQuantityData */
         $valueQuantityData = $data['valueQuantity'] ?? null;
-        /** @var array<string, mixed>|null $valueConceptData */
         $valueConceptData = $data['valueCodeableConcept'] ?? null;
-        /** @var array<string, mixed>|null $absentReasonData */
         $absentReasonData = $data['dataAbsentReason'] ?? null;
-        /** @var list<array<string, mixed>> $basedOnList */
-        $basedOnList = $data['basedOn'] ?? [];
 
         return new self(
-            id: is_string($data['id'] ?? null) ? $data['id'] : null,
+            id: $data['id'] ?? null,
             meta: $metaData !== null ? Meta::fromArray($metaData) : null,
-            language: is_string($data['language'] ?? null) ? $data['language'] : null,
+            language: $data['language'] ?? null,
             identifier: array_values(array_map(
                 static fn(array $i): Identifier => Identifier::fromArray($i),
-                $identifierList,
+                $data['identifier'] ?? [],
             )),
-            status: is_string($data['status'] ?? null) ? $data['status'] : null,
+            status: $data['status'] ?? null,
             category: array_values(array_map(
                 static fn(array $c): CodeableConcept => CodeableConcept::fromArray($c),
-                $categoryList,
+                $data['category'] ?? [],
             )),
             code: $codeData !== null ? CodeableConcept::fromArray($codeData) : null,
             subject: $subjectData !== null ? Reference::fromArray($subjectData) : null,
             encounter: $encounterData !== null ? Reference::fromArray($encounterData) : null,
-            effectiveDateTime: is_string($data['effectiveDateTime'] ?? null) ? $data['effectiveDateTime'] : null,
-            issued: is_string($data['issued'] ?? null) ? $data['issued'] : null,
+            effectiveDateTime: $data['effectiveDateTime'] ?? null,
+            issued: $data['issued'] ?? null,
             performer: array_values(array_map(
                 static fn(array $r): Reference => Reference::fromArray($r),
-                $performerList,
+                $data['performer'] ?? [],
             )),
             valueQuantity: $valueQuantityData !== null ? Quantity::fromArray($valueQuantityData) : null,
             valueCodeableConcept: $valueConceptData !== null
                 ? CodeableConcept::fromArray($valueConceptData)
                 : null,
-            valueString: is_string($data['valueString'] ?? null) ? $data['valueString'] : null,
+            valueString: $data['valueString'] ?? null,
             dataAbsentReason: $absentReasonData !== null
                 ? CodeableConcept::fromArray($absentReasonData)
                 : null,
             basedOn: array_values(array_map(
                 static fn(array $r): Reference => Reference::fromArray($r),
-                $basedOnList,
+                $data['basedOn'] ?? [],
             )),
         );
     }
