@@ -9,7 +9,6 @@ use Pulsar\Api\Api;
 use Pulsar\Api\Exception\ApiException;
 
 use function count;
-use function is_int;
 
 /**
  * Complexity caps for API requests.
@@ -81,19 +80,19 @@ final readonly class ComplexityLimits
     /**
      * Build from a raw config array.
      *
-     * @param array<string, mixed> $data
+     * @param array{
+     *     max_fields?: int,
+     *     max_nesting_depth?: int,
+     *     max_includes?: int,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $rawMaxFields = $data['max_fields'] ?? 50;
-        $rawMaxNesting = $data['max_nesting_depth'] ?? 3;
-        $rawMaxIncludes = $data['max_includes'] ?? 10;
-
         return new self(
-            maxFields: is_int($rawMaxFields) ? $rawMaxFields : 50,
-            maxNestingDepth: is_int($rawMaxNesting) ? $rawMaxNesting : 3,
-            maxIncludes: is_int($rawMaxIncludes) ? $rawMaxIncludes : 10,
+            maxFields: $data['max_fields'] ?? 50,
+            maxNestingDepth: $data['max_nesting_depth'] ?? 3,
+            maxIncludes: $data['max_includes'] ?? 10,
         );
     }
 }
