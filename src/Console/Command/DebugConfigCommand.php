@@ -63,7 +63,7 @@ final class DebugConfigCommand extends Command
     #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
-        $filter = $input->getOption('filter');
+        $filter = $input->getNullableStringOption('filter');
         $loaded = 0;
 
         foreach ($this->configClasses as $className) {
@@ -90,7 +90,7 @@ final class DebugConfigCommand extends Command
         return ExitCode::Success->value;
     }
 
-    private function renderConfigDto(OutputInterface $output, string $className, object $dto, mixed $filter): void
+    private function renderConfigDto(OutputInterface $output, string $className, object $dto, ?string $filter): void
     {
         $reflection = new ReflectionClass($dto);
         $properties = $reflection->getProperties(ReflectionProperty::IS_PUBLIC);
@@ -105,7 +105,7 @@ final class DebugConfigCommand extends Command
             $name = $property->getName();
             $qualifiedName = $className . '.' . $name;
 
-            if (is_string($filter) && !str_contains($qualifiedName, $filter) && !str_contains($name, $filter)) {
+            if ($filter !== null && !str_contains($qualifiedName, $filter) && !str_contains($name, $filter)) {
                 continue;
             }
 
