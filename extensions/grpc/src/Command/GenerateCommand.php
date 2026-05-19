@@ -203,9 +203,9 @@ final class GenerateCommand extends Command
     private function resolveOutputDir(InputInterface $input): string
     {
         if ($input->hasOption('output')) {
-            $value = $input->getOption('output');
+            $value = $input->getStringOption('output');
 
-            if (is_string($value) && $value !== '') {
+            if ($value !== '') {
                 return $value;
             }
         }
