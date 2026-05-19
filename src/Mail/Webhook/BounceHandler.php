@@ -34,13 +34,16 @@ final readonly class BounceHandler
      */
     public function process(WebhookRequest $request): array
     {
+        /** @var mixed $decoded */
         $decoded = json_decode($request->payload, true);
         /** @var array<string, mixed> $data */
         $data = is_array($decoded) ? $decoded : [];
 
+        /** @var mixed $rawMessageId */
         $rawMessageId = $data['message_id'] ?? null;
         $messageId = is_string($rawMessageId) ? $rawMessageId : null;
 
+        /** @var mixed $rawBounceType */
         $rawBounceType = $data['bounce_type'] ?? null;
         $bounceType = is_string($rawBounceType) ? $rawBounceType : 'unknown';
 

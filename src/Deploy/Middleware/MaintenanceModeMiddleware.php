@@ -51,6 +51,7 @@ final readonly class MaintenanceModeMiddleware implements MiddlewareInterface
 
         // Check IP bypass
         $serverParams = $request->getServerParams();
+        /** @var mixed $clientIp */
         $clientIp = $serverParams['REMOTE_ADDR'] ?? null;
 
         if (is_string($clientIp) && $clientIp !== '' && $this->maintenanceMode->isIpAllowed($clientIp)) {
@@ -59,6 +60,7 @@ final readonly class MaintenanceModeMiddleware implements MiddlewareInterface
 
         // Check secret bypass via query parameter
         $queryParams = $request->getQueryParams();
+        /** @var mixed $querySecret */
         $querySecret = $queryParams['maintenance_secret'] ?? null;
 
         if (is_string($querySecret) && $this->maintenanceMode->checkSecret($querySecret)) {
@@ -67,6 +69,7 @@ final readonly class MaintenanceModeMiddleware implements MiddlewareInterface
 
         // Check secret bypass via cookie
         $cookies = $request->getCookieParams();
+        /** @var mixed $cookieSecret */
         $cookieSecret = $cookies['maintenance_secret'] ?? null;
 
         if (is_string($cookieSecret) && $this->maintenanceMode->checkSecret($cookieSecret)) {
