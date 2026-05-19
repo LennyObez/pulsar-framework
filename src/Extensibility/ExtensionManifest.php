@@ -68,13 +68,21 @@ final readonly class ExtensionManifest
     /**
      * Create manifest from array data.
      *
-     * @param array<string, mixed> $data
+     * @param array{
+     *     name?: string,
+     *     version?: string,
+     *     extension_class?: string,
+     *     description?: string,
+     *     pulsar?: array{min_version?: string, max_version?: string},
+     *     provides?: array<string, mixed>,
+     *     requires?: array<string, string>,
+     *     trust_tier?: string,
+     * } $data
      * @throws ManifestException If required fields are missing or invalid
      */
     #[NoDiscard]
     public static function fromArray(array $data, string $basePath = ''): self
     {
-        // Validate required fields
         if (!isset($data['name']) || !is_string($data['name'])) {
             throw ManifestException::missingField('name', $basePath);
         }
@@ -87,40 +95,20 @@ final readonly class ExtensionManifest
             throw ManifestException::missingField('extension_class', $basePath);
         }
 
-        // Validate version format (semver)
         if (!preg_match('/^\d+\.\d+\.\d+(-[a-zA-Z0-9.]+)?$/', $data['version'])) {
             throw ManifestException::invalidVersion($data['version'], $basePath);
         }
-
-        // Parse nested configs
-        /** @var array{min_version?: string, max_version?: string} $pulsarData */
-        $pulsarData = $data['pulsar'] ?? [];
-        $pulsar = PulsarVersionConfig::fromArray($pulsarData);
-
-        /** @var array<string, mixed> $providesData */
-        $providesData = $data['provides'] ?? [];
-        $provides = ProvidesConfig::fromArray($providesData);
-
-        /** @var array<string, string> $requiresData */
-        $requiresData = $data['requires'] ?? [];
-        $requires = RequiresConfig::fromArray($requiresData);
-
-        // Parse trust tier: metadata only, effective tier resolved by host policy
-        $trustTierValue = isset($data['trust_tier']) && is_string($data['trust_tier'])
-            ? $data['trust_tier']
-            : '';
-        $requestedTrustTier = TrustTier::tryFrom($trustTierValue) ?? TrustTier::Community;
 
         return new self(
             name: $data['name'],
             version: $data['version'],
             extensionClass: $data['extension_class'],
             path: $basePath,
-            description: isset($data['description']) && is_string($data['description']) ? $data['description'] : '',
-            pulsar: $pulsar,
-            provides: $provides,
-            requires: $requires,
-            requestedTrustTier: $requestedTrustTier,
+            description: $data['description'] ?? '',
+            pulsar: PulsarVersionConfig::fromArray($data['pulsar'] ?? []),
+            provides: ProvidesConfig::fromArray($data['provides'] ?? []),
+            requires: RequiresConfig::fromArray($data['requires'] ?? []),
+            requestedTrustTier: TrustTier::tryFrom($data['trust_tier'] ?? '') ?? TrustTier::Community,
         );
     }
 
