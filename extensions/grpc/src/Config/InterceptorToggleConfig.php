@@ -7,8 +7,6 @@ namespace Pulsar\Extension\Grpc\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_bool;
-
 /**
  * Toggle configuration for individual interceptors.
  *
@@ -29,17 +27,23 @@ final readonly class InterceptorToggleConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     tracing?: bool,
+     *     auth?: bool,
+     *     rate_limit?: bool,
+     *     validation?: bool,
+     *     logging?: bool,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            tracing: is_bool($data['tracing'] ?? null) ? $data['tracing'] : true,
-            auth: is_bool($data['auth'] ?? null) ? $data['auth'] : true,
-            rateLimit: is_bool($data['rate_limit'] ?? null) ? $data['rate_limit'] : true,
-            validation: is_bool($data['validation'] ?? null) ? $data['validation'] : true,
-            logging: is_bool($data['logging'] ?? null) ? $data['logging'] : true,
+            tracing: $data['tracing'] ?? true,
+            auth: $data['auth'] ?? true,
+            rateLimit: $data['rate_limit'] ?? true,
+            validation: $data['validation'] ?? true,
+            logging: $data['logging'] ?? true,
         );
     }
 }

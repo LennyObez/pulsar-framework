@@ -7,8 +7,6 @@ namespace Pulsar\Extension\Grpc\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_string;
-
 /**
  * Configuration for the protoc codegen wrapper.
  * @api
@@ -24,17 +22,21 @@ final readonly class CodegenConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     proto_path?: string,
+     *     output_path?: string,
+     *     protoc_binary?: string,
+     *     grpc_php_plugin?: string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            protoPath: is_string($data['proto_path'] ?? null) ? $data['proto_path'] : 'proto',
-            outputPath: is_string($data['output_path'] ?? null) ? $data['output_path'] : 'src/Generated',
-            protocBinary: is_string($data['protoc_binary'] ?? null) ? $data['protoc_binary'] : 'protoc',
-            grpcPhpPlugin: is_string($data['grpc_php_plugin'] ?? null)
-                ? $data['grpc_php_plugin'] : 'grpc_php_plugin',
+            protoPath: $data['proto_path'] ?? 'proto',
+            outputPath: $data['output_path'] ?? 'src/Generated',
+            protocBinary: $data['protoc_binary'] ?? 'protoc',
+            grpcPhpPlugin: $data['grpc_php_plugin'] ?? 'grpc_php_plugin',
         );
     }
 }

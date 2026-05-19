@@ -7,8 +7,6 @@ namespace Pulsar\Extension\Grpc\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_bool;
-
 /**
  * Configuration for gRPC server reflection.
  *
@@ -25,14 +23,17 @@ final readonly class ReflectionConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     enabled?: bool,
+     *     allow_in_production?: bool,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            enabled: is_bool($data['enabled'] ?? null) ? $data['enabled'] : false,
-            allowInProduction: is_bool($data['allow_in_production'] ?? null) ? $data['allow_in_production'] : false,
+            enabled: $data['enabled'] ?? false,
+            allowInProduction: $data['allow_in_production'] ?? false,
         );
     }
 }

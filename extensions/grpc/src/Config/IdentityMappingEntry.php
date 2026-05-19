@@ -8,8 +8,6 @@ use NoDiscard;
 use Pulsar\Api\Api;
 
 use function in_array;
-use function is_array;
-use function is_string;
 
 /**
  * A single mTLS identity mapping entry.
@@ -31,18 +29,19 @@ final readonly class IdentityMappingEntry
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     name?: string,
+     *     trust_level?: string,
+     *     allowed_methods?: list<string>,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var list<string> $methods */
-        $methods = is_array($data['allowed_methods'] ?? null) ? $data['allowed_methods'] : ['*'];
-
         return new self(
-            name: is_string($data['name'] ?? null) ? $data['name'] : '',
-            trustLevel: is_string($data['trust_level'] ?? null) ? $data['trust_level'] : 'internal',
-            allowedMethods: $methods,
+            name: $data['name'] ?? '',
+            trustLevel: $data['trust_level'] ?? 'internal',
+            allowedMethods: $data['allowed_methods'] ?? ['*'],
         );
     }
 
