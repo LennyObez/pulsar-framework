@@ -72,20 +72,10 @@ final class CrudCommand extends Command
             return ExitCode::Invalid->value;
         }
 
-        $basePath = $input->getOption('path', 'src');
-        $namespace = $input->getOption('namespace', 'App');
+        $basePath = $input->getStringOption('path', 'src');
+        $namespace = $input->getStringOption('namespace', 'App');
         $force = $input->hasOption('force');
-        $skipRaw = $input->getOption('skip', '');
-
-        if (!is_string($basePath)) {
-            $basePath = 'src';
-        }
-
-        if (!is_string($namespace)) {
-            $namespace = 'App';
-        }
-
-        $skip = $this->parseSkipList($skipRaw);
+        $skip = $this->parseSkipList($input->getStringOption('skip'));
 
         if ($this->generators === []) {
             $output->errorln('No generators registered.');
@@ -169,9 +159,9 @@ final class CrudCommand extends Command
      *
      * @return list<string>
      */
-    private function parseSkipList(mixed $raw): array
+    private function parseSkipList(string $raw): array
     {
-        if (!is_string($raw) || $raw === '') {
+        if ($raw === '') {
             return [];
         }
 

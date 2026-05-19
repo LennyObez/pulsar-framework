@@ -15,7 +15,6 @@ use Pulsar\Console\OutputInterface;
 use function is_dir;
 use function is_file;
 use function is_int;
-use function is_string;
 use function sprintf;
 
 /**
@@ -54,10 +53,7 @@ final class MakeFeatureCommand extends Command
 
         [$name, $module, $modulePath, $namespace] = $context;
 
-        $method = $input->getOption('method', 'POST');
-        if (!is_string($method)) {
-            $method = 'POST';
-        }
+        $method = $input->getStringOption('method', 'POST');
 
         $featurePath = $modulePath . DIRECTORY_SEPARATOR . 'Features' . DIRECTORY_SEPARATOR . $name;
 
