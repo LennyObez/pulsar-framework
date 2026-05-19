@@ -7,10 +7,6 @@ namespace Pulsar\Extension\Form\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_bool;
-use function is_int;
-use function is_string;
-
 /**
  * File upload security configuration.
  * @api
@@ -25,17 +21,19 @@ final readonly class UploadConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     directory?: string,
+     *     max_size?: int,
+     *     regulated_preset?: bool,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $rawMaxSize = $data['max_size'] ?? 10_485_760;
-
         return new self(
-            directory: is_string($data['directory'] ?? null) ? $data['directory'] : 'storage/uploads',
-            maxSize: is_int($rawMaxSize) ? $rawMaxSize : 10_485_760,
-            regulatedPreset: is_bool($data['regulated_preset'] ?? null) ? $data['regulated_preset'] : false,
+            directory: $data['directory'] ?? 'storage/uploads',
+            maxSize: $data['max_size'] ?? 10_485_760,
+            regulatedPreset: $data['regulated_preset'] ?? false,
         );
     }
 }
