@@ -8,9 +8,6 @@ use NoDiscard;
 use Pulsar\Api\Api;
 
 use function array_key_exists;
-use function is_array;
-use function is_bool;
-use function is_int;
 use function is_string;
 use function preg_match;
 use function str_contains;
@@ -190,31 +187,42 @@ final readonly class PropertyDefinition
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     name?: string,
+     *     phpType?: string,
+     *     columnName?: string,
+     *     columnType?: string,
+     *     nullable?: bool,
+     *     hasDefault?: bool,
+     *     defaultValue?: mixed,
+     *     validationRules?: list<string>,
+     *     isFilterable?: bool,
+     *     isSortable?: bool,
+     *     length?: int|null,
+     *     isPrimaryKey?: bool,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $rawRules = $data['validationRules'] ?? [];
-
         return new self(
-            name: is_string($data['name'] ?? null) ? $data['name'] : '',
-            phpType: is_string($data['phpType'] ?? null) ? $data['phpType'] : 'mixed',
-            columnName: is_string($data['columnName'] ?? null) ? $data['columnName'] : '',
-            columnType: is_string($data['columnType'] ?? null) ? $data['columnType'] : '',
-            nullable: is_bool($data['nullable'] ?? null) ? $data['nullable'] : false,
-            hasDefault: is_bool($data['hasDefault'] ?? null) ? $data['hasDefault'] : false,
+            name: $data['name'] ?? '',
+            phpType: $data['phpType'] ?? 'mixed',
+            columnName: $data['columnName'] ?? '',
+            columnType: $data['columnType'] ?? '',
+            nullable: $data['nullable'] ?? false,
+            hasDefault: $data['hasDefault'] ?? false,
             defaultValue: array_key_exists('defaultValue', $data) ? $data['defaultValue'] : null,
-            validationRules: is_array($rawRules) ? self::filterStringList($rawRules) : [],
-            isFilterable: is_bool($data['isFilterable'] ?? null) ? $data['isFilterable'] : false,
-            isSortable: is_bool($data['isSortable'] ?? null) ? $data['isSortable'] : false,
-            length: is_int($data['length'] ?? null) ? $data['length'] : null,
-            isPrimaryKey: is_bool($data['isPrimaryKey'] ?? null) ? $data['isPrimaryKey'] : false,
+            validationRules: self::filterStringList($data['validationRules'] ?? []),
+            isFilterable: $data['isFilterable'] ?? false,
+            isSortable: $data['isSortable'] ?? false,
+            length: $data['length'] ?? null,
+            isPrimaryKey: $data['isPrimaryKey'] ?? false,
         );
     }
 
     /**
-     * @param array<array-key, mixed> $items
+     * @param list<string> $items
      * @return list<string>
      */
     private static function filterStringList(array $items): array
