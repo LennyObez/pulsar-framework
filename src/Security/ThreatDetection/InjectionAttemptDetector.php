@@ -81,7 +81,9 @@ final class InjectionAttemptDetector implements ThreatDetectorInterface
     #[Override]
     public function analyze(ServerRequestInterface $request): ?ThreatEvent
     {
-        $ip = is_string($request->getServerParams()['REMOTE_ADDR'] ?? null) ? $request->getServerParams()['REMOTE_ADDR'] : 'unknown';
+        /** @var mixed $rawIp */
+        $rawIp = $request->getServerParams()['REMOTE_ADDR'] ?? null;
+        $ip = is_string($rawIp) ? $rawIp : 'unknown';
         $values = $this->extractValues($request);
 
         foreach ($values as $value) {
