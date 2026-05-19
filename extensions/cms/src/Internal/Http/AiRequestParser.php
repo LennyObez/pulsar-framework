@@ -57,7 +57,9 @@ final readonly class AiRequestParser
      */
     public function requireString(array $body, string $field): ?string
     {
-        $value = is_string($body[$field] ?? null) ? $body[$field] : null;
+        /** @var mixed $raw */
+        $raw = $body[$field] ?? null;
+        $value = is_string($raw) ? $raw : null;
 
         return ($value !== null && $value !== '') ? $value : null;
     }
@@ -69,7 +71,10 @@ final readonly class AiRequestParser
      */
     public function optionalString(array $body, string $field, string $default = ''): string
     {
-        return is_string($body[$field] ?? null) ? $body[$field] : $default;
+        /** @var mixed $raw */
+        $raw = $body[$field] ?? null;
+
+        return is_string($raw) ? $raw : $default;
     }
 
     /**
@@ -79,7 +84,10 @@ final readonly class AiRequestParser
      */
     public function optionalInt(array $body, string $field, int $default): int
     {
-        return is_int($body[$field] ?? null) ? $body[$field] : $default;
+        /** @var mixed $raw */
+        $raw = $body[$field] ?? null;
+
+        return is_int($raw) ? $raw : $default;
     }
 
     /**
@@ -90,8 +98,11 @@ final readonly class AiRequestParser
      */
     public function optionalStringArray(array $body, string $field): ?array
     {
+        /** @var mixed $raw */
+        $raw = $body[$field] ?? null;
+
         /** @var list<string>|null */
-        return is_array($body[$field] ?? null) ? $body[$field] : null;
+        return is_array($raw) ? $raw : null;
     }
 
     /**
