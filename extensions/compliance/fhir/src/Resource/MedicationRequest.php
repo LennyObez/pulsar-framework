@@ -7,7 +7,8 @@ namespace Pulsar\Extension\Fhir\Resource;
 use Override;
 use Pulsar\Api\Api;
 
-use function is_string;
+use function array_map;
+use function array_values;
 
 /**
  * An order or request for supply of medication and administration instructions.
@@ -114,61 +115,65 @@ final readonly class MedicationRequest extends FhirResource
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     id?: string|null,
+     *     meta?: array<string, mixed>|null,
+     *     language?: string|null,
+     *     identifier?: list<array<string, mixed>>,
+     *     status?: string|null,
+     *     statusReason?: array<string, mixed>|null,
+     *     intent?: string|null,
+     *     medicationCodeableConcept?: array<string, mixed>|null,
+     *     medicationReference?: array<string, mixed>|null,
+     *     subject?: array<string, mixed>|null,
+     *     encounter?: array<string, mixed>|null,
+     *     authoredOn?: string|null,
+     *     requester?: array<string, mixed>|null,
+     *     reasonCode?: list<array<string, mixed>>,
+     *     reasonReference?: list<array<string, mixed>>,
+     *     priority?: string|null,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
-        /** @var array<string, mixed>|null $metaData */
         $metaData = $data['meta'] ?? null;
-        /** @var list<array<string, mixed>> $identifierList */
-        $identifierList = $data['identifier'] ?? [];
-        /** @var array<string, mixed>|null $statusReasonData */
         $statusReasonData = $data['statusReason'] ?? null;
-        /** @var array<string, mixed>|null $medConceptData */
         $medConceptData = $data['medicationCodeableConcept'] ?? null;
-        /** @var array<string, mixed>|null $medRefData */
         $medRefData = $data['medicationReference'] ?? null;
-        /** @var array<string, mixed>|null $subjectData */
         $subjectData = $data['subject'] ?? null;
-        /** @var array<string, mixed>|null $encounterData */
         $encounterData = $data['encounter'] ?? null;
-        /** @var array<string, mixed>|null $requesterData */
         $requesterData = $data['requester'] ?? null;
-        /** @var list<array<string, mixed>> $reasonCodeList */
-        $reasonCodeList = $data['reasonCode'] ?? [];
-        /** @var list<array<string, mixed>> $reasonRefList */
-        $reasonRefList = $data['reasonReference'] ?? [];
 
         return new self(
-            id: is_string($data['id'] ?? null) ? $data['id'] : null,
+            id: $data['id'] ?? null,
             meta: $metaData !== null ? Meta::fromArray($metaData) : null,
-            language: is_string($data['language'] ?? null) ? $data['language'] : null,
+            language: $data['language'] ?? null,
             identifier: array_values(array_map(
                 static fn(array $i): Identifier => Identifier::fromArray($i),
-                $identifierList,
+                $data['identifier'] ?? [],
             )),
-            status: is_string($data['status'] ?? null) ? $data['status'] : null,
+            status: $data['status'] ?? null,
             statusReason: $statusReasonData !== null
                 ? CodeableConcept::fromArray($statusReasonData)
                 : null,
-            intent: is_string($data['intent'] ?? null) ? $data['intent'] : null,
+            intent: $data['intent'] ?? null,
             medicationCodeableConcept: $medConceptData !== null
                 ? CodeableConcept::fromArray($medConceptData)
                 : null,
             medicationReference: $medRefData !== null ? Reference::fromArray($medRefData) : null,
             subject: $subjectData !== null ? Reference::fromArray($subjectData) : null,
             encounter: $encounterData !== null ? Reference::fromArray($encounterData) : null,
-            authoredOn: is_string($data['authoredOn'] ?? null) ? $data['authoredOn'] : null,
+            authoredOn: $data['authoredOn'] ?? null,
             requester: $requesterData !== null ? Reference::fromArray($requesterData) : null,
             reasonCode: array_values(array_map(
                 static fn(array $c): CodeableConcept => CodeableConcept::fromArray($c),
-                $reasonCodeList,
+                $data['reasonCode'] ?? [],
             )),
             reasonReference: array_values(array_map(
                 static fn(array $r): Reference => Reference::fromArray($r),
-                $reasonRefList,
+                $data['reasonReference'] ?? [],
             )),
-            priority: is_string($data['priority'] ?? null) ? $data['priority'] : null,
+            priority: $data['priority'] ?? null,
         );
     }
 }
