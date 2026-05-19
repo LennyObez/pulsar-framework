@@ -10,8 +10,6 @@ use Pulsar\Api\Api;
 use Pulsar\Event\Attribute\RequiresEnvelope;
 use Pulsar\Security\Compliance\ComplianceEvent;
 
-use function is_string;
-
 /**
  * Records completion of a PSD2 transaction risk assessment.
  * @api
@@ -60,20 +58,32 @@ final readonly class TransactionRiskAssessed extends ComplianceEvent
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     event_id?: string,
+     *     occurred_at?: string,
+     *     correlation_id?: string,
+     *     nonce?: string,
+     *     assessment_id?: string,
+     *     transaction_id?: string,
+     *     risk_level?: string,
+     *     exemption?: string,
+     *     sca_required?: bool,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
+        $occurredAt = $data['occurred_at'] ?? null;
+
         return new self(
-            eventId: is_string($data['event_id'] ?? null) ? $data['event_id'] : '',
-            occurredAt: is_string($data['occurred_at'] ?? null) ? new DateTimeImmutable($data['occurred_at']) : new DateTimeImmutable(),
-            correlationId: is_string($data['correlation_id'] ?? null) ? $data['correlation_id'] : '',
-            nonce: is_string($data['nonce'] ?? null) ? $data['nonce'] : '',
-            assessmentId: is_string($data['assessment_id'] ?? null) ? $data['assessment_id'] : '',
-            transactionId: is_string($data['transaction_id'] ?? null) ? $data['transaction_id'] : '',
-            riskLevel: is_string($data['risk_level'] ?? null) ? $data['risk_level'] : '',
-            exemption: is_string($data['exemption'] ?? null) ? $data['exemption'] : '',
+            eventId: $data['event_id'] ?? '',
+            occurredAt: $occurredAt !== null ? new DateTimeImmutable($occurredAt) : new DateTimeImmutable(),
+            correlationId: $data['correlation_id'] ?? '',
+            nonce: $data['nonce'] ?? '',
+            assessmentId: $data['assessment_id'] ?? '',
+            transactionId: $data['transaction_id'] ?? '',
+            riskLevel: $data['risk_level'] ?? '',
+            exemption: $data['exemption'] ?? '',
             scaRequired: ($data['sca_required'] ?? false) === true,
         );
     }
