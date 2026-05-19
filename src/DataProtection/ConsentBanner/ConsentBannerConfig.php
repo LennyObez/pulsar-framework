@@ -7,9 +7,6 @@ namespace Pulsar\DataProtection\ConsentBanner;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_array;
-use function is_bool;
-use function is_int;
 use function is_string;
 
 /**
@@ -42,40 +39,36 @@ final readonly class ConsentBannerConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     enabled?: bool,
+     *     position?: string,
+     *     privacy_policy_url?: string,
+     *     categories?: array<array-key, array<string, mixed>>,
+     *     granular_opt_in?: bool,
+     *     cookie_name?: string,
+     *     cookie_ttl_days?: int,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         $categories = [];
 
-        $rawCategories = $data['categories'] ?? [];
-
-        if (is_array($rawCategories)) {
-            foreach ($rawCategories as $key => $catData) {
-                if (!is_array($catData)) {
-                    continue;
-                }
-
-                /** @var string $catKey */
-                $catKey = is_string($key) ? $key : (string) $key;
-                /** @var array<string, mixed> $catData */
-                $categories[] = ConsentCategory::fromArray($catKey, $catData);
-            }
-        }
-
-        if ($categories === []) {
-            $categories = self::defaultCategories();
+        foreach ($data['categories'] ?? [] as $key => $catData) {
+            $categories[] = ConsentCategory::fromArray(
+                is_string($key) ? $key : (string) $key,
+                $catData,
+            );
         }
 
         return new self(
-            enabled: isset($data['enabled']) && is_bool($data['enabled']) ? $data['enabled'] : true,
-            position: isset($data['position']) && is_string($data['position']) ? $data['position'] : 'bottom',
-            privacyPolicyUrl: isset($data['privacy_policy_url']) && is_string($data['privacy_policy_url']) ? $data['privacy_policy_url'] : '/privacy',
-            categories: $categories,
-            granularOptIn: isset($data['granular_opt_in']) && is_bool($data['granular_opt_in']) ? $data['granular_opt_in'] : true,
-            cookieName: isset($data['cookie_name']) && is_string($data['cookie_name']) ? $data['cookie_name'] : 'pulsar_consent',
-            cookieTtlDays: isset($data['cookie_ttl_days']) && is_int($data['cookie_ttl_days']) ? $data['cookie_ttl_days'] : 365,
+            enabled: $data['enabled'] ?? true,
+            position: $data['position'] ?? 'bottom',
+            privacyPolicyUrl: $data['privacy_policy_url'] ?? '/privacy',
+            categories: $categories === [] ? self::defaultCategories() : $categories,
+            granularOptIn: $data['granular_opt_in'] ?? true,
+            cookieName: $data['cookie_name'] ?? 'pulsar_consent',
+            cookieTtlDays: $data['cookie_ttl_days'] ?? 365,
         );
     }
 
