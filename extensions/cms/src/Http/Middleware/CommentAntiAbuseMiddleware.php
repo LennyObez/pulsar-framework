@@ -47,6 +47,7 @@ final readonly class CommentAntiAbuseMiddleware implements MiddlewareInterface
         }
 
         /** @var array<string, mixed> $parsedBody */
+        /** @var mixed $body */
         $body = $parsedBody['body'] ?? null;
 
         if (!is_string($body) || $body === '') {
@@ -55,13 +56,20 @@ final readonly class CommentAntiAbuseMiddleware implements MiddlewareInterface
 
         $ipHash = $this->resolveIpHash($request);
 
+        /** @var mixed $rawPowChallenge */
+        $rawPowChallenge = $parsedBody['_pow_challenge'] ?? null;
+        /** @var mixed $rawPowNonce */
+        $rawPowNonce = $parsedBody['_pow_nonce'] ?? null;
+        /** @var mixed $rawCaptchaToken */
+        $rawCaptchaToken = $parsedBody['_captcha_token'] ?? null;
+
         $context = new AntiSpamContext(
             body: $body,
             ipHash: $ipHash,
             formFields: $parsedBody,
-            powChallenge: is_string($parsedBody['_pow_challenge'] ?? null) ? $parsedBody['_pow_challenge'] : null,
-            powNonce: is_string($parsedBody['_pow_nonce'] ?? null) ? $parsedBody['_pow_nonce'] : null,
-            captchaToken: is_string($parsedBody['_captcha_token'] ?? null) ? $parsedBody['_captcha_token'] : null,
+            powChallenge: is_string($rawPowChallenge) ? $rawPowChallenge : null,
+            powNonce: is_string($rawPowNonce) ? $rawPowNonce : null,
+            captchaToken: is_string($rawCaptchaToken) ? $rawCaptchaToken : null,
             submissionTimestamp: time(),
         );
 
