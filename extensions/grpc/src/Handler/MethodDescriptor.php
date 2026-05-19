@@ -31,30 +31,24 @@ final readonly class MethodDescriptor
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     name?: string,
+     *     full_name?: string,
+     *     type?: string,
+     *     input_type?: string,
+     *     output_type?: string,
+     *     handler?: string,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
-        /** @var string $name */
-        $name = $data['name'] ?? '';
-        /** @var string $fullName */
-        $fullName = $data['full_name'] ?? '';
-        /** @var string $type */
-        $type = $data['type'] ?? 'unary';
-        /** @var string $inputType */
-        $inputType = $data['input_type'] ?? '';
-        /** @var string $outputType */
-        $outputType = $data['output_type'] ?? '';
-        /** @var string $handler */
-        $handler = $data['handler'] ?? '';
-
         return new self(
-            name: $name,
-            fullName: $fullName,
-            type: MethodType::from($type),
-            inputType: $inputType,
-            outputType: $outputType,
-            handler: $handler,
+            name: $data['name'] ?? '',
+            fullName: $data['full_name'] ?? '',
+            type: MethodType::from($data['type'] ?? 'unary'),
+            inputType: $data['input_type'] ?? '',
+            outputType: $data['output_type'] ?? '',
+            handler: $data['handler'] ?? '',
         );
     }
 
