@@ -7,10 +7,6 @@ namespace Pulsar\Queue\Driver\Config;
 use NoDiscard;
 use Pulsar\Api\Internal;
 
-use function is_float;
-use function is_int;
-use function is_string;
-
 /**
  * Configuration DTO for the Redis queue driver.
  */
@@ -27,25 +23,25 @@ final readonly class RedisDriverConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data Raw config array
+     * @param array{
+     *     host?: string,
+     *     port?: int,
+     *     password?: string,
+     *     database?: int,
+     *     prefix?: string,
+     *     timeout?: float|int,
+     * } $data Raw config array
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $rawHost = $data['host'] ?? '127.0.0.1';
-        $rawPort = $data['port'] ?? 6379;
-        $rawPassword = $data['password'] ?? '';
-        $rawDatabase = $data['database'] ?? 0;
-        $rawPrefix = $data['prefix'] ?? 'queue:';
-        $rawTimeout = $data['timeout'] ?? 0.0;
-
         return new self(
-            host: is_string($rawHost) ? $rawHost : '127.0.0.1',
-            port: is_int($rawPort) ? $rawPort : 6379,
-            password: is_string($rawPassword) ? $rawPassword : '',
-            database: is_int($rawDatabase) ? $rawDatabase : 0,
-            prefix: is_string($rawPrefix) ? $rawPrefix : 'queue:',
-            timeout: is_int($rawTimeout) || is_float($rawTimeout) ? (float) $rawTimeout : 0.0,
+            host: $data['host'] ?? '127.0.0.1',
+            port: $data['port'] ?? 6379,
+            password: $data['password'] ?? '',
+            database: $data['database'] ?? 0,
+            prefix: $data['prefix'] ?? 'queue:',
+            timeout: (float) ($data['timeout'] ?? 0.0),
         );
     }
 }
