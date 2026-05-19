@@ -9,8 +9,6 @@ use DateTimeImmutable;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_string;
-
 /**
  * Readonly value object for an applied migration row.
  * @api
@@ -28,30 +26,23 @@ final readonly class MigrationRecord
     /**
      * Build from a raw database row array.
      *
-     * @param array<string, mixed> $data
+     * @param array{
+     *     version?: string,
+     *     name?: string,
+     *     batch?: int,
+     *     applied_at?: string,
+     * } $data
      *
      * @throws DateMalformedStringException
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $appliedAt = $data['applied_at'] ?? 'now';
-        $dateTime = new DateTimeImmutable(is_string($appliedAt) ? $appliedAt : 'now');
-
-        /** @var string $version */
-        $version = $data['version'] ?? '';
-
-        /** @var string $name */
-        $name = $data['name'] ?? '';
-
-        /** @var int $batch */
-        $batch = $data['batch'] ?? 0;
-
         return new self(
-            version: $version,
-            name: $name,
-            batch: $batch,
-            appliedAt: $dateTime,
+            version: $data['version'] ?? '',
+            name: $data['name'] ?? '',
+            batch: $data['batch'] ?? 0,
+            appliedAt: new DateTimeImmutable($data['applied_at'] ?? 'now'),
         );
     }
 }
