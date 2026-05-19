@@ -60,8 +60,8 @@ final readonly class LatestPostsBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
-        /** @var list<mixed> $posts */
-        $posts = $data['posts'] ?? [];
+        /** @var list<array{title?: string, url?: string, thumbnail?: string, date?: string, author?: string, excerpt?: string}> $posts */
+        $posts = is_array($data['posts'] ?? null) ? $data['posts'] : [];
         $showExcerpt = is_bool($data['showExcerpt'] ?? null) ? $data['showExcerpt'] : true;
         $showThumbnail = is_bool($data['showThumbnail'] ?? null) ? $data['showThumbnail'] : false;
         $showDate = is_bool($data['showDate'] ?? null) ? $data['showDate'] : true;
@@ -70,34 +70,34 @@ final readonly class LatestPostsBlock implements BlockTypeInterface
         $html = '<div class="latest-posts">';
 
         foreach ($posts as $post) {
-            if (!is_array($post)) {
-                continue;
-            }
-
-            $title = htmlspecialchars(is_string($post['title'] ?? null) ? $post['title'] : '', ENT_QUOTES, 'UTF-8');
-            $url = htmlspecialchars(is_string($post['url'] ?? null) ? $post['url'] : '#', ENT_QUOTES, 'UTF-8');
+            $title = htmlspecialchars($post['title'] ?? '', ENT_QUOTES, 'UTF-8');
+            $url = htmlspecialchars($post['url'] ?? '#', ENT_QUOTES, 'UTF-8');
 
             $html .= '<article class="latest-posts__item">';
 
-            if ($showThumbnail && is_string($post['thumbnail'] ?? null) && $post['thumbnail'] !== '') {
-                $thumb = htmlspecialchars($post['thumbnail'], ENT_QUOTES, 'UTF-8');
+            $thumbnail = $post['thumbnail'] ?? '';
+            if ($showThumbnail && $thumbnail !== '') {
+                $thumb = htmlspecialchars($thumbnail, ENT_QUOTES, 'UTF-8');
                 $html .= "<img src=\"$thumb\" alt=\"\" class=\"latest-posts__thumbnail\" loading=\"lazy\">";
             }
 
             $html .= "<h3 class=\"latest-posts__title\"><a href=\"$url\">$title</a></h3>";
 
-            if ($showDate && is_string($post['date'] ?? null) && $post['date'] !== '') {
-                $date = htmlspecialchars($post['date'], ENT_QUOTES, 'UTF-8');
+            $dateValue = $post['date'] ?? '';
+            if ($showDate && $dateValue !== '') {
+                $date = htmlspecialchars($dateValue, ENT_QUOTES, 'UTF-8');
                 $html .= "<time class=\"latest-posts__date\">$date</time>";
             }
 
-            if ($showAuthor && is_string($post['author'] ?? null) && $post['author'] !== '') {
-                $author = htmlspecialchars($post['author'], ENT_QUOTES, 'UTF-8');
+            $authorValue = $post['author'] ?? '';
+            if ($showAuthor && $authorValue !== '') {
+                $author = htmlspecialchars($authorValue, ENT_QUOTES, 'UTF-8');
                 $html .= "<span class=\"latest-posts__author\">$author</span>";
             }
 
-            if ($showExcerpt && is_string($post['excerpt'] ?? null) && $post['excerpt'] !== '') {
-                $excerpt = htmlspecialchars($post['excerpt'], ENT_QUOTES, 'UTF-8');
+            $excerptValue = $post['excerpt'] ?? '';
+            if ($showExcerpt && $excerptValue !== '') {
+                $excerpt = htmlspecialchars($excerptValue, ENT_QUOTES, 'UTF-8');
                 $html .= "<p class=\"latest-posts__excerpt\">$excerpt</p>";
             }
 
