@@ -7,10 +7,6 @@ namespace Pulsar\Extension\Cms\Media\Video;
 use Pulsar\Api\Api;
 
 use function is_array;
-use function is_bool;
-use function is_float;
-use function is_int;
-use function is_string;
 
 /**
  * Configuration for video processing and transcoding.
@@ -41,17 +37,22 @@ final readonly class VideoConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     ffmpeg_path?: string,
+     *     ffprobe_path?: string,
+     *     hls_enabled?: bool,
+     *     hls_segment_duration?: int,
+     *     transcode_presets?: array<string, array<string, mixed>>,
+     *     max_upload_size?: int,
+     *     process_timeout?: int,
+     *     thumbnail_timestamp?: float|int,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
-        $rawPresets = is_array($data['transcode_presets'] ?? null) ? $data['transcode_presets'] : [];
-        /** @var array<string, TranscodePreset> $presets */
         $presets = [];
-
-        foreach ($rawPresets as $name => $preset) {
-            if (is_array($preset) && is_string($name)) {
-                /** @var array<string, mixed> $preset */
+        foreach ($data['transcode_presets'] ?? [] as $name => $preset) {
+            if (is_array($preset)) {
                 $presets[$name] = TranscodePreset::fromArray($preset);
             }
         }
@@ -61,16 +62,14 @@ final readonly class VideoConfig
         }
 
         return new self(
-            ffmpegPath: is_string($data['ffmpeg_path'] ?? null) ? $data['ffmpeg_path'] : 'ffmpeg',
-            ffprobePath: is_string($data['ffprobe_path'] ?? null) ? $data['ffprobe_path'] : 'ffprobe',
-            hlsEnabled: is_bool($data['hls_enabled'] ?? null) ? $data['hls_enabled'] : true,
-            hlsSegmentDuration: is_int($data['hls_segment_duration'] ?? null) ? $data['hls_segment_duration'] : 6,
+            ffmpegPath: $data['ffmpeg_path'] ?? 'ffmpeg',
+            ffprobePath: $data['ffprobe_path'] ?? 'ffprobe',
+            hlsEnabled: $data['hls_enabled'] ?? true,
+            hlsSegmentDuration: $data['hls_segment_duration'] ?? 6,
             transcodePresets: $presets,
-            maxUploadSize: is_int($data['max_upload_size'] ?? null) ? $data['max_upload_size'] : 524_288_000,
-            processTimeout: is_int($data['process_timeout'] ?? null) ? $data['process_timeout'] : 600,
-            thumbnailTimestamp: isset($data['thumbnail_timestamp']) && (is_int($data['thumbnail_timestamp']) || is_float($data['thumbnail_timestamp']))
-                ? (float) $data['thumbnail_timestamp']
-                : 1.0,
+            maxUploadSize: $data['max_upload_size'] ?? 524_288_000,
+            processTimeout: $data['process_timeout'] ?? 600,
+            thumbnailTimestamp: (float) ($data['thumbnail_timestamp'] ?? 1.0),
         );
     }
 
