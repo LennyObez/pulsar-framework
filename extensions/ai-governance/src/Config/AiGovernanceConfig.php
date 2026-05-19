@@ -7,8 +7,6 @@ namespace Pulsar\Extension\AiGovernance\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_string;
-
 /**
  * Configuration DTO for the AI governance extension.
  * @api
@@ -38,7 +36,15 @@ final readonly class AiGovernanceConfig
     /**
      * Build from raw config array.
      *
-     * @param array<string, mixed> $data
+     * @param array{
+     *     audit_invocations?: bool|int|string,
+     *     require_impact_assessment?: bool|int|string,
+     *     require_model_card?: bool|int|string,
+     *     require_consent_for_training_data?: bool|int|string,
+     *     registry_store?: string,
+     *     data_governance_store?: string,
+     *     explainability_store?: string,
+     * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
@@ -48,9 +54,9 @@ final readonly class AiGovernanceConfig
             requireImpactAssessment: (bool) ($data['require_impact_assessment'] ?? true),
             requireModelCard: (bool) ($data['require_model_card'] ?? false),
             requireConsentForTrainingData: (bool) ($data['require_consent_for_training_data'] ?? true),
-            registryStore: is_string($data['registry_store'] ?? null) ? $data['registry_store'] : 'memory',
-            dataGovernanceStore: is_string($data['data_governance_store'] ?? null) ? $data['data_governance_store'] : 'memory',
-            explainabilityStore: is_string($data['explainability_store'] ?? null) ? $data['explainability_store'] : 'memory',
+            registryStore: $data['registry_store'] ?? 'memory',
+            dataGovernanceStore: $data['data_governance_store'] ?? 'memory',
+            explainabilityStore: $data['explainability_store'] ?? 'memory',
         );
     }
 }
