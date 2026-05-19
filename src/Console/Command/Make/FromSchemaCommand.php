@@ -20,7 +20,6 @@ use function file_exists;
 use function file_put_contents;
 use function implode;
 use function is_dir;
-use function is_string;
 use function json_encode;
 use function mkdir;
 use function sprintf;
@@ -63,20 +62,12 @@ final class FromSchemaCommand extends Command
     #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
-        $basePath = $input->getOption('path', 'src');
-        $namespace = $input->getOption('namespace', 'App\\Entity');
+        $basePath = $input->getStringOption('path', 'src');
+        $namespace = $input->getStringOption('namespace', 'App\\Entity');
         $force = $input->hasOption('force');
 
-        if (!is_string($basePath)) {
-            $basePath = 'src';
-        }
-
-        if (!is_string($namespace)) {
-            $namespace = 'App\\Entity';
-        }
-
-        $specificTable = $input->getOption('table');
-        if (!is_string($specificTable) || $specificTable === '') {
+        $specificTable = $input->getNullableStringOption('table');
+        if ($specificTable === '') {
             $specificTable = null;
         }
 

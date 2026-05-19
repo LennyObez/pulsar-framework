@@ -54,12 +54,8 @@ final class MakeTestCommand extends Command
             return ExitCode::Invalid->value;
         }
 
-        $basePath = $input->getOption('path', 'tests/Unit');
+        $basePath = $input->getStringOption('path', 'tests/Unit');
         $force = $input->hasOption('force');
-
-        if (!is_string($basePath)) {
-            $basePath = 'tests/Unit';
-        }
 
         if (!class_exists($className)) {
             $output->errorln(sprintf('Class "%s" does not exist. Ensure it is autoloaded.', $className));
