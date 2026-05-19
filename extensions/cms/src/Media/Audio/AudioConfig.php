@@ -7,9 +7,6 @@ namespace Pulsar\Extension\Cms\Media\Audio;
 use Pulsar\Api\Api;
 
 use function is_array;
-use function is_bool;
-use function is_int;
-use function is_string;
 
 /**
  * Configuration for audio processing and transcoding.
@@ -40,17 +37,21 @@ final readonly class AudioConfig
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array{
+     *     ffmpeg_path?: string,
+     *     ffprobe_path?: string,
+     *     max_upload_size?: int,
+     *     process_timeout?: int,
+     *     transcode_presets?: array<string, array<string, mixed>>,
+     *     waveform_enabled?: bool,
+     *     waveform_samples?: int,
+     * } $data
      */
     public static function fromArray(array $data): self
     {
-        $rawPresets = is_array($data['transcode_presets'] ?? null) ? $data['transcode_presets'] : [];
-        /** @var array<string, AudioTranscodePreset> $presets */
         $presets = [];
-
-        foreach ($rawPresets as $name => $preset) {
-            if (is_array($preset) && is_string($name)) {
-                /** @var array<string, mixed> $preset */
+        foreach ($data['transcode_presets'] ?? [] as $name => $preset) {
+            if (is_array($preset)) {
                 $presets[$name] = AudioTranscodePreset::fromArray($preset);
             }
         }
@@ -60,13 +61,13 @@ final readonly class AudioConfig
         }
 
         return new self(
-            ffmpegPath: is_string($data['ffmpeg_path'] ?? null) ? $data['ffmpeg_path'] : 'ffmpeg',
-            ffprobePath: is_string($data['ffprobe_path'] ?? null) ? $data['ffprobe_path'] : 'ffprobe',
-            maxUploadSize: is_int($data['max_upload_size'] ?? null) ? $data['max_upload_size'] : 104_857_600,
-            processTimeout: is_int($data['process_timeout'] ?? null) ? $data['process_timeout'] : 300,
+            ffmpegPath: $data['ffmpeg_path'] ?? 'ffmpeg',
+            ffprobePath: $data['ffprobe_path'] ?? 'ffprobe',
+            maxUploadSize: $data['max_upload_size'] ?? 104_857_600,
+            processTimeout: $data['process_timeout'] ?? 300,
             transcodePresets: $presets,
-            waveformEnabled: is_bool($data['waveform_enabled'] ?? null) ? $data['waveform_enabled'] : true,
-            waveformSamples: is_int($data['waveform_samples'] ?? null) ? $data['waveform_samples'] : 256,
+            waveformEnabled: $data['waveform_enabled'] ?? true,
+            waveformSamples: $data['waveform_samples'] ?? 256,
         );
     }
 
