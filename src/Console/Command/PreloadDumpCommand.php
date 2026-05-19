@@ -93,8 +93,7 @@ final class PreloadDumpCommand extends Command
     #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
-        $rawOutput = $input->getOption('output');
-        $outputPath = is_string($rawOutput) ? $rawOutput : 'preload.generated.php';
+        $outputPath = $input->getStringOption('output', 'preload.generated.php');
         $strict = !$input->hasOption('lenient');
         $noMeta = $input->hasOption('no-meta');
 
