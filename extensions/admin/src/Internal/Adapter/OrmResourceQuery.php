@@ -50,8 +50,7 @@ final readonly class OrmResourceQuery implements ResourceQueryInterface
 
         $countSql = "SELECT COUNT(*) AS cnt FROM $table$whereStr";
         $countResult = $this->connection->query($countSql, $bindings);
-        $cntValue = $countResult->first()?->get('cnt');
-        $total = is_numeric($cntValue) ? (int) $cntValue : 0;
+        $total = $countResult->first()?->getInt('cnt') ?? 0;
 
         $dataSql = "SELECT * FROM $table$whereStr$orderBy LIMIT $perPage OFFSET $offset";
         $dataResult = $this->connection->query($dataSql, $bindings);
@@ -127,8 +126,8 @@ final readonly class OrmResourceQuery implements ResourceQueryInterface
 
         $sql = "SELECT COUNT(*) AS cnt FROM $table$whereStr";
         $result = $this->connection->query($sql, $bindings);
-        $cntVal = $result->first()?->get('cnt');
-        return is_numeric($cntVal) ? (int) $cntVal : 0;
+
+        return $result->first()?->getInt('cnt') ?? 0;
     }
 
     private function tableName(DataResourceInterface $resource): string

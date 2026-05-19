@@ -116,8 +116,7 @@ final readonly class DbGoalConversionRepository
 
     private static function hydrate(Row $row): GoalConversion
     {
-        $revenueRaw = $row->get('revenue_value');
-        $revenue = is_numeric($revenueRaw) ? (float) $revenueRaw : null;
+        $revenue = $row->getNullableFloat('revenue_value');
 
         return new GoalConversion(
             id: $row->getString('id'),
