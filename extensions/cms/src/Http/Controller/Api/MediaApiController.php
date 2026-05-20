@@ -129,9 +129,13 @@ final readonly class MediaApiController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $visibilityValue = is_string($body['visibility'] ?? null) ? $body['visibility'] : 'public';
+        /** @var mixed $rawVisibility */
+        $rawVisibility = $body['visibility'] ?? null;
+        $visibilityValue = is_string($rawVisibility) ? $rawVisibility : 'public';
         $visibility = MediaVisibility::tryFrom($visibilityValue) ?? MediaVisibility::Public;
-        $uploaderId = is_string($body['uploader_id'] ?? null) ? $body['uploader_id'] : 'api';
+        /** @var mixed $rawUploaderId */
+        $rawUploaderId = $body['uploader_id'] ?? null;
+        $uploaderId = is_string($rawUploaderId) ? $rawUploaderId : 'api';
 
         /** @var string|null $tenantId */
         $tenantId = $request->getAttribute('tenant_id');
