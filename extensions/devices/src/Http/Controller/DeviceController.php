@@ -62,9 +62,15 @@ final readonly class DeviceController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $deviceName = is_string($body['device_name'] ?? null) ? $body['device_name'] : '';
-        $platform = is_string($body['platform'] ?? null) ? $body['platform'] : '';
-        $appVersion = is_string($body['app_version'] ?? null) ? $body['app_version'] : '';
+        /** @var mixed $rawDeviceName */
+        $rawDeviceName = $body['device_name'] ?? null;
+        $deviceName = is_string($rawDeviceName) ? $rawDeviceName : '';
+        /** @var mixed $rawPlatform */
+        $rawPlatform = $body['platform'] ?? null;
+        $platform = is_string($rawPlatform) ? $rawPlatform : '';
+        /** @var mixed $rawAppVersion */
+        $rawAppVersion = $body['app_version'] ?? null;
+        $appVersion = is_string($rawAppVersion) ? $rawAppVersion : '';
 
         if ($deviceName === '' || $platform === '' || $appVersion === '') {
             return Response::json([
