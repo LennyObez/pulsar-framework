@@ -99,6 +99,7 @@ final readonly class PluginManifest
 
         $result = [];
 
+        /** @var mixed $item */
         foreach ($value as $item) {
             $result[] = is_string($item) ? $item : (is_scalar($item) ? (string) $item : '');
         }
@@ -117,6 +118,7 @@ final readonly class PluginManifest
 
         $result = [];
 
+        /** @var mixed $item */
         foreach ($value as $key => $item) {
             $strKey = is_string($key) ? $key : (string) $key;
             $result[$strKey] = is_string($item) ? $item : (is_scalar($item) ? (string) $item : '');
@@ -134,8 +136,10 @@ final readonly class PluginManifest
             return [];
         }
 
+        /** @var array<string, mixed> $result */
         $result = [];
 
+        /** @var mixed $item */
         foreach ($value as $key => $item) {
             $strKey = is_string($key) ? $key : (string) $key;
             $result[$strKey] = $item;
@@ -155,6 +159,7 @@ final readonly class PluginManifest
 
         $result = [];
 
+        /** @var mixed $item */
         foreach ($value as $key => $item) {
             if (!is_array($item)) {
                 continue;
@@ -162,6 +167,7 @@ final readonly class PluginManifest
 
             $inner = [];
 
+            /** @var mixed $v */
             foreach ($item as $k => $v) {
                 $innerKey = is_string($k) ? $k : (string) $k;
                 $inner[$innerKey] = is_string($v) ? $v : (is_scalar($v) ? (string) $v : '');
