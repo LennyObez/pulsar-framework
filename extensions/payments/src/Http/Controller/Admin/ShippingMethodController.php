@@ -217,6 +217,7 @@ final readonly class ShippingMethodController
      */
     private function validateZoneInput(array $body): ?string
     {
+        /** @var mixed $rawName */
         $rawName = $body['name'] ?? null;
         $name = is_string($rawName) ? $rawName : '';
 
@@ -242,6 +243,7 @@ final readonly class ShippingMethodController
      */
     private function buildZoneFromInput(string $id, array $body): ShippingZone
     {
+        /** @var mixed $rawName */
         $rawName = $body['name'] ?? null;
         $name = is_string($rawName) && $rawName !== '' ? $rawName : 'Unnamed Zone';
 
@@ -286,6 +288,7 @@ final readonly class ShippingMethodController
      */
     private function buildMethodFromInput(array $data): ?ShippingMethodRate
     {
+        /** @var mixed $rawMethodId */
         $rawMethodId = $data['method_id'] ?? null;
         $methodId = is_string($rawMethodId) ? $rawMethodId : '';
 
@@ -293,23 +296,28 @@ final readonly class ShippingMethodController
             return null;
         }
 
+        /** @var mixed $rawLabel */
         $rawLabel = $data['label'] ?? null;
         $label = is_string($rawLabel) && $rawLabel !== '' ? $rawLabel : $methodId;
+        /** @var mixed $rawType */
         $rawType = $data['type'] ?? null;
         $typeValue = is_string($rawType) ? $rawType : 'flat';
         $type = ShippingRateType::tryFrom($typeValue) ?? ShippingRateType::Flat;
 
+        /** @var mixed $rawBaseRate */
         $rawBaseRate = $data['base_rate'] ?? null;
         $baseRateAmount = (is_string($rawBaseRate) || is_int($rawBaseRate) || is_float($rawBaseRate))
             && is_numeric($rawBaseRate)
             ? (int) $rawBaseRate
             : 0;
+        /** @var mixed $rawCurrency */
         $rawCurrency = $data['currency'] ?? null;
         $currencyCode = is_string($rawCurrency) ? $rawCurrency : 'EUR';
         $currency = Currency::tryFrom($currencyCode) ?? Currency::EUR;
 
         $baseRate = Money::of($baseRateAmount, $currency);
 
+        /** @var mixed $rawId */
         $rawId = $data['id'] ?? null;
 
         $toNullableInt = static function (mixed $value): ?int {
