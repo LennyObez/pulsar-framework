@@ -196,7 +196,19 @@ final readonly class CloudWiring implements ServiceWiringInterface
     }
 
     /**
-     * @param array<string, mixed> $azureData
+     * @param array{
+     *     tenant_id?: string,
+     *     client_id?: string,
+     *     client_secret?: string,
+     *     endpoint?: string|null,
+     *     access_token?: string|null,
+     *     storage_account?: string,
+     *     blob_container?: string,
+     *     blob_prefix?: string,
+     *     servicebus_namespace?: string,
+     *     servicebus_queue?: string,
+     *     keyvault_uri?: string,
+     * } $azureData
      */
     private function wireAzure(ContainerInterface $container, array $azureData, CloudHttpClient $httpClient): void
     {
@@ -204,63 +216,64 @@ final readonly class CloudWiring implements ServiceWiringInterface
         $container->instance(AzureConfig::class, $azureConfig);
 
         // Blob Storage
-        $rawStorageAccount = $azureData['storage_account'] ?? '';
-        $rawContainer = $azureData['blob_container'] ?? '';
+        $storageAccount = $azureData['storage_account'] ?? '';
+        $blobContainer = $azureData['blob_container'] ?? '';
 
-        if (is_string($rawStorageAccount) && $rawStorageAccount !== '' && is_string($rawContainer) && $rawContainer !== '') {
-            $rawPrefix = $azureData['blob_prefix'] ?? '';
+        if ($storageAccount !== '' && $blobContainer !== '') {
+            $prefix = $azureData['blob_prefix'] ?? '';
 
             $container->bind(
                 BlobStorageAdapter::class,
                 static fn(): BlobStorageAdapter => new BlobStorageAdapter(
                     config: $azureConfig,
-                    storageAccount: $rawStorageAccount,
-                    container: $rawContainer,
-                    prefix: is_string($rawPrefix) ? $rawPrefix : '',
+                    storageAccount: $storageAccount,
+                    container: $blobContainer,
+                    prefix: $prefix,
                     httpClient: $httpClient,
                 ),
             );
         }
 
         // Service Bus Queue
-        $rawNamespace = $azureData['servicebus_namespace'] ?? '';
+        $serviceBusNamespace = $azureData['servicebus_namespace'] ?? '';
 
-        if (is_string($rawNamespace) && $rawNamespace !== '') {
+        if ($serviceBusNamespace !== '') {
             $container->bind(
                 ServiceBusQueueDriver::class,
                 static fn(): ServiceBusQueueDriver => new ServiceBusQueueDriver(
                     config: $azureConfig,
-                    namespace: $rawNamespace,
+                    namespace: $serviceBusNamespace,
                     httpClient: $httpClient,
                 ),
             );
         }
 
         // Cosmos DB Sessions
-        $rawCosmosAccount = $azureData['cosmos_account'] ?? '';
-        $rawCosmosDb = $azureData['cosmos_database'] ?? '';
+        /** @var array{cosmos_account?: string, cosmos_database?: string, keyvault_name?: string} $azureData */
+        $cosmosAccount = $azureData['cosmos_account'] ?? '';
+        $cosmosDb = $azureData['cosmos_database'] ?? '';
 
-        if (is_string($rawCosmosAccount) && $rawCosmosAccount !== '' && is_string($rawCosmosDb) && $rawCosmosDb !== '') {
+        if ($cosmosAccount !== '' && $cosmosDb !== '') {
             $container->bind(
                 CosmosDbSessionHandler::class,
                 static fn(): CosmosDbSessionHandler => new CosmosDbSessionHandler(
                     config: $azureConfig,
-                    accountName: $rawCosmosAccount,
-                    databaseId: $rawCosmosDb,
+                    accountName: $cosmosAccount,
+                    databaseId: $cosmosDb,
                     httpClient: $httpClient,
                 ),
             );
         }
 
         // Key Vault
-        $rawVaultName = $azureData['keyvault_name'] ?? '';
+        $vaultName = $azureData['keyvault_name'] ?? '';
 
-        if (is_string($rawVaultName) && $rawVaultName !== '') {
+        if ($vaultName !== '') {
             $container->bind(
                 KeyVaultProvider::class,
                 static fn(): KeyVaultProvider => new KeyVaultProvider(
                     config: $azureConfig,
-                    vaultName: $rawVaultName,
+                    vaultName: $vaultName,
                     httpClient: $httpClient,
                 ),
             );
