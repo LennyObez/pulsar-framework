@@ -89,7 +89,9 @@ final readonly class ExpressionCompiler
     public function in(string $column, array $values, bool $not = false): Expression
     {
         $placeholders = [];
+        /** @var array<string, mixed> $bindings */
         $bindings = [];
+        /** @var mixed $val */
         foreach ($values as $val) {
             $name = $this->bindings->next();
             $placeholders[] = ':' . $name;
