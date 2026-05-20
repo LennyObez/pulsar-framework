@@ -10,7 +10,12 @@ use Pulsar\Api\Internal;
 use Pulsar\Extension\Analytics\Contracts\FlowServiceInterface;
 use Pulsar\Http\Message\Response;
 
+use function array_map;
+use function is_int;
+use function is_numeric;
 use function is_string;
+use function max;
+use function min;
 
 /**
  * User flow / behavior flow API endpoint.
@@ -25,6 +30,7 @@ final readonly class FlowController
     public function flow(ServerRequestInterface $request): Response
     {
         $params = $request->getQueryParams();
+        /** @var mixed $rawSiteId */
         $rawSiteId = $params['site_id'] ?? null;
         $siteId = is_string($rawSiteId) ? $rawSiteId : '';
 
@@ -32,14 +38,18 @@ final readonly class FlowController
             return Response::json(['error' => 'site_id is required'], 400);
         }
 
+        /** @var mixed $rawFrom */
         $rawFrom = $params['from'] ?? null;
+        /** @var mixed $rawTo */
         $rawTo = $params['to'] ?? null;
         $from = new DateTimeImmutable(is_string($rawFrom) ? $rawFrom : '-30 days');
         $to = new DateTimeImmutable(is_string($rawTo) ? $rawTo : 'now');
+        /** @var mixed $rawEntryPage */
         $rawEntryPage = $params['entry_page'] ?? null;
         $entryPage = is_string($rawEntryPage) ? $rawEntryPage : '/';
+        /** @var mixed $rawDepth */
         $rawDepth = $params['depth'] ?? 3;
-        $depth = max(1, min(5, is_numeric($rawDepth) ? (int) $rawDepth : 3));
+        $depth = max(1, min(5, (is_int($rawDepth) || is_string($rawDepth)) && is_numeric($rawDepth) ? (int) $rawDepth : 3));
 
         $steps = $this->flowService->getFlowFromPage($siteId, $from, $to, $entryPage, $depth);
 
@@ -56,6 +66,7 @@ final readonly class FlowController
     public function exits(ServerRequestInterface $request): Response
     {
         $params = $request->getQueryParams();
+        /** @var mixed $rawSiteId */
         $rawSiteId = $params['site_id'] ?? null;
         $siteId = is_string($rawSiteId) ? $rawSiteId : '';
 
@@ -63,7 +74,9 @@ final readonly class FlowController
             return Response::json(['error' => 'site_id is required'], 400);
         }
 
+        /** @var mixed $rawFrom */
         $rawFrom = $params['from'] ?? null;
+        /** @var mixed $rawTo */
         $rawTo = $params['to'] ?? null;
         $from = new DateTimeImmutable(is_string($rawFrom) ? $rawFrom : '-30 days');
         $to = new DateTimeImmutable(is_string($rawTo) ? $rawTo : 'now');
