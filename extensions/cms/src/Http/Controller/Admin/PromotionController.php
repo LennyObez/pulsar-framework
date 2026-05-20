@@ -287,11 +287,11 @@ final readonly class PromotionController extends AbstractAdminController
             maxUses: isset($body['max_uses']) ? (is_int($body['max_uses']) ? $body['max_uses'] : 0) : $promotion->maxUses,
             maxUsesPerCustomer: isset($body['max_uses_per_customer']) ? (is_int($body['max_uses_per_customer']) ? $body['max_uses_per_customer'] : 0) : $promotion->maxUsesPerCustomer,
             currentUses: $promotion->currentUses,
-            applicableProductIds: is_array($body['applicable_product_ids'] ?? null)
-                ? array_values(array_filter($body['applicable_product_ids'], 'is_string'))
+            applicableProductIds: is_array($rawProductIds = $body['applicable_product_ids'] ?? null)
+                ? array_values(array_filter($rawProductIds, 'is_string'))
                 : $promotion->applicableProductIds,
-            applicableCategoryIds: is_array($body['applicable_category_ids'] ?? null)
-                ? array_values(array_filter($body['applicable_category_ids'], 'is_string'))
+            applicableCategoryIds: is_array($rawCategoryIds = $body['applicable_category_ids'] ?? null)
+                ? array_values(array_filter($rawCategoryIds, 'is_string'))
                 : $promotion->applicableCategoryIds,
             startsAt: $startsAt,
             expiresAt: $expiresAt,
