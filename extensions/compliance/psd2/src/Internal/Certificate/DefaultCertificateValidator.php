@@ -163,7 +163,7 @@ final readonly class DefaultCertificateValidator implements CertificateValidator
     /**
      * Extract PSD2 roles from certificate extensions.
      *
-     * @param array<string, mixed> $extensions
+     * @param array<array-key, mixed> $extensions
      *
      * @return list<string>
      */
@@ -204,7 +204,7 @@ final readonly class DefaultCertificateValidator implements CertificateValidator
     /**
      * Extract the NCA authorization number from certificate extensions.
      *
-     * @param array<string, mixed> $extensions
+     * @param array<array-key, mixed> $extensions
      */
     private function extractAuthorizationNumber(array $extensions): string
     {
@@ -224,7 +224,7 @@ final readonly class DefaultCertificateValidator implements CertificateValidator
     }
 
     /**
-     * @param array<string, mixed> $extensions
+     * @param array<array-key, mixed> $extensions
      */
     private function extractNcaName(array $extensions): string
     {
@@ -239,7 +239,7 @@ final readonly class DefaultCertificateValidator implements CertificateValidator
     }
 
     /**
-     * @param array<string, mixed> $extensions
+     * @param array<array-key, mixed> $extensions
      */
     private function extractNcaId(array $extensions): string
     {
@@ -256,7 +256,7 @@ final readonly class DefaultCertificateValidator implements CertificateValidator
     /**
      * Check whether the certificate is a qualified eIDAS certificate.
      *
-     * @param array<string, mixed> $extensions
+     * @param array<array-key, mixed> $extensions
      */
     private function checkQualification(array $extensions): bool
     {
