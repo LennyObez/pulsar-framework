@@ -94,15 +94,23 @@ final readonly class NotificationPreferencesController
             /** @var array<string, mixed> $item */
             $item = $entry;
 
-            $eventType = is_string($item['event_type'] ?? null) ? $item['event_type'] : null;
+            /** @var mixed $rawEventType */
+            $rawEventType = $item['event_type'] ?? null;
+            $eventType = is_string($rawEventType) ? $rawEventType : null;
 
             if ($eventType === null || $eventType === '') {
                 continue;
             }
 
-            $inApp = is_bool($item['in_app'] ?? null) ? $item['in_app'] : true;
-            $email = is_bool($item['email'] ?? null) ? $item['email'] : false;
-            $emailFrequency = is_string($item['email_frequency'] ?? null) ? $item['email_frequency'] : 'immediate';
+            /** @var mixed $rawInApp */
+            $rawInApp = $item['in_app'] ?? null;
+            $inApp = is_bool($rawInApp) ? $rawInApp : true;
+            /** @var mixed $rawEmail */
+            $rawEmail = $item['email'] ?? null;
+            $email = is_bool($rawEmail) ? $rawEmail : false;
+            /** @var mixed $rawEmailFrequency */
+            $rawEmailFrequency = $item['email_frequency'] ?? null;
+            $emailFrequency = is_string($rawEmailFrequency) ? $rawEmailFrequency : 'immediate';
 
             if (!in_array($emailFrequency, self::VALID_FREQUENCIES, true)) {
                 $emailFrequency = 'immediate';
