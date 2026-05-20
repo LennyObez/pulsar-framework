@@ -43,14 +43,20 @@ final readonly class CommerceApiController
         }
 
         $params = $request->getQueryParams();
-        $page = max(1, is_int($params['page'] ?? null) ? $params['page'] : 1);
-        $perPage = min(100, max(1, is_int($params['per_page'] ?? null) ? $params['per_page'] : 20));
+        /** @var mixed $rawPage */
+        $rawPage = $params['page'] ?? null;
+        $page = max(1, is_int($rawPage) ? $rawPage : 1);
+        /** @var mixed $rawPerPage */
+        $rawPerPage = $params['per_page'] ?? null;
+        $perPage = min(100, max(1, is_int($rawPerPage) ? $rawPerPage : 20));
 
         /** @var array<string, mixed> $filters */
         $filters = [];
 
-        if (is_string($params['status'] ?? null)) {
-            $filters['status'] = $params['status'];
+        /** @var mixed $rawStatus */
+        $rawStatus = $params['status'] ?? null;
+        if (is_string($rawStatus)) {
+            $filters['status'] = $rawStatus;
         }
 
         /** @var string|null $tenantId */
@@ -121,18 +127,26 @@ final readonly class CommerceApiController
         }
 
         $params = $request->getQueryParams();
-        $page = max(1, is_int($params['page'] ?? null) ? $params['page'] : 1);
-        $perPage = min(100, max(1, is_int($params['per_page'] ?? null) ? $params['per_page'] : 20));
+        /** @var mixed $rawPage */
+        $rawPage = $params['page'] ?? null;
+        $page = max(1, is_int($rawPage) ? $rawPage : 1);
+        /** @var mixed $rawPerPage */
+        $rawPerPage = $params['per_page'] ?? null;
+        $perPage = min(100, max(1, is_int($rawPerPage) ? $rawPerPage : 20));
 
         /** @var array<string, mixed> $filters */
         $filters = [];
 
-        if (is_string($params['status'] ?? null)) {
-            $filters['status'] = $params['status'];
+        /** @var mixed $rawStatus */
+        $rawStatus = $params['status'] ?? null;
+        if (is_string($rawStatus)) {
+            $filters['status'] = $rawStatus;
         }
 
-        if (is_string($params['customer_id'] ?? null)) {
-            $filters['customerId'] = $params['customer_id'];
+        /** @var mixed $rawCustomerId */
+        $rawCustomerId = $params['customer_id'] ?? null;
+        if (is_string($rawCustomerId)) {
+            $filters['customerId'] = $rawCustomerId;
         }
 
         /** @var string|null $tenantId */
