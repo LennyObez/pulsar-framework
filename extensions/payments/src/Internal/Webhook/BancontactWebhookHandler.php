@@ -79,7 +79,9 @@ final readonly class BancontactWebhookHandler
      */
     private function processEvent(string $eventType, array $object): bool
     {
-        $intentId = is_string($object['id'] ?? null) ? $object['id'] : '';
+        /** @var mixed $rawIntentId */
+        $rawIntentId = $object['id'] ?? null;
+        $intentId = is_string($rawIntentId) ? $rawIntentId : '';
 
         if ($intentId === '') {
             return false;
@@ -105,9 +107,13 @@ final readonly class BancontactWebhookHandler
      */
     private function handlePaymentFailed(string $intentId, array $object): bool
     {
+        /** @var mixed $rawLastError */
+        $rawLastError = $object['last_payment_error'] ?? null;
         /** @var array<string, mixed> $lastError */
-        $lastError = is_array($object['last_payment_error'] ?? null) ? $object['last_payment_error'] : [];
-        $message = is_string($lastError['message'] ?? null) ? $lastError['message'] : 'Unknown error';
+        $lastError = is_array($rawLastError) ? $rawLastError : [];
+        /** @var mixed $rawMessage */
+        $rawMessage = $lastError['message'] ?? null;
+        $message = is_string($rawMessage) ? $rawMessage : 'Unknown error';
 
         $this->logger->warning('Bancontact payment failed', [
             'intent_id' => $intentId,
