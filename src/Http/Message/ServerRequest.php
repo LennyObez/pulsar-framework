@@ -185,9 +185,11 @@ final class ServerRequest implements ServerRequestInterface
         /** @var array<string, mixed> $fileData */
         $fileData = $files ?? $_FILES;
 
+        /** @var mixed $requestMethod */
         $requestMethod = $serverData['REQUEST_METHOD'] ?? 'GET';
         $method = is_string($requestMethod) ? $requestMethod : 'GET';
 
+        /** @var mixed $requestUri */
         $requestUri = $serverData['REQUEST_URI'] ?? '/';
         $uriString = is_string($requestUri) ? $requestUri : '/';
 
@@ -231,6 +233,7 @@ final class ServerRequest implements ServerRequestInterface
             query: $queryString,
         );
 
+        /** @var mixed $protocol */
         $protocol = $serverData['SERVER_PROTOCOL'] ?? null;
         $protocolVersion = is_string($protocol) ? str_replace('HTTP/', '', $protocol) : '1.1';
 
