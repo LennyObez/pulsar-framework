@@ -54,7 +54,8 @@ final readonly class MobileWebhookHandler
             return ['status' => 'invalid_format', 'event_type' => ''];
         }
 
-        $encodedData = is_string($message['data'] ?? null) ? $message['data'] : '';
+        $rawData = $message['data'] ?? null;
+        $encodedData = is_string($rawData) ? $rawData : '';
 
         if ($encodedData === '') {
             return ['status' => 'missing_data', 'event_type' => ''];
@@ -84,9 +85,8 @@ final readonly class MobileWebhookHandler
 
         $rawType = $subscriptionNotification['notificationType'] ?? 0;
         $notificationType = is_int($rawType) ? $rawType : (int) (is_string($rawType) ? $rawType : '0');
-        $purchaseToken = is_string($subscriptionNotification['purchaseToken'] ?? null)
-            ? $subscriptionNotification['purchaseToken']
-            : '';
+        $rawPurchaseToken = $subscriptionNotification['purchaseToken'] ?? null;
+        $purchaseToken = is_string($rawPurchaseToken) ? $rawPurchaseToken : '';
 
         if ($purchaseToken === '') {
             return ['status' => 'missing_token', 'event_type' => ''];
@@ -124,7 +124,8 @@ final readonly class MobileWebhookHandler
      */
     public function handleAppleSns(array $body): array
     {
-        $signedPayload = is_string($body['signedPayload'] ?? null) ? $body['signedPayload'] : '';
+        $rawSignedPayload = $body['signedPayload'] ?? null;
+        $signedPayload = is_string($rawSignedPayload) ? $rawSignedPayload : '';
 
         if ($signedPayload === '') {
             return ['status' => 'missing_payload', 'event_type' => ''];
@@ -136,21 +137,20 @@ final readonly class MobileWebhookHandler
             return ['status' => 'invalid_jws', 'event_type' => ''];
         }
 
-        $notificationType = is_string($decoded['notificationType'] ?? null)
-            ? $decoded['notificationType']
-            : '';
+        $rawNotificationType = $decoded['notificationType'] ?? null;
+        $notificationType = is_string($rawNotificationType) ? $rawNotificationType : '';
 
         /** @var array<string, mixed> $transactionData */
         $transactionData = is_array($decoded['data'] ?? null) ? $decoded['data'] : [];
 
-        $signedTransactionInfo = is_string($transactionData['signedTransactionInfo'] ?? null)
-            ? $transactionData['signedTransactionInfo']
-            : '';
+        $rawSignedTransactionInfo = $transactionData['signedTransactionInfo'] ?? null;
+        $signedTransactionInfo = is_string($rawSignedTransactionInfo) ? $rawSignedTransactionInfo : '';
 
         $transactionInfo = $signedTransactionInfo !== '' ? self::decodeJws($signedTransactionInfo) : null;
 
-        $originalTransactionId = $transactionInfo !== null && is_string($transactionInfo['originalTransactionId'] ?? null)
-            ? $transactionInfo['originalTransactionId']
+        $rawOriginalTransactionId = $transactionInfo['originalTransactionId'] ?? null;
+        $originalTransactionId = $transactionInfo !== null && is_string($rawOriginalTransactionId)
+            ? $rawOriginalTransactionId
             : '';
 
         if ($originalTransactionId === '') {
