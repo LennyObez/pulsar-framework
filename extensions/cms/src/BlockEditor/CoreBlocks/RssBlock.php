@@ -56,8 +56,8 @@ final readonly class RssBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
-        /** @var list<mixed> $items */
-        $items = $data['items'] ?? [];
+        /** @var list<array{title?: string, url?: string, date?: string, description?: string}> $items */
+        $items = is_array($data['items'] ?? null) ? $data['items'] : [];
         $showDescription = is_bool($data['showDescription'] ?? null) ? $data['showDescription'] : true;
         $showDate = is_bool($data['showDate'] ?? null) ? $data['showDate'] : true;
         $feedUrl = htmlspecialchars(is_string($data['feedUrl'] ?? null) ? $data['feedUrl'] : '', ENT_QUOTES, 'UTF-8');
@@ -66,24 +66,22 @@ final readonly class RssBlock implements BlockTypeInterface
         $html .= '<ul class="rss-block__list">';
 
         foreach ($items as $item) {
-            if (!is_array($item)) {
-                continue;
-            }
-
-            $title = htmlspecialchars(is_string($item['title'] ?? null) ? $item['title'] : '', ENT_QUOTES, 'UTF-8');
-            $url = htmlspecialchars(is_string($item['url'] ?? null) ? $item['url'] : '#', ENT_QUOTES, 'UTF-8');
+            $title = htmlspecialchars($item['title'] ?? '', ENT_QUOTES, 'UTF-8');
+            $url = htmlspecialchars($item['url'] ?? '#', ENT_QUOTES, 'UTF-8');
 
             $html .= '<li class="rss-block__item">';
             $html .= "<a href=\"$url\" rel=\"noopener noreferrer\" target=\"_blank\">$title</a>";
 
-            if ($showDate && is_string($item['date'] ?? null) && $item['date'] !== '') {
-                $date = htmlspecialchars($item['date'], ENT_QUOTES, 'UTF-8');
-                $html .= "<time class=\"rss-block__date\">$date</time>";
+            $date = $item['date'] ?? '';
+            if ($showDate && $date !== '') {
+                $dateEsc = htmlspecialchars($date, ENT_QUOTES, 'UTF-8');
+                $html .= "<time class=\"rss-block__date\">$dateEsc</time>";
             }
 
-            if ($showDescription && is_string($item['description'] ?? null) && $item['description'] !== '') {
-                $desc = htmlspecialchars($item['description'], ENT_QUOTES, 'UTF-8');
-                $html .= "<p class=\"rss-block__description\">$desc</p>";
+            $desc = $item['description'] ?? '';
+            if ($showDescription && $desc !== '') {
+                $descEsc = htmlspecialchars($desc, ENT_QUOTES, 'UTF-8');
+                $html .= "<p class=\"rss-block__description\">$descEsc</p>";
             }
 
             $html .= '</li>';
