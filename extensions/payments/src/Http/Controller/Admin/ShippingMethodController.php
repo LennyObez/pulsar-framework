@@ -249,8 +249,11 @@ final readonly class ShippingMethodController
 
         /** @var list<string> $countries */
         $countries = [];
-        $rawCountries = is_array($body['countries'] ?? null) ? $body['countries'] : [];
+        /** @var mixed $rawCountriesRaw */
+        $rawCountriesRaw = $body['countries'] ?? null;
+        $rawCountries = is_array($rawCountriesRaw) ? $rawCountriesRaw : [];
 
+        /** @var mixed $code */
         foreach ($rawCountries as $code) {
             if (is_string($code) && $code !== '') {
                 $countries[] = strtoupper($code);
@@ -258,8 +261,11 @@ final readonly class ShippingMethodController
         }
 
         $methods = [];
-        $rawMethods = is_array($body['methods'] ?? null) ? $body['methods'] : [];
+        /** @var mixed $rawMethodsRaw */
+        $rawMethodsRaw = $body['methods'] ?? null;
+        $rawMethods = is_array($rawMethodsRaw) ? $rawMethodsRaw : [];
 
+        /** @var mixed $rawMethod */
         foreach ($rawMethods as $rawMethod) {
             if (!is_array($rawMethod)) {
                 continue;
@@ -535,6 +541,7 @@ final readonly class ShippingMethodController
 
     private function resolveRouteParam(ServerRequestInterface $request, string $param): string
     {
+        /** @var mixed $value */
         $value = $request->getAttribute($param);
 
         return is_string($value) ? $value : '';
