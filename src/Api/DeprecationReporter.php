@@ -102,17 +102,27 @@ final class DeprecationReporter
                 continue;
             }
 
+            /** @var mixed $deprecated */
             $deprecated = $entry['deprecated'] ?? null;
 
             if (!is_array($deprecated)) {
                 continue;
             }
 
+            /** @var mixed $rawSymbol */
+            $rawSymbol = $entry['name'] ?? null;
+            /** @var mixed $rawSince */
+            $rawSince = $deprecated['since'] ?? null;
+            /** @var mixed $rawRemoveIn */
+            $rawRemoveIn = $deprecated['removeIn'] ?? null;
+            /** @var mixed $rawReplacement */
+            $rawReplacement = $deprecated['replacement'] ?? null;
+
             $reports[] = [
-                'symbol' => is_string($entry['name'] ?? null) ? $entry['name'] : 'unknown',
-                'since' => is_string($deprecated['since'] ?? null) ? $deprecated['since'] : '',
-                'removeIn' => is_string($deprecated['removeIn'] ?? null) ? $deprecated['removeIn'] : '',
-                'replacement' => is_string($deprecated['replacement'] ?? null) ? $deprecated['replacement'] : '',
+                'symbol' => is_string($rawSymbol) ? $rawSymbol : 'unknown',
+                'since' => is_string($rawSince) ? $rawSince : '',
+                'removeIn' => is_string($rawRemoveIn) ? $rawRemoveIn : '',
+                'replacement' => is_string($rawReplacement) ? $rawReplacement : '',
             ];
         }
 

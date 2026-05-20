@@ -128,10 +128,17 @@ final readonly class BillingEngine
             ? $subscription->metadata['billing_address']
             : [];
 
+        /** @var mixed $rawCountry */
+        $rawCountry = $address['country'] ?? null;
+        /** @var mixed $rawRegion */
+        $rawRegion = $address['region'] ?? null;
+        /** @var mixed $rawPostal */
+        $rawPostal = $address['postal_code'] ?? null;
+
         return [
-            'country' => is_string($address['country'] ?? null) ? $address['country'] : '',
-            'region' => is_string($address['region'] ?? null) ? $address['region'] : '',
-            'postal_code' => is_string($address['postal_code'] ?? null) ? $address['postal_code'] : '',
+            'country' => is_string($rawCountry) ? $rawCountry : '',
+            'region' => is_string($rawRegion) ? $rawRegion : '',
+            'postal_code' => is_string($rawPostal) ? $rawPostal : '',
         ];
     }
 }
