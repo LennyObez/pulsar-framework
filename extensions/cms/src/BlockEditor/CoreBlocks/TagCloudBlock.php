@@ -56,8 +56,12 @@ final readonly class TagCloudBlock implements BlockTypeInterface
     {
         /** @var list<mixed> $tags */
         $tags = $data['tags'] ?? [];
-        $minFont = is_int($data['minFontSize'] ?? null) ? max(8, $data['minFontSize']) : 12;
-        $maxFont = is_int($data['maxFontSize'] ?? null) ? max($minFont, $data['maxFontSize']) : 32;
+        /** @var mixed $rawMinFont */
+        $rawMinFont = $data['minFontSize'] ?? null;
+        /** @var mixed $rawMaxFont */
+        $rawMaxFont = $data['maxFontSize'] ?? null;
+        $minFont = is_int($rawMinFont) ? max(8, $rawMinFont) : 12;
+        $maxFont = is_int($rawMaxFont) ? max($minFont, $rawMaxFont) : 32;
 
         $maxCount = 0;
         $minCount = PHP_INT_MAX;
@@ -67,7 +71,9 @@ final readonly class TagCloudBlock implements BlockTypeInterface
                 continue;
             }
 
-            $count = is_int($tag['count'] ?? null) ? $tag['count'] : 0;
+            /** @var mixed $rawCount */
+            $rawCount = $tag['count'] ?? null;
+            $count = is_int($rawCount) ? $rawCount : 0;
             $maxCount = max($maxCount, $count);
             $minCount = min($minCount, $count);
         }
@@ -83,9 +89,15 @@ final readonly class TagCloudBlock implements BlockTypeInterface
                 continue;
             }
 
-            $name = htmlspecialchars(is_string($tag['name'] ?? null) ? $tag['name'] : '', ENT_QUOTES, 'UTF-8');
-            $url = htmlspecialchars(is_string($tag['url'] ?? null) ? $tag['url'] : '#', ENT_QUOTES, 'UTF-8');
-            $count = is_int($tag['count'] ?? null) ? $tag['count'] : 0;
+            /** @var mixed $rawName */
+            $rawName = $tag['name'] ?? null;
+            /** @var mixed $rawUrl */
+            $rawUrl = $tag['url'] ?? null;
+            /** @var mixed $rawCount */
+            $rawCount = $tag['count'] ?? null;
+            $name = htmlspecialchars(is_string($rawName) ? $rawName : '', ENT_QUOTES, 'UTF-8');
+            $url = htmlspecialchars(is_string($rawUrl) ? $rawUrl : '#', ENT_QUOTES, 'UTF-8');
+            $count = is_int($rawCount) ? $rawCount : 0;
 
             $range = $maxCount - $minCount;
             $fontSize = $range > 0
