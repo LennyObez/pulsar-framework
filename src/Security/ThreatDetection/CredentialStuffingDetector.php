@@ -70,8 +70,12 @@ final class CredentialStuffingDetector implements ThreatDetectorInterface
             return;
         }
 
-        $ip = is_string($context['ip'] ?? null) ? $context['ip'] : '';
-        $username = is_string($context['account'] ?? null) ? $context['account'] : '';
+        /** @var mixed $rawIp */
+        $rawIp = $context['ip'] ?? null;
+        /** @var mixed $rawUsername */
+        $rawUsername = $context['account'] ?? null;
+        $ip = is_string($rawIp) ? $rawIp : '';
+        $username = is_string($rawUsername) ? $rawUsername : '';
 
         if ($ip === '' || $username === '') {
             return;
