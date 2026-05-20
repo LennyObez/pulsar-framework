@@ -184,7 +184,9 @@ final readonly class StripeWebhookHandler
      */
     private function handlePaymentSucceeded(array $object): bool
     {
-        $subscriptionId = is_string($object['subscription'] ?? null) ? $object['subscription'] : '';
+        /** @var mixed $rawSubscriptionId */
+        $rawSubscriptionId = $object['subscription'] ?? null;
+        $subscriptionId = is_string($rawSubscriptionId) ? $rawSubscriptionId : '';
 
         if ($subscriptionId === '') {
             return false;
