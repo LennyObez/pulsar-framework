@@ -55,7 +55,9 @@ final readonly class NewsletterController extends AbstractAdminController
         $this->authorize($identity, 'cms.newsletter.manage');
 
         $params = $request->getQueryParams();
-        $statusFilter = is_string($params['status'] ?? null) ? $params['status'] : null;
+        /** @var mixed $rawStatus */
+        $rawStatus = $params['status'] ?? null;
+        $statusFilter = is_string($rawStatus) ? $rawStatus : null;
 
         /** @var int|string $rawPage */
         $rawPage = $params['page'] ?? 1;
@@ -238,10 +240,18 @@ final readonly class NewsletterController extends AbstractAdminController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $subject = is_string($body['subject'] ?? null) ? $body['subject'] : '';
-        $bodyHtml = is_string($body['body_html'] ?? null) ? $body['body_html'] : '';
-        $bodyText = is_string($body['body_text'] ?? null) ? $body['body_text'] : null;
-        $locale = is_string($body['locale'] ?? null) ? $body['locale'] : 'en';
+        /** @var mixed $rawSubject */
+        $rawSubject = $body['subject'] ?? null;
+        $subject = is_string($rawSubject) ? $rawSubject : '';
+        /** @var mixed $rawBodyHtml */
+        $rawBodyHtml = $body['body_html'] ?? null;
+        $bodyHtml = is_string($rawBodyHtml) ? $rawBodyHtml : '';
+        /** @var mixed $rawBodyText */
+        $rawBodyText = $body['body_text'] ?? null;
+        $bodyText = is_string($rawBodyText) ? $rawBodyText : null;
+        /** @var mixed $rawLocale */
+        $rawLocale = $body['locale'] ?? null;
+        $locale = is_string($rawLocale) ? $rawLocale : 'en';
 
         if ($subject === '' || $bodyHtml === '') {
             return Response::json(['error' => 'Subject and HTML body are required'], 422);
@@ -276,10 +286,18 @@ final readonly class NewsletterController extends AbstractAdminController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $subject = is_string($body['subject'] ?? null) ? $body['subject'] : '';
-        $bodyHtml = is_string($body['body_html'] ?? null) ? $body['body_html'] : '';
-        $bodyText = is_string($body['body_text'] ?? null) ? $body['body_text'] : null;
-        $locale = is_string($body['locale'] ?? null) ? $body['locale'] : 'en';
+        /** @var mixed $rawSubject */
+        $rawSubject = $body['subject'] ?? null;
+        $subject = is_string($rawSubject) ? $rawSubject : '';
+        /** @var mixed $rawBodyHtml */
+        $rawBodyHtml = $body['body_html'] ?? null;
+        $bodyHtml = is_string($rawBodyHtml) ? $rawBodyHtml : '';
+        /** @var mixed $rawBodyText */
+        $rawBodyText = $body['body_text'] ?? null;
+        $bodyText = is_string($rawBodyText) ? $rawBodyText : null;
+        /** @var mixed $rawLocale */
+        $rawLocale = $body['locale'] ?? null;
+        $locale = is_string($rawLocale) ? $rawLocale : 'en';
 
         if ($subject === '' || $bodyHtml === '') {
             return Response::json(['error' => 'Subject and HTML body are required'], 422);
