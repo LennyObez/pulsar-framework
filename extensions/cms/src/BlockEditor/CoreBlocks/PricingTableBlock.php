@@ -76,9 +76,13 @@ final readonly class PricingTableBlock implements BlockTypeInterface
                 $cssClass .= ' pricing-plan--highlighted';
             }
 
+            /** @var mixed $rawName */
             $rawName = $plan['name'] ?? null;
+            /** @var mixed $rawPrice */
             $rawPrice = $plan['price'] ?? null;
+            /** @var mixed $rawCtaText */
             $rawCtaText = $plan['ctaText'] ?? null;
+            /** @var mixed $rawCtaUrl */
             $rawCtaUrl = $plan['ctaUrl'] ?? null;
             $name = htmlspecialchars(is_string($rawName) ? $rawName : '', ENT_QUOTES, 'UTF-8');
             $price = htmlspecialchars(is_string($rawPrice) ? $rawPrice : '', ENT_QUOTES, 'UTF-8');

@@ -46,9 +46,13 @@ final readonly class CodeComparisonBlock implements BlockTypeInterface
     {
         /** @var mixed $title */
         $title = $data['title'] ?? null;
+        /** @var mixed $rawLeftLabel */
         $rawLeftLabel = $data['leftLabel'] ?? null;
+        /** @var mixed $rawLeftCode */
         $rawLeftCode = $data['leftCode'] ?? null;
+        /** @var mixed $rawRightLabel */
         $rawRightLabel = $data['rightLabel'] ?? null;
+        /** @var mixed $rawRightCode */
         $rawRightCode = $data['rightCode'] ?? null;
         $leftLabel = htmlspecialchars(is_string($rawLeftLabel) ? $rawLeftLabel : '', ENT_QUOTES, 'UTF-8');
         $leftCode = htmlspecialchars(is_string($rawLeftCode) ? $rawLeftCode : '', ENT_QUOTES, 'UTF-8');
