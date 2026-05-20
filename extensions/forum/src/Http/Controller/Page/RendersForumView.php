@@ -54,6 +54,9 @@ trait RendersForumView
         return Response::html($html, $statusCode);
     }
 
+    /**
+     * @psalm-api Trait utility used by a subset of consumer controllers.
+     */
     private function getIdentity(ServerRequestInterface $request): ?IdentityInterface
     {
         /** @var IdentityInterface|null $identity */
