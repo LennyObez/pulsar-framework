@@ -370,9 +370,13 @@ final readonly class SchemaApiController
         /** @var list<string> $referencedColumns */
         $referencedColumns = $fk['referenced_columns'] ?? [];
 
+        /** @var mixed $fkName */
         $fkName = $fk['name'] ?? '';
+        /** @var mixed $refTable */
         $refTable = $fk['referenced_table'] ?? '';
+        /** @var mixed $onDelete */
         $onDelete = $fk['on_delete'] ?? 'RESTRICT';
+        /** @var mixed $onUpdate */
         $onUpdate = $fk['on_update'] ?? 'RESTRICT';
         return new SchemaForeignKey(
             name: is_string($fkName) ? $fkName : '',
