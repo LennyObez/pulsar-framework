@@ -137,17 +137,20 @@ final readonly class MobileWebhookHandler
             return ['status' => 'invalid_jws', 'event_type' => ''];
         }
 
+        /** @var mixed $rawNotificationType */
         $rawNotificationType = $decoded['notificationType'] ?? null;
         $notificationType = is_string($rawNotificationType) ? $rawNotificationType : '';
 
         /** @var array<string, mixed> $transactionData */
         $transactionData = is_array($decoded['data'] ?? null) ? $decoded['data'] : [];
 
+        /** @var mixed $rawSignedTransactionInfo */
         $rawSignedTransactionInfo = $transactionData['signedTransactionInfo'] ?? null;
         $signedTransactionInfo = is_string($rawSignedTransactionInfo) ? $rawSignedTransactionInfo : '';
 
         $transactionInfo = $signedTransactionInfo !== '' ? self::decodeJws($signedTransactionInfo) : null;
 
+        /** @var mixed $rawOriginalTransactionId */
         $rawOriginalTransactionId = $transactionInfo['originalTransactionId'] ?? null;
         $originalTransactionId = $transactionInfo !== null && is_string($rawOriginalTransactionId)
             ? $rawOriginalTransactionId
