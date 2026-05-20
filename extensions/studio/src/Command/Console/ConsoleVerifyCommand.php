@@ -53,6 +53,7 @@ final class ConsoleVerifyCommand extends Command
     #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
+        /** @var mixed $rawFilePath */
         $rawFilePath = $input->getArgument(0);
         $filePath = is_string($rawFilePath) ? $rawFilePath : '';
         $mode = $input->getStringOption('mode', 'public');
