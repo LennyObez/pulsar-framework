@@ -32,7 +32,19 @@ final class SqliteSavedViewStore implements SavedViewStoreInterface
         $stmt->execute(['resource' => $resourceName]);
 
         $views = [];
-        /** @var array<string, mixed> $row */
+        /**
+         * @var array{
+         *     id: string,
+         *     resource_name: string,
+         *     label: string,
+         *     filters: string,
+         *     sort: string,
+         *     per_page: int,
+         *     created_by: string,
+         *     is_default: int,
+         *     created_at: int,
+         * } $row
+         */
         foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
             $views[] = $this->hydrate($row);
         }
@@ -47,7 +59,19 @@ final class SqliteSavedViewStore implements SavedViewStoreInterface
         $stmt = $this->pdo->prepare('SELECT * FROM admin_saved_views WHERE id = :id');
         $stmt->execute(['id' => $id]);
 
-        /** @var array<string, mixed>|false $row */
+        /**
+         * @var array{
+         *     id: string,
+         *     resource_name: string,
+         *     label: string,
+         *     filters: string,
+         *     sort: string,
+         *     per_page: int,
+         *     created_by: string,
+         *     is_default: int,
+         *     created_at: int,
+         * }|false $row
+         */
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($row === false) {
             return null;
@@ -111,11 +135,20 @@ final class SqliteSavedViewStore implements SavedViewStoreInterface
     }
 
     /**
-     * @param array<string, mixed> $row
+     * @param array{
+     *     id: string,
+     *     resource_name: string,
+     *     label: string,
+     *     filters: string,
+     *     sort: string,
+     *     per_page: int,
+     *     created_by: string,
+     *     is_default: int,
+     *     created_at: int,
+     * } $row
      */
     private function hydrate(array $row): SavedView
     {
-        /** @var array{id: string, resource_name: string, label: string, filters: string, sort: string, per_page: int, created_by: string, is_default: int, created_at: int} $row */
         /** @var array<string, mixed> $filters */
         $filters = json_decode($row['filters'], true, 512, JSON_THROW_ON_ERROR);
         /** @var array<string, string> $sort */
