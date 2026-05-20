@@ -63,9 +63,22 @@ final readonly class OAuth2TokenResolver implements TokenResolverInterface
         // Resolve basic profile claims for the identity
         $claims = $this->claimsProvider->getClaims($accessToken->subjectId, $accessToken->scopes);
 
+        /** @var mixed $rawName */
+        $rawName = $claims['name'] ?? null;
+        /** @var mixed $rawPreferredUsername */
+        $rawPreferredUsername = $claims['preferred_username'] ?? null;
+
+        if (is_string($rawName)) {
+            $displayName = $rawName;
+        } elseif (is_string($rawPreferredUsername)) {
+            $displayName = $rawPreferredUsername;
+        } else {
+            $displayName = $accessToken->subjectId;
+        }
+
         return new Identity(
             id: $accessToken->subjectId,
-            displayName: is_string($claims['name'] ?? null) ? $claims['name'] : (is_string($claims['preferred_username'] ?? null) ? $claims['preferred_username'] : $accessToken->subjectId),
+            displayName: $displayName,
             roles: [],
             twoFactorStatus: self::deriveTwoFactorStatus($claims),
             attributes: [
@@ -107,6 +120,7 @@ final readonly class OAuth2TokenResolver implements TokenResolverInterface
         $amr = $claims['amr'] ?? null;
 
         if (is_array($amr)) {
+            /** @var mixed $method */
             foreach ($amr as $method) {
                 if (is_string($method) && in_array($method, self::MFA_AMR_VALUES, true)) {
                     return TwoFactorStatus::Verified;
