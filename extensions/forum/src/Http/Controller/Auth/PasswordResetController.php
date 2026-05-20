@@ -73,7 +73,9 @@ final readonly class PasswordResetController
 
         /** @var array<string, mixed> $body */
         $body = $parsed;
-        $email = is_string($body['email'] ?? null) ? trim($body['email']) : '';
+        /** @var mixed $rawEmail */
+        $rawEmail = $body['email'] ?? null;
+        $email = is_string($rawEmail) ? trim($rawEmail) : '';
 
         // Always show success to prevent email enumeration
         if ($email === '') {
@@ -126,7 +128,9 @@ final readonly class PasswordResetController
     public function showResetForm(ServerRequestInterface $request): Response
     {
         $params = $request->getQueryParams();
-        $token = is_string($params['token'] ?? null) ? $params['token'] : '';
+        /** @var mixed $rawToken */
+        $rawToken = $params['token'] ?? null;
+        $token = is_string($rawToken) ? $rawToken : '';
 
         return $this->respondWithView($request, 'auth.reset-password', [
             'page_title' => 'Set New Password',
@@ -153,9 +157,15 @@ final readonly class PasswordResetController
         /** @var array<string, mixed> $body */
         $body = $parsed;
 
-        $token = is_string($body['token'] ?? null) ? $body['token'] : '';
-        $password = is_string($body['password'] ?? null) ? $body['password'] : '';
-        $passwordConfirm = is_string($body['password_confirm'] ?? null) ? $body['password_confirm'] : '';
+        /** @var mixed $rawToken */
+        $rawToken = $body['token'] ?? null;
+        $token = is_string($rawToken) ? $rawToken : '';
+        /** @var mixed $rawPassword */
+        $rawPassword = $body['password'] ?? null;
+        $password = is_string($rawPassword) ? $rawPassword : '';
+        /** @var mixed $rawPasswordConfirm */
+        $rawPasswordConfirm = $body['password_confirm'] ?? null;
+        $passwordConfirm = is_string($rawPasswordConfirm) ? $rawPasswordConfirm : '';
 
         $errors = [];
 
