@@ -44,7 +44,9 @@ final readonly class ToolsController extends AbstractAdminController
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
-        $userId = is_string($body['user_id'] ?? null) ? $body['user_id'] : '';
+        /** @var mixed $rawUserId */
+        $rawUserId = $body['user_id'] ?? null;
+        $userId = is_string($rawUserId) ? $rawUserId : '';
 
         if ($userId === '') {
             return Response::json(['error' => 'user_id is required'], 400);
@@ -71,8 +73,12 @@ final readonly class ToolsController extends AbstractAdminController
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
-        $userId = is_string($body['user_id'] ?? null) ? $body['user_id'] : '';
-        $reason = is_string($body['reason'] ?? null) ? $body['reason'] : '';
+        /** @var mixed $rawUserId */
+        $rawUserId = $body['user_id'] ?? null;
+        $userId = is_string($rawUserId) ? $rawUserId : '';
+        /** @var mixed $rawReason */
+        $rawReason = $body['reason'] ?? null;
+        $reason = is_string($rawReason) ? $rawReason : '';
 
         if ($userId === '') {
             return Response::json(['error' => 'user_id is required'], 400);
