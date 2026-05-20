@@ -68,6 +68,7 @@ final class EntityHydrator implements EntityHydratorInterface
                 continue;
             }
 
+            /** @var mixed $value */
             $value = $row->get($col->columnName);
 
             // Decrypt if encrypted
@@ -80,6 +81,7 @@ final class EntityHydrator implements EntityHydratorInterface
             if ($col->casterClass !== null && $value !== null) {
                 /** @var callable $fromDb */
                 $fromDb = [$col->casterClass, 'fromDatabase'];
+                /** @var mixed $value */
                 $value = $fromDb($value);
             } else {
                 $value = $this->typeCaster->fromDatabase($value, $col->type);

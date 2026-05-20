@@ -68,7 +68,9 @@ final readonly class WithCountLoader
         $parentIds = [];
         foreach ($entities as $entity) {
             $ref = new ReflectionClass($entity);
-            $parentIds[] = $ref->getProperty($pkProperty)->getValue($entity);
+            /** @var mixed $pkValue */
+            $pkValue = $ref->getProperty($pkProperty)->getValue($entity);
+            $parentIds[] = $pkValue;
         }
 
         if ($parentIds === []) {
@@ -94,8 +96,9 @@ final readonly class WithCountLoader
         $result = $builder->get();
         $countMap = [];
         foreach ($result->rows as $row) {
-            $rawKey = $row->get($relation->foreignKey);
-            $key = is_scalar($rawKey) ? (string) $rawKey : '';
+            /** @var mixed $rawForeignKey */
+            $rawForeignKey = $row->get($relation->foreignKey);
+            $key = is_scalar($rawForeignKey) ? (string) $rawForeignKey : '';
             $countMap[$key] = $row->getInt('cnt');
         }
 
