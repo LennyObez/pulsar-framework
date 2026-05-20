@@ -514,10 +514,12 @@ final readonly class ContentController
             }
         }
 
-        $locale = htmlspecialchars(is_string($translation['locale'] ?? null) ? $translation['locale'] : 'en', ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $rawLocale = $translation['locale'] ?? null;
+        $locale = htmlspecialchars(is_string($rawLocale) ? $rawLocale : 'en', ENT_QUOTES | ENT_HTML5, 'UTF-8');
 
         // Build canonical URL and Open Graph tags
-        $path = is_string($translation['path'] ?? null) ? $translation['path'] : '';
+        $rawPath = $translation['path'] ?? null;
+        $path = is_string($rawPath) ? $rawPath : '';
         $canonicalUrl = htmlspecialchars($baseUrl . '/' . ltrim($path, '/'), ENT_QUOTES | ENT_HTML5, 'UTF-8');
         $ogTitle = $metaTitle;
         $ogDescription = $metaDescription;
