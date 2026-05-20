@@ -64,7 +64,9 @@ final readonly class WebhookController
             return Response::json(['error' => 'Invalid Pub/Sub message format'], 400);
         }
 
-        $encodedData = is_string($message['data'] ?? null) ? $message['data'] : '';
+        /** @var mixed $rawData */
+        $rawData = $message['data'] ?? null;
+        $encodedData = is_string($rawData) ? $rawData : '';
 
         if ($encodedData === '') {
             return Response::json(['error' => 'Missing message data'], 400);
@@ -93,11 +95,12 @@ final readonly class WebhookController
             return Response::json(['status' => 'ignored']);
         }
 
+        /** @var mixed $rawType */
         $rawType = $subscriptionNotification['notificationType'] ?? 0;
         $notificationType = is_int($rawType) ? $rawType : (int) (is_string($rawType) ? $rawType : '0');
-        $purchaseToken = is_string($subscriptionNotification['purchaseToken'] ?? null)
-            ? $subscriptionNotification['purchaseToken']
-            : '';
+        /** @var mixed $rawPurchaseToken */
+        $rawPurchaseToken = $subscriptionNotification['purchaseToken'] ?? null;
+        $purchaseToken = is_string($rawPurchaseToken) ? $rawPurchaseToken : '';
 
         if ($purchaseToken === '') {
             return Response::json(['error' => 'Missing purchase token'], 400);
@@ -135,7 +138,9 @@ final readonly class WebhookController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $signedPayload = is_string($body['signedPayload'] ?? null) ? $body['signedPayload'] : '';
+        /** @var mixed $rawSignedPayload */
+        $rawSignedPayload = $body['signedPayload'] ?? null;
+        $signedPayload = is_string($rawSignedPayload) ? $rawSignedPayload : '';
 
         if ($signedPayload === '') {
             return Response::json(['error' => 'Missing signedPayload'], 400);
@@ -147,9 +152,9 @@ final readonly class WebhookController
             return Response::json(['error' => 'Invalid JWS payload'], 400);
         }
 
-        $notificationType = is_string($decodedPayload['notificationType'] ?? null)
-            ? $decodedPayload['notificationType']
-            : '';
+        /** @var mixed $rawNotificationType */
+        $rawNotificationType = $decodedPayload['notificationType'] ?? null;
+        $notificationType = is_string($rawNotificationType) ? $rawNotificationType : '';
 
         /** @var array<string, mixed> $transactionData */
         $transactionData = is_array($decodedPayload['data'] ?? null)
@@ -157,16 +162,18 @@ final readonly class WebhookController
             : [];
 
         // Extract the signed transaction info from the notification data
-        $signedTransactionInfo = is_string($transactionData['signedTransactionInfo'] ?? null)
-            ? $transactionData['signedTransactionInfo']
-            : '';
+        /** @var mixed $rawSignedTransactionInfo */
+        $rawSignedTransactionInfo = $transactionData['signedTransactionInfo'] ?? null;
+        $signedTransactionInfo = is_string($rawSignedTransactionInfo) ? $rawSignedTransactionInfo : '';
 
         $transactionInfo = $signedTransactionInfo !== ''
             ? $this->decodeAppleJws($signedTransactionInfo)
             : null;
 
-        $originalTransactionId = $transactionInfo !== null && is_string($transactionInfo['originalTransactionId'] ?? null)
-            ? $transactionInfo['originalTransactionId']
+        /** @var mixed $rawOriginalTransactionId */
+        $rawOriginalTransactionId = $transactionInfo['originalTransactionId'] ?? null;
+        $originalTransactionId = $transactionInfo !== null && is_string($rawOriginalTransactionId)
+            ? $rawOriginalTransactionId
             : '';
 
         if ($originalTransactionId === '') {
