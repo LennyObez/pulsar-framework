@@ -49,9 +49,13 @@ final readonly class BounceWebhookController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
+        /** @var mixed $rawSendId */
         $rawSendId = $body['send_id'] ?? null;
+        /** @var mixed $rawSubscriberId */
         $rawSubscriberId = $body['subscriber_id'] ?? null;
+        /** @var mixed $rawBounceType */
         $rawBounceType = $body['bounce_type'] ?? null;
+        /** @var mixed $rawReason */
         $rawReason = $body['reason'] ?? null;
         $sendId = is_string($rawSendId) ? $rawSendId : '';
         $subscriberId = is_string($rawSubscriberId) ? $rawSubscriberId : '';
@@ -89,17 +93,24 @@ final readonly class BounceWebhookController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $bounces = is_array($body['bounces'] ?? null) ? $body['bounces'] : [];
+        /** @var mixed $rawBouncesRaw */
+        $rawBouncesRaw = $body['bounces'] ?? null;
+        $bounces = is_array($rawBouncesRaw) ? $rawBouncesRaw : [];
         $processed = 0;
 
+        /** @var mixed $bounce */
         foreach ($bounces as $bounce) {
             if (!is_array($bounce)) {
                 continue;
             }
 
+            /** @var mixed $rawSendId */
             $rawSendId = $bounce['send_id'] ?? null;
+            /** @var mixed $rawSubscriberId */
             $rawSubscriberId = $bounce['subscriber_id'] ?? null;
+            /** @var mixed $rawBounceType */
             $rawBounceType = $bounce['bounce_type'] ?? null;
+            /** @var mixed $rawReason */
             $rawReason = $bounce['reason'] ?? null;
             $sendId = is_string($rawSendId) ? $rawSendId : '';
             $subscriberId = is_string($rawSubscriberId) ? $rawSubscriberId : '';
