@@ -84,8 +84,12 @@ final class BruteForceDetector implements ThreatDetectorInterface
             return;
         }
 
-        $ip = is_string($context['ip'] ?? null) ? $context['ip'] : '';
-        $account = is_string($context['account'] ?? null) ? $context['account'] : '';
+        /** @var mixed $rawIp */
+        $rawIp = $context['ip'] ?? null;
+        /** @var mixed $rawAccount */
+        $rawAccount = $context['account'] ?? null;
+        $ip = is_string($rawIp) ? $rawIp : '';
+        $account = is_string($rawAccount) ? $rawAccount : '';
         $now = time();
 
         if ($ip !== '') {
