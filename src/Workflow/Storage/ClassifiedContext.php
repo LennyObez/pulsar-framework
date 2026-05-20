@@ -99,8 +99,10 @@ final readonly class ClassifiedContext
      */
     public function redactForExport(ClassificationLevel $maxLevel = ClassificationLevel::Internal): array
     {
+        /** @var array<string, mixed> $result */
         $result = [];
 
+        /** @var mixed $value */
         foreach ($this->values as $key => $value) {
             $fieldLevel = $this->classifications[$key];
 
@@ -162,6 +164,7 @@ final readonly class ClassifiedContext
             $classificationStrings[$key] = $level->value;
         }
 
+        /** @var mixed $value */
         foreach ($this->values as $key => $value) {
             $level = $this->classifications[$key];
 
@@ -214,12 +217,16 @@ final readonly class ClassifiedContext
             $classStrings,
         );
 
+        /** @var array<string, mixed> $values */
         $values = [];
 
+        /** @var mixed $value */
         foreach ($rawValues as $key => $value) {
             if ($encryptor !== null && in_array($key, $encryptedFields, true) && is_string($value)) {
                 try {
-                    $values[$key] = json_decode($encryptor->decrypt($value), true, 512, JSON_THROW_ON_ERROR);
+                    /** @var mixed $decoded */
+                    $decoded = json_decode($encryptor->decrypt($value), true, 512, JSON_THROW_ON_ERROR);
+                    $values[$key] = $decoded;
                 } catch (Throwable $e) {
                     throw new RuntimeException(sprintf(
                         'Failed to decrypt workflow context field "%s": %s',
