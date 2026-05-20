@@ -146,6 +146,7 @@ final readonly class ConfigurableShippingCalculator implements ShippingCalculato
         $method = ShippingMethod::Standard;
 
         // First: exact country match for the standard method
+        /** @var ShippingRateConfig|null $exact */
         $exact = array_find(
             $this->config->shippingRates,
             static fn(ShippingRateConfig $rate): bool => $rate->method === $method && $rate->countryCodes !== [] && in_array($country, $rate->countryCodes, true),
@@ -156,9 +157,12 @@ final readonly class ConfigurableShippingCalculator implements ShippingCalculato
         }
 
         // Second: wildcard (empty country list) for the standard method
-        return array_find(
+        /** @var ShippingRateConfig|null $wildcard */
+        $wildcard = array_find(
             $this->config->shippingRates,
             static fn(ShippingRateConfig $rate): bool => $rate->method === $method && $rate->countryCodes === [],
         );
+
+        return $wildcard;
     }
 }
