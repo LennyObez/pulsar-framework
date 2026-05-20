@@ -36,6 +36,7 @@ final readonly class AggregateBuilder
     #[NoDiscard]
     public function count(string $column = '*'): int
     {
+        /** @var mixed $value */
         $value = $this->aggregate('COUNT', $column);
 
         return is_numeric($value) ? (int) $value : 0;
@@ -44,6 +45,7 @@ final readonly class AggregateBuilder
     #[NoDiscard]
     public function sum(string $column): float
     {
+        /** @var mixed $value */
         $value = $this->aggregate('SUM', $column);
 
         return is_numeric($value) ? (float) $value : 0.0;
@@ -64,6 +66,7 @@ final readonly class AggregateBuilder
     #[NoDiscard]
     public function avg(string $column): ?float
     {
+        /** @var mixed $value */
         $value = $this->aggregate('AVG', $column);
 
         return is_numeric($value) ? (float) $value : null;
