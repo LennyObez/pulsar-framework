@@ -68,6 +68,7 @@ final readonly class Row
      */
     public function getInt(string $column): int
     {
+        /** @var mixed $value */
         $value = $this->get($column);
 
         if (is_int($value)) {
@@ -88,6 +89,7 @@ final readonly class Row
      */
     public function getString(string $column): string
     {
+        /** @var mixed $value */
         $value = $this->get($column);
 
         if (is_string($value)) {
@@ -108,6 +110,7 @@ final readonly class Row
      */
     public function getBool(string $column): bool
     {
+        /** @var mixed $value */
         $value = $this->get($column);
 
         if (is_bool($value)) {
@@ -132,6 +135,7 @@ final readonly class Row
      */
     public function getFloat(string $column): float
     {
+        /** @var mixed $value */
         $value = $this->get($column);
 
         if (is_float($value)) {
@@ -156,6 +160,7 @@ final readonly class Row
      */
     public function getNullableInt(string $column): ?int
     {
+        /** @var mixed $value */
         $value = $this->get($column);
 
         if ($value === null) {
@@ -180,6 +185,7 @@ final readonly class Row
      */
     public function getNullableFloat(string $column): ?float
     {
+        /** @var mixed $value */
         $value = $this->get($column);
 
         if ($value === null) {
@@ -212,6 +218,7 @@ final readonly class Row
      */
     public function getBinary(string $column): string
     {
+        /** @var mixed $value */
         $value = $this->get($column);
 
         if (is_string($value)) {
@@ -238,6 +245,7 @@ final readonly class Row
      */
     public function getNullableString(string $column): ?string
     {
+        /** @var mixed $value */
         $value = $this->get($column);
 
         if ($value === null) {
