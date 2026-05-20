@@ -64,8 +64,12 @@ final readonly class CommentsBlock implements BlockTypeInterface
     {
         /** @var list<mixed> $comments */
         $comments = $data['comments'] ?? [];
-        $showForm = is_bool($data['showForm'] ?? null) ? $data['showForm'] : true;
-        $contentId = htmlspecialchars(is_string($data['contentId'] ?? null) ? $data['contentId'] : '', ENT_QUOTES, 'UTF-8');
+        /** @var mixed $rawShowForm */
+        $rawShowForm = $data['showForm'] ?? null;
+        $showForm = is_bool($rawShowForm) ? $rawShowForm : true;
+        /** @var mixed $rawContentId */
+        $rawContentId = $data['contentId'] ?? null;
+        $contentId = htmlspecialchars(is_string($rawContentId) ? $rawContentId : '', ENT_QUOTES, 'UTF-8');
 
         $count = count($comments);
         $html = "<section class=\"comments-block\" id=\"comments\" data-content-id=\"$contentId\">";
@@ -133,8 +137,12 @@ final readonly class CommentsBlock implements BlockTypeInterface
      */
     private function renderForm(array $data): string
     {
-        $action = htmlspecialchars(is_string($data['action'] ?? null) ? $data['action'] : '/comments', ENT_QUOTES, 'UTF-8');
-        $contentId = htmlspecialchars(is_string($data['contentId'] ?? null) ? $data['contentId'] : '', ENT_QUOTES, 'UTF-8');
+        /** @var mixed $rawAction */
+        $rawAction = $data['action'] ?? null;
+        /** @var mixed $rawContentId */
+        $rawContentId = $data['contentId'] ?? null;
+        $action = htmlspecialchars(is_string($rawAction) ? $rawAction : '/comments', ENT_QUOTES, 'UTF-8');
+        $contentId = htmlspecialchars(is_string($rawContentId) ? $rawContentId : '', ENT_QUOTES, 'UTF-8');
         $csrfToken = htmlspecialchars($this->csrfTokenManager->getToken(), ENT_QUOTES, 'UTF-8');
 
         return '<form class="comments-block__form" method="post" action="' . $action . '">'

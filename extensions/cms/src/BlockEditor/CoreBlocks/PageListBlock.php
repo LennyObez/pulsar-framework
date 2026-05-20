@@ -57,7 +57,9 @@ final readonly class PageListBlock implements BlockTypeInterface
     {
         /** @var list<mixed> $pages */
         $pages = $data['pages'] ?? [];
-        $showHierarchy = is_bool($data['showHierarchy'] ?? null) ? $data['showHierarchy'] : true;
+        /** @var mixed $rawShowHierarchy */
+        $rawShowHierarchy = $data['showHierarchy'] ?? null;
+        $showHierarchy = is_bool($rawShowHierarchy) ? $rawShowHierarchy : true;
 
         $html = '<nav class="page-list-block" aria-label="Page list">';
         $html .= $this->renderPageList($pages, $showHierarchy);
@@ -77,8 +79,12 @@ final readonly class PageListBlock implements BlockTypeInterface
                 continue;
             }
 
-            $title = htmlspecialchars(is_string($page['title'] ?? null) ? $page['title'] : '', ENT_QUOTES, 'UTF-8');
-            $url = htmlspecialchars(is_string($page['url'] ?? null) ? $page['url'] : '#', ENT_QUOTES, 'UTF-8');
+            /** @var mixed $rawTitle */
+            $rawTitle = $page['title'] ?? null;
+            /** @var mixed $rawUrl */
+            $rawUrl = $page['url'] ?? null;
+            $title = htmlspecialchars(is_string($rawTitle) ? $rawTitle : '', ENT_QUOTES, 'UTF-8');
+            $url = htmlspecialchars(is_string($rawUrl) ? $rawUrl : '#', ENT_QUOTES, 'UTF-8');
 
             $html .= "<li class=\"page-list-block__item\"><a href=\"$url\">$title</a>";
 
