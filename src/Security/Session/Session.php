@@ -11,6 +11,10 @@ use Pulsar\Security\Exception\SecurityException;
 
 use function array_key_exists;
 use function ini_get;
+use function is_bool;
+use function is_int;
+use function is_numeric;
+use function is_string;
 use function session_destroy;
 use function session_get_cookie_params;
 use function session_id;
@@ -78,6 +82,54 @@ final class Session implements SessionInterface
         $this->ensureStarted();
 
         return $_SESSION[$key] ?? $default;
+    }
+
+    #[Override]
+    #[NoDiscard]
+    public function getString(string $key, string $default = ''): string
+    {
+        $this->ensureStarted();
+
+        $value = $_SESSION[$key] ?? null;
+
+        return is_string($value) ? $value : $default;
+    }
+
+    #[Override]
+    #[NoDiscard]
+    public function getNullableString(string $key): ?string
+    {
+        $this->ensureStarted();
+
+        $value = $_SESSION[$key] ?? null;
+
+        return is_string($value) ? $value : null;
+    }
+
+    #[Override]
+    #[NoDiscard]
+    public function getInt(string $key, int $default = 0): int
+    {
+        $this->ensureStarted();
+
+        $value = $_SESSION[$key] ?? null;
+
+        if (is_int($value)) {
+            return $value;
+        }
+
+        return is_string($value) && is_numeric($value) ? (int) $value : $default;
+    }
+
+    #[Override]
+    #[NoDiscard]
+    public function getBool(string $key, bool $default = false): bool
+    {
+        $this->ensureStarted();
+
+        $value = $_SESSION[$key] ?? null;
+
+        return is_bool($value) ? $value : $default;
     }
 
     #[Override]
