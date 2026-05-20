@@ -72,6 +72,7 @@ final class HipaaLogFormatter implements ComplianceLogFormatter
         $context = $entry->context;
         $phiDetected = false;
 
+        /** @var mixed $value */
         foreach ($context as $key => $value) {
             $lowerKey = strtolower($key);
 
