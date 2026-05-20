@@ -78,12 +78,14 @@ final class TemplateProfiler
             $sorted = $durations;
             usort($sorted, static fn(float $a, float $b): int => $a <=> $b);
 
+            $maxMs = $sorted === [] ? 0.0 : $sorted[count($sorted) - 1];
+
             $result[$name] = [
                 'count' => $count,
                 'total_ms' => $total,
                 'avg_ms' => $count > 0 ? $total / $count : 0.0,
                 'min_ms' => $sorted[0] ?? 0.0,
-                'max_ms' => $sorted[count($sorted) - 1] ?? 0.0,
+                'max_ms' => $maxMs,
             ];
         }
 
