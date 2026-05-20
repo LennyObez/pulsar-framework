@@ -15,6 +15,7 @@ use Pulsar\Support\QrCodeEncoder;
 
 use function htmlspecialchars;
 use function in_array;
+use function is_float;
 use function is_int;
 use function is_numeric;
 use function is_string;
@@ -98,17 +99,23 @@ final readonly class QrPaymentBlock implements BlockTypeInterface
         ];
     }
 
+    /**
+     * @param array{format?: string, description?: string, alignment?: string, amount?: int, currency?: string, beneficiary_name?: string, iban?: string, payment_url?: string} $data
+     */
     #[Override]
     public function render(array $data): string
     {
-        $format = is_string($data['format'] ?? null) ? $data['format'] : 'epc_qr';
+        $rawFormat = $data['format'] ?? null;
+        $format = is_string($rawFormat) ? $rawFormat : 'epc_qr';
+        $rawDescription = $data['description'] ?? null;
         $description = htmlspecialchars(
-            is_string($data['description'] ?? null) ? $data['description'] : '',
+            is_string($rawDescription) ? $rawDescription : '',
             ENT_QUOTES,
             'UTF-8',
         );
-        $alignment = is_string($data['alignment'] ?? null) && in_array($data['alignment'], self::VALID_ALIGNMENTS, true)
-            ? $data['alignment']
+        $rawAlignment = $data['alignment'] ?? null;
+        $alignment = is_string($rawAlignment) && in_array($rawAlignment, self::VALID_ALIGNMENTS, true)
+            ? $rawAlignment
             : 'center';
 
         $gateway = new QrPaymentGateway($this->qrEncoder, $this->payconiqConfig);
@@ -152,7 +159,8 @@ final readonly class QrPaymentBlock implements BlockTypeInterface
             $errors[] = 'currency is required and must be a string';
         }
 
-        $format = is_string($data['format'] ?? null) ? $data['format'] : '';
+        $rawFormat = $data['format'] ?? null;
+        $format = is_string($rawFormat) ? $rawFormat : '';
 
         if ($format === 'epc_qr') {
             if (!isset($data['beneficiary_name']) || !is_string($data['beneficiary_name']) || $data['beneficiary_name'] === '') {
@@ -189,24 +197,34 @@ final readonly class QrPaymentBlock implements BlockTypeInterface
     private function generateQrSvg(QrPaymentGateway $gateway, array $data, string $format): string
     {
         $amount = $this->resolveAmount($data);
+        $rawBeneficiary = $data['beneficiary_name'] ?? null;
+        $beneficiaryName = is_string($rawBeneficiary) ? $rawBeneficiary : '';
+        $rawIban = $data['iban'] ?? null;
+        $iban = is_string($rawIban) ? $rawIban : '';
+        $rawBic = $data['bic'] ?? null;
+        $bic = is_string($rawBic) ? $rawBic : '';
+        $rawReference = $data['reference'] ?? null;
+        $reference = is_string($rawReference) ? $rawReference : '';
+        $rawPaymentUrl = $data['payment_url'] ?? null;
+        $paymentUrl = is_string($rawPaymentUrl) ? $rawPaymentUrl : '';
 
         return match ($format) {
             'epc_qr' => $gateway->generateEpcQr(
                 amount: $amount,
-                beneficiaryName: is_string($data['beneficiary_name'] ?? null) ? $data['beneficiary_name'] : '',
-                iban: is_string($data['iban'] ?? null) ? $data['iban'] : '',
-                bic: is_string($data['bic'] ?? null) ? $data['bic'] : '',
-                reference: is_string($data['reference'] ?? null) ? $data['reference'] : '',
+                beneficiaryName: $beneficiaryName,
+                iban: $iban,
+                bic: $bic,
+                reference: $reference,
             )->svgContent,
             'payconiq' => $gateway->generatePayconiqQr(
                 amount: $amount,
-                paymentId: is_string($data['reference'] ?? null) ? $data['reference'] : 'block-payment',
-                reference: is_string($data['reference'] ?? null) ? $data['reference'] : '',
+                paymentId: $reference !== '' ? $reference : 'block-payment',
+                reference: $reference,
             )->svgContent,
             'payment_link' => $gateway->generatePaymentLinkQr(
                 amount: $amount,
-                paymentUrl: is_string($data['payment_url'] ?? null) ? $data['payment_url'] : '',
-                reference: is_string($data['reference'] ?? null) ? $data['reference'] : '',
+                paymentUrl: $paymentUrl,
+                reference: $reference,
             )->svgContent,
             default => '',
         };
@@ -220,8 +238,11 @@ final readonly class QrPaymentBlock implements BlockTypeInterface
     private function resolveAmount(array $data): Money
     {
         $rawAmount = $data['amount'] ?? 0;
-        $amountValue = is_int($rawAmount) ? $rawAmount : (is_numeric($rawAmount) ? (int) $rawAmount : 0);
-        $currencyStr = is_string($data['currency'] ?? null) ? $data['currency'] : 'EUR';
+        $amountValue = is_int($rawAmount)
+            ? $rawAmount
+            : ((is_string($rawAmount) || is_float($rawAmount)) && is_numeric($rawAmount) ? (int) $rawAmount : 0);
+        $rawCurrency = $data['currency'] ?? null;
+        $currencyStr = is_string($rawCurrency) ? $rawCurrency : 'EUR';
         $currency = Currency::tryFrom($currencyStr) ?? Currency::EUR;
 
         return Money::of($amountValue > 0 ? $amountValue : 1, $currency);
@@ -240,7 +261,8 @@ final readonly class QrPaymentBlock implements BlockTypeInterface
             return '';
         }
 
-        $currencyStr = is_string($data['currency'] ?? null) ? $data['currency'] : 'EUR';
+        $rawCurrency = $data['currency'] ?? null;
+        $currencyStr = is_string($rawCurrency) ? $rawCurrency : 'EUR';
         $currency = Currency::tryFrom($currencyStr) ?? Currency::EUR;
         $money = Money::of($rawAmount, $currency);
 
