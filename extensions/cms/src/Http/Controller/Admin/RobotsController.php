@@ -41,6 +41,7 @@ final readonly class RobotsController extends AbstractAdminController
         $identity = $this->requireIdentity($request);
         $this->authorize($identity, 'cms.seo.view');
 
+        /** @var mixed $content */
         $content = $this->settings->get(self::SETTINGS_GROUP, self::SETTINGS_KEY);
 
         $data = [
