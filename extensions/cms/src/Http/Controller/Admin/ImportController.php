@@ -156,7 +156,10 @@ final readonly class ImportController extends AbstractAdminController
                 $this->persistMarkdownItem($item);
                 $created++;
             } catch (CmsException $e) {
-                $errors[] = (is_string($item['translation']['title'] ?? null) ? $item['translation']['title'] : 'untitled') . ': ' . $e->getMessage();
+                /** @var mixed $rawTitle */
+                $rawTitle = $item['translation']['title'] ?? null;
+                $title = is_string($rawTitle) ? $rawTitle : 'untitled';
+                $errors[] = $title . ': ' . $e->getMessage();
             }
         }
 
@@ -212,7 +215,10 @@ final readonly class ImportController extends AbstractAdminController
                 $this->persistCsvItem($item);
                 $created++;
             } catch (CmsException $e) {
-                $errors[] = (is_string($item['translation']['title'] ?? null) ? $item['translation']['title'] : 'untitled') . ': ' . $e->getMessage();
+                /** @var mixed $rawTitle */
+                $rawTitle = $item['translation']['title'] ?? null;
+                $title = is_string($rawTitle) ? $rawTitle : 'untitled';
+                $errors[] = $title . ': ' . $e->getMessage();
             }
         }
 
@@ -260,6 +266,7 @@ final readonly class ImportController extends AbstractAdminController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
+        /** @var mixed $rawPolicyValue */
         $rawPolicyValue = $body['duplicate_policy'] ?? null;
         $policyValue = is_string($rawPolicyValue) ? $rawPolicyValue : 'skip';
         $policy = DuplicateResolutionPolicy::tryFrom($policyValue) ?? DuplicateResolutionPolicy::Skip;
@@ -397,6 +404,7 @@ final readonly class ImportController extends AbstractAdminController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
+        /** @var mixed $content */
         $content = $body['json_content'] ?? null;
 
         if (is_string($content) && $content !== '') {
@@ -414,6 +422,7 @@ final readonly class ImportController extends AbstractAdminController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
+        /** @var mixed $content */
         $content = $body[$fieldName] ?? null;
 
         if (is_string($content) && $content !== '') {
