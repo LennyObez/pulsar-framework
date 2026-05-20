@@ -151,7 +151,9 @@ final readonly class PluginController extends AbstractAdminController
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
-        $enabled = is_bool($body['enabled'] ?? null) ? $body['enabled'] : false;
+        /** @var mixed $rawEnabled */
+        $rawEnabled = $body['enabled'] ?? null;
+        $enabled = is_bool($rawEnabled) ? $rawEnabled : false;
 
         try {
             $plugin = $enabled
@@ -199,8 +201,10 @@ final readonly class PluginController extends AbstractAdminController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
+        /** @var mixed $rawSettings */
+        $rawSettings = $body['settings'] ?? null;
         /** @var array<string, mixed> $settings */
-        $settings = is_array($body['settings'] ?? null) ? $body['settings'] : [];
+        $settings = is_array($rawSettings) ? $rawSettings : [];
 
         $settingsGroup = "plugin.$id";
         /** @var mixed $rawLocale */
@@ -210,6 +214,7 @@ final readonly class PluginController extends AbstractAdminController
         $locale = is_string($rawLocale) ? $rawLocale : null;
         $reason = is_string($rawReason) ? $rawReason : null;
 
+        /** @var mixed $value */
         foreach ($settings as $key => $value) {
             $this->settingsService->set($settingsGroup, $key, $value, $locale, $reason);
         }
@@ -234,7 +239,9 @@ final readonly class PluginController extends AbstractAdminController
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
-        $reason = is_string($body['reason'] ?? null) ? $body['reason'] : '';
+        /** @var mixed $rawReason */
+        $rawReason = $body['reason'] ?? null;
+        $reason = is_string($rawReason) ? $rawReason : '';
 
         if (strlen($reason) < 10) {
             return Response::json([
@@ -253,6 +260,7 @@ final readonly class PluginController extends AbstractAdminController
 
     private function resolveLocale(ServerRequestInterface $request): ?string
     {
+        /** @var mixed $locale */
         $locale = $request->getQueryParams()['locale'] ?? null;
 
         return is_string($locale) ? $locale : null;
