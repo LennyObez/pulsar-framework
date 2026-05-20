@@ -100,8 +100,12 @@ final readonly class ServiceDiscoveryWiring implements ServiceWiringInterface
         $container->instance(ServiceRegistryInterface::class, $registry);
 
         // Health check
-        $healthPath = is_string($config['health_path'] ?? null) ? $config['health_path'] : '/health';
-        $healthTimeout = is_numeric($config['health_timeout'] ?? null) ? (float) $config['health_timeout'] : 5.0;
+        /** @var mixed $rawHealthPath */
+        $rawHealthPath = $config['health_path'] ?? null;
+        /** @var mixed $rawHealthTimeout */
+        $rawHealthTimeout = $config['health_timeout'] ?? null;
+        $healthPath = is_string($rawHealthPath) ? $rawHealthPath : '/health';
+        $healthTimeout = is_numeric($rawHealthTimeout) ? (float) $rawHealthTimeout : 5.0;
         $healthCheck = new HttpHealthCheck($healthPath, $healthTimeout);
         $container->instance(HealthCheckInterface::class, $healthCheck);
         $container->instance(HttpHealthCheck::class, $healthCheck);
