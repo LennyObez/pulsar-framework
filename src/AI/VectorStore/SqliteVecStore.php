@@ -11,9 +11,7 @@ use Pulsar\Database\ConnectionInterface;
 
 use function implode;
 use function is_array;
-use function is_numeric;
 use function is_scalar;
-use function is_string;
 use function json_decode;
 use function json_encode;
 use function preg_match;
@@ -102,8 +100,7 @@ final readonly class SqliteVecStore implements VectorStoreInterface
         $rows = [];
 
         foreach ($result->rows as $row) {
-            $distRaw = $row->get('dist');
-            $distance = is_numeric($distRaw) ? (float) $distRaw : 0.0;
+            $distance = $row->getFloat('dist');
 
             // Convert distance to similarity score (1 - distance for cosine/L2)
             $score = match ($this->metric) {
@@ -112,8 +109,7 @@ final readonly class SqliteVecStore implements VectorStoreInterface
                 DistanceMetric::InnerProduct => -$distance,
             };
 
-            $metadataRaw = $row->get('metadata');
-            $metadataDecoded = is_string($metadataRaw) ? json_decode($metadataRaw, true) : null;
+            $metadataDecoded = json_decode($row->getString('metadata'), true);
             /** @var array<string, mixed> $metadata */
             $metadata = is_array($metadataDecoded) ? $metadataDecoded : [];
 
@@ -122,13 +118,10 @@ final readonly class SqliteVecStore implements VectorStoreInterface
                 continue;
             }
 
-            $id = $row->get('id');
-            $content = $row->get('content');
-
             $rows[] = new SearchResult(
-                id: is_scalar($id) ? (string) $id : '',
+                id: $row->getString('id'),
                 score: $score,
-                content: is_string($content) ? $content : '',
+                content: $row->getString('content'),
                 metadata: $metadata,
             );
         }
@@ -209,11 +202,9 @@ final readonly class SqliteVecStore implements VectorStoreInterface
             $result = $conn->query($selectSql, $bindings);
 
             foreach ($result->rows as $row) {
-                $idRaw = $row->get('id');
-                $id = is_scalar($idRaw) ? (string) $idRaw : '';
                 $conn->execute(
                     sprintf('DELETE FROM %s_vec WHERE id = :id', $this->table),
-                    [':id' => $id],
+                    [':id' => $row->getString('id')],
                 );
             }
 
@@ -235,9 +226,7 @@ final readonly class SqliteVecStore implements VectorStoreInterface
                 return 0;
             }
 
-            $cnt = $first->get('cnt');
-
-            return is_numeric($cnt) ? (int) $cnt : 0;
+            return $first->getInt('cnt');
         }
 
         $conditions = [];
@@ -260,9 +249,7 @@ final readonly class SqliteVecStore implements VectorStoreInterface
             return 0;
         }
 
-        $cnt = $first->get('cnt');
-
-        return is_numeric($cnt) ? (int) $cnt : 0;
+        return $first->getInt('cnt');
     }
 
     /**
