@@ -80,6 +80,7 @@ final readonly class AccessibilityExtension implements ExtensionInterface
         }
 
         if ($container->has('app.environment')) {
+            /** @var mixed $env */
             $env = $container->get('app.environment');
 
             return is_string($env) && $env !== 'production' && $env !== 'prod';
