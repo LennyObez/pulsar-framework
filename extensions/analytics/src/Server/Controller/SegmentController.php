@@ -30,6 +30,7 @@ final readonly class SegmentController
     public function index(ServerRequestInterface $request): Response
     {
         $params = $request->getQueryParams();
+        /** @var mixed $rawSiteId */
         $rawSiteId = $params['site_id'] ?? null;
         $siteId = is_string($rawSiteId) ? $rawSiteId : '';
 
@@ -59,9 +60,15 @@ final readonly class SegmentController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $siteId = is_string($body['site_id'] ?? null) ? $body['site_id'] : '';
-        $name = is_string($body['name'] ?? null) ? $body['name'] : '';
-        $rawFilters = is_array($body['filters'] ?? null) ? $body['filters'] : [];
+        /** @var mixed $rawSiteId */
+        $rawSiteId = $body['site_id'] ?? null;
+        $siteId = is_string($rawSiteId) ? $rawSiteId : '';
+        /** @var mixed $rawName */
+        $rawName = $body['name'] ?? null;
+        $name = is_string($rawName) ? $rawName : '';
+        /** @var mixed $rawFiltersRaw */
+        $rawFiltersRaw = $body['filters'] ?? null;
+        $rawFilters = is_array($rawFiltersRaw) ? $rawFiltersRaw : [];
 
         if ($siteId === '' || $name === '' || $rawFilters === []) {
             return Response::json(['error' => 'site_id, name, and filters are required'], 400);
@@ -69,15 +76,22 @@ final readonly class SegmentController
 
         $filters = [];
 
+        /** @var mixed $rawFilter */
         foreach ($rawFilters as $rawFilter) {
             if (!is_array($rawFilter)) {
                 continue;
             }
             /** @var array<string, mixed> $rawFilter */
 
-            $dimStr = is_string($rawFilter['dimension'] ?? null) ? $rawFilter['dimension'] : '';
-            $opStr = is_string($rawFilter['operator'] ?? null) ? $rawFilter['operator'] : '';
-            $value = is_string($rawFilter['value'] ?? null) ? $rawFilter['value'] : '';
+            /** @var mixed $rawDim */
+            $rawDim = $rawFilter['dimension'] ?? null;
+            $dimStr = is_string($rawDim) ? $rawDim : '';
+            /** @var mixed $rawOp */
+            $rawOp = $rawFilter['operator'] ?? null;
+            $opStr = is_string($rawOp) ? $rawOp : '';
+            /** @var mixed $rawValue */
+            $rawValue = $rawFilter['value'] ?? null;
+            $value = is_string($rawValue) ? $rawValue : '';
 
             $dimension = SegmentDimension::tryFrom($dimStr);
             $operator = SegmentOperator::tryFrom($opStr);
@@ -106,7 +120,9 @@ final readonly class SegmentController
     public function count(ServerRequestInterface $request, string $id): Response
     {
         $params = $request->getQueryParams();
+        /** @var mixed $rawFrom */
         $rawFrom = $params['from'] ?? null;
+        /** @var mixed $rawTo */
         $rawTo = $params['to'] ?? null;
         $from = new DateTimeImmutable(is_string($rawFrom) ? $rawFrom : '-30 days');
         $to = new DateTimeImmutable(is_string($rawTo) ? $rawTo : 'now');
