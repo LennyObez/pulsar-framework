@@ -56,6 +56,12 @@ final readonly class DefaultCertificateValidator implements CertificateValidator
     #[Override]
     public function validate(string $pemCertificate): CertificateInfo
     {
+        $parsed = openssl_x509_parse($pemCertificate);
+
+        if (!is_array($parsed)) {
+            throw Psd2Exception::certificateParseFailure('OpenSSL could not parse the certificate');
+        }
+
         /** @var array{
          *     subject?: array{CN?: string},
          *     issuer?: array{CN?: string},
@@ -63,15 +69,8 @@ final readonly class DefaultCertificateValidator implements CertificateValidator
          *     validFrom_time_t?: int,
          *     validTo_time_t?: int,
          *     extensions?: array<string, mixed>,
-         *     ...
-         * }|false $parsed
+         * } $parsed
          */
-        $parsed = openssl_x509_parse($pemCertificate);
-
-        if (!is_array($parsed)) {
-            throw Psd2Exception::certificateParseFailure('OpenSSL could not parse the certificate');
-        }
-
         $subjectArr = $parsed['subject'] ?? [];
         $issuerArr = $parsed['issuer'] ?? [];
         $subject = $subjectArr['CN'] ?? '';
