@@ -68,7 +68,9 @@ final readonly class KeysetPaginator implements PaginatorInterface
         $nextCursor = null;
 
         if ($hasMore && $pageItems !== []) {
+            /** @var mixed $lastItem */
             $lastItem = $pageItems[count($pageItems) - 1];
+            /** @var mixed $keysetValue */
             $keysetValue = is_array($lastItem) ? ($lastItem[$this->sortKey] ?? null) : null;
 
             if ($keysetValue !== null) {
@@ -83,7 +85,9 @@ final readonly class KeysetPaginator implements PaginatorInterface
         $prevCursor = null;
 
         if ($currentCursor !== null && $pageItems !== []) {
+            /** @var mixed $firstItem */
             $firstItem = $pageItems[0];
+            /** @var mixed $keysetValue */
             $keysetValue = is_array($firstItem) ? ($firstItem[$this->sortKey] ?? null) : null;
 
             if ($keysetValue !== null) {
