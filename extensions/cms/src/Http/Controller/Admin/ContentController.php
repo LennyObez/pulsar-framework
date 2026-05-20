@@ -293,6 +293,7 @@ final readonly class ContentController extends AbstractAdminController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
+        /** @var mixed $rawLocale */
         $rawLocale = $body['locale'] ?? null;
         $locale = is_string($rawLocale) ? $rawLocale : $this->config->defaultLocale;
         $translation = $this->translationRepository->findByContentAndLocale($id, $locale);
@@ -301,11 +302,14 @@ final readonly class ContentController extends AbstractAdminController
             return Response::json(['error' => 'Translation not found for locale'], 404);
         }
 
+        /** @var mixed $rawTitle */
         $rawTitle = $body['title'] ?? null;
         $title = is_string($rawTitle) ? $rawTitle : $translation->title;
+        /** @var mixed $rawBodyText */
         $rawBodyText = $body['body'] ?? null;
         $rawBody = is_string($rawBodyText) ? $rawBodyText : $translation->body;
         $sanitizedBody = $this->safeHtmlPolicy->sanitize($rawBody);
+        /** @var mixed $rawSlug */
         $rawSlug = $body['slug'] ?? null;
         $slugSegment = is_string($rawSlug) ? $rawSlug : $translation->slugSegment;
 
@@ -367,7 +371,9 @@ final readonly class ContentController extends AbstractAdminController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $locale = is_string($body['locale'] ?? null) ? $body['locale'] : '';
+        /** @var mixed $rawLocale */
+        $rawLocale = $body['locale'] ?? null;
+        $locale = is_string($rawLocale) ? $rawLocale : '';
 
         if ($locale === '' || !in_array($locale, $this->config->supportedLocales, true)) {
             return Response::json(['error' => 'Invalid or unsupported locale'], 400);
@@ -380,9 +386,15 @@ final readonly class ContentController extends AbstractAdminController
             return Response::json(['error' => 'Translation already exists for this locale'], 409);
         }
 
-        $title = is_string($body['title'] ?? null) ? $body['title'] : '';
-        $slugSegment = is_string($body['slug'] ?? null) ? $body['slug'] : '';
-        $rawBody = is_string($body['body'] ?? null) ? $body['body'] : '';
+        /** @var mixed $rawTitle */
+        $rawTitle = $body['title'] ?? null;
+        $title = is_string($rawTitle) ? $rawTitle : '';
+        /** @var mixed $rawSlug */
+        $rawSlug = $body['slug'] ?? null;
+        $slugSegment = is_string($rawSlug) ? $rawSlug : '';
+        /** @var mixed $rawBodyText */
+        $rawBodyText = $body['body'] ?? null;
+        $rawBody = is_string($rawBodyText) ? $rawBodyText : '';
 
         if ($title === '' || $slugSegment === '') {
             return Response::json(['error' => 'Title and slug are required'], 400);
@@ -402,6 +414,13 @@ final readonly class ContentController extends AbstractAdminController
 
         $translationId = UuidGenerator::v7();
 
+        /** @var mixed $rawExcerpt */
+        $rawExcerpt = $body['excerpt'] ?? null;
+        /** @var mixed $rawMetaTitle */
+        $rawMetaTitle = $body['meta_title'] ?? null;
+        /** @var mixed $rawMetaDescription */
+        $rawMetaDescription = $body['meta_description'] ?? null;
+
         try {
             $translation = ContentTranslation::create(
                 id: $translationId,
@@ -411,9 +430,9 @@ final readonly class ContentController extends AbstractAdminController
                 slugSegment: $slugSegment,
                 path: $path,
                 body: $sanitizedBody,
-                excerpt: is_string($body['excerpt'] ?? null) ? $body['excerpt'] : null,
-                metaTitle: is_string($body['meta_title'] ?? null) ? $body['meta_title'] : null,
-                metaDescription: is_string($body['meta_description'] ?? null) ? $body['meta_description'] : null,
+                excerpt: is_string($rawExcerpt) ? $rawExcerpt : null,
+                metaTitle: is_string($rawMetaTitle) ? $rawMetaTitle : null,
+                metaDescription: is_string($rawMetaDescription) ? $rawMetaDescription : null,
             );
         } catch (CmsException $e) {
             return Response::json(['error' => $e->getMessage()], 400);
@@ -443,7 +462,9 @@ final readonly class ContentController extends AbstractAdminController
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
-        $reason = is_string($body['reason'] ?? null) ? $body['reason'] : '';
+        /** @var mixed $rawReason */
+        $rawReason = $body['reason'] ?? null;
+        $reason = is_string($rawReason) ? $rawReason : '';
 
         if (strlen($reason) < 10) {
             return Response::json([
@@ -469,7 +490,9 @@ final readonly class ContentController extends AbstractAdminController
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
-        $reason = is_string($body['reason'] ?? null) ? $body['reason'] : null;
+        /** @var mixed $rawReason */
+        $rawReason = $body['reason'] ?? null;
+        $reason = is_string($rawReason) ? $rawReason : null;
 
         try {
             $updated = $this->publishingStateMachine->transition(
@@ -500,7 +523,9 @@ final readonly class ContentController extends AbstractAdminController
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
-        $reason = is_string($body['reason'] ?? null) ? $body['reason'] : null;
+        /** @var mixed $rawReason */
+        $rawReason = $body['reason'] ?? null;
+        $reason = is_string($rawReason) ? $rawReason : null;
 
         try {
             $updated = $this->publishingStateMachine->transition(
@@ -531,7 +556,9 @@ final readonly class ContentController extends AbstractAdminController
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
-        $publishAtStr = is_string($body['publish_at'] ?? null) ? $body['publish_at'] : '';
+        /** @var mixed $rawPublishAt */
+        $rawPublishAt = $body['publish_at'] ?? null;
+        $publishAtStr = is_string($rawPublishAt) ? $rawPublishAt : '';
 
         if ($publishAtStr === '') {
             return Response::json(['error' => 'publish_at is required'], 400);
@@ -574,8 +601,12 @@ final readonly class ContentController extends AbstractAdminController
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
-        $locale = is_string($body['locale'] ?? null) ? $body['locale'] : null;
-        $reviewerId = is_string($body['reviewer_id'] ?? null) ? $body['reviewer_id'] : null;
+        /** @var mixed $rawLocale */
+        $rawLocale = $body['locale'] ?? null;
+        $locale = is_string($rawLocale) ? $rawLocale : null;
+        /** @var mixed $rawReviewerId */
+        $rawReviewerId = $body['reviewer_id'] ?? null;
+        $reviewerId = is_string($rawReviewerId) ? $rawReviewerId : null;
 
         $review = $this->workflowService->submitForReview(
             $id,
@@ -611,7 +642,9 @@ final readonly class ContentController extends AbstractAdminController
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
-        $locale = is_string($body['locale'] ?? null) ? $body['locale'] : null;
+        /** @var mixed $rawLocale */
+        $rawLocale = $body['locale'] ?? null;
+        $locale = is_string($rawLocale) ? $rawLocale : null;
 
         $lock = $this->lockService->acquire($id, $identity->id(), $locale);
 
