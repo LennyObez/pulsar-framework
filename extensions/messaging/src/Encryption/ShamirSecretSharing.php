@@ -139,10 +139,13 @@ final readonly class ShamirSecretSharing
         $count = count($points);
 
         for ($i = 0; $i < $count; $i++) {
+            assert($i >= 0);
             $numerator = 1;
             $denominator = 1;
 
             for ($j = 0; $j < $count; $j++) {
+                assert($j >= 0);
+
                 if ($i === $j) {
                     continue;
                 }

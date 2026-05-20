@@ -165,7 +165,9 @@ final readonly class ThreadController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $categoryId = is_string($body['category_id'] ?? null) ? $body['category_id'] : '';
+        /** @var mixed $rawCategoryId */
+        $rawCategoryId = $body['category_id'] ?? null;
+        $categoryId = is_string($rawCategoryId) ? $rawCategoryId : '';
 
         if ($categoryId === '') {
             return Response::json(['error' => 'Category ID is required'], 422);
