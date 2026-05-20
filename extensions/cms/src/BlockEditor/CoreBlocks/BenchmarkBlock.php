@@ -148,8 +148,12 @@ final readonly class BenchmarkBlock implements BlockTypeInterface
                 continue;
             }
 
-            $label = htmlspecialchars(is_string($entry['label'] ?? null) ? $entry['label'] : '', ENT_QUOTES, 'UTF-8');
-            $value = is_numeric($entry['value'] ?? null) ? (float) $entry['value'] : 0.0;
+            /** @var mixed $rawLabel */
+            $rawLabel = $entry['label'] ?? null;
+            $label = htmlspecialchars(is_string($rawLabel) ? $rawLabel : '', ENT_QUOTES, 'UTF-8');
+            /** @var mixed $rawValue */
+            $rawValue = $entry['value'] ?? null;
+            $value = is_numeric($rawValue) ? (float) $rawValue : 0.0;
             $highlight = ($entry['highlight'] ?? false) === true;
 
             $formatted = number_format($value, 2);
