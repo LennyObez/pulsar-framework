@@ -129,7 +129,7 @@ final readonly class WaveformGenerator
             $count = count($peaks);
 
             for ($i = 0; $i < $count; $i++) {
-                $peaks[$i] = $peaks[$i] / $globalMax;
+                $peaks[$i] = (float) $peaks[$i] / $globalMax;
             }
         }
 
