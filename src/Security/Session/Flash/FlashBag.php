@@ -132,6 +132,7 @@ final class FlashBag
      */
     private function getNewBag(): array
     {
+        /** @var mixed $bag */
         $bag = $this->session->get(self::KEY_NEW, []);
 
         /** @var array<string, mixed> */
@@ -143,6 +144,7 @@ final class FlashBag
      */
     private function getOldBag(): array
     {
+        /** @var mixed $bag */
         $bag = $this->session->get(self::KEY_OLD, []);
 
         /** @var array<string, mixed> */
