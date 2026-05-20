@@ -47,12 +47,14 @@ final readonly class CodeExampleBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
+        /** @var mixed $rawCode */
         $rawCode = $data['code'] ?? '';
         $code = htmlspecialchars(is_string($rawCode) ? $rawCode : '', ENT_QUOTES, 'UTF-8');
         $showCopy = ($data['showCopy'] ?? true) ? 'true' : 'false';
 
         $html = "<div class=\"cms-code-example\" data-show-copy=\"$showCopy\">";
 
+        /** @var mixed $filename */
         $filename = $data['filename'] ?? null;
 
         if (is_string($filename) && $filename !== '') {
@@ -60,6 +62,7 @@ final readonly class CodeExampleBlock implements BlockTypeInterface
             $html .= "<div class=\"cms-code-example__filename\">$escapedFilename</div>";
         }
 
+        /** @var mixed $language */
         $language = $data['language'] ?? null;
 
         if (is_string($language) && $language !== '' && preg_match('/^[a-zA-Z0-9_-]+$/', $language) === 1) {
