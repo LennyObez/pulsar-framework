@@ -109,32 +109,37 @@ final readonly class DbOrderRepository implements OrderRepositoryInterface
         /** @var array<string, mixed> $bindings */
         $bindings = [];
 
-        if (is_string($filters['status'] ?? null)) {
+        $rawStatus = $filters['status'] ?? null;
+        if (is_string($rawStatus)) {
             $sql .= ' AND status = :status';
-            $bindings['status'] = $filters['status'];
+            $bindings['status'] = $rawStatus;
         }
 
-        if (is_string($filters['customerId'] ?? null)) {
+        $rawCustomerId = $filters['customerId'] ?? null;
+        if (is_string($rawCustomerId)) {
             $sql .= ' AND customer_id = :customer_id';
-            $bindings['customer_id'] = $filters['customerId'];
+            $bindings['customer_id'] = $rawCustomerId;
         }
 
-        if (is_string($filters['tenantId'] ?? null)) {
+        $rawTenantId = $filters['tenantId'] ?? null;
+        if (is_string($rawTenantId)) {
             $sql .= ' AND tenant_id = :tenant_id';
-            $bindings['tenant_id'] = $filters['tenantId'];
+            $bindings['tenant_id'] = $rawTenantId;
         } elseif ($this->tenantId !== null) {
             $sql .= ' AND tenant_id = :tenant_id';
             $bindings['tenant_id'] = $this->tenantId;
         }
 
-        if (is_string($filters['dateFrom'] ?? null)) {
+        $rawDateFrom = $filters['dateFrom'] ?? null;
+        if (is_string($rawDateFrom)) {
             $sql .= ' AND created_at >= :date_from';
-            $bindings['date_from'] = $filters['dateFrom'];
+            $bindings['date_from'] = $rawDateFrom;
         }
 
-        if (is_string($filters['dateTo'] ?? null)) {
+        $rawDateTo = $filters['dateTo'] ?? null;
+        if (is_string($rawDateTo)) {
             $sql .= ' AND created_at <= :date_to';
-            $bindings['date_to'] = $filters['dateTo'];
+            $bindings['date_to'] = $rawDateTo;
         }
 
         $sql .= ' ORDER BY created_at DESC LIMIT :limit OFFSET :offset';
