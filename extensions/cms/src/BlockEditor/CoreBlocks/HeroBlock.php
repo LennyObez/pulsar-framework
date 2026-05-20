@@ -45,7 +45,9 @@ final readonly class HeroBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
-        $title = htmlspecialchars(is_string($data['title'] ?? null) ? $data['title'] : '', ENT_QUOTES, 'UTF-8');
+        /** @var mixed $rawTitle */
+        $rawTitle = $data['title'] ?? null;
+        $title = htmlspecialchars(is_string($rawTitle) ? $rawTitle : '', ENT_QUOTES, 'UTF-8');
         $alignment = 'center';
 
         if (isset($data['alignment']) && is_string($data['alignment']) && in_array($data['alignment'], self::VALID_ALIGNMENTS, true)) {
