@@ -192,13 +192,21 @@ final readonly class DatabaseOutboxPort implements OutboxPort
      */
     private function hydrate(array $row): EventEnvelope
     {
-        $payloadJson = is_string($row['payload_json'] ?? null) ? $row['payload_json'] : '';
-        $metadataJson = is_string($row['metadata_json'] ?? null) ? $row['metadata_json'] : '';
-        $eventType = is_string($row['event_type'] ?? null) ? $row['event_type'] : '';
-        $schemaVersion = is_int($row['schema_version'] ?? null) ? $row['schema_version'] : 0;
-        $originModule = is_string($row['origin_module'] ?? null) ? $row['origin_module'] : null;
-        $scope = is_string($row['scope'] ?? null) ? $row['scope'] : null;
-        $eventId = is_string($row['event_id'] ?? null) ? $row['event_id'] : '';
+        $rawPayloadJson = $row['payload_json'] ?? null;
+        $rawMetadataJson = $row['metadata_json'] ?? null;
+        $rawEventType = $row['event_type'] ?? null;
+        $rawSchemaVersion = $row['schema_version'] ?? null;
+        $rawOriginModule = $row['origin_module'] ?? null;
+        $rawScope = $row['scope'] ?? null;
+        $rawEventId = $row['event_id'] ?? null;
+
+        $payloadJson = is_string($rawPayloadJson) ? $rawPayloadJson : '';
+        $metadataJson = is_string($rawMetadataJson) ? $rawMetadataJson : '';
+        $eventType = is_string($rawEventType) ? $rawEventType : '';
+        $schemaVersion = is_int($rawSchemaVersion) ? $rawSchemaVersion : 0;
+        $originModule = is_string($rawOriginModule) ? $rawOriginModule : null;
+        $scope = is_string($rawScope) ? $rawScope : null;
+        $eventId = is_string($rawEventId) ? $rawEventId : '';
 
         $payload = $payloadJson !== ''
             ? json_decode($payloadJson, true, 512, JSON_THROW_ON_ERROR)
