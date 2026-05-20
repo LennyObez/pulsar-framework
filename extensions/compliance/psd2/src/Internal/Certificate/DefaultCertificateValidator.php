@@ -97,17 +97,21 @@ final readonly class DefaultCertificateValidator implements CertificateValidator
         }
 
         // Extract PSD2-specific fields from extensions
-        $psd2Roles = $this->extractPsd2Roles($parsed);
-        $authorizationNumber = $this->extractAuthorizationNumber($parsed);
-        $ncaName = $this->extractNcaName($parsed);
-        $ncaId = $this->extractNcaId($parsed);
+        $rawExtensions = $parsed['extensions'] ?? [];
+        /** @var array<string, mixed> $extensions */
+        $extensions = is_array($rawExtensions) ? $rawExtensions : [];
+
+        $psd2Roles = $this->extractPsd2Roles($extensions);
+        $authorizationNumber = $this->extractAuthorizationNumber($extensions);
+        $ncaName = $this->extractNcaName($extensions);
+        $ncaId = $this->extractNcaId($extensions);
 
         // Determine certificate type from subject/extensions
         $type = str_contains($subject, 'QWAC') || str_contains($subject, 'Web Authentication')
             ? CertificateType::Qwac
             : CertificateType::Qseal;
 
-        $isQualified = $this->checkQualification($parsed);
+        $isQualified = $this->checkQualification($extensions);
 
         if ($this->config->requireQualified && !$isQualified) {
             $this->auditLogger?->log(
@@ -159,18 +163,16 @@ final readonly class DefaultCertificateValidator implements CertificateValidator
     /**
      * Extract PSD2 roles from certificate extensions.
      *
-     * @param array{extensions?: array<string, string>, ...<string, mixed>} $parsed
+     * @param array<string, mixed> $extensions
      *
      * @return list<string>
      */
-    private function extractPsd2Roles(array $parsed): array
+    private function extractPsd2Roles(array $extensions): array
     {
         // PSD2 roles are stored in QcStatements extension
         // In practice, this requires ASN.1 parsing of the extension
         // For the framework, we extract from subject/extensions hints
         $roles = [];
-        $extensions = is_array($parsed['extensions'] ?? null) ? $parsed['extensions'] : [];
-        /** @var array<string, string> $extensions */
 
         foreach ($extensions as $oid => $value) {
             if (!is_string($oid) || !is_string($value)) {
@@ -201,13 +203,10 @@ final readonly class DefaultCertificateValidator implements CertificateValidator
     /**
      * Extract the NCA authorization number from certificate extensions.
      *
-     * @param array{extensions?: array<string, string>, ...<string, mixed>} $parsed
+     * @param array<string, mixed> $extensions
      */
-    private function extractAuthorizationNumber(array $parsed): string
+    private function extractAuthorizationNumber(array $extensions): string
     {
-        $extensions = is_array($parsed['extensions'] ?? null) ? $parsed['extensions'] : [];
-        /** @var array<string, string> $extensions */
-
         foreach ($extensions as $value) {
             if (!is_string($value)) {
                 continue;
@@ -223,13 +222,10 @@ final readonly class DefaultCertificateValidator implements CertificateValidator
     }
 
     /**
-     * @param array{extensions?: array<string, string>, ...<string, mixed>} $parsed
+     * @param array<string, mixed> $extensions
      */
-    private function extractNcaName(array $parsed): string
+    private function extractNcaName(array $extensions): string
     {
-        $extensions = is_array($parsed['extensions'] ?? null) ? $parsed['extensions'] : [];
-        /** @var array<string, string> $extensions */
-
         foreach ($extensions as $value) {
             if (is_string($value) && str_contains($value, 'NCA')) {
                 return $value;
@@ -240,13 +236,10 @@ final readonly class DefaultCertificateValidator implements CertificateValidator
     }
 
     /**
-     * @param array{extensions?: array<string, string>, ...<string, mixed>} $parsed
+     * @param array<string, mixed> $extensions
      */
-    private function extractNcaId(array $parsed): string
+    private function extractNcaId(array $extensions): string
     {
-        $extensions = is_array($parsed['extensions'] ?? null) ? $parsed['extensions'] : [];
-        /** @var array<string, string> $extensions */
-
         foreach ($extensions as $oid => $value) {
             if (is_string($oid) && is_string($value) && str_contains($oid, 'NCAId')) {
                 return $value;
@@ -259,13 +252,10 @@ final readonly class DefaultCertificateValidator implements CertificateValidator
     /**
      * Check whether the certificate is a qualified eIDAS certificate.
      *
-     * @param array{extensions?: array<string, string>, ...<string, mixed>} $parsed
+     * @param array<string, mixed> $extensions
      */
-    private function checkQualification(array $parsed): bool
+    private function checkQualification(array $extensions): bool
     {
-        $extensions = is_array($parsed['extensions'] ?? null) ? $parsed['extensions'] : [];
-        /** @var array<string, string> $extensions */
-
         foreach ($extensions as $oid => $value) {
             if (!is_string($oid) || !is_string($value)) {
                 continue;
