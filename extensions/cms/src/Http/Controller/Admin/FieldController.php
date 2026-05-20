@@ -65,8 +65,10 @@ final readonly class FieldController extends AbstractAdminController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
+        /** @var mixed $rawFieldKey */
         $rawFieldKey = $body['field_key'] ?? null;
         $fieldKey = is_string($rawFieldKey) ? $rawFieldKey : '';
+        /** @var mixed $rawFieldType */
         $rawFieldType = $body['field_type'] ?? null;
         $fieldTypeStr = is_string($rawFieldType) ? $rawFieldType : '';
 
@@ -80,11 +82,17 @@ final readonly class FieldController extends AbstractAdminController
             return Response::json(['error' => 'Invalid field_type'], 400);
         }
 
+        /** @var mixed $rawRequired */
         $rawRequired = $body['required'] ?? null;
+        /** @var mixed $rawTranslatable */
         $rawTranslatable = $body['translatable'] ?? null;
+        /** @var mixed $rawSearchable */
         $rawSearchable = $body['searchable'] ?? null;
+        /** @var mixed $rawFilterable */
         $rawFilterable = $body['filterable'] ?? null;
+        /** @var mixed $rawSortable */
         $rawSortable = $body['sortable'] ?? null;
+        /** @var mixed $rawSortOrder */
         $rawSortOrder = $body['sort_order'] ?? null;
         $field = new ContentTypeField(
             id: UuidGenerator::v7(),
@@ -133,19 +141,34 @@ final readonly class FieldController extends AbstractAdminController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
+        /** @var mixed $rawFieldKey */
+        $rawFieldKey = $body['field_key'] ?? null;
+        /** @var mixed $rawRequired */
+        $rawRequired = $body['required'] ?? null;
+        /** @var mixed $rawTranslatable */
+        $rawTranslatable = $body['translatable'] ?? null;
+        /** @var mixed $rawSearchable */
+        $rawSearchable = $body['searchable'] ?? null;
+        /** @var mixed $rawFilterable */
+        $rawFilterable = $body['filterable'] ?? null;
+        /** @var mixed $rawSortable */
+        $rawSortable = $body['sortable'] ?? null;
+        /** @var mixed $rawSortOrder */
+        $rawSortOrder = $body['sort_order'] ?? null;
+
         $updated = new ContentTypeField(
             id: $existing->id,
             contentType: $contentType,
-            fieldKey: is_string($body['field_key'] ?? null) ? $body['field_key'] : $existing->fieldKey,
+            fieldKey: is_string($rawFieldKey) ? $rawFieldKey : $existing->fieldKey,
             fieldType: $existing->fieldType,
-            required: is_bool($body['required'] ?? null) ? $body['required'] : $existing->required,
-            translatable: is_bool($body['translatable'] ?? null) ? $body['translatable'] : $existing->translatable,
-            searchable: is_bool($body['searchable'] ?? null) ? $body['searchable'] : $existing->searchable,
-            filterable: is_bool($body['filterable'] ?? null) ? $body['filterable'] : $existing->filterable,
-            sortable: is_bool($body['sortable'] ?? null) ? $body['sortable'] : $existing->sortable,
+            required: is_bool($rawRequired) ? $rawRequired : $existing->required,
+            translatable: is_bool($rawTranslatable) ? $rawTranslatable : $existing->translatable,
+            searchable: is_bool($rawSearchable) ? $rawSearchable : $existing->searchable,
+            filterable: is_bool($rawFilterable) ? $rawFilterable : $existing->filterable,
+            sortable: is_bool($rawSortable) ? $rawSortable : $existing->sortable,
             validationRules: self::toStringKeyedArray($body['validation_rules'] ?? $existing->validationRules),
             defaultValue: $body['default_value'] ?? $existing->defaultValue,
-            sortOrder: is_int($body['sort_order'] ?? null) ? $body['sort_order'] : $existing->sortOrder,
+            sortOrder: is_int($rawSortOrder) ? $rawSortOrder : $existing->sortOrder,
         );
 
         $this->fieldRepository->saveField($updated);
