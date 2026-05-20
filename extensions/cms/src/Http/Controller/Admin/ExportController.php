@@ -136,15 +136,23 @@ final readonly class ExportController extends AbstractAdminController
             /** @var list<string>|null $contentTypes */
             $contentTypes = is_array($body['content_types'] ?? null) ? $body['content_types'] : null;
 
+            /** @var mixed $rawIncludePii */
+            $rawIncludePii = $body['include_pii'] ?? null;
+            /** @var mixed $rawDateFrom */
+            $rawDateFrom = $body['date_from'] ?? null;
+            /** @var mixed $rawDateTo */
+            $rawDateTo = $body['date_to'] ?? null;
+            /** @var mixed $rawStatus */
+            $rawStatus = $body['status'] ?? null;
             $options = ExportOptions::fromArray([
                 'scope' => $scope,
                 'locales' => $locales,
-                'include_pii' => is_bool($body['include_pii'] ?? null) ? $body['include_pii'] : false,
+                'include_pii' => is_bool($rawIncludePii) ? $rawIncludePii : false,
                 'tenant_id' => $tenantId,
                 'content_types' => $contentTypes,
-                'date_from' => isset($body['date_from']) && $body['date_from'] !== '' ? (is_string($body['date_from']) ? $body['date_from'] : '') : null,
-                'date_to' => isset($body['date_to']) && $body['date_to'] !== '' ? (is_string($body['date_to']) ? $body['date_to'] : '') : null,
-                'status' => isset($body['status']) && $body['status'] !== '' ? (is_string($body['status']) ? $body['status'] : '') : null,
+                'date_from' => is_string($rawDateFrom) && $rawDateFrom !== '' ? $rawDateFrom : null,
+                'date_to' => is_string($rawDateTo) && $rawDateTo !== '' ? $rawDateTo : null,
+                'status' => is_string($rawStatus) && $rawStatus !== '' ? $rawStatus : null,
             ]);
         } catch (InvalidArgumentException $e) {
             return Response::json(['error' => $e->getMessage()], 400);
@@ -202,10 +210,12 @@ final readonly class ExportController extends AbstractAdminController
         try {
             /** @var list<string>|null $locales */
             $locales = is_array($body['locales'] ?? null) ? $body['locales'] : null;
+            /** @var mixed $rawIncludePii */
+            $rawIncludePii = $body['include_pii'] ?? null;
             $options = ExportOptions::fromArray([
                 'scope' => $scope,
                 'locales' => $locales,
-                'include_pii' => is_bool($body['include_pii'] ?? null) ? $body['include_pii'] : false,
+                'include_pii' => is_bool($rawIncludePii) ? $rawIncludePii : false,
                 'tenant_id' => $tenantId,
             ]);
         } catch (InvalidArgumentException $e) {
@@ -236,7 +246,9 @@ final readonly class ExportController extends AbstractAdminController
         $this->authorize($identity, 'cms.tools.export');
 
         $params = $request->getQueryParams();
-        $locale = is_string($params['locale'] ?? null) ? $params['locale'] : 'en';
+        /** @var mixed $rawLocale */
+        $rawLocale = $params['locale'] ?? null;
+        $locale = is_string($rawLocale) ? $rawLocale : 'en';
 
         /** @var string|null $tenantId */
         $tenantId = $request->getAttribute('tenant_id');
@@ -287,7 +299,9 @@ final readonly class ExportController extends AbstractAdminController
         $this->authorize($identity, 'cms.tools.export');
 
         $params = $request->getQueryParams();
-        $locale = is_string($params['locale'] ?? null) ? $params['locale'] : 'en';
+        /** @var mixed $rawLocale */
+        $rawLocale = $params['locale'] ?? null;
+        $locale = is_string($rawLocale) ? $rawLocale : 'en';
 
         /** @var string|null $tenantId */
         $tenantId = $request->getAttribute('tenant_id');
