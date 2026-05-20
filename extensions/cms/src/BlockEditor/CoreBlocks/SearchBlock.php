@@ -38,18 +38,24 @@ final readonly class SearchBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
+        /** @var mixed $rawPlaceholder */
+        $rawPlaceholder = $data['placeholder'] ?? null;
+        /** @var mixed $rawAction */
+        $rawAction = $data['action'] ?? null;
+        /** @var mixed $rawButtonText */
+        $rawButtonText = $data['buttonText'] ?? null;
         $placeholder = htmlspecialchars(
-            is_string($data['placeholder'] ?? null) ? $data['placeholder'] : 'Search…',
+            is_string($rawPlaceholder) ? $rawPlaceholder : 'Search…',
             ENT_QUOTES,
             'UTF-8',
         );
         $action = htmlspecialchars(
-            is_string($data['action'] ?? null) ? $data['action'] : '/search',
+            is_string($rawAction) ? $rawAction : '/search',
             ENT_QUOTES,
             'UTF-8',
         );
         $buttonText = htmlspecialchars(
-            is_string($data['buttonText'] ?? null) ? $data['buttonText'] : 'Search',
+            is_string($rawButtonText) ? $rawButtonText : 'Search',
             ENT_QUOTES,
             'UTF-8',
         );
