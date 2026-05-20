@@ -39,8 +39,10 @@ final readonly class Distinct implements RuleInterface
             );
         }
 
+        /** @var list<mixed> $unique */
         $unique = [];
 
+        /** @var mixed $element */
         foreach ($value as $element) {
             if (in_array($element, $unique, true)) {
                 return new Violation(
