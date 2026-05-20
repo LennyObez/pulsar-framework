@@ -49,8 +49,12 @@ final readonly class SearchAnalyticsController extends AbstractAdminController
 
         $params = $request->getQueryParams();
 
-        $fromStr = is_string($params['from'] ?? null) ? $params['from'] : null;
-        $toStr = is_string($params['to'] ?? null) ? $params['to'] : null;
+        /** @var mixed $rawFrom */
+        $rawFrom = $params['from'] ?? null;
+        $fromStr = is_string($rawFrom) ? $rawFrom : null;
+        /** @var mixed $rawTo */
+        $rawTo = $params['to'] ?? null;
+        $toStr = is_string($rawTo) ? $rawTo : null;
 
         $now = new DateTimeImmutable();
 
