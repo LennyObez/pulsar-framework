@@ -233,22 +233,24 @@ final readonly class SchemaFileParser
     }
 
     /**
-     * @param array<mixed, mixed> $relDef
+     * @param array{
+     *     type?: string,
+     *     target?: string,
+     *     foreignKey?: string|null,
+     *     localKey?: string,
+     *     pivot?: string|null,
+     * } $relDef
      */
     private function parseRelation(string $name, array $relDef): RelationshipDefinition
     {
-        $typeStr = is_string($relDef['type'] ?? null) ? $relDef['type'] : 'hasMany';
-        $target = is_string($relDef['target'] ?? null) ? $relDef['target'] : '';
-        $foreignKey = is_string($relDef['foreignKey'] ?? null) ? $relDef['foreignKey'] : null;
-
-        $type = RelationType::tryFrom($typeStr) ?? RelationType::HasMany;
+        $type = RelationType::tryFrom($relDef['type'] ?? 'hasMany') ?? RelationType::HasMany;
 
         return new RelationshipDefinition(
             type: $type,
-            relatedEntity: $target,
-            foreignKey: $foreignKey ?? $name . '_id',
-            localKey: is_string($relDef['localKey'] ?? null) ? $relDef['localKey'] : 'id',
-            pivotTable: is_string($relDef['pivot'] ?? null) ? $relDef['pivot'] : null,
+            relatedEntity: $relDef['target'] ?? '',
+            foreignKey: $relDef['foreignKey'] ?? ($name . '_id'),
+            localKey: $relDef['localKey'] ?? 'id',
+            pivotTable: $relDef['pivot'] ?? null,
         );
     }
 
