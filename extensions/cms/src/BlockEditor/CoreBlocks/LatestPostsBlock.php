@@ -60,12 +60,22 @@ final readonly class LatestPostsBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
+        /** @var mixed $rawPosts */
+        $rawPosts = $data['posts'] ?? null;
         /** @var list<array{title?: string, url?: string, thumbnail?: string, date?: string, author?: string, excerpt?: string}> $posts */
-        $posts = is_array($data['posts'] ?? null) ? $data['posts'] : [];
-        $showExcerpt = is_bool($data['showExcerpt'] ?? null) ? $data['showExcerpt'] : true;
-        $showThumbnail = is_bool($data['showThumbnail'] ?? null) ? $data['showThumbnail'] : false;
-        $showDate = is_bool($data['showDate'] ?? null) ? $data['showDate'] : true;
-        $showAuthor = is_bool($data['showAuthor'] ?? null) ? $data['showAuthor'] : false;
+        $posts = is_array($rawPosts) ? $rawPosts : [];
+        /** @var mixed $rawShowExcerpt */
+        $rawShowExcerpt = $data['showExcerpt'] ?? null;
+        /** @var mixed $rawShowThumbnail */
+        $rawShowThumbnail = $data['showThumbnail'] ?? null;
+        /** @var mixed $rawShowDate */
+        $rawShowDate = $data['showDate'] ?? null;
+        /** @var mixed $rawShowAuthor */
+        $rawShowAuthor = $data['showAuthor'] ?? null;
+        $showExcerpt = is_bool($rawShowExcerpt) ? $rawShowExcerpt : true;
+        $showThumbnail = is_bool($rawShowThumbnail) ? $rawShowThumbnail : false;
+        $showDate = is_bool($rawShowDate) ? $rawShowDate : true;
+        $showAuthor = is_bool($rawShowAuthor) ? $rawShowAuthor : false;
 
         $html = '<div class="latest-posts">';
 
