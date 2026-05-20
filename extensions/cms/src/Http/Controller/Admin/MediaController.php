@@ -51,10 +51,18 @@ final readonly class MediaController extends AbstractAdminController
         $this->authorize($identity, 'cms.media.view');
 
         $params = $request->getQueryParams();
-        $page = max(1, is_int($params['page'] ?? null) ? $params['page'] : 1);
-        $perPage = min(100, max(1, is_int($params['per_page'] ?? null) ? $params['per_page'] : 20));
-        $mimeType = is_string($params['mime'] ?? null) ? $params['mime'] : null;
-        $visibility = is_string($params['visibility'] ?? null) ? $params['visibility'] : null;
+        /** @var mixed $rawPage */
+        $rawPage = $params['page'] ?? null;
+        $page = max(1, is_int($rawPage) ? $rawPage : 1);
+        /** @var mixed $rawPerPage */
+        $rawPerPage = $params['per_page'] ?? null;
+        $perPage = min(100, max(1, is_int($rawPerPage) ? $rawPerPage : 20));
+        /** @var mixed $rawMime */
+        $rawMime = $params['mime'] ?? null;
+        $mimeType = is_string($rawMime) ? $rawMime : null;
+        /** @var mixed $rawVisibility */
+        $rawVisibility = $params['visibility'] ?? null;
+        $visibility = is_string($rawVisibility) ? $rawVisibility : null;
 
         /** @var string|null $tenantId */
         $tenantId = $request->getAttribute('tenant_id');
@@ -105,7 +113,9 @@ final readonly class MediaController extends AbstractAdminController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $visibilityValue = is_string($body['visibility'] ?? null) ? $body['visibility'] : 'public';
+        /** @var mixed $rawVisibility */
+        $rawVisibility = $body['visibility'] ?? null;
+        $visibilityValue = is_string($rawVisibility) ? $rawVisibility : 'public';
         $visibility = MediaVisibility::tryFrom($visibilityValue) ?? MediaVisibility::Public;
 
         /** @var string|null $tenantId */
@@ -212,7 +222,9 @@ final readonly class MediaController extends AbstractAdminController
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
-        $reason = is_string($body['reason'] ?? null) ? $body['reason'] : '';
+        /** @var mixed $rawReason */
+        $rawReason = $body['reason'] ?? null;
+        $reason = is_string($rawReason) ? $rawReason : '';
 
         if (strlen($reason) < 10) {
             return Response::json([
