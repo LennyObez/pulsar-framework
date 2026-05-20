@@ -46,22 +46,32 @@ final readonly class OrderController extends AbstractAdminController
         $this->authorize($identity, 'cms.commerce.orders.view');
 
         $params = $request->getQueryParams();
-        $page = max(1, is_int($params['page'] ?? null) ? $params['page'] : 1);
-        $perPage = min(100, max(1, is_int($params['per_page'] ?? null) ? $params['per_page'] : 20));
+        /** @var mixed $rawPage */
+        $rawPage = $params['page'] ?? null;
+        $page = max(1, is_int($rawPage) ? $rawPage : 1);
+        /** @var mixed $rawPerPage */
+        $rawPerPage = $params['per_page'] ?? null;
+        $perPage = min(100, max(1, is_int($rawPerPage) ? $rawPerPage : 20));
 
         /** @var array<string, mixed> $filters */
         $filters = [];
 
-        if (is_string($params['status'] ?? null) && $params['status'] !== '') {
-            $filters['status'] = $params['status'];
+        /** @var mixed $rawStatus */
+        $rawStatus = $params['status'] ?? null;
+        if (is_string($rawStatus) && $rawStatus !== '') {
+            $filters['status'] = $rawStatus;
         }
 
-        if (is_string($params['date_from'] ?? null) && $params['date_from'] !== '') {
-            $filters['dateFrom'] = $params['date_from'];
+        /** @var mixed $rawDateFrom */
+        $rawDateFrom = $params['date_from'] ?? null;
+        if (is_string($rawDateFrom) && $rawDateFrom !== '') {
+            $filters['dateFrom'] = $rawDateFrom;
         }
 
-        if (is_string($params['date_to'] ?? null) && $params['date_to'] !== '') {
-            $filters['dateTo'] = $params['date_to'];
+        /** @var mixed $rawDateTo */
+        $rawDateTo = $params['date_to'] ?? null;
+        if (is_string($rawDateTo) && $rawDateTo !== '') {
+            $filters['dateTo'] = $rawDateTo;
         }
 
         /** @var string|null $tenantId */
@@ -153,8 +163,12 @@ final readonly class OrderController extends AbstractAdminController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $amount = is_int($body['amount'] ?? null) ? $body['amount'] : 0;
-        $reason = is_string($body['reason'] ?? null) ? $body['reason'] : '';
+        /** @var mixed $rawAmount */
+        $rawAmount = $body['amount'] ?? null;
+        $amount = is_int($rawAmount) ? $rawAmount : 0;
+        /** @var mixed $rawReason */
+        $rawReason = $body['reason'] ?? null;
+        $reason = is_string($rawReason) ? $rawReason : '';
 
         if ($amount <= 0) {
             return Response::json(['error' => 'Refund amount must be positive'], 400);
