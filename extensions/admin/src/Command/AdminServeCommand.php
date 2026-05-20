@@ -13,9 +13,7 @@ use Pulsar\Console\OutputInterface;
 use Pulsar\Extension\Admin\Config\AdminConfig;
 
 use function file_exists;
-use function is_int;
 use function is_resource;
-use function is_string;
 use function proc_close;
 use function proc_open;
 use function sprintf;
@@ -59,25 +57,8 @@ final class AdminServeCommand extends Command
             return ExitCode::Error->value;
         }
 
-        $host = '127.0.0.1';
-
-        if ($input->hasOption('host')) {
-            $hostOption = $input->getOption('host');
-
-            if (is_string($hostOption)) {
-                $host = $hostOption;
-            }
-        }
-
-        $port = 8686;
-
-        if ($input->hasOption('port')) {
-            $portOption = $input->getOption('port');
-
-            if (is_int($portOption) || is_string($portOption)) {
-                $port = (int) $portOption;
-            }
-        }
+        $host = $input->getStringOption('host', '127.0.0.1');
+        $port = $input->getIntOption('port', 8686);
 
         $routerScript = $this->basePath . '/extensions/admin/dev/router.php';
         if (!file_exists($routerScript)) {

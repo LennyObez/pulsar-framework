@@ -12,9 +12,7 @@ use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 
 use function file_exists;
-use function is_int;
 use function is_resource;
-use function is_string;
 use function preg_match;
 use function proc_close;
 use function proc_open;
@@ -54,10 +52,7 @@ final class CmsServeCommand extends Command
     #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
-        $hostOption = $input->getOption('host');
-        $host = $input->hasOption('host') && is_string($hostOption)
-            ? $hostOption
-            : '127.0.0.1';
+        $host = $input->getStringOption('host', '127.0.0.1');
 
         if (preg_match('/^[A-Za-z0-9.\-:\[\]]+$/', $host) !== 1) {
             $output->errorln(sprintf('Invalid --host value: %s', $host));
@@ -65,10 +60,7 @@ final class CmsServeCommand extends Command
             return ExitCode::Error->value;
         }
 
-        $portOption = $input->getOption('port');
-        $port = $input->hasOption('port') && (is_int($portOption) || is_string($portOption))
-            ? (int) $portOption
-            : 8787;
+        $port = $input->getIntOption('port', 8787);
 
         if ($port < 1 || $port > 65535) {
             $output->errorln(sprintf('Invalid --port value: %d', $port));
