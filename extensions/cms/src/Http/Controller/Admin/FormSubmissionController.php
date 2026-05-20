@@ -163,7 +163,9 @@ final readonly class FormSubmissionController extends AbstractAdminController
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
-        $reason = is_string($body['reason'] ?? null) ? $body['reason'] : 'Manually marked as spam';
+        /** @var mixed $rawReason */
+        $rawReason = $body['reason'] ?? null;
+        $reason = is_string($rawReason) ? $rawReason : 'Manually marked as spam';
 
         $tenantId = $this->validateTenantAccess($request);
 
@@ -186,7 +188,9 @@ final readonly class FormSubmissionController extends AbstractAdminController
 
         $tenantId = $this->validateTenantAccess($request);
         $params = $request->getQueryParams();
-        $contentId = is_string($params['content_id'] ?? null) ? $params['content_id'] : '';
+        /** @var mixed $rawContentId */
+        $rawContentId = $params['content_id'] ?? null;
+        $contentId = is_string($rawContentId) ? $rawContentId : '';
 
         if ($contentId === '') {
             return Response::json(['error' => 'content_id query parameter is required'], 400);
@@ -219,10 +223,13 @@ final readonly class FormSubmissionController extends AbstractAdminController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $rawIds = is_array($body['ids'] ?? null) ? $body['ids'] : [];
+        /** @var mixed $rawIdsRaw */
+        $rawIdsRaw = $body['ids'] ?? null;
+        $rawIds = is_array($rawIdsRaw) ? $rawIdsRaw : [];
 
         $deleted = 0;
 
+        /** @var mixed $id */
         foreach ($rawIds as $id) {
             if (!is_string($id)) {
                 continue;
@@ -249,6 +256,7 @@ final readonly class FormSubmissionController extends AbstractAdminController
     {
         $parts = [];
 
+        /** @var mixed $value */
         foreach ($data as $key => $value) {
             if (str_starts_with($key, '_')) {
                 continue;
