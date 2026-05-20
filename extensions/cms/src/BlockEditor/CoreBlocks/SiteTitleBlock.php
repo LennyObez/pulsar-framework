@@ -47,11 +47,20 @@ final readonly class SiteTitleBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
-        $title = htmlspecialchars(is_string($data['title'] ?? null) ? $data['title'] : '', ENT_QUOTES, 'UTF-8');
+        /** @var mixed $rawTitle */
+        $rawTitle = $data['title'] ?? null;
+        $title = htmlspecialchars(is_string($rawTitle) ? $rawTitle : '', ENT_QUOTES, 'UTF-8');
+        /** @var mixed $tagline */
         $tagline = $data['tagline'] ?? null;
-        $tag = is_string($data['tag'] ?? null) && in_array($data['tag'], self::VALID_TAGS, true) ? $data['tag'] : 'h1';
-        $linkToHome = is_bool($data['linkToHome'] ?? null) ? $data['linkToHome'] : true;
-        $homeUrl = htmlspecialchars(is_string($data['homeUrl'] ?? null) ? $data['homeUrl'] : '/', ENT_QUOTES, 'UTF-8');
+        /** @var mixed $rawTag */
+        $rawTag = $data['tag'] ?? null;
+        $tag = is_string($rawTag) && in_array($rawTag, self::VALID_TAGS, true) ? $rawTag : 'h1';
+        /** @var mixed $rawLinkToHome */
+        $rawLinkToHome = $data['linkToHome'] ?? null;
+        $linkToHome = is_bool($rawLinkToHome) ? $rawLinkToHome : true;
+        /** @var mixed $rawHomeUrl */
+        $rawHomeUrl = $data['homeUrl'] ?? null;
+        $homeUrl = htmlspecialchars(is_string($rawHomeUrl) ? $rawHomeUrl : '/', ENT_QUOTES, 'UTF-8');
 
         $html = '<div class="site-title-block">';
 
