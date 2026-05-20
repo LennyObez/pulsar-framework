@@ -81,8 +81,12 @@ final readonly class StripeWebhookHandler
      */
     private function handleSubscriptionUpdate(array $object): bool
     {
-        $gatewayId = is_string($object['id'] ?? null) ? $object['id'] : '';
-        $status = is_string($object['status'] ?? null) ? $object['status'] : '';
+        /** @var mixed $rawGatewayId */
+        $rawGatewayId = $object['id'] ?? null;
+        /** @var mixed $rawStatus */
+        $rawStatus = $object['status'] ?? null;
+        $gatewayId = is_string($rawGatewayId) ? $rawGatewayId : '';
+        $status = is_string($rawStatus) ? $rawStatus : '';
 
         if ($gatewayId === '') {
             return false;
@@ -126,7 +130,9 @@ final readonly class StripeWebhookHandler
      */
     private function handleSubscriptionDeleted(array $object): bool
     {
-        $gatewayId = is_string($object['id'] ?? null) ? $object['id'] : '';
+        /** @var mixed $rawGatewayId */
+        $rawGatewayId = $object['id'] ?? null;
+        $gatewayId = is_string($rawGatewayId) ? $rawGatewayId : '';
 
         if ($gatewayId === '') {
             return false;
@@ -149,7 +155,9 @@ final readonly class StripeWebhookHandler
      */
     private function handlePaymentFailed(array $object): bool
     {
-        $subscriptionId = is_string($object['subscription'] ?? null) ? $object['subscription'] : '';
+        /** @var mixed $rawSubscriptionId */
+        $rawSubscriptionId = $object['subscription'] ?? null;
+        $subscriptionId = is_string($rawSubscriptionId) ? $rawSubscriptionId : '';
 
         if ($subscriptionId === '') {
             return false;
