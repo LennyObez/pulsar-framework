@@ -311,7 +311,9 @@ final readonly class AnalyticsImportExportProvider implements ImportExportProvid
         $warnings = [];
 
         foreach ($goals as $entry) {
+            /** @var mixed $siteId */
             $siteId = $entry['site_id'] ?? null;
+            /** @var mixed $name */
             $name = $entry['name'] ?? null;
 
             if (!is_string($siteId) || !is_string($name)) {
@@ -321,7 +323,9 @@ final readonly class AnalyticsImportExportProvider implements ImportExportProvid
                 continue;
             }
 
-            $goalTypeValue = is_string($entry['goal_type'] ?? null) ? $entry['goal_type'] : '';
+            /** @var mixed $rawGoalType */
+            $rawGoalType = $entry['goal_type'] ?? null;
+            $goalTypeValue = is_string($rawGoalType) ? $rawGoalType : '';
             $goalType = GoalType::tryFrom($goalTypeValue);
 
             if ($goalType === null) {
@@ -332,7 +336,9 @@ final readonly class AnalyticsImportExportProvider implements ImportExportProvid
             }
 
             if (!$dryRun) {
-                $targetValue = is_string($entry['target_value'] ?? null) ? $entry['target_value'] : '';
+                /** @var mixed $rawTargetValue */
+                $rawTargetValue = $entry['target_value'] ?? null;
+                $targetValue = is_string($rawTargetValue) ? $rawTargetValue : '';
                 $this->goalService->create($siteId, $name, $goalType, $targetValue);
             }
 
@@ -353,7 +359,9 @@ final readonly class AnalyticsImportExportProvider implements ImportExportProvid
         $warnings = [];
 
         foreach ($funnels as $entry) {
+            /** @var mixed $siteId */
             $siteId = $entry['site_id'] ?? null;
+            /** @var mixed $name */
             $name = $entry['name'] ?? null;
 
             if (!is_string($siteId) || !is_string($name)) {
@@ -363,7 +371,9 @@ final readonly class AnalyticsImportExportProvider implements ImportExportProvid
                 continue;
             }
 
-            $rawSteps = is_array($entry['steps'] ?? null) ? $entry['steps'] : [];
+            /** @var mixed $rawStepsValue */
+            $rawStepsValue = $entry['steps'] ?? null;
+            $rawSteps = is_array($rawStepsValue) ? $rawStepsValue : [];
 
             if ($rawSteps === []) {
                 $warnings[] = "Skipping funnel '{$name}' with no steps";
