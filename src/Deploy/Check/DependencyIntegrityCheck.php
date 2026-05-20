@@ -193,7 +193,9 @@ final readonly class DependencyIntegrityCheck implements DeployCheckInterface
                 continue;
             }
 
+            /** @var mixed $name */
             $name = $package['name'] ?? null;
+            /** @var mixed $version */
             $version = $package['version'] ?? null;
 
             if (is_string($name) && is_string($version)) {
@@ -218,12 +220,14 @@ final readonly class DependencyIntegrityCheck implements DeployCheckInterface
             ? $installedData['packages']
             : $installedData;
 
-        foreach ($packages as $key => $package) {
+        foreach ($packages as $package) {
             if (!is_array($package)) {
                 continue;
             }
 
+            /** @var mixed $name */
             $name = $package['name'] ?? null;
+            /** @var mixed $version */
             $version = $package['version'] ?? null;
 
             if (is_string($name) && is_string($version)) {
