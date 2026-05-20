@@ -237,6 +237,7 @@ final readonly class ResultPrinter
         $lines = [sprintf('array(%d) [', $count)];
         $shown = 0;
 
+        /** @var mixed $item */
         foreach ($value as $key => $item) {
             if ($shown >= self::MAX_ARRAY_ITEMS) {
                 $remaining = $count - $shown;
@@ -325,8 +326,10 @@ final readonly class ResultPrinter
 
         // If it's also iterable, show first/last items
         if ($value instanceof Traversable) {
+            /** @var list<mixed> $items */
             $items = [];
 
+            /** @var mixed $item */
             foreach ($value as $item) {
                 $items[] = $item;
 
@@ -339,6 +342,7 @@ final readonly class ResultPrinter
             $closingIndent = str_repeat(self::INDENT, $depth);
             $lines = [$header . ' ['];
 
+            /** @var mixed $item */
             foreach (array_slice($items, 0, 5) as $i => $item) {
                 $lines[] = $indent . $i . ' => ' . $this->format($item, $depth + 1) . ',';
             }
@@ -400,6 +404,7 @@ final readonly class ResultPrinter
                 continue;
             }
 
+            /** @var mixed $propValue */
             $propValue = $prop->getValue($value);
 
             // Apply secret redaction if available
