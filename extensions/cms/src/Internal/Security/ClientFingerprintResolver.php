@@ -75,7 +75,9 @@ final readonly class ClientFingerprintResolver
     private function resolveIpAddress(ServerRequestInterface $request): string
     {
         $serverParams = $request->getServerParams();
-        $remoteAddr = is_string($serverParams['REMOTE_ADDR'] ?? null) ? $serverParams['REMOTE_ADDR'] : '127.0.0.1';
+        /** @var mixed $rawRemoteAddr */
+        $rawRemoteAddr = $serverParams['REMOTE_ADDR'] ?? null;
+        $remoteAddr = is_string($rawRemoteAddr) ? $rawRemoteAddr : '127.0.0.1';
 
         // Only trust forwarded headers if the request comes from a trusted proxy
         if (!$this->isTrustedProxy($remoteAddr)) {
