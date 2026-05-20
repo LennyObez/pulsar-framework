@@ -44,8 +44,12 @@ final readonly class TrackingController
     {
         if ($this->trackingEnabled) {
             $params = $request->getQueryParams();
-            $sendId = is_string($params['s'] ?? null) ? $params['s'] : '';
-            $signature = is_string($params['sig'] ?? null) ? $params['sig'] : '';
+            /** @var mixed $rawSendId */
+            $rawSendId = $params['s'] ?? null;
+            $sendId = is_string($rawSendId) ? $rawSendId : '';
+            /** @var mixed $rawSignature */
+            $rawSignature = $params['sig'] ?? null;
+            $signature = is_string($rawSignature) ? $rawSignature : '';
 
             if ($sendId !== '' && $this->validateSignature($sendId, 'open', $signature)) {
                 $this->sendRepository->updateStatus($sendId, SendStatus::Delivered);
@@ -73,12 +77,15 @@ final readonly class TrackingController
     public function click(ServerRequestInterface $request): Response
     {
         $params = $request->getQueryParams();
-        /** @var string $sendId */
-        $sendId = is_string($params['s'] ?? null) ? $params['s'] : '';
-        /** @var string $url */
-        $url = is_string($params['url'] ?? null) ? $params['url'] : '';
-        /** @var string $signature */
-        $signature = is_string($params['sig'] ?? null) ? $params['sig'] : '';
+        /** @var mixed $rawSendId */
+        $rawSendId = $params['s'] ?? null;
+        $sendId = is_string($rawSendId) ? $rawSendId : '';
+        /** @var mixed $rawUrl */
+        $rawUrl = $params['url'] ?? null;
+        $url = is_string($rawUrl) ? $rawUrl : '';
+        /** @var mixed $rawSignature */
+        $rawSignature = $params['sig'] ?? null;
+        $signature = is_string($rawSignature) ? $rawSignature : '';
 
         if ($url === '') {
             return Response::json(['error' => 'Missing URL parameter'], 400);
