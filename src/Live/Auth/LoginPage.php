@@ -55,6 +55,12 @@ final class LoginPage extends LiveComponent
     private ?AuthUiConfig $config = null;
     private ?AuthenticatorInterface $authenticator = null;
 
+    /**
+     * @param array{
+     *     config?: AuthUiConfig,
+     *     authenticator?: AuthenticatorInterface,
+     * } $params
+     */
     public function mount(array $params = []): void
     {
         $cfg = $params['config'] ?? null;
