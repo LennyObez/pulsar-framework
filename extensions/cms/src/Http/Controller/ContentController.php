@@ -183,6 +183,7 @@ final readonly class ContentController
         }
 
         // Verify content is published (or preview token is valid)
+        /** @var mixed $previewToken */
         $previewToken = $request->getQueryParams()['preview_token'] ?? null;
 
         if (!$content->isPublished() && !$this->isValidPreviewToken($previewToken, $content->id)) {
@@ -466,10 +467,14 @@ final readonly class ContentController
         // Fallback to inline HTML when no template engine is available
         /** @var array<string, mixed> $translation */
         $translation = $data['translation'] ?? [];
-        $title = htmlspecialchars(is_string($translation['title'] ?? null) ? $translation['title'] : '', ENT_QUOTES | ENT_HTML5, 'UTF-8');
-        $body = $this->safeHtmlPolicy->sanitize(is_string($translation['body'] ?? null) ? $translation['body'] : '');
-        $metaTitle = htmlspecialchars(is_string($translation['meta_title'] ?? null) ? $translation['meta_title'] : $title, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-        $metaDescription = htmlspecialchars(is_string($translation['meta_description'] ?? null) ? $translation['meta_description'] : '', ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $rawTitle = $translation['title'] ?? null;
+        $rawBody = $translation['body'] ?? null;
+        $rawMetaTitle = $translation['meta_title'] ?? null;
+        $rawMetaDescription = $translation['meta_description'] ?? null;
+        $title = htmlspecialchars(is_string($rawTitle) ? $rawTitle : '', ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $body = $this->safeHtmlPolicy->sanitize(is_string($rawBody) ? $rawBody : '');
+        $metaTitle = htmlspecialchars(is_string($rawMetaTitle) ? $rawMetaTitle : $title, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $metaDescription = htmlspecialchars(is_string($rawMetaDescription) ? $rawMetaDescription : '', ENT_QUOTES | ENT_HTML5, 'UTF-8');
 
         // Build hreflang link tags
         /** @var list<array{locale: string, href: string}> $hreflangLinks */
