@@ -73,12 +73,23 @@ final readonly class BackupController extends AbstractAdminController
 
         $tenantId = $this->validateTenantAccess($request);
 
+        /** @var mixed $rawIncludeContent */
+        $rawIncludeContent = $body['include_content'] ?? null;
+        /** @var mixed $rawIncludeMedia */
+        $rawIncludeMedia = $body['include_media'] ?? null;
+        /** @var mixed $rawIncludeTaxonomies */
+        $rawIncludeTaxonomies = $body['include_taxonomies'] ?? null;
+        /** @var mixed $rawIncludeMenus */
+        $rawIncludeMenus = $body['include_menus'] ?? null;
+        /** @var mixed $rawIncludeSettings */
+        $rawIncludeSettings = $body['include_settings'] ?? null;
+
         $scope = BackupScope::fromArray([
-            'include_content' => is_bool($body['include_content'] ?? null) ? $body['include_content'] : true,
-            'include_media' => is_bool($body['include_media'] ?? null) ? $body['include_media'] : false,
-            'include_taxonomies' => is_bool($body['include_taxonomies'] ?? null) ? $body['include_taxonomies'] : true,
-            'include_menus' => is_bool($body['include_menus'] ?? null) ? $body['include_menus'] : true,
-            'include_settings' => is_bool($body['include_settings'] ?? null) ? $body['include_settings'] : true,
+            'include_content' => is_bool($rawIncludeContent) ? $rawIncludeContent : true,
+            'include_media' => is_bool($rawIncludeMedia) ? $rawIncludeMedia : false,
+            'include_taxonomies' => is_bool($rawIncludeTaxonomies) ? $rawIncludeTaxonomies : true,
+            'include_menus' => is_bool($rawIncludeMenus) ? $rawIncludeMenus : true,
+            'include_settings' => is_bool($rawIncludeSettings) ? $rawIncludeSettings : true,
             'tenant_id' => $tenantId,
         ]);
 
