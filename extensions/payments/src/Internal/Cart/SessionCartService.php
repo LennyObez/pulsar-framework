@@ -172,33 +172,35 @@ final readonly class SessionCartService implements CartServiceInterface
     /**
      * Deserialize a cart from its session array form.
      *
-     * @param array<string, mixed> $data
+     * @param array{
+     *     id?: string,
+     *     userId?: string|null,
+     *     currency?: string,
+     *     couponCode?: string|null,
+     *     createdAt?: string,
+     *     updatedAt?: string,
+     *     items?: list<array{id?: string, productId?: string, productName?: string, quantity?: int, unitPriceAmount?: int, currency?: string, metadata?: array<string, mixed>}>,
+     * } $data
      */
     private function deserializeCart(array $data): Cart
     {
-        $rawItems = is_array($data['items'] ?? null) ? $data['items'] : [];
         $items = [];
 
-        foreach ($rawItems as $rawItem) {
-            if (is_array($rawItem) && isset($rawItem['id'], $rawItem['productId']) && $rawItem['id'] !== '' && $rawItem['productId'] !== '') {
+        foreach ($data['items'] ?? [] as $rawItem) {
+            if (isset($rawItem['id'], $rawItem['productId']) && $rawItem['id'] !== '' && $rawItem['productId'] !== '') {
                 /** @var array{id: non-empty-string, productId: non-empty-string, productName: string, quantity: int<1, max>, unitPriceAmount: int, currency: string, metadata?: array<string, mixed>} $validItem */
                 $validItem = $rawItem;
                 $items[] = CartItem::fromArray($validItem);
             }
         }
 
-        $userId = is_string($data['userId'] ?? null) && $data['userId'] !== ''
-            ? $data['userId']
-            : null;
+        $userId = ($data['userId'] ?? '') !== '' ? $data['userId'] : null;
+        $couponCode = ($data['couponCode'] ?? '') !== '' ? $data['couponCode'] : null;
 
-        $couponCode = is_string($data['couponCode'] ?? null) && $data['couponCode'] !== ''
-            ? $data['couponCode']
-            : null;
-
-        $currencyCode = is_string($data['currency'] ?? null) ? $data['currency'] : 'EUR';
+        $currencyCode = $data['currency'] ?? 'EUR';
         $currency = Currency::tryFrom($currencyCode) ?? $this->defaultCurrency;
 
-        $cartId = is_string($data['id'] ?? null) && $data['id'] !== '' ? $data['id'] : bin2hex(random_bytes(16));
+        $cartId = ($data['id'] ?? '') !== '' ? $data['id'] : bin2hex(random_bytes(16));
 
         return new Cart(
             id: $cartId,
@@ -206,8 +208,8 @@ final readonly class SessionCartService implements CartServiceInterface
             items: $items,
             currency: $currency,
             couponCode: $couponCode,
-            createdAt: new DateTimeImmutable(is_string($data['createdAt'] ?? null) ? $data['createdAt'] : 'now'),
-            updatedAt: new DateTimeImmutable(is_string($data['updatedAt'] ?? null) ? $data['updatedAt'] : 'now'),
+            createdAt: new DateTimeImmutable($data['createdAt'] ?? 'now'),
+            updatedAt: new DateTimeImmutable($data['updatedAt'] ?? 'now'),
         );
     }
 }
