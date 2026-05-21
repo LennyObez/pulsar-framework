@@ -73,6 +73,7 @@ final readonly class ReadContainerBindingsTool implements McpToolInterface
         $bindings = $snapshot->architectureMap->bindings;
 
         // Filter by substring
+        /** @var mixed $filter */
         $filter = $params['filter'] ?? null;
         if (is_string($filter) && $filter !== '') {
             $bindings = array_filter(
@@ -86,6 +87,7 @@ final readonly class ReadContainerBindingsTool implements McpToolInterface
         /** @var int $limit */
         $limit = isset($params['limit']) && is_int($params['limit']) ? $params['limit'] : 100;
         $totalCount = count($bindings);
+        /** @var mixed $cursor */
         $cursor = $params['cursor'] ?? null;
         $offset = is_string($cursor) && $cursor !== '' ? (int) $cursor : 0;
 

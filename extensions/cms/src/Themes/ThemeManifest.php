@@ -136,8 +136,10 @@ final readonly class ThemeManifest
             return [];
         }
 
+        /** @var array<string, mixed> $result */
         $result = [];
 
+        /** @var mixed $item */
         foreach ($value as $key => $item) {
             $result[(string) $key] = $item;
         }
