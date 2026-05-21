@@ -78,6 +78,7 @@ final readonly class ResumeBlock implements BlockTypeInterface
             /** @var list<string> $filtered */
             $filtered = [];
 
+            /** @var mixed $section */
             foreach ($data['sections'] as $section) {
                 if (is_string($section) && in_array($section, self::VALID_SECTIONS, true)) {
                     $filtered[] = $section;

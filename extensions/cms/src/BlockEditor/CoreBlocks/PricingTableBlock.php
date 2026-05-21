@@ -140,6 +140,7 @@ final readonly class PricingTableBlock implements BlockTypeInterface
             if (!isset($plan['features']) || !is_array($plan['features'])) {
                 $errors[] = "plans[$index].features is required and must be an array";
             } else {
+                /** @var mixed $feature */
                 foreach ($plan['features'] as $featureIndex => $feature) {
                     if (!is_string($feature)) {
                         $errors[] = "plans[$index].features[$featureIndex] must be a string";

@@ -47,6 +47,7 @@ final readonly class ProgressBarBlock implements BlockTypeInterface
         $rawLabel = $data['label'] ?? null;
         $value = is_int($rawValue) ? $rawValue : 0;
         $label = htmlspecialchars(is_string($rawLabel) ? $rawLabel : '', ENT_QUOTES, 'UTF-8');
+        /** @var mixed $showPercentage */
         $showPercentage = $data['showPercentage'] ?? true;
 
         $colorStyle = '';
