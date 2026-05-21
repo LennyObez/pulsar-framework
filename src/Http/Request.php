@@ -221,6 +221,7 @@ final readonly class Request
         }
 
         try {
+            /** @var mixed $decoded */
             $decoded = json_decode($this->body, true, flags: JSON_THROW_ON_ERROR);
 
             /** @var array<string, mixed> */
@@ -333,6 +334,7 @@ final readonly class Request
      */
     public function isSecure(): bool
     {
+        /** @var mixed $https */
         $https = $this->server('HTTPS');
         return $https !== null && $https !== 'off';
     }
@@ -464,6 +466,7 @@ final readonly class Request
      */
     private static function resolveContentLength(array $serverData): int
     {
+        /** @var mixed $raw */
         $raw = $serverData['CONTENT_LENGTH'] ?? $serverData['HTTP_CONTENT_LENGTH'] ?? null;
 
         if (is_string($raw) && ctype_digit($raw)) {
