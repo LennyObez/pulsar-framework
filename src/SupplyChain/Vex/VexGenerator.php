@@ -218,13 +218,14 @@ final readonly class VexGenerator
                 continue;
             }
 
-            /** @var mixed $advisory */
-            foreach ($packageAdvisories as $advisory) {
-                if (!is_array($advisory)) {
+            /** @var mixed $advisoryRaw */
+            foreach ($packageAdvisories as $advisoryRaw) {
+                if (!is_array($advisoryRaw)) {
                     continue;
                 }
 
                 /** @var array<string, mixed> $advisory */
+                $advisory = $advisoryRaw;
                 /** @var mixed $rawCve */
                 $rawCve = $advisory['cve'] ?? null;
                 $cve = is_string($rawCve) ? $rawCve : '';
