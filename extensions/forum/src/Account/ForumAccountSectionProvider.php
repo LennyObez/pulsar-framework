@@ -146,6 +146,7 @@ final readonly class ForumAccountSectionProvider implements AccountSectionProvid
     private function renderFrontActivity(string $userId, array $params): string
     {
         $stats = $this->getStats($userId);
+        /** @var mixed $rawPage */
         $rawPage = $params['page'] ?? 1;
         $page = max(1, is_numeric($rawPage) ? (int) $rawPage : 1);
 
@@ -231,6 +232,7 @@ final readonly class ForumAccountSectionProvider implements AccountSectionProvid
     private function renderBackActivity(string $userId, array $params): string
     {
         $stats = $this->getStats($userId);
+        /** @var mixed $rawPage */
         $rawPage = $params['page'] ?? 1;
         $page = max(1, is_numeric($rawPage) ? (int) $rawPage : 1);
         $profile = $this->profiles->findByUser($userId);
