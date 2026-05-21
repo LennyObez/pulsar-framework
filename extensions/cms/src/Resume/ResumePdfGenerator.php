@@ -224,6 +224,7 @@ final class ResumePdfGenerator
      */
     private static function stringField(array $row, string $key): string
     {
+        /** @var mixed $value */
         $value = $row[$key] ?? '';
 
         return is_string($value) ? $value : '';
