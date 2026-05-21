@@ -78,6 +78,7 @@ final readonly class TabsBlock implements BlockTypeInterface
 
         $html .= '</div>';
 
+        /** @var mixed $tab */
         foreach ($tabs as $i => $tab) {
             if (!is_array($tab)) {
                 continue;

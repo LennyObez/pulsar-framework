@@ -84,6 +84,7 @@ final readonly class TagCloudBlock implements BlockTypeInterface
 
         $html = '<div class="tag-cloud" role="navigation" aria-label="Tag cloud">';
 
+        /** @var mixed $tag */
         foreach ($tags as $tag) {
             if (!is_array($tag)) {
                 continue;
