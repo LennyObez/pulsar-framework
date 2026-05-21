@@ -189,6 +189,7 @@ final readonly class WebAuthnAttestationVerifier
         }
 
         // Verify the attestation certificate chain if present
+        /** @var mixed $x5c */
         $x5c = $attStmt['x5c'] ?? null;
         if ($x5c === []) {
             return DeviceProofResult::failed('Empty certificate chain');
