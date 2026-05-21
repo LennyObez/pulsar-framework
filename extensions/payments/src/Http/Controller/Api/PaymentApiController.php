@@ -28,7 +28,9 @@ final readonly class PaymentApiController
      */
     public function show(ServerRequestInterface $request): Response
     {
-        $paymentId = is_string($request->getAttribute('id')) ? $request->getAttribute('id') : '';
+        /** @var mixed $rawPaymentId */
+        $rawPaymentId = $request->getAttribute('id');
+        $paymentId = is_string($rawPaymentId) ? $rawPaymentId : '';
 
         if ($paymentId === '') {
             return Response::json(['error' => 'Missing payment ID'], 400);
@@ -58,7 +60,9 @@ final readonly class PaymentApiController
      */
     public function list(ServerRequestInterface $request): Response
     {
-        $customerId = is_string($request->getAttribute('user_id')) ? $request->getAttribute('user_id') : '';
+        /** @var mixed $rawCustomerId */
+        $rawCustomerId = $request->getAttribute('user_id');
+        $customerId = is_string($rawCustomerId) ? $rawCustomerId : '';
 
         if ($customerId === '') {
             return Response::json(['error' => 'Authentication required'], 401);
