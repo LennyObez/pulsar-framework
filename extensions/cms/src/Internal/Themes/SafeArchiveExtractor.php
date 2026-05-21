@@ -101,7 +101,14 @@ final readonly class SafeArchiveExtractor implements ThemeArchiveExtractorInterf
                     continue;
                 }
 
-                $entryName = $stat['name'];
+                /** @var mixed $rawEntryName */
+                $rawEntryName = $stat['name'];
+
+                if (!is_string($rawEntryName)) {
+                    throw CmsException::themeZipSlipDetected('non-string entry');
+                }
+
+                $entryName = $rawEntryName;
 
                 // Security check: null bytes in filename
                 if (str_contains($entryName, "\0")) {
