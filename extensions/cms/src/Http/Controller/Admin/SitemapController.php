@@ -43,14 +43,17 @@ final readonly class SitemapController extends AbstractAdminController
         $this->authorize($identity, 'cms.seo.view');
 
         $params = $request->getQueryParams();
-        $baseUrl = is_string($params['base_url'] ?? null) ? $params['base_url'] : '';
+        /** @var mixed $rawBaseUrl */
+        $rawBaseUrl = $params['base_url'] ?? null;
+        $baseUrl = is_string($rawBaseUrl) ? $rawBaseUrl : '';
 
         /** @var string|null $tenantId */
         $tenantId = $request->getAttribute('tenant_id');
 
         if ($baseUrl === '') {
-            /** @var string $baseUrl */
-            $baseUrl = $request->getAttribute('base_url', '');
+            /** @var mixed $rawBaseUrlAttr */
+            $rawBaseUrlAttr = $request->getAttribute('base_url', '');
+            $baseUrl = is_string($rawBaseUrlAttr) ? $rawBaseUrlAttr : '';
         }
 
         $indexXml = $this->sitemapGenerator->generateIndex($baseUrl, $tenantId);
@@ -75,14 +78,17 @@ final readonly class SitemapController extends AbstractAdminController
         $this->authorize($identity, 'cms.seo.manage');
 
         $params = $request->getQueryParams();
-        $baseUrl = is_string($params['base_url'] ?? null) ? $params['base_url'] : '';
+        /** @var mixed $rawBaseUrl */
+        $rawBaseUrl = $params['base_url'] ?? null;
+        $baseUrl = is_string($rawBaseUrl) ? $rawBaseUrl : '';
 
         /** @var string|null $tenantId */
         $tenantId = $request->getAttribute('tenant_id');
 
         if ($baseUrl === '') {
-            /** @var string $baseUrl */
-            $baseUrl = $request->getAttribute('base_url', '');
+            /** @var mixed $rawBaseUrlAttr */
+            $rawBaseUrlAttr = $request->getAttribute('base_url', '');
+            $baseUrl = is_string($rawBaseUrlAttr) ? $rawBaseUrlAttr : '';
         }
 
         $indexXml = $this->sitemapGenerator->generateIndex($baseUrl, $tenantId);
