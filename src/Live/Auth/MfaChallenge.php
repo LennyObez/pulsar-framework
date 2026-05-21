@@ -40,15 +40,15 @@ final class MfaChallenge extends LiveComponent
     private ?AuthUiConfig $config = null;
 
     /**
-     * @param array{
-     *     identity-id?: string,
-     *     identityId?: string,
-     *     authenticator?: AuthenticatorInterface,
-     *     config?: AuthUiConfig,
-     * } $params
+     * Component params come from the route mount data: typed loosely so the
+     * runtime is_string / instanceof checks below can defend against tampered
+     * input without contradicting an overly narrow docblock.
+     *
+     * @param array<string, mixed> $params
      */
     public function mount(array $params = []): void
     {
+        /** @var mixed $idRaw */
         $idRaw = $params['identity-id'] ?? $params['identityId'] ?? '';
         $this->identityId = is_string($idRaw) ? $idRaw : '';
         $auth = $params['authenticator'] ?? null;

@@ -82,7 +82,7 @@ final readonly class CspReportEndpoint implements RequestHandlerInterface
             $this->logViolation($report);
         } elseif (str_contains($contentType, 'reports+json') || is_array($decoded[0] ?? null)) {
             // Reporting API sends an array of reports
-            /** @var list<array<string, mixed>> $reports */
+            /** @var list<mixed> $reports */
             $reports = isset($decoded[0]) ? $decoded : [$decoded];
 
             foreach ($reports as $entry) {
