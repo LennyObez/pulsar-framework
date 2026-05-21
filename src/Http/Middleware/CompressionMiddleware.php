@@ -16,6 +16,7 @@ use function extension_loaded;
 use function function_exists;
 use function gzencode;
 use function in_array;
+use function is_string;
 use function str_contains;
 use function strlen;
 use function strtolower;
@@ -174,9 +175,10 @@ final readonly class CompressionMiddleware implements MiddlewareInterface
             return null;
         }
 
+        /** @var mixed $result */
         $result = brotli_compress($data);
 
-        return $result !== false ? $result : null;
+        return is_string($result) ? $result : null;
     }
 
     private function zstdCompress(string $data): ?string
@@ -185,9 +187,10 @@ final readonly class CompressionMiddleware implements MiddlewareInterface
             return null;
         }
 
+        /** @var mixed $result */
         $result = zstd_compress($data);
 
-        return $result !== false ? $result : null;
+        return is_string($result) ? $result : null;
     }
 
     /**
