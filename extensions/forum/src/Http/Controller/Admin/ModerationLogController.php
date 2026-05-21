@@ -41,11 +41,17 @@ final readonly class ModerationLogController
         $this->authorize($identity, 'forum.admin.moderation-log');
 
         $params = $request->getQueryParams();
-        $page = max(1, is_numeric($params['page'] ?? null) ? (int) $params['page'] : 1);
-        $perPage = min(100, max(1, is_numeric($params['per_page'] ?? null) ? (int) $params['per_page'] : 20));
+        /** @var mixed $rawPage */
+        $rawPage = $params['page'] ?? null;
+        $page = max(1, is_numeric($rawPage) ? (int) $rawPage : 1);
+        /** @var mixed $rawPerPage */
+        $rawPerPage = $params['per_page'] ?? null;
+        $perPage = min(100, max(1, is_numeric($rawPerPage) ? (int) $rawPerPage : 20));
 
-        $moderatorFilter = is_string($params['moderator_id'] ?? null) && $params['moderator_id'] !== ''
-            ? $params['moderator_id']
+        /** @var mixed $rawModeratorId */
+        $rawModeratorId = $params['moderator_id'] ?? null;
+        $moderatorFilter = is_string($rawModeratorId) && $rawModeratorId !== ''
+            ? $rawModeratorId
             : null;
 
         /** @var string|null $tenantId */
