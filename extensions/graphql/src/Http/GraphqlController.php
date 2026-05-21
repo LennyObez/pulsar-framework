@@ -92,7 +92,7 @@ final readonly class GraphqlController
     /**
      * Return the schema introspection result.
      */
-    public function introspect(ServerRequestInterface $request): Response
+    public function introspect(): Response
     {
         return Response::json([
             'data' => $this->schema->toIntrospection(),
