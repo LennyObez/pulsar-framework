@@ -47,6 +47,4 @@ final class MigrationFlockHolder
     {
         self::$handle = null;
     }
-
-    private function __construct() {}
 }

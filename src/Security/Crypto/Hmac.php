@@ -35,8 +35,6 @@ final class Hmac
      */
     private const int HASH_LENGTH = SODIUM_CRYPTO_GENERICHASH_BYTES;
 
-    private function __construct() {}
-
     /**
      * Compute a keyed BLAKE2b hash and return as hex string.
      *
