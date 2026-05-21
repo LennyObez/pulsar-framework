@@ -28,6 +28,7 @@ final readonly class LiveProp
      * @param bool $writable Whether this property can be updated from the frontend
      * @param string $fieldName Custom wire:model field name (defaults to property name)
      * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function __construct(
         public bool $writable = false,

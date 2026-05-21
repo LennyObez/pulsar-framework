@@ -48,6 +48,7 @@ final readonly class DatabaseOutboxPort implements OutboxPort
 {
     /**
      * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     private const string TABLE = 'outbox_events';
 

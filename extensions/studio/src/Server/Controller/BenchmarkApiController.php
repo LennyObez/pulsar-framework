@@ -44,6 +44,7 @@ final readonly class BenchmarkApiController
 {
     /**
      * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     private string $runDir;
 

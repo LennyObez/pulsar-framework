@@ -25,6 +25,7 @@ final readonly class MediaController
 {
     /**
      * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     private const string CACHE_DERIVATIVE = 'public, max-age=2592000, immutable';
     private const string CACHE_ORIGINAL_PUBLIC = 'public, max-age=86400';

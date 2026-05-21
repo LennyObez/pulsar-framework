@@ -29,6 +29,7 @@ final readonly class GoogleCalendarSync implements GoogleCalendarSyncInterface
 {
     /**
      * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     private const string API_BASE = 'https://www.googleapis.com/calendar/v3';
     private const string TOKEN_URL = 'https://oauth2.googleapis.com/token';

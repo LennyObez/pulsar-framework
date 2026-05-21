@@ -25,7 +25,11 @@ final class ConnectionContext
     public float $lastActivity;
     public int $keepAliveRemaining;
 
-    /** @var 'idle'|'headers'|'body' */
+    /**
+     * @var 'idle'|'headers'|'body'
+     *
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
     public string $currentRequestPhase = 'idle';
     public float $phaseStartedAt;
 

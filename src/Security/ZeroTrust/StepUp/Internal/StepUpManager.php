@@ -24,7 +24,11 @@ use Pulsar\Security\ZeroTrust\StepUp\StepUpState;
 #[Internal(reason: 'Wired by composition root only')]
 final class StepUpManager
 {
-    /** @var array<string, StepUpState> Keyed by "{identityId}:{ruleName}" */
+    /**
+     * @var array<string, StepUpState> Keyed by "{identityId}:{ruleName}"
+     *
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
     private array $states = [];
 
     public function __construct(
