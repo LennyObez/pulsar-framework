@@ -302,5 +302,16 @@
             </errorLevel>
         </InvalidReturnStatement>
 
+        <!-- (C) EntityFactory uses `new static()` with @template T of object
+             for the test data builder pattern. @phpstan-consistent-constructor
+             and @psalm-consistent-constructor cover the constructor signature
+             but Psalm 6.x still flags the generic instantiation because T
+             could be narrowed in subclasses. The factory pattern is intentional. -->
+        <UnsafeGenericInstantiation>
+            <errorLevel type="suppress">
+                <file name="../../src/Testing/EntityFactory.php"/>
+            </errorLevel>
+        </UnsafeGenericInstantiation>
+
     </issueHandlers>
 </psalm>
