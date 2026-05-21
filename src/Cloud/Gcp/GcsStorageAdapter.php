@@ -59,6 +59,7 @@ final readonly class GcsStorageAdapter implements StorageAdapterInterface
             $encodedKey,
         );
 
+        /** @var array<string, string> $headers */
         $headers = $this->authHeaders();
         $headers['Content-Length'] = (string) strlen($content);
 

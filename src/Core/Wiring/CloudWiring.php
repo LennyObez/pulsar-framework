@@ -218,7 +218,9 @@ final readonly class CloudWiring implements ServiceWiringInterface
      */
     private function wireAzure(ContainerInterface $container, array $azureData, CloudHttpClient $httpClient): void
     {
-        $azureConfig = AzureConfig::fromArray($azureData);
+        /** @var array{tenant_id?: string, client_id?: string, client_secret?: string, access_token?: string|null, endpoint?: string|null} $azureConfigArgs */
+        $azureConfigArgs = $azureData;
+        $azureConfig = AzureConfig::fromArray($azureConfigArgs);
         $container->instance(AzureConfig::class, $azureConfig);
 
         // Blob Storage
