@@ -5,6 +5,7 @@
  */
 /** @var list<array{timestamp_us?: int, event_type?: string, request_id?: string}> $typedEvents */
 $typedEvents = $events ?? [];
+/** @var bool $showCorrelationFlag */
 $showCorrelationFlag = $showCorrelation ?? true;
 ?>
 <table class="data-table">

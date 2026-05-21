@@ -36,7 +36,7 @@ $detailFields = array_filter($resource->fields(), static fn($f): bool => $f->vis
                     <?php if ($field->redacted): ?>
                     <span class="admin-redacted" title="<?= __('admin.resource.redacted') ?>" data-t="admin.resource.redacted"><?= $e(str_repeat("\u{2022}", 6)) ?></span>
                     <?php else: ?>
-                    <?php $detailVal = $data[$field->name] ?? ''; ?><?= $e(is_scalar($detailVal) ? (string) $detailVal : '') ?>
+                    <?php /** @var mixed $detailVal */ $detailVal = $data[$field->name] ?? ''; ?><?= $e(is_scalar($detailVal) ? (string) $detailVal : '') ?>
                     <?php endif; ?>
                 </dd>
             </div>

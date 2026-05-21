@@ -10,5 +10,6 @@
         <li><a href="/analytics/goals" class="analytics-nav__link" data-t="analytics.nav.goals"><?= __('analytics.nav.goals') ?></a></li>
         <li><a href="/analytics/settings" class="analytics-nav__link" data-t="analytics.nav.settings"><?= __('analytics.nav.settings') ?></a></li>
     </ul>
-    <div data-language-selector data-locales="en,fr,nl,de,es,it,pt,pl,ro,cs,el,hu,sv,da,fi,sk,bg,hr,sl,lt,lv,et,ga,mt,lb" data-current="<?= htmlspecialchars(is_string($locale ?? null) ? $locale : 'en') ?>"></div>
+    <?php /** @var mixed $rawLocale */ $rawLocale = $locale ?? null; ?>
+    <div data-language-selector data-locales="en,fr,nl,de,es,it,pt,pl,ro,cs,el,hu,sv,da,fi,sk,bg,hr,sl,lt,lv,et,ga,mt,lb" data-current="<?= htmlspecialchars(is_string($rawLocale) ? $rawLocale : 'en') ?>"></div>
 </nav>
