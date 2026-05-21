@@ -6,6 +6,7 @@ namespace Pulsar\Console;
 
 use Pulsar\Api\Api;
 
+use function array_keys;
 use function sprintf;
 
 /**
@@ -76,7 +77,7 @@ abstract class Command implements CommandInterface
     {
         $usage = $this->name;
 
-        foreach ($this->options as $name => $config) {
+        foreach (array_keys($this->options) as $name) {
             $usage .= sprintf(' [--%s]', $name);
         }
 

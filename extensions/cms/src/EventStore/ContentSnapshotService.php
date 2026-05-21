@@ -182,7 +182,7 @@ final readonly class ContentSnapshotService implements ContentSnapshotServiceInt
          */
         $translationsData = json_decode($row->getString('translations_json'), true, 512, JSON_THROW_ON_ERROR);
 
-        $this->db->transaction(function (ConnectionInterface $db) use ($translationsData, $row, $restoredBy): void {
+        $this->db->transaction(function () use ($translationsData, $row, $restoredBy): void {
             $contentId = $row->getString('content_id');
             $snapshotNumber = $row->getInt('snapshot_number');
 
