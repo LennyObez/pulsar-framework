@@ -147,7 +147,7 @@ final class SchemaInferrer
             }
 
             if ($apiField->example !== null) {
-                $schema['example'] = $apiField->example;
+                $schema = [...$schema, 'example' => $apiField->example];
             }
         }
 

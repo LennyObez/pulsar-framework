@@ -44,6 +44,7 @@ final readonly class CompiledValidationMap
             return;
         }
 
+        /** @var mixed $loaded */
         $loaded = require $artifactPath;
 
         /** @var array<class-string, array{rules: array<string, list<array{rule: class-string, parameters: array<string, mixed>, groups: list<string>}>>, filters: array<string, list<array{filter: class-string, parameters: array<string, mixed>}>>}> $validated */

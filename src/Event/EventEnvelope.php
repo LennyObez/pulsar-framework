@@ -187,10 +187,11 @@ final readonly class EventEnvelope
     {
         ksort($data);
 
+        /** @var mixed $value */
         foreach ($data as $key => $value) {
             if (is_array($value)) {
                 /** @var array<string, mixed> $value */
-                $data[$key] = self::recursiveKsort($value);
+                $data = [...$data, $key => self::recursiveKsort($value)];
             }
         }
 

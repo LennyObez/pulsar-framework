@@ -362,6 +362,7 @@ final class HttpClient implements HttpClientInterface
         // Try IPv6 via AAAA records
         $records = @dns_get_record($host, DNS_AAAA);
         if ($records !== false && $records !== []) {
+            /** @var mixed $ipv6 */
             $ipv6 = $records[0]['ipv6'] ?? null;
             return is_string($ipv6) ? $ipv6 : null;
         }
