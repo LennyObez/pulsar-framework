@@ -48,12 +48,10 @@ final class DunningManagerTest extends TestCase
     #[Test]
     public function shouldExpireReturnsTrueWhenRetryCountReachesMax(): void
     {
-        $sub = $this->buildSubscription(SubscriptionStatus::PastDue);
-
-        self::assertFalse($this->dunning->shouldExpire($sub, 0));
-        self::assertFalse($this->dunning->shouldExpire($sub, 3));
-        self::assertTrue($this->dunning->shouldExpire($sub, 4));
-        self::assertTrue($this->dunning->shouldExpire($sub, 10));
+        self::assertFalse($this->dunning->shouldExpire(0));
+        self::assertFalse($this->dunning->shouldExpire(3));
+        self::assertTrue($this->dunning->shouldExpire(4));
+        self::assertTrue($this->dunning->shouldExpire(10));
     }
 
     #[Test]
