@@ -75,9 +75,11 @@ final class Pipeline
     #[NoDiscard]
     public function thenReturn(): mixed
     {
+        /** @var mixed $passable */
         $passable = $this->passable;
 
         foreach ($this->stages as $stage) {
+            /** @var mixed $passable */
             $passable = $stage($passable);
         }
 
@@ -92,9 +94,11 @@ final class Pipeline
     #[NoDiscard]
     public function then(Closure $destination): mixed
     {
+        /** @var mixed $passable */
         $passable = $this->passable;
 
         foreach ($this->stages as $stage) {
+            /** @var mixed $passable */
             $passable = $stage($passable);
         }
 

@@ -38,8 +38,10 @@ final readonly class SanitizationPipeline
         $originals = $data;
         $sanitized = $data;
 
+        /** @var mixed $value */
         foreach ($sanitized as $field => $value) {
             foreach ($this->filters as $filter) {
+                /** @var mixed $value */
                 $value = $filter->apply($value);
             }
 
