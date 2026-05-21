@@ -205,11 +205,6 @@
                 <file name="../../extensions/cms/src/Media/Processing/ImagickImageProcessor.php"/>
             </errorLevel>
         </MixedArgument>
-        <UnusedMethod>
-            <errorLevel type="suppress">
-                <file name="../../extensions/cms/src/Media/Processing/ImagickImageProcessor.php"/>
-            </errorLevel>
-        </UnusedMethod>
         <UnusedParam>
             <errorLevel type="suppress">
                 <!-- (C) Optional ext-imagick: see UndefinedClass rationale above. -->
@@ -331,6 +326,19 @@
                 <file name="../../src/Security/Session/SessionManager.php"/>
             </errorLevel>
         </UnimplementedInterfaceMethod>
+
+        <!-- (C) FrankenPhpRuntime::handleRequest is called from inside a closure
+             passed to `frankenphp_handle_request()`. Psalm cannot trace the
+             closure invocation through the FrankenPHP-only function so the
+             method reads as unused. Combined with the Imagick ImageProcessor's
+             private configureJpeg/Webp/Avif methods that route through a
+             match() over Imagick instances Psalm cannot resolve. -->
+        <UnusedMethod>
+            <errorLevel type="suppress">
+                <file name="../../extensions/cms/src/Media/Processing/ImagickImageProcessor.php"/>
+                <file name="../../src/Runtime/FrankenPhpRuntime.php"/>
+            </errorLevel>
+        </UnusedMethod>
 
     </issueHandlers>
 </psalm>
