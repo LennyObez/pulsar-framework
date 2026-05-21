@@ -35,6 +35,8 @@ use function substr;
  * banking app or card reader.
  *
  * Only EUR payments are supported by Bancontact.
+ *
+ * @psalm-api Registered with PaymentProviderRegistry by class-name.
  */
 #[Internal]
 final readonly class BancontactGateway implements PaymentProviderInterface
