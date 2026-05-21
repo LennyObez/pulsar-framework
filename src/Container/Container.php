@@ -353,6 +353,7 @@ final class Container implements AdvancedContainerInterface
             if ($definition->lazy) {
                 $instance = LazyServiceFactory::create($id, $concrete, $this);
             } elseif ($concrete instanceof Closure) {
+                /** @var mixed $instance */
                 $instance = $concrete($this);
             } else {
                 $instance = $this->build($concrete);
