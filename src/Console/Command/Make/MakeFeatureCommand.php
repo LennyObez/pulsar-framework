@@ -84,7 +84,7 @@ final class MakeFeatureCommand extends Command
             $routeContent = file_get_contents($routesFile);
             if ($routeContent !== false) {
                 // Insert before the closing of the closure
-                $entry = $this->templates->routeEntry($name, $namespace, $method);
+                $entry = $this->templates->routeEntry($name, $method);
                 $routeContent = str_replace('};', $entry . "\n};", $routeContent);
                 file_put_contents($routesFile, $routeContent);
                 $output->writeln('  Updated routes.php');

@@ -95,7 +95,7 @@ final readonly class TemplateRegistry
     {
         return match ($preset) {
             ProjectPreset::Minimal => $this->indexPhpMinimal(),
-            ProjectPreset::Web => $this->indexPhpWeb($appName),
+            ProjectPreset::Web => $this->indexPhpWeb(),
             ProjectPreset::Api => $this->indexPhpApi(),
         };
     }
@@ -125,7 +125,7 @@ final readonly class TemplateRegistry
             PHP;
     }
 
-    private function indexPhpWeb(string $appName): string
+    private function indexPhpWeb(): string
     {
         return <<<PHP
             <?php
