@@ -121,6 +121,7 @@ final class JwksFetcher
     public function fetchKey(string $jwksUri, string $kid): ?JwkKey
     {
         $keys = $this->fetchKeys($jwksUri);
+        /** @var JwkKey|null $found */
         $found = array_find($keys, static fn(JwkKey $key): bool => $key->kid === $kid);
 
         if ($found !== null) {
@@ -132,6 +133,9 @@ final class JwksFetcher
 
         $keys = $this->fetchKeys($jwksUri);
 
-        return array_find($keys, static fn(JwkKey $key): bool => $key->kid === $kid);
+        /** @var JwkKey|null $second */
+        $second = array_find($keys, static fn(JwkKey $key): bool => $key->kid === $kid);
+
+        return $second;
     }
 }
