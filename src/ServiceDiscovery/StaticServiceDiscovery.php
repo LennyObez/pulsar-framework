@@ -68,7 +68,10 @@ final class StaticServiceDiscovery implements ServiceDiscoveryInterface
             return null;
         }
 
-        return array_find($this->registry[$serviceName], static fn(ServiceInstance $instance): bool => $instance->healthy);
+        /** @var ServiceInstance|null $found */
+        $found = array_find($this->registry[$serviceName], static fn(ServiceInstance $instance): bool => $instance->healthy);
+
+        return $found;
     }
 
     #[Override]

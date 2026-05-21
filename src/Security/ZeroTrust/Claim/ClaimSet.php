@@ -57,7 +57,10 @@ final readonly class ClaimSet implements Countable, IteratorAggregate
     #[NoDiscard]
     public function first(string $name): ?Claim
     {
-        return array_find($this->claims, static fn(Claim $claim): bool => $claim->name === $name);
+        /** @var Claim|null $found */
+        $found = array_find($this->claims, static fn(Claim $claim): bool => $claim->name === $name);
+
+        return $found;
     }
 
     /**
