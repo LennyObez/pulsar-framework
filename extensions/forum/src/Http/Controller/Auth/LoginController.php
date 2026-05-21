@@ -69,8 +69,12 @@ final readonly class LoginController
         /** @var array<string, mixed> $body */
         $body = $parsed;
 
-        $email = is_string($body['email'] ?? null) ? trim($body['email']) : '';
-        $password = is_string($body['password'] ?? null) ? $body['password'] : '';
+        /** @var mixed $rawEmail */
+        $rawEmail = $body['email'] ?? null;
+        $email = is_string($rawEmail) ? trim($rawEmail) : '';
+        /** @var mixed $rawPassword */
+        $rawPassword = $body['password'] ?? null;
+        $password = is_string($rawPassword) ? $rawPassword : '';
 
         if ($email === '' || $password === '') {
             return $this->respondWithView($request, 'auth.login', [
