@@ -44,8 +44,12 @@ final readonly class LinkHealthController extends AbstractAdminController
         $this->authorize($identity, 'cms.seo.view');
 
         $params = $request->getQueryParams();
-        $page = max(1, is_int($params['page'] ?? null) ? $params['page'] : 1);
-        $perPage = min(100, max(1, is_int($params['per_page'] ?? null) ? $params['per_page'] : 50));
+        /** @var mixed $rawPage */
+        $rawPage = $params['page'] ?? null;
+        $page = max(1, is_int($rawPage) ? $rawPage : 1);
+        /** @var mixed $rawPerPage */
+        $rawPerPage = $params['per_page'] ?? null;
+        $perPage = min(100, max(1, is_int($rawPerPage) ? $rawPerPage : 50));
 
         /** @var string|null $tenantId */
         $tenantId = $request->getAttribute('tenant_id');
