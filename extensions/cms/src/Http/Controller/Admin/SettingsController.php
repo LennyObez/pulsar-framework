@@ -66,6 +66,7 @@ final readonly class SettingsController extends AbstractAdminController
         /** @var array<string, mixed> $settings */
         $settings = is_array($body['settings'] ?? null) ? $body['settings'] : [];
 
+        /** @var mixed $value */
         foreach ($settings as $key => $value) {
             $this->settingsService->set($group, $key, $value, $locale, $reason);
         }
@@ -79,6 +80,7 @@ final readonly class SettingsController extends AbstractAdminController
 
     private function resolveLocale(ServerRequestInterface $request): string
     {
+        /** @var mixed $locale */
         $locale = $request->getQueryParams()['locale'] ?? null;
 
         return is_string($locale) ? $locale : $this->config->defaultLocale;

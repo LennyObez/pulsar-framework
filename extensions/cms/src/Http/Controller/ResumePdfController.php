@@ -52,6 +52,7 @@ final readonly class ResumePdfController
      */
     public function printView(ServerRequestInterface $request, string $slug): Response
     {
+        /** @var mixed $rawLocale */
         $rawLocale = $request->getQueryParams()['locale'] ?? 'en';
         $locale = is_string($rawLocale) ? $rawLocale : 'en';
 
@@ -84,7 +85,9 @@ final readonly class ResumePdfController
             $jsonValue = $field['value_json'];
 
             if (is_string($jsonValue) && $jsonValue !== '') {
-                $resumeData[$field['key']] = json_decode($jsonValue, true, flags: JSON_THROW_ON_ERROR);
+                /** @var mixed $decoded */
+                $decoded = json_decode($jsonValue, true, flags: JSON_THROW_ON_ERROR);
+                $resumeData[$field['key']] = $decoded;
             } elseif ($field['value_string'] !== null) {
                 $resumeData[$field['key']] = $field['value_string'];
             }
