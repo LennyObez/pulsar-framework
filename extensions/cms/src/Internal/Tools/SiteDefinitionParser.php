@@ -852,6 +852,7 @@ final readonly class SiteDefinitionParser
                     continue;
                 }
 
+                /** @var mixed $itemData */
                 foreach ($items as $sortOrder => $itemData) {
                     if (!is_array($itemData)) {
                         continue;
