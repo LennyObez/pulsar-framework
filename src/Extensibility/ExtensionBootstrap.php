@@ -119,9 +119,10 @@ final class ExtensionBootstrap
 
         // Apply enabled filter: skip extensions not in the allowed list
         if ($this->enabledFilter !== null) {
+            $enabledFilter = $this->enabledFilter;
             $manifests = array_values(array_filter(
                 $manifests,
-                fn(ExtensionManifest $m): bool => in_array($m->name, $this->enabledFilter, true),
+                static fn(ExtensionManifest $m): bool => in_array($m->name, $enabledFilter, true),
             ));
         }
 
