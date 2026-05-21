@@ -85,7 +85,6 @@ final readonly class AnalyticsImportExportProvider implements ImportExportProvid
                 'sites' => $this->exportSites(),
                 'goals' => $this->exportGoals(),
                 'funnels' => $this->exportFunnels(),
-                default => [],
             };
         }
 

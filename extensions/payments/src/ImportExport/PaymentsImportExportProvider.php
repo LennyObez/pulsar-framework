@@ -76,7 +76,6 @@ final readonly class PaymentsImportExportProvider implements ImportExportProvide
             $data[$type] = match ($type) {
                 'gateway_config' => $this->exportGatewayConfig(),
                 'pricing_plans' => $this->exportPricingPlans(),
-                default => [],
             };
         }
 
