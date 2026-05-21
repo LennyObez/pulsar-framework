@@ -59,7 +59,7 @@ final class JwksFetcher
         // Use a custom error handler instead of `@` suppression so HTTP
         // failures don't pollute global PHP warnings while still allowing
         // legitimate runtime errors (config, OOM, etc.) to surface.
-        $previousHandler = set_error_handler(static fn(): bool => true);
+        set_error_handler(static fn(): bool => true);
 
         try {
             $response = file_get_contents($jwksUri, false, $context);

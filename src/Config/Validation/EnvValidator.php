@@ -89,7 +89,6 @@ final readonly class EnvValidator
     public function validate(array $requiredKeys, array $envValues): ConfigValidationResult
     {
         $errors = [];
-        $definedKeys = array_keys($envValues);
 
         foreach ($requiredKeys as $key) {
             $value = $envValues[$key] ?? null;

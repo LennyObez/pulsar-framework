@@ -120,8 +120,7 @@ final readonly class DatabaseRecoveryCodeStore implements RecoveryCodeStoreInter
             return ConsumeResult::failure(ConsumeReason::NotEnrolled);
         }
 
-        // Build the code hash list and find the target
-        $codeHashes = [];
+        // Find the target row matching the supplied code hash
         $targetRowId = null;
         $targetUsedAt = null;
         $targetIndex = -1;
@@ -130,7 +129,6 @@ final readonly class DatabaseRecoveryCodeStore implements RecoveryCodeStoreInter
 
         foreach ($result->rows as $row) {
             $rowCodeHash = $row->getString('code_hash');
-            $codeHashes[] = $rowCodeHash;
 
             if (hash_equals($rowCodeHash, $codeHash)) {
                 $targetRowId = $row->getString('id');
