@@ -46,6 +46,7 @@ final readonly class ForumAntiAbuseMiddleware implements MiddlewareInterface
         }
 
         /** @var array<string, mixed> $parsedBody */
+        /** @var mixed $body */
         $body = $parsedBody['body'] ?? null;
 
         if (!is_string($body) || $body === '') {
@@ -55,8 +56,11 @@ final readonly class ForumAntiAbuseMiddleware implements MiddlewareInterface
         $ipHash = $this->resolveIpHash($request);
 
         // Extract user context from request attributes (set by auth middleware)
+        /** @var mixed $userId */
         $userId = $request->getAttribute('user_id');
+        /** @var mixed $accountAgeSeconds */
         $accountAgeSeconds = $request->getAttribute('account_age_seconds');
+        /** @var mixed $reputationTier */
         $reputationTier = $request->getAttribute('reputation_tier');
 
         /** @var list<string> $recentBodies */
@@ -110,6 +114,7 @@ final readonly class ForumAntiAbuseMiddleware implements MiddlewareInterface
 
     private function resolveIpHash(ServerRequestInterface $request): string
     {
+        /** @var mixed $ip */
         $ip = $request->getServerParams()['REMOTE_ADDR'] ?? null;
         $raw = is_string($ip) ? $ip : 'unknown';
 
