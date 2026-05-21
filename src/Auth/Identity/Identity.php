@@ -101,13 +101,11 @@ final readonly class Identity implements IdentityInterface
     /**
      * Reconstitute an identity from a serialized array.
      *
-     * @param array{
-     *     id?: string,
-     *     display_name?: string,
-     *     roles?: list<string>,
-     *     two_factor_status?: int|string,
-     *     attributes?: array<string, mixed>,
-     * } $data
+     * The parameter is intentionally typed loosely: this factory is called
+     * after json_decode / session unserialize, so runtime type checks are
+     * required to defend against tampered payloads.
+     *
+     * @param array<string, mixed> $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
