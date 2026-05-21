@@ -337,6 +337,7 @@ final readonly class StripeGateway implements PaymentProviderInterface
      */
     private static function currencyStr(array $data, string $key, string $default): string
     {
+        /** @var mixed $value */
         $value = $data[$key] ?? null;
 
         return is_string($value) ? strtoupper($value) : $default;
