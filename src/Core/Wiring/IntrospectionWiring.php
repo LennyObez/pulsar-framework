@@ -57,7 +57,10 @@ final readonly class IntrospectionWiring implements ServiceWiringInterface
         $configData = [];
 
         if ($configPath !== null && is_file($configPath . DIRECTORY_SEPARATOR . 'introspection.php')) {
-            /** @psalm-suppress UnresolvableInclude */
+            /**
+             * @psalm-suppress UnresolvableInclude
+             * @var mixed $loaded
+             */
             $loaded = require $configPath . DIRECTORY_SEPARATOR . 'introspection.php';
 
             if (is_array($loaded)) {
