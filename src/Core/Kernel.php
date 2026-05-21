@@ -1023,10 +1023,13 @@ final class Kernel implements KernelInterface
                  * @var mixed $result
                  */
                 $result = (function () use ($routeFile): mixed {
-                    /** @psalm-suppress UnusedVariable */
+                    // Local aliases inherited by the required routes file via PHP scope.
+                    // Psalm cannot trace through `require`, so we mark these as "used" by
+                    // explicitly listing them in compact() before the include — the include
+                    // is what actually consumes them at runtime.
                     $router = $this->router;
-                    /** @psalm-suppress UnusedVariable */
                     $container = $this->container;
+                    compact('router', 'container');
 
                     /** @psalm-suppress UnresolvableInclude */
                     return require $routeFile;

@@ -8,7 +8,6 @@ use DateTimeImmutable;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Booking\Contracts\AppointmentRepositoryInterface;
 use Pulsar\Http\Message\Response;
-use Pulsar\Http\Request;
 
 /**
  * Admin dashboard showing calendar view, today's appointments, and stats.
@@ -23,7 +22,7 @@ final readonly class AdminBookingDashboardController
     /**
      * GET /admin/booking: dashboard overview.
      */
-    public function index(Request $request): Response
+    public function index(): Response
     {
         $today = new DateTimeImmutable('today');
         $todayEnd = new DateTimeImmutable('tomorrow');
