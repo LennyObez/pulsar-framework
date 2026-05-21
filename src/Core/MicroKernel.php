@@ -237,18 +237,18 @@ final class MicroKernel
         if (is_callable($handler)) {
             /** @var mixed $response */
             $response = $handler($request, ...array_values($matched->parameters));
-        } elseif (is_array($handler) && isset($handler[0], $handler[1]) && is_string($handler[0]) && is_string($handler[1])) {
-            /** @var class-string $class */
+        } elseif (is_array($handler) && isset($handler[0], $handler[1]) && is_string($handler[0]) && is_string($handler[1]) && class_exists($handler[0])) {
             $class = $handler[0];
             $method = $handler[1];
             /** @var mixed $controller */
             $controller = $this->container->has($class)
                 ? $this->container->get($class)
                 : new $class();
-            /** @var mixed $response */
-            $response = $controller->$method($request, ...array_values($matched->parameters));
+            if (is_object($controller) && is_callable([$controller, $method])) {
+                /** @var mixed $response */
+                $response = $controller->$method($request, ...array_values($matched->parameters));
+            }
         } elseif (is_string($handler) && class_exists($handler)) {
-            /** @var class-string $handlerClass */
             $handlerClass = $handler;
             /** @var mixed $controller */
             $controller = $this->container->has($handlerClass)

@@ -59,17 +59,16 @@ final readonly class GcsStorageAdapter implements StorageAdapterInterface
             $encodedKey,
         );
 
-        /** @var array<string, string> $headers */
         $headers = $this->authHeaders();
         $headers['Content-Length'] = (string) strlen($content);
 
-        if ($metadata?->contentType !== null) {
+        if ($metadata !== null && $metadata->contentType !== null) {
             $headers['Content-Type'] = $metadata->contentType;
         } else {
             $headers['Content-Type'] = 'application/octet-stream';
         }
 
-        if ($metadata?->cacheControl !== null) {
+        if ($metadata !== null && $metadata->cacheControl !== null) {
             $headers['Cache-Control'] = $metadata->cacheControl;
         }
 

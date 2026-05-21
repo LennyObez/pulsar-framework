@@ -9,8 +9,10 @@ use Pulsar\Live\LiveAction;
 use Pulsar\Live\LiveComponent;
 use ReflectionClass;
 use ReflectionMethod;
+use ReflectionParameter;
 
 use function array_keys;
+use function array_map;
 
 /**
  * Dispatches frontend actions to component methods.
@@ -119,21 +121,24 @@ final class ActionDispatcher
      */
     private function resolveParameters(ReflectionMethod $method, array $params): array
     {
-        /** @var list<mixed> $resolved */
-        $resolved = [];
+        return array_map(
+            static function (ReflectionParameter $parameter) use ($params): mixed {
+                $name = $parameter->getName();
 
-        foreach ($method->getParameters() as $parameter) {
-            $name = $parameter->getName();
+                if (isset($params[$name])) {
+                    /** @var mixed $value */
+                    $value = $params[$name];
 
-            if (isset($params[$name])) {
-                $resolved[] = $params[$name];
-            } elseif ($parameter->isDefaultValueAvailable()) {
-                $resolved[] = $parameter->getDefaultValue();
-            } else {
-                $resolved[] = null;
-            }
-        }
+                    return $value;
+                }
 
-        return $resolved;
+                if ($parameter->isDefaultValueAvailable()) {
+                    return $parameter->getDefaultValue();
+                }
+
+                return null;
+            },
+            $method->getParameters(),
+        );
     }
 }
