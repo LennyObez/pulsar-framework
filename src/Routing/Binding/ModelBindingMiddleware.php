@@ -168,7 +168,7 @@ final class ModelBindingMiddleware implements MiddlewareInterface
             // Regulated preset: authorization bypass forbidden unless #[PublicRoute]
             if ($isRegulated && $withoutAuthz && !$isPublicRoute) {
                 $routeName = $matchedRoute->getName() ?? $matchedRoute->route->path;
-                return $this->forbiddenResponse($request, ModelBindingException::authBypassForbidden($routeName));
+                return $this->forbiddenResponse($request);
             }
 
             // Skip authorization if explicitly opted out on a public route
@@ -199,10 +199,7 @@ final class ModelBindingMiddleware implements MiddlewareInterface
             if (!$this->authHook->authorize($identity, $model, $meta)) {
                 $this->auditAuthzDenied($request, $identity->id(), $modelClass);
 
-                return $this->forbiddenResponse(
-                    $request,
-                    ModelBindingException::authorizationFailed($modelClass, $paramName),
-                );
+                return $this->forbiddenResponse($request);
             }
         }
 
@@ -301,7 +298,7 @@ final class ModelBindingMiddleware implements MiddlewareInterface
         return $this->errorResponse($request, ResponseStatus::Unauthorized, 'Unauthorized');
     }
 
-    private function forbiddenResponse(ServerRequestInterface $request, ModelBindingException $e): ResponseInterface
+    private function forbiddenResponse(ServerRequestInterface $request): ResponseInterface
     {
         return $this->errorResponse($request, ResponseStatus::Forbidden, 'Forbidden');
     }

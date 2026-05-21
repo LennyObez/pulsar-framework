@@ -73,6 +73,7 @@ final readonly class Appointment
             throw BookingException::noDepositRequired($this->bookingNumber);
         }
 
+        /** @var self $appointment */
         $appointment = clone($this, [
             'depositPaid' => true,
             'updatedAt' => new DateTimeImmutable(),

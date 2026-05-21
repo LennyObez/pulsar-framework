@@ -245,4 +245,27 @@ class Redis
      * @return int|false
      */
     public function lRem(string $key, string $value, int $count): int|false {}
+
+    /**
+     * @param string $channel
+     * @param string $message
+     * @return int
+     */
+    public function publish(string $channel, string $message): int {}
+
+    /**
+     * @param string $key
+     * @param int $start
+     * @param int $stop
+     * @return bool
+     */
+    public function lTrim(string $key, int $start, int $stop): bool {}
+
+    /**
+     * @param string $key
+     * @param string $min
+     * @param string $max
+     * @return int
+     */
+    public function zRemRangeByScore(string $key, string $min, string $max): int {}
 }

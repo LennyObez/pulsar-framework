@@ -231,6 +231,7 @@ final readonly class BlobStorageAdapter implements StorageAdapterInterface
         }
 
         $objects = [];
+        /** @psalm-suppress TypeDoesNotContainType -- SimpleXMLElement dynamic property access */
         $blobs = $doc->Blobs->Blob ?? [];
 
         foreach ($blobs as $blob) {
