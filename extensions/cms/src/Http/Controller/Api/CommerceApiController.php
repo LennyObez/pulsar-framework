@@ -88,7 +88,7 @@ final readonly class CommerceApiController
     /**
      * GET /api/v1/products/{id}: Show a single product.
      */
-    public function showProduct(ServerRequestInterface $request, string $id): Response
+    public function showProduct(string $id): Response
     {
         if ($this->config->commerce === null) {
             return Response::json(['error' => 'Commerce is not enabled', 'status' => 404], 404);
@@ -178,7 +178,7 @@ final readonly class CommerceApiController
     /**
      * GET /api/v1/orders/{id}: Show a single order.
      */
-    public function showOrder(ServerRequestInterface $request, string $id): Response
+    public function showOrder(string $id): Response
     {
         if ($this->config->commerce === null) {
             return Response::json(['error' => 'Commerce is not enabled', 'status' => 404], 404);

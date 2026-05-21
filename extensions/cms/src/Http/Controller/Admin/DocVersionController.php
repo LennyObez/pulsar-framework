@@ -27,7 +27,7 @@ final readonly class DocVersionController
     /**
      * GET /admin/cms/docs/versions: List all documentation versions.
      */
-    public function index(ServerRequestInterface $request): Response
+    public function index(): Response
     {
         $versions = $this->versionService->listVersions();
 
