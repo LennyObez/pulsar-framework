@@ -76,7 +76,7 @@ final readonly class FeedbackController
     /**
      * GET /admin/feedback/{id}: Show a single feedback item.
      */
-    public function show(ServerRequestInterface $request, string $id): Response
+    public function show(string $id): Response
     {
         $feedback = $this->repository->findById($id);
 
