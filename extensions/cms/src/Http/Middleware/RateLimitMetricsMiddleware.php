@@ -80,6 +80,7 @@ final readonly class RateLimitMetricsMiddleware implements MiddlewareInterface
      */
     private function resolveEndpoint(ServerRequestInterface $request): string
     {
+        /** @var mixed $routeName */
         $routeName = $request->getAttribute('route_name');
 
         if (is_string($routeName) && $routeName !== '') {
@@ -98,12 +99,14 @@ final readonly class RateLimitMetricsMiddleware implements MiddlewareInterface
      */
     private function resolveIpHash(ServerRequestInterface $request): string
     {
+        /** @var mixed $ipHash */
         $ipHash = $request->getAttribute('ip_hash');
 
         if (is_string($ipHash) && $ipHash !== '') {
             return $ipHash;
         }
 
+        /** @var mixed $ip */
         $ip = $request->getServerParams()['REMOTE_ADDR'] ?? null;
 
         return is_string($ip) ? $ip : '';

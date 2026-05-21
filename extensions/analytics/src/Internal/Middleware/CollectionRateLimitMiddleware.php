@@ -63,6 +63,7 @@ final readonly class CollectionRateLimitMiddleware implements MiddlewareInterfac
     private function getClientIp(ServerRequestInterface $request): string
     {
         $serverParams = $request->getServerParams();
+        /** @var mixed $rawAddr */
         $rawAddr = $serverParams['REMOTE_ADDR'] ?? '127.0.0.1';
         $remoteAddr = is_string($rawAddr) ? $rawAddr : '127.0.0.1';
 
