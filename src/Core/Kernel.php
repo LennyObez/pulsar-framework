@@ -251,7 +251,7 @@ final class Kernel implements KernelInterface
         $cacheLoadUs = (int) ((hrtime(true) - $cacheStart) / 1000);
 
         // Build artifact verification (production mode)
-        $this->verifyBuildArtifacts($cacheLoaded);
+        $this->verifyBuildArtifacts();
 
         // Register shared Randomizer (CSPRNG) singleton
         $randomizer = new Randomizer(new Secure());
@@ -921,7 +921,7 @@ final class Kernel implements KernelInterface
      *
      * @throws BuildException If required artifacts are missing or integrity check fails
      */
-    private function verifyBuildArtifacts(bool $cacheLoaded): void
+    private function verifyBuildArtifacts(): void
     {
         $configPath = $this->configManager?->configPath();
 
