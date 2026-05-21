@@ -136,13 +136,12 @@ final readonly class PluginManifest
             return [];
         }
 
-        /** @var array<string, mixed> $result */
         $result = [];
 
         /** @var mixed $item */
         foreach ($value as $key => $item) {
             $strKey = is_string($key) ? $key : (string) $key;
-            $result[$strKey] = $item;
+            $result = [...$result, $strKey => $item];
         }
 
         return $result;

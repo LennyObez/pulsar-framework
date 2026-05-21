@@ -80,7 +80,7 @@ final readonly class FormSubmissionController
                 continue;
             }
 
-            $formData[$key] = $value;
+            $formData = [...$formData, $key => $value];
         }
 
         /** @var mixed $rawRedirect */

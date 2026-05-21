@@ -445,13 +445,12 @@ final readonly class AnalyticsImportExportProvider implements ImportExportProvid
             return [];
         }
 
-        /** @var array<string, mixed> $result */
         $result = [];
 
         /** @var mixed $v */
         foreach ($value as $k => $v) {
             if (is_string($k)) {
-                $result[$k] = $v;
+                $result = [...$result, $k => $v];
             }
         }
 

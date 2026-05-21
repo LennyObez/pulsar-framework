@@ -150,7 +150,6 @@ final readonly class CmsPageCacheMiddleware implements MiddlewareInterface
      */
     private function filterQueryParams(array $params): array
     {
-        /** @var array<string, mixed> $filtered */
         $filtered = [];
 
         /** @var mixed $value */
@@ -170,7 +169,7 @@ final readonly class CmsPageCacheMiddleware implements MiddlewareInterface
             }
 
             if (!$excluded) {
-                $filtered[$key] = $value;
+                $filtered = [...$filtered, $key => $value];
             }
         }
 

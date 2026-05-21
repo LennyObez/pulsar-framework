@@ -132,12 +132,12 @@ final class GrpcExtensionAdapter implements GrpcTransportAdapterInterface
             }
         }
 
-        /** @var array<string, list<string>> $metadata */
         $metadata = [];
         if (isset($event->metadata) && is_array($event->metadata)) {
+            /** @var mixed $values */
             foreach ($event->metadata as $key => $values) {
                 if (is_string($key) && is_array($values)) {
-                    $metadata[$key] = array_values(array_filter($values, 'is_string'));
+                    $metadata = [...$metadata, $key => array_values(array_filter($values, 'is_string'))];
                 }
             }
         }

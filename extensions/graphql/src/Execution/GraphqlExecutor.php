@@ -198,7 +198,6 @@ final readonly class GraphqlExecutor
             return $data;
         }
 
-        /** @var array<string, mixed> $result */
         $result = [];
 
         foreach ($selections as $sel) {
@@ -222,18 +221,18 @@ final readonly class GraphqlExecutor
                         }
                     }
 
-                    $result[$key] = $projected;
+                    $result = [...$result, $key => $projected];
                 } elseif (is_array($value) && $sel->selections !== [] && !$this->isIndexedList($value)) {
                     // Nested object
                     $nestedType = $this->resolveNestedType($typeName, $fieldName);
                     /** @var array<string, mixed> $value */
-                    $result[$key] = $this->projectSelections($value, $sel->selections, $nestedType);
+                    $result = [...$result, $key => $this->projectSelections($value, $sel->selections, $nestedType)];
                 } else {
-                    $result[$key] = $value;
+                    $result = [...$result, $key => $value];
                 }
             } else {
                 // Lazy-resolved sub-fields (translations, blocks, terms)
-                $result[$key] = $this->resolveLazyField($data, $typeName, $sel);
+                $result = [...$result, $key => $this->resolveLazyField($data, $typeName, $sel)];
             }
         }
 
