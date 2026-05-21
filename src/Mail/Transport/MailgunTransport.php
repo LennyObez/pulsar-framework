@@ -116,6 +116,7 @@ final readonly class MailgunTransport implements TransportInterface
             $params['h:' . $key] = $value;
         }
 
+        /** @var mixed $value */
         foreach ($message->metadata as $key => $value) {
             $params['v:' . $key] = is_string($value) ? $value : (string) json_encode($value);
         }

@@ -206,7 +206,9 @@ final class ImportCommand extends Command
         /** @var array<string, mixed> $decoded */
         $decoded = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
 
-        $providers = is_array($decoded['providers'] ?? null) ? $decoded['providers'] : [];
+        /** @var mixed $providersRaw */
+        $providersRaw = $decoded['providers'] ?? null;
+        $providers = is_array($providersRaw) ? $providersRaw : [];
 
         if (isset($providers[$providerName]) && is_array($providers[$providerName])) {
             return json_encode($providers[$providerName], JSON_THROW_ON_ERROR);

@@ -141,7 +141,7 @@ final class Session implements SessionInterface
     {
         $this->ensureStarted();
 
-        $_SESSION[$key] = $value;
+        $_SESSION = [...$_SESSION, $key => $value];
     }
 
     #[Override]

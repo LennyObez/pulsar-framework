@@ -36,16 +36,16 @@ final readonly class SanitizationPipeline
     public function sanitize(array $data): SanitizationResult
     {
         $originals = $data;
-        $sanitized = $data;
+        $sanitized = [];
 
         /** @var mixed $value */
-        foreach ($sanitized as $field => $value) {
+        foreach ($data as $field => $value) {
             foreach ($this->filters as $filter) {
                 /** @var mixed $value */
                 $value = $filter->apply($value);
             }
 
-            $sanitized[$field] = $value;
+            $sanitized = [...$sanitized, $field => $value];
         }
 
         return new SanitizationResult($sanitized, $originals);

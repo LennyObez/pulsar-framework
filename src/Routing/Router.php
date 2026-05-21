@@ -441,6 +441,7 @@ final class Router implements RouterInterface
         // Domain-aware URL generation: if a route has a scope attribute and
         // that scope is mapped to a subdomain, generate a fully-qualified URL
         if ($domainConfig !== null && $domainConfig->hasSubdomainMappings()) {
+            /** @var mixed $scope */
             $scope = $route->attributes['scope'] ?? null;
 
             if (is_string($scope)) {

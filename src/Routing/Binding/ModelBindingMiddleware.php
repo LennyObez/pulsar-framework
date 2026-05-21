@@ -214,6 +214,7 @@ final class ModelBindingMiddleware implements MiddlewareInterface
      */
     private function isPublicRoute(MatchedRoute $matchedRoute): bool
     {
+        /** @var mixed $handler */
         $handler = $matchedRoute->getHandler();
         $handlerInfo = $this->resolveHandlerInfo($handler);
 

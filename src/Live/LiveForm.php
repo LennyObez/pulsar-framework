@@ -150,12 +150,11 @@ abstract class LiveForm
      */
     public function toArray(): array
     {
-        /** @var array<string, mixed> $data */
         $data = [];
 
         foreach ($this->rules() as $field => $_) {
             if (property_exists($this, $field)) {
-                $data[$field] = $this->{$field};
+                $data = [...$data, $field => $this->{$field}];
             }
         }
 

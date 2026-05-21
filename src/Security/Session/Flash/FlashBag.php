@@ -112,9 +112,7 @@ final class FlashBag
 
         foreach ($keys as $key) {
             if (array_key_exists($key, $old)) {
-                /** @var mixed $value */
-                $value = $old[$key];
-                $kept[$key] = $value;
+                $kept = [...$kept, $key => $old[$key]];
             }
         }
 
