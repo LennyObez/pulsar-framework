@@ -33,7 +33,7 @@ final readonly class SwaggerUiController
     /**
      * Serve the Swagger UI HTML page.
      */
-    public function ui(Request $request): Response
+    public function ui(): Response
     {
         $specUrl = htmlspecialchars($this->specRoute, ENT_QUOTES, 'UTF-8');
 
@@ -76,7 +76,7 @@ final readonly class SwaggerUiController
     /**
      * Serve the pre-built OpenAPI JSON spec.
      */
-    public function spec(Request $request): Response
+    public function spec(): Response
     {
         if (!file_exists($this->specPath)) {
             return Response::json(

@@ -30,7 +30,7 @@ final readonly class BookingController
     /**
      * GET /booking: show the booking form.
      */
-    public function form(Request $request): Response
+    public function form(): Response
     {
         return Response::html('<h1>Book an Appointment</h1>');
     }

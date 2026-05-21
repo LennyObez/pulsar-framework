@@ -21,7 +21,7 @@ final readonly class PricingApiController
      *
      * List available pricing plans.
      */
-    public function list(ServerRequestInterface $request): Response
+    public function list(): Response
     {
         // Pricing plans are typically loaded from config or database.
         // This is a placeholder that returns the API structure.
