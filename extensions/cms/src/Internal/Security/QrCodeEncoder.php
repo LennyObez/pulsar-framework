@@ -220,11 +220,10 @@ final readonly class QrCodeEncoder
         }
 
         // Pad with alternating 11101100 (236) and 00010001 (17)
-        $padBytes = [0xEC, 0x11];
         $padIndex = 0;
 
         while (count($bits) < $totalDataBits) {
-            $byte = (int) $padBytes[$padIndex % 2];
+            $byte = $padIndex % 2 === 0 ? 0xEC : 0x11;
 
             for ($j = 7; $j >= 0; $j--) {
                 $bits[] = ($byte >> $j) & 1;
@@ -245,12 +244,13 @@ final readonly class QrCodeEncoder
     private function bitsToCodewords(array $bits): array
     {
         $codewords = [];
+        $totalBits = count($bits);
 
-        for ($i = 0; $i < count($bits); $i += 8) {
+        for ($i = 0; $i < $totalBits; $i += 8) {
             $byte = 0;
 
-            for ($j = 0; $j < 8 && ($i + $j) < count($bits); $j++) {
-                $byte = ($byte << 1) | (int) $bits[$i + $j];
+            for ($j = 0; $j < 8 && ($i + $j) < $totalBits; $j++) {
+                $byte = ($byte << 1) | (int) ($bits[$i + $j] ?? 0);
             }
 
             $codewords[] = $byte;
@@ -296,20 +296,23 @@ final readonly class QrCodeEncoder
      */
     private function rsGeneratorPoly(int $degree): array
     {
+        /** @var list<int> $poly */
         $poly = [1];
 
         for ($i = 0; $i < $degree; $i++) {
-            $newPoly = array_fill(0, count($poly) + 1, 0);
+            $polySize = count($poly);
+            /** @var list<int> $newPoly */
+            $newPoly = array_fill(0, $polySize + 1, 0);
 
-            for ($j = 0; $j < count($poly); $j++) {
-                $newPoly[$j] ^= (int) $poly[$j];
-                $newPoly[$j + 1] ^= $this->gfMul((int) $poly[$j], $this->gfExp($i));
+            for ($j = 0; $j < $polySize; $j++) {
+                $newPoly[$j] ^= $poly[$j];
+                $newPoly[$j + 1] ^= $this->gfMul($poly[$j], $this->gfExp($i));
             }
 
             $poly = $newPoly;
         }
 
-        return array_values($poly);
+        return $poly;
     }
 
     /**
@@ -680,7 +683,7 @@ final readonly class QrCodeEncoder
                     }
 
                     if ($bitIndex < $totalBits) {
-                        $matrix[$row][$c] = (int) $bits[$bitIndex];
+                        $matrix[$row][$c] = (int) ($bits[$bitIndex] ?? 0);
                         $bitIndex++;
                     } else {
                         $matrix[$row][$c] = 0;
