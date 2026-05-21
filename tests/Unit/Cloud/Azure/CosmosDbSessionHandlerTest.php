@@ -75,7 +75,7 @@ final class CosmosDbSessionHandlerTest extends TestCase
         $config = new AzureConfig(accessToken: 'test-token');
         $handler = new CosmosDbSessionHandler($config, 'myaccount', 'mydb');
 
-        $handler->setSessionContext('sess-123', 'user-1', '10.0.0.1', 'Chrome/120');
+        $handler->setSessionContext('user-1', '10.0.0.1', 'Chrome/120');
 
         self::assertInstanceOf(CosmosDbSessionHandler::class, $handler);
     }
