@@ -799,6 +799,10 @@ final class Kernel implements KernelInterface
 
         // Autowire: resolve constructor dependencies from the container
         try {
+            if (!class_exists($class)) {
+                throw RoutingException::invalidHandler($class . ': class does not exist');
+            }
+
             $reflection = new ReflectionClass($class);
 
             if (!$reflection->isInstantiable()) {
@@ -808,10 +812,6 @@ final class Kernel implements KernelInterface
             }
 
             $constructor = $reflection->getConstructor();
-
-            if (!class_exists($class)) {
-                throw RoutingException::invalidHandler($class . ': class does not exist');
-            }
 
             if ($constructor === null || $constructor->getNumberOfParameters() === 0) {
                 return new $class();
