@@ -355,6 +355,7 @@ final class JsonPath
             $rawValue = trim($m[3]);
 
             // Parse the comparison value
+            /** @var mixed $compareValue */
             $compareValue = self::parseValue($rawValue);
 
             return static function (mixed $node) use ($field, $op, $compareValue): array {
@@ -364,11 +365,13 @@ final class JsonPath
 
                 $results = [];
 
+                /** @var mixed $item */
                 foreach ($node as $item) {
                     if (!is_array($item) || !array_key_exists($field, $item)) {
                         continue;
                     }
 
+                    /** @var mixed $val */
                     $val = $item[$field];
 
                     $match = match ($op) {
@@ -400,6 +403,7 @@ final class JsonPath
 
                 $results = [];
 
+                /** @var mixed $item */
                 foreach ($node as $item) {
                     if (is_array($item) && array_key_exists($field, $item)) {
                         $results[] = $item;
@@ -452,12 +456,16 @@ final class JsonPath
 
             if ($step > 0) {
                 for ($i = $resolvedStart; $i < $resolvedEnd; $i += $step) {
-                    $results[] = $values[$i];
+                    /** @var mixed $sliceVal */
+                    $sliceVal = $values[$i];
+                    $results[] = $sliceVal;
                 }
             } else {
                 for ($i = $resolvedStart; $i > $resolvedEnd; $i += $step) {
                     if ($i >= 0 && $i < $count) {
-                        $results[] = $values[$i];
+                        /** @var mixed $sliceVal */
+                        $sliceVal = $values[$i];
+                        $results[] = $sliceVal;
                     }
                 }
             }
@@ -480,9 +488,12 @@ final class JsonPath
         if ($key === '*') {
             $results = [...$results, ...array_values($node)];
         } elseif (array_key_exists($key, $node)) {
-            $results[] = $node[$key];
+            /** @var mixed $matched */
+            $matched = $node[$key];
+            $results[] = $matched;
         }
 
+        /** @var mixed $child */
         foreach ($node as $child) {
             if (is_array($child)) {
                 $results = [...$results, ...self::recursiveDescend($child, $key)];
