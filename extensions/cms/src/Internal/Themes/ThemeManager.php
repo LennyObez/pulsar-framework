@@ -416,8 +416,8 @@ final readonly class ThemeManager implements ThemeManagerInterface
             RecursiveIteratorIterator::SELF_FIRST,
         );
 
+        /** @var SplFileInfo $item */
         foreach ($iterator as $item) {
-            /** @var SplFileInfo $item */
             $relativePath = substr($item->getPathname(), strlen($source) + 1);
             $targetPath = $target . '/' . $relativePath;
 
@@ -464,8 +464,8 @@ final readonly class ThemeManager implements ThemeManagerInterface
             RecursiveIteratorIterator::CHILD_FIRST,
         );
 
+        /** @var SplFileInfo $item */
         foreach ($iterator as $item) {
-            /** @var SplFileInfo $item */
             if ($item->isDir()) {
                 rmdir($item->getPathname());
             } else {
