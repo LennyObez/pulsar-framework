@@ -35,6 +35,7 @@ final class PropertyAccessor
                 return null;
             }
 
+            /** @var mixed $current */
             $current = $this->readProperty($current, $segment);
         }
 
@@ -56,6 +57,7 @@ final class PropertyAccessor
                 return;
             }
 
+            /** @var mixed $current */
             $current = $this->readProperty($current, $segment);
         }
 

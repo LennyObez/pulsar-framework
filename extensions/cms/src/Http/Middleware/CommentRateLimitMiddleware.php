@@ -101,6 +101,7 @@ final readonly class CommentRateLimitMiddleware implements MiddlewareInterface
      */
     private function resolveIpHash(ServerRequestInterface $request): string
     {
+        /** @var mixed $ip */
         $ip = $request->getServerParams()['REMOTE_ADDR'] ?? null;
         $raw = is_string($ip) ? $ip : 'unknown';
 
