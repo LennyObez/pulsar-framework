@@ -489,7 +489,9 @@ final class Container implements AdvancedContainerInterface
 
             if ($type === null) {
                 if ($parameter->isDefaultValueAvailable()) {
-                    $dependencies[] = $parameter->getDefaultValue();
+                    /** @var mixed $defaultValue */
+                    $defaultValue = $parameter->getDefaultValue();
+                    $dependencies[] = $defaultValue;
                     continue;
                 }
 
@@ -504,7 +506,9 @@ final class Container implements AdvancedContainerInterface
 
             if (!$type instanceof ReflectionNamedType || $type->isBuiltin()) {
                 if ($parameter->isDefaultValueAvailable()) {
-                    $dependencies[] = $parameter->getDefaultValue();
+                    /** @var mixed $defaultValue */
+                    $defaultValue = $parameter->getDefaultValue();
+                    $dependencies[] = $defaultValue;
                     continue;
                 }
 
@@ -531,7 +535,9 @@ final class Container implements AdvancedContainerInterface
                 $dependencies[] = $this->get($dependencyClass);
             } catch (NotFoundException) {
                 if ($parameter->isDefaultValueAvailable()) {
-                    $dependencies[] = $parameter->getDefaultValue();
+                    /** @var mixed $defaultValue */
+                    $defaultValue = $parameter->getDefaultValue();
+                    $dependencies[] = $defaultValue;
                 } elseif ($type->allowsNull()) {
                     $dependencies[] = null;
                 } else {
@@ -655,7 +661,9 @@ final class Container implements AdvancedContainerInterface
 
             // Explicit parameters take precedence
             if (isset($params[$name])) {
-                $arguments[] = $params[$name];
+                /** @var mixed $explicitArg */
+                $explicitArg = $params[$name];
+                $arguments[] = $explicitArg;
 
                 continue;
             }
@@ -675,7 +683,9 @@ final class Container implements AdvancedContainerInterface
 
             // Fall back to default value
             if ($parameter->isDefaultValueAvailable()) {
-                $arguments[] = $parameter->getDefaultValue();
+                /** @var mixed $defaultArg */
+                $defaultArg = $parameter->getDefaultValue();
+                $arguments[] = $defaultArg;
 
                 continue;
             }
