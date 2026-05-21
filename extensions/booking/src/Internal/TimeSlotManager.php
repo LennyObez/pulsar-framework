@@ -33,7 +33,7 @@ final readonly class TimeSlotManager implements TimeSlotManagerInterface
         $slots = [];
 
         /** @var array{id: string, date: string, start_time: string, end_time: string, available: int|string, appointment_id: string|null} $row */
-        foreach ($result as $row) {
+        foreach ($result->rows as $row) {
             $slot = $this->hydrateSlot($row);
 
             if ($slot->durationMinutes() >= $durationMinutes) {
@@ -55,7 +55,7 @@ final readonly class TimeSlotManager implements TimeSlotManagerInterface
         /** @var list<array{id: string, date: string, start_time: string, end_time: string, available: int|string, appointment_id: string|null}> $rows */
         $rows = [];
         /** @var array{id: string, date: string, start_time: string, end_time: string, available: int|string, appointment_id: string|null} $row */
-        foreach ($result as $row) {
+        foreach ($result->rows as $row) {
             $rows[] = $row;
         }
 
