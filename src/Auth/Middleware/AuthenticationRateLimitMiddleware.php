@@ -78,6 +78,7 @@ final readonly class AuthenticationRateLimitMiddleware implements MiddlewareInte
             return $this->trustedProxy->resolveClientIp($request);
         }
 
+        /** @var mixed $raw */
         $raw = $request->getServerParams()['REMOTE_ADDR'] ?? null;
 
         return is_string($raw) ? $raw : 'unknown';
