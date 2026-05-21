@@ -211,7 +211,7 @@ final class JsonStreamReader
 
                     if ($itemJson !== '') {
                         try {
-                            yield $index++ => json_decode($itemJson, true, $maxDepth, JSON_THROW_ON_ERROR);
+                            yield $index++ => json_decode($itemJson, true, min($maxDepth, 2_147_483_647), JSON_THROW_ON_ERROR);
                         } catch (JsonException $e) {
                             throw new RuntimeException("Invalid JSON at item $index: " . $e->getMessage(), 0, $e);
                         }
@@ -236,7 +236,7 @@ final class JsonStreamReader
                         $itemJson = substr($buffer, $itemStart, $pos - $itemStart + 1);
 
                         try {
-                            yield $index++ => json_decode($itemJson, true, $maxDepth, JSON_THROW_ON_ERROR);
+                            yield $index++ => json_decode($itemJson, true, min($maxDepth, 2_147_483_647), JSON_THROW_ON_ERROR);
                         } catch (JsonException $e) {
                             throw new RuntimeException("Invalid JSON at item $index: " . $e->getMessage(), 0, $e);
                         }
