@@ -65,6 +65,7 @@ final readonly class WithCountLoader
     private function countRelation(array $entities, RelationMetadata $relation, string $pkProperty): array
     {
         $entityClass = $entities[0]::class;
+        /** @var list<mixed> $parentIds */
         $parentIds = [];
         foreach ($entities as $entity) {
             $ref = new ReflectionClass($entity);
@@ -134,6 +135,7 @@ final readonly class WithCountLoader
         $result = $builder->get();
         $countMap = [];
         foreach ($result->rows as $row) {
+            /** @var mixed $rawKey */
             $rawKey = $row->get($relation->morphIdColumn);
             $key = is_scalar($rawKey) ? (string) $rawKey : '';
             $countMap[$key] = $row->getInt('cnt');
