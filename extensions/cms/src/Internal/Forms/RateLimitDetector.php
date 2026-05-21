@@ -39,6 +39,7 @@ final readonly class RateLimitDetector implements SpamDetectorInterface
 
         $tenantId = isset($meta['tenant_id']) && is_string($meta['tenant_id']) ? $meta['tenant_id'] : '';
         $cacheKey = 'cms_form_rate_' . hash('xxh128', $tenantId . ':' . $ip);
+        /** @var mixed $count */
         $count = $this->cache->get($cacheKey);
 
         $currentCount = is_int($count) ? $count : 0;
