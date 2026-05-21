@@ -125,6 +125,7 @@ final readonly class RevisionController extends AbstractAdminController
 
     private function resolveLocale(ServerRequestInterface $request): string
     {
+        /** @var mixed $locale */
         $locale = $request->getQueryParams()['locale'] ?? null;
 
         return is_string($locale) ? $locale : $this->config->defaultLocale;

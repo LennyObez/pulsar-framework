@@ -73,6 +73,7 @@ final readonly class NewsletterFeedController
     private function resolveLocale(ServerRequestInterface $request): string
     {
         $params = $request->getQueryParams();
+        /** @var mixed $locale */
         $locale = $params['locale'] ?? null;
 
         return is_string($locale) && $locale !== '' ? $locale : 'en';

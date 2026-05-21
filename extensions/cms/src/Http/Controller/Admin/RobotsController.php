@@ -61,7 +61,9 @@ final readonly class RobotsController extends AbstractAdminController
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
-        $content = is_string($body['content'] ?? null) ? $body['content'] : '';
+        /** @var mixed $rawContent */
+        $rawContent = $body['content'] ?? null;
+        $content = is_string($rawContent) ? $rawContent : '';
 
         if ($content === '') {
             return Response::json(['error' => 'Content is required'], 400);

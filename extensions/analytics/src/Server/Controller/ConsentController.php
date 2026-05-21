@@ -67,6 +67,7 @@ final readonly class ConsentController
      */
     private function resolveVisitorHash(ServerRequestInterface $request): string
     {
+        /** @var mixed $rawIp */
         $rawIp = $request->getServerParams()['REMOTE_ADDR'] ?? '0.0.0.0';
         $ip = is_string($rawIp) ? $rawIp : '0.0.0.0';
         $userAgent = $request->getHeaderLine('User-Agent');
