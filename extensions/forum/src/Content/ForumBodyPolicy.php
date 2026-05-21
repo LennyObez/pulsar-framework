@@ -135,6 +135,7 @@ final readonly class ForumBodyPolicy
             return null;
         }
 
+        /** @var mixed $child */
         foreach (iterator_to_array($dom->childNodes) as $child) {
             if ($child instanceof DOMProcessingInstruction) {
                 $dom->removeChild($child);
@@ -367,7 +368,12 @@ final readonly class ForumBodyPolicy
         if ($body !== null) {
             $html = '';
 
+            /** @var mixed $child */
             foreach ($body->childNodes as $child) {
+                if (!$child instanceof \DOMNode) {
+                    continue;
+                }
+
                 $fragment = $dom->saveHTML($child);
 
                 if ($fragment !== false) {
