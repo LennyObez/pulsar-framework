@@ -14,6 +14,8 @@ use Pulsar\Compliance\ControlStatus;
  *
  * Maps Pulsar framework features to the California Consumer Privacy Act (CCPA)
  * and California Privacy Rights Act (CPRA) requirements they provide coverage for.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Framework-internal control registration; use ControlCatalog for public access')]
 final class CcpaMapping

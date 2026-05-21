@@ -44,6 +44,8 @@ use function sprintf;
  *
  * Executes saga steps sequentially, persists state after each step,
  * and handles compensation with proper handling of irreversible steps.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Use SagaOrchestratorInterface as the public API')]
 final readonly class SagaOrchestrator implements SagaOrchestratorInterface

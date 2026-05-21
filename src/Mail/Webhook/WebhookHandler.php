@@ -28,6 +28,8 @@ use const JSON_THROW_ON_ERROR;
  * 3. Deduplicate via event ID
  * 4. Parse and return result
  * 5. Audit log the event
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class WebhookHandler implements WebhookHandlerInterface

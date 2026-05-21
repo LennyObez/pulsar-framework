@@ -15,6 +15,8 @@ use Pulsar\Compliance\ControlStatus;
  * Maps Pulsar framework features to ISO 27001:2022 Annex A technological
  * controls (A.8.x). Organizational (A.5.x), people (A.6.x), and physical
  * (A.7.x) controls are documented as organizational responsibilities.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Framework-internal control registration; use ControlCatalog for public access')]
 final class Iso27001Mapping

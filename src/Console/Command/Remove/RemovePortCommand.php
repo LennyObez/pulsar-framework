@@ -17,6 +17,8 @@ use function sprintf;
 
 /**
  * Remove a scaffolded port interface from a module.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class RemovePortCommand extends Command
 {

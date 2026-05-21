@@ -16,6 +16,8 @@ use function sprintf;
 
 /**
  * Run all registered health checks.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class HealthCheckCommand extends Command
 {

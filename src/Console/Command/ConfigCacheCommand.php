@@ -21,6 +21,8 @@ use function sprintf;
  * Serializes the entire ConfigRepository into a single binary envelope,
  * optionally encrypted. Run during deployment to eliminate config
  * file parsing and DTO construction overhead on every request.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class ConfigCacheCommand extends Command
 {

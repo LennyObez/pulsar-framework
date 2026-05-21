@@ -14,6 +14,9 @@ use function sprintf;
 use function str_starts_with;
 
 #[Internal]
+/**
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+ */
 final readonly class StatefulSingletonAnalyzer
 {
     /** @param list<string> $coreNamespaces Namespace prefixes treated as core (hard errors in strict mode) */

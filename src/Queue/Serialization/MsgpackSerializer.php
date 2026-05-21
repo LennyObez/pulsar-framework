@@ -19,6 +19,8 @@ use function msgpack_unpack;
  * callers should check extension availability before selecting this serializer.
  *
  * PHP's native {@see unserialize()} is never used.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Optional serializer implementation; depend on SerializerInterface')]
 final readonly class MsgpackSerializer implements SerializerInterface

@@ -22,6 +22,8 @@ use Pulsar\Api\Api;
  *       #[ListensTo(OrderShipped::class)]
  *       public function onOrderShipped(OrderShipped $event): void { }
  *   }
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Attribute(Attribute::TARGET_METHOD | Attribute::IS_REPEATABLE)]
 #[Api(since: '1.0.0')]

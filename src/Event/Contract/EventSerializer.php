@@ -9,6 +9,8 @@ use Pulsar\Event\EventEnvelope;
 
 /**
  * Serializes and deserializes event envelopes for transport/storage.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Unimplemented port; will be promoted to #[Api] when an adapter ships')]
 interface EventSerializer

@@ -19,6 +19,8 @@ use function str_replace;
 
 /**
  * Enables Studio in the configuration file.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class StudioEnableCommand extends Command

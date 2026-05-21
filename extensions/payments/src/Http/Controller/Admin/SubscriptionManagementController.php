@@ -15,6 +15,8 @@ use function is_string;
 
 /**
  * Admin controller for subscription management.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class SubscriptionManagementController

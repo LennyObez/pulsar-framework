@@ -27,6 +27,8 @@ use function sprintf;
  *
  * Starts a PsySH-based shell with the application container, safe-mode
  * wrappers, environment guards, audit logging, and secret redaction.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class ShellCommand extends Command

@@ -28,6 +28,8 @@ use const JSON_UNESCAPED_SLASHES;
  *
  * Usage:
  *   pulsar export:run [--providers=cms,forum,payments] [--format=json] [--output=export.json]
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class ExportCommand extends Command

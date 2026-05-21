@@ -13,6 +13,8 @@ use Pulsar\Event\EventEnvelope;
  *
  * Stores the full history of events for an aggregate, enabling
  * event replay and temporal queries.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Unimplemented port; will be promoted to #[Api] when an adapter ships')]
 interface EventStorePort

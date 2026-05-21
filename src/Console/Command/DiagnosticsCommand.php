@@ -19,6 +19,8 @@ use function sprintf;
 
 /**
  * Displays system diagnostics and health checks.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class DiagnosticsCommand extends Command
 {

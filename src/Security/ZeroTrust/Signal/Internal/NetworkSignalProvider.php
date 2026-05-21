@@ -25,6 +25,8 @@ use function is_string;
  * - `network.zone` (string): Network zone classification (e.g., "internal", "external", "vpn")
  * - `network.tor_exit` (bool): Whether the IP is a known Tor exit node
  * - `network.known_proxy` (bool): Whether the IP is a known proxy
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class NetworkSignalProvider implements SignalProviderInterface

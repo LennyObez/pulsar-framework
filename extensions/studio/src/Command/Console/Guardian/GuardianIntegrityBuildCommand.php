@@ -29,6 +29,8 @@ use const LOCK_EX;
 
 /**
  * Builds an integrity manifest from the current filesystem state.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class GuardianIntegrityBuildCommand extends Command

@@ -11,6 +11,8 @@ use Pulsar\Extension\Payments\Contracts\ClockInterface;
 
 /**
  * Test clock with injectable, deterministic time.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class FixedClock implements ClockInterface

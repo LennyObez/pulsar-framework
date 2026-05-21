@@ -22,6 +22,8 @@ use function mkdir;
  * Iterates over all registered services and their method descriptors,
  * producing a ServiceManifest DTO. Can also write the manifest as
  * a PHP array file for zero-overhead boot-time loading.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Build-time manifest compilation')]
 final class ManifestCompiler

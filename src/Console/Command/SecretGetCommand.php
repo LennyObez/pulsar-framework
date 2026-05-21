@@ -16,6 +16,8 @@ use function sprintf;
 
 /**
  * Retrieve and display a decrypted secret from the vault.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class SecretGetCommand extends Command
 {

@@ -21,6 +21,8 @@ use function sprintf;
  * Display database table structure, columns, and metadata.
  *
  * Usage: db:inspect [table] [--columns] [--all]
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class DbInspectCommand extends Command

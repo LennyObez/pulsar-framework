@@ -21,6 +21,8 @@ use const JSON_THROW_ON_ERROR;
  *
  * The state payload sent to the browser is encrypted with AES-256-GCM
  * and authenticated, preventing tampering or state forgery.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class ComponentStateEncryptor

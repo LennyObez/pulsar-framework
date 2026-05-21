@@ -16,6 +16,8 @@ use Pulsar\Routing\Binding\Contract\AuthorizationHookInterface;
  *
  * Builds a PolicyContext with the 'view' permission and the resolved
  * model, then asks the Gate whether the identity is allowed.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Default implementation; consumers may provide their own AuthorizationHookInterface')]
 final readonly class PolicyAuthorizationHook implements AuthorizationHookInterface

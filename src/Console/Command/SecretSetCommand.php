@@ -16,6 +16,8 @@ use function sprintf;
 
 /**
  * Store a secret in the encrypted vault.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class SecretSetCommand extends Command
 {

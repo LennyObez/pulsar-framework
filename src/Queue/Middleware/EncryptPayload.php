@@ -26,6 +26,8 @@ use Pulsar\Queue\Envelope\JobEnvelope;
  * Transport/driver IDs are intentionally excluded from AAD because they break
  * legitimate workflows (dev Redis -> prod SQS, migrations, failover). Cross-env
  * replay is prevented by key separation (distinct master keys per environment).
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Encryption middleware is an implementation detail of the queue transport')]
 final readonly class EncryptPayload implements JobMiddlewareInterface

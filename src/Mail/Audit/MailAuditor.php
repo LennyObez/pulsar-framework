@@ -23,6 +23,8 @@ use function array_map;
  * When HMAC hashing is enabled, computes integrity hashes of message body
  * and attachments using a derived subkey. Recipient addresses are always
  * pseudonymized via HMAC: raw email addresses never appear in audit logs.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class MailAuditor

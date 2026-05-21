@@ -21,6 +21,8 @@ use function sprintf;
  * CLI command to generate a VEX (Vulnerability Exploitability eXchange) document.
  *
  * Runs vulnerability analysis and produces an OpenVEX JSON file alongside the SBOM.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'CLI command registration')]
 final class VexCommand extends Command

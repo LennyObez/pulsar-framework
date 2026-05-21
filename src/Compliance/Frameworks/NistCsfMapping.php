@@ -14,6 +14,8 @@ use Pulsar\Compliance\ControlStatus;
  *
  * Maps Pulsar framework features to the six NIST CSF 2.0 functions:
  * Govern, Identify, Protect, Detect, Respond, Recover.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Framework-internal control registration; use ControlCatalog for public access')]
 final class NistCsfMapping

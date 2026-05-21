@@ -17,6 +17,8 @@ use function hash_equals;
  * Postmark authenticates webhooks by including a token in a custom header.
  * This verifier compares the header value against the configured token
  * using constant-time comparison.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class PostmarkWebhookVerifier implements WebhookVerifierInterface

@@ -35,6 +35,8 @@ use const PREG_SPLIT_NO_EMPTY;
  *
  * Wraps the standard TemplateEngine and splits its output at @defer
  * boundaries or into fixed-size chunks.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Streaming engine is an implementation detail; use via TemplateEngineInterface')]
 final readonly class StreamingTemplateEngine

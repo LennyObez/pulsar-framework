@@ -26,6 +26,7 @@ use Pulsar\Compliance\ControlStatus;
  * - Annex A: Reference controls (A.2–A.10)
  *
  * @see https://www.iso.org/standard/81230.html
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Framework-internal control registration; use ControlCatalog for public access')]
 final class Iso42001Mapping

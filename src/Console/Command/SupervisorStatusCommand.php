@@ -23,6 +23,8 @@ use const JSON_UNESCAPED_SLASHES;
 
 /**
  * Display the current supervisor configuration and policy state.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class SupervisorStatusCommand extends Command
 {

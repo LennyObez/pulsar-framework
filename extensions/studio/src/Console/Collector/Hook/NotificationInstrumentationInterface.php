@@ -14,6 +14,8 @@ use Pulsar\Observability\Context\CorrelationContext;
  * When the notification subsystem is implemented, its channel decorator
  * should call record() for each notification dispatch. Studio's collector
  * then forwards the event to storage.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 interface NotificationInstrumentationInterface

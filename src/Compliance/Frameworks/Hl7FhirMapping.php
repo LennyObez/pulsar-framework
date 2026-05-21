@@ -15,6 +15,8 @@ use Pulsar\Compliance\ControlStatus;
  * Maps Pulsar framework features to HL7 FHIR interoperability requirements
  * they provide coverage for. FHIR controls are functional capabilities
  * rather than regulatory mandates.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Framework-internal control registration; use ControlCatalog for public access')]
 final class Hl7FhirMapping

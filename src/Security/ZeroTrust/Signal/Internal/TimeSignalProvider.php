@@ -24,6 +24,8 @@ use function in_array;
  * Claims produced:
  * - `time.off_hours` (bool): Whether the request is outside configured business hours
  * - `time.unusual` (bool): Whether the request time deviates from the user's typical patterns
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class TimeSignalProvider implements SignalProviderInterface

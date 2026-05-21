@@ -19,6 +19,8 @@ use Pulsar\Http\ResponseStatus;
  *
  * Returns 401 for authentication failures (with WWW-Authenticate header),
  * 403 for authorization failures.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class StudioAccessMiddleware implements MiddlewareInterface
