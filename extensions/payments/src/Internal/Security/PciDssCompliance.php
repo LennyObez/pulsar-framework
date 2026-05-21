@@ -66,6 +66,7 @@ final readonly class PciDssCompliance
      */
     public static function assertNoPan(array $data): void
     {
+        /** @var mixed $value */
         foreach ($data as $key => $value) {
             if (is_string($value) && self::detectsPan($value)) {
                 throw PaymentException::invalid(
