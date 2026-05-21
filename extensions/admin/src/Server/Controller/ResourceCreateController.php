@@ -30,7 +30,7 @@ final readonly class ResourceCreateController
         private AdminConfig $config,
     ) {}
 
-    public function form(ServerRequestInterface $request, string $resource): Response
+    public function form(string $resource): Response
     {
         $resourceDef = $this->registry->get($resource);
 
