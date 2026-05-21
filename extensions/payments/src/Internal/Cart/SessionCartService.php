@@ -195,8 +195,10 @@ final readonly class SessionCartService implements CartServiceInterface
             }
         }
 
-        $userId = ($data['userId'] ?? '') !== '' ? $data['userId'] : null;
-        $couponCode = ($data['couponCode'] ?? '') !== '' ? $data['couponCode'] : null;
+        $rawUserId = $data['userId'] ?? null;
+        $userId = is_string($rawUserId) && $rawUserId !== '' ? $rawUserId : null;
+        $rawCouponCode = $data['couponCode'] ?? null;
+        $couponCode = is_string($rawCouponCode) && $rawCouponCode !== '' ? $rawCouponCode : null;
 
         $currencyCode = $data['currency'] ?? 'EUR';
         $currency = Currency::tryFrom($currencyCode) ?? $this->defaultCurrency;
