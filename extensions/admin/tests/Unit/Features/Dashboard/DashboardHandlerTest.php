@@ -11,7 +11,6 @@ use Pulsar\Extension\Admin\Contracts\DataResourceInterface;
 use Pulsar\Extension\Admin\Contracts\ResourceRegistryInterface;
 use Pulsar\Extension\Admin\Contracts\WidgetInterface;
 use Pulsar\Extension\Admin\Features\Dashboard\DashboardHandler;
-use Pulsar\Extension\Admin\Features\Dashboard\DashboardRequest;
 use Pulsar\Extension\Admin\Features\Dashboard\DashboardResult;
 
 final class DashboardHandlerTest extends TestCase
@@ -33,7 +32,7 @@ final class DashboardHandlerTest extends TestCase
         $registry->method('all')->willReturn(['users' => $resource]);
 
         $handler = new DashboardHandler($registry, [$widget]);
-        $result = $handler->execute(new DashboardRequest());
+        $result = $handler->execute();
 
         self::assertInstanceOf(DashboardResult::class, $result);
         self::assertCount(1, $result->widgets);
@@ -55,7 +54,7 @@ final class DashboardHandlerTest extends TestCase
         $registry->method('all')->willReturn([]);
 
         $handler = new DashboardHandler($registry, []);
-        $result = $handler->execute(new DashboardRequest());
+        $result = $handler->execute();
 
         self::assertSame([], $result->widgets);
         self::assertSame([], $result->resources);
@@ -71,7 +70,7 @@ final class DashboardHandlerTest extends TestCase
         $registry->method('all')->willReturn([]);
 
         $handler = new DashboardHandler($registry, [$widget1, $widget2]);
-        $result = $handler->execute(new DashboardRequest());
+        $result = $handler->execute();
 
         self::assertCount(2, $result->widgets);
         self::assertSame('w1', $result->widgets[0]['id']);
