@@ -231,15 +231,17 @@ final readonly class DatabaseOutboxPort implements OutboxPort
             $metadata = [];
         }
 
-        /** @var array<string, mixed> $payload */
-        /** @var array<string, mixed> $metadata */
+        /** @var array<string, mixed> $payloadTyped */
+        $payloadTyped = $payload;
+        /** @var array<string, mixed> $metadataTyped */
+        $metadataTyped = $metadata;
 
         return EventEnvelope::fromArray([
             'event_id' => $eventId,
             'event_type' => $eventType,
             'schema_version' => $schemaVersion,
-            'metadata' => $metadata,
-            'payload' => $payload,
+            'metadata' => $metadataTyped,
+            'payload' => $payloadTyped,
             'origin_module' => $originModule,
             'scope' => $scope,
         ]);
