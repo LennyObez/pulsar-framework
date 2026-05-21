@@ -192,6 +192,7 @@ final class IdeHelperCommand extends Command
         $result = $prefix . '$' . $param->getName();
 
         if ($param->isDefaultValueAvailable()) {
+            /** @var mixed $default */
             $default = $param->getDefaultValue();
             $result .= ' = ' . var_export($default, true);
         }
