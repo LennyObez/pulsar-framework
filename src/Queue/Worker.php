@@ -437,9 +437,9 @@ final class Worker
         }
 
         /** @psalm-suppress UndefinedConstant SIGINT/SIGTERM are POSIX-only, guarded by OS check above */
-        $sigint = SIGINT;
+        $sigint = (int) SIGINT;
         /** @psalm-suppress UndefinedConstant */
-        $sigterm = SIGTERM;
+        $sigterm = (int) SIGTERM;
 
         pcntl_signal($sigint, function (): void {
             $this->stop();

@@ -56,7 +56,7 @@ final class RuntimeReloadCommand extends Command
         }
 
         /** @psalm-suppress UndefinedConstant */
-        $sigusr1 = SIGUSR1;
+        $sigusr1 = (int) SIGUSR1;
         $sent = posix_kill($pid, $sigusr1);
 
         if (!$sent) {
