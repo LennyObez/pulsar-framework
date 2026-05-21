@@ -118,6 +118,7 @@ final class ApiAbuseDetector implements ThreatDetectorInterface
             }
         }
 
+        /** @var list<int> $ids */
         foreach ($numericIds as $ids) {
             if (count($ids) < 5) {
                 continue;
@@ -126,7 +127,8 @@ final class ApiAbuseDetector implements ThreatDetectorInterface
             sort($ids);
             $sequential = 0;
 
-            for ($i = 1; $i < count($ids); $i++) {
+            $idsCount = count($ids);
+            for ($i = 1; $i < $idsCount; $i++) {
                 if ($ids[$i] === $ids[$i - 1] + 1) {
                     $sequential++;
                 }
