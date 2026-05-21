@@ -81,8 +81,6 @@ final readonly class ReviewController extends AbstractAdminController
                 $updated = $this->publishingStateMachine->transition(
                     $content,
                     PublishingStatus::Approved,
-                    $identity->id(),
-                    $reason,
                 );
 
                 $this->contentRepository->save($updated);
@@ -123,8 +121,6 @@ final readonly class ReviewController extends AbstractAdminController
                 $updated = $this->publishingStateMachine->transition(
                     $content,
                     PublishingStatus::Draft,
-                    $identity->id(),
-                    $reason,
                 );
 
                 $this->contentRepository->save($updated);

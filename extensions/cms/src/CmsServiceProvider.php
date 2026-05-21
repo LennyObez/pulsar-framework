@@ -200,9 +200,6 @@ final class CmsServiceProvider implements ServiceProviderInterface
             }
 
             // 5. Admin controllers (back-office)
-            /** @var ConnectionInterface $connection */
-            $connection = $container->get(ConnectionInterface::class);
-
             /** @var AuditLoggerInterface|null $auditLogger */
             $auditLogger = $container->has(AuditLoggerInterface::class)
                 ? $container->get(AuditLoggerInterface::class)

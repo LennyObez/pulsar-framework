@@ -167,7 +167,6 @@ final class ModelBindingMiddleware implements MiddlewareInterface
 
             // Regulated preset: authorization bypass forbidden unless #[PublicRoute]
             if ($isRegulated && $withoutAuthz && !$isPublicRoute) {
-                $routeName = $matchedRoute->getName() ?? $matchedRoute->route->path;
                 return $this->forbiddenResponse($request);
             }
 
