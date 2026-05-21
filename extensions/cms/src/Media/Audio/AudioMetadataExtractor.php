@@ -121,6 +121,7 @@ final readonly class AudioMetadataExtractor
      */
     private function findAudioStream(array $streams): array
     {
+        /** @var mixed $stream */
         foreach ($streams as $stream) {
             if (is_array($stream) && ($stream['codec_type'] ?? null) === 'audio') {
                 /** @var array<string, mixed> $stream */
@@ -140,6 +141,7 @@ final readonly class AudioMetadataExtractor
     private static function findTag(array $tags, array $keys): ?string
     {
         foreach ($keys as $key) {
+            /** @var mixed $value */
             $value = $tags[$key] ?? null;
 
             if (is_string($value) && trim($value) !== '') {
