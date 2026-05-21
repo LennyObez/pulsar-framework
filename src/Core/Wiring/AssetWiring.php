@@ -118,10 +118,17 @@ final readonly class AssetWiring implements ServiceWiringInterface
 
         $fullPath = $basePath . '/' . $cleanPath;
         $realBase = realpath($basePath);
+        if ($realBase === false) {
+            return new Response(statusCode: 404);
+        }
+
         $realFile = realpath($fullPath);
+        if ($realFile === false) {
+            return new Response(statusCode: 404);
+        }
 
         // Ensure the resolved path is within the base directory
-        if ($realBase === false || $realFile === false || !str_starts_with($realFile, $realBase . DIRECTORY_SEPARATOR)) {
+        if (!str_starts_with($realFile, $realBase . DIRECTORY_SEPARATOR)) {
             return new Response(statusCode: 404);
         }
 

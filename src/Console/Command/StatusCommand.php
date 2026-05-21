@@ -49,7 +49,7 @@ final class StatusCommand extends Command
 
         // Framework info
         $output->writeln(sprintf('  Version:     %s', Version::full()));
-        $output->writeln(sprintf('  PHP:         %s (%s)', phpversion(), php_sapi_name() ?: 'unknown'));
+        $output->writeln(sprintf('  PHP:         %s (%s)', phpversion() ?: PHP_VERSION, php_sapi_name() ?: 'unknown'));
         $output->writeln(sprintf('  Platform:    %s', php_uname('s') . ' ' . php_uname('r')));
         $output->writeln(sprintf('  Booted:      %s', $this->kernel->booted ? 'Yes' : 'No'));
 
