@@ -15,8 +15,6 @@ use SodiumException;
 
 use function bin2hex;
 use function is_array;
-use function is_int;
-use function is_string;
 use function json_encode;
 use function sodium_crypto_generichash;
 use function sprintf;

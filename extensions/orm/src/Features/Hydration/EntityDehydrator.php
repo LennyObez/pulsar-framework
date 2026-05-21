@@ -54,13 +54,10 @@ final class EntityDehydrator
     {
         $metadata = $this->metadataRegistry->get($entity::class);
         $reflectionData = self::reflectionFor($entity::class);
-        /** @var array<string, mixed> $values */
         $values = [];
 
         foreach ($metadata->insertableColumns() as $col) {
-            /** @var mixed $value */
-            $value = $this->extractValue($reflectionData, $entity, $col);
-            $values[$col->columnName] = $value;
+            $values = [...$values, $col->columnName => $this->extractValue($reflectionData, $entity, $col)];
 
             // Add blind index if encrypted
             if ($col->encrypted && $col->blindIndexColumn !== null && $this->encryptor !== null) {
@@ -70,7 +67,7 @@ final class EntityDehydrator
                 if ($rawValue !== null) {
                     $strValue = is_string($rawValue) ? $rawValue : (is_scalar($rawValue) ? (string) $rawValue : '');
                     $hash = $this->encryptor->blindIndex($strValue, $col->blindIndexHashLength ?? 32);
-                    $values[$col->blindIndexColumn] = Param::binary($hash);
+                    $values = [...$values, $col->blindIndexColumn => Param::binary($hash)];
                 }
             }
         }
@@ -87,13 +84,10 @@ final class EntityDehydrator
     {
         $metadata = $this->metadataRegistry->get($entity::class);
         $reflectionData = self::reflectionFor($entity::class);
-        /** @var array<string, mixed> $values */
         $values = [];
 
         foreach ($metadata->updatableColumns() as $col) {
-            /** @var mixed $value */
-            $value = $this->extractValue($reflectionData, $entity, $col);
-            $values[$col->columnName] = $value;
+            $values = [...$values, $col->columnName => $this->extractValue($reflectionData, $entity, $col)];
 
             // Update blind index if encrypted
             if ($col->encrypted && $col->blindIndexColumn !== null && $this->encryptor !== null) {
@@ -103,7 +97,7 @@ final class EntityDehydrator
                 if ($rawValue !== null) {
                     $strValue = is_string($rawValue) ? $rawValue : (is_scalar($rawValue) ? (string) $rawValue : '');
                     $hash = $this->encryptor->blindIndex($strValue, $col->blindIndexHashLength ?? 32);
-                    $values[$col->blindIndexColumn] = Param::binary($hash);
+                    $values = [...$values, $col->blindIndexColumn => Param::binary($hash)];
                 }
             }
         }

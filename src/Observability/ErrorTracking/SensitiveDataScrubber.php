@@ -13,7 +13,6 @@ use function array_values;
 use function count;
 use function in_array;
 use function is_array;
-use function is_string;
 use function preg_replace;
 use function preg_split;
 use function str_ends_with;

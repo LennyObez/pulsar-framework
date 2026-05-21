@@ -86,15 +86,15 @@ final readonly class FieldVisibilityFilter
                 continue;
             }
             if ($field->redacted) {
-                $filtered[$field->name] = self::REDACTED_PLACEHOLDER;
+                $filtered = [...$filtered, $field->name => self::REDACTED_PLACEHOLDER];
                 continue;
             }
-            $filtered[$field->name] = $record[$field->name] ?? null;
+            $filtered = [...$filtered, $field->name => $record[$field->name] ?? null];
         }
 
         $pk = $resource->primaryKey();
         if (!isset($filtered[$pk]) && isset($record[$pk])) {
-            $filtered[$pk] = $record[$pk];
+            $filtered = [...$filtered, $pk => $record[$pk]];
         }
 
         return $filtered;

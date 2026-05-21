@@ -19,7 +19,6 @@ use Pulsar\Security\Audit\AuditOutcome;
 use function array_key_exists;
 use function array_values;
 use function is_array;
-use function is_int;
 use function is_string;
 use function openssl_x509_parse;
 use function str_contains;

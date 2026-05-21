@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Accessibility\Validator;
 
 use DOMElement;
+use DOMNode;
 use DOMXPath;
 
 use function count;
@@ -106,7 +107,7 @@ final readonly class FormLabelValidator implements ValidatorInterface
             // Group by name attribute
             $groups = [];
 
-            /** @var \DOMNode $input */
+            /** @var DOMNode $input */
             foreach ($inputs as $input) {
                 if (!$input instanceof DOMElement) {
                     continue;

@@ -22,8 +22,6 @@ use function count;
 use function fclose;
 use function fopen;
 use function fputcsv;
-use function is_int;
-use function is_string;
 use function json_encode;
 use function number_format;
 use function rewind;

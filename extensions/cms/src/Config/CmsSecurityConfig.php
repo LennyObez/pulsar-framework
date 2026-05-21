@@ -149,7 +149,7 @@ final readonly class CmsSecurityConfig
         }
 
         return array_values(array_map(
-            static fn (mixed $v): string => is_string($v) ? $v : (is_scalar($v) ? (string) $v : ''),
+            static fn(mixed $v): string => is_string($v) ? $v : (is_scalar($v) ? (string) $v : ''),
             $raw,
         ));
     }
@@ -166,7 +166,7 @@ final readonly class CmsSecurityConfig
         }
 
         return array_values(array_map(
-            static fn (mixed $v): int => is_int($v) ? $v : (is_numeric($v) ? (int) $v : 0),
+            static fn(mixed $v): int => is_int($v) ? $v : (is_numeric($v) ? (int) $v : 0),
             $raw,
         ));
     }
