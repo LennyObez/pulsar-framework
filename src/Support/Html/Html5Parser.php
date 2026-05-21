@@ -221,11 +221,14 @@ final class Html5Parser
 
         /** @var mixed $btn */
         foreach ($buttons as $btn) {
-            if ($btn instanceof \Dom\Element
-                && trim($btn->textContent ?? '') === ''
-                && !$btn->hasAttribute('aria-label')
-                && !$btn->hasAttribute('aria-labelledby')) {
-                $issues[] = 'Button has no text content or aria-label';
+            if ($btn instanceof \Dom\Element) {
+                /** @var mixed $rawText */
+                $rawText = $btn->textContent ?? '';
+                if (trim(is_string($rawText) ? $rawText : '') === ''
+                    && !$btn->hasAttribute('aria-label')
+                    && !$btn->hasAttribute('aria-labelledby')) {
+                    $issues[] = 'Button has no text content or aria-label';
+                }
             }
         }
 
@@ -243,7 +246,9 @@ final class Html5Parser
         /** @var mixed $child */
         foreach ($node->childNodes as $child) {
             if ($child instanceof \Dom\Text) {
-                $text = trim($child->textContent ?? '');
+                /** @var mixed $rawText */
+                $rawText = $child->textContent ?? '';
+                $text = trim(is_string($rawText) ? $rawText : '');
 
                 if ($text !== '') {
                     $parts[] = $text;
