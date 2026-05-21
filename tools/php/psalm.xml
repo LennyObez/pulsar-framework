@@ -223,6 +223,28 @@
                 <file name="../../src/Security/Csrf/EncryptedCsrfManager.php"/>
                 <file name="../../src/Security/Csrf/StatelessCsrfManager.php"/>
                 <file name="../../src/Security/Session/SessionEncryption.php"/>
+                <!-- (C) #[Api] public surface where the parameter is reserved
+                     for future use without breaking the documented signature.
+                     Each entry corresponds to a forward-compatible API contract
+                     (filter operator hint, query bindings, retry exception
+                     introspection, cache key tracking, model-binder request
+                     context, hreflang current-locale anchoring, etc.). -->
+                <file name="../../extensions/cms/src/I18n/HreflangGenerator.php"/>
+                <file name="../../src/Api/Filter/Filter.php"/>
+                <file name="../../src/Database/Cache/SensitivityMetadata.php"/>
+                <file name="../../src/Database/Cache/TableTagExtractor.php"/>
+                <file name="../../src/Observability/Profiler/RequestProfiler.php"/>
+                <file name="../../src/Queue/Retry/QueueRetryPolicy.php"/>
+                <file name="../../src/Routing/Binding/ModelBinder.php"/>
+                <!-- (C) RuntimeInterface::afterRequest(\$request, \$response): the
+                     RequestSandbox impl currently uses neither argument but the
+                     interface contract requires the signature for future
+                     request/response-driven cleanup hooks. -->
+                <file name="../../src/Runtime/RequestSandbox.php"/>
+                <!-- (C) WebAuthnAttestationVerifier reserved signature parameters
+                     for the COSE signature / attestation chain verification work
+                     tracked under F385.M4 (OAuth2/WebAuthn external audit). -->
+                <file name="../../src/Security/ZeroTrust/DeviceIdentity/Internal/WebAuthnAttestationVerifier.php"/>
             </errorLevel>
         </UnusedParam>
 
