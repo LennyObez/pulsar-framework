@@ -10,7 +10,6 @@ use Psr\Log\LoggerInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Booking\Contracts\AppointmentRepositoryInterface;
 use Pulsar\Extension\Booking\Contracts\BookingServiceInterface;
-use Pulsar\Extension\Booking\Contracts\TimeSlotManagerInterface;
 use Pulsar\Extension\Booking\Domain\Appointment;
 use Pulsar\Extension\Booking\Domain\AppointmentStatus;
 use Pulsar\Extension\Booking\Domain\BookingConfig;
@@ -31,7 +30,6 @@ final readonly class BookingService implements BookingServiceInterface
 {
     public function __construct(
         private AppointmentRepositoryInterface $repository,
-        private TimeSlotManagerInterface $timeSlotManager,
         private BookingNumberGenerator $numberGenerator,
         private BookingConfig $config,
         private LoggerInterface $logger,
