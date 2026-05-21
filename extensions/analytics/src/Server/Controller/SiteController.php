@@ -23,7 +23,7 @@ final readonly class SiteController
         private SiteServiceInterface $siteService,
     ) {}
 
-    public function index(ServerRequestInterface $request): Response
+    public function index(): Response
     {
         $sites = $this->siteService->listAll();
 
@@ -74,7 +74,7 @@ final readonly class SiteController
         ], 201);
     }
 
-    public function show(ServerRequestInterface $request, string $id): Response
+    public function show(string $id): Response
     {
         $site = $this->siteService->findById($id);
 
@@ -134,7 +134,7 @@ final readonly class SiteController
         ]);
     }
 
-    public function delete(ServerRequestInterface $request, string $id): Response
+    public function delete(string $id): Response
     {
         try {
             $this->siteService->delete($id);

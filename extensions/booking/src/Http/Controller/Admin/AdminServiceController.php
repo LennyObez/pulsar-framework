@@ -29,7 +29,7 @@ final readonly class AdminServiceController
     /**
      * GET /admin/booking/services: list services.
      */
-    public function listServices(Request $request): Response
+    public function listServices(): Response
     {
         $result = $this->connection->query(
             'SELECT * FROM booking_services ORDER BY name ASC',
@@ -137,7 +137,7 @@ final readonly class AdminServiceController
     /**
      * GET /admin/booking/categories: list categories.
      */
-    public function listCategories(Request $request): Response
+    public function listCategories(): Response
     {
         $result = $this->connection->query(
             'SELECT * FROM booking_service_categories ORDER BY sort_order ASC',

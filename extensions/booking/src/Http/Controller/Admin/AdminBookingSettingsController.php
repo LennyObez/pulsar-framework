@@ -7,7 +7,6 @@ namespace Pulsar\Extension\Booking\Http\Controller\Admin;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Booking\Domain\BookingConfig;
 use Pulsar\Http\Message\Response;
-use Pulsar\Http\Request;
 
 /**
  * Admin controller for booking configuration management.
@@ -22,7 +21,7 @@ final readonly class AdminBookingSettingsController
     /**
      * GET /admin/booking/settings: show current config.
      */
-    public function show(Request $request): Response
+    public function show(): Response
     {
         return Response::json([
             'deposit_required' => $this->config->depositRequired,
