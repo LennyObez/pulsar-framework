@@ -206,7 +206,7 @@ final class UserProfile extends LiveComponent
 
         $sectionHtml = match ($this->activeSection) {
             'password' => $this->renderPasswordSection($e),
-            'mfa' => $this->renderMfaSection($e),
+            'mfa' => $this->renderMfaSection(),
             default => $this->renderProfileSection($e),
         };
 
@@ -310,8 +310,7 @@ final class UserProfile extends LiveComponent
             HTML;
     }
 
-    /** @param Closure(string): string $e */
-    private function renderMfaSection(Closure $e): string
+    private function renderMfaSection(): string
     {
         return <<<HTML
             <div class="pulsar-auth__mfa-section">

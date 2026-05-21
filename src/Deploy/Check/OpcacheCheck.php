@@ -127,7 +127,7 @@ final readonly class OpcacheCheck implements DeployCheckInterface
             }
 
             // Preload checks
-            $preloadResult = $this->checkPreload($environment);
+            $preloadResult = $this->checkPreload();
 
             if ($preloadResult !== null) {
                 return $preloadResult;
@@ -145,7 +145,7 @@ final readonly class OpcacheCheck implements DeployCheckInterface
      *
      * @return CheckResult|null Null if preload config is acceptable
      */
-    private function checkPreload(string $environment): ?CheckResult
+    private function checkPreload(): ?CheckResult
     {
         $preloadPath = $this->runtime->iniGet('opcache.preload');
 

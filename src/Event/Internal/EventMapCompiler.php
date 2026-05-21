@@ -48,7 +48,7 @@ final class EventMapCompiler
             $moduleIds = [];
 
             foreach ($rawListeners as $entry) {
-                $parsed = $this->parseListenerCallable($entry['callable'], $entry['fqcn']);
+                $parsed = $this->parseListenerCallable($entry['callable']);
                 $compiledListeners[] = [
                     'class' => $parsed['class'],
                     'method' => $parsed['method'],
@@ -130,7 +130,7 @@ final class EventMapCompiler
      *
      * @return array{class: string, method: string}
      */
-    private function parseListenerCallable(callable $listener, string $fqcn): array
+    private function parseListenerCallable(callable $listener): array
     {
         if (is_array($listener) && isset($listener[0], $listener[1])) {
             /** @var array{0: object|string, 1: string} $listener */
