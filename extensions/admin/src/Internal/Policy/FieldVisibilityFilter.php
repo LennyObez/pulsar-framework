@@ -63,6 +63,7 @@ final readonly class FieldVisibilityFilter
             if ($field->redacted) {
                 continue;
             }
+            /** @var mixed $value */
             $value = $record[$field->name] ?? null;
             $filtered[$field->name] = $this->toScalar($value);
         }
@@ -77,6 +78,7 @@ final readonly class FieldVisibilityFilter
     private function filterRecord(DataResourceInterface $resource, array $record, string $context): array
     {
         $fields = $resource->fields();
+        /** @var array<string, mixed> $filtered */
         $filtered = [];
 
         foreach ($fields as $field) {
