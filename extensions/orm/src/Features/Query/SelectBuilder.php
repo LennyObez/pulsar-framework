@@ -294,6 +294,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
 
         $callback($this);
 
+        /** @var list<Expression> $orGroup */
         $orGroup = $this->wheres;
         $orBindings = $this->bindings;
 
