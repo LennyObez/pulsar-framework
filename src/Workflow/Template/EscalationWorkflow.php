@@ -56,7 +56,8 @@ final readonly class EscalationWorkflow
         for ($level = 1; $level <= $levels; $level++) {
             $stateName = sprintf('level_%d', $level);
             $fallbackIndex = count($rolesPerLevel) > 0 ? count($rolesPerLevel) - 1 : 0;
-            $roles = $rolesPerLevel[$level - 1] ?? $rolesPerLevel[$fallbackIndex] ?? ['manager'];
+            $levelIndex = max(0, $level - 1);
+            $roles = $rolesPerLevel[$levelIndex] ?? $rolesPerLevel[$fallbackIndex] ?? ['manager'];
 
             $builder->state($stateName, ['escalation_level' => $level]);
 

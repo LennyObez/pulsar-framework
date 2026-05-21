@@ -87,7 +87,7 @@ final readonly class DunningManager
      */
     public function nextRetryIntervalDays(int $retryCount): int
     {
-        $index = min($retryCount, count(self::RETRY_INTERVALS) - 1);
+        $index = max(0, min($retryCount, count(self::RETRY_INTERVALS) - 1));
 
         return self::RETRY_INTERVALS[$index];
     }
