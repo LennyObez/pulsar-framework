@@ -270,6 +270,7 @@ final readonly class DevErrorPage implements ExceptionRendererInterface
         if ($queryParams !== []) {
             $html .= '<h3 class="dev-error__subtitle">Query Parameters</h3>';
             $html .= '<table class="dev-error__table">';
+            /** @var mixed $value */
             foreach ($queryParams as $key => $value) {
                 $html .= $this->tableRow(
                     $key,
@@ -297,8 +298,17 @@ final readonly class DevErrorPage implements ExceptionRendererInterface
         $html .= $this->tableRow('Name', $this->esc($matchedRoute->getName() ?? '(unnamed)'));
         $html .= $this->tableRow('Pattern', $this->esc($matchedRoute->route->path));
 
+        /** @var mixed $handler */
         $handler = $matchedRoute->getHandler();
-        $handlerStr = is_string($handler) ? $handler : (is_array($handler) ? implode('::', $handler) : '(closure)');
+        if (is_string($handler)) {
+            $handlerStr = $handler;
+        } elseif (is_array($handler)) {
+            /** @var list<string> $handlerList */
+            $handlerList = array_map(static fn(mixed $part): string => is_string($part) ? $part : '?', $handler);
+            $handlerStr = implode('::', $handlerList);
+        } else {
+            $handlerStr = '(closure)';
+        }
         $html .= $this->tableRow('Handler', $this->esc($handlerStr));
 
         $middleware = $matchedRoute->getMiddleware();
