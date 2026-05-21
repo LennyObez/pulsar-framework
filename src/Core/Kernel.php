@@ -1030,7 +1030,10 @@ final class Kernel implements KernelInterface
                     $router = $this->router;
                     $container = $this->container;
 
-                    /** @psalm-suppress UnresolvableInclude */
+                    /**
+                     * @psalm-suppress UnresolvableInclude
+                     * @var mixed $loaded
+                     */
                     $loaded = require $routeFile;
                     unset($router, $container);
 
