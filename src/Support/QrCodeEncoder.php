@@ -248,8 +248,14 @@ final readonly class QrCodeEncoder
         for ($i = 0; $i < $totalBits; $i += 8) {
             $byte = 0;
 
-            for ($j = 0; $j < 8 && ($i + $j) < $totalBits; $j++) {
-                $byte = ($byte << 1) | (int) ($bits[$i + $j] ?? 0);
+            for ($j = 0; $j < 8; $j++) {
+                $idx = $i + $j;
+
+                if ($idx >= $totalBits) {
+                    break;
+                }
+
+                $byte = ($byte << 1) | (int) ($bits[$idx] ?? 0);
             }
 
             $codewords[] = $byte;
@@ -305,8 +311,8 @@ final readonly class QrCodeEncoder
 
             for ($j = 0; $j < $len; $j++) {
                 $coef = (int) ($poly[$j] ?? 0);
-                $newPoly[$j] ^= $coef;
-                $newPoly[$j + 1] ^= $this->gfMul($coef, $this->gfExp($i));
+                $newPoly[$j] = ($newPoly[$j] ?? 0) ^ $coef;
+                $newPoly[$j + 1] = ($newPoly[$j + 1] ?? 0) ^ $this->gfMul($coef, $this->gfExp($i));
             }
 
             $poly = $newPoly;
@@ -836,12 +842,14 @@ final readonly class QrCodeEncoder
 
                 for ($i = 0; $i < 11; $i++) {
                     $val = $matrix[$r][$c + $i] ?? 0;
+                    $p1 = $pattern1[$i] ?? 0;
+                    $p2 = $pattern2[$i] ?? 0;
 
-                    if ($val !== $pattern1[$i]) {
+                    if ($val !== $p1) {
                         $match1 = false;
                     }
 
-                    if ($val !== $pattern2[$i]) {
+                    if ($val !== $p2) {
                         $match2 = false;
                     }
                 }
@@ -859,12 +867,14 @@ final readonly class QrCodeEncoder
 
                 for ($i = 0; $i < 11; $i++) {
                     $val = $matrix[$r + $i][$c] ?? 0;
+                    $p1 = $pattern1[$i] ?? 0;
+                    $p2 = $pattern2[$i] ?? 0;
 
-                    if ($val !== $pattern1[$i]) {
+                    if ($val !== $p1) {
                         $match1 = false;
                     }
 
-                    if ($val !== $pattern2[$i]) {
+                    if ($val !== $p2) {
                         $match2 = false;
                     }
                 }
