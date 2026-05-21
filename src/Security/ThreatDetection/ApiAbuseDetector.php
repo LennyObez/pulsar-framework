@@ -125,12 +125,14 @@ final class ApiAbuseDetector implements ThreatDetectorInterface
                 continue;
             }
 
-            sort($ids);
+            /** @var list<int> $sortedIds */
+            $sortedIds = $ids;
+            sort($sortedIds);
             $sequential = 0;
 
-            $idsCount = count($ids);
+            $idsCount = count($sortedIds);
             for ($i = 1; $i < $idsCount; $i++) {
-                if ($ids[$i] === $ids[$i - 1] + 1) {
+                if ($sortedIds[$i] === $sortedIds[$i - 1] + 1) {
                     $sequential++;
                 }
             }
