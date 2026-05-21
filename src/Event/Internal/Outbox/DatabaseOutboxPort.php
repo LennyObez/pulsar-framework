@@ -215,9 +215,11 @@ final readonly class DatabaseOutboxPort implements OutboxPort
         $scope = is_string($rawScope) ? $rawScope : null;
         $eventId = is_string($rawEventId) ? $rawEventId : '';
 
+        /** @var mixed $payload */
         $payload = $payloadJson !== ''
             ? json_decode($payloadJson, true, 512, JSON_THROW_ON_ERROR)
             : [];
+        /** @var mixed $metadata */
         $metadata = $metadataJson !== ''
             ? json_decode($metadataJson, true, 512, JSON_THROW_ON_ERROR)
             : [];
