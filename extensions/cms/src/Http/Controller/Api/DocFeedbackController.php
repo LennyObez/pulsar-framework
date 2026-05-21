@@ -79,7 +79,7 @@ final readonly class DocFeedbackController
     /**
      * GET /api/v1/cms/docs/{docPageId}/feedback: Feedback summary for a doc page.
      */
-    public function summary(ServerRequestInterface $request, string $docPageId): Response
+    public function summary(string $docPageId): Response
     {
         $counts = $this->feedbackRepository->countByDocPage($docPageId);
 

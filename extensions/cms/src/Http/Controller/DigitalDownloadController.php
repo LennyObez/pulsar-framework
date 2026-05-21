@@ -46,7 +46,7 @@ final readonly class DigitalDownloadController
         private MediaDiskInterface $disk,
     ) {}
 
-    public function download(ServerRequestInterface $request, string $token): Response
+    public function download(string $token): Response
     {
         $result = $this->delivery->processDownload($token);
 
