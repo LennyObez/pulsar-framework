@@ -9,6 +9,9 @@ use Pulsar\Security\Compliance\DataClassification;
 
 use function array_map;
 use function array_values;
+use function is_array;
+use function is_bool;
+use function is_int;
 use function is_string;
 
 /**
@@ -41,26 +44,24 @@ final readonly class JustifiedAccessConfig
     ) {}
 
     /**
-     * @param array{
-     *     enabled?: bool,
-     *     default_categories?: list<JustificationCategory|string>,
-     *     require_supervisor_for?: list<DataClassification|string>,
-     *     break_the_glass_duration?: int,
-     *     anomaly_threshold?: int,
-     *     anomaly_window_seconds?: int,
-     *     justification_header?: string,
-     *     category_header?: string,
-     *     min_justification_length?: int,
-     * } $data
+     * Typed loosely because the input is a config file loaded by users;
+     * each access is validated or coerced below.
+     *
+     * @param array<string, mixed> $data
      */
     public static function fromArray(array $data): self
     {
-        $defaultCategories = isset($data['default_categories'])
+        $rawDefaultCategories = $data['default_categories'] ?? null;
+        $defaultCategories = is_array($rawDefaultCategories)
             ? array_values(array_map(
-                static fn(JustificationCategory|string $v): JustificationCategory => $v instanceof JustificationCategory
-                    ? $v
-                    : JustificationCategory::from(is_string($v) ? $v : 'customer_request'),
-                $data['default_categories'],
+                static function (mixed $v): JustificationCategory {
+                    if ($v instanceof JustificationCategory) {
+                        return $v;
+                    }
+
+                    return JustificationCategory::from(is_string($v) ? $v : 'customer_request');
+                },
+                $rawDefaultCategories,
             ))
             : [
                 JustificationCategory::CustomerRequest,
@@ -70,25 +71,38 @@ final readonly class JustifiedAccessConfig
                 JustificationCategory::AccountMaintenance,
             ];
 
-        $requireSupervisorFor = isset($data['require_supervisor_for'])
+        $rawRequireSupervisor = $data['require_supervisor_for'] ?? null;
+        $requireSupervisorFor = is_array($rawRequireSupervisor)
             ? array_values(array_map(
-                static fn(DataClassification|string $v): DataClassification => $v instanceof DataClassification
-                    ? $v
-                    : DataClassification::from(is_string($v) ? $v : 'restricted'),
-                $data['require_supervisor_for'],
+                static function (mixed $v): DataClassification {
+                    if ($v instanceof DataClassification) {
+                        return $v;
+                    }
+
+                    return DataClassification::from(is_string($v) ? $v : 'restricted');
+                },
+                $rawRequireSupervisor,
             ))
             : [];
 
+        $enabled = $data['enabled'] ?? true;
+        $break = $data['break_the_glass_duration'] ?? 900;
+        $anomalyThreshold = $data['anomaly_threshold'] ?? 50;
+        $anomalyWindow = $data['anomaly_window_seconds'] ?? 3600;
+        $justificationHeader = $data['justification_header'] ?? 'X-Access-Justification';
+        $categoryHeader = $data['category_header'] ?? 'X-Access-Justification-Category';
+        $minJustification = $data['min_justification_length'] ?? 10;
+
         return new self(
-            enabled: $data['enabled'] ?? true,
+            enabled: is_bool($enabled) ? $enabled : true,
             defaultCategories: $defaultCategories,
             requireSupervisorFor: $requireSupervisorFor,
-            breakTheGlassDuration: $data['break_the_glass_duration'] ?? 900,
-            anomalyThreshold: $data['anomaly_threshold'] ?? 50,
-            anomalyWindowSeconds: $data['anomaly_window_seconds'] ?? 3600,
-            justificationHeader: $data['justification_header'] ?? 'X-Access-Justification',
-            categoryHeader: $data['category_header'] ?? 'X-Access-Justification-Category',
-            minJustificationLength: $data['min_justification_length'] ?? 10,
+            breakTheGlassDuration: is_int($break) ? $break : 900,
+            anomalyThreshold: is_int($anomalyThreshold) ? $anomalyThreshold : 50,
+            anomalyWindowSeconds: is_int($anomalyWindow) ? $anomalyWindow : 3600,
+            justificationHeader: is_string($justificationHeader) ? $justificationHeader : 'X-Access-Justification',
+            categoryHeader: is_string($categoryHeader) ? $categoryHeader : 'X-Access-Justification-Category',
+            minJustificationLength: is_int($minJustification) ? $minJustification : 10,
         );
     }
 }
