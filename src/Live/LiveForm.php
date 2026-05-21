@@ -58,6 +58,7 @@ abstract class LiveForm
                 continue;
             }
 
+            /** @var mixed $value */
             $value = $this->{$field};
 
             foreach ($fieldRules as $rule) {
@@ -134,6 +135,7 @@ abstract class LiveForm
      */
     public function fill(array $data): void
     {
+        /** @var mixed $value */
         foreach ($data as $field => $value) {
             if (property_exists($this, $field)) {
                 $this->{$field} = $value;
@@ -148,6 +150,7 @@ abstract class LiveForm
      */
     public function toArray(): array
     {
+        /** @var array<string, mixed> $data */
         $data = [];
 
         foreach ($this->rules() as $field => $_) {
@@ -256,6 +259,7 @@ abstract class LiveForm
         $confirmationField = $field . '_confirmation';
 
         if (property_exists($this, $confirmationField)) {
+            /** @var mixed $confirmation */
             $confirmation = $this->{$confirmationField};
 
             if ($value !== $confirmation) {
