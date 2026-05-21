@@ -90,6 +90,7 @@ final readonly class CspViolationReport
      */
     private static function str(array $data, string $key): string
     {
+        /** @var mixed $value */
         $value = $data[$key] ?? '';
 
         return is_string($value) ? $value : '';

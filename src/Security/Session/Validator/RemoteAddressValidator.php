@@ -34,6 +34,7 @@ final readonly class RemoteAddressValidator implements SessionValidatorInterface
     public function validate(SessionMetadata $metadata, ServerRequestInterface $request): bool
     {
         $storedIp = $metadata->ipAddress;
+        /** @var mixed $remoteAddr */
         $remoteAddr = $request->getServerParams()['REMOTE_ADDR'] ?? '';
         $currentIp = is_string($remoteAddr) ? $remoteAddr : '';
 

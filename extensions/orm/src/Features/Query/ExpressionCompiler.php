@@ -89,13 +89,12 @@ final readonly class ExpressionCompiler
     public function in(string $column, array $values, bool $not = false): Expression
     {
         $placeholders = [];
-        /** @var array<string, mixed> $bindings */
         $bindings = [];
         /** @var mixed $val */
         foreach ($values as $val) {
             $name = $this->bindings->next();
             $placeholders[] = ':' . $name;
-            $bindings[$name] = $val;
+            $bindings = [...$bindings, $name => $val];
         }
 
         $op = $not ? 'NOT IN' : 'IN';
@@ -153,10 +152,7 @@ final readonly class ExpressionCompiler
         $bindings = [];
         foreach ($expressions as $expr) {
             $sqls[] = $expr->sql;
-            /** @var mixed $value */
-            foreach ($expr->bindings as $param => $value) {
-                $bindings[$param] = $value;
-            }
+            $bindings = [...$bindings, ...$expr->bindings];
         }
 
         return new Expression(
@@ -176,10 +172,7 @@ final readonly class ExpressionCompiler
         $bindings = [];
         foreach ($expressions as $expr) {
             $sqls[] = $expr->sql;
-            /** @var mixed $value */
-            foreach ($expr->bindings as $param => $value) {
-                $bindings[$param] = $value;
-            }
+            $bindings = [...$bindings, ...$expr->bindings];
         }
 
         return new Expression(

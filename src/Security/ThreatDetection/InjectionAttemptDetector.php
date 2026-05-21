@@ -173,6 +173,7 @@ final class InjectionAttemptDetector implements ThreatDetectorInterface
      */
     private function flattenValues(array $data, array &$out): void
     {
+        /** @var mixed $value */
         foreach ($data as $value) {
             if (is_string($value)) {
                 $out[] = $value;

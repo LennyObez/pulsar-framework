@@ -50,6 +50,7 @@ final class SnapshotCapture
                 continue;
             }
 
+            /** @var mixed $value */
             $value = $field->classification === DataClassification::Restricted
                 ? '[REDACTED]'
                 : $field->value;
