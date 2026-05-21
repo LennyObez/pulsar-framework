@@ -39,5 +39,6 @@ $navItems = [
         <li><a href="<?= $e($item['href']) ?>"<?= $isActive ? ' class="active"' : '' ?>><?= $e($item['label']) ?></a></li>
         <?php endforeach; ?>
     </ul>
-    <div data-language-selector data-locales="en,fr,nl,de,es,it,pt,pl,ro,cs,el,hu,sv,da,fi,sk,bg,hr,sl,lt,lv,et,ga,mt,lb" data-current="<?= htmlspecialchars(is_string($locale ?? null) ? $locale : 'en') ?>"></div>
+    <?php /** @var mixed $rawLocale */ $rawLocale = $locale ?? null; ?>
+    <div data-language-selector data-locales="en,fr,nl,de,es,it,pt,pl,ro,cs,el,hu,sv,da,fi,sk,bg,hr,sl,lt,lv,et,ga,mt,lb" data-current="<?= htmlspecialchars(is_string($rawLocale) ? $rawLocale : 'en') ?>"></div>
 </nav>
