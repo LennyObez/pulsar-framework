@@ -243,6 +243,7 @@ final class CacheManifest
     {
         ksort($data);
 
+        /** @var mixed $value */
         foreach ($data as &$value) {
             if (is_array($value)) {
                 // Only sort associative arrays (string keys), not lists

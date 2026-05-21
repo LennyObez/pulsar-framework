@@ -153,9 +153,13 @@ final readonly class CacheIntegrity
             return null;
         }
 
+        /** @var mixed $payloadData */
         $payloadData = $envelope['payload'] ?? null;
+        /** @var mixed $expectedSha256 */
         $expectedSha256 = $envelope['sha256'] ?? null;
+        /** @var mixed $expectedHmac */
         $expectedHmac = $envelope['hmac'] ?? null;
+        /** @var mixed $encrypted */
         $encrypted = $envelope['encrypted'] ?? false;
 
         if (!is_string($payloadData) || !is_string($expectedSha256) || !is_string($expectedHmac)) {

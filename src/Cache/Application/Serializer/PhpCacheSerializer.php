@@ -39,6 +39,7 @@ final readonly class PhpCacheSerializer implements CacheSerializerInterface
     public function deserialize(string $data): mixed
     {
         try {
+            /** @var mixed $result */
             $result = unserialize($data, [
                 'allowed_classes' => $this->allowedClasses === [] ? false : $this->allowedClasses,
             ]);
