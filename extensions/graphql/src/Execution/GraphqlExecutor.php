@@ -58,7 +58,8 @@ final readonly class GraphqlExecutor
         try {
             $parsed = $this->parser->parse($query, $variables);
 
-            $this->validateComplexity($parsed->fields);
+            $fieldCount = 0;
+            $this->validateComplexity($parsed->fields, 1, $fieldCount);
 
             $data = [];
 
@@ -91,13 +92,11 @@ final readonly class GraphqlExecutor
      * @param list<ParsedField> $fields
      * @throws GraphqlException When limits are exceeded
      */
-    private function validateComplexity(array $fields, int $currentDepth = 1): int
+    private function validateComplexity(array $fields, int $currentDepth, int &$fieldCount): void
     {
         if ($currentDepth > self::MAX_DEPTH) {
             throw GraphqlException::queryTooComplex('Maximum query depth exceeded');
         }
-
-        $fieldCount = 0;
 
         foreach ($fields as $field) {
             $fieldCount++;
@@ -107,15 +106,9 @@ final readonly class GraphqlExecutor
             }
 
             if ($field->selections !== []) {
-                $fieldCount += $this->validateComplexity($field->selections, $currentDepth + 1);
-
-                if ($fieldCount > self::MAX_FIELDS) {
-                    throw GraphqlException::queryTooComplex('Too many fields requested');
-                }
+                $this->validateComplexity($field->selections, $currentDepth + 1, $fieldCount);
             }
         }
-
-        return $fieldCount;
     }
 
     /** @return array<string, mixed>|null */
