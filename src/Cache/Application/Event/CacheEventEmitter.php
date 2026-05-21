@@ -167,6 +167,7 @@ final class CacheEventEmitter
      * Register a listener for future event dispatcher integration.
      *
      * @param callable(CacheEvent): void $listener
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function addListener(callable $listener): void
     {

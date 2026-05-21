@@ -28,6 +28,9 @@ use function random_bytes;
 #[Internal]
 final readonly class BookingService implements BookingServiceInterface
 {
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
     public function __construct(
         private AppointmentRepositoryInterface $repository,
         private BookingNumberGenerator $numberGenerator,
@@ -89,6 +92,7 @@ final readonly class BookingService implements BookingServiceInterface
      * Request an appointment with full service details pre-populated.
      *
      * @throws BookingException If constraints are violated
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function requestWithService(
         Service $service,

@@ -19,6 +19,7 @@ final readonly class Sanitize
     /**
      * @param class-string $filter Fully qualified filter class name
      * @param array<string, mixed> $parameters Constructor parameters for the filter
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function __construct(
         public string $filter,

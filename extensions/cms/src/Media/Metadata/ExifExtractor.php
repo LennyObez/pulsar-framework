@@ -46,6 +46,7 @@ final readonly class ExifExtractor
      *
      * Returns an empty MediaMetadata for unsupported formats rather
      * than throwing, so callers can safely call this on any upload.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function extract(string $filePath): MediaMetadata
     {
@@ -71,6 +72,7 @@ final readonly class ExifExtractor
      * Extract raw EXIF data without structuring it.
      *
      * @return array<string, mixed>
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function extractRaw(string $filePath): array
     {

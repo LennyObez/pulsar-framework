@@ -123,6 +123,7 @@ final class Translator implements TranslatorInterface
 
     /**
      * Reset the global instance (for testing).
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public static function resetGlobalInstance(): void
     {

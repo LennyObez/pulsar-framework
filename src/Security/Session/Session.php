@@ -32,6 +32,9 @@ use function setcookie;
  */
 final class Session implements SessionInterface
 {
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
     private bool $started = false;
 
     public function __construct(

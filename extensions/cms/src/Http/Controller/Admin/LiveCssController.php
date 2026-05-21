@@ -40,6 +40,9 @@ final readonly class LiveCssController extends AbstractAdminController
     ) {
         parent::__construct($templateEngine, $gate);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function editor(ServerRequestInterface $request): Response
     {
@@ -83,6 +86,9 @@ final readonly class LiveCssController extends AbstractAdminController
             ] : null,
         ]);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function save(ServerRequestInterface $request): Response
     {
@@ -146,6 +152,9 @@ final readonly class LiveCssController extends AbstractAdminController
             return Response::json(['error' => $e->getMessage()], 422);
         }
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function rollback(ServerRequestInterface $request): Response
     {
@@ -182,6 +191,9 @@ final readonly class LiveCssController extends AbstractAdminController
             return Response::json(['error' => $e->getMessage()], 422);
         }
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function history(ServerRequestInterface $request): Response
     {

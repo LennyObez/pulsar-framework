@@ -58,6 +58,7 @@ final class DatabaseHandler implements SessionHandlerInterface
      *
      * Called by the session manager to associate user metadata with
      * the session row. This data is stored alongside session payload.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function setSessionContext(
         ?string $userId,

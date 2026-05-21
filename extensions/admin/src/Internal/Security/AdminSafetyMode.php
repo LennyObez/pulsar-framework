@@ -29,6 +29,7 @@ final readonly class AdminSafetyMode
      *
      * @param array<string, mixed> $errorData
      * @return array<string, mixed>
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function sanitize(array $errorData): array
     {
@@ -41,6 +42,7 @@ final readonly class AdminSafetyMode
 
     /**
      * Get the error message appropriate for the current mode.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function errorMessage(string $internalMessage): string
     {
@@ -50,6 +52,9 @@ final readonly class AdminSafetyMode
 
         return 'An error occurred while processing your request';
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function isDebug(): bool
     {

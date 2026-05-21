@@ -78,6 +78,7 @@ final class BufferedEventStore implements EventStoreInterface
 
     /**
      * Get the number of events currently in the buffer.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function bufferCount(): int
     {
@@ -161,6 +162,7 @@ final class BufferedEventStore implements EventStoreInterface
 
     /**
      * Get the inner store.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function inner(): EventStoreInterface
     {

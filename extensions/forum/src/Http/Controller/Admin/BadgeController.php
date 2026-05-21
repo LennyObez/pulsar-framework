@@ -24,6 +24,9 @@ use function is_string;
 final readonly class BadgeController
 {
     use RendersAdminView;
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function __construct(
         private BadgeServiceInterface $badgeService,
@@ -33,6 +36,7 @@ final readonly class BadgeController
 
     /**
      * GET /admin/forum/badges: Badge overview with available badges.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function index(ServerRequestInterface $request): Response
     {
@@ -53,6 +57,7 @@ final readonly class BadgeController
 
     /**
      * GET /admin/forum/badges/user/{userId}: Show badges for a user.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function userBadges(ServerRequestInterface $request, string $userId): Response
     {
@@ -75,6 +80,7 @@ final readonly class BadgeController
 
     /**
      * POST /admin/forum/badges/award: Manually award a badge to a user.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function award(ServerRequestInterface $request): Response
     {
@@ -124,6 +130,7 @@ final readonly class BadgeController
 
     /**
      * POST /admin/forum/badges/revoke: Revoke a badge from a user.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function revoke(ServerRequestInterface $request): Response
     {

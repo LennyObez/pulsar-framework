@@ -22,6 +22,9 @@ final readonly class StatsController
     public function __construct(
         private StatsServiceInterface $statsService,
     ) {}
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function aggregate(ServerRequestInterface $request): Response
     {

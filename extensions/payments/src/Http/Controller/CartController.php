@@ -32,6 +32,9 @@ use const ENT_QUOTES;
 #[Internal(reason: 'HTTP controller; implementation detail')]
 final readonly class CartController
 {
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
     public function __construct(
         private CartServiceInterface $cartService,
     ) {}
@@ -40,6 +43,7 @@ final readonly class CartController
      * GET /cart
      *
      * Display the cart page or return cart contents as JSON.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function show(ServerRequestInterface $request): Response
     {
@@ -78,6 +82,7 @@ final readonly class CartController
      * Add an item to the cart. Returns updated cart as JSON.
      *
      * Expected body: { "product_id": "...", "product_name": "...", "quantity": 1, "unit_price": 1999, "currency": "EUR" }
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function add(ServerRequestInterface $request): Response
     {
@@ -143,6 +148,7 @@ final readonly class CartController
      * POST /cart/remove/{itemId}
      *
      * Remove an item from the cart.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function remove(ServerRequestInterface $request): Response
     {
@@ -167,6 +173,7 @@ final readonly class CartController
      * Update the quantity of a cart item.
      *
      * Expected body: { "quantity": 3 }
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function update(ServerRequestInterface $request): Response
     {
@@ -201,6 +208,7 @@ final readonly class CartController
      * Apply a coupon code to the cart.
      *
      * Expected body: { "coupon_code": "SAVE10" }
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function applyCoupon(ServerRequestInterface $request): Response
     {

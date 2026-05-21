@@ -79,6 +79,7 @@ final class ConfigManager implements ConfigManagerInterface
      * resolved in the repository. The order of registration
      * defines the order of activation within the extension
      * tier — wire dependencies accordingly.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function registerLoader(string $basename, ConfigLoaderInterface $loader, bool $optional = true): self
     {

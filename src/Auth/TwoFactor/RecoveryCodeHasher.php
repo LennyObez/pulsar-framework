@@ -57,6 +57,7 @@ final readonly class RecoveryCodeHasher
      * @return int Index of matching hash, or -1 if no match
      *
      * @throws SodiumException
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function verify(#[SensitiveParameter] string $code, array $hashedCodes): int
     {

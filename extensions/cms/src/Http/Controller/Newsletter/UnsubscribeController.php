@@ -25,6 +25,9 @@ use function time;
 #[Internal(reason: 'CMS newsletter controller; implementation detail')]
 final readonly class UnsubscribeController
 {
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
     private const int SIGNATURE_TTL_SECONDS = 7_776_000; // 90 days
 
     public function __construct(
@@ -36,6 +39,7 @@ final readonly class UnsubscribeController
      * GET /newsletter/unsubscribe?id={subscriberId}&sig={signature}&t={timestamp}
      *
      * Validates the HMAC signature, checks expiry, and unsubscribes.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function unsubscribe(ServerRequestInterface $request): Response
     {

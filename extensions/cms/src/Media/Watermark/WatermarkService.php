@@ -61,6 +61,7 @@ final readonly class WatermarkService
      * @param string $variantName Variant name for per-variant config check
      *
      * @return bool Whether the watermark was applied
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function apply(string $imagePath, string $variantName): bool
     {

@@ -21,6 +21,7 @@ final class StudioException extends RuntimeException
 {
     /**
      * Studio storage is not writable.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public static function storageNotWritable(string $path): self
@@ -67,6 +68,7 @@ final class StudioException extends RuntimeException
 
     /**
      * Evidence chain verification failed.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public static function chainBroken(int $linkIndex, string $reason): self
@@ -78,6 +80,7 @@ final class StudioException extends RuntimeException
 
     /**
      * Studio is not enabled.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public static function notEnabled(): self
@@ -87,6 +90,7 @@ final class StudioException extends RuntimeException
 
     /**
      * Studio server failed to start.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public static function serverStartFailed(string $reason): self
@@ -96,6 +100,7 @@ final class StudioException extends RuntimeException
 
     /**
      * Access denied to Studio.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public static function accessDenied(string $reason = 'unauthorized'): self
@@ -105,6 +110,7 @@ final class StudioException extends RuntimeException
 
     /**
      * Invalid Studio configuration.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public static function invalidConfig(string $reason): self
@@ -114,6 +120,7 @@ final class StudioException extends RuntimeException
 
     /**
      * Archive file is invalid or corrupted.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public static function invalidArchive(string $reason): self

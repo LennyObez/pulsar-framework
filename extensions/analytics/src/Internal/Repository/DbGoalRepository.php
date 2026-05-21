@@ -71,6 +71,9 @@ final readonly class DbGoalRepository
             'created_at' => $goal->createdAt->format('Y-m-d H:i:s'),
         ]);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function update(Goal $goal): void
     {

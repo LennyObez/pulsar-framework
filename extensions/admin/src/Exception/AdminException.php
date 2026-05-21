@@ -14,11 +14,20 @@ use function sprintf;
  */
 class AdminException extends RuntimeException
 {
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
     #[NoDiscard]
     public static function disabled(): self
     {
         return new self('Admin panel is disabled. Set ADMIN_ENABLED=true to activate.');
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     #[NoDiscard]
     public static function invalidConfiguration(string $detail): self

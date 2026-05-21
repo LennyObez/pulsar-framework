@@ -21,6 +21,9 @@ use Pulsar\View\Engine\TemplateEngineInterface;
 final readonly class SettingsController
 {
     use RendersAdminView;
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function __construct(
         private ForumConfig $config,
@@ -30,6 +33,7 @@ final readonly class SettingsController
 
     /**
      * GET /admin/forum/settings: View forum settings.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function index(ServerRequestInterface $request): Response
     {

@@ -34,6 +34,9 @@ final readonly class SiteDefinitionController extends AbstractAdminController
     ) {
         parent::__construct($templateEngine, $gate);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function form(ServerRequestInterface $request): Response
     {
@@ -47,6 +50,9 @@ final readonly class SiteDefinitionController extends AbstractAdminController
             'supports_dry_run' => true,
         ]);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function dryRun(ServerRequestInterface $request): Response
     {
@@ -67,6 +73,9 @@ final readonly class SiteDefinitionController extends AbstractAdminController
             return Response::json(['error' => $e->getMessage()], 422);
         }
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function execute(ServerRequestInterface $request): Response
     {

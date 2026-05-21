@@ -60,6 +60,9 @@ final class RouteContext
         $slot['name'] = $name;
         $this->slots[$key] = $slot;
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function pattern(): ?string
     {
@@ -67,6 +70,9 @@ final class RouteContext
 
         return $slot['pattern'] ?? null;
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function name(): ?string
     {

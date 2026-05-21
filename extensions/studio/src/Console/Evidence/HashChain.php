@@ -42,6 +42,7 @@ final class HashChain
 
     /**
      * Fallback constant for environments without master key (dev/testing).
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     private const string CHAIN_SEED_FALLBACK = 'PULSAR_STUDIO_CHAIN_SEED';
 
@@ -77,6 +78,7 @@ final class HashChain
      * @return string Hex-encoded derived seed
      *
      * @throws SodiumException
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public static function deriveSeedFromMasterKey(string $masterKeyRaw): string
@@ -95,6 +97,7 @@ final class HashChain
      * Compute the next chain link for an event.
      *
      * @throws SodiumException
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function computeLink(EventEnvelope $envelope, string $previousHash): ChainLink
     {
@@ -115,6 +118,7 @@ final class HashChain
 
     /**
      * Verify a chain link's hash against its predecessor and canonical event data.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public static function verifyLinkHash(string $previousHash, string $canonical, string $expectedHash): bool
@@ -128,6 +132,7 @@ final class HashChain
      * Verify a link's MAC (requires chain MAC key).
      *
      * @throws SodiumException
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public static function verifyLinkMac(string $currentHash, string $expectedMac, string $chainMacKey, HmacInterface $hmac): bool
@@ -137,6 +142,7 @@ final class HashChain
 
     /**
      * Whether this chain instance can compute/verify MACs.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function hasMacKey(): bool
     {

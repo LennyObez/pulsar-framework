@@ -27,6 +27,9 @@ use function sprintf;
 #[Internal]
 final readonly class ReplAuditLogger
 {
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
     public function __construct(
         private AuditLoggerInterface $auditLogger,
         private string $sessionId,
@@ -77,6 +80,7 @@ final readonly class ReplAuditLogger
 
     /**
      * Log an individual REPL command execution.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function logCommand(string $actor, string $command, ?string $resultSummary = null): void
     {
@@ -120,6 +124,7 @@ final readonly class ReplAuditLogger
      * Summarize a result value for audit logging.
      *
      * Returns a type description + truncated preview, never a full dump.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public static function summarizeResult(mixed $value): string
     {

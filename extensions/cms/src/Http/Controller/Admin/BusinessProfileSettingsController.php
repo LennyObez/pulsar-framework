@@ -62,6 +62,7 @@ final readonly class BusinessProfileSettingsController extends AbstractAdminCont
 
     /**
      * Display the business profile edit form.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function edit(ServerRequestInterface $request): Response
     {
@@ -84,6 +85,7 @@ final readonly class BusinessProfileSettingsController extends AbstractAdminCont
 
     /**
      * Persist the updated business profile.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function update(ServerRequestInterface $request): Response
     {

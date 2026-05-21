@@ -43,6 +43,7 @@ final readonly class FormSubmissionController extends AbstractAdminController
 
     /**
      * List form submissions with filtering.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function index(ServerRequestInterface $request): Response
     {
@@ -95,6 +96,7 @@ final readonly class FormSubmissionController extends AbstractAdminController
 
     /**
      * Show a single form submission.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function show(ServerRequestInterface $request, string $id): Response
     {
@@ -136,6 +138,7 @@ final readonly class FormSubmissionController extends AbstractAdminController
 
     /**
      * Mark a submission as read.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function markAsRead(ServerRequestInterface $request, string $id): Response
     {
@@ -155,6 +158,7 @@ final readonly class FormSubmissionController extends AbstractAdminController
 
     /**
      * Mark a submission as spam.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function markAsSpam(ServerRequestInterface $request, string $id): Response
     {
@@ -180,6 +184,7 @@ final readonly class FormSubmissionController extends AbstractAdminController
 
     /**
      * Export submissions for a content ID as CSV.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function export(ServerRequestInterface $request): Response
     {
@@ -212,6 +217,7 @@ final readonly class FormSubmissionController extends AbstractAdminController
      *
      * Each submission is verified to belong to the current tenant before deletion,
      * preventing cross-tenant data access.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function bulkDelete(ServerRequestInterface $request): Response
     {

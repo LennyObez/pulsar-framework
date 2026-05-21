@@ -36,6 +36,7 @@ final readonly class SandboxEngine
      * @param array<string, mixed> $data Template variables
      *
      * @throws ViewException If the template is invalid or exceeds resource limits
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function render(string $source, array $data = []): string
     {

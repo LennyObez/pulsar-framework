@@ -45,6 +45,7 @@ final readonly class PaymentTokenizer
      * Generate a secure, opaque token for a payment method.
      *
      * The token is not derived from the original data (one-way).
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public static function generateToken(string $prefix = 'tok'): string
@@ -69,6 +70,7 @@ final readonly class PaymentTokenizer
      * Used to detect duplicate payment methods without storing raw data.
      * The fingerprint is bound to the deployment via the configured tokenizer
      * key, preventing cross-environment correlation.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public static function fingerprint(string $methodType, string $last4, string $expiryMonth, string $expiryYear): string

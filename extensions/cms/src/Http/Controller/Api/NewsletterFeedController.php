@@ -22,6 +22,9 @@ use function min;
 #[Internal(reason: 'CMS REST API controller; implementation detail')]
 final readonly class NewsletterFeedController
 {
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
     private const int CACHE_TTL_SECONDS = 3600;
 
     public function __construct(
@@ -32,6 +35,7 @@ final readonly class NewsletterFeedController
      * GET /api/cms/feed/{contentType}/rss
      *
      * Returns an RSS 2.0 feed for the given content type.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function rss(ServerRequestInterface $request, string $contentType): Response
     {
@@ -53,6 +57,7 @@ final readonly class NewsletterFeedController
      * GET /api/cms/feed/{contentType}/atom
      *
      * Returns an Atom 1.0 feed for the given content type.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function atom(ServerRequestInterface $request, string $contentType): Response
     {

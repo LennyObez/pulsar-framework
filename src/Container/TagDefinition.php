@@ -16,6 +16,7 @@ final readonly class TagDefinition
      * @param string $name Tag name (e.g. 'event.listener')
      * @param int $priority Sorting priority (higher = earlier, default 0)
      * @param array<string, mixed> $attributes Arbitrary tag metadata
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function __construct(
         public string $name,

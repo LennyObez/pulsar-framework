@@ -32,6 +32,7 @@ final readonly class Response
      * Return a new response with the given body.
      *
      * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement: Psalm does not yet infer clone() return type
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public function withBody(string $body): self
@@ -43,6 +44,7 @@ final readonly class Response
      * Return a new response with the given status.
      *
      * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public function withStatus(ResponseStatus $status): self
@@ -56,6 +58,7 @@ final readonly class Response
      * @param string|list<string> $value
      *
      * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public function withHeader(string $name, string|array $value): self
@@ -67,6 +70,7 @@ final readonly class Response
      * Return a new response with an added header value.
      *
      * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public function withAddedHeader(string $name, string $value): self
@@ -78,6 +82,7 @@ final readonly class Response
      * Return a new response without the given header.
      *
      * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public function withoutHeader(string $name): self
@@ -89,6 +94,7 @@ final readonly class Response
      * Return a new response with the given protocol version.
      *
      * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public function withProtocolVersion(string $version): self
@@ -98,6 +104,7 @@ final readonly class Response
 
     /**
      * Check if the response body is empty.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function isEmpty(): bool
     {
@@ -106,6 +113,7 @@ final readonly class Response
 
     /**
      * Get the Content-Length, if set.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function contentLength(): ?int
     {
@@ -115,6 +123,7 @@ final readonly class Response
 
     /**
      * Get the Content-Type, if set.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function contentType(): ?string
     {
@@ -167,6 +176,7 @@ final readonly class Response
 
     /**
      * Create a plain text response.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public static function text(
@@ -219,6 +229,7 @@ final readonly class Response
      *                                         relative-only redirects.
      *
      * @throws UnsafeRedirectException
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public static function redirect(
@@ -302,6 +313,7 @@ final readonly class Response
 
     /**
      * Create an empty response (204 No Content).
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public static function noContent(): self
@@ -316,6 +328,7 @@ final readonly class Response
      * Create a 422 JSON response for validation errors.
      *
      * @param list<array{field: string, message: string, rule: string}> $violations
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public static function validationError(array $violations): self

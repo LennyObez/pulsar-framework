@@ -133,11 +133,17 @@ final readonly class SqlCompiler
 
         return $sql;
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function quoter(): IdentifierQuoter
     {
         return $this->quoter;
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function dialect(): DialectInterface
     {

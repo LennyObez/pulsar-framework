@@ -36,6 +36,7 @@ final readonly class SitemapController extends AbstractAdminController
 
     /**
      * Preview sitemap entries grouped by type and locale with entry counts.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function preview(ServerRequestInterface $request): Response
     {
@@ -71,6 +72,7 @@ final readonly class SitemapController extends AbstractAdminController
 
     /**
      * Force regeneration of the sitemap.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function regenerate(ServerRequestInterface $request): Response
     {

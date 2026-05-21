@@ -35,72 +35,108 @@ final class EventQuery
     public function __construct(
         private readonly EventStoreInterface $store,
     ) {}
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function type(EventType ...$types): self
     {
         $this->eventTypes = array_values([...$this->eventTypes, ...$types]);
         return $this;
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function requestId(string $requestId): self
     {
         $this->requestId = $requestId;
         return $this;
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function traceId(string $traceId): self
     {
         $this->traceId = $traceId;
         return $this;
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function jobId(string $jobId): self
     {
         $this->jobId = $jobId;
         return $this;
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function tenantHash(string $tenantHash): self
     {
         $this->tenantHash = $tenantHash;
         return $this;
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function since(int $timestampUs): self
     {
         $this->sinceUs = $timestampUs;
         return $this;
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function until(int $timestampUs): self
     {
         $this->untilUs = $timestampUs;
         return $this;
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function sinceId(int $id): self
     {
         $this->sinceId = $id;
         return $this;
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function search(string $term): self
     {
         $this->search = $term;
         return $this;
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function limit(int $limit): self
     {
         $this->limit = max(1, $limit);
         return $this;
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function offset(int $offset): self
     {
         $this->offset = max(0, $offset);
         return $this;
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function page(int $page, int $perPage = 50): self
     {
@@ -123,6 +159,9 @@ final class EventQuery
             search: $this->search,
         );
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     #[NoDiscard]
     public function get(): EventQueryResult

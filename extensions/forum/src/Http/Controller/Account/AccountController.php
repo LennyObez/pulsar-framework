@@ -30,6 +30,9 @@ use function max;
 final readonly class AccountController
 {
     use RendersForumView;
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function __construct(
         private ForumProfileRepositoryInterface $profileRepository,
@@ -46,6 +49,7 @@ final readonly class AccountController
 
     /**
      * GET /account: My profile overview.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function profile(ServerRequestInterface $request): Response
     {
@@ -72,6 +76,7 @@ final readonly class AccountController
 
     /**
      * GET /account/threads: My threads.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function threads(ServerRequestInterface $request): Response
     {
@@ -99,6 +104,7 @@ final readonly class AccountController
 
     /**
      * GET /account/posts: My posts.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function posts(ServerRequestInterface $request): Response
     {
@@ -125,6 +131,7 @@ final readonly class AccountController
 
     /**
      * GET /account/settings: Account settings.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function settings(ServerRequestInterface $request): Response
     {

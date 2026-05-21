@@ -25,12 +25,18 @@ final class McpException extends RuntimeException
     {
         return new self(sprintf('MCP protocol error (%d): %s', $code, $message), $code);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     #[NoDiscard]
     public static function executionFailed(string $tool, string $reason): self
     {
         return new self(sprintf('MCP tool "%s" execution failed: %s', $tool, $reason));
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     #[NoDiscard]
     public static function outputTruncated(string $tool): self

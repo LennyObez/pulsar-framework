@@ -54,6 +54,8 @@ final readonly class RequestSandbox
      * 4. Check leak detector for warnings
      *
      * @return list<string> Leak warnings (empty if clean)
+     *
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function afterRequest(ServerRequestInterface $request, ResponseInterface $response): array
     {

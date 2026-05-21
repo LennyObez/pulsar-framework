@@ -42,6 +42,7 @@ final readonly class IntrospectedResource implements DataResourceInterface
 
     /**
      * Expose the raw table name for OrmResourceQuery compatibility.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function tableName(): string
     {
