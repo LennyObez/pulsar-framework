@@ -53,7 +53,7 @@ final readonly class StatusApiController
         $limit = 50;
 
         if (isset($params['limit']) && is_numeric($params['limit'])) {
-            $limit = (int) max(1, min(200, (int) $params['limit']));
+            $limit = max(1, min(200, (int) $params['limit']));
         }
 
         $snapshots = $this->store->recentSnapshots($limit);
