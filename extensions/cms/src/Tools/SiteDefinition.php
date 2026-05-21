@@ -92,10 +92,12 @@ final readonly class SiteDefinition
 
         /** @var array<string, mixed> $siteData */
         $siteData = $data['site'];
+        /** @var mixed $seoValue */
         $seoValue = $data['seo'] ?? [];
         /** @var array<string, mixed> $seoData */
         $seoData = is_array($seoValue) ? $seoValue : [];
 
+        /** @var mixed $forumValue */
         $forumValue = $data['forum'] ?? null;
         /** @var array<string, mixed>|null $forumData */
         $forumData = is_array($forumValue) ? $forumValue : null;
@@ -126,6 +128,7 @@ final readonly class SiteDefinition
 
         $result = [];
 
+        /** @var mixed $item */
         foreach ($value as $item) {
             if (is_array($item)) {
                 /** @var array<string, mixed> $item */
