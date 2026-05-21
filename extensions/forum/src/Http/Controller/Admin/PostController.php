@@ -91,7 +91,9 @@ final readonly class PostController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $newBody = is_string($body['body'] ?? null) ? $body['body'] : '';
+        /** @var mixed $rawBody */
+        $rawBody = $body['body'] ?? null;
+        $newBody = is_string($rawBody) ? $rawBody : '';
 
         if ($newBody === '') {
             return Response::json(['error' => 'Post body is required'], 422);
