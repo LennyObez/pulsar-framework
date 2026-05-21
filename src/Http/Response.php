@@ -19,7 +19,7 @@ use function strtolower;
  * Immutable HTTP response value object.
  */
 #[Api(since: '1.0.0')]
-readonly class Response
+final readonly class Response
 {
     public function __construct(
         public string $body = '',
