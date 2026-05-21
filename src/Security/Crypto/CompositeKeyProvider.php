@@ -73,6 +73,7 @@ final class CompositeKeyProvider implements KeyProviderInterface
      */
     public function __unserialize(array $data): void
     {
+        unset($data);
         throw SecurityException::serializationForbidden('CompositeKeyProvider');
     }
 

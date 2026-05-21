@@ -98,6 +98,7 @@ final class MasterKey implements KeyProviderInterface
      */
     public function __unserialize(array $data): void
     {
+        unset($data);
         throw SecurityException::serializationForbidden('MasterKey');
     }
 
