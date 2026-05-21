@@ -32,13 +32,17 @@ final readonly class LeaderboardController
     {
         $params = $request->getQueryParams();
 
-        $period = is_string($params['period'] ?? null) ? $params['period'] : 'all';
+        /** @var mixed $rawPeriod */
+        $rawPeriod = $params['period'] ?? null;
+        $period = is_string($rawPeriod) ? $rawPeriod : 'all';
 
         if (!in_array($period, ['all', 'month', 'week'], true)) {
             $period = 'all';
         }
 
-        $limit = min(100, max(1, is_numeric($params['limit'] ?? null) ? (int) $params['limit'] : 25));
+        /** @var mixed $rawLimit */
+        $rawLimit = $params['limit'] ?? null;
+        $limit = min(100, max(1, is_numeric($rawLimit) ? (int) $rawLimit : 25));
 
         $ranked = $this->leaderboardService->getTopUsers($period, $limit);
 
