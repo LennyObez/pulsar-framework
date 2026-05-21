@@ -56,6 +56,7 @@ final readonly class SimpleCache implements CacheInterface
     public function getMultiple(iterable $keys, mixed $default = null): iterable
     {
         $keyList = $this->iterableToArray($keys);
+        /** @var array<string, mixed> $result */
         $result = [];
 
         foreach ($this->pool->getItems($keyList) as $key => $item) {
@@ -70,7 +71,10 @@ final readonly class SimpleCache implements CacheInterface
     {
         $success = true;
 
-        /** @var string $key */
+        /**
+         * @var string $key
+         * @var mixed $value
+         */
         foreach ($values as $key => $value) {
             $item = new CacheItem($key);
             $item->set($value);
