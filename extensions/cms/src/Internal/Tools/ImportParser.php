@@ -552,17 +552,19 @@ final readonly class ImportParser
                 continue;
             }
 
-            $title = isset($transData['title']) && is_string($transData['title']) ? $transData['title'] : 'Untitled';
-            $slugSegment = $this->resolveTranslationSlugSegment(
-                $transData,
-                is_string($transData['path'] ?? null) ? $transData['path'] : $this->slugify($title),
-            );
+            /** @var mixed $rawTitle */
+            $rawTitle = $transData['title'] ?? null;
+            $title = is_string($rawTitle) ? $rawTitle : 'Untitled';
+            /** @var mixed $rawPath */
+            $rawPath = $transData['path'] ?? null;
+            $defaultSlug = is_string($rawPath) ? $rawPath : $this->slugify($title);
+            $slugSegment = $this->resolveTranslationSlugSegment($transData, $defaultSlug);
 
             if ($appendSlug) {
                 $slugSegment .= '-imported';
             }
 
-            $path = ltrim(isset($transData['path']) && is_string($transData['path']) ? $transData['path'] : $slugSegment, '/');
+            $path = ltrim(is_string($rawPath) ? $rawPath : $slugSegment, '/');
 
             $translation = ContentTranslation::create(
                 id: UuidGenerator::v7(),
@@ -1154,7 +1156,11 @@ final readonly class ImportParser
                 sortOrder: isset($itemData['sort_order']) && (is_int($itemData['sort_order']) || is_string($itemData['sort_order']))
                     ? (int) $itemData['sort_order']
                     : $sortOrder,
-                visible: is_bool($itemData['visible'] ?? null) ? $itemData['visible'] : true,
+                visible: (function() use ($itemData): bool {
+                    /** @var mixed $raw */
+                    $raw = $itemData['visible'] ?? null;
+                    return is_bool($raw) ? $raw : true;
+                })(),
             );
             $translations = [];
 
