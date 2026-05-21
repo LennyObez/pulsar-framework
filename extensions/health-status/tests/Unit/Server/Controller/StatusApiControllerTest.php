@@ -36,7 +36,7 @@ final class StatusApiControllerTest extends TestCase
         $controller = new StatusApiController($store, $runner);
         $request = $this->createStub(ServerRequestInterface::class);
 
-        $response = $controller->current($request);
+        $response = $controller->current();
 
         self::assertSame(200, $response->getStatusCode());
         self::assertStringContainsString('application/json', $response->getHeaderLine('Content-Type'));
@@ -55,7 +55,7 @@ final class StatusApiControllerTest extends TestCase
         $controller = new StatusApiController($store, $runner);
         $request = $this->createStub(ServerRequestInterface::class);
 
-        $response = $controller->current($request);
+        $response = $controller->current();
 
         self::assertStringContainsString('max-age=10', $response->getHeaderLine('Cache-Control'));
     }
@@ -82,7 +82,7 @@ final class StatusApiControllerTest extends TestCase
         $controller = new StatusApiController($store, $runner);
         $request = $this->createStub(ServerRequestInterface::class);
 
-        $response = $controller->current($request);
+        $response = $controller->current();
         /** @var array<string, mixed> $body */
         $body = json_decode((string) $response->getBody(), true);
 
@@ -198,7 +198,7 @@ final class StatusApiControllerTest extends TestCase
         $controller = new StatusApiController($store, $runner);
         $request = $this->createStub(ServerRequestInterface::class);
 
-        $response = $controller->incidents($request);
+        $response = $controller->incidents();
         /** @var array<string, mixed> $body */
         $body = json_decode((string) $response->getBody(), true);
 
@@ -230,7 +230,7 @@ final class StatusApiControllerTest extends TestCase
         $controller = new StatusApiController($store, $runner);
         $request = $this->createStub(ServerRequestInterface::class);
 
-        $controller->current($request);
+        $controller->current();
     }
 
     private function createHealthySnapshot(): HealthSnapshot
