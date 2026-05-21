@@ -199,7 +199,9 @@ final readonly class SchemaFileParser
                 continue;
             }
 
-            $relationships[] = $this->parseRelation($relName, $relDef);
+            /** @var array{type?: string, target?: string, foreignKey?: ?string, localKey?: string, pivot?: ?string} $relDefTyped */
+            $relDefTyped = $relDef;
+            $relationships[] = $this->parseRelation($relName, $relDefTyped);
         }
 
         /** @var mixed $rawPrimaryKey */
