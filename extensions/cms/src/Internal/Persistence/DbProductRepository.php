@@ -131,14 +131,18 @@ final readonly class DbProductRepository implements ProductRepositoryInterface
         /** @var array<string, mixed> $bindings */
         $bindings = [];
 
-        if (is_string($filters['status'] ?? null)) {
+        /** @var mixed $rawStatus */
+        $rawStatus = $filters['status'] ?? null;
+        if (is_string($rawStatus)) {
             $sql .= ' AND status = :status';
-            $bindings['status'] = $filters['status'];
+            $bindings['status'] = $rawStatus;
         }
 
-        if (is_string($filters['tenantId'] ?? null)) {
+        /** @var mixed $rawTenantId */
+        $rawTenantId = $filters['tenantId'] ?? null;
+        if (is_string($rawTenantId)) {
             $sql .= ' AND tenant_id = :tenant_id';
-            $bindings['tenant_id'] = $filters['tenantId'];
+            $bindings['tenant_id'] = $rawTenantId;
         } elseif ($this->tenantId !== null) {
             $sql .= ' AND tenant_id = :tenant_id';
             $bindings['tenant_id'] = $this->tenantId;

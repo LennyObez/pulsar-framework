@@ -78,6 +78,7 @@ final readonly class CarouselBlock implements BlockTypeInterface
 
         $slideIndex = 0;
 
+        /** @var mixed $slide */
         foreach ($slides as $slide) {
             if (!is_array($slide)) {
                 continue;
@@ -108,6 +109,7 @@ final readonly class CarouselBlock implements BlockTypeInterface
 
         $dotIndex = 0;
 
+        /** @var mixed $slide */
         foreach ($slides as $slide) {
             if (!is_array($slide)) {
                 continue;
