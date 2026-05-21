@@ -205,24 +205,12 @@
                 <file name="../../extensions/cms/src/Media/Processing/ImagickImageProcessor.php"/>
             </errorLevel>
         </MixedAssignment>
-        <MixedMethodCall>
-            <errorLevel type="suppress">
-                <file name="../../extensions/cms/src/Media/Document/PdfThumbnailGenerator.php"/>
-                <file name="../../extensions/cms/src/Media/Processing/ImagickImageProcessor.php"/>
-            </errorLevel>
-        </MixedMethodCall>
         <MixedArgument>
             <errorLevel type="suppress">
                 <file name="../../extensions/cms/src/Media/Document/PdfThumbnailGenerator.php"/>
                 <file name="../../extensions/cms/src/Media/Processing/ImagickImageProcessor.php"/>
             </errorLevel>
         </MixedArgument>
-        <MixedOperand>
-            <errorLevel type="suppress">
-                <file name="../../extensions/cms/src/Media/Document/PdfThumbnailGenerator.php"/>
-                <file name="../../extensions/cms/src/Media/Processing/ImagickImageProcessor.php"/>
-            </errorLevel>
-        </MixedOperand>
         <UnusedMethod>
             <errorLevel type="suppress">
                 <file name="../../extensions/cms/src/Media/Processing/ImagickImageProcessor.php"/>
@@ -230,12 +218,34 @@
         </UnusedMethod>
         <UnusedParam>
             <errorLevel type="suppress">
+                <!-- (C) Optional ext-imagick: see UndefinedClass rationale above. -->
                 <file name="../../extensions/cms/src/Media/Processing/ImagickImageProcessor.php"/>
                 <file name="../../extensions/cms/src/Media/Document/PdfThumbnailGenerator.php"/>
+                <!-- (C) Optional ext-brotli / ext-zstd inside function_exists guards. -->
                 <file name="../../src/Http/Middleware/CompressionMiddleware.php"/>
+                <!-- (C) FrankenPHP-only frankenphp_early_hints function. -->
                 <file name="../../src/Runtime/FrankenPhpRuntime.php"/>
+                <!-- (C) Magic __serialize / __unserialize methods that exist solely to
+                     forbid serialization. PHP mandates the signature; the body throws
+                     before reading $data. -->
+                <file name="../../src/Security/Crypto/CompositeKeyProvider.php"/>
+                <file name="../../src/Security/Crypto/Encryptor.php"/>
+                <file name="../../src/Security/Crypto/MasterKey.php"/>
+                <file name="../../src/Security/Csrf/EncryptedCsrfManager.php"/>
+                <file name="../../src/Security/Csrf/StatelessCsrfManager.php"/>
+                <file name="../../src/Security/Session/SessionEncryption.php"/>
             </errorLevel>
         </UnusedParam>
+
+        <!-- (C) Template-method default implementations on abstract base classes:
+             subclasses override these hooks and use the contract parameter, but
+             Psalm only sees the base "not implemented" default. -->
+        <PossiblyUnusedParam>
+            <errorLevel type="suppress">
+                <file name="../../src/Notification/Notification.php"/>
+                <file name="../../src/Live/LiveComponent.php"/>
+            </errorLevel>
+        </PossiblyUnusedParam>
 
     </issueHandlers>
 </psalm>

@@ -32,7 +32,6 @@ abstract class Notification
      */
     public function toMail(NotifiableInterface $notifiable): Mailable
     {
-        unset($notifiable);
         throw new BadMethodCallException('toMail() is not implemented for ' . static::class);
     }
 
@@ -43,7 +42,6 @@ abstract class Notification
      */
     public function toDatabase(NotifiableInterface $notifiable): array
     {
-        unset($notifiable);
         throw new BadMethodCallException('toDatabase() is not implemented for ' . static::class);
     }
 
@@ -52,7 +50,6 @@ abstract class Notification
      */
     public function toSlack(NotifiableInterface $notifiable): SlackMessage
     {
-        unset($notifiable);
         throw new BadMethodCallException('toSlack() is not implemented for ' . static::class);
     }
 
@@ -61,7 +58,6 @@ abstract class Notification
      */
     public function toWebhook(NotifiableInterface $notifiable): WebhookPayload
     {
-        unset($notifiable);
         throw new BadMethodCallException('toWebhook() is not implemented for ' . static::class);
     }
 
@@ -70,7 +66,6 @@ abstract class Notification
      */
     public function toSms(NotifiableInterface $notifiable): SmsMessage
     {
-        unset($notifiable);
         throw new BadMethodCallException('toSms() is not implemented for ' . static::class);
     }
 
@@ -81,7 +76,6 @@ abstract class Notification
      */
     public function toBroadcast(NotifiableInterface $notifiable): array
     {
-        unset($notifiable);
         throw new BadMethodCallException('toBroadcast() is not implemented for ' . static::class);
     }
 
@@ -90,7 +84,6 @@ abstract class Notification
      */
     public function toPush(NotifiableInterface $notifiable): PushMessage
     {
-        unset($notifiable);
         throw new BadMethodCallException('toPush() is not implemented for ' . static::class);
     }
 
