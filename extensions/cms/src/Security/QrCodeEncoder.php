@@ -312,7 +312,7 @@ final class QrCodeEncoder
                         continue;
                     }
                     if ($bitIndex < $totalBits) {
-                        $matrix[$row][$c] = $bits[$bitIndex];
+                        $matrix[$row][$c] = (int) $bits[$bitIndex];
                         $bitIndex++;
                     }
                 }
