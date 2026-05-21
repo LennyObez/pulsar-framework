@@ -110,7 +110,9 @@ final readonly class WebhookProcessor
             );
         }
 
+        /** @var mixed $eventIdRaw */
         $eventIdRaw = $payload[$this->eventIdKey] ?? null;
+        /** @var mixed $eventTypeRaw */
         $eventTypeRaw = $payload[$this->eventTypeKey] ?? '';
         $eventId = is_string($eventIdRaw) ? $eventIdRaw : null;
         $eventType = is_string($eventTypeRaw) ? $eventTypeRaw : '';
