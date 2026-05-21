@@ -75,6 +75,7 @@ abstract class AbstractApiResource
                 continue;
             }
 
+            /** @var mixed $value */
             $value = $this->{$propertyName};
 
             // Handle conditional fields
@@ -83,6 +84,7 @@ abstract class AbstractApiResource
                     continue;
                 }
 
+                /** @var mixed $value */
                 $value = $value->value;
             }
 
@@ -197,6 +199,7 @@ abstract class AbstractApiResource
     ): array {
         $output = [];
 
+        /** @var mixed $item */
         foreach ($items as $key => $item) {
             if ($item instanceof self) {
                 $output[$key] = $item->toArray($clearance, null, $redactionRules, $includeRedactionMeta);
