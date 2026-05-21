@@ -49,6 +49,7 @@ final readonly class PulsarToPsr7Request
             ->withCookieParams($request->cookies)
             ->withParsedBody($request->post !== [] ? $request->post : null);
 
+        /** @var mixed $value */
         foreach ($request->attributes as $name => $value) {
             $psrRequest = $psrRequest->withAttribute($name, $value);
         }

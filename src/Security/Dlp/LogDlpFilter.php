@@ -63,8 +63,10 @@ final readonly class LogDlpFilter
      */
     private function filterArray(array $data): array
     {
+        /** @var array<string, mixed> $result */
         $result = [];
 
+        /** @var mixed $value */
         foreach ($data as $key => $value) {
             if (is_string($value)) {
                 $result[$key] = $this->registry->scan($value)->redactedContent;
