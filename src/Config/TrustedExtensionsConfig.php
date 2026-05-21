@@ -101,9 +101,12 @@ final readonly class TrustedExtensionsConfig
             return null;
         }
 
-        return array_find(
+        /** @var ExtensionCapability|null $found */
+        $found = array_find(
             ExtensionCapability::cases(),
             static fn(ExtensionCapability $case): bool => $case->name === $name,
         );
+
+        return $found;
     }
 }

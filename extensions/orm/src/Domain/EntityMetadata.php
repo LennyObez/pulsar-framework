@@ -63,10 +63,13 @@ final readonly class EntityMetadata
      */
     public function columnByName(string $columnName): ?ColumnMetadata
     {
-        return array_find(
+        /** @var ColumnMetadata|null $found */
+        $found = array_find(
             $this->columns,
             static fn(ColumnMetadata $col): bool => $col->columnName === $columnName,
         );
+
+        return $found;
     }
 
     /**
