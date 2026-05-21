@@ -8,8 +8,11 @@ use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Extensibility\Exception\ManifestException;
 
+use function array_filter;
 use function array_is_list;
+use function array_values;
 use function is_array;
+use function is_bool;
 
 /**
  * Configuration for what an extension provides.
@@ -93,10 +96,16 @@ final readonly class ProvidesConfig
             throw ManifestException::invalidFieldType('provides.migrations', 'list', 'associative array', '');
         }
 
+        $services = array_values(array_filter($services, 'is_string'));
+        $commands = array_values(array_filter($commands, 'is_string'));
+        $middleware = array_values(array_filter($middleware, 'is_string'));
+        $migrations = array_values(array_filter($migrations, 'is_string'));
+        $routes = $data['routes'] ?? false;
+
         return new self(
             services: $services,
             commands: $commands,
-            routes: $data['routes'] ?? false,
+            routes: is_bool($routes) ? $routes : false,
             middleware: $middleware,
             migrations: $migrations,
         );
