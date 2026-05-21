@@ -148,6 +148,10 @@ final readonly class HealthStatusExtension implements ExtensionInterface, PostBo
             $configPath = $configManager->configPath();
 
             if ($configPath !== null && is_file($configPath . DIRECTORY_SEPARATOR . 'health-status.php')) {
+                /**
+                 * @psalm-suppress UnresolvableInclude
+                 * @var mixed $data
+                 */
                 $data = require $configPath . DIRECTORY_SEPARATOR . 'health-status.php';
 
                 if (is_array($data)) {
