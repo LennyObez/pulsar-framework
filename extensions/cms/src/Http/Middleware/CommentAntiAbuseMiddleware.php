@@ -40,13 +40,14 @@ final readonly class CommentAntiAbuseMiddleware implements MiddlewareInterface
     #[Override]
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        $parsedBody = $request->getParsedBody();
+        $rawParsedBody = $request->getParsedBody();
 
-        if (!is_array($parsedBody)) {
+        if (!is_array($rawParsedBody)) {
             return $handler->handle($request);
         }
 
         /** @var array<string, mixed> $parsedBody */
+        $parsedBody = $rawParsedBody;
         /** @var mixed $body */
         $body = $parsedBody['body'] ?? null;
 
