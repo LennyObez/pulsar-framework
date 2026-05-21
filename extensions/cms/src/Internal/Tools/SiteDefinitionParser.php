@@ -643,6 +643,7 @@ final readonly class SiteDefinitionParser
             }
 
             // Determine if this item uses nested translations format
+            /** @var mixed $translations */
             $translations = $itemData['translations'] ?? null;
 
             if (is_array($translations) && $translations !== [] && !array_is_list($translations)) {
@@ -666,19 +667,23 @@ final readonly class SiteDefinitionParser
             }
 
             // Create content blocks
+            /** @var mixed $blocks */
             $blocks = $itemData['blocks'] ?? [];
 
             if (is_array($blocks)) {
+                /** @var mixed $blockData */
                 foreach ($blocks as $blockData) {
                     if (!is_array($blockData)) {
                         continue;
                     }
 
                     /** @var array<string, mixed> $blockData */
+                    /** @var mixed $blockContent */
                     $blockContent = $blockData['data'] ?? $blockData['content'] ?? [];
 
                     if (is_array($blockContent)) {
                         // Resolve media refs in block data
+                        /** @var mixed $bVal */
                         foreach ($blockContent as $bKey => $bVal) {
                             if (is_string($bVal) && str_starts_with($bVal, 'media://')) {
                                 $ref = str_replace('media://', '', $bVal);
@@ -692,11 +697,13 @@ final readonly class SiteDefinitionParser
             }
 
             // Attach taxonomy terms
+            /** @var mixed $taxonomyTerms */
             $taxonomyTerms = $itemData['taxonomy_terms'] ?? [];
 
             if (is_array($taxonomyTerms)) {
                 $termIds = [];
 
+                /** @var mixed $termRef */
                 foreach ($taxonomyTerms as $termRef) {
                     if (is_string($termRef) && isset($taxonomyTermMap[$termRef])) {
                         $termIds[] = $taxonomyTermMap[$termRef];
@@ -731,10 +738,12 @@ final readonly class SiteDefinitionParser
         $menusByLocation = [];
 
         foreach ($menus as $menuData) {
+            /** @var mixed $location */
             $location = $menuData['location'] ?? null;
 
             // Handle menus without explicit location: derive from name
             if (($location === null || $location === '') && isset($menuData['name'])) {
+                /** @var mixed $name */
                 $name = $menuData['name'];
 
                 if (is_array($name)) {
@@ -752,6 +761,7 @@ final readonly class SiteDefinitionParser
 
                     if ($location !== '') {
                         // Convert multilingual format to per-locale entries
+                        /** @var mixed $localeName */
                         foreach ($name as $locale => $localeName) {
                             if (!is_string($locale) || !is_string($localeName)) {
                                 continue;
@@ -797,6 +807,7 @@ final readonly class SiteDefinitionParser
 
             if ($dryRun) {
                 foreach ($localeEntries as $entry) {
+                    /** @var mixed $items */
                     $items = $entry['items'] ?? [];
                     $created += is_array($items) ? count($items) : 0;
                 }
@@ -834,6 +845,7 @@ final readonly class SiteDefinitionParser
 
             foreach ($localeEntries as $entry) {
                 $locale = self::asString($entry, 'locale', 'en');
+                /** @var mixed $items */
                 $items = $entry['items'] ?? [];
 
                 if (!is_array($items)) {
@@ -927,9 +939,11 @@ final readonly class SiteDefinitionParser
         $warnings = [];
 
         // Site-level settings
+        /** @var mixed $siteSettings */
         $siteSettings = $site['settings'] ?? [];
 
         if (is_array($siteSettings)) {
+            /** @var mixed $value */
             foreach ($siteSettings as $key => $value) {
                 $created++;
 
@@ -941,6 +955,7 @@ final readonly class SiteDefinitionParser
 
         // SEO settings
         if ($seo !== []) {
+            /** @var mixed $value */
             foreach ($seo as $key => $value) {
                 $created++;
 
