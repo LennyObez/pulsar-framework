@@ -54,6 +54,7 @@ final readonly class MobileWebhookHandler
             return ['status' => 'invalid_format', 'event_type' => ''];
         }
 
+        /** @var mixed $rawData */
         $rawData = $message['data'] ?? null;
         $encodedData = is_string($rawData) ? $rawData : '';
 
@@ -83,8 +84,10 @@ final readonly class MobileWebhookHandler
             return ['status' => 'ignored', 'event_type' => ''];
         }
 
+        /** @var mixed $rawType */
         $rawType = $subscriptionNotification['notificationType'] ?? 0;
         $notificationType = is_int($rawType) ? $rawType : (int) (is_string($rawType) ? $rawType : '0');
+        /** @var mixed $rawPurchaseToken */
         $rawPurchaseToken = $subscriptionNotification['purchaseToken'] ?? null;
         $purchaseToken = is_string($rawPurchaseToken) ? $rawPurchaseToken : '';
 
@@ -124,6 +127,7 @@ final readonly class MobileWebhookHandler
      */
     public function handleAppleSns(array $body): array
     {
+        /** @var mixed $rawSignedPayload */
         $rawSignedPayload = $body['signedPayload'] ?? null;
         $signedPayload = is_string($rawSignedPayload) ? $rawSignedPayload : '';
 
