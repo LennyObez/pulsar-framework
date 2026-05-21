@@ -445,6 +445,7 @@ final readonly class AnalyticsImportExportProvider implements ImportExportProvid
             return [];
         }
 
+        /** @var array<string, mixed> $result */
         $result = [];
 
         /** @var mixed $v */
