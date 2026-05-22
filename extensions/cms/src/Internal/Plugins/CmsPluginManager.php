@@ -610,8 +610,8 @@ final readonly class CmsPluginManager implements CmsPluginManagerInterface
             new RecursiveDirectoryIterator($srcDir, FilesystemIterator::SKIP_DOTS),
         );
 
+        /** @var SplFileInfo $item */
         foreach ($iterator as $item) {
-            /** @var SplFileInfo $item */
             if ($item->getExtension() !== 'php') {
                 continue;
             }
@@ -671,8 +671,8 @@ final readonly class CmsPluginManager implements CmsPluginManagerInterface
             RecursiveIteratorIterator::CHILD_FIRST,
         );
 
+        /** @var SplFileInfo $item */
         foreach ($iterator as $item) {
-            /** @var SplFileInfo $item */
             if ($item->isDir()) {
                 // Path comes from RecursiveDirectoryIterator iterating $path,
                 // which was guarded by isInsideAllowedRoot() above — recursion
