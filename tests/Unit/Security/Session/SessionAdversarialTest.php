@@ -284,9 +284,9 @@ final class SessionAdversarialTest extends TestCase
         $dbHandler = new DatabaseHandler($pdo, 'sessions', 3600);
 
         // Fill up to the limit
-        $dbHandler->setSessionContext('s1', 'user-1', '10.0.0.1', 'Agent');
+        $dbHandler->setSessionContext('user-1', '10.0.0.1', 'Agent');
         $dbHandler->write('s1', 'data1');
-        $dbHandler->setSessionContext('s2', 'user-1', '10.0.0.2', 'Agent');
+        $dbHandler->setSessionContext('user-1', '10.0.0.2', 'Agent');
         $dbHandler->write('s2', 'data2');
 
         $manager = new SessionManager($dbHandler, $config);
