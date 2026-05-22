@@ -301,8 +301,10 @@ final readonly class ExportBundleGenerator
      */
     private function redactPii(array $data): array
     {
+        /** @var array<string, mixed> $redacted */
         $redacted = [];
 
+        /** @var mixed $value */
         foreach ($data as $key => $value) {
             if (is_array($value)) {
                 /** @var array<string, mixed> $value */

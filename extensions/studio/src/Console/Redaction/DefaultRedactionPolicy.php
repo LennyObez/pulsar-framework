@@ -73,8 +73,10 @@ final class DefaultRedactionPolicy implements RedactionPolicyInterface
      */
     private function redactValues(array $data): array
     {
+        /** @var array<string, mixed> $result */
         $result = [];
 
+        /** @var mixed $value */
         foreach ($data as $key => $value) {
             if (is_string($value)) {
                 $result[$key] = $this->redactString($value);

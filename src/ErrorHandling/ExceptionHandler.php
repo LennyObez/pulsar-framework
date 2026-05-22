@@ -191,6 +191,7 @@ final readonly class ExceptionHandler
 
         // Extract trace ID from request attributes if available
         $traceId = null;
+        /** @var mixed $traceContext */
         $traceContext = $request->getAttribute('_trace_context');
 
         if ($traceContext instanceof TraceContext) {
@@ -248,6 +249,7 @@ final readonly class ExceptionHandler
             }
         }
 
+        /** @var mixed $attribute */
         $attribute = $request->getAttribute('_request_context');
 
         return $attribute instanceof RequestContext ? $attribute : null;
