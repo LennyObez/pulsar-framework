@@ -169,6 +169,7 @@ final readonly class OpenAiProvider implements AiClientInterface
 
             $floats = [];
 
+            /** @var mixed $val */
             foreach ($embeddingValues as $val) {
                 if (is_float($val) || is_int($val)) {
                     $floats[] = (float) $val;
@@ -270,6 +271,7 @@ final readonly class OpenAiProvider implements AiClientInterface
 
         foreach ($message['tool_calls'] ?? [] as $tc) {
             $func = $tc['function'] ?? [];
+            /** @var mixed $argsDecoded */
             $argsDecoded = json_decode($func['arguments'] ?? '{}', true);
             /** @var array<string, mixed> $args */
             $args = is_array($argsDecoded) ? $argsDecoded : [];
