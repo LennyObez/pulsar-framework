@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Tooling\PsalmPlugin;
 
+use Override;
 use Psalm\Plugin\PluginEntryPointInterface;
 use Psalm\Plugin\RegistrationInterface;
+use Pulsar\Tooling\PsalmPlugin\Hook\ContainerResolutionDetector;
 use SimpleXMLElement;
 
-use function dirname;
+use function class_exists;
 
 /**
  * Psalm plugin for the Pulsar framework.
@@ -24,27 +26,25 @@ use function dirname;
  *     RealtimeBroadcasterInterface, OAuthProviderInterface, …).
  *   - Framework base classes (Command, Migration, Extension,
  *     AbstractServiceProvider) discovered via composer autoload + manifest.
- *   - Controller / ServiceProvider naming conventions (classes in
- *     `*\Http\Controller\*`, `*\Server\Controller\*`, `*ServiceProvider`).
+ *   - Controller / ServiceProvider naming conventions.
  *
  * The hook sets `ClassLikeStorage::$public_api = true` during the
  * `AfterClassLikeVisit` phase, which is exactly what an explicit
  * `@psalm-api` / `@api` docblock tag would do — but without requiring an
  * annotation on every wired class.
- *
- * This replaces the prior session's compromise of bulk-annotating ~1500
- * classes/members and adding 77 file-narrow XML suppressions. Truly-dead code
- * remains visible because the plugin only marks classes that match an
- * actual framework wiring convention.
  */
 final class PulsarPsalmPlugin implements PluginEntryPointInterface
 {
+    #[Override]
     public function __invoke(RegistrationInterface $registration, ?SimpleXMLElement $config = null): void
     {
-        $hookDir = __DIR__ . DIRECTORY_SEPARATOR . 'Hook';
+        // Psalm's PluginRegistrationSocket::registerHooksFromClass() checks
+        // `class_exists($handler, false)` — autoload is disabled, so we must
+        // force the hook class to load before registering it. Touching the
+        // class-string constant alone does not trigger Composer autoload;
+        // the `class_exists($class, true)` call below forces it.
+        class_exists(ContainerResolutionDetector::class);
 
-        require_once $hookDir . DIRECTORY_SEPARATOR . 'ContainerResolutionDetector.php';
-
-        $registration->registerHooksFromClass(Hook\ContainerResolutionDetector::class);
+        $registration->registerHooksFromClass(ContainerResolutionDetector::class);
     }
 }
