@@ -55,9 +55,15 @@ final readonly class CategoryPageController
         }
 
         $params = $request->getQueryParams();
-        $locale = is_string($params['locale'] ?? null) ? $params['locale'] : 'en';
-        $page = max(1, is_numeric($params['page'] ?? null) ? (int) $params['page'] : 1);
-        $perPage = min(100, max(1, is_numeric($params['per_page'] ?? null) ? (int) $params['per_page'] : $this->config->threadsPerPage));
+        /** @var mixed $rawLocale */
+        $rawLocale = $params['locale'] ?? null;
+        $locale = is_string($rawLocale) ? $rawLocale : 'en';
+        /** @var mixed $rawPage */
+        $rawPage = $params['page'] ?? null;
+        $page = max(1, is_numeric($rawPage) ? (int) $rawPage : 1);
+        /** @var mixed $rawPerPage */
+        $rawPerPage = $params['per_page'] ?? null;
+        $perPage = min(100, max(1, is_numeric($rawPerPage) ? (int) $rawPerPage : $this->config->threadsPerPage));
 
         $result = $this->threadRepository->findByCategory($category->id, $page, $perPage);
 

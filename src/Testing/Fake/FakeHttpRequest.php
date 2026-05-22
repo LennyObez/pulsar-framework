@@ -31,6 +31,7 @@ final readonly class FakeHttpRequest
      */
     public function hasJsonKey(string $key): bool
     {
+        /** @var mixed $data */
         $data = json_decode($this->body, true);
 
         return is_array($data) && array_key_exists($key, $data);
@@ -41,6 +42,7 @@ final readonly class FakeHttpRequest
      */
     public function jsonValue(string $key): mixed
     {
+        /** @var mixed $data */
         $data = json_decode($this->body, true);
 
         return is_array($data) ? ($data[$key] ?? null) : null;
