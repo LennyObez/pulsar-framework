@@ -31,8 +31,6 @@ use const DIRECTORY_SEPARATOR;
  * Build an integrity manifest from configured file paths.
  *
  * Usage: integrity:build [--sign] [--output=path]
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class IntegrityBuildCommand extends Command
 {

@@ -46,7 +46,6 @@ final readonly class ThemeController extends AbstractAdminController
 
     /**
      * List all installed themes.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function index(ServerRequestInterface $request): Response
     {
@@ -83,7 +82,6 @@ final readonly class ThemeController extends AbstractAdminController
      * Upload and install a theme from a ZIP archive.
      *
      * Requires step-up authentication.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function install(ServerRequestInterface $request): Response
     {
@@ -138,7 +136,6 @@ final readonly class ThemeController extends AbstractAdminController
      * Activate an installed theme.
      *
      * Requires step-up authentication.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function activate(ServerRequestInterface $request, string $id): Response
     {
@@ -161,7 +158,6 @@ final readonly class ThemeController extends AbstractAdminController
 
     /**
      * Deactivate an active theme.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function deactivate(ServerRequestInterface $request, string $id): Response
     {
@@ -183,7 +179,6 @@ final readonly class ThemeController extends AbstractAdminController
 
     /**
      * Generate a theme preview session URL.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function preview(ServerRequestInterface $request, string $id): Response
     {
@@ -208,7 +203,6 @@ final readonly class ThemeController extends AbstractAdminController
      * Delete an installed theme with a mandatory reason.
      *
      * Requires step-up authentication.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function delete(ServerRequestInterface $request, string $id): Response
     {

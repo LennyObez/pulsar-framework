@@ -19,8 +19,6 @@ use function sprintf;
 
 /**
  * Displays a timeline of recent Studio events.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class ConsoleTimelineCommand extends Command

@@ -25,8 +25,6 @@ use function sprintf;
  *
  * Delegates to {@see ProjectGenerator} with the Minimal preset to ensure
  * output is consistent with `pulsar new --preset=minimal`.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class InitCommand extends Command
 {

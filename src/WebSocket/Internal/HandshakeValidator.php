@@ -14,8 +14,6 @@ use function trim;
 
 /**
  * Validates and processes WebSocket upgrade handshakes (RFC 6455 Section 4.2).
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class HandshakeValidator

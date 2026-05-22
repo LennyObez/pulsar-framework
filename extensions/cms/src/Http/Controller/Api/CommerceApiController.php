@@ -35,7 +35,6 @@ final readonly class CommerceApiController
 
     /**
      * GET /api/v1/products: List products with pagination.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function listProducts(ServerRequestInterface $request): Response
     {
@@ -88,7 +87,6 @@ final readonly class CommerceApiController
 
     /**
      * GET /api/v1/products/{id}: Show a single product.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function showProduct(string $id): Response
     {
@@ -121,7 +119,6 @@ final readonly class CommerceApiController
 
     /**
      * GET /api/v1/orders: List orders with pagination.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function listOrders(ServerRequestInterface $request): Response
     {
@@ -180,7 +177,6 @@ final readonly class CommerceApiController
 
     /**
      * GET /api/v1/orders/{id}: Show a single order.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function showOrder(string $id): Response
     {

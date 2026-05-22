@@ -14,8 +14,6 @@ use Pulsar\Compliance\ControlStatus;
  *
  * Maps Pulsar framework features to NIS2 cybersecurity risk management
  * measures under Article 21 and incident reporting under Article 23.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Framework-internal control registration; use ControlCatalog for public access')]
 final class Nis2Mapping

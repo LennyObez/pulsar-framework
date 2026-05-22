@@ -46,7 +46,6 @@ final class ContainerBuilder
 
     /**
      * Remove a service definition.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function removeDefinition(string $id): void
     {
@@ -55,7 +54,6 @@ final class ContainerBuilder
 
     /**
      * Check if a definition exists.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public function hasDefinition(string $id): bool
@@ -94,7 +92,6 @@ final class ContainerBuilder
      * Get all service IDs.
      *
      * @return list<string>
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public function getServiceIds(): array

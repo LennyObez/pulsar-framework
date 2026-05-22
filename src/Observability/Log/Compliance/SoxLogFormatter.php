@@ -20,8 +20,6 @@ use function in_array;
  *
  * Supports controls for SOX Section 302/404 internal controls over
  * financial reporting.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Compliance formatter implementation detail')]
 final class SoxLogFormatter implements ComplianceLogFormatter

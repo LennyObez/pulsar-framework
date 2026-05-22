@@ -13,16 +13,10 @@ use Pulsar\Http\Message\Response;
  */
 final readonly class WebhookController
 {
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
     public function __construct(
         private ProcessWebhookHandler $handler,
         private PaymentsConfig $config,
     ) {}
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function handle(ServerRequestInterface $request): Response
     {

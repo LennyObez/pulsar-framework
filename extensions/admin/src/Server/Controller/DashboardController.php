@@ -24,9 +24,6 @@ final readonly class DashboardController
         private DashboardHandler $handler,
         private AdminConfig $config,
     ) {}
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function index(ServerRequestInterface $request): Response
     {

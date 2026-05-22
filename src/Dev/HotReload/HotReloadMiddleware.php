@@ -20,8 +20,6 @@ use function str_replace;
  * The script connects to a WebSocket server and listens for file change
  * notifications, triggering a page reload when PHP or template files change.
  * Only active when `$debugMode` is true; production responses are never modified.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class HotReloadMiddleware implements MiddlewareInterface

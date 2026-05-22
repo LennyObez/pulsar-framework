@@ -41,8 +41,6 @@ final class Application
      * via the metadata pair.
      *
      * @var array<string, array{description: string, factory: callable(): CommandInterface}>
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     private array $lazyCommands = [];
 
@@ -63,7 +61,6 @@ final class Application
      * Add multiple commands.
      *
      * @param list<CommandInterface> $commands
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function addCommands(array $commands): self
     {
@@ -80,7 +77,6 @@ final class Application
      * include the command without instantiating it.
      *
      * @param callable(): CommandInterface $factory
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function addLazy(string $name, string $description, callable $factory): self
     {
@@ -172,7 +168,6 @@ final class Application
      *
      * @param list<string>|null $argv Command line arguments
      * @return int Exit code
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function run(?array $argv = null): int
     {
@@ -412,7 +407,6 @@ final class Application
 
     /**
      * Get the kernel instance.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function kernel(): Kernel
     {

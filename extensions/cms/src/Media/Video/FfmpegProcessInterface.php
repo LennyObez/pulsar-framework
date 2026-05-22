@@ -37,7 +37,6 @@ interface FfmpegProcessInterface
 
     /**
      * Extract a single frame as a thumbnail image.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function extractThumbnail(
         string $ffmpegPath,
@@ -50,7 +49,6 @@ interface FfmpegProcessInterface
      * Generate HLS segments from a video file.
      *
      * @param list<string> $codecArgs Additional codec arguments
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function segmentHls(
         string $ffmpegPath,

@@ -18,8 +18,6 @@ use function unpack;
  * Configurable per-provider IP allowlist for webhook source verification.
  *
  * Supports both individual IPs and CIDR ranges (IPv4 and IPv6).
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class ConfigurableIpAllowlist implements IpAllowlistInterface

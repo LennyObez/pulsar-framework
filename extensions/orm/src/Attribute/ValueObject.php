@@ -12,8 +12,6 @@ use Pulsar\Api\Api;
  *
  * Value object properties are flattened into the owning entity's table
  * with an optional column prefix.
- *
- * @psalm-api PHP attribute consumed via reflection during ORM hydration.
  */
 #[Attribute(Attribute::TARGET_PROPERTY)]
 #[Api(since: '1.0.0')]

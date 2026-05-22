@@ -16,8 +16,6 @@ use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
 
 /**
  * Purges all events from the Studio evidence store.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class EvidencePurgeCommand extends Command

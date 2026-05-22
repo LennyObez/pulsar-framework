@@ -33,8 +33,6 @@ use const PATHINFO_EXTENSION;
  *
  * When a change is detected, broadcasts a reload message via the
  * WebSocket BroadcastManager on the `hot-reload` channel.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class FileWatcher

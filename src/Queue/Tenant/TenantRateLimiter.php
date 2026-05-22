@@ -21,8 +21,6 @@ use function sprintf;
  * Scopes rate limiting per tenant: each tenant on each queue has its own
  * lock resource (`queue:rate:{tenantId}:{queue}`), preventing noisy-neighbor
  * effects across tenants.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Tenant rate limiting middleware is an implementation detail of the queue system')]
 final readonly class TenantRateLimiter implements JobMiddlewareInterface

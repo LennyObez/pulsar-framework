@@ -21,9 +21,6 @@ use function array_map;
 final readonly class IntegrityDashboardController
 {
     use RendersStatusView;
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function __construct(
         private IntegrityVerificationRunnerInterface $runner,
@@ -45,7 +42,6 @@ final readonly class IntegrityDashboardController
 
     /**
      * GET /_pulsar/status/api/integrity: JSON integrity results.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function api(): Response
     {

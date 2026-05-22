@@ -22,8 +22,6 @@ use const JSON_UNESCAPED_SLASHES;
 
 /**
  * Displays Console event store status and statistics.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class ConsoleStatusCommand extends Command

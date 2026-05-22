@@ -44,8 +44,6 @@ use const PHP_VERSION;
  * executed database queries. Sensitive values are always redacted.
  *
  * Uses the Pulsar design charter styling (dark theme with deep blue palette).
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class DevErrorPage implements ExceptionRendererInterface

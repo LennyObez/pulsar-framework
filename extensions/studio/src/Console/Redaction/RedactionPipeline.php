@@ -34,7 +34,6 @@ final class RedactionPipeline implements RedactionPipelineInterface
 
     /**
      * Add a policy that applies only to a specific event type.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function addTypePolicy(EventType $type, RedactionPolicyInterface $policy): void
     {

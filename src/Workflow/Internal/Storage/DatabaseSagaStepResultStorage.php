@@ -24,8 +24,6 @@ use const JSON_THROW_ON_ERROR;
  *
  * Forward execution rows are append-only. Compensation creates new rows
  * with direction=compensating. Rows are never deleted.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Use SagaStepResultStorageInterface port')]
 final readonly class DatabaseSagaStepResultStorage implements SagaStepResultStorageInterface

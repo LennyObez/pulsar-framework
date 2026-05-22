@@ -64,8 +64,6 @@ use const PHP_URL_PATH;
  * - Request dispatch and response emission
  *
  * Each dev router becomes ~20 lines: require autoload, configure, run.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Dev server implementation detail; not part of public API')]
 final class DevServerBootstrap

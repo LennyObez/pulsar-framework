@@ -15,8 +15,6 @@ use function sprintf;
 
 /**
  * Run all registered supervisor preflight checks and report results.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class SupervisorCheckCommand extends Command
 {

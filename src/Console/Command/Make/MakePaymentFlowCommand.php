@@ -18,8 +18,6 @@ use function sprintf;
 
 /**
  * Scaffold a complete payment flow with idempotency, audit logging, and metrics.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class MakePaymentFlowCommand extends Command
 {

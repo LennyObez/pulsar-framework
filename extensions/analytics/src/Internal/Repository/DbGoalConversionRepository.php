@@ -63,7 +63,6 @@ final readonly class DbGoalConversionRepository
 
     /**
      * @return list<GoalConversion>
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function findByGoal(string $goalId, DateTimeImmutable $from, DateTimeImmutable $to, int $limit = 1000): array
     {
@@ -74,9 +73,6 @@ final readonly class DbGoalConversionRepository
             'limit' => $limit,
         ])->map(self::hydrate(...));
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function countByGoal(string $goalId, DateTimeImmutable $from, DateTimeImmutable $to): int
     {
@@ -88,9 +84,6 @@ final readonly class DbGoalConversionRepository
 
         return $row?->getInt('total') ?? 0;
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function countBySite(string $siteId, DateTimeImmutable $from, DateTimeImmutable $to): int
     {
@@ -102,9 +95,6 @@ final readonly class DbGoalConversionRepository
 
         return $row?->getInt('total') ?? 0;
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function sumRevenueByGoal(string $goalId, DateTimeImmutable $from, DateTimeImmutable $to): float
     {
@@ -116,9 +106,6 @@ final readonly class DbGoalConversionRepository
 
         return $row?->getFloat('total_revenue') ?? 0.0;
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function deleteOlderThan(DateTimeImmutable $before): int
     {

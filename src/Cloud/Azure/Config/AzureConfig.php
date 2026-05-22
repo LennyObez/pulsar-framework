@@ -14,10 +14,6 @@ use SensitiveParameter;
 #[Internal]
 final readonly class AzureConfig
 {
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
     public function __construct(
         public string $tenantId = '',
         public string $clientId = '',
@@ -69,7 +65,6 @@ final readonly class AzureConfig
 
     /**
      * Resolve the tenant ID from config or environment.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public function resolveTenantId(): string

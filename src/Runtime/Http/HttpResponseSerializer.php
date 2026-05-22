@@ -105,7 +105,6 @@ final class HttpResponseSerializer
 
     /**
      * Create a minimal error response as raw bytes.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public static function errorResponse(
         int $statusCode,

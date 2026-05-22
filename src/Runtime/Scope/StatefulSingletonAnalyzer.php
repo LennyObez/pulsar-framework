@@ -13,9 +13,6 @@ use ReflectionProperty;
 use function sprintf;
 use function str_starts_with;
 
-/**
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
- */
 #[Internal]
 final readonly class StatefulSingletonAnalyzer
 {

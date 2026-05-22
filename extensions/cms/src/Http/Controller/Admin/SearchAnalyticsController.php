@@ -41,7 +41,6 @@ final readonly class SearchAnalyticsController extends AbstractAdminController
      * Query params:
      * - from: ISO 8601 date (default: 30 days ago)
      * - to: ISO 8601 date (default: now)
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function index(ServerRequestInterface $request): Response
     {

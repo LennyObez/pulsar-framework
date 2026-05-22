@@ -35,7 +35,6 @@ final readonly class IdTokenBuilder
      * @param string|null $nonce The nonce from the authorization request
      * @param int $ttl Token lifetime in seconds
      * @return string The signed JWT string
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function build(
         string $subjectId,

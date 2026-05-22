@@ -53,9 +53,6 @@ final class WorkerContext
     {
         $this->state = WorkerState::Draining;
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function recycle(): void
     {
@@ -66,25 +63,16 @@ final class WorkerContext
     {
         $this->state = WorkerState::Stopped;
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function state(): WorkerState
     {
         return $this->state;
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function requestCount(): int
     {
         return $this->requestCount;
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function startedAt(): int
     {

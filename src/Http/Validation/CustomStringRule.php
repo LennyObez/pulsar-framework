@@ -41,9 +41,6 @@ final readonly class CustomStringRule implements RuleInterface
     {
         return $this->ruleName;
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function parameter(): string
     {

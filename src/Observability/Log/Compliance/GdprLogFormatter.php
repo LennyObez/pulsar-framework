@@ -21,8 +21,6 @@ use function substr;
  * prevent brute-force re-identification of low-entropy identifiers.
  *
  * Supports controls for GDPR Article 4(5) pseudonymization requirements.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Compliance formatter implementation detail')]
 final class GdprLogFormatter implements ComplianceLogFormatter

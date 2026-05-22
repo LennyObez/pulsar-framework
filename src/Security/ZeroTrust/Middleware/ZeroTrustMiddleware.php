@@ -37,8 +37,6 @@ use Pulsar\Security\ZeroTrust\StepUp\StepUpAction;
  * 5. Deny: returns a 403 Forbidden response
  * 6. StepUp: delegates to StepUpManager for loop protection
  * 7. Logs all decisions via AuditLogger
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Wired by composition root only')]
 final readonly class ZeroTrustMiddleware implements MiddlewareInterface

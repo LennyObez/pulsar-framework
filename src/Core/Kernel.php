@@ -438,7 +438,6 @@ final class Kernel implements KernelInterface
 
     /**
      * Get the middleware registry.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function middlewareRegistry(): MiddlewareRegistry
     {
@@ -459,7 +458,6 @@ final class Kernel implements KernelInterface
      * @param PsrMiddlewareInterface|class-string<PsrMiddlewareInterface> $middleware
      *
      * @throws LogicException When called after `boot()` has run.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function addMiddleware(PsrMiddlewareInterface|string $middleware): self
     {

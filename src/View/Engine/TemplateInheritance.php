@@ -57,7 +57,6 @@ final class TemplateInheritance
 
     /**
      * Set the parent template (called by @extends).
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function setParent(string $template): void
     {
@@ -66,7 +65,6 @@ final class TemplateInheritance
 
     /**
      * Get the parent template name.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public function getParent(): ?string
@@ -79,7 +77,6 @@ final class TemplateInheritance
      *
      * When called with a second argument (@section('name', 'content')), sets the
      * section inline without starting output buffering: no @endsection needed.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function startSection(string $name, ?string $content = null): void
     {
@@ -98,7 +95,6 @@ final class TemplateInheritance
 
     /**
      * End the current section (called by @endsection).
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function endSection(): void
     {
@@ -120,7 +116,6 @@ final class TemplateInheritance
      *
      * @param string $name Section name
      * @param string $default Default content if section is not defined
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public function yieldSection(string $name, string $default = ''): string
@@ -130,7 +125,6 @@ final class TemplateInheritance
 
     /**
      * Check whether a section has been defined.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public function hasSection(string $name): bool
@@ -143,7 +137,6 @@ final class TemplateInheritance
      *
      * @param string $template Template name
      * @param array<string, mixed> $data Scoped data for the included template
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public function renderInclude(string $template, array $data = []): string
@@ -199,7 +192,6 @@ final class TemplateInheritance
      *
      * @param string $name Component template name
      * @param array<string, mixed> $data Component data/props
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function startComponent(string $name, array $data = []): void
     {
@@ -210,7 +202,6 @@ final class TemplateInheritance
 
     /**
      * Render and return the current component (called by @endcomponent).
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public function renderComponent(): string
@@ -244,7 +235,6 @@ final class TemplateInheritance
 
     /**
      * Start a named slot (called by @slot).
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function startSlot(string $name): void
     {
@@ -254,7 +244,6 @@ final class TemplateInheritance
 
     /**
      * End the current slot (called by @endslot).
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function endSlot(): void
     {
@@ -280,7 +269,6 @@ final class TemplateInheritance
 
     /**
      * Reset state between template renders.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function reset(): void
     {

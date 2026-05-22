@@ -22,9 +22,6 @@ use function trim;
 #[Internal(reason: 'Front-office controller; implementation detail')]
 final readonly class TicketController
 {
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
     public function __construct(
         private TicketServiceInterface $ticketService,
         private TicketRepositoryInterface $ticketRepository,
@@ -34,7 +31,6 @@ final readonly class TicketController
 
     /**
      * POST /support/tickets: Create a new support ticket.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function create(ServerRequestInterface $request): Response
     {
@@ -76,7 +72,6 @@ final readonly class TicketController
 
     /**
      * GET /support/tickets/{number}: View ticket status.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function show(ServerRequestInterface $request): Response
     {
@@ -123,7 +118,6 @@ final readonly class TicketController
 
     /**
      * POST /support/tickets/{number}/messages: Add a reply to a ticket.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function addMessage(ServerRequestInterface $request): Response
     {

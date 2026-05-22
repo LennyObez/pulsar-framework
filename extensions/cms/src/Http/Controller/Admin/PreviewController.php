@@ -37,9 +37,6 @@ use const JSON_THROW_ON_ERROR;
 #[Internal(reason: 'CMS admin controller - implementation detail')]
 final readonly class PreviewController extends AbstractAdminController
 {
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
     public function __construct(
         private ContentRepositoryInterface $contentRepository,
         private ContentTranslationRepositoryInterface $translationRepository,
@@ -57,7 +54,6 @@ final readonly class PreviewController extends AbstractAdminController
      *
      * The page loads the content editor form on the left and an iframe
      * pointing to the render endpoint on the right.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function show(ServerRequestInterface $request, string $id): Response
     {
@@ -116,7 +112,6 @@ final readonly class PreviewController extends AbstractAdminController
      *
      * Accepts either a GET (renders the persisted content) or a POST (renders
      * the submitted body in real-time for live preview while typing).
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function render(ServerRequestInterface $request, string $id): Response
     {

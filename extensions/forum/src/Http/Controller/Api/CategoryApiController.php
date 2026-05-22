@@ -29,9 +29,6 @@ use function min;
 #[Internal(reason: 'Forum REST API controller; implementation detail')]
 final readonly class CategoryApiController
 {
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
     public function __construct(
         private CategoryRepositoryInterface $categoryRepository,
         private CategoryTranslationRepositoryInterface $translationRepository,
@@ -41,7 +38,6 @@ final readonly class CategoryApiController
 
     /**
      * GET /api/v1/forum/categories: List root categories.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function index(ServerRequestInterface $request): Response
     {
@@ -64,7 +60,6 @@ final readonly class CategoryApiController
 
     /**
      * GET /api/v1/forum/categories/{id}: Show a single category with children.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function show(ServerRequestInterface $request, string $id): Response
     {
@@ -94,7 +89,6 @@ final readonly class CategoryApiController
 
     /**
      * GET /api/v1/forum/categories/{id}/threads: List threads in a category.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function threads(ServerRequestInterface $request, string $id): Response
     {

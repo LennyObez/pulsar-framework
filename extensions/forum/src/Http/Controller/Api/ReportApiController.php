@@ -20,16 +20,12 @@ use function is_string;
 #[Internal(reason: 'Forum REST API controller; implementation detail')]
 final readonly class ReportApiController
 {
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
     public function __construct(
         private ModerationServiceInterface $moderationService,
     ) {}
 
     /**
      * POST /api/v1/forum/threads/{id}/report; Report a thread.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function reportThread(ServerRequestInterface $request, string $id): Response
     {
@@ -81,7 +77,6 @@ final readonly class ReportApiController
 
     /**
      * POST /api/v1/forum/posts/{id}/report; Report a post.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function reportPost(ServerRequestInterface $request, string $id): Response
     {

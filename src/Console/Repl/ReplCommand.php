@@ -33,8 +33,6 @@ use function sprintf;
  *   pulsar repl --sandbox           Start in sandbox mode (DB writes rolled back)
  *   pulsar repl --readonly          Start in read-only mode (all writes blocked)
  *   pulsar repl --no-safe-mode      Disable safe mode wrappers
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class ReplCommand extends Command

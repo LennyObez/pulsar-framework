@@ -20,9 +20,6 @@ use function time;
  * In production, this would be backed by Redis pub/sub or a dedicated
  * WebSocket server. This implementation stores presence and recent events
  * in-memory for single-process deployments.
- *
- * @psalm-api Bound to RealtimeBroadcasterInterface in the forum service
- *            provider for in-memory/dev deployments; container-resolved.
  */
 #[Internal(reason: 'SSE broadcaster; use RealtimeBroadcasterInterface')]
 final class SseRealtimeBroadcaster implements RealtimeBroadcasterInterface

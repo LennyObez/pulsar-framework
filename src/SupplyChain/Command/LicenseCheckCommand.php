@@ -24,8 +24,6 @@ use const JSON_THROW_ON_ERROR;
  * CLI command to check dependency licenses against an allowlist.
  *
  * Returns exit code 1 if any dependency has a non-compliant or unknown license.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'CLI command registration')]
 final class LicenseCheckCommand extends Command

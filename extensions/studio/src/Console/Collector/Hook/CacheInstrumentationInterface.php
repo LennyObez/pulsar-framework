@@ -14,8 +14,6 @@ use Pulsar\Observability\Context\CorrelationContext;
  * When the cache subsystem is implemented, its decorator should call
  * record() for each operation. Studio's collector then forwards
  * the event to storage.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 interface CacheInstrumentationInterface

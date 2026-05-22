@@ -31,16 +31,10 @@ use const FILTER_VALIDATE_EMAIL;
 #[Internal(reason: 'CMS HTTP controller; implementation detail')]
 final readonly class CheckoutController
 {
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
     public function __construct(
         private CheckoutServiceInterface $checkout,
         private ?TemplateEngineInterface $templateEngine = null,
     ) {}
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function show(ServerRequestInterface $request): Response
     {
@@ -81,9 +75,6 @@ final readonly class CheckoutController
 
         return $this->renderCheckoutHtml($request, $items);
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function process(ServerRequestInterface $request): Response
     {
@@ -167,9 +158,6 @@ final readonly class CheckoutController
             return Response::json(['error' => $e->getMessage()], 422);
         }
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function success(ServerRequestInterface $request): Response
     {

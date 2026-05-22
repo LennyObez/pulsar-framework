@@ -21,8 +21,6 @@ use function sprintf;
  *
  * Generates Dockerfile, docker-compose.yml, and .dockerignore,
  * then prints the commands needed to build and start the environment.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class DevStartCommand extends Command
 {

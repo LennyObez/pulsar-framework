@@ -24,8 +24,6 @@ use function substr;
  *
  * Supports controls for HIPAA Privacy Rule (45 CFR 164.514) safe harbor
  * de-identification requirements.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Compliance formatter implementation detail')]
 final class HipaaLogFormatter implements ComplianceLogFormatter

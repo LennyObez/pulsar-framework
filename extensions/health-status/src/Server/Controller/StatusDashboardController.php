@@ -19,9 +19,6 @@ use Pulsar\Http\Message\Response;
 final readonly class StatusDashboardController
 {
     use RendersStatusView;
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function __construct(
         private HealthHistoryStoreInterface $store,

@@ -25,9 +25,6 @@ use function array_map;
 final readonly class UserProfilePageController
 {
     use RendersForumView;
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function __construct(
         private ForumProfileRepositoryInterface $profileRepository,
@@ -44,7 +41,6 @@ final readonly class UserProfilePageController
 
     /**
      * GET /u/{userId}: Show public user profile.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function show(ServerRequestInterface $request, string $userId): Response
     {

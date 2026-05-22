@@ -19,8 +19,6 @@ use Pulsar\Security\Audit\AuditOutcome;
  * schedule. Actual purge execution against a data store is delegated to
  * domain-specific implementations: this manager determines WHAT should
  * be purged and logs the action via the audit trail.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Retention management implementation detail')]
 final readonly class RetentionManager

@@ -32,7 +32,6 @@ final readonly class LeakSentinelConfig
      *     growth_percent_threshold?: float,
      *     growth_bytes_threshold?: int,
      * } $data
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public static function fromArray(array $data): self
     {

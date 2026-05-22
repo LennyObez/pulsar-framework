@@ -25,8 +25,6 @@ use function time;
 
 /**
  * Exports Studio events as a verifiable evidence archive.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class ConsoleExportCommand extends Command

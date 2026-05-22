@@ -44,7 +44,6 @@ final readonly class FeedbackApiController
      * - context: object (optional, arbitrary key-value pairs)
      *
      * Returns 201 with feedback data, 422 on validation error, 429 on rate limit.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function submit(ServerRequestInterface $request): Response
     {
@@ -110,7 +109,6 @@ final readonly class FeedbackApiController
 
     /**
      * GET /api/v1/feedback: List the authenticated user's feedback, paginated.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function index(ServerRequestInterface $request): Response
     {
@@ -141,7 +139,6 @@ final readonly class FeedbackApiController
 
     /**
      * GET /api/v1/feedback/{id}: Show a single feedback item (own only).
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function show(ServerRequestInterface $request, string $id): Response
     {

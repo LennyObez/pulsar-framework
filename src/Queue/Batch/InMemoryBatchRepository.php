@@ -16,8 +16,6 @@ use function time;
  * In-memory batch repository for testing.
  *
  * State is not persisted across process boundaries.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Testing implementation; use BatchRepositoryInterface for type hints')]
 final class InMemoryBatchRepository implements BatchRepositoryInterface

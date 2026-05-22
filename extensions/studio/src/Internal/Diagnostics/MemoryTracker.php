@@ -35,7 +35,6 @@ final class MemoryTracker
      * @param int $maxSnapshots Maximum snapshots to retain (ring buffer size)
      * @param int $leakThresholdBytes Minimum growth to flag as suspicious leak
      * @param int $minSamplesForDetection Minimum snapshots before leak detection activates
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function __construct(
         private readonly int $maxSnapshots = 200,
@@ -47,7 +46,6 @@ final class MemoryTracker
      * Record a memory snapshot at the end of a request.
      *
      * @param int|null $requestNumber Sequential request number in the worker lifecycle
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function snapshot(?int $requestNumber = null): MemorySnapshot
     {
@@ -69,7 +67,6 @@ final class MemoryTracker
 
     /**
      * Record a snapshot with explicit memory values (for testing).
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function recordExplicit(int $usageBytes, int $peakBytes, ?int $requestNumber = null): MemorySnapshot
     {
@@ -150,7 +147,6 @@ final class MemoryTracker
 
     /**
      * Get the current memory usage in bytes.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function currentUsageBytes(): int
     {
@@ -163,7 +159,6 @@ final class MemoryTracker
 
     /**
      * Get the peak memory usage seen across all snapshots.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function peakUsageBytes(): int
     {
@@ -182,7 +177,6 @@ final class MemoryTracker
      * Get all recorded snapshots.
      *
      * @return list<MemorySnapshot>
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function snapshots(): array
     {
@@ -193,8 +187,6 @@ final class MemoryTracker
      * Get the most recent N snapshots.
      *
      * @return list<MemorySnapshot>
-     *
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function recentSnapshots(int $count = 50): array
     {
@@ -207,7 +199,6 @@ final class MemoryTracker
 
     /**
      * Get the number of snapshots recorded.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function snapshotCount(): int
     {
@@ -237,7 +228,6 @@ final class MemoryTracker
 
     /**
      * Reset all tracking state.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function reset(): void
     {

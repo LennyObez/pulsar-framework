@@ -21,8 +21,6 @@ use function time;
  * Cookie format: base64(deviceId|expiry|hmac)
  * The HMAC covers both deviceId and expiry to prevent tampering with either field.
  * All signing operations go through KeyRingInterface (Finding B).
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class DeviceCookieManager

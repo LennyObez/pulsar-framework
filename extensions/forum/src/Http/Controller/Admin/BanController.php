@@ -30,9 +30,6 @@ use function min;
 final readonly class BanController
 {
     use RendersAdminView;
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function __construct(
         private BanServiceInterface $banService,
@@ -43,7 +40,6 @@ final readonly class BanController
 
     /**
      * GET /admin/forum/bans: List active bans with pagination.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function index(ServerRequestInterface $request): Response
     {
@@ -75,7 +71,6 @@ final readonly class BanController
 
     /**
      * GET /admin/forum/bans/{id}: Show ban detail.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function show(ServerRequestInterface $request, string $id): Response
     {
@@ -117,7 +112,6 @@ final readonly class BanController
 
     /**
      * POST /admin/forum/bans: Create a new ban.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function create(ServerRequestInterface $request): Response
     {
@@ -186,7 +180,6 @@ final readonly class BanController
 
     /**
      * POST /admin/forum/bans/{id}/revoke: Revoke an active ban.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function revoke(ServerRequestInterface $request, string $id): Response
     {

@@ -42,9 +42,6 @@ use const ENT_QUOTES;
 #[Internal(reason: 'Admin HTTP controller; implementation detail')]
 final readonly class ShippingMethodController
 {
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
     public function __construct(
         private ShippingZoneRepositoryInterface $repository,
     ) {}
@@ -53,7 +50,6 @@ final readonly class ShippingMethodController
      * GET /admin/shipping
      *
      * List all shipping zones and their methods.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function index(ServerRequestInterface $request): Response
     {
@@ -72,7 +68,6 @@ final readonly class ShippingMethodController
      * GET /admin/shipping/create
      *
      * Display the shipping zone creation form.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function create(ServerRequestInterface $request): Response
     {
@@ -93,7 +88,6 @@ final readonly class ShippingMethodController
      * POST /admin/shipping
      *
      * Save a new shipping zone.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function store(ServerRequestInterface $request): Response
     {
@@ -123,7 +117,6 @@ final readonly class ShippingMethodController
      * GET /admin/shipping/{id}/edit
      *
      * Display the shipping zone edit form.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function edit(ServerRequestInterface $request): Response
     {
@@ -153,7 +146,6 @@ final readonly class ShippingMethodController
      * PUT /admin/shipping/{id}
      *
      * Update an existing shipping zone.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function update(ServerRequestInterface $request): Response
     {
@@ -195,7 +187,6 @@ final readonly class ShippingMethodController
      * DELETE /admin/shipping/{id}
      *
      * Delete a shipping zone.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function destroy(ServerRequestInterface $request): Response
     {

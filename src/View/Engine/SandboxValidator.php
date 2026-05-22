@@ -118,7 +118,6 @@ final readonly class SandboxValidator
      * Create a validator from a ViewConfig.
      *
      * Returns null if sandbox mode is disabled.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public static function fromConfig(ViewConfig $config): ?self
@@ -137,7 +136,6 @@ final readonly class SandboxValidator
      * @param string $templateName Template name for error context
      *
      * @throws ViewException If a disallowed function or class is found
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function validate(string $compiledOutput, string $templateName): void
     {
@@ -248,7 +246,6 @@ final readonly class SandboxValidator
      * Get the current function allowlist.
      *
      * @return list<string>
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public function allowedFunctions(): array
@@ -260,7 +257,6 @@ final readonly class SandboxValidator
      * Get the current class allowlist.
      *
      * @return list<string>
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public function allowedClasses(): array
@@ -270,7 +266,6 @@ final readonly class SandboxValidator
 
     /**
      * Check whether a specific function is allowed.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public function isFunctionAllowed(string $function): bool
@@ -281,7 +276,6 @@ final readonly class SandboxValidator
 
     /**
      * Check whether a specific class is allowed.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public function isClassAllowed(string $class): bool

@@ -20,8 +20,6 @@ use function substr;
  *
  * Header format: t={unix_timestamp},v1={hex_signature}[,v1={hex_signature}...]
  * Multiple v1= values are allowed for secret rotation.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final readonly class HmacWebhookVerifier implements WebhookVerifierInterface
 {

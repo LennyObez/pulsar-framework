@@ -25,9 +25,6 @@ use function strtoupper;
 #[Internal]
 final readonly class SubscriptionController
 {
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
     public function __construct(
         private SubscriptionManagerInterface $subscriptionManager,
     ) {}
@@ -36,7 +33,6 @@ final readonly class SubscriptionController
      * POST /payments/subscriptions
      *
      * Create a new subscription.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function create(ServerRequestInterface $request): Response
     {
@@ -107,7 +103,6 @@ final readonly class SubscriptionController
      * GET /payments/subscriptions
      *
      * List subscriptions for the authenticated user.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function list(ServerRequestInterface $request): Response
     {
@@ -128,7 +123,6 @@ final readonly class SubscriptionController
      * POST /payments/subscriptions/{id}/cancel
      *
      * Cancel a subscription.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function cancel(ServerRequestInterface $request): Response
     {
@@ -156,7 +150,6 @@ final readonly class SubscriptionController
      * POST /payments/subscriptions/{id}/pause
      *
      * Pause a subscription.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function pause(ServerRequestInterface $request): Response
     {
@@ -184,7 +177,6 @@ final readonly class SubscriptionController
      * POST /payments/subscriptions/{id}/resume
      *
      * Resume a paused subscription.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function resume(ServerRequestInterface $request): Response
     {

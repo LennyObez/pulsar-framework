@@ -28,8 +28,6 @@ use const JSON_UNESCAPED_SLASHES;
  * CLI command that runs all deploy readiness checks.
  *
  * Usage: deploy:check [--env=production] [--json] [--strict]
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class DeployCheckCommand extends Command

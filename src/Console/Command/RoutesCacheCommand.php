@@ -21,8 +21,6 @@ use function sprintf;
  * Serializes all registered routes through the RouteCache, skipping
  * closure-based handlers that cannot be serialized. Run this during
  * deployment to eliminate route registration overhead on every request.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class RoutesCacheCommand extends Command
 {

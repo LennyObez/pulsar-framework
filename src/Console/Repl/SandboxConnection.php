@@ -49,7 +49,6 @@ final class SandboxConnection implements ConnectionInterface
 
     /**
      * Whether the sandbox transaction is active.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function isActive(): bool
     {

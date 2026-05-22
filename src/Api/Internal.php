@@ -17,10 +17,6 @@ use Attribute;
 #[Api(since: '1.0.0')]
 final readonly class Internal
 {
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
     public function __construct(
         public string $reason = '',
     ) {}

@@ -14,8 +14,6 @@ use Pulsar\Compliance\ControlStatus;
  *
  * Maps Pulsar framework features to PSD2 (Payment Services Directive 2) requirements
  * they provide coverage for, focusing on SCA, transaction monitoring, and open banking.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Framework-internal control registration; use ControlCatalog for public access')]
 final class Psd2Mapping

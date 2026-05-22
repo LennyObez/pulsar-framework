@@ -20,16 +20,12 @@ use function is_string;
 #[Internal(reason: 'CMS admin controller; implementation detail')]
 final readonly class DocVersionController
 {
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
     public function __construct(
         private DocVersionServiceInterface $versionService,
     ) {}
 
     /**
      * GET /admin/cms/docs/versions: List all documentation versions.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function index(): Response
     {
@@ -43,7 +39,6 @@ final readonly class DocVersionController
 
     /**
      * PUT /admin/cms/docs/versions/default: Set the default documentation version.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function setDefault(ServerRequestInterface $request): Response
     {

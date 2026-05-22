@@ -8,9 +8,6 @@ use Pulsar\Extension\Admin\Domain\SavedView;
 
 /**
  * Result DTO for saved view operations.
- *
- * @psalm-api Constructor-promoted properties consumed by admin controllers
- *            via reflection; Psalm cannot trace the read sites.
  */
 final readonly class SavedViewsResult
 {

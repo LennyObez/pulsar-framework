@@ -37,7 +37,6 @@ final readonly class PeppolClient
 
     /**
      * Create a PeppolClient from a PeppolConfig DTO.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public static function fromConfig(PeppolConfig $config, HttpClientInterface $httpClient): self
@@ -59,7 +58,6 @@ final readonly class PeppolClient
      * @param string $ublXml Valid UBL 2.1 Invoice or CreditNote XML
      * @param string $receiverId Recipient Peppol participant ID
      * @param string $receiverScheme Recipient scheme (e.g., "0088" for GLN, "9925" for VAT BE)
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public function send(string $ublXml, string $receiverId, string $receiverScheme): PeppolTransmissionResult

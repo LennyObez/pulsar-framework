@@ -49,7 +49,6 @@ final readonly class DefaultRetentionPolicy implements RetentionPolicyInterface
      *     retention_days?: int,
      *     legal_basis?: string,
      * } $data
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public static function fromArray(array $data): self

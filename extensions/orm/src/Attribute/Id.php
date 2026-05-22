@@ -14,9 +14,6 @@ use Pulsar\Api\Api;
 #[Api(since: '1.0.0')]
 final readonly class Id
 {
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
     public function __construct(
         public bool $autoIncrement = true,
     ) {}

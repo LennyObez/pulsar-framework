@@ -15,8 +15,6 @@ use function sprintf;
 
 /**
  * Flush (purge) all jobs from a specific queue.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class QueueFlushCommand extends Command
 {

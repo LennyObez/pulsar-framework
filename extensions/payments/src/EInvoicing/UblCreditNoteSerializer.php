@@ -20,8 +20,6 @@ use function sprintf;
  * original invoice for full audit traceability.
  *
  * XML namespace: urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'E-invoicing serializer')]
 final readonly class UblCreditNoteSerializer

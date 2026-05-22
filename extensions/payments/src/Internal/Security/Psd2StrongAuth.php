@@ -73,7 +73,6 @@ final readonly class Psd2StrongAuth
      * Get the SCA exemption reason if applicable.
      *
      * @return string|null Exemption reason or null if SCA is required
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public static function exemptionReason(

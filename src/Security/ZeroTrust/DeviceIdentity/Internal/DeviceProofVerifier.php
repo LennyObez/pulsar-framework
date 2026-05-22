@@ -21,8 +21,6 @@ use function time;
  *
  * Challenges include a nonce and timestamp for replay safety (Finding D).
  * All crypto operations go through KeyRingInterface (Finding B).
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class DeviceProofVerifier

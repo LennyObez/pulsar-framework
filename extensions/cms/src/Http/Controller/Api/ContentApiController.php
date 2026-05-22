@@ -48,7 +48,6 @@ final readonly class ContentApiController
 
     /**
      * GET /api/v1/content: List content with pagination and filtering.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function index(ServerRequestInterface $request): Response
     {
@@ -94,7 +93,6 @@ final readonly class ContentApiController
 
     /**
      * GET /api/v1/content/{id}: Show a single content item with all related data.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function show(ServerRequestInterface $request, string $id): Response
     {
@@ -153,7 +151,6 @@ final readonly class ContentApiController
 
     /**
      * POST /api/v1/content: Create new content from JSON body.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function create(ServerRequestInterface $request): Response
     {
@@ -269,7 +266,6 @@ final readonly class ContentApiController
 
     /**
      * PUT /api/v1/content/{id}: Update existing content.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function update(ServerRequestInterface $request, string $id): Response
     {
@@ -351,7 +347,6 @@ final readonly class ContentApiController
 
     /**
      * DELETE /api/v1/content/{id}: Soft delete content.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function delete(string $id): Response
     {
