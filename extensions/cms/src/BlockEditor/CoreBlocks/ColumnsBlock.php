@@ -77,6 +77,7 @@ final readonly class ColumnsBlock implements BlockTypeInterface
 
             $html .= '<div class="column">';
 
+            /** @var mixed $blocks */
             $blocks = $column['blocks'] ?? [];
 
             if (is_array($blocks)) {
@@ -114,6 +115,7 @@ final readonly class ColumnsBlock implements BlockTypeInterface
                 continue;
             }
 
+            /** @var mixed $block */
             foreach ($column['blocks'] as $blockIndex => $block) {
                 if (!is_array($block)) {
                     $errors[] = "columns[$colIndex].blocks[$blockIndex] must be an object";
