@@ -102,6 +102,7 @@ final readonly class OtlpLogBridge implements LogSinkInterface
     {
         $flat = [];
 
+        /** @var mixed $value */
         foreach ($context as $key => $value) {
             if (is_scalar($value)) {
                 $flat[$key] = $value;
