@@ -174,8 +174,10 @@ final readonly class FilterCompiler
     ): array {
         $values = is_array($value) ? $value : [$value];
         $placeholders = [];
+        /** @var array<string, mixed> $params */
         $params = [];
 
+        /** @var mixed $v */
         foreach ($values as $v) {
             $p = 'f_' . $paramIndex++;
             $placeholders[] = ':' . $p;

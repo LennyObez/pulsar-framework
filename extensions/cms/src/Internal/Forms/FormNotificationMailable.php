@@ -54,6 +54,7 @@ final class FormNotificationMailable extends Mailable
     {
         $rows = [];
 
+        /** @var mixed $value */
         foreach ($this->submission->data as $key => $value) {
             // Skip internal fields
             if (str_starts_with($key, '_')) {
@@ -96,6 +97,7 @@ final class FormNotificationMailable extends Mailable
         // Plain text version
         $textLines = ['New Form Submission', '', 'Submitted at: ' . $this->submission->submittedAt->format('Y-m-d H:i:s T'), ''];
 
+        /** @var mixed $value */
         foreach ($this->submission->data as $key => $value) {
             if (str_starts_with($key, '_')) {
                 continue;

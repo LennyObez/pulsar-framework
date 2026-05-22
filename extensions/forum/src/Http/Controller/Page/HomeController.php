@@ -46,7 +46,9 @@ final readonly class HomeController
         $tenantId = $request->getAttribute('tenant_id');
 
         $params = $request->getQueryParams();
-        $locale = is_string($params['locale'] ?? null) ? $params['locale'] : 'en';
+        /** @var mixed $rawLocale */
+        $rawLocale = $params['locale'] ?? null;
+        $locale = is_string($rawLocale) ? $rawLocale : 'en';
 
         $categories = $this->categoryRepository->findRoots($tenantId);
         $recentThreads = $this->threadRepository->findRecent(1, 5, $tenantId);
