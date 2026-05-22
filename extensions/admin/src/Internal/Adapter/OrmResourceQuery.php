@@ -157,6 +157,7 @@ final readonly class OrmResourceQuery implements ResourceQueryInterface
             ),
         );
 
+        /** @var mixed $value */
         foreach ($filters as $field => $value) {
             if (!in_array($field, $filterableFields, true)) {
                 continue;
