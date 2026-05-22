@@ -83,6 +83,7 @@ final class LogFormatter
         /** @var array<string, mixed> $normalized */
         $normalized = [];
 
+        /** @var mixed $value */
         foreach ($context as $key => $value) {
             if ($value instanceof Throwable) {
                 $normalized[$key] = $this->serializeThrowable($value);
