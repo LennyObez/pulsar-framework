@@ -32,9 +32,11 @@ final readonly class ProofOfWorkVerifier implements SpamDetectorInterface
     #[Override]
     public function detect(array $data, array $meta): SpamResult
     {
+        /** @var mixed $rawChallenge */
         $rawChallenge = $meta['_pow_challenge'] ?? null;
         $challenge = is_string($rawChallenge) ? $rawChallenge : '';
         // Read nonce from $meta (extracted by controller), fallback to $data for direct usage.
+        /** @var mixed $rawNonce */
         $rawNonce = $meta['_pow_nonce'] ?? $data['_pow_nonce'] ?? null;
         $nonce = is_string($rawNonce) ? $rawNonce : '';
 

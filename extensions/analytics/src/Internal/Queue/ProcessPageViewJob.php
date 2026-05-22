@@ -59,6 +59,7 @@ final readonly class ProcessPageViewJob implements QueueableInterface
 
     private function str(string $key, string $default = ''): string
     {
+        /** @var mixed $value */
         $value = $this->data[$key] ?? null;
 
         return is_string($value) ? $value : $default;
@@ -66,6 +67,7 @@ final readonly class ProcessPageViewJob implements QueueableInterface
 
     private function int(string $key, int $default = 0): int
     {
+        /** @var mixed $value */
         $value = $this->data[$key] ?? null;
 
         return is_int($value) ? $value : $default;
