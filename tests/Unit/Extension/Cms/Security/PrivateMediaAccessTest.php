@@ -49,7 +49,7 @@ final class PrivateMediaAccessTest extends TestCase
         $this->repository->method('findByHash')->willReturn($asset);
 
         $request = $this->createRequest(identity: null);
-        $response = $this->controller->serveOriginal('abc123', 'test.jpg');
+        $response = $this->controller->serveOriginal($request, 'abc123');
 
         self::assertSame(403, $response->getStatusCode());
     }
@@ -62,7 +62,7 @@ final class PrivateMediaAccessTest extends TestCase
 
         $identity = $this->createIdentity(authenticated: false);
         $request = $this->createRequest(identity: $identity);
-        $response = $this->controller->serveOriginal('abc123', 'test.jpg');
+        $response = $this->controller->serveOriginal($request, 'abc123');
 
         self::assertSame(403, $response->getStatusCode());
     }
@@ -76,7 +76,7 @@ final class PrivateMediaAccessTest extends TestCase
 
         $identity = $this->createIdentity(authenticated: true);
         $request = $this->createRequest(identity: $identity);
-        $response = $this->controller->serveOriginal('abc123', 'test.jpg');
+        $response = $this->controller->serveOriginal($request, 'abc123');
 
         self::assertSame(200, $response->getStatusCode());
         self::assertSame('private, no-store', $response->getHeaderLine('Cache-Control'));
@@ -90,7 +90,7 @@ final class PrivateMediaAccessTest extends TestCase
         $this->disk->method('read')->willReturn('file-contents');
 
         $request = $this->createRequest(identity: null);
-        $response = $this->controller->serveOriginal('abc123', 'test.jpg');
+        $response = $this->controller->serveOriginal($request, 'abc123');
 
         self::assertSame(200, $response->getStatusCode());
     }
@@ -104,7 +104,7 @@ final class PrivateMediaAccessTest extends TestCase
         $this->repository->method('findByHash')->willReturn($asset);
 
         $request = $this->createRequest(identity: null);
-        $response = $this->controller->serve('thumb', 'abc123', 'test', 'webp');
+        $response = $this->controller->serve($request, 'thumb', 'abc123', 'test');
 
         self::assertSame(403, $response->getStatusCode());
     }
@@ -132,7 +132,7 @@ final class PrivateMediaAccessTest extends TestCase
 
         $identity = $this->createIdentity(authenticated: true);
         $request = $this->createRequest(identity: $identity);
-        $response = $this->controller->serve('thumb', 'abc123', 'test', 'webp');
+        $response = $this->controller->serve($request, 'thumb', 'abc123', 'test');
 
         self::assertSame(200, $response->getStatusCode());
         self::assertSame('private, no-store', $response->getHeaderLine('Cache-Control'));
@@ -160,7 +160,7 @@ final class PrivateMediaAccessTest extends TestCase
         $this->disk->method('read')->willReturn('derivative-contents');
 
         $request = $this->createRequest(identity: null);
-        $response = $this->controller->serve('thumb', 'abc123', 'test', 'webp');
+        $response = $this->controller->serve($request, 'thumb', 'abc123', 'test');
 
         self::assertSame(200, $response->getStatusCode());
         self::assertStringContainsString('public', $response->getHeaderLine('Cache-Control'));
@@ -175,7 +175,7 @@ final class PrivateMediaAccessTest extends TestCase
         $this->repository->method('findByHash')->willReturn($asset);
 
         $request = $this->createRequest(identity: null);
-        $response = $this->controller->serveOriginal('abc123', 'test.jpg');
+        $response = $this->controller->serveOriginal($request, 'abc123');
 
         self::assertSame(404, $response->getStatusCode());
     }
@@ -186,7 +186,7 @@ final class PrivateMediaAccessTest extends TestCase
         $this->repository->method('findByHash')->willReturn(null);
 
         $request = $this->createRequest(identity: null);
-        $response = $this->controller->serveOriginal('abc123', 'test.jpg');
+        $response = $this->controller->serveOriginal($request, 'abc123');
 
         self::assertSame(404, $response->getStatusCode());
     }
