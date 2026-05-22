@@ -124,9 +124,11 @@ final class ExtensionValidateCommand extends Command
         }
 
         // Check pulsar version constraint
+        /** @var mixed $pulsarConfig */
         $pulsarConfig = $manifest['pulsar'] ?? null;
 
         if (is_array($pulsarConfig)) {
+            /** @var mixed $minVersion */
             $minVersion = $pulsarConfig['min_version'] ?? null;
 
             if (is_string($minVersion)) {

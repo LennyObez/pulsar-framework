@@ -74,8 +74,10 @@ final class ConsoleExportCommand extends Command
 
         file_put_contents($outputPath, $archiveJson);
 
+        /** @var mixed $rawEventCount */
         $rawEventCount = $archive->manifest['event_count'] ?? 0;
         $eventCount = is_numeric($rawEventCount) ? (int) $rawEventCount : 0;
+        /** @var mixed $rawChainLinkCount */
         $rawChainLinkCount = $archive->manifest['chain_link_count'] ?? 0;
         $chainLinkCount = is_numeric($rawChainLinkCount) ? (int) $rawChainLinkCount : 0;
 
