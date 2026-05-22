@@ -85,6 +85,7 @@ final readonly class RateLimitMiddleware implements MiddlewareInterface
     private function resolveKey(ServerRequestInterface $request): string
     {
         $ip = $this->resolveClientIp($request);
+        /** @var mixed $userId */
         $userId = $request->getAttribute('rate_limit.user_id');
 
         if (is_string($userId) && $userId !== '') {
@@ -100,6 +101,7 @@ final readonly class RateLimitMiddleware implements MiddlewareInterface
             return $this->trustedProxy->resolveClientIp($request);
         }
 
+        /** @var mixed $raw */
         $raw = $request->getServerParams()['REMOTE_ADDR'] ?? null;
 
         if (is_string($raw) && $raw !== '') {

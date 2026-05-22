@@ -53,6 +53,7 @@ final class InsertBuilder
         $placeholders = [];
         $bindings = [];
 
+        /** @var mixed $value */
         foreach ($this->values as $value) {
             $binding = $this->bindingCounter->next();
             $placeholders[] = ':' . $binding;

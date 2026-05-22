@@ -33,6 +33,7 @@ final readonly class HoneypotDetector implements SpamDetectorInterface
     {
         // Read from $meta where the controller extracts _-prefixed fields,
         // with a fallback to $data for direct programmatic usage.
+        /** @var mixed $value */
         $value = $meta[$this->fieldName] ?? $data[$this->fieldName] ?? null;
 
         if (is_string($value) && trim($value) !== '') {

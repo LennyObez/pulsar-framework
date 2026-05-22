@@ -83,6 +83,7 @@ final readonly class ImportAnalyzer
         if (isset($bundleData['settings']) && is_array($bundleData['settings'])) {
             $settingsCount = 0;
 
+            /** @var mixed $group */
             foreach ($bundleData['settings'] as $group) {
                 if (is_array($group)) {
                     $settingsCount += count($group);
@@ -98,13 +99,16 @@ final readonly class ImportAnalyzer
             $duplicates = 0;
             $missing = [];
 
+            /** @var mixed $item */
             foreach ($mediaItems as $item) {
                 if (!is_array($item)) {
                     continue;
                 }
 
                 /** @var array<string, mixed> $item */
-                $id = isset($item['id']) && is_string($item['id']) ? $item['id'] : null;
+                /** @var mixed $rawId */
+                $rawId = $item['id'] ?? null;
+                $id = is_string($rawId) ? $rawId : null;
 
                 if ($id !== null) {
                     $existing = $this->mediaRepo->findById($id);

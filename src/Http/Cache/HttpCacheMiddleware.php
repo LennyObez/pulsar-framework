@@ -176,6 +176,7 @@ final class HttpCacheMiddleware implements MiddlewareInterface
 
     private function resolveTtl(ServerRequestInterface $request): int
     {
+        /** @var mixed $ttl */
         $ttl = $request->getAttribute('cache.ttl');
 
         if ($ttl !== null && is_int($ttl)) {
@@ -190,6 +191,7 @@ final class HttpCacheMiddleware implements MiddlewareInterface
      */
     private function resolveTags(ServerRequestInterface $request): array
     {
+        /** @var mixed $tags */
         $tags = $request->getAttribute('cache.tags');
 
         if (is_array($tags)) {

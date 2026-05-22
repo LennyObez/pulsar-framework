@@ -266,7 +266,9 @@ final readonly class SqliteVecStore implements VectorStoreInterface
      */
     private function matchesFilter(array $metadata, array $filter): bool
     {
+        /** @var mixed $value */
         foreach ($filter as $key => $value) {
+            /** @var mixed $metaVal */
             $metaVal = $metadata[$key] ?? null;
             $filterVal = is_scalar($value) ? (string) $value : '';
             $metaStr = is_scalar($metaVal) ? (string) $metaVal : '';
