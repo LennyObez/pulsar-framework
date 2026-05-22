@@ -329,6 +329,7 @@ final readonly class CartController
 
     private function resolveUserId(ServerRequestInterface $request): ?string
     {
+        /** @var mixed $userId */
         $userId = $request->getAttribute('user_id');
 
         return is_string($userId) && $userId !== '' ? $userId : null;
@@ -336,6 +337,7 @@ final readonly class CartController
 
     private function resolveRouteParam(ServerRequestInterface $request, string $param): string
     {
+        /** @var mixed $value */
         $value = $request->getAttribute($param);
 
         return is_string($value) ? $value : '';
