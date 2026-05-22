@@ -70,6 +70,7 @@ final class ToolbarDataCollector
      */
     public function collect(ServerRequestInterface $request, float $requestTimeMs): ToolbarData
     {
+        /** @var mixed $matchedRoute */
         $matchedRoute = $request->getAttribute('_matched_route');
         $routeName = null;
         $controller = null;
@@ -79,6 +80,7 @@ final class ToolbarDataCollector
             $routeName = $matchedRoute->getName();
             $routePattern = $matchedRoute->route->path;
 
+            /** @var mixed $handler */
             $handler = $matchedRoute->getHandler();
             if (is_string($handler)) {
                 $controller = $handler;

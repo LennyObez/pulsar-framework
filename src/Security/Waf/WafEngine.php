@@ -56,6 +56,7 @@ final class WafEngine
             return [];
         }
 
+        /** @var mixed $clientIp */
         $clientIp = $request->getServerParams()['REMOTE_ADDR'] ?? '';
 
         if (is_string($clientIp) && in_array($clientIp, $this->config->bypassIps, true)) {
