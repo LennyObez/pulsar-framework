@@ -143,6 +143,7 @@ final readonly class BenchmarkBlock implements BlockTypeInterface
         $html .= "<caption>$name" . ($unit !== '' ? " ($unit)" : '') . '</caption>';
         $html .= '<thead><tr><th>Framework</th><th>Result</th><th>Chart</th></tr></thead><tbody>';
 
+        /** @var mixed $entry */
         foreach ($entries as $entry) {
             if (!is_array($entry)) {
                 continue;
@@ -202,6 +203,7 @@ final readonly class BenchmarkBlock implements BlockTypeInterface
                 continue;
             }
 
+            /** @var mixed $entry */
             foreach ($metric['entries'] as $ei => $entry) {
                 if (!is_array($entry)) {
                     $errors[] = "metrics[$mi].entries[$ei] must be an object";
