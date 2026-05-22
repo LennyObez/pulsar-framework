@@ -7,7 +7,6 @@ namespace Pulsar\Config\Validation;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function array_keys;
 use function array_values;
 use function file_exists;
 use function file_get_contents;

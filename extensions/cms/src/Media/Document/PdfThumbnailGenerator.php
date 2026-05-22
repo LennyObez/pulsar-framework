@@ -13,6 +13,7 @@ use Pulsar\Api\Internal;
 use function class_exists;
 use function file_exists;
 use function is_resource;
+use function is_string;
 use function realpath;
 use function str_starts_with;
 use function sys_get_temp_dir;

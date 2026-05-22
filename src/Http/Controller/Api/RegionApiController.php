@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Pulsar\Http\Controller\Api;
 
 use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Http\Message\Response;
 use Pulsar\I18n\Region\CountryRegistry;

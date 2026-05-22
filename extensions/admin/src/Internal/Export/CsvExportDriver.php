@@ -16,7 +16,6 @@ use function in_array;
 use function is_bool;
 use function is_string;
 use function rewind;
-use function str_contains;
 use function stream_get_contents;
 
 /**
