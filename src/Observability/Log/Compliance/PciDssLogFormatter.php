@@ -69,8 +69,10 @@ final class PciDssLogFormatter implements ComplianceLogFormatter
      */
     private function maskContext(array $context): array
     {
+        /** @var array<string, mixed> $masked */
         $masked = [];
 
+        /** @var mixed $value */
         foreach ($context as $key => $value) {
             $lowerKey = strtolower($key);
 

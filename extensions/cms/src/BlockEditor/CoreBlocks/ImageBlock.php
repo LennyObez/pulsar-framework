@@ -98,8 +98,12 @@ final readonly class ImageBlock implements BlockTypeInterface
         $html .= '</figure>';
 
         // ImageObject structured data for SEO
-        $rawSrc = is_string($data['src'] ?? null) ? $data['src'] : '';
-        $rawAlt = is_string($data['alt'] ?? null) ? $data['alt'] : '';
+        /** @var mixed $rawSrcVal */
+        $rawSrcVal = $data['src'] ?? null;
+        $rawSrc = is_string($rawSrcVal) ? $rawSrcVal : '';
+        /** @var mixed $rawAltVal */
+        $rawAltVal = $data['alt'] ?? null;
+        $rawAlt = is_string($rawAltVal) ? $rawAltVal : '';
 
         if ($rawSrc !== '') {
             $structuredData = [
