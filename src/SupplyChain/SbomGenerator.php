@@ -59,9 +59,11 @@ final readonly class SbomGenerator
             $components = [...$components, ...$this->extractPnpmComponents($pnpmLockContents)];
         }
 
+        /** @var mixed $rawProjectName */
         $rawProjectName = is_array($composerJson) ? ($composerJson['name'] ?? null) : null;
         $projectName = is_string($rawProjectName) ? $rawProjectName : 'unknown';
 
+        /** @var mixed $rawProjectVersion */
         $rawProjectVersion = is_array($composerJson) ? ($composerJson['version'] ?? null) : null;
         $projectVersion = is_string($rawProjectVersion) ? $rawProjectVersion : 'unknown';
 

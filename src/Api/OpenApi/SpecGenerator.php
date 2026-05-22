@@ -315,6 +315,7 @@ final class SpecGenerator
      */
     private function paramToOpenApi(ApiParam $param): array
     {
+        /** @var array<string, mixed> $schema */
         $schema = ['type' => $param->type];
 
         if ($param->format !== null) {
@@ -329,6 +330,7 @@ final class SpecGenerator
             $schema['default'] = $param->default;
         }
 
+        /** @var array<string, mixed> $parameter */
         $parameter = [
             'name' => $param->name,
             'in' => $param->in,
