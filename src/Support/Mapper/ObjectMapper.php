@@ -146,6 +146,7 @@ final class ObjectMapper
             self::$paramCache[$targetClass] = $params;
         }
 
+        /** @var list<mixed> $args */
         $args = [];
 
         foreach ($params as $param) {
