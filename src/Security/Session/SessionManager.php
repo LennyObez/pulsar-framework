@@ -112,6 +112,7 @@ final class SessionManager implements SessionInterface
             return;
         }
 
+        /** @var mixed $cookieValue */
         $cookieValue = $request->getCookieParams()[$this->config->effectiveCookieName()] ?? null;
         $existingId = is_string($cookieValue) ? $cookieValue : '';
 
@@ -131,6 +132,7 @@ final class SessionManager implements SessionInterface
             $this->loadStoredPayload($decrypted);
         }
 
+        /** @var mixed $rawIp */
         $rawIp = $request->getServerParams()['REMOTE_ADDR'] ?? '';
         $ipAddress = is_string($rawIp) ? $rawIp : '';
         $userAgent = $request->getHeaderLine('User-Agent');
