@@ -185,7 +185,7 @@ final class GraphqlControllerTest extends TestCase
     public function introspect_returns_schema(): void
     {
         $request = $this->createStub(ServerRequestInterface::class);
-        $response = $this->controller->introspect($request);
+        $response = $this->controller->introspect();
 
         self::assertSame(200, $response->getStatusCode());
 

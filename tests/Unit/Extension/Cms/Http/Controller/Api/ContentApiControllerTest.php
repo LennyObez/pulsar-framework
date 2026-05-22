@@ -272,7 +272,7 @@ final class ContentApiControllerTest extends TestCase
 
         $request = new ServerRequest(method: 'DELETE', uri: '/api/v1/content/missing');
 
-        $response = $this->controller->delete($request, 'missing');
+        $response = $this->controller->delete('missing');
 
         self::assertSame(404, $response->getStatusCode());
     }
@@ -304,7 +304,7 @@ final class ContentApiControllerTest extends TestCase
 
         $request = new ServerRequest(method: 'DELETE', uri: '/api/v1/content/content-1');
 
-        $response = $this->controller->delete($request, 'content-1');
+        $response = $this->controller->delete('content-1');
 
         self::assertSame(200, $response->getStatusCode());
 
