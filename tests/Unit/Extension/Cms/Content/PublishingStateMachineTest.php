@@ -22,7 +22,7 @@ final class PublishingStateMachineTest extends TestCase
         $machine = new PublishingStateMachine();
         $content = Content::create(id: 'c-01', contentType: ContentType::Article, authorId: 'u-01');
 
-        $result = $machine->transition($content, PublishingStatus::Published, 'u-01');
+        $result = $machine->transition($content, PublishingStatus::Published);
 
         self::assertSame(PublishingStatus::Published, $result->status);
         self::assertNotNull($result->publishedAt);
@@ -35,7 +35,7 @@ final class PublishingStateMachineTest extends TestCase
         $machine = new PublishingStateMachine();
         $content = Content::create(id: 'c-02', contentType: ContentType::Page, authorId: 'u-01');
 
-        $result = $machine->transition($content, PublishingStatus::Scheduled, 'u-01');
+        $result = $machine->transition($content, PublishingStatus::Scheduled);
 
         self::assertSame(PublishingStatus::Scheduled, $result->status);
     }
@@ -45,9 +45,9 @@ final class PublishingStateMachineTest extends TestCase
     {
         $machine = new PublishingStateMachine();
         $draft = Content::create(id: 'c-03', contentType: ContentType::Article, authorId: 'u-01');
-        $scheduled = $machine->transition($draft, PublishingStatus::Scheduled, 'u-01');
+        $scheduled = $machine->transition($draft, PublishingStatus::Scheduled);
 
-        $published = $machine->transition($scheduled, PublishingStatus::Published, 'u-01');
+        $published = $machine->transition($scheduled, PublishingStatus::Published);
 
         self::assertSame(PublishingStatus::Published, $published->status);
         self::assertNotNull($published->publishedAt);
@@ -58,9 +58,9 @@ final class PublishingStateMachineTest extends TestCase
     {
         $machine = new PublishingStateMachine();
         $draft = Content::create(id: 'c-04', contentType: ContentType::Article, authorId: 'u-01');
-        $published = $machine->transition($draft, PublishingStatus::Published, 'u-01');
+        $published = $machine->transition($draft, PublishingStatus::Published);
 
-        $archived = $machine->transition($published, PublishingStatus::Archived, 'u-01');
+        $archived = $machine->transition($published, PublishingStatus::Archived);
 
         self::assertSame(PublishingStatus::Archived, $archived->status);
     }
@@ -70,10 +70,10 @@ final class PublishingStateMachineTest extends TestCase
     {
         $machine = new PublishingStateMachine();
         $draft = Content::create(id: 'c-05', contentType: ContentType::Article, authorId: 'u-01');
-        $published = $machine->transition($draft, PublishingStatus::Published, 'u-01');
-        $archived = $machine->transition($published, PublishingStatus::Archived, 'u-01');
+        $published = $machine->transition($draft, PublishingStatus::Published);
+        $archived = $machine->transition($published, PublishingStatus::Archived);
 
-        $restored = $machine->transition($archived, PublishingStatus::Draft, 'u-01');
+        $restored = $machine->transition($archived, PublishingStatus::Draft);
 
         self::assertSame(PublishingStatus::Draft, $restored->status);
         self::assertNull($restored->scheduledPublishAt);
@@ -88,7 +88,7 @@ final class PublishingStateMachineTest extends TestCase
 
         $this->expectException(CmsException::class);
 
-        $machine->transition($content, PublishingStatus::Archived, 'u-01');
+        $machine->transition($content, PublishingStatus::Archived);
     }
 
     #[Test]
@@ -97,14 +97,14 @@ final class PublishingStateMachineTest extends TestCase
         $machine = new PublishingStateMachine();
         $content = Content::create(id: 'c-07', contentType: ContentType::Article, authorId: 'u-01');
 
-        $published = $machine->transition($content, PublishingStatus::Published, 'u-01');
+        $published = $machine->transition($content, PublishingStatus::Published);
         $firstPublishedAt = $published->publishedAt;
 
         self::assertNotNull($firstPublishedAt);
 
-        $archived = $machine->transition($published, PublishingStatus::Archived, 'u-01');
-        $restored = $machine->transition($archived, PublishingStatus::Draft, 'u-01');
-        $republished = $machine->transition($restored, PublishingStatus::Published, 'u-01');
+        $archived = $machine->transition($published, PublishingStatus::Archived);
+        $restored = $machine->transition($archived, PublishingStatus::Draft);
+        $republished = $machine->transition($restored, PublishingStatus::Published);
 
         self::assertSame($firstPublishedAt, $republished->publishedAt);
     }
@@ -115,8 +115,8 @@ final class PublishingStateMachineTest extends TestCase
         $machine = new PublishingStateMachine();
         $content = Content::create(id: 'c-08', contentType: ContentType::Article, authorId: 'u-01');
 
-        $scheduled = $machine->transition($content, PublishingStatus::Scheduled, 'u-01');
-        $published = $machine->transition($scheduled, PublishingStatus::Published, 'u-01');
+        $scheduled = $machine->transition($content, PublishingStatus::Scheduled);
+        $published = $machine->transition($scheduled, PublishingStatus::Published);
 
         // Published clears scheduledPublishAt
         self::assertNull($published->scheduledPublishAt);
@@ -127,10 +127,10 @@ final class PublishingStateMachineTest extends TestCase
     {
         $machine = new PublishingStateMachine();
         $draft = Content::create(id: 'c-09', contentType: ContentType::Article, authorId: 'u-01');
-        $published = $machine->transition($draft, PublishingStatus::Published, 'u-01');
-        $archived = $machine->transition($published, PublishingStatus::Archived, 'u-01');
+        $published = $machine->transition($draft, PublishingStatus::Published);
+        $archived = $machine->transition($published, PublishingStatus::Archived);
 
-        $restored = $machine->transition($archived, PublishingStatus::Draft, 'u-01');
+        $restored = $machine->transition($archived, PublishingStatus::Draft);
 
         self::assertNull($restored->scheduledPublishAt);
         self::assertNull($restored->scheduledUnpublishAt);
@@ -142,12 +142,12 @@ final class PublishingStateMachineTest extends TestCase
         $machine = new PublishingStateMachine();
         $draft = Content::create(id: 'c-10', contentType: ContentType::Article, authorId: 'u-01');
 
-        $firstPublish = $machine->transition($draft, PublishingStatus::Published, 'u-01');
+        $firstPublish = $machine->transition($draft, PublishingStatus::Published);
         $firstPublishedAt = $firstPublish->publishedAt;
 
-        $archived = $machine->transition($firstPublish, PublishingStatus::Archived, 'u-01');
-        $restored = $machine->transition($archived, PublishingStatus::Draft, 'u-01');
-        $republished = $machine->transition($restored, PublishingStatus::Published, 'u-01');
+        $archived = $machine->transition($firstPublish, PublishingStatus::Archived);
+        $restored = $machine->transition($archived, PublishingStatus::Draft);
+        $republished = $machine->transition($restored, PublishingStatus::Published);
 
         self::assertSame($firstPublishedAt, $republished->publishedAt);
     }
@@ -158,7 +158,7 @@ final class PublishingStateMachineTest extends TestCase
         $machine = new PublishingStateMachine();
         $content = Content::create(id: 'c-11', contentType: ContentType::Article, authorId: 'u-01');
 
-        $result = $machine->transition($content, PublishingStatus::InReview, 'u-01', editorialWorkflow: true);
+        $result = $machine->transition($content, PublishingStatus::InReview, editorialWorkflow: true);
 
         self::assertSame(PublishingStatus::InReview, $result->status);
     }
@@ -169,7 +169,7 @@ final class PublishingStateMachineTest extends TestCase
         $machine = new PublishingStateMachine(null);
         $content = Content::create(id: 'c-12', contentType: ContentType::Article, authorId: 'u-01');
 
-        $result = $machine->transition($content, PublishingStatus::Published, 'u-01');
+        $result = $machine->transition($content, PublishingStatus::Published);
 
         self::assertSame(PublishingStatus::Published, $result->status);
     }
