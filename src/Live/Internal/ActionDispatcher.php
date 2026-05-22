@@ -119,6 +119,7 @@ final class ActionDispatcher
      */
     private function resolveParameters(ReflectionMethod $method, array $params): array
     {
+        /** @var list<mixed> $resolved */
         $resolved = [];
 
         foreach ($method->getParameters() as $parameter) {
