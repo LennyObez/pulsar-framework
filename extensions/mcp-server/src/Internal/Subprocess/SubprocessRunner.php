@@ -275,7 +275,9 @@ final class SubprocessRunner
         if (PHP_OS_FAMILY === 'Windows' && $pid > 0) {
             $this->windowsForceKillTree($pid);
         } else {
-            proc_terminate($process, defined('SIGKILL') ? SIGKILL : 9);
+            /** @psalm-suppress UndefinedConstant SIGKILL is POSIX-only, guarded via defined() */
+            $signal = defined('SIGKILL') ? (int) SIGKILL : 9;
+            proc_terminate($process, $signal);
         }
 
         return proc_close($process);

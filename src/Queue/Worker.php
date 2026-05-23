@@ -436,13 +436,16 @@ final class Worker
             return;
         }
 
-        /** @psalm-suppress UndefinedConstant: SIGINT/SIGTERM are POSIX-only, guarded by OS check above */
-        pcntl_signal(SIGINT, function (): void {
+        /** @psalm-suppress UndefinedConstant SIGINT/SIGTERM are POSIX-only, guarded by OS check above */
+        $sigint = SIGINT;
+        /** @psalm-suppress UndefinedConstant */
+        $sigterm = SIGTERM;
+
+        pcntl_signal($sigint, function (): void {
             $this->stop();
         });
 
-        /** @psalm-suppress UndefinedConstant */
-        pcntl_signal(SIGTERM, function (): void {
+        pcntl_signal($sigterm, function (): void {
             $this->stop();
         });
     }

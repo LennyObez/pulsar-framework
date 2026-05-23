@@ -18,7 +18,8 @@ $typedContent = $content ?? '';
 <body>
     <header class="studio-header" role="banner">
         <span class="studio-header__brand" data-t="studio.title"><?= __('studio.title') ?></span>
-        <div data-language-selector data-locales="en,fr,nl,de,es,it,pt,pl,ro,cs,el,hu,sv,da,fi,sk,bg,hr,sl,lt,lv,et,ga,mt,lb" data-current="<?= htmlspecialchars(is_string($locale ?? null) ? $locale : 'en') ?>"></div>
+        <?php /** @var mixed $rawLocale */ $rawLocale = $locale ?? null; ?>
+        <div data-language-selector data-locales="en,fr,nl,de,es,it,pt,pl,ro,cs,el,hu,sv,da,fi,sk,bg,hr,sl,lt,lv,et,ga,mt,lb" data-current="<?= htmlspecialchars(is_string($rawLocale) ? $rawLocale : 'en') ?>"></div>
     </header>
     <?= $typedContent ?>
     <script src="/ui/js/language-selector.js" defer></script>

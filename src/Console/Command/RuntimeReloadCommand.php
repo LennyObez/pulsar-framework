@@ -56,7 +56,8 @@ final class RuntimeReloadCommand extends Command
         }
 
         /** @psalm-suppress UndefinedConstant */
-        $sent = posix_kill($pid, SIGUSR1);
+        $sigusr1 = SIGUSR1;
+        $sent = posix_kill($pid, $sigusr1);
 
         if (!$sent) {
             $output->error(sprintf('Failed to send reload signal to PID %d', $pid));
