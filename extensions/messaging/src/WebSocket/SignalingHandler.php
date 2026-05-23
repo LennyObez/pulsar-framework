@@ -80,13 +80,25 @@ final class SignalingHandler
             return;
         }
 
-        $message = SignalingMessage::fromArray([
-            'type' => $data['type'] ?? '',
+        /** @var mixed $rawType */
+        $rawType = $data['type'] ?? '';
+        /** @var mixed $rawToUserId */
+        $rawToUserId = $data['to_user_id'] ?? '';
+        /** @var mixed $rawCallId */
+        $rawCallId = $data['call_id'] ?? '';
+        /** @var mixed $rawPayloadField */
+        $rawPayloadField = $data['payload'] ?? null;
+
+        /** @var array{type: string, from_user_id: string, to_user_id: string, call_id: string, payload: array<string, mixed>} $messageData */
+        $messageData = [
+            'type' => is_string($rawType) ? $rawType : '',
             'from_user_id' => $userId,
-            'to_user_id' => $data['to_user_id'] ?? '',
-            'call_id' => $data['call_id'] ?? '',
-            'payload' => is_array($data['payload'] ?? null) ? $data['payload'] : [],
-        ]);
+            'to_user_id' => is_string($rawToUserId) ? $rawToUserId : '',
+            'call_id' => is_string($rawCallId) ? $rawCallId : '',
+            'payload' => is_array($rawPayloadField) ? $rawPayloadField : [],
+        ];
+
+        $message = SignalingMessage::fromArray($messageData);
 
         if ($message->toUserId === '') {
             return;
