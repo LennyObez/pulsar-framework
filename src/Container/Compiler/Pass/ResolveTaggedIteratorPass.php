@@ -67,6 +67,7 @@ final class ResolveTaggedIteratorPass implements CompilerPassInterface
                     return new $concreteClass();
                 }
 
+                /** @var list<mixed> $dependencies */
                 $dependencies = [];
 
                 foreach ($constructor->getParameters() as $parameter) {
@@ -91,7 +92,9 @@ final class ResolveTaggedIteratorPass implements CompilerPassInterface
                     if ($type instanceof ReflectionNamedType && !$type->isBuiltin()) {
                         $dependencies[] = $container->get($type->getName());
                     } elseif ($parameter->isDefaultValueAvailable()) {
-                        $dependencies[] = $parameter->getDefaultValue();
+                        /** @var mixed $paramDefault */
+                        $paramDefault = $parameter->getDefaultValue();
+                        $dependencies[] = $paramDefault;
                     }
                 }
 
