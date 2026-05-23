@@ -39,6 +39,7 @@ final readonly class HtmlBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
+        /** @var mixed $html */
         $html = $data['html'] ?? '';
 
         return $this->sanitizer->sanitize(is_string($html) ? $html : '');

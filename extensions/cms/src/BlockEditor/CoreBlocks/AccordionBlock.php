@@ -85,6 +85,7 @@ final readonly class AccordionBlock implements BlockTypeInterface
             $html .= '<script type="application/ld+json">';
             $faqItems = [];
 
+            /** @var mixed $item */
             foreach ($items as $item) {
                 if (!is_array($item)) {
                     continue;

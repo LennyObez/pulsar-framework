@@ -47,6 +47,7 @@ final readonly class DocsBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
+        /** @var mixed $rawSlug */
         $rawSlug = $data['docSlug'] ?? '';
         $slug = htmlspecialchars(is_string($rawSlug) ? $rawSlug : '', ENT_QUOTES, 'UTF-8');
         $showSection = ($data['showSection'] ?? true) ? 'true' : 'false';
