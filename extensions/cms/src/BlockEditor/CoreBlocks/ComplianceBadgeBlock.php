@@ -85,6 +85,7 @@ final readonly class ComplianceBadgeBlock implements BlockTypeInterface
         $size = is_string($data['size'] ?? null) && in_array($data['size'], self::VALID_SIZES, true)
             ? $data['size']
             : 'md';
+        /** @var mixed $title */
         $title = $data['title'] ?? null;
 
         $html = "<div class=\"compliance-badge-block compliance-badge-block--$layout compliance-badge-block--$size\">";
