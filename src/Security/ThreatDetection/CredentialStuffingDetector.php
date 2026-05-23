@@ -100,8 +100,10 @@ final class CredentialStuffingDetector implements ThreatDetectorInterface
     private function resolveIp(ServerRequestInterface $request): string
     {
         $params = $request->getServerParams();
+        /** @var mixed $raw */
+        $raw = $params['REMOTE_ADDR'] ?? null;
 
-        return is_string($params['REMOTE_ADDR'] ?? null) ? $params['REMOTE_ADDR'] : 'unknown';
+        return is_string($raw) ? $raw : 'unknown';
     }
 
     private function pruneWindow(string $ip, int $now): void
