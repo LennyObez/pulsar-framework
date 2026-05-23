@@ -273,11 +273,11 @@ final class FrankenPhpRuntime implements ReloadableRuntimeInterface
          * @var int $sigterm
          * @var int $sigusr1
          */
-        $sigint = SIGINT;
+        $sigint = (int) SIGINT;
         /** @psalm-suppress UndefinedConstant */
-        $sigterm = SIGTERM;
+        $sigterm = (int) SIGTERM;
         /** @psalm-suppress UndefinedConstant */
-        $sigusr1 = SIGUSR1;
+        $sigusr1 = (int) SIGUSR1;
 
         pcntl_signal($sigint, function (): void {
             $this->stop();
