@@ -465,6 +465,8 @@ final readonly class DevErrorPage implements ExceptionRendererInterface
             $unit++;
         }
 
+        assert($unit >= 0 && $unit <= 3);
+
         return number_format($size, 2) . ' ' . $units[$unit];
     }
 
