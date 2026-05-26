@@ -40,9 +40,10 @@ trait RendersStudioView
      */
     private function renderContentTemplate(string $template, array $data): string
     {
+        $templatePath = __DIR__ . '/../View/templates/' . $template . '.php';
         extract($data);
         ob_start();
-        include __DIR__ . '/../View/templates/' . $template . '.php';
+        include $templatePath;
 
         return (string) ob_get_clean();
     }
