@@ -24,6 +24,7 @@ final readonly class RealtimeController
     public function realtime(ServerRequestInterface $request): Response
     {
         $params = $request->getQueryParams();
+        /** @var mixed $rawSiteId */
         $rawSiteId = $params['site_id'] ?? null;
         $siteId = is_string($rawSiteId) ? $rawSiteId : '';
 
