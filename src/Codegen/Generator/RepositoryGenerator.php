@@ -224,7 +224,10 @@ final class RepositoryGenerator extends AbstractGenerator
      */
     private function findPrimaryProperty(EntityDefinition $entity): ?PropertyDefinition
     {
-        return array_find($entity->properties, static fn(PropertyDefinition $property): bool => $property->isPrimaryKey);
+        /** @var PropertyDefinition|null $found */
+        $found = array_find($entity->properties, static fn(PropertyDefinition $property): bool => $property->isPrimaryKey);
+
+        return $found;
     }
 
     /**

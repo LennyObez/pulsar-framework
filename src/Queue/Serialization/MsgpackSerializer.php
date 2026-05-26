@@ -45,8 +45,8 @@ final readonly class MsgpackSerializer implements SerializerInterface
             default => ['_value' => $data],
         };
 
-        /** @psalm-suppress UndefinedFunction: ext-msgpack is an optional runtime dependency */
-        return msgpack_pack($payload);
+        /** @psalm-suppress UndefinedFunction ext-msgpack is an optional runtime dependency */
+        return (string) msgpack_pack($payload);
     }
 
     /** @return array<string, mixed> */
