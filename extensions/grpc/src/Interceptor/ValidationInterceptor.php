@@ -98,6 +98,7 @@ final readonly class ValidationInterceptor implements InterceptorInterface
         $violations = [];
 
         foreach ($rules as $field => $fieldRules) {
+            /** @var mixed $value */
             $value = $data[$field] ?? null;
 
             foreach ($fieldRules as $rule) {

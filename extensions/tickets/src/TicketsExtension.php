@@ -60,7 +60,10 @@ final readonly class TicketsExtension implements ExtensionInterface, PreBootExte
             $configPath = $configManager->configPath();
 
             if ($configPath !== null && is_file($configPath . DIRECTORY_SEPARATOR . 'tickets.php')) {
-                /** @psalm-suppress UnresolvableInclude */
+                /**
+                 * @psalm-suppress UnresolvableInclude
+                 * @var mixed $ticketsData
+                 */
                 $ticketsData = require $configPath . DIRECTORY_SEPARATOR . 'tickets.php';
 
                 if (is_array($ticketsData)) {

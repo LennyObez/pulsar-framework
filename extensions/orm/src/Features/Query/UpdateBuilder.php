@@ -68,6 +68,7 @@ final class UpdateBuilder
     public function execute(): int
     {
         $setClauses = [];
+        /** @var mixed $value */
         foreach ($this->values as $column => $value) {
             $binding = $this->bindingCounter->next('s');
             $setClauses[] = sprintf('%s = :%s', $this->quoter->quote($column), $binding);

@@ -161,6 +161,7 @@ final class WafEngine
     {
         $values = [];
 
+        /** @var mixed $value */
         foreach ($params as $value) {
             if (is_array($value)) {
                 foreach ($this->flattenParams($value) as $nested) {

@@ -172,6 +172,7 @@ final class Translator implements TranslatorInterface
         // This allows translation strings like "© :year Author" to work with
         // @t('messages.copyright', ['year' => 2026]).
         if (str_contains($message, ':')) {
+            /** @var mixed $value */
             foreach ($parameters as $key => $value) {
                 if (is_scalar($value)) {
                     $message = str_replace(':' . $key, (string) $value, $message);
