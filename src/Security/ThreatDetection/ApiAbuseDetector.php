@@ -109,6 +109,7 @@ final class ApiAbuseDetector implements ThreatDetectorInterface
      */
     private function detectEnumeration(array $entries): bool
     {
+        /** @var array<string, list<int>> $numericIds */
         $numericIds = [];
 
         foreach ($entries as $entry) {
