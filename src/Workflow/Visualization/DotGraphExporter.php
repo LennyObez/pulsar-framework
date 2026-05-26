@@ -154,7 +154,10 @@ final class DotGraphExporter implements DotGraphExporterInterface
 
     private function findInitialState(WorkflowDefinition $definition): ?StateDefinition
     {
-        return array_find($definition->states, static fn(StateDefinition $state): bool => $state->isInitial());
+        /** @var StateDefinition|null $found */
+        $found = array_find($definition->states, static fn(StateDefinition $state): bool => $state->isInitial());
+
+        return $found;
     }
 
     /**
