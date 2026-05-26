@@ -80,6 +80,7 @@ final readonly class ContentHeuristicScorer implements SpamDetectorInterface
 
         // Check for empty required fields
         foreach ($this->requiredFields as $field) {
+            /** @var mixed $fieldValue */
             $fieldValue = $data[$field] ?? null;
 
             if (!is_string($fieldValue) || trim($fieldValue) === '') {

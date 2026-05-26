@@ -43,6 +43,7 @@ final readonly class CommentHoneypotMiddleware implements MiddlewareInterface
         $body = $request->getParsedBody();
 
         if (is_array($body)) {
+            /** @var mixed $honeypotValue */
             $honeypotValue = $body[$this->honeypotField] ?? null;
 
             if (is_string($honeypotValue) && $honeypotValue !== '') {

@@ -39,6 +39,7 @@ final readonly class CmsSeoHeadersMiddleware implements MiddlewareInterface
         $response = $response->withHeader('X-Robots-Tag', $this->config->seo->defaultRobots);
 
         // Add Content-Language header from the locale attribute
+        /** @var mixed $locale */
         $locale = $request->getAttribute('locale');
 
         if (is_string($locale) && $locale !== '') {
