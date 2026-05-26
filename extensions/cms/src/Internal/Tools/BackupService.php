@@ -253,6 +253,7 @@ final readonly class BackupService implements BackupServiceInterface
 
                 $counts[$label] = count($rows);
 
+                /** @var mixed $row */
                 foreach ($rows as $row) {
                     if (!is_array($row) || $row === []) {
                         continue;

@@ -172,6 +172,7 @@ final readonly class MediaBundleExporter implements MediaBundleExporterInterface
     {
         $counts = [];
 
+        /** @var mixed $items */
         foreach ($data as $type => $items) {
             if (is_array($items)) {
                 $counts[$type] = count($items);

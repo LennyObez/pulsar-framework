@@ -220,6 +220,7 @@ final readonly class MediaBundleImporter
                         continue;
                     }
 
+                    /** @var mixed $mediaId */
                     $mediaId = $mediaRef['id'] ?? null;
                     $existingAsset = is_string($mediaId)
                         ? $this->mediaRepository->findById($mediaId)

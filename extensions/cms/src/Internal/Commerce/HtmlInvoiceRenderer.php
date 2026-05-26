@@ -216,6 +216,7 @@ final readonly class HtmlInvoiceRenderer implements InvoiceRendererInterface
 
     private function extractProductName(OrderItem $item): string
     {
+        /** @var mixed $sku */
         $sku = $item->productSnapshot['sku'] ?? null;
 
         return is_string($sku) ? $sku : 'Product ' . $item->productId;
