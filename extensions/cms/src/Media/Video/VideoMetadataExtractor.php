@@ -108,6 +108,7 @@ final readonly class VideoMetadataExtractor
      */
     private function findStream(array $streams, string $codecType): array
     {
+        /** @var mixed $stream */
         foreach ($streams as $stream) {
             if (is_array($stream) && ($stream['codec_type'] ?? null) === $codecType) {
                 /** @var array<string, mixed> $stream */

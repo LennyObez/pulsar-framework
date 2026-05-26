@@ -92,6 +92,7 @@ final readonly class ViewConfig
     {
         $strings = [];
 
+        /** @var mixed $item */
         foreach ($items as $item) {
             if (is_string($item) && $item !== '') {
                 $strings[] = $item;

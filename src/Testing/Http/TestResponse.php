@@ -443,6 +443,7 @@ final class TestResponse
     private function getJsonPath(string $path): mixed
     {
         $segments = explode('.', $path);
+        /** @var mixed $current */
         $current = $this->json();
 
         foreach ($segments as $segment) {
@@ -450,6 +451,7 @@ final class TestResponse
                 return null;
             }
 
+            /** @var mixed $current */
             $current = $current[$segment];
         }
 
