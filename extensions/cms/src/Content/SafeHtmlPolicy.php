@@ -249,6 +249,7 @@ final readonly class SafeHtmlPolicy
         }
 
         // Remove the XML processing instruction we added for encoding
+        /** @var mixed $child */
         foreach (iterator_to_array($dom->childNodes) as $child) {
             if ($child instanceof DOMProcessingInstruction) {
                 $dom->removeChild($child);

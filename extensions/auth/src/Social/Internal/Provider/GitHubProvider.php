@@ -148,7 +148,12 @@ final readonly class GitHubProvider implements OAuthProviderInterface
 
         /** @var mixed $entry */
         foreach ($emails as $entry) {
-            if (is_array($entry) && ($entry['primary'] ?? false) === true && is_string($rawEntryEmail = $entry['email'] ?? null)) {
+            if (!is_array($entry) || ($entry['primary'] ?? false) !== true) {
+                continue;
+            }
+            /** @var mixed $rawEntryEmail */
+            $rawEntryEmail = $entry['email'] ?? null;
+            if (is_string($rawEntryEmail)) {
                 return $rawEntryEmail;
             }
         }
