@@ -181,6 +181,7 @@ final readonly class FormSubmissionService implements FormSubmissionServiceInter
             ];
 
             foreach (array_keys($allKeys) as $key) {
+                /** @var mixed $value */
                 $value = $submission->data[$key] ?? '';
                 $row[] = is_string($value) ? $value : (is_scalar($value) ? (string) $value : '');
             }

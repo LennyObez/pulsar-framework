@@ -71,6 +71,7 @@ final readonly class FormSubmissionController
         ];
 
         // Strip internal fields from user data
+        /** @var array<string, mixed> $formData */
         $formData = [];
 
         /** @var mixed $value */
