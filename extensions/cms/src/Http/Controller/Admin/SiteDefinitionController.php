@@ -97,6 +97,7 @@ final readonly class SiteDefinitionController extends AbstractAdminController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
+        /** @var mixed $content */
         $content = $body['json_content'] ?? null;
 
         if (is_string($content) && $content !== '') {

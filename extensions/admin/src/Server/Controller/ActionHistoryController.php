@@ -56,6 +56,7 @@ final readonly class ActionHistoryController
 
     private function parseLimitParam(ServerRequestInterface $request): int
     {
+        /** @var mixed $limitParam */
         $limitParam = $request->getQueryParams()['limit'] ?? null;
 
         return max(1, min(100, is_numeric($limitParam) ? (int) $limitParam : 50));
