@@ -38,9 +38,10 @@ trait RendersStatusView
      */
     private function renderContentTemplate(string $template, array $data): string
     {
+        $templatePath = __DIR__ . '/../View/templates/' . $template . '.pulse.php';
         extract($data);
         ob_start();
-        include __DIR__ . '/../View/templates/' . $template . '.pulse.php';
+        include $templatePath;
 
         return (string) ob_get_clean();
     }
