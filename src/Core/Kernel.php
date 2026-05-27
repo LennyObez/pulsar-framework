@@ -732,6 +732,7 @@ final class Kernel implements KernelInterface
         }
 
         // Spread named route params into positional args after $request
+        /** @var list<mixed> $args */
         $args = [$request];
 
         if (!isset($this->handlerParamMap[$cacheKey])) {
