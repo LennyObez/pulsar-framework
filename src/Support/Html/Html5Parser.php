@@ -254,7 +254,9 @@ final class Html5Parser
                     $parts[] = $text;
                 }
             } elseif ($child instanceof \Dom\Element) {
-                if (!in_array(strtolower($child->localName), $excludeTags, true)) {
+                /** @var mixed $localName */
+                $localName = $child->localName;
+                if (!in_array(strtolower(is_string($localName) ? $localName : ''), $excludeTags, true)) {
                     self::collectTextNodes($child, $excludeTags, $parts);
                 }
             }
@@ -274,7 +276,9 @@ final class Html5Parser
         /** @var mixed $child */
         foreach ($node->childNodes as $child) {
             if ($child instanceof \Dom\Element) {
-                $tagName = strtolower($child->localName);
+                /** @var mixed $localName */
+                $localName = $child->localName;
+                $tagName = strtolower(is_string($localName) ? $localName : '');
 
                 if (!in_array($tagName, $allowedTags, true)) {
                     $toRemove[] = $child;
@@ -311,11 +315,14 @@ final class Html5Parser
                 continue;
             }
 
-            $name = strtolower($attr->name);
+            /** @var mixed $attrName */
+            $attrName = $attr->name;
+            $attrNameStr = is_string($attrName) ? $attrName : '';
+            $name = strtolower($attrNameStr);
 
             // Block event handlers
             if (str_starts_with($name, 'on')) {
-                $toRemove[] = $attr->name;
+                $toRemove[] = $attrNameStr;
 
                 continue;
             }
@@ -326,14 +333,16 @@ final class Html5Parser
             }
 
             if (!in_array($name, $allowedAttributes, true)) {
-                $toRemove[] = $attr->name;
+                $toRemove[] = $attrNameStr;
 
                 continue;
             }
 
             // Block javascript: URIs in href/src
-            if (($name === 'href' || $name === 'src') && self::isDangerousUri($attr->value)) {
-                $toRemove[] = $attr->name;
+            /** @var mixed $attrValue */
+            $attrValue = $attr->value;
+            if (($name === 'href' || $name === 'src') && self::isDangerousUri(is_string($attrValue) ? $attrValue : '')) {
+                $toRemove[] = $attrNameStr;
             }
         }
 
