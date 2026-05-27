@@ -6,6 +6,7 @@ namespace Pulsar\Extension\Psd2\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * PSD2 certificate validation configuration.
@@ -25,21 +26,16 @@ final readonly class CertificateConfig
     ) {}
 
     /**
-     * @param array{
-     *     require_qualified?: bool,
-     *     check_revocation?: bool,
-     *     trusted_issuers?: list<string>,
-     *     validator?: string,
-     * } $data
+     * @param array<string, mixed> $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            requireQualified: $data['require_qualified'] ?? true,
-            checkRevocation: $data['check_revocation'] ?? true,
-            trustedIssuers: $data['trusted_issuers'] ?? [],
-            validator: $data['validator'] ?? 'default',
+            requireQualified: Coerce::strictBool($data['require_qualified'] ?? null, true),
+            checkRevocation: Coerce::strictBool($data['check_revocation'] ?? null, true),
+            trustedIssuers: Coerce::listOfString($data['trusted_issuers'] ?? null),
+            validator: Coerce::string($data['validator'] ?? null, 'default'),
         );
     }
 }
