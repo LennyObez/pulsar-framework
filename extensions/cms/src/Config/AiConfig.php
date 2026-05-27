@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Cms\Config;
 
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * AI content assistant configuration.
@@ -47,10 +48,10 @@ final readonly class AiConfig
     {
         return new self(
             enabled: (bool) ($data['enabled'] ?? false),
-            provider: $data['provider'] ?? 'openai',
-            model: $data['model'] ?? '',
-            apiKey: $data['api_key'] ?? '',
-            baseUrl: $data['base_url'] ?? '',
+            provider: Coerce::string($data['provider'] ?? null, 'openai'),
+            model: Coerce::string($data['model'] ?? null),
+            apiKey: Coerce::string($data['api_key'] ?? null),
+            baseUrl: Coerce::string($data['base_url'] ?? null),
         );
     }
 }
