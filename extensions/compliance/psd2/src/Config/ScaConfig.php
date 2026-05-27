@@ -6,6 +6,7 @@ namespace Pulsar\Extension\Psd2\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * SCA (Strong Customer Authentication) configuration.
@@ -21,19 +22,15 @@ final readonly class ScaConfig
     ) {}
 
     /**
-     * @param array{
-     *     challenge_timeout_seconds?: int,
-     *     challenge_store?: string,
-     *     code_length?: int,
-     * } $data
+     * @param array<string, mixed> $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            challengeTimeoutSeconds: $data['challenge_timeout_seconds'] ?? 300,
-            challengeStore: $data['challenge_store'] ?? 'memory',
-            codeLength: $data['code_length'] ?? 8,
+            challengeTimeoutSeconds: Coerce::int($data['challenge_timeout_seconds'] ?? null, 300),
+            challengeStore: Coerce::string($data['challenge_store'] ?? null, 'memory'),
+            codeLength: Coerce::int($data['code_length'] ?? null, 8),
         );
     }
 }
