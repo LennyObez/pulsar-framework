@@ -6,6 +6,7 @@ namespace Pulsar\Extension\Fhir\Config;
 
 use Pulsar\Api\Api;
 use Pulsar\Extension\Fhir\Resource\FhirVersion;
+use Pulsar\Support\Coerce;
 
 /**
  * Configuration for the FHIR extension.
@@ -34,20 +35,15 @@ final readonly class FhirConfig
     ) {}
 
     /**
-     * @param array{
-     *     server_name?: string,
-     *     fhir_version?: string,
-     *     base_path?: string,
-     *     supported_resource_types?: list<string>,
-     * } $data
+     * @param array<string, mixed> $data
      */
     public static function fromArray(array $data): self
     {
         return new self(
-            serverName: $data['server_name'] ?? 'Pulsar FHIR Server',
-            fhirVersion: FhirVersion::tryFrom($data['fhir_version'] ?? '') ?? FhirVersion::R4,
-            basePath: $data['base_path'] ?? '/fhir',
-            supportedResourceTypes: $data['supported_resource_types'] ?? [
+            serverName: Coerce::string($data['server_name'] ?? null, 'Pulsar FHIR Server'),
+            fhirVersion: FhirVersion::tryFrom(Coerce::string($data['fhir_version'] ?? null)) ?? FhirVersion::R4,
+            basePath: Coerce::string($data['base_path'] ?? null, '/fhir'),
+            supportedResourceTypes: Coerce::listOfString($data['supported_resource_types'] ?? null, [
                 'Patient',
                 'Observation',
                 'Encounter',
@@ -56,7 +52,7 @@ final readonly class FhirConfig
                 'AllergyIntolerance',
                 'Procedure',
                 'DiagnosticReport',
-            ],
+            ]),
         );
     }
 }
