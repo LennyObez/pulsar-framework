@@ -94,6 +94,7 @@ final readonly class SqliteRateLimiter implements RateLimiterInterface
         $stmt = $this->db->prepare('SELECT count FROM rate_limits WHERE key = ? AND window_start >= ?');
         $stmt->execute([$key, $windowStart]);
 
+        /** @var mixed $count */
         $count = $stmt->fetchColumn();
 
         return $count !== false ? (int) $count : 0;

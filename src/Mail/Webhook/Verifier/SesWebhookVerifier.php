@@ -146,6 +146,7 @@ final class SesWebhookVerifier implements WebhookVerifierInterface
      */
     private function buildCanonicalMessage(array $data): string
     {
+        /** @var mixed $rawType */
         $rawType = $data['Type'] ?? '';
         $type = is_string($rawType) ? $rawType : '';
 

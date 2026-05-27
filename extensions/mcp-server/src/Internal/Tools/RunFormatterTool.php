@@ -87,6 +87,7 @@ final readonly class RunFormatterTool implements McpToolInterface
             };
 
             // Validate and handle optional path for PHP formatter
+            /** @var mixed $path */
             $path = $params['path'] ?? null;
             if ($type === 'php' && is_string($path) && $path !== '') {
                 $validated = ParamValidator::validatePath($path, $this->projectRoot);
