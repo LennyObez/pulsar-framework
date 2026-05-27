@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Cms\LiveCss;
 
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Configuration for the Live CSS editor subsystem.
@@ -37,9 +38,9 @@ final readonly class LiveCssConfig
     public static function fromArray(array $data): self
     {
         return new self(
-            enabled: $data['enabled'] ?? true,
-            maxCssLength: $data['max_css_length'] ?? 100_000,
-            allowExternalFonts: $data['allow_external_fonts'] ?? false,
+            enabled: Coerce::strictBool($data['enabled'] ?? null, true),
+            maxCssLength: Coerce::int($data['max_css_length'] ?? null, 100_000),
+            allowExternalFonts: Coerce::strictBool($data['allow_external_fonts'] ?? null),
         );
     }
 }
