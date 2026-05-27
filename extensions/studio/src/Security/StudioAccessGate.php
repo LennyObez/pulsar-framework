@@ -54,6 +54,7 @@ final readonly class StudioAccessGate
         }
 
         // CIDR check
+        /** @var mixed $clientIp */
         $clientIp = $request->getServerParams()['REMOTE_ADDR'] ?? null;
         if (is_string($clientIp) && !$this->allowlistChecker->isAllowed($clientIp)) {
             return ['allowed' => false, 'reason' => 'IP not in allowlist'];
