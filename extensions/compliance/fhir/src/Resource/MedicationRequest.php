@@ -6,9 +6,10 @@ namespace Pulsar\Extension\Fhir\Resource;
 
 use Override;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 use function array_map;
-use function array_values;
+use function is_array;
 
 /**
  * An order or request for supply of medication and administration instructions.
@@ -136,44 +137,60 @@ final readonly class MedicationRequest extends FhirResource
      */
     public static function fromArray(array $data): self
     {
-        $metaData = $data['meta'] ?? null;
-        $statusReasonData = $data['statusReason'] ?? null;
-        $medConceptData = $data['medicationCodeableConcept'] ?? null;
-        $medRefData = $data['medicationReference'] ?? null;
-        $subjectData = $data['subject'] ?? null;
-        $encounterData = $data['encounter'] ?? null;
-        $requesterData = $data['requester'] ?? null;
+        $opt = static fn(string $k): ?array => is_array($data[$k] ?? null) ? $data[$k] : null;
+        $list = static function (string $k) use ($data): array {
+            $raw = $data[$k] ?? null;
+            if (!is_array($raw)) {
+                return [];
+            }
+            $out = [];
+            foreach ($raw as $entry) {
+                if (is_array($entry)) {
+                    $out[] = $entry;
+                }
+            }
+
+            return $out;
+        };
+
+        $metaData = $opt('meta');
+        $statusReasonData = $opt('statusReason');
+        $medConceptData = $opt('medicationCodeableConcept');
+        $medRefData = $opt('medicationReference');
+        $subjectData = $opt('subject');
+        $encounterData = $opt('encounter');
+        $requesterData = $opt('requester');
 
         return new self(
-            id: $data['id'] ?? null,
+            id: Coerce::nullableString($data['id'] ?? null),
             meta: $metaData !== null ? Meta::fromArray($metaData) : null,
-            language: $data['language'] ?? null,
-            identifier: array_values(array_map(
+            language: Coerce::nullableString($data['language'] ?? null),
+            identifier: array_map(
                 static fn(array $i): Identifier => Identifier::fromArray($i),
-                $data['identifier'] ?? [],
-            )),
-            status: $data['status'] ?? null,
+                $list('identifier'),
+            ),
+            status: Coerce::nullableString($data['status'] ?? null),
             statusReason: $statusReasonData !== null
                 ? CodeableConcept::fromArray($statusReasonData)
                 : null,
-            intent: $data['intent'] ?? null,
+            intent: Coerce::nullableString($data['intent'] ?? null),
             medicationCodeableConcept: $medConceptData !== null
                 ? CodeableConcept::fromArray($medConceptData)
                 : null,
             medicationReference: $medRefData !== null ? Reference::fromArray($medRefData) : null,
             subject: $subjectData !== null ? Reference::fromArray($subjectData) : null,
             encounter: $encounterData !== null ? Reference::fromArray($encounterData) : null,
-            authoredOn: $data['authoredOn'] ?? null,
+            authoredOn: Coerce::nullableString($data['authoredOn'] ?? null),
             requester: $requesterData !== null ? Reference::fromArray($requesterData) : null,
-            reasonCode: array_values(array_map(
+            reasonCode: array_map(
                 static fn(array $c): CodeableConcept => CodeableConcept::fromArray($c),
-                $data['reasonCode'] ?? [],
-            )),
-            reasonReference: array_values(array_map(
+                $list('reasonCode'),
+            ),
+            reasonReference: array_map(
                 static fn(array $r): Reference => Reference::fromArray($r),
-                $data['reasonReference'] ?? [],
-            )),
-            priority: $data['priority'] ?? null,
+                $list('reasonReference'),
+            ),
+            priority: Coerce::nullableString($data['priority'] ?? null),
         );
     }
 }
