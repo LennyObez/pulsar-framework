@@ -6,6 +6,7 @@ namespace Pulsar\Extension\OpenTelemetry\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Metrics-specific OTLP configuration.
@@ -31,9 +32,9 @@ final readonly class OtlpMetricsConfig
     public static function fromArray(array $data): self
     {
         return new self(
-            enabled: $data['enabled'] ?? true,
-            endpoint: $data['endpoint'] ?? '',
-            collectIntervalMs: $data['collect_interval_ms'] ?? 60_000,
+            enabled: Coerce::strictBool($data['enabled'] ?? null, true),
+            endpoint: Coerce::string($data['endpoint'] ?? null),
+            collectIntervalMs: Coerce::int($data['collect_interval_ms'] ?? null, 60_000),
         );
     }
 }

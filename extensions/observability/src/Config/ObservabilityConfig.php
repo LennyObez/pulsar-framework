@@ -7,8 +7,10 @@ namespace Pulsar\Extension\Observability\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Config\Environment;
+use Pulsar\Support\Coerce;
 
 use function explode;
+use function is_array;
 use function str_contains;
 use function strpos;
 use function strtolower;
@@ -98,24 +100,28 @@ final readonly class ObservabilityConfig
     #[NoDiscard]
     public static function fromArray(array $data, ?Environment $environment = null): self
     {
-        $traces = TracingConfig::fromArray($data['traces'] ?? []);
-        $metrics = MetricsConfig::fromArray($data['metrics'] ?? []);
-        $logs = LogsConfig::fromArray($data['logs'] ?? []);
-        $sampler = SamplerConfig::fromArray($data['sampler'] ?? []);
-        $batch = BatchConfig::fromArray($data['batch'] ?? []);
-        $cardinality = CardinalityConfig::fromArray($data['cardinality'] ?? []);
-        $export = ExportConfig::fromArray($data['export'] ?? []);
+        $sub = static fn(string $k): array => is_array($data[$k] ?? null) ? $data[$k] : [];
 
-        $enabled = $data['enabled'] ?? false;
-        $endpoint = $data['endpoint'] ?? 'http://localhost:4318';
-        $protocol = OtlpProtocol::tryFrom($data['protocol'] ?? '') ?? OtlpProtocol::HttpProtobuf;
-        $timeoutMs = $data['timeout_ms'] ?? 5000;
-        $headers = $data['headers'] ?? [];
-        $serviceName = $data['service_name'] ?? '';
-        $serviceVersion = $data['service_version'] ?? '';
-        $serviceNamespace = $data['service_namespace'] ?? '';
-        $propagators = $data['propagators'] ?? ['tracecontext', 'baggage'];
-        $dualExport = $data['dual_export'] ?? false;
+        $traces = TracingConfig::fromArray($sub('traces'));
+        $metrics = MetricsConfig::fromArray($sub('metrics'));
+        $logs = LogsConfig::fromArray($sub('logs'));
+        $sampler = SamplerConfig::fromArray($sub('sampler'));
+        $batch = BatchConfig::fromArray($sub('batch'));
+        $cardinality = CardinalityConfig::fromArray($sub('cardinality'));
+        $export = ExportConfig::fromArray($sub('export'));
+
+        $headersRaw = $data['headers'] ?? null;
+
+        $enabled = Coerce::strictBool($data['enabled'] ?? null);
+        $endpoint = Coerce::string($data['endpoint'] ?? null, 'http://localhost:4318');
+        $protocol = OtlpProtocol::tryFrom(Coerce::string($data['protocol'] ?? null)) ?? OtlpProtocol::HttpProtobuf;
+        $timeoutMs = Coerce::int($data['timeout_ms'] ?? null, 5000);
+        $headers = is_array($headersRaw) ? $headersRaw : [];
+        $serviceName = Coerce::string($data['service_name'] ?? null);
+        $serviceVersion = Coerce::string($data['service_version'] ?? null);
+        $serviceNamespace = Coerce::string($data['service_namespace'] ?? null);
+        $propagators = Coerce::listOfString($data['propagators'] ?? null, ['tracecontext', 'baggage']);
+        $dualExport = Coerce::strictBool($data['dual_export'] ?? null);
 
         // Apply environment variable overrides
         if ($environment !== null) {

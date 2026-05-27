@@ -6,6 +6,7 @@ namespace Pulsar\Extension\Observability\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Batch exporter configuration.
@@ -20,17 +21,14 @@ final readonly class BatchConfig
     ) {}
 
     /**
-     * @param array{
-     *     max_batch_size?: int,
-     *     max_queue_size?: int,
-     * } $data
+     * @param array<string, mixed> $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            maxBatchSize: $data['max_batch_size'] ?? 512,
-            maxQueueSize: $data['max_queue_size'] ?? 2048,
+            maxBatchSize: Coerce::int($data['max_batch_size'] ?? null, 512),
+            maxQueueSize: Coerce::int($data['max_queue_size'] ?? null, 2048),
         );
     }
 }
