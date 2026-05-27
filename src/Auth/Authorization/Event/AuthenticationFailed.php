@@ -9,10 +9,12 @@ use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Event\Attribute\RequiresEnvelope;
 use Pulsar\Event\EnvelopeRequiredEvent;
+use Pulsar\Support\Coerce;
 use Random\Engine\Secure;
 use Random\Randomizer;
 
 use function bin2hex;
+use function is_string;
 
 /**
  * Dispatched when authentication fails.
@@ -52,14 +54,7 @@ final readonly class AuthenticationFailed implements EnvelopeRequiredEvent
     }
 
     /**
-     * @param array{
-     *     attempted_identity?: string,
-     *     guard_name?: string,
-     *     failure_reason?: string,
-     *     correlation_id?: string,
-     *     nonce?: string,
-     *     occurred_at?: string,
-     * } $data
+     * @param array<string, mixed> $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
@@ -67,12 +62,12 @@ final readonly class AuthenticationFailed implements EnvelopeRequiredEvent
         $occurredAt = $data['occurred_at'] ?? null;
 
         return new self(
-            attemptedIdentity: $data['attempted_identity'] ?? '',
-            guardName: $data['guard_name'] ?? '',
-            failureReason: $data['failure_reason'] ?? '',
-            correlationId: $data['correlation_id'] ?? '',
-            nonce: $data['nonce'] ?? '',
-            occurredAt: $occurredAt !== null ? new DateTimeImmutable($occurredAt) : new DateTimeImmutable(),
+            attemptedIdentity: Coerce::string($data['attempted_identity'] ?? null),
+            guardName: Coerce::string($data['guard_name'] ?? null),
+            failureReason: Coerce::string($data['failure_reason'] ?? null),
+            correlationId: Coerce::string($data['correlation_id'] ?? null),
+            nonce: Coerce::string($data['nonce'] ?? null),
+            occurredAt: is_string($occurredAt) ? new DateTimeImmutable($occurredAt) : new DateTimeImmutable(),
         );
     }
 

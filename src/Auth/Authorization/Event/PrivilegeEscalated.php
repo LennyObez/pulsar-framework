@@ -9,10 +9,12 @@ use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Event\Attribute\RequiresEnvelope;
 use Pulsar\Event\EnvelopeRequiredEvent;
+use Pulsar\Support\Coerce;
 use Random\Engine\Secure;
 use Random\Randomizer;
 
 use function bin2hex;
+use function is_string;
 
 /**
  * Dispatched when a user's roles are escalated during a session.
@@ -59,15 +61,7 @@ final readonly class PrivilegeEscalated implements EnvelopeRequiredEvent
     }
 
     /**
-     * @param array{
-     *     identity_id?: string,
-     *     from_roles?: list<string>,
-     *     to_roles?: list<string>,
-     *     reason?: string,
-     *     correlation_id?: string,
-     *     nonce?: string,
-     *     occurred_at?: string,
-     * } $data
+     * @param array<string, mixed> $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
@@ -75,13 +69,13 @@ final readonly class PrivilegeEscalated implements EnvelopeRequiredEvent
         $occurredAt = $data['occurred_at'] ?? null;
 
         return new self(
-            identityId: $data['identity_id'] ?? '',
-            fromRoles: $data['from_roles'] ?? [],
-            toRoles: $data['to_roles'] ?? [],
-            reason: $data['reason'] ?? '',
-            correlationId: $data['correlation_id'] ?? '',
-            nonce: $data['nonce'] ?? '',
-            occurredAt: $occurredAt !== null ? new DateTimeImmutable($occurredAt) : new DateTimeImmutable(),
+            identityId: Coerce::string($data['identity_id'] ?? null),
+            fromRoles: Coerce::listOfString($data['from_roles'] ?? null),
+            toRoles: Coerce::listOfString($data['to_roles'] ?? null),
+            reason: Coerce::string($data['reason'] ?? null),
+            correlationId: Coerce::string($data['correlation_id'] ?? null),
+            nonce: Coerce::string($data['nonce'] ?? null),
+            occurredAt: is_string($occurredAt) ? new DateTimeImmutable($occurredAt) : new DateTimeImmutable(),
         );
     }
 
