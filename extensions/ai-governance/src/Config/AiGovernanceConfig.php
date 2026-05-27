@@ -6,6 +6,7 @@ namespace Pulsar\Extension\AiGovernance\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Configuration DTO for the AI governance extension.
@@ -54,9 +55,9 @@ final readonly class AiGovernanceConfig
             requireImpactAssessment: (bool) ($data['require_impact_assessment'] ?? true),
             requireModelCard: (bool) ($data['require_model_card'] ?? false),
             requireConsentForTrainingData: (bool) ($data['require_consent_for_training_data'] ?? true),
-            registryStore: $data['registry_store'] ?? 'memory',
-            dataGovernanceStore: $data['data_governance_store'] ?? 'memory',
-            explainabilityStore: $data['explainability_store'] ?? 'memory',
+            registryStore: Coerce::string($data['registry_store'] ?? null, 'memory'),
+            dataGovernanceStore: Coerce::string($data['data_governance_store'] ?? null, 'memory'),
+            explainabilityStore: Coerce::string($data['explainability_store'] ?? null, 'memory'),
         );
     }
 }
