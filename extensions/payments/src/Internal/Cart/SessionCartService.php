@@ -201,7 +201,9 @@ final readonly class SessionCartService implements CartServiceInterface
         $currencyCode = $data['currency'] ?? 'EUR';
         $currency = Currency::tryFrom($currencyCode) ?? $this->defaultCurrency;
 
-        $cartId = ($data['id'] ?? '') !== '' ? $data['id'] : bin2hex(random_bytes(16));
+        /** @var mixed $rawCartId */
+        $rawCartId = $data['id'] ?? '';
+        $cartId = is_string($rawCartId) && $rawCartId !== '' ? $rawCartId : bin2hex(random_bytes(16));
 
         return new Cart(
             id: $cartId,
