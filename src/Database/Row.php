@@ -23,7 +23,7 @@ use function stream_get_contents;
  * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class Row
+readonly class Row
 {
     /**
      * @param array<string, mixed> $data Column name => value pairs

@@ -14,7 +14,7 @@ use Pulsar\Api\Api;
  * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class AnonymousIdentity implements IdentityInterface
+readonly class AnonymousIdentity implements IdentityInterface
 {
     #[Override]
     public function id(): string

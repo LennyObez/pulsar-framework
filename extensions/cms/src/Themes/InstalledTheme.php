@@ -15,7 +15,7 @@ use Pulsar\Api\Api;
  * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class InstalledTheme
+readonly class InstalledTheme
 {
     /**
      * @param string $id UUIDv7
