@@ -252,6 +252,7 @@ final readonly class OrderExportService implements OrderExportServiceInterface
     private function sanitizeFiltersForLog(array $filters): array
     {
         /** @var array<string, mixed> $safe */
+        /** @var array<string, mixed> $safe */
         $safe = [];
 
         /** @var mixed $value */
