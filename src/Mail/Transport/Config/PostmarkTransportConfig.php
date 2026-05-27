@@ -6,6 +6,7 @@ namespace Pulsar\Mail\Transport\Config;
 
 use NoDiscard;
 use Pulsar\Api\Internal;
+use Pulsar\Support\Coerce;
 use SensitiveParameter;
 
 /**
@@ -20,13 +21,13 @@ final readonly class PostmarkTransportConfig
     ) {}
 
     /**
-     * @param array{server_token?: string} $data
+     * @param array<string, mixed> $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            serverToken: $data['server_token'] ?? '',
+            serverToken: Coerce::string($data['server_token'] ?? null),
         );
     }
 }
