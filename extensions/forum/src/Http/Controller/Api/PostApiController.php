@@ -119,9 +119,15 @@ final readonly class PostApiController
 
     /**
      * GET /api/v1/forum/posts/{id}: Show a single post.
+     *
+     * The $request parameter is accepted (and ignored) so the method signature
+     * matches the router's controller dispatch convention used elsewhere in
+     * this controller (create/update/destroy all take ServerRequestInterface
+     * as the first argument).
      */
-    public function show(string $id): Response
+    public function show(ServerRequestInterface $request, string $id): Response
     {
+        unset($request);
         $post = $this->postRepository->findById($id);
 
         if ($post === null || $post->isDeleted()) {
