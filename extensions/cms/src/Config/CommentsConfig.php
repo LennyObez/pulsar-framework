@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Cms\Config;
 
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Comments system configuration.
@@ -61,17 +62,17 @@ final readonly class CommentsConfig
     public static function fromArray(array $data): self
     {
         return new self(
-            enabled: $data['enabled'] ?? true,
-            autoApproveAuthenticated: $data['auto_approve_authenticated'] ?? false,
-            editWindowMinutes: $data['edit_window_minutes'] ?? 15,
-            maxNestingDepth: $data['max_nesting_depth'] ?? 3,
-            rateLimitPerMinute: $data['rate_limit_per_minute'] ?? 5,
-            rateLimitPerHour: $data['rate_limit_per_hour'] ?? 30,
-            guestCommentsAllowed: $data['guest_comments_allowed'] ?? true,
-            requireEmail: $data['require_email'] ?? false,
-            maxBodyLength: $data['max_body_length'] ?? 10_000,
-            maxLinksPerComment: $data['max_links_per_comment'] ?? 3,
-            honeypotFieldName: $data['honeypot_field_name'] ?? 'website_url',
+            enabled: Coerce::strictBool($data['enabled'] ?? null, true),
+            autoApproveAuthenticated: Coerce::strictBool($data['auto_approve_authenticated'] ?? null),
+            editWindowMinutes: Coerce::int($data['edit_window_minutes'] ?? null, 15),
+            maxNestingDepth: Coerce::int($data['max_nesting_depth'] ?? null, 3),
+            rateLimitPerMinute: Coerce::int($data['rate_limit_per_minute'] ?? null, 5),
+            rateLimitPerHour: Coerce::int($data['rate_limit_per_hour'] ?? null, 30),
+            guestCommentsAllowed: Coerce::strictBool($data['guest_comments_allowed'] ?? null, true),
+            requireEmail: Coerce::strictBool($data['require_email'] ?? null),
+            maxBodyLength: Coerce::int($data['max_body_length'] ?? null, 10_000),
+            maxLinksPerComment: Coerce::int($data['max_links_per_comment'] ?? null, 3),
+            honeypotFieldName: Coerce::string($data['honeypot_field_name'] ?? null, 'website_url'),
         );
     }
 }
