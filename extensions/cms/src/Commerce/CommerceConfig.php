@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Cms\Commerce;
 
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
-use function array_values;
+use function is_array;
 
 /**
  * Configuration for the commerce subsystem.
@@ -58,13 +59,23 @@ final readonly class CommerceConfig
     public static function fromArray(array $data): self
     {
         $taxRates = [];
-        foreach ($data['taxRates'] ?? [] as $rate) {
-            $taxRates[] = TaxRateConfig::fromArray($rate);
+        $rawTax = $data['taxRates'] ?? null;
+        if (is_array($rawTax)) {
+            foreach ($rawTax as $rate) {
+                if (is_array($rate)) {
+                    $taxRates[] = TaxRateConfig::fromArray($rate);
+                }
+            }
         }
 
         $shippingRates = [];
-        foreach ($data['shippingRates'] ?? [] as $rate) {
-            $shippingRates[] = ShippingRateConfig::fromArray($rate);
+        $rawShip = $data['shippingRates'] ?? null;
+        if (is_array($rawShip)) {
+            foreach ($rawShip as $rate) {
+                if (is_array($rate)) {
+                    $shippingRates[] = ShippingRateConfig::fromArray($rate);
+                }
+            }
         }
 
         $defaultEuCodes = [
@@ -76,13 +87,13 @@ final readonly class CommerceConfig
         return new self(
             taxRates: $taxRates,
             shippingRates: $shippingRates,
-            invoiceRenderer: $data['invoiceRenderer'] ?? 'html',
-            downloadTokenExpiryDays: $data['downloadTokenExpiryDays'] ?? 30,
-            maxDownloads: $data['maxDownloads'] ?? 5,
+            invoiceRenderer: Coerce::string($data['invoiceRenderer'] ?? null, 'html'),
+            downloadTokenExpiryDays: Coerce::int($data['downloadTokenExpiryDays'] ?? null, 30),
+            maxDownloads: Coerce::int($data['maxDownloads'] ?? null, 5),
             taxRequired: (bool) ($data['taxRequired'] ?? false),
-            currency: $data['currency'] ?? 'EUR',
-            sellerCountry: $data['sellerCountry'] ?? 'US',
-            euCountryCodes: array_values($data['euCountryCodes'] ?? $defaultEuCodes),
+            currency: Coerce::string($data['currency'] ?? null, 'EUR'),
+            sellerCountry: Coerce::string($data['sellerCountry'] ?? null, 'US'),
+            euCountryCodes: Coerce::listOfString($data['euCountryCodes'] ?? null, $defaultEuCodes),
         );
     }
 }
