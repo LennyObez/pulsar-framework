@@ -7,6 +7,7 @@ namespace Pulsar\Extension\OpenTelemetry\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Observability\Log\LogLevel;
+use Pulsar\Support\Coerce;
 
 /**
  * Logs-specific OTLP configuration.
@@ -22,19 +23,15 @@ final readonly class OtlpLogsConfig
     ) {}
 
     /**
-     * @param array{
-     *     enabled?: bool,
-     *     endpoint?: string,
-     *     min_level?: string,
-     * } $data
+     * @param array<string, mixed> $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            enabled: $data['enabled'] ?? true,
-            endpoint: $data['endpoint'] ?? '',
-            minLevel: LogLevel::tryFrom($data['min_level'] ?? '') ?? LogLevel::Warning,
+            enabled: Coerce::strictBool($data['enabled'] ?? null, true),
+            endpoint: Coerce::string($data['endpoint'] ?? null),
+            minLevel: LogLevel::tryFrom(Coerce::string($data['min_level'] ?? null)) ?? LogLevel::Warning,
         );
     }
 }
