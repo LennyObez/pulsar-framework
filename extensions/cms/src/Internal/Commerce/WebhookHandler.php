@@ -267,8 +267,10 @@ final readonly class WebhookHandler
 
     private function dispatchRetry(string $eventId, string $payload, string $signature): void
     {
-        /** @var QueueDriverInterface $queueDriver: non-null guaranteed by caller */
         $queueDriver = $this->queueDriver;
+        if ($queueDriver === null) {
+            return;
+        }
 
         $jobPayload = json_encode([
             'eventId' => $eventId,
