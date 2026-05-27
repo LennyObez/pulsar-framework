@@ -101,6 +101,7 @@ final readonly class SecurityHeadersMiddleware implements MiddlewareInterface
             return false;
         }
 
+        /** @var mixed $clientIpRaw */
         $clientIpRaw = $request->getServerParams()['REMOTE_ADDR'] ?? '';
         $clientIp = is_string($clientIpRaw) ? $clientIpRaw : '';
 

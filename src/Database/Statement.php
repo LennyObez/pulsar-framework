@@ -130,6 +130,7 @@ final class Statement
      */
     private function bindAll(array $bindings): void
     {
+        /** @var mixed $value */
         foreach ($bindings as $key => $value) {
             $paramType = match (true) {
                 $value === null => PDO::PARAM_NULL,
