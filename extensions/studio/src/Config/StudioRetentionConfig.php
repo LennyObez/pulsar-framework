@@ -7,6 +7,7 @@ namespace Pulsar\Extension\Studio\Config;
 use NoDiscard;
 use Pulsar\Api\Internal;
 use Pulsar\Config\Environment;
+use Pulsar\Support\Coerce;
 
 /**
  * Retention policy configuration for Studio event storage.
@@ -21,22 +22,20 @@ final readonly class StudioRetentionConfig
     ) {}
 
     /**
-     * @param array{
-     *     max_age_days?: int,
-     *     max_size_mb?: int,
-     *     vacuum_interval_hours?: int,
-     * } $data
+     * @param array<string, mixed> $data
      */
     #[NoDiscard]
     public static function fromArray(array $data, Environment $environment): self
     {
         $retentionEnv = $environment->get('STUDIO_RETENTION_DAYS');
-        $maxAgeDays = $retentionEnv !== null ? (int) $retentionEnv : ($data['max_age_days'] ?? 7);
+        $maxAgeDays = $retentionEnv !== null
+            ? (int) $retentionEnv
+            : Coerce::int($data['max_age_days'] ?? null, 7);
 
         return new self(
             maxAgeDays: $maxAgeDays,
-            maxSizeMb: $data['max_size_mb'] ?? 500,
-            vacuumIntervalHours: $data['vacuum_interval_hours'] ?? 24,
+            maxSizeMb: Coerce::int($data['max_size_mb'] ?? null, 500),
+            vacuumIntervalHours: Coerce::int($data['vacuum_interval_hours'] ?? null, 24),
         );
     }
 }

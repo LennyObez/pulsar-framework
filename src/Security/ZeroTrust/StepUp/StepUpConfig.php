@@ -7,6 +7,7 @@ namespace Pulsar\Security\ZeroTrust\StepUp;
 use InvalidArgumentException;
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Configuration for step-up authentication limits and cooldowns.
@@ -50,21 +51,16 @@ final readonly class StepUpConfig
     /**
      * Build from raw configuration array.
      *
-     * @param array{
-     *     max_attempts?: int,
-     *     cooldown_seconds?: int,
-     *     lockout_seconds?: int,
-     *     window_seconds?: int,
-     * } $data
+     * @param array<string, mixed> $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            maxAttempts: $data['max_attempts'] ?? 5,
-            cooldownSeconds: $data['cooldown_seconds'] ?? 0,
-            lockoutSeconds: $data['lockout_seconds'] ?? 900,
-            windowSeconds: $data['window_seconds'] ?? 3600,
+            maxAttempts: Coerce::int($data['max_attempts'] ?? null, 5),
+            cooldownSeconds: Coerce::int($data['cooldown_seconds'] ?? null, 0),
+            lockoutSeconds: Coerce::int($data['lockout_seconds'] ?? null, 900),
+            windowSeconds: Coerce::int($data['window_seconds'] ?? null, 3600),
         );
     }
 }
