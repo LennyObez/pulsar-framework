@@ -6,6 +6,7 @@ namespace Pulsar\Extension\Compiler;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * A single extension entry within a compiled extension manifest.
@@ -29,25 +30,18 @@ final readonly class CompiledExtensionEntry
     /**
      * Create from array data.
      *
-     * @param array{
-     *     name?: string,
-     *     version?: string,
-     *     extensionClass?: string,
-     *     enabled?: bool|int|string,
-     *     dependencies?: list<string>,
-     *     trustTier?: string,
-     * } $data
+     * @param array<string, mixed> $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            name: $data['name'] ?? '',
-            version: $data['version'] ?? '',
-            extensionClass: $data['extensionClass'] ?? '',
-            enabled: (bool) ($data['enabled'] ?? true),
-            dependencies: $data['dependencies'] ?? [],
-            trustTier: $data['trustTier'] ?? 'community',
+            name: Coerce::string($data['name'] ?? null),
+            version: Coerce::string($data['version'] ?? null),
+            extensionClass: Coerce::string($data['extensionClass'] ?? null),
+            enabled: Coerce::bool($data['enabled'] ?? null, true),
+            dependencies: Coerce::listOfString($data['dependencies'] ?? null),
+            trustTier: Coerce::string($data['trustTier'] ?? null, 'community'),
         );
     }
 
