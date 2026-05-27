@@ -6,6 +6,7 @@ namespace Pulsar\Queue\Driver\Config;
 
 use NoDiscard;
 use Pulsar\Api\Internal;
+use Pulsar\Support\Coerce;
 
 /**
  * Configuration DTO for the Amazon SQS queue driver.
@@ -32,10 +33,10 @@ final readonly class SqsDriverConfig
     public static function fromArray(array $data): self
     {
         return new self(
-            region: $data['region'] ?? 'us-east-1',
-            key: $data['key'] ?? '',
-            secret: $data['secret'] ?? '',
-            prefix: $data['prefix'] ?? '',
+            region: Coerce::string($data['region'] ?? null, 'us-east-1'),
+            key: Coerce::string($data['key'] ?? null),
+            secret: Coerce::string($data['secret'] ?? null),
+            prefix: Coerce::string($data['prefix'] ?? null),
         );
     }
 }
