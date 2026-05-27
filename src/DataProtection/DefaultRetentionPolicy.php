@@ -8,6 +8,7 @@ use DateInterval;
 use DateTimeImmutable;
 use NoDiscard;
 use Pulsar\Api\Internal;
+use Pulsar\Support\Coerce;
 
 use function max;
 
@@ -44,19 +45,15 @@ final readonly class DefaultRetentionPolicy implements RetentionPolicyInterface
      * ]
      * ```
      *
-     * @param array{
-     *     category?: string,
-     *     retention_days?: int,
-     *     legal_basis?: string,
-     * } $data
+     * @param array<string, mixed> $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            category: $data['category'] ?? '',
-            retentionDays: max(0, $data['retention_days'] ?? 0),
-            legalBasis: $data['legal_basis'] ?? '',
+            category: Coerce::string($data['category'] ?? null),
+            retentionDays: max(0, Coerce::int($data['retention_days'] ?? null, 0)),
+            legalBasis: Coerce::string($data['legal_basis'] ?? null),
         );
     }
 

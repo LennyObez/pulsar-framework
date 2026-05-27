@@ -6,6 +6,7 @@ namespace Pulsar\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 use function array_filter;
 use function array_values;
@@ -53,23 +54,29 @@ final readonly class DomainConfig
     public static function fromArray(array $data, Environment $environment): self
     {
         $subdomains = [];
-        foreach ($data['subdomains'] ?? [] as $subdomain => $scopes) {
-            if (is_string($scopes)) {
-                $subdomains[$subdomain] = [$scopes];
-            } elseif (is_array($scopes)) {
-                $subdomains[$subdomain] = array_values(array_filter(
-                    $scopes,
-                    static fn(mixed $v): bool => is_string($v),
-                ));
+        $rawSubs = $data['subdomains'] ?? null;
+        if (is_array($rawSubs)) {
+            foreach ($rawSubs as $subdomain => $scopes) {
+                if (!is_string($subdomain)) {
+                    continue;
+                }
+                if (is_string($scopes)) {
+                    $subdomains[$subdomain] = [$scopes];
+                } elseif (is_array($scopes)) {
+                    $subdomains[$subdomain] = array_values(array_filter($scopes, is_string(...)));
+                }
             }
         }
 
+        $domainEnv = $environment->get('APP_DOMAIN');
+        $sessionEnv = $environment->get('SESSION_DOMAIN');
+
         return new self(
-            defaultDomain: $environment->get('APP_DOMAIN') ?? $data['default_domain'] ?? 'localhost',
+            defaultDomain: $domainEnv ?? Coerce::string($data['default_domain'] ?? null, 'localhost'),
             subdomains: $subdomains,
-            corsAcrossSubdomains: $data['cors_across_subdomains'] ?? true,
-            sharedSessionDomain: $environment->get('SESSION_DOMAIN') ?? $data['shared_session_domain'] ?? '',
-            scheme: $data['scheme'] ?? 'https',
+            corsAcrossSubdomains: Coerce::strictBool($data['cors_across_subdomains'] ?? null, true),
+            sharedSessionDomain: $sessionEnv ?? Coerce::string($data['shared_session_domain'] ?? null),
+            scheme: Coerce::string($data['scheme'] ?? null, 'https'),
         );
     }
 
