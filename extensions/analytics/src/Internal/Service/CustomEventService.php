@@ -111,6 +111,7 @@ final readonly class CustomEventService implements CustomEventServiceInterface
             /** @var array<string, mixed> $props */
             $props = json_decode($propsJson, true, flags: JSON_THROW_ON_ERROR);
 
+            /** @var mixed $value */
             foreach ($props as $key => $value) {
                 $valueStr = is_scalar($value) ? (string) $value : '';
 
