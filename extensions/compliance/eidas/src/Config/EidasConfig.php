@@ -6,6 +6,7 @@ namespace Pulsar\Extension\Eidas\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * eIDAS extension configuration.
@@ -51,12 +52,12 @@ final readonly class EidasConfig
     public static function fromArray(array $data): self
     {
         return new self(
-            signatureService: $data['signature_service'] ?? 'hmac',
-            sealService: $data['seal_service'] ?? 'hmac',
-            timestampService: $data['timestamp_service'] ?? 'local',
-            deliveryService: $data['delivery_service'] ?? 'memory',
-            defaultSignatureFormat: $data['default_signature_format'] ?? 'jades',
-            tsaName: $data['tsa_name'] ?? 'Pulsar Local TSA',
+            signatureService: Coerce::string($data['signature_service'] ?? null, 'hmac'),
+            sealService: Coerce::string($data['seal_service'] ?? null, 'hmac'),
+            timestampService: Coerce::string($data['timestamp_service'] ?? null, 'local'),
+            deliveryService: Coerce::string($data['delivery_service'] ?? null, 'memory'),
+            defaultSignatureFormat: Coerce::string($data['default_signature_format'] ?? null, 'jades'),
+            tsaName: Coerce::string($data['tsa_name'] ?? null, 'Pulsar Local TSA'),
         );
     }
 }
