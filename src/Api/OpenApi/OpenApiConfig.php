@@ -6,8 +6,10 @@ namespace Pulsar\Api\OpenApi;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 use function is_array;
+use function is_string;
 
 /**
  * Typed configuration DTO for OpenAPI spec generation.
@@ -75,40 +77,40 @@ final readonly class OpenApiConfig
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $servers = self::filterServers($data['servers'] ?? []);
-        $securitySchemes = self::filterSecuritySchemes($data['security_schemes'] ?? []);
-
         return new self(
-            title: $data['title'] ?? 'Pulsar API',
-            version: $data['version'] ?? '1.0.0',
-            description: $data['description'] ?? '',
-            termsOfService: $data['terms_of_service'] ?? null,
-            contactName: $data['contact_name'] ?? null,
-            contactEmail: $data['contact_email'] ?? null,
-            contactUrl: $data['contact_url'] ?? null,
-            licenseName: $data['license_name'] ?? null,
-            licenseUrl: $data['license_url'] ?? null,
-            servers: $servers,
-            securitySchemes: $securitySchemes,
-            outputPath: $data['output_path'] ?? 'storage/api/openapi.json',
-            swaggerUiRoute: $data['swagger_ui_route'] ?? '/api/docs',
+            title: Coerce::string($data['title'] ?? null, 'Pulsar API'),
+            version: Coerce::string($data['version'] ?? null, '1.0.0'),
+            description: Coerce::string($data['description'] ?? null),
+            termsOfService: Coerce::nullableString($data['terms_of_service'] ?? null),
+            contactName: Coerce::nullableString($data['contact_name'] ?? null),
+            contactEmail: Coerce::nullableString($data['contact_email'] ?? null),
+            contactUrl: Coerce::nullableString($data['contact_url'] ?? null),
+            licenseName: Coerce::nullableString($data['license_name'] ?? null),
+            licenseUrl: Coerce::nullableString($data['license_url'] ?? null),
+            servers: self::filterServers($data['servers'] ?? null),
+            securitySchemes: self::filterSecuritySchemes($data['security_schemes'] ?? null),
+            outputPath: Coerce::string($data['output_path'] ?? null, 'storage/api/openapi.json'),
+            swaggerUiRoute: Coerce::string($data['swagger_ui_route'] ?? null, '/api/docs'),
             swaggerUiEnabled: ($data['swagger_ui_enabled'] ?? false) === true,
         );
     }
 
     /**
-     * @param list<array{url: string, description: string}> $items
-     *
      * @return list<array{url: string, description: string}>
      */
-    private static function filterServers(array $items): array
+    private static function filterServers(mixed $items): array
     {
-        $servers = [];
+        if (!is_array($items)) {
+            return [];
+        }
 
+        $servers = [];
         foreach ($items as $item) {
             if (
                 is_array($item)
                 && isset($item['url'], $item['description'])
+                && is_string($item['url'])
+                && is_string($item['description'])
             ) {
                 $servers[] = ['url' => $item['url'], 'description' => $item['description']];
             }
@@ -118,14 +120,15 @@ final readonly class OpenApiConfig
     }
 
     /**
-     * @param list<SecuritySchemeDefinition> $items
-     *
      * @return list<SecuritySchemeDefinition>
      */
-    private static function filterSecuritySchemes(array $items): array
+    private static function filterSecuritySchemes(mixed $items): array
     {
-        $schemes = [];
+        if (!is_array($items)) {
+            return [];
+        }
 
+        $schemes = [];
         foreach ($items as $item) {
             if ($item instanceof SecuritySchemeDefinition) {
                 $schemes[] = $item;

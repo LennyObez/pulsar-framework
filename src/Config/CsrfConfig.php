@@ -6,11 +6,9 @@ namespace Pulsar\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
-use function array_filter;
-use function array_values;
 use function in_array;
-use function is_string;
 
 /**
  * Typed configuration DTO for CSRF protection settings.
@@ -37,30 +35,22 @@ final readonly class CsrfConfig
     /**
      * Build from the raw CSRF config array.
      *
-     * @param array{
-     *     enabled?: bool|int|string,
-     *     token_length?: int,
-     *     header_name?: string,
-     *     form_field_name?: string,
-     *     trusted_origins?: list<string>,
-     *     origin_validation?: string,
-     * } $data Raw `csrf` sub-array from config/security.php
+     * @param array<string, mixed> $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $trustedOrigins = array_values(array_filter($data['trusted_origins'] ?? [], is_string(...)));
-        $rawOriginValidation = $data['origin_validation'] ?? 'optional';
+        $rawOriginValidation = Coerce::string($data['origin_validation'] ?? null, 'optional');
         $originValidation = in_array($rawOriginValidation, ['off', 'optional', 'required'], true)
             ? $rawOriginValidation
             : 'optional';
 
         return new self(
-            enabled: (bool) ($data['enabled'] ?? true),
-            tokenLength: $data['token_length'] ?? 32,
-            headerName: $data['header_name'] ?? 'X-CSRF-Token',
-            formFieldName: $data['form_field_name'] ?? '_csrf_token',
-            trustedOrigins: $trustedOrigins,
+            enabled: Coerce::bool($data['enabled'] ?? null, true),
+            tokenLength: Coerce::int($data['token_length'] ?? null, 32),
+            headerName: Coerce::string($data['header_name'] ?? null, 'X-CSRF-Token'),
+            formFieldName: Coerce::string($data['form_field_name'] ?? null, '_csrf_token'),
+            trustedOrigins: Coerce::listOfString($data['trusted_origins'] ?? null),
             originValidation: $originValidation,
         );
     }

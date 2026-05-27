@@ -53,4 +53,9 @@ final class RuntimeException extends BaseRuntimeException
     {
         return new self(sprintf('Fatal runtime error: %s', $message));
     }
+
+    public static function unsupportedType(string $message): self
+    {
+        return new self($message);
+    }
 }
