@@ -6,6 +6,7 @@ namespace Pulsar\AI\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * API credentials and endpoint configuration for a single AI provider.
@@ -26,19 +27,15 @@ final readonly class ProviderCredentials
     ) {}
 
     /**
-     * @param array{
-     *     api_key?: string,
-     *     base_url?: string,
-     *     organization?: string,
-     * } $data
+     * @param array<string, mixed> $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            apiKey: $data['api_key'] ?? '',
-            baseUrl: $data['base_url'] ?? '',
-            organization: $data['organization'] ?? '',
+            apiKey: Coerce::string($data['api_key'] ?? null),
+            baseUrl: Coerce::string($data['base_url'] ?? null),
+            organization: Coerce::string($data['organization'] ?? null),
         );
     }
 }
