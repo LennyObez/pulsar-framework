@@ -7,6 +7,10 @@ namespace Pulsar\Context;
 use DateTimeImmutable;
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
+
+use function is_array;
+use function is_string;
 
 /**
  * Immutable request context carrying correlation, causation, and request metadata.
@@ -104,17 +108,18 @@ final readonly class RequestContext
     public static function fromArray(array $data): self
     {
         $timestampRaw = $data['timestamp'] ?? null;
+        $attributes = $data['attributes'] ?? null;
 
         return new self(
-            correlationId: CorrelationId::fromString($data['correlation_id'] ?? ''),
-            causationId: CausationId::fromString($data['causation_id'] ?? ''),
-            actor: $data['actor'] ?? null,
-            tenantId: $data['tenant_id'] ?? null,
-            ip: $data['ip'] ?? null,
-            userAgent: $data['user_agent'] ?? null,
-            locale: $data['locale'] ?? null,
-            timestamp: $timestampRaw !== null ? new DateTimeImmutable($timestampRaw) : null,
-            attributes: $data['attributes'] ?? [],
+            correlationId: CorrelationId::fromString(Coerce::string($data['correlation_id'] ?? null)),
+            causationId: CausationId::fromString(Coerce::string($data['causation_id'] ?? null)),
+            actor: Coerce::nullableString($data['actor'] ?? null),
+            tenantId: Coerce::nullableString($data['tenant_id'] ?? null),
+            ip: Coerce::nullableString($data['ip'] ?? null),
+            userAgent: Coerce::nullableString($data['user_agent'] ?? null),
+            locale: Coerce::nullableString($data['locale'] ?? null),
+            timestamp: is_string($timestampRaw) ? new DateTimeImmutable($timestampRaw) : null,
+            attributes: is_array($attributes) ? $attributes : [],
         );
     }
 }
