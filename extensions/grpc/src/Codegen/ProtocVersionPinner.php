@@ -70,6 +70,7 @@ final class ProtocVersionPinner
     public function getPinnedVersion(string $manifestPath): ?string
     {
         $data = $this->loadManifest($manifestPath);
+        /** @var mixed $version */
         $version = $data[self::METADATA_KEY] ?? null;
 
         return is_string($version) && $version !== '' ? $version : null;

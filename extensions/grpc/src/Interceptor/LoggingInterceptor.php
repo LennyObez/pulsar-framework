@@ -29,6 +29,7 @@ final readonly class LoggingInterceptor implements InterceptorInterface
     public function handle(CallContext $context, Closure $next): InterceptorResult
     {
         $method = $context->method->fullName;
+        /** @var mixed $identity */
         $identity = $context->attributes['auth.identity'] ?? $context->peerIdentity;
 
         $this->logger->debug('gRPC call started', [

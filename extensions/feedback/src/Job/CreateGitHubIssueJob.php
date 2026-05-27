@@ -100,6 +100,7 @@ final readonly class CreateGitHubIssueJob
             ]);
 
             if ($response->ok()) {
+                /** @var mixed $data */
                 $data = $response->json();
 
                 if (is_array($data) && isset($data['html_url']) && is_string($data['html_url'])) {

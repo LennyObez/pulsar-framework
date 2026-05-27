@@ -73,9 +73,13 @@ final readonly class MessagingWebSocketHandler
      */
     private function handleSendMessage(string $connectionId, string $userId, array $data): void
     {
+        /** @var mixed $conversationId */
         $conversationId = $data['conversation_id'] ?? null;
+        /** @var mixed $encryptedContent */
         $encryptedContent = $data['encrypted_content'] ?? null;
+        /** @var mixed $nonce */
         $nonce = $data['nonce'] ?? null;
+        /** @var mixed $typeValue */
         $typeValue = $data['type'] ?? 'text';
 
         if (!is_string($conversationId) || !is_string($encryptedContent) || !is_string($nonce)) {

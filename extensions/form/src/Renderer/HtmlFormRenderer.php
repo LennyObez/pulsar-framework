@@ -178,6 +178,7 @@ final readonly class HtmlFormRenderer implements FormRendererInterface
     private function renderInput(FieldInterface $field, bool $hasErrors, array $errors): string
     {
         $attrs = $this->buildFieldAttributes($field, $hasErrors);
+        /** @var mixed $value */
         $value = $field->getValue();
 
         if (is_string($value) || is_int($value) || is_float($value)) {
