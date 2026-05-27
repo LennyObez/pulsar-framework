@@ -6,8 +6,7 @@ namespace Pulsar\Live\Auth;
 
 use NoDiscard;
 use Pulsar\Api\Api;
-
-use function is_array;
+use Pulsar\Support\Coerce;
 
 /**
  * Configuration for pre-built auth UI components.
@@ -70,24 +69,20 @@ final readonly class AuthUiConfig
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $rawSocialProviders = $data['social_providers'] ?? null;
-        /** @var list<string> $socialProviders */
-        $socialProviders = is_array($rawSocialProviders) ? $rawSocialProviders : [];
-
         return new self(
-            brandName: $data['brand_name'] ?? '',
-            logoUrl: $data['logo_url'] ?? '',
-            accentColor: $data['accent_color'] ?? '#4f46e5',
-            darkMode: $data['dark_mode'] ?? false,
-            socialProviders: $socialProviders,
-            showRememberMe: $data['show_remember_me'] ?? true,
-            showForgotPassword: $data['show_forgot_password'] ?? true,
-            requireEmailVerification: $data['require_email_verification'] ?? false,
-            enableMfa: $data['enable_mfa'] ?? true,
-            loginRedirect: $data['login_redirect'] ?? '/dashboard',
-            logoutRedirect: $data['logout_redirect'] ?? '/login',
-            signupRedirect: $data['signup_redirect'] ?? '/dashboard',
-            passwordMinLength: $data['password_min_length'] ?? 8,
+            brandName: Coerce::string($data['brand_name'] ?? null),
+            logoUrl: Coerce::string($data['logo_url'] ?? null),
+            accentColor: Coerce::string($data['accent_color'] ?? null, '#4f46e5'),
+            darkMode: Coerce::strictBool($data['dark_mode'] ?? null),
+            socialProviders: Coerce::listOfString($data['social_providers'] ?? null),
+            showRememberMe: Coerce::strictBool($data['show_remember_me'] ?? null, true),
+            showForgotPassword: Coerce::strictBool($data['show_forgot_password'] ?? null, true),
+            requireEmailVerification: Coerce::strictBool($data['require_email_verification'] ?? null),
+            enableMfa: Coerce::strictBool($data['enable_mfa'] ?? null, true),
+            loginRedirect: Coerce::string($data['login_redirect'] ?? null, '/dashboard'),
+            logoutRedirect: Coerce::string($data['logout_redirect'] ?? null, '/login'),
+            signupRedirect: Coerce::string($data['signup_redirect'] ?? null, '/dashboard'),
+            passwordMinLength: Coerce::int($data['password_min_length'] ?? null, 8),
         );
     }
 }
