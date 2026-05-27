@@ -47,7 +47,9 @@ trait RendersForumView
 
         $data['__identity'] = $identity;
         $data['__is_authenticated'] = $identity !== null && $identity->isAuthenticated();
-        $data['__csrf_token'] = $request->getAttribute('csrf_token', '');
+        /** @var mixed $csrfToken */
+        $csrfToken = $request->getAttribute('csrf_token', '');
+        $data['__csrf_token'] = $csrfToken;
 
         $html = $engine->render($template, $data);
 
