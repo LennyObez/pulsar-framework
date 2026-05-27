@@ -31,6 +31,7 @@ final readonly class ScaRequiredMiddleware implements MiddlewareInterface
     #[Override]
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
+        /** @var mixed $scaVerified */
         $scaVerified = $request->getAttribute(self::REQUEST_ATTRIBUTE);
 
         if ($scaVerified === true) {
