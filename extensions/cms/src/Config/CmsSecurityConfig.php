@@ -5,13 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Cms\Config;
 
 use Pulsar\Api\Api;
-
-use function array_map;
-use function array_values;
-use function is_int;
-use function is_numeric;
-use function is_scalar;
-use function is_string;
+use Pulsar\Support\Coerce;
 
 /**
  * CMS security configuration DTO.
@@ -110,64 +104,30 @@ final readonly class CmsSecurityConfig
     public static function fromArray(array $data): self
     {
         return new self(
-            ssrfEnabled: $data['ssrf_enabled'] ?? true,
-            blockedIpRanges: self::toStringList($data['blocked_ip_ranges'] ?? null, [
+            ssrfEnabled: Coerce::strictBool($data['ssrf_enabled'] ?? null, true),
+            blockedIpRanges: Coerce::listOfString($data['blocked_ip_ranges'] ?? null, [
                 '127.0.0.0/8', '10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16',
                 '169.254.0.0/16', '0.0.0.0/8', '100.64.0.0/10', '198.18.0.0/15',
                 '::1/128', 'fc00::/7', 'fe80::/10',
             ]),
-            additionalBlockedIps: self::toStringList($data['additional_blocked_ips'] ?? null, []),
-            allowedOutboundPorts: self::toIntList($data['allowed_outbound_ports'] ?? null, [80, 443]),
-            maxRedirects: $data['max_redirects'] ?? 3,
-            connectTimeoutSeconds: $data['connect_timeout_seconds'] ?? 5,
-            totalTimeoutSeconds: $data['total_timeout_seconds'] ?? 15,
-            maxResponseBytes: $data['max_response_bytes'] ?? 10_485_760,
-            oembedAllowedProviders: self::toStringList($data['oembed_allowed_providers'] ?? null, []),
-            trustedProxies: self::toStringList($data['trusted_proxies'] ?? null, []),
-            forwardedForHeader: $data['forwarded_for_header'] ?? 'X-Forwarded-For',
-            realIpHeader: $data['real_ip_header'] ?? 'X-Real-IP',
-            cloudflareMode: $data['cloudflare_mode'] ?? false,
-            stepUpTtlMinutes: $data['step_up_ttl_minutes'] ?? 15,
-            trustedPublicKeys: self::toStringList($data['trusted_public_keys'] ?? null, []),
-            requireSignedPlugins: $data['require_signed_plugins'] ?? false,
-            integrityCheckOnBoot: $data['integrity_check_on_boot'] ?? true,
-            ipv6SubnetMask: $data['ipv6_subnet_mask'] ?? 64,
-            hotlinkProtection: $data['hotlink_protection'] ?? false,
-            hotlinkAllowedDomains: self::toStringList($data['hotlink_allowed_domains'] ?? null, []),
+            additionalBlockedIps: Coerce::listOfString($data['additional_blocked_ips'] ?? null),
+            allowedOutboundPorts: Coerce::listOfInt($data['allowed_outbound_ports'] ?? null, [80, 443]),
+            maxRedirects: Coerce::int($data['max_redirects'] ?? null, 3),
+            connectTimeoutSeconds: Coerce::int($data['connect_timeout_seconds'] ?? null, 5),
+            totalTimeoutSeconds: Coerce::int($data['total_timeout_seconds'] ?? null, 15),
+            maxResponseBytes: Coerce::int($data['max_response_bytes'] ?? null, 10_485_760),
+            oembedAllowedProviders: Coerce::listOfString($data['oembed_allowed_providers'] ?? null),
+            trustedProxies: Coerce::listOfString($data['trusted_proxies'] ?? null),
+            forwardedForHeader: Coerce::string($data['forwarded_for_header'] ?? null, 'X-Forwarded-For'),
+            realIpHeader: Coerce::string($data['real_ip_header'] ?? null, 'X-Real-IP'),
+            cloudflareMode: Coerce::strictBool($data['cloudflare_mode'] ?? null),
+            stepUpTtlMinutes: Coerce::int($data['step_up_ttl_minutes'] ?? null, 15),
+            trustedPublicKeys: Coerce::listOfString($data['trusted_public_keys'] ?? null),
+            requireSignedPlugins: Coerce::strictBool($data['require_signed_plugins'] ?? null),
+            integrityCheckOnBoot: Coerce::strictBool($data['integrity_check_on_boot'] ?? null, true),
+            ipv6SubnetMask: Coerce::int($data['ipv6_subnet_mask'] ?? null, 64),
+            hotlinkProtection: Coerce::strictBool($data['hotlink_protection'] ?? null),
+            hotlinkAllowedDomains: Coerce::listOfString($data['hotlink_allowed_domains'] ?? null),
         );
-    }
-
-    /**
-     * @param array<array-key, mixed>|null $raw
-     * @param list<string>                 $default
-     * @return list<string>
-     */
-    private static function toStringList(?array $raw, array $default): array
-    {
-        if ($raw === null) {
-            return $default;
-        }
-
-        return array_values(array_map(
-            static fn(mixed $v): string => is_string($v) ? $v : (is_scalar($v) ? (string) $v : ''),
-            $raw,
-        ));
-    }
-
-    /**
-     * @param array<array-key, mixed>|null $raw
-     * @param list<int>                    $default
-     * @return list<int>
-     */
-    private static function toIntList(?array $raw, array $default): array
-    {
-        if ($raw === null) {
-            return $default;
-        }
-
-        return array_values(array_map(
-            static fn(mixed $v): int => is_int($v) ? $v : (is_numeric($v) ? (int) $v : 0),
-            $raw,
-        ));
     }
 }
