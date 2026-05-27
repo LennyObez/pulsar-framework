@@ -109,6 +109,7 @@ final readonly class StorybookRenderer
             $component = new ($story->componentClass)();
 
             if ($component instanceof EmbeddableComponent) {
+                /** @var mixed $value */
                 foreach ($story->props as $key => $value) {
                     $component->prop($key, $value);
                 }

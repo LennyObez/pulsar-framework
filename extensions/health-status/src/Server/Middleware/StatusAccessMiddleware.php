@@ -96,6 +96,7 @@ final class StatusAccessMiddleware implements MiddlewareInterface
         $serverParams = $request->getServerParams();
 
         if (array_key_exists('REMOTE_ADDR', $serverParams)) {
+            /** @var mixed $addr */
             $addr = $serverParams['REMOTE_ADDR'];
 
             return is_string($addr) ? $addr : '0.0.0.0';
