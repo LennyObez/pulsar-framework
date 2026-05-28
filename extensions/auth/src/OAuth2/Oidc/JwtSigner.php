@@ -12,6 +12,7 @@ use RuntimeException;
 use function base64_encode;
 use function count;
 use function explode;
+use function in_array;
 use function is_array;
 use function is_int;
 use function is_numeric;
@@ -183,7 +184,31 @@ final readonly class JwtSigner implements JwtSignerInterface
             }
         }
 
-        // aud: validated by the relying party (OIDC Core §3.1.3.7), not here.
+        // aud (RFC 7519 §4.1.3): when the `aud` claim is present, the principal
+        // verifying the token MUST be among its values, otherwise the token is
+        // rejected. For OP-issued, self-verified tokens that principal is the
+        // issuer URL — the OP both mints and consumes these. Skipping this check
+        // is the classic confused-deputy / token-redirect hole: a token minted
+        // for audience B would be silently accepted by verifier A.
+        //
+        // (RP-bound ID tokens, whose `aud` is the client_id, are verified
+        // elsewhere by JwksIdTokenVerifier against the client_id, not here.)
+        if ($this->config->issuer !== '' && isset($claims['aud'])) {
+            $aud = $claims['aud'];
+
+            if (is_string($aud)) {
+                if ($aud !== $this->config->issuer) {
+                    return false;
+                }
+            } elseif (is_array($aud)) {
+                if (!in_array($this->config->issuer, $aud, true)) {
+                    return false;
+                }
+            } else {
+                // Present but neither string nor array of strings → malformed.
+                return false;
+            }
+        }
 
         return true;
     }
