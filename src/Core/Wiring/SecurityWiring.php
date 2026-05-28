@@ -565,7 +565,10 @@ final readonly class SecurityWiring implements ServiceWiringInterface
         $environment = $configManager->environment();
 
         if ($configPath !== null && is_file($configPath . DIRECTORY_SEPARATOR . 'domains.php')) {
-            /** @psalm-suppress UnresolvableInclude */
+            /**
+             * @psalm-suppress UnresolvableInclude
+             * @var mixed $data
+             */
             $data = require $configPath . DIRECTORY_SEPARATOR . 'domains.php';
 
             if (is_array($data)) {

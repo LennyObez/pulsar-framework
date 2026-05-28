@@ -109,7 +109,10 @@ final class StudioExtension implements ExtensionInterface, PreBootExtensionInter
         }
 
         // Load Studio config
-        /** @psalm-suppress UnresolvableInclude Studio config path is validated by is_file() above */
+        /**
+         * @psalm-suppress UnresolvableInclude Studio config path is validated by is_file() above
+         * @var mixed $studioData
+         */
         $studioData = require $configPath . DIRECTORY_SEPARATOR . 'studio.php';
 
         if (!is_array($studioData)) {

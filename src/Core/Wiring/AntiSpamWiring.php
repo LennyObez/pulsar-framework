@@ -148,7 +148,10 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface
         $configPath = $configManager->configPath();
 
         if ($configPath !== null && is_file($configPath . DIRECTORY_SEPARATOR . 'anti-spam.php')) {
-            /** @psalm-suppress UnresolvableInclude */
+            /**
+             * @psalm-suppress UnresolvableInclude
+             * @var mixed $data
+             */
             $data = require $configPath . DIRECTORY_SEPARATOR . 'anti-spam.php';
 
             if (is_array($data)) {
