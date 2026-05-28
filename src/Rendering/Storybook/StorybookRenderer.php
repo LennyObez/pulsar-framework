@@ -106,7 +106,9 @@ final readonly class StorybookRenderer
         }
 
         try {
-            $component = new ($story->componentClass)();
+            /** @var class-string $componentClass */
+            $componentClass = $story->componentClass;
+            $component = new $componentClass();
 
             if ($component instanceof EmbeddableComponent) {
                 /** @var mixed $value */
