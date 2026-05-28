@@ -61,6 +61,13 @@ final class WebhookRetryTest extends TestCase
         $this->paymentGateway->method('verifyWebhookSignature')->willReturn(true);
 
         $this->webhookConnection->method('query')->willReturn(new Result([]));
+
+        // transaction() must actually run the callback (and propagate any
+        // exception it throws) so the handler's retry-on-failure path can be
+        // exercised. A bare stub would return null without invoking it.
+        $this->webhookConnection->method('transaction')->willReturnCallback(
+            fn(callable $callback): mixed => $callback($this->webhookConnection),
+        );
     }
 
     public function testRetryJobDispatchesRetryOnFailureWithIncrementedCount(): void
