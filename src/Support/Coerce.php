@@ -176,6 +176,16 @@ final class Coerce
     }
 
     /**
+     * Strict float: only an actual float returns; ints, numeric strings, and
+     * everything else fall back to default. Use when the config schema
+     * intentionally rejects loose typing (mirrors {@see strictInt}).
+     */
+    public static function strictFloat(mixed $value, float $default): float
+    {
+        return is_float($value) ? $value : $default;
+    }
+
+    /**
      * @param list<string> $default
      * @return list<string>
      */

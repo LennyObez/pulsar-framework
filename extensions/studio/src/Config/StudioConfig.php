@@ -7,6 +7,7 @@ namespace Pulsar\Extension\Studio\Config;
 use NoDiscard;
 use Pulsar\Api\Internal;
 use Pulsar\Config\Environment;
+use Pulsar\Support\Coerce;
 
 use function in_array;
 use function max;
@@ -63,7 +64,7 @@ final readonly class StudioConfig
         $samplingRateEnv = $environment->get('STUDIO_SAMPLING_RATE');
         $samplingRate = $samplingRateEnv !== null
             ? (float) $samplingRateEnv
-            : (float) ($data['sampling_rate'] ?? 1.0);
+            : Coerce::float($data['sampling_rate'] ?? null, 1.0);
 
         return new self(
             enabled: $enabled,
