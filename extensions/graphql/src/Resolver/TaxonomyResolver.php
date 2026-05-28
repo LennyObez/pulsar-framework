@@ -12,7 +12,7 @@ use Pulsar\Extension\Cms\Taxonomy\TaxonomyRepositoryInterface;
  * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class TaxonomyResolver
+readonly class TaxonomyResolver
 {
     public function __construct(
         private TaxonomyRepositoryInterface $taxonomyRepository,
