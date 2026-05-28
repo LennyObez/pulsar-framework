@@ -51,6 +51,7 @@ final readonly class BlobStorageAdapter implements StorageAdapterInterface
         $blobName = $this->buildBlobName($key);
         $url = $this->blobUrl($blobName);
 
+        /** @var array<string, string> $headers */
         $headers = $this->authHeaders();
         $headers['Content-Length'] = (string) strlen($content);
         $headers['x-ms-blob-type'] = 'BlockBlob';
