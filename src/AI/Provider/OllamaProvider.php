@@ -160,6 +160,7 @@ final readonly class OllamaProvider implements AiClientInterface
 
             $floats = [];
 
+            /** @var mixed $val */
             foreach ($values as $val) {
                 if (is_float($val) || is_int($val)) {
                     $floats[] = (float) $val;
