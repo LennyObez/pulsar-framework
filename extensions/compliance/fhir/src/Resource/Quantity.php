@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Fhir\Resource;
 
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * A measured amount (or an amount that can potentially be measured).
@@ -65,7 +66,7 @@ final readonly class Quantity
     public static function fromArray(array $data): self
     {
         return new self(
-            value: isset($data['value']) ? (float) $data['value'] : null,
+            value: Coerce::nullableFloat($data['value'] ?? null),
             comparator: $data['comparator'] ?? null,
             unit: $data['unit'] ?? null,
             system: $data['system'] ?? null,
