@@ -39,7 +39,7 @@ final readonly class StatusDetail
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $codeValue = Coerce::int($data['code'] ?? null, GrpcStatus::Unknown->value);
+        $codeValue = Coerce::strictInt($data['code'] ?? null, GrpcStatus::Unknown->value);
         $details = $data['details'] ?? null;
 
         return new self(
