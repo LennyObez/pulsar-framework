@@ -30,6 +30,8 @@ use Pulsar\Container\Container;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Container\Exception\ContainerException;
 use Pulsar\Container\Exception\NotFoundException;
+use Pulsar\Core\Controller\ControllerResolverInterface;
+use Pulsar\Core\Controller\ReflectionControllerResolver;
 use Pulsar\Core\Event\TerminateEvent;
 use Pulsar\Core\Wiring\AntiSpamWiring;
 use Pulsar\Core\Wiring\ApiWiring;
@@ -90,7 +92,6 @@ use Pulsar\Security\Crypto\HmacInterface;
 use Pulsar\Security\Crypto\KeyProviderInterface;
 use Random\Engine\Secure;
 use Random\Randomizer;
-use ReflectionClass;
 use ReflectionException;
 use ReflectionMethod;
 use ReflectionNamedType;
@@ -143,13 +144,17 @@ final class Kernel implements KernelInterface
     /** @var array<string, list<array{name: string, hasDefault: bool, default: mixed}>> */
     private array $handlerParamMap = [];
 
+    private readonly ControllerResolverInterface $controllerResolver;
+
     public function __construct(
         ?ContainerInterface $container = null,
         ?Router $router = null,
         ?ExtensionBootstrap $extensionBootstrap = null,
         ?ConfigManager $configManager = null,
+        ?ControllerResolverInterface $controllerResolver = null,
     ) {
         $this->container = $container ?? new Container();
+        $this->controllerResolver = $controllerResolver ?? new ReflectionControllerResolver($this->container);
         $this->router = $router ?? new Router();
         $this->middleware = new MiddlewarePipeline($this->container);
         $this->middlewareRegistry = new MiddlewareRegistry();
@@ -810,71 +815,7 @@ final class Kernel implements KernelInterface
      */
     private function resolveController(string $class): object
     {
-        if ($this->container->has($class)) {
-            /** @var object */
-            return $this->container->get($class);
-        }
-
-        // Autowire: resolve constructor dependencies from the container
-        try {
-            if (!class_exists($class)) {
-                throw RoutingException::invalidHandler($class . ': class does not exist');
-            }
-
-            $reflection = new ReflectionClass($class);
-
-            if (!$reflection->isInstantiable()) {
-                throw RoutingException::invalidHandler(
-                    $class . ' is not instantiable (abstract class or interface)',
-                );
-            }
-
-            $constructor = $reflection->getConstructor();
-
-            if ($constructor === null || $constructor->getNumberOfParameters() === 0) {
-                return new $class();
-            }
-
-            $args = [];
-
-            foreach ($constructor->getParameters() as $param) {
-                $type = $param->getType();
-
-                if ($type instanceof ReflectionNamedType && !$type->isBuiltin()) {
-                    $typeName = $type->getName();
-
-                    if ($this->container->has($typeName)) {
-                        $args = [...$args, $this->container->get($typeName)];
-
-                        continue;
-                    }
-                }
-
-                if ($param->isDefaultValueAvailable()) {
-                    $args = [...$args, $param->getDefaultValue()];
-
-                    continue;
-                }
-
-                if ($type instanceof ReflectionNamedType && $type->allowsNull()) {
-                    $args = [...$args, null];
-
-                    continue;
-                }
-
-                throw RoutingException::invalidHandler(
-                    $class . ': cannot resolve constructor parameter $' . $param->getName(),
-                );
-            }
-
-            return $reflection->newInstanceArgs($args);
-        } catch (RoutingException $e) {
-            throw $e;
-        } catch (ReflectionException) {
-            throw RoutingException::invalidHandler(
-                $class . ' (not registered in the container: required dependencies are unavailable)',
-            );
-        }
+        return $this->controllerResolver->resolve($class);
     }
 
     /**
