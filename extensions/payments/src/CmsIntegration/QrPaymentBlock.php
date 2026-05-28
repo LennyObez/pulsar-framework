@@ -159,6 +159,7 @@ final readonly class QrPaymentBlock implements BlockTypeInterface
             $errors[] = 'currency is required and must be a string';
         }
 
+        /** @var mixed $rawFormat */
         $rawFormat = $data['format'] ?? null;
         $format = is_string($rawFormat) ? $rawFormat : '';
 
