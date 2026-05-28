@@ -167,6 +167,7 @@ final class SharedMemoryConfigStore
             // Restrict deserialization to the explicit set of config DTO classes
             // that ConfigRepository contains. This prevents gadget-chain attacks
             // even if the HMAC key is compromised (defense in depth).
+            /** @var mixed $result */
             $result = unserialize($serialized, ['allowed_classes' => [
                 \Pulsar\Config\ConfigRepository::class,
                 \Pulsar\Config\AppConfig::class,

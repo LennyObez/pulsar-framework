@@ -150,6 +150,7 @@ final readonly class SesMailTransport implements TransportInterface
         /** @var list<array{Name: string, Value: string}> $tags */
         $tags = [];
 
+        /** @var mixed $value */
         foreach ($message->metadata as $key => $value) {
             $tags[] = ['Name' => $key, 'Value' => is_string($value) ? $value : (string) json_encode($value)];
         }

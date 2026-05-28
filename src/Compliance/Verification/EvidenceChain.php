@@ -163,6 +163,7 @@ final class EvidenceChain
         $totalPassRate = 0.0;
 
         foreach ($verificationRecords as $record) {
+            /** @var mixed $rawRate */
             $rawRate = $record->data['pass_rate'] ?? 0.0;
             $totalPassRate += is_numeric($rawRate) ? (float) $rawRate : 0.0;
         }

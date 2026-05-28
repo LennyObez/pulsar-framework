@@ -122,6 +122,7 @@ final class RedactionTestCommand extends Command
      */
     private function printPayload(OutputInterface $output, array $payload, string $indent): void
     {
+        /** @var mixed $value */
         foreach ($payload as $key => $value) {
             if (is_array($value)) {
                 $output->writeln(sprintf('%s%s:', $indent, $key));
