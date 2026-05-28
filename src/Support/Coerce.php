@@ -58,6 +58,18 @@ final class Coerce
         return is_int($value) ? $value : $default;
     }
 
+    /**
+     * Raw-input int coercion with PHP `(int)`-cast semantics for present
+     * values: an omitted key (passed as null) keeps the schema `$absentDefault`,
+     * but a key that is *present yet non-numeric* (e.g. `'invalid'`, `false`,
+     * `[]`) collapses to `0` rather than silently reverting to the default.
+     * This distinguishes "not configured" from "configured with garbage".
+     */
+    public static function intFromInput(mixed $value, int $absentDefault): int
+    {
+        return $value === null ? $absentDefault : self::int($value, 0);
+    }
+
     public static function string(mixed $value, string $default = ''): string
     {
         return is_string($value) ? $value : $default;
@@ -66,6 +78,16 @@ final class Coerce
     public static function nullableString(mixed $value): ?string
     {
         return is_string($value) ? $value : null;
+    }
+
+    /**
+     * Raw-input string counterpart to {@see intFromInput}: an omitted key (null)
+     * keeps `$absentDefault`; a value that is present but not a string collapses
+     * to the empty string `''` rather than reverting to the default.
+     */
+    public static function stringFromInput(mixed $value, string $absentDefault = ''): string
+    {
+        return $value === null ? $absentDefault : self::string($value, '');
     }
 
     /**
@@ -109,6 +131,15 @@ final class Coerce
     }
 
     /**
+     * Raw-input float counterpart to {@see intFromInput}: an omitted key (null)
+     * keeps `$absentDefault`; a present-but-non-numeric value collapses to `0.0`.
+     */
+    public static function floatFromInput(mixed $value, float $absentDefault): float
+    {
+        return $value === null ? $absentDefault : self::float($value, 0.0);
+    }
+
+    /**
      * @param list<string> $default
      * @return list<string>
      */
@@ -119,6 +150,28 @@ final class Coerce
         }
 
         return array_values(array_filter($value, is_string(...)));
+    }
+
+    /**
+     * Raw-input string-list coercion: scalars are wrapped (`'a'` → `['a']`),
+     * then every element that is not a non-empty string is dropped. Used for
+     * config lists of identifiers/IPs/names where blanks and wrong-typed
+     * entries are meaningless. An omitted key (null) yields an empty list.
+     *
+     * @return list<string>
+     */
+    public static function stringListFromInput(mixed $value): array
+    {
+        if ($value === null) {
+            return [];
+        }
+
+        $items = is_array($value) ? $value : [$value];
+
+        return array_values(array_filter(
+            $items,
+            static fn(mixed $v): bool => is_string($v) && $v !== '',
+        ));
     }
 
     /**

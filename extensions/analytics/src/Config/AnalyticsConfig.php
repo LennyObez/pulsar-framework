@@ -63,7 +63,7 @@ final readonly class AnalyticsConfig
         return new self(
             enabled: (bool) ($data['enabled'] ?? true),
             collectionDriver: Coerce::string($collection['driver'] ?? null, 'direct'),
-            trustedProxies: Coerce::listOfString($data['trusted_proxies'] ?? null),
+            trustedProxies: Coerce::stringListFromInput($data['trusted_proxies'] ?? null),
             privacy: PrivacyConfig::fromArray(is_array($privacy) ? $privacy : []),
             tracking: TrackingConfig::fromArray(is_array($tracking) ? $tracking : []),
             retention: RetentionConfig::fromArray(is_array($retention) ? $retention : []),
