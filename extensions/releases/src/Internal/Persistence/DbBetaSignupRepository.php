@@ -149,6 +149,7 @@ final readonly class DbBetaSignupRepository implements BetaSignupRepositoryInter
     private static function hydrate(Row $row): BetaSignup
     {
         $brandsJson = $row->getString('camera_brands');
+        /** @var mixed $decoded */
         $decoded = json_decode($brandsJson, true, flags: JSON_THROW_ON_ERROR);
 
         /** @var list<string> $cameraBrands */

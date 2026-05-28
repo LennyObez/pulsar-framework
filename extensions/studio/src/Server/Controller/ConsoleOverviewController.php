@@ -63,6 +63,7 @@ final readonly class ConsoleOverviewController
 
     private function parseWindow(ServerRequestInterface $request): int
     {
+        /** @var mixed $window */
         $window = $request->getAttribute('_query_window');
 
         return match ($window) {
