@@ -315,6 +315,7 @@ final readonly class AppStoreVerifier implements SubscriptionVerifierInterface
                 return [];
             }
 
+            /** @var mixed $decoded */
             $decoded = json_decode($payloadJson, true, 32, JSON_THROW_ON_ERROR);
 
             /** @var array<string, mixed> $decoded */
