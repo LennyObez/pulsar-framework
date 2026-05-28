@@ -90,7 +90,9 @@ final readonly class FormSubmissionController
         );
 
         try {
-            $this->formService->submit($formData, $meta);
+            /** @var array{_csrf_token?: string, ip?: string, user_agent?: string, form_block_id?: string, content_id?: string, tenant_id?: string|null} $submitMeta */
+            $submitMeta = $meta;
+            $this->formService->submit($formData, $submitMeta);
 
             return Response::redirect($redirectUrl, 303)
                 ->withHeader('X-Form-Status', 'success');
