@@ -76,11 +76,14 @@ final class FromSchemaCommandTest extends TestCase
         $command = new FromSchemaCommand($this->introspector, $this->snapshotStore);
 
         $input = $this->createStub(InputInterface::class);
-        $input->method('getOption')->willReturnMap([
-            ['path', 'src', 'src'],
-            ['namespace', 'App\\Entity', 'App\\Entity'],
-            ['table', null, null],
-        ]);
+        $input->method('getStringOption')->willReturnCallback(
+            static fn(string $name, string $default = ''): string => match ($name) {
+                'path' => 'src',
+                'namespace' => 'App\\Entity',
+                default => $default,
+            },
+        );
+        $input->method('getNullableStringOption')->willReturn(null);
         $input->method('hasOption')->willReturn(false);
 
         $output = $this->createMock(OutputInterface::class);
@@ -99,11 +102,14 @@ final class FromSchemaCommandTest extends TestCase
         $command = new FromSchemaCommand($this->introspector, $this->snapshotStore);
 
         $input = $this->createStub(InputInterface::class);
-        $input->method('getOption')->willReturnMap([
-            ['path', 'src', 'src'],
-            ['namespace', 'App\\Entity', 'App\\Entity'],
-            ['table', null, 'nonexistent'],
-        ]);
+        $input->method('getStringOption')->willReturnCallback(
+            static fn(string $name, string $default = ''): string => match ($name) {
+                'path' => 'src',
+                'namespace' => 'App\\Entity',
+                default => $default,
+            },
+        );
+        $input->method('getNullableStringOption')->willReturn('nonexistent');
         $input->method('hasOption')->willReturn(false);
 
         $output = $this->createMock(OutputInterface::class);
@@ -131,11 +137,14 @@ final class FromSchemaCommandTest extends TestCase
         $command = new FromSchemaCommand($this->introspector, $store);
 
         $input = $this->createStub(InputInterface::class);
-        $input->method('getOption')->willReturnMap([
-            ['path', 'src', $this->tempDir],
-            ['namespace', 'App\\Entity', 'App\\Entity'],
-            ['table', null, null],
-        ]);
+        $input->method('getStringOption')->willReturnCallback(
+            fn(string $name, string $default = ''): string => match ($name) {
+                'path' => $this->tempDir,
+                'namespace' => 'App\\Entity',
+                default => $default,
+            },
+        );
+        $input->method('getNullableStringOption')->willReturn(null);
         $input->method('hasOption')->willReturn(false);
 
         $output = $this->createStub(OutputInterface::class);
@@ -190,11 +199,14 @@ final class FromSchemaCommandTest extends TestCase
         $command = new FromSchemaCommand($this->introspector, $store);
 
         $input = $this->createStub(InputInterface::class);
-        $input->method('getOption')->willReturnMap([
-            ['path', 'src', $this->tempDir],
-            ['namespace', 'App\\Entity', 'App\\Entity'],
-            ['table', null, null],
-        ]);
+        $input->method('getStringOption')->willReturnCallback(
+            fn(string $name, string $default = ''): string => match ($name) {
+                'path' => $this->tempDir,
+                'namespace' => 'App\\Entity',
+                default => $default,
+            },
+        );
+        $input->method('getNullableStringOption')->willReturn(null);
         $input->method('hasOption')->willReturn(false);
 
         $output = $this->createMock(OutputInterface::class);
@@ -229,11 +241,14 @@ final class FromSchemaCommandTest extends TestCase
         $command = new FromSchemaCommand($this->introspector, $this->snapshotStore);
 
         $input = $this->createStub(InputInterface::class);
-        $input->method('getOption')->willReturnMap([
-            ['path', 'src', $this->tempDir],
-            ['namespace', 'App\\Entity', 'App\\Entity'],
-            ['table', null, 'users'],
-        ]);
+        $input->method('getStringOption')->willReturnCallback(
+            fn(string $name, string $default = ''): string => match ($name) {
+                'path' => $this->tempDir,
+                'namespace' => 'App\\Entity',
+                default => $default,
+            },
+        );
+        $input->method('getNullableStringOption')->willReturn('users');
         $input->method('hasOption')->willReturn(false);
 
         $output = $this->createStub(OutputInterface::class);
@@ -265,11 +280,14 @@ final class FromSchemaCommandTest extends TestCase
         file_put_contents($entityDir . DIRECTORY_SEPARATOR . 'Users.json', '{"original":true}');
 
         $input = $this->createStub(InputInterface::class);
-        $input->method('getOption')->willReturnMap([
-            ['path', 'src', $this->tempDir],
-            ['namespace', 'App\\Entity', 'App\\Entity'],
-            ['table', null, null],
-        ]);
+        $input->method('getStringOption')->willReturnCallback(
+            fn(string $name, string $default = ''): string => match ($name) {
+                'path' => $this->tempDir,
+                'namespace' => 'App\\Entity',
+                default => $default,
+            },
+        );
+        $input->method('getNullableStringOption')->willReturn(null);
         $input->method('hasOption')->willReturn(false);
 
         $output = $this->createMock(OutputInterface::class);
@@ -303,11 +321,14 @@ final class FromSchemaCommandTest extends TestCase
         file_put_contents($entityDir . DIRECTORY_SEPARATOR . 'Users.json', '{"original":true}');
 
         $input = $this->createStub(InputInterface::class);
-        $input->method('getOption')->willReturnMap([
-            ['path', 'src', $this->tempDir],
-            ['namespace', 'App\\Entity', 'App\\Entity'],
-            ['table', null, null],
-        ]);
+        $input->method('getStringOption')->willReturnCallback(
+            fn(string $name, string $default = ''): string => match ($name) {
+                'path' => $this->tempDir,
+                'namespace' => 'App\\Entity',
+                default => $default,
+            },
+        );
+        $input->method('getNullableStringOption')->willReturn(null);
         $input->method('hasOption')->willReturnCallback(
             static fn(string $name): bool => $name === 'force',
         );
@@ -339,11 +360,14 @@ final class FromSchemaCommandTest extends TestCase
         $command = new FromSchemaCommand($this->introspector, $this->snapshotStore);
 
         $input = $this->createStub(InputInterface::class);
-        $input->method('getOption')->willReturnMap([
-            ['path', 'src', $this->tempDir],
-            ['namespace', 'App\\Entity', 'App\\Entity'],
-            ['table', null, null],
-        ]);
+        $input->method('getStringOption')->willReturnCallback(
+            fn(string $name, string $default = ''): string => match ($name) {
+                'path' => $this->tempDir,
+                'namespace' => 'App\\Entity',
+                default => $default,
+            },
+        );
+        $input->method('getNullableStringOption')->willReturn(null);
         $input->method('hasOption')->willReturn(false);
 
         $output = $this->createMock(OutputInterface::class);
@@ -372,11 +396,14 @@ final class FromSchemaCommandTest extends TestCase
         self::assertDirectoryDoesNotExist($entityDir);
 
         $input = $this->createStub(InputInterface::class);
-        $input->method('getOption')->willReturnMap([
-            ['path', 'src', $this->tempDir],
-            ['namespace', 'App\\Entity', 'App\\Entity'],
-            ['table', null, null],
-        ]);
+        $input->method('getStringOption')->willReturnCallback(
+            fn(string $name, string $default = ''): string => match ($name) {
+                'path' => $this->tempDir,
+                'namespace' => 'App\\Entity',
+                default => $default,
+            },
+        );
+        $input->method('getNullableStringOption')->willReturn(null);
         $input->method('hasOption')->willReturn(false);
 
         $output = $this->createStub(OutputInterface::class);
