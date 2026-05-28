@@ -77,7 +77,7 @@ final class TrackingServiceTest extends TestCase
             pageViewRepository: $this->pageViewRepo,
             eventRepository: $this->eventRepo,
             siteRepository: $this->siteRepo,
-            config: $config ?? new AnalyticsConfig(),
+            config: $config ?? new AnalyticsConfig(privacy: new PrivacyConfig(requireConsent: false)),
             consentManager: $consentManager,
         );
     }
@@ -146,7 +146,7 @@ final class TrackingServiceTest extends TestCase
             $pageViewRepo,
             $this->eventRepo,
             $this->siteRepo,
-            new AnalyticsConfig(),
+            new AnalyticsConfig(privacy: new PrivacyConfig(requireConsent: false)),
         );
 
         $svc->trackPageView($request, ['url' => '']);
@@ -170,7 +170,7 @@ final class TrackingServiceTest extends TestCase
             $pageViewRepo,
             $this->eventRepo,
             $this->siteRepo,
-            new AnalyticsConfig(),
+            new AnalyticsConfig(privacy: new PrivacyConfig(requireConsent: false)),
         );
 
         $request = $this->createRequest();
@@ -193,7 +193,7 @@ final class TrackingServiceTest extends TestCase
             $pageViewRepo,
             $this->eventRepo,
             $this->siteRepo,
-            new AnalyticsConfig(),
+            new AnalyticsConfig(privacy: new PrivacyConfig(requireConsent: false)),
         );
 
         // Use a real bot user agent that the BotDetector recognizes
@@ -359,7 +359,7 @@ final class TrackingServiceTest extends TestCase
             $pageViewRepo,
             $this->eventRepo,
             $this->siteRepo,
-            new AnalyticsConfig(),
+            new AnalyticsConfig(privacy: new PrivacyConfig(requireConsent: false)),
         );
 
         $request = $this->createRequest(
@@ -394,7 +394,7 @@ final class TrackingServiceTest extends TestCase
             $pageViewRepo,
             $this->eventRepo,
             $this->siteRepo,
-            new AnalyticsConfig(),
+            new AnalyticsConfig(privacy: new PrivacyConfig(requireConsent: false)),
         );
 
         $request = $this->createRequest(
@@ -430,7 +430,7 @@ final class TrackingServiceTest extends TestCase
             $pageViewRepo,
             $this->eventRepo,
             $this->siteRepo,
-            new AnalyticsConfig(),
+            new AnalyticsConfig(privacy: new PrivacyConfig(requireConsent: false)),
         );
 
         $request = $this->createRequest(
@@ -495,7 +495,7 @@ final class TrackingServiceTest extends TestCase
             $this->pageViewRepo,
             $eventRepo,
             $this->siteRepo,
-            new AnalyticsConfig(),
+            new AnalyticsConfig(privacy: new PrivacyConfig(requireConsent: false)),
         );
 
         $request = $this->createRequest(
@@ -529,7 +529,7 @@ final class TrackingServiceTest extends TestCase
             $this->pageViewRepo,
             $eventRepo,
             $this->siteRepo,
-            new AnalyticsConfig(),
+            new AnalyticsConfig(privacy: new PrivacyConfig(requireConsent: false)),
         );
 
         $request = $this->createRequest(
@@ -565,7 +565,7 @@ final class TrackingServiceTest extends TestCase
             $this->pageViewRepo,
             $eventRepo,
             $this->siteRepo,
-            new AnalyticsConfig(),
+            new AnalyticsConfig(privacy: new PrivacyConfig(requireConsent: false)),
         );
 
         $request = $this->createRequest(
@@ -602,7 +602,7 @@ final class TrackingServiceTest extends TestCase
             $this->pageViewRepo,
             $eventRepo,
             $this->siteRepo,
-            new AnalyticsConfig(),
+            new AnalyticsConfig(privacy: new PrivacyConfig(requireConsent: false)),
         );
 
         $request = $this->createRequest(
@@ -633,7 +633,7 @@ final class TrackingServiceTest extends TestCase
             $this->pageViewRepo,
             $eventRepo,
             $this->siteRepo,
-            new AnalyticsConfig(),
+            new AnalyticsConfig(privacy: new PrivacyConfig(requireConsent: false)),
         );
 
         // Use a real bot user agent that the BotDetector recognizes
@@ -701,7 +701,7 @@ final class TrackingServiceTest extends TestCase
             $pageViewRepo,
             $this->eventRepo,
             $this->siteRepo,
-            new AnalyticsConfig(),
+            new AnalyticsConfig(privacy: new PrivacyConfig(requireConsent: false)),
         );
 
         $request = $this->createRequest(
@@ -734,7 +734,7 @@ final class TrackingServiceTest extends TestCase
             $pageViewRepo,
             $this->eventRepo,
             $this->siteRepo,
-            new AnalyticsConfig(),
+            new AnalyticsConfig(privacy: new PrivacyConfig(requireConsent: false)),
         );
 
         $request = $this->createRequest(
@@ -767,7 +767,7 @@ final class TrackingServiceTest extends TestCase
             $this->pageViewRepo,
             $eventRepo,
             $this->siteRepo,
-            new AnalyticsConfig(),
+            new AnalyticsConfig(privacy: new PrivacyConfig(requireConsent: false)),
         );
 
         $request = $this->createRequest(
