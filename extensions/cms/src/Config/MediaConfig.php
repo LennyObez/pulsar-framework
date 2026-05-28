@@ -100,7 +100,7 @@ final readonly class MediaConfig
         return new self(
             disk: Coerce::string($data['disk'] ?? null, 'local'),
             maxUploadSize: Coerce::int($data['max_upload_size'] ?? null, 52_428_800),
-            allowedMimeTypes: Coerce::listOfString($data['allowed_mime_types'] ?? null, [
+            allowedMimeTypes: Coerce::stringListOrEmpty($data['allowed_mime_types'] ?? null, [
                 'image/jpeg',
                 'image/png',
                 'image/webp',
@@ -109,7 +109,7 @@ final readonly class MediaConfig
                 'image/svg+xml',
                 'application/pdf',
             ]),
-            allowedExtensions: Coerce::listOfString($data['allowed_extensions'] ?? null, [
+            allowedExtensions: Coerce::stringListOrEmpty($data['allowed_extensions'] ?? null, [
                 'jpg', 'jpeg', 'png', 'webp', 'avif', 'gif', 'svg', 'pdf',
             ]),
             maxImageWidth: Coerce::int($data['max_image_width'] ?? null, 16384),

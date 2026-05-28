@@ -46,7 +46,7 @@ final readonly class FormsConfig
         return new self(
             spamThreshold: Coerce::float($data['spam_threshold'] ?? null, 5.0),
             rateLimitPerHour: Coerce::int($data['rate_limit_per_hour'] ?? null, 10),
-            notificationRecipients: Coerce::listOfString($data['notification_recipients'] ?? null),
+            notificationRecipients: Coerce::stringListOrEmpty($data['notification_recipients'] ?? null),
             honeypotFieldName: Coerce::string($data['honeypot_field_name'] ?? null, '_hp_field'),
             powDifficulty: Coerce::string($data['pow_difficulty'] ?? null, '0000'),
         );

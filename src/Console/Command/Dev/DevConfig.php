@@ -6,6 +6,7 @@ namespace Pulsar\Console\Command\Dev;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 use function in_array;
 use function is_int;
@@ -85,7 +86,7 @@ final readonly class DevConfig
             mailpitWebPort: self::validPort($data['mailpit_web_port'] ?? null, 8025),
             memoryLimit: $data['memory_limit'] ?? 512,
             xdebug: $data['xdebug'] ?? true,
-            phpExtensions: $data['php_extensions'] ?? [],
+            phpExtensions: Coerce::stringListFromInput($data['php_extensions'] ?? null),
             projectName: $data['project_name'] ?? 'pulsar',
         );
     }
