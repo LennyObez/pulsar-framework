@@ -124,6 +124,7 @@ final class SchemaInferrer
     private function inferPropertySchema(ReflectionProperty $property): array
     {
         $type = $property->getType();
+        /** @var array<string, mixed> $schema */
         $schema = $this->typeToSchema($type);
 
         // Apply ApiField compliance metadata
