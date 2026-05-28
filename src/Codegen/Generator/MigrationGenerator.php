@@ -280,6 +280,7 @@ final class MigrationGenerator extends AbstractGenerator
      */
     private function meta(SchemaOperation $op, string $key, string $default): string
     {
+        /** @var mixed $value */
         $value = $op->metadata[$key] ?? null;
 
         return is_string($value) ? $value : $default;
