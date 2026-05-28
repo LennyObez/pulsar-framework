@@ -670,6 +670,7 @@ final readonly class PaymentsAccountSectionProvider implements AccountSectionPro
      */
     private function extractPage(array $params): int
     {
+        /** @var mixed $page */
         $page = $params['page'] ?? 1;
 
         if (is_int($page) && $page >= 1) {

@@ -44,6 +44,7 @@ final readonly class ParametersHasher
     {
         ksort($array);
 
+        /** @var mixed $value */
         foreach ($array as &$value) {
             if (is_array($value)) {
                 /** @var array<string, mixed> $value */

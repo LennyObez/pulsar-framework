@@ -162,6 +162,7 @@ final readonly class KlarnaGateway implements PaymentProviderInterface
      */
     private function resolveKlarnaCategory(array $metadata): string
     {
+        /** @var mixed $requested */
         $requested = $metadata['klarna_category'] ?? null;
 
         if (is_string($requested)) {
