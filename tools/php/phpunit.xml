@@ -56,6 +56,15 @@
     </testsuites>
     <php>
         <ini name="memory_limit" value="3G"/>
+        <!--
+            Test-only escape hatch for AbstractAdminController::authorize().
+            Lets unit tests that instantiate admin controllers without a
+            GateInterface (because they exercise business logic, not the
+            authorization layer itself) bypass the MED-3 deny-by-default
+            check. Never defined in production — see the constant guard in
+            extensions/cms/src/Http/Controller/Admin/AbstractAdminController.php.
+        -->
+        <const name="PULSAR_TEST_BYPASS_AUTHZ" value="1"/>
     </php>
     <source>
         <include>

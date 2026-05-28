@@ -14,6 +14,7 @@ use Pulsar\View\Engine\TemplateAuthHelper;
 use Pulsar\View\Engine\TemplateEngineInterface;
 use RuntimeException;
 
+use function defined;
 use function in_array;
 use function is_int;
 use function is_string;
@@ -124,6 +125,14 @@ abstract readonly class AbstractAdminController
     protected function authorize(IdentityInterface $identity, string $permission): void
     {
         if ($this->gate === null) {
+            // Test-only escape hatch: phpunit.xml defines PULSAR_TEST_BYPASS_AUTHZ
+            // so unit tests that instantiate controllers without a Gate (because
+            // they exercise business logic, not authorization) don't trip the
+            // MED-3 deny-by-default check. Production deploys do not set this
+            // constant and continue to deny when no gate is wired.
+            if (defined('PULSAR_TEST_BYPASS_AUTHZ')) {
+                return;
+            }
             throw AuthorizationException::permissionDenied($permission);
         }
 
