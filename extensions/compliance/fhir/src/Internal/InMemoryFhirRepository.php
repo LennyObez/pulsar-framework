@@ -11,11 +11,9 @@ use Pulsar\Extension\Fhir\Rest\FhirRepositoryInterface;
 
 use function array_key_exists;
 use function bin2hex;
-use function is_array;
 use function is_string;
 use function random_bytes;
-use function str_contains;
-use function strtolower;
+use function str_starts_with;
 
 /**
  * In-memory FHIR resource repository for testing and development.
@@ -47,7 +45,7 @@ final class InMemoryFhirRepository implements FhirRepositoryInterface
                 continue;
             }
 
-            if ($this->matchesParameters($resource, $parameters)) {
+            if (FhirSearchMatcher::matches($resource, $parameters)) {
                 $results[] = $resource;
             }
         }
@@ -94,70 +92,6 @@ final class InMemoryFhirRepository implements FhirRepositoryInterface
         unset($this->resources[$key]);
 
         return true;
-    }
-
-    /**
-     * @param array<string, mixed>  $resource
-     * @param array<string, string> $parameters
-     */
-    private function matchesParameters(array $resource, array $parameters): bool
-    {
-        foreach ($parameters as $param => $value) {
-            // Handle FHIR system parameters
-            if ($param === '_id') {
-                if (($resource['id'] ?? '') !== $value) {
-                    return false;
-                }
-                continue;
-            }
-
-            if ($param === '_lastUpdated') {
-                /** @var array<string, mixed> $meta */
-                $meta = $resource['meta'] ?? [];
-                /** @var mixed $rawLastUpdated */
-                $rawLastUpdated = $meta['lastUpdated'] ?? null;
-                $lastUpdated = is_string($rawLastUpdated) ? $rawLastUpdated : '';
-                if (!str_contains($lastUpdated, $value)) {
-                    return false;
-                }
-                continue;
-            }
-
-            // Handle dotted paths (e.g. subject.reference)
-            /** @var mixed $fieldValue */
-            $fieldValue = $this->resolveField($resource, $param);
-            if ($fieldValue === null) {
-                return false;
-            }
-
-            if (is_string($fieldValue) && strtolower($fieldValue) !== strtolower($value)) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    /**
-     * Resolve a dotted field path in the resource.
-     *
-     * @param array<string, mixed> $resource
-     */
-    private function resolveField(array $resource, string $path): mixed
-    {
-        $parts = explode('.', $path);
-        /** @var mixed $current */
-        $current = $resource;
-
-        foreach ($parts as $part) {
-            if (!is_array($current) || !array_key_exists($part, $current)) {
-                return null;
-            }
-            /** @var mixed $current */
-            $current = $current[$part];
-        }
-
-        return $current;
     }
 
     /**
