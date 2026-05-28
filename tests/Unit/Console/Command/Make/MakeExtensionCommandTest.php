@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Console\Command\Make\MakeExtensionCommand;
 use Pulsar\Console\ExitCode;
-use Pulsar\Console\InputInterface;
+use Pulsar\Console\Input\ArrayInput;
 use Pulsar\Console\OutputInterface;
 
 #[CoversClass(MakeExtensionCommand::class)]
@@ -41,8 +41,7 @@ final class MakeExtensionCommandTest extends TestCase
     {
         $command = new MakeExtensionCommand();
 
-        $input = $this->createStub(InputInterface::class);
-        $input->method('getArgument')->willReturn(null);
+        $input = new ArrayInput(null, [], []);
 
         $output = $this->createMock(OutputInterface::class);
         $output->expects(self::atLeastOnce())->method('errorln');
@@ -60,13 +59,7 @@ final class MakeExtensionCommandTest extends TestCase
 
         mkdir($this->tempDir . DIRECTORY_SEPARATOR . 'extensions', 0o755, true);
 
-        $input = $this->createStub(InputInterface::class);
-        $input->method('getArgument')->willReturn('my-widget');
-        $input->method('getOption')->willReturnMap([
-            ['vendor', 'acme', 'acme'],
-            ['path', 'extensions', 'extensions'],
-        ]);
-        $input->method('hasOption')->willReturn(false);
+        $input = new ArrayInput(null, ['my-widget'], ['vendor' => 'acme', 'path' => 'extensions']);
 
         $output = $this->createStub(OutputInterface::class);
 
@@ -100,13 +93,7 @@ final class MakeExtensionCommandTest extends TestCase
         $extPath = $this->tempDir . DIRECTORY_SEPARATOR . 'extensions' . DIRECTORY_SEPARATOR . 'my-widget';
         mkdir($extPath, 0o755, true);
 
-        $input = $this->createStub(InputInterface::class);
-        $input->method('getArgument')->willReturn('my-widget');
-        $input->method('getOption')->willReturnMap([
-            ['vendor', 'acme', 'acme'],
-            ['path', 'extensions', 'extensions'],
-        ]);
-        $input->method('hasOption')->willReturn(false);
+        $input = new ArrayInput(null, ['my-widget'], ['vendor' => 'acme', 'path' => 'extensions']);
 
         $output = $this->createMock(OutputInterface::class);
         $output->expects(self::atLeastOnce())->method('errorln');
