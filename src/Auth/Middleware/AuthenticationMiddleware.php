@@ -39,6 +39,7 @@ final readonly class AuthenticationMiddleware implements MiddlewareInterface
         $request = $request->withAttribute('_security_context', $securityContext);
 
         // Preserve an already-authenticated identity (e.g. dev router injection)
+        /** @var mixed $existing */
         $existing = $request->getAttribute('identity');
 
         if ($existing instanceof IdentityInterface && $existing->isAuthenticated()) {

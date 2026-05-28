@@ -128,6 +128,7 @@ final readonly class ApiVersionResolver implements MiddlewareInterface
     private function fromQueryParam(ServerRequestInterface $request): ?string
     {
         $params = $request->getQueryParams();
+        /** @var mixed $value */
         $value = $params[$this->queryParam] ?? null;
 
         if ($value === null || $value === '') {

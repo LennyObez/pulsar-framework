@@ -56,6 +56,7 @@ final readonly class LevelOfAssuranceMiddleware implements MiddlewareInterface
     public static function resolveLevel(ServerRequestInterface $request): LevelOfAssurance
     {
         // Explicit LoA override (e.g., from hardware token guard)
+        /** @var mixed $explicit */
         $explicit = $request->getAttribute('_loa_high');
 
         if ($explicit === true) {
