@@ -109,6 +109,7 @@ final class DebugConfigCommand extends Command
                 continue;
             }
 
+            /** @var mixed $value */
             $value = $property->getValue($dto);
             $rows[] = [
                 $name,
