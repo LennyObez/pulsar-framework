@@ -47,6 +47,7 @@ final class ConfigCache
     {
         $path = $cachePath . DIRECTORY_SEPARATOR . self::FILENAME;
 
+        /** @var mixed $result */
         $result = $this->integrity->readEnvelope($path, $allowedClasses);
 
         if ($result instanceof ConfigRepository) {
