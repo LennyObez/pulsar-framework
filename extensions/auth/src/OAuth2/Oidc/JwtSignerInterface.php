@@ -23,11 +23,14 @@ interface JwtSignerInterface
     public function sign(array $claims, string $keyId): string;
 
     /**
-     * Verify a JWT signature.
+     * Verify a JWT signature and claims.
      *
      * @param string $jwt The JWT string to verify
      * @param string $keyId The key identifier for verification
+     * @param string|null $expectedAudience When provided, the token's `aud` claim
+     *        (if present) must contain this value (RFC 7519 §4.1.3); when null,
+     *        `aud` is not constrained here and is validated by the relying party.
      * @return array<string, mixed>|null The decoded claims, or null if verification fails
      */
-    public function verify(string $jwt, string $keyId): ?array;
+    public function verify(string $jwt, string $keyId, ?string $expectedAudience = null): ?array;
 }
