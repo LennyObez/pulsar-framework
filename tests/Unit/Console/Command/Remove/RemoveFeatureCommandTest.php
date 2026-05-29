@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Console\Command\Remove\RemoveFeatureCommand;
 use Pulsar\Console\ExitCode;
-use Pulsar\Console\InputInterface;
+use Pulsar\Console\Input\ArrayInput;
 use Pulsar\Console\OutputInterface;
 
 #[CoversClass(RemoveFeatureCommand::class)]
@@ -41,8 +41,7 @@ final class RemoveFeatureCommandTest extends TestCase
     {
         $command = new RemoveFeatureCommand();
 
-        $input = $this->createStub(InputInterface::class);
-        $input->method('getArgument')->willReturn(null);
+        $input = new ArrayInput(null, [], []);
 
         $output = $this->createMock(OutputInterface::class);
         $output->expects(self::atLeastOnce())->method('errorln');
@@ -55,11 +54,7 @@ final class RemoveFeatureCommandTest extends TestCase
     {
         $command = new RemoveFeatureCommand();
 
-        $input = $this->createStub(InputInterface::class);
-        $input->method('getArgument')->willReturn('CreateOrder');
-        $input->method('getOption')->willReturnMap([
-            ['module', null, null],
-        ]);
+        $input = new ArrayInput(null, ['CreateOrder'], []);
 
         $output = $this->createMock(OutputInterface::class);
         $output->expects(self::atLeastOnce())->method('errorln');
@@ -80,13 +75,11 @@ final class RemoveFeatureCommandTest extends TestCase
 
         $command = new RemoveFeatureCommand();
 
-        $input = $this->createStub(InputInterface::class);
-        $input->method('getArgument')->willReturn('CreateOrder');
-        $input->method('getOption')->willReturnMap([
-            ['module', null, 'Billing'],
-            ['path', 'app/Modules', 'app/Modules'],
+        $input = new ArrayInput(null, ['CreateOrder'], [
+            'module' => 'Billing',
+            'path' => 'app/Modules',
+            'force' => true,
         ]);
-        $input->method('hasOption')->willReturnCallback(fn(string $name): bool => $name === 'force');
 
         $output = $this->createStub(OutputInterface::class);
 
