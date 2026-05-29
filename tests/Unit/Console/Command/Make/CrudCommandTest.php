@@ -15,6 +15,7 @@ use Pulsar\Codegen\Schema\EntityDefinition;
 use Pulsar\Codegen\Schema\PropertyDefinition;
 use Pulsar\Console\Command\Make\CrudCommand;
 use Pulsar\Console\ExitCode;
+use Pulsar\Console\Input\ArrayInput;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 
@@ -142,16 +143,11 @@ final class CrudCommandTest extends TestCase
             'admin' => $gen2,
         ]);
 
-        $input = $this->createStub(InputInterface::class);
-        $input->method('getArgument')->willReturn('User');
-        $input->method('getOption')->willReturnMap([
-            ['path', 'src', 'src'],
-            ['namespace', 'App', 'App'],
-            ['skip', '', 'admin'],
+        $input = new ArrayInput(null, ['User'], [
+            'path' => 'src',
+            'namespace' => 'App',
+            'skip' => 'admin',
         ]);
-        $input->method('hasOption')->willReturnCallback(
-            static fn(string $name): bool => $name !== 'force',
-        );
 
         $output = $this->createStub(OutputInterface::class);
 
@@ -178,16 +174,11 @@ final class CrudCommandTest extends TestCase
             'policy' => $gen3,
         ]);
 
-        $input = $this->createStub(InputInterface::class);
-        $input->method('getArgument')->willReturn('User');
-        $input->method('getOption')->willReturnMap([
-            ['path', 'src', 'src'],
-            ['namespace', 'App', 'App'],
-            ['skip', '', 'admin,form'],
+        $input = new ArrayInput(null, ['User'], [
+            'path' => 'src',
+            'namespace' => 'App',
+            'skip' => 'admin,form',
         ]);
-        $input->method('hasOption')->willReturnCallback(
-            static fn(string $name): bool => $name !== 'force',
-        );
 
         $output = $this->createStub(OutputInterface::class);
 
