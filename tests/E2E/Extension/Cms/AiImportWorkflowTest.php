@@ -97,6 +97,7 @@ final class AiImportWorkflowTest extends TestCase
             'menus' => [
                 [
                     'id' => 'm-main',
+                    'location' => 'primary',
                     'name' => 'Main Navigation',
                     'items' => [
                         ['label' => 'Home', 'content_ref' => 'content_ref:c-home'],
@@ -106,6 +107,7 @@ final class AiImportWorkflowTest extends TestCase
                 ],
                 [
                     'id' => 'm-footer',
+                    'location' => 'footer',
                     'name' => 'Footer Navigation',
                     'items' => [
                         ['label' => 'Privacy', 'content_ref' => 'content_ref:c-about'],
