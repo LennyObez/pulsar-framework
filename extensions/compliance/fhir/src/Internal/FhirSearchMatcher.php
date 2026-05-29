@@ -75,7 +75,6 @@ final class FhirSearchMatcher
     private static function resolveField(array $resource, string $path): mixed
     {
         $parts = explode('.', $path);
-        /** @var mixed $current */
         $current = $resource;
 
         foreach ($parts as $part) {

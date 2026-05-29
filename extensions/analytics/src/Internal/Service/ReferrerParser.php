@@ -97,11 +97,8 @@ final readonly class ReferrerParser
         if ($queryString !== '') {
             parse_str($queryString, $queryParams);
             if (isset($queryParams['utm_source']) && $queryParams['utm_source'] !== '') {
-                /** @var mixed $utmSource */
                 $utmSource = $queryParams['utm_source'];
-                /** @var mixed $utmMedium */
                 $utmMedium = $queryParams['utm_medium'] ?? '';
-                /** @var mixed $utmCampaign */
                 $utmCampaign = $queryParams['utm_campaign'] ?? '';
 
                 return ReferrerSource::fromUtm(
