@@ -795,7 +795,12 @@ final readonly class SiteDefinitionParser
         foreach ($menusByLocation as $location => $localeEntries) {
             $firstEntry = $localeEntries[0];
             $importId = self::asNullableString($firstEntry, 'import_id');
-            $existingMenu = $this->menuRepository->findByLocation($location, self::asString($firstEntry, 'locale', 'en'));
+            // Idempotent import: when an import_id is present it is the natural
+            // key (per the class contract and the taxonomy/content paths); fall
+            // back to the location key for entries imported without an import_id.
+            $existingMenu = $importId !== null
+                ? $this->menuRepository->findByImportId($importId)
+                : $this->menuRepository->findByLocation($location, self::asString($firstEntry, 'locale', 'en'));
 
             if ($existingMenu !== null) {
                 $menuId = $existingMenu->id;
