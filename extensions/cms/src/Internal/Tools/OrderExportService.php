@@ -250,15 +250,14 @@ final readonly class OrderExportService implements OrderExportServiceInterface
     private function sanitizeFiltersForLog(array $filters): array
     {
         /** @var array<string, mixed> $safe */
-        /** @var array<string, mixed> $safe */
         $safe = [];
 
         /** @var mixed $value */
         foreach ($filters as $key => $value) {
             if ($key === 'customerId' || $key === 'tenantId') {
-                $safe[$key] = '[present]';
+                $safe = [...$safe, $key => '[present]'];
             } else {
-                $safe[$key] = $value;
+                $safe = [...$safe, $key => $value];
             }
         }
 

@@ -128,11 +128,11 @@ final readonly class ShowcaseGridRenderer
             $json = $field['value_json'];
 
             if (is_string($json) && $json !== '') {
-                $values[$field['key']] = json_decode($json, true, flags: JSON_THROW_ON_ERROR);
+                $values = [...$values, $field['key'] => json_decode($json, true, flags: JSON_THROW_ON_ERROR)];
             } elseif ($field['value_bool'] !== null) {
-                $values[$field['key']] = $field['value_bool'] === '1' || $field['value_bool'] === 'true';
+                $values = [...$values, $field['key'] => $field['value_bool'] === '1' || $field['value_bool'] === 'true'];
             } elseif ($field['value_string'] !== null) {
-                $values[$field['key']] = $field['value_string'];
+                $values = [...$values, $field['key'] => $field['value_string']];
             }
         }
 

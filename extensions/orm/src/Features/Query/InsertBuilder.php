@@ -57,7 +57,7 @@ final class InsertBuilder
         foreach ($this->values as $value) {
             $binding = $this->bindingCounter->next();
             $placeholders[] = ':' . $binding;
-            $bindings[$binding] = $value;
+            $bindings = [...$bindings, $binding => $value];
         }
 
         $compiler = new SqlCompiler($this->connection->driver());

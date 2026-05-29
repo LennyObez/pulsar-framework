@@ -29,8 +29,9 @@ $totalMatches = $templateData['totalMatches'] ?? 0;
             <tbody>
                 <?php foreach ($rows as $row): ?>
                 <tr>
-                    <?php /** @var mixed $value */ ?>
-                    <?php foreach ($row as $value): ?>
+                    <?php
+                    /** @var mixed $value */
+                    foreach ($row as $value): ?>
                     <td><?= $e(is_scalar($value) ? (string) $value : '') ?></td>
                     <?php endforeach; ?>
                 </tr>

@@ -65,13 +65,12 @@ final readonly class WithCountLoader
     private function countRelation(array $entities, RelationMetadata $relation, string $pkProperty): array
     {
         $entityClass = $entities[0]::class;
-        /** @var list<mixed> $parentIds */
         $parentIds = [];
         foreach ($entities as $entity) {
             $ref = new ReflectionClass($entity);
             /** @var mixed $pkValue */
             $pkValue = $ref->getProperty($pkProperty)->getValue($entity);
-            $parentIds[] = $pkValue;
+            $parentIds = [...$parentIds, $pkValue];
         }
 
         if ($parentIds === []) {

@@ -45,11 +45,12 @@ trait RendersForumView
         /** @var IdentityInterface|null $identity */
         $identity = $request->getAttribute('identity');
 
-        $data['__identity'] = $identity;
-        $data['__is_authenticated'] = $identity !== null && $identity->isAuthenticated();
-        /** @var mixed $csrfToken */
-        $csrfToken = $request->getAttribute('csrf_token', '');
-        $data['__csrf_token'] = $csrfToken;
+        $data = [
+            ...$data,
+            '__identity' => $identity,
+            '__is_authenticated' => $identity !== null && $identity->isAuthenticated(),
+            '__csrf_token' => $request->getAttribute('csrf_token', ''),
+        ];
 
         $html = $engine->render($template, $data);
 

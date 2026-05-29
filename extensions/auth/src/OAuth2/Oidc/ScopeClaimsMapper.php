@@ -69,12 +69,11 @@ final class ScopeClaimsMapper
     public static function filterClaims(array $allClaims, array $scopes): array
     {
         $allowedClaims = self::claimsForScopes($scopes);
-        /** @var array<string, mixed> $filtered */
         $filtered = [];
 
         foreach ($allowedClaims as $claimName) {
             if (array_key_exists($claimName, $allClaims)) {
-                $filtered[$claimName] = $allClaims[$claimName];
+                $filtered = [...$filtered, $claimName => $allClaims[$claimName]];
             }
         }
 

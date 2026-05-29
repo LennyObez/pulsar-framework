@@ -164,7 +164,7 @@ final readonly class OrmResourceQuery implements ResourceQueryInterface
             }
             $paramName = "filter_$field";
             $whereClauses[] = "$field = :$paramName";
-            $bindings[$paramName] = $value;
+            $bindings = [...$bindings, $paramName => $value];
         }
     }
 

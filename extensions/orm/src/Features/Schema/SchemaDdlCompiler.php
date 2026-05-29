@@ -157,6 +157,7 @@ final readonly class SchemaDdlCompiler
         }
 
         if ($col->hasDefault) {
+            /** @var mixed $default */
             $default = $col->default;
             if ($default === null) {
                 $sql .= ' DEFAULT NULL';

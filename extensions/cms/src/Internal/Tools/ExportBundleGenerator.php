@@ -308,11 +308,11 @@ final readonly class ExportBundleGenerator
         foreach ($data as $key => $value) {
             if (is_array($value)) {
                 /** @var array<string, mixed> $value */
-                $redacted[$key] = $this->redactPii($value);
+                $redacted = [...$redacted, $key => $this->redactPii($value)];
             } elseif (in_array($key, self::PII_FIELDS, true) && $value !== null) {
-                $redacted[$key] = '[redacted]';
+                $redacted = [...$redacted, $key => '[redacted]'];
             } else {
-                $redacted[$key] = $value;
+                $redacted = [...$redacted, $key => $value];
             }
         }
 
