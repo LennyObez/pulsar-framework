@@ -156,7 +156,7 @@ abstract class FormRequest
 
         foreach ($rules as $field => $_) {
             if (array_key_exists($field, $data)) {
-                $validated[$field] = $data[$field];
+                $validated = [...$validated, $field => $data[$field]];
             }
         }
 

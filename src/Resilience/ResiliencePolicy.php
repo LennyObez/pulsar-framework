@@ -127,6 +127,7 @@ final readonly class ResiliencePolicy
             $inner = $wrapped;
             $wrapped = static function () use ($inner, $timeoutMs): mixed {
                 $start = microtime(true);
+                /** @var mixed $result */
                 $result = $inner();
                 $elapsed = (microtime(true) - $start) * 1000.0;
 

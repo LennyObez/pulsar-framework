@@ -80,6 +80,7 @@ final class FrankenPhpRuntime implements ReloadableRuntimeInterface
         $continueWorking = true;
 
         while ($continueWorking && $this->status === RuntimeStatus::Running) {
+            /** @var mixed $result */
             $result = frankenphp_handle_request(function (): void {
                 $this->handleRequest();
             });

@@ -47,6 +47,7 @@ final class FallbackMessageFormatter implements MessageFormatterInterface
                 $key = $matches[1];
 
                 if (isset($parameters[$key])) {
+                    /** @var mixed $value */
                     $value = $parameters[$key];
 
                     return match (true) {
