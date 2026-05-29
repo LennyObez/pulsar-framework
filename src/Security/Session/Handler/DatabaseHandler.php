@@ -10,6 +10,7 @@ use PDO;
 use PDOException;
 use Pulsar\Api\Internal;
 
+use function is_string;
 use function preg_match;
 use function sprintf;
 use function time;

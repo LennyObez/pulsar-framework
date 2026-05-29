@@ -9,7 +9,6 @@ use Pulsar\Api\Api;
 use Pulsar\Support\Coerce;
 
 use function array_map;
-use function array_values;
 use function is_array;
 
 /**

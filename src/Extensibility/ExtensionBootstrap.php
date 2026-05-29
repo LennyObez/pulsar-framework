@@ -432,7 +432,7 @@ final class ExtensionBootstrap
             // whose constructor needs arguments cannot be autowired here, so it
             // gets the actionable error; any exception from a zero-argument
             // constructor body propagates to register()'s own handler.
-            $constructor = (new ReflectionClass($providerClass))->getConstructor();
+            $constructor = new ReflectionClass($providerClass)->getConstructor();
 
             if ($constructor !== null && $constructor->getNumberOfRequiredParameters() > 0) {
                 throw new ExtensionException(
