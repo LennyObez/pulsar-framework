@@ -14,6 +14,7 @@ use Pulsar\SupplyChain\License\LicenseChecker;
 
 use function count;
 use function file_get_contents;
+use function is_readable;
 use function is_string;
 use function json_decode;
 use function sprintf;
@@ -46,7 +47,10 @@ final class LicenseCheckCommand extends Command
     {
         $lockPath = $this->projectRoot . '/composer.lock';
 
-        $lockContents = file_get_contents($lockPath);
+        // Guard with is_readable() so file_get_contents() is only attempted on a
+        // readable file — a missing/unreadable lock would otherwise emit an
+        // E_WARNING before the is_string() check handled the false return.
+        $lockContents = is_readable($lockPath) ? file_get_contents($lockPath) : false;
 
         if (!is_string($lockContents)) {
             $output->error(sprintf('Cannot read composer.lock at: %s', $lockPath));

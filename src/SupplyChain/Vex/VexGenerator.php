@@ -23,6 +23,8 @@ use function is_string;
 use function json_decode;
 use function ord;
 use function random_bytes;
+use function restore_error_handler;
+use function set_error_handler;
 use function sprintf;
 use function str_contains;
 use function substr;
@@ -97,13 +99,25 @@ final readonly class VexGenerator
             2 => ['pipe', 'w'],
         ];
 
-        // nosemgrep: php.lang.security.exec-use.exec-use: array form bypasses the shell entirely (CWE-78 safe)
-        $process = proc_open(
-            ['composer', 'audit', '--format=json', '--no-interaction'],
-            $descriptors,
-            $pipes,
-            $this->projectRoot,
-        );
+        // The command is a constant literal array and the array form bypasses the
+        // shell entirely, so no user input ever reaches a command line (CWE-78 and
+        // CWE-94 safe). proc_open() emits an E_WARNING when the binary is absent
+        // (e.g. `composer` resolves to composer.bat on Windows and is not found via
+        // the array form); that is a handled degradation (false return below), so
+        // the warning is suppressed with a scoped error handler.
+        set_error_handler(static fn(): bool => true);
+
+        try {
+            // nosemgrep: php.lang.security.exec-use.exec-use
+            $process = proc_open(
+                ['composer', 'audit', '--format=json', '--no-interaction'],
+                $descriptors,
+                $pipes,
+                $this->projectRoot,
+            );
+        } finally {
+            restore_error_handler();
+        }
 
         if ($process === false) {
             return [];

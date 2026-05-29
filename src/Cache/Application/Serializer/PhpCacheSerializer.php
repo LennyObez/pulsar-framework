@@ -12,7 +12,9 @@ use Throwable;
 use function array_keys;
 use function is_array;
 use function is_object;
+use function restore_error_handler;
 use function serialize;
+use function set_error_handler;
 use function unserialize;
 
 /**
@@ -47,6 +49,14 @@ final readonly class PhpCacheSerializer implements CacheSerializerInterface
         // the input is trusted cache-backend data (not request input), and any
         // disallowed class that slips through is rejected fail-closed by
         // containsIncompleteClass() below.
+        // unserialize() emits an E_WARNING on malformed input that the catch
+        // below cannot intercept (warnings are not Throwables). Failure is
+        // detected via the false return and the incomplete-class check, and
+        // allowed_classes => false means no user code (__wakeup/__unserialize)
+        // runs — so the only possible error is the format warning. Suppress it
+        // with a scoped handler rather than the error-suppression operator.
+        set_error_handler(static fn(): bool => true);
+
         try {
             /** @var mixed $result */
             $result = unserialize($data, [ // nosemgrep
@@ -54,6 +64,8 @@ final readonly class PhpCacheSerializer implements CacheSerializerInterface
             ]);
         } catch (Throwable $e) {
             throw CacheException::serializationFailed($e->getMessage(), $e);
+        } finally {
+            restore_error_handler();
         }
 
         if ($result === false && $data !== 'b:0;') {
