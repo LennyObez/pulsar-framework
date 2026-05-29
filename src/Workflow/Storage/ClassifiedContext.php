@@ -153,7 +153,6 @@ final readonly class ClassifiedContext
     public function serialize(?EncryptorInterface $encryptor = null): array
     {
         $classificationStrings = [];
-        /** @var array<string, mixed> $serializedValues */
         $serializedValues = [];
         $encryptedFields = [];
 
@@ -167,7 +166,7 @@ final readonly class ClassifiedContext
 
             if ($encryptor !== null && $this->requiresEncryption($level)) {
                 try {
-                    $serializedValues[$key] = $encryptor->encrypt(json_encode($value, JSON_THROW_ON_ERROR));
+                    $serializedValues = [...$serializedValues, $key => $encryptor->encrypt(json_encode($value, JSON_THROW_ON_ERROR))];
                 } catch (Throwable $e) {
                     throw new RuntimeException(sprintf(
                         'Failed to encrypt workflow context field "%s" (classification: %s): %s',
@@ -179,7 +178,7 @@ final readonly class ClassifiedContext
 
                 $encryptedFields[] = $key;
             } else {
-                $serializedValues[$key] = $value;
+                $serializedValues = [...$serializedValues, $key => $value];
             }
         }
 
@@ -214,16 +213,13 @@ final readonly class ClassifiedContext
             $classStrings,
         );
 
-        /** @var array<string, mixed> $values */
         $values = [];
 
         /** @var mixed $value */
         foreach ($rawValues as $key => $value) {
             if ($encryptor !== null && in_array($key, $encryptedFields, true) && is_string($value)) {
                 try {
-                    /** @var mixed $decoded */
-                    $decoded = json_decode($encryptor->decrypt($value), true, 512, JSON_THROW_ON_ERROR);
-                    $values[$key] = $decoded;
+                    $values = [...$values, $key => json_decode($encryptor->decrypt($value), true, 512, JSON_THROW_ON_ERROR)];
                 } catch (Throwable $e) {
                     throw new RuntimeException(sprintf(
                         'Failed to decrypt workflow context field "%s": %s',
@@ -232,7 +228,7 @@ final readonly class ClassifiedContext
                     ), 0, $e);
                 }
             } else {
-                $values[$key] = $value;
+                $values = [...$values, $key => $value];
             }
         }
 

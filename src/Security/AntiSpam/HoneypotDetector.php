@@ -33,6 +33,7 @@ final readonly class HoneypotDetector implements HoneypotDetectorInterface
     #[Override]
     public function check(AntiSpamContext $context): AntiSpamCheckResult
     {
+        /** @var mixed $value */
         $value = $context->formFields[$this->fieldName] ?? null;
 
         if (is_string($value) && $value !== '') {

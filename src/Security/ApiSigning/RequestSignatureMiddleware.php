@@ -53,6 +53,7 @@ final readonly class RequestSignatureMiddleware implements MiddlewareInterface
         }
 
         if (!$result->valid) {
+            /** @var mixed $remoteAddr */
             $remoteAddr = $request->getServerParams()['REMOTE_ADDR'] ?? 'unknown';
             $sourceIp = is_string($remoteAddr) ? $remoteAddr : 'unknown';
 

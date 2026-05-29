@@ -90,6 +90,7 @@ final class DatabaseHandler implements SessionHandlerInterface
         );
         $stmt->execute([$id]);
 
+        /** @var mixed $data */
         $data = $stmt->fetchColumn();
 
         if ($data === false) {
