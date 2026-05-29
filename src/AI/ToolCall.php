@@ -35,11 +35,13 @@ final readonly class ToolCall
     public static function fromArray(array $data): self
     {
         $arguments = $data['arguments'] ?? null;
+        /** @var array<string, mixed> $argumentsArr */
+        $argumentsArr = is_array($arguments) ? $arguments : [];
 
         return new self(
             id: Coerce::string($data['id'] ?? null),
             name: Coerce::string($data['name'] ?? null),
-            arguments: is_array($arguments) ? $arguments : [],
+            arguments: $argumentsArr,
         );
     }
 }
