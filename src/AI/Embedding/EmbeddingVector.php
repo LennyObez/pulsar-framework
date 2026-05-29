@@ -62,10 +62,7 @@ final readonly class EmbeddingVector
         $normA = 0.0;
         $normB = 0.0;
 
-        $count = count($this->values);
-
-        for ($i = 0; $i < $count; $i++) {
-            $a = $this->values[$i];
+        foreach ($this->values as $i => $a) {
             $b = $other->values[$i] ?? 0.0;
             $dot += $a * $b;
             $normA += $a * $a;
