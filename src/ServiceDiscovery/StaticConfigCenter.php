@@ -49,6 +49,7 @@ final class StaticConfigCenter implements ConfigCenterInterface
             }
             $normalized[$namespace] = [];
 
+            /** @var mixed $value */
             foreach ($entries as $key => $value) {
                 if (is_string($key) && is_string($value)) {
                     $normalized[$namespace][$key] = $value;

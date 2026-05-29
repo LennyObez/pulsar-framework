@@ -36,9 +36,11 @@ final readonly class CompiledCatalogIndex
      */
     public static function fromArray(array $data): self
     {
+        /** @var mixed $index */
         $index = $data['index'] ?? null;
         /** @var array<string, array<string, list<string>>> $indexArr */
         $indexArr = is_array($index) ? $index : [];
+        /** @var mixed $fileHashes */
         $fileHashes = $data['file_hashes'] ?? null;
         /** @var array<string, string> $fileHashesArr */
         $fileHashesArr = is_array($fileHashes) ? $fileHashes : [];
