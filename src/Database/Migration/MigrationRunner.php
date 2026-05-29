@@ -252,6 +252,13 @@ final readonly class MigrationRunner implements MigrationRunnerInterface
      */
     public function getPending(): array
     {
+        // Re-scan the filesystem: a long-running process (or a single
+        // process issuing several operations) may have new migration
+        // files dropped in since the last discovery. The repository
+        // memoises discovery for intra-operation reuse, so we invalidate
+        // at this operation boundary to reflect current on-disk state.
+        $this->repository->clearCache();
+
         $allFiles = $this->repository->discover();
         $applied = $this->getApplied();
 
@@ -315,6 +322,13 @@ final readonly class MigrationRunner implements MigrationRunnerInterface
     private function rollbackRecords(array $records): array
     {
         $rolledBack = [];
+
+        // Single discovery point for every rollback operation
+        // (rollbackLastBatch / rollbackTo / reset). Invalidate the
+        // memoised scan so we match the version records against the
+        // migration files present on disk right now, not a stale list.
+        $this->repository->clearCache();
+
         $allFiles = $this->repository->discover();
 
         foreach ($records as $record) {
