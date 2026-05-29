@@ -161,10 +161,6 @@ final class RoadRunnerGrpcAdapter implements GrpcTransportAdapterInterface
         /** @var array<string, list<string>> $metadata */
         $metadata = [];
         if (is_array($data['metadata'] ?? null)) {
-            /**
-             * @var mixed $key
-             * @var mixed $values
-             */
             foreach ($data['metadata'] as $key => $values) {
                 if (is_string($key) && is_array($values)) {
                     $metadata[$key] = array_values(array_filter($values, 'is_string'));
