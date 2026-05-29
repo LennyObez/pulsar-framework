@@ -28,7 +28,12 @@ final readonly class Psd2Config
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $sub = static fn(string $k): array => is_array($data[$k] ?? null) ? $data[$k] : [];
+        $sub = static function (string $k) use ($data): array {
+            $value = $data[$k] ?? null;
+
+            /** @var array<string, mixed> */
+            return is_array($value) ? $value : [];
+        };
 
         return new self(
             sca: ScaConfig::fromArray($sub('sca')),
