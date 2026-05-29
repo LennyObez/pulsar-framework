@@ -277,6 +277,7 @@ final class ExtensionLoader
      */
     public function instantiate(ExtensionManifest $manifest): ExtensionInterface
     {
+        /** @var class-string $class */
         $class = $manifest->extensionClass;
 
         if (!class_exists($class)) {
