@@ -9,6 +9,7 @@ use Pulsar\Api\Internal;
 use function abs;
 use function array_shift;
 use function array_slice;
+use function assert;
 use function count;
 use function memory_get_peak_usage;
 use function memory_get_usage;

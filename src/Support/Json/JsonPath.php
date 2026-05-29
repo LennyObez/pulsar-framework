@@ -10,6 +10,7 @@ use NoDiscard;
 use Pulsar\Api\Api;
 
 use function array_key_exists;
+use function array_map;
 use function array_values;
 use function count;
 use function is_array;
@@ -452,25 +453,21 @@ final class JsonPath
 
             $resolvedEnd = min($resolvedEnd, $count);
 
-            $results = [];
+            $indices = [];
 
             if ($step > 0) {
                 for ($i = $resolvedStart; $i < $resolvedEnd; $i += $step) {
-                    /** @var mixed $sliceVal */
-                    $sliceVal = $values[$i];
-                    $results[] = $sliceVal;
+                    $indices[] = $i;
                 }
             } else {
                 for ($i = $resolvedStart; $i > $resolvedEnd; $i += $step) {
                     if ($i >= 0 && $i < $count) {
-                        /** @var mixed $sliceVal */
-                        $sliceVal = $values[$i];
-                        $results[] = $sliceVal;
+                        $indices[] = $i;
                     }
                 }
             }
 
-            return $results;
+            return array_map(static fn(int $i): mixed => $values[$i], $indices);
         };
     }
 
@@ -488,9 +485,7 @@ final class JsonPath
         if ($key === '*') {
             $results = [...$results, ...array_values($node)];
         } elseif (array_key_exists($key, $node)) {
-            /** @var mixed $matched */
-            $matched = $node[$key];
-            $results[] = $matched;
+            $results = [...$results, $node[$key]];
         }
 
         /** @var mixed $child */

@@ -21,7 +21,6 @@ use function dirname;
 use function file_exists;
 use function implode;
 use function is_array;
-use function is_string;
 use function ksort;
 use function realpath;
 use function sort;

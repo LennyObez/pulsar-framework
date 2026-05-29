@@ -17,7 +17,6 @@ use Pulsar\Core\KernelInterface;
 
 use function array_filter;
 use function count;
-use function is_string;
 use function sprintf;
 use function str_contains;
 

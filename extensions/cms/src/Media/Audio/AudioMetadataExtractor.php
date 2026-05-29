@@ -105,7 +105,7 @@ final readonly class AudioMetadataExtractor
             channels: isset($audioStream['channels']) && is_numeric($audioStream['channels'])
                 ? (int) $audioStream['channels']
                 : null,
-            codec: (function() use ($audioStream): ?string {
+            codec: (function () use ($audioStream): ?string {
                 /** @var mixed $raw */
                 $raw = $audioStream['codec_name'] ?? null;
                 return is_string($raw) ? $raw : null;

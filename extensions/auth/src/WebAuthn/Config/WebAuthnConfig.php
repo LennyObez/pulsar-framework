@@ -7,7 +7,6 @@ namespace Pulsar\Extension\Auth\WebAuthn\Config;
 use Pulsar\Api\Api;
 
 use function array_values;
-use function is_string;
 
 /**
  * Configuration for the WebAuthn extension.

@@ -136,7 +136,7 @@ abstract class Factory
         }
 
         foreach ($this->sequences as $attribute => $sequence) {
-            $attributes[$attribute] = $sequence();
+            $attributes = [...$attributes, $attribute => $sequence()];
         }
 
         return array_merge($attributes, $overrides);

@@ -8,6 +8,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\I18n\LocaleNegotiatorInterface;
 
+use function assert;
 use function in_array;
 use function is_numeric;
 use function is_string;

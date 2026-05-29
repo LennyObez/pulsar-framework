@@ -761,11 +761,9 @@ final class Kernel implements KernelInterface
 
         foreach ($this->handlerParamMap[$cacheKey] as $entry) {
             if (isset($routeParams[$entry['name']])) {
-                $args[] = $routeParams[$entry['name']];
+                $args = [...$args, $routeParams[$entry['name']]];
             } elseif ($entry['hasDefault']) {
-                /** @var mixed $entryDefault */
-                $entryDefault = $entry['default'];
-                $args[] = $entryDefault;
+                $args = [...$args, $entry['default']];
             }
             // If no route param and no default, skip: PHP will throw a clear error
         }
@@ -811,6 +809,10 @@ final class Kernel implements KernelInterface
 
             $constructor = $reflection->getConstructor();
 
+            if (!class_exists($class)) {
+                throw RoutingException::invalidHandler($class . ': class does not exist');
+            }
+
             if ($constructor === null || $constructor->getNumberOfParameters() === 0) {
                 return new $class();
             }
@@ -824,22 +826,20 @@ final class Kernel implements KernelInterface
                     $typeName = $type->getName();
 
                     if ($this->container->has($typeName)) {
-                        $args[] = $this->container->get($typeName);
+                        $args = [...$args, $this->container->get($typeName)];
 
                         continue;
                     }
                 }
 
                 if ($param->isDefaultValueAvailable()) {
-                    /** @var mixed $paramDefault */
-                    $paramDefault = $param->getDefaultValue();
-                    $args[] = $paramDefault;
+                    $args = [...$args, $param->getDefaultValue()];
 
                     continue;
                 }
 
                 if ($type instanceof ReflectionNamedType && $type->allowsNull()) {
-                    $args[] = null;
+                    $args = [...$args, null];
 
                     continue;
                 }
@@ -1005,7 +1005,9 @@ final class Kernel implements KernelInterface
                  * @var mixed $result
                  */
                 $result = (function () use ($routeFile): mixed {
+                    /** @psalm-suppress UnusedVariable */
                     $router = $this->router;
+                    /** @psalm-suppress UnusedVariable */
                     $container = $this->container;
 
                     /** @psalm-suppress UnresolvableInclude */

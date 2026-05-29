@@ -17,6 +17,7 @@ use function file_exists;
 use function file_put_contents;
 use function filesize;
 use function is_dir;
+use function is_string;
 use function mkdir;
 use function realpath;
 use function str_contains;

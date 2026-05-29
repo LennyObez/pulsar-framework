@@ -8,6 +8,7 @@ use InvalidArgumentException;
 use Pulsar\Api\Api;
 
 use function array_keys;
+use function assert;
 use function chr;
 use function count;
 use function ord;

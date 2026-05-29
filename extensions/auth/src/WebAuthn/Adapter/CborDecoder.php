@@ -90,11 +90,10 @@ final class CborDecoder
     private function decodeArray(int $additionalInfo): array
     {
         $count = $this->decodeUnsignedInt($additionalInfo);
-        /** @var list<mixed> $result */
         $result = [];
 
         for ($i = 0; $i < $count; $i++) {
-            $result[] = $this->decodeItem();
+            $result = [...$result, $this->decodeItem()];
         }
 
         return $result;
@@ -106,13 +105,12 @@ final class CborDecoder
     private function decodeMap(int $additionalInfo): array
     {
         $count = $this->decodeUnsignedInt($additionalInfo);
-        /** @var array<int|string, mixed> $result */
         $result = [];
 
         for ($i = 0; $i < $count; $i++) {
             /** @var int|string $key */
             $key = $this->decodeItem();
-            $result[$key] = $this->decodeItem();
+            $result = [...$result, $key => $this->decodeItem()];
         }
 
         return $result;

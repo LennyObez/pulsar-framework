@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
 
 use function array_filter;
 use function array_values;
+use function assert;
 use function count;
 use function is_string;
 use function preg_match;

@@ -10,7 +10,6 @@ use function array_map;
 use function htmlspecialchars;
 use function implode;
 use function is_array;
-use function is_string;
 
 use const ENT_QUOTES;
 

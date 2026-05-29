@@ -1156,7 +1156,7 @@ final readonly class ImportParser
                 sortOrder: isset($itemData['sort_order']) && (is_int($itemData['sort_order']) || is_string($itemData['sort_order']))
                     ? (int) $itemData['sort_order']
                     : $sortOrder,
-                visible: (function() use ($itemData): bool {
+                visible: (function () use ($itemData): bool {
                     /** @var mixed $raw */
                     $raw = $itemData['visible'] ?? null;
                     return is_bool($raw) ? $raw : true;

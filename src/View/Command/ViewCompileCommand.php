@@ -20,7 +20,6 @@ use SplFileInfo;
 use function count;
 use function file_put_contents;
 use function is_dir;
-use function is_string;
 use function json_encode;
 use function microtime;
 use function number_format;

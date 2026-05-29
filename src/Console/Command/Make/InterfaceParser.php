@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Console\Command\Make;
 
 use function array_map;
+use function assert;
 use function count;
 use function implode;
 use function in_array;
