@@ -18,6 +18,7 @@ use Random\Randomizer;
 
 use function bin2hex;
 use function class_exists;
+use function is_a;
 
 /**
  * Synchronous queue driver that executes jobs immediately in-process.
@@ -45,17 +46,13 @@ final readonly class SyncDriver implements QueueDriverInterface
     {
         $jobId = bin2hex($this->randomizer->getBytes(16));
 
-        if (!class_exists($jobClass)) {
+        if (!class_exists($jobClass) || !is_a($jobClass, QueueableInterface::class, true)) {
             throw QueueException::serializationFailed($jobClass);
         }
 
-        /** @var class-string $jobClassName */
+        /** @var class-string<QueueableInterface> $jobClassName */
         $jobClassName = $jobClass;
         $job = new $jobClassName();
-
-        if (!$job instanceof QueueableInterface) {
-            throw QueueException::serializationFailed($jobClass);
-        }
 
         $context = new JobContext(
             jobId: $jobId,

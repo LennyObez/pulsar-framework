@@ -61,6 +61,7 @@ final class ResolveTaggedIteratorPass implements CompilerPassInterface
             /** @var class-string $concreteClass */
             $concreteClass = $concrete;
             $factory = static function (ContainerInterface $container) use ($concreteClass, $builder): object {
+                /** @var class-string $concreteClass */
                 if (!class_exists($concreteClass)) {
                     throw new \RuntimeException('Class ' . $concreteClass . ' does not exist');
                 }

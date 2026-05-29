@@ -46,6 +46,7 @@ use function file_get_contents;
 use function hash;
 use function hash_file;
 use function implode;
+use function is_a;
 use function is_dir;
 use function json_decode;
 use function random_bytes;
@@ -538,27 +539,19 @@ final readonly class CmsPluginManager implements CmsPluginManagerInterface
             }
         }
 
-        if (!class_exists($manifest->entryPoint)) {
-            $this->logger->error('Plugin entry point class not found', [
+        $entryPoint = $manifest->entryPoint;
+
+        if (!class_exists($entryPoint) || !is_a($entryPoint, CmsPluginInterface::class, true)) {
+            $this->logger->error('Plugin entry point class missing or does not implement CmsPluginInterface', [
                 'slug' => $plugin->slug,
-                'entry_point' => $manifest->entryPoint,
+                'entry_point' => $entryPoint,
             ]);
 
             return null;
         }
 
-        $instance = new ($manifest->entryPoint)();
-
-        if (!$instance instanceof CmsPluginInterface) {
-            $this->logger->error('Plugin entry point does not implement CmsPluginInterface', [
-                'slug' => $plugin->slug,
-                'entry_point' => $manifest->entryPoint,
-            ]);
-
-            return null;
-        }
-
-        return $instance;
+        /** @var class-string<CmsPluginInterface> $entryPoint */
+        return new $entryPoint();
     }
 
     /**

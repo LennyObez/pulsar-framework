@@ -11,6 +11,7 @@ use Pulsar\Container\ContainerInterface;
 use Pulsar\Container\DecoratorDefinition;
 
 use function array_reverse;
+use function class_exists;
 use function usort;
 
 /**
@@ -47,8 +48,10 @@ final class DecoratorChain
                 /** @var object $current */
                 $current = ($decorator->decorator)($current, $container);
             } else {
-                /** @var class-string $decoratorClass */
                 $decoratorClass = $decorator->decorator;
+                if (!class_exists($decoratorClass)) {
+                    continue;
+                }
                 $current = new $decoratorClass($current);
             }
         }

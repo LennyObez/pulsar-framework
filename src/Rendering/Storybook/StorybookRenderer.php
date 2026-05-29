@@ -101,13 +101,13 @@ final readonly class StorybookRenderer
 
     private function renderComponentPreview(ComponentStory $story): string
     {
-        if (!class_exists($story->componentClass)) {
+        $componentClass = $story->componentClass;
+
+        if (!class_exists($componentClass)) {
             return '<p class="sb-error">Component class not found</p>';
         }
 
         try {
-            /** @var class-string $componentClass */
-            $componentClass = $story->componentClass;
             $component = new $componentClass();
 
             if ($component instanceof EmbeddableComponent) {

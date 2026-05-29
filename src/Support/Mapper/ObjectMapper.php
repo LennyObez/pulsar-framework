@@ -19,6 +19,7 @@ use ValueError;
 
 use function array_key_exists;
 use function array_map;
+use function call_user_func;
 use function class_exists;
 use function enum_exists;
 use function is_a;
@@ -72,7 +73,7 @@ final class ObjectMapper
         if (method_exists($targetClass, 'fromArray')) {
             try {
                 /** @var T */
-                return $targetClass::fromArray($data);
+                return call_user_func([$targetClass, 'fromArray'], $data);
             } catch (Throwable $e) {
                 throw MappingException::factoryFailed($targetClass, $e);
             }

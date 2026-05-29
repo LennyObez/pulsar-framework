@@ -29,6 +29,7 @@ use Throwable;
 use function class_exists;
 use function function_exists;
 use function hrtime;
+use function is_a;
 use function memory_get_usage;
 use function sprintf;
 use function time;
@@ -213,17 +214,13 @@ final class Worker
 
         $this->typeRegistry->assertAllowed($jobClass);
 
-        if (!class_exists($jobClass)) {
+        if (!class_exists($jobClass) || !is_a($jobClass, QueueableInterface::class, true)) {
             throw QueueException::serializationFailed($jobClass);
         }
 
-        /** @var class-string $jobClassName */
+        /** @var class-string<QueueableInterface> $jobClassName */
         $jobClassName = $jobClass;
         $job = new $jobClassName();
-
-        if (!$job instanceof QueueableInterface) {
-            throw QueueException::serializationFailed($jobClass);
-        }
 
         $requestContext = $this->buildRequestContext($envelope);
 

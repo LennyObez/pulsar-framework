@@ -11,8 +11,10 @@ use Pulsar\Extensibility\Exception\DependencyException;
 use Pulsar\Extensibility\Exception\ExtensionException;
 use Pulsar\Extensibility\Exception\ManifestException;
 
+use function class_exists;
 use function count;
 use function in_array;
+use function is_a;
 use function sprintf;
 
 /**
@@ -277,22 +279,16 @@ final class ExtensionLoader
      */
     public function instantiate(ExtensionManifest $manifest): ExtensionInterface
     {
-        /** @var class-string $class */
         $class = $manifest->extensionClass;
 
-        if (!class_exists($class)) {
+        if (!class_exists($class) || !is_a($class, ExtensionInterface::class, true)) {
             throw ExtensionException::registrationFailed(
                 $manifest->name,
-                'Extension class does not exist: ' . $class,
+                'Extension class does not exist or does not implement ExtensionInterface: ' . $class,
             );
         }
 
-        $instance = new $class();
-
-        if (!$instance instanceof ExtensionInterface) {
-            throw ExtensionException::invalidExtensionClass($class);
-        }
-
-        return $instance;
+        /** @var class-string<ExtensionInterface> $class */
+        return new $class();
     }
 }
