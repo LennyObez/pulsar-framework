@@ -125,6 +125,28 @@ final class PublicApiSnapshotTest extends TestCase
                 }
                 sort($methods);
 
+                // Capture full method signatures for API surface tracking.
+                // This MUST mirror tools/api/generate-snapshot.php exactly so the
+                // committed snapshot and this independent scan stay identical.
+                $signatures = [];
+                foreach ($ref->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
+                    if ($method->getDeclaringClass()->getName() !== $class) {
+                        continue;
+                    }
+                    $params = [];
+                    foreach ($method->getParameters() as $param) {
+                        $paramType = $param->getType();
+                        $params[] = ($paramType !== null ? (string) $paramType . ' ' : '') . '$' . $param->getName();
+                    }
+                    $returnType = $method->getReturnType();
+                    $signatures[$method->getName()] = [
+                        'params' => $params,
+                        'return' => $returnType !== null ? (string) $returnType : null,
+                        'static' => $method->isStatic(),
+                    ];
+                }
+                ksort($signatures);
+
                 $constants = [];
                 foreach ($ref->getReflectionConstants(ReflectionClassConstant::IS_PUBLIC) as $constant) {
                     if ($constant->getDeclaringClass()->getName() === $class) {
@@ -139,6 +161,7 @@ final class PublicApiSnapshotTest extends TestCase
                 $apiClasses[$class] = [
                     'since' => $apiInstance->since,
                     'methods' => $methods,
+                    'signatures' => $signatures,
                     'constants' => $constants,
                 ];
 
