@@ -10,6 +10,7 @@ use Pulsar\Api\Internal;
 use Pulsar\Extension\Studio\Internal\Diagnostics\GitLogReader;
 use Pulsar\Http\Message\Response;
 
+use function assert;
 use function count;
 use function json_encode;
 

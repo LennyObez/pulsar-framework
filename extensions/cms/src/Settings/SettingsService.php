@@ -131,17 +131,17 @@ final readonly class SettingsService implements SettingsServiceInterface
         $globalSql = $sql . ' AND locale IS NULL';
         $globalResult = $this->db->query($globalSql, $bindings);
 
-        /** @var array<string, mixed> $settings */
         $settings = [];
 
         foreach ($globalResult->rows as $row) {
             $k = $row->getString('key');
-            /** @var mixed $deserialized */
-            $deserialized = $this->deserializeValue(
-                $row->getString('value'),
-                $row->getString('value_type'),
-            );
-            $settings[$k] = $deserialized;
+            $settings = [
+                ...$settings,
+                $k => $this->deserializeValue(
+                    $row->getString('value'),
+                    $row->getString('value_type'),
+                ),
+            ];
         }
 
         // Override with locale-specific settings if requested
@@ -152,12 +152,13 @@ final readonly class SettingsService implements SettingsServiceInterface
 
             foreach ($localeResult->rows as $row) {
                 $k = $row->getString('key');
-                /** @var mixed $deserializedLocale */
-                $deserializedLocale = $this->deserializeValue(
-                    $row->getString('value'),
-                    $row->getString('value_type'),
-                );
-                $settings[$k] = $deserializedLocale;
+                $settings = [
+                    ...$settings,
+                    $k => $this->deserializeValue(
+                        $row->getString('value'),
+                        $row->getString('value_type'),
+                    ),
+                ];
             }
         }
 
@@ -195,12 +196,15 @@ final readonly class SettingsService implements SettingsServiceInterface
             $k = $row->getString('key');
 
             // Locale-specific values override global (they come after NULLS FIRST)
-            /** @var mixed $deserialized */
-            $deserialized = $this->deserializeValue(
-                $row->getString('value'),
-                $row->getString('value_type'),
-            );
-            $settings[$g][$k] = $deserialized;
+            $groupBag = $settings[$g] ?? [];
+            $groupBag = [
+                ...$groupBag,
+                $k => $this->deserializeValue(
+                    $row->getString('value'),
+                    $row->getString('value_type'),
+                ),
+            ];
+            $settings[$g] = $groupBag;
         }
 
         return $settings;

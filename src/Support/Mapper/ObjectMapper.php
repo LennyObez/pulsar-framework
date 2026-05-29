@@ -18,6 +18,7 @@ use UnitEnum;
 use ValueError;
 
 use function array_key_exists;
+use function array_map;
 use function class_exists;
 use function enum_exists;
 use function is_a;
@@ -93,17 +94,10 @@ final class ObjectMapper
     #[NoDiscard]
     public function mapList(array $items, string $targetClass): array
     {
-        $results = [];
-
-        foreach ($items as $index => $item) {
-            if (!is_array($item)) {
-                throw MappingException::invalidListItem($targetClass, $index);
-            }
-
-            $results[] = $this->map($item, $targetClass);
-        }
-
-        return $results;
+        return array_map(
+            fn(array $item): object => $this->map($item, $targetClass),
+            $items,
+        );
     }
 
     /**
@@ -146,22 +140,26 @@ final class ObjectMapper
             self::$paramCache[$targetClass] = $params;
         }
 
-        /** @var list<mixed> $args */
-        $args = [];
+        $args = array_map(
+            function (ReflectionParameter $param) use ($data, $targetClass): mixed {
+                $key = $this->resolveKey($param->getName(), $data);
 
-        foreach ($params as $param) {
-            $key = $this->resolveKey($param->getName(), $data);
+                if ($key !== null && array_key_exists($key, $data)) {
+                    return $this->coerce($data[$key], $param, $targetClass);
+                }
 
-            if ($key !== null && array_key_exists($key, $data)) {
-                $args[] = $this->coerce($data[$key], $param, $targetClass);
-            } elseif ($param->isDefaultValueAvailable()) {
-                $args[] = $param->getDefaultValue();
-            } elseif ($param->allowsNull()) {
-                $args[] = null;
-            } else {
+                if ($param->isDefaultValueAvailable()) {
+                    return $param->getDefaultValue();
+                }
+
+                if ($param->allowsNull()) {
+                    return null;
+                }
+
                 throw MappingException::missingRequired($targetClass, $param->getName());
-            }
-        }
+            },
+            $params,
+        );
 
         try {
             /** @var T */

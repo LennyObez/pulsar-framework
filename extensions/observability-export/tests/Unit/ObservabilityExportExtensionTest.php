@@ -7,9 +7,9 @@ namespace Pulsar\Extension\ObservabilityExportTests\Unit;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Container\ContainerInterface;
-use Pulsar\Extension\ObservabilityExport\ObservabilityExportExtension;
 use Pulsar\Extension\ObservabilityExport\Error\ErrorExporterInterface;
 use Pulsar\Extension\ObservabilityExport\Metrics\MetricsExporterInterface;
+use Pulsar\Extension\ObservabilityExport\ObservabilityExportExtension;
 use Pulsar\Extension\ObservabilityExport\Span\SpanExporterInterface;
 use Pulsar\Routing\RouterInterface;
 

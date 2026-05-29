@@ -166,11 +166,10 @@ final class AstInterpreter
                 throw ViewException::sandboxLoopLimitExceeded($this->config->loopLimit);
             }
 
-            $loopData = $data;
-            $loopData[$parts['value']] = $value;
+            $loopData = [...$data, $parts['value'] => $value];
 
             if ($parts['key'] !== null) {
-                $loopData[$parts['key']] = $key;
+                $loopData = [...$loopData, $parts['key'] => $key];
             }
 
             $this->evaluateChildren($node->children, $loopData);

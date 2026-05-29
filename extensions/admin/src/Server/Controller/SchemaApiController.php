@@ -25,6 +25,7 @@ use Pulsar\Http\Message\Response;
 use Pulsar\Http\ResponseStatus;
 
 use function array_map;
+use function is_int;
 use function is_scalar;
 use function is_string;
 use function mb_strlen;

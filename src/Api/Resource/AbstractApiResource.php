@@ -147,7 +147,7 @@ abstract class AbstractApiResource
                 continue;
             }
 
-            $output[$fieldName] = $value;
+            $output = [...$output, $fieldName => $value];
         }
 
         // Attach redaction metadata only when the debug/audit flag is enabled.
@@ -201,13 +201,11 @@ abstract class AbstractApiResource
 
         /** @var mixed $item */
         foreach ($items as $key => $item) {
-            if ($item instanceof self) {
-                $output[$key] = $item->toArray($clearance, null, $redactionRules, $includeRedactionMeta);
-            } elseif (is_array($item)) {
-                $output[$key] = self::serializeArray($item, $clearance, $redactionRules, $includeRedactionMeta);
-            } else {
-                $output[$key] = $item;
-            }
+            $output = match (true) {
+                $item instanceof self => [...$output, $key => $item->toArray($clearance, null, $redactionRules, $includeRedactionMeta)],
+                is_array($item) => [...$output, $key => self::serializeArray($item, $clearance, $redactionRules, $includeRedactionMeta)],
+                default => [...$output, $key => $item],
+            };
         }
 
         return $output;

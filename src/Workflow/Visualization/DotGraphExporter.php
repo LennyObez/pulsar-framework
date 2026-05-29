@@ -91,6 +91,7 @@ final class DotGraphExporter implements DotGraphExporterInterface
             $attrs['fontcolor'] = 'white';
         }
 
+        /** @var mixed $metadataLabel */
         $metadataLabel = $state->metadata['label'] ?? null;
         $attrs['label'] = is_string($metadataLabel) ? $metadataLabel : $state->name;
 

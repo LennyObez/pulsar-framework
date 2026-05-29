@@ -327,10 +327,9 @@ final class SpecGenerator
         }
 
         if ($param->default !== null) {
-            $schema['default'] = $param->default;
+            $schema = [...$schema, 'default' => $param->default];
         }
 
-        /** @var array<string, mixed> $parameter */
         $parameter = [
             'name' => $param->name,
             'in' => $param->in,
@@ -346,7 +345,7 @@ final class SpecGenerator
         }
 
         if ($param->example !== null) {
-            $parameter['example'] = $param->example;
+            $parameter = [...$parameter, 'example' => $param->example];
         }
 
         return $parameter;

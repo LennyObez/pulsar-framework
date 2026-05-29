@@ -95,6 +95,7 @@ final readonly class NetworkSignalProvider implements SignalProviderInterface
     private function extractClientIp(SignalContext $context): string
     {
         $serverParams = $context->request->getServerParams();
+        /** @var mixed $remoteAddr */
         $remoteAddr = $serverParams['REMOTE_ADDR'] ?? null;
 
         return is_string($remoteAddr) ? $remoteAddr : '127.0.0.1';

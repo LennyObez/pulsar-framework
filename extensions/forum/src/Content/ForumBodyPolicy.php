@@ -370,7 +370,7 @@ final readonly class ForumBodyPolicy
 
             /** @var mixed $child */
             foreach ($body->childNodes as $child) {
-                if (!$child instanceof \DOMNode) {
+                if (!$child instanceof DOMNode) {
                     continue;
                 }
 
