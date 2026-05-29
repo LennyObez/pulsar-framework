@@ -52,8 +52,8 @@ final class SensitivePatternRegistry
         foreach ($this->patterns as $pattern) {
             if (preg_match_all($pattern->regex, $content, $found, PREG_OFFSET_CAPTURE) > 0) {
                 foreach ($found[0] as $match) {
-                    $value = (string) $match[0];
-                    $offset = (int) $match[1];
+                    $value = $match[0];
+                    $offset = $match[1];
 
                     if ($pattern->validator !== null && !($pattern->validator)($value)) {
                         continue;
