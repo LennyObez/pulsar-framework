@@ -102,7 +102,7 @@ final readonly class ErrorPageRenderer implements ExceptionRendererInterface
             'status' => $status->value,
             'statusPhrase' => $status->reasonPhrase(),
             'message' => $this->safeMessage($exception, $status),
-            'requestUrl' => $this->esc((string) $request->getUri()->getPath()),
+            'requestUrl' => $this->esc($request->getUri()->getPath()),
             'requestMethod' => $request->getMethod(),
             'retryAfter' => $this->extractRetryAfter($exception),
             'maintenanceMessage' => $this->extractMaintenanceMessage($exception),
