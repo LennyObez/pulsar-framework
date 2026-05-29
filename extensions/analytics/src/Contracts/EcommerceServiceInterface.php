@@ -30,6 +30,7 @@ interface EcommerceServiceInterface
      *     conversion_rate: float,
      *     items_sold: int,
      *     currency: string,
+     *     revenue_by_currency: array<string, array{revenue: float, transactions: int, avg_order_value: float}>,
      * }
      */
     public function getSummary(
