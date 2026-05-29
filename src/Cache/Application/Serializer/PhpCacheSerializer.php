@@ -9,6 +9,7 @@ use Pulsar\Api\Internal;
 use Pulsar\Cache\Application\Exception\CacheException;
 use Throwable;
 
+use function array_keys;
 use function is_array;
 use function is_object;
 use function serialize;
@@ -86,9 +87,11 @@ final readonly class PhpCacheSerializer implements CacheSerializerInterface
             return true;
         }
 
+        // Iterate by key so each (genuinely mixed) element is passed straight
+        // into the recursive call rather than bound to an intermediate variable.
         if (is_array($value)) {
-            foreach ($value as $item) {
-                if (self::containsIncompleteClass($item)) {
+            foreach (array_keys($value) as $key) {
+                if (self::containsIncompleteClass($value[$key])) {
                     return true;
                 }
             }
@@ -97,8 +100,9 @@ final readonly class PhpCacheSerializer implements CacheSerializerInterface
         }
 
         if (is_object($value)) {
-            foreach ((array) $value as $item) {
-                if (self::containsIncompleteClass($item)) {
+            $properties = (array) $value;
+            foreach (array_keys($properties) as $key) {
+                if (self::containsIncompleteClass($properties[$key])) {
                     return true;
                 }
             }
