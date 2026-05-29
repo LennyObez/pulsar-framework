@@ -45,6 +45,7 @@ final readonly class Each implements RuleInterface
             );
         }
 
+        /** @var mixed $element */
         foreach ($value as $index => $element) {
             $elementField = sprintf('%s.%s', $field, $index);
 

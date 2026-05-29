@@ -69,7 +69,6 @@ final class PciDssLogFormatter implements ComplianceLogFormatter
      */
     private function maskContext(array $context): array
     {
-        /** @var array<string, mixed> $masked */
         $masked = [];
 
         /** @var mixed $value */
@@ -77,16 +76,16 @@ final class PciDssLogFormatter implements ComplianceLogFormatter
             $lowerKey = strtolower($key);
 
             if (in_array($lowerKey, self::CVV_KEYS, true)) {
-                $masked[$key] = '***';
+                $masked = [...$masked, $key => '***'];
             } elseif (in_array($lowerKey, self::EXPIRY_KEYS, true)) {
-                $masked[$key] = '**/**';
+                $masked = [...$masked, $key => '**/**'];
             } elseif (is_string($value)) {
-                $masked[$key] = $this->maskPanInString($value);
+                $masked = [...$masked, $key => $this->maskPanInString($value)];
             } elseif (is_array($value)) {
                 /** @var array<string, mixed> $value */
-                $masked[$key] = $this->maskContext($value);
+                $masked = [...$masked, $key => $this->maskContext($value)];
             } else {
-                $masked[$key] = $value;
+                $masked = [...$masked, $key => $value];
             }
         }
 

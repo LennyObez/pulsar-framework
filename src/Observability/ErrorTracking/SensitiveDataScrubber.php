@@ -74,18 +74,17 @@ final readonly class SensitiveDataScrubber
      */
     public function scrub(array $data): array
     {
-        /** @var array<string, mixed> $result */
         $result = [];
 
         /** @var mixed $value */
         foreach ($data as $key => $value) {
             if ($this->isSensitiveKey($key)) {
-                $result[$key] = self::REDACTED;
+                $result = [...$result, $key => self::REDACTED];
             } elseif (is_array($value)) {
                 /** @var array<string, mixed> $value */
-                $result[$key] = $this->scrub($value);
+                $result = [...$result, $key => $this->scrub($value)];
             } else {
-                $result[$key] = $value;
+                $result = [...$result, $key => $value];
             }
         }
 

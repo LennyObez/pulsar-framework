@@ -55,7 +55,7 @@ final readonly class Distinct implements RuleInterface
                 );
             }
 
-            $unique[] = $element;
+            $unique = [...$unique, $element];
         }
 
         return null;

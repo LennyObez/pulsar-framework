@@ -46,6 +46,7 @@ final readonly class ModelBinder
         ServerRequestInterface $request,
         ResolutionContext $context,
     ): array {
+        /** @var mixed $handler */
         $handler = $matchedRoute->getHandler();
         $handlerInfo = $this->resolveHandlerInfo($handler);
 
