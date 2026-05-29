@@ -214,7 +214,7 @@ final class PreviewControllerTest extends TestCase
         $response = $this->controller->render($request, $this->contentId);
 
         self::assertSame('no-store, no-cache, must-revalidate', $response->getHeaderLine('Cache-Control'));
-        self::assertSame('noindex', $response->getHeaderLine('X-Robots-Tag'));
+        self::assertSame('noindex, nofollow', $response->getHeaderLine('X-Robots-Tag'));
     }
 
     #[Test]
