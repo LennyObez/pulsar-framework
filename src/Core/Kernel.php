@@ -778,7 +778,6 @@ final class Kernel implements KernelInterface
             return $wantsRequest ? [$request, $routeParams] : [$routeParams];
         }
 
-        /** @var list<mixed> $args */
         $args = $wantsRequest ? [$request] : [];
 
         if (!isset($this->handlerParamMap[$cacheKey])) {
@@ -831,10 +830,8 @@ final class Kernel implements KernelInterface
      *
      * @param class-string $class
      *
-     * @throws ContainerException If a container error occurs during resolution
-     * @throws NotFoundException If the resolved binding is not found
-     * @throws ReflectionException If class reflection fails during autowiring
-     * @throws Error If the class cannot be instantiated
+     * @throws RoutingException If the class is missing, not instantiable, or
+     *         cannot be resolved (see {@see ControllerResolverInterface::resolve()})
      */
     private function resolveController(string $class): object
     {

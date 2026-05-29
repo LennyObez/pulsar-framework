@@ -17,6 +17,7 @@ use Pulsar\Extensibility\Internal\ScopedContainerProxy;
 use Pulsar\Extensibility\Internal\ScopedRouterProxy;
 use Pulsar\Extensibility\Internal\ServiceRestrictionMap;
 use Pulsar\Routing\RouterInterface;
+use ReflectionClass;
 use Throwable;
 
 use function array_filter;
@@ -427,11 +428,13 @@ final class ExtensionBootstrap
             // no required constructor dependencies — the common case, and the
             // path that runs before the container is fully wired. An
             // autowire-friendly (zero-argument) provider must work without an
-            // explicit binding, as the diagnostic below promises. Providers with
-            // genuinely unmet dependencies fall through to the helpful error.
-            try {
-                $resolved = new $providerClass();
-            } catch (Throwable) {
+            // explicit binding, as the diagnostic below promises. A provider
+            // whose constructor needs arguments cannot be autowired here, so it
+            // gets the actionable error; any exception from a zero-argument
+            // constructor body propagates to register()'s own handler.
+            $constructor = (new ReflectionClass($providerClass))->getConstructor();
+
+            if ($constructor !== null && $constructor->getNumberOfRequiredParameters() > 0) {
                 throw new ExtensionException(
                     sprintf(
                         'Extension service provider "%s" could not be resolved through the container: %s. '
@@ -442,6 +445,8 @@ final class ExtensionBootstrap
                     previous: $containerError,
                 );
             }
+
+            $resolved = new $providerClass();
         }
 
         if (!$resolved instanceof ServiceProviderInterface) {
