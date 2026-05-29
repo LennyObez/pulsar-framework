@@ -202,11 +202,7 @@ final class PdoConnection implements ConnectionInterface
                 PDO::ATTR_EMULATE_PREPARES => false,
             ];
 
-            $mergedOptions = $defaultOptions;
-            /** @var mixed $value */
-            foreach ($this->options as $key => $value) {
-                $mergedOptions[$key] = $value;
-            }
+            $mergedOptions = [...$defaultOptions, ...$this->options];
 
             $this->connection = new PDO(
                 $this->dsn,

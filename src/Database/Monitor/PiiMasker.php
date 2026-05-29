@@ -43,16 +43,16 @@ final readonly class PiiMasker
             return $bindings;
         }
 
-        /** @var array<string|int, mixed> $masked */
         $masked = [];
 
         /** @var mixed $value */
         foreach ($bindings as $key => $value) {
             $columnName = strtolower(ltrim((string) $key, ':'));
 
-            $masked[$key] = in_array($columnName, $this->normalizedColumns, true)
-                ? self::MASK
-                : $value;
+            $masked = [
+                ...$masked,
+                $key => in_array($columnName, $this->normalizedColumns, true) ? self::MASK : $value,
+            ];
         }
 
         return $masked;

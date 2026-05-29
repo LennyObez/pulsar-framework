@@ -56,6 +56,7 @@ final class NoCacheMiddleware implements MiddlewareInterface
     private function shouldApply(ServerRequestInterface $request): bool
     {
         // Check for the attribute marker set by the router
+        /** @var mixed $handler */
         $handler = $request->getAttribute('_controller');
 
         if ($handler === null) {

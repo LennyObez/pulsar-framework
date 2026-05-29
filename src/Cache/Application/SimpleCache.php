@@ -56,11 +56,10 @@ final readonly class SimpleCache implements CacheInterface
     public function getMultiple(iterable $keys, mixed $default = null): iterable
     {
         $keyList = $this->iterableToArray($keys);
-        /** @var array<string, mixed> $result */
         $result = [];
 
         foreach ($this->pool->getItems($keyList) as $key => $item) {
-            $result[$key] = $item->isHit() ? $item->get() : $default;
+            $result = [...$result, $key => $item->isHit() ? $item->get() : $default];
         }
 
         return $result;
