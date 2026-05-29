@@ -250,7 +250,7 @@ final readonly class SvgSanitizer
 
         /** @var mixed $child */
         foreach (iterator_to_array($node->childNodes) as $child) {
-            $children[] = $child;
+            $children = [...$children, $child];
         }
 
         /** @var mixed $child */
