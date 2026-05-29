@@ -98,7 +98,7 @@ final readonly class SbomGenerator
      */
     private function extractComposerComponents(array $lockData, string $key, bool $isDev): array
     {
-        /** @var list<array{name?: string, version?: string, license?: list<string>, authors?: list<array{name?: string}>, dist?: array{shasum?: string}}> $packages */
+        /** @var list<array{name?: string, version?: string, license?: list<string>, authors?: list<array{name?: string}>, dist?: array{shasum?: string, reference?: string}}> $packages */
         $packages = is_array($lockData[$key] ?? null) ? $lockData[$key] : [];
 
         $components = [];
@@ -146,9 +146,7 @@ final readonly class SbomGenerator
             $dist = $package['dist'] ?? null;
 
             if (is_array($dist)) {
-                /** @var mixed $shasum */
                 $shasum = $dist['shasum'] ?? null;
-                /** @var mixed $reference */
                 $reference = $dist['reference'] ?? null;
 
                 if (is_string($shasum) && $shasum !== '') {

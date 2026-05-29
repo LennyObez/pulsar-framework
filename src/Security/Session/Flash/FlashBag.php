@@ -45,9 +45,7 @@ final class FlashBag
      */
     public function set(string $key, mixed $value): void
     {
-        /** @var array<string, mixed> $new */
-        $new = $this->getNewBag();
-        $new[$key] = $value;
+        $new = [...$this->getNewBag(), $key => $value];
         $this->session->set(self::KEY_NEW, $new);
     }
 
@@ -109,17 +107,22 @@ final class FlashBag
      */
     public function keep(string ...$keys): void
     {
-        /** @var array<string, mixed> $old */
         $old = $this->getOldBag();
-        /** @var array<string, mixed> $new */
-        $new = $this->getNewBag();
+        $kept = [];
 
         foreach ($keys as $key) {
             if (array_key_exists($key, $old)) {
-                $new[$key] = $old[$key];
+                /** @var mixed $value */
+                $value = $old[$key];
+                $kept[$key] = $value;
             }
         }
 
+        if ($kept === []) {
+            return;
+        }
+
+        $new = [...$this->getNewBag(), ...$kept];
         $this->session->set(self::KEY_NEW, $new);
     }
 
