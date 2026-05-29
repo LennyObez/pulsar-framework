@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Supervisor\PreflightCheck;
 
+use Closure;
 use Override;
 use Pulsar\Api\Internal;
 
@@ -22,8 +23,15 @@ final class MemoryPreflightCheck implements PreflightCheckInterface
 {
     private const int BYTES_PER_MB = 1_048_576;
 
+    /**
+     * @param (Closure(): int)|null $memoryReader Returns current usage in bytes.
+     *        Defaults to memory_get_usage(true). Injectable so callers (and
+     *        tests) can measure deterministically rather than depend on the
+     *        live process heap.
+     */
     public function __construct(
         private readonly int $thresholdMb = 256,
+        private readonly ?Closure $memoryReader = null,
     ) {}
 
     #[Override]
@@ -35,7 +43,9 @@ final class MemoryPreflightCheck implements PreflightCheckInterface
     #[Override]
     public function check(): PreflightCheckResult
     {
-        $usageBytes = memory_get_usage(true);
+        $usageBytes = $this->memoryReader !== null
+            ? ($this->memoryReader)()
+            : memory_get_usage(true);
         $usageMb = (int) round($usageBytes / self::BYTES_PER_MB);
         $findings = [
             sprintf('Current memory usage: %d MB', $usageMb),
