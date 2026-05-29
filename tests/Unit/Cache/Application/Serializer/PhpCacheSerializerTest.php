@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Cache\Application\Serializer;
 
-use __PHP_Incomplete_Class;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -83,7 +82,7 @@ final class PhpCacheSerializerTest extends TestCase
     }
 
     #[Test]
-    public function deserializeWithoutAllowlistReturnsIncompleteClass(): void
+    public function deserializeWithoutAllowlistRejectsObjects(): void
     {
         $serializerWithAllowlist = new PhpCacheSerializer([stdClass::class]);
         $object = new stdClass();
@@ -91,9 +90,11 @@ final class PhpCacheSerializerTest extends TestCase
         $encoded = $serializerWithAllowlist->serialize($object);
 
         $serializerWithoutAllowlist = new PhpCacheSerializer();
-        $decoded = $serializerWithoutAllowlist->deserialize($encoded);
 
-        self::assertInstanceOf(__PHP_Incomplete_Class::class, $decoded);
+        // Fail closed: a class outside the allowlist must be rejected, not
+        // silently downgraded to __PHP_Incomplete_Class and handed back.
+        $this->expectException(CacheException::class);
+        $serializerWithoutAllowlist->deserialize($encoded);
     }
 
     #[Test]
