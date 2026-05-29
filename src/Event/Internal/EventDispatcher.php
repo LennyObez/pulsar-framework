@@ -80,6 +80,7 @@ final readonly class EventDispatcher implements EventDispatcherInterface
             /** @var list<Throwable> $listenerErrors */
             $listenerErrors = [];
 
+            /** @var mixed $listener */
             foreach ($listeners as $listener) {
                 if ($event instanceof StoppableEventInterface && $event->isPropagationStopped()) {
                     break;

@@ -326,12 +326,11 @@ final readonly class ResultPrinter
 
         // If it's also iterable, show first/last items
         if ($value instanceof Traversable) {
-            /** @var list<mixed> $items */
             $items = [];
 
             /** @var mixed $item */
             foreach ($value as $item) {
-                $items[] = $item;
+                $items = [...$items, $item];
 
                 if (count($items) > self::MAX_ARRAY_ITEMS) {
                     break;

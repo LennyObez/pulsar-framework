@@ -77,6 +77,7 @@ final readonly class ExtensionAutoDiscovery
         /** @var list<array<string, mixed>> $packages */
         $packages = [];
         if (is_array($data)) {
+            /** @var mixed $packagesValue */
             $packagesValue = $data['packages'] ?? null;
             if (is_array($packagesValue)) {
                 /** @var list<array<string, mixed>> $packages */

@@ -109,7 +109,6 @@ final readonly class JsonApiRenderer implements ResponseRendererInterface
             unset($attributes['_meta']);
         }
 
-        /** @var array<string, mixed> $resource */
         $resource = [
             'type' => $type,
             'id' => $id,
@@ -117,7 +116,7 @@ final readonly class JsonApiRenderer implements ResponseRendererInterface
         ];
 
         if ($meta !== []) {
-            $resource['meta'] = $meta;
+            $resource = [...$resource, 'meta' => $meta];
         }
 
         return $resource;

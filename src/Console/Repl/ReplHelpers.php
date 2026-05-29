@@ -215,6 +215,7 @@ final readonly class ReplHelpers
         $start = hrtime(true);
 
         try {
+            /** @var mixed $result */
             $result = $callback();
         } catch (Throwable $e) {
             $end = hrtime(true);
