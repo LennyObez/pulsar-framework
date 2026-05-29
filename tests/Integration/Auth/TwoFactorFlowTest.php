@@ -15,6 +15,8 @@ use Pulsar\Auth\Identity\Identity;
 use Pulsar\Auth\Identity\TwoFactorStatus;
 use Pulsar\Auth\Middleware\TwoFactorMiddleware;
 use Pulsar\Auth\SecurityContext;
+use Pulsar\Auth\TwoFactor\AllowAllTwoFactorRateLimiter;
+use Pulsar\Auth\TwoFactor\InMemoryTotpReplayGuard;
 use Pulsar\Auth\TwoFactor\RecoveryCodeGenerator;
 use Pulsar\Auth\TwoFactor\RecoveryCodeVerifier;
 use Pulsar\Auth\TwoFactor\TotpGenerator;
@@ -49,6 +51,8 @@ final class TwoFactorFlowTest extends TestCase
             recoveryCodeVerifier: $recoveryVerifier,
             issuer: 'PulsarTest',
             recoveryCodeCount: 8,
+            replayGuard: new InMemoryTotpReplayGuard(),
+            rateLimiter: new AllowAllTwoFactorRateLimiter(),
         );
     }
 
