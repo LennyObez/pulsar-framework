@@ -102,6 +102,7 @@ final readonly class HijackDetector
 
     private function extractIp(ServerRequestInterface $request): string
     {
+        /** @var mixed $ip */
         $ip = $request->getServerParams()['REMOTE_ADDR'] ?? '';
 
         return is_string($ip) ? $ip : '';

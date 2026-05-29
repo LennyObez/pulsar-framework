@@ -153,6 +153,7 @@ final class SecretVault
         $data = require $this->vaultPath;
 
         if (is_array($data)) {
+            /** @var mixed $value */
             foreach ($data as $key => $value) {
                 if (is_string($key) && is_string($value)) {
                     $this->secrets[$key] = $value;

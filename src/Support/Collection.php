@@ -120,16 +120,15 @@ final class Collection implements Countable, IteratorAggregate
     #[NoDiscard]
     public function pluck(string $key): self
     {
-        /** @var list<mixed> $result */
         $result = [];
 
         foreach ($this->items as $item) {
             if (is_array($item) && array_key_exists($key, $item)) {
-                $result[] = $item[$key];
+                $result = [...$result, $item[$key]];
             } elseif (is_object($item) && property_exists($item, $key)) {
-                $result[] = $item->{$key};
+                $result = [...$result, $item->{$key}];
             } elseif (is_object($item) && method_exists($item, $key)) {
-                $result[] = $item->{$key}();
+                $result = [...$result, $item->{$key}()];
             }
         }
 

@@ -51,6 +51,7 @@ final readonly class HoneypotMiddleware implements MiddlewareInterface
             return $handler->handle($request);
         }
 
+        /** @var mixed $remoteAddr */
         $remoteAddr = $request->getServerParams()['REMOTE_ADDR'] ?? 'unknown';
         $sourceIp = is_string($remoteAddr) ? $remoteAddr : 'unknown';
 

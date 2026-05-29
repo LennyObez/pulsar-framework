@@ -54,6 +54,7 @@ final readonly class ReputationCooldown implements ReputationCooldownInterface
         $identity = $context->userId ?? $context->ipHash;
         $cacheKey = sprintf('antispam_cooldown:%s', $identity);
 
+        /** @var mixed $lastSubmission */
         $lastSubmission = $this->cache->get($cacheKey);
 
         if ($lastSubmission !== null && (is_int($lastSubmission) || is_string($lastSubmission))) {
