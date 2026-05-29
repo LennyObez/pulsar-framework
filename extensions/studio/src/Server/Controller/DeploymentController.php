@@ -45,7 +45,6 @@ final readonly class DeploymentController
         $tagCount = count($tags);
 
         for ($i = 0; $i < $tagCount && $i < 20; $i++) {
-            assert($i >= 0);
             /** @var string $tag */
             $tag = $tags[$i];
             /** @var string|null $previousTag */
