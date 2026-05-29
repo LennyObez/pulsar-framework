@@ -95,19 +95,6 @@ parameters:
         -
             identifier: argument.type
             message: '#^Parameter \#\d+ \$\w+ of (static method|method|function) [^ ]+ expects list<array\{.+\}>, list<array<string, mixed>> given\.$#'
-        # === Category B: PHPUnit createStub() generic limitation ===
-        # PHPStan 1.x / 2.x cannot resolve the @template T of TestCase::createStub()
-        # when the argument is a concrete final class (not an interface).
-        # PHPUnit returns `T&Stub` but the analyser infers `mixed` for the chain
-        # `$stub->method('foo')->willReturn(...)`. The runtime is correct; the
-        # analyser limitation is documented upstream.
-        -
-            identifier: method.unresolvableReturnType
-            message: '#^Return type of call to method PHPUnit\\Framework\\TestCase::createStub\(\) contains unresolvable type\.$#'
-        -
-            identifier: method.nonObject
-            message: '#^Cannot call method [^ ]+\(\) on mixed\.$#'
-            path: ../../tests/
         # === Category B: Test fixtures deliberately pass invalid shapes ===
         # Validator-pattern fromArray() / fromX() tests intentionally pass
         # type-mismatched arrays (e.g. `['api_key' => 12345]` when the shape

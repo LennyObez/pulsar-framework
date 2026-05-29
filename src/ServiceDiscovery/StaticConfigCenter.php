@@ -35,7 +35,8 @@ final class StaticConfigCenter implements ConfigCenterInterface
     }
 
     /**
-     * @param array<string, array<string, string>> $data
+     * @param array<string, mixed> $data Raw config; non-array namespaces and
+     *        non-string entries are skipped (normalized).
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
@@ -43,10 +44,13 @@ final class StaticConfigCenter implements ConfigCenterInterface
         $normalized = [];
 
         foreach ($data as $namespace => $entries) {
+            if (!is_array($entries)) {
+                continue;
+            }
             $normalized[$namespace] = [];
 
             foreach ($entries as $key => $value) {
-                if (is_string($key)) {
+                if (is_string($key) && is_string($value)) {
                     $normalized[$namespace][$key] = $value;
                 }
             }
