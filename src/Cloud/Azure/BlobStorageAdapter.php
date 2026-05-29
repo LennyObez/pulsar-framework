@@ -51,19 +51,18 @@ final readonly class BlobStorageAdapter implements StorageAdapterInterface
         $blobName = $this->buildBlobName($key);
         $url = $this->blobUrl($blobName);
 
-        /** @var array<string, string> $headers */
         $headers = $this->authHeaders();
         $headers['Content-Length'] = (string) strlen($content);
         $headers['x-ms-blob-type'] = 'BlockBlob';
         $headers['x-ms-version'] = '2023-11-03';
 
-        if ($metadata?->contentType !== null) {
+        if ($metadata !== null && $metadata->contentType !== null) {
             $headers['Content-Type'] = $metadata->contentType;
         } else {
             $headers['Content-Type'] = 'application/octet-stream';
         }
 
-        if ($metadata?->cacheControl !== null) {
+        if ($metadata !== null && $metadata->cacheControl !== null) {
             $headers['Cache-Control'] = $metadata->cacheControl;
         }
 

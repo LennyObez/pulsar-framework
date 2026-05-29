@@ -242,10 +242,9 @@ final class S3StorageAdapter implements StorageAdapterInterface
         $objectKey = $this->buildObjectKey($key);
         $payloadHash = hash('sha256', '');
 
-        /** @var array<string, string> $headers */
         $headers = ['Host' => $this->getHost()];
 
-        if ($metadata?->contentType !== null) {
+        if ($metadata !== null && $metadata->contentType !== null) {
             $headers['Content-Type'] = $metadata->contentType;
         }
 

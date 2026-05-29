@@ -146,8 +146,12 @@ final class AuditLogger implements AuditLoggerInterface
                 $resolvedActor = $requestContext->actor;
             }
 
-            $enrichedMetadata['correlation_id'] ??= $requestContext->correlationId->value;
-            $enrichedMetadata['causation_id'] ??= $requestContext->causationId->value;
+            if (!isset($enrichedMetadata['correlation_id'])) {
+                $enrichedMetadata['correlation_id'] = $requestContext->correlationId->value;
+            }
+            if (!isset($enrichedMetadata['causation_id'])) {
+                $enrichedMetadata['causation_id'] = $requestContext->causationId->value;
+            }
         }
 
         if ($resolvedActor === null || $resolvedActor === '') {

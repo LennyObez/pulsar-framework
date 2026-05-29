@@ -10,6 +10,7 @@ use Pulsar\Workflow\Exception\WorkflowException;
 use RuntimeException;
 use Throwable;
 
+use function array_intersect_key;
 use function array_key_exists;
 use function array_keys;
 use function array_map;
@@ -99,19 +100,14 @@ final readonly class ClassifiedContext
      */
     public function redactForExport(ClassificationLevel $maxLevel = ClassificationLevel::Internal): array
     {
-        /** @var array<string, mixed> $result */
-        $result = [];
-
-        /** @var mixed $value */
-        foreach ($this->values as $key => $value) {
-            $fieldLevel = $this->classifications[$key];
-
+        $allowedKeys = [];
+        foreach ($this->classifications as $key => $fieldLevel) {
             if ($fieldLevel->isAtOrBelow($maxLevel)) {
-                $result[$key] = $value;
+                $allowedKeys[$key] = true;
             }
         }
 
-        return $result;
+        return array_intersect_key($this->values, $allowedKeys);
     }
 
     /**
