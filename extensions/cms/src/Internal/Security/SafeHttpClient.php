@@ -362,6 +362,7 @@ final readonly class SafeHttpClient
         // Parse response headers
         $statusCode = 200;
         $responseHeaders = [];
+        /** @var list<string>|null $lastHeaders */
         $lastHeaders = http_get_last_response_headers();
 
         if ($lastHeaders !== null) {
