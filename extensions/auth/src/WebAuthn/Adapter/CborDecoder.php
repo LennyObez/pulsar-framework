@@ -34,6 +34,9 @@ final class CborDecoder
         return $decoder->decodeItem();
     }
 
+    /**
+     * @return int|string|float|bool|array<array-key, mixed>|null A decoded CBOR value
+     */
     private function decodeItem(): mixed
     {
         if ($this->offset >= strlen($this->data)) {
