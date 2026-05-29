@@ -49,8 +49,9 @@ final readonly class SyncDriver implements QueueDriverInterface
             throw QueueException::serializationFailed($jobClass);
         }
 
-        /** @var object $job */
-        $job = new $jobClass();
+        /** @var class-string $jobClassName */
+        $jobClassName = $jobClass;
+        $job = new $jobClassName();
 
         if (!$job instanceof QueueableInterface) {
             throw QueueException::serializationFailed($jobClass);
