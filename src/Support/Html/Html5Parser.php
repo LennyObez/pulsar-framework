@@ -214,7 +214,7 @@ final class Html5Parser
         foreach ($buttons as $btn) {
             if ($btn instanceof \Dom\Element) {
                 $rawText = $btn->textContent ?? '';
-                if (trim(is_string($rawText) ? $rawText : '') === ''
+                if (trim($rawText) === ''
                     && !$btn->hasAttribute('aria-label')
                     && !$btn->hasAttribute('aria-labelledby')) {
                     $issues[] = 'Button has no text content or aria-label';
@@ -236,14 +236,14 @@ final class Html5Parser
         foreach ($node->childNodes as $child) {
             if ($child instanceof \Dom\Text) {
                 $rawText = $child->textContent ?? '';
-                $text = trim(is_string($rawText) ? $rawText : '');
+                $text = trim($rawText);
 
                 if ($text !== '') {
                     $parts[] = $text;
                 }
             } elseif ($child instanceof \Dom\Element) {
                 $localName = $child->localName;
-                if (!in_array(strtolower(is_string($localName) ? $localName : ''), $excludeTags, true)) {
+                if (!in_array(strtolower($localName), $excludeTags, true)) {
                     self::collectTextNodes($child, $excludeTags, $parts);
                 }
             }
@@ -262,7 +262,7 @@ final class Html5Parser
         foreach ($node->childNodes as $child) {
             if ($child instanceof \Dom\Element) {
                 $localName = $child->localName;
-                $tagName = strtolower(is_string($localName) ? $localName : '');
+                $tagName = strtolower($localName);
 
                 if (!in_array($tagName, $allowedTags, true)) {
                     $toRemove[] = $child;
@@ -293,11 +293,7 @@ final class Html5Parser
         $hasDataWildcard = in_array('data-*', $allowedAttributes, true);
         $toRemove = [];
         foreach ($element->attributes as $attr) {
-            if (!$attr instanceof \Dom\Attr) {
-                continue;
-            }
-            $attrName = $attr->name;
-            $attrNameStr = is_string($attrName) ? $attrName : '';
+            $attrNameStr = $attr->name;
             $name = strtolower($attrNameStr);
 
             // Block event handlers
@@ -320,7 +316,7 @@ final class Html5Parser
 
             // Block javascript: URIs in href/src
             $attrValue = $attr->value;
-            if (($name === 'href' || $name === 'src') && self::isDangerousUri(is_string($attrValue) ? $attrValue : '')) {
+            if (($name === 'href' || $name === 'src') && self::isDangerousUri($attrValue)) {
                 $toRemove[] = $attrNameStr;
             }
         }
