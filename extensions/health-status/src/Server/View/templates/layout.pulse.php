@@ -1,4 +1,6 @@
 <?php
+/** @var mixed $title */
+/** @var mixed $content */
 $typedTitle = isset($title) && is_string($title) ? $title : 'System Status';
 $typedContent = isset($content) && is_string($content) ? $content : '';
 $currentYear = (int) date('Y');
