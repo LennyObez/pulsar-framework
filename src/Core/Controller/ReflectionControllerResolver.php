@@ -54,7 +54,7 @@ final class ReflectionControllerResolver implements ControllerResolverInterface
             $constructor = $reflection->getConstructor();
 
             if ($constructor === null || $constructor->getNumberOfParameters() === 0) {
-                return new $class();
+                return $reflection->newInstance();
             }
 
             $args = [];

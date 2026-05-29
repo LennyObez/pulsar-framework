@@ -213,7 +213,7 @@ final class Html5Parser
         $buttons = $doc->querySelectorAll('button');
         foreach ($buttons as $btn) {
             if ($btn instanceof \Dom\Element) {
-                $rawText = $btn->textContent ?? '';
+                $rawText = (string) ($btn->textContent ?? '');
                 if (trim($rawText) === ''
                     && !$btn->hasAttribute('aria-label')
                     && !$btn->hasAttribute('aria-labelledby')) {
@@ -235,14 +235,14 @@ final class Html5Parser
     {
         foreach ($node->childNodes as $child) {
             if ($child instanceof \Dom\Text) {
-                $rawText = $child->textContent ?? '';
+                $rawText = (string) ($child->textContent ?? '');
                 $text = trim($rawText);
 
                 if ($text !== '') {
                     $parts[] = $text;
                 }
             } elseif ($child instanceof \Dom\Element) {
-                $localName = $child->localName;
+                $localName = (string) $child->localName;
                 if (!in_array(strtolower($localName), $excludeTags, true)) {
                     self::collectTextNodes($child, $excludeTags, $parts);
                 }
@@ -261,7 +261,7 @@ final class Html5Parser
         $toRemove = [];
         foreach ($node->childNodes as $child) {
             if ($child instanceof \Dom\Element) {
-                $localName = $child->localName;
+                $localName = (string) $child->localName;
                 $tagName = strtolower($localName);
 
                 if (!in_array($tagName, $allowedTags, true)) {
@@ -292,8 +292,10 @@ final class Html5Parser
     {
         $hasDataWildcard = in_array('data-*', $allowedAttributes, true);
         $toRemove = [];
+
+        /** @var \Dom\Attr $attr */
         foreach ($element->attributes as $attr) {
-            $attrNameStr = $attr->name;
+            $attrNameStr = (string) $attr->name;
             $name = strtolower($attrNameStr);
 
             // Block event handlers
@@ -315,7 +317,7 @@ final class Html5Parser
             }
 
             // Block javascript: URIs in href/src
-            $attrValue = $attr->value;
+            $attrValue = (string) $attr->value;
             if (($name === 'href' || $name === 'src') && self::isDangerousUri($attrValue)) {
                 $toRemove[] = $attrNameStr;
             }
