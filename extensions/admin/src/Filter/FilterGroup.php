@@ -62,8 +62,10 @@ final readonly class FilterGroup
         $logic = FilterLogic::tryFrom(Coerce::string($data['logic'] ?? null, 'and')) ?? FilterLogic::And;
 
         $conditions = [];
+        /** @var mixed $rawConditions */
         $rawConditions = $data['conditions'] ?? null;
         if (is_array($rawConditions)) {
+            /** @var mixed $condData */
             foreach ($rawConditions as $condData) {
                 if (is_array($condData)) {
                     /** @var array<string, mixed> $condData */
@@ -73,8 +75,10 @@ final readonly class FilterGroup
         }
 
         $groups = [];
+        /** @var mixed $rawGroups */
         $rawGroups = $data['groups'] ?? null;
         if (is_array($rawGroups)) {
+            /** @var mixed $groupData */
             foreach ($rawGroups as $groupData) {
                 if (is_array($groupData)) {
                     /** @var array<string, mixed> $groupData */

@@ -34,6 +34,7 @@ final readonly class ToolCall
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
+        /** @var mixed $arguments */
         $arguments = $data['arguments'] ?? null;
         /** @var array<string, mixed> $argumentsArr */
         $argumentsArr = is_array($arguments) ? $arguments : [];

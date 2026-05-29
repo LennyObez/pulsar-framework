@@ -62,6 +62,7 @@ final readonly class AuthorizationGranted implements EnvelopeRequiredEvent
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
+        /** @var mixed $occurredAt */
         $occurredAt = $data['occurred_at'] ?? null;
 
         return new self(
