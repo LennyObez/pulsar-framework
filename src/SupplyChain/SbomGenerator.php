@@ -146,7 +146,9 @@ final readonly class SbomGenerator
             $dist = $package['dist'] ?? null;
 
             if (is_array($dist)) {
+                /** @var mixed $shasum */
                 $shasum = $dist['shasum'] ?? null;
+                /** @var mixed $reference */
                 $reference = $dist['reference'] ?? null;
 
                 if (is_string($shasum) && $shasum !== '') {
