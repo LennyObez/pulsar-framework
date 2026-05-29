@@ -64,7 +64,7 @@ final readonly class CsvContentImporter
         $results = [];
 
         while (($row = fgetcsv($stream, escape: '')) !== false) {
-            if ($row === null || count($row) !== count($headers)) {
+            if (count($row) !== count($headers)) {
                 continue;
             }
 
