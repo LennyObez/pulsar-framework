@@ -12,12 +12,12 @@ use Psr\Http\Message\UriInterface;
 use Pulsar\Auth\Exception\AuthenticationException;
 use Pulsar\Auth\Exception\AuthorizationException;
 use Pulsar\Auth\Identity\IdentityInterface;
-use Pulsar\Extension\Cms\Internal\Security\CmsRateLimiter;
 use Pulsar\Auth\Identity\TwoFactorStatus;
 use Pulsar\Auth\TwoFactor\RecoveryCodeGenerator;
 use Pulsar\Auth\TwoFactor\TotpGenerator;
 use Pulsar\Auth\TwoFactor\TotpVerifier;
 use Pulsar\Extension\Cms\Http\Controller\Admin\TwoFactorController;
+use Pulsar\Extension\Cms\Internal\Security\CmsRateLimiter;
 use Pulsar\Extension\Cms\Security\QrCodeEncoder;
 
 use function json_decode;

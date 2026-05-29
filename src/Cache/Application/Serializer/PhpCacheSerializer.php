@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Cache\Application\Serializer;
 
+use __PHP_Incomplete_Class;
 use Pulsar\Api\Internal;
 use Pulsar\Cache\Application\Exception\CacheException;
 use Throwable;
@@ -81,7 +82,7 @@ final readonly class PhpCacheSerializer implements CacheSerializerInterface
      */
     private static function containsIncompleteClass(mixed $value): bool
     {
-        if ($value instanceof \__PHP_Incomplete_Class) {
+        if ($value instanceof __PHP_Incomplete_Class) {
             return true;
         }
 

@@ -104,7 +104,6 @@ use function is_callable;
 use function is_string;
 use function is_subclass_of;
 use function sprintf;
-use function str_contains;
 
 /**
  * Pulsar Kernel
