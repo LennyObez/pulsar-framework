@@ -38,8 +38,6 @@ use function ucfirst;
 #[Api(since: '1.0.0')]
 final class Str
 {
-    private function __construct() {}
-
     /**
      * Convert a string to a URL-friendly slug.
      *

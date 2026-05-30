@@ -27,8 +27,6 @@ use const JSON_UNESCAPED_SLASHES;
 #[Api(since: '1.0.0')]
 final class ManifestFormat
 {
-    private function __construct() {}
-
     /**
      * Serialize an integrity manifest to formatted JSON.
      *

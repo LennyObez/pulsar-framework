@@ -27,8 +27,6 @@ final class CacheKeyValidator
      */
     private const int MAX_KEY_LENGTH = 250;
 
-    private function __construct() {}
-
     /**
      * Validate a single cache key.
      *

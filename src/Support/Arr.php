@@ -32,8 +32,6 @@ use function usort;
 #[Api(since: '1.0.0')]
 final class Arr
 {
-    private function __construct() {}
-
     /**
      * Get a value from a nested array using dot notation.
      *

@@ -19,8 +19,6 @@ use Pulsar\Security\Csrf\CsrfMiddleware;
 #[Api(since: '1.0.0')]
 final class MiddlewareAliasConfig
 {
-    private function __construct() {}
-
     /**
      * Get the default middleware aliases mapping short names to class-strings.
      *

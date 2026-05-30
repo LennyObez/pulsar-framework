@@ -24,8 +24,6 @@ use function usleep;
 #[Api(since: '1.0.0')]
 final class Helpers
 {
-    private function __construct() {}
-
     /**
      * Resolve a value: call closures, pass scalars through.
      *
