@@ -8,7 +8,7 @@ declare(strict_types=1);
  */
 $e = static fn(string $val): string => htmlspecialchars($val);
 $currentPathRaw = $_SERVER['REQUEST_URI'] ?? '/admin';
-$currentPath = is_string($currentPathRaw) ? (strtok($currentPathRaw, '?') ?: '/admin') : '/admin';
+$currentPath = strtok($currentPathRaw, '?') ?: '/admin';
 
 $schemaEnabled = ($templateData['schema_enabled'] ?? false) === true;
 
