@@ -31,8 +31,7 @@ $lastUpdatedDisplay = $current->capturedAt->format('M j, Y H:i:s T');
 <section aria-labelledby="checks-heading">
     <h2 id="checks-heading" class="status-section-title">Health Checks</h2>
     <div class="status-grid">
-<?php foreach ($current->results as $result): ?>
-        <?php $checkResult = $result; ?>
+<?php foreach ($current->results as $checkResult): ?>
         <?php include __DIR__ . '/partials/check-card.pulse.php'; ?>
 <?php endforeach; ?>
     </div>
