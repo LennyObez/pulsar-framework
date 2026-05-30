@@ -55,11 +55,6 @@ final class CallableReflector
         }
 
         // Invokable object
-        if (is_object($callable)) {
-            return new ReflectionMethod($callable, '__invoke');
-        }
-
-        // Fallback: wrap in closure and reflect
-        return new ReflectionFunction(Closure::fromCallable($callable));
+        return new ReflectionMethod($callable, '__invoke');
     }
 }
