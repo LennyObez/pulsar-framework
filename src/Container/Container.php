@@ -24,6 +24,7 @@ use ReflectionNamedType;
 use Throwable;
 
 use function array_keys;
+use function class_exists;
 use function is_callable;
 use function is_object;
 use function is_string;
@@ -447,6 +448,10 @@ final class Container implements AdvancedContainerInterface
      */
     private function buildFromHints(string $className, array $hints): object
     {
+        if (!class_exists($className)) {
+            throw ContainerException::unresolvable($className, sprintf('Class "%s" does not exist', $className));
+        }
+
         $dependencies = [];
 
         foreach ($hints as $hint) {
@@ -466,6 +471,10 @@ final class Container implements AdvancedContainerInterface
      */
     private function buildFromReflection(string $className): object
     {
+        if (!class_exists($className)) {
+            throw ContainerException::unresolvable($className, sprintf('Class "%s" does not exist', $className));
+        }
+
         $reflector = new ReflectionClass($className);
 
         if (!$reflector->isInstantiable()) {
