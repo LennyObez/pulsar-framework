@@ -87,7 +87,6 @@ final readonly class ForumImportExportProvider implements ImportExportProviderIn
                 'categories' => $this->exportCategories(),
                 'threads' => $this->exportThreads(),
                 'tags' => $this->exportTags(),
-                default => [],
             };
         }
 
