@@ -237,23 +237,25 @@ final class MicroKernel
         if (is_callable($handler)) {
             /** @var mixed $response */
             $response = $handler($request, ...array_values($matched->parameters));
-        } elseif (is_array($handler) && isset($handler[0], $handler[1]) && is_string($handler[0]) && is_string($handler[1]) && class_exists($handler[0])) {
+        } elseif (is_array($handler) && isset($handler[0], $handler[1]) && is_string($handler[0]) && is_string($handler[1])) {
             $class = $handler[0];
             $method = $handler[1];
-            /** @var mixed $controller */
-            $controller = $this->container->has($class)
-                ? $this->container->get($class)
-                : new $class();
-            if (is_object($controller) && is_callable([$controller, $method])) {
-                /** @var mixed $response */
-                $response = $controller->$method($request, ...array_values($matched->parameters));
+
+            if (class_exists($class)) {
+                /** @var mixed $controller */
+                $controller = $this->container->has($class)
+                    ? $this->container->get($class)
+                    : new $class();
+                if (is_object($controller) && is_callable([$controller, $method])) {
+                    /** @var mixed $response */
+                    $response = $controller->$method($request, ...array_values($matched->parameters));
+                }
             }
         } elseif (is_string($handler) && class_exists($handler)) {
-            $handlerClass = $handler;
             /** @var mixed $controller */
-            $controller = $this->container->has($handlerClass)
-                ? $this->container->get($handlerClass)
-                : new $handlerClass();
+            $controller = $this->container->has($handler)
+                ? $this->container->get($handler)
+                : new $handler();
             if (is_callable($controller)) {
                 /** @var mixed $response */
                 $response = $controller($request, ...array_values($matched->parameters));
