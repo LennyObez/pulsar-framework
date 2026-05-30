@@ -192,10 +192,6 @@ final class ArgvInput implements InputInterface
     {
         $value = $this->options[$name] ?? null;
 
-        if (is_int($value)) {
-            return $value;
-        }
-
         return is_string($value) && is_numeric($value) ? (int) $value : $default;
     }
 
