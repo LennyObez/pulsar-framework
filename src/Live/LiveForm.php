@@ -116,7 +116,6 @@ abstract class LiveForm
     {
         $this->errors = [];
         $ref = new ReflectionClass(static::class);
-        $defaults = $ref->newInstanceWithoutConstructor();
 
         foreach ($this->rules() as $field => $_) {
             if (property_exists($this, $field)) {

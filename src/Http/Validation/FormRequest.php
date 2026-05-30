@@ -98,7 +98,7 @@ abstract class FormRequest
         $data = $this->inputData();
         $builder = ValidatorBuilder::make($data)->rules($this->rules());
 
-        $result = $builder->validateOrFail();
+        $builder->validateOrFail();
         $this->validatedData = $this->extractValidated($data, $this->rules());
 
         return $this->validatedData;

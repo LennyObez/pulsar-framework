@@ -44,7 +44,7 @@ final class MakeEventCommand extends Command
             return $context;
         }
 
-        [$name, $module, $modulePath, $namespace] = $context;
+        [$name, , $modulePath, $namespace] = $context;
 
         $eventDir = $modulePath . DIRECTORY_SEPARATOR . 'Event';
 

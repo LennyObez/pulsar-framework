@@ -33,9 +33,6 @@ final readonly class ResourceDeleteController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        /** @var array<string, mixed> $body */
-        $body = (array) ($request->getParsedBody() ?? []);
-
         $context = new MutationContext(
             actor: $actor,
             reason: isset($body['reason']) && is_string($body['reason']) ? $body['reason'] : 'Admin panel delete',

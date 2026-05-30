@@ -52,7 +52,6 @@ final readonly class PaymentsAccountSectionProvider implements AccountSectionPro
 
     public function getSections(string $userId): array
     {
-        $orderResult = $this->orderRepository->findByCustomer($userId, 1, 1);
         $activeOrderCount = $this->countActiveOrders($userId);
         $invoices = $this->invoiceRepository->findByCustomer($userId);
 
