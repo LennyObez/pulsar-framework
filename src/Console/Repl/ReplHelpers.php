@@ -371,7 +371,7 @@ final readonly class ReplHelpers
 
         foreach ($method->getParameters() as $param) {
             $type = $param->getType();
-            $paramStr = $type !== null ? $type . ' $' . $param->getName() : '$' . $param->getName();
+            $paramStr = $type !== null ? (string) $type . ' $' . $param->getName() : '$' . $param->getName();
 
             if ($param->isOptional() && $param->isDefaultValueAvailable()) {
                 $paramStr .= ' = ' . var_export($param->getDefaultValue(), true);

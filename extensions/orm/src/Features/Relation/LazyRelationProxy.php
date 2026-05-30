@@ -18,6 +18,8 @@ use Traversable;
 
 use function array_values;
 use function count;
+use function is_int;
+use function is_string;
 
 /**
  * Transparent proxy that lazily loads related entities on first access.
@@ -126,6 +128,10 @@ final class LazyRelationProxy implements IteratorAggregate, Countable, ArrayAcce
      */
     public function offsetGet(mixed $offset): ?object
     {
+        if (!is_int($offset) && !is_string($offset)) {
+            return null;
+        }
+
         return $this->load()[$offset] ?? null;
     }
 
