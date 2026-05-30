@@ -266,7 +266,7 @@ final readonly class RedirectController extends AbstractAdminController
     private function escapeCsv(string $value): string
     {
         // Protect against CSV formula injection: prefix dangerous leading characters
-        if ($value !== '' && str_contains("=+-@\t\r", $value[0])) {
+        if ($value !== '' && in_array($value[0], ['=', '+', '-', '@', "\t", "\r"], true)) {
             $value = "\t" . $value;
         }
 

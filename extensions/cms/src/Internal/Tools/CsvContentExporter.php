@@ -12,8 +12,8 @@ use function array_map;
 use function fclose;
 use function fopen;
 use function fputcsv;
+use function in_array;
 use function rewind;
-use function str_contains;
 use function stream_get_contents;
 
 /**
@@ -99,7 +99,7 @@ final readonly class CsvContentExporter
      */
     private function sanitizeFormulaInjection(string $value): string
     {
-        if ($value !== '' && str_contains("=+-@\t\r", $value[0])) {
+        if ($value !== '' && in_array($value[0], ['=', '+', '-', '@', "\t", "\r"], true)) {
             return "\t" . $value;
         }
 

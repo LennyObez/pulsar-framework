@@ -327,7 +327,7 @@ final readonly class ReplHelpers
 
                 foreach ($method->getParameters() as $param) {
                     $type = $param->getType();
-                    $paramStr = $type !== null ? $type . ' $' . $param->getName() : '$' . $param->getName();
+                    $paramStr = $type !== null ? (string) $type . ' $' . $param->getName() : '$' . $param->getName();
 
                     if ($param->isOptional() && $param->isDefaultValueAvailable()) {
                         $paramStr .= ' = ' . var_export($param->getDefaultValue(), true);
@@ -337,7 +337,7 @@ final readonly class ReplHelpers
                 }
 
                 $returnType = $method->getReturnType();
-                $returnStr = $returnType !== null ? ': ' . $returnType : '';
+                $returnStr = $returnType !== null ? ': ' . (string) $returnType : '';
 
                 $lines[] = sprintf(
                     '  %s(%s)%s',
@@ -381,7 +381,7 @@ final readonly class ReplHelpers
         }
 
         $returnType = $method->getReturnType();
-        $returnStr = $returnType !== null ? ': ' . $returnType : '';
+        $returnStr = $returnType !== null ? ': ' . (string) $returnType : '';
 
         $lines[] = sprintf('  Signature: %s(%s)%s', $methodName, implode(', ', $params), $returnStr);
 
