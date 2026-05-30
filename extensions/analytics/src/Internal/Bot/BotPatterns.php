@@ -42,5 +42,4 @@ final class BotPatterns
         'httpclient',
     ];
 
-    private function __construct() {}
 }

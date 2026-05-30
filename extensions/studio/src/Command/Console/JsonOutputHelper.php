@@ -25,8 +25,6 @@ final class JsonOutputHelper
     /** Standard JSON encoding flags for CLI output. */
     private const int JSON_FLAGS = JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES;
 
-    private function __construct() {}
-
     /**
      * Encode data as a JSON envelope for CLI output.
      *

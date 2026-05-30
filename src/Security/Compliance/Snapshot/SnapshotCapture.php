@@ -22,8 +22,6 @@ use Pulsar\Security\Compliance\Exception\ComplianceException;
 #[Api(since: '1.0.0')]
 final class SnapshotCapture
 {
-    private function __construct() {}
-
     /**
      * Capture a point-in-time snapshot of classified entity fields.
      *
