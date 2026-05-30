@@ -206,8 +206,6 @@ final class WafEngine
 
     private function detectSqli(string $value): bool
     {
-        $lower = mb_strtolower($value, 'UTF-8');
-
         $patterns = [
             '/\bunion\b.*\bselect\b/i',
             '/\bselect\b.*\bfrom\b/i',

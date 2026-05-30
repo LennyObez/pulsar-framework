@@ -38,7 +38,6 @@ final readonly class LicenseBadgeRenderer
         ?string $date = null,
     ): string {
         $displayName = $copyrightHolder ?? $authorName;
-        $escapedLabel = self::escape($license->label());
         $escapedValue = self::escape($license->value);
 
         $html = '<div class="pui-license-badge" role="contentinfo" aria-label="License information">';

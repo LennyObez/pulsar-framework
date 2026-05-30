@@ -135,9 +135,6 @@ final class IdeHelperCommand extends Command
      */
     private function generateInterfaceStub(ReflectionClass $reflection): string
     {
-        $namespace = $reflection->getNamespaceName();
-        $shortName = $reflection->getShortName();
-
         $methods = [];
 
         foreach ($reflection->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {

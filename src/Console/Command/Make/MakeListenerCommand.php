@@ -46,7 +46,7 @@ final class MakeListenerCommand extends Command
             return $context;
         }
 
-        [$name, $module, $modulePath, $namespace] = $context;
+        [$name, , $modulePath, $namespace] = $context;
 
         $eventClass = $input->getOption('event');
 

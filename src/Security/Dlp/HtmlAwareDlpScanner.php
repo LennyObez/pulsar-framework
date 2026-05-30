@@ -63,14 +63,6 @@ final readonly class HtmlAwareDlpScanner
         $values = [];
 
         foreach (self::SCANNABLE_ATTRIBUTES as $attr) {
-            $selectorMap = match ($attr) {
-                'href' => 'a',
-                'src' => 'img, script, iframe, video, audio, source',
-                'value' => 'input',
-                'placeholder' => 'input, textarea',
-                default => '*',
-            };
-
             $extracted = Html5Parser::extractAttributes($html, "[$attr]", $attr);
             $values = [...$values, ...$extracted];
         }

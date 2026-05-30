@@ -157,7 +157,7 @@ final readonly class SandboxValidator
         $constructorNames = $this->extractConstructorNames($compiledOutput);
         $seen = [];
 
-        foreach ($matches[1] as [$function, $offset]) {
+        foreach ($matches[1] as [$function]) {
             $lower = strtolower($function);
 
             if (isset($seen[$lower])) {
