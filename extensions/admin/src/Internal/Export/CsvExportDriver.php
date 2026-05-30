@@ -12,6 +12,7 @@ use Pulsar\Extension\Admin\Domain\ExportFormat;
 use function fclose;
 use function fopen;
 use function fputcsv;
+use function in_array;
 use function is_bool;
 use function is_string;
 use function rewind;
@@ -78,7 +79,7 @@ final readonly class CsvExportDriver implements ExportDriverInterface
         $str = (string) $value;
 
         // Protect against CSV formula injection
-        if ($str !== '' && is_string($value) && str_contains("=+-@\t\r", $str[0])) {
+        if ($str !== '' && is_string($value) && in_array($str[0], ['=', '+', '-', '@', "\t", "\r"], true)) {
             return "\t" . $str;
         }
 

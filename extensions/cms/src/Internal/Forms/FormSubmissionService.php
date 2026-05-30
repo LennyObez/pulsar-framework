@@ -23,6 +23,7 @@ use Throwable;
 use function array_keys;
 use function bin2hex;
 use function implode;
+use function in_array;
 use function is_scalar;
 use function is_string;
 use function sodium_crypto_generichash;
@@ -220,7 +221,7 @@ final readonly class FormSubmissionService implements FormSubmissionServiceInter
      */
     private static function sanitizeCsvValue(string $value): string
     {
-        if ($value !== '' && str_contains("=+-@\t\r", $value[0])) {
+        if ($value !== '' && in_array($value[0], ['=', '+', '-', '@', "\t", "\r"], true)) {
             return "'" . $value;
         }
 
