@@ -60,15 +60,11 @@ final class ResumePdfGenerator
             $items = [];
 
             foreach ($resumeData['experience'] as $exp) {
-                if (!is_array($exp)) {
-                    continue;
-                }
-
-                $title = $e($exp['title'] ?? '');
-                $company = $e($exp['company'] ?? '');
-                $location = $e($exp['location'] ?? '');
-                $period = $e($exp['period'] ?? '');
-                $description = $e($exp['description'] ?? '');
+                $title = $e(is_string($exp['title'] ?? null) ? $exp['title'] : '');
+                $company = $e(is_string($exp['company'] ?? null) ? $exp['company'] : '');
+                $location = $e(is_string($exp['location'] ?? null) ? $exp['location'] : '');
+                $period = $e(is_string($exp['period'] ?? null) ? $exp['period'] : '');
+                $description = $e(is_string($exp['description'] ?? null) ? $exp['description'] : '');
 
                 $items[] = '<div class="resume-entry">'
                     . "<h3>$title</h3>"
@@ -91,13 +87,9 @@ final class ResumePdfGenerator
             $items = [];
 
             foreach ($resumeData['education'] as $edu) {
-                if (!is_array($edu)) {
-                    continue;
-                }
-
-                $degree = $e($edu['degree'] ?? '');
-                $institution = $e($edu['institution'] ?? '');
-                $year = $e($edu['year'] ?? '');
+                $degree = $e(is_string($edu['degree'] ?? null) ? $edu['degree'] : '');
+                $institution = $e(is_string($edu['institution'] ?? null) ? $edu['institution'] : '');
+                $year = $e(is_string($edu['year'] ?? null) ? $edu['year'] : '');
 
                 $items[] = '<div class="resume-entry">'
                     . "<h3>$degree</h3>"
@@ -117,14 +109,10 @@ final class ResumePdfGenerator
             $items = [];
 
             foreach ($resumeData['skills'] as $category) {
-                if (!is_array($category)) {
-                    continue;
-                }
-
-                $catName = $e($category['category'] ?? '');
+                $catName = $e(is_string($category['category'] ?? null) ? $category['category'] : '');
                 $skills = $category['items'] ?? [];
 
-                if (is_array($skills) && $skills !== []) {
+                if ($skills !== []) {
                     $skillList = implode(', ', array_map(static fn(string $s): string => $e($s), $skills));
                     $items[] = "<div class=\"resume-entry\"><strong>$catName:</strong> $skillList</div>";
                 }
@@ -141,12 +129,8 @@ final class ResumePdfGenerator
             $items = [];
 
             foreach ($resumeData['languages'] as $lang) {
-                if (!is_array($lang)) {
-                    continue;
-                }
-
-                $language = $e($lang['language'] ?? '');
-                $level = $e($lang['level'] ?? '');
+                $language = $e(is_string($lang['language'] ?? null) ? $lang['language'] : '');
+                $level = $e(is_string($lang['level'] ?? null) ? $lang['level'] : '');
                 $items[] = "<li>$language" . ($level !== '' ? ": $level" : '') . '</li>';
             }
 
@@ -161,13 +145,9 @@ final class ResumePdfGenerator
             $items = [];
 
             foreach ($resumeData['certifications'] as $cert) {
-                if (!is_array($cert)) {
-                    continue;
-                }
-
-                $certName = $e($cert['name'] ?? '');
-                $issuer = $e($cert['issuer'] ?? '');
-                $year = $e($cert['year'] ?? '');
+                $certName = $e(is_string($cert['name'] ?? null) ? $cert['name'] : '');
+                $issuer = $e(is_string($cert['issuer'] ?? null) ? $cert['issuer'] : '');
+                $year = $e(is_string($cert['year'] ?? null) ? $cert['year'] : '');
                 $items[] = "<li>$certName"
                     . ($issuer !== '' ? ": $issuer" : '')
                     . ($year !== '' ? " ($year)" : '')
@@ -185,12 +165,8 @@ final class ResumePdfGenerator
             $items = [];
 
             foreach ($resumeData['projects'] as $project) {
-                if (!is_array($project)) {
-                    continue;
-                }
-
-                $projectName = $e($project['name'] ?? '');
-                $description = $e($project['description'] ?? '');
+                $projectName = $e(is_string($project['name'] ?? null) ? $project['name'] : '');
+                $description = $e(is_string($project['description'] ?? null) ? $project['description'] : '');
                 $items[] = '<div class="resume-entry">'
                     . "<h3>$projectName</h3>"
                     . ($description !== '' ? "<p>$description</p>" : '')
