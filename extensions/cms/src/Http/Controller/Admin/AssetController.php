@@ -61,7 +61,11 @@ final readonly class AssetController
         foreach ($candidates as $filePath) {
             $realPath = realpath($filePath);
 
-            if ($realPath === false || !is_file($realPath) || !str_starts_with($realPath, realpath($baseDir) ?: '')) {
+            if ($realPath === false) {
+                continue;
+            }
+
+            if (!is_file($realPath) || !str_starts_with($realPath, realpath($baseDir) ?: '')) {
                 continue;
             }
 
