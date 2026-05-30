@@ -63,12 +63,16 @@ final class RouteContext
 
     public function pattern(): ?string
     {
-        return $this->slots[$this->currentKey()]['pattern'] ?? null;
+        $slot = $this->slots[$this->currentKey()] ?? null;
+
+        return $slot['pattern'] ?? null;
     }
 
     public function name(): ?string
     {
-        return $this->slots[$this->currentKey()]['name'] ?? null;
+        $slot = $this->slots[$this->currentKey()] ?? null;
+
+        return $slot['name'] ?? null;
     }
 
     /**

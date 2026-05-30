@@ -92,7 +92,8 @@ final class KeyRatchet
      */
     public function reset(string $newSecret): void
     {
-        sodium_memzero($this->chainKey);
+        $oldKey = $this->chainKey;
+        sodium_memzero($oldKey);
 
         $this->chainKey = sodium_crypto_generichash(
             'pulsar-ratchet-init',
@@ -108,7 +109,9 @@ final class KeyRatchet
      */
     public function destroy(): void
     {
-        sodium_memzero($this->chainKey);
+        $oldKey = $this->chainKey;
+        sodium_memzero($oldKey);
+        $this->chainKey = '';
         $this->counter = 0;
     }
 }
