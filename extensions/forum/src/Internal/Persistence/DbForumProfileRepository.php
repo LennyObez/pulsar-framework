@@ -68,9 +68,12 @@ final readonly class DbForumProfileRepository implements ForumProfileRepositoryI
             AND COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key
         SQL;
 
+    // Clamp to >= 0 with a portable CASE expression (GREATEST is unavailable in
+    // SQLite). :delta is bound twice under distinct names because native prepared
+    // statements do not allow reusing a single named placeholder.
     private const string SQL_INCREMENT_POST_COUNT = <<<'SQL'
         UPDATE forum_profiles
-        SET post_count = GREATEST(0, post_count + :delta),
+        SET post_count = CASE WHEN post_count + :delta > 0 THEN post_count + :delta_value ELSE 0 END,
             updated_at = :updated_at
         WHERE user_id = :user_id
             AND COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key
@@ -78,7 +81,7 @@ final readonly class DbForumProfileRepository implements ForumProfileRepositoryI
 
     private const string SQL_INCREMENT_THREAD_COUNT = <<<'SQL'
         UPDATE forum_profiles
-        SET thread_count = GREATEST(0, thread_count + :delta),
+        SET thread_count = CASE WHEN thread_count + :delta > 0 THEN thread_count + :delta_value ELSE 0 END,
             updated_at = :updated_at
         WHERE user_id = :user_id
             AND COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key
@@ -215,6 +218,7 @@ final readonly class DbForumProfileRepository implements ForumProfileRepositoryI
             'user_id' => $userId,
             'tenant_key' => $tenantId ?? $this->tenantId ?? self::SENTINEL_TENANT,
             'delta' => $delta,
+            'delta_value' => $delta,
             'updated_at' => $now->format('c'),
         ]);
     }
@@ -227,6 +231,7 @@ final readonly class DbForumProfileRepository implements ForumProfileRepositoryI
             'user_id' => $userId,
             'tenant_key' => $tenantId ?? $this->tenantId ?? self::SENTINEL_TENANT,
             'delta' => $delta,
+            'delta_value' => $delta,
             'updated_at' => $now->format('c'),
         ]);
     }
