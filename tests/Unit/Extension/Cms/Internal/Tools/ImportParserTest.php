@@ -7,7 +7,7 @@ namespace Pulsar\Tests\Unit\Extension\Cms\Internal\Tools;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Extension\Cms\Content\Content;
@@ -29,21 +29,21 @@ use const JSON_THROW_ON_ERROR;
 #[CoversClass(ImportParser::class)]
 final class ImportParserTest extends TestCase
 {
-    private ContentRepositoryInterface&MockObject $contentRepo;
-    private ContentTranslationRepositoryInterface&MockObject $translationRepo;
-    private ContentBlockRepositoryInterface&MockObject $blockRepo;
-    private TaxonomyRepositoryInterface&MockObject $taxonomyRepo;
-    private MenuRepositoryInterface&MockObject $menuRepo;
-    private SettingsServiceInterface&MockObject $settingsService;
+    private ContentRepositoryInterface&Stub $contentRepo;
+    private ContentTranslationRepositoryInterface&Stub $translationRepo;
+    private ContentBlockRepositoryInterface&Stub $blockRepo;
+    private TaxonomyRepositoryInterface&Stub $taxonomyRepo;
+    private MenuRepositoryInterface&Stub $menuRepo;
+    private SettingsServiceInterface&Stub $settingsService;
 
     protected function setUp(): void
     {
-        $this->contentRepo = $this->createMock(ContentRepositoryInterface::class);
-        $this->translationRepo = $this->createMock(ContentTranslationRepositoryInterface::class);
-        $this->blockRepo = $this->createMock(ContentBlockRepositoryInterface::class);
-        $this->taxonomyRepo = $this->createMock(TaxonomyRepositoryInterface::class);
-        $this->menuRepo = $this->createMock(MenuRepositoryInterface::class);
-        $this->settingsService = $this->createMock(SettingsServiceInterface::class);
+        $this->contentRepo = $this->createStub(ContentRepositoryInterface::class);
+        $this->translationRepo = $this->createStub(ContentTranslationRepositoryInterface::class);
+        $this->blockRepo = $this->createStub(ContentBlockRepositoryInterface::class);
+        $this->taxonomyRepo = $this->createStub(TaxonomyRepositoryInterface::class);
+        $this->menuRepo = $this->createStub(MenuRepositoryInterface::class);
+        $this->settingsService = $this->createStub(SettingsServiceInterface::class);
     }
 
     private function createParser(?ImportConfig $config = null): ImportParser
@@ -69,8 +69,7 @@ final class ImportParserTest extends TestCase
 
         /** @var list<Content> $savedContents */
         $savedContents = [];
-        $this->contentRepo->expects(self::once())
-            ->method('save')
+        $this->contentRepo->method('save')
             ->willReturnCallback(function (Content $content) use (&$savedContents): void {
                 $savedContents[] = $content;
             });
@@ -104,8 +103,7 @@ final class ImportParserTest extends TestCase
 
         /** @var list<Content> $savedContents */
         $savedContents = [];
-        $this->contentRepo->expects(self::once())
-            ->method('save')
+        $this->contentRepo->method('save')
             ->willReturnCallback(function (Content $content) use (&$savedContents): void {
                 $savedContents[] = $content;
             });
@@ -140,8 +138,7 @@ final class ImportParserTest extends TestCase
 
         /** @var list<Content> $savedContents */
         $savedContents = [];
-        $this->contentRepo->expects(self::once())
-            ->method('save')
+        $this->contentRepo->method('save')
             ->willReturnCallback(function (Content $content) use (&$savedContents): void {
                 $savedContents[] = $content;
             });
@@ -175,8 +172,7 @@ final class ImportParserTest extends TestCase
 
         /** @var list<ContentTranslation> $savedTranslations */
         $savedTranslations = [];
-        $this->translationRepo->expects(self::once())
-            ->method('save')
+        $this->translationRepo->method('save')
             ->willReturnCallback(function (ContentTranslation $t) use (&$savedTranslations): void {
                 $savedTranslations[] = $t;
             });
@@ -206,8 +202,7 @@ final class ImportParserTest extends TestCase
 
         /** @var list<ContentTranslation> $savedTranslations */
         $savedTranslations = [];
-        $this->translationRepo->expects(self::once())
-            ->method('save')
+        $this->translationRepo->method('save')
             ->willReturnCallback(function (ContentTranslation $t) use (&$savedTranslations): void {
                 $savedTranslations[] = $t;
             });
@@ -238,8 +233,7 @@ final class ImportParserTest extends TestCase
         $this->settingsService->method('get')->willReturn(null);
 
         $setCalls = [];
-        $this->settingsService->expects(self::exactly(2))
-            ->method('set')
+        $this->settingsService->method('set')
             ->willReturnCallback(function (string $group, string $key, mixed $value) use (&$setCalls): void {
                 $setCalls[] = ['group' => $group, 'key' => $key, 'value' => $value];
             });
@@ -257,6 +251,7 @@ final class ImportParserTest extends TestCase
         $result = $parser->importBundle($json, false);
 
         self::assertSame(['settings' => 2], $result->created);
+        self::assertCount(2, $setCalls);
         self::assertSame('general', $setCalls[0]['group']);
         self::assertSame('site_name', $setCalls[0]['key']);
     }
@@ -267,8 +262,7 @@ final class ImportParserTest extends TestCase
         $this->settingsService->method('get')->willReturn(null);
 
         $setCalls = [];
-        $this->settingsService->expects(self::exactly(2))
-            ->method('set')
+        $this->settingsService->method('set')
             ->willReturnCallback(function (string $group, string $key, mixed $value) use (&$setCalls): void {
                 $setCalls[] = ['group' => $group, 'key' => $key, 'value' => $value];
             });
@@ -284,6 +278,7 @@ final class ImportParserTest extends TestCase
         $result = $parser->importBundle($json, false);
 
         self::assertSame(['settings' => 2], $result->created);
+        self::assertCount(2, $setCalls);
 
         // Flat format should be wrapped in "general" group
         self::assertSame('general', $setCalls[0]['group']);
@@ -337,8 +332,18 @@ final class ImportParserTest extends TestCase
     public function dryRunDoesNotPersist(): void
     {
         $this->contentRepo->method('findByPath')->willReturn(null);
-        $this->contentRepo->expects(self::never())->method('save');
-        $this->translationRepo->expects(self::never())->method('save');
+
+        // Dry run must not persist: record any save() and assert none happened.
+        $savedContents = [];
+        $this->contentRepo->method('save')
+            ->willReturnCallback(function () use (&$savedContents): void {
+                $savedContents[] = true;
+            });
+        $savedTranslations = [];
+        $this->translationRepo->method('save')
+            ->willReturnCallback(function () use (&$savedTranslations): void {
+                $savedTranslations[] = true;
+            });
 
         $json = json_encode([
             'content' => [
@@ -355,6 +360,8 @@ final class ImportParserTest extends TestCase
 
         self::assertTrue($result->dryRun);
         self::assertSame(['content' => 1], $result->created);
+        self::assertSame([], $savedContents);
+        self::assertSame([], $savedTranslations);
     }
 
     /**

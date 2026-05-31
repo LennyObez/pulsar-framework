@@ -140,7 +140,7 @@ final class ContentControllerHomepageFallbackTest extends TestCase
     {
         $translation = $this->createTranslation('');
 
-        $translationRepo = $this->createMock(ContentTranslationRepositoryInterface::class);
+        $translationRepo = $this->createStub(ContentTranslationRepositoryInterface::class);
         $translationRepo->method('findByContentAndLocale')->willReturn(null);
 
         // First call to findByPath with the raw path returns null.
@@ -196,7 +196,7 @@ final class ContentControllerHomepageFallbackTest extends TestCase
     {
         $translation = $this->createTranslation('');
 
-        $translationRepo = $this->createMock(ContentTranslationRepositoryInterface::class);
+        $translationRepo = $this->createStub(ContentTranslationRepositoryInterface::class);
 
         // When homepage_content_id is set, findByContentAndLocale is called first
         $translationRepo->method('findByContentAndLocale')
