@@ -17,4 +17,5 @@ done
 exec php -d memory_limit=8G -d opcache.jit=off vendor/bin/phpunit \
     -c tools/php/phpunit.xml --no-coverage \
     --display-deprecations --display-phpunit-deprecations \
-    --display-notices --display-phpunit-notices --display-warnings
+    --display-notices --display-phpunit-notices --display-warnings \
+    --display-skipped --display-incomplete
