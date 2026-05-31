@@ -10,8 +10,12 @@ use Pulsar\Database\ConnectionInterface;
 use Pulsar\Extension\Cms\Config\CmsConfig;
 use Pulsar\Extension\Cms\Support\UuidGenerator;
 
+use function bin2hex;
 use function count;
 use function hash_equals;
+use function sodium_crypto_generichash;
+
+use const SODIUM_CRYPTO_GENERICHASH_BYTES_MAX;
 
 /**
  * Service for the append-only content event store.
@@ -201,7 +205,7 @@ final readonly class ContentEventService
             json_encode($payload, JSON_THROW_ON_ERROR),
         ]);
 
-        return hash('blake2b', $data);
+        return bin2hex(sodium_crypto_generichash($data, '', SODIUM_CRYPTO_GENERICHASH_BYTES_MAX));
     }
 
     /**

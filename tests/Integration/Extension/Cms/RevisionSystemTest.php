@@ -11,7 +11,6 @@ use Pulsar\Extension\Cms\Content\ContentRevision;
 use Pulsar\Extension\Cms\Content\ContentRevisionRepositoryInterface;
 use Pulsar\Extension\Cms\Content\ContentTranslation;
 
-use function in_array;
 use function strlen;
 
 #[CoversClass(ContentRevision::class)]
@@ -21,10 +20,6 @@ final class RevisionSystemTest extends TestCase
 
     protected function setUp(): void
     {
-        if (!in_array('blake2b', hash_algos(), true)) {
-            self::markTestSkipped('blake2b hash algorithm is not available in this PHP build');
-        }
-
         $this->revisionRepo = new InMemoryRevisionRepository();
     }
 
