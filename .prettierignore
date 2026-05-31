@@ -11,6 +11,10 @@ bootstrap/cache/
 *.lock
 pnpm-lock.yaml
 composer.lock
+# Emitted by tools/api/generate-snapshot.php in a deterministic format the
+# boundary checker consumes; Prettier must not reformat it or the two tools
+# fight over the file.
+tools/api/public-api.snapshot.json
 
 # IDE and editor
 .idea/

@@ -7,6 +7,10 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- Native localized route slugs: translate URL path segments per locale (`/fr/developpement`, `/nl/ontwikkeling`) for a single route registered under a canonical key. Includes `SlugRegistry`, `LocalizedSlugMiddleware` (constant-time rewrite + configurable canonical 301 for non-canonical aliases, route parameters preserved), `LocalizedUrlGenerator` with the `route()` helper and `@route` directive, slug-aware hreflang/`x-default` output, and the `i18n:slugs:lint` console command (completeness + collision checks, wired into CI). Compiled once at boot with zero runtime cost when unconfigured.
+
 ## [1.0.0-rc.11] - 2026-02-12
 
 ### Added

@@ -34,7 +34,11 @@ use Pulsar\I18n\Locale\LocalePrefixMiddleware;
 use Pulsar\I18n\Locale\LocaleUrlGenerator;
 use Pulsar\I18n\Locale\LocaleUrlResolverInterface;
 use Pulsar\I18n\Locale\LocaleUrlStrategy;
+use Pulsar\I18n\Locale\LocalizedSlugMiddleware;
+use Pulsar\I18n\Locale\LocalizedUrlGenerator;
 use Pulsar\I18n\Locale\RouteBasedLocaleUrlResolver;
+use Pulsar\I18n\Locale\SlugLocaleUrlResolver;
+use Pulsar\I18n\Locale\SlugRegistry;
 use Pulsar\I18n\Locale\UrlPrefixExtractor;
 use Pulsar\I18n\LocaleNegotiatorInterface;
 use Pulsar\I18n\Region\CountryRegistry;
@@ -72,6 +76,11 @@ final readonly class I18nWiring implements ServiceWiringInterface
         /** @var I18nConfig $config */
         $config = $repository->get(I18nConfig::class);
         $container->instance(I18nConfig::class, $config);
+
+        // Compile the localized-slug registry once at boot and register it so
+        // controllers can type-hint it. Empty when no slugs are configured.
+        $slugRegistry = SlugRegistry::fromConfig($config->localizedSlugs, $config->supportedLocales);
+        $container->instance(SlugRegistry::class, $slugRegistry);
 
         $intlAvailable = extension_loaded('intl');
 
@@ -132,7 +141,7 @@ final readonly class I18nWiring implements ServiceWiringInterface
 
         // Wire middleware based on URL strategy
         if ($config->urlStrategy === LocaleUrlStrategy::PathPrefix) {
-            $this->wireLocaleUrlRouting($container, $middleware, $config, $negotiator, $translator);
+            $this->wireLocaleUrlRouting($container, $middleware, $config, $negotiator, $translator, $router, $slugRegistry);
         } else {
             $middleware->pipe(new LocaleMiddleware($negotiator, $config, $translator));
         }
@@ -144,6 +153,8 @@ final readonly class I18nWiring implements ServiceWiringInterface
         I18nConfig $config,
         LocaleNegotiatorInterface $negotiator,
         TranslatorInterface $translator,
+        Router $router,
+        SlugRegistry $slugRegistry,
     ): void {
         $extractor = new UrlPrefixExtractor();
         $container->instance(UrlPrefixExtractor::class, $extractor);
@@ -151,18 +162,33 @@ final readonly class I18nWiring implements ServiceWiringInterface
         // LocalePrefixMiddleware replaces LocaleMiddleware
         $middleware->pipe(new LocalePrefixMiddleware($extractor, $negotiator, $config, $translator));
 
-        // Default URL resolver (extensions may override with content-aware impl)
-        $resolver = new RouteBasedLocaleUrlResolver($extractor, $config);
+        // Localized slug rewriting runs immediately after the prefix strip, so
+        // the locale-agnostic router only ever sees canonical key paths. Piped
+        // only when slugs are configured — zero overhead otherwise.
+        if (!$slugRegistry->isEmpty()) {
+            $middleware->pipe(new LocalizedSlugMiddleware($slugRegistry, $config, $extractor));
+        }
 
+        // Default URL resolver: slug-aware when slugs are configured, otherwise
+        // simple prefix swapping. Extensions may pre-bind a content-aware
+        // implementation, which takes precedence.
         if (!$container->has(LocaleUrlResolverInterface::class)) {
+            $resolver = $slugRegistry->isEmpty()
+                ? new RouteBasedLocaleUrlResolver($extractor, $config)
+                : new SlugLocaleUrlResolver($slugRegistry, $config, $extractor);
             $container->instance(LocaleUrlResolverInterface::class, $resolver);
         }
 
-        // URL generator
+        // Path-based URL generator (hreflang, locale switchers)
         $resolverInstance = $container->get(LocaleUrlResolverInterface::class);
         /** @var LocaleUrlResolverInterface $resolverInstance */
         $urlGenerator = new LocaleUrlGenerator($extractor, $config, $resolverInstance);
         $container->instance(LocaleUrlGenerator::class, $urlGenerator);
+
+        // Key-based localized URL generator backing route() and @route.
+        $localizedGenerator = new LocalizedUrlGenerator($slugRegistry, $config, $extractor, $translator, $router);
+        $container->instance(LocalizedUrlGenerator::class, $localizedGenerator);
+        LocalizedUrlGenerator::setGlobalInstance($localizedGenerator);
 
         // Template helper (reads locale from translator, updated per-request by middleware)
         $helper = new TemplateLocaleHelper($translator, $urlGenerator);

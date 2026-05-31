@@ -9391,7 +9391,8 @@
                         "bool $strictMode",
                         "Pulsar\\I18n\\Locale\\LocaleUrlStrategy $urlStrategy",
                         "bool $defaultLocaleInUrl",
-                        "bool $canonicalRedirect"
+                        "bool $canonicalRedirect",
+                        "array $localizedSlugs"
                     ],
                     "return": null,
                     "static": false
@@ -27232,6 +27233,66 @@
             },
             "constants": []
         },
+        "Pulsar\\I18n\\Locale\\LocalizedUrlGenerator": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "Pulsar\\I18n\\Locale\\SlugRegistry $registry",
+                        "Pulsar\\Config\\I18nConfig $config",
+                        "Pulsar\\I18n\\Locale\\UrlPrefixExtractor $extractor",
+                        "Pulsar\\I18n\\TranslatorInterface $translator",
+                        "?Pulsar\\Routing\\Router $router"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "alternates": {
+                    "params": [
+                        "string $key",
+                        "array $params"
+                    ],
+                    "return": "array",
+                    "static": false
+                },
+                "getGlobalInstance": {
+                    "params": [],
+                    "return": "Pulsar\\I18n\\Locale\\LocalizedUrlGenerator",
+                    "static": true
+                },
+                "hreflangLinks": {
+                    "params": [
+                        "string $key",
+                        "array $params"
+                    ],
+                    "return": "array",
+                    "static": false
+                },
+                "resetGlobalInstance": {
+                    "params": [],
+                    "return": "void",
+                    "static": true
+                },
+                "route": {
+                    "params": [
+                        "string $key",
+                        "array $params",
+                        "?string $locale"
+                    ],
+                    "return": "string",
+                    "static": false
+                },
+                "setGlobalInstance": {
+                    "params": [
+                        "Pulsar\\I18n\\Locale\\LocalizedUrlGenerator $instance"
+                    ],
+                    "return": "void",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\I18n\\Locale\\RouteBasedLocaleUrlResolver": {
             "since": "1.0.0",
             "methods": [],
@@ -27249,6 +27310,87 @@
                         "string $currentPath",
                         "string $currentLocale"
                     ],
+                    "return": "array",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\I18n\\Locale\\SlugMatch": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "string $key",
+                        "string $remainder",
+                        "bool $isCanonical"
+                    ],
+                    "return": null,
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\I18n\\Locale\\SlugRegistry": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "declaredSlugs": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
+                },
+                "fromConfig": {
+                    "params": [
+                        "array $localizedSlugs",
+                        "array $supportedLocales"
+                    ],
+                    "return": "Pulsar\\I18n\\Locale\\SlugRegistry",
+                    "static": true
+                },
+                "hasKey": {
+                    "params": [
+                        "string $key"
+                    ],
+                    "return": "bool",
+                    "static": false
+                },
+                "isEmpty": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
+                "keys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
+                },
+                "matchKey": {
+                    "params": [
+                        "string $path"
+                    ],
+                    "return": "?Pulsar\\I18n\\Locale\\SlugMatch",
+                    "static": false
+                },
+                "matchLocalized": {
+                    "params": [
+                        "string $locale",
+                        "string $path"
+                    ],
+                    "return": "?Pulsar\\I18n\\Locale\\SlugMatch",
+                    "static": false
+                },
+                "slugFor": {
+                    "params": [
+                        "string $key",
+                        "string $locale"
+                    ],
+                    "return": "string",
+                    "static": false
+                },
+                "supportedLocales": {
+                    "params": [],
                     "return": "array",
                     "static": false
                 }
@@ -55081,6 +55223,8 @@
         "Pulsar\\I18n\\Locale\\LocaleMiddleware",
         "Pulsar\\I18n\\Locale\\LocaleNegotiator",
         "Pulsar\\I18n\\Locale\\LocalePrefixMiddleware",
+        "Pulsar\\I18n\\Locale\\LocalizedSlugMiddleware",
+        "Pulsar\\I18n\\Locale\\SlugLocaleUrlResolver",
         "Pulsar\\I18n\\Region\\RegionMiddleware",
         "Pulsar\\I18n\\Translator",
         "Pulsar\\ImportExport\\Command\\ExportCommand",
@@ -55300,6 +55444,7 @@
         "Pulsar\\View\\Directive\\PhpDirective",
         "Pulsar\\View\\Directive\\PushDirective",
         "Pulsar\\View\\Directive\\RegionSelectorDirective",
+        "Pulsar\\View\\Directive\\RouteDirective",
         "Pulsar\\View\\Directive\\SanitizeDirective",
         "Pulsar\\View\\Directive\\SectionDirective",
         "Pulsar\\View\\Directive\\SimpleDirective",
