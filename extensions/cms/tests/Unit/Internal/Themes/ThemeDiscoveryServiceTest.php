@@ -108,7 +108,7 @@ final class ThemeDiscoveryServiceTest extends TestCase
         $existingTheme = $this->createStub(InstalledTheme::class);
 
         $repo = $this->createMock(ThemeRepositoryInterface::class);
-        $repo->method('findBySlug')->with('existing')->willReturn($existingTheme);
+        $repo->method('findBySlug')->willReturnMap([['existing', $existingTheme]]);
         $repo->expects(self::never())->method('save');
 
         $service = new ThemeDiscoveryService($repo, new NullLogger(), $basePath);
@@ -221,6 +221,9 @@ final class ThemeDiscoveryServiceTest extends TestCase
         $tempDir = sys_get_temp_dir();
 
         if (str_starts_with($path, $tempDir) && is_file($path)) {
+            // Path is constrained to sys_get_temp_dir() by the guard above; this
+            // only removes a temp file the test itself created (no traversal).
+            // nosemgrep: php.lang.security.unlink-use.unlink-use
             unlink($path);
         }
     }
