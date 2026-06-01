@@ -55121,6 +55121,7 @@
         "Pulsar\\Container\\CallableReflector",
         "Pulsar\\Container\\Compiled\\CompiledContainer",
         "Pulsar\\Container\\Compiled\\ContainerCompiler",
+        "Pulsar\\Container\\Compiler\\CompilerPassProcessor",
         "Pulsar\\Container\\Compiler\\ContainerBuilder",
         "Pulsar\\Container\\Compiler\\PassRunner",
         "Pulsar\\Container\\Compiler\\Pass\\AutoTagPass",
