@@ -106,7 +106,12 @@ final class SharedMemoryConfigStore
         try {
             // Layout: [4-byte length][32-byte HMAC][serialized data]
             $header = pack('N', $dataLength);
-            shmop_write($shm, $header . $hmac . $serialized, 0);
+            $payload = $header . $hmac . $serialized;
+            $written = shmop_write($shm, $payload, 0);
+
+            if ($written !== strlen($payload)) {
+                throw new ConfigException('Failed to write full payload to shared memory segment');
+            }
         } finally {
             /** @psalm-suppress UnusedFunctionCall */
             shmop_close($shm);
@@ -216,6 +221,7 @@ final class SharedMemoryConfigStore
         }
 
         try {
+            /** @psalm-suppress UnusedFunctionCall */
             shmop_delete($shm);
         } finally {
             /** @psalm-suppress UnusedFunctionCall */

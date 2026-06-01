@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 
 use function array_intersect_key;
 use function array_key_exists;
+use function array_keys;
 use function array_map;
 use function sprintf;
 
@@ -61,7 +62,7 @@ final readonly class AttributeAllowlist
         $allowed = $this->allowedLookup[$scope];
         $filtered = array_intersect_key($attributes, $allowed);
 
-        foreach ($attributes as $key => $value) {
+        foreach (array_keys($attributes) as $key) {
             if (!array_key_exists($key, $allowed)) {
                 $this->logUnknownKey($scope, $key);
             }
