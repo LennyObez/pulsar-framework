@@ -7,6 +7,8 @@ namespace Pulsar\Extension\Auth\WebAuthn\Exception;
 use Pulsar\Api\Api;
 use RuntimeException;
 
+use function sprintf;
+
 /**
  * WebAuthn ceremony and verification exceptions.
  * @api
@@ -43,12 +45,12 @@ final class WebAuthnException extends RuntimeException
 
     public static function cloneDetected(string $credentialId): self
     {
-        return new self('clone_detected', 'Authenticator clone detected for credential: signature counter did not increase');
+        return new self('clone_detected', sprintf('Authenticator clone detected for credential %s: signature counter did not increase', $credentialId));
     }
 
     public static function credentialNotFound(string $credentialId): self
     {
-        return new self('credential_not_found', 'The credential is not registered');
+        return new self('credential_not_found', sprintf('The credential %s is not registered', $credentialId));
     }
 
     public static function userNotFound(): self
