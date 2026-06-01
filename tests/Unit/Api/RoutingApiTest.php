@@ -4,17 +4,19 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Api;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Api\Api;
 use Pulsar\Routing\MatchedRoute;
 use Pulsar\Routing\Route;
 use Pulsar\Routing\RouteGroup;
 use Pulsar\Routing\Router;
 use Pulsar\Routing\RoutingException;
 
-#[CoversClass(Api::class)]
+// Purely structural: asserts public-API classes carry the #[Api] attribute via
+// reflection, exercising no measurable code. The previous #[CoversClass(Api::class)]
+// targeted the Api attribute class, which is not a valid coverage target.
+#[CoversNothing]
 final class RoutingApiTest extends TestCase
 {
     use ApiAssertionsTrait;
