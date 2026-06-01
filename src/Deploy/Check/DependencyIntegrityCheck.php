@@ -185,9 +185,11 @@ final readonly class DependencyIntegrityCheck implements DeployCheckInterface
     {
         $versions = [];
 
-        /** @var list<array<string, mixed>> $packages */
-        $packages = is_array($lockData['packages'] ?? null) ? $lockData['packages'] : [];
+        /** @var mixed $packagesRaw */
+        $packagesRaw = $lockData['packages'] ?? null;
+        $packages = is_array($packagesRaw) ? $packagesRaw : [];
 
+        /** @var mixed $package */
         foreach ($packages as $package) {
             if (!is_array($package)) {
                 continue;
@@ -215,11 +217,11 @@ final readonly class DependencyIntegrityCheck implements DeployCheckInterface
         $versions = [];
 
         // Composer 2 format: { "packages": [...], "dev": true, ... }
-        /** @var list<array<string, mixed>> $packages */
-        $packages = is_array($installedData['packages'] ?? null)
-            ? $installedData['packages']
-            : $installedData;
+        /** @var mixed $packagesRaw */
+        $packagesRaw = $installedData['packages'] ?? null;
+        $packages = is_array($packagesRaw) ? $packagesRaw : $installedData;
 
+        /** @var mixed $package */
         foreach ($packages as $package) {
             if (!is_array($package)) {
                 continue;
