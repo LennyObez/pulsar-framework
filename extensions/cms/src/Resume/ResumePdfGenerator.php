@@ -10,6 +10,7 @@ use function array_map;
 use function htmlspecialchars;
 use function implode;
 use function is_array;
+use function is_string;
 
 use const ENT_QUOTES;
 
@@ -60,11 +61,11 @@ final class ResumePdfGenerator
             $items = [];
 
             foreach ($resumeData['experience'] as $exp) {
-                $title = $e(is_string($exp['title'] ?? null) ? $exp['title'] : '');
-                $company = $e(is_string($exp['company'] ?? null) ? $exp['company'] : '');
-                $location = $e(is_string($exp['location'] ?? null) ? $exp['location'] : '');
-                $period = $e(is_string($exp['period'] ?? null) ? $exp['period'] : '');
-                $description = $e(is_string($exp['description'] ?? null) ? $exp['description'] : '');
+                $title = $e(self::stringField($exp, 'title'));
+                $company = $e(self::stringField($exp, 'company'));
+                $location = $e(self::stringField($exp, 'location'));
+                $period = $e(self::stringField($exp, 'period'));
+                $description = $e(self::stringField($exp, 'description'));
 
                 $items[] = '<div class="resume-entry">'
                     . "<h3>$title</h3>"
@@ -87,9 +88,9 @@ final class ResumePdfGenerator
             $items = [];
 
             foreach ($resumeData['education'] as $edu) {
-                $degree = $e(is_string($edu['degree'] ?? null) ? $edu['degree'] : '');
-                $institution = $e(is_string($edu['institution'] ?? null) ? $edu['institution'] : '');
-                $year = $e(is_string($edu['year'] ?? null) ? $edu['year'] : '');
+                $degree = $e(self::stringField($edu, 'degree'));
+                $institution = $e(self::stringField($edu, 'institution'));
+                $year = $e(self::stringField($edu, 'year'));
 
                 $items[] = '<div class="resume-entry">'
                     . "<h3>$degree</h3>"
@@ -109,7 +110,7 @@ final class ResumePdfGenerator
             $items = [];
 
             foreach ($resumeData['skills'] as $category) {
-                $catName = $e(is_string($category['category'] ?? null) ? $category['category'] : '');
+                $catName = $e(self::stringField($category, 'category'));
                 $skills = $category['items'] ?? [];
 
                 if ($skills !== []) {
@@ -129,8 +130,8 @@ final class ResumePdfGenerator
             $items = [];
 
             foreach ($resumeData['languages'] as $lang) {
-                $language = $e(is_string($lang['language'] ?? null) ? $lang['language'] : '');
-                $level = $e(is_string($lang['level'] ?? null) ? $lang['level'] : '');
+                $language = $e(self::stringField($lang, 'language'));
+                $level = $e(self::stringField($lang, 'level'));
                 $items[] = "<li>$language" . ($level !== '' ? ": $level" : '') . '</li>';
             }
 
@@ -145,9 +146,9 @@ final class ResumePdfGenerator
             $items = [];
 
             foreach ($resumeData['certifications'] as $cert) {
-                $certName = $e(is_string($cert['name'] ?? null) ? $cert['name'] : '');
-                $issuer = $e(is_string($cert['issuer'] ?? null) ? $cert['issuer'] : '');
-                $year = $e(is_string($cert['year'] ?? null) ? $cert['year'] : '');
+                $certName = $e(self::stringField($cert, 'name'));
+                $issuer = $e(self::stringField($cert, 'issuer'));
+                $year = $e(self::stringField($cert, 'year'));
                 $items[] = "<li>$certName"
                     . ($issuer !== '' ? ": $issuer" : '')
                     . ($year !== '' ? " ($year)" : '')
@@ -165,8 +166,8 @@ final class ResumePdfGenerator
             $items = [];
 
             foreach ($resumeData['projects'] as $project) {
-                $projectName = $e(is_string($project['name'] ?? null) ? $project['name'] : '');
-                $description = $e(is_string($project['description'] ?? null) ? $project['description'] : '');
+                $projectName = $e(self::stringField($project, 'name'));
+                $description = $e(self::stringField($project, 'description'));
                 $items[] = '<div class="resume-entry">'
                     . "<h3>$projectName</h3>"
                     . ($description !== '' ? "<p>$description</p>" : '')
@@ -213,5 +214,18 @@ final class ResumePdfGenerator
             </body>
             </html>
             HTML;
+    }
+
+    /**
+     * Read a string field from a loosely-typed array, falling back to '' when
+     * missing or wrong-typed.
+     *
+     * @param array<array-key, mixed> $row
+     */
+    private static function stringField(array $row, string $key): string
+    {
+        $value = $row[$key] ?? '';
+
+        return is_string($value) ? $value : '';
     }
 }
