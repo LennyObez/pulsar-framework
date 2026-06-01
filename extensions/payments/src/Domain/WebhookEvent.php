@@ -40,12 +40,7 @@ final readonly class WebhookEvent
      * pipeline. Throws `InvalidArgumentException` (caller's
      * `Throwable` catch already handles it).
      *
-     * @param array{
-     *     id?: string|null,
-     *     type?: string|null,
-     *     created_at?: int|string|float,
-     *     data?: array<string, mixed>,
-     * } $payload
+     * @param array<string, mixed> $payload Raw payload (typically json_decode output)
      *
      * @throws InvalidArgumentException If required fields are missing or wrong-typed.
      * @throws ValueError                If the event type is not a valid WebhookEventType.

@@ -68,47 +68,50 @@ final readonly class ExtensionManifest
     /**
      * Create manifest from array data.
      *
-     * @param array{
-     *     name?: string,
-     *     version?: string,
-     *     extension_class?: string,
-     *     description?: string,
-     *     pulsar?: array{min_version?: string, max_version?: string},
-     *     provides?: array<string, mixed>,
-     *     requires?: array<string, string>,
-     *     trust_tier?: string,
-     * } $data
+     * Typed loosely because the input comes from json_decode of an untrusted
+     * pulsar.json on disk; each access is validated below.
+     *
+     * @param array<string, mixed> $data
      * @throws ManifestException If required fields are missing or invalid
      */
     #[NoDiscard]
     public static function fromArray(array $data, string $basePath = ''): self
     {
-        if (!isset($data['name']) || !is_string($data['name'])) {
+        $name = $data['name'] ?? null;
+        if (!is_string($name)) {
             throw ManifestException::missingField('name', $basePath);
         }
 
-        if (!isset($data['version']) || !is_string($data['version'])) {
+        $version = $data['version'] ?? null;
+        if (!is_string($version)) {
             throw ManifestException::missingField('version', $basePath);
         }
 
-        if (!isset($data['extension_class']) || !is_string($data['extension_class'])) {
+        $extensionClass = $data['extension_class'] ?? null;
+        if (!is_string($extensionClass)) {
             throw ManifestException::missingField('extension_class', $basePath);
         }
 
-        if (!preg_match('/^\d+\.\d+\.\d+(-[a-zA-Z0-9.]+)?$/', $data['version'])) {
-            throw ManifestException::invalidVersion($data['version'], $basePath);
+        if (!preg_match('/^\d+\.\d+\.\d+(-[a-zA-Z0-9.]+)?$/', $version)) {
+            throw ManifestException::invalidVersion($version, $basePath);
         }
 
+        $description = $data['description'] ?? '';
+        $pulsar = $data['pulsar'] ?? [];
+        $provides = $data['provides'] ?? [];
+        $requires = $data['requires'] ?? [];
+        $trustTier = $data['trust_tier'] ?? '';
+
         return new self(
-            name: $data['name'],
-            version: $data['version'],
-            extensionClass: $data['extension_class'],
+            name: $name,
+            version: $version,
+            extensionClass: $extensionClass,
             path: $basePath,
-            description: $data['description'] ?? '',
-            pulsar: PulsarVersionConfig::fromArray($data['pulsar'] ?? []),
-            provides: ProvidesConfig::fromArray($data['provides'] ?? []),
-            requires: RequiresConfig::fromArray($data['requires'] ?? []),
-            requestedTrustTier: TrustTier::tryFrom($data['trust_tier'] ?? '') ?? TrustTier::Community,
+            description: is_string($description) ? $description : '',
+            pulsar: PulsarVersionConfig::fromArray(is_array($pulsar) ? $pulsar : []),
+            provides: ProvidesConfig::fromArray(is_array($provides) ? $provides : []),
+            requires: RequiresConfig::fromArray(is_array($requires) ? $requires : []),
+            requestedTrustTier: TrustTier::tryFrom(is_string($trustTier) ? $trustTier : '') ?? TrustTier::Community,
         );
     }
 
