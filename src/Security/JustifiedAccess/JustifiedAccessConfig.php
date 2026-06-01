@@ -51,6 +51,7 @@ final readonly class JustifiedAccessConfig
      */
     public static function fromArray(array $data): self
     {
+        /** @var mixed $rawDefaultCategories */
         $rawDefaultCategories = $data['default_categories'] ?? null;
         $defaultCategories = is_array($rawDefaultCategories)
             ? array_values(array_map(
@@ -71,6 +72,7 @@ final readonly class JustifiedAccessConfig
                 JustificationCategory::AccountMaintenance,
             ];
 
+        /** @var mixed $rawRequireSupervisor */
         $rawRequireSupervisor = $data['require_supervisor_for'] ?? null;
         $requireSupervisorFor = is_array($rawRequireSupervisor)
             ? array_values(array_map(
@@ -85,12 +87,19 @@ final readonly class JustifiedAccessConfig
             ))
             : [];
 
+        /** @var mixed $enabled */
         $enabled = $data['enabled'] ?? true;
+        /** @var mixed $break */
         $break = $data['break_the_glass_duration'] ?? 900;
+        /** @var mixed $anomalyThreshold */
         $anomalyThreshold = $data['anomaly_threshold'] ?? 50;
+        /** @var mixed $anomalyWindow */
         $anomalyWindow = $data['anomaly_window_seconds'] ?? 3600;
+        /** @var mixed $justificationHeader */
         $justificationHeader = $data['justification_header'] ?? 'X-Access-Justification';
+        /** @var mixed $categoryHeader */
         $categoryHeader = $data['category_header'] ?? 'X-Access-Justification-Category';
+        /** @var mixed $minJustification */
         $minJustification = $data['min_justification_length'] ?? 10;
 
         return new self(
