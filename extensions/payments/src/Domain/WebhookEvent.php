@@ -71,9 +71,11 @@ final readonly class WebhookEvent
         // non-numeric value to 0 (Unix epoch — recognisable as
         // malformed) and keeps the constructor signature in the
         // safe `int|numeric-string` shape it expects.
+        /** @var mixed $createdAtRaw */
         $createdAtRaw = $payload['created_at'] ?? 0;
         $timestamp = is_numeric($createdAtRaw) ? (int) $createdAtRaw : 0;
 
+        /** @var mixed $rawData */
         $rawData = $payload['data'] ?? [];
         if (!is_array($rawData)) {
             throw new InvalidArgumentException('WebhookEvent.data is not an array');

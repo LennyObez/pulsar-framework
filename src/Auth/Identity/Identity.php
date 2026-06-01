@@ -13,6 +13,7 @@ use function array_all;
 use function array_key_exists;
 use function in_array;
 use function is_array;
+use function is_int;
 use function is_string;
 
 /**
@@ -125,16 +126,24 @@ final readonly class Identity implements IdentityInterface
             throw AuthenticationException::invalidIdentityData('roles must be a list of strings');
         }
 
+        /** @var mixed $attributes */
         $attributes = $data['attributes'] ?? [];
         if (!is_array($attributes)) {
             throw AuthenticationException::invalidIdentityData('attributes must be an array');
         }
+        /** @var array<string, mixed> $attributes */
+
+        /** @var mixed $twoFactorRaw */
+        $twoFactorRaw = $data['two_factor_status'] ?? TwoFactorStatus::Disabled->value;
+        $twoFactorValue = is_int($twoFactorRaw) || is_string($twoFactorRaw)
+            ? $twoFactorRaw
+            : TwoFactorStatus::Disabled->value;
 
         return new self(
             id: $id,
             displayName: $displayName,
             roles: $roles,
-            twoFactorStatus: TwoFactorStatus::from($data['two_factor_status'] ?? TwoFactorStatus::Disabled->value),
+            twoFactorStatus: TwoFactorStatus::from($twoFactorValue),
             attributes: $attributes,
         );
     }
