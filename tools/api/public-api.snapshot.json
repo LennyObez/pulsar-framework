@@ -36536,6 +36536,11 @@
             "since": "1.0.0",
             "methods": [],
             "signatures": {
+                "__construct": {
+                    "params": [],
+                    "return": null,
+                    "static": false
+                },
                 "add": {
                     "params": [
                         "Pulsar\\Routing\\Route $route"
@@ -55365,6 +55370,9 @@
         "Pulsar\\Routing\\Binding\\ModelBindingMiddleware",
         "Pulsar\\Routing\\Binding\\PolicyAuthorizationHook",
         "Pulsar\\Routing\\Internal\\ConfigDomainResolver",
+        "Pulsar\\Routing\\ResourceRegistrar",
+        "Pulsar\\Routing\\RouteIndex",
+        "Pulsar\\Routing\\RouteUrlGenerator",
         "Pulsar\\Runtime\\Bridge\\PsrBridge",
         "Pulsar\\Runtime\\Fiber\\FiberScheduler",
         "Pulsar\\Runtime\\FrankenPhpRuntime",
