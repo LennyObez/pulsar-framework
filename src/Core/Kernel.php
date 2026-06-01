@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Core;
 
-use Closure;
 use Error;
 use JsonException;
 use LogicException;
@@ -13,12 +12,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface as PsrMiddlewareInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Api\OpenApi\OpenApiWiring;
-use Pulsar\Build\BuildArtifactLoader;
-use Pulsar\Build\BuildException;
-use Pulsar\Build\VerificationStatus;
-use Pulsar\Cache\CachedRoute;
 use Pulsar\Cache\FrameworkCache;
-use Pulsar\Cache\RouteHandlerType;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\ConfigManagerInterface;
 use Pulsar\Container\AdvancedContainerInterface;
@@ -30,6 +24,11 @@ use Pulsar\Container\Container;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Container\Exception\ContainerException;
 use Pulsar\Container\Exception\NotFoundException;
+use Pulsar\Core\Boot\BuildArtifactVerifier;
+use Pulsar\Core\Boot\CachedRouteReconstructor;
+use Pulsar\Core\Boot\ExtensionDiscovery;
+use Pulsar\Core\Boot\ExtensionViewPathRegistrar;
+use Pulsar\Core\Boot\ProjectRouteLoader;
 use Pulsar\Core\Controller\ControllerResolverInterface;
 use Pulsar\Core\Controller\ReflectionControllerResolver;
 use Pulsar\Core\Event\TerminateEvent;
@@ -84,12 +83,9 @@ use Pulsar\Http\ResponseStatus;
 use Pulsar\Http\RouteContext;
 use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Routing\MatchedRoute;
-use Pulsar\Routing\Route;
 use Pulsar\Routing\Router;
 use Pulsar\Routing\RouterInterface;
 use Pulsar\Routing\RoutingException;
-use Pulsar\Security\Crypto\HmacInterface;
-use Pulsar\Security\Crypto\KeyProviderInterface;
 use Random\Engine\Secure;
 use Random\Randomizer;
 use ReflectionException;
@@ -98,7 +94,6 @@ use ReflectionNamedType;
 use SodiumException;
 use Throwable;
 
-use function dirname;
 use function is_array;
 use function is_callable;
 use function is_string;
@@ -251,7 +246,7 @@ final class Kernel implements KernelInterface
 
                 // Apply cached routes to the router
                 if ($cached !== null && $cached['routes'] !== null && $cached['routes'] !== []) {
-                    $this->router->loadRoutes($this->reconstructCachedRoutes($cached['routes']));
+                    $this->router->loadRoutes(CachedRouteReconstructor::reconstruct($cached['routes']));
                     $routesCached = true;
 
                     if ($strictRouteCache) {
@@ -264,7 +259,7 @@ final class Kernel implements KernelInterface
         $cacheLoadUs = (int) ((hrtime(true) - $cacheStart) / 1000);
 
         // Build artifact verification (production mode)
-        $this->verifyBuildArtifacts();
+        BuildArtifactVerifier::verify($this->container, $this->configManager);
 
         // Register shared Randomizer (CSPRNG) singleton
         $randomizer = new Randomizer(new Secure());
@@ -344,7 +339,7 @@ final class Kernel implements KernelInterface
 
         // Load project route files (routes/web.php, routes/api.php)
         if (!$routesCached) {
-            $this->loadProjectRouteFiles();
+            ProjectRouteLoader::load($this->configManager, $this->router, $this->container);
         }
 
         // Auto-discover extensions when no bootstrap was provided but a
@@ -352,7 +347,12 @@ final class Kernel implements KernelInterface
         // bare kernel in tests). Scans getcwd()/extensions for pulsar.json
         // manifests so HTTP entry points work without explicit bootstrap.
         if ($this->extensionBootstrap === null && $this->configManager !== null) {
-            $this->autoDiscoverExtensions();
+            $bootstrap = ExtensionDiscovery::discover($this->configManager);
+
+            if ($bootstrap !== null) {
+                $this->extensionBootstrap = $bootstrap;
+                $this->container->instance(ExtensionBootstrap::class, $bootstrap);
+            }
         }
 
         // Extension register phase (all extensions)
@@ -384,7 +384,7 @@ final class Kernel implements KernelInterface
 
         // After extensions boot, add their view paths to the template engine.
         // Extensions may provide Pulse templates under resources/views/ (e.g., cms::public.pages.page).
-        $this->registerExtensionViewPaths();
+        ExtensionViewPathRegistrar::register($this->container, $this->extensionBootstrap);
 
         $this->booted = true;
 
@@ -836,311 +836,6 @@ final class Kernel implements KernelInterface
     private function resolveController(string $class): object
     {
         return $this->controllerResolver->resolve($class);
-    }
-
-    /**
-     * Reconstruct Route objects from cached route DTOs.
-     *
-     * This conversion lives in the composition root so that Router
-     * never imports Cache-internal types (CachedRoute, RouteHandlerType).
-     *
-     * @param list<CachedRoute> $cachedRoutes
-     * @return list<Route>
-     */
-    private function reconstructCachedRoutes(array $cachedRoutes): array
-    {
-        $routes = [];
-
-        foreach ($cachedRoutes as $cached) {
-            /** @var class-string $resolvable */
-            $resolvable = $cached->handler->resolvable;
-            $handler = match ($cached->handler->type) {
-                RouteHandlerType::Invokable => $resolvable,
-                RouteHandlerType::Method => [$resolvable, $cached->handler->method ?? '__invoke'],
-            };
-
-            $routes[] = new Route(
-                methods: $cached->methods,
-                path: $cached->path,
-                handler: $handler,
-                name: $cached->name,
-                attributes: $cached->attributes,
-                middleware: $cached->middleware,
-                constraints: $cached->constraints,
-                host: $cached->host,
-            );
-        }
-
-        return $routes;
-    }
-
-    /**
-     * Verify build artifacts in production mode.
-     *
-     * In production: fail fast if artifacts are missing, optionally verify integrity.
-     * In development: skip verification (artifacts may not exist).
-     *
-     * @throws BuildException If required artifacts are missing or integrity check fails
-     */
-    private function verifyBuildArtifacts(): void
-    {
-        $configPath = $this->configManager?->configPath();
-
-        if ($configPath === null) {
-            return;
-        }
-
-        $isProduction = $this->isProductionMode();
-
-        // Only enforce in production mode
-        if (!$isProduction) {
-            return;
-        }
-
-        $cacheDir = $configPath . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'var' . DIRECTORY_SEPARATOR . 'cache';
-        $loader = new BuildArtifactLoader($cacheDir);
-
-        // Production mode: require build artifacts
-        if (!$loader->hasArtifacts()) {
-            throw BuildException::missingArtifacts(['build-manifest.json']);
-        }
-
-        // Optional integrity verification
-        if (BuildArtifactLoader::isVerificationEnabled()) {
-            $manifest = $loader->loadManifest();
-
-            if ($manifest === null) {
-                throw BuildException::missingArtifact('build-manifest.json');
-            }
-
-            // Verify signature FIRST (if present and crypto services available)
-            // This ensures the manifest itself is authentic before trusting its hashes
-            if ($manifest->signature !== null
-                && $this->container->has(HmacInterface::class)
-                && $this->container->has(KeyProviderInterface::class)
-            ) {
-                /** @var HmacInterface $hmac */
-                $hmac = $this->container->get(HmacInterface::class);
-                /** @var KeyProviderInterface $keyProvider */
-                $keyProvider = $this->container->get(KeyProviderInterface::class);
-
-                if (!$loader->verifySignature($manifest, $hmac, $keyProvider)) {
-                    throw BuildException::signatureVerificationFailed();
-                }
-            }
-
-            // Then verify artifact hashes against the (now-authenticated) manifest
-            $result = $loader->verifyIntegrity($manifest);
-
-            if ($result !== null && !$result->passed) {
-                $failed = [];
-
-                foreach ($result->entries as $key => $status) {
-                    if ($status !== VerificationStatus::Ok) {
-                        $failed[] = $key;
-                    }
-                }
-
-                throw BuildException::integrityCheckFailedMultiple($failed);
-            }
-        }
-    }
-
-    /**
-     * Load project-level route files from the routes/ directory.
-     *
-     * Scans for routes/web.php and routes/api.php relative to the config
-     * path's parent directory (the project root). Each file receives the
-     * Router instance and can register routes directly.
-     */
-    private function loadProjectRouteFiles(): void
-    {
-        $configPath = $this->configManager?->configPath();
-
-        if ($configPath !== null) {
-            $projectRoot = dirname($configPath);
-        } else {
-            // Fallback: use current working directory when no config manager
-            // is available (e.g., HTTP entry points without explicit config)
-            $cwd = getcwd();
-
-            if ($cwd === false) {
-                return;
-            }
-
-            $projectRoot = $cwd;
-        }
-
-        $routesDir = $projectRoot . DIRECTORY_SEPARATOR . 'routes';
-
-        $routeFiles = ['web.php', 'api.php'];
-
-        foreach ($routeFiles as $file) {
-            $routeFile = $routesDir . DIRECTORY_SEPARATOR . $file;
-
-            if (is_file($routeFile)) {
-                /**
-                 * @psalm-suppress UnresolvableInclude
-                 * @var mixed $result
-                 */
-                $result = (function () use ($routeFile): mixed {
-                    // Local aliases inherited by the required routes file via PHP scope.
-                    // The require'd file consumes $router and $container directly through
-                    // PHP's scope inheritance; Psalm cannot trace through include so we
-                    // bind them here and unset() after the include to mark them as used.
-                    $router = $this->router;
-                    $container = $this->container;
-
-                    /**
-                     * @psalm-suppress UnresolvableInclude
-                     * @var mixed $loaded
-                     */
-                    $loaded = require $routeFile;
-                    unset($router, $container);
-
-                    return $loaded;
-                })();
-
-                // Support route files that return a closure: invoke with router
-                if ($result instanceof Closure) {
-                    $result($this->router);
-                }
-            }
-        }
-    }
-
-    /**
-     * Auto-discover extensions from the project extensions directory.
-     *
-     * When no ExtensionBootstrap is provided (common in HTTP entry points),
-     * this scans `getcwd()/extensions` for pulsar.json manifests and
-     * creates a bootstrap instance automatically.
-     */
-    /**
-     * After extensions boot, add their resources/views/ directories to the
-     * template compiler's search paths. This allows namespace-prefixed templates
-     * like "cms::public.pages.page" to resolve to the CMS extension's views.
-     */
-    private function registerExtensionViewPaths(): void
-    {
-        if (!$this->container->has(\Pulsar\View\Engine\TemplateCompiler::class)) {
-            return;
-        }
-
-        // Get extension paths from the bootstrap's manifests
-        $manifests = $this->extensionBootstrap?->getManifests() ?? [];
-
-        if ($manifests === []) {
-            return;
-        }
-
-        $extensionViewPaths = [];
-
-        foreach ($manifests as $manifest) {
-            if ($manifest->path !== '') {
-                $viewsDir = $manifest->path . DIRECTORY_SEPARATOR . 'resources' . DIRECTORY_SEPARATOR . 'views';
-
-                if (is_dir($viewsDir)) {
-                    $extensionViewPaths[] = $viewsDir;
-                }
-            }
-        }
-
-        /** @var \Pulsar\View\ViewConfig $existingConfig */
-        $existingConfig = $this->container->get(\Pulsar\View\ViewConfig::class);
-
-        // Also add the project's theme/ subdirectory as a search path.
-        // Projects may organize templates under resources/views/theme/ for separation
-        // from framework-provided templates. This is searched after the root views dir.
-        $themeViewPaths = [];
-
-        foreach ($existingConfig->templatePaths as $viewPath) {
-            $themePath = $viewPath . DIRECTORY_SEPARATOR . 'theme';
-
-            if (is_dir($themePath)) {
-                $themeViewPaths[] = $themePath;
-            }
-        }
-
-        if ($extensionViewPaths === [] && $themeViewPaths === []) {
-            return;
-        }
-
-        // Rebuild the ViewConfig and TemplateCompiler with all paths
-
-        $updatedConfig = new \Pulsar\View\ViewConfig(
-            templatePaths: [...$existingConfig->templatePaths, ...$themeViewPaths, ...$extensionViewPaths],
-            cachePath: $existingConfig->cachePath,
-            autoEscape: $existingConfig->autoEscape,
-            activeTheme: $existingConfig->activeTheme,
-            phpDirectiveAllowed: $existingConfig->phpDirectiveAllowed,
-            sandboxMode: $existingConfig->sandboxMode,
-            sandboxStepLimit: $existingConfig->sandboxStepLimit,
-            sandboxLoopLimit: $existingConfig->sandboxLoopLimit,
-            sandboxOutputSizeLimit: $existingConfig->sandboxOutputSizeLimit,
-            sandboxWallClockCheckInterval: $existingConfig->sandboxWallClockCheckInterval,
-        );
-
-        // Replace the config and rebuild the compiler with the new paths
-        $this->container->instance(\Pulsar\View\ViewConfig::class, $updatedConfig);
-
-        /** @var \Pulsar\View\Engine\TemplateCache $cache */
-        $cache = $this->container->get(\Pulsar\View\Engine\TemplateCache::class);
-        $newCompiler = new \Pulsar\View\Engine\TemplateCompiler($updatedConfig, $cache);
-
-        // Re-register directives on the new compiler
-        if ($this->container->has(\Pulsar\View\Directive\DirectiveRegistry::class)) {
-            /** @var \Pulsar\View\Directive\DirectiveRegistry $directives */
-            $directives = $this->container->get(\Pulsar\View\Directive\DirectiveRegistry::class);
-            $directives->bindTo($newCompiler);
-        }
-
-        $this->container->instance(\Pulsar\View\Engine\TemplateCompiler::class, $newCompiler);
-
-        // Rebuild the engine with the new compiler
-        $newEngine = new \Pulsar\View\Engine\TemplateEngine($newCompiler);
-        $this->container->instance(\Pulsar\View\Engine\TemplateEngineInterface::class, $newEngine);
-        $this->container->instance(\Pulsar\View\Engine\TemplateEngine::class, $newEngine);
-        \Pulsar\Http\Message\Response::setTemplateEngine($newEngine);
-    }
-
-    private function autoDiscoverExtensions(): void
-    {
-        // Derive the project root from the config path (parent of config/).
-        // Falls back to getcwd() when no config path is available.
-        $configPath = $this->configManager?->configPath();
-        $projectRoot = $configPath !== null ? dirname($configPath) : (getcwd() ?: null);
-
-        if ($projectRoot === null) {
-            return;
-        }
-
-        $extensionsDir = $projectRoot . DIRECTORY_SEPARATOR . 'extensions';
-
-        if (!is_dir($extensionsDir)) {
-            return;
-        }
-
-        $bootstrap = ExtensionBootstrap::create();
-        $bootstrap->loadFromPaths([$extensionsDir]);
-
-        $this->extensionBootstrap = $bootstrap;
-        $this->container->instance(ExtensionBootstrap::class, $bootstrap);
-    }
-
-    /**
-     * Determine if the application is running in production mode.
-     */
-    private function isProductionMode(): bool
-    {
-        try {
-            $env = $this->configManager?->environment();
-            $appEnv = $env?->get('APP_ENV') ?? 'production';
-
-            return $appEnv === 'production';
-        } catch (Throwable) {
-            return false;
-        }
     }
 
     /**
