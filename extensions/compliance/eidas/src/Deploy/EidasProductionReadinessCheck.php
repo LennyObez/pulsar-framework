@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Deploy\Check;
+namespace Pulsar\Extension\Eidas\Deploy;
 
 use Override;
 use Pulsar\Api\Internal;

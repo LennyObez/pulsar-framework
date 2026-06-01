@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Deploy\Check;
+namespace Pulsar\Extension\Cms\Deploy;
 
 use Override;
 use Pulsar\Api\Internal;

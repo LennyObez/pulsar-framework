@@ -2,12 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Database\Migration;
+namespace Pulsar\Extension\Orm\Migration;
 
 use Pulsar\Api\Api;
 use Pulsar\Database\Exception\DatabaseException;
 use Pulsar\Database\Introspection\ColumnInfo;
 use Pulsar\Database\Introspection\DatabaseIntrospector;
+use Pulsar\Database\Migration\DiffResult;
 use Pulsar\Extension\Orm\Contracts\MetadataRegistryInterface;
 use Pulsar\Extension\Orm\Domain\ColumnMetadata;
 use Pulsar\Extension\Orm\Domain\ColumnType;
