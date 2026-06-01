@@ -8,6 +8,7 @@ use Psr\Log\LoggerInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Cms\Media\Video\FfmpegProcessInterface;
 
+use function array_keys;
 use function file_exists;
 use function realpath;
 use function str_starts_with;
@@ -110,7 +111,7 @@ final readonly class AudioProcessor
     {
         $results = [];
 
-        foreach ($this->config->transcodePresets as $name => $preset) {
+        foreach (array_keys($this->config->transcodePresets) as $name) {
             $outputPath = $this->transcode($sourcePath, $name);
 
             if ($outputPath !== null) {

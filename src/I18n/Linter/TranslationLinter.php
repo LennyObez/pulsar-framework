@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 use Pulsar\Config\I18nConfig;
 use Pulsar\I18n\CatalogInterface;
 
+use function array_keys;
 use function count;
 use function extension_loaded;
 use function in_array;
@@ -107,7 +108,7 @@ final readonly class TranslationLinter
             $allKeys = [];
 
             foreach ($this->config->supportedLocales as $locale) {
-                foreach ($this->catalog->all($locale, $domain) as $key => $entry) {
+                foreach (array_keys($this->catalog->all($locale, $domain)) as $key) {
                     $allKeys[$key][] = $locale;
                 }
             }
