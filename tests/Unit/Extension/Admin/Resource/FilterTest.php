@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Tests\Unit\Live\Admin;
+namespace Pulsar\Tests\Unit\Extension\Admin\Resource;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Live\Admin\BooleanFilter;
-use Pulsar\Live\Admin\DateRangeFilter;
-use Pulsar\Live\Admin\SelectFilter;
+use Pulsar\Extension\Admin\Resource\BooleanFilter;
+use Pulsar\Extension\Admin\Resource\DateRangeFilter;
+use Pulsar\Extension\Admin\Resource\SelectFilter;
 
 #[CoversClass(SelectFilter::class)]
 #[CoversClass(DateRangeFilter::class)]
