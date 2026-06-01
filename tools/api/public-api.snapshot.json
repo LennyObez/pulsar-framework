@@ -9392,7 +9392,8 @@
                         "Pulsar\\I18n\\Locale\\LocaleUrlStrategy $urlStrategy",
                         "bool $defaultLocaleInUrl",
                         "bool $canonicalRedirect",
-                        "array $localizedSlugs"
+                        "array $localizedSlugs",
+                        "bool $negotiateUnprefixedLocale"
                     ],
                     "return": null,
                     "static": false

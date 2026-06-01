@@ -25,6 +25,10 @@ final readonly class I18nConfig
      * @param list<string> $supportedLocales
      * @param list<string> $fallbackLocales
      * @param array<string, array<string, string>> $localizedSlugs Route key => (locale => translated slug).
+     * @param bool $negotiateUnprefixedLocale When true (default), an unprefixed URL's active locale is chosen by
+     *        Accept-Language negotiation; when false, it is always the default locale, so unprefixed (default-locale)
+     *        URLs stay canonical and are never redirected to a negotiated translation. The negotiated preference is
+     *        still exposed via the `_negotiated_locale` request attribute for courtesy redirects.
      */
     public function __construct(
         public string $defaultLocale,
@@ -38,6 +42,7 @@ final readonly class I18nConfig
         public bool $defaultLocaleInUrl = false,
         public bool $canonicalRedirect = true,
         public array $localizedSlugs = [],
+        public bool $negotiateUnprefixedLocale = true,
     ) {}
 
     /**
@@ -55,6 +60,7 @@ final readonly class I18nConfig
      *     default_locale_in_url?: bool|int|string,
      *     canonical_redirect?: bool|int|string,
      *     localized_slugs?: array<string, array<string, string>>,
+     *     negotiate_unprefixed_locale?: bool|int|string,
      * } $data Raw array from config/i18n.php
      */
     #[NoDiscard]
@@ -92,6 +98,7 @@ final readonly class I18nConfig
             defaultLocaleInUrl: (bool) ($data['default_locale_in_url'] ?? false),
             canonicalRedirect: (bool) ($data['canonical_redirect'] ?? true),
             localizedSlugs: self::parseLocalizedSlugs($data['localized_slugs'] ?? null),
+            negotiateUnprefixedLocale: (bool) ($data['negotiate_unprefixed_locale'] ?? true),
         );
     }
 
