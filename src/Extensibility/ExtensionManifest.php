@@ -96,10 +96,15 @@ final readonly class ExtensionManifest
             throw ManifestException::invalidVersion($version, $basePath);
         }
 
+        /** @var mixed $description */
         $description = $data['description'] ?? '';
+        /** @var mixed $pulsar */
         $pulsar = $data['pulsar'] ?? [];
+        /** @var mixed $provides */
         $provides = $data['provides'] ?? [];
+        /** @var mixed $requires */
         $requires = $data['requires'] ?? [];
+        /** @var mixed $trustTier */
         $trustTier = $data['trust_tier'] ?? '';
 
         return new self(
