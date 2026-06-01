@@ -318,8 +318,12 @@ final readonly class AppStoreVerifier implements SubscriptionVerifierInterface
             /** @var mixed $decoded */
             $decoded = json_decode($payloadJson, true, 32, JSON_THROW_ON_ERROR);
 
+            if (!is_array($decoded)) {
+                return [];
+            }
+
             /** @var array<string, mixed> $decoded */
-            return is_array($decoded) ? $decoded : [];
+            return $decoded;
         } catch (Throwable $e) {
             // Signed payload decode failure: the claims cannot be
             // trusted, so return an empty claim set (safe default),

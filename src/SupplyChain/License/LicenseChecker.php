@@ -52,15 +52,19 @@ final readonly class LicenseChecker
         $sections = ['packages', 'packages-dev'];
 
         foreach ($sections as $section) {
-            /** @var list<array<string, mixed>> $packages */
-            $packages = is_array($composerLock[$section] ?? null) ? $composerLock[$section] : [];
+            /** @var mixed $packagesRaw */
+            $packagesRaw = $composerLock[$section] ?? null;
+            $packages = is_array($packagesRaw) ? $packagesRaw : [];
 
+            /** @var mixed $package */
             foreach ($packages as $package) {
                 if (!is_array($package)) {
                     continue;
                 }
 
+                /** @var mixed $name */
                 $name = $package['name'] ?? null;
+                /** @var mixed $version */
                 $version = $package['version'] ?? null;
 
                 if (!is_string($name) || !is_string($version)) {

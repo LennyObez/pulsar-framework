@@ -150,14 +150,18 @@ final readonly class OpenAiProvider implements AiClientInterface
         /** @var array<string, mixed> $data */
         $data = $decoded;
 
-        /** @var list<array{embedding?: list<float>, index?: int}> $dataItems */
-        $dataItems = is_array($data['data'] ?? null) ? $data['data'] : [];
+        /** @var mixed $rawDataItems */
+        $rawDataItems = $data['data'] ?? null;
+        $dataItems = is_array($rawDataItems) ? $rawDataItems : [];
 
-        /** @var array{total_tokens?: int} $usage */
-        $usage = is_array($data['usage'] ?? null) ? $data['usage'] : [];
+        /** @var mixed $rawUsage */
+        $rawUsage = $data['usage'] ?? null;
+        /** @var array<string, mixed> $usage */
+        $usage = is_array($rawUsage) ? $rawUsage : [];
 
         $vectors = [];
 
+        /** @var mixed $item */
         foreach ($dataItems as $item) {
             if (!is_array($item)) {
                 continue;
