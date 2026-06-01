@@ -7,6 +7,9 @@ namespace Pulsar\Extensibility\Manifest;
 use NoDiscard;
 use Pulsar\Api\Api;
 
+use function array_keys;
+use function is_string;
+
 /**
  * Configuration for extension dependencies.
  * @api
@@ -24,12 +27,22 @@ final readonly class RequiresConfig
     /**
      * Create from manifest array data.
      *
-     * @param array<string, string> $data
+     * Input arrives untyped from json_decode of pulsar.json; filter to a
+     * string => string map before constructing the value object.
+     *
+     * @param array<string, mixed> $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        return new self(extensions: $data);
+        $extensions = [];
+        foreach ($data as $name => $constraint) {
+            if (is_string($name) && is_string($constraint)) {
+                $extensions[$name] = $constraint;
+            }
+        }
+
+        return new self(extensions: $extensions);
     }
 
     /**

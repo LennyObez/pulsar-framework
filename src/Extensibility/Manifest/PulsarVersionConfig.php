@@ -44,7 +44,7 @@ final readonly class PulsarVersionConfig
      * so only third-party manifests should ever trip the
      * notice.
      *
-     * @param array{min_version?: string, max_version?: string} $data
+     * @param array<string, mixed> $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
