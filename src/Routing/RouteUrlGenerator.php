@@ -41,13 +41,13 @@ final class RouteUrlGenerator
 
             foreach ($parameters as $key => $value) {
                 // RFC 3986 §2 path-segment encoding (F2.7): a raw value
-                // containing `/`, `?`, `#`, `..`, ` `, or any reserved byte
-                // would otherwise punch out of its segment and either change the
-                // route taken or become a path-traversal vector against routes
-                // downstream of this URL. `rawurlencode` percent-encodes
-                // everything outside the unreserved set so a parameter like
-                // `'../admin'` is rendered as `%2E%2E%2Fadmin` and stays inside
-                // its slot.
+                // containing `/`, `?`, `#`, ` `, or any reserved byte would
+                // otherwise punch out of its segment and either change the route
+                // taken or become a path-traversal vector against routes
+                // downstream of this URL. `rawurlencode` percent-encodes every
+                // reserved byte, so a parameter like `'../admin'` becomes
+                // `..%2Fadmin`: the `/` is encoded (no segment breakout), while
+                // the unreserved dots remain literal and harmless on their own.
                 $encoded = rawurlencode($value);
                 $search[] = '{' . $key . '}';
                 $search[] = '{' . $key . '?}';
