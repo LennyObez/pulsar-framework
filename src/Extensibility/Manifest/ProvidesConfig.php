@@ -48,13 +48,10 @@ final readonly class ProvidesConfig
     /**
      * Create from manifest array data.
      *
-     * @param array{
-     *     services?: list<string>|array<string, string>,
-     *     commands?: list<string>|array<string, string>,
-     *     middleware?: list<string>|array<string, string>,
-     *     migrations?: list<string>|array<string, string>,
-     *     routes?: bool,
-     * } $data
+     * Typed loosely because the input is the `provides` section of an
+     * untrusted pulsar.json on disk; each list is validated below.
+     *
+     * @param array<string, mixed> $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
