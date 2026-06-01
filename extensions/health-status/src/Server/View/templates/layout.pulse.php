@@ -1,7 +1,9 @@
 <?php
 /** @var mixed $title */
 /** @var mixed $content */
+/** @var mixed $rawTitle */
 $rawTitle = $title ?? null;
+/** @var mixed $rawContent */
 $rawContent = $content ?? null;
 $typedTitle = is_string($rawTitle) ? $rawTitle : 'System Status';
 $typedContent = is_string($rawContent) ? $rawContent : '';
