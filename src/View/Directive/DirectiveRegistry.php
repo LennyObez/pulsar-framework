@@ -128,6 +128,7 @@ final class DirectiveRegistry
         // Forms
         $this->register(new CsrfDirective());
         $this->register(new MethodDirective());
+        $this->register(new ShieldDirective());
 
         // i18n
         $this->register(new I18nDirective());
