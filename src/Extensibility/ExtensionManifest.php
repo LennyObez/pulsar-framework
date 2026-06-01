@@ -25,6 +25,11 @@ use function json_validate;
 #[Api(since: '1.0.0')]
 final readonly class ExtensionManifest
 {
+    /**
+     * @param array<string, string> $autoload Explicit PSR-4 map (namespace prefix with
+     *        trailing `\` => absolute source directory). Empty means "derive from
+     *        extension_class + path"; see {@see self::autoloadMap()}.
+     */
     public function __construct(
         public string $name,
         public string $version,
@@ -35,6 +40,7 @@ final readonly class ExtensionManifest
         public ProvidesConfig $provides = new ProvidesConfig(),
         public RequiresConfig $requires = new RequiresConfig(),
         public TrustTier $requestedTrustTier = TrustTier::Community,
+        public array $autoload = [],
     ) {}
 
     /**
@@ -107,6 +113,8 @@ final readonly class ExtensionManifest
         $requires = $data['requires'] ?? [];
         /** @var mixed $trustTier */
         $trustTier = $data['trust_tier'] ?? '';
+        /** @var mixed $autoload */
+        $autoload = $data['autoload'] ?? [];
 
         return new self(
             name: $name,
@@ -118,7 +126,72 @@ final readonly class ExtensionManifest
             provides: ProvidesConfig::fromArray(self::ensureStringKeyed($provides)),
             requires: RequiresConfig::fromArray(self::ensureStringKeyed($requires)),
             requestedTrustTier: TrustTier::tryFrom(is_string($trustTier) ? $trustTier : '') ?? TrustTier::Community,
+            autoload: self::parseAutoload($autoload, $basePath),
         );
+    }
+
+    /**
+     * Parse a manifest's `autoload.psr-4` map, resolving relative source
+     * directories against the manifest's base path.
+     *
+     * @return array<string, string> Namespace prefix => absolute source directory
+     */
+    private static function parseAutoload(mixed $autoload, string $basePath): array
+    {
+        if (!is_array($autoload)) {
+            return [];
+        }
+
+        /** @var mixed $psr4 */
+        $psr4 = $autoload['psr-4'] ?? null;
+
+        if (!is_array($psr4)) {
+            return [];
+        }
+
+        $map = [];
+
+        /** @var mixed $directory */
+        foreach ($psr4 as $prefix => $directory) {
+            if (!is_string($prefix) || !is_string($directory)) {
+                continue;
+            }
+
+            $relative = rtrim($directory, '/\\');
+            $resolved = $basePath !== ''
+                ? $basePath . DIRECTORY_SEPARATOR . $relative
+                : $relative;
+            $map[$prefix] = $resolved;
+        }
+
+        return $map;
+    }
+
+    /**
+     * Resolve the PSR-4 autoload map used to register this extension's classes.
+     *
+     * Returns the explicit `autoload.psr-4` map when the manifest declares one;
+     * otherwise derives the conventional single mapping from the extension class
+     * namespace to the extension's `src/` directory
+     * (e.g. `Pulsar\Extension\Payments\` => `<path>/src`).
+     *
+     * @return array<string, string> Namespace prefix (trailing `\`) => absolute source directory
+     */
+    public function autoloadMap(): array
+    {
+        if ($this->autoload !== []) {
+            return $this->autoload;
+        }
+
+        $separator = strrpos($this->extensionClass, '\\');
+
+        if ($separator === false) {
+            return [];
+        }
+
+        $namespace = substr($this->extensionClass, 0, $separator) . '\\';
+
+        return [$namespace => $this->path . DIRECTORY_SEPARATOR . 'src'];
     }
 
     /**
