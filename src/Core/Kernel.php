@@ -101,6 +101,7 @@ use function dirname;
 use function is_array;
 use function is_callable;
 use function is_string;
+use function is_subclass_of;
 use function sprintf;
 use function str_contains;
 
@@ -135,6 +136,9 @@ final class Kernel implements KernelInterface
 
     /** @var array<string, bool> */
     private array $handlerUsesArrayParams = [];
+
+    /** @var array<string, bool> */
+    private array $handlerWantsRequest = [];
 
     /** @var array<string, list<array{name: string, hasDefault: bool, default: mixed}>> */
     private array $handlerParamMap = [];
@@ -707,33 +711,47 @@ final class Kernel implements KernelInterface
     ): array {
         $cacheKey = $class . '::' . $method;
 
-        if (!isset($this->handlerUsesArrayParams[$cacheKey])) {
+        if (!isset($this->handlerWantsRequest[$cacheKey])) {
             try {
                 $reflection = new ReflectionMethod($class, $method);
                 $params = $reflection->getParameters();
 
-                // Check if the second parameter (index 1) is typed as `array`
-                $usesArray = false;
+                $wantsRequest = false;
+                if (isset($params[0])) {
+                    $firstType = $params[0]->getType();
+                    if ($firstType instanceof ReflectionNamedType && !$firstType->isBuiltin()) {
+                        $typeName = $firstType->getName();
+                        $wantsRequest = $typeName === ServerRequestInterface::class
+                            || is_subclass_of($typeName, ServerRequestInterface::class);
+                    }
+                }
 
-                if (isset($params[1])) {
-                    $type = $params[1]->getType();
+                // Legacy array-passing: if the param right after $request (or the very first
+                // when there is no $request) is typed `array`, hand over the raw $routeParams.
+                $arrayParamIndex = $wantsRequest ? 1 : 0;
+                $usesArray = false;
+                if (isset($params[$arrayParamIndex])) {
+                    $type = $params[$arrayParamIndex]->getType();
                     $usesArray = $type instanceof ReflectionNamedType && $type->getName() === 'array';
                 }
 
+                $this->handlerWantsRequest[$cacheKey] = $wantsRequest;
                 $this->handlerUsesArrayParams[$cacheKey] = $usesArray;
             } catch (ReflectionException) {
-                // Reflection failed; fall back to legacy array-passing
+                // Reflection failed; fall back to legacy array-passing with $request
+                $this->handlerWantsRequest[$cacheKey] = true;
                 $this->handlerUsesArrayParams[$cacheKey] = true;
             }
         }
 
+        $wantsRequest = $this->handlerWantsRequest[$cacheKey];
+
         if ($this->handlerUsesArrayParams[$cacheKey]) {
-            return [$request, $routeParams];
+            return $wantsRequest ? [$request, $routeParams] : [$routeParams];
         }
 
-        // Spread named route params into positional args after $request
         /** @var list<mixed> $args */
-        $args = [$request];
+        $args = $wantsRequest ? [$request] : [];
 
         if (!isset($this->handlerParamMap[$cacheKey])) {
             try {
@@ -741,7 +759,7 @@ final class Kernel implements KernelInterface
                 $paramMap = [];
 
                 foreach ($reflection->getParameters() as $i => $param) {
-                    if ($i === 0) {
+                    if ($wantsRequest && $i === 0) {
                         continue; // Skip $request
                     }
 
@@ -755,7 +773,7 @@ final class Kernel implements KernelInterface
                 $this->handlerParamMap[$cacheKey] = $paramMap;
             } catch (ReflectionException) {
                 // Fall back to passing the array
-                return [$request, $routeParams];
+                return $wantsRequest ? [$request, $routeParams] : [$routeParams];
             }
         }
 
