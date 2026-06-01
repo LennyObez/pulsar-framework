@@ -6,11 +6,15 @@
  * solve() produces a solution the predicate accepts.
  */
 import { describe, it, expect } from 'vitest';
-import { createHash } from 'node:crypto';
 import { sha256, leadingZeroBits, solve } from './managed-challenge.pow.js';
 
-function reference(input: string): Uint8Array {
-  return new Uint8Array(createHash('sha256').update(Buffer.from(input, 'utf8')).digest());
+/**
+ * Reference SHA-256 via the Web Crypto API (the same primitive browsers and the
+ * worker run under), to cross-check the synchronous implementation.
+ */
+async function reference(input: string): Promise<Uint8Array> {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(input));
+  return new Uint8Array(digest);
 }
 
 describe('sha256', () => {
@@ -27,9 +31,9 @@ describe('sha256', () => {
     'z'.repeat(200),
   ];
 
-  it.each(inputs)('matches node:crypto for %j', (input) => {
+  it.each(inputs)('matches Web Crypto SHA-256 for %j', async (input) => {
     const got = sha256(new TextEncoder().encode(input));
-    expect(Array.from(got)).toEqual(Array.from(reference(input)));
+    expect(Array.from(got)).toEqual(Array.from(await reference(input)));
   });
 
   it('produces a 32-byte digest', () => {
@@ -58,7 +62,7 @@ describe('leadingZeroBits', () => {
 });
 
 describe('solve', () => {
-  it('finds a solution meeting the difficulty', () => {
+  it('finds a solution meeting the difficulty', async () => {
     const id = 'abcdef0123456789abcdef0123456789';
     const bits = 10;
 
@@ -68,7 +72,7 @@ describe('solve', () => {
     const digest = sha256(new TextEncoder().encode(`${id}.${solution}`));
     expect(leadingZeroBits(digest)).toBeGreaterThanOrEqual(bits);
     // Cross-check the hash against the reference implementation.
-    expect(Array.from(digest)).toEqual(Array.from(reference(`${id}.${solution}`)));
+    expect(Array.from(digest)).toEqual(Array.from(await reference(`${id}.${solution}`)));
   });
 
   it('returns null when no solution is found within the bound', () => {
