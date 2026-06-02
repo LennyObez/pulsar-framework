@@ -13,6 +13,7 @@ use Pulsar\Auth\Security\SensitiveOperation;
 use Pulsar\Auth\Security\TakeoverRisk;
 use Pulsar\Auth\Security\TakeoverRiskLevel;
 use Pulsar\Http\Message\ServerRequest;
+use Pulsar\Http\TrustedProxy;
 use Pulsar\Security\Session\SessionMetadata;
 
 use function time;
@@ -103,6 +104,43 @@ final class AccountTakeoverGuardTest extends TestCase
 
         self::assertTrue($risk->isLow());
         self::assertSame(TakeoverRiskLevel::Low, $risk->level);
+    }
+
+    #[Test]
+    public function trustedProxyResolvesForwardedClientSoNoFalseElevation(): void
+    {
+        $guard = new AccountTakeoverGuard(new NullLogger(), trustedProxy: new TrustedProxy(['10.0.0.0/8']));
+
+        // Same real client 203.0.113.5 arriving via the trusted proxy 10.0.0.1.
+        $request = new ServerRequest(
+            method: 'POST',
+            uri: '/account',
+            headers: ['User-Agent' => 'Mozilla/5.0', 'X-Forwarded-For' => '203.0.113.5'],
+            serverParams: ['REMOTE_ADDR' => '10.0.0.1'],
+        );
+
+        $risk = $guard->evaluate(SensitiveOperation::PasswordChange, $request, $this->createMeta('203.0.113.5', 'Mozilla/5.0'));
+
+        self::assertTrue($risk->isLow());
+    }
+
+    #[Test]
+    public function trustedProxyStillElevatesOnRealClientIpChange(): void
+    {
+        $guard = new AccountTakeoverGuard(new NullLogger(), trustedProxy: new TrustedProxy(['10.0.0.0/8']));
+
+        // A different real client behind the same proxy — raw REMOTE_ADDR would
+        // miss this (proxy IP is constant); resolution catches it.
+        $request = new ServerRequest(
+            method: 'POST',
+            uri: '/account',
+            headers: ['User-Agent' => 'Mozilla/5.0', 'X-Forwarded-For' => '198.51.100.9'],
+            serverParams: ['REMOTE_ADDR' => '10.0.0.1'],
+        );
+
+        $risk = $guard->evaluate(SensitiveOperation::PasswordChange, $request, $this->createMeta('203.0.113.5', 'Mozilla/5.0'));
+
+        self::assertSame(TakeoverRiskLevel::Elevated, $risk->level);
     }
 
     #[Test]

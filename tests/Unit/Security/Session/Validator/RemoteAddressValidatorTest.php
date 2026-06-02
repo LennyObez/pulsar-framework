@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Http\Message\ServerRequest;
+use Pulsar\Http\TrustedProxy;
 use Pulsar\Security\Session\SessionMetadata;
 use Pulsar\Security\Session\Validator\RemoteAddressValidator;
 
@@ -65,6 +66,40 @@ final class RemoteAddressValidatorTest extends TestCase
         $request = $this->createRequestWithRemoteAddr('10.0.0.1');
 
         self::assertTrue($validator->validate($metadata, $request));
+    }
+
+    #[Test]
+    public function trustedProxyResolvesForwardedClientForComparison(): void
+    {
+        $validator = new RemoteAddressValidator(mode: 'strict', trustedProxy: new TrustedProxy(['10.0.0.0/8']));
+
+        // Stored IP is the real client; request arrives via the trusted proxy.
+        // Resolution must compare the forwarded client, not the proxy address.
+        $metadata = $this->createMetadataWithIp('203.0.113.5');
+        $request = new ServerRequest(
+            method: 'GET',
+            uri: '/',
+            headers: ['X-Forwarded-For' => '203.0.113.5'],
+            serverParams: ['REMOTE_ADDR' => '10.0.0.1'],
+        );
+
+        self::assertTrue($validator->validate($metadata, $request));
+    }
+
+    #[Test]
+    public function trustedProxyStillFailsOnRealClientMismatch(): void
+    {
+        $validator = new RemoteAddressValidator(mode: 'strict', trustedProxy: new TrustedProxy(['10.0.0.0/8']));
+
+        $metadata = $this->createMetadataWithIp('203.0.113.5');
+        $request = new ServerRequest(
+            method: 'GET',
+            uri: '/',
+            headers: ['X-Forwarded-For' => '198.51.100.9'],
+            serverParams: ['REMOTE_ADDR' => '10.0.0.1'],
+        );
+
+        self::assertFalse($validator->validate($metadata, $request));
     }
 
     #[Test]
