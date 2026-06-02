@@ -120,7 +120,7 @@ final readonly class PostApiController
     /**
      * GET /api/v1/forum/posts/{id}: Show a single post.
      */
-    public function show(ServerRequestInterface $request, string $id): Response
+    public function show(string $id): Response
     {
         $post = $this->postRepository->findById($id);
 
