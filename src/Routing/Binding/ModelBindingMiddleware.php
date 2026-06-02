@@ -87,17 +87,19 @@ final class ModelBindingMiddleware implements MiddlewareInterface
         $context = $this->buildResolutionContext($identity);
 
         try {
-            $models = $this->binder->bind($matchedRoute, $request, $context);
+            $resolved = $this->binder->bindWithMeta($matchedRoute, $request, $context);
         } catch (ModelBindingException $e) {
             return $this->handleBindingException($e, $request);
         }
+
+        $models = $resolved->models;
 
         if ($models === []) {
             return $handler->handle($request);
         }
 
         // Authorization enforcement
-        $authResult = $this->enforceAuthorization($request, $matchedRoute, $models, $identity);
+        $authResult = $this->enforceAuthorization($request, $matchedRoute, $models, $resolved->metas, $identity);
         if ($authResult !== null) {
             return $authResult;
         }
@@ -150,12 +152,14 @@ final class ModelBindingMiddleware implements MiddlewareInterface
     /**
      * Enforce authorization on resolved models according to the configured preset.
      *
-     * @param array<string, object> $models
+     * @param array<string, object>      $models
+     * @param array<string, BindingMeta> $metas  Binding metadata keyed by parameter name
      */
     private function enforceAuthorization(
         ServerRequestInterface $request,
         MatchedRoute $matchedRoute,
         array $models,
+        array $metas,
         ?IdentityInterface $identity,
     ): ?ResponseInterface {
         $withoutAuthz = ($matchedRoute->getAttributes()['_without_authorization'] ?? false) === true;
@@ -193,7 +197,11 @@ final class ModelBindingMiddleware implements MiddlewareInterface
                 continue;
             }
 
-            $meta = new BindingMeta(class: $modelClass);
+            // Use the metadata that actually produced this binding so the
+            // hook enforces the declared authorization policy. Falling back to
+            // a bare meta would silently downgrade every binding to the hook's
+            // default permission ('view'), under-authorizing edit/delete routes.
+            $meta = $metas[$paramName] ?? new BindingMeta(class: $modelClass);
 
             if (!$this->authHook->authorize($identity, $model, $meta)) {
                 $this->auditAuthzDenied($request, $identity->id(), $modelClass);
