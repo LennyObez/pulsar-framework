@@ -188,13 +188,5 @@
             </errorLevel>
         </TypeDoesNotContainType>
 
-        <!-- (C) Intentional literal for formula-injection defense in CSV export
-             (taint-analysis false positive). -->
-        <InvalidLiteralArgument>
-            <errorLevel type="suppress">
-                <directory name="../../src/ImportExport"/>
-                <directory name="../../extensions/cms/src/ImportExport"/>
-            </errorLevel>
-        </InvalidLiteralArgument>
     </issueHandlers>
 </psalm>
