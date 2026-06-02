@@ -34,7 +34,7 @@ final readonly class StatusApiController
     /**
      * GET /_pulsar/status/api/current: current health as JSON.
      */
-    public function current(ServerRequestInterface $request): Response
+    public function current(): Response
     {
         $snapshot = $this->runner->run();
         $this->store->storeSnapshot($snapshot);
@@ -70,7 +70,7 @@ final readonly class StatusApiController
     /**
      * GET /_pulsar/status/api/incidents: active + recent incidents as JSON.
      */
-    public function incidents(ServerRequestInterface $request): Response
+    public function incidents(): Response
     {
         $active = $this->store->activeIncidents();
         $recent = $this->store->recentIncidents(20);

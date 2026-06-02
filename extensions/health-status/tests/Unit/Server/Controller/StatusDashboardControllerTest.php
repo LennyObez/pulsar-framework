@@ -36,7 +36,7 @@ final class StatusDashboardControllerTest extends TestCase
         $controller = new StatusDashboardController($store, $runner);
         $request = $this->createStub(ServerRequestInterface::class);
 
-        $response = $controller($request);
+        $response = $controller();
 
         self::assertSame(200, $response->getStatusCode());
         self::assertStringContainsString('text/html', $response->getHeaderLine('Content-Type'));
@@ -57,7 +57,7 @@ final class StatusDashboardControllerTest extends TestCase
         $controller = new StatusDashboardController($store, $runner);
         $request = $this->createStub(ServerRequestInterface::class);
 
-        $response = $controller($request);
+        $response = $controller();
         $body = (string) $response->getBody();
 
         self::assertStringContainsString('<!DOCTYPE html>', $body);
@@ -90,7 +90,7 @@ final class StatusDashboardControllerTest extends TestCase
         $controller = new StatusDashboardController($store, $runner);
         $request = $this->createStub(ServerRequestInterface::class);
 
-        $response = $controller($request);
+        $response = $controller();
         $body = (string) $response->getBody();
 
         self::assertStringContainsString('Database', $body);
@@ -122,7 +122,7 @@ final class StatusDashboardControllerTest extends TestCase
         $controller = new StatusDashboardController($store, $runner);
         $request = $this->createStub(ServerRequestInterface::class);
 
-        $response = $controller($request);
+        $response = $controller();
         $body = (string) $response->getBody();
 
         self::assertStringContainsString('incident-banner--major', $body);
@@ -151,7 +151,7 @@ final class StatusDashboardControllerTest extends TestCase
         $controller = new StatusDashboardController($store, $runner);
         $request = $this->createStub(ServerRequestInterface::class);
 
-        $response = $controller($request);
+        $response = $controller();
         $body = (string) $response->getBody();
 
         self::assertStringContainsString('timeline__row', $body);
@@ -174,7 +174,7 @@ final class StatusDashboardControllerTest extends TestCase
         $controller = new StatusDashboardController($store, $runner);
         $request = $this->createStub(ServerRequestInterface::class);
 
-        $controller($request);
+        $controller();
     }
 
     #[Test]
@@ -192,7 +192,7 @@ final class StatusDashboardControllerTest extends TestCase
         $controller = new StatusDashboardController($store, $runner);
         $request = $this->createStub(ServerRequestInterface::class);
 
-        $response = $controller($request);
+        $response = $controller();
         $body = (string) $response->getBody();
 
         self::assertStringContainsString('http-equiv="refresh"', $body);
@@ -220,7 +220,7 @@ final class StatusDashboardControllerTest extends TestCase
         $controller = new StatusDashboardController($store, $runner);
         $request = $this->createStub(ServerRequestInterface::class);
 
-        $response = $controller($request);
+        $response = $controller();
         $body = (string) $response->getBody();
 
         self::assertStringNotContainsString('<script>alert(1)</script>', $body);

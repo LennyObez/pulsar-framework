@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\HealthStatus\Server\Controller;
 
-use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\HealthStatus\Contracts\HealthCheckRunnerInterface;
 use Pulsar\Extension\HealthStatus\Contracts\HealthHistoryStoreInterface;
@@ -26,7 +25,7 @@ final readonly class StatusDashboardController
         private HealthCheckRunnerInterface $runner,
     ) {}
 
-    public function __invoke(ServerRequestInterface $request): Response
+    public function __invoke(): Response
     {
         $current = $this->runner->run();
         $this->store->storeSnapshot($current);
