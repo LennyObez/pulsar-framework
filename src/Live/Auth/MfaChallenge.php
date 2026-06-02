@@ -51,8 +51,10 @@ final class MfaChallenge extends LiveComponent
         /** @var mixed $idRaw */
         $idRaw = $params['identity-id'] ?? $params['identityId'] ?? '';
         $this->identityId = is_string($idRaw) ? $idRaw : '';
+        /** @var mixed $auth */
         $auth = $params['authenticator'] ?? null;
         $this->authenticator = $auth instanceof AuthenticatorInterface ? $auth : null;
+        /** @var mixed $cfg */
         $cfg = $params['config'] ?? null;
         $this->config = $cfg instanceof AuthUiConfig ? $cfg : new AuthUiConfig();
     }

@@ -167,8 +167,8 @@ final readonly class OpenAiProvider implements AiClientInterface
                 continue;
             }
 
+            /** @var mixed $rawEmbedding */
             $rawEmbedding = $item['embedding'] ?? null;
-            /** @var list<mixed> $embeddingValues */
             $embeddingValues = is_array($rawEmbedding) ? $rawEmbedding : [];
 
             $floats = [];
@@ -180,6 +180,7 @@ final readonly class OpenAiProvider implements AiClientInterface
                 }
             }
 
+            /** @var mixed $rawIndex */
             $rawIndex = $item['index'] ?? null;
             $vectors[] = new EmbeddingVector(
                 values: $floats,
@@ -187,6 +188,7 @@ final readonly class OpenAiProvider implements AiClientInterface
             );
         }
 
+        /** @var mixed $rawTotalTokens */
         $rawTotalTokens = $usage['total_tokens'] ?? null;
         return new EmbeddingResult(
             embeddings: $vectors,

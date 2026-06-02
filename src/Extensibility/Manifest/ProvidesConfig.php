@@ -100,6 +100,7 @@ final readonly class ProvidesConfig
         $commands = array_values(array_filter($commands, 'is_string'));
         $middleware = array_values(array_filter($middleware, 'is_string'));
         $migrations = array_values(array_filter($migrations, 'is_string'));
+        /** @var mixed $routes */
         $routes = $data['routes'] ?? false;
 
         return new self(

@@ -36,6 +36,7 @@ final readonly class RequiresConfig
     public static function fromArray(array $data): self
     {
         $extensions = [];
+        /** @var mixed $constraint */
         foreach ($data as $name => $constraint) {
             if (is_string($name) && is_string($constraint)) {
                 $extensions[$name] = $constraint;
