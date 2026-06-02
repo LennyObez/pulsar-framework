@@ -378,6 +378,8 @@ final class SagaOrchestratorTest extends TestCase
         self::assertCount(1, $compCompleted);
         self::assertCount(1, $sagaFailed);
         self::assertSame('fail_step', $sagaFailed[0]->failedStepName);
+        // Compensation ran to completion, so the failure event reports success.
+        self::assertTrue($sagaFailed[0]->compensationSuccessful);
     }
 
     #[Test]
@@ -595,6 +597,48 @@ final class SagaOrchestratorTest extends TestCase
         $this->expectExceptionMessage('Compensation fail');
 
         $this->orchestrator()->execute($definition, []);
+    }
+
+    #[Test]
+    public function execute_compensation_failure_dispatches_saga_failed_event_with_compensation_unsuccessful(): void
+    {
+        // Regression: previously SagaFailedEvent was never dispatched when
+        // compensation itself failed (the throw propagated first), and the only
+        // dispatch hardcoded compensationSuccessful=true via a tautology.
+        $events = &$this->captureEvents();
+
+        $definition = SagaDefinitionBuilder::create('order')
+            ->step('charge')->forward(stdClass::class)->compensate(stdClass::class)
+            ->step('fail_step')->forward(stdClass::class)
+            ->build();
+
+        $call = 0;
+        $this->commandBus->method('dispatch')->willReturnCallback(
+            static function () use (&$call): array {
+                $call++;
+                if ($call === 2) {
+                    throw new RuntimeException('Forward fail');
+                }
+                if ($call === 3) {
+                    throw new RuntimeException('Compensation fail');
+                }
+
+                return [];
+            },
+        );
+
+        try {
+            $this->orchestrator()->execute($definition, []);
+            self::fail('Expected CompensationFailedException');
+        } catch (CompensationFailedException) {
+            // Expected — the saga-failed event must still have been dispatched first.
+        }
+
+        $sagaFailed = array_values(array_filter($events, static fn(object $e): bool => $e instanceof SagaFailedEvent));
+
+        self::assertCount(1, $sagaFailed);
+        self::assertFalse($sagaFailed[0]->compensationSuccessful);
+        self::assertSame('fail_step', $sagaFailed[0]->failedStepName);
     }
 
     #[Test]
