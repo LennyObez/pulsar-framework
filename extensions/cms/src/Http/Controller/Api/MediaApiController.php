@@ -84,7 +84,7 @@ final readonly class MediaApiController
     /**
      * GET /api/v1/media/{id}: Show a single media asset.
      */
-    public function show(ServerRequestInterface $request, string $id): Response
+    public function show(string $id): Response
     {
         $asset = $this->mediaRepository->findById($id);
 
@@ -168,7 +168,7 @@ final readonly class MediaApiController
     /**
      * DELETE /api/v1/media/{id}: Delete a media asset.
      */
-    public function delete(ServerRequestInterface $request, string $id): Response
+    public function delete(string $id): Response
     {
         $asset = $this->mediaRepository->findById($id);
 

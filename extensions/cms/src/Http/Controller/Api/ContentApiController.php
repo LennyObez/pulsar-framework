@@ -348,7 +348,7 @@ final readonly class ContentApiController
     /**
      * DELETE /api/v1/content/{id}: Soft delete content.
      */
-    public function delete(ServerRequestInterface $request, string $id): Response
+    public function delete(string $id): Response
     {
         $content = $this->contentRepository->findById($id);
 
