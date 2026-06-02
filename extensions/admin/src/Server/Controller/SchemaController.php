@@ -64,7 +64,7 @@ final readonly class SchemaController
         ]));
     }
 
-    public function createForm(ServerRequestInterface $request): Response
+    public function createForm(): Response
     {
         $tables = $this->introspector->tables();
         $tableNames = array_map(static fn($t): string => $t->name, $tables);

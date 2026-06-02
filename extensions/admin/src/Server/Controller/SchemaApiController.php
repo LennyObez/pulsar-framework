@@ -182,7 +182,7 @@ final readonly class SchemaApiController
         return Response::json($result);
     }
 
-    public function previewDropTable(ServerRequestInterface $request, string $table): Response
+    public function previewDropTable(string $table): Response
     {
         $result = $this->previewHandler->previewDropTable($table);
 
@@ -227,7 +227,7 @@ final readonly class SchemaApiController
         return Response::json(['entries' => $entryData]);
     }
 
-    public function exportBundle(ServerRequestInterface $request): Response
+    public function exportBundle(): Response
     {
         $bundle = $this->changeLog->exportSqlBundle();
 

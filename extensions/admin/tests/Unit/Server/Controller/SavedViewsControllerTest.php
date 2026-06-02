@@ -40,7 +40,7 @@ final class SavedViewsControllerTest extends TestCase
 
         $request = new ServerRequest(method: 'GET', uri: '/admin/views/posts');
 
-        $response = $this->controller->list($request, 'posts');
+        $response = $this->controller->list('posts');
 
         self::assertSame(200, $response->getStatusCode());
         $body = json_decode((string) $response->getBody(), true, 16, JSON_THROW_ON_ERROR);
@@ -60,7 +60,7 @@ final class SavedViewsControllerTest extends TestCase
 
         $request = new ServerRequest(method: 'GET', uri: '/admin/views/posts');
 
-        $response = $this->controller->list($request, 'posts');
+        $response = $this->controller->list('posts');
 
         self::assertSame(200, $response->getStatusCode());
         $body = json_decode((string) $response->getBody(), true, 16, JSON_THROW_ON_ERROR);
@@ -125,7 +125,7 @@ final class SavedViewsControllerTest extends TestCase
     {
         $request = new ServerRequest(method: 'DELETE', uri: '/admin/views/posts/v-1');
 
-        $response = $this->controller->delete($request, 'posts', 'v-1');
+        $response = $this->controller->delete('v-1');
 
         self::assertSame(200, $response->getStatusCode());
         $body = json_decode((string) $response->getBody(), true, 16, JSON_THROW_ON_ERROR);
@@ -142,7 +142,7 @@ final class SavedViewsControllerTest extends TestCase
 
         $request = new ServerRequest(method: 'GET', uri: '/admin/views/posts');
 
-        $response = $this->controller->list($request, 'posts');
+        $response = $this->controller->list('posts');
 
         $body = json_decode((string) $response->getBody(), true, 16, JSON_THROW_ON_ERROR);
         $view = $body['views'][0];

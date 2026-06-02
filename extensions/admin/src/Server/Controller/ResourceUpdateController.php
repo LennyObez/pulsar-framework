@@ -30,7 +30,7 @@ final readonly class ResourceUpdateController
         private AdminConfig $config,
     ) {}
 
-    public function form(ServerRequestInterface $request, string $resource, string $id): Response
+    public function form(string $resource, string $id): Response
     {
         $resourceDef = $this->registry->get($resource);
 
