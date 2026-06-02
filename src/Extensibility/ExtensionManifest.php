@@ -113,11 +113,31 @@ final readonly class ExtensionManifest
             extensionClass: $extensionClass,
             path: $basePath,
             description: is_string($description) ? $description : '',
-            pulsar: PulsarVersionConfig::fromArray(is_array($pulsar) ? $pulsar : []),
-            provides: ProvidesConfig::fromArray(is_array($provides) ? $provides : []),
-            requires: RequiresConfig::fromArray(is_array($requires) ? $requires : []),
+            pulsar: PulsarVersionConfig::fromArray(self::ensureStringKeyed($pulsar)),
+            provides: ProvidesConfig::fromArray(self::ensureStringKeyed($provides)),
+            requires: RequiresConfig::fromArray(self::ensureStringKeyed($requires)),
             requestedTrustTier: TrustTier::tryFrom(is_string($trustTier) ? $trustTier : '') ?? TrustTier::Community,
         );
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function ensureStringKeyed(mixed $value): array
+    {
+        if (!is_array($value)) {
+            return [];
+        }
+
+        $result = [];
+        /** @var mixed $val */
+        foreach ($value as $key => $val) {
+            if (is_string($key)) {
+                $result[$key] = $val;
+            }
+        }
+
+        return $result;
     }
 
     /**

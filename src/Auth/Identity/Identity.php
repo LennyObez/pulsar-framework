@@ -126,12 +126,19 @@ final readonly class Identity implements IdentityInterface
             throw AuthenticationException::invalidIdentityData('roles must be a list of strings');
         }
 
-        /** @var mixed $attributes */
-        $attributes = $data['attributes'] ?? [];
-        if (!is_array($attributes)) {
+        /** @var mixed $rawAttributes */
+        $rawAttributes = $data['attributes'] ?? [];
+        if (!is_array($rawAttributes)) {
             throw AuthenticationException::invalidIdentityData('attributes must be an array');
         }
-        /** @var array<string, mixed> $attributes */
+
+        $attributes = [];
+        /** @var mixed $attrValue */
+        foreach ($rawAttributes as $attrKey => $attrValue) {
+            if (is_string($attrKey)) {
+                $attributes[$attrKey] = $attrValue;
+            }
+        }
 
         /** @var mixed $twoFactorRaw */
         $twoFactorRaw = $data['two_factor_status'] ?? TwoFactorStatus::Disabled->value;
