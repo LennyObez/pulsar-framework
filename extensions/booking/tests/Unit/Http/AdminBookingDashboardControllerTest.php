@@ -12,9 +12,6 @@ use Pulsar\Extension\Booking\Contracts\AppointmentRepositoryInterface;
 use Pulsar\Extension\Booking\Domain\Appointment;
 use Pulsar\Extension\Booking\Domain\AppointmentStatus;
 use Pulsar\Extension\Booking\Http\Controller\Admin\AdminBookingDashboardController;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
 
 #[CoversClass(AdminBookingDashboardController::class)]
 final class AdminBookingDashboardControllerTest extends TestCase
@@ -49,16 +46,7 @@ final class AdminBookingDashboardControllerTest extends TestCase
 
         $controller = new AdminBookingDashboardController($repository);
 
-        $request = new Request(
-            method: Method::GET,
-            uri: '/admin/booking',
-            path: '/admin/booking',
-            queryString: '',
-            headers: new HeaderBag([]),
-            body: '',
-        );
-
-        $response = $controller->index($request);
+        $response = $controller->index();
 
         self::assertSame(200, $response->getStatusCode());
         $body = json_decode((string) $response->getBody(), true);
@@ -84,16 +72,7 @@ final class AdminBookingDashboardControllerTest extends TestCase
 
         $controller = new AdminBookingDashboardController($repository);
 
-        $request = new Request(
-            method: Method::GET,
-            uri: '/admin/booking',
-            path: '/admin/booking',
-            queryString: '',
-            headers: new HeaderBag([]),
-            body: '',
-        );
-
-        $response = $controller->index($request);
+        $response = $controller->index();
 
         $body = json_decode((string) $response->getBody(), true);
         self::assertSame([], $body['today']);
