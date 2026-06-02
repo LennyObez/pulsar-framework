@@ -94,6 +94,7 @@ final class BruteForceDetector implements ThreatDetectorInterface
 
         if ($ip !== '') {
             $this->ipFailures[$ip][] = $now;
+            $this->pruneWindow($ip, $now);
         }
 
         if ($account !== '') {
