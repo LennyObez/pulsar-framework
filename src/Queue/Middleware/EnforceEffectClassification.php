@@ -59,8 +59,7 @@ final readonly class EnforceEffectClassification implements JobMiddlewareInterfa
      *
      * When the allowance is present, dispatches an audit event recording the
      * reason and reviewer for compliance traceability.
-     */
-    /**
+     *
      * @param class-string $jobClass
      */
     private function enforceNonIdempotentAllowance(string $jobClass): void

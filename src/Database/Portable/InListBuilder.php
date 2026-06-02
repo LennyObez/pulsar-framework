@@ -10,6 +10,7 @@ use Pulsar\Database\Driver;
 
 use function implode;
 use function sprintf;
+use function str_replace;
 
 /**
  * Builds portable IN-list or ANY() clauses.
@@ -70,7 +71,7 @@ final class InListBuilder
         }
 
         if ($driver === Driver::PostgreSQL) {
-            return [$paramName => '{' . implode(',', $values) . '}'];
+            return [$paramName => self::toPostgresArrayLiteral($values)];
         }
 
         $bindings = [];
@@ -91,5 +92,27 @@ final class InListBuilder
         }
 
         return sprintf('%s IN (%s)', $column, implode(', ', $placeholders));
+    }
+
+    /**
+     * Encode values as a PostgreSQL array literal.
+     *
+     * Every element is double-quoted with `\` and `"` backslash-escaped, which
+     * is always-valid PostgreSQL array-literal syntax. This prevents values
+     * that contain `,`, `{`, `}`, `"`, `\`, or whitespace from being silently
+     * split into multiple elements or corrupting the literal.
+     *
+     * @param list<string> $values
+     */
+    private static function toPostgresArrayLiteral(array $values): string
+    {
+        $quoted = [];
+
+        foreach ($values as $value) {
+            $escaped = str_replace(['\\', '"'], ['\\\\', '\\"'], $value);
+            $quoted[] = '"' . $escaped . '"';
+        }
+
+        return '{' . implode(',', $quoted) . '}';
     }
 }

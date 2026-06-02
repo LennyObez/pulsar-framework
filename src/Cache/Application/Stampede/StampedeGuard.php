@@ -32,8 +32,9 @@ final readonly class StampedeGuard
         private int $lockTtlSeconds = 30,
         private int $lockTimeoutMs = 5000,
         private float $jitterFactor = 0.1,
+        ?Randomizer $randomizer = null,
     ) {
-        $this->randomizer = new Randomizer(new Secure());
+        $this->randomizer = $randomizer ?? new Randomizer(new Secure());
     }
 
     /**

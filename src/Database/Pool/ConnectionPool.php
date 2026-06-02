@@ -77,6 +77,12 @@ final class ConnectionPool implements ConnectionPoolInterface
         if ($this->activeCount >= $this->config->maxConnections) {
             $this->waitCount++;
 
+            $this->logger?->warning('Connection pool exhausted', [
+                'max_connections' => $this->config->maxConnections,
+                'active_count' => $this->activeCount,
+                'wait_count' => $this->waitCount,
+            ]);
+
             throw DatabaseException::poolExhausted($this->config->maxConnections);
         }
 

@@ -11,6 +11,7 @@ use Pulsar\Observability\Metrics\LabelSet;
 use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Queue\QueueDriverInterface;
 
+use function array_slice;
 use function array_sum;
 use function count;
 use function floor;
@@ -30,12 +31,21 @@ use const SORT_NUMERIC;
 #[Api(since: '1.0.0')]
 final class MetricsCollector
 {
+    /**
+     * Maximum number of raw timing samples retained per queue.
+     *
+     * Caps memory and percentile-sort cost in long-running workers: only the
+     * most recent samples are kept (sliding window). Cumulative counters
+     * (processed/failed/dispatched) are unaffected and remain exact.
+     */
+    private const int MAX_TIMING_SAMPLES = 10_000;
+
     private readonly Counter $processedCounter;
     private readonly Counter $failedCounter;
     private readonly Counter $dispatchedCounter;
     private readonly Histogram $durationHistogram;
 
-    /** @var array<string, list<float>> Raw timing samples per queue */
+    /** @var array<string, list<float>> Raw timing samples per queue (bounded sliding window) */
     private array $timingSamples = [];
 
     public function __construct(
@@ -74,6 +84,15 @@ final class MetricsCollector
         $this->durationHistogram->observe($durationMs, $labels);
 
         $this->timingSamples[$queue][] = $durationMs;
+
+        // Keep only the most recent window so memory and the percentile sort
+        // stay bounded for long-running workers.
+        if (count($this->timingSamples[$queue]) > self::MAX_TIMING_SAMPLES) {
+            $this->timingSamples[$queue] = array_slice(
+                $this->timingSamples[$queue],
+                -self::MAX_TIMING_SAMPLES,
+            );
+        }
     }
 
     /**

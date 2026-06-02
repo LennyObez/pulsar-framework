@@ -45,4 +45,21 @@ final readonly class AmqpDriverConfig
             exchange: Coerce::string($data['exchange'] ?? null, 'pulsar.queue'),
         );
     }
+
+    /**
+     * Prevent the broker password from leaking in debug output.
+     *
+     * @return array<string, string|int>
+     */
+    public function __debugInfo(): array
+    {
+        return [
+            'host' => $this->host,
+            'port' => $this->port,
+            'user' => $this->user,
+            'password' => $this->password !== '' ? '[REDACTED]' : '',
+            'vhost' => $this->vhost,
+            'exchange' => $this->exchange,
+        ];
+    }
 }

@@ -59,7 +59,7 @@ final readonly class SimpleCache implements CacheInterface
         $result = [];
 
         foreach ($this->pool->getItems($keyList) as $key => $item) {
-            $result = [...$result, $key => $item->isHit() ? $item->get() : $default];
+            $result[$key] = $item->isHit() ? $item->get() : $default;
         }
 
         return $result;

@@ -77,20 +77,19 @@ final class FanOutCoverageTest extends TestCase
     {
         $results = FanOut::run([
             'infinite' => static function (): string {
-                // Suspend forever — the timeout will terminate this
+                // Suspend forever — the timeout is the only exit. A task that
+                // never returns cannot complete before the deadline on any
+                // machine with a measurable clock, so the timeout branch is
+                // guaranteed to fire.
                 for (;;) {
                     Fiber::suspend();
                 }
             },
         ], timeoutMs: 1);
 
-        // Allow a small window — either the task completes or times out
         self::assertCount(1, $results);
-        // On very fast machines, the task might complete before timeout
-        if ($results['infinite']->timedOut) {
-            self::assertFalse($results['infinite']->success);
-            self::assertTrue($results['infinite']->timedOut);
-        }
+        self::assertFalse($results['infinite']->success);
+        self::assertTrue($results['infinite']->timedOut);
     }
 
     #[Test]
@@ -143,5 +142,33 @@ final class FanOutCoverageTest extends TestCase
         self::assertNull($result->value);
         self::assertNull($result->error);
         self::assertFalse($result->timedOut);
+    }
+
+    #[Test]
+    public function completedTaskIsHarvestedNotTimedOutWhenDeadlineFires(): void
+    {
+        // A task that completes after one resume runs alongside an infinite
+        // task that forces the deadline to fire. The completed task must report
+        // its result, not be falsely flagged as timed out when the timeout
+        // branch executes.
+        $results = FanOut::run([
+            'quick' => static function (): string {
+                Fiber::suspend();
+
+                return 'finished';
+            },
+            'infinite' => static function (): string {
+                for (;;) {
+                    Fiber::suspend();
+                }
+            },
+        ], timeoutMs: 1);
+
+        self::assertCount(2, $results);
+        self::assertTrue($results['quick']->success);
+        self::assertFalse($results['quick']->timedOut);
+        self::assertSame('finished', $results['quick']->value);
+        self::assertTrue($results['infinite']->timedOut);
+        self::assertFalse($results['infinite']->success);
     }
 }

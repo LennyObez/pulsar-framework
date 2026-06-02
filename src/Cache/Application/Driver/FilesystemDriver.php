@@ -127,6 +127,18 @@ final class FilesystemDriver extends AbstractCacheDriver
                 }
             }
 
+            // glob('*') does not match leading-dot files on Unix, so orphaned
+            // atomic-write temp files (.tmp.<pid>.<hrtime>) left behind by an
+            // interrupted set() would survive a clear() and leak. Sweep them
+            // explicitly before removing the shard directory.
+            $tmpFiles = @glob($shardDir . DIRECTORY_SEPARATOR . '.tmp.*', GLOB_NOSORT);
+
+            if ($tmpFiles !== false) {
+                foreach ($tmpFiles as $tmpFile) {
+                    @unlink($tmpFile);
+                }
+            }
+
             @rmdir($shardDir);
         }
 

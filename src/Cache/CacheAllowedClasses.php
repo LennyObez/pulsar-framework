@@ -217,6 +217,7 @@ final class CacheAllowedClasses
      *
      * @param list<class-string> $classes
      *
+     * @throws CacheException If the allowlist file cannot be written.
      * @throws JsonException
      */
     public static function save(string $cachePath, array $classes): void
@@ -225,7 +226,13 @@ final class CacheAllowedClasses
 
         $json = json_encode($classes, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 
-        file_put_contents($path, $json, LOCK_EX);
+        // A discarded return value would let a disk-full / permission failure
+        // pass silently: doWarm() then hashes a missing (empty-string hash) or
+        // stale file, producing a manifest whose allowed_classes_hash will not
+        // match the file on the next load(). Fail loudly instead.
+        if (file_put_contents($path, $json, LOCK_EX) === false) {
+            throw CacheException::writeFailure($path, 'failed to write allowed-classes file');
+        }
     }
 
     /**
@@ -313,14 +320,16 @@ final class CacheAllowedClasses
      */
     private static function hasDangerousMethods(ReflectionClass $ref): bool
     {
-        return array_any(self::DANGEROUS_METHODS, static function (string $method) use ($ref): bool {
-            if (!$ref->hasMethod($method)) {
-                return false;
-            }
-
-            // Only count it if declared on this class (not inherited from a parent)
-            return $ref->getMethod($method)->getDeclaringClass()->getName() === $ref->getName();
-        });
+        // A dangerous magic method counts whether declared on this class OR
+        // inherited from a parent: PHP's unserialize() invokes the inherited
+        // __wakeup / __destruct / __serialize / __unserialize when
+        // reconstructing the subclass, so a subclass that merely inherits one
+        // is just as exploitable as the parent. hasMethod() already walks the
+        // inheritance chain.
+        return array_any(
+            self::DANGEROUS_METHODS,
+            static fn(string $method): bool => $ref->hasMethod($method),
+        );
     }
 
     /**

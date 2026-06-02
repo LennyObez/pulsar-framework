@@ -6,9 +6,10 @@ namespace Pulsar\Database;
 
 use Pulsar\Api\Api;
 
-use function array_splice;
+use function array_key_first;
 use function count;
 use function hash;
+use function ksort;
 use function serialize;
 
 /**
@@ -28,7 +29,16 @@ final class RequestCoalescer
     /** @var array<string, Result> */
     private array $cache = [];
 
-    /** @var list<string> Key insertion order for LRU eviction */
+    /**
+     * Insertion-ordered set of cache keys for LRU eviction.
+     *
+     * Keyed by the cache key (value is always `true`) so membership tests and
+     * targeted removal in {@see invalidate()} are O(1). PHP preserves insertion
+     * order on associative arrays, so the oldest key remains
+     * `array_key_first()` for eviction.
+     *
+     * @var array<string, true>
+     */
     private array $keys = [];
 
     private int $hits = 0;
@@ -107,11 +117,7 @@ final class RequestCoalescer
         $key = $this->computeKey($sql, $bindings);
 
         if (isset($this->cache[$key])) {
-            unset($this->cache[$key]);
-            $this->keys = array_values(array_filter(
-                $this->keys,
-                static fn(string $k): bool => $k !== $key,
-            ));
+            unset($this->cache[$key], $this->keys[$key]);
         }
     }
 
@@ -160,6 +166,11 @@ final class RequestCoalescer
      */
     private function computeKey(string $sql, array $bindings): string
     {
+        // Sort bindings by key so that logically identical queries whose
+        // binding arrays differ only in key order produce the same cache key.
+        // Mirrors QueryCacheKey::build(), which ksort()s before hashing.
+        ksort($bindings);
+
         return hash('xxh128', $sql . "\0" . serialize($bindings));
     }
 
@@ -167,12 +178,13 @@ final class RequestCoalescer
     {
         // LRU eviction when at capacity
         if (count($this->cache) >= $this->maxEntries && !isset($this->cache[$key])) {
-            $evictKey = $this->keys[0];
-            unset($this->cache[$evictKey]);
-            array_splice($this->keys, 0, 1);
+            $evictKey = array_key_first($this->keys);
+            if ($evictKey !== null) {
+                unset($this->cache[$evictKey], $this->keys[$evictKey]);
+            }
         }
 
         $this->cache[$key] = $result;
-        $this->keys[] = $key;
+        $this->keys[$key] = true;
     }
 }

@@ -8,6 +8,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Cache\CacheAllowedClasses;
+use ReflectionClass;
+use ReflectionMethod;
 
 use function dirname;
 use function file_put_contents;
@@ -151,4 +153,77 @@ final class CacheAllowedClassesTest extends TestCase
         // Should not contain forward-slash escaping (unescaped slashes flag)
         self::assertStringNotContainsString('\\/', $content);
     }
+
+    #[Test]
+    public function hasDangerousMethodsDetectsInheritedMagicMethod(): void
+    {
+        // A subclass that inherits __wakeup from its parent is just as
+        // exploitable as the parent, because unserialize() invokes the
+        // inherited method when reconstructing the subclass. The check must
+        // flag it even though the method is declared on the parent.
+        $result = $this->invokeHasDangerousMethods(InheritsWakeupFixture::class);
+
+        self::assertTrue($result);
+    }
+
+    #[Test]
+    public function hasDangerousMethodsDetectsDirectlyDeclaredMagicMethod(): void
+    {
+        $result = $this->invokeHasDangerousMethods(DeclaresWakeupFixture::class);
+
+        self::assertTrue($result);
+    }
+
+    #[Test]
+    public function hasDangerousMethodsAllowsClassWithNoMagicMethods(): void
+    {
+        $result = $this->invokeHasDangerousMethods(SafeFixture::class);
+
+        self::assertFalse($result);
+    }
+
+    /**
+     * @param class-string $className
+     */
+    private function invokeHasDangerousMethods(string $className): bool
+    {
+        /** @var ReflectionClass<object> $ref */
+        $ref = new ReflectionClass($className);
+
+        $method = new ReflectionMethod(CacheAllowedClasses::class, 'hasDangerousMethods');
+
+        /** @var bool $result */
+        $result = $method->invoke(null, $ref);
+
+        return $result;
+    }
+}
+
+/**
+ * Fixture: parent declaring a dangerous magic method.
+ */
+final class DeclaresWakeupFixture
+{
+    public function __wakeup(): void {}
+}
+
+/**
+ * Fixture: parent declaring a dangerous magic method, intended for inheritance.
+ */
+class DangerousParentFixture
+{
+    public function __wakeup(): void {}
+}
+
+/**
+ * Fixture: subclass that inherits (does not declare) a dangerous magic method.
+ */
+final class InheritsWakeupFixture extends DangerousParentFixture {}
+
+/**
+ * Fixture: class with no dangerous magic methods.
+ */
+final class SafeFixture
+{
+    public function harmless(): void {}
 }
