@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\ErrorHandling;
 
+use Closure;
 use Override;
 use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Api;
@@ -32,10 +33,20 @@ use const ENT_SUBSTITUTE;
 #[Api(since: '1.0.0')]
 final readonly class ErrorPageRenderer implements ExceptionRendererInterface
 {
+    /**
+     * @param (Closure(): ?TemplateEngineInterface)|null $templateEngineResolver
+     *        Lazily resolves the template engine at render time. Supplied by the
+     *        composition root so the renderer does not depend on wiring order:
+     *        the exception handler is wired early (so it can catch boot-time
+     *        errors) before ViewWiring binds the engine, so eagerly capturing
+     *        the engine at construction would always be null. Resolving on
+     *        render (after boot and route loading) picks up the bound engine.
+     */
     public function __construct(
         private ?TemplateEngineInterface $templateEngine = null,
         private ?ExceptionRendererInterface $devRenderer = null,
         private bool $debug = false,
+        private ?Closure $templateEngineResolver = null,
     ) {}
 
     #[Override]
@@ -49,13 +60,17 @@ final readonly class ErrorPageRenderer implements ExceptionRendererInterface
         $code = $status->value;
         $context = $this->buildContext($exception, $request, $status);
 
-        // Try template engine if available
-        if ($this->templateEngine !== null) {
-            $template = $this->resolveTemplate($code);
+        // Resolve the template engine lazily: it may be bound only after this
+        // renderer is constructed (ViewWiring runs after ExceptionHandlerWiring),
+        // so eager capture at construction time would miss it.
+        $engine = $this->resolveEngine();
+
+        if ($engine !== null) {
+            $template = $this->resolveTemplate($code, $engine);
 
             if ($template !== null) {
                 try {
-                    return $this->templateEngine->render($template, $context);
+                    return $engine->render($template, $context);
                 } catch (Throwable) {
                     // Template rendering failed, fall through to inline HTML
                 }
@@ -69,20 +84,46 @@ final readonly class ErrorPageRenderer implements ExceptionRendererInterface
     /**
      * Resolve the best template name for the given status code.
      *
+     * @param TemplateEngineInterface|null $engine The engine to probe; when null
+     *        it is resolved lazily (see {@see resolveEngine()}).
+     *
      * @return string|null Template name in dot-notation, or null if none exists
      */
-    public function resolveTemplate(int $code): ?string
+    public function resolveTemplate(int $code, ?TemplateEngineInterface $engine = null): ?string
     {
+        $engine ??= $this->resolveEngine();
+
+        if ($engine === null) {
+            return null;
+        }
+
         // 1. Try specific template (e.g. "errors.404")
         $specific = sprintf('errors.%d', $code);
-        if ($this->templateEngine !== null && $this->templateEngine->exists($specific)) {
+        if ($engine->exists($specific)) {
             return $specific;
         }
 
         // 2. Try category fallback (e.g. "errors.4xx")
         $category = $this->categoryTemplate($code);
-        if ($this->templateEngine !== null && $this->templateEngine->exists($category)) {
+        if ($engine->exists($category)) {
             return $category;
+        }
+
+        return null;
+    }
+
+    /**
+     * Resolve the template engine, preferring an eagerly-injected instance and
+     * falling back to the lazy resolver. Returns null when neither yields one.
+     */
+    private function resolveEngine(): ?TemplateEngineInterface
+    {
+        if ($this->templateEngine !== null) {
+            return $this->templateEngine;
+        }
+
+        if ($this->templateEngineResolver !== null) {
+            return ($this->templateEngineResolver)();
         }
 
         return null;
