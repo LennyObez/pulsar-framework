@@ -32,7 +32,7 @@ final readonly class SavedViewsController
         private SavedViewsHandler $handler,
     ) {}
 
-    public function list(ServerRequestInterface $request, string $resource): Response
+    public function list(string $resource): Response
     {
         $result = $this->handler->execute(new SavedViewsRequest(
             operation: 'list',
@@ -107,7 +107,7 @@ final readonly class SavedViewsController
         );
     }
 
-    public function delete(ServerRequestInterface $request, string $resource, string $viewId): Response
+    public function delete(string $viewId): Response
     {
         $result = $this->handler->execute(new SavedViewsRequest(
             operation: 'delete',
