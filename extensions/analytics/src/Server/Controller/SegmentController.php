@@ -139,7 +139,7 @@ final readonly class SegmentController
         ]);
     }
 
-    public function delete(ServerRequestInterface $request, string $id): Response
+    public function delete(string $id): Response
     {
         try {
             $this->segmentService->delete($id);

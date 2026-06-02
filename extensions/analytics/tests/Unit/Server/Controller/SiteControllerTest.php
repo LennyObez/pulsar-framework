@@ -41,7 +41,7 @@ final class SiteControllerTest extends TestCase
 
         $request = new ServerRequest(method: 'GET', uri: '/analytics/api/sites');
 
-        $response = $this->controller->index($request);
+        $response = $this->controller->index();
 
         self::assertSame(200, $response->getStatusCode());
         $body = json_decode((string) $response->getBody(), true, 16, JSON_THROW_ON_ERROR);
@@ -59,7 +59,7 @@ final class SiteControllerTest extends TestCase
 
         $request = new ServerRequest(method: 'GET', uri: '/analytics/api/sites');
 
-        $response = $this->controller->index($request);
+        $response = $this->controller->index();
 
         self::assertSame(200, $response->getStatusCode());
         $body = json_decode((string) $response->getBody(), true, 16, JSON_THROW_ON_ERROR);
@@ -221,7 +221,7 @@ final class SiteControllerTest extends TestCase
 
         $request = new ServerRequest(method: 'GET', uri: '/analytics/api/sites/s-1');
 
-        $response = $this->controller->show($request, 's-1');
+        $response = $this->controller->show('s-1');
 
         self::assertSame(200, $response->getStatusCode());
         $body = json_decode((string) $response->getBody(), true, 16, JSON_THROW_ON_ERROR);
@@ -239,7 +239,7 @@ final class SiteControllerTest extends TestCase
 
         $request = new ServerRequest(method: 'GET', uri: '/analytics/api/sites/missing');
 
-        $response = $this->controller->show($request, 'missing');
+        $response = $this->controller->show('missing');
 
         self::assertSame(404, $response->getStatusCode());
         $body = json_decode((string) $response->getBody(), true, 16, JSON_THROW_ON_ERROR);
@@ -318,7 +318,7 @@ final class SiteControllerTest extends TestCase
     {
         $request = new ServerRequest(method: 'DELETE', uri: '/analytics/api/sites/s-1');
 
-        $response = $this->controller->delete($request, 's-1');
+        $response = $this->controller->delete('s-1');
 
         self::assertSame(200, $response->getStatusCode());
         $body = json_decode((string) $response->getBody(), true, 16, JSON_THROW_ON_ERROR);
@@ -335,7 +335,7 @@ final class SiteControllerTest extends TestCase
 
         $request = new ServerRequest(method: 'DELETE', uri: '/analytics/api/sites/s-missing');
 
-        $response = $this->controller->delete($request, 's-missing');
+        $response = $this->controller->delete('s-missing');
 
         self::assertSame(404, $response->getStatusCode());
     }

@@ -284,7 +284,7 @@ final class SegmentControllerTest extends TestCase
             uri: '/plsr/api/v1/segments/s-001',
         );
 
-        $response = $this->controller->delete($request, 's-001');
+        $response = $this->controller->delete('s-001');
 
         self::assertSame(200, $response->getStatusCode());
         /** @var array<string, mixed> $body */
@@ -305,7 +305,7 @@ final class SegmentControllerTest extends TestCase
             uri: '/plsr/api/v1/segments/missing',
         );
 
-        $response = $this->controller->delete($request, 'missing');
+        $response = $this->controller->delete('missing');
 
         self::assertSame(404, $response->getStatusCode());
     }

@@ -88,7 +88,7 @@ final readonly class GoalController
         ], 201);
     }
 
-    public function show(ServerRequestInterface $request, string $id): Response
+    public function show(string $id): Response
     {
         $goal = $this->goalService->findById($id);
 
@@ -147,7 +147,7 @@ final readonly class GoalController
         ]);
     }
 
-    public function delete(ServerRequestInterface $request, string $id): Response
+    public function delete(string $id): Response
     {
         try {
             $this->goalService->delete($id);

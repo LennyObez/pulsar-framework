@@ -281,7 +281,7 @@ final class FunnelControllerTest extends TestCase
             uri: '/plsr/api/v1/funnels/f-001',
         );
 
-        $response = $this->controller->delete($request, 'f-001');
+        $response = $this->controller->delete('f-001');
 
         self::assertSame(200, $response->getStatusCode());
         /** @var array<string, mixed> $body */
@@ -302,7 +302,7 @@ final class FunnelControllerTest extends TestCase
             uri: '/plsr/api/v1/funnels/missing',
         );
 
-        $response = $this->controller->delete($request, 'missing');
+        $response = $this->controller->delete('missing');
 
         self::assertSame(404, $response->getStatusCode());
     }

@@ -146,7 +146,7 @@ final readonly class FunnelController
         ]);
     }
 
-    public function delete(ServerRequestInterface $request, string $id): Response
+    public function delete(string $id): Response
     {
         try {
             $this->funnelService->delete($id);
