@@ -132,7 +132,7 @@ final class DoctorCommand extends Command
 
     private function checkPhpVersion(OutputInterface $output): void
     {
-        $currentVersion = phpversion();
+        $currentVersion = phpversion() ?: PHP_VERSION;
 
         if (version_compare($currentVersion, self::REQUIRED_PHP, '>=')) {
             $this->pass($output, sprintf('PHP version %s (>= %s required)', $currentVersion, self::REQUIRED_PHP));
