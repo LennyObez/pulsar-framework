@@ -49,6 +49,7 @@ final readonly class PulsarVersionConfig
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
+        /** @var mixed $rawMinVersion */
         $rawMinVersion = $data['min_version'] ?? null;
 
         if (!is_string($rawMinVersion) || $rawMinVersion === '') {
@@ -64,6 +65,7 @@ final readonly class PulsarVersionConfig
             $minVersion = $rawMinVersion;
         }
 
+        /** @var mixed $rawMaxVersion */
         $rawMaxVersion = $data['max_version'] ?? null;
         $maxVersion = is_string($rawMaxVersion) ? $rawMaxVersion : null;
 

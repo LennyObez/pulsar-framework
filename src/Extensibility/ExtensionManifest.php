@@ -133,7 +133,7 @@ final readonly class ExtensionManifest
         /** @var mixed $val */
         foreach ($value as $key => $val) {
             if (is_string($key)) {
-                $result[$key] = $val;
+                $result = [...$result, $key => $val];
             }
         }
 

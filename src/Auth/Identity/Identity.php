@@ -136,7 +136,7 @@ final readonly class Identity implements IdentityInterface
         /** @var mixed $attrValue */
         foreach ($rawAttributes as $attrKey => $attrValue) {
             if (is_string($attrKey)) {
-                $attributes[$attrKey] = $attrValue;
+                $attributes = [...$attributes, $attrKey => $attrValue];
             }
         }
 
