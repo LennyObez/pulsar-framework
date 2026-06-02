@@ -113,11 +113,11 @@ final class DeployConfigTest extends TestCase
     }
 
     #[Test]
-    public function defaultChecksIncludeAllThirteenEntries(): void
+    public function defaultChecksIncludeAllFourteenEntries(): void
     {
         $config = new DeployConfig();
 
-        self::assertCount(13, $config->checks);
+        self::assertCount(14, $config->checks);
         self::assertArrayHasKey('debug-mode', $config->checks);
         self::assertArrayHasKey('opcache', $config->checks);
         self::assertArrayHasKey('jit', $config->checks);
@@ -131,6 +131,7 @@ final class DeployConfigTest extends TestCase
         self::assertArrayHasKey('request-size-limits', $config->checks);
         self::assertArrayHasKey('trusted-proxies', $config->checks);
         self::assertArrayHasKey('integrity', $config->checks);
+        self::assertArrayHasKey('audit-logger', $config->checks);
     }
 
     #[Test]
@@ -194,7 +195,7 @@ final class DeployConfigTest extends TestCase
     {
         $config = DeployConfig::fromArray([], $this->environment);
 
-        self::assertCount(13, $config->checks);
+        self::assertCount(14, $config->checks);
         self::assertSame('fail', $config->checkConfig('debug-mode')['severity']);
     }
 

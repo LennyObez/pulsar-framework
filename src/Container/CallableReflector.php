@@ -12,6 +12,7 @@ use ReflectionFunction;
 use ReflectionFunctionAbstract;
 use ReflectionMethod;
 
+use function explode;
 use function is_array;
 use function is_object;
 use function is_string;

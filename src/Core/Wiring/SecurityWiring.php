@@ -325,14 +325,21 @@ final readonly class SecurityWiring implements ServiceWiringInterface
         $headersMiddleware = new SecurityHeadersMiddleware($securityConfig->headers, $trustedProxies);
         $container->instance(SecurityHeadersMiddleware::class, $headersMiddleware);
 
-        // Pipe globally (F9.1): every response — including routes that do
-        // not opt into the `web` / `api` middleware groups — must carry the
-        // X-Content-Type-Options, X-Frame-Options, Referrer-Policy, CSP,
-        // and Cross-Origin baseline. Relying on per-route opt-in left
+        // Pipe globally (F9.1, F12.10): every response — including routes
+        // that do not opt into the `web` / `api` middleware groups — must
+        // carry the X-Content-Type-Options, X-Frame-Options, Referrer-Policy,
+        // CSP, and Cross-Origin baseline. Relying on per-route opt-in left
         // diagnostics endpoints, JSON APIs declared outside groups, error
         // pages, and ad-hoc routes exposed with no headers at all. The
-        // middleware is idempotent (it sets `withHeader`, which replaces
-        // existing values) so groups that include it again are a no-op.
+        // middleware is idempotent for header VALUES (it sets `withHeader`,
+        // which replaces existing values) so groups that include it again
+        // produce the same result — but it must be piped exactly once into
+        // the global pipeline: a second global pipe would run the CSP
+        // builder, frame setter, and HSTS injector twice on every response.
+        //
+        // CSRF stays group-only because POST-only API endpoints legitimately
+        // need to opt out, and an auto-pipe would break stateless
+        // bearer-token flows.
         $middleware->pipe($headersMiddleware);
 
         // Incident Reporter: default to in-memory, override with FileIncidentReporter via config
@@ -411,19 +418,6 @@ final readonly class SecurityWiring implements ServiceWiringInterface
 
         // Add subdomain middleware to the global pipeline (resolves domain context for routing)
         $middleware->pipe($subdomainMiddleware);
-
-        // F12.10: secure-by-default consistency. AuthenticationMiddleware
-        // was already auto-piped while SecurityHeadersMiddleware and
-        // CsrfMiddleware lived only inside named groups, leaving the
-        // baseline deployment with auth active but no security headers
-        // and no CSRF — the exact gap a production install does not
-        // expect to discover the hard way. Auto-piping
-        // SecurityHeadersMiddleware globally is a no-side-effect
-        // header injection that benefits every response. CSRF stays
-        // group-only because POST-only API endpoints legitimately
-        // need to opt out, and an auto-pipe would break stateless
-        // bearer-token flows.
-        $middleware->pipe($headersMiddleware);
 
         // Named middleware aliases: allow routes to use string references
         $middlewareRegistry->alias('session', SessionMiddleware::class);

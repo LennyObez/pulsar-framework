@@ -190,14 +190,18 @@ final class RouteCompiler
         );
         $pattern = $replaced ?? $pattern;
 
-        // Optional params: {param?}
+        // Optional params: /{param?}. The preceding slash becomes optional
+        // together with the parameter so that /blog/{page?} matches both /blog
+        // and /blog/2 — byte-identical to Route::pathToPattern(). preg_quote
+        // escaped the `?` to `\?`, so the literal token here is `/{param\?}`
+        // and the regex matches the escaped form.
         $replaced = preg_replace_callback(
-            '#\{([a-zA-Z_][a-zA-Z0-9_]*)\?}#',
+            '#/\{([a-zA-Z_][a-zA-Z0-9_]*)\\\\\?}#',
             static function (array $matches) use ($constraints): string {
                 $name = $matches[1];
                 $regex = $constraints[$name] ?? '[^/]+';
 
-                return '(?:(?P<' . $name . '>' . $regex . '))?';
+                return '(?:/(?P<' . $name . '>' . $regex . '))?';
             },
             $pattern,
         );

@@ -27,12 +27,13 @@ final class ExtensionViewPathRegistrar
             return;
         }
 
-        // Get extension paths from the bootstrap's manifests
+        // Get extension paths from the bootstrap's manifests. An empty list is
+        // not an early exit: a project with no extensions installed may still
+        // organize templates under resources/views/theme/, and those theme
+        // paths (computed below) must still be registered. The combined guard
+        // further down returns only when BOTH extension and theme paths are
+        // empty.
         $manifests = $extensionBootstrap?->getManifests() ?? [];
-
-        if ($manifests === []) {
-            return;
-        }
 
         $extensionViewPaths = [];
 

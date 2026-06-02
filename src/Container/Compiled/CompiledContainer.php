@@ -9,6 +9,7 @@ use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Container\AdvancedContainerInterface;
 use Pulsar\Container\BindingType;
+use Pulsar\Container\CallableReflector;
 use Pulsar\Container\Compiler\PassRunner;
 use Pulsar\Container\ContextualBindingBuilder;
 use Pulsar\Container\Exception\ContainerException;
@@ -16,10 +17,13 @@ use Pulsar\Container\Exception\NotFoundException;
 use Pulsar\Container\Lifetime;
 use Pulsar\Container\Provider\DeferredServiceProviderInterface;
 use Pulsar\Container\Scope\ScopeManager;
+use ReflectionException;
+use ReflectionNamedType;
 
 use function array_keys;
 use function array_pop;
 use function in_array;
+use function sprintf;
 
 /**
  * Base class for compiled containers.
@@ -295,9 +299,76 @@ abstract class CompiledContainer implements AdvancedContainerInterface
         );
     }
 
+    /**
+     * Call a callable, resolving type-hinted parameters from the container.
+     *
+     * Mirrors the dynamic container's contract: explicit parameters in $params
+     * take precedence, remaining parameters are resolved by type hint, then by
+     * default value, then null for nullable parameters.
+     *
+     * @param callable $callable The callable to invoke
+     * @param array<string, mixed> $params Explicit parameter overrides
+     *
+     * @throws ContainerException If a required parameter cannot be resolved
+     * @throws ReflectionException If reflection on the callable fails
+     */
     #[Override]
     public function call(callable $callable, array $params = []): mixed
     {
-        return $callable(...$params);
+        $reflection = CallableReflector::reflect($callable);
+        /** @var list<mixed> $arguments */
+        $arguments = [];
+
+        foreach ($reflection->getParameters() as $parameter) {
+            $name = $parameter->getName();
+
+            // Explicit parameters take precedence
+            if (isset($params[$name])) {
+                /** @var mixed $explicitArg */
+                $explicitArg = $params[$name];
+                $arguments[] = $explicitArg;
+
+                continue;
+            }
+
+            $type = $parameter->getType();
+
+            // Try to resolve from container by type hint
+            if ($type instanceof ReflectionNamedType && !$type->isBuiltin()) {
+                $typeName = $type->getName();
+
+                if ($this->has($typeName)) {
+                    $arguments[] = $this->get($typeName);
+
+                    continue;
+                }
+            }
+
+            // Fall back to default value
+            if ($parameter->isDefaultValueAvailable()) {
+                /** @var mixed $defaultArg */
+                $defaultArg = $parameter->getDefaultValue();
+                $arguments[] = $defaultArg;
+
+                continue;
+            }
+
+            // Nullable parameters default to null
+            if ($type !== null && $type->allowsNull()) {
+                $arguments[] = null;
+
+                continue;
+            }
+
+            throw ContainerException::unresolvable(
+                'call()',
+                sprintf(
+                    'Cannot resolve parameter "%s" for callable: no container binding and no default value',
+                    $name,
+                ),
+            );
+        }
+
+        return $callable(...$arguments);
     }
 }

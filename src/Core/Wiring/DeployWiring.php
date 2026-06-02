@@ -13,6 +13,7 @@ use Pulsar\Config\DeployConfig;
 use Pulsar\Config\IntegrityConfig;
 use Pulsar\Config\SecurityConfig;
 use Pulsar\Container\ContainerInterface;
+use Pulsar\Deploy\Check\AuditLoggerReadinessCheck;
 use Pulsar\Deploy\Check\CacheSettingsCheck;
 use Pulsar\Deploy\Check\DebugModeCheck;
 use Pulsar\Deploy\Check\FilesystemScanCheck;
@@ -119,6 +120,8 @@ final readonly class DeployWiring implements ServiceWiringInterface
 
             return new IntegrityCheck($integrityConfig);
         });
+
+        $this->registerCheckOrSkip($deployCheck, 'audit-logger', $deployConfig, static fn(): DeployCheckInterface => new AuditLoggerReadinessCheck($container));
 
         $container->instance(DeployCheck::class, $deployCheck);
         $container->instance(DeployCheckRunnerInterface::class, $deployCheck);
