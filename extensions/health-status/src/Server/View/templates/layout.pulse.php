@@ -1,12 +1,6 @@
 <?php
-/** @var mixed $title */
-/** @var mixed $content */
-/** @var mixed $rawTitle */
-$rawTitle = $title ?? null;
-/** @var mixed $rawContent */
-$rawContent = $content ?? null;
-$typedTitle = is_string($rawTitle) ? $rawTitle : 'System Status';
-$typedContent = is_string($rawContent) ? $rawContent : '';
+$typedTitle = isset($title) && is_string($title) ? $title : 'System Status';
+$typedContent = isset($content) && is_string($content) ? $content : '';
 $timestamp = date('Y-m-d\TH:i:sP');
 $displayTime = date('M j, Y H:i:s T');
 ?>
