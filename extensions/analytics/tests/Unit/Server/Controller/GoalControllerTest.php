@@ -187,7 +187,7 @@ final class GoalControllerTest extends TestCase
 
         $request = new ServerRequest(method: 'GET', uri: '/analytics/api/goals/g-1');
 
-        $response = $this->controller->show($request, 'g-1');
+        $response = $this->controller->show('g-1');
 
         self::assertSame(200, $response->getStatusCode());
         $body = json_decode((string) $response->getBody(), true, 16, JSON_THROW_ON_ERROR);
@@ -202,7 +202,7 @@ final class GoalControllerTest extends TestCase
 
         $request = new ServerRequest(method: 'GET', uri: '/analytics/api/goals/nonexistent');
 
-        $response = $this->controller->show($request, 'nonexistent');
+        $response = $this->controller->show('nonexistent');
 
         self::assertSame(404, $response->getStatusCode());
         $body = json_decode((string) $response->getBody(), true, 16, JSON_THROW_ON_ERROR);
@@ -294,7 +294,7 @@ final class GoalControllerTest extends TestCase
     {
         $request = new ServerRequest(method: 'DELETE', uri: '/analytics/api/goals/g-1');
 
-        $response = $this->controller->delete($request, 'g-1');
+        $response = $this->controller->delete('g-1');
 
         self::assertSame(200, $response->getStatusCode());
         $body = json_decode((string) $response->getBody(), true, 16, JSON_THROW_ON_ERROR);
@@ -311,7 +311,7 @@ final class GoalControllerTest extends TestCase
 
         $request = new ServerRequest(method: 'DELETE', uri: '/analytics/api/goals/g-missing');
 
-        $response = $this->controller->delete($request, 'g-missing');
+        $response = $this->controller->delete('g-missing');
 
         self::assertSame(404, $response->getStatusCode());
     }
