@@ -54711,6 +54711,7 @@
         "Pulsar\\Event\\Internal\\Outbox\\DatabaseOutboxPort",
         "Pulsar\\Event\\Internal\\Outbox\\OutboxRelay",
         "Pulsar\\Event\\Internal\\Outbox\\OutboxRelayTickResult",
+        "Pulsar\\Event\\Internal\\Outbox\\PendingEnvelope",
         "Pulsar\\Event\\Internal\\StormGuard",
         "Pulsar\\Extensibility\\ExtensionAutoloader",
         "Pulsar\\Extensibility\\ExtensionLoader",
