@@ -30,7 +30,7 @@ final readonly class TagApiController
     /**
      * GET /api/v1/forum/tags: List all tags ordered by usage.
      */
-    public function index(ServerRequestInterface $request): Response
+    public function index(): Response
     {
         $tags = $this->tagRepository->findAll();
 

@@ -137,7 +137,7 @@ final readonly class ThreadApiController
     /**
      * GET /api/v1/forum/threads/{id}: Show a single thread.
      */
-    public function show(ServerRequestInterface $request, string $id): Response
+    public function show(string $id): Response
     {
         $thread = $this->threadRepository->findById($id);
 
