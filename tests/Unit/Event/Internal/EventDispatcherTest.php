@@ -469,8 +469,11 @@ final class EventDispatcherTest extends TestCase
     }
 
     #[Test]
-    public function dispatchComputesScopeInternalWhenNoListenerModuleIds(): void
+    public function dispatchComputesScopeCrossModuleWhenNoListenerModuleIds(): void
     {
+        // No listener-module data (e.g. fresh / pre-compiled deploy) must
+        // default to CrossModule (safe-fail), not Internal — otherwise a genuine
+        // cross-module event would be silently kept out of the outbox.
         $metadataProvider = $this->createStub(ListenerMetadataProviderInterface::class);
         $metadataProvider->method('requiresEnvelopeFor')->willReturn(false);
         $metadataProvider->method('stormOverrideFor')->willReturn(null);
@@ -482,6 +485,29 @@ final class EventDispatcherTest extends TestCase
         /** @var EventEnvelope $result */
         $result = $dispatcher->dispatch($envelope);
 
+        self::assertSame(EventScope::CrossModule, $result->scope);
+    }
+
+    #[Test]
+    public function computeScopeUsesEventTypeNotEnvelopeClassForListenerLookup(): void
+    {
+        // Regression: scope must be computed against the logical event type, not
+        // the EventEnvelope wrapper class (which no listener is ever keyed by).
+        $metadataProvider = $this->createMock(ListenerMetadataProviderInterface::class);
+        $metadataProvider->method('requiresEnvelopeFor')->willReturn(false);
+        $metadataProvider->method('stormOverrideFor')->willReturn(null);
+        $metadataProvider->expects(self::once())
+            ->method('listenerModuleIdsFor')
+            ->with('order.placed')
+            ->willReturn(['billing']);
+
+        $dispatcher = new EventDispatcher($this->provider, $metadataProvider, $this->stormGuard);
+
+        $envelope = $this->createEnvelope(originModule: 'billing', eventType: 'order.placed');
+        /** @var EventEnvelope $result */
+        $result = $dispatcher->dispatch($envelope);
+
+        // All listeners are in the origin module -> Internal.
         self::assertSame(EventScope::Internal, $result->scope);
     }
 
