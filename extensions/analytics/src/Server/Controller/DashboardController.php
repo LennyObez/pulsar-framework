@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Analytics\Server\Controller;
 
-use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Analytics\Config\AnalyticsConfig;
 use Pulsar\Http\Message\Response;
@@ -21,27 +20,27 @@ final readonly class DashboardController
         private AnalyticsConfig $config,
     ) {}
 
-    public function index(ServerRequestInterface $request): Response
+    public function index(): Response
     {
         return $this->renderTemplate('dashboard');
     }
 
-    public function sites(ServerRequestInterface $request): Response
+    public function sites(): Response
     {
         return $this->renderTemplate('sites');
     }
 
-    public function goals(ServerRequestInterface $request): Response
+    public function goals(): Response
     {
         return $this->renderTemplate('goals');
     }
 
-    public function settings(ServerRequestInterface $request): Response
+    public function settings(): Response
     {
         return $this->renderTemplate('settings');
     }
 
-    public function asset(ServerRequestInterface $request, string $path): Response
+    public function asset(string $path): Response
     {
         // Reject obviously malicious paths before filesystem access
         if (str_contains($path, '..') || str_contains($path, "\0")) {
