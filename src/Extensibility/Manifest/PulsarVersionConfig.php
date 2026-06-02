@@ -64,9 +64,12 @@ final readonly class PulsarVersionConfig
             $minVersion = $rawMinVersion;
         }
 
+        $rawMaxVersion = $data['max_version'] ?? null;
+        $maxVersion = is_string($rawMaxVersion) ? $rawMaxVersion : null;
+
         return new self(
             minVersion: $minVersion,
-            maxVersion: $data['max_version'] ?? null,
+            maxVersion: $maxVersion,
         );
     }
 
