@@ -27,7 +27,7 @@ final class IntegrityDashboardControllerTest extends TestCase
         $controller = new IntegrityDashboardController($runner);
         $request = $this->createStub(ServerRequestInterface::class);
 
-        $response = $controller($request);
+        $response = $controller();
 
         self::assertSame(200, $response->getStatusCode());
         self::assertStringContainsString('text/html', $response->getHeaderLine('Content-Type'));
@@ -41,7 +41,7 @@ final class IntegrityDashboardControllerTest extends TestCase
         $controller = new IntegrityDashboardController($runner);
         $request = $this->createStub(ServerRequestInterface::class);
 
-        $response = $controller($request);
+        $response = $controller();
         $body = (string) $response->getBody();
 
         self::assertStringContainsString('<!DOCTYPE html>', $body);
@@ -56,7 +56,7 @@ final class IntegrityDashboardControllerTest extends TestCase
         $controller = new IntegrityDashboardController($runner);
         $request = $this->createStub(ServerRequestInterface::class);
 
-        $response = $controller($request);
+        $response = $controller();
         $body = (string) $response->getBody();
 
         self::assertSame(200, $response->getStatusCode());
@@ -87,7 +87,7 @@ final class IntegrityDashboardControllerTest extends TestCase
         $controller = new IntegrityDashboardController($runner);
         $request = $this->createStub(ServerRequestInterface::class);
 
-        $response = $controller($request);
+        $response = $controller();
         $body = (string) $response->getBody();
 
         self::assertStringContainsString('src/Kernel.php', $body);
@@ -115,7 +115,7 @@ final class IntegrityDashboardControllerTest extends TestCase
         $controller = new IntegrityDashboardController($runner);
         $request = $this->createStub(ServerRequestInterface::class);
 
-        $response = $controller($request);
+        $response = $controller();
         $body = (string) $response->getBody();
 
         self::assertStringContainsString('42', $body);
@@ -188,7 +188,7 @@ final class IntegrityDashboardControllerTest extends TestCase
         $controller = new IntegrityDashboardController($runner);
         $request = $this->createStub(ServerRequestInterface::class);
 
-        $response = $controller($request);
+        $response = $controller();
         $body = (string) $response->getBody();
 
         self::assertStringNotContainsString('<img onerror=alert(1)>', $body);

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\HealthStatus\Server\Controller;
 
-use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\HealthStatus\Contracts\IntegrityVerificationRunnerInterface;
 use Pulsar\Http\Message\Response;
@@ -30,7 +29,7 @@ final readonly class IntegrityDashboardController
     /**
      * GET /_pulsar/status/integrity: HTML integrity dashboard.
      */
-    public function __invoke(ServerRequestInterface $request): Response
+    public function __invoke(): Response
     {
         $result = $this->runner->run();
 
@@ -44,7 +43,7 @@ final readonly class IntegrityDashboardController
     /**
      * GET /_pulsar/status/api/integrity: JSON integrity results.
      */
-    public function api(ServerRequestInterface $request): Response
+    public function api(): Response
     {
         $result = $this->runner->run();
 
