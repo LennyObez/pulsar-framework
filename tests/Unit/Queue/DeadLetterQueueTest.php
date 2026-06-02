@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Queue\DeadLetterQueue;
+use Pulsar\Queue\Driver\InMemoryFailedJobRepository;
 use Pulsar\Queue\Exception\QueueException;
 use Pulsar\Queue\FailedJob;
 use Pulsar\Queue\JobRecord;
@@ -52,6 +53,25 @@ final class DeadLetterQueueTest extends TestCase
         $this->dlq->store($this->makeRecord('j3', 'emails', 'App\\Jobs\\C', '{}', 3), 'Error C');
 
         self::assertCount(3, $this->dlq->list());
+    }
+
+    #[Test]
+    public function it_persists_across_instances_via_a_shared_repository(): void
+    {
+        $repository = new InMemoryFailedJobRepository();
+
+        $first = new DeadLetterQueue($this->driver, repository: $repository);
+        $first->store($this->makeRecord('persist-1', 'emails', 'App\\Jobs\\X', '{}', 2), 'boom');
+
+        // A fresh DLQ instance (e.g. a recycled worker) backed by the same durable
+        // repository still sees the dead-lettered job; the previous per-instance
+        // array lost everything on restart. Cross-process durability proper is
+        // covered by DatabaseFailedJobRepositoryTest.
+        $second = new DeadLetterQueue($this->driver, repository: $repository);
+        $listed = $second->list();
+
+        self::assertCount(1, $listed);
+        self::assertSame('persist-1', $listed[0]->id);
     }
 
     #[Test]

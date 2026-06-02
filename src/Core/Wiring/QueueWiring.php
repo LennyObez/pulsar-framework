@@ -11,13 +11,17 @@ use Pulsar\Config\QueueConfig;
 use Pulsar\Config\QueueDriverType;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Context\RequestContextHolder;
+use Pulsar\Database\ConnectionManagerInterface;
 use Pulsar\Event\EventDispatcherInterface;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Queue\Attribute\EffectClassifier;
 use Pulsar\Queue\DeadLetterQueue;
+use Pulsar\Queue\Driver\DatabaseFailedJobRepository;
 use Pulsar\Queue\Driver\InMemoryDriver;
+use Pulsar\Queue\Driver\InMemoryFailedJobRepository;
 use Pulsar\Queue\Driver\SyncDriver;
+use Pulsar\Queue\FailedJobRepositoryInterface;
 use Pulsar\Queue\Middleware\MiddlewarePipeline as QueueMiddlewarePipeline;
 use Pulsar\Queue\Middleware\PropagateContext;
 use Pulsar\Queue\Monitor\MetricsCollector;
@@ -128,9 +132,31 @@ final readonly class QueueWiring implements ServiceWiringInterface
         $classifier = new EffectClassifier();
         $container->instance(EffectClassifier::class, $classifier);
 
+        // Dead-letter repository: prefer an application-provided one, else a
+        // durable database-backed store when a connection is available (required
+        // for the audit/retention guarantees of regulated domains), else fall
+        // back to a process-local in-memory store (sync/memory transports).
+        if ($container->has(FailedJobRepositoryInterface::class)) {
+            /** @var FailedJobRepositoryInterface $failedJobRepository */
+            $failedJobRepository = $container->get(FailedJobRepositoryInterface::class);
+        } elseif ($container->has(ConnectionManagerInterface::class)) {
+            /** @var ConnectionManagerInterface $connectionManager */
+            $connectionManager = $container->get(ConnectionManagerInterface::class);
+            $failedJobRepository = new DatabaseFailedJobRepository($connectionManager->connection());
+            $container->instance(FailedJobRepositoryInterface::class, $failedJobRepository);
+        } else {
+            $failedJobRepository = new InMemoryFailedJobRepository();
+            $container->instance(FailedJobRepositoryInterface::class, $failedJobRepository);
+        }
+
         // Dead letter queue
         /** @var EventDispatcherInterface|null $eventDispatcher */
-        $deadLetterQueue = new DeadLetterQueue($driver, $eventDispatcher);
+        $deadLetterQueue = new DeadLetterQueue(
+            $driver,
+            $eventDispatcher,
+            $queueConfig->deadLetterRegulated,
+            $failedJobRepository,
+        );
         $container->instance(DeadLetterQueue::class, $deadLetterQueue);
 
         // Execution middleware pipeline (empty by default; encryption/dedup/rate-limit

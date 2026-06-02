@@ -32,6 +32,7 @@ final readonly class QueueConfig
         public bool $deadLetterEnabled = true,
         public int $deadLetterRetentionDays = 30,
         public array $driverOptions = [],
+        public bool $deadLetterRegulated = false,
     ) {}
 
     /**
@@ -54,6 +55,7 @@ final readonly class QueueConfig
      *     dead_letter?: array{
      *         enabled?: bool|int|string,
      *         retention_days?: int,
+     *         regulated?: bool|int|string,
      *     },
      *     driver_options?: array<string, mixed>,
      * } $data Raw array from config/queue.php
@@ -87,6 +89,7 @@ final readonly class QueueConfig
             deadLetterEnabled: (bool) ($dlData['enabled'] ?? true),
             deadLetterRetentionDays: $dlData['retention_days'] ?? 30,
             driverOptions: $data['driver_options'] ?? [],
+            deadLetterRegulated: (bool) ($dlData['regulated'] ?? false),
         );
     }
 }

@@ -9761,7 +9761,8 @@
                         "float $retryMultiplier",
                         "bool $deadLetterEnabled",
                         "int $deadLetterRetentionDays",
-                        "array $driverOptions"
+                        "array $driverOptions",
+                        "bool $deadLetterRegulated"
                     ],
                     "return": null,
                     "static": false
@@ -33287,7 +33288,8 @@
                     "params": [
                         "Pulsar\\Queue\\QueueDriverInterface $driver",
                         "?Pulsar\\Event\\EventDispatcherInterface $eventDispatcher",
-                        "bool $regulated"
+                        "bool $regulated",
+                        "?Pulsar\\Queue\\FailedJobRepositoryInterface $repository"
                     ],
                     "return": null,
                     "static": false
@@ -33817,6 +33819,49 @@
                         "int $attempts"
                     ],
                     "return": null,
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Queue\\FailedJobRepositoryInterface": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "all": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
+                },
+                "count": {
+                    "params": [],
+                    "return": "int",
+                    "static": false
+                },
+                "find": {
+                    "params": [
+                        "string $id"
+                    ],
+                    "return": "?Pulsar\\Queue\\FailedJob",
+                    "static": false
+                },
+                "flush": {
+                    "params": [],
+                    "return": "int",
+                    "static": false
+                },
+                "forget": {
+                    "params": [
+                        "string $id"
+                    ],
+                    "return": "bool",
+                    "static": false
+                },
+                "store": {
+                    "params": [
+                        "Pulsar\\Queue\\FailedJob $job"
+                    ],
+                    "return": "void",
                     "static": false
                 }
             },
@@ -54818,7 +54863,9 @@
         "Pulsar\\Queue\\Driver\\Config\\RedisDriverConfig",
         "Pulsar\\Queue\\Driver\\Config\\SqsDriverConfig",
         "Pulsar\\Queue\\Driver\\DatabaseDriver",
+        "Pulsar\\Queue\\Driver\\DatabaseFailedJobRepository",
         "Pulsar\\Queue\\Driver\\InMemoryDriver",
+        "Pulsar\\Queue\\Driver\\InMemoryFailedJobRepository",
         "Pulsar\\Queue\\Driver\\PubSubDriver",
         "Pulsar\\Queue\\Driver\\RedisDriver",
         "Pulsar\\Queue\\Driver\\SqsDriver",
