@@ -75,7 +75,7 @@ final class FirestoreSessionHandlerTest extends TestCase
         $handler = new FirestoreSessionHandler($config);
 
         // Should not throw
-        $handler->setSessionContext('sess-123', 'user-1', '192.168.1.1', 'Mozilla/5.0');
+        $handler->setSessionContext('user-1', '192.168.1.1', 'Mozilla/5.0');
 
         self::assertInstanceOf(FirestoreSessionHandler::class, $handler);
     }

@@ -122,13 +122,13 @@ final class DatabaseHandlerTest extends TestCase
     #[Test]
     public function getActiveSessionsCountsUserSessions(): void
     {
-        $this->handler->setSessionContext('s1', 'user-1', '10.0.0.1', 'Agent');
+        $this->handler->setSessionContext('user-1', '10.0.0.1', 'Agent');
         $this->handler->write('s1', 'data1');
 
-        $this->handler->setSessionContext('s2', 'user-1', '10.0.0.2', 'Agent');
+        $this->handler->setSessionContext('user-1', '10.0.0.2', 'Agent');
         $this->handler->write('s2', 'data2');
 
-        $this->handler->setSessionContext('s3', 'user-2', '10.0.0.3', 'Agent');
+        $this->handler->setSessionContext('user-2', '10.0.0.3', 'Agent');
         $this->handler->write('s3', 'data3');
 
         self::assertSame(2, $this->handler->getActiveSessions('user-1'));
@@ -139,10 +139,10 @@ final class DatabaseHandlerTest extends TestCase
     #[Test]
     public function listSessionsReturnsUserSessions(): void
     {
-        $this->handler->setSessionContext('s1', 'user-1', '10.0.0.1', 'Chrome');
+        $this->handler->setSessionContext('user-1', '10.0.0.1', 'Chrome');
         $this->handler->write('s1', 'data1');
 
-        $this->handler->setSessionContext('s2', 'user-1', '10.0.0.2', 'Firefox');
+        $this->handler->setSessionContext('user-1', '10.0.0.2', 'Firefox');
         $this->handler->write('s2', 'data2');
 
         $sessions = $this->handler->listSessions('user-1');
@@ -173,7 +173,7 @@ final class DatabaseHandlerTest extends TestCase
         );
         $stmt->execute(['old-s', 'user-1', 'data', '', '', $oldTimestamp, $oldTimestamp]);
 
-        $this->handler->setSessionContext('new-s', 'user-1', '10.0.0.1', 'Agent');
+        $this->handler->setSessionContext('user-1', '10.0.0.1', 'Agent');
         $this->handler->write('new-s', 'data');
 
         $sessions = $this->handler->listSessions('user-1');
@@ -200,7 +200,7 @@ final class DatabaseHandlerTest extends TestCase
     #[Test]
     public function sessionContextStoredWithWrite(): void
     {
-        $this->handler->setSessionContext('s1', 'user-42', '192.168.1.1', 'Mozilla/5.0');
+        $this->handler->setSessionContext('user-42', '192.168.1.1', 'Mozilla/5.0');
         $this->handler->write('s1', 'session-data');
 
         $stmt = $this->pdo->prepare('SELECT * FROM sessions WHERE id = ?');
@@ -224,7 +224,7 @@ final class DatabaseHandlerTest extends TestCase
 
         $handler = new DatabaseHandler($badPdo, 'sessions', 3600);
         self::assertTrue($handler->open('', ''));
-        $handler->setSessionContext('s1', 'u1', '10.0.0.1', 'Agent');
+        $handler->setSessionContext('u1', '10.0.0.1', 'Agent');
 
         // write should catch PDOException and return false
         $result = $handler->write('s1', 'data');

@@ -47,7 +47,6 @@ final class CosmosDbSessionHandler implements SessionHandlerInterface
      * Set session context metadata for the next write() call.
      */
     public function setSessionContext(
-        string $sessionId,
         ?string $userId,
         string $ipAddress,
         string $userAgent,

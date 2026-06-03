@@ -102,7 +102,7 @@ final readonly class MetadataCompiler
         $encryptedColumns = [];
 
         foreach ($reflection->getProperties() as $property) {
-            $columnMeta = $this->compileColumn($property, $entityClass);
+            $columnMeta = $this->compileColumn($property);
             if ($columnMeta !== null) {
                 $columns[$property->getName()] = $columnMeta;
 
@@ -151,10 +151,7 @@ final readonly class MetadataCompiler
         );
     }
 
-    /**
-     * @param class-string $entityClass
-     */
-    private function compileColumn(ReflectionProperty $property, string $entityClass): ?ColumnMetadata
+    private function compileColumn(ReflectionProperty $property): ?ColumnMetadata
     {
         $columnAttrs = $property->getAttributes(Column::class, ReflectionAttribute::IS_INSTANCEOF);
         $idAttrs = $property->getAttributes(Id::class, ReflectionAttribute::IS_INSTANCEOF);
