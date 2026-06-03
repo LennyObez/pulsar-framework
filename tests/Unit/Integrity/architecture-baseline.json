@@ -16,6 +16,8 @@
   "Pulsar\\I18n\\Compiler\\I18nCatalogCompiler": "BuildCommand composition root compiles i18n catalog index",
   "Pulsar\\Event\\Internal\\EventDispatcher": "EventWiring composition root wires event dispatcher",
   "Pulsar\\Event\\Internal\\StormGuard": "EventWiring composition root wires storm guard",
+  "Pulsar\\Saga\\Storage\\InMemorySagaStateStorage": "SagaWiring composition root wires the default in-memory saga state storage",
+  "Pulsar\\Workflow\\Internal\\Storage\\DatabaseSagaStateStorage": "SagaWiring composition root wires the durable database-backed saga state storage",
   "Pulsar\\Config\\ConfigManager": "Wiring classes composition root reads config",
   "Pulsar\\Http\\Middleware\\MiddlewarePipeline": "Wiring classes composition root registers middleware",
   "Pulsar\\Http\\Middleware\\MiddlewareRegistry": "Wiring classes composition root registers middleware",
