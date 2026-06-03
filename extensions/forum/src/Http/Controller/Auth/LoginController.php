@@ -131,7 +131,7 @@ final readonly class LoginController
     /**
      * POST /logout; Log out the current user.
      */
-    public function logout(ServerRequestInterface $request): Response
+    public function logout(): Response
     {
         $this->sessionGuard?->logout();
 

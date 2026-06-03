@@ -41,7 +41,6 @@ final readonly class MediaController
         ServerRequestInterface $request,
         string $variant,
         string $hash,
-        string $filename,
         string $format,
     ): Response {
         $asset = $this->mediaRepository->findByHash($hash);
@@ -88,7 +87,6 @@ final readonly class MediaController
     public function serveOriginal(
         ServerRequestInterface $request,
         string $hash,
-        string $filename,
     ): Response {
         $asset = $this->mediaRepository->findByHash($hash);
 
