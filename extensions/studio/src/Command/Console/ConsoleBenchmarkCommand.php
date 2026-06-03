@@ -139,7 +139,7 @@ final class ConsoleBenchmarkCommand extends Command
         $phpBinary = PHP_BINARY;
         $workerScript = $this->basePath . '/tools/bench/worker.php';
         $allProfiles = $unoptimized + $optimized;
-        $tempPreloadFile = $this->generatePreloadIfNeeded($allProfiles, $phpBinary, $output);
+        $tempPreloadFile = $this->generatePreloadIfNeeded($allProfiles, $phpBinary);
 
         $runStart = hrtime(true);
         $results = [];
@@ -426,7 +426,7 @@ final class ConsoleBenchmarkCommand extends Command
      *
      * @throws RandomException If random_bytes() fails for temp file naming
      */
-    private function generatePreloadIfNeeded(array $profiles, string $phpBinary, OutputInterface $output): ?string
+    private function generatePreloadIfNeeded(array $profiles, string $phpBinary): ?string
     {
         $needsPreload = false;
 

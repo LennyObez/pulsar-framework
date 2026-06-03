@@ -78,7 +78,7 @@ final readonly class ProtocRunner
             return CodegenResult::failure($errors, $version);
         }
 
-        $generatedFiles = $this->findGeneratedFiles($outputDir, $outputText);
+        $generatedFiles = $this->findGeneratedFiles($outputDir);
 
         return CodegenResult::success($generatedFiles, $version);
     }
@@ -169,7 +169,7 @@ final readonly class ProtocRunner
      *
      * @return list<string>
      */
-    private function findGeneratedFiles(string $outputDir, string $protocOutput): array
+    private function findGeneratedFiles(string $outputDir): array
     {
         $files = [];
 

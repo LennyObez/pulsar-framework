@@ -77,7 +77,7 @@ final class GrpcExtensionAdapter implements GrpcTransportAdapterInterface
                 continue;
             }
 
-            $this->dispatchEvent($event, $handler, $server);
+            $this->dispatchEvent($event, $handler);
         }
     }
 
@@ -114,7 +114,7 @@ final class GrpcExtensionAdapter implements GrpcTransportAdapterInterface
     /**
      * Dispatch a single gRPC call event to the request handler.
      */
-    private function dispatchEvent(object $event, GrpcRequestHandler $handler, object $server): void
+    private function dispatchEvent(object $event, GrpcRequestHandler $handler): void
     {
         /** @var string $method */
         $method = $event->method ?? '';

@@ -40,7 +40,7 @@ final readonly class FhirExtension implements ExtensionInterface
     #[Override]
     public function boot(ContainerInterface $container, RouterInterface $router): void
     {
-        $this->registerFhirRoutes($router, $container);
+        $this->registerFhirRoutes($router);
     }
 
     /**
@@ -54,7 +54,7 @@ final readonly class FhirExtension implements ExtensionInterface
         ];
     }
 
-    private function registerFhirRoutes(RouterInterface $router, ContainerInterface $container): void
+    private function registerFhirRoutes(RouterInterface $router): void
     {
         $basePath = '/fhir';
 
