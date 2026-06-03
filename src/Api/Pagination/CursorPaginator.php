@@ -61,7 +61,7 @@ final readonly class CursorPaginator implements PaginatorInterface
         $currentCursor = $request->cursor ?? $request->after;
 
         // Generate links
-        $links = $this->buildLinks($baseUrl, $perPage, $nextCursor, $currentCursor);
+        $links = $this->buildLinks($baseUrl, $perPage, $nextCursor);
 
         return new PaginationResult(
             items: $pageItems,
@@ -122,7 +122,7 @@ final readonly class CursorPaginator implements PaginatorInterface
         ], JSON_THROW_ON_ERROR));
     }
 
-    private function buildLinks(string $baseUrl, int $perPage, ?string $nextCursor, ?string $currentCursor): PaginationLinks
+    private function buildLinks(string $baseUrl, int $perPage, ?string $nextCursor): PaginationLinks
     {
         if ($baseUrl === '') {
             return new PaginationLinks();

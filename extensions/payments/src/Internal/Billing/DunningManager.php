@@ -59,9 +59,13 @@ final readonly class DunningManager
     }
 
     /**
-     * Check if the subscription has exhausted all retry attempts.
+     * Check if a subscription has exhausted all retry attempts.
+     *
+     * The decision is currently driven entirely by the configured retry budget;
+     * future per-subscription overrides can re-introduce the subscription
+     * parameter.
      */
-    public function shouldExpire(Subscription $subscription, int $retryCount): bool
+    public function shouldExpire(int $retryCount): bool
     {
         return $retryCount >= $this->config->dunningMaxRetries;
     }

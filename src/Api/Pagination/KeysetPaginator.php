@@ -95,7 +95,7 @@ final readonly class KeysetPaginator implements PaginatorInterface
             }
         }
 
-        $links = $this->buildLinks($baseUrl, $perPage, $nextCursor, $currentCursor);
+        $links = $this->buildLinks($baseUrl, $perPage, $nextCursor);
 
         return new PaginationResult(
             items: $pageItems,
@@ -151,7 +151,7 @@ final readonly class KeysetPaginator implements PaginatorInterface
         ], JSON_THROW_ON_ERROR));
     }
 
-    private function buildLinks(string $baseUrl, int $perPage, ?string $nextCursor, ?string $currentCursor): PaginationLinks
+    private function buildLinks(string $baseUrl, int $perPage, ?string $nextCursor): PaginationLinks
     {
         if ($baseUrl === '') {
             return new PaginationLinks();
