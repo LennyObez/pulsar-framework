@@ -102,6 +102,64 @@ final class RegressionDetectorTest extends TestCase
         self::assertSame('security.hsts_max_age', $violations[0]->constraint);
     }
 
+    public function testHipaaRequiresTwoYearHstsMaxAge(): void
+    {
+        // HIPAA mandates a 2-year (63072000s) HSTS floor. A 1-year max-age
+        // (31536000s) — acceptable under the generic baseline — is a regression.
+        $profile = $this->createProfile([ComplianceFramework::Hipaa]);
+        $detector = new RegressionDetector($profile);
+
+        $violations = $detector->detect(
+            sessionIdleTimeout: 600,
+            passwordMinLength: 14,
+            hstsMaxAge: 31536000,
+            encryptionAtRest: true,
+            mfaScope: 'always',
+            tamperEvidentAudit: true,
+        );
+
+        self::assertCount(1, $violations);
+        self::assertSame('security.hsts_max_age', $violations[0]->constraint);
+        self::assertStringContainsString('63072000', $violations[0]->expectedDescription);
+    }
+
+    public function testNis2RequiresTwoYearHstsMaxAge(): void
+    {
+        $profile = $this->createProfile([ComplianceFramework::Nis2]);
+        $detector = new RegressionDetector($profile);
+
+        $violations = $detector->detect(
+            sessionIdleTimeout: 600,
+            passwordMinLength: 14,
+            hstsMaxAge: 31536000,
+            encryptionAtRest: true,
+            mfaScope: 'always',
+            tamperEvidentAudit: true,
+        );
+
+        self::assertCount(1, $violations);
+        self::assertSame('security.hsts_max_age', $violations[0]->constraint);
+        self::assertStringContainsString('63072000', $violations[0]->expectedDescription);
+    }
+
+    public function testOneYearHstsSatisfiesNonExtendedFramework(): void
+    {
+        // GDPR (no extended HSTS floor) accepts a 1-year max-age.
+        $profile = $this->createProfile([ComplianceFramework::Gdpr]);
+        $detector = new RegressionDetector($profile);
+
+        $violations = $detector->detect(
+            sessionIdleTimeout: 600,
+            passwordMinLength: 14,
+            hstsMaxAge: 31536000,
+            encryptionAtRest: true,
+            mfaScope: 'always',
+            tamperEvidentAudit: true,
+        );
+
+        self::assertSame([], $violations);
+    }
+
     public function testDetectsEncryptionAtRestRegression(): void
     {
         $profile = $this->createProfile([ComplianceFramework::Gdpr]);

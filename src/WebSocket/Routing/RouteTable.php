@@ -16,9 +16,9 @@ use function array_values;
  * In-memory registry of WebSocket routes.
  *
  * Routes are static: registration happens at boot time via service providers
- * or `Core\Wiring` wire-up hooks. Registration is idempotent by path — a
- * duplicate registration throws `WebSocketException::duplicateRoute()` so
- * silent shadowing cannot happen.
+ * or `Core\Wiring` wire-up hooks. Routes are unique by path — a duplicate
+ * registration throws `WebSocketException::duplicateRoute()` so silent
+ * shadowing cannot happen.
  *
  * The table is exact-match on path (no parameter extraction yet — see TD-036).
  * Globs and path parameters will land alongside the HTTP router's trie-based

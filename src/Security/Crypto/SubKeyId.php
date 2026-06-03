@@ -61,10 +61,22 @@ enum SubKeyId: int
     /** WebAuthn challenge signing (extensions/webauthn). */
     case WebAuthnChallenge = 10;
 
-    /** Idempotency cache HMAC envelope (F21.3). */
-    case IdempotencyEnvelope = 11;
+    /**
+     * 11 is intentionally unallocated: the idempotency envelope below
+     * shipped under 12 before this registry existed, leaving a permanent
+     * gap here. Never backfill 11 onto a live subsystem — doing so would
+     * re-key it. A future subsystem may claim 11 freely.
+     */
 
-    /** Reserved range for first-party extensions: 12–63. */
+    /**
+     * Idempotency cache HMAC envelope (F21.3). Pinned to 12 to match the
+     * value shipped by `SignedIdempotencyEnvelope` since 1.0.0; the live
+     * code predates this registry, so the registry follows the code rather
+     * than re-keying every sealed envelope in existing stores.
+     */
+    case IdempotencyEnvelope = 12;
+
+    /** Reserved range for first-party extensions: 13–63. */
 
     /** Reserved range for third-party extensions: 64–127. */
 

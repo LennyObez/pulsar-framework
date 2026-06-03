@@ -17,8 +17,8 @@ final class ServiceTtlEntry
     public function __construct(
         public readonly ServiceInstance $instance,
         public readonly ?int $ttlSeconds,
-        public int $registeredAt,
-        public int $lastHeartbeat,
+        public readonly int $registeredAt,
+        private int $lastHeartbeat,
     ) {
         $this->healthStatus = $instance->healthy
             ? ServiceHealthStatus::Healthy
@@ -32,6 +32,11 @@ final class ServiceTtlEntry
         }
 
         return ($now - $this->lastHeartbeat) > $this->ttlSeconds;
+    }
+
+    public function lastHeartbeat(): int
+    {
+        return $this->lastHeartbeat;
     }
 
     public function refreshHeartbeat(int $now): void

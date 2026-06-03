@@ -6,7 +6,6 @@ namespace Pulsar\DataProtection\ConsentBanner;
 
 use NoDiscard;
 use Pulsar\Api\Api;
-use Pulsar\DataProtection\ConsentManagerInterface;
 
 use function htmlspecialchars;
 use function implode;
@@ -14,6 +13,10 @@ use function json_encode;
 use function sprintf;
 
 use const ENT_QUOTES;
+use const JSON_HEX_AMP;
+use const JSON_HEX_APOS;
+use const JSON_HEX_QUOT;
+use const JSON_HEX_TAG;
 use const JSON_THROW_ON_ERROR;
 use const JSON_UNESCAPED_SLASHES;
 
@@ -22,12 +25,13 @@ use const JSON_UNESCAPED_SLASHES;
  *
  * Generates a fully self-contained consent banner that:
  * - Shows consent categories with descriptions
- * - Persists consent to a cookie (and optionally to the ConsentManager)
+ * - Persists consent to a cookie
  * - Blocks non-consented script tags (via type="text/plain" data-consent)
  * - Respects the granular opt-in setting for GDPR compliance
  *
- * The rendered output integrates with ConsentManagerInterface so that
- * consent state is tracked server-side for compliance evidence.
+ * The banner is client-side only: consent is recorded in a browser cookie.
+ * Server-side consent tracking, if required, is handled separately by a
+ * ConsentManagerInterface implementation reading that cookie.
  * @api
  */
 #[Api(since: '1.0.0')]
@@ -51,23 +55,23 @@ final readonly class ConsentBannerRenderer
         }
 
         $categories = $this->renderCategories();
-        $configJson = htmlspecialchars(
-            json_encode([
-                'cookieName' => $this->config->cookieName,
-                'cookieTtlDays' => $this->config->cookieTtlDays,
-                'granular' => $this->config->granularOptIn,
-                'categories' => array_map(
-                    static fn(ConsentCategory $c): array => [
-                        'key' => $c->key,
-                        'required' => $c->required,
-                        'default' => $c->defaultEnabled,
-                    ],
-                    $this->config->categories,
-                ),
-            ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES),
-            ENT_QUOTES,
-            'UTF-8',
-        );
+        // Embedded directly in a <script> block (raw CDATA), not an HTML
+        // attribute: use JSON hex-escaping so any value containing <, >, &, ',
+        // or " produces valid, XSS-safe JavaScript. htmlspecialchars() is wrong
+        // here — it would corrupt the JSON literal inside <script>.
+        $configJson = json_encode([
+            'cookieName' => $this->config->cookieName,
+            'cookieTtlDays' => $this->config->cookieTtlDays,
+            'granular' => $this->config->granularOptIn,
+            'categories' => array_map(
+                static fn(ConsentCategory $c): array => [
+                    'key' => $c->key,
+                    'required' => $c->required,
+                    'default' => $c->defaultEnabled,
+                ],
+                $this->config->categories,
+            ),
+        ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
 
         $position = htmlspecialchars($this->config->position, ENT_QUOTES, 'UTF-8');
         $privacyUrl = htmlspecialchars($this->config->privacyPolicyUrl, ENT_QUOTES, 'UTF-8');

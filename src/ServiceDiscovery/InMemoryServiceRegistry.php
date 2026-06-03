@@ -11,7 +11,6 @@ use Pulsar\ServiceDiscovery\Event\ServiceDeregistered;
 use Pulsar\ServiceDiscovery\Event\ServiceHealthChanged;
 use Pulsar\ServiceDiscovery\Event\ServiceRegistered;
 
-use function array_filter;
 use function array_keys;
 use function array_map;
 use function array_values;
@@ -88,13 +87,17 @@ final class InMemoryServiceRegistry implements ServiceDiscoveryInterface, Servic
         $entries = $this->entries[$serviceName] ?? [];
         unset($this->entries[$serviceName]);
 
+        // Capture the clock once so every event from this bulk operation shares a
+        // single occurredAt, keeping consumers that correlate by timestamp coherent.
+        $now = time();
+
         foreach ($entries as $entry) {
             $this->eventDispatcher?->dispatch(new ServiceDeregistered(
                 serviceName: $serviceName,
                 host: $entry->instance->host,
                 port: $entry->instance->port,
                 reason: 'bulk_deregister',
-                occurredAt: time(),
+                occurredAt: $now,
             ));
         }
     }
@@ -180,12 +183,13 @@ final class InMemoryServiceRegistry implements ServiceDiscoveryInterface, Servic
             return [];
         }
 
+        // evictExpired() above already removed every expired entry using a single
+        // wall-clock read, so the survivors are guaranteed live. A second
+        // isExpired(time()) filter here would re-read the clock and could drop a
+        // boundary entry that was kept by eviction, returning it stale-empty.
         return array_values(array_map(
             static fn(ServiceTtlEntry $e): ServiceInstance => $e->instance,
-            array_filter(
-                $this->entries[$serviceName],
-                static fn(ServiceTtlEntry $e): bool => !$e->isExpired(time()),
-            ),
+            $this->entries[$serviceName],
         ));
     }
 

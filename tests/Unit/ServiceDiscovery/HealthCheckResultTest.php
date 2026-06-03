@@ -35,6 +35,18 @@ final class HealthCheckResultTest extends TestCase
     }
 
     #[Test]
+    public function unhealthyFactoryRetainsLatency(): void
+    {
+        // A connection failure still has a measured latency (e.g. the timeout
+        // ceiling). The factory must preserve it for diagnostics.
+        $result = HealthCheckResult::unhealthy('Connection failed', 5000.0);
+
+        self::assertSame(ServiceHealthStatus::Unhealthy, $result->status);
+        self::assertSame('Connection failed', $result->message);
+        self::assertSame(5000.0, $result->latencyMs);
+    }
+
+    #[Test]
     public function degradedFactory(): void
     {
         $result = HealthCheckResult::degraded('High latency', 500.0);

@@ -11,6 +11,8 @@ use Pulsar\WebSocket\ChannelManager;
 use Pulsar\WebSocket\Internal\InMemoryBroadcastManager;
 
 use function ord;
+use function str_contains;
+use function substr;
 
 #[CoversClass(InMemoryBroadcastManager::class)]
 final class InMemoryBroadcastManagerTest extends TestCase
@@ -143,5 +145,36 @@ final class InMemoryBroadcastManagerTest extends TestCase
         // First byte should be 0x81 (FIN + text opcode)
         self::assertNotEmpty($received);
         self::assertSame(0x81, ord($received[0]));
+    }
+
+    #[Test]
+    public function broadcastEnvelopeLeavesSlashesAndUnicodeUnescaped(): void
+    {
+        $channelManager = new ChannelManager();
+        $manager = new InMemoryBroadcastManager($channelManager);
+
+        $received = '';
+
+        $channelManager->subscribe('chat', 'conn-1');
+        $manager->registerSender('conn-1', function (string $data) use (&$received): void {
+            $received = $data;
+        });
+
+        // A URL (slashes) and a non-ASCII string (i18n). The wire form must
+        // match WebSocketConnection::send(), which uses JSON_UNESCAPED_SLASHES
+        // | JSON_UNESCAPED_UNICODE, so a client cannot receive two distinct
+        // serializations of semantically identical data.
+        $manager->broadcast('chat', 'message', [
+            'url' => 'https://example.test/path',
+            'label' => 'café',
+        ]);
+
+        // Strip the 2-byte text frame header to inspect the JSON body.
+        $json = substr($received, 2);
+
+        self::assertTrue(str_contains($json, 'https://example.test/path'));
+        self::assertFalse(str_contains($json, 'https:\/\/'));
+        self::assertTrue(str_contains($json, 'café'));
+        self::assertFalse(str_contains($json, '\\u00e9'));
     }
 }

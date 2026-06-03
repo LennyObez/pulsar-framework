@@ -24,6 +24,15 @@ use function microtime;
  *   4. Retry: innermost, retries transient failures
  *
  * Each layer is optional; only configured strategies are applied.
+ *
+ * Timeout/circuit-breaker interaction: the timeout layer measures elapsed time
+ * after the inner call returns and throws a timeout exception when the budget is
+ * exceeded. Because the timeout layer (2) wraps the circuit-breaker layer (3),
+ * a timeout thrown for a slow-but-functionally-successful operation propagates
+ * outward and is NOT counted as a circuit-breaker failure: the circuit breaker
+ * has already recorded the inner success before the timeout check runs. If the
+ * operation instead fails by throwing, the circuit breaker records that failure
+ * as usual.
  * @api
  */
 #[Api(since: '1.0.0')]
