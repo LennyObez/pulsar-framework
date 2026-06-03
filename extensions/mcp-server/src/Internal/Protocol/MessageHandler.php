@@ -69,7 +69,7 @@ final readonly class MessageHandler
     public function handle(JsonRpcRequest $request): ?string
     {
         if ($request->isNotification()) {
-            return $this->handleNotification($request);
+            return $this->handleNotification();
         }
 
         /** @var string|int $id */
@@ -88,13 +88,13 @@ final readonly class MessageHandler
         };
     }
 
-    private function handleNotification(JsonRpcRequest $request): null
+    private function handleNotification(): null
     {
-        // notifications/cancelled is a best-effort acknowledgment. The current
-        // implementation runs tool execution synchronously, so we have nothing
-        // to interrupt — future async execution can read the requestId from
-        // $request->params and check a cancellation registry.
-        // All notifications (including notifications/initialized) return null per spec.
+        // notifications/cancelled and notifications/initialized are best-effort
+        // acknowledgments. The current implementation runs tool execution
+        // synchronously, so cancellation has nothing to interrupt. Future async
+        // execution can read the requestId and check a cancellation registry.
+        // All notifications return null per spec.
         return null;
     }
 

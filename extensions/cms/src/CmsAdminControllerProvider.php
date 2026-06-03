@@ -14,7 +14,6 @@ use Pulsar\Cache\Application\CacheManagerInterface;
 use Pulsar\Cache\Application\TaggedCacheInterface;
 use Pulsar\Config\BusinessProfileProviderInterface;
 use Pulsar\Container\ContainerInterface;
-use Pulsar\Database\ConnectionInterface;
 use Pulsar\Extension\Cms\Account\AccountSectionRegistry;
 use Pulsar\Extension\Cms\Comments\CommentRepositoryInterface;
 use Pulsar\Extension\Cms\Comments\CommentServiceInterface;
@@ -117,7 +116,6 @@ final readonly class CmsAdminControllerProvider
 {
     public function register(
         ContainerInterface $container,
-        ConnectionInterface $connection,
         CmsConfig $config,
         ?AuditLoggerInterface $auditLogger,
     ): void {
