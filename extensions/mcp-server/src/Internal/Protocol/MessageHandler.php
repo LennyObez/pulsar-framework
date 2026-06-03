@@ -90,24 +90,12 @@ final readonly class MessageHandler
 
     private function handleNotification(JsonRpcRequest $request): null
     {
-        if ($request->method === 'notifications/cancelled') {
-            $this->handleCancelled($request->params);
-        }
-
-        // All notifications (including notifications/initialized) return null per spec
+        // notifications/cancelled is a best-effort acknowledgment. The current
+        // implementation runs tool execution synchronously, so we have nothing
+        // to interrupt — future async execution can read the requestId from
+        // $request->params and check a cancellation registry.
+        // All notifications (including notifications/initialized) return null per spec.
         return null;
-    }
-
-    /**
-     * @param array<string, mixed> $params
-     */
-    private function handleCancelled(array $params): void
-    {
-        // Best-effort cancel tracking. The requestId identifies which in-flight
-        // request the client wants cancelled. Since tool execution is synchronous
-        // in the current implementation, this is a no-op acknowledgment.
-        // Future async execution can check a cancellation registry keyed by
-        // $params['requestId'].
     }
 
     /**

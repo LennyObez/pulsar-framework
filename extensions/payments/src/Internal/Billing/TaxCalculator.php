@@ -26,26 +26,13 @@ final readonly class TaxCalculator
     /**
      * Calculate tax for the given amount.
      *
-     * @param string $customerId Used to look up customer jurisdiction
+     * The default implementation applies a flat VAT rate. A future
+     * jurisdiction-aware implementation will need to introduce a
+     * customer-id parameter and resolve the rate from the customer's
+     * billing address.
      */
-    public function calculate(Money $amount, string $customerId): Money
+    public function calculate(Money $amount): Money
     {
-        // Default implementation: apply standard VAT rate
-        // In production, resolve rate from customer's billing address
-        $rateBasisPoints = $this->resolveRate($customerId);
-
-        return $amount->percentage($rateBasisPoints, RoundingMode::HalfUp);
-    }
-
-    /**
-     * Resolve the applicable tax rate for a customer.
-     *
-     * @return int Tax rate in basis points (10000 = 100%)
-     */
-    private function resolveRate(string $customerId): int
-    {
-        // Placeholder: in production, look up customer address and apply
-        // jurisdiction-specific rates. For now, return the default EU VAT rate.
-        return self::DEFAULT_VAT_RATE_BASIS_POINTS;
+        return $amount->percentage(self::DEFAULT_VAT_RATE_BASIS_POINTS, RoundingMode::HalfUp);
     }
 }

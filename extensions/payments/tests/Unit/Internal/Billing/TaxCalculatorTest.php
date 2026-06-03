@@ -18,7 +18,7 @@ final class TaxCalculatorTest extends TestCase
         $calculator = new TaxCalculator();
         $amount = Money::of(10000, Currency::EUR);
 
-        $tax = $calculator->calculate($amount, 'cust-1');
+        $tax = $calculator->calculate($amount);
 
         // Default 20% VAT = 2000 basis points on 10000 = 2000
         self::assertSame(2000, $tax->amount);
@@ -29,7 +29,7 @@ final class TaxCalculatorTest extends TestCase
     public function calculateHandlesZeroAmount(): void
     {
         $calculator = new TaxCalculator();
-        $tax = $calculator->calculate(Money::zero(Currency::USD), 'cust-2');
+        $tax = $calculator->calculate(Money::zero(Currency::USD));
 
         self::assertSame(0, $tax->amount);
     }
@@ -40,7 +40,7 @@ final class TaxCalculatorTest extends TestCase
         $calculator = new TaxCalculator();
         $amount = Money::of(100, Currency::USD); // $1.00
 
-        $tax = $calculator->calculate($amount, 'cust-3');
+        $tax = $calculator->calculate($amount);
 
         // 20% of 100 = 20
         self::assertSame(20, $tax->amount);
