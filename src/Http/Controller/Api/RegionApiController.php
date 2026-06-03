@@ -25,7 +25,7 @@ final readonly class RegionApiController
         private CountryRegistry $registry,
     ) {}
 
-    public function __invoke(ServerRequestInterface $request): ResponseInterface
+    public function __invoke(): ResponseInterface
     {
         $data = $this->registry->toArray();
 

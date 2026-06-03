@@ -43,9 +43,7 @@ final class BookingControllerTest extends TestCase
 
     public function testFormReturnsHtml(): void
     {
-        $request = $this->makeRequest(Method::GET, '/booking');
-
-        $response = $this->controller->form($request);
+        $response = $this->controller->form();
 
         self::assertSame(200, $response->status->value);
         self::assertStringContains('Book an Appointment', $response->body);

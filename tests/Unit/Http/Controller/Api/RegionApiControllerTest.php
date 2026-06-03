@@ -21,7 +21,7 @@ final class RegionApiControllerTest extends TestCase
         $controller = new RegionApiController($registry);
         $request = $this->createStub(ServerRequestInterface::class);
 
-        $response = $controller($request);
+        $response = $controller();
 
         self::assertSame(200, $response->getStatusCode());
     }
@@ -33,7 +33,7 @@ final class RegionApiControllerTest extends TestCase
         $controller = new RegionApiController($registry);
         $request = $this->createStub(ServerRequestInterface::class);
 
-        $response = $controller($request);
+        $response = $controller();
         $cacheControl = $response->getHeaderLine('Cache-Control');
 
         self::assertStringContainsString('public', $cacheControl);
@@ -47,7 +47,7 @@ final class RegionApiControllerTest extends TestCase
         $controller = new RegionApiController($registry);
         $request = $this->createStub(ServerRequestInterface::class);
 
-        $response = $controller($request);
+        $response = $controller();
         $body = (string) $response->getBody();
         $decoded = json_decode($body, true);
         self::assertIsArray($decoded);
@@ -65,7 +65,7 @@ final class RegionApiControllerTest extends TestCase
         $controller = new RegionApiController($registry);
         $request = $this->createStub(ServerRequestInterface::class);
 
-        $response = $controller($request);
+        $response = $controller();
         $body = (string) $response->getBody();
         $decoded = json_decode($body, true);
         self::assertIsArray($decoded);
