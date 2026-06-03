@@ -60,7 +60,6 @@ final class DatabaseHandler implements SessionHandlerInterface
      * the session row. This data is stored alongside session payload.
      */
     public function setSessionContext(
-        string $sessionId,
         ?string $userId,
         string $ipAddress,
         string $userAgent,
