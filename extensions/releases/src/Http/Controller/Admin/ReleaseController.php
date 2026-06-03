@@ -75,7 +75,7 @@ final readonly class ReleaseController
     /**
      * GET /admin/releases/create: Show create release form data (field metadata).
      */
-    public function create(ServerRequestInterface $request): Response
+    public function create(): Response
     {
         return Response::json([
             'data' => [
@@ -169,7 +169,7 @@ final readonly class ReleaseController
     /**
      * GET /admin/releases/{id}: Show a single release.
      */
-    public function edit(ServerRequestInterface $request, string $id): Response
+    public function edit(string $id): Response
     {
         $release = $this->releaseRepository->findById($id);
 
