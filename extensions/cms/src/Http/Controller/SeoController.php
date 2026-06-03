@@ -48,7 +48,7 @@ final readonly class SeoController
      * Google expects: GET /google{code}.html returning
      * "google-site-verification: google{code}.html"
      */
-    public function googleVerification(ServerRequestInterface $request): Response
+    public function googleVerification(): Response
     {
         $code = $this->seoConfig->googleSiteVerification;
 
@@ -69,7 +69,7 @@ final readonly class SeoController
      *
      * Bing expects: GET /BingSiteAuth.xml returning XML with the verification code.
      */
-    public function bingVerification(ServerRequestInterface $request): Response
+    public function bingVerification(): Response
     {
         $code = $this->seoConfig->bingSiteVerification;
 

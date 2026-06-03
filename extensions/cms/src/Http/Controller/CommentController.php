@@ -32,7 +32,7 @@ final readonly class CommentController
         private CommentServiceInterface $commentService,
     ) {}
 
-    public function submit(ServerRequestInterface $request, string $locale, string $contentId): Response
+    public function submit(ServerRequestInterface $request, string $contentId): Response
     {
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
