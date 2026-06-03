@@ -45,6 +45,26 @@ final class RouterTest extends TestCase
     }
 
     #[Test]
+    public function snapshotAndRestoreRoundTripsRouterState(): void
+    {
+        $router = new Router();
+        $router->add(Route::get('/home', fn() => null, 'home'));
+
+        $snapshot = $router->snapshot();
+
+        // Routes registered after the snapshot are discarded on restore — this is
+        // how the kernel prevents reboot from accumulating wiring/extension routes.
+        $router->add(Route::get('/added', fn() => null, 'added'));
+        self::assertCount(2, $router->routes);
+
+        $router->restoreFromSnapshot($snapshot);
+
+        self::assertCount(1, $router->routes);
+        self::assertNotNull($router->getByName('home'));
+        self::assertNull($router->getByName('added'));
+    }
+
+    #[Test]
     public function getMethodRegistersGetRoute(): void
     {
         $router = new Router();

@@ -21,6 +21,7 @@ use ReflectionClass;
 use Throwable;
 
 use function array_filter;
+use function array_keys;
 use function array_values;
 use function in_array;
 use function sprintf;
@@ -385,6 +386,27 @@ final class ExtensionBootstrap
         }
 
         $this->booted = true;
+    }
+
+    /**
+     * Reset the boot lifecycle after a kernel shutdown so a subsequent boot()
+     * re-runs only the boot phase for already-registered extensions.
+     *
+     * Booted extensions are returned to the Registered state (which canBoot()
+     * accepts) — deliberately NOT to Validated — so register() does not run a
+     * second time; re-registration is unsafe without a contract that extension
+     * register() is idempotent. The registered flag stays true. Failed and
+     * not-yet-booted extensions are left untouched.
+     */
+    public function resetLifecycle(): void
+    {
+        $this->booted = false;
+
+        foreach (array_keys($this->registry->all()) as $name) {
+            if ($this->registry->getState($name)->isBooted()) {
+                $this->registry->setState($name, ExtensionLifecycle::Registered);
+            }
+        }
     }
 
     /**
