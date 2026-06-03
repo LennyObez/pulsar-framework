@@ -17,7 +17,6 @@ use Pulsar\Extension\Admin\Features\BulkAction\BulkActionRequest;
 use Pulsar\Extension\Admin\Features\CreateResource\CreateResourceHandler;
 use Pulsar\Extension\Admin\Features\CreateResource\CreateResourceRequest;
 use Pulsar\Extension\Admin\Features\Dashboard\DashboardHandler;
-use Pulsar\Extension\Admin\Features\Dashboard\DashboardRequest;
 use Pulsar\Extension\Admin\Features\Dashboard\DashboardResult;
 use Pulsar\Extension\Admin\Features\DeleteResource\DeleteResourceHandler;
 use Pulsar\Extension\Admin\Features\DeleteResource\DeleteResourceRequest;
@@ -167,7 +166,7 @@ final readonly class AdminGateway
 
     public function dashboard(): DashboardResult
     {
-        return $this->dashboardHandler->execute(new DashboardRequest());
+        return $this->dashboardHandler->execute();
     }
 
     /**

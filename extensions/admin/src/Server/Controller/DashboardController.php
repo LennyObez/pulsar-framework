@@ -8,7 +8,6 @@ use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Admin\Config\AdminConfig;
 use Pulsar\Extension\Admin\Features\Dashboard\DashboardHandler;
-use Pulsar\Extension\Admin\Features\Dashboard\DashboardRequest;
 use Pulsar\Http\Message\Response;
 
 use function str_contains;
@@ -28,7 +27,7 @@ final readonly class DashboardController
 
     public function index(ServerRequestInterface $request): Response
     {
-        $result = $this->handler->execute(new DashboardRequest());
+        $result = $this->handler->execute();
 
         if (str_contains($request->getHeaderLine('Accept'), 'application/json')) {
             return Response::json([

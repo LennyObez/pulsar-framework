@@ -20,7 +20,7 @@ final readonly class DashboardHandler
         private array $widgets,
     ) {}
 
-    public function execute(DashboardRequest $request): DashboardResult
+    public function execute(): DashboardResult
     {
         $widgetData = array_map(
             static fn(WidgetInterface $widget): array => [
