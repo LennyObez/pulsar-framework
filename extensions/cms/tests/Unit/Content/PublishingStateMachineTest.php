@@ -23,7 +23,7 @@ final class PublishingStateMachineTest extends TestCase
         $sm = new PublishingStateMachine();
         $content = Content::create('c1', ContentType::Article, 'a1');
 
-        $result = $sm->transition($content, PublishingStatus::Published, 'actor-1');
+        $result = $sm->transition($content, PublishingStatus::Published);
 
         self::assertSame(PublishingStatus::Published, $result->status);
         self::assertNotNull($result->publishedAt);
@@ -35,12 +35,12 @@ final class PublishingStateMachineTest extends TestCase
         $sm = new PublishingStateMachine();
         $content = Content::create('c1', ContentType::Article, 'a1');
 
-        $published = $sm->transition($content, PublishingStatus::Published, 'actor-1');
+        $published = $sm->transition($content, PublishingStatus::Published);
         $originalPublishedAt = $published->publishedAt;
 
-        $archived = $sm->transition($published, PublishingStatus::Archived, 'actor-1');
-        $draft = $sm->transition($archived, PublishingStatus::Draft, 'actor-1');
-        $republished = $sm->transition($draft, PublishingStatus::Published, 'actor-1');
+        $archived = $sm->transition($published, PublishingStatus::Archived);
+        $draft = $sm->transition($archived, PublishingStatus::Draft);
+        $republished = $sm->transition($draft, PublishingStatus::Published);
 
         self::assertSame($originalPublishedAt, $republished->publishedAt);
     }
@@ -54,7 +54,7 @@ final class PublishingStateMachineTest extends TestCase
         $this->expectException(CmsException::class);
         $this->expectExceptionMessage("Invalid status transition from 'draft' to 'archived'");
 
-        $sm->transition($content, PublishingStatus::Archived, 'actor-1');
+        $sm->transition($content, PublishingStatus::Archived);
     }
 
     #[Test]
@@ -66,7 +66,7 @@ final class PublishingStateMachineTest extends TestCase
         $sm = new PublishingStateMachine($orchestrator);
         $content = Content::create('c1', ContentType::Article, 'a1');
 
-        $sm->transition($content, PublishingStatus::Published, 'actor-1');
+        $sm->transition($content, PublishingStatus::Published);
     }
 
     #[Test]
@@ -77,9 +77,9 @@ final class PublishingStateMachineTest extends TestCase
 
         $sm = new PublishingStateMachine($orchestrator);
         $content = Content::create('c1', ContentType::Article, 'a1');
-        $published = $sm->transition($content, PublishingStatus::Published, 'actor-1');
+        $published = $sm->transition($content, PublishingStatus::Published);
 
-        $sm->transition($published, PublishingStatus::Archived, 'actor-1');
+        $sm->transition($published, PublishingStatus::Archived);
     }
 
     #[Test]
@@ -88,7 +88,7 @@ final class PublishingStateMachineTest extends TestCase
         $sm = new PublishingStateMachine();
         $content = Content::create('c1', ContentType::Article, 'a1');
 
-        $result = $sm->transition($content, PublishingStatus::Published, 'actor-1');
+        $result = $sm->transition($content, PublishingStatus::Published);
 
         self::assertSame(PublishingStatus::Published, $result->status);
     }
@@ -98,9 +98,9 @@ final class PublishingStateMachineTest extends TestCase
     {
         $sm = new PublishingStateMachine();
         $content = Content::create('c1', ContentType::Article, 'a1');
-        $published = $sm->transition($content, PublishingStatus::Published, 'actor-1');
-        $archived = $sm->transition($published, PublishingStatus::Archived, 'actor-1');
-        $draft = $sm->transition($archived, PublishingStatus::Draft, 'actor-1');
+        $published = $sm->transition($content, PublishingStatus::Published);
+        $archived = $sm->transition($published, PublishingStatus::Archived);
+        $draft = $sm->transition($archived, PublishingStatus::Draft);
 
         self::assertNull($draft->scheduledPublishAt);
         self::assertNull($draft->scheduledUnpublishAt);

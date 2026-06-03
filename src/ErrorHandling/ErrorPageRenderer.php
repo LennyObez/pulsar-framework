@@ -63,7 +63,7 @@ final readonly class ErrorPageRenderer implements ExceptionRendererInterface
         }
 
         // Inline HTML fallback: works even when template engine is down
-        return $this->renderInlineFallback($status, $context);
+        return $this->renderInlineFallback($status);
     }
 
     /**
@@ -209,10 +209,8 @@ final readonly class ErrorPageRenderer implements ExceptionRendererInterface
      *
      * Produces a complete, valid, accessible HTML document with no external
      * dependencies. Uses the Pulsar design charter colors inline.
-     *
-     * @param array<string, mixed> $context
      */
-    private function renderInlineFallback(ResponseStatus $status, array $context): string
+    private function renderInlineFallback(ResponseStatus $status): string
     {
         $code = $status->value;
         $phrase = $this->esc($status->reasonPhrase());

@@ -91,7 +91,7 @@ final readonly class ExportBundleGenerator
         }
 
         if (in_array('comments', $options->scope, true)) {
-            $data['comments'] = $this->exportComments($options);
+            $data['comments'] = $this->exportComments();
         }
 
         if (in_array('users', $options->scope, true)) {
@@ -240,7 +240,7 @@ final readonly class ExportBundleGenerator
     /**
      * @return list<array<string, mixed>>
      */
-    private function exportComments(ExportOptions $options): array
+    private function exportComments(): array
     {
         if ($this->commentRepository === null) {
             return [];

@@ -488,18 +488,10 @@ final readonly class ContentController extends AbstractAdminController
             return Response::json(['error' => 'Content not found'], 404);
         }
 
-        /** @var array<string, mixed> $body */
-        $body = (array) ($request->getParsedBody() ?? []);
-        /** @var mixed $rawReason */
-        $rawReason = $body['reason'] ?? null;
-        $reason = is_string($rawReason) ? $rawReason : null;
-
         try {
             $updated = $this->publishingStateMachine->transition(
                 $content,
                 PublishingStatus::Published,
-                $identity->id(),
-                $reason,
             );
 
             $this->contentRepository->save($updated);
@@ -521,18 +513,10 @@ final readonly class ContentController extends AbstractAdminController
             return Response::json(['error' => 'Content not found'], 404);
         }
 
-        /** @var array<string, mixed> $body */
-        $body = (array) ($request->getParsedBody() ?? []);
-        /** @var mixed $rawReason */
-        $rawReason = $body['reason'] ?? null;
-        $reason = is_string($rawReason) ? $rawReason : null;
-
         try {
             $updated = $this->publishingStateMachine->transition(
                 $content,
                 PublishingStatus::Archived,
-                $identity->id(),
-                $reason,
             );
 
             $this->contentRepository->save($updated);
@@ -619,8 +603,6 @@ final readonly class ContentController extends AbstractAdminController
             $updated = $this->publishingStateMachine->transition(
                 $content,
                 PublishingStatus::InReview,
-                $identity->id(),
-                'Submitted for editorial review',
             );
 
             $this->contentRepository->save($updated);

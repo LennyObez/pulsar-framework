@@ -208,7 +208,7 @@ final class CmsServiceProvider implements ServiceProviderInterface
                 ? $container->get(AuditLoggerInterface::class)
                 : null;
 
-            new CmsAdminControllerProvider()->register($container, $connection, $config, $auditLogger);
+            new CmsAdminControllerProvider()->register($container, $config, $auditLogger);
         }
 
         // 6. Permissions and commands

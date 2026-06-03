@@ -140,7 +140,7 @@ final class DevServerBootstrap
         }
 
         // 5. Bootstrap translation system for dev
-        self::bootstrapTranslations($projectRoot, $config, $kernel);
+        self::bootstrapTranslations($projectRoot, $kernel);
 
         // 6. Auto-migrate if configured
         if ($config->autoMigrate) {
@@ -148,7 +148,7 @@ final class DevServerBootstrap
         }
 
         // 7. Build and dispatch request
-        $request = self::buildRequest($requestUri, $config);
+        $request = self::buildRequest($config);
 
         try {
             $response = $kernel->handle($request);
@@ -369,7 +369,7 @@ final class DevServerBootstrap
      * Translator global instance with catalogs from the framework
      * and all extensions that provide translation files.
      */
-    public static function bootstrapTranslations(string $projectRoot, DevServerConfig $config, Kernel $kernel): void
+    public static function bootstrapTranslations(string $projectRoot, Kernel $kernel): void
     {
         // Skip if the kernel already booted i18n (I18nConfig was present)
         if ($kernel->container()->has(TranslatorInterface::class)) {
@@ -436,7 +436,7 @@ final class DevServerBootstrap
     /**
      * Build a ServerRequest from PHP globals with optional dev identity.
      */
-    public static function buildRequest(string $requestUri, DevServerConfig $config): ServerRequest
+    public static function buildRequest(DevServerConfig $config): ServerRequest
     {
         $request = ServerRequest::fromGlobals();
 
