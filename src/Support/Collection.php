@@ -309,11 +309,15 @@ final class Collection implements Countable, IteratorAggregate
                 /** @var mixed $vb */
                 $vb = is_array($b) ? ($b[$keyOrCallback] ?? null) : (is_object($b) && property_exists($b, $keyOrCallback) ? $b->{$keyOrCallback} : null);
             } else {
-                /** @psalm-suppress MixedArgument -- Closure(T) called with mixed from usort */
-                /** @var mixed $va */
+                /**
+                 * @psalm-suppress MixedArgument -- Closure(T) called with mixed from usort
+                 * @var mixed $va
+                 */
                 $va = $keyOrCallback($a);
-                /** @psalm-suppress MixedArgument -- Closure(T) called with mixed from usort */
-                /** @var mixed $vb */
+                /**
+                 * @psalm-suppress MixedArgument -- Closure(T) called with mixed from usort
+                 * @var mixed $vb
+                 */
                 $vb = $keyOrCallback($b);
             }
 

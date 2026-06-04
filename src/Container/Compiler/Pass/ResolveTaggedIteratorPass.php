@@ -70,6 +70,7 @@ final class ResolveTaggedIteratorPass implements CompilerPassInterface
                 $constructor = $reflector->getConstructor();
 
                 if ($constructor === null) {
+                    /** @var class-string $concreteClass */
                     return new $concreteClass();
                 }
 
@@ -102,6 +103,7 @@ final class ResolveTaggedIteratorPass implements CompilerPassInterface
                     $constructor->getParameters(),
                 );
 
+                /** @var class-string $concreteClass */
                 return new $concreteClass(...$dependencies);
             };
 
