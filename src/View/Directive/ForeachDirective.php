@@ -49,7 +49,7 @@ final readonly class ForeachDirective implements DirectiveInterface
             . ' elseif ($__loopItems instanceof \Traversable) { $__loopItems = iterator_to_array($__loopItems, false); $__loopCount = count($__loopItems); }'
             . ' else { $__loopCount = 0; }'
             . ' $loop = new \Pulsar\View\Engine\LoopVariable($__loopCount, $__loopDepth, $__loopParent instanceof \Pulsar\View\Engine\LoopVariable ? $__loopParent : null);'
-            . ' foreach (' . $this->rewriteIterable($expression, $iterable) . '):'
+            . ' foreach (' . $this->rewriteIterable($expression) . '):'
             . ' $loop->step(); ?>';
     }
 
@@ -74,7 +74,7 @@ final readonly class ForeachDirective implements DirectiveInterface
      * during count computation are iterated from the materialized array,
      * not exhausted by a second evaluation of the original expression.
      */
-    private function rewriteIterable(string $expression, string $originalIterable): string
+    private function rewriteIterable(string $expression): string
     {
         $expr = trim($expression);
 
