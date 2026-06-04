@@ -252,10 +252,9 @@ final class QrCodeEncoder
         }
 
         // Pad bytes (alternating 0xEC, 0x11)
-        $padBytes = [0xEC, 0x11];
         $padIndex = 0;
         while (count($bits) < $totalBits) {
-            $byte = $padBytes[$padIndex % 2];
+            $byte = $padIndex % 2 === 0 ? 0xEC : 0x11;
             for ($i = 7; $i >= 0; $i--) {
                 $bits[] = ($byte >> $i) & 1;
             }
@@ -312,7 +311,7 @@ final class QrCodeEncoder
                         continue;
                     }
                     if ($bitIndex < $totalBits) {
-                        $matrix[$row][$c] = (int) $bits[$bitIndex];
+                        $matrix[$row][$c] = (int) ($bits[$bitIndex] ?? 0);
                         $bitIndex++;
                     }
                 }
