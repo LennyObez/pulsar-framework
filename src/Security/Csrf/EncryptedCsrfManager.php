@@ -187,6 +187,7 @@ final class EncryptedCsrfManager implements CsrfTokenManagerInterface
      */
     public function __unserialize(array $data): void
     {
+        unset($data);
         throw new RuntimeException('EncryptedCsrfManager must not be serialized');
     }
 }

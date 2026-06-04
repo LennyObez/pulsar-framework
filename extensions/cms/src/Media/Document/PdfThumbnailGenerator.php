@@ -177,10 +177,17 @@ final readonly class PdfThumbnailGenerator
 
         /** @var array<int, resource> $pipes */
         fclose($pipes[0]);
-        stream_get_contents($pipes[1]);
+        // Drain stdout/stderr to prevent Ghostscript blocking on a full pipe buffer.
+        $stdout = stream_get_contents($pipes[1]);
         fclose($pipes[1]);
-        stream_get_contents($pipes[2]);
+        $stderr = stream_get_contents($pipes[2]);
         fclose($pipes[2]);
+
+        if (is_string($stderr) && $stderr !== '') {
+            $this->logger->debug('Ghostscript stderr', ['output' => $stderr]);
+        }
+
+        unset($stdout);
 
         $exitCode = proc_close($process);
 

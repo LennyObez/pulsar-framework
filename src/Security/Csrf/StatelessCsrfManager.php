@@ -169,6 +169,7 @@ final class StatelessCsrfManager implements CsrfTokenManagerInterface
      */
     public function __unserialize(array $data): void
     {
+        unset($data);
         throw new RuntimeException('StatelessCsrfManager must not be serialized');
     }
 }

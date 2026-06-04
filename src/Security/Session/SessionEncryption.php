@@ -85,6 +85,7 @@ final class SessionEncryption
      */
     public function __unserialize(array $data): void
     {
+        unset($data);
         throw SecurityException::serializationForbidden('SessionEncryption');
     }
 

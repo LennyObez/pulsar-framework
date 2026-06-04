@@ -98,6 +98,7 @@ final class Encryptor implements EncryptorInterface
      */
     public function __unserialize(array $data): void
     {
+        unset($data);
         throw SecurityException::serializationForbidden('Encryptor');
     }
 
