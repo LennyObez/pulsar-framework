@@ -324,19 +324,22 @@ final readonly class QrCodeEncoder
      */
     private function rsEncode(array $data, array $generator, int $ecCount): array
     {
+        /** @var list<int> $result */
         $result = array_pad($data, count($data) + $ecCount, 0);
+        $dataCount = count($data);
+        $genCount = count($generator);
 
-        for ($i = 0; $i < count($data); $i++) {
+        for ($i = 0; $i < $dataCount; $i++) {
             $coef = $result[$i];
 
             if ($coef !== 0) {
-                for ($j = 1; $j < count($generator); $j++) {
+                for ($j = 1; $j < $genCount; $j++) {
                     $result[$i + $j] ^= $this->gfMul($generator[$j], $coef);
                 }
             }
         }
 
-        return array_slice($result, count($data));
+        return array_slice($result, $dataCount);
     }
 
     /**
