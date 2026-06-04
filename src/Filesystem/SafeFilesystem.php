@@ -4,15 +4,18 @@ declare(strict_types=1);
 
 namespace Pulsar\Filesystem;
 
+use Closure;
 use Pulsar\Api\Api;
-use Symfony\Component\Filesystem\Exception\IOException;
-use Symfony\Component\Filesystem\Filesystem;
 
 use function clearstatcache;
 use function gc_collect_cycles;
 use function is_dir;
 use function is_file;
+use function restore_error_handler;
+use function rmdir;
 use function scandir;
+use function set_error_handler;
+use function unlink;
 use function usleep;
 
 /**
@@ -25,22 +28,30 @@ use function usleep;
  * even with a hostile `--path` option, a `..` traversal segment, or
  * a mid-tree symlink.
  *
- * The destructive primitives are delegated to
- * `Symfony\Component\Filesystem\Filesystem` (a secure-by-default
- * library) so the only direct `unlink()` / `rmdir()` calls in the
- * scaffold layer live behind a SafePath chokepoint and a vetted
- * library wrapper. Static-analysis sweeps for `unlink($var)` /
- * `rmdir($var)` patterns are therefore satisfied at the source.
+ * The destructive primitives are native `unlink()` / `rmdir()` calls
+ * reached only through this class and only with a `SafePath` argument,
+ * so every deletion in the scaffold layer lives behind the trust-boundary
+ * chokepoint. The transient-failure warning (a held handle, a lost race)
+ * is swallowed with a scoped error handler — never the `@` operator — and
+ * surfaced as a boolean so the retry loop can act on it.
  * @api
  */
 #[Api(since: '1.0.0')]
 final class SafeFilesystem
 {
-    private readonly Filesystem $fs;
+    /** @var Closure(string): bool */
+    private readonly Closure $remove;
 
-    public function __construct(?Filesystem $fs = null)
+    /**
+     * @param ?Closure(string): bool $remove Deletion primitive returning
+     *   whether the path was removed. Defaults to a native unlink/rmdir that
+     *   swallows the transient-failure warning. Injectable only to drive the
+     *   retry / best-effort tests deterministically; applications use the
+     *   default and never pass this argument.
+     */
+    public function __construct(?Closure $remove = null)
     {
-        $this->fs = $fs ?? new Filesystem();
+        $this->remove = $remove ?? self::nativeRemove(...);
     }
 
     /**
@@ -104,14 +115,11 @@ final class SafeFilesystem
             return;
         }
 
-        try {
-            $this->fs->remove($abs);
-        } catch (IOException) {
-            // Match the prior `@unlink` semantics: scaffold removal
-            // is best-effort; a single failed leaf does not abort
-            // the broader operation. The remove command's caller
-            // will retry the directory traversal at the rmdir level.
-        }
+        // Best-effort: scaffold removal is intentionally non-fatal, so a single
+        // failed leaf does not abort the broader operation (the caller retries
+        // at the rmdir level). The SafePath argument is the chokepoint that
+        // guarantees $abs lives inside the trust boundary.
+        ($this->remove)($abs);
     }
 
     /**
@@ -160,28 +168,39 @@ final class SafeFilesystem
 
     private function rmdirWithRetry(string $dir): void
     {
-        // Escalating delays: 100ms, 200ms, 400ms, 800ms, 1600ms (~3.1s total)
+        // Escalating delays: 100ms, 200ms, 400ms, 800ms, 1600ms (~3.1s total).
+        // Tolerates the brief handle-release lag seen on Windows / OneDrive.
         $delays = [100_000, 200_000, 400_000, 800_000, 1_600_000];
 
         foreach ($delays as $delay) {
-            try {
-                $this->fs->remove($dir);
+            if (($this->remove)($dir)) {
                 return;
-            } catch (IOException) {
-                usleep($delay);
-                clearstatcache(true, $dir);
             }
+
+            usleep($delay);
+            clearstatcache(true, $dir);
         }
 
-        // Final attempt: best-effort. A persistent IOException after
-        // the full backoff schedule is swallowed and the directory is
-        // left in place rather than crashing the whole remove
-        // operation; scaffold remove is intentionally non-fatal.
+        // Final best-effort attempt. A directory still not removable after the
+        // full backoff schedule is left in place rather than crashing the whole
+        // remove operation; scaffold remove is intentionally non-fatal.
+        ($this->remove)($dir);
+    }
+
+    /**
+     * Native deletion primitive: rmdir for a directory, unlink otherwise.
+     * The transient-failure warning (a held handle, a lost race) is swallowed
+     * via a scoped error handler — never the `@` operator — and reported
+     * through the boolean return so {@see rmdirWithRetry()} can retry.
+     */
+    private static function nativeRemove(string $path): bool
+    {
+        set_error_handler(static fn(): bool => true);
+
         try {
-            $this->fs->remove($dir);
-        } catch (IOException) {
-            // Best-effort: leave the directory in place rather than
-            // crashing the whole remove operation.
+            return is_dir($path) ? rmdir($path) : unlink($path);
+        } finally {
+            restore_error_handler();
         }
     }
 }

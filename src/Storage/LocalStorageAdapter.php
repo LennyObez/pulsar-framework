@@ -6,8 +6,6 @@ namespace Pulsar\Storage;
 
 use NoDiscard;
 use Override;
-use Symfony\Component\Filesystem\Exception\IOException;
-use Symfony\Component\Filesystem\Filesystem;
 
 use function dirname;
 use function file_exists;
@@ -17,11 +15,14 @@ use function is_dir;
 use function is_file;
 use function mkdir;
 use function realpath;
+use function restore_error_handler;
+use function set_error_handler;
 use function stat;
 use function str_contains;
 use function str_starts_with;
 use function strlen;
 use function substr;
+use function unlink;
 
 use const DIRECTORY_SEPARATOR;
 use const LOCK_EX;
@@ -94,15 +95,26 @@ final readonly class LocalStorageAdapter implements StorageAdapterInterface
             return;
         }
 
-        // F3.3 / F17.4: route the destructive op through Symfony's
-        // Filesystem (a secure-by-default library). The path was
-        // already validated by resolvePath() — basePath prefix +
-        // realpath symlink-escape rejection — so the only remaining
-        // failure is genuine I/O (permission denied, disk error).
+        // F3.3 / F17.4: resolvePath() already validated the path (basePath
+        // prefix + realpath symlink-escape rejection), so the only remaining
+        // failure is genuine I/O (permission denied, disk error). Capture the
+        // native warning without the `@` operator and translate a failed
+        // unlink into a StorageException.
+        $error = null;
+        set_error_handler(static function (int $errno, string $message) use (&$error): bool {
+            $error = $message;
+
+            return true;
+        });
+
         try {
-            new Filesystem()->remove($path);
-        } catch (IOException $e) {
-            throw StorageException::deleteFailed($key, $e->getMessage());
+            $removed = unlink($path);
+        } finally {
+            restore_error_handler();
+        }
+
+        if (!$removed) {
+            throw StorageException::deleteFailed($key, $error ?? 'unlink failed');
         }
     }
 
