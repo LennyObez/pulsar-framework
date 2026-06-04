@@ -172,6 +172,34 @@ final class JwkKeyComprehensiveTest extends TestCase
     }
 
     #[Test]
+    public function ecP256JwkWithLeadingZeroCoordinateProducesValidPem(): void
+    {
+        // Regression (deterministic): a real P-256 public key whose X coordinate
+        // decodes to 31 bytes because its leading byte is zero (OpenSSL strips
+        // it). Without left-padding the coordinate to the 32-byte field size the
+        // reconstructed uncompressed point is malformed and getPublicKeyPem()
+        // returns null — the intermittent (~1/256) failure that flaked the
+        // random-key ecP256 test above.
+        $jwk = new JwkKey(
+            kty: 'EC',
+            kid: 'ec-p256-short-x',
+            alg: 'ES256',
+            use: 'sig',
+            parameters: [
+                'crv' => 'P-256',
+                'x' => 'ZsakBUBSlcy7HmNAQYIU73scm4OpyAK1Uwp-RXzIsQ',
+                'y' => 'ghvGPhy51f2dijlHLmS-JDLV1QQIfglSyg_sqMuoiI4',
+            ],
+        );
+
+        $pem = $jwk->getPublicKeyPem();
+
+        self::assertNotNull($pem);
+        self::assertStringStartsWith('-----BEGIN PUBLIC KEY-----', $pem);
+        self::assertNotFalse(openssl_pkey_get_public($pem));
+    }
+
+    #[Test]
     public function ecP384PemReturnsNullDueToCoordinateLengthMismatch(): void
     {
         // P-384 curve is supported in OID mapping, but generating with P-256 coordinates
