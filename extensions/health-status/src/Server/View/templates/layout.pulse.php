@@ -1,6 +1,8 @@
 <?php
-$typedTitle = isset($title) && is_string($title) ? $title : 'System Status';
-$typedContent = isset($content) && is_string($content) ? $content : '';
+/** @var string $title */
+/** @var string $content */
+$typedTitle = $title !== '' ? $title : 'System Status';
+$typedContent = $content;
 $timestamp = date('Y-m-d\TH:i:sP');
 $displayTime = date('M j, Y H:i:s T');
 ?>

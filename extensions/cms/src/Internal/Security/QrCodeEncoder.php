@@ -224,7 +224,7 @@ final readonly class QrCodeEncoder
         $padIndex = 0;
 
         while (count($bits) < $totalDataBits) {
-            $byte = $padBytes[$padIndex % 2];
+            $byte = (int) $padBytes[$padIndex % 2];
 
             for ($j = 7; $j >= 0; $j--) {
                 $bits[] = ($byte >> $j) & 1;
@@ -250,7 +250,7 @@ final readonly class QrCodeEncoder
             $byte = 0;
 
             for ($j = 0; $j < 8 && ($i + $j) < count($bits); $j++) {
-                $byte = ($byte << 1) | $bits[$i + $j];
+                $byte = ($byte << 1) | (int) $bits[$i + $j];
             }
 
             $codewords[] = $byte;
@@ -302,8 +302,8 @@ final readonly class QrCodeEncoder
             $newPoly = array_fill(0, count($poly) + 1, 0);
 
             for ($j = 0; $j < count($poly); $j++) {
-                $newPoly[$j] ^= $poly[$j];
-                $newPoly[$j + 1] ^= $this->gfMul($poly[$j], $this->gfExp($i));
+                $newPoly[$j] ^= (int) $poly[$j];
+                $newPoly[$j + 1] ^= $this->gfMul((int) $poly[$j], $this->gfExp($i));
             }
 
             $poly = $newPoly;
@@ -677,7 +677,7 @@ final readonly class QrCodeEncoder
                     }
 
                     if ($bitIndex < $totalBits) {
-                        $matrix[$row][$c] = $bits[$bitIndex];
+                        $matrix[$row][$c] = (int) $bits[$bitIndex];
                         $bitIndex++;
                     } else {
                         $matrix[$row][$c] = 0;
