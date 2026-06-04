@@ -141,6 +141,7 @@ final readonly class TemplateEngine implements TemplateEngineInterface
             throw ViewException::compilationFailed(
                 $_path_,
                 'execution failed: ' . $e->getMessage(),
+                $e,
             );
         }
 

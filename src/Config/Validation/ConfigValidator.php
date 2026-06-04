@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
 use function array_key_exists;
 use function count;
 use function get_debug_type;
+use function implode;
 use function in_array;
 use function is_array;
 use function is_bool;

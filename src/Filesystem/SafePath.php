@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 use function dirname;
 use function getcwd;
 use function is_dir;
+use function is_file;
 use function preg_match;
 use function realpath;
 use function rtrim;
@@ -167,17 +168,31 @@ final readonly class SafePath
             if ($ancestorReal === false) {
                 return null;
             }
-            if (!str_starts_with($ancestorReal, $boundaryReal)) {
+            if (!self::isWithinBoundary($ancestorReal, $boundaryReal)) {
                 return null;
             }
             return $candidate;
         }
 
-        if (!str_starts_with($real, $boundaryReal)) {
+        if (!self::isWithinBoundary($real, $boundaryReal)) {
             return null;
         }
 
         return $real;
+    }
+
+    /**
+     * True when $real is the boundary itself or a descendant of it.
+     *
+     * A trailing separator is appended to the boundary before the
+     * prefix test so a sibling directory sharing a name prefix
+     * (`/app/data` vs boundary `/app`) is not mistaken for a child
+     * (`/app` would otherwise prefix-match `/appdata`).
+     */
+    private static function isWithinBoundary(string $real, string $boundaryReal): bool
+    {
+        return $real === $boundaryReal
+            || str_starts_with($real, $boundaryReal . DIRECTORY_SEPARATOR);
     }
 
     private static function isAbsolutePath(string $path): bool
@@ -198,6 +213,14 @@ final readonly class SafePath
         $current = rtrim($path, '/\\');
 
         while ($current !== '' && !is_dir($current)) {
+            // An existing regular file component means the path can
+            // never be created (no directory can live under a file),
+            // so the candidate must be rejected rather than walked
+            // past as if the file segment did not exist.
+            if (is_file($current)) {
+                return false;
+            }
+
             $parent = dirname($current);
             if ($parent === $current) {
                 return false;

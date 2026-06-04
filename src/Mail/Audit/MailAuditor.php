@@ -105,7 +105,7 @@ final readonly class MailAuditor
      */
     private function pseudonymizeRecipient(Message $message, ?string $auditKey): string
     {
-        $firstRecipient = $message->to[0]->email ?? 'unknown';
+        $firstRecipient = $message->to !== [] ? $message->to[0]->email : 'unknown';
 
         if ($this->hmac === null || $auditKey === null) {
             return 'anon';

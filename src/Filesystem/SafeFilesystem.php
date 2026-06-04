@@ -173,8 +173,10 @@ final class SafeFilesystem
             }
         }
 
-        // Final attempt: let the IOException bubble — scaffold remove
-        // commands report it through their own diagnostic path.
+        // Final attempt: best-effort. A persistent IOException after
+        // the full backoff schedule is swallowed and the directory is
+        // left in place rather than crashing the whole remove
+        // operation; scaffold remove is intentionally non-fatal.
         try {
             $this->fs->remove($dir);
         } catch (IOException) {

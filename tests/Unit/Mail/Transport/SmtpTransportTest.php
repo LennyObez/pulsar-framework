@@ -15,9 +15,28 @@ use Pulsar\Mail\Message;
 use Pulsar\Mail\Transport\Config\SmtpTransportConfig;
 use Pulsar\Mail\Transport\SmtpTransport;
 use ReflectionMethod;
+use ReflectionProperty;
 
 use function assert;
+use function base64_encode;
+use function chunk_split;
+use function explode;
+use function fclose;
+use function fwrite;
 use function is_string;
+use function quoted_printable_encode;
+use function rtrim;
+use function str_repeat;
+use function str_starts_with;
+use function stream_get_contents;
+use function stream_socket_pair;
+use function strlen;
+
+use const DIRECTORY_SEPARATOR;
+use const STREAM_IPPROTO_IP;
+use const STREAM_PF_INET;
+use const STREAM_PF_UNIX;
+use const STREAM_SOCK_STREAM;
 
 #[CoversClass(SmtpTransport::class)]
 final class SmtpTransportTest extends TestCase
@@ -399,6 +418,137 @@ final class SmtpTransportTest extends TestCase
         $this->callPrivateMethod($transport, 'authenticate');
     }
 
+    /**
+     * Regression: the guard must be an allowlist (tls/ssl only). A misspelled or
+     * non-standard encryption value must NOT permit AUTH LOGIN over cleartext.
+     */
+    #[Test]
+    #[DataProvider('nonEncryptedValueProvider')]
+    public function authenticateThrowsForAnyNonAllowlistedEncryption(string $encryption): void
+    {
+        $config = new SmtpTransportConfig(
+            username: 'user',
+            password: 'pass',
+            encryption: $encryption,
+        );
+        $transport = new SmtpTransport($config);
+
+        $this->expectException(MailException::class);
+        $this->expectExceptionMessage('Cannot authenticate over unencrypted connection');
+
+        $this->callPrivateMethod($transport, 'authenticate');
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function nonEncryptedValueProvider(): iterable
+    {
+        yield 'disabled' => ['disabled'];
+        yield 'off' => ['off'];
+        yield 'plain' => ['plain'];
+        yield 'uppercase TLS' => ['TLS'];
+        yield 'whitespace' => [' tls'];
+    }
+
+    // --- MIME body Content-Transfer-Encoding (RFC 2045 conformance) ---
+
+    /**
+     * Regression: the message declares quoted-printable, so an 8-bit body MUST be
+     * quoted-printable encoded, not written verbatim.
+     */
+    #[Test]
+    public function buildRawMessageQuotedPrintableEncodesNonAsciiTextBody(): void
+    {
+        $transport = new SmtpTransport(new SmtpTransportConfig());
+        $message = new Message(
+            from: new Address('sender@example.com'),
+            to: [new Address('recipient@example.com')],
+            subject: 'Encoding',
+            textBody: 'Café — déjà vu',
+        );
+
+        $raw = $this->callPrivateMethod($transport, 'buildRawMessage', $message, '<qp-id@localhost>');
+        assert(is_string($raw));
+
+        self::assertStringContainsString('Content-Transfer-Encoding: quoted-printable', $raw);
+        self::assertStringContainsString(quoted_printable_encode('Café — déjà vu'), $raw);
+        // The raw 8-bit bytes must not appear unencoded in the body.
+        self::assertStringNotContainsString('Café — déjà vu', $raw);
+    }
+
+    #[Test]
+    public function buildRawMessageQuotedPrintableEncodesNonAsciiHtmlBody(): void
+    {
+        $transport = new SmtpTransport(new SmtpTransportConfig());
+        $message = new Message(
+            from: new Address('sender@example.com'),
+            to: [new Address('recipient@example.com')],
+            subject: 'Encoding',
+            htmlBody: '<p>Über grün</p>',
+        );
+
+        $raw = $this->callPrivateMethod($transport, 'buildRawMessage', $message, '<qp-html-id@localhost>');
+        assert(is_string($raw));
+
+        self::assertStringContainsString(quoted_printable_encode('<p>Über grün</p>'), $raw);
+        self::assertStringNotContainsString('<p>Über grün</p>', $raw);
+    }
+
+    #[Test]
+    public function buildRawMessageQuotedPrintableEncodesMultipartParts(): void
+    {
+        $transport = new SmtpTransport(new SmtpTransportConfig());
+        $message = new Message(
+            from: new Address('sender@example.com'),
+            to: [new Address('recipient@example.com')],
+            subject: 'Encoding',
+            htmlBody: '<p>Größe</p>',
+            textBody: 'Größe',
+        );
+
+        $raw = $this->callPrivateMethod($transport, 'buildRawMessage', $message, '<qp-multi-id@localhost>');
+        assert(is_string($raw));
+
+        self::assertStringContainsString(quoted_printable_encode('Größe'), $raw);
+        self::assertStringContainsString(quoted_printable_encode('<p>Größe</p>'), $raw);
+    }
+
+    /**
+     * Regression: RFC 2045 §6.8 requires base64 lines at most 76 chars. A large
+     * attachment must be wrapped, not emitted as one unbroken line.
+     */
+    #[Test]
+    public function buildRawMessageChunksBase64Attachment(): void
+    {
+        $transport = new SmtpTransport(new SmtpTransportConfig());
+        $largeContent = str_repeat('A', 1000);
+        $message = new Message(
+            from: new Address('sender@example.com'),
+            to: [new Address('recipient@example.com')],
+            subject: 'Large Attachment',
+            textBody: 'See attached',
+            attachments: [
+                new Attachment(
+                    filename: 'big.bin',
+                    content: $largeContent,
+                    mimeType: 'application/octet-stream',
+                ),
+            ],
+        );
+
+        $raw = $this->callPrivateMethod($transport, 'buildRawMessage', $message, '<chunk-id@localhost>');
+        assert(is_string($raw));
+
+        $expected = chunk_split(base64_encode($largeContent), 76, "\r\n");
+        self::assertStringContainsString($expected, $raw);
+
+        // No base64 run should exceed 76 characters between CRLF separators.
+        foreach (explode("\r\n", $raw) as $line) {
+            self::assertLessThanOrEqual(76, strlen($line));
+        }
+    }
+
     #[Test]
     public function authenticateSkipsWhenNoCredentials(): void
     {
@@ -409,6 +559,96 @@ final class SmtpTransportTest extends TestCase
         $this->callPrivateMethod($transport, 'authenticate');
 
         $this->addToAssertionCount(1); // authenticate() completes without exception when no credentials set
+    }
+
+    // --- SMTP envelope command injection (protocol layer) ---
+
+    /**
+     * Regression: an Address whose ->email contains CR/LF must NOT be able to
+     * inject additional SMTP commands via MAIL FROM / RCPT TO. The envelope
+     * commands now pass through sanitizeHeaderValue(), collapsing the injected
+     * bytes onto a single line.
+     *
+     * The transport writes a command then reads a response in lockstep. We use a
+     * connected stream socket pair: the "server" end is pre-filled with the 250
+     * responses the transport expects, so the synchronous read/write dance
+     * completes without a real network or a second thread. After the call, the
+     * server end holds exactly the bytes the transport wrote — the wire image.
+     */
+    #[Test]
+    #[DataProvider('envelopeMethodProvider')]
+    public function envelopeCommandsAreSanitizedAgainstInjection(
+        string $method,
+        Message $message,
+        string $expectedWireFragment,
+    ): void {
+        // STREAM_PF_UNIX is unsupported by stream_socket_pair on Windows; INET works on both.
+        $domain = DIRECTORY_SEPARATOR === '\\' ? STREAM_PF_INET : STREAM_PF_UNIX;
+        $pair = @stream_socket_pair($domain, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
+
+        if ($pair === false) {
+            self::markTestSkipped('stream_socket_pair is unavailable on this platform');
+        }
+
+        [$transportEnd, $serverEnd] = $pair;
+
+        // Pre-fill every response the method will read (one 250 per command).
+        fwrite($serverEnd, "250 OK\r\n");
+        fwrite($serverEnd, "250 OK\r\n");
+        fwrite($serverEnd, "250 OK\r\n");
+
+        $transport = new SmtpTransport(new SmtpTransportConfig(encryption: 'none'));
+
+        $socketProperty = new ReflectionProperty(SmtpTransport::class, 'socket');
+        $socketProperty->setValue($transport, $transportEnd);
+
+        $arg = $method === 'mailFrom' ? $message->from : $message;
+        $this->callPrivateMethod($transport, $method, $arg);
+
+        // Read back what the transport wrote to the wire.
+        fclose($transportEnd);
+        $wire = stream_get_contents($serverEnd);
+        fclose($serverEnd);
+        assert(is_string($wire));
+
+        // No embedded CRLF before the trailing terminator => no injected command.
+        self::assertStringContainsString($expectedWireFragment, $wire);
+
+        foreach (explode("\r\n", rtrim($wire, "\r\n")) as $line) {
+            self::assertStringNotContainsString("\n", $line);
+            self::assertFalse(
+                str_starts_with($line, 'DATA') && $line !== 'DATA',
+                'A second command leaked onto the wire: ' . $line,
+            );
+        }
+    }
+
+    /**
+     * @return iterable<string, array{string, Message, string}>
+     */
+    public static function envelopeMethodProvider(): iterable
+    {
+        yield 'MAIL FROM injection' => [
+            'mailFrom',
+            new Message(
+                from: new Address("attacker@evil.com\r\nRCPT TO:<victim@evil.com>"),
+                to: [new Address('target@example.com')],
+                subject: 'x',
+                textBody: 'b',
+            ),
+            "MAIL FROM:<attacker@evil.comRCPT TO:<victim@evil.com>>\r\n",
+        ];
+
+        yield 'RCPT TO injection' => [
+            'rcptTo',
+            new Message(
+                from: new Address('sender@example.com'),
+                to: [new Address("target@example.com\r\nDATA\r\nInjected body")],
+                subject: 'x',
+                textBody: 'b',
+            ),
+            "RCPT TO:<target@example.comDATAInjected body>\r\n",
+        ];
     }
 
     // --- name() ---

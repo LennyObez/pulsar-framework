@@ -6,11 +6,13 @@ namespace Pulsar\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Config\Exception\ConfigException;
 
 use function array_filter;
 use function array_map;
 use function implode;
 use function is_string;
+use function str_contains;
 
 /**
  * Typed configuration DTO for Content Security Policy headers.
@@ -127,6 +129,25 @@ final readonly class CspConfig
     {
         $customDirectives = array_filter($data['custom_directives'] ?? [], is_string(...));
 
+        // A literal ';' is the CSP directive separator and is never valid inside a
+        // single directive name or value. Permitting it would let a config override
+        // inject an arbitrary additional directive (e.g. a permissive default-src),
+        // silently neutralising the entire policy. Reject it at config-build time.
+        $reportUri = $data['report_uri'] ?? '';
+
+        if (str_contains($reportUri, ';')) {
+            throw ConfigException::invalidValue('headers.csp.report_uri', "must not contain ';'");
+        }
+
+        foreach ($customDirectives as $directive => $value) {
+            if (str_contains($directive, ';') || str_contains($value, ';')) {
+                throw ConfigException::invalidValue(
+                    'headers.csp.custom_directives.' . $directive,
+                    "directive name and value must not contain ';'",
+                );
+            }
+        }
+
         return new self(
             enabled: (bool) ($data['enabled'] ?? true),
             reportOnly: (bool) ($data['report_only'] ?? false),
@@ -143,7 +164,7 @@ final readonly class CspConfig
             baseUri: $data['base_uri'] ?? "'self'",
             formAction: $data['form_action'] ?? "'self'",
             upgradeInsecureRequests: (bool) ($data['upgrade_insecure_requests'] ?? false),
-            reportUri: $data['report_uri'] ?? '',
+            reportUri: $reportUri,
             reportTo: $data['report_to'] ?? '',
             customDirectives: $customDirectives,
         );
