@@ -321,19 +321,22 @@ final readonly class QrCodeEncoder
      */
     private function rsEncode(array $data, array $generator, int $ecCount): array
     {
+        /** @var list<int> $result */
         $result = array_pad($data, count($data) + $ecCount, 0);
+        $dataCount = count($data);
+        $genCount = count($generator);
 
-        for ($i = 0; $i < count($data); $i++) {
+        for ($i = 0; $i < $dataCount; $i++) {
             $coef = $result[$i];
 
             if ($coef !== 0) {
-                for ($j = 1; $j < count($generator); $j++) {
+                for ($j = 1; $j < $genCount; $j++) {
                     $result[$i + $j] ^= $this->gfMul($generator[$j], $coef);
                 }
             }
         }
 
-        return array_slice($result, count($data));
+        return array_slice($result, $dataCount);
     }
 
     /**
@@ -825,12 +828,14 @@ final readonly class QrCodeEncoder
 
                 for ($i = 0; $i < 11; $i++) {
                     $val = $matrix[$r][$c + $i] ?? 0;
+                    $p1 = $pattern1[$i] ?? 0;
+                    $p2 = $pattern2[$i] ?? 0;
 
-                    if ($val !== $pattern1[$i]) {
+                    if ($val !== $p1) {
                         $match1 = false;
                     }
 
-                    if ($val !== $pattern2[$i]) {
+                    if ($val !== $p2) {
                         $match2 = false;
                     }
                 }
@@ -848,12 +853,14 @@ final readonly class QrCodeEncoder
 
                 for ($i = 0; $i < 11; $i++) {
                     $val = $matrix[$r + $i][$c] ?? 0;
+                    $p1 = $pattern1[$i] ?? 0;
+                    $p2 = $pattern2[$i] ?? 0;
 
-                    if ($val !== $pattern1[$i]) {
+                    if ($val !== $p1) {
                         $match1 = false;
                     }
 
-                    if ($val !== $pattern2[$i]) {
+                    if ($val !== $p2) {
                         $match2 = false;
                     }
                 }
