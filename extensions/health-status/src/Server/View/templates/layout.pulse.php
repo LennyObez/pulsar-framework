@@ -1,8 +1,8 @@
 <?php
-/** @var string $title */
-/** @var string $content */
-$typedTitle = $title !== '' ? $title : 'System Status';
-$typedContent = $content;
+$rawTitle = $title ?? null;
+$rawContent = $content ?? null;
+$typedTitle = is_string($rawTitle) && $rawTitle !== '' ? $rawTitle : 'System Status';
+$typedContent = is_string($rawContent) ? $rawContent : '';
 $timestamp = date('Y-m-d\TH:i:sP');
 $displayTime = date('M j, Y H:i:s T');
 ?>

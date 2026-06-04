@@ -305,8 +305,9 @@ final readonly class QrCodeEncoder
             $newPoly = array_fill(0, $polySize + 1, 0);
 
             for ($j = 0; $j < $polySize; $j++) {
-                $newPoly[$j] ^= $poly[$j];
-                $newPoly[$j + 1] ^= $this->gfMul($poly[$j], $this->gfExp($i));
+                $coef = (int) ($poly[$j] ?? 0);
+                $newPoly[$j] ^= $coef;
+                $newPoly[$j + 1] ^= $this->gfMul($coef, $this->gfExp($i));
             }
 
             $poly = $newPoly;
