@@ -684,7 +684,7 @@ final readonly class QrCodeEncoder
                     }
 
                     if ($bitIndex < $totalBits) {
-                        $matrix[$row][$c] = $bits[$bitIndex];
+                        $matrix[$row][$c] = (int) $bits[$bitIndex];
                         $bitIndex++;
                     } else {
                         $matrix[$row][$c] = 0;
