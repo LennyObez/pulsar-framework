@@ -188,5 +188,54 @@
             </errorLevel>
         </TypeDoesNotContainType>
 
+        <!-- (C) ext-imagick is an optional runtime dependency. Psalm has no
+             bundled stub, and the source-code stub approach was reverted on
+             2026-04-28 (regulated repo policy — no in-repo stubs for optional
+             extensions). Suppress Imagick-related issues file-narrow on the
+             two implementations that touch the extension API directly. -->
+        <UndefinedClass>
+            <errorLevel type="suppress">
+                <file name="../../extensions/cms/src/Media/Document/PdfThumbnailGenerator.php"/>
+                <file name="../../extensions/cms/src/Media/Processing/ImagickImageProcessor.php"/>
+            </errorLevel>
+        </UndefinedClass>
+        <MixedAssignment>
+            <errorLevel type="suppress">
+                <file name="../../extensions/cms/src/Media/Document/PdfThumbnailGenerator.php"/>
+                <file name="../../extensions/cms/src/Media/Processing/ImagickImageProcessor.php"/>
+            </errorLevel>
+        </MixedAssignment>
+        <MixedMethodCall>
+            <errorLevel type="suppress">
+                <file name="../../extensions/cms/src/Media/Document/PdfThumbnailGenerator.php"/>
+                <file name="../../extensions/cms/src/Media/Processing/ImagickImageProcessor.php"/>
+            </errorLevel>
+        </MixedMethodCall>
+        <MixedArgument>
+            <errorLevel type="suppress">
+                <file name="../../extensions/cms/src/Media/Document/PdfThumbnailGenerator.php"/>
+                <file name="../../extensions/cms/src/Media/Processing/ImagickImageProcessor.php"/>
+            </errorLevel>
+        </MixedArgument>
+        <MixedOperand>
+            <errorLevel type="suppress">
+                <file name="../../extensions/cms/src/Media/Document/PdfThumbnailGenerator.php"/>
+                <file name="../../extensions/cms/src/Media/Processing/ImagickImageProcessor.php"/>
+            </errorLevel>
+        </MixedOperand>
+        <UnusedMethod>
+            <errorLevel type="suppress">
+                <file name="../../extensions/cms/src/Media/Processing/ImagickImageProcessor.php"/>
+            </errorLevel>
+        </UnusedMethod>
+        <UnusedParam>
+            <errorLevel type="suppress">
+                <file name="../../extensions/cms/src/Media/Processing/ImagickImageProcessor.php"/>
+                <file name="../../extensions/cms/src/Media/Document/PdfThumbnailGenerator.php"/>
+                <file name="../../src/Http/Middleware/CompressionMiddleware.php"/>
+                <file name="../../src/Runtime/FrankenPhpRuntime.php"/>
+            </errorLevel>
+        </UnusedParam>
+
     </issueHandlers>
 </psalm>
