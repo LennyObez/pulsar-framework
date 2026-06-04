@@ -86,6 +86,7 @@ final class Arr
             }
         }
 
+        /** @var array<string, mixed> $array */
         return $array;
     }
 
