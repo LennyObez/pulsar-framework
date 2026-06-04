@@ -107,7 +107,7 @@ final class TemplateCompiler
         $output = $this->rewriteExpressionDirectives($output);
 
         // Phase 3: Compile directives (registered by the directive system)
-        $output = $this->compileDirectives($output, $templateName);
+        $output = $this->compileDirectives($output);
 
         // Phase 4: Compile raw (unescaped) output {!! $expr !!}
         $output = $this->compileRawEchos($output);
@@ -295,7 +295,7 @@ final class TemplateCompiler
      * so that expressions with nested parens (e.g. `@foreach (($a ?? []) as $v)`)
      * are captured correctly.
      */
-    private function compileDirectives(string $source, string $templateName): string
+    private function compileDirectives(string $source): string
     {
         if ($this->directiveCompilers === []) {
             return $source;
