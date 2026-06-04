@@ -57,6 +57,8 @@ abstract class LiveComponent
      */
     public function beforeAction(string $action): bool
     {
+        unset($action);
+
         return true;
     }
 
@@ -65,7 +67,7 @@ abstract class LiveComponent
      */
     public function afterAction(string $action): void
     {
-        // Override in subclass
+        unset($action);
     }
 
     /**
