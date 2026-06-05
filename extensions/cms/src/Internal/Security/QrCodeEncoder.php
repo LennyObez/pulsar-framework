@@ -249,8 +249,14 @@ final readonly class QrCodeEncoder
         for ($i = 0; $i < $totalBits; $i += 8) {
             $byte = 0;
 
-            for ($j = 0; $j < 8 && ($i + $j) < $totalBits; $j++) {
-                $byte = ($byte << 1) | (int) ($bits[$i + $j] ?? 0);
+            for ($j = 0; $j < 8; $j++) {
+                $idx = $i + $j;
+
+                if ($idx >= $totalBits) {
+                    break;
+                }
+
+                $byte = ($byte << 1) | (int) ($bits[$idx] ?? 0);
             }
 
             $codewords[] = $byte;
@@ -306,8 +312,8 @@ final readonly class QrCodeEncoder
 
             for ($j = 0; $j < $polySize; $j++) {
                 $coef = (int) ($poly[$j] ?? 0);
-                $newPoly[$j] ^= $coef;
-                $newPoly[$j + 1] ^= $this->gfMul($coef, $this->gfExp($i));
+                $newPoly[$j] = ($newPoly[$j] ?? 0) ^ $coef;
+                $newPoly[$j + 1] = ($newPoly[$j + 1] ?? 0) ^ $this->gfMul($coef, $this->gfExp($i));
             }
 
             $poly = $newPoly;
