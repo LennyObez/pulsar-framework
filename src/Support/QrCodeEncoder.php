@@ -122,7 +122,7 @@ final readonly class QrCodeEncoder
 
         // Place function patterns
         $this->placeFinderPatterns($matrix, $reserved, $size);
-        $this->placeAlignmentPatterns($matrix, $reserved, $version, $size);
+        $this->placeAlignmentPatterns($matrix, $reserved, $version);
         $this->placeTimingPatterns($matrix, $reserved, $size);
         $this->placeDarkModule($matrix, $reserved, $version);
         $this->reserveFormatArea($reserved, $size);
@@ -546,7 +546,7 @@ final readonly class QrCodeEncoder
      * @param array<int, array<int, int|null>> &$matrix
      * @param array<int, array<int, int|null>> &$reserved
      */
-    private function placeAlignmentPatterns(array &$matrix, array &$reserved, int $version, int $size): void
+    private function placeAlignmentPatterns(array &$matrix, array &$reserved, int $version): void
     {
         if ($version < 2) {
             return;
