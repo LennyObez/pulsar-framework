@@ -35,6 +35,10 @@ use const PHP_INT_MAX;
  * - SVG output with configurable module size and quiet zone
  *
  * This is a self-contained implementation with no external dependencies.
+ *
+ * @psalm-api Bound by class-name in CmsCoreServiceProvider and consumed by
+ *            the admin controller wiring; Psalm cannot trace the class-string
+ *            lookup so the discovery happens through this annotation.
  */
 #[Internal(reason: 'CMS security internals — use via service binding')]
 final readonly class QrCodeEncoder
