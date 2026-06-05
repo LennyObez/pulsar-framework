@@ -272,5 +272,20 @@
             </errorLevel>
         </MixedReturnStatement>
 
+        <!-- (C) `new \$className(...)` dynamic instantiation through container
+             compiler passes and reflection-based factories: Psalm cannot
+             narrow a class-string variable into the constructor call site,
+             even after class_exists/@var class-string guards. -->
+        <MixedMethodCall>
+            <errorLevel type="suppress">
+                <file name="../../src/Container/Compiler/Pass/ResolveTaggedIteratorPass.php"/>
+                <file name="../../src/Container/Container.php"/>
+                <file name="../../src/Container/Decorator/DecoratorChain.php"/>
+                <file name="../../src/Core/Kernel.php"/>
+                <file name="../../src/Core/MicroKernel.php"/>
+                <file name="../../src/Rendering/Storybook/StorybookRenderer.php"/>
+            </errorLevel>
+        </MixedMethodCall>
+
     </issueHandlers>
 </psalm>
