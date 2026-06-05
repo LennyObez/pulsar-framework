@@ -1024,15 +1024,17 @@ final class Kernel implements KernelInterface
                  */
                 $result = (function () use ($routeFile): mixed {
                     // Local aliases inherited by the required routes file via PHP scope.
-                    // Psalm cannot trace through `require`, so we mark these as "used" by
-                    // explicitly listing them in compact() before the include — the include
-                    // is what actually consumes them at runtime.
+                    // The require'd file consumes $router and $container directly through
+                    // PHP's scope inheritance; Psalm cannot trace through include so we
+                    // bind them here and unset() after the include to mark them as used.
                     $router = $this->router;
                     $container = $this->container;
-                    compact('router', 'container');
 
                     /** @psalm-suppress UnresolvableInclude */
-                    return require $routeFile;
+                    $loaded = require $routeFile;
+                    unset($router, $container);
+
+                    return $loaded;
                 })();
 
                 // Support route files that return a closure: invoke with router
