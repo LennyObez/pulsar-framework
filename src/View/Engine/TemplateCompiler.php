@@ -78,7 +78,7 @@ final class TemplateCompiler
             return $cached;
         }
 
-        $compiledOutput = $this->compileSource($sourceContent, $templateName);
+        $compiledOutput = $this->compileSource($sourceContent);
 
         $this->sandboxCompiler?->validate($compiledOutput, $templateName);
 
@@ -89,10 +89,9 @@ final class TemplateCompiler
      * Compile a template source string to PHP output.
      *
      * @param string $source Raw template source
-     * @param string $templateName Template name for error context
      */
     #[NoDiscard]
-    public function compileSource(string $source, string $templateName = '<inline>'): string
+    public function compileSource(string $source): string
     {
         $output = $source;
 
