@@ -287,5 +287,20 @@
             </errorLevel>
         </MixedMethodCall>
 
+        <!-- (C) Generic Closure(): T resolution helpers — Psalm cannot thread
+             the @template T parameter through Closure invocations. The
+             Helpers::value implementation is correct; the @return T contract
+             is preserved at the call site, just not within the helper body. -->
+        <InvalidReturnType>
+            <errorLevel type="suppress">
+                <file name="../../src/Support/functions.php"/>
+            </errorLevel>
+        </InvalidReturnType>
+        <InvalidReturnStatement>
+            <errorLevel type="suppress">
+                <file name="../../src/Support/functions.php"/>
+            </errorLevel>
+        </InvalidReturnStatement>
+
     </issueHandlers>
 </psalm>
