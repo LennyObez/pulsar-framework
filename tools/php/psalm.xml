@@ -313,5 +313,15 @@
             </errorLevel>
         </UnsafeGenericInstantiation>
 
+        <!-- (C) Pulse templates use `foreach (... as $local) { include partial; }`
+             to leverage PHP's scope inheritance through include. Psalm cannot
+             trace the partial's variable consumption, so the foreach value
+             reads as unused at the loop site. -->
+        <UnusedForeachValue>
+            <errorLevel type="suppress">
+                <file name="../../extensions/health-status/src/Server/View/templates/dashboard.pulse.php"/>
+            </errorLevel>
+        </UnusedForeachValue>
+
     </issueHandlers>
 </psalm>
