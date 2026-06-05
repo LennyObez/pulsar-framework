@@ -247,5 +247,30 @@
             </errorLevel>
         </PossiblyUnusedParam>
 
+        <!-- (C) The DI container is intentionally type-generic at the boundary:
+             callers know the concrete type they fetched and downstream type
+             narrowing happens at the call site, not inside the container.
+             The wrapper proxies (ReadOnly, ScopedContainerProxy, BoundaryGuard)
+             pass through the mixed return type from $inner->get() unchanged. -->
+        <MixedAssignment>
+            <errorLevel type="suppress">
+                <file name="../../src/Container/Container.php"/>
+                <file name="../../src/Support/Arr.php"/>
+            </errorLevel>
+        </MixedAssignment>
+        <MixedReturnStatement>
+            <errorLevel type="suppress">
+                <file name="../../src/Container/Container.php"/>
+                <file name="../../src/Container/Internal/BoundaryGuard.php"/>
+                <file name="../../src/Console/Repl/ReadOnlyContainer.php"/>
+                <file name="../../src/Extensibility/Internal/ScopedContainerProxy.php"/>
+                <!-- (C) Resilience/Helpers compose Closure(): T through wrapper
+                     closures; Psalm cannot thread the generic T through nested
+                     anonymous-function returns. -->
+                <file name="../../src/Resilience/ResiliencePolicy.php"/>
+                <file name="../../src/Support/Helpers.php"/>
+            </errorLevel>
+        </MixedReturnStatement>
+
     </issueHandlers>
 </psalm>
