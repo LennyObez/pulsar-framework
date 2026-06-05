@@ -199,12 +199,6 @@
                 <file name="../../extensions/cms/src/Media/Processing/ImagickImageProcessor.php"/>
             </errorLevel>
         </UndefinedClass>
-        <MixedAssignment>
-            <errorLevel type="suppress">
-                <file name="../../extensions/cms/src/Media/Document/PdfThumbnailGenerator.php"/>
-                <file name="../../extensions/cms/src/Media/Processing/ImagickImageProcessor.php"/>
-            </errorLevel>
-        </MixedAssignment>
         <MixedArgument>
             <errorLevel type="suppress">
                 <file name="../../extensions/cms/src/Media/Document/PdfThumbnailGenerator.php"/>
@@ -254,6 +248,10 @@
              pass through the mixed return type from $inner->get() unchanged. -->
         <MixedAssignment>
             <errorLevel type="suppress">
+                <!-- (C) Optional ext-imagick: see UndefinedClass rationale above. -->
+                <file name="../../extensions/cms/src/Media/Document/PdfThumbnailGenerator.php"/>
+                <file name="../../extensions/cms/src/Media/Processing/ImagickImageProcessor.php"/>
+                <!-- (C) DI container is type-generic at the boundary by design. -->
                 <file name="../../src/Container/Container.php"/>
                 <file name="../../src/Support/Arr.php"/>
             </errorLevel>
