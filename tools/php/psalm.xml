@@ -321,5 +321,16 @@
             </errorLevel>
         </UnusedForeachValue>
 
+        <!-- (A) Psalm 6.x cannot parse PHP 8.4 property hook syntax with
+             asymmetric visibility (`public private(set) ?T $prop { get => ...; }`).
+             It misreads the `get => ...` hook as an undeclared method
+             "getstring". PHPStan max parses it correctly. Re-evaluate after
+             Psalm 7 ships. -->
+        <UnimplementedInterfaceMethod>
+            <errorLevel type="suppress">
+                <file name="../../src/Security/Session/SessionManager.php"/>
+            </errorLevel>
+        </UnimplementedInterfaceMethod>
+
     </issueHandlers>
 </psalm>
