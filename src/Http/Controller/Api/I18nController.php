@@ -33,11 +33,11 @@ final readonly class I18nController
      * @param list<string> $domains Domains to include in the bundle
      */
     public function __construct(
-        private CatalogInterface $catalog,
+        CatalogInterface $catalog,
         private I18nConfig $config,
         private array $domains = ['core', 'messages'],
     ) {
-        $this->compiler = new TranslationCompiler($this->catalog);
+        $this->compiler = new TranslationCompiler($catalog);
     }
 
     public function __invoke(ServerRequestInterface $request): ResponseInterface
