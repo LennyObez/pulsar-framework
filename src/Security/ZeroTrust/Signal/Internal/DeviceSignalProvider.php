@@ -25,6 +25,8 @@ use function is_string;
  * - `device.known` (bool): Whether a device cookie is present
  * - `device.registered` (bool): Whether the device is in the registry
  * - `device.attestation_valid` (bool): Whether attestation was verified
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class DeviceSignalProvider implements SignalProviderInterface

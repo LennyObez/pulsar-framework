@@ -29,6 +29,8 @@ use function random_bytes;
  * Processes subscription renewals by creating invoices and charging
  * the customer's payment method. Integrates with DunningManager
  * for failed payment recovery.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class BillingEngine

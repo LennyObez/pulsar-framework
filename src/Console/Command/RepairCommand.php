@@ -16,6 +16,8 @@ use function sprintf;
 
 /**
  * Run self-healing repair jobs.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class RepairCommand extends Command
 {

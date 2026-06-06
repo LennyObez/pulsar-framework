@@ -23,6 +23,8 @@ use function sprintf;
  * Show framework status overview.
  *
  * Displays version, PHP info, boot status, extension count, and route count.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class StatusCommand extends Command

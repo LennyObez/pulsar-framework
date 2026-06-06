@@ -18,6 +18,8 @@ use function sprintf;
 
 /**
  * Displays the current status of the Studio evidence store.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class EvidenceStatusCommand extends Command

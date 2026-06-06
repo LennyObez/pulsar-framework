@@ -14,6 +14,8 @@ use Pulsar\Event\EventEnvelope;
  *
  * Wraps an inner EventDispatcher and ensures all envelopes dispatched
  * through this module carry the correct origin module identifier.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class ModuleEventDispatcher implements EventDispatcherInterface

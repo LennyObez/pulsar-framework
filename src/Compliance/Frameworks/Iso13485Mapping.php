@@ -20,6 +20,7 @@ use Pulsar\Compliance\ControlStatus;
  * replace the organizational commitment required for certification.
  *
  * @see ISO 13485:2016 Medical devices: Quality management systems
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Framework-internal control registration; use ControlCatalog for public access')]
 final class Iso13485Mapping

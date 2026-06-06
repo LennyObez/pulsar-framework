@@ -23,6 +23,8 @@ use function str_contains;
  *
  *     $guard = new SagaContainerGuard(enabled: true);
  *     $guard->assertAllowed($serviceId, $requestingClass);
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Used by saga orchestrator internals')]
 final readonly class SagaContainerGuard

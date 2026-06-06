@@ -12,6 +12,8 @@ use Pulsar\Api\Internal;
  *
  * Tracks the number of in-flight messages and enforces configurable
  * high/low watermarks to prevent buffer overflows.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Streaming flow control')]
 final class BackpressureController

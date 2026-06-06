@@ -15,6 +15,8 @@ use function array_merge;
 
 /**
  * Loads related entities in batches to avoid excessive IN clause sizes.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class BatchLoader

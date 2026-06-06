@@ -15,6 +15,8 @@ use function sprintf;
  *
  * The output is a generic, commented configuration that can be adapted
  * to any reverse proxy or load balancer. No vendor product names are used.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class ProxySnippetGenerator

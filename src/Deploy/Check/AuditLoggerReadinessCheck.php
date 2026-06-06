@@ -22,6 +22,8 @@ use Pulsar\Deploy\DeployCheckInterface;
  * loses every compliance signal — PCI Req 10, HIPAA §164.312(b), SOX ITGC
  * change-trail, GDPR Art 30 — without any visible failure. The deploy gate
  * refuses it explicitly so the operator must make the deployment trail real.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class AuditLoggerReadinessCheck implements DeployCheckInterface

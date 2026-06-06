@@ -26,6 +26,8 @@ use const JSON_UNESCAPED_SLASHES;
  * Allows bypass via:
  * - A secret passed as a query parameter or cookie
  * - An allowed IP address
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class MaintenanceModeMiddleware implements MiddlewareInterface

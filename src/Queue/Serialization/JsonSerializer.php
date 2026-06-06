@@ -22,6 +22,8 @@ use const JSON_UNESCAPED_UNICODE;
  * forward-compatible deserialization through {@see VersionTransformerInterface}.
  *
  * PHP's native {@see unserialize()} is never used.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Default serializer implementation; depend on SerializerInterface')]
 final readonly class JsonSerializer implements SerializerInterface

@@ -18,6 +18,8 @@ use Pulsar\Api\Api;
  * Usage:
  *   #[Teleport(to: '#modal-root')]
  *   final class ConfirmDialog extends LiveComponent { ... }
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Attribute(Attribute::TARGET_CLASS)]
 #[Api(since: '1.0.0')]

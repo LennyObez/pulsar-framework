@@ -23,6 +23,8 @@ use Pulsar\Security\ZeroTrust\Signal\SignalProviderInterface;
  * Claims produced:
  * - `behavior.rapid_requests` (bool): Whether the request rate exceeds the threshold
  * - `behavior.anomalous_pattern` (bool): Whether the request deviates from the user's baseline
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class BehaviorSignalProvider implements SignalProviderInterface

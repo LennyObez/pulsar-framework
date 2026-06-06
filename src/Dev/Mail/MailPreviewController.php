@@ -27,6 +27,8 @@ use const ENT_QUOTES;
  * - Text preview of a specific message
  *
  * Integrates with Studio by rendering content compatible with its layout.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class MailPreviewController

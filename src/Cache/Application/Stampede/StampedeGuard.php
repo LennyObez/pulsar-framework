@@ -19,6 +19,8 @@ use Throwable;
  * 1. Try get from driver
  * 2. On miss: acquire lock → invoke callback → set with jitter → release
  * 3. On lock timeout: retry get (another process may have regenerated), fallback to callback
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class StampedeGuard

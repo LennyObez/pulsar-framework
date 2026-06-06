@@ -23,6 +23,8 @@ use const JSON_UNESCAPED_SLASHES;
 
 /**
  * Displays the current Studio status and configuration.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class StudioStatusCommand extends Command

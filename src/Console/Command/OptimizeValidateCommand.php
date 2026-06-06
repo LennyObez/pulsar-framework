@@ -28,6 +28,8 @@ use function sprintf;
  * 5. Exit 0 on success, 1 on failure
  *
  * Usage: optimize:validate [--strict] [--encrypt]
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class OptimizeValidateCommand extends Command

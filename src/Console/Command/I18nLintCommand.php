@@ -16,6 +16,8 @@ use function strtoupper;
 
 /**
  * Validates translation catalogs for common issues.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class I18nLintCommand extends Command
 {

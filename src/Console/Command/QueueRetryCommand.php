@@ -16,6 +16,8 @@ use function sprintf;
 
 /**
  * Retry a single failed job or all failed jobs from the dead-letter queue.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class QueueRetryCommand extends Command
 {

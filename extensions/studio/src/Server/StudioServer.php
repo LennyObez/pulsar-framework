@@ -14,6 +14,8 @@ use function sprintf;
  *
  * Manages the lifecycle of a `php -S` process that serves
  * the Studio UI and API endpoints.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class StudioServer

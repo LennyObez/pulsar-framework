@@ -16,6 +16,8 @@ use Pulsar\Console\OutputInterface;
  * Removes all framework cache files.
  *
  * Usage: optimize:clear
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class OptimizeClearCommand extends Command

@@ -14,6 +14,8 @@ use Pulsar\Observability\Context\CorrelationContext;
  * When the HTTP client subsystem is implemented, its decorator should
  * call record() for each outgoing request. Studio's collector
  * then forwards the event to storage.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 interface HttpClientInstrumentationInterface

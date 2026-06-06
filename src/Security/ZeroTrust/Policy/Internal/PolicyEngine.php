@@ -37,6 +37,8 @@ use function usort;
  *
  * Rules are evaluated in priority order (highest first). The first matching
  * rule whose requirements are fully satisfied determines the decision.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class PolicyEngine implements PolicyEngineInterface

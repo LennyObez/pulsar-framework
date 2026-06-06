@@ -18,6 +18,8 @@ use function usort;
 
 /**
  * In-memory marketplace registry for testing and local development.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class InMemoryMarketplaceRegistry implements MarketplaceRegistryInterface

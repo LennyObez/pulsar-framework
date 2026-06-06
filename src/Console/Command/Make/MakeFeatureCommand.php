@@ -19,6 +19,8 @@ use function sprintf;
 
 /**
  * Scaffold a vertical feature slice within a module.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class MakeFeatureCommand extends Command
 {

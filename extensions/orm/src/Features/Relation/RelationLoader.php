@@ -24,6 +24,8 @@ use function is_scalar;
  * Loads entity relations based on a FetchPlan.
  *
  * No lazy loading: all relations must be declared upfront.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class RelationLoader

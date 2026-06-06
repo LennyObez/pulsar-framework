@@ -26,6 +26,8 @@ use function class_exists;
  * signature — boots unchanged.
  *
  * Permissive when the CMS extension is not installed.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class PluginSignatureRequiredCheck implements DeployCheckInterface

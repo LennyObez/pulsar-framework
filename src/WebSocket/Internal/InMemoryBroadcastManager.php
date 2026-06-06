@@ -19,6 +19,8 @@ use const JSON_THROW_ON_ERROR;
  *
  * Sends messages directly to connections tracked in the channel manager.
  * For multi-server, use a Redis-backed adapter instead.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class InMemoryBroadcastManager implements BroadcastManagerInterface

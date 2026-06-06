@@ -25,6 +25,8 @@ use const JSON_THROW_ON_ERROR;
  * Only INSERT operations are performed; rows are never updated or deleted.
  * The full transition history serves as the audit trail and enables
  * state reconstruction.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Use TransitionLogInterface port')]
 final readonly class DatabaseTransitionLog implements TransitionLogInterface

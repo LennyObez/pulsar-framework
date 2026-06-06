@@ -17,6 +17,8 @@ use function sprintf;
 
 /**
  * Run all due scheduled jobs.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class SchedulerTickCommand extends Command
 {

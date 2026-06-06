@@ -17,6 +17,8 @@ use function random_int;
  * Stores used TOTP time steps in a shared SQLite database keyed by
  * (identity_id, purpose, time_step), providing cross-process replay
  * protection. Uses WAL mode for concurrent access from multiple PHP-FPM workers.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class SqliteTotpReplayGuard implements TotpReplayGuardInterface

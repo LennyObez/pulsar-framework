@@ -22,6 +22,8 @@ use function sprintf;
  * progress), the job is rejected.
  *
  * Jobs without an idempotency key pass through without dedup checks.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Deduplication middleware is an implementation detail of the queue system')]
 final readonly class PreventDuplicates implements JobMiddlewareInterface

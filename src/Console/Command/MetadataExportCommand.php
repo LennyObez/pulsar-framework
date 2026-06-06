@@ -23,6 +23,8 @@ use const JSON_UNESCAPED_SLASHES;
  * Exports project metadata as JSON to stdout.
  *
  * Applies SensitiveDataScrubber to all output. Warnings are written to stderr.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class MetadataExportCommand extends Command
 {

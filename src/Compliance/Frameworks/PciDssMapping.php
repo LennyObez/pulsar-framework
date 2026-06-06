@@ -13,6 +13,8 @@ use Pulsar\Compliance\ControlStatus;
  * Registers PCI-DSS controls into the catalog.
  *
  * Maps Pulsar framework features to PCI-DSS requirements they provide coverage for.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Framework-internal control registration; use ControlCatalog for public access')]
 final class PciDssMapping

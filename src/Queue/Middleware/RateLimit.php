@@ -21,6 +21,8 @@ use function sprintf;
  * cannot be acquired within the configured timeout, the job is rejected.
  *
  * Rate limiting is queue-scoped: each queue has its own lock resource.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Rate limiting middleware is an implementation detail of the queue system')]
 final readonly class RateLimit implements JobMiddlewareInterface
