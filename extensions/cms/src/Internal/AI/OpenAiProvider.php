@@ -25,6 +25,9 @@ use const JSON_UNESCAPED_UNICODE;
  *
  * Works with OpenAI, Azure OpenAI, and any API that follows the
  * OpenAI chat completions format (e.g., Ollama, vLLM, LiteLLM).
+ *
+ * @psalm-api Bound to LlmProviderInterface in the CMS AI service provider;
+ *            Psalm cannot trace the string-keyed interface dispatch.
  */
 #[Internal(reason: 'LLM provider implementation — use LlmProviderInterface')]
 final readonly class OpenAiProvider implements LlmProviderInterface

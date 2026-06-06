@@ -24,6 +24,10 @@ use function json_decode;
 
 use const JSON_THROW_ON_ERROR;
 
+/**
+ * @psalm-api Registered with OAuthProviderRegistry during social-auth wiring;
+ *            Psalm cannot trace the registry's string-keyed dispatch.
+ */
 #[Internal]
 final readonly class GitHubProvider implements OAuthProviderInterface
 {
