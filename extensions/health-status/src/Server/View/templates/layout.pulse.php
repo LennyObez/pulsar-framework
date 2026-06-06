@@ -1,10 +1,12 @@
 <?php
-/** @var mixed $rawTitle */
-$rawTitle = $title ?? null;
-/** @var mixed $rawContent */
-$rawContent = $content ?? null;
-$typedTitle = is_string($rawTitle) && $rawTitle !== '' ? $rawTitle : 'System Status';
-$typedContent = is_string($rawContent) ? $rawContent : '';
+/**
+ * Variables injected by the template engine at render time.
+ *
+ * @var string $title
+ * @var string $content
+ */
+$typedTitle = $title !== '' ? $title : 'System Status';
+$typedContent = $content;
 $timestamp = date('Y-m-d\TH:i:sP');
 $displayTime = date('M j, Y H:i:s T');
 ?>
