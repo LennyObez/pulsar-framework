@@ -24,6 +24,8 @@ use function substr;
  * irreversible: original data cannot be recovered from logs.
  *
  * Supports controls for PCI DSS Requirement 3.4 (render PAN unreadable).
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Compliance formatter implementation detail')]
 final class PciDssLogFormatter implements ComplianceLogFormatter

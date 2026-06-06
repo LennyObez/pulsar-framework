@@ -26,6 +26,8 @@ use function random_bytes;
  * suitable for traditional server-rendered applications. Guest carts
  * are stored under a session key and migrated to the user's key on
  * authentication via {@see mergeGuestCart()}.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Session-based cart persistence; implementation detail')]
 final readonly class SessionCartService implements CartServiceInterface

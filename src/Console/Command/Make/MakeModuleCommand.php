@@ -19,6 +19,8 @@ use function sprintf;
 
 /**
  * Scaffold a new module with Contracts/Internal separation, config DTO, and tests.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class MakeModuleCommand extends Command
 {

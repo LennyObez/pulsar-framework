@@ -14,6 +14,8 @@ use Pulsar\Extension\Studio\Console\Event\EventVersion;
  *
  * Records supervisor self-healing actions (worker recycle, stuck job
  * recovery, cache purge, connection reset) for observability.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class SupervisorPayload implements ConsoleEvent

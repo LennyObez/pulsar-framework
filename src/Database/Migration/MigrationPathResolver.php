@@ -19,6 +19,8 @@ use const DIRECTORY_SEPARATOR;
  * only for extensions that successfully registered or booted (not failed ones).
  * This prevents disabled or broken extensions from contributing migrations
  * that could conflict with project schemas.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Wired in composition root; use MigrationPathResolverInterface')]
 final readonly class MigrationPathResolver implements MigrationPathResolverInterface

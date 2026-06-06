@@ -26,6 +26,8 @@ use const JSON_UNESCAPED_UNICODE;
 
 /**
  * Extracts translation keys from PHP source files.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class I18nExtractCommand extends Command
 {

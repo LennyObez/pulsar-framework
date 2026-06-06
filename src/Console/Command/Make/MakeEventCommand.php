@@ -20,6 +20,8 @@ use function sprintf;
 
 /**
  * Scaffold an event class.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class MakeEventCommand extends Command
 {

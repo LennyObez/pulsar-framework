@@ -30,6 +30,8 @@ use function sprintf;
 
 /**
  * Displays registered routes in table format.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class ShowRoutesCommand extends Command
 {

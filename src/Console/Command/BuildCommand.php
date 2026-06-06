@@ -65,6 +65,8 @@ use const PHP_VERSION;
  *
  * Replaces `pulsar optimize` as the canonical production build command.
  * Produces content-addressed artifacts: same input always generates byte-identical output.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class BuildCommand extends Command

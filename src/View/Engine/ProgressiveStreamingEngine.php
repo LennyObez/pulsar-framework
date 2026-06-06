@@ -33,6 +33,8 @@ use const EXTR_SKIP;
  * This approach is essential for large pages where the full render
  * may take significant time: the client starts receiving HTML
  * immediately rather than waiting for complete server-side rendering.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Streaming engine is an implementation detail; use via TemplateEngineInterface')]
 final readonly class ProgressiveStreamingEngine

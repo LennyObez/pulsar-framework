@@ -21,6 +21,8 @@ use function version_compare;
  * This command does not perform destructive in-place binary replacement.
  * Instead, it checks for available updates via the release checker and
  * provides the Composer command to run.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class SelfUpdateCommand extends Command
 {

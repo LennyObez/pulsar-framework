@@ -27,6 +27,8 @@ use function rawurldecode;
  *
  * Used by RoadRunner adapter to bridge external PSR-7 workers to Pulsar's
  * internal HTTP types when needed (e.g., health endpoint responses).
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class PsrBridge implements PsrBridgeInterface

@@ -26,6 +26,8 @@ use const SODIUM_CRYPTO_SIGN_SECRETKEYBYTES;
 
 /**
  * CLI command to sign release artifacts with Ed25519.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'CLI command registration')]
 final class SignCommand extends Command

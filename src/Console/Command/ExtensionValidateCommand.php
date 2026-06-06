@@ -29,6 +29,8 @@ use const JSON_THROW_ON_ERROR;
  * and that referenced classes exist.
  *
  * Usage: extension:validate <path>
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class ExtensionValidateCommand extends Command

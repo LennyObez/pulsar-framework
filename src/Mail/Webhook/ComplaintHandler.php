@@ -19,6 +19,8 @@ use function json_decode;
  *
  * Logs the complaint for audit purposes. Downstream consumers can use
  * the result to trigger unsubscribe workflows.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class ComplaintHandler

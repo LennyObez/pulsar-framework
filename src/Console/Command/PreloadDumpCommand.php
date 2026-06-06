@@ -45,6 +45,8 @@ use const JSON_UNESCAPED_SLASHES;
  *   --strict   Fail if any classmap entry cannot be resolved (CI-friendly default)
  *   --lenient  Skip invalid entries with warnings instead of failing
  *   --no-meta  Suppress .meta.json sidecar generation
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class PreloadDumpCommand extends Command

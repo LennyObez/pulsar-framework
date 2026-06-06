@@ -30,6 +30,8 @@ use function version_compare;
  * database connectivity, master key presence/strength, config validity,
  * and Composer autoload freshness. Each check reports a pass/fail status
  * with an actionable fix suggestion on failure.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class DoctorCommand extends Command
 {

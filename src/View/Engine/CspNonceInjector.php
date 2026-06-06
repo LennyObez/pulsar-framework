@@ -19,6 +19,8 @@ use function preg_replace;
  * By performing this injection at compile-time rather than requiring manual
  * @csp_nonce directives, we ensure that every inline script and style tag
  * is automatically covered by the Content Security Policy.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'CSP injection is an engine implementation detail')]
 final readonly class CspNonceInjector

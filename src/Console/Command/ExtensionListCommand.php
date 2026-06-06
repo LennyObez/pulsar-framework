@@ -22,6 +22,8 @@ use function str_contains;
  * List installed extensions with status and version.
  *
  * Usage: extension:list [--filter=<pattern>]
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class ExtensionListCommand extends Command

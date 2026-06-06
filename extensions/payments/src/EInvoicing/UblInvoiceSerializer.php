@@ -26,6 +26,8 @@ use function sprintf;
  * - Invoice: urn:oasis:names:specification:ubl:schema:xsd:Invoice-2
  * - CAC: urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2
  * - CBC: urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Use InvoiceRendererInterface')]
 final readonly class UblInvoiceSerializer implements InvoiceRendererInterface

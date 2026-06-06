@@ -15,6 +15,8 @@ use Pulsar\Queue\QueueableInterface;
  * Queueable job that sends a Mailable through the mail manager.
  *
  * Used for asynchronous mail delivery via the queue system.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class SendMailJob implements QueueableInterface

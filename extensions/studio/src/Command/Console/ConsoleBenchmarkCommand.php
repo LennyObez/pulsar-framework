@@ -48,6 +48,8 @@ use const PHP_VERSION;
 
 /**
  * Studio benchmark command: runs the profile matrix and emits events.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class ConsoleBenchmarkCommand extends Command

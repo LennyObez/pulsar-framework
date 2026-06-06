@@ -12,5 +12,7 @@ use Pulsar\Database\Migration\MigrationInterface as BaseMigrationInterface;
  * The canonical location is `Pulsar\Database\Migration\MigrationInterface`.
  * This alias exists so that `use Pulsar\Database\MigrationInterface` works
  * as developers commonly expect.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 interface MigrationInterface extends BaseMigrationInterface {}

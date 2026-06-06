@@ -36,6 +36,8 @@ use function time;
  *     created_at  INT NOT NULL,
  *     reserved_at INT DEFAULT NULL
  *   )
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Implementation detail; use QueueDriverInterface contract')]
 final readonly class DatabaseDriver implements QueueDriverInterface

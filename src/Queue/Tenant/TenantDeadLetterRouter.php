@@ -19,6 +19,8 @@ use function str_starts_with;
  * If the envelope has a tenantId and the queue is a DLQ (starts with "dlq"),
  * the queue name is rewritten to `dlq:tenant:{tenantId}` to maintain
  * tenant isolation in dead letter processing.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Tenant DLQ routing is an implementation detail of the queue system')]
 final readonly class TenantDeadLetterRouter implements JobMiddlewareInterface

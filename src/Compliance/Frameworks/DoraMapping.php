@@ -16,6 +16,7 @@ use Pulsar\Compliance\ControlStatus;
  * requirements for financial entities.
  *
  * @see https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32022R2554
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Framework-internal control registration; use ControlCatalog for public access')]
 final class DoraMapping

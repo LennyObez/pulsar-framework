@@ -18,6 +18,8 @@ use function sprintf;
 
 /**
  * Displays the current supervisor configuration and policy status.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class GuardianSupervisorStatusCommand extends Command

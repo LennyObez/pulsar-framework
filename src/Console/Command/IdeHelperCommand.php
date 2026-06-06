@@ -30,6 +30,8 @@ use function sprintf;
  * file with type-hinted stubs for IDE autocompletion.
  *
  * Usage: ide:helper [--output=_ide_helper.php]
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class IdeHelperCommand extends Command

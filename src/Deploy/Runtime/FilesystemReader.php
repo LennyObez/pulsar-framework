@@ -11,6 +11,8 @@ use function is_readable;
 
 /**
  * Default implementation delegating to real filesystem functions.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class FilesystemReader implements FilesystemReaderInterface

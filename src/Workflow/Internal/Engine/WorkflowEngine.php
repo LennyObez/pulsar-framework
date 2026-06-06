@@ -44,6 +44,8 @@ use function is_string;
  *
  * Coordinates guard evaluation, transition listeners, state persistence with
  * optimistic locking, audit logging, and domain event dispatching.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Use WorkflowEngineInterface as the public API')]
 final readonly class WorkflowEngine implements WorkflowEngineInterface

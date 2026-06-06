@@ -14,6 +14,8 @@ use function sprintf;
 
 /**
  * Print the command to stop the Docker development environment.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class DevStopCommand extends Command
 {

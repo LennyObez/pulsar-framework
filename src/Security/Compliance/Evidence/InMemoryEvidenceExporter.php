@@ -23,6 +23,8 @@ use function json_encode;
  * Stores exports in memory and generates SHA-256 hash manifests for
  * integrity verification. Reports encrypted=false since no real
  * encryption is applied.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Test/dev evidence exporter implementation')]
 final class InMemoryEvidenceExporter implements EvidenceExporterInterface

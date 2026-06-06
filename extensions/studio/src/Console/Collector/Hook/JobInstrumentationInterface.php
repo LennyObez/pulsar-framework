@@ -14,6 +14,8 @@ use Pulsar\Observability\Context\CorrelationContext;
  * When the queue subsystem is implemented, its worker decorator should
  * call record() for each job state transition. Studio's collector
  * then forwards the event to storage.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 interface JobInstrumentationInterface

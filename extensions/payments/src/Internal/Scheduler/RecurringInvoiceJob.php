@@ -26,6 +26,8 @@ use function sprintf;
  *
  * The job is idempotent: invoices are only generated for subscriptions
  * whose currentPeriodEnd matches today's date exactly.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Scheduled recurring billing job')]
 final readonly class RecurringInvoiceJob

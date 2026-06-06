@@ -20,6 +20,8 @@ use Pulsar\Security\ZeroTrust\Signal\SignalProviderInterface;
  * Collects fresh signals from all providers and passes them through the policy
  * engine to detect trust degradation mid-session. The caller is responsible
  * for checking whether re-verification is needed based on timing.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Session-level verification, wired by composition root')]
 final class ContinuousVerificationManager implements ContinuousVerificationInterface

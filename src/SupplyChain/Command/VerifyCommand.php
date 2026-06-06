@@ -25,6 +25,8 @@ use const SODIUM_CRYPTO_SIGN_PUBLICKEYBYTES;
 
 /**
  * CLI command to verify release artifact signatures.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'CLI command registration')]
 final class VerifyCommand extends Command

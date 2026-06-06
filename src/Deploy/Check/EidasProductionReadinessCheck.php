@@ -28,6 +28,8 @@ use function sprintf;
  * The gate is permissive when the extension is not installed (no
  * EidasConfig in the container) so applications that do not use eIDAS
  * are unaffected.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class EidasProductionReadinessCheck implements DeployCheckInterface

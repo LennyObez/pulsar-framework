@@ -18,6 +18,8 @@ use function usort;
  * Designed for integration with the Studio database explorer: slow queries
  * are collected per-request and surfaced as alerts in the UI. The detector
  * resets between requests for persistent runtime safety.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class SlowQueryAlert

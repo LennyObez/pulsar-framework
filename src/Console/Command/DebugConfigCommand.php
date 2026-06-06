@@ -37,6 +37,8 @@ use function str_contains;
  * Accepts a list of known config class names and resolves each from the repository.
  *
  * Usage: debug:config [--filter=<pattern>]
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class DebugConfigCommand extends Command

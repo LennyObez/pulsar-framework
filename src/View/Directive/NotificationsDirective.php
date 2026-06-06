@@ -14,6 +14,8 @@ use Pulsar\Api\Internal;
  *
  * Compiles to a PHP block that queries the DatabaseNotificationRepository
  * for unread notifications and renders a dropdown bell component.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Directive implementation detail')]
 final readonly class NotificationsDirective implements DirectiveInterface

@@ -17,6 +17,8 @@ use function sprintf;
  *
  * Renders invoices as clean, printable HTML that can be converted
  * to PDF using a headless browser or wkhtmltopdf.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class PdfInvoiceRenderer implements InvoiceRendererInterface

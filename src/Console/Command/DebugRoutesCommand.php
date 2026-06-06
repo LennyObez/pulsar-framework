@@ -33,6 +33,8 @@ use function strtoupper;
  *
  * Shows more detail than show:routes, including named middleware,
  * domain constraints, and parameter bindings.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class DebugRoutesCommand extends Command

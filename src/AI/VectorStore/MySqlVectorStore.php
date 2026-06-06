@@ -37,6 +37,8 @@ use const JSON_UNESCAPED_UNICODE;
  *     metadata JSON NOT NULL DEFAULT ('{}'),
  *     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
  * );
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'VectorStore implementation; use VectorStoreInterface')]
 final readonly class MySqlVectorStore implements VectorStoreInterface

@@ -24,6 +24,8 @@ use function strtoupper;
  * Usage: docs [topic]
  *   Without a topic, lists all available documentation files.
  *   With a topic, shows its path (usable with --open to launch a browser).
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class DocsCommand extends Command

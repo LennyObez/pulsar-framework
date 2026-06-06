@@ -38,6 +38,8 @@ use const JSON_UNESCAPED_UNICODE;
  * );
  *
  * CREATE INDEX ON {table} USING ivfflat (embedding {operator}) WITH (lists = 100);
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'VectorStore implementation; use VectorStoreInterface')]
 final readonly class PgVectorStore implements VectorStoreInterface

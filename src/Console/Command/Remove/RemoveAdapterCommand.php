@@ -17,6 +17,8 @@ use function sprintf;
 
 /**
  * Remove a scaffolded adapter and its test from a module.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class RemoveAdapterCommand extends Command
 {

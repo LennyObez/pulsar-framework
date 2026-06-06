@@ -22,6 +22,8 @@ use function time;
  *
  * Mailgun signs webhooks with HMAC-SHA256 using the signing key.
  * The signature is computed over the concatenation of timestamp + token.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class MailgunWebhookVerifier implements WebhookVerifierInterface

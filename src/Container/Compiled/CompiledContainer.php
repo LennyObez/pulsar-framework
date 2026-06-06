@@ -27,6 +27,8 @@ use function in_array;
  * Generated compiled containers extend this class and provide a
  * $methodMap of service IDs to factory method names. All mutation
  * methods throw ContainerException: compiled containers are read-only.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 abstract class CompiledContainer implements AdvancedContainerInterface

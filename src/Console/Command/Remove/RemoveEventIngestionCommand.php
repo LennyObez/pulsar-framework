@@ -16,6 +16,8 @@ use function sprintf;
 
 /**
  * Remove a scaffolded event ingestion pipeline and its associated files.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class RemoveEventIngestionCommand extends Command
 {

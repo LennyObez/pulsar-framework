@@ -14,6 +14,8 @@ use function time;
  * In-memory webhook deduplication store for testing and single-process use.
  *
  * Keys are formatted as "{tenantId}:{eventId}" for tenant isolation.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class InMemoryDeduplicationStore implements WebhookDeduplicationStoreInterface

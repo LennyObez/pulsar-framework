@@ -24,6 +24,8 @@ use function sprintf;
  * Detects unauthorized modifications to vendor/ without updating
  * the lock file: a supply chain integrity control required by
  * DORA Art.28 and NIS2 Art.21(d).
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class DependencyIntegrityCheck implements DeployCheckInterface

@@ -23,6 +23,8 @@ use function is_string;
  * For each service whose concrete class has constructor parameters annotated
  * with #[TaggedIterator], this pass rewrites the binding to a factory that
  * collects and injects the tagged services at resolution time.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class ResolveTaggedIteratorPass implements CompilerPassInterface

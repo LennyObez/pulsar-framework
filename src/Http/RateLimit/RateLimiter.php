@@ -22,6 +22,8 @@ use function time;
  * sweep the entire `$hits` map every `GC_INTERVAL_SECONDS` so the
  * footprint stays bounded by the active-key set rather than the
  * lifetime-distinct-key set.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class RateLimiter implements RateLimiterInterface

@@ -13,6 +13,8 @@ use function sprintf;
 /**
  * Verifies that available disk space on the target path meets the
  * configured minimum threshold.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class DiskSpacePreflightCheck implements PreflightCheckInterface

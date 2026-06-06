@@ -36,6 +36,8 @@ use const DIRECTORY_SEPARATOR;
  *
  * Requires the --confirm flag as a safety gate to prevent accidental
  * manifest regeneration. All repair operations are logged to the audit trail.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class IntegrityRepairCommand extends Command
 {

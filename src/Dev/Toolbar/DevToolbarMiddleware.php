@@ -22,6 +22,8 @@ use function str_replace;
  * Measures request processing time, collects runtime metrics, and injects
  * the toolbar HTML before the closing `</body>` tag. Non-HTML responses
  * and production requests are passed through untouched.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class DevToolbarMiddleware implements MiddlewareInterface

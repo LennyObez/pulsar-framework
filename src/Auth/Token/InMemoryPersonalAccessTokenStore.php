@@ -14,6 +14,8 @@ use function hash_equals;
  *
  * Suitable for testing and development. Production deployments
  * should use a database-backed implementation.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class InMemoryPersonalAccessTokenStore implements PersonalAccessTokenStoreInterface

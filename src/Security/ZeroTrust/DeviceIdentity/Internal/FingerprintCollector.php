@@ -21,6 +21,8 @@ use function trim;
  * Confidence is capped at 0.3 because fingerprints are easily spoofed.
  *
  * All hashing via KeyRingInterface (Finding B).
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class FingerprintCollector

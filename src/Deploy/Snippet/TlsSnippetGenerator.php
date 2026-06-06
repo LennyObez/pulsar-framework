@@ -13,6 +13,8 @@ use function implode;
  *
  * The output is a generic, commented configuration for TLS termination
  * that can be adapted to any web server or proxy. No vendor product names are used.
+ *
+ * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class TlsSnippetGenerator
