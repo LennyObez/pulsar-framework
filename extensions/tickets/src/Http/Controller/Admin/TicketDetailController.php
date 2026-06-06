@@ -27,6 +27,9 @@ use function trim;
 final readonly class TicketDetailController
 {
     use RendersAdminView;
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function __construct(
         private TicketRepositoryInterface $ticketRepository,
@@ -38,6 +41,7 @@ final readonly class TicketDetailController
 
     /**
      * GET /admin/tickets/{id}: Full ticket view with messages.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function show(ServerRequestInterface $request): Response
     {
@@ -93,6 +97,7 @@ final readonly class TicketDetailController
 
     /**
      * POST /admin/tickets/{id}/assign: Assign ticket to an agent.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function assign(ServerRequestInterface $request): Response
     {
@@ -121,6 +126,7 @@ final readonly class TicketDetailController
 
     /**
      * PUT /admin/tickets/{id}/status: Change ticket status.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function changeStatus(ServerRequestInterface $request): Response
     {
@@ -150,6 +156,7 @@ final readonly class TicketDetailController
 
     /**
      * PUT /admin/tickets/{id}/priority: Change ticket priority.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function changePriority(ServerRequestInterface $request): Response
     {
@@ -179,6 +186,7 @@ final readonly class TicketDetailController
 
     /**
      * POST /admin/tickets/{id}/messages: Add a public reply.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function addMessage(ServerRequestInterface $request): Response
     {
@@ -212,6 +220,7 @@ final readonly class TicketDetailController
 
     /**
      * POST /admin/tickets/{id}/notes: Add an internal note.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function addNote(ServerRequestInterface $request): Response
     {
@@ -246,6 +255,7 @@ final readonly class TicketDetailController
 
     /**
      * POST /admin/tickets/{id}/escalate: Escalate the ticket.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function escalate(ServerRequestInterface $request): Response
     {

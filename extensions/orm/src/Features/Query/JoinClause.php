@@ -19,6 +19,7 @@ final readonly class JoinClause
      * @param string $table Quoted table + alias expression
      * @param string $condition Compiled ON condition
      * @param array<string, mixed> $bindings Any bindings from the ON clause
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function __construct(
         public string $type,

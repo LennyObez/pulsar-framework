@@ -21,12 +21,16 @@ use function max;
 #[Internal(reason: 'Forum REST API controller; implementation detail')]
 final readonly class NotificationApiController
 {
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
     public function __construct(
         private ForumNotificationRepositoryInterface $notificationRepository,
     ) {}
 
     /**
      * GET /api/v1/forum/notifications: Paginated notifications for the authenticated user.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function list(ServerRequestInterface $request): Response
     {
@@ -61,6 +65,7 @@ final readonly class NotificationApiController
 
     /**
      * PATCH /api/v1/forum/notifications/{id}/read: Mark a single notification as read.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function markRead(ServerRequestInterface $request, string $id): Response
     {
@@ -79,6 +84,7 @@ final readonly class NotificationApiController
 
     /**
      * POST /api/v1/forum/notifications/read-all: Mark all notifications as read.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function markAllRead(ServerRequestInterface $request): Response
     {
@@ -91,6 +97,7 @@ final readonly class NotificationApiController
 
     /**
      * GET /api/v1/forum/notifications/unread-count: Unread notification count.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function unreadCount(ServerRequestInterface $request): Response
     {

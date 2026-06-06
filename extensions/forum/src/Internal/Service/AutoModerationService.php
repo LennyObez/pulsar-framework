@@ -56,6 +56,7 @@ final readonly class AutoModerationService
      *
      * New users with a reputation score below the review threshold have
      * their posts held for moderator approval before becoming visible.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function shouldQueueForReview(ForumProfile $author): bool
     {
@@ -67,6 +68,7 @@ final readonly class AutoModerationService
      *
      * Content that accumulates reports from 3 or more unique reporters
      * is automatically hidden pending moderator review.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function shouldAutoHide(string $targetType, string $targetId): bool
     {
@@ -84,6 +86,7 @@ final readonly class AutoModerationService
      *
      * Users with reputation below the URL threshold are limited to a
      * maximum number of URLs per post to prevent link spam.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function isUrlLimitExceeded(ForumProfile $author, string $body): bool
     {
@@ -104,6 +107,7 @@ final readonly class AutoModerationService
      *
      * Compares the body against the author's posts created since the given timestamp
      * using similarity analysis. Posts with 85%+ similarity are flagged as duplicates.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function isDuplicate(string $authorId, string $body, DateTimeImmutable $since): bool
     {
@@ -126,6 +130,7 @@ final readonly class AutoModerationService
      *
      * Low-reputation users (score below 10) must wait at least 5 minutes
      * between consecutive posts to prevent flooding.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function isPostingTooFast(ForumProfile $author, DateTimeImmutable $lastPostAt): bool
     {

@@ -22,6 +22,9 @@ use function min;
 #[Internal(reason: 'Forum REST API controller; implementation detail')]
 final readonly class TagApiController
 {
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
     public function __construct(
         private TagRepositoryInterface $tagRepository,
         private ThreadRepositoryInterface $threadRepository,
@@ -29,6 +32,7 @@ final readonly class TagApiController
 
     /**
      * GET /api/v1/forum/tags: List all tags ordered by usage.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function index(): Response
     {
@@ -47,6 +51,7 @@ final readonly class TagApiController
 
     /**
      * GET /api/v1/forum/tags/{slug}: Show a tag and its threads.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function show(ServerRequestInterface $request, string $slug): Response
     {

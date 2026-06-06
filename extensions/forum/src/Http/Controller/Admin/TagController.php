@@ -23,6 +23,9 @@ use function is_string;
 final readonly class TagController
 {
     use RendersAdminView;
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function __construct(
         private TagRepositoryInterface $tagRepository,
@@ -33,6 +36,7 @@ final readonly class TagController
 
     /**
      * GET /admin/forum/tags: List all tags.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function index(ServerRequestInterface $request): Response
     {
@@ -50,6 +54,7 @@ final readonly class TagController
 
     /**
      * GET /admin/forum/tags/{id}: Show a single tag.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function show(ServerRequestInterface $request, string $id): Response
     {
@@ -69,6 +74,7 @@ final readonly class TagController
 
     /**
      * POST /admin/forum/tags: Create a new tag.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function create(ServerRequestInterface $request): Response
     {
@@ -100,6 +106,7 @@ final readonly class TagController
 
     /**
      * PUT /admin/forum/tags/{id}: Update a tag.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function update(ServerRequestInterface $request, string $id): Response
     {
@@ -139,6 +146,7 @@ final readonly class TagController
 
     /**
      * DELETE /admin/forum/tags/{id}: Delete a tag.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function delete(ServerRequestInterface $request, string $id): Response
     {

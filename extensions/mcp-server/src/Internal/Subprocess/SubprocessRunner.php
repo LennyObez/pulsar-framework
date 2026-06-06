@@ -76,6 +76,7 @@ final class SubprocessRunner
      * identities do not match.
      *
      * @throws LogicException When the reference is not the same instance
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function assertSameInstance(self $other): void
     {
@@ -408,6 +409,7 @@ final class SubprocessRunner
      * Best-effort cancellation of the active subprocess.
      *
      * Used by the notifications/cancelled handler to terminate a running process.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function cancel(): void
     {

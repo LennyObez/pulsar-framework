@@ -31,6 +31,9 @@ final readonly class SavedViewsController
     public function __construct(
         private SavedViewsHandler $handler,
     ) {}
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function list(string $resource): Response
     {
@@ -53,6 +56,9 @@ final readonly class SavedViewsController
             ),
         ]);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function store(ServerRequestInterface $request, string $resource): Response
     {
@@ -106,6 +112,9 @@ final readonly class SavedViewsController
             $result->success ? ResponseStatus::Created->value : ResponseStatus::InternalServerError->value,
         );
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function delete(string $viewId): Response
     {

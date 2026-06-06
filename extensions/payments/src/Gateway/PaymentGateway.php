@@ -42,6 +42,9 @@ use Pulsar\Tenancy\TenantContext;
  */
 final readonly class PaymentGateway implements PaymentGatewayInterface
 {
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
     public function __construct(
         private CreatePaymentIntentHandler $createHandler,
         private CapturePaymentIntentHandler $captureHandler,

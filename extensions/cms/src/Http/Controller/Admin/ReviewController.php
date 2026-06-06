@@ -33,6 +33,9 @@ final readonly class ReviewController extends AbstractAdminController
     ) {
         parent::__construct($templateEngine, $gate);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function index(ServerRequestInterface $request): Response
     {
@@ -59,6 +62,9 @@ final readonly class ReviewController extends AbstractAdminController
 
         return $this->respondWithView($request, 'admin.reviews.index', $data);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function approve(ServerRequestInterface $request, string $reviewId): Response
     {
@@ -96,6 +102,9 @@ final readonly class ReviewController extends AbstractAdminController
             'decided_at' => $review->decidedAt?->format('c'),
         ]);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function reject(ServerRequestInterface $request, string $reviewId): Response
     {

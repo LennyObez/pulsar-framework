@@ -21,6 +21,9 @@ use function array_map;
 final readonly class TicketSettingsController
 {
     use RendersAdminView;
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function __construct(
         private TicketsConfig $config,
@@ -30,6 +33,7 @@ final readonly class TicketSettingsController
 
     /**
      * GET /admin/tickets/settings: View current settings.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function show(ServerRequestInterface $request): Response
     {

@@ -23,6 +23,7 @@ final readonly class Expose
      * @param DataClassification $classification Data classification level for this field
      * @param list<string> $requiredPermissions Permissions required to see this field
      * @param list<string> $requiredRoles Roles required to see this field (any match grants access)
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function __construct(
         public string $as = '',

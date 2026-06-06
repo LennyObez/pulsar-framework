@@ -21,6 +21,9 @@ final readonly class CustomEventController
     public function __construct(
         private CustomEventServiceInterface $customEventService,
     ) {}
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function names(ServerRequestInterface $request): Response
     {
@@ -44,6 +47,9 @@ final readonly class CustomEventController
 
         return Response::json(['data' => $data]);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function properties(ServerRequestInterface $request): Response
     {
@@ -70,6 +76,9 @@ final readonly class CustomEventController
 
         return Response::json(['data' => $data]);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function timeseries(ServerRequestInterface $request): Response
     {

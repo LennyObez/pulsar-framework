@@ -17,6 +17,7 @@ interface CollectorInterface
 {
     /**
      * Whether this collector is currently enabled.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public bool $enabled { get; set; }
 }

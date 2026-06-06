@@ -18,6 +18,9 @@ use Pulsar\View\Engine\TemplateEngineInterface;
 final readonly class TicketDashboardController
 {
     use RendersAdminView;
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function __construct(
         private TicketRepositoryInterface $ticketRepository,
@@ -27,6 +30,7 @@ final readonly class TicketDashboardController
 
     /**
      * GET /admin/tickets: Ticket dashboard with overview stats.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function index(ServerRequestInterface $request): Response
     {

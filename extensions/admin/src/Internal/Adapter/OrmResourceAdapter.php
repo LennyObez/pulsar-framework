@@ -25,6 +25,7 @@ final readonly class OrmResourceAdapter implements DataResourceInterface
      * @param list<ResourceOperation> $operations
      * @param list<BulkAction> $bulkActions
      * @param list<string> $exportableFields
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function __construct(
         private string $resourceName,

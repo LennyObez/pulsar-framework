@@ -33,6 +33,9 @@ use function min;
 #[Internal(reason: 'Forum REST API controller; implementation detail')]
 final readonly class ModerationApiController
 {
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
     public function __construct(
         private ThreadReportRepositoryInterface $threadReportRepository,
         private PostReportRepositoryInterface $postReportRepository,
@@ -42,6 +45,7 @@ final readonly class ModerationApiController
 
     /**
      * GET /api/v1/forum/moderation/reports: List reports by status.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function reports(ServerRequestInterface $request): Response
     {
@@ -97,6 +101,7 @@ final readonly class ModerationApiController
 
     /**
      * POST /api/v1/forum/moderation/reports/{id}/review: Review a report.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function reviewReport(ServerRequestInterface $request, string $id): Response
     {
@@ -160,6 +165,7 @@ final readonly class ModerationApiController
 
     /**
      * POST /api/v1/forum/moderation/ban/{userId}: Ban a user.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function ban(ServerRequestInterface $request, string $userId): Response
     {
@@ -211,6 +217,7 @@ final readonly class ModerationApiController
 
     /**
      * POST /api/v1/forum/moderation/unban/{userId}: Unban a user.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function unban(ServerRequestInterface $request, string $userId): Response
     {

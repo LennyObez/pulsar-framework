@@ -29,6 +29,9 @@ use function random_bytes;
 #[Internal]
 final readonly class CheckoutController
 {
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
     public function __construct(
         private PaymentGatewayInterface $gateway,
     ) {}
@@ -40,6 +43,7 @@ final readonly class CheckoutController
      *
      * Expected JSON body:
      *   { "amount": 1000, "currency": "USD", "method": "card" }
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function create(ServerRequestInterface $request): Response
     {
@@ -108,6 +112,7 @@ final readonly class CheckoutController
      * POST /payments/checkout/{intentId}/capture
      *
      * Capture a previously created payment intent.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function capture(ServerRequestInterface $request): Response
     {

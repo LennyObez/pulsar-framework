@@ -25,6 +25,9 @@ use function trim;
 final readonly class TicketCategoryController
 {
     use RendersAdminView;
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function __construct(
         private TicketCategoryRepositoryInterface $categoryRepository,
@@ -34,6 +37,7 @@ final readonly class TicketCategoryController
 
     /**
      * GET /admin/tickets/categories: List all categories.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function index(ServerRequestInterface $request): Response
     {
@@ -58,6 +62,7 @@ final readonly class TicketCategoryController
 
     /**
      * POST /admin/tickets/categories: Create a new category.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function create(ServerRequestInterface $request): Response
     {
@@ -100,6 +105,7 @@ final readonly class TicketCategoryController
 
     /**
      * PUT /admin/tickets/categories/{id}: Update a category.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function update(ServerRequestInterface $request): Response
     {
@@ -146,6 +152,7 @@ final readonly class TicketCategoryController
 
     /**
      * DELETE /admin/tickets/categories/{id}: Delete a category.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function delete(ServerRequestInterface $request): Response
     {

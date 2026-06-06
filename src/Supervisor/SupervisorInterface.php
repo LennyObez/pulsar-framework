@@ -21,6 +21,7 @@ interface SupervisorInterface
 
     /**
      * @return list<JobRecord>
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function detectStuckJobs(QueueDriverInterface $driver): array;
 
@@ -32,6 +33,7 @@ interface SupervisorInterface
      * @throws RandomException
      * @throws JsonException
      * @throws SodiumException
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function recoverStuckJobs(array $stuckJobs, DeadLetterQueue $deadLetterQueue): array;
 

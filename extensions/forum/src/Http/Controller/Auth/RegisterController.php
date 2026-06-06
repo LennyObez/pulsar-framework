@@ -28,6 +28,9 @@ use const PASSWORD_BCRYPT;
 final readonly class RegisterController
 {
     use RendersForumView;
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function __construct(
         private ConnectionInterface $connection,
@@ -41,6 +44,7 @@ final readonly class RegisterController
 
     /**
      * GET /register: Show registration form.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function showForm(ServerRequestInterface $request): Response
     {
@@ -52,6 +56,7 @@ final readonly class RegisterController
 
     /**
      * POST /register: Process registration.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function register(ServerRequestInterface $request): Response
     {

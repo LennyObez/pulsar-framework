@@ -34,6 +34,9 @@ use function min;
 #[Internal(reason: 'Forum REST API controller; implementation detail')]
 final readonly class ThreadApiController
 {
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
     public function __construct(
         private ThreadRepositoryInterface $threadRepository,
         private ThreadSubscriptionRepositoryInterface $subscriptionRepository,
@@ -46,6 +49,7 @@ final readonly class ThreadApiController
 
     /**
      * GET /api/v1/forum/threads: List recent threads.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function index(ServerRequestInterface $request): Response
     {
@@ -67,6 +71,7 @@ final readonly class ThreadApiController
 
     /**
      * POST /api/v1/forum/threads: Create a new thread.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function create(ServerRequestInterface $request): Response
     {
@@ -136,6 +141,7 @@ final readonly class ThreadApiController
 
     /**
      * GET /api/v1/forum/threads/{id}: Show a single thread.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function show(string $id): Response
     {
@@ -150,6 +156,7 @@ final readonly class ThreadApiController
 
     /**
      * PUT /api/v1/forum/threads/{id}: Update a thread.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function update(ServerRequestInterface $request, string $id): Response
     {
@@ -189,6 +196,7 @@ final readonly class ThreadApiController
 
     /**
      * DELETE /api/v1/forum/threads/{id}: Soft delete a thread.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function delete(ServerRequestInterface $request, string $id): Response
     {
@@ -220,6 +228,7 @@ final readonly class ThreadApiController
 
     /**
      * POST /api/v1/forum/threads/{id}/lock: Lock a thread.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function lock(ServerRequestInterface $request, string $id): Response
     {
@@ -240,6 +249,7 @@ final readonly class ThreadApiController
 
     /**
      * POST /api/v1/forum/threads/{id}/pin: Pin a thread.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function pin(ServerRequestInterface $request, string $id): Response
     {
@@ -260,6 +270,7 @@ final readonly class ThreadApiController
 
     /**
      * POST /api/v1/forum/threads/{id}/subscribe: Subscribe to a thread.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function subscribe(ServerRequestInterface $request, string $id): Response
     {
@@ -294,6 +305,7 @@ final readonly class ThreadApiController
 
     /**
      * DELETE /api/v1/forum/threads/{id}/subscribe: Unsubscribe from a thread.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function unsubscribe(ServerRequestInterface $request, string $id): Response
     {

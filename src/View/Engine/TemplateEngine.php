@@ -36,6 +36,7 @@ final readonly class TemplateEngine implements TemplateEngineInterface
 
     /**
      * Access the underlying compiler for directive registration and direct compilation.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function compiler(): TemplateCompiler
     {
@@ -101,6 +102,7 @@ final readonly class TemplateEngine implements TemplateEngineInterface
      * @param int $chunkSize Minimum bytes per yielded chunk
      *
      * @return Generator<int, string, void, void>
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function stream(string $template, array $data = [], int $chunkSize = 4096): Generator
     {

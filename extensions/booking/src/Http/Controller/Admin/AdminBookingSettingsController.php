@@ -14,12 +14,16 @@ use Pulsar\Http\Message\Response;
 #[Internal]
 final readonly class AdminBookingSettingsController
 {
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
     public function __construct(
         private BookingConfig $config,
     ) {}
 
     /**
      * GET /admin/booking/settings: show current config.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function show(): Response
     {

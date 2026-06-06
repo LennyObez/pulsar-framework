@@ -25,6 +25,9 @@ final readonly class EcommerceController
     public function __construct(
         private EcommerceServiceInterface $ecommerceService,
     ) {}
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function summary(ServerRequestInterface $request): Response
     {
@@ -48,6 +51,9 @@ final readonly class EcommerceController
 
         return Response::json($data);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function products(ServerRequestInterface $request): Response
     {
@@ -74,6 +80,9 @@ final readonly class EcommerceController
 
         return Response::json(['data' => $data]);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function revenue(ServerRequestInterface $request): Response
     {

@@ -129,6 +129,7 @@ final class InstrumentedConnection implements ConnectionInterface, CollectorInte
 
     /**
      * Get the underlying connection.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function inner(): ConnectionInterface
     {

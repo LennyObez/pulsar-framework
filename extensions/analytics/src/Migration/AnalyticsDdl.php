@@ -18,14 +18,23 @@ use Pulsar\Database\Driver;
 #[Internal(reason: 'Migration helper; not part of the public analytics API')]
 final readonly class AnalyticsDdl
 {
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
     public function __construct(
         private ConnectionInterface $connection,
     ) {}
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function driverName(): string
     {
         return $this->connection->driver()->value;
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function driver(): Driver
     {

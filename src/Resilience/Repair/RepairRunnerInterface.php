@@ -9,6 +9,9 @@ use Pulsar\Api\Api;
 #[Api(since: '1.0.0')]
 interface RepairRunnerInterface
 {
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
     public function register(RepairJobInterface $job): void;
 
     /**
@@ -18,6 +21,7 @@ interface RepairRunnerInterface
 
     /**
      * @return list<RepairResult>
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function repairAll(): array;
 
@@ -25,6 +29,7 @@ interface RepairRunnerInterface
 
     /**
      * @return list<string>
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function names(): array;
 }

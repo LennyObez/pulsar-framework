@@ -27,6 +27,9 @@ use function is_string;
 #[Internal]
 final readonly class PayconiqWebhookHandler
 {
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
     public function __construct(
         private PayconiqConfig $config,
         private LoggerInterface $logger,

@@ -29,6 +29,9 @@ use const JSON_UNESCAPED_SLASHES;
 #[Internal]
 final readonly class ApiController
 {
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
     public function __construct(
         private EventStoreInterface $store,
     ) {}

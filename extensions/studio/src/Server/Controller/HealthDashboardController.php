@@ -39,6 +39,9 @@ use const PHP_VERSION;
 final readonly class HealthDashboardController
 {
     use RendersStudioView;
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function __construct(
         private EventStoreInterface $store,

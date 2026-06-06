@@ -22,6 +22,9 @@ final readonly class GoalController
     public function __construct(
         private GoalServiceInterface $goalService,
     ) {}
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function index(ServerRequestInterface $request): Response
     {
@@ -47,6 +50,9 @@ final readonly class GoalController
             ], $goals),
         ]);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function create(ServerRequestInterface $request): Response
     {
@@ -87,6 +93,9 @@ final readonly class GoalController
             'created_at' => $goal->createdAt->format('c'),
         ], 201);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function show(string $id): Response
     {
@@ -105,6 +114,9 @@ final readonly class GoalController
             'created_at' => $goal->createdAt->format('c'),
         ]);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function update(ServerRequestInterface $request, string $id): Response
     {
@@ -146,6 +158,9 @@ final readonly class GoalController
             'created_at' => $goal->createdAt->format('c'),
         ]);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function delete(string $id): Response
     {

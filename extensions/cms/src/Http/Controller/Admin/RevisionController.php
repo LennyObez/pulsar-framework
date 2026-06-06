@@ -34,6 +34,9 @@ final readonly class RevisionController extends AbstractAdminController
     ) {
         parent::__construct($templateEngine, $gate);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function index(ServerRequestInterface $request, string $contentId): Response
     {
@@ -65,6 +68,9 @@ final readonly class RevisionController extends AbstractAdminController
 
         return $this->respondWithView($request, 'admin.revisions.index', $data);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function diff(ServerRequestInterface $request): Response
     {
@@ -91,6 +97,9 @@ final readonly class RevisionController extends AbstractAdminController
             ], $diff->changes),
         ]);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function restore(ServerRequestInterface $request, string $contentId, string $revisionId): Response
     {

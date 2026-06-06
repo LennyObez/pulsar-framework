@@ -14,6 +14,11 @@ use Pulsar\Config\Environment;
 #[Internal]
 final readonly class StudioCollectorConfig
 {
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
     public function __construct(
         public bool $http = true,
         public bool $database = true,

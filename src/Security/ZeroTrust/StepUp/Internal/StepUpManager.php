@@ -86,6 +86,7 @@ final class StepUpManager
 
     /**
      * Mark a step-up as successfully completed, resetting the state.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function markSuccess(string $identityId, string $ruleName): void
     {
@@ -106,6 +107,7 @@ final class StepUpManager
 
     /**
      * Get the current state for an identity and rule (for inspection/testing).
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function getState(string $identityId, string $ruleName): ?StepUpState
     {

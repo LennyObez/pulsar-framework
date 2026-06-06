@@ -32,6 +32,7 @@ final readonly class CollaborationApiController
      * GET /api/v1/collaboration/{contentId}/state
      *
      * Returns the current CRDT document state and active collaboration sessions.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function getState(ServerRequestInterface $request): Response
     {
@@ -63,6 +64,7 @@ final readonly class CollaborationApiController
      *
      * Applies a CRDT state update from the client.
      * Body: {"update": "<base64>", "user_id": "<id>"}
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function applyUpdate(ServerRequestInterface $request): Response
     {
@@ -86,6 +88,7 @@ final readonly class CollaborationApiController
      *
      * Joins a collaboration session.
      * Body: {"user_id": "<id>", "user_name": "<name>"}
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function join(ServerRequestInterface $request): Response
     {
@@ -111,6 +114,7 @@ final readonly class CollaborationApiController
      *
      * Leaves a collaboration session.
      * Body: {"session_id": "<id>"}
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function leave(ServerRequestInterface $request): Response
     {
@@ -127,6 +131,7 @@ final readonly class CollaborationApiController
      *
      * Updates cursor/selection position for awareness.
      * Body: {"session_id": "<id>", "cursor_position": "...", "selection_range": "..."}
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function awareness(ServerRequestInterface $request): Response
     {

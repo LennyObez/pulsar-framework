@@ -34,6 +34,7 @@ final readonly class TranslationCompiler
      * @param string $locale Target locale code
      * @param string $domain Translation domain
      * @param bool $prettyPrint Whether to indent the JSON output
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function compile(string $locale, string $domain = 'messages', bool $prettyPrint = false): string
     {
@@ -79,6 +80,7 @@ final readonly class TranslationCompiler
      * Get the list of available keys for a locale and domain.
      *
      * @return list<string>
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function keys(string $locale, string $domain = 'messages'): array
     {

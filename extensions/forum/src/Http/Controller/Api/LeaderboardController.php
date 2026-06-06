@@ -21,12 +21,16 @@ use function min;
 #[Internal(reason: 'Forum REST API controller; implementation detail')]
 final readonly class LeaderboardController
 {
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
     public function __construct(
         private LeaderboardServiceInterface $leaderboardService,
     ) {}
 
     /**
      * GET /api/v1/forum/leaderboard: Get top users by reputation.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function index(ServerRequestInterface $request): Response
     {

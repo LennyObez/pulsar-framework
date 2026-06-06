@@ -75,6 +75,7 @@ final readonly class DatabaseEventStore implements EventStoreInterface
      *
      * Uses SELECT ... FOR UPDATE on PostgreSQL/MySQL for chain linearization.
      * Falls back to SQLite's implicit serialized writes within a transaction.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function storeWithChain(
         EventEnvelope $envelope,
@@ -274,6 +275,7 @@ final readonly class DatabaseEventStore implements EventStoreInterface
      * Get chain links for verification.
      *
      * @return list<array<string, mixed>>
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function chainLinks(int $limit = 0, int $offset = 0): array
     {

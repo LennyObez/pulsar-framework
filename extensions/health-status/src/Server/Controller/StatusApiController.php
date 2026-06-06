@@ -26,6 +26,9 @@ use function min;
 #[Internal]
 final readonly class StatusApiController
 {
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
     public function __construct(
         private HealthHistoryStoreInterface $store,
         private HealthCheckRunnerInterface $runner,
@@ -33,6 +36,7 @@ final readonly class StatusApiController
 
     /**
      * GET /_pulsar/status/api/current: current health as JSON.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function current(): Response
     {
@@ -46,6 +50,7 @@ final readonly class StatusApiController
 
     /**
      * GET /_pulsar/status/api/history: recent snapshots as JSON.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function history(ServerRequestInterface $request): Response
     {
@@ -69,6 +74,7 @@ final readonly class StatusApiController
 
     /**
      * GET /_pulsar/status/api/incidents: active + recent incidents as JSON.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function incidents(): Response
     {

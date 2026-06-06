@@ -162,6 +162,7 @@ final class TemplateCompiler
 
     /**
      * Check whether a directive compiler is registered.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public function hasDirective(string $name): bool

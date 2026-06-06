@@ -20,6 +20,9 @@ use function array_map;
 final readonly class TagPageController
 {
     use RendersForumView;
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function __construct(
         private TagRepositoryInterface $tagRepository,
@@ -33,6 +36,7 @@ final readonly class TagPageController
 
     /**
      * GET /tags: List all tags.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function index(ServerRequestInterface $request): Response
     {

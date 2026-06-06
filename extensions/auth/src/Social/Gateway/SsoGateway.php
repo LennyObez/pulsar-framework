@@ -22,6 +22,9 @@ use Pulsar\Extension\Auth\Social\Features\MapIdentity\MapIdentityRequest;
  */
 final readonly class SsoGateway implements SsoGatewayInterface
 {
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
     public function __construct(
         private ExchangeCodeHandler $exchangeHandler,
         private MapIdentityHandler $mapHandler,

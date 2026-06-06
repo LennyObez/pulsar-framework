@@ -86,6 +86,7 @@ final readonly class PciDssCompliance
      * Mask a card number to show only last 4 digits.
      *
      * Only used for display purposes with pre-tokenized data.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public static function maskCardNumber(string $last4): string

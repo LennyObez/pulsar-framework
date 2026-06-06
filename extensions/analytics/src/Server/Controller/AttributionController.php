@@ -22,6 +22,9 @@ final readonly class AttributionController
     public function __construct(
         private AttributionServiceInterface $attributionService,
     ) {}
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function calculate(ServerRequestInterface $request): Response
     {
@@ -66,6 +69,9 @@ final readonly class AttributionController
             ], $results),
         ]);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function compare(ServerRequestInterface $request): Response
     {

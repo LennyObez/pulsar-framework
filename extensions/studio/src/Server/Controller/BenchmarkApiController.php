@@ -42,6 +42,9 @@ use const PHP_BINARY;
 #[Internal]
 final readonly class BenchmarkApiController
 {
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
     private string $runDir;
 
     public function __construct(

@@ -34,6 +34,7 @@ final readonly class ConsentController
      * Grant analytics consent for the current visitor.
      *
      * POST /plsr/consent/grant
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function grant(ServerRequestInterface $request): Response
     {
@@ -48,6 +49,7 @@ final readonly class ConsentController
      * Revoke analytics consent for the current visitor.
      *
      * POST /plsr/consent/revoke
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function revoke(ServerRequestInterface $request): Response
     {
