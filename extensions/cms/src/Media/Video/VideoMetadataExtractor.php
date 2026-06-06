@@ -23,6 +23,9 @@ use const JSON_THROW_ON_ERROR;
  * Calls ffprobe as a subprocess with JSON output and maps the result
  * to a structured VideoMetadata DTO. Gracefully returns empty metadata
  * if ffprobe is unavailable.
+ *
+ * @psalm-api Resolved from the DI container by media upload pipelines;
+ *            not instantiated by name.
  */
 #[Internal(reason: 'Use VideoMetadata DTO directly for public API')]
 final readonly class VideoMetadataExtractor

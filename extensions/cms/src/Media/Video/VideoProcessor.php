@@ -18,6 +18,8 @@ use function unlink;
  *
  * Converts source video files to target presets (resolution, bitrate, codec).
  * If FFmpeg is unavailable, logs a warning and returns null gracefully.
+ *
+ * @psalm-api Resolved from the DI container by media upload pipelines.
  */
 #[Internal(reason: 'Use VideoProcessor via service container')]
 final readonly class VideoProcessor
