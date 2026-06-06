@@ -39,6 +39,8 @@ use function substr;
  * 5. captureIntent() confirms the payment was captured.
  *
  * Only EUR payments are supported by Payconiq.
+ *
+ * @psalm-api Registered with PaymentProviderRegistry by class-name.
  */
 #[Internal]
 final readonly class PayconiqGateway implements PaymentProviderInterface

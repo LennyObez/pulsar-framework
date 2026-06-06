@@ -35,6 +35,9 @@ use const JSON_THROW_ON_ERROR;
  * Communicates with the Stripe API using raw HTTP requests (no SDK dependency).
  * All card numbers are tokenized by Stripe.js on the client side --
  * raw card data never touches the server (PCI-DSS v4.0.1 compliant).
+ *
+ * @psalm-api Registered with PaymentProviderRegistry by class-name; dispatched
+ *            through the registry's string-keyed lookup.
  */
 #[Internal]
 final readonly class StripeGateway implements PaymentProviderInterface

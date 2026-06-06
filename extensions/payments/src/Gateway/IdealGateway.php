@@ -33,6 +33,8 @@ use function substr;
  * with strong customer authentication built in.
  *
  * Only EUR payments are supported by iDEAL.
+ *
+ * @psalm-api Registered with PaymentProviderRegistry by class-name.
  */
 #[Internal]
 final readonly class IdealGateway implements PaymentProviderInterface

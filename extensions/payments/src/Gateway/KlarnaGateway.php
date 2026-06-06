@@ -40,6 +40,8 @@ use function substr;
  *
  * Supports EUR, SEK, NOK, DKK, GBP, USD and other currencies depending
  * on the customer's country.
+ *
+ * @psalm-api Registered with PaymentProviderRegistry by class-name.
  */
 #[Internal]
 final readonly class KlarnaGateway implements PaymentProviderInterface
