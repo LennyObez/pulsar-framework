@@ -20,6 +20,9 @@ use function array_keys;
  * - email: email, email_verified
  * - address: address
  * - phone: phone_number, phone_number_verified
+ *
+ * @psalm-api Public OIDC mapper resolved from the OAuth2 token resolver wiring;
+ *            not instantiated by name.
  */
 #[Internal(reason: 'Implementation detail')]
 final class ScopeClaimsMapper
