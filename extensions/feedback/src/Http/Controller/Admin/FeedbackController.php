@@ -40,6 +40,7 @@ final readonly class FeedbackController
 
     /**
      * GET /admin/feedback: List all feedback with optional category/status filters.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function index(ServerRequestInterface $request): Response
     {
@@ -75,6 +76,7 @@ final readonly class FeedbackController
 
     /**
      * GET /admin/feedback/{id}: Show a single feedback item.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function show(string $id): Response
     {
@@ -93,6 +95,7 @@ final readonly class FeedbackController
      * PUT /admin/feedback/{id}/status: Update feedback status.
      *
      * Request body: { "status": "investigating" | "resolved" | "wont_fix" | "duplicate" }
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function updateStatus(ServerRequestInterface $request, string $id): Response
     {
@@ -128,6 +131,7 @@ final readonly class FeedbackController
      * POST /admin/feedback/{id}/respond: Attach an admin response.
      *
      * Request body: { "response": "string" }
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function respond(ServerRequestInterface $request, string $id): Response
     {
@@ -160,6 +164,7 @@ final readonly class FeedbackController
      * POST /admin/feedback/{id}/github-issue: Queue GitHub issue creation.
      *
      * Request body: { "github_repo": "owner/repo" }
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function createIssue(ServerRequestInterface $request, string $id): Response
     {

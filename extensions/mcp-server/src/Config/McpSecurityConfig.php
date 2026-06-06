@@ -21,6 +21,8 @@ final readonly class McpSecurityConfig
      * @param int $rateLimitPerMinute Global rate limit for tool calls
      * @param array<string, int> $toolRateLimits Per-tool rate limit overrides
      * @param int $maxConcurrentActions Maximum simultaneous action tool executions
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function __construct(
         public array $pathAllowlist,

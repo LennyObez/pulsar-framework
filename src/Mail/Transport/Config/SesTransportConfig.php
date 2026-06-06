@@ -14,6 +14,9 @@ use SensitiveParameter;
 #[Internal]
 final readonly class SesTransportConfig
 {
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
     public function __construct(
         public string $region = 'us-east-1',
         public string $accessKey = '',

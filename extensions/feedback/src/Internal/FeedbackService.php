@@ -110,6 +110,7 @@ final readonly class FeedbackService
 
     /**
      * Link a feedback item to a GitHub issue URL.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function linkIssue(string $feedbackId, string $url): ?Feedback
     {

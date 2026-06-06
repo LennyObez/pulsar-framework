@@ -45,6 +45,7 @@ final class BuildArtifactLoader
 
     /**
      * Check if the cache directory exists.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function cacheExists(): bool
     {
@@ -108,6 +109,7 @@ final class BuildArtifactLoader
 
     /**
      * Load compiled extension manifest.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function loadExtensionManifest(): ?CompiledExtensionManifest
     {
@@ -125,6 +127,7 @@ final class BuildArtifactLoader
      * Load compiled event listener map.
      *
      * @return array<class-string, array{listeners: list<array{class: string, method: string, priority: int, moduleId: string}>, requiresEnvelope: bool, stormOverride: ?int, listenerModuleIds: list<string>}>|null
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function loadEventMap(): ?array
     {
@@ -142,6 +145,7 @@ final class BuildArtifactLoader
      * Load compiled i18n catalog index.
      *
      * @return array<string, mixed>|null
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function loadI18nCatalogIndex(): ?array
     {
@@ -182,6 +186,7 @@ final class BuildArtifactLoader
      *
      * @param BuildManifest $manifest
      * @return list<string> Missing required artifact keys
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function checkRequiredArtifacts(BuildManifest $manifest): array
     {

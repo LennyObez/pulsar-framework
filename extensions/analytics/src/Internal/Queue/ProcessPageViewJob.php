@@ -24,6 +24,9 @@ use function is_string;
 #[Internal(reason: 'Queue job for async page view processing')]
 final readonly class ProcessPageViewJob implements QueueableInterface
 {
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
     public function __construct(
         private PageViewRepositoryInterface $repository,
         /** @var array<string, mixed> */

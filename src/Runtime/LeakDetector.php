@@ -47,6 +47,7 @@ final class LeakDetector
 
     /**
      * Register a resource for tracking.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function trackResource(string $id, string $type, string $description): void
     {
@@ -60,6 +61,7 @@ final class LeakDetector
 
     /**
      * Mark a tracked resource as released.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function releaseResource(string $id): void
     {
@@ -117,6 +119,7 @@ final class LeakDetector
 
     /**
      * Get the memory baseline snapshot.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function memoryBaseline(): int
     {
@@ -127,6 +130,7 @@ final class LeakDetector
      * Get currently tracked resources.
      *
      * @return list<ResourceEntry>
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function trackedResources(): array
     {

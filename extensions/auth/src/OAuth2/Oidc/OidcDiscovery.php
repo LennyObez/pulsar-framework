@@ -23,6 +23,7 @@ final readonly class OidcDiscovery
      * Generate the OpenID Provider configuration document.
      *
      * @return array<string, mixed>
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function configurationDocument(): array
     {

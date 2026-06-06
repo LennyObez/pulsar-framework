@@ -34,6 +34,7 @@ final readonly class SubscriptionController
      *
      * Expected JSON body:
      *   { "store": "google"|"apple", "purchase_token": "...", "plan": "..." }
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function verify(ServerRequestInterface $request): Response
     {
@@ -91,6 +92,7 @@ final readonly class SubscriptionController
      * GET /api/v1/subscriptions/status
      *
      * Returns the current subscription status for the authenticated user.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function status(ServerRequestInterface $request): Response
     {
@@ -123,6 +125,7 @@ final readonly class SubscriptionController
      *
      * Expected JSON body:
      *   { "store": "google"|"apple", "purchase_token": "...", "plan": "..." }
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function restore(ServerRequestInterface $request): Response
     {

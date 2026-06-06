@@ -23,6 +23,9 @@ use const JSON_UNESCAPED_SLASHES;
 final readonly class TimelineController
 {
     use RendersStudioView;
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function __construct(
         private TimelineBuilder $timelineBuilder,

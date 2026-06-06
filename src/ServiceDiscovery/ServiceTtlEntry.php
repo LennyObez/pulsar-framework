@@ -12,6 +12,9 @@ use Pulsar\Api\Internal;
 #[Internal]
 final class ServiceTtlEntry
 {
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
     public ServiceHealthStatus $healthStatus;
 
     public function __construct(

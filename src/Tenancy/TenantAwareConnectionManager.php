@@ -56,6 +56,7 @@ final readonly class TenantAwareConnectionManager implements ConnectionManagerIn
      * Get the table prefix for the current tenant.
      *
      * @throws TenancyException If no tenant is resolved and prefix strategy is used.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function getTablePrefix(): string
     {

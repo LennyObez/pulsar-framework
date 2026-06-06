@@ -42,6 +42,7 @@ final readonly class DsarController
      *
      * Returns a JSON response containing all analytics data associated
      * with the requesting user's visitor identity.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function request(ServerRequestInterface $request): Response
     {
@@ -64,6 +65,7 @@ final readonly class DsarController
      *
      * Deletes all analytics data associated with the requesting user's
      * visitor identity and returns the count of deleted records.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function erase(ServerRequestInterface $request): Response
     {

@@ -26,6 +26,7 @@ final class ResourceMetadataCache
      * Get metadata for a resource class, resolving and caching on first access.
      *
      * @param class-string $class
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public function get(string $class): ResourceMetadata
@@ -37,6 +38,7 @@ final class ResourceMetadataCache
      * Pre-warm the cache with a list of resource classes.
      *
      * @param list<class-string> $classes
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function warmUp(array $classes): void
     {
@@ -49,6 +51,7 @@ final class ResourceMetadataCache
      * Check if metadata is cached for a class.
      *
      * @param class-string $class
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function has(string $class): bool
     {
@@ -57,6 +60,7 @@ final class ResourceMetadataCache
 
     /**
      * Clear the cache.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function clear(): void
     {

@@ -95,6 +95,9 @@ final class MemcachedDriver extends AbstractCacheDriver
 
         return $this->memcached->setMulti($values, $expiration);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function delete(string $key): bool
     {

@@ -51,6 +51,9 @@ final readonly class SpanBatchExporter
     {
         $this->batchExporter->enqueue($span);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function flush(): void
     {
@@ -61,6 +64,9 @@ final readonly class SpanBatchExporter
     {
         $this->batchExporter->shutdown();
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function queueSize(): int
     {

@@ -30,6 +30,9 @@ final readonly class SchemaController
         private AdminSchemaConfig $config,
         private SchemaChangeLogStoreInterface $changeLog,
     ) {}
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function list(ServerRequestInterface $request): Response
     {
@@ -63,6 +66,9 @@ final readonly class SchemaController
             'schema_enabled' => $this->config->enabled,
         ]));
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function createForm(): Response
     {
@@ -76,6 +82,9 @@ final readonly class SchemaController
             'schema_enabled' => $this->config->enabled,
         ]));
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function view(ServerRequestInterface $request, string $table): Response
     {
@@ -111,6 +120,9 @@ final readonly class SchemaController
             'schema_enabled' => $this->config->enabled,
         ]));
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function changelog(ServerRequestInterface $request): Response
     {

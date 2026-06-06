@@ -19,6 +19,9 @@ use Throwable;
 #[Internal]
 final readonly class ReminderService implements ReminderServiceInterface
 {
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
     public function __construct(
         private AppointmentRepositoryInterface $repository,
         private BookingConfig $config,

@@ -18,6 +18,7 @@ final class InMemoryScopeRepository implements ScopeRepositoryInterface
 
     /**
      * Register a scope definition.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function add(Scope $scope): void
     {

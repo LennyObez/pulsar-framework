@@ -25,6 +25,9 @@ use function is_string;
 #[Internal]
 final readonly class SubscriptionApiController
 {
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
     public function __construct(
         private DbSubscriptionRepository $subscriptionRepository,
         private MobileVerifierInterface $mobileVerifier,
@@ -34,6 +37,7 @@ final readonly class SubscriptionApiController
      * POST /api/v1/subscriptions/verify
      *
      * Verify a mobile in-app purchase token.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function verify(ServerRequestInterface $request): Response
     {
@@ -117,6 +121,7 @@ final readonly class SubscriptionApiController
      * GET /api/v1/subscriptions/status
      *
      * Get subscription status for the authenticated user.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function status(ServerRequestInterface $request): Response
     {

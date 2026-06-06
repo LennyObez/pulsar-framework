@@ -59,6 +59,7 @@ final readonly class RecoveryCodeVerifier
      * @param list<string> $validCodes Codes currently stored for the user
      *
      * @return RecoveryCodeConsumeResult|null Match data + remaining codes, or null on miss
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function verifyAndConsume(string $code, array $validCodes): ?RecoveryCodeConsumeResult
     {

@@ -38,6 +38,7 @@ final class DirectiveRegistry
 
     /**
      * Check if a directive is registered.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public function has(string $name): bool
@@ -47,6 +48,7 @@ final class DirectiveRegistry
 
     /**
      * Get a registered directive.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public function get(string $name): ?DirectiveInterface
@@ -58,6 +60,7 @@ final class DirectiveRegistry
      * Get all registered directive names.
      *
      * @return list<string>
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public function names(): array

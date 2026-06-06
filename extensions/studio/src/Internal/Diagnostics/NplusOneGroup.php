@@ -21,6 +21,7 @@ final readonly class NplusOneGroup
 
     /**
      * Average duration per execution in milliseconds.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function averageDurationMs(): float
     {

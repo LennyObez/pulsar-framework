@@ -25,6 +25,9 @@ use function is_string;
 #[Internal(reason: 'CMS newsletter controller; implementation detail')]
 final readonly class BounceWebhookController
 {
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
     private const int HARD_BOUNCE_THRESHOLD = 3;
 
     public function __construct(
@@ -43,6 +46,7 @@ final readonly class BounceWebhookController
      *   "bounce_type": "hard|soft",
      *   "reason": "..."
      * }
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function handle(ServerRequestInterface $request): Response
     {
@@ -87,6 +91,7 @@ final readonly class BounceWebhookController
      *     ...
      *   ]
      * }
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function handleBatch(ServerRequestInterface $request): Response
     {

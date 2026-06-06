@@ -53,6 +53,7 @@ final readonly class HmacPseudonymizer implements PseudonymizerInterface
      * Create a new pseudonymizer with a different rotation salt.
      *
      * Used when rotating the salt periodically to limit correlation windows.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public function withRotationSalt(string $salt): self

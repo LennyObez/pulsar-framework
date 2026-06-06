@@ -46,6 +46,9 @@ use const JSON_UNESCAPED_UNICODE;
 #[Internal]
 final readonly class DatabaseOutboxPort implements OutboxPort
 {
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
     private const string TABLE = 'outbox_events';
 
     public function __construct(
@@ -57,6 +60,7 @@ final readonly class DatabaseOutboxPort implements OutboxPort
      *
      * Called from a migration or boot wiring. Multiple invocations are
      * safe — the `IF NOT EXISTS` clause covers re-runs.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function installSchema(): void
     {

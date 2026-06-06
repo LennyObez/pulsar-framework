@@ -78,6 +78,7 @@ final readonly class EncryptedEventStore implements EventStoreInterface
      * @throws StudioException If maximum retry attempts exceeded due to database busy
      * @throws RandomException
      * @throws SodiumException
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function storeWithChain(
         EventEnvelope $envelope,
@@ -153,6 +154,7 @@ final readonly class EncryptedEventStore implements EventStoreInterface
 
     /**
      * Whether encryption is active.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function isEncrypted(): bool
     {

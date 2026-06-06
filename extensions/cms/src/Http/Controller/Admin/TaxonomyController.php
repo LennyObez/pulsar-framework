@@ -29,6 +29,9 @@ final readonly class TaxonomyController extends AbstractAdminController
     ) {
         parent::__construct($templateEngine, $gate);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function index(ServerRequestInterface $request): Response
     {
@@ -45,6 +48,9 @@ final readonly class TaxonomyController extends AbstractAdminController
 
         return $this->respondWithView($request, 'admin.taxonomy.index', $data);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function create(ServerRequestInterface $request): Response
     {
@@ -53,6 +59,9 @@ final readonly class TaxonomyController extends AbstractAdminController
 
         return Response::json(['status' => 'created'], 201);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function show(ServerRequestInterface $request, string $slug): Response
     {
@@ -88,6 +97,9 @@ final readonly class TaxonomyController extends AbstractAdminController
 
         return $this->respondWithView($request, 'admin.taxonomy.form', $data);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function update(ServerRequestInterface $request, string $slug): Response
     {
@@ -104,6 +116,9 @@ final readonly class TaxonomyController extends AbstractAdminController
 
         return Response::json(['id' => $taxonomy->id, 'status' => 'updated']);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function delete(ServerRequestInterface $request, string $slug): Response
     {

@@ -22,6 +22,9 @@ use Pulsar\Extension\Auth\Social\Exception\SsoException;
  */
 final readonly class ExchangeCodeHandler
 {
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
     public function __construct(
         private OAuthProviderRegistryInterface $providerRegistry,
         private OAuthStateManagerInterface $stateManager,

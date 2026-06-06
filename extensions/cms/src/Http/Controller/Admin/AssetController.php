@@ -37,6 +37,9 @@ final readonly class AssetController
         'png' => 'image/png',
         'ico' => 'image/x-icon',
     ];
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function serve(ServerRequestInterface $request): Response
     {

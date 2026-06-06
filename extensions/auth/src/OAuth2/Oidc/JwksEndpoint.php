@@ -43,6 +43,7 @@ final readonly class JwksEndpoint
      * are skipped so that a single bad entry cannot poison discovery.
      *
      * @return array{keys: list<array<string, string>>}
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function jwksDocument(): array
     {

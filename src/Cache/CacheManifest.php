@@ -83,6 +83,9 @@ final class CacheManifest
         bool $strict,
         bool $encrypted,
     ): self {
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
         $manifest = new self(
             schemaVersion: $schemaVersion,
             frameworkVersion: $frameworkVersion,

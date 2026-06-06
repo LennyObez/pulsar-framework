@@ -24,6 +24,9 @@ use function is_string;
 final readonly class TicketListController
 {
     use RendersAdminView;
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function __construct(
         private TicketRepositoryInterface $ticketRepository,
@@ -33,6 +36,7 @@ final readonly class TicketListController
 
     /**
      * GET /admin/tickets/list: Filterable ticket list.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function index(ServerRequestInterface $request): Response
     {

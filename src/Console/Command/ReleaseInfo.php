@@ -12,6 +12,9 @@ use Pulsar\Api\Internal;
 #[Internal]
 final readonly class ReleaseInfo
 {
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
     public function __construct(
         public string $version,
         public string $changelog,

@@ -35,6 +35,9 @@ use function round;
 #[Internal(reason: 'CMS admin controller; implementation detail')]
 final readonly class NewsletterController extends AbstractAdminController
 {
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
     public function __construct(
         private NewsletterSubscriberRepositoryInterface $subscriberRepository,
         private NewsletterCampaignRepositoryInterface $campaignRepository,
@@ -48,6 +51,7 @@ final readonly class NewsletterController extends AbstractAdminController
 
     /**
      * GET /admin/cms/newsletter/subscribers: List subscribers with status filter.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function subscribers(ServerRequestInterface $request): Response
     {
@@ -114,6 +118,7 @@ final readonly class NewsletterController extends AbstractAdminController
 
     /**
      * GET /admin/cms/newsletter/subscribers/{id}: Subscriber detail.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function subscriberDetail(ServerRequestInterface $request, string $id): Response
     {
@@ -154,6 +159,7 @@ final readonly class NewsletterController extends AbstractAdminController
 
     /**
      * GET /admin/cms/newsletter/campaigns: List campaigns.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function campaigns(ServerRequestInterface $request): Response
     {
@@ -198,6 +204,7 @@ final readonly class NewsletterController extends AbstractAdminController
     /**
      * GET /admin/cms/newsletter/campaigns/create: Show campaign creation form.
      * GET /admin/cms/newsletter/campaigns/{id}/edit: Show campaign edit form.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function campaignForm(ServerRequestInterface $request, ?string $id = null): Response
     {
@@ -231,6 +238,7 @@ final readonly class NewsletterController extends AbstractAdminController
 
     /**
      * POST /admin/cms/newsletter/campaigns: Create a new campaign.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function createCampaign(ServerRequestInterface $request): Response
     {
@@ -277,6 +285,7 @@ final readonly class NewsletterController extends AbstractAdminController
 
     /**
      * PUT /admin/cms/newsletter/campaigns/{id}: Update a campaign.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function updateCampaign(ServerRequestInterface $request, string $id): Response
     {
@@ -317,6 +326,7 @@ final readonly class NewsletterController extends AbstractAdminController
 
     /**
      * DELETE /admin/cms/newsletter/campaigns/{id}: Delete a campaign.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function deleteCampaign(ServerRequestInterface $request, string $id): Response
     {
@@ -334,6 +344,7 @@ final readonly class NewsletterController extends AbstractAdminController
 
     /**
      * POST /admin/cms/newsletter/campaigns/{id}/send: Send a campaign immediately.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function sendCampaign(ServerRequestInterface $request, string $id): Response
     {
@@ -368,6 +379,7 @@ final readonly class NewsletterController extends AbstractAdminController
 
     /**
      * GET /admin/cms/newsletter/campaigns/{id}/analytics: Campaign analytics.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function campaignAnalytics(ServerRequestInterface $request, string $id): Response
     {

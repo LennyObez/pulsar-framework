@@ -22,6 +22,9 @@ final class CachedMetadataRegistry implements MetadataRegistryInterface
     public function __construct(
         private readonly MetadataCompiler $compiler,
     ) {}
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     #[Override]
     public function get(string $entityClass): EntityMetadata
@@ -57,6 +60,7 @@ final class CachedMetadataRegistry implements MetadataRegistryInterface
      *
      * @param list<class-string> $entityClasses
      * @throws MappingException
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function warmUp(array $entityClasses): void
     {
@@ -67,6 +71,7 @@ final class CachedMetadataRegistry implements MetadataRegistryInterface
 
     /**
      * Clear the metadata cache.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function clear(): void
     {

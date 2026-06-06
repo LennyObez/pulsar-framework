@@ -25,6 +25,9 @@ use function min;
 final readonly class ModerationLogController
 {
     use RendersAdminView;
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function __construct(
         private ForumModerationLogRepositoryInterface $moderationLogRepository,
@@ -34,6 +37,7 @@ final readonly class ModerationLogController
 
     /**
      * GET /admin/forum/moderation-log: Paginated moderation action log.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function index(ServerRequestInterface $request): Response
     {

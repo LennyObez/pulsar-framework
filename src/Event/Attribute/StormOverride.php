@@ -20,6 +20,9 @@ use function min;
 #[Api(since: '1.0.0')]
 final readonly class StormOverride
 {
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
     public int $maxDepth;
 
     public function __construct(

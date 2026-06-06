@@ -31,6 +31,9 @@ final readonly class AiAssistantApiController
         private ContentAssistant $assistant,
         private AiRequestParser $parser,
     ) {}
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function generateDraft(ServerRequestInterface $request): Response
     {
@@ -51,6 +54,9 @@ final readonly class AiAssistantApiController
 
         return $this->formatResponse($this->assistant->generateDraft($topic, $tone, $targetWords));
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function summarize(ServerRequestInterface $request): Response
     {
@@ -70,6 +76,9 @@ final readonly class AiAssistantApiController
 
         return $this->formatResponse($this->assistant->summarize($content, $maxSentences));
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function suggestTitles(ServerRequestInterface $request): Response
     {
@@ -89,6 +98,9 @@ final readonly class AiAssistantApiController
 
         return $this->formatResponse($this->assistant->suggestTitle($content, $count));
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function suggestMeta(ServerRequestInterface $request): Response
     {
@@ -108,6 +120,9 @@ final readonly class AiAssistantApiController
 
         return $this->formatResponse($this->assistant->suggestMetaDescription($content, $maxLength));
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function translate(ServerRequestInterface $request): Response
     {
@@ -137,6 +152,9 @@ final readonly class AiAssistantApiController
 
         return $this->formatResponse($this->assistant->translateContent($content, $sourceLocale, $targetLocale));
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function improveReadability(ServerRequestInterface $request): Response
     {
@@ -154,6 +172,9 @@ final readonly class AiAssistantApiController
 
         return $this->formatResponse($this->assistant->improveReadability($content));
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function generateOutline(ServerRequestInterface $request): Response
     {
@@ -174,6 +195,9 @@ final readonly class AiAssistantApiController
 
         return $this->formatResponse($this->assistant->generateOutline($topic, $keywords, $targetAudience));
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function expandContent(ServerRequestInterface $request): Response
     {
@@ -193,6 +217,9 @@ final readonly class AiAssistantApiController
 
         return $this->formatResponse($this->assistant->expandContent($content, $targetWords));
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function condenseContent(ServerRequestInterface $request): Response
     {
@@ -212,6 +239,9 @@ final readonly class AiAssistantApiController
 
         return $this->formatResponse($this->assistant->condenseContent($content, $targetWords));
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function adjustTone(ServerRequestInterface $request): Response
     {
@@ -235,6 +265,9 @@ final readonly class AiAssistantApiController
 
         return $this->formatResponse($this->assistant->adjustTone($content, $targetTone));
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function generateFaq(ServerRequestInterface $request): Response
     {
@@ -254,6 +287,9 @@ final readonly class AiAssistantApiController
 
         return $this->formatResponse($this->assistant->generateFaq($content, $count));
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function generateProductDescription(ServerRequestInterface $request): Response
     {
@@ -279,6 +315,9 @@ final readonly class AiAssistantApiController
 
         return $this->formatResponse($this->assistant->generateProductDescription($productName, $features, $tone));
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function extractKeywords(ServerRequestInterface $request): Response
     {
@@ -298,6 +337,9 @@ final readonly class AiAssistantApiController
 
         return $this->formatResponse($this->assistant->extractKeywords($content, $count));
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function analyzeSeoScore(ServerRequestInterface $request): Response
     {
@@ -339,6 +381,9 @@ final readonly class AiAssistantApiController
             return $this->formatResponse($result);
         }
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function suggestSlug(ServerRequestInterface $request): Response
     {
@@ -356,6 +401,9 @@ final readonly class AiAssistantApiController
 
         return $this->formatResponse($this->assistant->suggestSlug($title));
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function generateAltText(ServerRequestInterface $request): Response
     {
@@ -379,6 +427,9 @@ final readonly class AiAssistantApiController
 
         return $this->formatResponse($this->assistant->generateAltText($imageContext, $surroundingContent));
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function optimizeHeadings(ServerRequestInterface $request): Response
     {
@@ -396,6 +447,9 @@ final readonly class AiAssistantApiController
 
         return $this->formatResponse($this->assistant->optimizeHeadings($content));
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function generateSerpPreview(ServerRequestInterface $request): Response
     {

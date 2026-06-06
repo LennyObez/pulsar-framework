@@ -15,12 +15,16 @@ use Pulsar\Http\Message\Response;
 #[Internal]
 final readonly class AdminBookingDashboardController
 {
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
     public function __construct(
         private AppointmentRepositoryInterface $repository,
     ) {}
 
     /**
      * GET /admin/booking: dashboard overview.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function index(): Response
     {

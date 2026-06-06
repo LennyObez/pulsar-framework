@@ -30,6 +30,7 @@ final readonly class DevServerConfig
      * @param list<Closure> $seeders Callables that receive the DB connection for seeding
      * @param list<string> $criticalTables Tables that must exist before writing the schema marker
      * @param array<string, string> $redirects Path redirects (from => to)
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function __construct(
         public string $extensionName,

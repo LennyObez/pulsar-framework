@@ -22,6 +22,9 @@ final readonly class SiteController
     public function __construct(
         private SiteServiceInterface $siteService,
     ) {}
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function index(): Response
     {
@@ -38,6 +41,9 @@ final readonly class SiteController
             ], $sites),
         ]);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function create(ServerRequestInterface $request): Response
     {
@@ -73,6 +79,9 @@ final readonly class SiteController
             'created_at' => $site->createdAt->format('c'),
         ], 201);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function show(string $id): Response
     {
@@ -93,6 +102,9 @@ final readonly class SiteController
             'updated_at' => $site->updatedAt->format('c'),
         ]);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function update(ServerRequestInterface $request, string $id): Response
     {
@@ -133,6 +145,9 @@ final readonly class SiteController
             'updated_at' => $site->updatedAt->format('c'),
         ]);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function delete(string $id): Response
     {

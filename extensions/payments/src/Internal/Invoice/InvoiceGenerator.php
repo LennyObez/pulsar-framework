@@ -23,6 +23,9 @@ use Pulsar\Extension\Payments\Internal\Persistence\DbInvoiceRepository;
 #[Internal]
 final readonly class InvoiceGenerator implements InvoiceGeneratorInterface
 {
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
     public function __construct(
         private InvoiceNumbering $numbering,
         private DbInvoiceRepository $invoiceRepository,

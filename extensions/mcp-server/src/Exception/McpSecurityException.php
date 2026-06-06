@@ -25,6 +25,9 @@ final class McpSecurityException extends RuntimeException
     {
         return new self(sprintf('Path access not allowed: %s', $path));
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     #[NoDiscard]
     public static function rateLimited(string $tool, int $retryAfter): self

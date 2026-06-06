@@ -27,6 +27,9 @@ use function min;
 final readonly class ThreadController
 {
     use RendersAdminView;
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function __construct(
         private ThreadRepositoryInterface $threadRepository,
@@ -38,6 +41,7 @@ final readonly class ThreadController
 
     /**
      * GET /admin/forum/threads: List threads with pagination.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function index(ServerRequestInterface $request): Response
     {
@@ -63,6 +67,7 @@ final readonly class ThreadController
 
     /**
      * GET /admin/forum/threads/{id}: Show a single thread.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function show(ServerRequestInterface $request, string $id): Response
     {
@@ -82,6 +87,7 @@ final readonly class ThreadController
 
     /**
      * POST /admin/forum/threads/{id}/lock: Lock a thread.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function lock(ServerRequestInterface $request, string $id): Response
     {
@@ -99,6 +105,7 @@ final readonly class ThreadController
 
     /**
      * POST /admin/forum/threads/{id}/unlock: Unlock a thread.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function unlock(ServerRequestInterface $request, string $id): Response
     {
@@ -116,6 +123,7 @@ final readonly class ThreadController
 
     /**
      * POST /admin/forum/threads/{id}/pin: Pin a thread.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function pin(ServerRequestInterface $request, string $id): Response
     {
@@ -133,6 +141,7 @@ final readonly class ThreadController
 
     /**
      * POST /admin/forum/threads/{id}/unpin: Unpin a thread.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function unpin(ServerRequestInterface $request, string $id): Response
     {
@@ -150,6 +159,7 @@ final readonly class ThreadController
 
     /**
      * POST /admin/forum/threads/{id}/move: Move a thread to a different category.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function move(ServerRequestInterface $request, string $id): Response
     {
@@ -185,6 +195,7 @@ final readonly class ThreadController
 
     /**
      * DELETE /admin/forum/threads/{id}: Soft delete a thread.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function delete(ServerRequestInterface $request, string $id): Response
     {

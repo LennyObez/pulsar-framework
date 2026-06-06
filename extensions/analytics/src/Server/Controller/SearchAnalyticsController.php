@@ -21,6 +21,9 @@ final readonly class SearchAnalyticsController
     public function __construct(
         private SearchAnalyticsServiceInterface $searchAnalyticsService,
     ) {}
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function overview(ServerRequestInterface $request): Response
     {
@@ -44,6 +47,9 @@ final readonly class SearchAnalyticsController
 
         return Response::json($data);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function topQueries(ServerRequestInterface $request): Response
     {
@@ -74,6 +80,9 @@ final readonly class SearchAnalyticsController
             ], $queries),
         ]);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function zeroResults(ServerRequestInterface $request): Response
     {

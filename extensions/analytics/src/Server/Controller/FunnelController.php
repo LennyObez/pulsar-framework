@@ -26,6 +26,9 @@ final readonly class FunnelController
     public function __construct(
         private FunnelServiceInterface $funnelService,
     ) {}
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function index(ServerRequestInterface $request): Response
     {
@@ -55,6 +58,9 @@ final readonly class FunnelController
             ], $funnels),
         ]);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function create(ServerRequestInterface $request): Response
     {
@@ -116,6 +122,9 @@ final readonly class FunnelController
             'created_at' => $funnel->createdAt->format('c'),
         ], 201);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function evaluate(ServerRequestInterface $request, string $id): Response
     {
@@ -145,6 +154,9 @@ final readonly class FunnelController
             ], $result->steps),
         ]);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function delete(string $id): Response
     {

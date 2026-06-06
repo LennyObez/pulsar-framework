@@ -96,6 +96,7 @@ final readonly class SecretManagerProvider
      * @return array<string, string> Secret ID => secret value
      *
      * @throws CloudException If any secret cannot be retrieved
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public function getSecrets(array $secretIds): array

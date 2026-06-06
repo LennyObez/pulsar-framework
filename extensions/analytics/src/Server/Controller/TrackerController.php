@@ -28,6 +28,9 @@ final readonly class TrackerController
     private const string TRACKER_FALLBACK = <<<'JS'
         !function(){"use strict";try{var d=document.currentScript,s=d.getAttribute("data-site"),a=d.getAttribute("data-api");if(!s||!a||"1"===navigator.doNotTrack)return;var u=location,e=function(t,n){var r=JSON.stringify(Object.assign({site:s,url:u.href},t));try{navigator.sendBeacon(a,r)}catch(e){fetch(a,{method:"POST",body:r,keepalive:!0}).catch(function(){})}"function"==typeof n&&n()};e({type:"pageview",referrer:document.referrer,screen_width:screen.width});window.plsr={event:function(n,o,v){e({type:"event",event_name:n,event_props:o||null,revenue_value:v||null})},ext:{}};var x=d.getAttribute("data-extensions");if(x){var b=a.replace(/\/[^\/]*$/,"");x.split(",").forEach(function(n){var t=document.createElement("script");t.async=!0;t.src=b+"/ext/"+n.trim()+".js";d.parentNode.insertBefore(t,d.nextSibling)})}}catch(e){}}();
         JS;
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     private const string DIST_PATH = __DIR__ . '/../../frontend/dist/plsr.js';
 

@@ -37,6 +37,7 @@ final readonly class LinkHealthController extends AbstractAdminController
 
     /**
      * Display broken links report with pagination and filters.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function index(ServerRequestInterface $request): Response
     {
@@ -79,6 +80,7 @@ final readonly class LinkHealthController extends AbstractAdminController
 
     /**
      * Trigger a full link health check across all published content.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function runCheck(ServerRequestInterface $request): Response
     {

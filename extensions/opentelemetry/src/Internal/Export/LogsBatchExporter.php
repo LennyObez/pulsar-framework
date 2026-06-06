@@ -51,6 +51,9 @@ final readonly class LogsBatchExporter
     {
         $this->batchExporter->enqueue($record);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function flush(): void
     {
@@ -61,6 +64,9 @@ final readonly class LogsBatchExporter
     {
         $this->batchExporter->shutdown();
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function queueSize(): int
     {

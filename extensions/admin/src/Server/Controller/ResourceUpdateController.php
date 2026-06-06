@@ -29,6 +29,9 @@ final readonly class ResourceUpdateController
         private ResourceRegistryInterface $registry,
         private AdminConfig $config,
     ) {}
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function form(string $resource, string $id): Response
     {
@@ -42,6 +45,9 @@ final readonly class ResourceUpdateController
             'schema_enabled' => $this->config->schema->enabled,
         ]));
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function update(ServerRequestInterface $request, string $resource, string $id): Response
     {

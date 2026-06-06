@@ -61,6 +61,9 @@ final readonly class ContentController extends AbstractAdminController
     ) {
         parent::__construct($templateEngine, $gate);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function index(ServerRequestInterface $request): Response
     {
@@ -107,6 +110,9 @@ final readonly class ContentController extends AbstractAdminController
 
         return $this->respondWithView($request, 'admin.content.index', $data);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function create(ServerRequestInterface $request): Response
     {
@@ -204,6 +210,9 @@ final readonly class ContentController extends AbstractAdminController
             'status' => $content->status->value,
         ], 201);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function show(ServerRequestInterface $request, string $id): Response
     {
@@ -273,6 +282,9 @@ final readonly class ContentController extends AbstractAdminController
 
         return $this->respondWithView($request, 'admin.content.show', $data);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function update(ServerRequestInterface $request, string $id): Response
     {
@@ -356,6 +368,7 @@ final readonly class ContentController extends AbstractAdminController
      *
      * Creates a new ContentTranslation for a locale that doesn't yet have one.
      * Used by the admin locale tabs to independently translate content per locale.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function addTranslation(ServerRequestInterface $request, string $id): Response
     {
@@ -447,6 +460,9 @@ final readonly class ContentController extends AbstractAdminController
             'status' => 'created',
         ], 201);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function delete(ServerRequestInterface $request, string $id): Response
     {
@@ -476,6 +492,9 @@ final readonly class ContentController extends AbstractAdminController
 
         return Response::json(['id' => $id, 'status' => 'deleted']);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function publish(ServerRequestInterface $request, string $id): Response
     {
@@ -501,6 +520,9 @@ final readonly class ContentController extends AbstractAdminController
             return Response::json(['error' => $e->getMessage()], 422);
         }
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function archive(ServerRequestInterface $request, string $id): Response
     {
@@ -526,6 +548,9 @@ final readonly class ContentController extends AbstractAdminController
             return Response::json(['error' => $e->getMessage()], 422);
         }
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function schedule(ServerRequestInterface $request, string $id): Response
     {
@@ -571,6 +596,9 @@ final readonly class ContentController extends AbstractAdminController
             return Response::json(['error' => $e->getMessage()], 422);
         }
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function submitReview(ServerRequestInterface $request, string $id): Response
     {
@@ -616,6 +644,9 @@ final readonly class ContentController extends AbstractAdminController
             'status' => $review->status->value,
         ]);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function acquireLock(ServerRequestInterface $request, string $id): Response
     {
@@ -646,6 +677,9 @@ final readonly class ContentController extends AbstractAdminController
             'expires_at' => $lock->expiresAt->format('c'),
         ]);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function releaseLock(ServerRequestInterface $request, string $id): Response
     {
@@ -656,6 +690,9 @@ final readonly class ContentController extends AbstractAdminController
 
         return Response::json(['content_id' => $id, 'status' => 'unlocked']);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function breakLock(ServerRequestInterface $request, string $id): Response
     {

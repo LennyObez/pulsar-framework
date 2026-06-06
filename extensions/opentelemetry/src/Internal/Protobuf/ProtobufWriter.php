@@ -157,6 +157,7 @@ final class ProtobufWriter
 
     /**
      * Append raw bytes directly to the buffer.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function writeRawBytes(string $bytes): void
     {
@@ -165,6 +166,7 @@ final class ProtobufWriter
 
     /**
      * Reset the buffer, discarding all written data.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function reset(): void
     {

@@ -39,6 +39,7 @@ final readonly class TrackingController
      * GET /newsletter/track/open?s={sendId}&sig={signature}
      *
      * Returns a 1x1 transparent GIF and records the open event.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function pixel(ServerRequestInterface $request): Response
     {
@@ -73,6 +74,7 @@ final readonly class TrackingController
      * GET /newsletter/track/click?s={sendId}&url={encodedUrl}&sig={signature}
      *
      * Redirects to the original URL and records the click event.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function click(ServerRequestInterface $request): Response
     {

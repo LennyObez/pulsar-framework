@@ -184,6 +184,7 @@ final readonly class SandboxCompiler
      * Get the list of denied functions.
      *
      * @return list<string>
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public function deniedFunctions(): array
@@ -195,6 +196,7 @@ final readonly class SandboxCompiler
      * Get the list of denied classes.
      *
      * @return list<string>
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public function deniedClasses(): array

@@ -29,6 +29,7 @@ final readonly class TaxonomyApiController
 
     /**
      * GET /api/v1/taxonomies/{slug}: Show a single taxonomy by slug.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function show(ServerRequestInterface $request, string $slug): Response
     {
@@ -53,6 +54,7 @@ final readonly class TaxonomyApiController
 
     /**
      * GET /api/v1/taxonomies/{slug}/terms: List terms for a taxonomy.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function terms(ServerRequestInterface $request, string $slug): Response
     {

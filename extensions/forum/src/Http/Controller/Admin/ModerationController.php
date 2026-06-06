@@ -32,6 +32,9 @@ use function min;
 final readonly class ModerationController
 {
     use RendersAdminView;
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function __construct(
         private ThreadReportRepositoryInterface $threadReportRepository,
@@ -43,6 +46,7 @@ final readonly class ModerationController
 
     /**
      * GET /admin/forum/moderation: Moderation queue.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function index(ServerRequestInterface $request): Response
     {
@@ -95,6 +99,7 @@ final readonly class ModerationController
 
     /**
      * POST /admin/forum/moderation/thread-reports/{id}: Review a thread report.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function reviewThreadReport(ServerRequestInterface $request, string $id): Response
     {
@@ -134,6 +139,7 @@ final readonly class ModerationController
 
     /**
      * POST /admin/forum/moderation/post-reports/{id}: Review a post report.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function reviewPostReport(ServerRequestInterface $request, string $id): Response
     {

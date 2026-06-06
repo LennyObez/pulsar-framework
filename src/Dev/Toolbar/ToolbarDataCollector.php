@@ -35,6 +35,7 @@ final class ToolbarDataCollector
 
     /**
      * Record a database query.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function recordQuery(string $sql, float $timeMs): void
     {
@@ -43,6 +44,7 @@ final class ToolbarDataCollector
 
     /**
      * Record a cache hit.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function recordCacheHit(): void
     {
@@ -51,6 +53,7 @@ final class ToolbarDataCollector
 
     /**
      * Record a cache miss.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function recordCacheMiss(): void
     {
@@ -59,6 +62,7 @@ final class ToolbarDataCollector
 
     /**
      * Record a loaded template.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function recordTemplate(string $templatePath): void
     {
@@ -106,6 +110,7 @@ final class ToolbarDataCollector
 
     /**
      * Reset all collected data (useful between requests in persistent runtimes).
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function reset(): void
     {

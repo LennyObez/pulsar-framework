@@ -27,6 +27,7 @@ final readonly class UserInfoEndpoint
      *
      * @param string $accessToken The bearer token value
      * @return array<string, mixed>|null Claims if token is valid, null otherwise
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function getClaims(string $accessToken): ?array
     {

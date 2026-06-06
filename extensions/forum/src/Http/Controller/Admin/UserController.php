@@ -30,6 +30,9 @@ use function is_string;
 final readonly class UserController
 {
     use RendersAdminView;
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function __construct(
         private ForumProfileRepositoryInterface $profileRepository,
@@ -42,6 +45,7 @@ final readonly class UserController
 
     /**
      * GET /admin/forum/users/{userId}: View a user's forum profile.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function show(ServerRequestInterface $request, string $userId): Response
     {
@@ -74,6 +78,7 @@ final readonly class UserController
 
     /**
      * POST /admin/forum/users/{userId}/ban: Ban a user.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function ban(ServerRequestInterface $request, string $userId): Response
     {
@@ -108,6 +113,7 @@ final readonly class UserController
 
     /**
      * POST /admin/forum/users/{userId}/unban: Unban a user.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function unban(ServerRequestInterface $request, string $userId): Response
     {
@@ -125,6 +131,7 @@ final readonly class UserController
 
     /**
      * POST /admin/forum/users/{userId}/promote: Add reputation points.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function promote(ServerRequestInterface $request, string $userId): Response
     {

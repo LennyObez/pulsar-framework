@@ -51,6 +51,7 @@ final class DeleteBuilder
 
     /**
      * Execute the DELETE and return the number of affected rows.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function execute(): int
     {

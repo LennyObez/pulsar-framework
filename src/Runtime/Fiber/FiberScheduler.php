@@ -49,6 +49,8 @@ final class FiberScheduler
      *
      * @param Closure(Socket): void $handler
      * @return bool True if spawned, false if at concurrency limit
+     *
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function spawn(Socket $socket, Closure $handler): bool
     {
@@ -90,6 +92,8 @@ final class FiberScheduler
      *
      * @param float $timeoutSeconds Timeout for socket_select (default 0.1s)
      * @return int Number of fibers resumed
+     *
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function tick(float $timeoutSeconds = 0.1): int
     {
@@ -148,6 +152,7 @@ final class FiberScheduler
 
     /**
      * Get the count of active Fibers.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function activeFiberCount(): int
     {
@@ -175,6 +180,8 @@ final class FiberScheduler
      *
      * @param float $timeoutSeconds Maximum drain time
      * @return int Number of Fibers still active after drain
+     *
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function drain(float $timeoutSeconds = 5.0): int
     {
@@ -210,6 +217,7 @@ final class FiberScheduler
 
     /**
      * Remove a specific socket and its Fiber.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function remove(Socket $socket): void
     {
@@ -219,6 +227,7 @@ final class FiberScheduler
 
     /**
      * Clean up all tracked Fibers and sockets.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function clear(): void
     {

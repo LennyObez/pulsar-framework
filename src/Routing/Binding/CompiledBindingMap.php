@@ -25,6 +25,7 @@ final readonly class CompiledBindingMap
 
     /**
      * Check if a binding exists for the given route and parameter.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function has(string $routeName, string $parameter): bool
     {
@@ -33,6 +34,7 @@ final readonly class CompiledBindingMap
 
     /**
      * Get binding metadata for a specific route parameter.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public function get(string $routeName, string $parameter): ?BindingMeta
@@ -55,6 +57,7 @@ final readonly class CompiledBindingMap
      * Get the full compiled map.
      *
      * @return array<string, array<string, BindingMeta>>
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public function all(): array
@@ -74,6 +77,7 @@ final readonly class CompiledBindingMap
      *     authz_policy?: string|null,
      *     custom_resolver?: class-string|null,
      * }>> $data
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
@@ -101,6 +105,7 @@ final readonly class CompiledBindingMap
      * Serialize to an array suitable for caching.
      *
      * @return array<string, array<string, array<string, mixed>>>
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public function toArray(): array

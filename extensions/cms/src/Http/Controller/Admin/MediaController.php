@@ -44,6 +44,7 @@ final readonly class MediaController extends AbstractAdminController
 
     /**
      * List media assets with optional filters.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function index(ServerRequestInterface $request): Response
     {
@@ -95,6 +96,7 @@ final readonly class MediaController extends AbstractAdminController
 
     /**
      * Upload a new media asset via multipart form data.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function upload(ServerRequestInterface $request): Response
     {
@@ -143,6 +145,7 @@ final readonly class MediaController extends AbstractAdminController
 
     /**
      * Show media asset detail with derivatives and translations.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function show(ServerRequestInterface $request, string $id): Response
     {
@@ -207,6 +210,7 @@ final readonly class MediaController extends AbstractAdminController
      * Soft-delete a media asset with a mandatory reason.
      *
      * Requires step-up authentication.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function delete(ServerRequestInterface $request, string $id): Response
     {
@@ -243,6 +247,7 @@ final readonly class MediaController extends AbstractAdminController
 
     /**
      * List image variants for a media asset.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function variants(ServerRequestInterface $request, string $id): Response
     {

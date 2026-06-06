@@ -23,6 +23,9 @@ use function sprintf;
 #[Internal(reason: 'Scheduled retention cleanup job')]
 final readonly class RetentionCleanupJob
 {
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
     public function __construct(
         private AnalyticsConfig $config,
         private PageViewRepositoryInterface $pageViewRepository,

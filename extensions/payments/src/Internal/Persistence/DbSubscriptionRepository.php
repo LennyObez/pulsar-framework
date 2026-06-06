@@ -24,6 +24,9 @@ use Pulsar\Extension\Payments\Domain\SubscriptionStatus;
 #[Internal]
 final readonly class DbSubscriptionRepository implements SubscriptionRepositoryInterface
 {
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
     public function __construct(
         private ConnectionInterface $connection,
     ) {}

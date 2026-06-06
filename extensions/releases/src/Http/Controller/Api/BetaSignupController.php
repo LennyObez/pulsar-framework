@@ -42,6 +42,7 @@ final readonly class BetaSignupController
      * - camera_brands: array of strings (optional)
      *
      * Returns 201 on success, 422 on validation error, 429 on rate limit.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function signup(ServerRequestInterface $request): Response
     {

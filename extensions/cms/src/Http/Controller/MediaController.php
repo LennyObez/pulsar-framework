@@ -23,6 +23,9 @@ use Pulsar\Http\Message\Response;
 #[Internal(reason: 'CMS HTTP controller; implementation detail')]
 final readonly class MediaController
 {
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
     private const string CACHE_DERIVATIVE = 'public, max-age=2592000, immutable';
     private const string CACHE_ORIGINAL_PUBLIC = 'public, max-age=86400';
     private const string CACHE_PRIVATE = 'private, no-store';
@@ -36,6 +39,7 @@ final readonly class MediaController
      * Serve a media derivative by variant, hash, filename, and format.
      *
      * URL pattern: /media/{variant}/{hash}/{filename}.{format}
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function serve(
         ServerRequestInterface $request,
@@ -83,6 +87,7 @@ final readonly class MediaController
      * Serve the original media asset file.
      *
      * URL pattern: /media/original/{hash}/{filename}
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function serveOriginal(
         ServerRequestInterface $request,

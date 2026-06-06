@@ -145,6 +145,7 @@ final readonly class ExpressionCompiler
      * Combine expressions with AND.
      *
      * @param list<Expression> $expressions
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function and(array $expressions): Expression
     {
@@ -165,6 +166,7 @@ final readonly class ExpressionCompiler
      * Combine expressions with OR.
      *
      * @param list<Expression> $expressions
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function or(array $expressions): Expression
     {
@@ -183,6 +185,7 @@ final readonly class ExpressionCompiler
 
     /**
      * @param array<string, mixed> $bindings
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function exists(string $subquerySql, array $bindings = []): Expression
     {

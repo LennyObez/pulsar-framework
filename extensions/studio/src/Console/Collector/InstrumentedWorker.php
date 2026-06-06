@@ -53,6 +53,7 @@ final class InstrumentedWorker implements CollectorInterface
      *
      * @throws RandomException
      * @throws Throwable
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function processNextJob(string $queue): bool
     {
@@ -92,6 +93,7 @@ final class InstrumentedWorker implements CollectorInterface
 
     /**
      * Delegate run to the inner worker.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function run(string $queue): void
     {
@@ -100,6 +102,7 @@ final class InstrumentedWorker implements CollectorInterface
 
     /**
      * Request a graceful shutdown of the inner worker.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function stop(): void
     {
@@ -108,6 +111,7 @@ final class InstrumentedWorker implements CollectorInterface
 
     /**
      * Get the inner worker's status.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function status(): WorkerStatus
     {
@@ -116,6 +120,7 @@ final class InstrumentedWorker implements CollectorInterface
 
     /**
      * Get the underlying worker.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function inner(): Worker
     {

@@ -26,6 +26,9 @@ final readonly class FlowController
     public function __construct(
         private FlowServiceInterface $flowService,
     ) {}
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function flow(ServerRequestInterface $request): Response
     {
@@ -62,6 +65,9 @@ final readonly class FlowController
             ], $steps),
         ]);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function exits(ServerRequestInterface $request): Response
     {

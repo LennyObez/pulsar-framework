@@ -29,6 +29,9 @@ final readonly class ExperimentController extends AbstractAdminController
     ) {
         parent::__construct($templateEngine, $gate);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function index(ServerRequestInterface $request): Response
     {
@@ -52,6 +55,9 @@ final readonly class ExperimentController extends AbstractAdminController
 
         return $this->respondWithView($request, 'admin.experiments.index', $data);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function create(ServerRequestInterface $request): Response
     {
@@ -112,6 +118,9 @@ final readonly class ExperimentController extends AbstractAdminController
             ], $createdVariants),
         ], 201);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function show(ServerRequestInterface $request, string $id): Response
     {
@@ -147,6 +156,9 @@ final readonly class ExperimentController extends AbstractAdminController
 
         return $this->respondWithView($request, 'admin.experiments.show', $data);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function start(ServerRequestInterface $request, string $id): Response
     {
@@ -165,6 +177,9 @@ final readonly class ExperimentController extends AbstractAdminController
             return Response::json(['error' => $e->getMessage()], 422);
         }
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function stop(ServerRequestInterface $request, string $id): Response
     {
@@ -183,6 +198,9 @@ final readonly class ExperimentController extends AbstractAdminController
             return Response::json(['error' => $e->getMessage()], 422);
         }
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function results(ServerRequestInterface $request, string $id): Response
     {

@@ -30,6 +30,9 @@ final readonly class SettingsController extends AbstractAdminController
     ) {
         parent::__construct($templateEngine, $gate);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function show(ServerRequestInterface $request, string $group): Response
     {
@@ -47,6 +50,9 @@ final readonly class SettingsController extends AbstractAdminController
 
         return $this->respondWithView($request, 'admin.settings.form', $data);
     }
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
 
     public function update(ServerRequestInterface $request, string $group): Response
     {

@@ -42,6 +42,7 @@ final readonly class RedirectController extends AbstractAdminController
 
     /**
      * List all redirects with pagination.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function index(ServerRequestInterface $request): Response
     {
@@ -85,6 +86,7 @@ final readonly class RedirectController extends AbstractAdminController
 
     /**
      * Create a new redirect.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function create(ServerRequestInterface $request): Response
     {
@@ -145,6 +147,7 @@ final readonly class RedirectController extends AbstractAdminController
 
     /**
      * Delete a redirect by ID.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function delete(ServerRequestInterface $request, string $id): Response
     {
@@ -164,6 +167,7 @@ final readonly class RedirectController extends AbstractAdminController
      * Bulk import redirects from a CSV file upload.
      *
      * Supports dry_run mode to preview import results without persisting.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function bulkImport(ServerRequestInterface $request): Response
     {
@@ -227,6 +231,7 @@ final readonly class RedirectController extends AbstractAdminController
 
     /**
      * Export all redirects as CSV.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function export(ServerRequestInterface $request): Response
     {

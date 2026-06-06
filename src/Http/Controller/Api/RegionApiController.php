@@ -21,6 +21,9 @@ use Pulsar\I18n\Region\CountryRegistry;
 #[Internal]
 final readonly class RegionApiController
 {
+    /**
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
     public function __construct(
         private CountryRegistry $registry,
     ) {}
