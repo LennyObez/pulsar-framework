@@ -23,6 +23,9 @@ use const JSON_THROW_ON_ERROR;
  * Events are published to a Redis Pub/Sub channel for cross-worker delivery
  * and stored in a capped list for late-joining clients. Presence is tracked
  * via sorted sets with timestamp scores for automatic expiry.
+ *
+ * @psalm-api Bound to RealtimeBroadcasterInterface in the forum service
+ *            provider when ext-redis is available; container-resolved.
  */
 #[Internal(reason: 'Redis broadcaster; use RealtimeBroadcasterInterface')]
 final class RedisRealtimeBroadcaster implements RealtimeBroadcasterInterface

@@ -33,6 +33,9 @@ use function time;
  *
  * Returns 429 Too Many Requests with Retry-After and X-RateLimit-* headers
  * when the per-hour limit is exceeded.
+ *
+ * @psalm-api Registered with the forum route middleware stack at extension
+ *            boot; container-resolved by class-name.
  */
 #[Internal(reason: 'Forum rate limiting middleware; implementation detail')]
 final readonly class ForumRateLimitMiddleware implements MiddlewareInterface
