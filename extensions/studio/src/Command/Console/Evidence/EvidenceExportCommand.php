@@ -32,8 +32,6 @@ use const JSON_UNESCAPED_SLASHES;
  * Exports Studio events as a verifiable evidence archive.
  *
  * Replaces the old `studio:console:export` command.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class EvidenceExportCommand extends Command

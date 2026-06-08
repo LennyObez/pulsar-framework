@@ -14,8 +14,6 @@ use function sprintf;
  * Health check that verifies database connectivity.
  *
  * Executes a `SELECT 1` query and measures response time.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final readonly class DatabaseHealthCheck implements HealthCheckInterface
 {

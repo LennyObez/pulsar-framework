@@ -19,8 +19,6 @@ use function json_decode;
  * Processes bounce webhook events.
  *
  * Updates delivery status for bounced messages and audit logs the event.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class BounceHandler

@@ -11,8 +11,6 @@ use Pulsar\Extension\Orm\Features\Query\SelectBuilder;
 
 /**
  * Applies tenant scoping filters to queries.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class TenantScopeApplier

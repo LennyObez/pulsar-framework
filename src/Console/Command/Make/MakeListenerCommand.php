@@ -21,8 +21,6 @@ use function sprintf;
 
 /**
  * Scaffold a listener class for an event.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class MakeListenerCommand extends Command
 {

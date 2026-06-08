@@ -14,8 +14,6 @@ use Pulsar\Api\Internal;
  *
  * Maintains an array-backed store indexed by subject identifier with
  * a secondary index by pseudonym for efficient reverse lookups.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Test/dev pseudonym lookup implementation')]
 final class InMemoryPseudonymLookup implements PseudonymLookupInterface

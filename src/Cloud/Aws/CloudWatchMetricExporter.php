@@ -25,8 +25,6 @@ use function time;
  * Buffers metric snapshots and flushes them to CloudWatch in batches.
  * Supports counters, gauges, and histograms mapped to CloudWatch
  * metric data with appropriate units and dimensions.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class CloudWatchMetricExporter

@@ -27,8 +27,6 @@ use function is_string;
  * - `location.country` (string): Resolved country code
  * - `location.geo_anomaly` (bool): Whether the location is unusual for this identity
  * - `location.travel_impossible` (bool): Whether the distance/time combination is physically impossible
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class LocationSignalProvider implements SignalProviderInterface

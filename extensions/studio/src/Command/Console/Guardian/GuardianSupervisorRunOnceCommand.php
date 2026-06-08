@@ -23,8 +23,6 @@ use function time;
  *
  * Evaluates whether the current process would trigger a recycle
  * based on current memory usage and uptime, and runs all preflight checks.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class GuardianSupervisorRunOnceCommand extends Command

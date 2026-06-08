@@ -13,8 +13,6 @@ use Pulsar\Extension\Studio\Console\Event\EventVersion;
  * Tenancy context event payload.
  *
  * Records tenant resolution events for audit and debugging.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class TenancyPayload implements ConsoleEvent

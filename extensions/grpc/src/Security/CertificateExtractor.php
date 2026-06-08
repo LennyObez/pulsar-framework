@@ -18,8 +18,6 @@ use function trim;
  *
  * Structured data extraction only: no dynamic interpretation.
  * Uses openssl_x509_parse() for certificate parsing.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Certificate parsing utility')]
 final readonly class CertificateExtractor

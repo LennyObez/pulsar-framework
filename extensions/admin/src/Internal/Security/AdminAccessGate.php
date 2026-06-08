@@ -46,7 +46,6 @@ final readonly class AdminAccessGate
      * Assert the identity can perform an operation on a resource.
      *
      * @throws AdminAccessDeniedException
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function assertCanPerform(
         IdentityInterface $identity,

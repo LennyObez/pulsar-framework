@@ -11,8 +11,6 @@ use Throwable;
 
 /**
  * Closure-based scheduled job.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final readonly class CallbackJob implements JobInterface
 {

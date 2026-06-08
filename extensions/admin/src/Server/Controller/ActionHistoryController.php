@@ -25,9 +25,6 @@ final readonly class ActionHistoryController
         private ActionHistoryStoreInterface $store,
         private AdminConfig $config,
     ) {}
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function recent(ServerRequestInterface $request): Response
     {
@@ -41,9 +38,6 @@ final readonly class ActionHistoryController
 
         return Response::html($this->renderHtml('Activity', $data));
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function forResource(ServerRequestInterface $request, string $resource): Response
     {

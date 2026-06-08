@@ -37,7 +37,6 @@ final class InMemoryImpactAssessmentStore implements AiImpactAssessmentInterface
 
     /**
      * Add a finding for a model. Used by tests and manual assessments.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function addFinding(string $modelId, ImpactFinding $finding): void
     {

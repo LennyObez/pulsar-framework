@@ -107,9 +107,6 @@ final class RedisDriver extends AbstractCacheDriver
 
         return array_all($results, static fn(mixed $result): bool => $result !== false);
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function delete(string $key): bool
     {

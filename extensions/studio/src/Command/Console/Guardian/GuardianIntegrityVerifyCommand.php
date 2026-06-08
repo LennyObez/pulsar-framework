@@ -27,8 +27,6 @@ use function sprintf;
 
 /**
  * Verifies the integrity manifest against the current filesystem state.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class GuardianIntegrityVerifyCommand extends Command

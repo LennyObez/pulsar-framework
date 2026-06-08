@@ -25,9 +25,6 @@ use function trim;
 final readonly class LoginController
 {
     use RendersForumView;
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function __construct(
         private ConnectionInterface $connection,
@@ -42,7 +39,6 @@ final readonly class LoginController
 
     /**
      * GET /login: Show login form.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function showForm(ServerRequestInterface $request): Response
     {
@@ -58,7 +54,6 @@ final readonly class LoginController
 
     /**
      * POST /login: Process login.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function login(ServerRequestInterface $request): Response
     {
@@ -135,7 +130,6 @@ final readonly class LoginController
 
     /**
      * POST /logout; Log out the current user.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function logout(): Response
     {

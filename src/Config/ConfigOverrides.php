@@ -24,7 +24,6 @@ final class ConfigOverrides
      * Add override values for a config domain (e.g. 'app', 'observability').
      *
      * @param array<string, mixed> $values
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function add(string $domain, array $values): void
     {
@@ -57,7 +56,6 @@ final class ConfigOverrides
 
     /**
      * Check if overrides exist for a domain.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function has(string $domain): bool
     {

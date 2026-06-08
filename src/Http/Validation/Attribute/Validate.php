@@ -20,7 +20,6 @@ final readonly class Validate
      * @param class-string $rule Fully qualified rule class name
      * @param array<string, mixed> $parameters Constructor parameters for the rule
      * @param list<string> $groups Groups this rule belongs to (empty = all groups)
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function __construct(
         public string $rule,

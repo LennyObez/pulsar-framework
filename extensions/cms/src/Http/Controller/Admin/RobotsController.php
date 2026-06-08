@@ -35,7 +35,6 @@ final readonly class RobotsController extends AbstractAdminController
 
     /**
      * Show the current robots.txt content.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function show(ServerRequestInterface $request): Response
     {
@@ -54,7 +53,6 @@ final readonly class RobotsController extends AbstractAdminController
 
     /**
      * Update the robots.txt content.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function update(ServerRequestInterface $request): Response
     {

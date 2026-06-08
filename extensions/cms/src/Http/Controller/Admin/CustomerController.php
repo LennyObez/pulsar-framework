@@ -55,7 +55,6 @@ final readonly class CustomerController extends AbstractAdminController
      * List all customers with search, role filter, and aggregate stats.
      *
      * GET /admin/customers
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function index(ServerRequestInterface $request): Response
     {
@@ -103,7 +102,6 @@ final readonly class CustomerController extends AbstractAdminController
      * Show detailed customer view with all extension sections.
      *
      * GET /admin/customers/{id}
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function show(ServerRequestInterface $request, string $id): Response
     {
@@ -178,7 +176,6 @@ final readonly class CustomerController extends AbstractAdminController
      * Add an admin note to a customer account.
      *
      * POST /admin/customers/{id}/notes
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function addNote(ServerRequestInterface $request, string $id): Response
     {

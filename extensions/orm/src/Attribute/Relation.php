@@ -27,7 +27,6 @@ final readonly class Relation
      * @param class-string|null $throughEntity Intermediate entity class (for HasManyThrough)
      * @param string|null $throughForeignKey FK on intermediate table referencing this entity
      * @param string|null $throughLocalKey FK on intermediate table referencing the target entity
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function __construct(
         public RelationType $type,

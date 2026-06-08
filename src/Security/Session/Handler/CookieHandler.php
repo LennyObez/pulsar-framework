@@ -154,7 +154,6 @@ final class CookieHandler implements SessionHandlerInterface
      *
      * Called by the session middleware before read() to inject the raw cookie value
      * received from the client request.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function loadFromCookie(string $sessionId, string $encryptedCookie): void
     {
@@ -191,7 +190,6 @@ final class CookieHandler implements SessionHandlerInterface
      * Get the encrypted cookie value for the given session ID to send to the client.
      *
      * Returns null if no write was performed for this session.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function getCookieValue(string $sessionId): ?string
     {

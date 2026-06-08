@@ -19,41 +19,26 @@ final readonly class DashboardController
     public function __construct(
         private AnalyticsConfig $config,
     ) {}
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function index(): Response
     {
         return $this->renderTemplate('dashboard');
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function sites(): Response
     {
         return $this->renderTemplate('sites');
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function goals(): Response
     {
         return $this->renderTemplate('goals');
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function settings(): Response
     {
         return $this->renderTemplate('settings');
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function asset(string $path): Response
     {

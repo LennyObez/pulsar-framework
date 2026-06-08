@@ -38,7 +38,6 @@ final readonly class BootProfile
 
     /**
      * @return array{total_us: int, cache_load_us: int, config_us: int, extension_register_us: int, extension_boot_us: int, compiler_pass_us: int, cache_hit: bool, routes_cached: bool}
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function toArray(): array
     {

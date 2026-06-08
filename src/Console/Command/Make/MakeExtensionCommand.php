@@ -18,8 +18,6 @@ use function sprintf;
 
 /**
  * Scaffold a new extension structure.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class MakeExtensionCommand extends Command
 {

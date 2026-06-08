@@ -24,10 +24,6 @@ use function is_string;
 #[Internal(reason: 'Forum controller; implementation detail')]
 final readonly class NotificationPreferencesController
 {
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
     private const array VALID_FREQUENCIES = ['immediate', 'daily', 'weekly'];
 
     public function __construct(
@@ -36,7 +32,6 @@ final readonly class NotificationPreferencesController
 
     /**
      * GET /forum/settings/notifications: List current user's notification preferences.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function index(ServerRequestInterface $request): Response
     {
@@ -66,7 +61,6 @@ final readonly class NotificationPreferencesController
      *   ]
      * }
      * ```
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function update(ServerRequestInterface $request): Response
     {

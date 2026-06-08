@@ -31,9 +31,6 @@ use function str_starts_with;
  */
 final readonly class CmsLocaleUrlResolver implements LocaleUrlResolverInterface
 {
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
     public function __construct(
         private ContentTranslationRepositoryInterface $translationRepository,
         private UrlPrefixExtractor $extractor,
@@ -47,7 +44,6 @@ final readonly class CmsLocaleUrlResolver implements LocaleUrlResolverInterface
      * Controllers call this per-request to bind the current content context
      * without mutating the shared singleton. The clone shares the stateless
      * translation repository: safe for single-threaded PHP request handling.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function withContentId(string $contentId): self
     {

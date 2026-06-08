@@ -26,8 +26,6 @@ use Pulsar\Queue\Exception\QueueException;
  *
  * This middleware is intended for regulated presets only. Non-regulated environments
  * should omit it from the pipeline for lower overhead.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Effect classification enforcement is an implementation detail of regulated queue processing')]
 final readonly class EnforceEffectClassification implements JobMiddlewareInterface

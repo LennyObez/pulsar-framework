@@ -92,7 +92,6 @@ final readonly class DbHourlyStatsRepository
 
     /**
      * @return list<HourlyStats>
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function findByDateRange(string $siteId, DateTimeImmutable $from, DateTimeImmutable $to): array
     {
@@ -102,9 +101,6 @@ final readonly class DbHourlyStatsRepository
             'to' => $to->format('Y-m-d'),
         ])->map(self::hydrate(...));
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function findByDateAndHour(string $siteId, DateTimeImmutable $date, int $hour): ?HourlyStats
     {
@@ -116,9 +112,6 @@ final readonly class DbHourlyStatsRepository
 
         return $row !== null ? self::hydrate($row) : null;
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function deleteOlderThan(DateTimeImmutable $before): int
     {

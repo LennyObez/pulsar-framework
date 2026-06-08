@@ -261,7 +261,6 @@ final class ListenerProvider implements ListenerProviderInterface, ListenerMetad
 
     /**
      * Reset static caches (for testing).
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public static function resetStaticCaches(): void
     {

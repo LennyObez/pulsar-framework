@@ -29,8 +29,6 @@ use function str_replace;
  *
  * Introspects the target class via reflection to produce PHPUnit test stubs
  * with #[Test] attributes, arranged in AAA pattern with assertion placeholders.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class MakeTestCommand extends Command
 {

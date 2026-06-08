@@ -31,9 +31,6 @@ final readonly class FieldController extends AbstractAdminController
     ) {
         parent::__construct($templateEngine, $gate);
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function index(ServerRequestInterface $request, string $contentType): Response
     {
@@ -59,9 +56,6 @@ final readonly class FieldController extends AbstractAdminController
 
         return $this->respondWithView($request, 'admin.fields.index', $data);
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function create(ServerRequestInterface $request, string $contentType): Response
     {
@@ -123,9 +117,6 @@ final readonly class FieldController extends AbstractAdminController
             'status' => 'created',
         ], 201);
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function update(ServerRequestInterface $request, string $contentType, string $fieldId): Response
     {
@@ -188,9 +179,6 @@ final readonly class FieldController extends AbstractAdminController
             'status' => 'updated',
         ]);
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function delete(ServerRequestInterface $request, string $contentType, string $fieldId): Response
     {

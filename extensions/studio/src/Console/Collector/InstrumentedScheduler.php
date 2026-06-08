@@ -62,7 +62,6 @@ final class InstrumentedScheduler implements CollectorInterface
      * @throws DateInvalidTimeZoneException
      * @throws SchedulerException
      * @throws Exception From random_bytes during job execution
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function tick(?DateTimeImmutable $now = null): SchedulerTickResult
     {
@@ -125,7 +124,6 @@ final class InstrumentedScheduler implements CollectorInterface
 
     /**
      * Get the job registry.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function registry(): JobRegistry
     {
@@ -134,7 +132,6 @@ final class InstrumentedScheduler implements CollectorInterface
 
     /**
      * Get the underlying scheduler.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function inner(): Scheduler
     {

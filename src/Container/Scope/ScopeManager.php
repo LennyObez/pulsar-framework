@@ -73,7 +73,6 @@ final class ScopeManager
 
     /**
      * Check if a scope is currently active.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public function isActive(Lifetime $lifetime): bool
@@ -116,7 +115,6 @@ final class ScopeManager
 
     /**
      * Get the current tenant ID (if tenant scope is active).
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public function currentTenantId(): ?string

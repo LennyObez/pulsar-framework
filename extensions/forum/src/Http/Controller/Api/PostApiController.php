@@ -31,9 +31,6 @@ use function min;
 #[Internal(reason: 'Forum REST API controller; implementation detail')]
 final readonly class PostApiController
 {
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
     public function __construct(
         private PostRepositoryInterface $postRepository,
         private ForumServiceInterface $forumService,
@@ -46,7 +43,6 @@ final readonly class PostApiController
 
     /**
      * GET /api/v1/forum/threads/{threadId}/posts: List posts in a thread.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function index(ServerRequestInterface $request, string $threadId): Response
     {
@@ -65,7 +61,6 @@ final readonly class PostApiController
 
     /**
      * POST /api/v1/forum/threads/{threadId}/posts: Create a new post.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function create(ServerRequestInterface $request, string $threadId): Response
     {
@@ -124,7 +119,6 @@ final readonly class PostApiController
 
     /**
      * GET /api/v1/forum/posts/{id}: Show a single post.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function show(string $id): Response
     {
@@ -139,7 +133,6 @@ final readonly class PostApiController
 
     /**
      * PUT /api/v1/forum/posts/{id}: Edit a post.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function update(ServerRequestInterface $request, string $id): Response
     {
@@ -179,7 +172,6 @@ final readonly class PostApiController
 
     /**
      * DELETE /api/v1/forum/posts/{id}: Soft delete a post.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function delete(ServerRequestInterface $request, string $id): Response
     {
@@ -214,7 +206,6 @@ final readonly class PostApiController
      * POST /api/v1/forum/posts/{id}/accept: Mark a post as the accepted solution.
      *
      * Only the thread author may accept a solution.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function accept(ServerRequestInterface $request, string $id): Response
     {

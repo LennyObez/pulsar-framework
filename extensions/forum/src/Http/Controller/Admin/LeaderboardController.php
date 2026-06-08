@@ -25,9 +25,6 @@ use function min;
 final readonly class LeaderboardController
 {
     use RendersAdminView;
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function __construct(
         private LeaderboardServiceInterface $leaderboardService,
@@ -37,7 +34,6 @@ final readonly class LeaderboardController
 
     /**
      * GET /admin/forum/leaderboard: Show leaderboard with period selector.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function index(ServerRequestInterface $request): Response
     {

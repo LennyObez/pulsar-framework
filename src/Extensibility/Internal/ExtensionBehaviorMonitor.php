@@ -20,8 +20,6 @@ use function sprintf;
  * Tracks capability usage, error rates, and resource consumption per
  * extension. Flags anomalous behavior (excessive errors, capability
  * probing, unexpected resource usage) and reports via the logger.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class ExtensionBehaviorMonitor

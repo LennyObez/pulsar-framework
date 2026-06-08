@@ -28,9 +28,6 @@ use const STDOUT;
  *
  * Bootstraps the full framework kernel so all Forum routes (public pages,
  * account pages, admin, API), database, auth, and extensions are available.
- *
- * @psalm-api Discovered by the console command registrar via class-name;
- *            not instantiated directly.
  */
 #[Internal]
 final class ForumServeCommand extends Command

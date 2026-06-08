@@ -18,8 +18,6 @@ use function sprintf;
 
 /**
  * Applies the retention policy to the Studio evidence store.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class RetentionApplyCommand extends Command

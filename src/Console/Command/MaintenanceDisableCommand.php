@@ -16,8 +16,6 @@ use Pulsar\Deploy\MaintenanceMode;
  * Disable maintenance mode.
  *
  * Usage: maintenance:disable
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class MaintenanceDisableCommand extends Command

@@ -17,8 +17,6 @@ use Pulsar\Extension\Payments\Domain\Subscription;
  * Uses day-based proration: the customer pays only for the
  * remaining portion of the billing cycle at the new rate,
  * and receives credit for unused time at the old rate.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class ProrationCalculator

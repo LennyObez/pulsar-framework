@@ -48,7 +48,6 @@ final readonly class TwoFactorController extends AbstractAdminController
 
     /**
      * Return 2FA enrollment status for the current user.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function status(ServerRequestInterface $request): Response
     {
@@ -68,7 +67,6 @@ final readonly class TwoFactorController extends AbstractAdminController
      *
      * Returns a provisioning URI and SVG QR code for scanning with an authenticator app.
      * The secret is returned to be stored temporarily until the user confirms with a valid code.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function enroll(ServerRequestInterface $request): Response
     {
@@ -129,7 +127,6 @@ final readonly class TwoFactorController extends AbstractAdminController
      * Confirm 2FA enrollment by verifying the first TOTP code.
      *
      * The client must submit a valid TOTP code to prove the authenticator is configured.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function confirm(ServerRequestInterface $request): Response
     {
@@ -194,7 +191,6 @@ final readonly class TwoFactorController extends AbstractAdminController
 
     /**
      * Verify a TOTP code (general verification endpoint).
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function verify(ServerRequestInterface $request): Response
     {
@@ -254,7 +250,6 @@ final readonly class TwoFactorController extends AbstractAdminController
      * Disable 2FA for the authenticated user.
      *
      * Requires step-up authentication and a mandatory reason (min 10 chars).
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function disable(ServerRequestInterface $request): Response
     {
@@ -297,7 +292,6 @@ final readonly class TwoFactorController extends AbstractAdminController
      * Generate a new set of recovery codes.
      *
      * Requires step-up authentication.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function regenerateRecoveryCodes(ServerRequestInterface $request): Response
     {

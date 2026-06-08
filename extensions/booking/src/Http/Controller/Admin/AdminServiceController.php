@@ -22,16 +22,12 @@ use function random_bytes;
 #[Internal]
 final readonly class AdminServiceController
 {
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
     public function __construct(
         private ConnectionInterface $connection,
     ) {}
 
     /**
      * GET /admin/booking/services: list services.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function listServices(): Response
     {
@@ -57,7 +53,6 @@ final readonly class AdminServiceController
 
     /**
      * POST /admin/booking/services: create a service.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function createService(Request $request): Response
     {
@@ -95,7 +90,6 @@ final readonly class AdminServiceController
 
     /**
      * PUT /admin/booking/services/{id}: update a service.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function updateService(Request $request): Response
     {
@@ -127,7 +121,6 @@ final readonly class AdminServiceController
 
     /**
      * DELETE /admin/booking/services/{id}: delete a service.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function deleteService(Request $request): Response
     {
@@ -143,7 +136,6 @@ final readonly class AdminServiceController
 
     /**
      * GET /admin/booking/categories: list categories.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function listCategories(): Response
     {
@@ -166,7 +158,6 @@ final readonly class AdminServiceController
 
     /**
      * POST /admin/booking/categories: create a category.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function createCategory(Request $request): Response
     {

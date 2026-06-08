@@ -20,7 +20,6 @@ final readonly class UpdateResult
 
     /**
      * Create a successful result.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public static function ok(string $notes = ''): self
     {
@@ -29,7 +28,6 @@ final readonly class UpdateResult
 
     /**
      * Create a failed result.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public static function failed(string $message): self
     {

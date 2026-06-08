@@ -28,7 +28,6 @@ class I18nException extends RuntimeException
 
     /**
      * @param list<string> $supported
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public static function unsupportedLocale(string $locale, array $supported): self

@@ -16,8 +16,6 @@ use Pulsar\Core\KernelInterface;
  * Alias for `optimize`: discoverable as `cache:warmup`.
  *
  * Delegates entirely to OptimizeCommand with the same options.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class CacheWarmupCommand extends Command

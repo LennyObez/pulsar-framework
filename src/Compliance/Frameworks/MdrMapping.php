@@ -16,7 +16,6 @@ use Pulsar\Compliance\ControlStatus;
  * requirements they provide tooling support for.
  *
  * @see https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32017R0745
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Framework-internal control registration; use ControlCatalog for public access')]
 final class MdrMapping

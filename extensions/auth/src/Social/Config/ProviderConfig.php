@@ -15,9 +15,7 @@ use function str_starts_with;
 #[Api(since: '1.0.0')]
 final readonly class ProviderConfig
 {
-    /**
-     * @param list<string> $scopes
-     */
+    /** @param list<string> $scopes */
     public function __construct(
         public string $name,
         public string $type,

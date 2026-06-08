@@ -275,7 +275,6 @@ final class RedisHandler implements SessionHandlerInterface
      * was added (under limit), false if the limit would be exceeded.
      *
      * @throws SecurityException If Redis communication fails
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function atomicAddSession(string $userId, string $sessionId, int $maxSessions): bool
     {
@@ -300,7 +299,6 @@ final class RedisHandler implements SessionHandlerInterface
 
     /**
      * Set metadata context for the current session write operation.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function setSessionContext(?string $userId, string $ipAddress, string $userAgent): void
     {

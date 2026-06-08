@@ -39,9 +39,6 @@ final readonly class OrderController extends AbstractAdminController
     ) {
         parent::__construct($templateEngine, $gate);
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function index(ServerRequestInterface $request): Response
     {
@@ -103,9 +100,6 @@ final readonly class OrderController extends AbstractAdminController
             ],
         ]);
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function show(ServerRequestInterface $request, string $id): Response
     {
@@ -153,9 +147,6 @@ final readonly class OrderController extends AbstractAdminController
             ], $items),
         ]);
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function refund(ServerRequestInterface $request, string $id): Response
     {
@@ -199,9 +190,6 @@ final readonly class OrderController extends AbstractAdminController
             return Response::json(['error' => $e->getMessage()], 422);
         }
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function export(ServerRequestInterface $request): Response
     {

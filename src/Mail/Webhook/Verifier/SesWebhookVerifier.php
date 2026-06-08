@@ -29,8 +29,6 @@ use const OPENSSL_ALGO_SHA256;
  * 1. Parsing the SNS message to extract the signing certificate URL
  * 2. Downloading and caching the certificate
  * 3. Verifying the signature against the canonical message string
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class SesWebhookVerifier implements WebhookVerifierInterface

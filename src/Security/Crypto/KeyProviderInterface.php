@@ -17,7 +17,6 @@ interface KeyProviderInterface
 
     /**
      * @throws SodiumException
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function deriveSubKeyHex(int $subKeyId, string $context, int $length = SODIUM_CRYPTO_SECRETBOX_KEYBYTES): string;
 }

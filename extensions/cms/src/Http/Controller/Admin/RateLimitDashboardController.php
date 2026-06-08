@@ -45,9 +45,6 @@ final readonly class RateLimitDashboardController extends AbstractAdminControlle
         '/api/cms/search' => ['limit' => 60, 'window' => 60],
         '/api/cms/export' => ['limit' => 5, 'window' => 300],
     ];
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function __construct(
         private SettingsServiceInterface $settings,
@@ -62,7 +59,6 @@ final readonly class RateLimitDashboardController extends AbstractAdminControlle
      * Render the rate limiting dashboard.
      *
      * Shows endpoint configurations, request/rejection metrics, and top IPs.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function dashboard(ServerRequestInterface $request): Response
     {
@@ -102,7 +98,6 @@ final readonly class RateLimitDashboardController extends AbstractAdminControlle
      * Update rate limit configuration for a specific endpoint.
      *
      * Stores the limit and window values in CMS settings for runtime use.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function updateLimit(ServerRequestInterface $request): Response
     {

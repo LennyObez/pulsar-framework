@@ -51,7 +51,6 @@ final readonly class PluginController extends AbstractAdminController
 
     /**
      * List all installed plugins.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function index(ServerRequestInterface $request): Response
     {
@@ -89,7 +88,6 @@ final readonly class PluginController extends AbstractAdminController
      * Upload and install a plugin from a ZIP archive.
      *
      * Requires step-up authentication.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function install(ServerRequestInterface $request): Response
     {
@@ -144,7 +142,6 @@ final readonly class PluginController extends AbstractAdminController
      * Enable or disable a plugin (toggle).
      *
      * Requires step-up authentication.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function toggle(ServerRequestInterface $request, string $id): Response
     {
@@ -175,7 +172,6 @@ final readonly class PluginController extends AbstractAdminController
 
     /**
      * Get settings for a specific plugin.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function settings(ServerRequestInterface $request, string $id): Response
     {
@@ -196,7 +192,6 @@ final readonly class PluginController extends AbstractAdminController
 
     /**
      * Update settings for a specific plugin.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function updateSettings(ServerRequestInterface $request, string $id): Response
     {
@@ -235,7 +230,6 @@ final readonly class PluginController extends AbstractAdminController
      * Delete a plugin with a mandatory reason.
      *
      * Requires step-up authentication.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function delete(ServerRequestInterface $request, string $id): Response
     {

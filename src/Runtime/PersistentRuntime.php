@@ -183,17 +183,11 @@ final class PersistentRuntime implements ReloadableRuntimeInterface
     {
         $this->sandbox->afterRequest($request, $response);
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function status(): RuntimeStatus
     {
         return $this->status;
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function requestCount(): int
     {

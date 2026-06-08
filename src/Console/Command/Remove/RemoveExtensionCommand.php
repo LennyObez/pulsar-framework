@@ -18,8 +18,6 @@ use function sprintf;
 
 /**
  * Remove a scaffolded extension directory.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class RemoveExtensionCommand extends Command
 {

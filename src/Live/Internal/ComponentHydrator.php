@@ -32,8 +32,6 @@ use const JSON_THROW_ON_ERROR;
  * every render into a single hash lookup. The previous M-2 audit
  * finding flagged the per-call `new ReflectionClass()` as wasted
  * work in render loops.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class ComponentHydrator

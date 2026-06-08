@@ -35,7 +35,6 @@ final readonly class TicketSlaMonitor
      * Check all active tickets for SLA violations and dispatch escalation events.
      *
      * @return int Number of escalated tickets
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function checkViolations(): int
     {

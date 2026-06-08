@@ -38,7 +38,6 @@ final readonly class AccountController
      * Account dashboard: overview with recent activity from all extensions.
      *
      * GET /account
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function dashboard(ServerRequestInterface $request): Response
     {
@@ -60,7 +59,6 @@ final readonly class AccountController
      * Customer profile management: name, email, avatar, addresses.
      *
      * GET /account/profile
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function profile(ServerRequestInterface $request): Response
     {
@@ -83,7 +81,6 @@ final readonly class AccountController
      * Update customer profile.
      *
      * POST /account/profile
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function updateProfile(ServerRequestInterface $request): Response
     {
@@ -127,7 +124,6 @@ final readonly class AccountController
      * Account settings: password, 2FA, notification preferences.
      *
      * GET /account/settings
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function settings(ServerRequestInterface $request): Response
     {
@@ -149,7 +145,6 @@ final readonly class AccountController
      * Render a dynamic section provided by an extension (Forum, Payments, etc.).
      *
      * GET /account/section/{sectionId}
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function section(ServerRequestInterface $request, string $sectionId): Response
     {

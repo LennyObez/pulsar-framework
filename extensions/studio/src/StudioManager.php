@@ -82,7 +82,6 @@ final readonly class StudioManager
 
     /**
      * Get the underlying event store.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function store(): EventStoreInterface
     {

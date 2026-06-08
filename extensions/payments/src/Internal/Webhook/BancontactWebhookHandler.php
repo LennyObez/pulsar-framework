@@ -33,9 +33,6 @@ use const JSON_THROW_ON_ERROR;
 #[Internal]
 final readonly class BancontactWebhookHandler
 {
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
     public function __construct(
         private StripeConfig $stripeConfig,
         private LoggerInterface $logger,

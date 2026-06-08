@@ -24,9 +24,6 @@ use function min;
 final readonly class ThreadPageController
 {
     use RendersForumView;
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function __construct(
         private ThreadRepositoryInterface $threadRepository,
@@ -42,7 +39,6 @@ final readonly class ThreadPageController
 
     /**
      * GET /t/{slug}: Show a thread with its posts.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function show(ServerRequestInterface $request, string $slug): Response
     {

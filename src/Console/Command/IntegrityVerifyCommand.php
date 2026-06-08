@@ -30,8 +30,6 @@ use const JSON_UNESCAPED_SLASHES;
  * Verify filesystem integrity against a stored manifest.
  *
  * Usage: integrity:verify [--strict] [--json]
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class IntegrityVerifyCommand extends Command
 {

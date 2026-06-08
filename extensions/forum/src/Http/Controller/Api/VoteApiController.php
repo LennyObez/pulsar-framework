@@ -21,16 +21,12 @@ use function is_string;
 #[Internal(reason: 'Forum REST API controller; implementation detail')]
 final readonly class VoteApiController
 {
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
     public function __construct(
         private VoteServiceInterface $voteService,
     ) {}
 
     /**
      * POST /api/v1/forum/threads/{id}/vote: Vote on a thread.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function threadVote(ServerRequestInterface $request, string $id): Response
     {
@@ -80,7 +76,6 @@ final readonly class VoteApiController
 
     /**
      * POST /api/v1/forum/posts/{id}/vote: Vote on a post.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function postVote(ServerRequestInterface $request, string $id): Response
     {
@@ -130,7 +125,6 @@ final readonly class VoteApiController
 
     /**
      * DELETE /api/v1/forum/threads/{id}/vote: Remove a thread vote.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function removeThreadVote(ServerRequestInterface $request, string $id): Response
     {
@@ -147,7 +141,6 @@ final readonly class VoteApiController
 
     /**
      * DELETE /api/v1/forum/posts/{id}/vote: Remove a post vote.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function removePostVote(ServerRequestInterface $request, string $id): Response
     {

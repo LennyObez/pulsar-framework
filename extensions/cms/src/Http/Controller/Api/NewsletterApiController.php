@@ -27,9 +27,6 @@ use const FILTER_VALIDATE_EMAIL;
 #[Internal(reason: 'CMS REST API controller; implementation detail')]
 final readonly class NewsletterApiController
 {
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
     public function __construct(
         private NewsletterSubscriptionServiceInterface $subscriptionService,
         private NewsletterSubscriberRepositoryInterface $subscriberRepository,
@@ -39,7 +36,6 @@ final readonly class NewsletterApiController
      * POST /api/cms/newsletter/subscribe
      *
      * Accepts email, locale, source. Validates honeypot field and email format.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function subscribe(ServerRequestInterface $request): Response
     {
@@ -100,7 +96,6 @@ final readonly class NewsletterApiController
      * GET /api/cms/newsletter/stats
      *
      * Returns subscriber count statistics by status.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function stats(ServerRequestInterface $request): Response
     {

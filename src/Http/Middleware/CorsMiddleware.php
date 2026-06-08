@@ -29,9 +29,6 @@ use function strtoupper;
  */
 final readonly class CorsMiddleware implements MiddlewareInterface
 {
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
     public function __construct(
         private CorsConfig $config,
     ) {

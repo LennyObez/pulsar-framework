@@ -37,9 +37,6 @@ final readonly class BackupController extends AbstractAdminController
     ) {
         parent::__construct($templateEngine, $gate);
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function index(ServerRequestInterface $request): Response
     {
@@ -61,9 +58,6 @@ final readonly class BackupController extends AbstractAdminController
             ], $backups),
         ]);
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function create(ServerRequestInterface $request): Response
     {
@@ -109,9 +103,6 @@ final readonly class BackupController extends AbstractAdminController
             'status' => 'created',
         ], 201);
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function restore(ServerRequestInterface $request, string $id): Response
     {
@@ -144,9 +135,6 @@ final readonly class BackupController extends AbstractAdminController
             return Response::json(['error' => $e->getMessage()], 422);
         }
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function delete(ServerRequestInterface $request, string $id): Response
     {

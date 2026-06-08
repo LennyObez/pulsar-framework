@@ -18,8 +18,6 @@ use function str_pad;
 
 /**
  * Display the status of all migrations.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class MigrateStatusCommand extends Command
 {

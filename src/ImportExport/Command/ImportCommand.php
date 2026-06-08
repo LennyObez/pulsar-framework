@@ -31,8 +31,6 @@ use const JSON_THROW_ON_ERROR;
  *
  * Usage:
  *   pulsar import:run <file> [--provider=cms] [--dry-run] [--duplicates=skip|overwrite|fail]
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class ImportCommand extends Command

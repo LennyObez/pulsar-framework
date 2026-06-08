@@ -13,8 +13,6 @@ use Pulsar\Api\Api;
  * This attribute is optional since all fields without {@see Expose} are hidden by default.
  * Use it for documentation emphasis on fields that callers might mistakenly expect
  * to be exposed (e.g., passwords, internal IDs, audit columns).
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Attribute(Attribute::TARGET_PROPERTY | Attribute::TARGET_METHOD)]
 #[Api(since: '1.0.0')]

@@ -35,11 +35,7 @@ final class InMemoryRefreshTokenRepository implements RefreshTokenRepositoryInte
     /** @var array<string, bool> Token IDs that have been consumed (rotated out) */
     private array $consumed = [];
 
-    /**
-     * @var array<string, list<string>> Family ID => list of token IDs in the family
-     *
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
+    /** @var array<string, list<string>> Family ID => list of token IDs in the family */
     private array $families = [];
 
     /** @var bool Whether replay was detected on the last consume() call */

@@ -28,9 +28,6 @@ final readonly class MenuController extends AbstractAdminController
     ) {
         parent::__construct($templateEngine, $gate);
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function index(ServerRequestInterface $request): Response
     {
@@ -41,9 +38,6 @@ final readonly class MenuController extends AbstractAdminController
 
         return $this->respondWithView($request, 'admin.menus.index', $data);
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function create(ServerRequestInterface $request): Response
     {
@@ -52,9 +46,6 @@ final readonly class MenuController extends AbstractAdminController
 
         return Response::json(['status' => 'created'], 201);
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function show(ServerRequestInterface $request, string $location): Response
     {
@@ -81,9 +72,6 @@ final readonly class MenuController extends AbstractAdminController
 
         return $this->respondWithView($request, 'admin.menus.form', $data);
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function update(ServerRequestInterface $request, string $location): Response
     {
@@ -102,9 +90,6 @@ final readonly class MenuController extends AbstractAdminController
 
         return Response::json(['id' => $menu->id, 'status' => 'updated']);
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function delete(ServerRequestInterface $request, string $location): Response
     {

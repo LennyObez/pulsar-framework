@@ -26,9 +26,6 @@ use function is_string;
 final readonly class CategoryController
 {
     use RendersAdminView;
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function __construct(
         private CategoryRepositoryInterface $categoryRepository,
@@ -39,7 +36,6 @@ final readonly class CategoryController
 
     /**
      * GET /admin/forum/categories: List all categories.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function index(ServerRequestInterface $request): Response
     {
@@ -60,7 +56,6 @@ final readonly class CategoryController
 
     /**
      * GET /admin/forum/categories/{id}: Show a single category with translations.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function show(ServerRequestInterface $request, string $id): Response
     {
@@ -85,7 +80,6 @@ final readonly class CategoryController
 
     /**
      * POST /admin/forum/categories: Create a new category.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function create(ServerRequestInterface $request): Response
     {
@@ -149,7 +143,6 @@ final readonly class CategoryController
 
     /**
      * PUT /admin/forum/categories/{id}: Update a category.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function update(ServerRequestInterface $request, string $id): Response
     {
@@ -218,7 +211,6 @@ final readonly class CategoryController
 
     /**
      * DELETE /admin/forum/categories/{id}: Delete a category.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function delete(ServerRequestInterface $request, string $id): Response
     {

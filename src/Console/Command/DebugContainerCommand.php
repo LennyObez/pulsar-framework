@@ -31,8 +31,6 @@ use const ARRAY_FILTER_USE_KEY;
  *  - --tags: displays all tagged services grouped by tag name.
  *
  * Usage: debug:container [--check-lifetimes] [--tags] [--filter=<pattern>]
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class DebugContainerCommand extends Command

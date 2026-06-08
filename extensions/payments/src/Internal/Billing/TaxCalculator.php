@@ -14,8 +14,6 @@ use Pulsar\Extension\Payments\Domain\RoundingMode;
  * Computes applicable taxes based on the customer's jurisdiction.
  * In production, this should be extended with a tax provider
  * (e.g., Avalara, TaxJar) for accurate multi-jurisdiction tax rates.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class TaxCalculator

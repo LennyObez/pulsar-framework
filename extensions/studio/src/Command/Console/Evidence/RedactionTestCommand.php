@@ -23,8 +23,6 @@ use const JSON_THROW_ON_ERROR;
 
 /**
  * Tests redaction policies against sample payloads.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class RedactionTestCommand extends Command

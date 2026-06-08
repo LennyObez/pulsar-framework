@@ -53,8 +53,6 @@ final class AeadPayloadEncryptor
 
     /**
      * KDF context for queue encryption (exactly 8 bytes).
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     private const string QUEUE_KDF_CONTEXT = 'que_aead';
 

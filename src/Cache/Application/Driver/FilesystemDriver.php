@@ -93,9 +93,6 @@ final class FilesystemDriver extends AbstractCacheDriver
 
         return $this->atomicWrite($path, $entry);
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function delete(string $key): bool
     {

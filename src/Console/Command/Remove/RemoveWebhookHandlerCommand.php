@@ -16,8 +16,6 @@ use function sprintf;
 
 /**
  * Remove a scaffolded webhook handler and its associated files.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class RemoveWebhookHandlerCommand extends Command
 {

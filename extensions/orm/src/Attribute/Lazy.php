@@ -17,9 +17,6 @@ use Pulsar\Api\Api;
  * Explicit FetchPlan declarations override this attribute:
  * if a relation is both #[Lazy] and included in a FetchPlan,
  * the FetchPlan wins and the relation is loaded eagerly.
- *
- * @psalm-api PHP attribute consumed via reflection during ORM hydration;
- *            no direct class-name reference.
  */
 #[Attribute(Attribute::TARGET_PROPERTY)]
 #[Api(since: '1.0.0')]

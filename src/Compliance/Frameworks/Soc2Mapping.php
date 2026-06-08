@@ -13,8 +13,6 @@ use Pulsar\Compliance\ControlStatus;
  * Registers SOC 2 Trust Services Criteria controls into the catalog.
  *
  * Maps Pulsar framework features to the SOC 2 controls they provide coverage for.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Framework-internal control registration; use ControlCatalog for public access')]
 final class Soc2Mapping

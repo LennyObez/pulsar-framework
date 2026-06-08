@@ -25,9 +25,6 @@ final readonly class ResourceDeleteController
     public function __construct(
         private DeleteResourceHandler $handler,
     ) {}
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function delete(ServerRequestInterface $request, string $resource, string $id): Response
     {

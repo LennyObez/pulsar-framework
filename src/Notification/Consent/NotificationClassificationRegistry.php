@@ -25,7 +25,6 @@ final class NotificationClassificationRegistry
      * Register a notification class with its classification.
      *
      * @param class-string $notificationClass
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function register(string $notificationClass, NotificationClassification $classification): void
     {
@@ -59,7 +58,6 @@ final class NotificationClassificationRegistry
      * Check if a notification class has a registered or attribute-declared classification.
      *
      * @param class-string $notificationClass
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function has(string $notificationClass): bool
     {
@@ -70,7 +68,6 @@ final class NotificationClassificationRegistry
      * Get all registered classifications.
      *
      * @return array<class-string, NotificationClassification>
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function all(): array
     {

@@ -20,9 +20,6 @@ use Pulsar\Http\Request;
 #[Internal]
 final readonly class AdminAppointmentController
 {
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
     public function __construct(
         private AppointmentRepositoryInterface $repository,
         private BookingServiceInterface $bookingService,
@@ -30,7 +27,6 @@ final readonly class AdminAppointmentController
 
     /**
      * GET /admin/booking/appointments: list appointments.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function list(Request $request): Response
     {
@@ -56,7 +52,6 @@ final readonly class AdminAppointmentController
 
     /**
      * GET /admin/booking/appointments/{id}: appointment detail.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function show(Request $request): Response
     {
@@ -89,7 +84,6 @@ final readonly class AdminAppointmentController
 
     /**
      * POST /admin/booking/appointments/{id}/confirm: confirm an appointment.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function confirm(Request $request): Response
     {
@@ -105,7 +99,6 @@ final readonly class AdminAppointmentController
 
     /**
      * POST /admin/booking/appointments/{id}/cancel: cancel an appointment.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function cancel(Request $request): Response
     {
@@ -121,7 +114,6 @@ final readonly class AdminAppointmentController
 
     /**
      * POST /admin/booking/appointments/{id}/reschedule: reschedule an appointment.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function reschedule(Request $request): Response
     {
@@ -145,7 +137,6 @@ final readonly class AdminAppointmentController
 
     /**
      * POST /admin/booking/appointments/{id}/complete: mark as completed.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function complete(Request $request): Response
     {
@@ -161,7 +152,6 @@ final readonly class AdminAppointmentController
 
     /**
      * POST /admin/booking/appointments/{id}/no-show: mark as no-show.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function noShow(Request $request): Response
     {

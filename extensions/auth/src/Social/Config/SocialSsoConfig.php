@@ -10,13 +10,7 @@ use Pulsar\Api\Api;
 #[Api(since: '1.0.0')]
 final readonly class SocialSsoConfig
 {
-    /**
-     * @param array<string, ProviderConfig> $providers
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
+    /** @param array<string, ProviderConfig> $providers */
     public function __construct(
         public bool $enabled,
         public string $defaultProvider,

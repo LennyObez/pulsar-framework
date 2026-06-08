@@ -51,7 +51,6 @@ final readonly class WebhookController
      *
      * Google sends a Pub/Sub message with a base64-encoded data field containing
      * the notification JSON.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function googlePlay(ServerRequestInterface $request): Response
     {
@@ -133,7 +132,6 @@ final readonly class WebhookController
      * Receives App Store Server Notifications v2 from Apple.
      *
      * Apple sends a signed JWS payload containing the notification data.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function appleSns(ServerRequestInterface $request): Response
     {

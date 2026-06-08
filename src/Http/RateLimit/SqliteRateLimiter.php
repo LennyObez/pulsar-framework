@@ -22,8 +22,6 @@ use function time;
  *
  * Window semantics: fixed windows aligned to windowSeconds intervals.
  * All clients share the same window boundaries.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class SqliteRateLimiter implements RateLimiterInterface

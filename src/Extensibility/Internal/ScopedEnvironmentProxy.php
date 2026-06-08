@@ -25,7 +25,6 @@ use function strtoupper;
  * - Deny-by-default for untrusted extensions
  *
  * @internal Not part of the public API
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final readonly class ScopedEnvironmentProxy implements EnvironmentInterface
 {

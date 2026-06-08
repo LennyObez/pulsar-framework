@@ -21,8 +21,6 @@ use function implode;
  *
  * Returns pre-configured tokens and identities for given authorization codes.
  * All URLs are synthetic and no real HTTP calls are made.
- *
- * @psalm-api Registered with OAuthProviderRegistry in dev/test wiring.
  */
 #[Internal]
 final class LocalMockProvider implements OAuthProviderInterface

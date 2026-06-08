@@ -32,8 +32,6 @@ use function sprintf;
  *   pulsar new my-app --preset=minimal --env=production
  *   pulsar new my-app --pack=banking
  *   pulsar new --list-packs
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class NewCommand extends Command
 {

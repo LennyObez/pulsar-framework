@@ -153,7 +153,6 @@ final class InstrumentedRuntime implements CollectorInterface, RuntimeCollectorI
      * Emit a leak warning event.
      *
      * @param list<string> $warnings
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function emitLeakWarning(
         array $warnings,
@@ -175,7 +174,6 @@ final class InstrumentedRuntime implements CollectorInterface, RuntimeCollectorI
 
     /**
      * Emit a Fiber scheduler metric event.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function emitSchedulerMetric(
         int $activeFibers,
@@ -210,7 +208,6 @@ final class InstrumentedRuntime implements CollectorInterface, RuntimeCollectorI
 
     /**
      * Get the inner runtime.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function inner(): RuntimeInterface
     {

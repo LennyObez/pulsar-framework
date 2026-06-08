@@ -24,7 +24,6 @@ final readonly class ApiResponse
      * @param bool $isCollection Whether the response is a collection of the schema type
      * @param string $mediaType Response media type
      * @param array<string, string>|null $headers Response headers as name => description
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function __construct(
         public int $status = 200,

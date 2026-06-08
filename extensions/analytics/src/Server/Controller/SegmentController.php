@@ -26,9 +26,6 @@ final readonly class SegmentController
     public function __construct(
         private SegmentServiceInterface $segmentService,
     ) {}
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function index(ServerRequestInterface $request): Response
     {
@@ -57,9 +54,6 @@ final readonly class SegmentController
             ], $segments),
         ]);
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function create(ServerRequestInterface $request): Response
     {
@@ -122,9 +116,6 @@ final readonly class SegmentController
             'created_at' => $segment->createdAt->format('c'),
         ], 201);
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function count(ServerRequestInterface $request, string $id): Response
     {
@@ -147,9 +138,6 @@ final readonly class SegmentController
             'visitors' => $count,
         ]);
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function delete(string $id): Response
     {

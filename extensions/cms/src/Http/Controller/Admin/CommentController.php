@@ -45,7 +45,6 @@ final readonly class CommentController extends AbstractAdminController
      * List comments for moderation, filtered by status.
      *
      * Default filter is "pending" to show the moderation queue.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function index(ServerRequestInterface $request): Response
     {
@@ -89,7 +88,6 @@ final readonly class CommentController extends AbstractAdminController
 
     /**
      * Moderation queue view with pending/approved/spam filter tabs.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function queue(ServerRequestInterface $request): Response
     {
@@ -133,7 +131,6 @@ final readonly class CommentController extends AbstractAdminController
 
     /**
      * Show a single comment detail for moderation.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function show(ServerRequestInterface $request, string $id): Response
     {
@@ -164,7 +161,6 @@ final readonly class CommentController extends AbstractAdminController
 
     /**
      * Show detailed comment view with parent context and author statistics.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function detail(ServerRequestInterface $request, string $id): Response
     {
@@ -219,7 +215,6 @@ final readonly class CommentController extends AbstractAdminController
 
     /**
      * Moderate a comment: approve, reject, or mark as spam.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function moderate(ServerRequestInterface $request, string $id): Response
     {
@@ -259,7 +254,6 @@ final readonly class CommentController extends AbstractAdminController
 
     /**
      * Delete a comment (soft delete).
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function delete(ServerRequestInterface $request, string $id): Response
     {
@@ -283,7 +277,6 @@ final readonly class CommentController extends AbstractAdminController
      * Accepts a list of comment IDs and a bulk action (approve, reject, spam).
      * Each comment is processed individually; failures are collected without
      * blocking the remaining operations.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function bulkAction(ServerRequestInterface $request): Response
     {

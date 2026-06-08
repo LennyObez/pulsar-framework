@@ -18,8 +18,6 @@ use function sprintf;
 
 /**
  * Runs all guardian checks: preflight and invariant checks from the Supervisor.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class GuardianCheckCommand extends Command

@@ -15,8 +15,6 @@ use Pulsar\Compliance\ControlStatus;
  * Maps Pulsar framework features to eIDAS requirements for electronic
  * identification, authentication, and trust services including electronic
  * signatures, seals, timestamps, and registered delivery.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Framework-internal control registration; use ControlCatalog for public access')]
 final class EidasMapping

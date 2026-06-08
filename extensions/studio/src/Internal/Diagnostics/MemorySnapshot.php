@@ -23,7 +23,6 @@ final readonly class MemorySnapshot
 
     /**
      * Format usage as a human-readable string.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function formattedUsage(): string
     {
@@ -32,7 +31,6 @@ final readonly class MemorySnapshot
 
     /**
      * Format peak as a human-readable string.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function formattedPeak(): string
     {

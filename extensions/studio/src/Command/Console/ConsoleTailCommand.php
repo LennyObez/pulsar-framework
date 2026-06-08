@@ -22,8 +22,6 @@ use const JSON_UNESCAPED_SLASHES;
 
 /**
  * Streams Studio events in real-time from the command line.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class ConsoleTailCommand extends Command

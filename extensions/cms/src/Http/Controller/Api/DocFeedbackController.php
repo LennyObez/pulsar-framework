@@ -24,16 +24,12 @@ use function mb_strlen;
 #[Internal(reason: 'CMS API controller; implementation detail')]
 final readonly class DocFeedbackController
 {
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
     public function __construct(
         private DocFeedbackRepositoryInterface $feedbackRepository,
     ) {}
 
     /**
      * POST /api/v1/cms/docs/feedback: Submit feedback for a doc page.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function submit(ServerRequestInterface $request): Response
     {
@@ -82,7 +78,6 @@ final readonly class DocFeedbackController
 
     /**
      * GET /api/v1/cms/docs/{docPageId}/feedback: Feedback summary for a doc page.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function summary(string $docPageId): Response
     {

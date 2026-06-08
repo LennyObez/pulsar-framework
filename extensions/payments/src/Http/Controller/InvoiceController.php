@@ -21,9 +21,6 @@ use function str_contains;
 #[Internal]
 final readonly class InvoiceController
 {
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
     public function __construct(
         private DbInvoiceRepository $invoiceRepository,
         private InvoiceRendererInterface $renderer,
@@ -33,7 +30,6 @@ final readonly class InvoiceController
      * GET /payments/invoices
      *
      * List invoices for the authenticated customer.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function list(ServerRequestInterface $request): Response
     {
@@ -64,7 +60,6 @@ final readonly class InvoiceController
      *
      * View a single invoice. Returns rendered HTML for browser visitors
      * and JSON for API clients.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function show(ServerRequestInterface $request): Response
     {
@@ -122,7 +117,6 @@ final readonly class InvoiceController
      * GET /payments/invoices/{id}/download
      *
      * Download an invoice as a rendered document.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function download(ServerRequestInterface $request): Response
     {

@@ -19,7 +19,6 @@ final readonly class Filterable
 {
     /**
      * @param list<string> $operators Allowed filter operators (e.g., ['eq', 'gt', 'lt', 'in'])
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function __construct(
         public array $operators = ['eq'],

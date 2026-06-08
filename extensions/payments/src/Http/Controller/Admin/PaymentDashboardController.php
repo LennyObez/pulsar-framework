@@ -20,8 +20,6 @@ use const ENT_QUOTES;
  * Admin dashboard controller for payment overview.
  *
  * Returns HTML for browser requests and JSON for API clients.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class PaymentDashboardController

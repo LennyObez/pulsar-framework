@@ -22,8 +22,6 @@ use function sprintf;
 
 /**
  * Scaffold an adapter implementing a port interface.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class MakeAdapterCommand extends Command
 {

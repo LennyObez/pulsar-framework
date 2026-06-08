@@ -38,7 +38,6 @@ final readonly class AppStoreVerifier implements MobileVerifierInterface
 
     /**
      * @param array{bundle_id: string, issuer_id: string, key_id: string, private_key_path: string, environment?: string} $config
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function __construct(
         private array $config,

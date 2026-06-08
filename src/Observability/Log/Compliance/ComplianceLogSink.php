@@ -20,8 +20,6 @@ use function json_encode;
  * When an encryptor is provided, log entry content is encrypted before
  * being written. All crypto operations use the central Keyring via
  * EncryptorInterface.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Compliance sink implementation detail')]
 final readonly class ComplianceLogSink implements LogSinkInterface

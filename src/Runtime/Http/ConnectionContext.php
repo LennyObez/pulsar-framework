@@ -17,19 +17,12 @@ use function strlen;
 #[Internal]
 final class ConnectionContext
 {
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
     public string $readBuffer = '';
     public int $bytesRead = 0;
     public float $lastActivity;
     public int $keepAliveRemaining;
 
-    /**
-     * @var 'idle'|'headers'|'body'
-     *
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
+    /** @var 'idle'|'headers'|'body' */
     public string $currentRequestPhase = 'idle';
     public float $phaseStartedAt;
 
@@ -70,7 +63,6 @@ final class ConnectionContext
 
     /**
      * Consume bytes from the front of the read buffer.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function consumeBuffer(int $length): string
     {

@@ -23,8 +23,6 @@ use function min;
  * Score computation: weighted average of present claims' confidence values.
  * Claims not present in the weight map are ignored. If no weighted claims
  * are present, the score is 0.0.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Diagnostic utility, not for access decisions')]
 final readonly class TrustScoreCalculator

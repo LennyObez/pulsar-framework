@@ -22,8 +22,6 @@ use const OPENSSL_ALGO_SHA256;
  * in the X-Twilio-Email-Event-Webhook-Signature header. The timestamp
  * from X-Twilio-Email-Event-Webhook-Timestamp is prepended to the body
  * before verification.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class SendgridWebhookVerifier implements WebhookVerifierInterface

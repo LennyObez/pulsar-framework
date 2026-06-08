@@ -82,9 +82,6 @@ final readonly class ContentController
         private ?ThemeRepositoryInterface $themeRepository = null,
         private string $projectViewsPath = '',
     ) {}
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function show(ServerRequestInterface $request): Response
     {
@@ -322,9 +319,6 @@ final readonly class ContentController
             ->withHeader('ETag', $etag)
             ->withHeader('Last-Modified', $lastModified);
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function generatePreviewToken(string $contentId, int $ttlSeconds = 3600): string
     {

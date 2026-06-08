@@ -85,7 +85,6 @@ final readonly class KeyVaultProvider
      * @return array<string, string> Secret name => secret value
      *
      * @throws CloudException If any secret cannot be retrieved
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public function getSecrets(array $secretNames): array

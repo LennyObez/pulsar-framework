@@ -42,9 +42,6 @@ final readonly class DigitalAssetController extends AbstractAdminController
     ) {
         parent::__construct($templateEngine, $gate);
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function index(ServerRequestInterface $request, string $productId): Response
     {
@@ -70,9 +67,6 @@ final readonly class DigitalAssetController extends AbstractAdminController
             ], $assets),
         ]);
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function upload(ServerRequestInterface $request, string $productId): Response
     {
@@ -155,7 +149,6 @@ final readonly class DigitalAssetController extends AbstractAdminController
      *
      * The product ID is required to locate the asset within the product's
      * asset collection, as the repository indexes assets by product.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function delete(ServerRequestInterface $request, string $productId, string $assetId): Response
     {

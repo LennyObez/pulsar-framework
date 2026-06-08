@@ -27,8 +27,6 @@ use function str_contains;
  *
  * Routes declare the minimum required LoA. Requests that do not meet
  * the threshold receive 403 Forbidden.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final readonly class LevelOfAssuranceMiddleware implements MiddlewareInterface
 {

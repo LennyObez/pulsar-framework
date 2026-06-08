@@ -30,7 +30,6 @@ final readonly class DeviceController
 
     /**
      * GET /api/v1/devices: List the authenticated user's devices.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function index(ServerRequestInterface $request): Response
     {
@@ -50,7 +49,6 @@ final readonly class DeviceController
 
     /**
      * POST /api/v1/devices: Register a new device and return the raw API token once.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function register(ServerRequestInterface $request): Response
     {
@@ -108,7 +106,6 @@ final readonly class DeviceController
 
     /**
      * POST /api/v1/devices/{id}/rotate: Rotate the API token for a device.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function rotate(ServerRequestInterface $request, string $id): Response
     {
@@ -133,7 +130,6 @@ final readonly class DeviceController
 
     /**
      * DELETE /api/v1/devices/{id}: Remove a device registration.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function delete(ServerRequestInterface $request, string $id): Response
     {

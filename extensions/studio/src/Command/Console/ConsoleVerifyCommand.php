@@ -24,8 +24,6 @@ use function str_repeat;
 
 /**
  * Verifies the integrity of a Studio evidence archive.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class ConsoleVerifyCommand extends Command

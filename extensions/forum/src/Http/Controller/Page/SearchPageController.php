@@ -25,9 +25,6 @@ use function trim;
 final readonly class SearchPageController
 {
     use RendersForumView;
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function __construct(
         private ThreadRepositoryInterface $threadRepository,
@@ -42,7 +39,6 @@ final readonly class SearchPageController
 
     /**
      * GET /search: Search threads.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function index(ServerRequestInterface $request): Response
     {

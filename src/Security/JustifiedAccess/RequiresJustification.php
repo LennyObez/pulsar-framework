@@ -25,7 +25,6 @@ final readonly class RequiresJustification
 {
     /**
      * @param list<JustificationCategory>|null $allowedCategories Restrict to specific categories (null = all)
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function __construct(
         public DataClassification $dataClassification = DataClassification::Confidential,

@@ -16,8 +16,6 @@ use function sprintf;
  *
  * This check runs before the supervisor begins accepting work to ensure
  * the process is not already under memory pressure.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class MemoryPreflightCheck implements PreflightCheckInterface

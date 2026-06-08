@@ -19,8 +19,6 @@ use function sprintf;
 /**
  * Displays a combined guardian status overview covering
  * integrity, supervisor, and evidence subsystems.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class GuardianStatusCommand extends Command

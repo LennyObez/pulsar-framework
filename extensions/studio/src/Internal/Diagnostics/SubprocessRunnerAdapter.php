@@ -16,8 +16,6 @@ use Pulsar\Extension\Studio\Contracts\ProcessRunnerInterface;
  * This adapter lives in the composition root (Internal namespace) and is the
  * only place that references the McpServer internal class. All other Studio
  * code depends on the public ProcessRunnerInterface contract.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class SubprocessRunnerAdapter implements ProcessRunnerInterface

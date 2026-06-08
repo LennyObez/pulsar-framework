@@ -21,8 +21,6 @@ use function usort;
  *
  * Resolves listener classes from the container at dispatch time.
  * Registration methods throw: use ListenerProvider for dynamic registration.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class CompiledListenerProvider implements ListenerProviderInterface, ListenerMetadataProviderInterface

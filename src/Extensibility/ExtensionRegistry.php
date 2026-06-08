@@ -64,7 +64,6 @@ final class ExtensionRegistry
      * Get an extension by name.
      *
      * @throws ExtensionException If not found
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public function get(string $name): ExtensionInterface
@@ -164,7 +163,6 @@ final class ExtensionRegistry
      * Get extension names.
      *
      * @return list<string>
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function names(): array
     {
@@ -173,7 +171,6 @@ final class ExtensionRegistry
 
     /**
      * Check if all extensions are in the booted state.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function allBooted(): bool
     {

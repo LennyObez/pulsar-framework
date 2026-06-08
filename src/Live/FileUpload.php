@@ -20,8 +20,6 @@ use function in_array;
  *   #[LiveProp(writable: true)]
  *   #[FileUpload(maxSize: 10_485_760, accept: ['image/png', 'image/jpeg'])]
  *   public ?UploadedFile $avatar = null;
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Attribute(Attribute::TARGET_PROPERTY)]
 #[Api(since: '1.0.0')]

@@ -13,20 +13,14 @@ use Pulsar\Http\Message\Response;
  */
 final readonly class ExampleController
 {
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
     public function __construct(
         private ExampleService $exampleService,
     ) {}
 
     /**
      * Index action - returns a simple greeting.
-     *
-     * @noinspection PhpUnusedParameterInspection: route handler contract
-     *
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
+    /** @noinspection PhpUnusedParameterInspection: route handler contract */
     public function index(ServerRequestInterface $_request): Response
     {
         return Response::json([
@@ -37,11 +31,8 @@ final readonly class ExampleController
 
     /**
      * Info action - returns extension information.
-     *
-     * @noinspection PhpUnusedParameterInspection: route handler contract
-     *
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
+    /** @noinspection PhpUnusedParameterInspection: route handler contract */
     public function info(ServerRequestInterface $_request): Response
     {
         return Response::json($this->exampleService->getInfo());
@@ -53,7 +44,6 @@ final readonly class ExampleController
      * @noinspection PhpUnusedParameterInspection: route handler contract
      *
      * @param array<string, string> $params Route parameters
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function greet(ServerRequestInterface $_request, array $params = []): Response
     {

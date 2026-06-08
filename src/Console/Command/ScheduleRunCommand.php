@@ -23,8 +23,6 @@ use function sprintf;
  * to be called once per minute from the system crontab:
  *
  *   * * * * * cd /path/to/project && php pulsar schedule:run >> /dev/null 2>&1
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class ScheduleRunCommand extends Command
 {

@@ -28,9 +28,6 @@ final readonly class InvoiceController extends AbstractAdminController
     ) {
         parent::__construct($templateEngine, $gate);
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function show(ServerRequestInterface $request, string $id): Response
     {
@@ -45,9 +42,6 @@ final readonly class InvoiceController extends AbstractAdminController
             return Response::json(['error' => $e->getMessage()], 404);
         }
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function download(ServerRequestInterface $request, string $id): Response
     {

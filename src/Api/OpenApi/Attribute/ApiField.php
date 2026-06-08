@@ -28,7 +28,6 @@ final readonly class ApiField
      * @param bool $redacted Whether this field may be omitted for unauthorized callers
      * @param string|null $description Override the field description in the schema
      * @param mixed $example Example value for documentation
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function __construct(
         public DataClassification $classification = DataClassification::Internal,

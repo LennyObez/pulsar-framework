@@ -13,8 +13,6 @@ use function sprintf;
 
 /**
  * MariaDB SQL dialect (mostly MySQL-compatible with minor differences).
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class MariaDbDialect implements DialectInterface

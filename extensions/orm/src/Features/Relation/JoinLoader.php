@@ -18,8 +18,6 @@ use function sprintf;
  *
  * Useful for single BelongsTo relations where a JOIN is more efficient
  * than a separate query.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class JoinLoader

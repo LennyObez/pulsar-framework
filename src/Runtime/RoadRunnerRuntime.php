@@ -154,9 +154,6 @@ final class RoadRunnerRuntime implements ReloadableRuntimeInterface
     {
         $this->sandbox->afterRequest($request, $response);
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function status(): RuntimeStatus
     {

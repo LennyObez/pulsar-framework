@@ -17,8 +17,6 @@ use function sprintf;
 
 /**
  * Show available runtimes and current configuration.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class RuntimeStatusCommand extends Command
 {

@@ -29,8 +29,6 @@ use const JSON_THROW_ON_ERROR;
  *
  * Implements optimistic locking via compare-and-swap on the version column.
  * All context data is serialized as JSON with classification metadata.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Use WorkflowStorageInterface port')]
 final readonly class DatabaseWorkflowStorage implements WorkflowStorageInterface

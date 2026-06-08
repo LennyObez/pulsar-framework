@@ -20,8 +20,6 @@ use Pulsar\Deploy\DeployCheckInterface;
  * placeholder that lets every attempt through. Deploying it to production
  * would silently disable 2FA brute-force protection, so the deploy gate
  * refuses it (and a missing binding) in staging/production environments.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class TwoFactorRateLimiterReadinessCheck implements DeployCheckInterface

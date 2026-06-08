@@ -22,8 +22,6 @@ use function is_string;
  *   seller_address_line2, seller_city, seller_postal_code,
  *   seller_country, seller_iban, seller_bic, seller_bank_name,
  *   seller_phone, seller_email, seller_website, seller_logo_path
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Use SellerProfile DTO directly in templates')]
 final readonly class SellerProfileResolver

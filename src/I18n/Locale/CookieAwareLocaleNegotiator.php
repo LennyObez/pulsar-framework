@@ -21,8 +21,6 @@ use function is_string;
  * 4. Request attribute `_locale` (from route parameter)
  * 5. Accept-Language header (RFC 7231, quality-sorted)
  * 6. Config default
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class CookieAwareLocaleNegotiator implements LocaleNegotiatorInterface

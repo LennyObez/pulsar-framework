@@ -37,9 +37,6 @@ final readonly class CollectionController
         private TrackingServiceInterface $trackingService,
         private SiteRepositoryInterface $siteRepository,
     ) {}
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function collect(ServerRequestInterface $request): Response
     {

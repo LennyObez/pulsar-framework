@@ -32,8 +32,6 @@ final readonly class DunningManager
 {
     /**
      * Retry intervals in days (exponential backoff).
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     private const array RETRY_INTERVALS = [1, 3, 7, 14];
 
@@ -45,7 +43,6 @@ final readonly class DunningManager
 
     /**
      * Transition a subscription to the dunning (past due) state.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function enterDunning(Subscription $subscription): Subscription
     {
@@ -67,7 +64,6 @@ final readonly class DunningManager
      * The decision is currently driven entirely by the configured retry budget;
      * future per-subscription overrides can re-introduce the subscription
      * parameter.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function shouldExpire(int $retryCount): bool
     {
@@ -76,7 +72,6 @@ final readonly class DunningManager
 
     /**
      * Expire a subscription after exhausting dunning retries.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function expire(Subscription $subscription): Subscription
     {
@@ -93,7 +88,6 @@ final readonly class DunningManager
 
     /**
      * Get the number of days until the next retry.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function nextRetryIntervalDays(int $retryCount): int
     {

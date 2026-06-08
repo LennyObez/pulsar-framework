@@ -21,8 +21,6 @@ use Pulsar\Extension\Payments\Exception\PaymentException;
  * Enforces maximum trial duration from configuration,
  * prevents trial abuse (one trial per customer per plan),
  * and handles trial-to-paid transitions.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class TrialManager

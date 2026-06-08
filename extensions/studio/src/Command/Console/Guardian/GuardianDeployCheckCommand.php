@@ -19,8 +19,6 @@ use function sprintf;
 
 /**
  * Delegates to the DeployCheck orchestrator and displays results.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class GuardianDeployCheckCommand extends Command

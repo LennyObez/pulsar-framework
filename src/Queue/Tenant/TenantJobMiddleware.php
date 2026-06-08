@@ -20,8 +20,6 @@ use Pulsar\Tenancy\TenantContext;
  * On execution: restores the tenant scope from the envelope's tenantId, which
  * triggers full resource scoping (DB, cache, storage, crypto AAD).
  * After job completion: resets TenantScope to prevent cross-tenant state leakage.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Tenant job middleware is an implementation detail of the queue system')]
 final readonly class TenantJobMiddleware implements JobMiddlewareInterface

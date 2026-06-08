@@ -36,8 +36,6 @@ use const JSON_UNESCAPED_UNICODE;
  *
  * Connects to a local Ollama instance for chat, completion, and embedding
  * without sending data to external APIs.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Provider implementation; use AiClientInterface')]
 final readonly class OllamaProvider implements AiClientInterface

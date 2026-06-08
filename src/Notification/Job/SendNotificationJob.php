@@ -16,8 +16,6 @@ use Pulsar\Queue\QueueableInterface;
  * Queueable job that sends a notification through the notification manager.
  *
  * Used for asynchronous notification delivery via the queue system.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class SendNotificationJob implements QueueableInterface

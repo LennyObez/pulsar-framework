@@ -33,7 +33,6 @@ final class TerminologyService implements TerminologyServiceInterface
 
     /**
      * Register a code system.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function registerCodeSystem(CodeSystemInterface $codeSystem): void
     {
@@ -42,7 +41,6 @@ final class TerminologyService implements TerminologyServiceInterface
 
     /**
      * Register a concept map.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function registerConceptMap(ConceptMap $conceptMap): void
     {

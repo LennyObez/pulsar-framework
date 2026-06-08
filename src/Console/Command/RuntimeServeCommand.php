@@ -28,8 +28,6 @@ use const FILTER_VALIDATE_IP;
 
 /**
  * Start the HTTP runtime server.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class RuntimeServeCommand extends Command
 {

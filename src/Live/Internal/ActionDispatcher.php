@@ -25,8 +25,6 @@ use function array_map;
  * at runtime so the cache survives the process lifetime, eliminating
  * the per-dispatch `new ReflectionClass()` + attribute-scan overhead
  * flagged by the M-2 audit finding.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class ActionDispatcher

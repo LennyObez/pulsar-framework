@@ -42,9 +42,6 @@ final readonly class ResumePdfController
         JOIN cms_content_type_fields ftf ON ftf.id = fv.field_id
         WHERE fv.content_id = :content_id
         SQL;
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function __construct(
         private ConnectionInterface $connection,
@@ -52,7 +49,6 @@ final readonly class ResumePdfController
 
     /**
      * GET /resume/{slug}/print: Print-friendly HTML page for PDF export.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function printView(ServerRequestInterface $request, string $slug): Response
     {

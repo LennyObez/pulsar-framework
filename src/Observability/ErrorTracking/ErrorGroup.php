@@ -25,12 +25,7 @@ final class ErrorGroup
     /** @var list<ErrorEvent> */
     private array $recentEvents = [];
 
-    /**
-     * @noinspection PhpUnhandledExceptionInspection: hardcoded 'now' and 'UTC' never throw
-     *
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
+    /** @noinspection PhpUnhandledExceptionInspection: hardcoded 'now' and 'UTC' never throw */
     public function __construct(
         public readonly ErrorFingerprint $fingerprint,
         private readonly int $maxRecentEvents = 5,
@@ -59,9 +54,6 @@ final class ErrorGroup
     {
         return $this->occurrenceCount;
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function firstSeen(): DateTimeImmutable
     {
@@ -75,7 +67,6 @@ final class ErrorGroup
 
     /**
      * @return list<ErrorEvent>
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function recentEvents(): array
     {

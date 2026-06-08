@@ -17,8 +17,6 @@ use Pulsar\Extension\Payments\Internal\Mobile\GooglePlayVerifier;
  *
  * Routes Apple requests to AppStoreVerifier and Google requests
  * to GooglePlayVerifier.
- *
- * @psalm-api Bound to MobileVerifierInterface in the payments service provider.
  */
 #[Internal]
 final readonly class MobileGateway implements MobileVerifierInterface

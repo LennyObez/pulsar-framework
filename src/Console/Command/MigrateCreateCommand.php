@@ -22,8 +22,6 @@ use function trim;
 
 /**
  * Create a new migration file.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class MigrateCreateCommand extends Command
 {

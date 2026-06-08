@@ -49,7 +49,6 @@ final readonly class EventEnvelope
      *
      * @throws JsonException
      * @throws RandomException
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public static function wrap(

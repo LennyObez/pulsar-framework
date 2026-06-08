@@ -71,7 +71,6 @@ final class MiddlewarePipeline implements MiddlewarePipelineInterface, PsrReques
 
     /**
      * Process a request through the middleware stack with a final handler.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function process(ServerRequestInterface $request, PsrRequestHandlerInterface $handler): ResponseInterface
     {
@@ -132,7 +131,6 @@ final class MiddlewarePipeline implements MiddlewarePipelineInterface, PsrReques
 
     /**
      * Check if the pipeline is empty.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function isEmpty(): bool
     {

@@ -24,9 +24,6 @@ use function is_string;
 final readonly class HomeController
 {
     use RendersForumView;
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function __construct(
         private CategoryRepositoryInterface $categoryRepository,
@@ -42,7 +39,6 @@ final readonly class HomeController
 
     /**
      * GET /: Forum homepage with category listing.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function index(ServerRequestInterface $request): Response
     {

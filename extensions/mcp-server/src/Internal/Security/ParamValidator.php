@@ -24,10 +24,6 @@ use const DIRECTORY_SEPARATOR;
 #[Internal]
 final readonly class ParamValidator
 {
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
     private const string CLIENT_ID_PATTERN = '/^[A-Za-z0-9_-]{1,64}$/';
     private const string FILTER_PATTERN = '/^[A-Za-z0-9_:.\\\\-]{1,256}$/';
     private const int FILTER_MAX_LENGTH = 256;

@@ -24,7 +24,6 @@ final class CircuitBreakerRegistry
 
     /**
      * Get or create a circuit breaker by name.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     #[NoDiscard]
     public function get(string $name): CircuitBreaker
@@ -38,7 +37,6 @@ final class CircuitBreakerRegistry
 
     /**
      * Check if a breaker with the given name exists.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function has(string $name): bool
     {
@@ -49,7 +47,6 @@ final class CircuitBreakerRegistry
      * Get all registered circuit breakers.
      *
      * @return array<string, CircuitBreaker>
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function all(): array
     {
@@ -58,7 +55,6 @@ final class CircuitBreakerRegistry
 
     /**
      * Reset a specific circuit breaker.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function reset(string $name): void
     {
@@ -69,7 +65,6 @@ final class CircuitBreakerRegistry
 
     /**
      * Reset all circuit breakers.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function resetAll(): void
     {

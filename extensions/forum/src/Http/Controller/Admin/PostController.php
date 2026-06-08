@@ -28,9 +28,6 @@ use function min;
 final readonly class PostController
 {
     use RendersAdminView;
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function __construct(
         private PostRepositoryInterface $postRepository,
@@ -43,7 +40,6 @@ final readonly class PostController
 
     /**
      * GET /admin/forum/threads/{threadId}/posts: List posts in a thread.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function index(ServerRequestInterface $request, string $threadId): Response
     {
@@ -67,7 +63,6 @@ final readonly class PostController
 
     /**
      * GET /admin/forum/posts/{id}: Show a single post.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function show(ServerRequestInterface $request, string $id): Response
     {
@@ -87,7 +82,6 @@ final readonly class PostController
 
     /**
      * PUT /admin/forum/posts/{id}: Admin edit a post (bypasses edit window).
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function edit(ServerRequestInterface $request, string $id): Response
     {
@@ -116,7 +110,6 @@ final readonly class PostController
 
     /**
      * DELETE /admin/forum/posts/{id}: Soft delete a post.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function delete(ServerRequestInterface $request, string $id): Response
     {

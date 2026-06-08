@@ -21,16 +21,10 @@ use const ENT_QUOTES;
 #[Internal(reason: 'CMS HTTP controller; implementation detail')]
 final readonly class SeoController
 {
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
     public function __construct(
         private RobotsTxtGeneratorInterface $robotsTxtGenerator,
         private SeoConfig $seoConfig,
     ) {}
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function robotsTxt(ServerRequestInterface $request): Response
     {
@@ -53,7 +47,6 @@ final readonly class SeoController
      *
      * Google expects: GET /google{code}.html returning
      * "google-site-verification: google{code}.html"
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function googleVerification(): Response
     {
@@ -75,7 +68,6 @@ final readonly class SeoController
      * Serve Bing Webmaster Tools verification XML file.
      *
      * Bing expects: GET /BingSiteAuth.xml returning XML with the verification code.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function bingVerification(): Response
     {

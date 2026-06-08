@@ -33,9 +33,6 @@ use function usort;
 #[Internal(reason: 'Forum REST API controller; implementation detail')]
 final readonly class PublicProfileController
 {
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
     public function __construct(
         private ForumProfileRepositoryInterface $profileRepository,
         private UserBadgeRepositoryInterface $badgeRepository,
@@ -45,7 +42,6 @@ final readonly class PublicProfileController
 
     /**
      * GET /api/v1/forum/users/{userId}: Extended public profile with badges and stats.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function show(ServerRequestInterface $request, string $userId): Response
     {
@@ -81,7 +77,6 @@ final readonly class PublicProfileController
 
     /**
      * GET /api/v1/forum/users/{userId}/activity: Recent activity timeline.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function activity(ServerRequestInterface $request, string $userId): Response
     {

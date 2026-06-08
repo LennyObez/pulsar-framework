@@ -17,8 +17,6 @@ use function sprintf;
 
 /**
  * Rollback database migrations.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class MigrateRollbackCommand extends Command
 {

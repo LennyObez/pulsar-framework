@@ -30,7 +30,6 @@ final readonly class CapturedMessage
      * Serialize to an array for API/UI display.
      *
      * @return array{id: string, from: string, to: list<string>, subject: string, has_html: bool, has_text: bool, attachment_count: int, captured_at: float}
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function toSummary(): array
     {

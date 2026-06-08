@@ -16,8 +16,6 @@ use function memory_get_usage;
  *
  * Boots the application once, sends N deterministic requests, and
  * checks that memory growth stays within configured thresholds.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class LeakSentinel
