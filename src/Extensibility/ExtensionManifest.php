@@ -14,6 +14,7 @@ use Pulsar\Extensibility\Manifest\RequiresConfig;
 
 use function count;
 use function dirname;
+use function is_array;
 use function is_string;
 use function json_validate;
 

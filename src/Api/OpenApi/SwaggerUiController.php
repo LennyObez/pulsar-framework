@@ -6,7 +6,6 @@ namespace Pulsar\Api\OpenApi;
 
 use Pulsar\Api\Api;
 use Pulsar\Http\Message\Response;
-use Pulsar\Http\Request;
 
 use function file_exists;
 use function file_get_contents;

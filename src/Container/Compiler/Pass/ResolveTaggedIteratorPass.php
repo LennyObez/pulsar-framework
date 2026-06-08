@@ -12,6 +12,8 @@ use Pulsar\Container\ServiceDefinition;
 use Pulsar\Container\Tag\TaggedIterator;
 use ReflectionClass;
 use ReflectionNamedType;
+use ReflectionParameter;
+use RuntimeException;
 
 use function array_map;
 use function class_exists;
@@ -63,7 +65,7 @@ final class ResolveTaggedIteratorPass implements CompilerPassInterface
             $factory = static function (ContainerInterface $container) use ($concreteClass, $builder): object {
                 /** @var class-string $concreteClass */
                 if (!class_exists($concreteClass)) {
-                    throw new \RuntimeException('Class ' . $concreteClass . ' does not exist');
+                    throw new RuntimeException('Class ' . $concreteClass . ' does not exist');
                 }
 
                 $reflector = new ReflectionClass($concreteClass);
@@ -75,7 +77,7 @@ final class ResolveTaggedIteratorPass implements CompilerPassInterface
                 }
 
                 $dependencies = array_map(
-                    static function (\ReflectionParameter $parameter) use ($container, $builder): mixed {
+                    static function (ReflectionParameter $parameter) use ($container, $builder): mixed {
                         $attrs = $parameter->getAttributes(TaggedIterator::class);
 
                         if ($attrs !== []) {

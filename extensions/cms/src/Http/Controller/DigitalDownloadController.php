@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Cms\Http\Controller;
 
-use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Cms\Commerce\DigitalDeliveryServiceInterface;
 use Pulsar\Extension\Cms\Media\MediaDiskInterface;
