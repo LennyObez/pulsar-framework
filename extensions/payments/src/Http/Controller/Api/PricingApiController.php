@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Payments\Http\Controller\Api;
 
-use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Http\Message\Response;
 
