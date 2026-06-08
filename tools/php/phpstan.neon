@@ -119,3 +119,15 @@ parameters:
             identifier: argument.type
             message: '#^Parameter \#\d+ \$\w+ of (static method|method|function) [^ ]+ expects array\{.+\}, array\{.+\} given\.$#'
             path: ../../tests/
+
+        # === Category A: Psalm / PHPStan disagreement on int offset domain ===
+        # QrCodeEncoder loops iterate `for ($i = 0; $i < 11; $i++)` over typed
+        # constant arrays. Psalm widens $i to int<-1, 10> (loop unrolling
+        # artifact) and demands `?? 0` to silence InvalidArrayOffset. PHPStan
+        # correctly narrows $i to int<0, 10> and then flags `?? 0` as a
+        # nullsafeAlways. Only one of the two can be satisfied; we keep the
+        # `?? 0` (Psalm's pessimistic view is the safer fallback) and let
+        # PHPStan ignore the always-exists noise on the static constant arrays.
+        -
+            identifier: nullCoalesce.offset
+            message: '#^Offset (int<-?\d+, \d+>|0\|1\|2\|3\|4\|5\|6\|7\|8\|9) on array\{.+\} on left side of \?\? always exists and is not nullable\.$#'

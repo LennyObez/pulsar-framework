@@ -323,7 +323,7 @@ final readonly class QrCodeEncoder
             $poly = $newPoly;
         }
 
-        return $poly;
+        return array_values($poly);
     }
 
     /**
