@@ -76,10 +76,8 @@ final class ResumePdfGenerator
                     . '</div>';
             }
 
-            if ($items !== []) {
-                $sections[] = '<section class="resume-section"><h2>Experience</h2>'
-                    . implode('', $items) . '</section>';
-            }
+            $sections[] = '<section class="resume-section"><h2>Experience</h2>'
+                . implode('', $items) . '</section>';
         }
 
         // Education
@@ -98,10 +96,8 @@ final class ResumePdfGenerator
                     . '</div></div>';
             }
 
-            if ($items !== []) {
-                $sections[] = '<section class="resume-section"><h2>Education</h2>'
-                    . implode('', $items) . '</section>';
-            }
+            $sections[] = '<section class="resume-section"><h2>Education</h2>'
+                . implode('', $items) . '</section>';
         }
 
         // Skills
@@ -134,10 +130,8 @@ final class ResumePdfGenerator
                 $items[] = "<li>$language" . ($level !== '' ? ": $level" : '') . '</li>';
             }
 
-            if ($items !== []) {
-                $sections[] = '<section class="resume-section"><h2>Languages</h2><ul>'
-                    . implode('', $items) . '</ul></section>';
-            }
+            $sections[] = '<section class="resume-section"><h2>Languages</h2><ul>'
+                . implode('', $items) . '</ul></section>';
         }
 
         // Certifications
@@ -154,10 +148,8 @@ final class ResumePdfGenerator
                     . '</li>';
             }
 
-            if ($items !== []) {
-                $sections[] = '<section class="resume-section"><h2>Certifications</h2><ul>'
-                    . implode('', $items) . '</ul></section>';
-            }
+            $sections[] = '<section class="resume-section"><h2>Certifications</h2><ul>'
+                . implode('', $items) . '</ul></section>';
         }
 
         // Projects
@@ -173,10 +165,8 @@ final class ResumePdfGenerator
                     . '</div>';
             }
 
-            if ($items !== []) {
-                $sections[] = '<section class="resume-section"><h2>Projects</h2>'
-                    . implode('', $items) . '</section>';
-            }
+            $sections[] = '<section class="resume-section"><h2>Projects</h2>'
+                . implode('', $items) . '</section>';
         }
 
         $escapedName = $e($name);
