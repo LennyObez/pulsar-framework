@@ -26,6 +26,7 @@ final readonly class ShouldBroadcast
      * @param bool $toOthers If true, exclude the connection that triggered the event
      * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function __construct(
         public array $channels = [],

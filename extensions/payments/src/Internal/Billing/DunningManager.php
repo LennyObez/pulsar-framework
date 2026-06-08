@@ -33,6 +33,7 @@ final readonly class DunningManager
     /**
      * Retry intervals in days (exponential backoff).
      * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     private const array RETRY_INTERVALS = [1, 3, 7, 14];
 

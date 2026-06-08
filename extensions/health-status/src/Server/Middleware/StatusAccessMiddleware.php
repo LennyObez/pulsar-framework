@@ -34,6 +34,7 @@ final class StatusAccessMiddleware implements MiddlewareInterface
      *
      * @var array<string, list<int>>
      * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     private array $requestLog = [];
 

@@ -18,7 +18,11 @@ use function max;
 #[Internal]
 final class EventQuery
 {
-    /** @var list<EventType> */
+    /**
+     * @var list<EventType>
+     *
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
     private array $eventTypes = [];
 
     private ?string $requestId = null;
