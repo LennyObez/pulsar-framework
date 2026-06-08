@@ -12,7 +12,6 @@ use Pulsar\Extension\Admin\Contracts\DataResourceInterface;
 use Pulsar\Extension\Admin\Contracts\ResourceRegistryInterface;
 use Pulsar\Extension\Admin\Contracts\WidgetInterface;
 use Pulsar\Extension\Admin\Features\Dashboard\DashboardHandler;
-use Pulsar\Extension\Admin\Features\Dashboard\DashboardRequest;
 
 #[CoversClass(DashboardHandler::class)]
 final class DashboardHandlerTest extends TestCase
@@ -37,7 +36,7 @@ final class DashboardHandlerTest extends TestCase
         $this->registry->method('all')->willReturn([]);
 
         $handler = new DashboardHandler($this->registry, [$widget]);
-        $result = $handler->execute(new DashboardRequest());
+        $result = $handler->execute();
 
         self::assertCount(1, $result->widgets);
         self::assertSame('total-users', $result->widgets[0]['id']);
@@ -57,7 +56,7 @@ final class DashboardHandlerTest extends TestCase
         $this->registry->method('all')->willReturn(['users' => $resource]);
 
         $handler = new DashboardHandler($this->registry, []);
-        $result = $handler->execute(new DashboardRequest());
+        $result = $handler->execute();
 
         self::assertCount(1, $result->resources);
         self::assertSame('users', $result->resources[0]['name']);
@@ -71,7 +70,7 @@ final class DashboardHandlerTest extends TestCase
         $this->registry->method('all')->willReturn([]);
 
         $handler = new DashboardHandler($this->registry, []);
-        $result = $handler->execute(new DashboardRequest());
+        $result = $handler->execute();
 
         self::assertSame([], $result->widgets);
         self::assertSame([], $result->resources);
@@ -97,7 +96,7 @@ final class DashboardHandlerTest extends TestCase
         $this->registry->method('all')->willReturn([]);
 
         $handler = new DashboardHandler($this->registry, [$widget1, $widget2]);
-        $result = $handler->execute(new DashboardRequest());
+        $result = $handler->execute();
 
         self::assertCount(2, $result->widgets);
         self::assertSame('w1', $result->widgets[0]['id']);
@@ -123,7 +122,7 @@ final class DashboardHandlerTest extends TestCase
         ]);
 
         $handler = new DashboardHandler($this->registry, []);
-        $result = $handler->execute(new DashboardRequest());
+        $result = $handler->execute();
 
         self::assertCount(2, $result->resources);
         self::assertSame('users', $result->resources[0]['name']);

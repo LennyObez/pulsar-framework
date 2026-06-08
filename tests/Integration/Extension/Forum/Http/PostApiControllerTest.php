@@ -83,7 +83,7 @@ final class PostApiControllerTest extends TestCase
         $this->postRepository->method('findById')->willReturn($post);
 
         $request = new ServerRequest(method: 'GET', uri: '/api/v1/forum/posts/post-show');
-        $response = $this->controller->show($request, 'post-show');
+        $response = $this->controller->show('post-show');
 
         self::assertSame(200, $response->getStatusCode());
         $data = $this->decodeBody($response);
@@ -97,7 +97,7 @@ final class PostApiControllerTest extends TestCase
         $this->postRepository->method('findById')->willReturn(null);
 
         $request = new ServerRequest(method: 'GET', uri: '/api/v1/forum/posts/nonexistent');
-        $response = $this->controller->show($request, 'nonexistent');
+        $response = $this->controller->show('nonexistent');
 
         self::assertSame(404, $response->getStatusCode());
     }

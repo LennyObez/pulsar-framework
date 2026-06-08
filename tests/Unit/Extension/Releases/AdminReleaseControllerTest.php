@@ -141,7 +141,7 @@ final class AdminReleaseControllerTest extends TestCase
     {
         $request = $this->createStub(ServerRequestInterface::class);
 
-        $response = $this->controller->create($request);
+        $response = $this->controller->create();
 
         self::assertSame(200, $response->getStatusCode());
 
@@ -315,7 +315,7 @@ final class AdminReleaseControllerTest extends TestCase
 
         $request = $this->createStub(ServerRequestInterface::class);
 
-        $response = $this->controller->edit($request, 'rel-001');
+        $response = $this->controller->edit('rel-001');
 
         self::assertSame(200, $response->getStatusCode());
 
@@ -332,7 +332,7 @@ final class AdminReleaseControllerTest extends TestCase
 
         $request = $this->createStub(ServerRequestInterface::class);
 
-        $response = $this->controller->edit($request, 'nonexistent');
+        $response = $this->controller->edit('nonexistent');
 
         self::assertSame(404, $response->getStatusCode());
 
