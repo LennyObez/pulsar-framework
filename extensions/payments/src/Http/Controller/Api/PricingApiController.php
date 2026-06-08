@@ -20,7 +20,6 @@ final readonly class PricingApiController
      * GET /api/v1/pricing
      *
      * List available pricing plans.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function list(): Response
     {

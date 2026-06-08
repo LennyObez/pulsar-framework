@@ -22,9 +22,6 @@ use Throwable;
 #[Internal]
 final readonly class WebhookController
 {
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
     public function __construct(
         private StripeWebhookHandler $stripeHandler,
         private PayPalWebhookHandler $paypalHandler,
@@ -35,7 +32,6 @@ final readonly class WebhookController
 
     /**
      * POST /payments/webhooks/stripe
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function stripe(ServerRequestInterface $request): Response
     {
@@ -57,7 +53,6 @@ final readonly class WebhookController
 
     /**
      * POST /payments/webhooks/paypal
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function paypal(ServerRequestInterface $request): Response
     {
@@ -88,7 +83,6 @@ final readonly class WebhookController
 
     /**
      * POST /payments/webhooks/google-play
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function googlePlay(ServerRequestInterface $request): Response
     {
@@ -110,7 +104,6 @@ final readonly class WebhookController
 
     /**
      * POST /payments/webhooks/apple
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function apple(ServerRequestInterface $request): Response
     {
@@ -132,7 +125,6 @@ final readonly class WebhookController
 
     /**
      * POST /payments/webhooks/payconiq
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function payconiq(ServerRequestInterface $request): Response
     {
@@ -158,7 +150,6 @@ final readonly class WebhookController
 
     /**
      * POST /payments/webhooks/bancontact
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function bancontact(ServerRequestInterface $request): Response
     {

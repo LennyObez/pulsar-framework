@@ -25,8 +25,6 @@ use function sodium_hex2bin;
  *
  * Key format: 64-byte Ed25519 secret key encoded as hex (128 hex chars).
  * The public key is derived from the secret key automatically.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Invoice signing service')]
 final readonly class InvoiceSigningService

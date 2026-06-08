@@ -17,9 +17,6 @@ use function is_string;
 #[Internal]
 final readonly class PaymentApiController
 {
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
     public function __construct(
         private DbPaymentRepository $paymentRepository,
     ) {}
@@ -28,7 +25,6 @@ final readonly class PaymentApiController
      * GET /api/v1/payments/{id}
      *
      * Retrieve a payment by ID.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function show(ServerRequestInterface $request): Response
     {
@@ -61,7 +57,6 @@ final readonly class PaymentApiController
      * GET /api/v1/payments
      *
      * List payments for the authenticated customer.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function list(ServerRequestInterface $request): Response
     {

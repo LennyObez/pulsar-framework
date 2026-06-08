@@ -130,7 +130,6 @@ final readonly class TemplateCache
      *
      * @param string $templateName Logical template name
      * @param string $sourceHash Content hash of the version to remove
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function forget(string $templateName, string $sourceHash): void
     {
@@ -149,7 +148,6 @@ final readonly class TemplateCache
 
     /**
      * Remove all cached templates.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function flush(): void
     {

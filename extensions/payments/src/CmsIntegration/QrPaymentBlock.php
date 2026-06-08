@@ -28,8 +28,6 @@ use const ENT_QUOTES;
  * Renders a configurable QR payment code in the page builder,
  * supporting EPC QR (all EU banking apps), Payconiq, and generic
  * payment links.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class QrPaymentBlock implements BlockTypeInterface

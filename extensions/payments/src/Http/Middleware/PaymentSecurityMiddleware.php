@@ -22,8 +22,6 @@ use function in_array;
  * Enforces PCI-DSS compliance by scanning request bodies for
  * raw card numbers. Any request containing a PAN is rejected
  * before reaching the payment controller.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class PaymentSecurityMiddleware implements MiddlewareInterface

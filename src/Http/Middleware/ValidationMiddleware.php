@@ -18,8 +18,6 @@ use function is_array;
  *
  * Subclasses define the validation rules. When validation fails, a ValidationException
  * is thrown (to be caught by the ExceptionHandler for a 422 JSON response).
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 abstract class ValidationMiddleware implements MiddlewareInterface
 {

@@ -19,8 +19,6 @@ use function sprintf;
  * CLI command to audit CI/CD pipeline configurations for security compliance.
  *
  * Returns exit code 1 if the pipeline is non-compliant.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'CLI command registration')]
 final class AuditPipelineCommand extends Command

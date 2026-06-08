@@ -32,7 +32,6 @@ final readonly class FormSubmissionController
 
     /**
      * Handle a form submission POST request.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function submit(ServerRequestInterface $request): Response
     {

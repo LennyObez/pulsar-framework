@@ -22,8 +22,6 @@ use function trim;
  * This class does not execute processes directly.
  *
  * Only instantiated in the composition root with a trusted project root path.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class ProcessGitLogReader implements GitLogReader

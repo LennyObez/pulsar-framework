@@ -28,9 +28,6 @@ use ValueError;
  */
 final readonly class ProcessWebhookHandler
 {
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
     public function __construct(
         private WebhookVerifierInterface $verifier,
         private WebhookEventLogInterface $eventLog,

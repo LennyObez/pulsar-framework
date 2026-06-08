@@ -25,9 +25,6 @@ final readonly class ExportController
     public function __construct(
         private PageViewRepositoryInterface $pageViewRepository,
     ) {}
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function export(ServerRequestInterface $request): Response
     {

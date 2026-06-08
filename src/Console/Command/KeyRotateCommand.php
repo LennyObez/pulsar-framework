@@ -34,8 +34,6 @@ use const DIRECTORY_SEPARATOR;
  * enables fallback decryption and audit verification during transition.
  *
  * Usage: key:rotate [--write] [--clear-cache]
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class KeyRotateCommand extends Command

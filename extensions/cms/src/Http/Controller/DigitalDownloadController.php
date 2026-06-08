@@ -40,17 +40,11 @@ final readonly class DigitalDownloadController
         'txt' => 'text/plain',
         'csv' => 'text/csv',
     ];
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function __construct(
         private DigitalDeliveryServiceInterface $delivery,
         private MediaDiskInterface $disk,
     ) {}
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function download(string $token): Response
     {

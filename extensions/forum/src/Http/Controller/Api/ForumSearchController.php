@@ -29,9 +29,6 @@ use function trim;
 #[Internal(reason: 'Forum REST API controller; implementation detail')]
 final readonly class ForumSearchController
 {
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
     public function __construct(
         private ForumSearchServiceInterface $searchService,
         private ForumConfig $config,
@@ -39,7 +36,6 @@ final readonly class ForumSearchController
 
     /**
      * GET /api/v1/forum/search: Full-text search with filters.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function search(ServerRequestInterface $request): Response
     {

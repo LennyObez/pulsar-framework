@@ -36,7 +36,6 @@ final readonly class MediaApiController
 
     /**
      * GET /api/v1/media: List media assets with pagination.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function index(ServerRequestInterface $request): Response
     {
@@ -84,7 +83,6 @@ final readonly class MediaApiController
 
     /**
      * GET /api/v1/media/{id}: Show a single media asset.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function show(string $id): Response
     {
@@ -112,7 +110,6 @@ final readonly class MediaApiController
 
     /**
      * POST /api/v1/media: Upload a new media asset via multipart form data.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function upload(ServerRequestInterface $request): Response
     {
@@ -170,7 +167,6 @@ final readonly class MediaApiController
 
     /**
      * DELETE /api/v1/media/{id}: Delete a media asset.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function delete(string $id): Response
     {

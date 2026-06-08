@@ -48,7 +48,6 @@ final readonly class UserController extends AbstractAdminController
 
     /**
      * List CMS users with role badges and 2FA status.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function index(ServerRequestInterface $request): Response
     {
@@ -101,7 +100,6 @@ final readonly class UserController extends AbstractAdminController
      * When extensions like Forum or Payments are active, their
      * AccountSectionProviders contribute tabs showing orders,
      * forum activity, badges, invoices, etc.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function show(ServerRequestInterface $request, string $id): Response
     {
@@ -160,7 +158,6 @@ final readonly class UserController extends AbstractAdminController
 
     /**
      * Update a CMS user (role assignment requires step-up).
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function update(ServerRequestInterface $request, string $id): Response
     {
@@ -218,7 +215,6 @@ final readonly class UserController extends AbstractAdminController
      * Reset a user's two-factor authentication.
      *
      * Requires step-up authentication and a mandatory reason.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function resetTwoFactor(ServerRequestInterface $request, string $id): Response
     {

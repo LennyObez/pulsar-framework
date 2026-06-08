@@ -32,8 +32,6 @@ use function trim;
  * to their corresponding test files and runs only those tests.
  *
  * Usage: test:changed [--from=HEAD~1] [--dry-run]
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class TestChangedCommand extends Command

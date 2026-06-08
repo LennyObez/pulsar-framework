@@ -19,8 +19,6 @@ use function random_bytes;
 
 /**
  * Admin controller for processing refunds.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class RefundController

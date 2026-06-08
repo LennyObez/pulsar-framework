@@ -18,8 +18,6 @@ use const PHP_OS_FAMILY;
 
 /**
  * Opens the Studio dashboard in the default browser.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class StudioOpenCommand extends Command

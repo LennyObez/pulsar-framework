@@ -18,8 +18,6 @@ use function sprintf;
 
 /**
  * Scaffold a new port (interface) in a module's Contracts directory.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class MakePortCommand extends Command
 {

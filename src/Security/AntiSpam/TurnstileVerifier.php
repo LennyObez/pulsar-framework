@@ -32,7 +32,6 @@ final readonly class TurnstileVerifier implements CaptchaVerifierInterface
 
     /**
      * Return the site key for use in frontend widget embedding.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function siteKey(): string
     {

@@ -13,8 +13,6 @@ use function sprintf;
 
 /**
  * Audit logger for encryption operations on ORM columns.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class EncryptionAuditLogger

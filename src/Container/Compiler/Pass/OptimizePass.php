@@ -19,8 +19,6 @@ use function is_string;
  * Replaces the logic in OptimizeCommand::buildContainerHints() by scanning
  * all definitions' concrete classes for constructor parameters that can
  * be resolved via the container.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class OptimizePass implements CompilerPassInterface

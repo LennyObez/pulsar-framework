@@ -13,8 +13,6 @@ use function hash;
  * Generates a stable fingerprint for a query (SQL text without bindings).
  *
  * Used for query analytics, caching, and deduplication.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class QueryFingerprint

@@ -12,10 +12,6 @@ use Pulsar\Api\Internal;
 #[Internal]
 final readonly class SlowQueryRecord
 {
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
     public function __construct(
         public string $sql,
         public string $fingerprint,
@@ -28,7 +24,6 @@ final readonly class SlowQueryRecord
 
     /**
      * How many times slower than the threshold this query was.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function overageMultiplier(): float
     {

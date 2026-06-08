@@ -22,8 +22,6 @@ use const JSON_THROW_ON_ERROR;
 
 /**
  * Display the current status of the queue system.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class QueueStatusCommand extends Command
 {

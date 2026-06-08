@@ -18,8 +18,6 @@ use Pulsar\Api\Api;
  * Usage:
  *     #[Vector(dimensions: 1536)]
  *     public array $embedding;
- *
- * @psalm-api PHP attribute consumed via reflection during ORM hydration.
  */
 #[Attribute(Attribute::TARGET_PROPERTY)]
 #[Api(since: '1.0.0')]

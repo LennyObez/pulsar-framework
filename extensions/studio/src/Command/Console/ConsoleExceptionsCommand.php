@@ -17,8 +17,6 @@ use function sprintf;
 
 /**
  * Displays exception data from Studio events.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class ConsoleExceptionsCommand extends Command

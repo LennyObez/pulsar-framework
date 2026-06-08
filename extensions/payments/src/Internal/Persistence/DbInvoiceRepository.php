@@ -25,9 +25,6 @@ use const JSON_UNESCAPED_SLASHES;
 #[Internal]
 final readonly class DbInvoiceRepository
 {
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
     public function __construct(
         private ConnectionInterface $connection,
     ) {}
@@ -95,9 +92,6 @@ final readonly class DbInvoiceRepository
 
         return $row !== null ? self::hydrate($row) : null;
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function findByInvoiceNumber(string $invoiceNumber): ?Invoice
     {

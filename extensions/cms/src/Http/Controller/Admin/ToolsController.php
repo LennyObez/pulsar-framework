@@ -35,7 +35,6 @@ final readonly class ToolsController extends AbstractAdminController
      * Export all CMS data for a given user (GDPR data portability).
      *
      * Requires step-up authentication.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function exportUserData(ServerRequestInterface $request): Response
     {
@@ -65,7 +64,6 @@ final readonly class ToolsController extends AbstractAdminController
      * Erase PII for a given user (GDPR right-to-erasure).
      *
      * Requires step-up authentication and a mandatory reason.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function eraseUserData(ServerRequestInterface $request): Response
     {

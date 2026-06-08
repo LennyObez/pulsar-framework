@@ -39,9 +39,6 @@ final readonly class PromotionController extends AbstractAdminController
     ) {
         parent::__construct($templateEngine, $gate);
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function index(ServerRequestInterface $request): Response
     {
@@ -67,9 +64,6 @@ final readonly class PromotionController extends AbstractAdminController
             ], $promotions),
         ]);
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function create(ServerRequestInterface $request): Response
     {
@@ -84,9 +78,6 @@ final readonly class PromotionController extends AbstractAdminController
             ),
         ]);
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function store(ServerRequestInterface $request): Response
     {
@@ -203,9 +194,6 @@ final readonly class PromotionController extends AbstractAdminController
             'status' => 'created',
         ], 201);
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function edit(ServerRequestInterface $request, string $id): Response
     {
@@ -240,9 +228,6 @@ final readonly class PromotionController extends AbstractAdminController
             ),
         ]);
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function update(ServerRequestInterface $request, string $id): Response
     {
@@ -322,9 +307,6 @@ final readonly class PromotionController extends AbstractAdminController
 
         return Response::json(['id' => $id, 'status' => 'updated']);
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function delete(ServerRequestInterface $request, string $id): Response
     {

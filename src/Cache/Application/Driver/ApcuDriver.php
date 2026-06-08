@@ -53,9 +53,6 @@ final class ApcuDriver extends AbstractCacheDriver
 
         return apcu_store($key, $value, $ttl ?? 0);
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function delete(string $key): bool
     {

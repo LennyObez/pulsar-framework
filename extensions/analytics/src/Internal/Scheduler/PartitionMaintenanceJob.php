@@ -24,9 +24,6 @@ final readonly class PartitionMaintenanceJob
         'analytics_page_views',
         'analytics_events',
     ];
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function __construct(
         private ConnectionInterface $connection,

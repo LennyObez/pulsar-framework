@@ -32,8 +32,6 @@ use function substr;
  * connection to the creditor's payment processor.
  *
  * PSD2 SCA requirements are enforced for initial mandate setup.
- *
- * @psalm-api Registered with PaymentProviderRegistry by class-name.
  */
 #[Internal]
 final readonly class SepaGateway implements PaymentProviderInterface

@@ -23,9 +23,6 @@ use Pulsar\Http\Middleware\MiddlewareInterface;
  * Requires a valid identity for write operations. Read operations are allowed
  * for guests when allowGuestViewing is enabled in the forum config.
  * Checks the forum.access permission via GateInterface when a gate is available.
- *
- * @psalm-api Registered with the forum route middleware stack at extension
- *            boot; container-resolved by class-name.
  */
 #[Internal(reason: 'Forum auth middleware; implementation detail')]
 final readonly class ForumAuthMiddleware implements MiddlewareInterface

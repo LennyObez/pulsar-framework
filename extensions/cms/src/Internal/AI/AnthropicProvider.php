@@ -24,9 +24,6 @@ use const JSON_UNESCAPED_UNICODE;
  * Anthropic Claude LLM provider.
  *
  * Connects to the Anthropic Messages API to provide completions.
- *
- * @psalm-api Bound to LlmProviderInterface in the CMS AI service provider;
- *            Psalm cannot trace the string-keyed interface dispatch.
  */
 #[Internal(reason: 'LLM provider implementation — use LlmProviderInterface')]
 final readonly class AnthropicProvider implements LlmProviderInterface

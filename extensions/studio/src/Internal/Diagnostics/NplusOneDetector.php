@@ -18,8 +18,6 @@ use function usort;
  * A query is flagged as N+1 when the same fingerprint appears more than
  * the configured threshold times within a single request lifecycle.
  * The detector resets between requests, making it safe for persistent runtimes.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class NplusOneDetector

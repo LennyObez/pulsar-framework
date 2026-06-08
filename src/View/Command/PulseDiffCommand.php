@@ -21,8 +21,6 @@ use function sprintf;
  * Shows the compiled output diff for a Pulse template.
  *
  * Usage: pulsar pulse:diff template.pulse.php
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'CLI command implementation')]
 final class PulseDiffCommand extends Command

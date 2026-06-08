@@ -42,7 +42,6 @@ final readonly class ReleaseApiController
      *
      * Returns 200 with release data, 404 if no stable release exists,
      * 422 if platform is invalid.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function latestVersion(ServerRequestInterface $request): Response
     {
@@ -82,7 +81,6 @@ final readonly class ReleaseApiController
      * - per_page: int (default 20, max 100)
      * - platform: string (optional, one of: android, ios, web)
      * - include_beta: string (optional, "true" or "false")
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function listReleases(ServerRequestInterface $request): Response
     {

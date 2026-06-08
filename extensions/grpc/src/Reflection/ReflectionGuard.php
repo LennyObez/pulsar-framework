@@ -31,7 +31,6 @@ final readonly class ReflectionGuard
      *
      * When allowed in production (force-enabled), automatically emits
      * a GrpcReflectionEnabled security audit event.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function isAllowed(bool $isProduction): bool
     {
@@ -58,7 +57,6 @@ final readonly class ReflectionGuard
      *
      * Call this when reflection is activated in a production environment
      * to create an audit trail of this security-sensitive configuration.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function onEnabled(AuditLoggerInterface $auditLogger): void
     {

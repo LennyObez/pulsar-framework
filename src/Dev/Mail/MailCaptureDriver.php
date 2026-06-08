@@ -91,7 +91,6 @@ final class MailCaptureDriver implements TransportInterface
 
     /**
      * Get the most recently captured message.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function latest(): ?CapturedMessage
     {

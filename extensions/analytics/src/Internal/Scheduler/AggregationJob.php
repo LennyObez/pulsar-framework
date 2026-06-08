@@ -20,9 +20,6 @@ use Pulsar\Extension\Analytics\Contracts\SiteRepositoryInterface;
 #[Internal(reason: 'Scheduled aggregation job')]
 final readonly class AggregationJob
 {
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
     public function __construct(
         private AggregationServiceInterface $aggregationService,
         private SiteRepositoryInterface $siteRepository,

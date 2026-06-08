@@ -26,8 +26,6 @@ use const JSON_THROW_ON_ERROR;
 
 /**
  * List all failed jobs in the dead-letter queue.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class QueueFailedCommand extends Command
 {

@@ -33,7 +33,6 @@ final class BookingNumberGenerator
 
     /**
      * Set the sequence counter (used when initializing from database).
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function setSequence(int $sequence): void
     {

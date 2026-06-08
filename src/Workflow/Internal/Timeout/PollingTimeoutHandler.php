@@ -21,8 +21,6 @@ use Pulsar\Workflow\Timeout\TimeoutHandlerInterface;
  * This implementation requires no external queue infrastructure. Users
  * with queue systems can provide a more efficient implementation via
  * delayed queue messages.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Use TimeoutHandlerInterface as the public API')]
 final readonly class PollingTimeoutHandler implements TimeoutHandlerInterface

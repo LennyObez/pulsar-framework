@@ -67,7 +67,6 @@ final readonly class EffectClassifier
      * Check whether a job class declares any effect classification attribute.
      *
      * @param class-string $jobClass Fully-qualified class name.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function hasEffectAttribute(string $jobClass): bool
     {

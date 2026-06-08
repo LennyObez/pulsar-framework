@@ -21,7 +21,6 @@ final readonly class ApiResource
     /**
      * @param string $type The resource type identifier (used in JSON:API, HAL links, etc.)
      * @param int|null $maxFields Override the global max-fields complexity cap for this resource
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function __construct(
         public string $type = '',

@@ -35,7 +35,6 @@ final readonly class CompiledCatalogIndex
      *     file_hashes?: array<string, string>,
      *     total_hash?: string,
      * } $data
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public static function fromArray(array $data): self
     {

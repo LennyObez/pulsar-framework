@@ -86,7 +86,6 @@ final class StormGuard
      * Get the current dispatch chain.
      *
      * @return list<string>
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function dispatchChain(): array
     {
@@ -95,7 +94,6 @@ final class StormGuard
 
     /**
      * Reset the guard state (for testing or worker reuse).
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function reset(): void
     {

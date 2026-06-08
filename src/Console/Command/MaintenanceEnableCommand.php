@@ -18,8 +18,6 @@ use function sprintf;
  * Enable maintenance mode with optional bypass secret.
  *
  * Usage: maintenance:enable [--secret=abc123] [--message="Be right back"] [--retry=60] [--allow=127.0.0.1]
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class MaintenanceEnableCommand extends Command

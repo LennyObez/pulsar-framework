@@ -25,9 +25,6 @@ use function min;
 #[Internal(reason: 'Forum REST API controller; implementation detail')]
 final readonly class ProfileApiController
 {
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
     public function __construct(
         private ForumProfileRepositoryInterface $profileRepository,
         private ThreadRepositoryInterface $threadRepository,
@@ -37,7 +34,6 @@ final readonly class ProfileApiController
 
     /**
      * GET /api/v1/forum/profiles/{userId}: Show a user's forum profile.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function show(ServerRequestInterface $request, string $userId): Response
     {
@@ -55,7 +51,6 @@ final readonly class ProfileApiController
 
     /**
      * GET /api/v1/forum/profiles/{userId}/threads: List threads by a user.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function threads(ServerRequestInterface $request, string $userId): Response
     {
@@ -82,7 +77,6 @@ final readonly class ProfileApiController
 
     /**
      * GET /api/v1/forum/profiles/{userId}/posts: List posts by a user.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function posts(ServerRequestInterface $request, string $userId): Response
     {

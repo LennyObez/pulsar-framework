@@ -25,8 +25,6 @@ use function hash;
  *
  * This implementation supports controls for GDPR Article 17
  * right-to-erasure requirements.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Forget service implementation')]
 final readonly class ForgetService implements ForgetServiceInterface

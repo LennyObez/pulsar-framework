@@ -20,8 +20,6 @@ use const PHP_OS_FAMILY;
 
 /**
  * Send reload signal to the running persistent runtime.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class RuntimeReloadCommand extends Command
 {

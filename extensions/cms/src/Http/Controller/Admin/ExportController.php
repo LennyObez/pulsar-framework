@@ -55,9 +55,6 @@ final readonly class ExportController extends AbstractAdminController
     ) {
         parent::__construct($templateEngine, $gate);
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function form(ServerRequestInterface $request): Response
     {
@@ -83,9 +80,6 @@ final readonly class ExportController extends AbstractAdminController
             'supports_zip' => $this->mediaBundleExporter !== null,
         ]);
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function selectiveForm(ServerRequestInterface $request): Response
     {
@@ -112,9 +106,6 @@ final readonly class ExportController extends AbstractAdminController
             'selective' => true,
         ]);
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function zipDownload(ServerRequestInterface $request): Response
     {
@@ -197,9 +188,6 @@ final readonly class ExportController extends AbstractAdminController
             body: (string) $body,
         );
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function download(ServerRequestInterface $request): Response
     {
@@ -251,9 +239,6 @@ final readonly class ExportController extends AbstractAdminController
             body: $json,
         );
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function markdownExport(ServerRequestInterface $request): Response
     {
@@ -307,9 +292,6 @@ final readonly class ExportController extends AbstractAdminController
             body: $markdown,
         );
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function csvExport(ServerRequestInterface $request): Response
     {

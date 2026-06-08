@@ -21,9 +21,6 @@ use Pulsar\Http\Request;
 #[Internal]
 final readonly class BookingController
 {
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
     public function __construct(
         private BookingServiceInterface $bookingService,
         private AppointmentRepositoryInterface $repository,
@@ -32,7 +29,6 @@ final readonly class BookingController
 
     /**
      * GET /booking: show the booking form.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function form(): Response
     {
@@ -41,7 +37,6 @@ final readonly class BookingController
 
     /**
      * POST /booking: submit a new booking request.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function submit(Request $request): Response
     {
@@ -86,7 +81,6 @@ final readonly class BookingController
 
     /**
      * GET /booking/{number}/status: check appointment status.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function status(Request $request): Response
     {
@@ -110,7 +104,6 @@ final readonly class BookingController
 
     /**
      * POST /booking/available-slots; get available slots for a date (AJAX).
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function availableSlots(Request $request): Response
     {

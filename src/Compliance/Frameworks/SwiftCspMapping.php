@@ -16,7 +16,6 @@ use Pulsar\Compliance\ControlStatus;
  * advisory controls across seven control objectives.
  *
  * @see https://www.swift.com/myswift/customer-security-programme-csp
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Framework-internal control registration; use ControlCatalog for public access')]
 final class SwiftCspMapping

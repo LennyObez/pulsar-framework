@@ -26,9 +26,6 @@ use function min;
 final readonly class CategoryPageController
 {
     use RendersForumView;
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function __construct(
         private CategoryRepositoryInterface $categoryRepository,
@@ -45,7 +42,6 @@ final readonly class CategoryPageController
 
     /**
      * GET /c/{slug}: List threads in a category.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function show(ServerRequestInterface $request, string $slug): Response
     {

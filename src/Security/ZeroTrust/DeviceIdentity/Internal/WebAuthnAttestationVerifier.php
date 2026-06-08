@@ -25,8 +25,6 @@ use function strlen;
  *   - "fido-u2f": high confidence (0.9): hardware U2F key attestation
  *
  * All crypto operations go through KeyRingInterface (Finding B).
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class WebAuthnAttestationVerifier

@@ -17,9 +17,6 @@ use Pulsar\Config\EnvironmentMode;
 #[Internal]
 final readonly class ProductionSafetyMode
 {
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
     public function __construct(
         private EnvironmentMode $mode,
     ) {}
@@ -38,9 +35,6 @@ final readonly class ProductionSafetyMode
     {
         return $this->mode !== EnvironmentMode::Production;
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function allowRawPayload(): bool
     {
@@ -56,9 +50,6 @@ final readonly class ProductionSafetyMode
     {
         return $this->mode === EnvironmentMode::Local;
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function mode(): EnvironmentMode
     {

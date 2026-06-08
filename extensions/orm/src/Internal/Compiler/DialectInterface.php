@@ -30,7 +30,6 @@ interface DialectInterface
 
     /**
      * Get the current timestamp SQL expression.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function currentTimestamp(): string;
 
@@ -41,7 +40,6 @@ interface DialectInterface
 
     /**
      * Whether this dialect supports RETURNING clause on INSERT.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function supportsReturning(): bool;
 
@@ -50,7 +48,6 @@ interface DialectInterface
      *
      * @param list<string> $conflictColumns
      * @param list<string> $updateColumns
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function compileUpsert(string $insertSql, array $conflictColumns, array $updateColumns): string;
 

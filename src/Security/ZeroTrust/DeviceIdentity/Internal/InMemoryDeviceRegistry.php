@@ -23,8 +23,6 @@ use function random_bytes;
  *
  * Reference implementation suitable for testing and development.
  * Production applications should use a persistent storage backend.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class InMemoryDeviceRegistry implements DeviceRegistryInterface

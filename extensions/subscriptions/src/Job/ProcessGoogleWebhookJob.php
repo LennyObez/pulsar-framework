@@ -19,8 +19,6 @@ use Throwable;
  *
  * Defers the actual subscription status update to the SubscriptionService,
  * ensuring that webhook acknowledgement and processing are decoupled.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Queue job; implementation detail')]
 final readonly class ProcessGoogleWebhookJob implements QueueableInterface

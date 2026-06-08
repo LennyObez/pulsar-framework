@@ -40,7 +40,6 @@ final class ArrayTransport implements TransportInterface
      * Get all sent messages (for test assertions).
      *
      * @return list<Message>
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function sent(): array
     {
@@ -49,7 +48,6 @@ final class ArrayTransport implements TransportInterface
 
     /**
      * Clear all stored messages.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function flush(): void
     {

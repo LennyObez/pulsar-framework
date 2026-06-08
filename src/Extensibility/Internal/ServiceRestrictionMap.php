@@ -115,7 +115,6 @@ final readonly class ServiceRestrictionMap
 
     /**
      * Check if a service is not classified (not restricted and not safe).
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function isUnknown(string $serviceId): bool
     {

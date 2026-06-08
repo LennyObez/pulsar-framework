@@ -14,8 +14,6 @@ use function sprintf;
 
 /**
  * Print the command to check Docker development environment status.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class DevStatusCommand extends Command
 {

@@ -43,7 +43,6 @@ final readonly class TimelineBuilder implements TimelineBuilderInterface
      * Build a timeline for a specific request.
      *
      * @return list<array<string, mixed>>
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function forRequest(string $requestId): array
     {
@@ -56,7 +55,6 @@ final readonly class TimelineBuilder implements TimelineBuilderInterface
      * Build a timeline for a specific job.
      *
      * @return list<array<string, mixed>>
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function forJob(string $jobId): array
     {
@@ -69,7 +67,6 @@ final readonly class TimelineBuilder implements TimelineBuilderInterface
      * Build a timeline for a specific trace.
      *
      * @return list<array<string, mixed>>
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function forTrace(string $traceId): array
     {

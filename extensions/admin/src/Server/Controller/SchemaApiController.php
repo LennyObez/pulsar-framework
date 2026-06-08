@@ -46,9 +46,6 @@ final readonly class SchemaApiController
         private PreviewDdlHandler $previewHandler,
         private SchemaChangeLogStoreInterface $changeLog,
     ) {}
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function create(ServerRequestInterface $request): Response
     {
@@ -62,9 +59,6 @@ final readonly class SchemaApiController
             $result['success'] ? ResponseStatus::Created->value : ResponseStatus::BadRequest->value,
         );
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function dropTable(ServerRequestInterface $request, string $table): Response
     {
@@ -76,9 +70,6 @@ final readonly class SchemaApiController
             $result['success'] ? ResponseStatus::OK->value : ResponseStatus::BadRequest->value,
         );
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function renameTable(ServerRequestInterface $request, string $table): Response
     {
@@ -94,9 +85,6 @@ final readonly class SchemaApiController
             $result['success'] ? ResponseStatus::OK->value : ResponseStatus::BadRequest->value,
         );
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function addColumn(ServerRequestInterface $request, string $table): Response
     {
@@ -110,9 +98,6 @@ final readonly class SchemaApiController
             $result['success'] ? ResponseStatus::Created->value : ResponseStatus::BadRequest->value,
         );
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function dropColumn(ServerRequestInterface $request, string $table, string $col): Response
     {
@@ -124,9 +109,6 @@ final readonly class SchemaApiController
             $result['success'] ? ResponseStatus::OK->value : ResponseStatus::BadRequest->value,
         );
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function addIndex(ServerRequestInterface $request, string $table): Response
     {
@@ -140,9 +122,6 @@ final readonly class SchemaApiController
             $result['success'] ? ResponseStatus::Created->value : ResponseStatus::BadRequest->value,
         );
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function dropIndex(ServerRequestInterface $request, string $table, string $name): Response
     {
@@ -156,9 +135,6 @@ final readonly class SchemaApiController
     }
 
     // Preview endpoints
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function previewCreate(ServerRequestInterface $request): Response
     {
@@ -167,9 +143,6 @@ final readonly class SchemaApiController
 
         return Response::json($result);
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function previewAddColumn(ServerRequestInterface $request, string $table): Response
     {
@@ -178,9 +151,6 @@ final readonly class SchemaApiController
 
         return Response::json($result);
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function previewDropColumn(ServerRequestInterface $request, string $table): Response
     {
@@ -192,9 +162,6 @@ final readonly class SchemaApiController
 
         return Response::json($result);
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function previewAddIndex(ServerRequestInterface $request, string $table): Response
     {
@@ -203,9 +170,6 @@ final readonly class SchemaApiController
 
         return Response::json($result);
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function previewDropIndex(ServerRequestInterface $request, string $table): Response
     {
@@ -217,9 +181,6 @@ final readonly class SchemaApiController
 
         return Response::json($result);
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function previewDropTable(string $table): Response
     {
@@ -227,9 +188,6 @@ final readonly class SchemaApiController
 
         return Response::json($result);
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function previewRenameTable(ServerRequestInterface $request, string $table): Response
     {
@@ -241,9 +199,6 @@ final readonly class SchemaApiController
 
         return Response::json($result);
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function changelog(ServerRequestInterface $request): Response
     {
@@ -271,9 +226,6 @@ final readonly class SchemaApiController
 
         return Response::json(['entries' => $entryData]);
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function exportBundle(): Response
     {

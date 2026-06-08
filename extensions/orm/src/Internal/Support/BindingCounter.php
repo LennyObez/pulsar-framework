@@ -28,15 +28,11 @@ final class BindingCounter
 
     /**
      * Reset the counter (for reuse across query compilations).
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function reset(): void
     {
         $this->counter = 0;
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function current(): int
     {

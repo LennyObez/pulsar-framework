@@ -29,8 +29,6 @@ use function substr;
  * dependency) so the same `tick()` can run from a CLI worker, a
  * cron, a queue consumer, or an in-process supervisor without
  * coupling to any one runtime.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class OutboxRelay

@@ -51,9 +51,6 @@ final readonly class ImportController extends AbstractAdminController
     ) {
         parent::__construct($templateEngine, $gate);
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function form(ServerRequestInterface $request): Response
     {
@@ -66,9 +63,6 @@ final readonly class ImportController extends AbstractAdminController
             'supports_dry_run' => true,
         ]);
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function dryRun(ServerRequestInterface $request): Response
     {
@@ -89,9 +83,6 @@ final readonly class ImportController extends AbstractAdminController
             return Response::json(['error' => $e->getMessage()], 422);
         }
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function execute(ServerRequestInterface $request): Response
     {
@@ -116,9 +107,6 @@ final readonly class ImportController extends AbstractAdminController
             return Response::json(['error' => $e->getMessage()], 422);
         }
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function markdownImport(ServerRequestInterface $request): Response
     {
@@ -181,9 +169,6 @@ final readonly class ImportController extends AbstractAdminController
             'errors' => $errors,
         ]);
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function csvImport(ServerRequestInterface $request): Response
     {
@@ -243,9 +228,6 @@ final readonly class ImportController extends AbstractAdminController
             'errors' => $errors,
         ]);
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function analyzeUpload(ServerRequestInterface $request): Response
     {
@@ -274,9 +256,6 @@ final readonly class ImportController extends AbstractAdminController
 
         return Response::json($analysis->toArray());
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function executeWithOptions(ServerRequestInterface $request): Response
     {

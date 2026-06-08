@@ -26,9 +26,6 @@ final readonly class BulkActionController
     public function __construct(
         private BulkActionHandler $handler,
     ) {}
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function execute(ServerRequestInterface $request, string $resource): Response
     {

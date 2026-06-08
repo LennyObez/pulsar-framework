@@ -39,8 +39,6 @@ use const JSON_UNESCAPED_UNICODE;
  *     metadata TEXT NOT NULL DEFAULT '{}',
  *     created_at TEXT NOT NULL DEFAULT (datetime('now'))
  * );
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'VectorStore implementation; use VectorStoreInterface')]
 final readonly class SqliteVecStore implements VectorStoreInterface

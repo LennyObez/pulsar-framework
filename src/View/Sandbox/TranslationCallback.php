@@ -21,7 +21,6 @@ final readonly class TranslationCallback
 
     /**
      * @param callable(string, array<string, mixed>): string $callback
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function __construct(callable $callback)
     {

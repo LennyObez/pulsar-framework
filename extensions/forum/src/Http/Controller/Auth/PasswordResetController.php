@@ -32,9 +32,6 @@ use const PASSWORD_BCRYPT;
 final readonly class PasswordResetController
 {
     use RendersForumView;
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function __construct(
         private ConnectionInterface $connection,
@@ -49,7 +46,6 @@ final readonly class PasswordResetController
 
     /**
      * GET /forgot-password: Show forgot password form.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function showRequestForm(ServerRequestInterface $request): Response
     {
@@ -62,7 +58,6 @@ final readonly class PasswordResetController
 
     /**
      * POST /forgot-password: Process password reset request.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function sendResetLink(ServerRequestInterface $request): Response
     {
@@ -129,7 +124,6 @@ final readonly class PasswordResetController
 
     /**
      * GET /reset-password: Show password reset form (with token).
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function showResetForm(ServerRequestInterface $request): Response
     {
@@ -147,7 +141,6 @@ final readonly class PasswordResetController
 
     /**
      * POST /reset-password: Process password reset.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function resetPassword(ServerRequestInterface $request): Response
     {

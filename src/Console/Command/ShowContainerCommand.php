@@ -28,8 +28,6 @@ use function strlen;
 
 /**
  * Displays container bindings.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class ShowContainerCommand extends Command
 {

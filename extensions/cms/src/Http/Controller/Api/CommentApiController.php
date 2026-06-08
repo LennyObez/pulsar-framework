@@ -24,16 +24,12 @@ use function min;
 #[Internal(reason: 'CMS HTTP controller; implementation detail')]
 final readonly class CommentApiController
 {
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
     public function __construct(
         private CommentRepositoryInterface $commentRepository,
     ) {}
 
     /**
      * GET /api/cms/comments?content_id={id}&page=1&per_page=20&sort=newest
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function index(ServerRequestInterface $request): Response
     {

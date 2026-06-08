@@ -22,8 +22,6 @@ use const EXTR_SKIP;
  *
  * Renders PHP templates with extracted variables.
  * Templates are plain PHP files that output HTML.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class ViewRenderer

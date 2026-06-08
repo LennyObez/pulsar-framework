@@ -24,19 +24,12 @@ use function in_array;
 #[Internal(reason: 'CMS HTTP controller; implementation detail')]
 final readonly class FeedController
 {
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
     private const int CACHE_TTL_SECONDS = 3600;
 
     public function __construct(
         private FeedGeneratorInterface $feedGenerator,
         private CmsConfig $config,
     ) {}
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function rss(ServerRequestInterface $request): Response
     {
@@ -58,9 +51,6 @@ final readonly class FeedController
             body: $xml,
         );
     }
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function atom(ServerRequestInterface $request): Response
     {

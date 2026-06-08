@@ -33,8 +33,6 @@ use const JSON_UNESCAPED_SLASHES;
  * PayPal payment provider implementation.
  *
  * Uses the PayPal Orders v2 API with raw HTTP requests.
- *
- * @psalm-api Registered with PaymentProviderRegistry by class-name.
  */
 #[Internal]
 final readonly class PayPalGateway implements PaymentProviderInterface

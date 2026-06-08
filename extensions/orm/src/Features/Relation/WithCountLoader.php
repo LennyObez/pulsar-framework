@@ -20,8 +20,6 @@ use function sprintf;
  * Loads relation counts without loading the actual related entities.
  *
  * Adds a `{relation}_count` property value to each entity.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class WithCountLoader

@@ -172,7 +172,6 @@ final class SimulatorProvider implements PaymentProviderInterface
 
     /**
      * Check if a charge has been flagged for dispute (4242 test vector).
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function hasDisputeFlag(string $chargeId): bool
     {

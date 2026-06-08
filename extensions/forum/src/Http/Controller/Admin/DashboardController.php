@@ -25,9 +25,6 @@ use function array_map;
 final readonly class DashboardController
 {
     use RendersAdminView;
-    /**
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
-     */
 
     public function __construct(
         private ThreadRepositoryInterface $threadRepository,
@@ -39,7 +36,6 @@ final readonly class DashboardController
 
     /**
      * GET /admin/forum: Forum dashboard with overview stats.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function index(ServerRequestInterface $request): Response
     {

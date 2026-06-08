@@ -29,8 +29,6 @@ use function trim;
  * This is a destructive operation that requires confirmation unless --force is passed.
  *
  * Usage: db:fresh [--force] [--seed]
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class DbFreshCommand extends Command

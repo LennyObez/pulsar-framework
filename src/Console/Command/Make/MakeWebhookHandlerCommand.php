@@ -18,8 +18,6 @@ use function sprintf;
 
 /**
  * Scaffold a webhook handler with verification, deduplication, and controller.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class MakeWebhookHandlerCommand extends Command
 {

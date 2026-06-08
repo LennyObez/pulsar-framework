@@ -17,8 +17,6 @@ use Pulsar\Runtime\Upgrade\UpgradeContext;
  * Pulls LeakDetector, RequestResetRegistry, and RequestSandbox from
  * the container (registered by Kernel::createRuntimeServices()) so
  * that consumers only depend on the factory interface.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class PersistentRuntimeFactory implements PersistentRuntimeFactoryInterface

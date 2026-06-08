@@ -14,8 +14,6 @@ use Pulsar\Http\Message\ServerRequest;
  * All fixtures are self-contained: no network dependency, no external
  * state. They exercise common framework paths: routing, session,
  * cache, events, templates.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final class LeakFixtureFactory

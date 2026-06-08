@@ -35,7 +35,6 @@ final class InstrumentedQueueManager implements CollectorInterface
 
     /**
      * Dispatch a job and emit a Studio event.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function dispatch(
         string $jobClass,
@@ -54,7 +53,6 @@ final class InstrumentedQueueManager implements CollectorInterface
 
     /**
      * Get the number of pending jobs on the given queue.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function size(?string $queue = null): int
     {
@@ -63,7 +61,6 @@ final class InstrumentedQueueManager implements CollectorInterface
 
     /**
      * Get the underlying queue manager.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function inner(): QueueManager
     {

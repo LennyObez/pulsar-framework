@@ -34,7 +34,6 @@ final readonly class GooglePlayVerifier implements MobileVerifierInterface
 {
     /**
      * @param array{package_name: string, service_account_json: string, api_base_url?: string} $config
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function __construct(
         private array $config,

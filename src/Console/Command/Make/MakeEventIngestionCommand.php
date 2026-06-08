@@ -18,8 +18,6 @@ use function sprintf;
 
 /**
  * Scaffold an event ingestion pipeline with webhook verification and deduplication.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class MakeEventIngestionCommand extends Command
 {

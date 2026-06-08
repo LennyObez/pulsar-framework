@@ -14,8 +14,6 @@ use Pulsar\Extension\Studio\Console\Event\EventVersion;
  *
  * Records the result of a file integrity check for monitoring
  * and auditing in the developer dashboard.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal]
 final readonly class IntegrityCheckPayload implements ConsoleEvent

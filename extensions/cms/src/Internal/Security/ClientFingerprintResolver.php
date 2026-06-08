@@ -51,7 +51,6 @@ final readonly class ClientFingerprintResolver
 
     /**
      * Resolve a client fingerprint from the request.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function resolve(ServerRequestInterface $request): ClientFingerprint
     {

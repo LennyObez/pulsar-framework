@@ -37,7 +37,6 @@ final readonly class ReleaseController
 
     /**
      * GET /admin/releases: List all releases with optional filters.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function index(ServerRequestInterface $request): Response
     {
@@ -75,7 +74,6 @@ final readonly class ReleaseController
 
     /**
      * GET /admin/releases/create: Show create release form data (field metadata).
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function create(): Response
     {
@@ -101,7 +99,6 @@ final readonly class ReleaseController
 
     /**
      * POST /admin/releases: Create a new release.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function store(ServerRequestInterface $request): Response
     {
@@ -171,7 +168,6 @@ final readonly class ReleaseController
 
     /**
      * GET /admin/releases/{id}: Show a single release.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function edit(string $id): Response
     {
@@ -188,7 +184,6 @@ final readonly class ReleaseController
 
     /**
      * PUT /admin/releases/{id}: Update a release (mark stable, etc.).
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function update(ServerRequestInterface $request, string $id): Response
     {
@@ -224,7 +219,6 @@ final readonly class ReleaseController
 
     /**
      * GET /admin/releases/beta-signups: List all beta signups.
-     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function betaSignups(ServerRequestInterface $request): Response
     {

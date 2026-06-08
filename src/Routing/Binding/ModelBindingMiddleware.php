@@ -46,8 +46,6 @@ use function str_contains;
  * cache is safe for the entire process lifetime and eliminates the
  * per-request `new ReflectionMethod()` + `new ReflectionClass()`
  * cost (M-2 audit response).
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Middleware wiring; registered in the middleware pipeline by the composition root')]
 final class ModelBindingMiddleware implements MiddlewareInterface

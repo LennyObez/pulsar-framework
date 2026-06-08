@@ -17,8 +17,6 @@ use function sprintf;
 
 /**
  * List all secret keys stored in the vault (without revealing values).
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class SecretListCommand extends Command
 {

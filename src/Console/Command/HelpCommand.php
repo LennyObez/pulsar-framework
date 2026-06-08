@@ -13,8 +13,6 @@ use Pulsar\Console\OutputInterface;
 
 /**
  * Displays the main help screen.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 final class HelpCommand extends Command
 {

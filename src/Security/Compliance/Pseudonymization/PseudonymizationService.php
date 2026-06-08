@@ -28,8 +28,6 @@ use function substr;
  *
  * This implementation supports controls for GDPR Article 4(5)
  * pseudonymization and HIPAA Safe Harbor de-identification.
- *
- * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
  */
 #[Internal(reason: 'Pseudonymization service implementation')]
 final class PseudonymizationService implements PseudonymizationServiceInterface
