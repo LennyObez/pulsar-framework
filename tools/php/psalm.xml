@@ -466,6 +466,7 @@
             <errorLevel type="suppress">
                 <file name="../../extensions/payments/src/Internal/Billing/DunningManager.php"/>
                 <file name="../../extensions/cms/src/Internal/Seo/RedirectManager.php"/>
+                <file name="../../src/Cache/CacheManifest.php"/>
             </errorLevel>
         </PossiblyUnusedReturnValue>
 
