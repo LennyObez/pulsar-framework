@@ -31,7 +31,7 @@ final class DocVersionControllerTest extends TestCase
         $controller = new DocVersionController(versionService: $service);
         $request = $this->createStub(ServerRequestInterface::class);
 
-        $response = $controller->index($request);
+        $response = $controller->index();
 
         self::assertSame(200, $response->getStatusCode());
 

@@ -60,7 +60,7 @@ final class ThreadApiControllerTest extends TestCase
         $this->threadRepository->method('findById')->willReturn($thread);
 
         $request = new ServerRequest(method: 'GET', uri: '/api/v1/forum/threads/thread-001');
-        $response = $this->controller->show($request, 'thread-001');
+        $response = $this->controller->show('thread-001');
 
         self::assertSame(200, $response->getStatusCode());
         $data = $this->decodeBody($response);
@@ -75,7 +75,7 @@ final class ThreadApiControllerTest extends TestCase
         $this->threadRepository->method('findById')->willReturn(null);
 
         $request = new ServerRequest(method: 'GET', uri: '/api/v1/forum/threads/nonexistent');
-        $response = $this->controller->show($request, 'nonexistent');
+        $response = $this->controller->show('nonexistent');
 
         self::assertSame(404, $response->getStatusCode());
         $data = $this->decodeBody($response);

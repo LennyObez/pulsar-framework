@@ -67,7 +67,7 @@ final class SwaggerUiControllerTest extends TestCase
             specRoute: '/api/docs/openapi.json',
         );
 
-        $response = $controller->ui($this->createRequest());
+        $response = $controller->ui();
 
         self::assertSame(200, $response->getStatusCode());
         $body = (string) $response->getBody();
@@ -83,7 +83,7 @@ final class SwaggerUiControllerTest extends TestCase
             specRoute: '/custom/path/openapi.json',
         );
 
-        $response = $controller->ui($this->createRequest());
+        $response = $controller->ui();
 
         self::assertStringContainsString('/custom/path/openapi.json', (string) $response->getBody());
     }
@@ -96,7 +96,7 @@ final class SwaggerUiControllerTest extends TestCase
             specRoute: '/api/docs"><script>alert(1)</script><"',
         );
 
-        $response = $controller->ui($this->createRequest());
+        $response = $controller->ui();
         $body = (string) $response->getBody();
 
         // The XSS payload should be escaped, not present as raw HTML
@@ -111,7 +111,7 @@ final class SwaggerUiControllerTest extends TestCase
             specPath: sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'nonexistent_pulsar_spec_' . bin2hex(random_bytes(8)) . '.json',
         );
 
-        $response = $controller->spec($this->createRequest());
+        $response = $controller->spec();
 
         self::assertSame(404, $response->getStatusCode());
         self::assertStringContainsString('not found', (string) $response->getBody());
@@ -123,7 +123,7 @@ final class SwaggerUiControllerTest extends TestCase
         $this->writeSpecFile('{"openapi":"3.1.0"}');
 
         $controller = new SwaggerUiController(specPath: $this->tempSpecPath);
-        $response = $controller->spec($this->createRequest());
+        $response = $controller->spec();
 
         self::assertSame(200, $response->getStatusCode());
         self::assertSame('{"openapi":"3.1.0"}', (string) $response->getBody());
@@ -135,7 +135,7 @@ final class SwaggerUiControllerTest extends TestCase
         $this->writeSpecFile('{}');
 
         $controller = new SwaggerUiController(specPath: $this->tempSpecPath);
-        $response = $controller->spec($this->createRequest());
+        $response = $controller->spec();
 
         self::assertStringContainsString(
             'application/json',
@@ -149,7 +149,7 @@ final class SwaggerUiControllerTest extends TestCase
         $this->writeSpecFile('{}');
 
         $controller = new SwaggerUiController(specPath: $this->tempSpecPath);
-        $response = $controller->spec($this->createRequest());
+        $response = $controller->spec();
 
         self::assertStringContainsString(
             'max-age=3600',
@@ -162,7 +162,7 @@ final class SwaggerUiControllerTest extends TestCase
     {
         $controller = new SwaggerUiController(specPath: '/tmp/spec.json');
 
-        $response = $controller->ui($this->createRequest());
+        $response = $controller->ui();
 
         self::assertStringContainsString('/api/docs/openapi.json', (string) $response->getBody());
     }

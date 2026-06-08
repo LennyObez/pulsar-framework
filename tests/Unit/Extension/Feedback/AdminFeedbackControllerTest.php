@@ -153,7 +153,7 @@ final class AdminFeedbackControllerTest extends TestCase
 
         $request = $this->createStub(ServerRequestInterface::class);
 
-        $response = $this->controller->show($request, 'fb-001');
+        $response = $this->controller->show('fb-001');
 
         self::assertSame(200, $response->getStatusCode());
 
@@ -173,7 +173,7 @@ final class AdminFeedbackControllerTest extends TestCase
 
         $request = $this->createStub(ServerRequestInterface::class);
 
-        $response = $this->controller->show($request, 'missing');
+        $response = $this->controller->show('missing');
 
         self::assertSame(404, $response->getStatusCode());
 
@@ -426,7 +426,7 @@ final class AdminFeedbackControllerTest extends TestCase
 
         $request = $this->createStub(ServerRequestInterface::class);
 
-        $response = $this->controller->show($request, 'fb-001');
+        $response = $this->controller->show('fb-001');
 
         $body = $this->jsonResponse($response);
         $data = $body['data'];

@@ -238,7 +238,7 @@ final class SchemaApiControllerTest extends TestCase
             uri: '/admin/api/schema/changelog/export',
         );
 
-        $response = $this->controller->exportBundle($request);
+        $response = $this->controller->exportBundle();
 
         self::assertSame(200, $response->getStatusCode());
         self::assertStringContainsString('CREATE TABLE my_users', (string) $response->getBody());
@@ -275,7 +275,7 @@ final class SchemaApiControllerTest extends TestCase
             headers: ['Accept' => 'application/json'],
         );
 
-        $response = $this->controller->previewDropTable($request, 'test_tbl');
+        $response = $this->controller->previewDropTable('test_tbl');
 
         self::assertSame(200, $response->getStatusCode());
         /** @var array<string, mixed> $body */

@@ -101,7 +101,7 @@ final class CommerceApiControllerTest extends TestCase
 
         $request = new ServerRequest(method: 'GET', uri: '/api/v1/products/missing');
 
-        $response = $controller->showProduct($request, 'missing');
+        $response = $controller->showProduct('missing');
 
         self::assertSame(404, $response->getStatusCode());
     }
@@ -155,7 +155,7 @@ final class CommerceApiControllerTest extends TestCase
 
         $request = new ServerRequest(method: 'GET', uri: '/api/v1/orders/order-1');
 
-        $response = $controller->showOrder($request, 'order-1');
+        $response = $controller->showOrder('order-1');
 
         self::assertSame(200, $response->getStatusCode());
 

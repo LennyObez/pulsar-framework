@@ -83,7 +83,7 @@ final class MediaApiControllerTest extends TestCase
 
         $request = new ServerRequest(method: 'GET', uri: '/api/v1/media/nonexistent');
 
-        $response = $this->controller->show($request, 'nonexistent');
+        $response = $this->controller->show('nonexistent');
 
         self::assertSame(404, $response->getStatusCode());
 
@@ -121,7 +121,7 @@ final class MediaApiControllerTest extends TestCase
 
         $request = new ServerRequest(method: 'GET', uri: '/api/v1/media/media-1');
 
-        $response = $this->controller->show($request, 'media-1');
+        $response = $this->controller->show('media-1');
 
         self::assertSame(200, $response->getStatusCode());
 
@@ -152,7 +152,7 @@ final class MediaApiControllerTest extends TestCase
 
         $request = new ServerRequest(method: 'DELETE', uri: '/api/v1/media/nonexistent');
 
-        $response = $this->controller->delete($request, 'nonexistent');
+        $response = $this->controller->delete('nonexistent');
 
         self::assertSame(404, $response->getStatusCode());
     }

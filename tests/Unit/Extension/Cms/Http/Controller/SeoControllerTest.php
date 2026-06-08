@@ -24,7 +24,7 @@ final class SeoControllerTest extends TestCase
         $controller = new SeoController($robotsTxt, $seoConfig);
         $request = $this->createStub(ServerRequestInterface::class);
 
-        $response = $controller->googleVerification($request);
+        $response = $controller->googleVerification();
 
         self::assertSame(200, $response->getStatusCode());
         $body = (string) $response->getBody();
@@ -40,7 +40,7 @@ final class SeoControllerTest extends TestCase
         $controller = new SeoController($robotsTxt, $seoConfig);
         $request = $this->createStub(ServerRequestInterface::class);
 
-        $response = $controller->googleVerification($request);
+        $response = $controller->googleVerification();
 
         self::assertSame(404, $response->getStatusCode());
     }
@@ -53,7 +53,7 @@ final class SeoControllerTest extends TestCase
         $controller = new SeoController($robotsTxt, $seoConfig);
         $request = $this->createStub(ServerRequestInterface::class);
 
-        $response = $controller->googleVerification($request);
+        $response = $controller->googleVerification();
 
         self::assertSame(404, $response->getStatusCode());
     }
@@ -66,7 +66,7 @@ final class SeoControllerTest extends TestCase
         $controller = new SeoController($robotsTxt, $seoConfig);
         $request = $this->createStub(ServerRequestInterface::class);
 
-        $response = $controller->bingVerification($request);
+        $response = $controller->bingVerification();
 
         self::assertSame(200, $response->getStatusCode());
         $body = (string) $response->getBody();
@@ -85,7 +85,7 @@ final class SeoControllerTest extends TestCase
         $controller = new SeoController($robotsTxt, $seoConfig);
         $request = $this->createStub(ServerRequestInterface::class);
 
-        $response = $controller->bingVerification($request);
+        $response = $controller->bingVerification();
 
         self::assertSame(404, $response->getStatusCode());
     }
@@ -98,7 +98,7 @@ final class SeoControllerTest extends TestCase
         $controller = new SeoController($robotsTxt, $seoConfig);
         $request = $this->createStub(ServerRequestInterface::class);
 
-        $response = $controller->bingVerification($request);
+        $response = $controller->bingVerification();
 
         self::assertSame(404, $response->getStatusCode());
     }
@@ -111,7 +111,7 @@ final class SeoControllerTest extends TestCase
         $controller = new SeoController($robotsTxt, $seoConfig);
         $request = $this->createStub(ServerRequestInterface::class);
 
-        $response = $controller->googleVerification($request);
+        $response = $controller->googleVerification();
         $body = (string) $response->getBody();
 
         self::assertStringNotContainsString('<script>', $body);
@@ -125,7 +125,7 @@ final class SeoControllerTest extends TestCase
         $controller = new SeoController($robotsTxt, $seoConfig);
         $request = $this->createStub(ServerRequestInterface::class);
 
-        $response = $controller->bingVerification($request);
+        $response = $controller->bingVerification();
         $body = (string) $response->getBody();
 
         self::assertStringNotContainsString('<script>alert', $body);
@@ -142,10 +142,10 @@ final class SeoControllerTest extends TestCase
         $controller = new SeoController($robotsTxt, $seoConfig);
         $request = $this->createStub(ServerRequestInterface::class);
 
-        $googleResponse = $controller->googleVerification($request);
+        $googleResponse = $controller->googleVerification();
         self::assertSame('public, max-age=86400', $googleResponse->getHeaderLine('Cache-Control'));
 
-        $bingResponse = $controller->bingVerification($request);
+        $bingResponse = $controller->bingVerification();
         self::assertSame('public, max-age=86400', $bingResponse->getHeaderLine('Cache-Control'));
     }
 
