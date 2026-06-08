@@ -27,7 +27,11 @@ use const SODIUM_CRYPTO_GENERICHASH_KEYBYTES;
 #[Internal(reason: 'In-memory implementation for testing; not for production use')]
 final class InMemoryAccessTokenRepository implements AccessTokenRepositoryInterface
 {
-    /** @var array<string, AccessToken> Keyed by token ID */
+    /**
+     * @var array<string, AccessToken> Keyed by token ID
+     *
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     */
     private array $tokensById = [];
 
     /** @var array<string, string> BLAKE2b-keyed(tokenValue) (hex) => token ID */

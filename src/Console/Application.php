@@ -42,6 +42,7 @@ final class Application
      *
      * @var array<string, array{description: string, factory: callable(): CommandInterface}>
      * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     private array $lazyCommands = [];
 

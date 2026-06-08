@@ -27,6 +27,7 @@ final readonly class BounceWebhookController
 {
     /**
      * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     private const int HARD_BOUNCE_THRESHOLD = 3;
 

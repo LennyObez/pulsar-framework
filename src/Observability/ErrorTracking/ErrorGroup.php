@@ -29,6 +29,7 @@ final class ErrorGroup
      * @noinspection PhpUnhandledExceptionInspection: hardcoded 'now' and 'UTC' never throw
      *
      * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
     public function __construct(
         public readonly ErrorFingerprint $fingerprint,

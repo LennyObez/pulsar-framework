@@ -30,6 +30,7 @@ final readonly class TrackerController
         JS;
     /**
      * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
+     * @psalm-api Wired-up through DI container or attribute discovery; Psalm cannot trace the call site.
      */
 
     private const string DIST_PATH = __DIR__ . '/../../frontend/dist/plsr.js';
