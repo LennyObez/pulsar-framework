@@ -109,6 +109,7 @@
       "Pulsar\\Extension\\Booking\\Tests\\": "extensions/booking/tests/",
       "Pulsar\\Extension\\Messaging\\Tests\\": "extensions/messaging/tests/",
       "Pulsar\\PHPStan\\": "tools/php/phpstan/",
+      "Pulsar\\Tooling\\PsalmPlugin\\": "tools/php/psalm-plugin/",
       "Pulsar\\Extension\\OpenTelemetry\\Tests\\": "extensions/opentelemetry/tests/",
       "Pulsar\\Extension\\Observability\\Tests\\": "extensions/observability/tests/",
       "Pulsar\\Extension\\OpenTelemetry\\Export\\JsonLines\\Tests\\": "extensions/observability-export/tests/",

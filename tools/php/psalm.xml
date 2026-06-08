@@ -74,6 +74,19 @@
         <file name="stubs/Psr7.php"/>
     </stubs>
 
+    <plugins>
+        <!--
+            Teaches Psalm about the Pulsar framework's container-resolution
+            conventions (PHP attributes consumed via reflection, registry-managed
+            interfaces, framework base classes, controller naming convention,
+            etc.). Stops the analyser from reporting UnusedClass /
+            PossiblyUnusedMethod / PossiblyUnusedProperty false positives on
+            classes that are wired at runtime but whose call sites Psalm
+            cannot trace statically.
+        -->
+        <pluginClass class="Pulsar\Tooling\PsalmPlugin\PulsarPsalmPlugin"/>
+    </plugins>
+
     <issueHandlers>
         <!--
             Zero-tolerance policy (tech-debt TD-001).
@@ -348,19 +361,6 @@
                 <file name="../../src/Security/Session/SessionManager.php"/>
             </errorLevel>
         </UnimplementedInterfaceMethod>
-
-        <!-- (C) FrankenPhpRuntime::handleRequest is called from inside a closure
-             passed to `frankenphp_handle_request()`. Psalm cannot trace the
-             closure invocation through the FrankenPHP-only function so the
-             method reads as unused. Combined with the Imagick ImageProcessor's
-             private configureJpeg/Webp/Avif methods that route through a
-             match() over Imagick instances Psalm cannot resolve. -->
-        <UnusedMethod>
-            <errorLevel type="suppress">
-                <file name="../../extensions/cms/src/Media/Processing/ImagickImageProcessor.php"/>
-                <file name="../../src/Runtime/FrankenPhpRuntime.php"/>
-            </errorLevel>
-        </UnusedMethod>
 
     </issueHandlers>
 </psalm>
