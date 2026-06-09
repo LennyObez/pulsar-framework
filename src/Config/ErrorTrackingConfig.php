@@ -6,6 +6,7 @@ namespace Pulsar\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Typed configuration DTO for the error tracking section of observability config.
@@ -27,21 +28,16 @@ final readonly class ErrorTrackingConfig
     /**
      * Build from the raw error tracking config array.
      *
-     * @param array{
-     *     enabled?: bool|int|string,
-     *     max_groups?: int,
-     *     max_recent_events_per_group?: int,
-     *     sensitive_fields?: list<string>,
-     * } $data
+     * @param array<string, mixed> $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
             enabled: (bool) ($data['enabled'] ?? true),
-            maxGroups: $data['max_groups'] ?? 500,
-            maxRecentEventsPerGroup: $data['max_recent_events_per_group'] ?? 5,
-            sensitiveFields: $data['sensitive_fields'] ?? [],
+            maxGroups: Coerce::int($data['max_groups'] ?? null, 500),
+            maxRecentEventsPerGroup: Coerce::int($data['max_recent_events_per_group'] ?? null, 5),
+            sensitiveFields: Coerce::listOfString($data['sensitive_fields'] ?? null),
         );
     }
 }

@@ -30,4 +30,16 @@ interface PersistentRuntimeFactoryInterface
         ?RuntimeCollectorInterface $collector = null,
         ?UpgradeContext $upgradeContext = null,
     ): RuntimeInterface;
+
+    /**
+     * Create a runtime instance for the given type (fpm, persistent, FrankenPHP, RoadRunner).
+     */
+    public function createForType(
+        RuntimeType $type,
+        KernelInterface $kernel,
+        RuntimeConfig $config,
+        ?LoggerInterface $logger = null,
+        ?RuntimeCollectorInterface $collector = null,
+        ?UpgradeContext $upgradeContext = null,
+    ): RuntimeInterface;
 }

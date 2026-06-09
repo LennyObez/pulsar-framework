@@ -6,6 +6,7 @@ namespace Pulsar\Rendering;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Configuration for static site generation (SSG).
@@ -24,19 +25,18 @@ final readonly class StaticSiteConfig
     ) {}
 
     /**
-     * @param array{
-     *     output_dir?: string,
-     *     base_url?: string,
-     *     exclude_patterns?: list<string>,
-     * } $data
+     * @param array<string, mixed> $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            outputDir: $data['output_dir'] ?? 'public/static',
-            baseUrl: $data['base_url'] ?? '',
-            excludePatterns: $data['exclude_patterns'] ?? ['/api/*', '/admin/*', '/_*'],
+            outputDir: Coerce::string($data['output_dir'] ?? null, 'public/static'),
+            baseUrl: Coerce::string($data['base_url'] ?? null),
+            excludePatterns: Coerce::listOfString(
+                $data['exclude_patterns'] ?? null,
+                ['/api/*', '/admin/*', '/_*'],
+            ),
         );
     }
 }

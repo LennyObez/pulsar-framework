@@ -11,6 +11,10 @@ use Pulsar\Extension\Form\Csrf\FormCsrfManager;
 use Pulsar\Extension\Form\Exception\CsrfException;
 use Pulsar\Security\Session\SessionInterface;
 
+use function is_bool;
+use function is_int;
+use function is_numeric;
+use function is_string;
 use function strlen;
 
 final class FormCsrfManagerTest extends TestCase
@@ -130,6 +134,38 @@ final class FormCsrfManagerTest extends TestCase
             public function get(string $key, mixed $default = null): mixed
             {
                 return $this->data[$key] ?? $default;
+            }
+            public function getString(string $key, string $default = ''): string
+            {
+                $value = $this->data[$key] ?? null;
+
+                return is_string($value) ? $value : $default;
+            }
+            public function getNullableString(string $key): ?string
+            {
+                $value = $this->data[$key] ?? null;
+
+                return is_string($value) ? $value : null;
+            }
+            public function getInt(string $key, int $default = 0): int
+            {
+                $value = $this->data[$key] ?? null;
+
+                if (is_int($value)) {
+                    return $value;
+                }
+
+                if (is_string($value) && is_numeric($value)) {
+                    return (int) $value;
+                }
+
+                return $default;
+            }
+            public function getBool(string $key, bool $default = false): bool
+            {
+                $value = $this->data[$key] ?? null;
+
+                return is_bool($value) ? $value : $default;
             }
             public function set(string $key, mixed $value): void
             {

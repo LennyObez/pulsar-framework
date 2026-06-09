@@ -54,6 +54,7 @@ final class ServeCommandTest extends TestCase
         self::assertArrayHasKey('port', $command->options);
         self::assertArrayHasKey('docroot', $command->options);
         self::assertArrayHasKey('public', $command->options);
+        self::assertArrayHasKey('check', $command->options);
     }
 
     #[Test]
@@ -99,12 +100,12 @@ final class ServeCommandTest extends TestCase
     public function acceptsLoopbackWithoutPublicFlag(): void
     {
         $command = new ServeCommand($this->basePath);
-        $input = new ArrayInput('serve', [], ['host' => '127.0.0.1', 'port' => '8080']);
+        $input = new ArrayInput('serve', [], ['host' => '127.0.0.1', 'port' => '8080', 'check' => true]);
         $output = new BufferedOutput();
 
         $exitCode = $command->execute($input, $output);
 
-        // Should succeed (prints command, doesn't spawn process)
+        // --check validates configuration and exits before spawning the server.
         self::assertSame(ExitCode::Success->value, $exitCode);
         self::assertStringContainsString('http://127.0.0.1:8080', $output->buffer . $output->errorBuffer);
     }
@@ -113,7 +114,7 @@ final class ServeCommandTest extends TestCase
     public function acceptsLocalhostWithoutPublicFlag(): void
     {
         $command = new ServeCommand($this->basePath);
-        $input = new ArrayInput('serve', [], ['host' => 'localhost', 'port' => '3000']);
+        $input = new ArrayInput('serve', [], ['host' => 'localhost', 'port' => '3000', 'check' => true]);
         $output = new BufferedOutput();
 
         $exitCode = $command->execute($input, $output);
@@ -126,7 +127,7 @@ final class ServeCommandTest extends TestCase
     public function defaultsToPort8000AndLocalhost(): void
     {
         $command = new ServeCommand($this->basePath);
-        $input = new ArrayInput('serve');
+        $input = new ArrayInput('serve', [], ['check' => true]);
         $output = new BufferedOutput();
 
         $exitCode = $command->execute($input, $output);
@@ -163,7 +164,7 @@ final class ServeCommandTest extends TestCase
     public function acceptsValidHosts(string $host): void
     {
         $command = new ServeCommand($this->basePath);
-        $options = ['host' => $host, 'port' => '8080'];
+        $options = ['host' => $host, 'port' => '8080', 'check' => true];
 
         // Loopback hosts don't need --public, others do
         $loopback = ['127.0.0.1', '::1', 'localhost'];

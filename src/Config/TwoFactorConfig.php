@@ -6,6 +6,7 @@ namespace Pulsar\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Typed configuration DTO for two-factor authentication settings.
@@ -30,32 +31,21 @@ final readonly class TwoFactorConfig
     /**
      * Build from a raw two-factor config array.
      *
-     * @param array{
-     *     enabled?: bool|int|string,
-     *     issuer?: string,
-     *     code_digits?: int,
-     *     code_period?: int,
-     *     verification_window?: int,
-     *     recovery_code_count?: int,
-     *     recovery_code_bytes?: int,
-     *     step_up_timeout_minutes?: int,
-     *     recovery_code_algorithm_version?: int,
-     *     allow_in_memory?: bool|int|string,
-     * } $data
+     * @param array<string, mixed> $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
             enabled: (bool) ($data['enabled'] ?? false),
-            issuer: $data['issuer'] ?? 'Pulsar',
-            codeDigits: $data['code_digits'] ?? 6,
-            codePeriod: $data['code_period'] ?? 30,
-            verificationWindow: $data['verification_window'] ?? 1,
-            recoveryCodeCount: $data['recovery_code_count'] ?? 8,
-            recoveryCodeBytes: $data['recovery_code_bytes'] ?? 8,
-            stepUpTimeoutMinutes: $data['step_up_timeout_minutes'] ?? 15,
-            recoveryCodeAlgorithmVersion: $data['recovery_code_algorithm_version'] ?? 2,
+            issuer: Coerce::string($data['issuer'] ?? null, 'Pulsar'),
+            codeDigits: Coerce::int($data['code_digits'] ?? null, 6),
+            codePeriod: Coerce::int($data['code_period'] ?? null, 30),
+            verificationWindow: Coerce::int($data['verification_window'] ?? null, 1),
+            recoveryCodeCount: Coerce::int($data['recovery_code_count'] ?? null, 8),
+            recoveryCodeBytes: Coerce::int($data['recovery_code_bytes'] ?? null, 8),
+            stepUpTimeoutMinutes: Coerce::int($data['step_up_timeout_minutes'] ?? null, 15),
+            recoveryCodeAlgorithmVersion: Coerce::int($data['recovery_code_algorithm_version'] ?? null, 2),
             allowInMemory: (bool) ($data['allow_in_memory'] ?? false),
         );
     }

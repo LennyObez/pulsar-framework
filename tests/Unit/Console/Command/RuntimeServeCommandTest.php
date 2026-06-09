@@ -15,7 +15,7 @@ use Pulsar\Console\Input\ArrayInput;
 use Pulsar\Console\Output\BufferedOutput;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Core\KernelInterface;
-use Pulsar\Runtime\RuntimeFactory;
+use Pulsar\Runtime\PersistentRuntimeFactoryInterface;
 use Pulsar\Runtime\RuntimeInterface;
 use Pulsar\Runtime\RuntimeResolver;
 
@@ -39,16 +39,16 @@ final class RuntimeServeCommandTest extends TestCase
         );
     }
 
-    private function createFactory(?RuntimeInterface $runtime = null): RuntimeFactory
+    private function createFactory(?RuntimeInterface $runtime = null): PersistentRuntimeFactoryInterface
     {
-        $container = $this->createStub(ContainerInterface::class);
         $kernelContainer = $this->createStub(ContainerInterface::class);
         $this->kernel->method('container')->willReturn($kernelContainer);
 
-        $factory = $this->createStub(RuntimeFactory::class);
+        $factory = $this->createStub(PersistentRuntimeFactoryInterface::class);
 
         if ($runtime !== null) {
             $factory->method('createForType')->willReturn($runtime);
+            $factory->method('create')->willReturn($runtime);
         }
 
         return $factory;
