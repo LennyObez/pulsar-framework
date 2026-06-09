@@ -7,6 +7,9 @@ namespace Pulsar\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Api\Resource\ComplexityLimits;
+use Pulsar\Support\Coerce;
+
+use function is_array;
 
 /**
  * Typed configuration DTO for API tooling settings.
@@ -45,15 +48,22 @@ final readonly class ApiConfig
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $pagination = $data['pagination'] ?? [];
+        $pagination = $data['pagination'] ?? null;
+        if (!is_array($pagination)) {
+            $pagination = [];
+        }
+        $complexityLimitsData = $data['complexity_limits'] ?? null;
+        if (!is_array($complexityLimitsData)) {
+            $complexityLimitsData = [];
+        }
 
         return new self(
-            defaultFormat: $data['default_format'] ?? 'json',
-            paginationType: $pagination['type'] ?? 'offset',
-            paginationDefaultSize: $pagination['default_size'] ?? 25,
-            paginationMaxSize: $pagination['max_size'] ?? 100,
-            versioningStrategy: $data['versioning_strategy'] ?? 'url',
-            complexityLimits: ComplexityLimits::fromArray($data['complexity_limits'] ?? []),
+            defaultFormat: Coerce::string($data['default_format'] ?? null, 'json'),
+            paginationType: Coerce::string($pagination['type'] ?? null, 'offset'),
+            paginationDefaultSize: Coerce::int($pagination['default_size'] ?? null, 25),
+            paginationMaxSize: Coerce::int($pagination['max_size'] ?? null, 100),
+            versioningStrategy: Coerce::string($data['versioning_strategy'] ?? null, 'url'),
+            complexityLimits: ComplexityLimits::fromArray($complexityLimitsData),
             entitySerializationBanEnabled: (bool) ($data['entity_serialization_ban'] ?? true),
         );
     }

@@ -6,7 +6,9 @@ namespace Pulsar\DataProtection\ConsentBanner;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
+use function is_array;
 use function is_string;
 
 /**
@@ -53,22 +55,27 @@ final readonly class ConsentBannerConfig
     public static function fromArray(array $data): self
     {
         $categories = [];
-
-        foreach ($data['categories'] ?? [] as $key => $catData) {
-            $categories[] = ConsentCategory::fromArray(
-                is_string($key) ? $key : (string) $key,
-                $catData,
-            );
+        $rawCats = $data['categories'] ?? null;
+        if (is_array($rawCats)) {
+            foreach ($rawCats as $key => $catData) {
+                if (!is_array($catData)) {
+                    continue;
+                }
+                $categories[] = ConsentCategory::fromArray(
+                    is_string($key) ? $key : (string) $key,
+                    $catData,
+                );
+            }
         }
 
         return new self(
-            enabled: $data['enabled'] ?? true,
-            position: $data['position'] ?? 'bottom',
-            privacyPolicyUrl: $data['privacy_policy_url'] ?? '/privacy',
+            enabled: Coerce::strictBool($data['enabled'] ?? null, true),
+            position: Coerce::string($data['position'] ?? null, 'bottom'),
+            privacyPolicyUrl: Coerce::string($data['privacy_policy_url'] ?? null, '/privacy'),
             categories: $categories === [] ? self::defaultCategories() : $categories,
-            granularOptIn: $data['granular_opt_in'] ?? true,
-            cookieName: $data['cookie_name'] ?? 'pulsar_consent',
-            cookieTtlDays: $data['cookie_ttl_days'] ?? 365,
+            granularOptIn: Coerce::strictBool($data['granular_opt_in'] ?? null, true),
+            cookieName: Coerce::string($data['cookie_name'] ?? null, 'pulsar_consent'),
+            cookieTtlDays: Coerce::int($data['cookie_ttl_days'] ?? null, 365),
         );
     }
 
