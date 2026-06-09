@@ -6,6 +6,7 @@ namespace Pulsar\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Typed configuration DTO for `config/repl.php`.
@@ -45,8 +46,8 @@ final readonly class ReplConfig
             enabled: $enabled,
             safeMode: (bool) ($data['safe_mode'] ?? true),
             audit: (bool) ($data['audit'] ?? false),
-            historyFile: $data['history_file'] ?? '.pulsar_repl_history',
-            startupCommands: $data['startup_commands'] ?? [],
+            historyFile: Coerce::string($data['history_file'] ?? null, '.pulsar_repl_history'),
+            startupCommands: Coerce::listOfString($data['startup_commands'] ?? null),
         );
     }
 }

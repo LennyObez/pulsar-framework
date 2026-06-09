@@ -6,6 +6,7 @@ namespace Pulsar\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Typed configuration DTO for audit logging settings.
@@ -39,10 +40,12 @@ final readonly class AuditConfig
     #[NoDiscard]
     public static function fromArray(array $data, Environment $environment): self
     {
+        $logPathEnv = $environment->get('AUDIT_LOG_PATH');
+
         return new self(
             enabled: (bool) ($data['enabled'] ?? true),
-            logPath: $environment->get('AUDIT_LOG_PATH') ?? $data['log_path'] ?? 'var/logs/audit.jsonl',
-            events: $data['events'] ?? [],
+            logPath: $logPathEnv ?? Coerce::string($data['log_path'] ?? null, 'var/logs/audit.jsonl'),
+            events: Coerce::listOfString($data['events'] ?? null),
         );
     }
 }

@@ -6,6 +6,7 @@ namespace Pulsar\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Per-disk storage configuration.
@@ -27,29 +28,20 @@ final readonly class DiskConfig
     ) {}
 
     /**
-     * @param array{
-     *     driver?: string,
-     *     root?: string,
-     *     visibility?: string,
-     *     region?: string,
-     *     bucket?: string,
-     *     prefix?: string,
-     *     endpoint?: string|null,
-     *     use_path_style?: bool|int|string,
-     * } $data Raw array for a single disk entry
+     * @param array<string, mixed> $data Raw array for a single disk entry
      */
     #[NoDiscard]
     public static function fromArray(string $name, array $data): self
     {
         return new self(
             name: $name,
-            driver: StorageDriver::from($data['driver'] ?? 'local'),
-            root: $data['root'] ?? '',
-            visibility: $data['visibility'] ?? 'private',
-            region: $data['region'] ?? '',
-            bucket: $data['bucket'] ?? '',
-            prefix: $data['prefix'] ?? '',
-            endpoint: $data['endpoint'] ?? null,
+            driver: StorageDriver::from(Coerce::string($data['driver'] ?? null, 'local')),
+            root: Coerce::string($data['root'] ?? null),
+            visibility: Coerce::string($data['visibility'] ?? null, 'private'),
+            region: Coerce::string($data['region'] ?? null),
+            bucket: Coerce::string($data['bucket'] ?? null),
+            prefix: Coerce::string($data['prefix'] ?? null),
+            endpoint: Coerce::nullableString($data['endpoint'] ?? null),
             usePathStyle: (bool) ($data['use_path_style'] ?? false),
         );
     }
