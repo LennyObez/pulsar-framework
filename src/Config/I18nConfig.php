@@ -7,8 +7,7 @@ namespace Pulsar\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\I18n\Locale\LocaleUrlStrategy;
-
-use function is_string;
+use Pulsar\Support\Coerce;
 
 /**
  * Typed configuration DTO for `config/i18n.php`.
@@ -55,14 +54,15 @@ final readonly class I18nConfig
     #[NoDiscard]
     public static function fromArray(array $data, Environment $environment): self
     {
-        $defaultLocale = $environment->get('APP_LOCALE') ?? $data['default_locale'] ?? 'en';
+        $localeEnv = $environment->get('APP_LOCALE');
+        $defaultLocale = $localeEnv ?? Coerce::string($data['default_locale'] ?? null, 'en');
 
-        $supportedLocales = self::filterStringList($data['supported_locales'] ?? ['en']);
+        $supportedLocales = Coerce::listOfString($data['supported_locales'] ?? null, ['en']);
         if ($supportedLocales === []) {
             $supportedLocales = ['en'];
         }
 
-        $fallbackLocales = self::filterStringList($data['fallback_locales'] ?? ['en']);
+        $fallbackLocales = Coerce::listOfString($data['fallback_locales'] ?? null, ['en']);
         if ($fallbackLocales === []) {
             $fallbackLocales = ['en'];
         }
@@ -72,39 +72,20 @@ final readonly class I18nConfig
             ? self::parseBool($regulatedEnv)
             : (bool) ($data['regulated'] ?? false);
 
-        $urlStrategy = LocaleUrlStrategy::tryFrom($data['url_strategy'] ?? 'none') ?? LocaleUrlStrategy::None;
+        $urlStrategy = LocaleUrlStrategy::tryFrom(Coerce::string($data['url_strategy'] ?? null, 'none')) ?? LocaleUrlStrategy::None;
 
         return new self(
             defaultLocale: $defaultLocale,
             supportedLocales: $supportedLocales,
             fallbackLocales: $fallbackLocales,
-            catalogPath: $data['catalog_path'] ?? null,
+            catalogPath: Coerce::nullableString($data['catalog_path'] ?? null),
             regulated: $regulated,
-            maxSupportedLocales: $data['max_supported_locales'] ?? 50,
+            maxSupportedLocales: Coerce::int($data['max_supported_locales'] ?? null, 50),
             strictMode: (bool) ($data['strict_mode'] ?? false),
             urlStrategy: $urlStrategy,
             defaultLocaleInUrl: (bool) ($data['default_locale_in_url'] ?? false),
             canonicalRedirect: (bool) ($data['canonical_redirect'] ?? true),
         );
-    }
-
-    /**
-     * Filter an array down to string values only, re-indexed as a list.
-     *
-     * @param list<string> $items
-     * @return list<string>
-     */
-    private static function filterStringList(array $items): array
-    {
-        $strings = [];
-
-        foreach ($items as $item) {
-            if (is_string($item)) {
-                $strings[] = $item;
-            }
-        }
-
-        return $strings;
     }
 
     private static function parseBool(string $value): bool

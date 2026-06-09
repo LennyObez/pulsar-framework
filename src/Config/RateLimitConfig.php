@@ -6,6 +6,7 @@ namespace Pulsar\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Typed configuration DTO for rate limiting settings.
@@ -25,19 +26,15 @@ final readonly class RateLimitConfig
     /**
      * Build from the raw rate limit config array.
      *
-     * @param array{
-     *     enabled?: bool|int|string,
-     *     default_limit?: int,
-     *     default_window?: int,
-     * } $data Raw `rate_limiting` sub-array from config/security.php
+     * @param array<string, mixed> $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
             enabled: (bool) ($data['enabled'] ?? true),
-            defaultLimit: $data['default_limit'] ?? 60,
-            defaultWindow: $data['default_window'] ?? 60,
+            defaultLimit: Coerce::int($data['default_limit'] ?? null, 60),
+            defaultWindow: Coerce::int($data['default_window'] ?? null, 60),
         );
     }
 }
