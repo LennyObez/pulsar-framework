@@ -19,6 +19,9 @@ use Random\Randomizer;
 use function array_key_exists;
 use function bin2hex;
 use function is_array;
+use function is_bool;
+use function is_int;
+use function is_numeric;
 use function is_string;
 use function json_decode;
 use function json_encode;
@@ -189,6 +192,58 @@ final class SessionManager implements SessionInterface
         $this->ensureStarted();
 
         return $this->data[$key] ?? $default;
+    }
+
+    #[Override]
+    #[NoDiscard]
+    public function getString(string $key, string $default = ''): string
+    {
+        $this->ensureStarted();
+        /** @var mixed $value */
+        $value = $this->data[$key] ?? null;
+
+        return is_string($value) ? $value : $default;
+    }
+
+    #[Override]
+    #[NoDiscard]
+    public function getNullableString(string $key): ?string
+    {
+        $this->ensureStarted();
+        /** @var mixed $value */
+        $value = $this->data[$key] ?? null;
+
+        return is_string($value) ? $value : null;
+    }
+
+    #[Override]
+    #[NoDiscard]
+    public function getInt(string $key, int $default = 0): int
+    {
+        $this->ensureStarted();
+        /** @var mixed $value */
+        $value = $this->data[$key] ?? null;
+
+        if (is_int($value)) {
+            return $value;
+        }
+
+        if (is_string($value) && is_numeric($value)) {
+            return (int) $value;
+        }
+
+        return $default;
+    }
+
+    #[Override]
+    #[NoDiscard]
+    public function getBool(string $key, bool $default = false): bool
+    {
+        $this->ensureStarted();
+        /** @var mixed $value */
+        $value = $this->data[$key] ?? null;
+
+        return is_bool($value) ? $value : $default;
     }
 
     #[Override]
