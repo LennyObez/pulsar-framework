@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Cms\AI;
 
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Immutable DTO representing a response from an LLM provider.
@@ -24,20 +25,15 @@ final readonly class LlmResponse
     ) {}
 
     /**
-     * @param array{
-     *     content?: string,
-     *     input_tokens?: int,
-     *     output_tokens?: int,
-     *     finish_reason?: string,
-     * } $data
+     * @param array<string, mixed> $data
      */
     public static function fromArray(array $data): self
     {
         return new self(
-            content: $data['content'] ?? '',
-            inputTokens: $data['input_tokens'] ?? 0,
-            outputTokens: $data['output_tokens'] ?? 0,
-            finishReason: $data['finish_reason'] ?? 'stop',
+            content: Coerce::string($data['content'] ?? null),
+            inputTokens: Coerce::int($data['input_tokens'] ?? null, 0),
+            outputTokens: Coerce::int($data['output_tokens'] ?? null, 0),
+            finishReason: Coerce::string($data['finish_reason'] ?? null, 'stop'),
         );
     }
 }

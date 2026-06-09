@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Cms\Commerce;
 
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * A single tax rate rule mapping categories and countries to a rate.
@@ -27,20 +28,15 @@ final readonly class TaxRateConfig
     ) {}
 
     /**
-     * @param array{
-     *     category?: string,
-     *     rate?: float|int,
-     *     label?: string,
-     *     countryCodes?: list<string>,
-     * } $data
+     * @param array<string, mixed> $data
      */
     public static function fromArray(array $data): self
     {
         return new self(
-            category: $data['category'] ?? '',
-            rate: (float) ($data['rate'] ?? 0.0),
-            label: $data['label'] ?? '',
-            countryCodes: $data['countryCodes'] ?? [],
+            category: Coerce::string($data['category'] ?? null),
+            rate: Coerce::float($data['rate'] ?? null, 0.0),
+            label: Coerce::string($data['label'] ?? null),
+            countryCodes: Coerce::listOfString($data['countryCodes'] ?? null),
         );
     }
 }

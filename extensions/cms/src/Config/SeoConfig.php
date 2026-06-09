@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Cms\Config;
 
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
+
+use function is_array;
 
 /**
  * SEO and link health configuration.
@@ -54,16 +57,23 @@ final readonly class SeoConfig
      */
     public static function fromArray(array $data): self
     {
+        $rawChangefreq = $data['sitemap_changefreq'] ?? null;
+        $rawPriority = $data['sitemap_priority'] ?? null;
+
         return new self(
-            defaultRobots: $data['default_robots'] ?? 'index, follow',
-            titleSuffix: $data['title_suffix'] ?? '',
-            sitemapChangefreq: $data['sitemap_changefreq'] ?? ['article' => 'weekly', 'page' => 'monthly'],
-            sitemapPriority: $data['sitemap_priority'] ?? ['page' => 0.8, 'article' => 0.6],
-            enableStructuredData: $data['enable_structured_data'] ?? true,
-            enableMediaSitemap: $data['enable_media_sitemap'] ?? true,
-            linkHealthCheckSchedule: $data['link_health_check_schedule'] ?? '0 3 * * 0',
-            googleSiteVerification: $data['google_site_verification'] ?? null,
-            bingSiteVerification: $data['bing_site_verification'] ?? null,
+            defaultRobots: Coerce::string($data['default_robots'] ?? null, 'index, follow'),
+            titleSuffix: Coerce::string($data['title_suffix'] ?? null),
+            sitemapChangefreq: is_array($rawChangefreq)
+                ? $rawChangefreq
+                : ['article' => 'weekly', 'page' => 'monthly'],
+            sitemapPriority: is_array($rawPriority)
+                ? $rawPriority
+                : ['page' => 0.8, 'article' => 0.6],
+            enableStructuredData: Coerce::strictBool($data['enable_structured_data'] ?? null, true),
+            enableMediaSitemap: Coerce::strictBool($data['enable_media_sitemap'] ?? null, true),
+            linkHealthCheckSchedule: Coerce::string($data['link_health_check_schedule'] ?? null, '0 3 * * 0'),
+            googleSiteVerification: Coerce::nullableString($data['google_site_verification'] ?? null),
+            bingSiteVerification: Coerce::nullableString($data['bing_site_verification'] ?? null),
         );
     }
 }
