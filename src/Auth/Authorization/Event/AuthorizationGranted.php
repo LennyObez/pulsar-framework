@@ -9,10 +9,12 @@ use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Event\Attribute\RequiresEnvelope;
 use Pulsar\Event\EnvelopeRequiredEvent;
+use Pulsar\Support\Coerce;
 use Random\Engine\Secure;
 use Random\Randomizer;
 
 use function bin2hex;
+use function is_string;
 
 /**
  * Dispatched when an authorization check grants access.
@@ -55,15 +57,7 @@ final readonly class AuthorizationGranted implements EnvelopeRequiredEvent
     }
 
     /**
-     * @param array{
-     *     identity_id?: string,
-     *     permission?: string,
-     *     resource?: string|null,
-     *     grant_reason?: string,
-     *     correlation_id?: string,
-     *     nonce?: string,
-     *     occurred_at?: string,
-     * } $data
+     * @param array<string, mixed> $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
@@ -71,13 +65,13 @@ final readonly class AuthorizationGranted implements EnvelopeRequiredEvent
         $occurredAt = $data['occurred_at'] ?? null;
 
         return new self(
-            identityId: $data['identity_id'] ?? '',
-            permission: $data['permission'] ?? '',
-            resource: $data['resource'] ?? null,
-            grantReason: $data['grant_reason'] ?? '',
-            correlationId: $data['correlation_id'] ?? '',
-            nonce: $data['nonce'] ?? '',
-            occurredAt: $occurredAt !== null ? new DateTimeImmutable($occurredAt) : new DateTimeImmutable(),
+            identityId: Coerce::string($data['identity_id'] ?? null),
+            permission: Coerce::string($data['permission'] ?? null),
+            resource: Coerce::nullableString($data['resource'] ?? null),
+            grantReason: Coerce::string($data['grant_reason'] ?? null),
+            correlationId: Coerce::string($data['correlation_id'] ?? null),
+            nonce: Coerce::string($data['nonce'] ?? null),
+            occurredAt: is_string($occurredAt) ? new DateTimeImmutable($occurredAt) : new DateTimeImmutable(),
         );
     }
 
