@@ -6,6 +6,7 @@ namespace Pulsar\Extension\Form\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Form renderer theming configuration.
@@ -23,23 +24,17 @@ final readonly class RendererConfig
     ) {}
 
     /**
-     * @param array{
-     *     theme?: string,
-     *     error_class?: string,
-     *     label_class?: string,
-     *     input_class?: string,
-     *     error_summary_class?: string,
-     * } $data
+     * @param array<string, mixed> $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            theme: $data['theme'] ?? 'default',
-            errorClass: $data['error_class'] ?? 'form-error',
-            labelClass: $data['label_class'] ?? 'form-label',
-            inputClass: $data['input_class'] ?? 'form-input',
-            errorSummaryClass: $data['error_summary_class'] ?? 'form-error-summary',
+            theme: Coerce::string($data['theme'] ?? null, 'default'),
+            errorClass: Coerce::string($data['error_class'] ?? null, 'form-error'),
+            labelClass: Coerce::string($data['label_class'] ?? null, 'form-label'),
+            inputClass: Coerce::string($data['input_class'] ?? null, 'form-input'),
+            errorSummaryClass: Coerce::string($data['error_summary_class'] ?? null, 'form-error-summary'),
         );
     }
 }
