@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Form\Wizard;
 
 use Pulsar\Api\Internal;
+use Pulsar\Support\Coerce;
+
+use function is_array;
 
 /**
  * Encrypted wizard state holding step data and anti-replay counter.
@@ -38,22 +41,21 @@ final readonly class WizardState
     }
 
     /**
-     * @param array{
-     *     wizard_id?: string,
-     *     current_step?: int,
-     *     step_counter?: int,
-     *     created_at?: int,
-     *     step_data?: array<int, array<string, mixed>>,
-     * } $data
+     * @param array<string, mixed> $data
      */
     public static function fromArray(array $data): self
     {
+        $stepData = $data['step_data'] ?? null;
+        if (!is_array($stepData)) {
+            $stepData = [];
+        }
+
         return new self(
-            wizardId: $data['wizard_id'] ?? '',
-            currentStep: $data['current_step'] ?? 0,
-            stepCounter: $data['step_counter'] ?? 0,
-            createdAt: $data['created_at'] ?? 0,
-            stepData: $data['step_data'] ?? [],
+            wizardId: Coerce::string($data['wizard_id'] ?? null),
+            currentStep: Coerce::int($data['current_step'] ?? null, 0),
+            stepCounter: Coerce::int($data['step_counter'] ?? null, 0),
+            createdAt: Coerce::int($data['created_at'] ?? null, 0),
+            stepData: $stepData,
         );
     }
 

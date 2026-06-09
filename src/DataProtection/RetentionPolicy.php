@@ -6,6 +6,7 @@ namespace Pulsar\DataProtection;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * A single data retention policy entry.
@@ -21,19 +22,15 @@ final readonly class RetentionPolicy
     ) {}
 
     /**
-     * @param array{
-     *     category?: string,
-     *     retention_days?: int,
-     *     legal_basis?: string,
-     * } $data
+     * @param array<string, mixed> $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            category: $data['category'] ?? '',
-            retentionDays: $data['retention_days'] ?? 0,
-            legalBasis: $data['legal_basis'] ?? '',
+            category: Coerce::string($data['category'] ?? null),
+            retentionDays: Coerce::int($data['retention_days'] ?? null, 0),
+            legalBasis: Coerce::string($data['legal_basis'] ?? null),
         );
     }
 }

@@ -6,6 +6,9 @@ namespace Pulsar\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
+
+use function is_array;
 
 /**
  * Typed configuration DTO for `config/mail.php`.
@@ -47,32 +50,39 @@ final readonly class MailConfig
     {
         $enabled = $environment->get('MAIL_ENABLED') !== null
             ? $environment->get('MAIL_ENABLED') === 'true'
-            : (bool) ($data['enabled'] ?? false);
+            : Coerce::strictBool($data['enabled'] ?? null);
 
-        $driverValue = $environment->get('MAIL_DRIVER') ?? $data['default_driver'] ?? 'smtp';
+        $driverEnv = $environment->get('MAIL_DRIVER');
+        $driverValue = $driverEnv ?? Coerce::string($data['default_driver'] ?? null, 'smtp');
         $defaultDriver = MailDriverType::tryFrom($driverValue) ?? MailDriverType::Smtp;
 
-        $encryptionValue = $environment->get('MAIL_ENCRYPTION_POLICY') ?? $data['encryption_policy'] ?? 'none';
+        $encryptionEnv = $environment->get('MAIL_ENCRYPTION_POLICY');
+        $encryptionValue = $encryptionEnv ?? Coerce::string($data['encryption_policy'] ?? null, 'none');
         $encryptionPolicy = MailEncryptionPolicy::tryFrom($encryptionValue) ?? MailEncryptionPolicy::None;
 
         $hipaaMode = $environment->get('MAIL_HIPAA_MODE') !== null
             ? $environment->get('MAIL_HIPAA_MODE') === 'true'
-            : (bool) ($data['hipaa_mode'] ?? false);
+            : Coerce::strictBool($data['hipaa_mode'] ?? null);
 
         $auditHashEnabled = $environment->get('MAIL_AUDIT_HASH') !== null
             ? $environment->get('MAIL_AUDIT_HASH') === 'true'
-            : (bool) ($data['audit_hash_enabled'] ?? false);
+            : Coerce::strictBool($data['audit_hash_enabled'] ?? null);
+
+        $fromAddressEnv = $environment->get('MAIL_FROM_ADDRESS');
+        $fromNameEnv = $environment->get('MAIL_FROM_NAME');
+        $replyToEnv = $environment->get('MAIL_REPLY_TO');
+        $driverOptions = $data['driver_options'] ?? null;
 
         return new self(
             enabled: $enabled,
             defaultDriver: $defaultDriver,
-            defaultFromAddress: $environment->get('MAIL_FROM_ADDRESS') ?? $data['default_from_address'] ?? '',
-            defaultFromName: $environment->get('MAIL_FROM_NAME') ?? $data['default_from_name'] ?? '',
-            defaultReplyTo: $environment->get('MAIL_REPLY_TO') ?? $data['default_reply_to'] ?? '',
+            defaultFromAddress: $fromAddressEnv ?? Coerce::string($data['default_from_address'] ?? null),
+            defaultFromName: $fromNameEnv ?? Coerce::string($data['default_from_name'] ?? null),
+            defaultReplyTo: $replyToEnv ?? Coerce::string($data['default_reply_to'] ?? null),
             encryptionPolicy: $encryptionPolicy,
             hipaaMode: $hipaaMode,
             auditHashEnabled: $auditHashEnabled,
-            driverOptions: $data['driver_options'] ?? [],
+            driverOptions: is_array($driverOptions) ? $driverOptions : [],
         );
     }
 }

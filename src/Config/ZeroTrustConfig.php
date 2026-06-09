@@ -8,12 +8,12 @@ use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Security\ZeroTrust\Privacy\SignalRetentionPolicy;
 use Pulsar\Security\ZeroTrust\StepUp\StepUpConfig;
+use Pulsar\Support\Coerce;
 
 use function array_filter;
 use function array_map;
 use function array_values;
 use function is_array;
-use function is_string;
 
 /**
  * Typed configuration DTO for the zero-trust module.
@@ -62,23 +62,28 @@ final readonly class ZeroTrustConfig
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var array<string, mixed> $stepUpData */
-        $stepUpData = $data['step_up'] ?? [];
+        $stepUpData = $data['step_up'] ?? null;
+        if (!is_array($stepUpData)) {
+            $stepUpData = [];
+        }
 
-        $providers = array_values(array_filter($data['signal_providers'] ?? [], is_string(...)));
+        $rawRetention = $data['retention_policies'] ?? null;
+        $retentionPolicies = is_array($rawRetention)
+            ? array_values(array_filter($rawRetention, is_array(...)))
+            : [];
 
         return new self(
-            enabled: $data['enabled'] ?? false,
-            defaultMinConfidence: (float) ($data['default_min_confidence'] ?? 0.7),
-            continuousVerificationIntervalSeconds: $data['continuous_verification_interval_seconds'] ?? 300,
-            deviceIdentityRequired: $data['device_identity_required'] ?? false,
+            enabled: Coerce::strictBool($data['enabled'] ?? null),
+            defaultMinConfidence: Coerce::float($data['default_min_confidence'] ?? null, 0.7),
+            continuousVerificationIntervalSeconds: Coerce::int($data['continuous_verification_interval_seconds'] ?? null, 300),
+            deviceIdentityRequired: Coerce::strictBool($data['device_identity_required'] ?? null),
             stepUp: StepUpConfig::fromArray($stepUpData),
             retentionPolicies: array_map(
                 static fn(array $item): SignalRetentionPolicy => SignalRetentionPolicy::fromArray($item),
-                array_values(array_filter($data['retention_policies'] ?? [], is_array(...))),
+                $retentionPolicies,
             ),
-            signalProviders: $providers,
-            trustScoreThreshold: (float) ($data['trust_score_threshold'] ?? 0.6),
+            signalProviders: Coerce::listOfString($data['signal_providers'] ?? null),
+            trustScoreThreshold: Coerce::float($data['trust_score_threshold'] ?? null, 0.6),
         );
     }
 }

@@ -6,6 +6,7 @@ namespace Pulsar\DataProtection;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Purge subsystem configuration.
@@ -21,19 +22,15 @@ final readonly class PurgeConfig
     ) {}
 
     /**
-     * @param array{
-     *     batch_size?: int,
-     *     audit_purge_operations?: bool,
-     *     dry_run?: bool,
-     * } $data
+     * @param array<string, mixed> $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            batchSize: $data['batch_size'] ?? 1000,
-            auditPurgeOperations: $data['audit_purge_operations'] ?? true,
-            dryRun: $data['dry_run'] ?? false,
+            batchSize: Coerce::int($data['batch_size'] ?? null, 1000),
+            auditPurgeOperations: Coerce::strictBool($data['audit_purge_operations'] ?? null, true),
+            dryRun: Coerce::strictBool($data['dry_run'] ?? null),
         );
     }
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Cms\Media;
 
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Represents a generated image variant with its physical dimensions,
@@ -26,22 +27,16 @@ final readonly class ImageVariant
     ) {}
 
     /**
-     * @param array{
-     *     path?: string,
-     *     width?: int,
-     *     height?: int,
-     *     format?: string,
-     *     size_bytes?: int,
-     * } $data
+     * @param array<string, mixed> $data
      */
     public static function fromArray(array $data): self
     {
         return new self(
-            path: $data['path'] ?? '',
-            width: $data['width'] ?? 0,
-            height: $data['height'] ?? 0,
-            format: $data['format'] ?? '',
-            sizeBytes: $data['size_bytes'] ?? 0,
+            path: Coerce::string($data['path'] ?? null),
+            width: Coerce::int($data['width'] ?? null, 0),
+            height: Coerce::int($data['height'] ?? null, 0),
+            format: Coerce::string($data['format'] ?? null),
+            sizeBytes: Coerce::int($data['size_bytes'] ?? null, 0),
         );
     }
 }
