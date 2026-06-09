@@ -60,7 +60,6 @@ final class Html5Parser
     public static function extractText(string $html, array $excludeTags = ['script', 'style', 'noscript', 'template']): string
     {
         $doc = self::parse($html);
-        /** @var mixed $body */
         $body = $doc->body;
 
         if (!$body instanceof Node) {
@@ -84,8 +83,6 @@ final class Html5Parser
         $nodeList = $doc->querySelectorAll($selector);
 
         $elements = [];
-
-        /** @var mixed $node */
         foreach ($nodeList as $node) {
             if ($node instanceof \Dom\Element) {
                 $elements[] = $node;
@@ -151,7 +148,6 @@ final class Html5Parser
         ],
     ): string {
         $doc = self::parse($html);
-        /** @var mixed $body */
         $body = $doc->body;
 
         if (!$body instanceof Node) {
@@ -183,8 +179,6 @@ final class Html5Parser
 
         // Check for images without alt text
         $images = $doc->querySelectorAll('img');
-
-        /** @var mixed $img */
         foreach ($images as $img) {
             if ($img instanceof \Dom\Element && !$img->hasAttribute('alt')) {
                 $src = $img->getAttribute('src') ?? '(unknown)';
@@ -194,8 +188,6 @@ final class Html5Parser
 
         // Check for links without href
         $links = $doc->querySelectorAll('a');
-
-        /** @var mixed $link */
         foreach ($links as $link) {
             if ($link instanceof \Dom\Element && !$link->hasAttribute('href')) {
                 $issues[] = 'Anchor element missing href attribute';
@@ -219,11 +211,8 @@ final class Html5Parser
 
         // Check for empty interactive elements
         $buttons = $doc->querySelectorAll('button');
-
-        /** @var mixed $btn */
         foreach ($buttons as $btn) {
             if ($btn instanceof \Dom\Element) {
-                /** @var mixed $rawText */
                 $rawText = $btn->textContent ?? '';
                 if (trim(is_string($rawText) ? $rawText : '') === ''
                     && !$btn->hasAttribute('aria-label')
@@ -244,10 +233,8 @@ final class Html5Parser
      */
     private static function collectTextNodes(Node $node, array $excludeTags, array &$parts): void
     {
-        /** @var mixed $child */
         foreach ($node->childNodes as $child) {
             if ($child instanceof \Dom\Text) {
-                /** @var mixed $rawText */
                 $rawText = $child->textContent ?? '';
                 $text = trim(is_string($rawText) ? $rawText : '');
 
@@ -255,7 +242,6 @@ final class Html5Parser
                     $parts[] = $text;
                 }
             } elseif ($child instanceof \Dom\Element) {
-                /** @var mixed $localName */
                 $localName = $child->localName;
                 if (!in_array(strtolower(is_string($localName) ? $localName : ''), $excludeTags, true)) {
                     self::collectTextNodes($child, $excludeTags, $parts);
@@ -273,11 +259,8 @@ final class Html5Parser
     private static function sanitizeNode(Node $node, array $allowedTags, array $allowedAttributes): void
     {
         $toRemove = [];
-
-        /** @var mixed $child */
         foreach ($node->childNodes as $child) {
             if ($child instanceof \Dom\Element) {
-                /** @var mixed $localName */
                 $localName = $child->localName;
                 $tagName = strtolower(is_string($localName) ? $localName : '');
 
@@ -309,14 +292,10 @@ final class Html5Parser
     {
         $hasDataWildcard = in_array('data-*', $allowedAttributes, true);
         $toRemove = [];
-
-        /** @var mixed $attr */
         foreach ($element->attributes as $attr) {
             if (!$attr instanceof \Dom\Attr) {
                 continue;
             }
-
-            /** @var mixed $attrName */
             $attrName = $attr->name;
             $attrNameStr = is_string($attrName) ? $attrName : '';
             $name = strtolower($attrNameStr);
@@ -340,7 +319,6 @@ final class Html5Parser
             }
 
             // Block javascript: URIs in href/src
-            /** @var mixed $attrValue */
             $attrValue = $attr->value;
             if (($name === 'href' || $name === 'src') && self::isDangerousUri(is_string($attrValue) ? $attrValue : '')) {
                 $toRemove[] = $attrNameStr;

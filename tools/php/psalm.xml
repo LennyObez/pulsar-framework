@@ -284,6 +284,13 @@
                 <!-- (C) DI container is type-generic at the boundary by design. -->
                 <file name="../../src/Container/Container.php"/>
                 <file name="../../src/Support/Arr.php"/>
+                <!-- (A) PHP 8.5 ext-dom Dom\NodeList iteration: Psalm narrows
+                     iteration values to mixed (DOMNodeList::current() returns
+                     DOMNode in stubs but Psalm doesn't recognise ext-dom 8.5
+                     replacements). PHPStan correctly types them. We previously
+                     used /** @var mixed */ to silence Psalm but PHPStan then
+                     rejected those annotations as wider than the native type. -->
+                <file name="../../src/Support/Html/Html5Parser.php"/>
             </errorLevel>
         </MixedAssignment>
         <MixedReturnStatement>
