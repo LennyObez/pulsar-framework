@@ -6,6 +6,7 @@ namespace Pulsar\DataProtection;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Consent tracking configuration.
@@ -24,17 +25,14 @@ final readonly class ConsentConfig
     ) {}
 
     /**
-     * @param array{
-     *     require_explicit?: bool,
-     *     purposes?: list<string>,
-     * } $data
+     * @param array<string, mixed> $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            requireExplicit: $data['require_explicit'] ?? true,
-            purposes: $data['purposes'] ?? [],
+            requireExplicit: Coerce::strictBool($data['require_explicit'] ?? null, true),
+            purposes: Coerce::listOfString($data['purposes'] ?? null),
         );
     }
 }

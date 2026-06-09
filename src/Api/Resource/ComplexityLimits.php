@@ -7,6 +7,7 @@ namespace Pulsar\Api\Resource;
 use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Api\Exception\ApiException;
+use Pulsar\Support\Coerce;
 
 use function count;
 
@@ -80,19 +81,15 @@ final readonly class ComplexityLimits
     /**
      * Build from a raw config array.
      *
-     * @param array{
-     *     max_fields?: int,
-     *     max_nesting_depth?: int,
-     *     max_includes?: int,
-     * } $data
+     * @param array<string, mixed> $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            maxFields: $data['max_fields'] ?? 50,
-            maxNestingDepth: $data['max_nesting_depth'] ?? 3,
-            maxIncludes: $data['max_includes'] ?? 10,
+            maxFields: Coerce::int($data['max_fields'] ?? null, 50),
+            maxNestingDepth: Coerce::int($data['max_nesting_depth'] ?? null, 3),
+            maxIncludes: Coerce::int($data['max_includes'] ?? null, 10),
         );
     }
 }

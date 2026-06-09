@@ -6,6 +6,7 @@ namespace Pulsar\DataProtection\ConsentBanner;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Represents a consent category in the cookie banner.
@@ -33,22 +34,17 @@ final readonly class ConsentCategory
     ) {}
 
     /**
-     * @param array{
-     *     label?: string,
-     *     description?: string,
-     *     required?: bool,
-     *     default_enabled?: bool,
-     * } $data
+     * @param array<string, mixed> $data
      */
     #[NoDiscard]
     public static function fromArray(string $key, array $data): self
     {
         return new self(
             key: $key,
-            label: $data['label'] ?? $key,
-            description: $data['description'] ?? '',
-            required: $data['required'] ?? false,
-            defaultEnabled: $data['default_enabled'] ?? false,
+            label: Coerce::string($data['label'] ?? null, $key),
+            description: Coerce::string($data['description'] ?? null),
+            required: Coerce::strictBool($data['required'] ?? null),
+            defaultEnabled: Coerce::strictBool($data['default_enabled'] ?? null),
         );
     }
 }
