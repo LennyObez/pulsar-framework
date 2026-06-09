@@ -6,7 +6,9 @@ namespace Pulsar\View;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
+use function is_array;
 use function is_string;
 
 /**
@@ -63,16 +65,16 @@ final readonly class ViewConfig
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $stepLimit = $data['sandbox_step_limit'] ?? 10_000;
-        $loopLimit = $data['sandbox_loop_limit'] ?? 1_000;
-        $outputLimit = $data['sandbox_output_size_limit'] ?? 1_048_576;
-        $wallClockInterval = $data['sandbox_wall_clock_check_interval'] ?? 500;
+        $stepLimit = Coerce::int($data['sandbox_step_limit'] ?? null, 10_000);
+        $loopLimit = Coerce::int($data['sandbox_loop_limit'] ?? null, 1_000);
+        $outputLimit = Coerce::int($data['sandbox_output_size_limit'] ?? null, 1_048_576);
+        $wallClockInterval = Coerce::int($data['sandbox_wall_clock_check_interval'] ?? null, 500);
 
         return new self(
-            templatePaths: self::filterStringList($data['template_paths'] ?? []),
-            cachePath: $data['cache_path'] ?? '',
+            templatePaths: self::filterStringList($data['template_paths'] ?? null),
+            cachePath: Coerce::string($data['cache_path'] ?? null),
             autoEscape: ($data['auto_escape'] ?? true) !== false,
-            activeTheme: $data['active_theme'] ?? 'default',
+            activeTheme: Coerce::string($data['active_theme'] ?? null, 'default'),
             phpDirectiveAllowed: ($data['php_directive_allowed'] ?? false) === true,
             sandboxMode: ($data['sandbox_mode'] ?? false) === true,
             sandboxStepLimit: $stepLimit > 0 ? $stepLimit : 10_000,
@@ -85,14 +87,15 @@ final readonly class ViewConfig
     /**
      * Filter an array down to non-empty string values, re-indexed as a list.
      *
-     * @param array<array-key, mixed> $items
      * @return list<string>
      */
-    private static function filterStringList(array $items): array
+    private static function filterStringList(mixed $items): array
     {
-        $strings = [];
+        if (!is_array($items)) {
+            return [];
+        }
 
-        /** @var mixed $item */
+        $strings = [];
         foreach ($items as $item) {
             if (is_string($item) && $item !== '') {
                 $strings[] = $item;
