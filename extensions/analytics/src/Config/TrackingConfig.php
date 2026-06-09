@@ -5,10 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Analytics\Config;
 
 use Pulsar\Api\Api;
-
-use function array_filter;
-use function array_values;
-use function is_string;
+use Pulsar\Support\Coerce;
 
 /**
  * Tracker script and endpoint configuration.
@@ -29,21 +26,14 @@ final readonly class TrackingConfig
     ) {}
 
     /**
-     * @param array{
-     *     tracker_endpoint?: string,
-     *     script_endpoint?: string,
-     *     extensions?: list<string>,
-     * } $data
+     * @param array<string, mixed> $data
      */
     public static function fromArray(array $data): self
     {
         return new self(
-            trackerEndpoint: $data['tracker_endpoint'] ?? '/plsr/api/event',
-            scriptEndpoint: $data['script_endpoint'] ?? '/plsr/js/tracker.js',
-            extensions: array_values(array_filter(
-                $data['extensions'] ?? [],
-                static fn(mixed $v): bool => is_string($v) && $v !== '',
-            )),
+            trackerEndpoint: Coerce::string($data['tracker_endpoint'] ?? null, '/plsr/api/event'),
+            scriptEndpoint: Coerce::string($data['script_endpoint'] ?? null, '/plsr/js/tracker.js'),
+            extensions: Coerce::listOfString($data['extensions'] ?? null),
         );
     }
 }
