@@ -6,6 +6,7 @@ namespace Pulsar\Extension\Form\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Wizard state machine configuration.
@@ -20,17 +21,14 @@ final readonly class WizardFormConfig
     ) {}
 
     /**
-     * @param array{
-     *     ttl?: int,
-     *     storage?: string,
-     * } $data
+     * @param array<string, mixed> $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            ttl: $data['ttl'] ?? 1800,
-            storage: $data['storage'] ?? 'server',
+            ttl: Coerce::int($data['ttl'] ?? null, 1800),
+            storage: Coerce::string($data['storage'] ?? null, 'server'),
         );
     }
 }

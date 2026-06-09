@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Forum\Config;
 
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Moderation thresholds configuration.
@@ -25,18 +26,14 @@ final readonly class ModerationConfig
     ) {}
 
     /**
-     * @param array{
-     *     auto_hide_threshold?: int,
-     *     notify_threshold?: int,
-     *     dismissed_report_retention_days?: int,
-     * } $data
+     * @param array<string, mixed> $data
      */
     public static function fromArray(array $data): self
     {
         return new self(
-            autoHideThreshold: $data['auto_hide_threshold'] ?? 5,
-            notifyThreshold: $data['notify_threshold'] ?? 3,
-            dismissedReportRetentionDays: $data['dismissed_report_retention_days'] ?? 90,
+            autoHideThreshold: Coerce::int($data['auto_hide_threshold'] ?? null, 5),
+            notifyThreshold: Coerce::int($data['notify_threshold'] ?? null, 3),
+            dismissedReportRetentionDays: Coerce::int($data['dismissed_report_retention_days'] ?? null, 90),
         );
     }
 }
