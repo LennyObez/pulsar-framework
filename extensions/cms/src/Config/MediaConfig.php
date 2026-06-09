@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Cms\Config;
 
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
+
+use function is_array;
 
 /**
  * Media upload and processing configuration.
@@ -83,17 +86,21 @@ final readonly class MediaConfig
      */
     public static function fromArray(array $data): self
     {
-        $rawVariants = $data['image_variants'] ?? [];
+        $rawVariants = $data['image_variants'] ?? null;
         $imageVariants = [];
 
-        foreach ($rawVariants as $v) {
-            $imageVariants[] = ImageVariantConfig::fromArray($v);
+        if (is_array($rawVariants)) {
+            foreach ($rawVariants as $v) {
+                if (is_array($v)) {
+                    $imageVariants[] = ImageVariantConfig::fromArray($v);
+                }
+            }
         }
 
         return new self(
-            disk: $data['disk'] ?? 'local',
-            maxUploadSize: $data['max_upload_size'] ?? 52_428_800,
-            allowedMimeTypes: self::toStringList($data['allowed_mime_types'] ?? null, [
+            disk: Coerce::string($data['disk'] ?? null, 'local'),
+            maxUploadSize: Coerce::int($data['max_upload_size'] ?? null, 52_428_800),
+            allowedMimeTypes: Coerce::listOfString($data['allowed_mime_types'] ?? null, [
                 'image/jpeg',
                 'image/png',
                 'image/webp',
@@ -102,31 +109,21 @@ final readonly class MediaConfig
                 'image/svg+xml',
                 'application/pdf',
             ]),
-            allowedExtensions: self::toStringList($data['allowed_extensions'] ?? null, [
+            allowedExtensions: Coerce::listOfString($data['allowed_extensions'] ?? null, [
                 'jpg', 'jpeg', 'png', 'webp', 'avif', 'gif', 'svg', 'pdf',
             ]),
-            maxImageWidth: $data['max_image_width'] ?? 16384,
-            maxImageHeight: $data['max_image_height'] ?? 16384,
-            maxPixelCount: $data['max_pixel_count'] ?? 100_000_000,
-            preserveExif: $data['preserve_exif'] ?? false,
-            jpegQuality: $data['jpeg_quality'] ?? 85,
-            webpQuality: $data['webp_quality'] ?? 80,
-            avifQuality: $data['avif_quality'] ?? 60,
-            avifEnabled: $data['avif_enabled'] ?? true,
-            storagePath: $data['storage_path'] ?? 'storage/cms/media',
+            maxImageWidth: Coerce::int($data['max_image_width'] ?? null, 16384),
+            maxImageHeight: Coerce::int($data['max_image_height'] ?? null, 16384),
+            maxPixelCount: Coerce::int($data['max_pixel_count'] ?? null, 100_000_000),
+            preserveExif: Coerce::strictBool($data['preserve_exif'] ?? null),
+            jpegQuality: Coerce::int($data['jpeg_quality'] ?? null, 85),
+            webpQuality: Coerce::int($data['webp_quality'] ?? null, 80),
+            avifQuality: Coerce::int($data['avif_quality'] ?? null, 60),
+            avifEnabled: Coerce::strictBool($data['avif_enabled'] ?? null, true),
+            storagePath: Coerce::string($data['storage_path'] ?? null, 'storage/cms/media'),
             imageVariants: $imageVariants,
-            progressiveJpeg: $data['progressive_jpeg'] ?? true,
-            preserveOriginal: $data['preserve_original'] ?? true,
+            progressiveJpeg: Coerce::strictBool($data['progressive_jpeg'] ?? null, true),
+            preserveOriginal: Coerce::strictBool($data['preserve_original'] ?? null, true),
         );
-    }
-
-    /**
-     * @param list<string>|null $raw
-     * @param list<string>      $default
-     * @return list<string>
-     */
-    private static function toStringList(?array $raw, array $default): array
-    {
-        return $raw ?? $default;
     }
 }

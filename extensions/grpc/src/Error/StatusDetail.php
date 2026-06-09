@@ -6,6 +6,9 @@ namespace Pulsar\Extension\Grpc\Error;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
+
+use function is_array;
 
 /**
  * Rich error details following the google.rpc.Status model.
@@ -31,19 +34,18 @@ final readonly class StatusDetail
     ) {}
 
     /**
-     * @param array{
-     *     code?: int,
-     *     message?: string,
-     *     details?: array<string, mixed>,
-     * } $data
+     * @param array<string, mixed> $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
+        $codeValue = Coerce::int($data['code'] ?? null, GrpcStatus::Unknown->value);
+        $details = $data['details'] ?? null;
+
         return new self(
-            code: GrpcStatus::tryFrom($data['code'] ?? GrpcStatus::Unknown->value) ?? GrpcStatus::Unknown,
-            message: $data['message'] ?? '',
-            details: $data['details'] ?? [],
+            code: GrpcStatus::tryFrom($codeValue) ?? GrpcStatus::Unknown,
+            message: Coerce::string($data['message'] ?? null),
+            details: is_array($details) ? $details : [],
         );
     }
 

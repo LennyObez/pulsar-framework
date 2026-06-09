@@ -6,6 +6,7 @@ namespace Pulsar\Extension\Form\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * File upload security configuration.
@@ -21,19 +22,15 @@ final readonly class UploadConfig
     ) {}
 
     /**
-     * @param array{
-     *     directory?: string,
-     *     max_size?: int,
-     *     regulated_preset?: bool,
-     * } $data
+     * @param array<string, mixed> $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            directory: $data['directory'] ?? 'storage/uploads',
-            maxSize: $data['max_size'] ?? 10_485_760,
-            regulatedPreset: $data['regulated_preset'] ?? false,
+            directory: Coerce::string($data['directory'] ?? null, 'storage/uploads'),
+            maxSize: Coerce::int($data['max_size'] ?? null, 10_485_760),
+            regulatedPreset: Coerce::strictBool($data['regulated_preset'] ?? null),
         );
     }
 }
