@@ -6,6 +6,10 @@ namespace Pulsar\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
+
+use function is_array;
+use function is_string;
 
 /**
  * Typed configuration DTO for `config/notification.php`.
@@ -51,26 +55,39 @@ final readonly class NotificationConfig
     {
         $enabled = $environment->get('NOTIFICATION_ENABLED') !== null
             ? $environment->get('NOTIFICATION_ENABLED') === 'true'
-            : ($data['enabled'] ?? false);
+            : Coerce::strictBool($data['enabled'] ?? null);
 
         $defaultChannels = [];
-        foreach ($data['default_channels'] ?? [] as $channel) {
-            $type = NotificationChannelType::tryFrom($channel);
-            if ($type !== null) {
-                $defaultChannels[] = $type;
+        $rawChannels = $data['default_channels'] ?? null;
+        if (is_array($rawChannels)) {
+            foreach ($rawChannels as $channel) {
+                if (!is_string($channel)) {
+                    continue;
+                }
+                $type = NotificationChannelType::tryFrom($channel);
+                if ($type !== null) {
+                    $defaultChannels[] = $type;
+                }
             }
         }
 
         $rawRateLimit = $environment->get('NOTIFICATION_RATE_LIMIT');
-        $rateLimitPerMinute = $rawRateLimit !== null ? (int) $rawRateLimit : ($data['rate_limit_per_minute'] ?? 60);
+        $rateLimitPerMinute = $rawRateLimit !== null
+            ? (int) $rawRateLimit
+            : Coerce::int($data['rate_limit_per_minute'] ?? null, 60);
 
         $regulated = $environment->get('NOTIFICATION_REGULATED') !== null
             ? $environment->get('NOTIFICATION_REGULATED') === 'true'
-            : ($data['regulated'] ?? false);
+            : Coerce::strictBool($data['regulated'] ?? null);
 
         $auditHashEnabled = $environment->get('NOTIFICATION_AUDIT_HASH') !== null
             ? $environment->get('NOTIFICATION_AUDIT_HASH') === 'true'
-            : ($data['audit_hash_enabled'] ?? false);
+            : Coerce::strictBool($data['audit_hash_enabled'] ?? null);
+
+        $unsubscribeEnv = $environment->get('NOTIFICATION_UNSUBSCRIBE_URL');
+        $fcmKeyEnv = $environment->get('NOTIFICATION_FCM_SERVER_KEY');
+        $fcmProjectEnv = $environment->get('NOTIFICATION_FCM_PROJECT_ID');
+        $fcmTokenEnv = $environment->get('NOTIFICATION_FCM_OAUTH_TOKEN');
 
         return new self(
             enabled: $enabled,
@@ -78,10 +95,10 @@ final readonly class NotificationConfig
             rateLimitPerMinute: $rateLimitPerMinute > 0 ? $rateLimitPerMinute : 60,
             regulated: $regulated,
             auditHashEnabled: $auditHashEnabled,
-            unsubscribeUrlPattern: $environment->get('NOTIFICATION_UNSUBSCRIBE_URL') ?? $data['unsubscribe_url_pattern'] ?? null,
-            fcmServerKey: $environment->get('NOTIFICATION_FCM_SERVER_KEY') ?? $data['fcm_server_key'] ?? null,
-            fcmProjectId: $environment->get('NOTIFICATION_FCM_PROJECT_ID') ?? $data['fcm_project_id'] ?? null,
-            fcmOAuthToken: $environment->get('NOTIFICATION_FCM_OAUTH_TOKEN') ?? $data['fcm_oauth_token'] ?? null,
+            unsubscribeUrlPattern: $unsubscribeEnv ?? Coerce::nullableString($data['unsubscribe_url_pattern'] ?? null),
+            fcmServerKey: $fcmKeyEnv ?? Coerce::nullableString($data['fcm_server_key'] ?? null),
+            fcmProjectId: $fcmProjectEnv ?? Coerce::nullableString($data['fcm_project_id'] ?? null),
+            fcmOAuthToken: $fcmTokenEnv ?? Coerce::nullableString($data['fcm_oauth_token'] ?? null),
         );
     }
 }

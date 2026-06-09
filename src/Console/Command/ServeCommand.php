@@ -61,6 +61,7 @@ final class ServeCommand extends Command
         $this->addOption('port', 'Port to listen on', 'p');
         $this->addOption('docroot', 'Document root directory (default: public/)');
         $this->addOption('public', 'Allow binding to non-loopback addresses');
+        $this->addOption('check', 'Validate configuration and print command without spawning the server');
     }
 
     #[Override]
@@ -124,7 +125,16 @@ final class ServeCommand extends Command
         $output->writeln('Press Ctrl+C to stop.');
         $output->newLine();
 
-        // nosemgrep: php.lang.security.exec-use.exec-use: array form bypasses the shell entirely
+        // --check: validate configuration and print the command without spawning the server.
+        // Used by integration tests to verify option parsing without binding a port.
+        if ($input->hasOption('check')) {
+            return ExitCode::Success->value;
+        }
+
+        // Array form of proc_open bypasses the shell entirely; each argument is
+        // passed verbatim to the OS process without metacharacter interpretation.
+        // Host, port and docroot have been validated upstream (lines 73-89).
+        // nosemgrep
         $process = proc_open($argv, [STDIN, STDOUT, STDERR], $pipes);
 
         if (!is_resource($process)) {

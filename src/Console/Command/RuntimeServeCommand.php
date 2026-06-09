@@ -13,8 +13,8 @@ use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 use Pulsar\Core\KernelInterface;
 use Pulsar\Observability\Metrics\MetricRegistry;
+use Pulsar\Runtime\PersistentRuntimeFactoryInterface;
 use Pulsar\Runtime\RuntimeCollectorInterface;
-use Pulsar\Runtime\RuntimeFactory;
 use Pulsar\Runtime\RuntimeResolver;
 use Pulsar\Runtime\RuntimeType;
 use Pulsar\Runtime\Upgrade\UpgradeContext;
@@ -33,7 +33,7 @@ final class RuntimeServeCommand extends Command
 {
     public function __construct(
         private readonly KernelInterface $kernel,
-        private readonly RuntimeFactory $runtimeFactory,
+        private readonly PersistentRuntimeFactoryInterface $runtimeFactory,
         private readonly RuntimeResolver $resolver,
         private readonly ?RuntimeConfig $runtimeConfig = null,
         private readonly ?LoggerInterface $logger = null,
