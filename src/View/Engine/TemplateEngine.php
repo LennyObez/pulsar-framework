@@ -30,9 +30,14 @@ use const EXTR_SKIP;
 #[Internal(reason: 'Engine implementation detail; use TemplateEngineInterface')]
 final readonly class TemplateEngine implements TemplateEngineInterface
 {
+    private ViewComposers $composers;
+
     public function __construct(
         private TemplateCompiler $compiler,
-    ) {}
+        ?ViewComposers $composers = null,
+    ) {
+        $this->composers = $composers ?? new ViewComposers();
+    }
 
     /**
      * Access the underlying compiler for directive registration and direct compilation.
@@ -44,6 +49,12 @@ final readonly class TemplateEngine implements TemplateEngineInterface
 
     public function render(string $template, array $data = []): string
     {
+        // Merge shared data + matching view composers beneath the caller's
+        // explicit data (explicit wins). Applied to every render, including
+        // nested partials and framework-internal renders (error pages). The
+        // resolver short-circuits to $data when nothing is shared/registered.
+        $data = $this->composers->resolve($template, $data);
+
         // Check if $__env was supplied externally (e.g. by @extends parent rendering)
         $isTopLevel = !array_key_exists('__env', $data);
 
@@ -88,6 +99,25 @@ final readonly class TemplateEngine implements TemplateEngineInterface
     public function exists(string $template): bool
     {
         return $this->compiler->exists($template);
+    }
+
+    public function share(string|array $key, mixed $value = null): void
+    {
+        $this->composers->share($key, $value);
+    }
+
+    public function composer(string|array $patterns, callable $composer): void
+    {
+        $this->composers->composer($patterns, $composer);
+    }
+
+    /**
+     * Access the shared-data / composer store (e.g. so an internal renderer can
+     * share the same request-scoped state). Prefer {@see share()} / {@see composer()}.
+     */
+    public function composers(): ViewComposers
+    {
+        return $this->composers;
     }
 
     /**

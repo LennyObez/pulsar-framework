@@ -218,6 +218,12 @@ final class TemplateEngineSpy implements TemplateEngineInterface
     /** @var array<string, mixed> */
     public array $lastData = [];
 
+    /** @var list<array{string|array<string, mixed>, mixed}> */
+    public array $sharedCalls = [];
+
+    /** @var list<array{string|list<string>, callable}> */
+    public array $composerCalls = [];
+
     public function render(string $template, array $data = []): string
     {
         $this->lastTemplate = $template;
@@ -234,5 +240,15 @@ final class TemplateEngineSpy implements TemplateEngineInterface
     public function exists(string $template): bool
     {
         return true;
+    }
+
+    public function share(string|array $key, mixed $value = null): void
+    {
+        $this->sharedCalls[] = [$key, $value];
+    }
+
+    public function composer(string|array $patterns, callable $composer): void
+    {
+        $this->composerCalls[] = [$patterns, $composer];
     }
 }

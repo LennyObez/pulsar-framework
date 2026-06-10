@@ -10,6 +10,7 @@ use Pulsar\Container\ContainerInterface;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Routing\Router;
+use Pulsar\Runtime\RequestResetRegistry;
 use Pulsar\Security\Escaper\ContextEscaper;
 use Pulsar\View\Command\PlaygroundServeCommand;
 use Pulsar\View\Command\ViewCompileCommand;
@@ -19,6 +20,7 @@ use Pulsar\View\Engine\TemplateCompiler;
 use Pulsar\View\Engine\TemplateEngine;
 use Pulsar\View\Engine\TemplateEngineInterface;
 use Pulsar\View\Engine\TemplateInheritance;
+use Pulsar\View\Engine\ViewComposers;
 use Pulsar\View\Escaping\AttributeEscaper;
 use Pulsar\View\Escaping\CssEscaper;
 use Pulsar\View\Escaping\EscaperInterface;
@@ -74,8 +76,21 @@ final readonly class ViewWiring implements ServiceWiringInterface
         $inheritance = new TemplateInheritance();
         $container->instance(TemplateInheritance::class, $inheritance);
 
+        // Shared view data + view composers (request-scoped; applied to every
+        // render, including framework-internal renders such as error pages).
+        $composers = new ViewComposers();
+        $container->instance(ViewComposers::class, $composers);
+
+        // Reset the per-request shared/composer state between requests. The
+        // registry is built by RuntimeWiring, which runs before ViewWiring.
+        if ($container->has(RequestResetRegistry::class)) {
+            /** @var RequestResetRegistry $resetRegistry */
+            $resetRegistry = $container->get(RequestResetRegistry::class);
+            $resetRegistry->registerResettable(ViewComposers::class);
+        }
+
         // Template engine (public API)
-        $engine = new TemplateEngine($compiler);
+        $engine = new TemplateEngine($compiler, $composers);
         $container->instance(TemplateEngineInterface::class, $engine);
         $container->instance(TemplateEngine::class, $engine);
 
