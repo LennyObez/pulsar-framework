@@ -6,6 +6,7 @@ namespace Pulsar\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 use function json_encode;
 
@@ -89,11 +90,11 @@ final readonly class NelConfig
     {
         return new self(
             enabled: (bool) ($data['enabled'] ?? false),
-            reportTo: $data['report_to'] ?? 'default',
-            maxAge: $data['max_age'] ?? 86400,
+            reportTo: Coerce::string($data['report_to'] ?? null, 'default'),
+            maxAge: Coerce::int($data['max_age'] ?? null, 86400),
             includeSubdomains: (bool) ($data['include_subdomains'] ?? false),
-            successFraction: (float) ($data['success_fraction'] ?? 0.0),
-            failureFraction: (float) ($data['failure_fraction'] ?? 1.0),
+            successFraction: Coerce::float($data['success_fraction'] ?? null, 0.0),
+            failureFraction: Coerce::float($data['failure_fraction'] ?? null, 1.0),
         );
     }
 }

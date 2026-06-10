@@ -6,6 +6,7 @@ namespace Pulsar\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Typed configuration DTO for a single authentication guard.
@@ -23,18 +24,14 @@ final readonly class AuthGuardConfig
     /**
      * Build from a raw guard config array.
      *
-     * @param array{
-     *     name?: string,
-     *     driver?: string,
-     *     enabled?: bool|int|string,
-     * } $data
+     * @param array<string, mixed> $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            name: $data['name'] ?? '',
-            driver: $data['driver'] ?? 'session',
+            name: Coerce::string($data['name'] ?? null),
+            driver: Coerce::string($data['driver'] ?? null, 'session'),
             enabled: (bool) ($data['enabled'] ?? true),
         );
     }

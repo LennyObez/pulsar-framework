@@ -6,6 +6,9 @@ namespace Pulsar\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
+
+use function is_array;
 
 /**
  * Typed configuration DTO for the metrics section of observability config.
@@ -36,13 +39,19 @@ final readonly class MetricsConfig
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $exporters = $data['exporters'] ?? [];
-        $exporter = $exporters['openmetrics'] ?? $exporters['prometheus'] ?? [];
+        $exporters = $data['exporters'] ?? null;
+        if (!is_array($exporters)) {
+            $exporters = [];
+        }
+        $exporter = $exporters['openmetrics'] ?? $exporters['prometheus'] ?? null;
+        if (!is_array($exporter)) {
+            $exporter = [];
+        }
 
         return new self(
             enabled: (bool) ($data['enabled'] ?? true),
             exporterEnabled: (bool) ($exporter['enabled'] ?? false),
-            exporterEndpoint: $exporter['endpoint'] ?? '/metrics',
+            exporterEndpoint: Coerce::string($exporter['endpoint'] ?? null, '/metrics'),
         );
     }
 }
