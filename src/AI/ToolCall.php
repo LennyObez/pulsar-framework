@@ -6,6 +6,9 @@ namespace Pulsar\AI;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
+
+use function is_array;
 
 /**
  * Represents a tool/function call requested by an AI model.
@@ -26,19 +29,17 @@ final readonly class ToolCall
     ) {}
 
     /**
-     * @param array{
-     *     id?: string,
-     *     name?: string,
-     *     arguments?: array<string, mixed>,
-     * } $data
+     * @param array<string, mixed> $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
+        $arguments = $data['arguments'] ?? null;
+
         return new self(
-            id: $data['id'] ?? '',
-            name: $data['name'] ?? '',
-            arguments: $data['arguments'] ?? [],
+            id: Coerce::string($data['id'] ?? null),
+            name: Coerce::string($data['name'] ?? null),
+            arguments: is_array($arguments) ? $arguments : [],
         );
     }
 }

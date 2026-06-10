@@ -6,6 +6,7 @@ namespace Pulsar\Cloud\Gcp\Config;
 
 use NoDiscard;
 use Pulsar\Api\Internal;
+use Pulsar\Support\Coerce;
 use SensitiveParameter;
 
 use function file_get_contents;
@@ -28,21 +29,16 @@ final readonly class GcpConfig
     ) {}
 
     /**
-     * @param array{
-     *     project_id?: string,
-     *     credentials_path?: string,
-     *     endpoint?: string|null,
-     *     access_token?: string|null,
-     * } $data Raw config array
+     * @param array<string, mixed> $data Raw config array
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            projectId: $data['project_id'] ?? '',
-            credentialsPath: $data['credentials_path'] ?? '',
-            endpoint: $data['endpoint'] ?? null,
-            accessToken: $data['access_token'] ?? null,
+            projectId: Coerce::string($data['project_id'] ?? null),
+            credentialsPath: Coerce::string($data['credentials_path'] ?? null),
+            endpoint: Coerce::nullableString($data['endpoint'] ?? null),
+            accessToken: Coerce::nullableString($data['access_token'] ?? null),
         );
     }
 

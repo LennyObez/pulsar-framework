@@ -6,6 +6,9 @@ namespace Pulsar\Cloud;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
+
+use function is_array;
 
 /**
  * Top-level cloud configuration for provider selection and shared settings.
@@ -47,14 +50,18 @@ final readonly class CloudConfig
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
+        $aws = $data['aws'] ?? null;
+        $gcp = $data['gcp'] ?? null;
+        $azure = $data['azure'] ?? null;
+
         return new self(
-            defaultProvider: $data['default_provider'] ?? 'aws',
-            aws: $data['aws'] ?? [],
-            gcp: $data['gcp'] ?? [],
-            azure: $data['azure'] ?? [],
-            httpTimeout: $data['http_timeout'] ?? 30,
-            retryAttempts: $data['retry_attempts'] ?? 3,
-            retryDelay: (float) ($data['retry_delay'] ?? 0.5),
+            defaultProvider: Coerce::string($data['default_provider'] ?? null, 'aws'),
+            aws: is_array($aws) ? $aws : [],
+            gcp: is_array($gcp) ? $gcp : [],
+            azure: is_array($azure) ? $azure : [],
+            httpTimeout: Coerce::int($data['http_timeout'] ?? null, 30),
+            retryAttempts: Coerce::int($data['retry_attempts'] ?? null, 3),
+            retryDelay: Coerce::float($data['retry_delay'] ?? null, 0.5),
         );
     }
 }

@@ -6,6 +6,7 @@ namespace Pulsar\Cloud\Azure\Config;
 
 use NoDiscard;
 use Pulsar\Api\Internal;
+use Pulsar\Support\Coerce;
 use SensitiveParameter;
 
 /**
@@ -24,23 +25,17 @@ final readonly class AzureConfig
     ) {}
 
     /**
-     * @param array{
-     *     tenant_id?: string,
-     *     client_id?: string,
-     *     client_secret?: string,
-     *     endpoint?: string|null,
-     *     access_token?: string|null,
-     * } $data Raw config array
+     * @param array<string, mixed> $data Raw config array
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            tenantId: $data['tenant_id'] ?? '',
-            clientId: $data['client_id'] ?? '',
-            clientSecret: $data['client_secret'] ?? '',
-            endpoint: $data['endpoint'] ?? null,
-            accessToken: $data['access_token'] ?? null,
+            tenantId: Coerce::string($data['tenant_id'] ?? null),
+            clientId: Coerce::string($data['client_id'] ?? null),
+            clientSecret: Coerce::string($data['client_secret'] ?? null),
+            endpoint: Coerce::nullableString($data['endpoint'] ?? null),
+            accessToken: Coerce::nullableString($data['access_token'] ?? null),
         );
     }
 
