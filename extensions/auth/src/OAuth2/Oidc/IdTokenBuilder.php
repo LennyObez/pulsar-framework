@@ -23,7 +23,7 @@ final readonly class IdTokenBuilder
     public function __construct(
         private OidcConfig $config,
         private UserClaimsProviderInterface $claimsProvider,
-        private JwtSigner $jwtSigner,
+        private JwtSignerInterface $jwtSigner,
     ) {}
 
     /**
