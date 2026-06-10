@@ -6,6 +6,7 @@ namespace Pulsar\Inertia;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Configuration for the Inertia-style SPA bridge.
@@ -21,19 +22,15 @@ final readonly class InertiaConfig
     ) {}
 
     /**
-     * @param array{
-     *     root_view?: string,
-     *     version_header?: string,
-     *     component_path_prefix?: string,
-     * } $data
+     * @param array<string, mixed> $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            rootView: $data['root_view'] ?? 'app',
-            versionHeader: $data['version_header'] ?? 'X-Inertia-Version',
-            componentPathPrefix: $data['component_path_prefix'] ?? '',
+            rootView: Coerce::string($data['root_view'] ?? null, 'app'),
+            versionHeader: Coerce::string($data['version_header'] ?? null, 'X-Inertia-Version'),
+            componentPathPrefix: Coerce::string($data['component_path_prefix'] ?? null),
         );
     }
 }
