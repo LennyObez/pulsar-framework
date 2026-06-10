@@ -75,4 +75,16 @@ final class LiveNavigateTest extends TestCase
 
         self::assertStringNotContainsString('<script>', $css);
     }
+
+    #[Test]
+    public function progressBarSanitizesCssInjection(): void
+    {
+        $nav = new LiveNavigate(progressColor: 'red; } body { background: url(//evil.com)');
+        $css = $nav->progressBarStyles();
+
+        // The injected rule must not survive into the <style> block.
+        self::assertStringNotContainsString('url(//evil.com)', $css);
+        self::assertStringNotContainsString('body {', $css);
+        self::assertStringContainsString('background: #4f46e5', $css);
+    }
 }

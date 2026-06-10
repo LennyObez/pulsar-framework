@@ -4,13 +4,16 @@ declare(strict_types=1);
 
 namespace Pulsar\Observability\Log;
 
+use Closure;
 use Psr\Log\LoggerInterface;
 use Pulsar\Api\Api;
 use Stringable;
 use Throwable;
 
+use function error_log;
 use function fwrite;
 use function is_string;
+use function rtrim;
 use function sprintf;
 
 /**
@@ -29,6 +32,9 @@ final class MutableLogger implements LoggerInterface
     /**
      * @param list<LogSinkInterface> $sinks
      * @param resource|null $stderr Stream to write sink failure notices to (when debug is true)
+     * @param Closure(string):void|null $fallbackEmitter Last-resort sink-failure emitter.
+     *                                                   Defaults to PHP's `error_log()`. Tests pass an
+     *                                                   in-memory buffer; CI / prod leaves it null.
      */
     public function __construct(
         private readonly array $sinks,
@@ -36,6 +42,7 @@ final class MutableLogger implements LoggerInterface
         private readonly string $channel = 'app',
         private readonly bool $debug = false,
         private mixed $stderr = null,
+        private readonly ?Closure $fallbackEmitter = null,
     ) {
         $this->threshold = $threshold;
     }
@@ -119,14 +126,39 @@ final class MutableLogger implements LoggerInterface
             return;
         }
 
+        $atLeastOneSucceeded = false;
+
         foreach ($this->sinks as $sink) {
             try {
                 $sink->write($entry);
+                $atLeastOneSucceeded = true;
             } catch (Throwable $e) {
                 if ($this->debug && $this->stderr !== null) {
                     @fwrite($this->stderr, sprintf("[Pulsar Logger] Sink failure: %s\n", $e->getMessage()));
                 }
             }
         }
+
+        // Mirror Logger::log() F4.2 durability: when every sink dropped the
+        // entry (or none were configured), persist it through the fallback
+        // emitter so the audit trail is not lost. MutableLogger is the
+        // persistent-worker variant where audit durability matters most, so
+        // a complete sink failure must still produce a signal even outside
+        // debug mode.
+        if (!$atLeastOneSucceeded) {
+            $line = new LogFormatter()->format($entry);
+            $this->emitFallback('[Pulsar Logger fallback] ' . rtrim($line, "\n"));
+        }
+    }
+
+    private function emitFallback(string $message): void
+    {
+        if ($this->fallbackEmitter !== null) {
+            ($this->fallbackEmitter)($message);
+
+            return;
+        }
+
+        @error_log($message);
     }
 }

@@ -202,7 +202,18 @@ final class MutableLoggerTest extends TestCase
         $stream = fopen('php://memory', 'r+');
         self::assertIsResource($stream);
 
-        $logger = new MutableLogger([$failingSink], LogLevel::Debug, debug: true, stderr: $stream);
+        // The single sink fails, so the all-sinks-failed durability fallback
+        // also fires; capture it here to keep it off the real error_log.
+        $fallbacks = [];
+        $logger = new MutableLogger(
+            [$failingSink],
+            LogLevel::Debug,
+            debug: true,
+            stderr: $stream,
+            fallbackEmitter: static function (string $message) use (&$fallbacks): void {
+                $fallbacks[] = $message;
+            },
+        );
 
         $logger->error('Trigger sink failure');
 
@@ -213,6 +224,71 @@ final class MutableLoggerTest extends TestCase
 
         self::assertStringContainsString('Sink failure', $output);
         self::assertStringContainsString('Connection lost', $output);
+        self::assertCount(1, $fallbacks);
+    }
+
+    #[Test]
+    public function fallbackEmitterReceivesEntryWhenAllSinksFail(): void
+    {
+        $failingSink = $this->createStub(LogSinkInterface::class);
+        $failingSink->method('write')->willThrowException(new RuntimeException('disk full'));
+
+        $fallbacks = [];
+        $logger = new MutableLogger(
+            [$failingSink],
+            LogLevel::Debug,
+            fallbackEmitter: static function (string $message) use (&$fallbacks): void {
+                $fallbacks[] = $message;
+            },
+        );
+
+        $logger->critical('audit-critical record');
+
+        self::assertCount(1, $fallbacks);
+        self::assertStringContainsString('[Pulsar Logger fallback]', $fallbacks[0]);
+        self::assertStringContainsString('audit-critical record', $fallbacks[0]);
+    }
+
+    #[Test]
+    public function fallbackEmitterFiresWhenNoSinksAreConfigured(): void
+    {
+        $fallbacks = [];
+        $logger = new MutableLogger(
+            [],
+            LogLevel::Debug,
+            fallbackEmitter: static function (string $message) use (&$fallbacks): void {
+                $fallbacks[] = $message;
+            },
+        );
+
+        $logger->error('lost without a sink');
+
+        self::assertCount(1, $fallbacks);
+        self::assertStringContainsString('lost without a sink', $fallbacks[0]);
+    }
+
+    #[Test]
+    public function fallbackEmitterDoesNotFireWhenAnySinkSucceeds(): void
+    {
+        $failingSink = $this->createStub(LogSinkInterface::class);
+        $failingSink->method('write')->willThrowException(new RuntimeException('flaky'));
+
+        $entries = [];
+        $goodSink = $this->createSinkCapturing($entries);
+
+        $fallbacks = [];
+        $logger = new MutableLogger(
+            [$failingSink, $goodSink],
+            LogLevel::Debug,
+            fallbackEmitter: static function (string $message) use (&$fallbacks): void {
+                $fallbacks[] = $message;
+            },
+        );
+
+        $logger->error('survives via good sink');
+
+        self::assertCount(1, $entries);
+        self::assertCount(0, $fallbacks);
     }
 
     #[Test]

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Broadcasting;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -15,6 +16,7 @@ use Pulsar\Broadcasting\PrivateChannel;
 use Pulsar\WebSocket\BroadcastManagerInterface as Transport;
 use RuntimeException;
 
+#[CoversClass(BroadcastManager::class)]
 final class BroadcastManagerTest extends TestCase
 {
     #[Test]

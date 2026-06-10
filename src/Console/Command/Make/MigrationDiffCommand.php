@@ -91,7 +91,9 @@ final class MigrationDiffCommand extends Command
                 continue;
             }
 
-            $migrationName = $customName !== '' ? $customName : $entity->tableName;
+            $migrationName = $customName !== ''
+                ? $customName . '_' . $entity->tableName
+                : $entity->tableName;
 
             $generator = new MigrationGenerator(
                 $this->renderer,

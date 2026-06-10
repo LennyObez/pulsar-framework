@@ -17,6 +17,7 @@ use Pulsar\Observability\Log\LogSinkInterface;
 use Pulsar\Security\Crypto\EncryptorInterface;
 use Pulsar\Security\Crypto\MasterKey;
 
+use function ini_get;
 use function is_string;
 
 /**
@@ -169,6 +170,63 @@ final class ComplianceLogSinkTest extends TestCase
         $written = $inner->entries[0];
         self::assertStringStartsWith('ENCRYPTED:', $written->message);
         self::assertTrue($written->context['encrypted']);
+    }
+
+    #[Test]
+    public function logsWarningWhenContextIsNotJsonEncodable(): void
+    {
+        $inner = new InMemoryLogSink();
+
+        $encryptor = new class implements EncryptorInterface {
+            public string $captured = '';
+
+            #[Override]
+            public function encrypt(string $plaintext): string
+            {
+                $this->captured = $plaintext;
+
+                return 'ENC:' . $plaintext;
+            }
+
+            #[Override]
+            public function decrypt(string $encoded): string
+            {
+                return '';
+            }
+
+            #[Override]
+            public function withDerivedKey(MasterKey $masterKey, int $subKeyId, string $context): EncryptorInterface
+            {
+                return $this;
+            }
+        };
+
+        $sink = new ComplianceLogSink($inner, $encryptor);
+
+        // A lone continuation byte is invalid UTF-8, so json_encode() returns
+        // false. Before the fix the loss was silent; now a diagnostic is
+        // emitted via error_log and the record falls back to '{}'.
+        $entry = $this->createEntry(['blob' => "\xB1\xC3"]);
+
+        $logFile = sys_get_temp_dir() . '/pulsar_complianceink_warn_' . uniqid('', true) . '.log';
+        $previous = ini_get('error_log');
+        ini_set('error_log', $logFile);
+
+        try {
+            $sink->write($entry);
+        } finally {
+            ini_set('error_log', $previous === false ? '' : $previous);
+        }
+
+        $emitted = is_file($logFile) ? (string) file_get_contents($logFile) : '';
+
+        self::assertStringContainsString('ComplianceLogSink', $emitted);
+        self::assertStringContainsString('json_encode failed', $emitted);
+
+        // The fallback record ('{}') is still written and encrypted, so logging
+        // never crashes the request.
+        self::assertCount(1, $inner->entries);
+        self::assertSame('ENC:{}', $inner->entries[0]->message);
     }
 
     #[Test]

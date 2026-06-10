@@ -91,6 +91,14 @@ final readonly class BroadcastManager
      */
     private function resolveExcludedConnections(BroadcastEventInterface $event): array
     {
+        // Exclusion can only ever apply to events that opt in via the interface;
+        // skip reflection entirely otherwise (the toOthers check below is gated
+        // on the same instanceof, so this is behaviour-preserving and avoids a
+        // ReflectionClass allocation on the common hot path).
+        if (!($event instanceof ExcludesConnectionInterface)) {
+            return [];
+        }
+
         try {
             $reflection = new ReflectionClass($event);
             $attributes = $reflection->getAttributes(ShouldBroadcast::class);
@@ -98,16 +106,20 @@ final readonly class BroadcastManager
             if ($attributes !== []) {
                 $attr = $attributes[0]->newInstance();
 
-                if ($attr->toOthers && $event instanceof ExcludesConnectionInterface) {
+                if ($attr->toOthers) {
                     $id = $event->excludeConnectionId();
 
-                    if ($id !== null) {
+                    if ($id !== null && $id !== '') {
                         return [$id];
                     }
                 }
             }
-        } catch (Throwable) {
-            // Reflection failure: don't exclude anyone
+        } catch (Throwable $e) {
+            $this->logger?->warning(sprintf(
+                'Failed to resolve excluded connections for event "%s": %s',
+                $event::class,
+                $e->getMessage(),
+            ));
         }
 
         return [];

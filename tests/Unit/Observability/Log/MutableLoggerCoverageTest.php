@@ -111,11 +111,21 @@ final class MutableLoggerCoverageTest extends TestCase
             }
         };
 
-        $logger = new MutableLogger([$failingSink], LogLevel::Debug, debug: false);
+        $fallbacks = [];
+        $logger = new MutableLogger(
+            [$failingSink],
+            LogLevel::Debug,
+            debug: false,
+            fallbackEmitter: static function (string $message) use (&$fallbacks): void {
+                $fallbacks[] = $message;
+            },
+        );
 
         // Should not throw
         $logger->error('test message');
-        $this->addToAssertionCount(1);
+
+        // All sinks failed, so the durability fallback fires.
+        self::assertCount(1, $fallbacks);
     }
 
     #[Test]
@@ -131,7 +141,18 @@ final class MutableLoggerCoverageTest extends TestCase
         $stderr = fopen('php://memory', 'w+');
         self::assertNotFalse($stderr);
 
-        $logger = new MutableLogger([$failingSink], LogLevel::Debug, debug: true, stderr: $stderr);
+        // Single failing sink also exercises the all-sinks-failed fallback;
+        // capture it so it does not reach the real error_log.
+        $fallbacks = [];
+        $logger = new MutableLogger(
+            [$failingSink],
+            LogLevel::Debug,
+            debug: true,
+            stderr: $stderr,
+            fallbackEmitter: static function (string $message) use (&$fallbacks): void {
+                $fallbacks[] = $message;
+            },
+        );
 
         $logger->error('test message');
 
@@ -139,6 +160,7 @@ final class MutableLoggerCoverageTest extends TestCase
         $output = stream_get_contents($stderr);
         self::assertIsString($output);
         self::assertStringContainsString('sink broken', $output);
+        self::assertCount(1, $fallbacks);
 
         fclose($stderr);
     }

@@ -6,6 +6,7 @@ namespace Pulsar\Live\Auth;
 
 use Closure;
 use Pulsar\Api\Api;
+use Pulsar\Live\CssColor;
 use Pulsar\Live\LiveAction;
 use Pulsar\Live\LiveComponent;
 use Pulsar\Live\LiveProp;
@@ -189,7 +190,7 @@ final class UserProfile extends LiveComponent
         $config = $this->config ?? new AuthUiConfig();
         $e = static fn(string $v): string => htmlspecialchars($v, ENT_QUOTES, 'UTF-8');
         $darkClass = $config->darkMode ? ' pulsar-auth--dark' : '';
-        $accentVar = $e($config->accentColor);
+        $accentVar = $e(CssColor::sanitize($config->accentColor));
 
         $profileActive = $this->activeSection === 'profile' ? ' pulsar-auth__tab--active' : '';
         $passwordActive = $this->activeSection === 'password' ? ' pulsar-auth__tab--active' : '';

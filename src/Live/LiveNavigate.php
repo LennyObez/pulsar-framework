@@ -56,7 +56,7 @@ final readonly class LiveNavigate
             return '';
         }
 
-        $color = htmlspecialchars($this->progressColor, ENT_QUOTES, 'UTF-8');
+        $color = htmlspecialchars(CssColor::sanitize($this->progressColor), ENT_QUOTES, 'UTF-8');
         $height = $this->progressHeight;
 
         return <<<CSS

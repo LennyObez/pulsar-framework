@@ -63,6 +63,24 @@ final class BroadcastManagerExcludeTest extends TestCase
     }
 
     #[Test]
+    public function broadcastDoesNotExcludeWhenConnectionIdIsEmptyString(): void
+    {
+        // An empty-string connection ID can never identify a real connection;
+        // it must be treated like null (no exclusion) rather than producing an
+        // exclusion list of [''] that the transport would have to honour.
+        $transport = $this->createMock(Transport::class);
+        $transport->expects(self::once())
+            ->method('broadcast')
+            ->with('notifications', 'alert', ['msg' => 'hi']);
+        $transport->expects(self::never())->method('broadcastExcept');
+
+        $manager = new BroadcastManager($transport);
+
+        $event = new EmptyConnectionExcludeEvent();
+        $manager->broadcast($event);
+    }
+
+    #[Test]
     public function broadcastLogsDebugOnSuccess(): void
     {
         $transport = $this->createStub(Transport::class);
@@ -186,5 +204,36 @@ final class NullConnectionExcludeEvent implements BroadcastEventInterface, Exclu
     public function excludeConnectionId(): ?string
     {
         return null;
+    }
+}
+
+/**
+ * Event with toOthers but an empty-string connection ID.
+ *
+ * @internal
+ */
+#[ShouldBroadcast(toOthers: true)]
+final class EmptyConnectionExcludeEvent implements BroadcastEventInterface, ExcludesConnectionInterface
+{
+    public function broadcastOn(): array
+    {
+        return [new Channel('notifications')];
+    }
+
+    public function broadcastAs(): string
+    {
+        return 'alert';
+    }
+
+    public function broadcastWith(): array
+    {
+        return ['msg' => 'hi'];
+    }
+
+    public function excludeConnectionId(): string
+    {
+        // Deliberately empty (not null): this event exercises the
+        // empty-connection-id exclude path.
+        return '';
     }
 }
