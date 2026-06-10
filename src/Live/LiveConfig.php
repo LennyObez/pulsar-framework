@@ -6,6 +6,7 @@ namespace Pulsar\Live;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Configuration for Pulsar Live components.
@@ -37,12 +38,12 @@ final readonly class LiveConfig
     public static function fromArray(array $data): self
     {
         return new self(
-            endpointPrefix: $data['endpoint_prefix'] ?? '/_live',
-            debounceMs: $data['debounce_ms'] ?? 150,
-            maxPayloadSize: $data['max_payload_size'] ?? 1_048_576,
-            enablePolling: $data['enable_polling'] ?? true,
-            defaultPollIntervalMs: $data['default_poll_interval_ms'] ?? 2000,
-            morphDom: $data['morph_dom'] ?? true,
+            endpointPrefix: Coerce::string($data['endpoint_prefix'] ?? null, '/_live'),
+            debounceMs: Coerce::int($data['debounce_ms'] ?? null, 150),
+            maxPayloadSize: Coerce::int($data['max_payload_size'] ?? null, 1_048_576),
+            enablePolling: Coerce::strictBool($data['enable_polling'] ?? null, true),
+            defaultPollIntervalMs: Coerce::int($data['default_poll_interval_ms'] ?? null, 2000),
+            morphDom: Coerce::strictBool($data['morph_dom'] ?? null, true),
         );
     }
 }

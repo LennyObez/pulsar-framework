@@ -7,6 +7,7 @@ namespace Pulsar\Marketplace;
 use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Extensibility\TrustTier;
+use Pulsar\Support\Coerce;
 
 /**
  * Configuration for the extension marketplace.
@@ -43,11 +44,11 @@ final readonly class MarketplaceConfig
     public static function fromArray(array $data): self
     {
         return new self(
-            registryUrl: $data['registry_url'] ?? 'https://marketplace.pulsarphp.com/api/v1',
-            autoUpdate: $data['auto_update'] ?? false,
-            minimumTrustTier: TrustTier::tryFrom($data['minimum_trust_tier'] ?? '') ?? TrustTier::Community,
-            verifySignatures: $data['verify_signatures'] ?? true,
-            cacheLifetimeSeconds: $data['cache_lifetime'] ?? 3600,
+            registryUrl: Coerce::string($data['registry_url'] ?? null, 'https://marketplace.pulsarphp.com/api/v1'),
+            autoUpdate: Coerce::strictBool($data['auto_update'] ?? null),
+            minimumTrustTier: TrustTier::tryFrom(Coerce::string($data['minimum_trust_tier'] ?? null)) ?? TrustTier::Community,
+            verifySignatures: Coerce::strictBool($data['verify_signatures'] ?? null, true),
+            cacheLifetimeSeconds: Coerce::int($data['cache_lifetime'] ?? null, 3600),
         );
     }
 }

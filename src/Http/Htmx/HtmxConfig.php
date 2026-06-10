@@ -6,6 +6,7 @@ namespace Pulsar\Http\Htmx;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Configuration for the Pulsar hypermedia (px-*) runtime.
@@ -41,14 +42,14 @@ final readonly class HtmxConfig
     public static function fromArray(array $data): self
     {
         return new self(
-            attributePrefix: $data['attribute_prefix'] ?? 'px',
-            defaultSwapDelayMs: $data['default_swap_delay_ms'] ?? 0,
-            defaultSettleDelayMs: $data['default_settle_delay_ms'] ?? 20,
-            includeIndicatorStyles: $data['include_indicator_styles'] ?? true,
-            historyCacheEnabled: $data['history_cache_enabled'] ?? true,
-            historyCacheSize: $data['history_cache_size'] ?? 10,
-            selfRequestsOnly: $data['self_requests_only'] ?? true,
-            csrfHeaderName: $data['csrf_header_name'] ?? 'X-CSRF-Token',
+            attributePrefix: Coerce::string($data['attribute_prefix'] ?? null, 'px'),
+            defaultSwapDelayMs: Coerce::int($data['default_swap_delay_ms'] ?? null, 0),
+            defaultSettleDelayMs: Coerce::int($data['default_settle_delay_ms'] ?? null, 20),
+            includeIndicatorStyles: Coerce::strictBool($data['include_indicator_styles'] ?? null, true),
+            historyCacheEnabled: Coerce::strictBool($data['history_cache_enabled'] ?? null, true),
+            historyCacheSize: Coerce::int($data['history_cache_size'] ?? null, 10),
+            selfRequestsOnly: Coerce::strictBool($data['self_requests_only'] ?? null, true),
+            csrfHeaderName: Coerce::string($data['csrf_header_name'] ?? null, 'X-CSRF-Token'),
         );
     }
 }
