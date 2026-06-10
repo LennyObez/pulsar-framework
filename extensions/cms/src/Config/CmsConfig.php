@@ -8,9 +8,9 @@ use Pulsar\Api\Api;
 use Pulsar\Extension\Cms\Commerce\CommerceConfig;
 use Pulsar\Extension\Cms\LiveCss\LiveCssConfig;
 use Pulsar\Extension\Cms\Tools\ImportConfig;
+use Pulsar\Support\Coerce;
 
-use function array_filter;
-use function array_values;
+use function is_array;
 
 /**
  * Top-level CMS configuration DTO.
@@ -115,38 +115,36 @@ final readonly class CmsConfig
      */
     public static function fromArray(array $data): self
     {
-        $supportedLocales = $data['supported_locales'] ?? ['en'];
-        $supportedLocales = array_values(array_filter($supportedLocales, 'is_string'));
+        $sub = static fn(string $k): array => is_array($data[$k] ?? null) ? $data[$k] : [];
+        $commerceData = $data['commerce'] ?? null;
 
         return new self(
-            siteName: $data['site_name'] ?? 'Pulsar CMS',
-            defaultLocale: $data['default_locale'] ?? 'en',
-            supportedLocales: $supportedLocales,
-            defaultLocaleInUrl: $data['default_locale_in_url'] ?? false,
-            editorialWorkflow: $data['editorial_workflow'] ?? false,
-            eventSourcing: $data['event_sourcing'] ?? false,
-            atomicSnapshots: $data['atomic_snapshots'] ?? false,
-            maxHierarchyDepth: $data['max_hierarchy_depth'] ?? 10,
-            homepageContentId: $data['homepage_content_id'] ?? null,
-            cache: CmsCacheConfig::fromArray($data['cache'] ?? []),
-            media: MediaConfig::fromArray($data['media'] ?? []),
-            comments: CommentsConfig::fromArray($data['comments'] ?? []),
-            seo: SeoConfig::fromArray($data['seo'] ?? []),
-            themes: ThemesConfig::fromArray($data['themes'] ?? []),
-            security: CmsSecurityConfig::fromArray($data['security'] ?? []),
-            commerce: isset($data['commerce']) && $data['commerce'] !== null
-                ? CommerceConfig::fromArray($data['commerce'])
-                : null,
-            liveCss: LiveCssConfig::fromArray($data['live_css'] ?? []),
-            import: ImportConfig::fromArray($data['import'] ?? []),
-            httpCacheTtlSeconds: $data['http_cache_ttl_seconds'] ?? 300,
-            publicRateLimitContent: $data['public_rate_limit_content'] ?? 120,
-            publicRateLimitCheckout: $data['public_rate_limit_checkout'] ?? 30,
-            apiKeyRequired: $data['api_key_required'] ?? false,
-            notifications: NotificationConfig::fromArray($data['notifications'] ?? []),
-            ai: AiConfig::fromArray($data['ai'] ?? []),
-            publishing: PublishingConfig::fromArray($data['publishing'] ?? []),
-            forms: FormsConfig::fromArray($data['forms'] ?? []),
+            siteName: Coerce::string($data['site_name'] ?? null, 'Pulsar CMS'),
+            defaultLocale: Coerce::string($data['default_locale'] ?? null, 'en'),
+            supportedLocales: Coerce::listOfString($data['supported_locales'] ?? null, ['en']),
+            defaultLocaleInUrl: Coerce::strictBool($data['default_locale_in_url'] ?? null),
+            editorialWorkflow: Coerce::strictBool($data['editorial_workflow'] ?? null),
+            eventSourcing: Coerce::strictBool($data['event_sourcing'] ?? null),
+            atomicSnapshots: Coerce::strictBool($data['atomic_snapshots'] ?? null),
+            maxHierarchyDepth: Coerce::int($data['max_hierarchy_depth'] ?? null, 10),
+            homepageContentId: Coerce::nullableString($data['homepage_content_id'] ?? null),
+            cache: CmsCacheConfig::fromArray($sub('cache')),
+            media: MediaConfig::fromArray($sub('media')),
+            comments: CommentsConfig::fromArray($sub('comments')),
+            seo: SeoConfig::fromArray($sub('seo')),
+            themes: ThemesConfig::fromArray($sub('themes')),
+            security: CmsSecurityConfig::fromArray($sub('security')),
+            commerce: is_array($commerceData) ? CommerceConfig::fromArray($commerceData) : null,
+            liveCss: LiveCssConfig::fromArray($sub('live_css')),
+            import: ImportConfig::fromArray($sub('import')),
+            httpCacheTtlSeconds: Coerce::int($data['http_cache_ttl_seconds'] ?? null, 300),
+            publicRateLimitContent: Coerce::int($data['public_rate_limit_content'] ?? null, 120),
+            publicRateLimitCheckout: Coerce::int($data['public_rate_limit_checkout'] ?? null, 30),
+            apiKeyRequired: Coerce::strictBool($data['api_key_required'] ?? null),
+            notifications: NotificationConfig::fromArray($sub('notifications')),
+            ai: AiConfig::fromArray($sub('ai')),
+            publishing: PublishingConfig::fromArray($sub('publishing')),
+            forms: FormsConfig::fromArray($sub('forms')),
         );
     }
 }
