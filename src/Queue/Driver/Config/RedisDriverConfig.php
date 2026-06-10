@@ -6,6 +6,7 @@ namespace Pulsar\Queue\Driver\Config;
 
 use NoDiscard;
 use Pulsar\Api\Internal;
+use Pulsar\Support\Coerce;
 
 /**
  * Configuration DTO for the Redis queue driver.
@@ -36,12 +37,12 @@ final readonly class RedisDriverConfig
     public static function fromArray(array $data): self
     {
         return new self(
-            host: $data['host'] ?? '127.0.0.1',
-            port: $data['port'] ?? 6379,
-            password: $data['password'] ?? '',
-            database: $data['database'] ?? 0,
-            prefix: $data['prefix'] ?? 'queue:',
-            timeout: (float) ($data['timeout'] ?? 0.0),
+            host: Coerce::string($data['host'] ?? null, '127.0.0.1'),
+            port: Coerce::int($data['port'] ?? null, 6379),
+            password: Coerce::string($data['password'] ?? null),
+            database: Coerce::int($data['database'] ?? null, 0),
+            prefix: Coerce::string($data['prefix'] ?? null, 'queue:'),
+            timeout: Coerce::float($data['timeout'] ?? null, 0.0),
         );
     }
 }
