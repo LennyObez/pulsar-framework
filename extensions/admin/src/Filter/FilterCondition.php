@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Admin\Filter;
 
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * A single filter condition in a visual filter definition.
@@ -25,17 +26,13 @@ final readonly class FilterCondition
     ) {}
 
     /**
-     * @param array{
-     *     field?: string,
-     *     operator?: string,
-     *     value?: mixed,
-     * } $data
+     * @param array<string, mixed> $data
      */
     public static function fromArray(array $data): self
     {
         return new self(
-            field: $data['field'] ?? '',
-            operator: FilterOperator::from($data['operator'] ?? 'eq'),
+            field: Coerce::string($data['field'] ?? null),
+            operator: FilterOperator::from(Coerce::string($data['operator'] ?? null, 'eq')),
             value: $data['value'] ?? null,
         );
     }
