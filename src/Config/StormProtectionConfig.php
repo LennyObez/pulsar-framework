@@ -6,6 +6,7 @@ namespace Pulsar\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 use function max;
 use function min;
@@ -38,9 +39,9 @@ final readonly class StormProtectionConfig
     #[NoDiscard]
     public static function fromArray(array $data, ?Environment $environment = null): self
     {
-        $maxDepth = $data['max_depth'] ?? 32;
-        $loopDetection = $data['loop_detection'] ?? true;
-        $maxRepeats = $data['max_repeats_per_event'] ?? 3;
+        $maxDepth = Coerce::int($data['max_depth'] ?? null, 32);
+        $loopDetection = Coerce::strictBool($data['loop_detection'] ?? null, true);
+        $maxRepeats = Coerce::int($data['max_repeats_per_event'] ?? null, 3);
 
         // Environment variable overrides (applied after array, before clamping)
         if ($environment !== null) {
