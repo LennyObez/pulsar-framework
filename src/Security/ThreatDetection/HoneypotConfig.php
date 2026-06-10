@@ -6,6 +6,7 @@ namespace Pulsar\Security\ThreatDetection;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Configuration for honeypot endpoint detection.
@@ -62,11 +63,11 @@ final readonly class HoneypotConfig
         $rawAction = $data['response_action'] ?? null;
         $responseAction = $rawAction instanceof ThreatResponse
             ? $rawAction
-            : ThreatResponse::tryFrom($rawAction ?? '') ?? ThreatResponse::Block;
+            : ThreatResponse::tryFrom(Coerce::string($rawAction)) ?? ThreatResponse::Block;
 
         return new self(
-            paths: $data['paths'] ?? [],
-            blockIp: $data['block_ip'] ?? true,
+            paths: Coerce::listOfString($data['paths'] ?? null),
+            blockIp: Coerce::strictBool($data['block_ip'] ?? null, true),
             responseAction: $responseAction,
         );
     }

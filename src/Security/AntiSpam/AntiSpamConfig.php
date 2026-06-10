@@ -6,6 +6,9 @@ namespace Pulsar\Security\AntiSpam;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
+
+use function is_array;
 
 /**
  * Configuration DTO for the anti-spam pipeline.
@@ -94,29 +97,31 @@ final readonly class AntiSpamConfig
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
+        $cooldownTiers = $data['cooldown_tiers'] ?? null;
+
         return new self(
-            honeypotEnabled: $data['honeypot_enabled'] ?? true,
-            honeypotFieldName: $data['honeypot_field_name'] ?? 'website_url',
-            duplicateDetectionEnabled: $data['duplicate_detection_enabled'] ?? true,
-            duplicateWindowSeconds: $data['duplicate_window_seconds'] ?? 300,
-            duplicateSimilarityThreshold: $data['duplicate_similarity_threshold'] ?? 85.0,
-            linkDensityEnabled: $data['link_density_enabled'] ?? true,
-            maxLinkDensity: $data['max_link_density'] ?? 0.3,
-            contentQualityEnabled: $data['content_quality_enabled'] ?? true,
-            minContentLength: $data['min_content_length'] ?? 10,
-            maxUppercaseRatio: $data['max_uppercase_ratio'] ?? 0.8,
-            maxRepeatedCharRatio: $data['max_repeated_char_ratio'] ?? 0.5,
-            proofOfWorkEnabled: $data['proof_of_work_enabled'] ?? false,
-            proofOfWorkPrefix: $data['proof_of_work_prefix'] ?? '0000',
-            captchaEnabled: $data['captcha_enabled'] ?? false,
-            captchaProvider: $data['captcha_provider'] ?? 'hcaptcha',
-            captchaSiteKey: $data['captcha_site_key'] ?? '',
-            captchaSecretKey: $data['captcha_secret_key'] ?? '',
-            accountAgeGateEnabled: $data['account_age_gate_enabled'] ?? false,
-            minAccountAgeSeconds: $data['min_account_age_seconds'] ?? 300,
-            reputationCooldownEnabled: $data['reputation_cooldown_enabled'] ?? true,
-            cooldownTiers: $data['cooldown_tiers'] ?? ['new' => 60, 'established' => 10, 'moderator' => 0],
-            shortCircuit: $data['short_circuit'] ?? false,
+            honeypotEnabled: Coerce::strictBool($data['honeypot_enabled'] ?? null, true),
+            honeypotFieldName: Coerce::string($data['honeypot_field_name'] ?? null, 'website_url'),
+            duplicateDetectionEnabled: Coerce::strictBool($data['duplicate_detection_enabled'] ?? null, true),
+            duplicateWindowSeconds: Coerce::int($data['duplicate_window_seconds'] ?? null, 300),
+            duplicateSimilarityThreshold: Coerce::float($data['duplicate_similarity_threshold'] ?? null, 85.0),
+            linkDensityEnabled: Coerce::strictBool($data['link_density_enabled'] ?? null, true),
+            maxLinkDensity: Coerce::float($data['max_link_density'] ?? null, 0.3),
+            contentQualityEnabled: Coerce::strictBool($data['content_quality_enabled'] ?? null, true),
+            minContentLength: Coerce::int($data['min_content_length'] ?? null, 10),
+            maxUppercaseRatio: Coerce::float($data['max_uppercase_ratio'] ?? null, 0.8),
+            maxRepeatedCharRatio: Coerce::float($data['max_repeated_char_ratio'] ?? null, 0.5),
+            proofOfWorkEnabled: Coerce::strictBool($data['proof_of_work_enabled'] ?? null),
+            proofOfWorkPrefix: Coerce::string($data['proof_of_work_prefix'] ?? null, '0000'),
+            captchaEnabled: Coerce::strictBool($data['captcha_enabled'] ?? null),
+            captchaProvider: Coerce::string($data['captcha_provider'] ?? null, 'hcaptcha'),
+            captchaSiteKey: Coerce::string($data['captcha_site_key'] ?? null),
+            captchaSecretKey: Coerce::string($data['captcha_secret_key'] ?? null),
+            accountAgeGateEnabled: Coerce::strictBool($data['account_age_gate_enabled'] ?? null),
+            minAccountAgeSeconds: Coerce::int($data['min_account_age_seconds'] ?? null, 300),
+            reputationCooldownEnabled: Coerce::strictBool($data['reputation_cooldown_enabled'] ?? null, true),
+            cooldownTiers: is_array($cooldownTiers) ? $cooldownTiers : ['new' => 60, 'established' => 10, 'moderator' => 0],
+            shortCircuit: Coerce::strictBool($data['short_circuit'] ?? null),
         );
     }
 }
