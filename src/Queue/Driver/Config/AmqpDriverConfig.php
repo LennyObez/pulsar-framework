@@ -6,6 +6,7 @@ namespace Pulsar\Queue\Driver\Config;
 
 use NoDiscard;
 use Pulsar\Api\Internal;
+use Pulsar\Support\Coerce;
 
 /**
  * Configuration DTO for the AMQP queue driver.
@@ -36,12 +37,12 @@ final readonly class AmqpDriverConfig
     public static function fromArray(array $data): self
     {
         return new self(
-            host: $data['host'] ?? '127.0.0.1',
-            port: $data['port'] ?? 5672,
-            user: $data['user'] ?? 'guest',
-            password: $data['password'] ?? 'guest',
-            vhost: $data['vhost'] ?? '/',
-            exchange: $data['exchange'] ?? 'pulsar.queue',
+            host: Coerce::string($data['host'] ?? null, '127.0.0.1'),
+            port: Coerce::int($data['port'] ?? null, 5672),
+            user: Coerce::string($data['user'] ?? null, 'guest'),
+            password: Coerce::string($data['password'] ?? null, 'guest'),
+            vhost: Coerce::string($data['vhost'] ?? null, '/'),
+            exchange: Coerce::string($data['exchange'] ?? null, 'pulsar.queue'),
         );
     }
 }

@@ -6,6 +6,7 @@ namespace Pulsar\Queue\Driver\Config;
 
 use NoDiscard;
 use Pulsar\Api\Internal;
+use Pulsar\Support\Coerce;
 
 /**
  * Configuration DTO for the Google Cloud Pub/Sub queue driver.
@@ -32,10 +33,10 @@ final readonly class PubSubDriverConfig
     public static function fromArray(array $data): self
     {
         return new self(
-            projectId: $data['project_id'] ?? '',
-            keyFilePath: $data['key_file_path'] ?? '',
-            topicPrefix: $data['topic_prefix'] ?? 'pulsar-queue-',
-            subscriptionPrefix: $data['subscription_prefix'] ?? 'pulsar-worker-',
+            projectId: Coerce::string($data['project_id'] ?? null),
+            keyFilePath: Coerce::string($data['key_file_path'] ?? null),
+            topicPrefix: Coerce::string($data['topic_prefix'] ?? null, 'pulsar-queue-'),
+            subscriptionPrefix: Coerce::string($data['subscription_prefix'] ?? null, 'pulsar-worker-'),
         );
     }
 }
