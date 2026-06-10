@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Admin\Filter;
 
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 use function array_map;
 use function count;
+use function is_array;
 
 /**
  * A group of filter conditions combined with AND/OR logic.
@@ -53,24 +55,30 @@ final readonly class FilterGroup
     }
 
     /**
-     * @param array{
-     *     logic?: string,
-     *     conditions?: list<array<string, mixed>>,
-     *     groups?: list<array<string, mixed>>,
-     * } $data
+     * @param array<string, mixed> $data
      */
     public static function fromArray(array $data): self
     {
-        $logic = FilterLogic::tryFrom($data['logic'] ?? 'and') ?? FilterLogic::And;
+        $logic = FilterLogic::tryFrom(Coerce::string($data['logic'] ?? null, 'and')) ?? FilterLogic::And;
 
         $conditions = [];
-        foreach ($data['conditions'] ?? [] as $condData) {
-            $conditions[] = FilterCondition::fromArray($condData);
+        $rawConditions = $data['conditions'] ?? null;
+        if (is_array($rawConditions)) {
+            foreach ($rawConditions as $condData) {
+                if (is_array($condData)) {
+                    $conditions[] = FilterCondition::fromArray($condData);
+                }
+            }
         }
 
         $groups = [];
-        foreach ($data['groups'] ?? [] as $groupData) {
-            $groups[] = self::fromArray($groupData);
+        $rawGroups = $data['groups'] ?? null;
+        if (is_array($rawGroups)) {
+            foreach ($rawGroups as $groupData) {
+                if (is_array($groupData)) {
+                    $groups[] = self::fromArray($groupData);
+                }
+            }
         }
 
         return new self(

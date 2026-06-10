@@ -7,6 +7,7 @@ namespace Pulsar\Extension\Cms\Content;
 use InvalidArgumentException;
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Configures how old content revisions are retained and pruned.
@@ -41,21 +42,16 @@ final readonly class RevisionRetentionPolicy
     /**
      * Build from a raw config array.
      *
-     * @param array{
-     *     max_revisions_per_content?: int,
-     *     max_age_days?: int,
-     *     keep_published?: bool,
-     *     keep_first_revision?: bool,
-     * } $data
+     * @param array<string, mixed> $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            maxRevisionsPerContent: $data['max_revisions_per_content'] ?? 50,
-            maxAgeDays: $data['max_age_days'] ?? 365,
-            keepPublished: $data['keep_published'] ?? true,
-            keepFirstRevision: $data['keep_first_revision'] ?? true,
+            maxRevisionsPerContent: Coerce::int($data['max_revisions_per_content'] ?? null, 50),
+            maxAgeDays: Coerce::int($data['max_age_days'] ?? null, 365),
+            keepPublished: Coerce::strictBool($data['keep_published'] ?? null, true),
+            keepFirstRevision: Coerce::strictBool($data['keep_first_revision'] ?? null, true),
         );
     }
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Fhir\Resource;
 
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Contact details (phone, fax, email, etc.).
@@ -49,20 +50,17 @@ final readonly class ContactPoint
     }
 
     /**
-     * @param array{
-     *     system?: string|null,
-     *     value?: string|null,
-     *     use?: string|null,
-     *     rank?: int|null,
-     * } $data
+     * @param array<string, mixed> $data
      */
     public static function fromArray(array $data): self
     {
+        $rank = $data['rank'] ?? null;
+
         return new self(
-            system: $data['system'] ?? null,
-            value: $data['value'] ?? null,
-            use: $data['use'] ?? null,
-            rank: $data['rank'] ?? null,
+            system: Coerce::nullableString($data['system'] ?? null),
+            value: Coerce::nullableString($data['value'] ?? null),
+            use: Coerce::nullableString($data['use'] ?? null),
+            rank: $rank === null ? null : Coerce::int($rank, 0),
         );
     }
 }

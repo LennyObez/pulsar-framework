@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Fhir\Resource;
 
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * A time period defined by a start and end date/time.
@@ -39,16 +40,13 @@ final readonly class Period
     }
 
     /**
-     * @param array{
-     *     start?: string|null,
-     *     end?: string|null,
-     * } $data
+     * @param array<string, mixed> $data
      */
     public static function fromArray(array $data): self
     {
         return new self(
-            start: $data['start'] ?? null,
-            end: $data['end'] ?? null,
+            start: Coerce::nullableString($data['start'] ?? null),
+            end: Coerce::nullableString($data['end'] ?? null),
         );
     }
 }

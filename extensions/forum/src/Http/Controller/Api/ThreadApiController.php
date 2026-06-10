@@ -136,9 +136,14 @@ final readonly class ThreadApiController
 
     /**
      * GET /api/v1/forum/threads/{id}: Show a single thread.
+     *
+     * The $request parameter is accepted (and ignored) so the method signature
+     * matches the router's controller dispatch convention used by the other
+     * verbs on this controller.
      */
-    public function show(string $id): Response
+    public function show(ServerRequestInterface $request, string $id): Response
     {
+        unset($request);
         $thread = $this->threadRepository->findById($id);
 
         if ($thread === null) {

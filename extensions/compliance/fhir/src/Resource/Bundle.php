@@ -6,9 +6,11 @@ namespace Pulsar\Extension\Fhir\Resource;
 
 use Override;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 use function array_map;
 use function array_values;
+use function is_array;
 
 /**
  * A container for a collection of resources.
@@ -85,22 +87,37 @@ final readonly class Bundle extends FhirResource
     public static function fromArray(array $data): self
     {
         $metaData = $data['meta'] ?? null;
+        $links = $data['link'] ?? null;
+        $entries = $data['entry'] ?? null;
+        $total = $data['total'] ?? null;
+
+        $linkList = [];
+        if (is_array($links)) {
+            foreach ($links as $l) {
+                if (is_array($l)) {
+                    $linkList[] = BundleLink::fromArray($l);
+                }
+            }
+        }
+
+        $entryList = [];
+        if (is_array($entries)) {
+            foreach ($entries as $e) {
+                if (is_array($e)) {
+                    $entryList[] = BundleEntry::fromArray($e);
+                }
+            }
+        }
 
         return new self(
-            id: $data['id'] ?? null,
-            meta: $metaData !== null ? Meta::fromArray($metaData) : null,
-            language: $data['language'] ?? null,
-            type: $data['type'] ?? null,
-            total: $data['total'] ?? null,
-            link: array_values(array_map(
-                static fn(array $l): BundleLink => BundleLink::fromArray($l),
-                $data['link'] ?? [],
-            )),
-            entry: array_values(array_map(
-                static fn(array $e): BundleEntry => BundleEntry::fromArray($e),
-                $data['entry'] ?? [],
-            )),
-            timestamp: $data['timestamp'] ?? null,
+            id: Coerce::nullableString($data['id'] ?? null),
+            meta: is_array($metaData) ? Meta::fromArray($metaData) : null,
+            language: Coerce::nullableString($data['language'] ?? null),
+            type: Coerce::nullableString($data['type'] ?? null),
+            total: $total === null ? null : Coerce::int($total, 0),
+            link: array_values($linkList),
+            entry: array_values($entryList),
+            timestamp: Coerce::nullableString($data['timestamp'] ?? null),
         );
     }
 }
