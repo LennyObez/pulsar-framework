@@ -6,6 +6,7 @@ namespace Pulsar\Extension\Observability\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Trace sampler configuration.
@@ -21,19 +22,15 @@ final readonly class SamplerConfig
     ) {}
 
     /**
-     * @param array{
-     *     type?: string,
-     *     probability?: float|int,
-     *     rate_per_second?: float|int,
-     * } $data
+     * @param array<string, mixed> $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            type: SamplerType::tryFrom($data['type'] ?? '') ?? SamplerType::ParentBased,
-            probability: (float) ($data['probability'] ?? 1.0),
-            ratePerSecond: (float) ($data['rate_per_second'] ?? 100.0),
+            type: SamplerType::tryFrom(Coerce::string($data['type'] ?? null)) ?? SamplerType::ParentBased,
+            probability: Coerce::float($data['probability'] ?? null, 1.0),
+            ratePerSecond: Coerce::float($data['rate_per_second'] ?? null, 100.0),
         );
     }
 }

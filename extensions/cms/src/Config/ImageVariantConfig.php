@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Cms\Config;
 
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Configuration for a single image variant (responsive size).
@@ -32,22 +33,16 @@ final readonly class ImageVariantConfig
     ) {}
 
     /**
-     * @param array{
-     *     name?: string,
-     *     max_width?: int,
-     *     max_height?: int,
-     *     format?: string,
-     *     quality?: int,
-     * } $data
+     * @param array<string, mixed> $data
      */
     public static function fromArray(array $data): self
     {
         return new self(
-            name: $data['name'] ?? '',
-            maxWidth: $data['max_width'] ?? 0,
-            maxHeight: $data['max_height'] ?? 0,
-            format: $data['format'] ?? 'original',
-            quality: $data['quality'] ?? 80,
+            name: Coerce::string($data['name'] ?? null),
+            maxWidth: Coerce::int($data['max_width'] ?? null, 0),
+            maxHeight: Coerce::int($data['max_height'] ?? null, 0),
+            format: Coerce::string($data['format'] ?? null, 'original'),
+            quality: Coerce::int($data['quality'] ?? null, 80),
         );
     }
 }

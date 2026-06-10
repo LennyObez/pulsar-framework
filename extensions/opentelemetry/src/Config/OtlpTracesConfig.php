@@ -6,6 +6,9 @@ namespace Pulsar\Extension\OpenTelemetry\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
+
+use function is_array;
 
 /**
  * Traces-specific OTLP configuration.
@@ -38,11 +41,13 @@ final readonly class OtlpTracesConfig
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
+        $allowlist = $data['attribute_allowlist'] ?? null;
+
         return new self(
-            enabled: $data['enabled'] ?? true,
-            endpoint: $data['endpoint'] ?? '',
-            attributeAllowlist: $data['attribute_allowlist'] ?? [],
-            dbStatementExport: DbStatementExport::tryFrom($data['db_statement_export'] ?? '') ?? DbStatementExport::None,
+            enabled: Coerce::strictBool($data['enabled'] ?? null, true),
+            endpoint: Coerce::string($data['endpoint'] ?? null),
+            attributeAllowlist: is_array($allowlist) ? $allowlist : [],
+            dbStatementExport: DbStatementExport::tryFrom(Coerce::string($data['db_statement_export'] ?? null)) ?? DbStatementExport::None,
         );
     }
 }
