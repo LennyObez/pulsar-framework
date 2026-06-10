@@ -6,9 +6,9 @@ namespace Pulsar\Extension\McpServer\Config;
 
 use NoDiscard;
 use Pulsar\Api\Internal;
+use Pulsar\Support\Coerce;
 
-use function array_filter;
-use function array_values;
+use function is_array;
 
 /**
  * Tool execution sub-configuration.
@@ -32,28 +32,25 @@ final readonly class McpToolsConfig
     ) {}
 
     /**
-     * @param array{
-     *     disabled_read_tools?: list<string>,
-     *     allowed_actions?: list<string>,
-     *     max_output_bytes?: int,
-     *     action_timeout?: int,
-     *     commands?: array{phpunit?: string|null, composer?: string|null, pnpm?: string|null},
-     * } $data
+     * @param array<string, mixed> $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $commandsRaw = $data['commands'] ?? [];
+        $commandsRaw = $data['commands'] ?? null;
+        if (!is_array($commandsRaw)) {
+            $commandsRaw = [];
+        }
 
         return new self(
-            disabledReadTools: array_values(array_filter($data['disabled_read_tools'] ?? [], '\is_string')),
-            allowedActions: array_values(array_filter($data['allowed_actions'] ?? [], '\is_string')),
-            maxOutputBytes: $data['max_output_bytes'] ?? 1_048_576,
-            actionTimeout: $data['action_timeout'] ?? 120,
+            disabledReadTools: Coerce::listOfString($data['disabled_read_tools'] ?? null),
+            allowedActions: Coerce::listOfString($data['allowed_actions'] ?? null),
+            maxOutputBytes: Coerce::int($data['max_output_bytes'] ?? null, 1_048_576),
+            actionTimeout: Coerce::int($data['action_timeout'] ?? null, 120),
             commands: [
-                'phpunit' => $commandsRaw['phpunit'] ?? null,
-                'composer' => $commandsRaw['composer'] ?? null,
-                'pnpm' => $commandsRaw['pnpm'] ?? null,
+                'phpunit' => Coerce::nullableString($commandsRaw['phpunit'] ?? null),
+                'composer' => Coerce::nullableString($commandsRaw['composer'] ?? null),
+                'pnpm' => Coerce::nullableString($commandsRaw['pnpm'] ?? null),
             ],
         );
     }

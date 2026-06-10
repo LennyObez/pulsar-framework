@@ -6,6 +6,9 @@ namespace Pulsar\Extension\Grpc\Manifest;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
+
+use function is_array;
 
 /**
  * A single service entry in the compiled service manifest.
@@ -26,19 +29,17 @@ final readonly class ManifestEntry
     ) {}
 
     /**
-     * @param array{
-     *     service_name?: string,
-     *     handler_class?: string,
-     *     methods?: list<array{name: string, full_name: string, type: string, input_type: string, output_type: string, handler: string}>,
-     * } $data
+     * @param array<string, mixed> $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
+        $methods = $data['methods'] ?? null;
+
         return new self(
-            serviceName: $data['service_name'] ?? '',
-            handlerClass: $data['handler_class'] ?? '',
-            methods: $data['methods'] ?? [],
+            serviceName: Coerce::string($data['service_name'] ?? null),
+            handlerClass: Coerce::string($data['handler_class'] ?? null),
+            methods: is_array($methods) ? $methods : [],
         );
     }
 
