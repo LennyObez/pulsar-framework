@@ -6,6 +6,7 @@ namespace Pulsar\Mail\Transport\Config;
 
 use NoDiscard;
 use Pulsar\Api\Internal;
+use Pulsar\Support\Coerce;
 use SensitiveParameter;
 
 /**
@@ -26,27 +27,19 @@ final readonly class SmtpTransportConfig
     ) {}
 
     /**
-     * @param array{
-     *     host?: string,
-     *     port?: int,
-     *     username?: string|null,
-     *     password?: string|null,
-     *     encryption?: string,
-     *     timeout?: int,
-     *     ehlo_hostname?: string|null,
-     * } $data
+     * @param array<string, mixed> $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            host: $data['host'] ?? 'localhost',
-            port: $data['port'] ?? 587,
-            username: $data['username'] ?? null,
-            password: $data['password'] ?? null,
-            encryption: $data['encryption'] ?? 'tls',
-            timeout: $data['timeout'] ?? 30,
-            ehloHostname: $data['ehlo_hostname'] ?? null,
+            host: Coerce::string($data['host'] ?? null, 'localhost'),
+            port: Coerce::int($data['port'] ?? null, 587),
+            username: Coerce::nullableString($data['username'] ?? null),
+            password: Coerce::nullableString($data['password'] ?? null),
+            encryption: Coerce::string($data['encryption'] ?? null, 'tls'),
+            timeout: Coerce::int($data['timeout'] ?? null, 30),
+            ehloHostname: Coerce::nullableString($data['ehlo_hostname'] ?? null),
         );
     }
 }

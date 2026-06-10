@@ -6,6 +6,7 @@ namespace Pulsar\Mail\Transport\Config;
 
 use NoDiscard;
 use Pulsar\Api\Internal;
+use Pulsar\Support\Coerce;
 use SensitiveParameter;
 
 /**
@@ -23,21 +24,16 @@ final readonly class SesTransportConfig
     ) {}
 
     /**
-     * @param array{
-     *     region?: string,
-     *     access_key?: string,
-     *     secret_key?: string,
-     *     endpoint?: string|null,
-     * } $data
+     * @param array<string, mixed> $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            region: $data['region'] ?? 'us-east-1',
-            accessKey: $data['access_key'] ?? '',
-            secretKey: $data['secret_key'] ?? '',
-            endpoint: $data['endpoint'] ?? null,
+            region: Coerce::string($data['region'] ?? null, 'us-east-1'),
+            accessKey: Coerce::string($data['access_key'] ?? null),
+            secretKey: Coerce::string($data['secret_key'] ?? null),
+            endpoint: Coerce::nullableString($data['endpoint'] ?? null),
         );
     }
 }
