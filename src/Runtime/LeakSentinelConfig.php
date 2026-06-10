@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Runtime;
 
 use Pulsar\Api\Internal;
+use Pulsar\Support\Coerce;
 
 /**
  * Configuration for the leak sentinel CI gate.
@@ -35,13 +36,13 @@ final readonly class LeakSentinelConfig
      */
     public static function fromArray(array $data): self
     {
-        $snapshotPoints = $data['snapshot_points'] ?? [];
+        $snapshotPoints = Coerce::listOfInt($data['snapshot_points'] ?? null);
 
         return new self(
-            totalRequests: $data['total_requests'] ?? 10_000,
+            totalRequests: Coerce::int($data['total_requests'] ?? null, 10_000),
             snapshotPoints: $snapshotPoints !== [] ? $snapshotPoints : [100, 1_000, 5_000, 10_000],
-            growthPercentThreshold: $data['growth_percent_threshold'] ?? 5.0,
-            growthBytesThreshold: $data['growth_bytes_threshold'] ?? 2_097_152,
+            growthPercentThreshold: Coerce::float($data['growth_percent_threshold'] ?? null, 5.0),
+            growthBytesThreshold: Coerce::int($data['growth_bytes_threshold'] ?? null, 2_097_152),
         );
     }
 }

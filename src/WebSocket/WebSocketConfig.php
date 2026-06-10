@@ -6,6 +6,7 @@ namespace Pulsar\WebSocket;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Configuration for the WebSocket server.
@@ -43,15 +44,15 @@ final readonly class WebSocketConfig
     public static function fromArray(array $data): self
     {
         return new self(
-            host: $data['host'] ?? '127.0.0.1',
-            port: $data['port'] ?? 6001,
-            maxConnections: $data['max_connections'] ?? 10_000,
-            maxPayloadSize: $data['max_payload_size'] ?? 16_777_216,
-            heartbeatIntervalSeconds: $data['heartbeat_interval'] ?? 30,
-            heartbeatTimeoutSeconds: $data['heartbeat_timeout'] ?? 60,
-            maxChannelsPerConnection: $data['max_channels_per_connection'] ?? 100,
-            enableCompression: $data['enable_compression'] ?? false,
-            path: $data['path'] ?? '/ws',
+            host: Coerce::string($data['host'] ?? null, '127.0.0.1'),
+            port: Coerce::int($data['port'] ?? null, 6001),
+            maxConnections: Coerce::int($data['max_connections'] ?? null, 10_000),
+            maxPayloadSize: Coerce::int($data['max_payload_size'] ?? null, 16_777_216),
+            heartbeatIntervalSeconds: Coerce::int($data['heartbeat_interval'] ?? null, 30),
+            heartbeatTimeoutSeconds: Coerce::int($data['heartbeat_timeout'] ?? null, 60),
+            maxChannelsPerConnection: Coerce::int($data['max_channels_per_connection'] ?? null, 100),
+            enableCompression: Coerce::strictBool($data['enable_compression'] ?? null),
+            path: Coerce::string($data['path'] ?? null, '/ws'),
         );
     }
 }
