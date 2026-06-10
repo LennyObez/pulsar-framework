@@ -6,6 +6,7 @@ namespace Pulsar\Security\Session;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 use function time;
 
@@ -26,25 +27,20 @@ final readonly class SessionMetadata
     ) {}
 
     /**
-     * @param array{
-     *     created_at?: int,
-     *     last_activity?: int,
-     *     ip_address?: string,
-     *     user_agent?: string,
-     *     user_id?: string|null,
-     *     fingerprint?: string|null,
-     * } $data
+     * @param array<string, mixed> $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
+        $now = time();
+
         return new self(
-            createdAt: $data['created_at'] ?? time(),
-            lastActivity: $data['last_activity'] ?? time(),
-            ipAddress: $data['ip_address'] ?? '',
-            userAgent: $data['user_agent'] ?? '',
-            userId: $data['user_id'] ?? null,
-            fingerprint: $data['fingerprint'] ?? null,
+            createdAt: Coerce::int($data['created_at'] ?? null, $now),
+            lastActivity: Coerce::int($data['last_activity'] ?? null, $now),
+            ipAddress: Coerce::string($data['ip_address'] ?? null),
+            userAgent: Coerce::string($data['user_agent'] ?? null),
+            userId: Coerce::nullableString($data['user_id'] ?? null),
+            fingerprint: Coerce::nullableString($data['fingerprint'] ?? null),
         );
     }
 

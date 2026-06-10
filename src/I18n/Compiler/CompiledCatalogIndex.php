@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace Pulsar\I18n\Compiler;
 
 use Pulsar\Api\Internal;
+use Pulsar\Support\Coerce;
+
+use function is_array;
 
 /**
  * Readonly DTO representing a compiled i18n catalog index.
@@ -29,20 +32,18 @@ final readonly class CompiledCatalogIndex
     ) {}
 
     /**
-     * @param array{
-     *     locales?: list<string>,
-     *     index?: array<string, array<string, list<string>>>,
-     *     file_hashes?: array<string, string>,
-     *     total_hash?: string,
-     * } $data
+     * @param array<string, mixed> $data
      */
     public static function fromArray(array $data): self
     {
+        $index = $data['index'] ?? null;
+        $fileHashes = $data['file_hashes'] ?? null;
+
         return new self(
-            locales: $data['locales'] ?? [],
-            index: $data['index'] ?? [],
-            fileHashes: $data['file_hashes'] ?? [],
-            totalHash: $data['total_hash'] ?? '',
+            locales: Coerce::listOfString($data['locales'] ?? null),
+            index: is_array($index) ? $index : [],
+            fileHashes: is_array($fileHashes) ? $fileHashes : [],
+            totalHash: Coerce::string($data['total_hash'] ?? null),
         );
     }
 

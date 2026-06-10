@@ -6,6 +6,10 @@ namespace Pulsar\Security\Waf;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
+
+use function max;
+use function min;
 
 /**
  * WAF engine configuration.
@@ -28,21 +32,16 @@ final readonly class WafConfig
     ) {}
 
     /**
-     * @param array{
-     *     enabled?: bool|int|string,
-     *     paranoia_level?: int,
-     *     bypass_ips?: list<string>,
-     *     custom_rules_path?: string|null,
-     * } $data
+     * @param array<string, mixed> $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
             enabled: (bool) ($data['enabled'] ?? true),
-            paranoiaLevel: max(1, min(4, $data['paranoia_level'] ?? 1)),
-            bypassIps: $data['bypass_ips'] ?? [],
-            customRulesPath: $data['custom_rules_path'] ?? null,
+            paranoiaLevel: max(1, min(4, Coerce::int($data['paranoia_level'] ?? null, 1))),
+            bypassIps: Coerce::listOfString($data['bypass_ips'] ?? null),
+            customRulesPath: Coerce::nullableString($data['custom_rules_path'] ?? null),
         );
     }
 }

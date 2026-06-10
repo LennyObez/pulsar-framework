@@ -6,6 +6,7 @@ namespace Pulsar\Security\SecurityTxt;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Configuration for auto-generating /.well-known/security.txt per RFC 9116.
@@ -53,14 +54,14 @@ final readonly class SecurityTxtConfig
     public static function fromArray(array $data): self
     {
         return new self(
-            contacts: $data['contacts'] ?? [],
-            expires: $data['expires'] ?? '',
-            encryption: $data['encryption'] ?? '',
-            acknowledgments: $data['acknowledgments'] ?? '',
-            policy: $data['policy'] ?? '',
-            preferredLanguages: $data['preferred_languages'] ?? [],
-            canonical: $data['canonical'] ?? '',
-            hiring: $data['hiring'] ?? [],
+            contacts: Coerce::listOfString($data['contacts'] ?? null),
+            expires: Coerce::string($data['expires'] ?? null),
+            encryption: Coerce::string($data['encryption'] ?? null),
+            acknowledgments: Coerce::string($data['acknowledgments'] ?? null),
+            policy: Coerce::string($data['policy'] ?? null),
+            preferredLanguages: Coerce::listOfString($data['preferred_languages'] ?? null),
+            canonical: Coerce::string($data['canonical'] ?? null),
+            hiring: Coerce::listOfString($data['hiring'] ?? null),
         );
     }
 }
