@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Fhir\Resource;
 
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
+
+use function is_bool;
 
 /**
  * A reference to a code defined by a terminology system (code + system + display).
@@ -64,12 +67,14 @@ final readonly class Coding
      */
     public static function fromArray(array $data): self
     {
+        $userSelected = $data['userSelected'] ?? null;
+
         return new self(
-            system: $data['system'] ?? null,
-            version: $data['version'] ?? null,
-            code: $data['code'] ?? null,
-            display: $data['display'] ?? null,
-            userSelected: $data['userSelected'] ?? null,
+            system: Coerce::nullableString($data['system'] ?? null),
+            version: Coerce::nullableString($data['version'] ?? null),
+            code: Coerce::nullableString($data['code'] ?? null),
+            display: Coerce::nullableString($data['display'] ?? null),
+            userSelected: is_bool($userSelected) ? $userSelected : null,
         );
     }
 }
