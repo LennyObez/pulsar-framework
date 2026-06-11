@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Forum\Config;
 
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
+
+use function is_array;
 
 /**
  * Top-level forum configuration DTO.
@@ -63,19 +66,23 @@ final readonly class ForumConfig
      */
     public static function fromArray(array $data): self
     {
+        $mod = $data['moderation'] ?? null;
+        $rep = $data['reputation'] ?? null;
+        $bad = $data['badges'] ?? null;
+
         return new self(
-            threadsPerPage: $data['threads_per_page'] ?? 25,
-            postsPerPage: $data['posts_per_page'] ?? 20,
-            postCooldownSeconds: $data['post_cooldown_seconds'] ?? 30,
+            threadsPerPage: Coerce::int($data['threads_per_page'] ?? null, 25),
+            postsPerPage: Coerce::int($data['posts_per_page'] ?? null, 20),
+            postCooldownSeconds: Coerce::int($data['post_cooldown_seconds'] ?? null, 30),
             requireThreadApproval: (bool) ($data['require_thread_approval'] ?? false),
             allowGuestViewing: (bool) ($data['allow_guest_viewing'] ?? true),
-            maxTitleLength: $data['max_title_length'] ?? 200,
-            maxBodyLength: $data['max_body_length'] ?? 50_000,
-            maxTagsPerThread: $data['max_tags_per_thread'] ?? 5,
-            editWindowMinutes: $data['edit_window_minutes'] ?? 30,
-            moderation: ModerationConfig::fromArray($data['moderation'] ?? []),
-            reputation: ReputationConfig::fromArray($data['reputation'] ?? []),
-            badges: BadgeConfig::fromArray($data['badges'] ?? []),
+            maxTitleLength: Coerce::int($data['max_title_length'] ?? null, 200),
+            maxBodyLength: Coerce::int($data['max_body_length'] ?? null, 50_000),
+            maxTagsPerThread: Coerce::int($data['max_tags_per_thread'] ?? null, 5),
+            editWindowMinutes: Coerce::int($data['edit_window_minutes'] ?? null, 30),
+            moderation: ModerationConfig::fromArray(is_array($mod) ? $mod : []),
+            reputation: ReputationConfig::fromArray(is_array($rep) ? $rep : []),
+            badges: BadgeConfig::fromArray(is_array($bad) ? $bad : []),
         );
     }
 }
