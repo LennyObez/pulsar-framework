@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Cms\Media\Metadata;
 
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 use function array_filter;
 use function count;
@@ -12,6 +13,7 @@ use function floatval;
 use function is_array;
 use function is_float;
 use function is_int;
+use function is_numeric;
 use function is_string;
 use function round;
 
@@ -180,26 +182,41 @@ final readonly class MediaMetadata
      */
     public static function fromArray(array $data): self
     {
+        $nullableFloat = static function (mixed $v): ?float {
+            if ($v === null) {
+                return null;
+            }
+            if (is_float($v) || is_int($v)) {
+                return (float) $v;
+            }
+            if (is_string($v) && is_numeric($v)) {
+                return (float) $v;
+            }
+
+            return null;
+        };
+        $optInt = static fn(mixed $v): ?int => $v === null ? null : (is_int($v) ? $v : null);
+
         return new self(
-            dateTaken: $data['date_taken'] ?? null,
-            gpsLatitude: self::toNullableFloat($data['gps_latitude'] ?? null),
-            gpsLongitude: self::toNullableFloat($data['gps_longitude'] ?? null),
-            cameraMake: $data['camera_make'] ?? null,
-            cameraModel: $data['camera_model'] ?? null,
-            lens: $data['lens'] ?? null,
-            focalLength: $data['focal_length'] ?? null,
-            aperture: $data['aperture'] ?? null,
-            exposureTime: $data['exposure_time'] ?? null,
-            iso: $data['iso'] ?? null,
-            flash: $data['flash'] ?? null,
-            whiteBalance: $data['white_balance'] ?? null,
-            orientation: $data['orientation'] ?? null,
-            colorSpace: $data['color_space'] ?? null,
-            xResolution: $data['x_resolution'] ?? null,
-            yResolution: $data['y_resolution'] ?? null,
-            software: $data['software'] ?? null,
-            copyright: $data['copyright'] ?? null,
-            description: $data['description'] ?? null,
+            dateTaken: Coerce::nullableString($data['date_taken'] ?? null),
+            gpsLatitude: $nullableFloat($data['gps_latitude'] ?? null),
+            gpsLongitude: $nullableFloat($data['gps_longitude'] ?? null),
+            cameraMake: Coerce::nullableString($data['camera_make'] ?? null),
+            cameraModel: Coerce::nullableString($data['camera_model'] ?? null),
+            lens: Coerce::nullableString($data['lens'] ?? null),
+            focalLength: Coerce::nullableString($data['focal_length'] ?? null),
+            aperture: Coerce::nullableString($data['aperture'] ?? null),
+            exposureTime: Coerce::nullableString($data['exposure_time'] ?? null),
+            iso: $optInt($data['iso'] ?? null),
+            flash: Coerce::nullableString($data['flash'] ?? null),
+            whiteBalance: Coerce::nullableString($data['white_balance'] ?? null),
+            orientation: $optInt($data['orientation'] ?? null),
+            colorSpace: Coerce::nullableString($data['color_space'] ?? null),
+            xResolution: $optInt($data['x_resolution'] ?? null),
+            yResolution: $optInt($data['y_resolution'] ?? null),
+            software: Coerce::nullableString($data['software'] ?? null),
+            copyright: Coerce::nullableString($data['copyright'] ?? null),
+            description: Coerce::nullableString($data['description'] ?? null),
         );
     }
 
