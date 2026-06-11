@@ -5,11 +5,9 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Cms\Media\Audio;
 
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 use function array_filter;
-use function is_float;
-use function is_int;
-use function is_string;
 use function sprintf;
 
 /**
@@ -57,20 +55,23 @@ final readonly class AudioMetadata
      */
     public static function fromArray(array $data): self
     {
+        $optInt = static fn(mixed $v): ?int => $v === null ? null : Coerce::int($v, 0);
+        $duration = $data['duration'] ?? null;
+
         return new self(
-            title: $data['title'] ?? null,
-            artist: $data['artist'] ?? null,
-            album: $data['album'] ?? null,
-            genre: $data['genre'] ?? null,
-            year: $data['year'] ?? null,
-            trackNumber: $data['track_number'] ?? null,
-            duration: self::toNullableFloat($data['duration'] ?? null),
-            bitrate: $data['bitrate'] ?? null,
-            sampleRate: $data['sample_rate'] ?? null,
-            channels: $data['channels'] ?? null,
-            codec: $data['codec'] ?? null,
-            format: $data['format'] ?? null,
-            fileSize: $data['file_size'] ?? null,
+            title: Coerce::nullableString($data['title'] ?? null),
+            artist: Coerce::nullableString($data['artist'] ?? null),
+            album: Coerce::nullableString($data['album'] ?? null),
+            genre: Coerce::nullableString($data['genre'] ?? null),
+            year: $optInt($data['year'] ?? null),
+            trackNumber: $optInt($data['track_number'] ?? null),
+            duration: $duration === null ? null : Coerce::float($duration, 0.0),
+            bitrate: $optInt($data['bitrate'] ?? null),
+            sampleRate: $optInt($data['sample_rate'] ?? null),
+            channels: $optInt($data['channels'] ?? null),
+            codec: Coerce::nullableString($data['codec'] ?? null),
+            format: Coerce::nullableString($data['format'] ?? null),
+            fileSize: $optInt($data['file_size'] ?? null),
         );
     }
 
@@ -123,24 +124,4 @@ final readonly class AudioMetadata
         return 'Untitled';
     }
 
-    private static function toNullableFloat(mixed $value): ?float
-    {
-        if ($value === null) {
-            return null;
-        }
-
-        if (is_float($value)) {
-            return $value;
-        }
-
-        if (is_int($value)) {
-            return (float) $value;
-        }
-
-        if (is_string($value) && is_numeric($value)) {
-            return (float) $value;
-        }
-
-        return null;
-    }
 }

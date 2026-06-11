@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Cms\Media\Audio;
 
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 use function is_array;
+use function is_string;
 
 /**
  * Configuration for audio processing and transcoding.
@@ -50,9 +52,12 @@ final readonly class AudioConfig
     public static function fromArray(array $data): self
     {
         $presets = [];
-        foreach ($data['transcode_presets'] ?? [] as $name => $preset) {
-            if (is_array($preset)) {
-                $presets[$name] = AudioTranscodePreset::fromArray($preset);
+        $rawPresets = $data['transcode_presets'] ?? null;
+        if (is_array($rawPresets)) {
+            foreach ($rawPresets as $name => $preset) {
+                if (is_string($name) && is_array($preset)) {
+                    $presets[$name] = AudioTranscodePreset::fromArray($preset);
+                }
             }
         }
 
@@ -61,13 +66,13 @@ final readonly class AudioConfig
         }
 
         return new self(
-            ffmpegPath: $data['ffmpeg_path'] ?? 'ffmpeg',
-            ffprobePath: $data['ffprobe_path'] ?? 'ffprobe',
-            maxUploadSize: $data['max_upload_size'] ?? 104_857_600,
-            processTimeout: $data['process_timeout'] ?? 300,
+            ffmpegPath: Coerce::string($data['ffmpeg_path'] ?? null, 'ffmpeg'),
+            ffprobePath: Coerce::string($data['ffprobe_path'] ?? null, 'ffprobe'),
+            maxUploadSize: Coerce::int($data['max_upload_size'] ?? null, 104_857_600),
+            processTimeout: Coerce::int($data['process_timeout'] ?? null, 300),
             transcodePresets: $presets,
-            waveformEnabled: $data['waveform_enabled'] ?? true,
-            waveformSamples: $data['waveform_samples'] ?? 256,
+            waveformEnabled: Coerce::strictBool($data['waveform_enabled'] ?? null, true),
+            waveformSamples: Coerce::int($data['waveform_samples'] ?? null, 256),
         );
     }
 
