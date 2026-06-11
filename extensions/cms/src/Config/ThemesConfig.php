@@ -5,8 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Cms\Config;
 
 use Pulsar\Api\Api;
-
-use function array_values;
+use Pulsar\Support\Coerce;
 
 /**
  * Theme system configuration.
@@ -50,16 +49,14 @@ final readonly class ThemesConfig
      */
     public static function fromArray(array $data): self
     {
-        $trustedPublicKeys = array_values($data['trusted_public_keys'] ?? []);
-
         return new self(
-            storagePath: $data['storage_path'] ?? 'storage/cms/themes',
-            assetDeployMode: $data['asset_deploy_mode'] ?? 'copy',
-            requireSignedThemes: $data['require_signed_themes'] ?? true,
-            trustedPublicKeys: $trustedPublicKeys,
-            integrityCheckOnBoot: $data['integrity_check_on_boot'] ?? true,
-            maxArchiveSize: $data['max_archive_size'] ?? 52_428_800,
-            maxFileCount: $data['max_file_count'] ?? 10_000,
+            storagePath: Coerce::string($data['storage_path'] ?? null, 'storage/cms/themes'),
+            assetDeployMode: Coerce::string($data['asset_deploy_mode'] ?? null, 'copy'),
+            requireSignedThemes: Coerce::strictBool($data['require_signed_themes'] ?? null, true),
+            trustedPublicKeys: Coerce::listOfString($data['trusted_public_keys'] ?? null),
+            integrityCheckOnBoot: Coerce::strictBool($data['integrity_check_on_boot'] ?? null, true),
+            maxArchiveSize: Coerce::int($data['max_archive_size'] ?? null, 52_428_800),
+            maxFileCount: Coerce::int($data['max_file_count'] ?? null, 10_000),
         );
     }
 }

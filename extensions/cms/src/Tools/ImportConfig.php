@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Cms\Tools;
 
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
-use function array_filter;
-use function array_values;
+use function array_key_exists;
 
 /**
  * Configuration for CMS import operations.
@@ -47,15 +47,15 @@ final readonly class ImportConfig
      */
     public static function fromArray(array $data): self
     {
-        $allowedLocales = isset($data['allowed_locales'])
-            ? array_values(array_filter($data['allowed_locales'], 'is_string'))
+        $allowedLocales = array_key_exists('allowed_locales', $data)
+            ? Coerce::listOfString($data['allowed_locales'])
             : null;
 
         return new self(
-            maxImportSizeBytes: $data['max_import_size_bytes'] ?? self::DEFAULT_MAX_IMPORT_SIZE,
-            allowExternalMediaDownload: $data['allow_external_media_download'] ?? true,
-            dryRunDefault: $data['dry_run_default'] ?? true,
-            duplicatePolicy: DuplicateResolutionPolicy::tryFrom($data['duplicate_policy'] ?? '')
+            maxImportSizeBytes: Coerce::int($data['max_import_size_bytes'] ?? null, self::DEFAULT_MAX_IMPORT_SIZE),
+            allowExternalMediaDownload: Coerce::strictBool($data['allow_external_media_download'] ?? null, true),
+            dryRunDefault: Coerce::strictBool($data['dry_run_default'] ?? null, true),
+            duplicatePolicy: DuplicateResolutionPolicy::tryFrom(Coerce::string($data['duplicate_policy'] ?? null))
                 ?? DuplicateResolutionPolicy::Skip,
             allowedLocales: $allowedLocales,
         );

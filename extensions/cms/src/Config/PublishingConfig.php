@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Cms\Config;
 
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Multi-channel publishing configuration.
@@ -42,8 +43,8 @@ final readonly class PublishingConfig
         return new self(
             rssEnabled: (bool) ($data['rss_enabled'] ?? false),
             staticSiteEnabled: (bool) ($data['static_site_enabled'] ?? false),
-            staticSiteOutputPath: $data['static_site_output_path'] ?? './public/static',
-            rssFeedPath: $data['rss_feed_path'] ?? './public/feed.xml',
+            staticSiteOutputPath: Coerce::string($data['static_site_output_path'] ?? null, './public/static'),
+            rssFeedPath: Coerce::string($data['rss_feed_path'] ?? null, './public/feed.xml'),
         );
     }
 }
