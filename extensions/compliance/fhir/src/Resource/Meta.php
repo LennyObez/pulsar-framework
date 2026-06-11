@@ -6,9 +6,11 @@ namespace Pulsar\Extension\Fhir\Resource;
 
 use DateTimeImmutable;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 use function array_map;
-use function array_values;
+use function is_array;
+use function is_string;
 
 /**
  * FHIR Resource metadata.
@@ -85,19 +87,35 @@ final readonly class Meta
      */
     public static function fromArray(array $data): self
     {
+        $lastUpdated = $data['lastUpdated'] ?? null;
+        $rawSecurity = $data['security'] ?? null;
+        $rawTag = $data['tag'] ?? null;
+
+        $security = [];
+        if (is_array($rawSecurity)) {
+            foreach ($rawSecurity as $c) {
+                if (is_array($c)) {
+                    $security[] = Coding::fromArray($c);
+                }
+            }
+        }
+
+        $tag = [];
+        if (is_array($rawTag)) {
+            foreach ($rawTag as $c) {
+                if (is_array($c)) {
+                    $tag[] = Coding::fromArray($c);
+                }
+            }
+        }
+
         return new self(
-            versionId: $data['versionId'] ?? null,
-            lastUpdated: isset($data['lastUpdated']) ? new DateTimeImmutable($data['lastUpdated']) : null,
-            source: $data['source'] ?? null,
-            profile: $data['profile'] ?? [],
-            security: array_values(array_map(
-                static fn(array $c): Coding => Coding::fromArray($c),
-                $data['security'] ?? [],
-            )),
-            tag: array_values(array_map(
-                static fn(array $c): Coding => Coding::fromArray($c),
-                $data['tag'] ?? [],
-            )),
+            versionId: Coerce::nullableString($data['versionId'] ?? null),
+            lastUpdated: is_string($lastUpdated) ? new DateTimeImmutable($lastUpdated) : null,
+            source: Coerce::nullableString($data['source'] ?? null),
+            profile: Coerce::listOfString($data['profile'] ?? null),
+            security: $security,
+            tag: $tag,
         );
     }
 }

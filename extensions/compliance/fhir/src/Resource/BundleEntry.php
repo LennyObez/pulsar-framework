@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Fhir\Resource;
 
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
+
+use function is_array;
 
 /**
  * An entry in a FHIR Bundle.
@@ -63,11 +66,15 @@ final readonly class BundleEntry
      */
     public static function fromArray(array $data): self
     {
+        $resource = $data['resource'] ?? null;
+        $request = $data['request'] ?? null;
+        $response = $data['response'] ?? null;
+
         return new self(
-            fullUrl: $data['fullUrl'] ?? null,
-            resource: $data['resource'] ?? null,
-            request: $data['request'] ?? null,
-            response: $data['response'] ?? null,
+            fullUrl: Coerce::nullableString($data['fullUrl'] ?? null),
+            resource: is_array($resource) ? $resource : null,
+            request: is_array($request) ? $request : null,
+            response: is_array($response) ? $response : null,
         );
     }
 }

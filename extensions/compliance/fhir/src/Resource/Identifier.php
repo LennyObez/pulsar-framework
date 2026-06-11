@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Fhir\Resource;
 
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
+
+use function is_array;
 
 /**
  * A technical identifier for a resource, distinct from the resource's FHIR ID.
@@ -61,10 +64,10 @@ final readonly class Identifier
         $typeData = $data['type'] ?? null;
 
         return new self(
-            use: $data['use'] ?? null,
-            type: $typeData !== null ? CodeableConcept::fromArray($typeData) : null,
-            system: $data['system'] ?? null,
-            value: $data['value'] ?? null,
+            use: Coerce::nullableString($data['use'] ?? null),
+            type: is_array($typeData) ? CodeableConcept::fromArray($typeData) : null,
+            system: Coerce::nullableString($data['system'] ?? null),
+            value: Coerce::nullableString($data['value'] ?? null),
         );
     }
 }

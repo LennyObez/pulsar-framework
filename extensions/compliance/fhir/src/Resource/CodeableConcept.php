@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Fhir\Resource;
 
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 use function array_map;
-use function array_values;
+use function is_array;
 
 /**
  * A CodeableConcept represents a value that is usually supplied by providing
@@ -57,12 +58,19 @@ final readonly class CodeableConcept
      */
     public static function fromArray(array $data): self
     {
+        $rawCoding = $data['coding'] ?? null;
+        $codingList = [];
+        if (is_array($rawCoding)) {
+            foreach ($rawCoding as $c) {
+                if (is_array($c)) {
+                    $codingList[] = Coding::fromArray($c);
+                }
+            }
+        }
+
         return new self(
-            coding: array_values(array_map(
-                static fn(array $c): Coding => Coding::fromArray($c),
-                $data['coding'] ?? [],
-            )),
-            text: $data['text'] ?? null,
+            coding: $codingList,
+            text: Coerce::nullableString($data['text'] ?? null),
         );
     }
 }
