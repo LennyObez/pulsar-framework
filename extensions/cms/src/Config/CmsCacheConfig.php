@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Cms\Config;
 
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * CMS caching configuration.
@@ -43,11 +44,11 @@ final readonly class CmsCacheConfig
     public static function fromArray(array $data): self
     {
         return new self(
-            pageCacheTtlSeconds: $data['page_cache_ttl_seconds'] ?? 3600,
-            stampedeProtection: $data['stampede_protection'] ?? true,
-            earlyRecomputeBeta: $data['early_recompute_beta'] ?? 10,
-            staleGracePeriodSeconds: $data['stale_grace_period_seconds'] ?? 300,
-            lockTimeoutSeconds: $data['lock_timeout_seconds'] ?? 5,
+            pageCacheTtlSeconds: Coerce::int($data['page_cache_ttl_seconds'] ?? null, 3600),
+            stampedeProtection: Coerce::strictBool($data['stampede_protection'] ?? null, true),
+            earlyRecomputeBeta: Coerce::int($data['early_recompute_beta'] ?? null, 10),
+            staleGracePeriodSeconds: Coerce::int($data['stale_grace_period_seconds'] ?? null, 300),
+            lockTimeoutSeconds: Coerce::int($data['lock_timeout_seconds'] ?? null, 5),
         );
     }
 }
