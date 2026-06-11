@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Cms\Media\Document;
 
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 use function array_filter;
 use function sprintf;
@@ -48,17 +49,19 @@ final readonly class DocumentMetadata
      */
     public static function fromArray(array $data): self
     {
+        $optInt = static fn(mixed $v): ?int => $v === null ? null : Coerce::int($v, 0);
+
         return new self(
-            title: $data['title'] ?? null,
-            author: $data['author'] ?? null,
-            subject: $data['subject'] ?? null,
-            creator: $data['creator'] ?? null,
-            producer: $data['producer'] ?? null,
-            pageCount: $data['page_count'] ?? null,
-            creationDate: $data['creation_date'] ?? null,
-            modificationDate: $data['modification_date'] ?? null,
-            pdfVersion: $data['pdf_version'] ?? null,
-            fileSize: $data['file_size'] ?? null,
+            title: Coerce::nullableString($data['title'] ?? null),
+            author: Coerce::nullableString($data['author'] ?? null),
+            subject: Coerce::nullableString($data['subject'] ?? null),
+            creator: Coerce::nullableString($data['creator'] ?? null),
+            producer: Coerce::nullableString($data['producer'] ?? null),
+            pageCount: $optInt($data['page_count'] ?? null),
+            creationDate: Coerce::nullableString($data['creation_date'] ?? null),
+            modificationDate: Coerce::nullableString($data['modification_date'] ?? null),
+            pdfVersion: Coerce::nullableString($data['pdf_version'] ?? null),
+            fileSize: $optInt($data['file_size'] ?? null),
         );
     }
 
