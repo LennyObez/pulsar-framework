@@ -5,8 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Cms\Config;
 
 use Pulsar\Api\Api;
-
-use function array_values;
+use Pulsar\Support\Coerce;
 
 /**
  * Form submission pipeline configuration.
@@ -45,11 +44,11 @@ final readonly class FormsConfig
     public static function fromArray(array $data): self
     {
         return new self(
-            spamThreshold: (float) ($data['spam_threshold'] ?? 5.0),
-            rateLimitPerHour: $data['rate_limit_per_hour'] ?? 10,
-            notificationRecipients: array_values($data['notification_recipients'] ?? []),
-            honeypotFieldName: $data['honeypot_field_name'] ?? '_hp_field',
-            powDifficulty: $data['pow_difficulty'] ?? '0000',
+            spamThreshold: Coerce::float($data['spam_threshold'] ?? null, 5.0),
+            rateLimitPerHour: Coerce::int($data['rate_limit_per_hour'] ?? null, 10),
+            notificationRecipients: Coerce::listOfString($data['notification_recipients'] ?? null),
+            honeypotFieldName: Coerce::string($data['honeypot_field_name'] ?? null, '_hp_field'),
+            powDifficulty: Coerce::string($data['pow_difficulty'] ?? null, '0000'),
         );
     }
 }

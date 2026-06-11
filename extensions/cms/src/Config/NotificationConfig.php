@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Cms\Config;
 
 use Pulsar\Api\Api;
-
-use function array_filter;
-use function array_values;
+use Pulsar\Support\Coerce;
 
 /**
  * CMS workflow notification configuration.
@@ -45,11 +43,9 @@ final readonly class NotificationConfig
      */
     public static function fromArray(array $data): self
     {
-        $channels = array_values(array_filter($data['channels'] ?? ['log'], 'is_string'));
-
         return new self(
             enabled: (bool) ($data['enabled'] ?? false),
-            channels: $channels,
+            channels: Coerce::listOfString($data['channels'] ?? null, ['log']),
             notifyOnPublish: (bool) ($data['notify_on_publish'] ?? true),
             notifyOnReview: (bool) ($data['notify_on_review'] ?? true),
             notifyOnComment: (bool) ($data['notify_on_comment'] ?? true),
