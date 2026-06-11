@@ -6,6 +6,7 @@ namespace Pulsar\Extension\Payments\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * iDEAL payment gateway configuration.
@@ -33,7 +34,7 @@ final readonly class IdealConfig
     {
         return new self(
             enabled: (bool) ($data['enabled'] ?? false),
-            provider: $data['provider'] ?? 'stripe',
+            provider: Coerce::string($data['provider'] ?? null, 'stripe'),
         );
     }
 }

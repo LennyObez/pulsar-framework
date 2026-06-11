@@ -6,6 +6,7 @@ namespace Pulsar\Extension\Payments\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Bancontact payment gateway configuration.
@@ -33,7 +34,7 @@ final readonly class BancontactConfig
     {
         return new self(
             enabled: (bool) ($data['enabled'] ?? false),
-            preferredLanguage: $data['preferred_language'] ?? 'nl',
+            preferredLanguage: Coerce::string($data['preferred_language'] ?? null, 'nl'),
         );
     }
 }

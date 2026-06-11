@@ -6,6 +6,7 @@ namespace Pulsar\Extension\Payments\Domain;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Immutable seller/company profile for invoice rendering.
@@ -79,24 +80,24 @@ final readonly class SellerProfile
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $logoPath = $data['logo_path'] ?? null;
+        $logoPath = Coerce::nullableString($data['logo_path'] ?? null);
 
         return new self(
-            companyName: $data['company_name'] ?? '',
-            legalForm: $data['legal_form'] ?? '',
-            vatNumber: $data['vat_number'] ?? '',
-            registrationNumber: $data['registration_number'] ?? '',
-            addressLine1: $data['address_line1'] ?? '',
-            addressLine2: $data['address_line2'] ?? '',
-            city: $data['city'] ?? '',
-            postalCode: $data['postal_code'] ?? '',
-            country: $data['country'] ?? '',
-            iban: $data['iban'] ?? '',
-            bic: $data['bic'] ?? '',
-            bankName: $data['bank_name'] ?? '',
-            phone: $data['phone'] ?? '',
-            email: $data['email'] ?? '',
-            website: $data['website'] ?? '',
+            companyName: Coerce::string($data['company_name'] ?? null),
+            legalForm: Coerce::string($data['legal_form'] ?? null),
+            vatNumber: Coerce::string($data['vat_number'] ?? null),
+            registrationNumber: Coerce::string($data['registration_number'] ?? null),
+            addressLine1: Coerce::string($data['address_line1'] ?? null),
+            addressLine2: Coerce::string($data['address_line2'] ?? null),
+            city: Coerce::string($data['city'] ?? null),
+            postalCode: Coerce::string($data['postal_code'] ?? null),
+            country: Coerce::string($data['country'] ?? null),
+            iban: Coerce::string($data['iban'] ?? null),
+            bic: Coerce::string($data['bic'] ?? null),
+            bankName: Coerce::string($data['bank_name'] ?? null),
+            phone: Coerce::string($data['phone'] ?? null),
+            email: Coerce::string($data['email'] ?? null),
+            website: Coerce::string($data['website'] ?? null),
             logoPath: ($logoPath !== null && $logoPath !== '') ? $logoPath : null,
         );
     }

@@ -6,6 +6,7 @@ namespace Pulsar\Extension\Payments\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Payconiq payment gateway configuration.
@@ -42,13 +43,13 @@ final readonly class PayconiqConfig
     public static function fromArray(array $data): self
     {
         return new self(
-            merchantId: $data['merchant_id'] ?? '',
-            apiKey: $data['api_key'] ?? '',
-            webhookSecret: $data['webhook_secret'] ?? '',
-            environment: $data['environment'] ?? 'ext',
+            merchantId: Coerce::string($data['merchant_id'] ?? null),
+            apiKey: Coerce::string($data['api_key'] ?? null),
+            webhookSecret: Coerce::string($data['webhook_secret'] ?? null),
+            environment: Coerce::string($data['environment'] ?? null, 'ext'),
             enabled: (bool) ($data['enabled'] ?? false),
-            callbackUrl: $data['callback_url'] ?? '',
-            paymentExpirySeconds: $data['payment_expiry_seconds'] ?? 900,
+            callbackUrl: Coerce::string($data['callback_url'] ?? null),
+            paymentExpirySeconds: Coerce::int($data['payment_expiry_seconds'] ?? null, 900),
         );
     }
 

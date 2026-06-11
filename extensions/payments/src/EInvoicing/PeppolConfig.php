@@ -6,6 +6,7 @@ namespace Pulsar\Extension\Payments\EInvoicing;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Peppol Access Point configuration.
@@ -42,11 +43,11 @@ final readonly class PeppolConfig
     {
         return new self(
             enabled: (bool) ($data['enabled'] ?? false),
-            accessPointUrl: $data['access_point_url'] ?? '',
-            senderId: $data['sender_id'] ?? '',
-            senderScheme: $data['sender_scheme'] ?? '0088',
-            receiverLookupEndpoint: $data['receiver_lookup_endpoint'] ?? null,
-            signingKeyPath: $data['signing_key_path'] ?? null,
+            accessPointUrl: Coerce::string($data['access_point_url'] ?? null),
+            senderId: Coerce::string($data['sender_id'] ?? null),
+            senderScheme: Coerce::string($data['sender_scheme'] ?? null, '0088'),
+            receiverLookupEndpoint: Coerce::nullableString($data['receiver_lookup_endpoint'] ?? null),
+            signingKeyPath: Coerce::nullableString($data['signing_key_path'] ?? null),
         );
     }
 
