@@ -6,7 +6,9 @@ namespace Pulsar\Extension\Payments\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
+use function is_array;
 use function is_string;
 use function strtoupper;
 
@@ -82,25 +84,27 @@ final readonly class PaymentsConfig
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
+        $sub = static fn(string $k): array => is_array($data[$k] ?? null) ? $data[$k] : [];
+
         return new self(
-            provider: $data['provider'] ?? 'null',
-            defaultCurrency: $data['default_currency'] ?? 'USD',
-            webhook: WebhookConfig::fromArray($data['webhook'] ?? []),
-            idempotency: IdempotencyConfig::fromArray($data['idempotency'] ?? []),
-            webhookLog: WebhookLogConfig::fromArray($data['webhook_log'] ?? []),
-            stripe: StripeConfig::fromArray($data['stripe'] ?? []),
-            paypal: PayPalConfig::fromArray($data['paypal'] ?? []),
-            sepa: SepaConfig::fromArray($data['sepa'] ?? []),
-            mobile: MobileConfig::fromArray($data['mobile'] ?? []),
-            payconiq: PayconiqConfig::fromArray($data['payconiq'] ?? []),
-            bancontact: BancontactConfig::fromArray($data['bancontact'] ?? []),
-            ideal: IdealConfig::fromArray($data['ideal'] ?? []),
-            klarna: KlarnaConfig::fromArray($data['klarna'] ?? []),
+            provider: Coerce::string($data['provider'] ?? null, 'null'),
+            defaultCurrency: Coerce::string($data['default_currency'] ?? null, 'USD'),
+            webhook: WebhookConfig::fromArray($sub('webhook')),
+            idempotency: IdempotencyConfig::fromArray($sub('idempotency')),
+            webhookLog: WebhookLogConfig::fromArray($sub('webhook_log')),
+            stripe: StripeConfig::fromArray($sub('stripe')),
+            paypal: PayPalConfig::fromArray($sub('paypal')),
+            sepa: SepaConfig::fromArray($sub('sepa')),
+            mobile: MobileConfig::fromArray($sub('mobile')),
+            payconiq: PayconiqConfig::fromArray($sub('payconiq')),
+            bancontact: BancontactConfig::fromArray($sub('bancontact')),
+            ideal: IdealConfig::fromArray($sub('ideal')),
+            klarna: KlarnaConfig::fromArray($sub('klarna')),
             subscriptionsEnabled: (bool) ($data['subscriptions_enabled'] ?? true),
-            invoiceRetentionDays: $data['invoice_retention_days'] ?? 3650,
-            dunningMaxRetries: $data['dunning_max_retries'] ?? 4,
-            trialMaxDays: $data['trial_max_days'] ?? 30,
-            countryPaymentMethods: self::parseCountryPaymentMethods($data['country_payment_methods'] ?? []),
+            invoiceRetentionDays: Coerce::int($data['invoice_retention_days'] ?? null, 3650),
+            dunningMaxRetries: Coerce::int($data['dunning_max_retries'] ?? null, 4),
+            trialMaxDays: Coerce::int($data['trial_max_days'] ?? null, 30),
+            countryPaymentMethods: self::parseCountryPaymentMethods(is_array($data['country_payment_methods'] ?? null) ? $data['country_payment_methods'] : []),
             requireTenantContext: (bool) ($data['require_tenant_context'] ?? false),
         );
     }
@@ -108,7 +112,7 @@ final readonly class PaymentsConfig
     /**
      * Parse per-country payment method overrides.
      *
-     * @param array<string, list<string>> $raw Raw config value
+     * @param array<array-key, mixed> $raw Raw config value
      * @return array<string, list<string>>
      */
     private static function parseCountryPaymentMethods(array $raw): array
@@ -116,6 +120,9 @@ final readonly class PaymentsConfig
         $result = [];
 
         foreach ($raw as $code => $methods) {
+            if (!is_string($code) || !is_array($methods)) {
+                continue;
+            }
             $filtered = [];
 
             foreach ($methods as $method) {

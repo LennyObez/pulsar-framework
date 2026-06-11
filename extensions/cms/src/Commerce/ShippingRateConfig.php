@@ -5,8 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Cms\Commerce;
 
 use Pulsar\Api\Api;
-
-use function array_values;
+use Pulsar\Support\Coerce;
 
 /**
  * Configuration for a single shipping rate rule.
@@ -44,13 +43,16 @@ final readonly class ShippingRateConfig
      */
     public static function fromArray(array $data): self
     {
+        $freeThreshold = $data['free_threshold'] ?? null;
+        $estimatedDays = $data['estimated_days'] ?? null;
+
         return new self(
-            method: ShippingMethod::from($data['method'] ?? 'standard'),
-            baseAmount: $data['base_amount'] ?? 0,
-            perItemAmount: $data['per_item_amount'] ?? 0,
-            freeThreshold: $data['free_threshold'] ?? null,
-            estimatedDays: $data['estimated_days'] ?? null,
-            countryCodes: array_values($data['country_codes'] ?? []),
+            method: ShippingMethod::from(Coerce::string($data['method'] ?? null, 'standard')),
+            baseAmount: Coerce::int($data['base_amount'] ?? null, 0),
+            perItemAmount: Coerce::int($data['per_item_amount'] ?? null, 0),
+            freeThreshold: $freeThreshold === null ? null : Coerce::int($freeThreshold, 0),
+            estimatedDays: $estimatedDays === null ? null : Coerce::int($estimatedDays, 0),
+            countryCodes: Coerce::listOfString($data['country_codes'] ?? null),
         );
     }
 }
