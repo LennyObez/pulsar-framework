@@ -6,6 +6,7 @@ namespace Pulsar\Extension\OpenTelemetry\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Cardinality limiting configuration.
@@ -31,9 +32,9 @@ final readonly class CardinalityConfig
     public static function fromArray(array $data): self
     {
         return new self(
-            maxAttributeKeys: $data['max_attribute_keys'] ?? 1000,
-            maxMetricSeries: $data['max_metric_series'] ?? 2000,
-            normalizeUrls: $data['normalize_urls'] ?? true,
+            maxAttributeKeys: Coerce::int($data['max_attribute_keys'] ?? null, 1000),
+            maxMetricSeries: Coerce::int($data['max_metric_series'] ?? null, 2000),
+            normalizeUrls: Coerce::strictBool($data['normalize_urls'] ?? null, true),
         );
     }
 }
