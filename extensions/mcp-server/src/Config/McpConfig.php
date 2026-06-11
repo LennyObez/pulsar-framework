@@ -7,6 +7,9 @@ namespace Pulsar\Extension\McpServer\Config;
 use NoDiscard;
 use Pulsar\Api\Internal;
 use Pulsar\Config\Environment;
+use Pulsar\Support\Coerce;
+
+use function is_array;
 
 /**
  * Top-level MCP server configuration DTO.
@@ -45,14 +48,18 @@ final readonly class McpConfig
             ? ($envEnabled === '1' || $envEnabled === 'true')
             : (bool) ($data['enabled'] ?? false);
 
-        $clientId = $environment->get('MCP_CLIENT_ID') ?? $data['client_id'] ?? 'default';
+        $clientIdEnv = $environment->get('MCP_CLIENT_ID');
+        $clientId = $clientIdEnv ?? Coerce::string($data['client_id'] ?? null, 'default');
+
+        $tools = $data['tools'] ?? null;
+        $security = $data['security'] ?? null;
 
         return new self(
             enabled: $enabled,
             clientId: $clientId,
-            projectRoot: $data['project_root'] ?? '',
-            tools: McpToolsConfig::fromArray($data['tools'] ?? []),
-            security: McpSecurityConfig::fromArray($data['security'] ?? []),
+            projectRoot: Coerce::string($data['project_root'] ?? null),
+            tools: McpToolsConfig::fromArray(is_array($tools) ? $tools : []),
+            security: McpSecurityConfig::fromArray(is_array($security) ? $security : []),
         );
     }
 }
