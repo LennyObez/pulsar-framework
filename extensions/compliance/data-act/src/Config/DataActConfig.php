@@ -6,6 +6,7 @@ namespace Pulsar\Extension\DataAct\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * EU Data Act (Regulation 2023/2854) extension configuration.
@@ -51,13 +52,13 @@ final readonly class DataActConfig
     public static function fromArray(array $data): self
     {
         return new self(
-            enabled: $data['enabled'] ?? false,
-            entityRole: $data['entity_role'] ?? 'data_holder',
-            portabilityMaxDays: $data['portability_max_days'] ?? 30,
-            switchingTransitionDays: $data['switching_transition_days'] ?? 30,
-            defaultExportFormat: $data['default_export_format'] ?? 'json',
-            enableAccessLogging: $data['enable_access_logging'] ?? true,
-            accessLogRetentionDays: $data['access_log_retention_days'] ?? 1825,
+            enabled: Coerce::strictBool($data['enabled'] ?? null),
+            entityRole: Coerce::string($data['entity_role'] ?? null, 'data_holder'),
+            portabilityMaxDays: Coerce::int($data['portability_max_days'] ?? null, 30),
+            switchingTransitionDays: Coerce::int($data['switching_transition_days'] ?? null, 30),
+            defaultExportFormat: Coerce::string($data['default_export_format'] ?? null, 'json'),
+            enableAccessLogging: Coerce::strictBool($data['enable_access_logging'] ?? null, true),
+            accessLogRetentionDays: Coerce::int($data['access_log_retention_days'] ?? null, 1825),
         );
     }
 

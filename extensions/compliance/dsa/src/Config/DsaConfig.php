@@ -6,6 +6,7 @@ namespace Pulsar\Extension\Dsa\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * DSA extension configuration.
@@ -50,12 +51,12 @@ final readonly class DsaConfig
     public static function fromArray(array $data): self
     {
         return new self(
-            enabled: $data['enabled'] ?? false,
-            platformType: $data['platform_type'] ?? 'hosting',
-            contactPoint: $data['contact_point'] ?? '',
-            legalRepresentative: $data['legal_representative'] ?? '',
-            appealWindowDays: $data['appeal_window_days'] ?? 180,
-            noticeResponseHours: $data['notice_response_hours'] ?? 24,
+            enabled: Coerce::strictBool($data['enabled'] ?? null),
+            platformType: Coerce::string($data['platform_type'] ?? null, 'hosting'),
+            contactPoint: Coerce::string($data['contact_point'] ?? null),
+            legalRepresentative: Coerce::string($data['legal_representative'] ?? null),
+            appealWindowDays: Coerce::int($data['appeal_window_days'] ?? null, 180),
+            noticeResponseHours: Coerce::int($data['notice_response_hours'] ?? null, 24),
         );
     }
 

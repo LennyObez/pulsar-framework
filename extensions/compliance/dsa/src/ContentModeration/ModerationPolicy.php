@@ -6,6 +6,7 @@ namespace Pulsar\Extension\Dsa\ContentModeration;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Content moderation policy definition per DSA Article 14.
@@ -49,12 +50,12 @@ final readonly class ModerationPolicy
     public static function fromArray(array $data): self
     {
         return new self(
-            id: $data['id'] ?? '',
-            name: $data['name'] ?? '',
-            description: $data['description'] ?? '',
-            legalBasis: $data['legal_basis'] ?? '',
-            requiresHumanReview: $data['requires_human_review'] ?? true,
-            category: $data['category'] ?? 'terms_violation',
+            id: Coerce::string($data['id'] ?? null),
+            name: Coerce::string($data['name'] ?? null),
+            description: Coerce::string($data['description'] ?? null),
+            legalBasis: Coerce::string($data['legal_basis'] ?? null),
+            requiresHumanReview: Coerce::strictBool($data['requires_human_review'] ?? null, true),
+            category: Coerce::string($data['category'] ?? null, 'terms_violation'),
         );
     }
 

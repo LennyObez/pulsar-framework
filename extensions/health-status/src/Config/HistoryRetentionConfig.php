@@ -6,6 +6,7 @@ namespace Pulsar\Extension\HealthStatus\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Configuration for health check history retention.
@@ -31,9 +32,9 @@ final readonly class HistoryRetentionConfig
     public static function fromArray(array $data): self
     {
         return new self(
-            maxAgeDays: $data['max_age_days'] ?? 30,
-            maxRows: $data['max_rows'] ?? 100_000,
-            cleanupIntervalHours: $data['cleanup_interval_hours'] ?? 6,
+            maxAgeDays: Coerce::int($data['max_age_days'] ?? null, 30),
+            maxRows: Coerce::int($data['max_rows'] ?? null, 100_000),
+            cleanupIntervalHours: Coerce::int($data['cleanup_interval_hours'] ?? null, 6),
         );
     }
 }
