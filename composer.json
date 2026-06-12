@@ -99,7 +99,8 @@
       "Pulsar\\Extension\\Tickets\\": "extensions/tickets/src/",
       "Pulsar\\Extension\\Booking\\": "extensions/booking/src/",
       "Pulsar\\Extension\\Messaging\\": "extensions/messaging/src/",
-      "Pulsar\\Extension\\HealthStatus\\": "extensions/health-status/src/"
+      "Pulsar\\Extension\\HealthStatus\\": "extensions/health-status/src/",
+      "Pulsar\\Extension\\Example\\": "extensions/example/src/"
     }
   },
   "autoload-dev": {
