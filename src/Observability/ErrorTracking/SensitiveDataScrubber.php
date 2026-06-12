@@ -78,7 +78,9 @@ final readonly class SensitiveDataScrubber
 
         /** @var mixed $value */
         foreach ($data as $key => $value) {
-            if ($this->isSensitiveKey($key)) {
+            // Numeric keys (e.g. list indices) are never sensitive — only
+            // string keys can carry a meaningful field name like "password".
+            if (is_string($key) && $this->isSensitiveKey($key)) {
                 $result = [...$result, $key => self::REDACTED];
             } elseif (is_array($value)) {
                 /** @var array<string, mixed> $value */

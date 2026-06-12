@@ -6,6 +6,9 @@ namespace Pulsar\Extension\HealthStatus\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
+
+use function is_array;
 
 /**
  * Top-level configuration DTO for the health-status extension.
@@ -45,16 +48,19 @@ final readonly class HealthStatusConfig
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
+        $retention = $data['retention'] ?? null;
+        $github = $data['github'] ?? null;
+
         return new self(
             enabled: (bool) ($data['enabled'] ?? true),
-            routePrefix: $data['route_prefix'] ?? '/_pulsar/status',
-            snapshotIntervalSeconds: $data['snapshot_interval_seconds'] ?? 60,
-            retention: HistoryRetentionConfig::fromArray($data['retention'] ?? []),
-            github: GitHubIntegrityConfig::fromArray($data['github'] ?? []),
+            routePrefix: Coerce::string($data['route_prefix'] ?? null, '/_pulsar/status'),
+            snapshotIntervalSeconds: Coerce::int($data['snapshot_interval_seconds'] ?? null, 60),
+            retention: HistoryRetentionConfig::fromArray(is_array($retention) ? $retention : []),
+            github: GitHubIntegrityConfig::fromArray(is_array($github) ? $github : []),
             requireAuth: (bool) ($data['require_auth'] ?? true),
             publicSummary: (bool) ($data['public_summary'] ?? false),
-            rateLimitPerMinute: $data['rate_limit_per_minute'] ?? 30,
-            incidentThresholdConsecutiveFailures: $data['incident_threshold_consecutive_failures'] ?? 3,
+            rateLimitPerMinute: Coerce::int($data['rate_limit_per_minute'] ?? null, 30),
+            incidentThresholdConsecutiveFailures: Coerce::int($data['incident_threshold_consecutive_failures'] ?? null, 3),
         );
     }
 }

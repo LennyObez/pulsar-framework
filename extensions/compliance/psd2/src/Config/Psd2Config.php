@@ -7,6 +7,8 @@ namespace Pulsar\Extension\Psd2\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
+use function is_array;
+
 /**
  * PSD2 extension configuration.
  * @api
@@ -21,19 +23,17 @@ final readonly class Psd2Config
     ) {}
 
     /**
-     * @param array{
-     *     sca?: array<string, mixed>,
-     *     risk?: array<string, mixed>,
-     *     certificate?: array<string, mixed>,
-     * } $data
+     * @param array<string, mixed> $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
+        $sub = static fn(string $k): array => is_array($data[$k] ?? null) ? $data[$k] : [];
+
         return new self(
-            sca: ScaConfig::fromArray($data['sca'] ?? []),
-            risk: RiskConfig::fromArray($data['risk'] ?? []),
-            certificate: CertificateConfig::fromArray($data['certificate'] ?? []),
+            sca: ScaConfig::fromArray($sub('sca')),
+            risk: RiskConfig::fromArray($sub('risk')),
+            certificate: CertificateConfig::fromArray($sub('certificate')),
         );
     }
 }

@@ -7,6 +7,8 @@ namespace Pulsar\Extension\Form\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
+use function is_array;
+
 /**
  * Immutable configuration for the form extension.
  * @api
@@ -22,21 +24,18 @@ final readonly class FormConfig
     ) {}
 
     /**
-     * @param array{
-     *     csrf?: array<string, mixed>,
-     *     renderer?: array<string, mixed>,
-     *     upload?: array<string, mixed>,
-     *     wizard?: array<string, mixed>,
-     * } $data
+     * @param array<string, mixed> $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
+        $sub = static fn(string $k): array => is_array($data[$k] ?? null) ? $data[$k] : [];
+
         return new self(
-            csrf: CsrfFormConfig::fromArray($data['csrf'] ?? []),
-            renderer: RendererConfig::fromArray($data['renderer'] ?? []),
-            upload: UploadConfig::fromArray($data['upload'] ?? []),
-            wizard: WizardFormConfig::fromArray($data['wizard'] ?? []),
+            csrf: CsrfFormConfig::fromArray($sub('csrf')),
+            renderer: RendererConfig::fromArray($sub('renderer')),
+            upload: UploadConfig::fromArray($sub('upload')),
+            wizard: WizardFormConfig::fromArray($sub('wizard')),
         );
     }
 }
