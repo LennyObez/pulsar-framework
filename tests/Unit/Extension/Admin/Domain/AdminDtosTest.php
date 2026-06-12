@@ -17,7 +17,6 @@ use Pulsar\Extension\Admin\Features\BulkAction\BulkActionRequest;
 use Pulsar\Extension\Admin\Features\BulkAction\BulkActionResult;
 use Pulsar\Extension\Admin\Features\CreateResource\CreateResourceRequest;
 use Pulsar\Extension\Admin\Features\CreateResource\CreateResourceResult;
-use Pulsar\Extension\Admin\Features\Dashboard\DashboardRequest;
 use Pulsar\Extension\Admin\Features\Dashboard\DashboardResult;
 use Pulsar\Extension\Admin\Features\DeleteResource\DeleteResourceRequest;
 use Pulsar\Extension\Admin\Features\DeleteResource\DeleteResourceResult;
@@ -37,7 +36,6 @@ use ReflectionClass;
 #[CoversClass(BulkActionResult::class)]
 #[CoversClass(CreateResourceRequest::class)]
 #[CoversClass(CreateResourceResult::class)]
-#[CoversClass(DashboardRequest::class)]
 #[CoversClass(DashboardResult::class)]
 #[CoversClass(DeleteResourceRequest::class)]
 #[CoversClass(DeleteResourceResult::class)]
@@ -144,17 +142,6 @@ final class AdminDtosTest extends TestCase
 
         self::assertTrue($result->result->success);
         self::assertSame('42', $result->result->metadata['id']);
-    }
-
-    // --- DashboardRequest ---
-
-    #[Test]
-    public function dashboardRequestConstructs(): void
-    {
-        $request = new DashboardRequest();
-
-        $reflection = new ReflectionClass($request);
-        self::assertTrue($reflection->isReadOnly());
     }
 
     // --- DashboardResult ---
