@@ -9,6 +9,8 @@ use Pulsar\Api\Api;
 
 use function in_array;
 use function parse_url;
+use function preg_match;
+use function str_replace;
 use function str_starts_with;
 use function strtolower;
 
@@ -40,8 +42,19 @@ final readonly class SafeRedirect
             throw new InvalidArgumentException('Redirect URL must not be empty.');
         }
 
-        // Block protocol-relative URLs (//evil.com)
-        if (str_starts_with($url, '//')) {
+        // Reject control characters (CR, LF, NUL, and any ASCII < 0x20 or
+        // DEL): a CR/LF smuggled into the Location value is the canonical
+        // "CRLF response splitting" attack, forging a second header.
+        if (preg_match('/[\x00-\x1F\x7F]/', $url) === 1) {
+            throw new InvalidArgumentException('Redirect URL must not contain control characters.');
+        }
+
+        // Block protocol-relative URLs (//evil.com) AND backslash-obfuscated
+        // variants (/\evil.com, \\evil.com, /\/evil.com). Browsers normalise
+        // "\" to "/" before resolving the authority, so a leading "/\" turns
+        // into "//" and navigates off-site. Normalise backslashes for the
+        // prefix test so every spelling is caught.
+        if (str_starts_with(str_replace('\\', '/', $url), '//')) {
             throw new InvalidArgumentException('Protocol-relative redirect URLs are not allowed.');
         }
 

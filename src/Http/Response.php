@@ -12,6 +12,7 @@ use function in_array;
 use function is_array;
 use function parse_url;
 use function preg_match;
+use function str_replace;
 use function str_starts_with;
 use function strtolower;
 
@@ -255,7 +256,11 @@ final readonly class Response
             throw UnsafeRedirectException::controlCharacters();
         }
 
-        if (str_starts_with($url, '//')) {
+        // Block protocol-relative URLs (//evil.com) AND backslash-obfuscated
+        // variants (/\evil.com, \\evil.com): browsers normalise "\" to "/"
+        // before resolving the authority, so a leading "/\" becomes "//" and
+        // navigates off-site. Normalise backslashes for the prefix test.
+        if (str_starts_with(str_replace('\\', '/', $url), '//')) {
             throw UnsafeRedirectException::protocolRelative();
         }
 

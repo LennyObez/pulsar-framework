@@ -235,6 +235,27 @@ final class ResponseTest extends TestCase
         (void) Response::redirect('//evil.example.com/phish');
     }
 
+    /**
+     * Browsers normalise "\" to "/" before resolving the authority, so
+     * `/\evil.com` becomes protocol-relative `//evil.com`. The bare "//"
+     * check misses this backslash spelling.
+     */
+    #[Test]
+    public function redirectRejectsBackslashObfuscatedProtocolRelativeUrl(): void
+    {
+        $this->expectException(UnsafeRedirectException::class);
+
+        (void) Response::redirect('/\\evil.example.com/phish');
+    }
+
+    #[Test]
+    public function redirectRejectsLeadingDoubleBackslashUrl(): void
+    {
+        $this->expectException(UnsafeRedirectException::class);
+
+        (void) Response::redirect('\\\\evil.example.com/phish');
+    }
+
     #[Test]
     public function redirectRejectsEmptyUrl(): void
     {
