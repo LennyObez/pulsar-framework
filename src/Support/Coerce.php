@@ -48,6 +48,16 @@ final class Coerce
         return $default;
     }
 
+    /**
+     * Strict int: only an actual int returns; numeric strings, floats, and
+     * everything else fall back to default. Use when the config schema
+     * intentionally rejects loose typing.
+     */
+    public static function strictInt(mixed $value, int $default): int
+    {
+        return is_int($value) ? $value : $default;
+    }
+
     public static function string(mixed $value, string $default = ''): string
     {
         return is_string($value) ? $value : $default;
