@@ -6,8 +6,10 @@ namespace Pulsar\Extension\Grpc\Manifest;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 use function array_map;
+use function is_array;
 use function sprintf;
 use function var_export;
 
@@ -44,14 +46,19 @@ final readonly class ServiceManifest
     public static function fromArray(array $data): self
     {
         $services = [];
-        foreach ($data['services'] ?? [] as $entry) {
-            $services[] = ManifestEntry::fromArray($entry);
+        $rawServices = $data['services'] ?? null;
+        if (is_array($rawServices)) {
+            foreach ($rawServices as $entry) {
+                if (is_array($entry)) {
+                    $services[] = ManifestEntry::fromArray($entry);
+                }
+            }
         }
 
         return new self(
             services: $services,
-            version: $data['version'] ?? '1.0',
-            compiledAt: $data['compiled_at'] ?? '',
+            version: Coerce::string($data['version'] ?? null, '1.0'),
+            compiledAt: Coerce::string($data['compiled_at'] ?? null),
         );
     }
 

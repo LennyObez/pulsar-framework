@@ -6,6 +6,7 @@ namespace Pulsar\Extension\Grpc\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 use function in_array;
 
@@ -39,9 +40,9 @@ final readonly class IdentityMappingEntry
     public static function fromArray(array $data): self
     {
         return new self(
-            name: $data['name'] ?? '',
-            trustLevel: $data['trust_level'] ?? 'internal',
-            allowedMethods: $data['allowed_methods'] ?? ['*'],
+            name: Coerce::string($data['name'] ?? null),
+            trustLevel: Coerce::string($data['trust_level'] ?? null, 'internal'),
+            allowedMethods: Coerce::listOfString($data['allowed_methods'] ?? null, ['*']),
         );
     }
 
