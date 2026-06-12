@@ -6,6 +6,7 @@ namespace Pulsar\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Typed configuration DTO for the tracing section of observability config.
@@ -32,7 +33,7 @@ final readonly class TracingConfig
     {
         return new self(
             enabled: (bool) ($data['enabled'] ?? false),
-            samplingRate: (float) ($data['sampling_rate'] ?? 0.1),
+            samplingRate: Coerce::float($data['sampling_rate'] ?? null, 0.1),
         );
     }
 }

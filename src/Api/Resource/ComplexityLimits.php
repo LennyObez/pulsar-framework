@@ -87,9 +87,9 @@ final readonly class ComplexityLimits
     public static function fromArray(array $data): self
     {
         return new self(
-            maxFields: Coerce::int($data['max_fields'] ?? null, 50),
-            maxNestingDepth: Coerce::int($data['max_nesting_depth'] ?? null, 3),
-            maxIncludes: Coerce::int($data['max_includes'] ?? null, 10),
+            maxFields: Coerce::strictInt($data['max_fields'] ?? null, 50),
+            maxNestingDepth: Coerce::strictInt($data['max_nesting_depth'] ?? null, 3),
+            maxIncludes: Coerce::strictInt($data['max_includes'] ?? null, 10),
         );
     }
 }
