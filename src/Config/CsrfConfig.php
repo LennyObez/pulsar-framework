@@ -17,7 +17,7 @@ use function in_array;
  * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class CsrfConfig
+readonly class CsrfConfig
 {
     /**
      * @param list<string> $trustedOrigins Canonical origins e.g. ['https://example.com', 'https://app.example.com:8443']
