@@ -9,6 +9,7 @@ use Pulsar\AI\Exception\AiException;
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Row;
+use Pulsar\Support\Coerce;
 
 use function array_map;
 use function implode;
@@ -102,15 +103,16 @@ final readonly class MySqlVectorStore implements VectorStoreInterface
         $result = $this->connection->query($sql, $bindings);
 
         return $result->map(function (Row $row): SearchResult {
+            $metadataRaw = Coerce::string($row->get('metadata'));
             /** @var mixed $metadataDecoded */
-            $metadataDecoded = json_decode($row->getString('metadata'), true);
+            $metadataDecoded = $metadataRaw === '' ? null : json_decode($metadataRaw, true);
             /** @var array<string, mixed> $metadata */
             $metadata = is_array($metadataDecoded) ? $metadataDecoded : [];
 
             return new SearchResult(
-                id: $row->getString('id'),
-                score: $row->getFloat('score'),
-                content: $row->getString('content'),
+                id: Coerce::string($row->get('id')),
+                score: Coerce::float($row->get('score'), 0.0),
+                content: Coerce::string($row->get('content')),
                 metadata: $metadata,
             );
         });
@@ -179,7 +181,7 @@ final readonly class MySqlVectorStore implements VectorStoreInterface
                 return 0;
             }
 
-            return $first->getInt('cnt');
+            return Coerce::int($first->get('cnt'), 0);
         }
 
         $conditions = [];
@@ -203,7 +205,7 @@ final readonly class MySqlVectorStore implements VectorStoreInterface
             return 0;
         }
 
-        return $first->getInt('cnt');
+        return Coerce::int($first->get('cnt'), 0);
     }
 
     /**

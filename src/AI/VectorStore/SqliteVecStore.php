@@ -8,6 +8,7 @@ use Override;
 use Pulsar\AI\Exception\AiException;
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Support\Coerce;
 
 use function implode;
 use function is_array;
@@ -93,7 +94,7 @@ final readonly class SqliteVecStore implements VectorStoreInterface
         $rows = [];
 
         foreach ($result->rows as $row) {
-            $distance = $row->getFloat('dist');
+            $distance = Coerce::float($row->get('dist'), 0.0);
 
             // Convert distance to similarity score (1 - distance for cosine/L2)
             $score = match ($this->metric) {
@@ -102,8 +103,9 @@ final readonly class SqliteVecStore implements VectorStoreInterface
                 DistanceMetric::InnerProduct => -$distance,
             };
 
+            $metadataRaw = Coerce::string($row->get('metadata'));
             /** @var mixed $metadataDecoded */
-            $metadataDecoded = json_decode($row->getString('metadata'), true);
+            $metadataDecoded = $metadataRaw === '' ? null : json_decode($metadataRaw, true);
             /** @var array<string, mixed> $metadata */
             $metadata = is_array($metadataDecoded) ? $metadataDecoded : [];
 
@@ -113,9 +115,9 @@ final readonly class SqliteVecStore implements VectorStoreInterface
             }
 
             $rows[] = new SearchResult(
-                id: $row->getString('id'),
+                id: Coerce::string($row->get('id')),
                 score: $score,
-                content: $row->getString('content'),
+                content: Coerce::string($row->get('content')),
                 metadata: $metadata,
             );
         }
@@ -199,7 +201,7 @@ final readonly class SqliteVecStore implements VectorStoreInterface
             foreach ($result->rows as $row) {
                 $conn->execute(
                     sprintf('DELETE FROM %s_vec WHERE id = :id', $this->table),
-                    [':id' => $row->getString('id')],
+                    [':id' => Coerce::string($row->get('id'))],
                 );
             }
 
@@ -221,7 +223,7 @@ final readonly class SqliteVecStore implements VectorStoreInterface
                 return 0;
             }
 
-            return $first->getInt('cnt');
+            return Coerce::int($first->get('cnt'), 0);
         }
 
         $conditions = [];
@@ -245,7 +247,7 @@ final readonly class SqliteVecStore implements VectorStoreInterface
             return 0;
         }
 
-        return $first->getInt('cnt');
+        return Coerce::int($first->get('cnt'), 0);
     }
 
     /**
