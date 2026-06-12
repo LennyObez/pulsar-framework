@@ -105,9 +105,9 @@ final class ScopedContainerProxyTest extends TestCase
     }
 
     #[Test]
-    public function communityCanRegisterSingletons(): void
+    public function communityWithGrantedContainerWriteCanRegisterSingletons(): void
     {
-        $proxy = $this->proxy(TrustTier::Community);
+        $proxy = $this->proxy(TrustTier::Community, [ExtensionCapability::ContainerWrite]);
         $proxy->singleton('test.singleton', fn() => new stdClass());
 
         self::assertTrue($proxy->has('test.singleton'));
@@ -212,9 +212,13 @@ final class ScopedContainerProxyTest extends TestCase
     }
 
     #[Test]
-    public function communityCanBindServices(): void
+    public function communityWithGrantedContainerWriteCanBindServices(): void
     {
-        $proxy = $this->proxy(TrustTier::Community);
+        // ContainerWrite was removed from the Community default grant in
+        // 1.0.0-rc.12 (it allowed silent override of core security services).
+        // A community extension can still bind when the capability is granted
+        // explicitly via config/extensions.php — modeled here as an extra cap.
+        $proxy = $this->proxy(TrustTier::Community, [ExtensionCapability::ContainerWrite]);
         $proxy->bind('test.service', fn() => new stdClass());
 
         self::assertTrue($proxy->has('test.service'));
@@ -317,7 +321,7 @@ final class ScopedContainerProxyTest extends TestCase
     public function forgetInstanceDelegatesToInnerWhenAllowed(): void
     {
         $this->container->instance('test.forget', new stdClass());
-        $proxy = $this->proxy(TrustTier::Community);
+        $proxy = $this->proxy(TrustTier::Community, [ExtensionCapability::ContainerWrite]);
 
         $proxy->forgetInstance('test.forget');
 
@@ -339,7 +343,7 @@ final class ScopedContainerProxyTest extends TestCase
     #[Test]
     public function setResolutionHintsDelegatesToInnerWhenAllowed(): void
     {
-        $proxy = $this->proxy(TrustTier::Community);
+        $proxy = $this->proxy(TrustTier::Community, [ExtensionCapability::ContainerWrite]);
         $proxy->setResolutionHints(null);
 
         // Verify proxy delegates without throwing by checking container is still consistent
