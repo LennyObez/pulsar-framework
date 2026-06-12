@@ -6,6 +6,7 @@ namespace Pulsar\Extension\Grpc\Health;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Response for the grpc.health.v1.Health/Check RPC.
@@ -19,13 +20,13 @@ final readonly class HealthCheckResponse
     ) {}
 
     /**
-     * @param array{status?: int} $data
+     * @param array<string, mixed> $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(
-            status: HealthStatus::tryFrom($data['status'] ?? HealthStatus::Unknown->value) ?? HealthStatus::Unknown,
+            status: HealthStatus::tryFrom(Coerce::int($data['status'] ?? null, HealthStatus::Unknown->value)) ?? HealthStatus::Unknown,
         );
     }
 

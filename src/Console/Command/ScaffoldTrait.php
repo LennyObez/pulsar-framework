@@ -154,11 +154,14 @@ trait ScaffoldTrait
     /**
      * Parse a comma-separated option value into a list of trimmed, non-empty strings.
      *
+     * Accepts non-string input (null from missing options, etc.) and returns
+     * an empty list — the caller treats that as "no items provided".
+     *
      * @return list<string>
      */
-    private function parseCommaSeparatedOption(string $value): array
+    private function parseCommaSeparatedOption(mixed $value): array
     {
-        if ($value === '') {
+        if (!is_string($value) || $value === '') {
             return [];
         }
 
