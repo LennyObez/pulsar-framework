@@ -41,14 +41,16 @@ final class VexCommandTest extends TestCase
 
         $command = new VexCommand($tempDir);
 
+        $vexPath = $tempDir . '/vex.json';
+
         $input = $this->createStub(InputInterface::class);
         $input->method('hasOption')->willReturn(false);
+        $input->method('getStringOption')->willReturn($vexPath);
 
         $output = $this->createStub(OutputInterface::class);
 
         $exitCode = $command->execute($input, $output);
 
-        $vexPath = $tempDir . '/vex.json';
         $fileExists = file_exists($vexPath);
 
         // Clean up
@@ -75,9 +77,7 @@ final class VexCommandTest extends TestCase
         $input->method('hasOption')->willReturnMap([
             ['output', true],
         ]);
-        $input->method('getOption')->willReturnMap([
-            ['output', null, $customPath],
-        ]);
+        $input->method('getStringOption')->willReturn($customPath);
 
         $output = $this->createStub(OutputInterface::class);
 
@@ -103,14 +103,16 @@ final class VexCommandTest extends TestCase
 
         $command = new VexCommand($tempDir);
 
+        $vexPath = $tempDir . '/vex.json';
+
         $input = $this->createStub(InputInterface::class);
         $input->method('hasOption')->willReturn(false);
+        $input->method('getStringOption')->willReturn($vexPath);
 
         $output = $this->createStub(OutputInterface::class);
 
         $command->execute($input, $output);
 
-        $vexPath = $tempDir . '/vex.json';
         $json = file_get_contents($vexPath);
 
         // Clean up
