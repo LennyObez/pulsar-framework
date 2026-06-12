@@ -8,10 +8,26 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Payments\Internal\Security\PaymentTokenizer;
 
+use function bin2hex;
+use function putenv;
+use function str_repeat;
 use function strlen;
 
 final class PaymentTokenizerTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        // PaymentTokenizer reads PULSAR_PCI_TOKENIZER_KEY via getenv() and
+        // refuses to operate without it. Provide a deterministic 32-byte
+        // (64 hex char) test key so the hashing/fingerprint tests can run.
+        putenv('PULSAR_PCI_TOKENIZER_KEY=' . bin2hex(str_repeat("\x2a", 32)));
+    }
+
+    protected function tearDown(): void
+    {
+        putenv('PULSAR_PCI_TOKENIZER_KEY');
+    }
+
     #[Test]
     public function generate_token_uses_default_prefix(): void
     {

@@ -166,10 +166,13 @@ final class MigrationDiffCommandTest extends TestCase
         $command = $this->createCommand($currentSnapshot, $store);
 
         $input = $this->createStub(InputInterface::class);
-        $input->method('getOption')->willReturnMap([
-            ['path', '.', '/project'],
-            ['name', null, 'create_users_table'],
-        ]);
+        $input->method('getStringOption')->willReturnCallback(
+            static fn(string $name, string $default = ''): string => match ($name) {
+                'path' => '/project',
+                'name' => 'create_users_table',
+                default => $default,
+            },
+        );
         $input->method('hasOption')->willReturn(false);
 
         $writtenLines = [];
@@ -232,10 +235,9 @@ final class MigrationDiffCommandTest extends TestCase
     private function createDefaultInput(): InputInterface
     {
         $input = $this->createStub(InputInterface::class);
-        $input->method('getOption')->willReturnMap([
-            ['path', '.', '/project'],
-            ['name', null, null],
-        ]);
+        $input->method('getStringOption')->willReturnCallback(
+            static fn(string $name, string $default = ''): string => $name === 'path' ? '/project' : $default,
+        );
         $input->method('hasOption')->willReturn(false);
 
         return $input;
