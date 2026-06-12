@@ -18,7 +18,7 @@ use function count;
  * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class Result
+readonly class Result
 {
     /** @var list<Row> */
     public array $rows;

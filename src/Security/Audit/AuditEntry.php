@@ -28,7 +28,7 @@ use function substr;
  * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class AuditEntry
+readonly class AuditEntry
 {
     /**
      * @param array<string, mixed> $metadata

@@ -12,7 +12,7 @@ use Pulsar\Context\RequestContext;
  * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class JobContext
+readonly class JobContext
 {
     public function __construct(
         public string $jobId,

@@ -21,7 +21,7 @@ use function json_decode;
  * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class HttpResponse
+readonly class HttpResponse
 {
     public function __construct(
         private ResponseStatus $statusCode,
