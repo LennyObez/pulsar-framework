@@ -29,7 +29,7 @@ use function time;
  *            rate limits; not instantiated by name.
  */
 #[Internal(reason: 'CMS rate limiting helper; not part of public API')]
-final readonly class CmsRateLimiter
+readonly class CmsRateLimiter
 {
     public function __construct(
         private TaggedCacheInterface $cache,
