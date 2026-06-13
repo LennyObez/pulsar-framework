@@ -12,7 +12,7 @@ use Pulsar\Extension\Cms\Media\MediaRepositoryInterface;
  * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class MediaResolver
+readonly class MediaResolver
 {
     public function __construct(
         private MediaRepositoryInterface $mediaRepository,
