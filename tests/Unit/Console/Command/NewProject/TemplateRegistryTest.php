@@ -117,7 +117,9 @@ final class TemplateRegistryTest extends TestCase
         $indexPhp = $files['public/index.php'];
         self::assertStringContainsString('<?php', $indexPhp);
         self::assertStringContainsString('ConfigManager', $indexPhp);
-        self::assertStringContainsString('welcome.php', $indexPhp);
+        // The welcome view is generated as its own file; index.php wires the
+        // kernel + extensions rather than referencing the view directly.
+        self::assertArrayHasKey('resources/views/welcome.php', $files);
     }
 
     #[Test]
@@ -142,7 +144,7 @@ final class TemplateRegistryTest extends TestCase
         $indexPhp = $files['public/index.php'];
         self::assertStringContainsString('ExtensionBootstrap', $indexPhp);
         self::assertStringContainsString('ExtensionBootstrap::create()', $indexPhp);
-        self::assertStringContainsString("loadFromPaths([__DIR__ . '/../extensions'])", $indexPhp);
+        self::assertStringContainsString('loadFromPaths($extensionPaths)', $indexPhp);
     }
 
     #[Test]
@@ -153,7 +155,7 @@ final class TemplateRegistryTest extends TestCase
         $indexPhp = $files['public/index.php'];
         self::assertStringContainsString('ExtensionBootstrap', $indexPhp);
         self::assertStringContainsString('ExtensionBootstrap::create()', $indexPhp);
-        self::assertStringContainsString("loadFromPaths([__DIR__ . '/../extensions'])", $indexPhp);
+        self::assertStringContainsString('loadFromPaths($extensionPaths)', $indexPhp);
     }
 
     #[Test]
@@ -163,7 +165,7 @@ final class TemplateRegistryTest extends TestCase
 
         $indexPhp = $files['public/index.php'];
         self::assertStringContainsString('envFilePath:', $indexPhp);
-        self::assertStringContainsString("__DIR__ . '/../.env'", $indexPhp);
+        self::assertStringContainsString("\$basePath . '/.env'", $indexPhp);
     }
 
     #[Test]
@@ -173,7 +175,7 @@ final class TemplateRegistryTest extends TestCase
 
         $indexPhp = $files['public/index.php'];
         self::assertStringContainsString('envFilePath:', $indexPhp);
-        self::assertStringContainsString("__DIR__ . '/../.env'", $indexPhp);
+        self::assertStringContainsString("\$basePath . '/.env'", $indexPhp);
     }
 
     #[Test]
