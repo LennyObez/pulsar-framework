@@ -603,18 +603,42 @@ foreach ($argv as $arg) {
 // Determine changed files
 $changedFiles = [];
 if ($diffBase !== null) {
-    $command = sprintf(
-        'git -C %s diff --name-only --diff-filter=ACMR %s...HEAD 2>/dev/null',
-        escapeshellarg($rootDir),
-        escapeshellarg($diffBase),
+    // Shell-free invocation: passing the command as an argument array makes
+    // proc_open bypass the shell entirely, so $diffBase (a CLI-supplied value)
+    // can never be interpreted as a command — no escaping required, no
+    // injection surface.
+    $descriptors = [
+        1 => ['pipe', 'w'],
+        2 => ['pipe', 'w'],
+    ];
+    $pipes = [];
+    // The argument-array form of proc_open never spawns a shell, so
+    // $rootDir/$diffBase cannot be interpreted as a command; the audit rule
+    // cannot distinguish array-form (safe) from string-form (shell) calls.
+    // nosemgrep: php.lang.security.exec-use.exec-use
+    $process = proc_open(
+        ['git', '-C', $rootDir, 'diff', '--name-only', '--diff-filter=ACMR', $diffBase . '...HEAD'],
+        $descriptors,
+        $pipes,
     );
-    $output = [];
-    exec($command, $output, $exitCode);
-    if ($exitCode === 0) {
-        $changedFiles = array_filter($output, static fn (string $f): bool => str_ends_with($f, '.php'));
-        $changedFiles = array_values($changedFiles);
+
+    if (is_resource($process)) {
+        $stdout = stream_get_contents($pipes[1]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+        $exitCode = proc_close($process);
+
+        if ($exitCode === 0 && is_string($stdout)) {
+            $changedFiles = array_values(array_filter(
+                explode("\n", trim($stdout)),
+                static fn (string $f): bool => $f !== '' && str_ends_with($f, '.php'),
+            ));
+        } else {
+            fwrite(STDERR, "Warning: Could not resolve diff-base '$diffBase'. Running full scan.\n");
+            $hasDiffBase = false;
+        }
     } else {
-        fwrite(STDERR, "Warning: Could not resolve diff-base '$diffBase'. Running full scan.\n");
+        fwrite(STDERR, "Warning: Could not spawn git for diff-base '$diffBase'. Running full scan.\n");
         $hasDiffBase = false;
     }
 }
@@ -658,8 +682,18 @@ foreach ($directories as $directory) {
 
         $filePath = $file->getPathname();
 
-        // Skip test fixtures
-        if (str_contains($filePath, 'Fixture')) {
+        // Skip test code and fixtures. Boundary rules govern shipped code,
+        // not tests: a test legitimately constructs concrete implementations
+        // (e.g. Database\PdoConnection for a DB integration test) and may
+        // exercise a module's own internals directly. This mirrors the
+        // deptrac config, whose exclude_files drops '#.*Test\.php$#' and
+        // '#.*Fixture.*\.php$#' for the same reason.
+        $normalisedPath = str_replace('\\', '/', $filePath);
+        if (
+            str_contains($normalisedPath, '/tests/')
+            || str_ends_with($filePath, 'Test.php')
+            || str_contains($filePath, 'Fixture')
+        ) {
             continue;
         }
 
