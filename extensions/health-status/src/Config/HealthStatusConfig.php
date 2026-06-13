@@ -20,6 +20,13 @@ use function is_array;
 #[Api(since: '1.0.0')]
 final readonly class HealthStatusConfig
 {
+    /**
+     * @param string|null $authToken Shared bearer token gating the
+     *        status endpoints. Must be a high-entropy secret. When
+     *        $requireAuth is true and this is null/empty the middleware
+     *        fails CLOSED (every request is denied) — an auth gate with
+     *        no credential must never admit traffic.
+     */
     public function __construct(
         public bool $enabled = true,
         public string $routePrefix = '/_pulsar/status',
@@ -30,6 +37,7 @@ final readonly class HealthStatusConfig
         public bool $publicSummary = false,
         public int $rateLimitPerMinute = 30,
         public int $incidentThresholdConsecutiveFailures = 3,
+        public ?string $authToken = null,
     ) {}
 
     /**
@@ -43,6 +51,7 @@ final readonly class HealthStatusConfig
      *     public_summary?: bool|int|string,
      *     rate_limit_per_minute?: int,
      *     incident_threshold_consecutive_failures?: int,
+     *     auth_token?: string|null,
      * } $data Raw configuration array
      */
     #[NoDiscard]
@@ -50,6 +59,7 @@ final readonly class HealthStatusConfig
     {
         $retention = $data['retention'] ?? null;
         $github = $data['github'] ?? null;
+        $authToken = Coerce::string($data['auth_token'] ?? null, '');
 
         return new self(
             enabled: (bool) ($data['enabled'] ?? true),
@@ -61,6 +71,7 @@ final readonly class HealthStatusConfig
             publicSummary: (bool) ($data['public_summary'] ?? false),
             rateLimitPerMinute: Coerce::int($data['rate_limit_per_minute'] ?? null, 30),
             incidentThresholdConsecutiveFailures: Coerce::int($data['incident_threshold_consecutive_failures'] ?? null, 3),
+            authToken: $authToken === '' ? null : $authToken,
         );
     }
 }

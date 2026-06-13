@@ -29,6 +29,16 @@ final class HealthStatusConfigTest extends TestCase
         self::assertFalse($config->publicSummary);
         self::assertSame(30, $config->rateLimitPerMinute);
         self::assertSame(3, $config->incidentThresholdConsecutiveFailures);
+        // No token by default — combined with requireAuth this fails closed.
+        self::assertNull($config->authToken);
+    }
+
+    #[Test]
+    public function fromArrayMapsAuthTokenAndTreatsEmptyAsNull(): void
+    {
+        self::assertSame('s3cret-token', HealthStatusConfig::fromArray(['auth_token' => 's3cret-token'])->authToken);
+        self::assertNull(HealthStatusConfig::fromArray(['auth_token' => ''])->authToken);
+        self::assertNull(HealthStatusConfig::fromArray([])->authToken);
     }
 
     #[Test]
