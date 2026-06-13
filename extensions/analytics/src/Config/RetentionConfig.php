@@ -31,9 +31,9 @@ final readonly class RetentionConfig
     public static function fromArray(array $data): self
     {
         return new self(
-            rawDays: Coerce::int($data['raw_days'] ?? null, 90),
-            aggregatedDays: Coerce::int($data['aggregated_days'] ?? null, 730),
-            hourlyHours: Coerce::int($data['hourly_hours'] ?? null, 48),
+            rawDays: Coerce::intFromInput($data['raw_days'] ?? null, 90),
+            aggregatedDays: Coerce::intFromInput($data['aggregated_days'] ?? null, 730),
+            hourlyHours: Coerce::intFromInput($data['hourly_hours'] ?? null, 48),
         );
     }
 }

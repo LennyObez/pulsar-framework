@@ -29,8 +29,8 @@ final readonly class RateLimitConfig
     public static function fromArray(array $data): self
     {
         return new self(
-            maxEventsPerIpPerMinute: Coerce::int($data['max_events_per_ip_per_minute'] ?? null, 30),
-            burst: Coerce::int($data['burst'] ?? null, 5),
+            maxEventsPerIpPerMinute: Coerce::intFromInput($data['max_events_per_ip_per_minute'] ?? null, 30),
+            burst: Coerce::intFromInput($data['burst'] ?? null, 5),
         );
     }
 }

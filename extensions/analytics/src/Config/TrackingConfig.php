@@ -31,9 +31,9 @@ final readonly class TrackingConfig
     public static function fromArray(array $data): self
     {
         return new self(
-            trackerEndpoint: Coerce::string($data['tracker_endpoint'] ?? null, '/plsr/api/event'),
-            scriptEndpoint: Coerce::string($data['script_endpoint'] ?? null, '/plsr/js/tracker.js'),
-            extensions: Coerce::listOfString($data['extensions'] ?? null),
+            trackerEndpoint: Coerce::stringFromInput($data['tracker_endpoint'] ?? null, '/plsr/api/event'),
+            scriptEndpoint: Coerce::stringFromInput($data['script_endpoint'] ?? null, '/plsr/js/tracker.js'),
+            extensions: Coerce::stringListFromInput($data['extensions'] ?? null),
         );
     }
 }
