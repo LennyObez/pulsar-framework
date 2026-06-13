@@ -1022,6 +1022,38 @@ deptrac:
         - type: classLike
           value: ^Pulsar\\Pagination\\Internal\\
 
+    # --- Filesystem ---
+    - name: Filesystem
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Filesystem\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Filesystem\\Internal\\
+
+    - name: Filesystem_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Filesystem\\Internal\\
+
+    # --- Uid ---
+    - name: Uid
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Uid\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Uid\\Internal\\
+
+    - name: Uid_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Uid\\Internal\\
+
     # =================================================================
     # Extension Layers
     # =================================================================
@@ -1878,6 +1910,10 @@ deptrac:
       - Ui_Internal
       - WebSocket
       - WebSocket_Internal
+      - Filesystem
+      - Filesystem_Internal
+      - Uid
+      - Uid_Internal
       - Introspection
       - Introspection_Internal
       # Extension layers (CompositionRoot wires these too)
@@ -1960,6 +1996,8 @@ deptrac:
       - SupplyChain
       - Ui
       - WebSocket
+      - Filesystem
+      - Uid
       # Extension public layers (cross-extension dependencies)
       - PaymentsContracts
       - PaymentsDomain
@@ -2171,6 +2209,8 @@ deptrac:
     Notification: *public_deps
     Observability: *public_deps
     Pagination: *public_deps
+    Filesystem: *public_deps
+    Uid: *public_deps
     Queue: *public_deps
     Resilience: *public_deps
     Runtime: *public_deps
@@ -2294,7 +2334,10 @@ deptrac:
     Rendering: *public_deps
     SupplyChain: *public_deps
     Ui: *public_deps
-    WebSocket: *public_deps
+    # WebSocketConnection defaults its outbound sink to the WebSocket\Internal
+    # NullFrameSink null-object (auth-only / test construction needs no
+    # transport). Public surface otherwise only touches Api + Support.
+    WebSocket: [CompositionRoot, WebSocket, WebSocket_Internal, Api, Support]
     # Introspection public layer depends on its own internal (service facades inject internal implementations)
     Introspection:
       - CompositionRoot
@@ -2355,7 +2398,9 @@ deptrac:
     Core_Internal: [Core, Api, Support, Container, Config, ErrorHandling, ServiceDiscovery]
     ErrorHandling_Internal: [ErrorHandling, Api, Support, Container, Config, Core]
     Http_Internal: [Http, Api, Support, Container, Config, Core, ErrorHandling]
-    Routing_Internal: [Routing, Api, Support, Container, Config, Core, ErrorHandling]
+    # ConfigDomainResolver resolves the request host through Http\TrustedProxy
+    # (forwarded-header aware). Routing public already depends on Http.
+    Routing_Internal: [Routing, Api, Support, Container, Config, Core, ErrorHandling, Http]
     Console_Internal: [Console, Api, Support, Container, Config, Core, ErrorHandling]
     # ScopedRouterProxy implements RouterInterface (Routing) and uses Method (Http)
     Extensibility_Internal:
@@ -2376,7 +2421,10 @@ deptrac:
     DataProtection_Internal: [DataProtection, Api, Support, Container, Config, Core, ErrorHandling]
     Dev_Internal: [Dev, Api, Support, Container, Config, Core, ErrorHandling, Console]
     Deploy_Internal: [Deploy, Api, Support, Container, Config, Core, ErrorHandling]
-    Event_Internal: [Event, Api, Support, Container, Config, Core, ErrorHandling, Observability]
+    # Transactional outbox: DatabaseOutboxPort persists envelopes via Database;
+    # OutboxRelay forwards integration events to Saga's IntegrationEventBusPort.
+    Event_Internal:
+      [Event, Api, Support, Container, Config, Core, ErrorHandling, Observability, Database, Saga]
     FeatureFlag_Internal: [FeatureFlag, Api, Support, Container, Config, Core, ErrorHandling]
     I18n_Internal: [I18n, Api, Support, Container, Config, Core, ErrorHandling]
     Idempotency_Internal: [Idempotency, Api, Support, Container, Config, Core, ErrorHandling]
@@ -2387,6 +2435,8 @@ deptrac:
     Notification_Internal: [Notification, Api, Support, Container, Config, Core, ErrorHandling]
     Observability_Internal: [Observability, Api, Support, Container, Config, Core, ErrorHandling]
     Pagination_Internal: [Pagination, Api, Support, Container, Config, Core, ErrorHandling, Http]
+    Filesystem_Internal: [Filesystem, Api, Support, Container, Config, Core, ErrorHandling]
+    Uid_Internal: [Uid, Api, Support, Container, Config, Core, ErrorHandling]
     Queue_Internal: [Queue, Api, Support, Container, Config, Core, ErrorHandling]
     Resilience_Internal: [Resilience, Api, Support, Container, Config, Core, ErrorHandling]
     Runtime_Internal: [Runtime, Api, Support, Container, Config, Core, ErrorHandling]
@@ -3151,6 +3201,11 @@ deptrac:
       - Http
       - Routing
       - Extensibility
+      # Anti-corruption adapters bridge the extension to core services:
+      # CoreHealthCheckRunnerAdapter → Resilience\HealthCheck,
+      # CoreIntegrityVerificationAdapter → Integrity manifest/verifier.
+      - Resilience
+      - Integrity
 
     BookingExtension_Internal:
       - BookingExtension
