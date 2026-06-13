@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Container\Container;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Driver;
 use Pulsar\Extension\Cms\CmsCoreServiceProvider;
 use Pulsar\Extension\Cms\Config\CmsConfig;
 use Pulsar\Extension\Cms\Http\Middleware\CmsLocaleMiddleware;
@@ -56,8 +57,12 @@ final class CmsLocaleMiddlewareRegistrationTest extends TestCase
     {
         $container = new Container();
 
-        // CmsCoreServiceProvider checks for ConnectionInterface first
-        $container->instance(ConnectionInterface::class, $this->createStub(ConnectionInterface::class));
+        // CmsCoreServiceProvider checks for ConnectionInterface first.
+        // driver() returns the Driver enum, which PHPUnit cannot auto-double —
+        // stub it to a concrete case so the stub can be generated.
+        $connection = $this->createStub(ConnectionInterface::class);
+        $connection->method('driver')->willReturn(Driver::SQLite);
+        $container->instance(ConnectionInterface::class, $connection);
 
         // CMS config is needed for all sub-providers
         $container->instance(CmsConfig::class, CmsConfig::fromArray([]));

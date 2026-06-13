@@ -18,7 +18,7 @@ use function array_sum;
  * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class ImportResult
+readonly class ImportResult
 {
     /**
      * @param array<string, int> $created Counts of created entities keyed by type
