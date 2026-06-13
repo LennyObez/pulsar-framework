@@ -110,7 +110,11 @@ final class CborDecoder
         for ($i = 0; $i < $count; $i++) {
             /** @var int|string $key */
             $key = $this->decodeItem();
-            $result = [...$result, $key => $this->decodeItem()];
+            // Direct assignment, not [...$result, $key => ...]: the spread
+            // operator renumbers integer keys, so a CBOR map key of 1 would
+            // become 0 on the next iteration's spread. CBOR (COSE) keys are
+            // frequently negative/positive ints, so this must be preserved.
+            $result[$key] = $this->decodeItem();
         }
 
         return $result;
