@@ -11,6 +11,7 @@ use Psr\Cache\CacheItemPoolInterface;
 use Psr\SimpleCache\CacheInterface;
 use Pulsar\Cache\Application\CacheManager;
 use Pulsar\Cache\Application\CacheManagerInterface;
+use Pulsar\Cache\Application\TaggedCacheInterface;
 use Pulsar\Config\CacheConfig;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Container\Container;
@@ -46,6 +47,50 @@ final class CacheWiringTest extends TestCase
         self::assertTrue($container->has(CacheManagerInterface::class));
         self::assertTrue($container->has(CacheItemPoolInterface::class));
         self::assertTrue($container->has(CacheInterface::class));
+        // Regression: the tagged cache must be bound too, otherwise every
+        // tag-aware consumer wired later (anti-spam single-use, duplicate
+        // detection, reputation cooldowns) silently disables itself.
+        self::assertTrue($container->has(TaggedCacheInterface::class));
+    }
+
+    #[Test]
+    public function wireBindsAResolvableTaggedCacheWhenEnabled(): void
+    {
+        $container = new Container();
+        $router = new Router();
+        $middleware = new MiddlewarePipeline($container);
+        $middlewareRegistry = new MiddlewareRegistry();
+
+        $configManager = $this->createConfigManager(enabled: true);
+        $configManager->load();
+
+        new CacheWiring()->wire($container, $configManager, $middleware, $middlewareRegistry, $router);
+
+        $tagged = $container->get(TaggedCacheInterface::class);
+        self::assertInstanceOf(TaggedCacheInterface::class, $tagged);
+
+        // It is a working tagged cache, not a placeholder: a tagged write is
+        // retrievable and is dropped when its tag is flushed.
+        $tagged->set('k', 'v', ['t'], 60);
+        self::assertSame('v', $tagged->get('k'));
+        $tagged->invalidateTag('t');
+        self::assertNull($tagged->get('k'));
+    }
+
+    #[Test]
+    public function wireDoesNotBindTaggedCacheWhenDisabled(): void
+    {
+        $container = new Container();
+        $router = new Router();
+        $middleware = new MiddlewarePipeline($container);
+        $middlewareRegistry = new MiddlewareRegistry();
+
+        $configManager = $this->createConfigManager(enabled: false);
+        $configManager->load();
+
+        new CacheWiring()->wire($container, $configManager, $middleware, $middlewareRegistry, $router);
+
+        self::assertFalse($container->has(TaggedCacheInterface::class));
     }
 
     #[Test]
