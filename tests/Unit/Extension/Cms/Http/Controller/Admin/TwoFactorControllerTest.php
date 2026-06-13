@@ -12,6 +12,7 @@ use Psr\Http\Message\UriInterface;
 use Pulsar\Auth\Exception\AuthenticationException;
 use Pulsar\Auth\Exception\AuthorizationException;
 use Pulsar\Auth\Identity\IdentityInterface;
+use Pulsar\Extension\Cms\Internal\Security\CmsRateLimiter;
 use Pulsar\Auth\Identity\TwoFactorStatus;
 use Pulsar\Auth\TwoFactor\RecoveryCodeGenerator;
 use Pulsar\Auth\TwoFactor\TotpGenerator;
@@ -315,12 +316,18 @@ final class TwoFactorControllerTest extends TestCase
 
     private function createController(): TwoFactorController
     {
+        // TwoFactorController returns 429 when no rate limiter is wired
+        // (deny-by-default). These tests exercise the 2FA business logic,
+        // not the rate-limit path, so inject a limiter that always allows.
+        $rateLimiter = $this->createStub(CmsRateLimiter::class);
+        $rateLimiter->method('attempt')->willReturn(true);
+
         return new TwoFactorController(
             totpGenerator: $this->totpGenerator,
             totpVerifier: $this->totpVerifier,
             recoveryCodeGenerator: $this->recoveryCodeGenerator,
             qrCodeEncoder: $this->qrCodeEncoder,
-            rateLimiter: null,
+            rateLimiter: $rateLimiter,
             auditLogger: null,
         );
     }
