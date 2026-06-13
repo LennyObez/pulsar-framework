@@ -39,9 +39,9 @@ final readonly class McpSecurityConfig
 
         return new self(
             pathAllowlist: Coerce::listOfString($data['path_allowlist'] ?? null),
-            rateLimitPerMinute: Coerce::int($data['rate_limit_per_minute'] ?? null, 60),
+            rateLimitPerMinute: Coerce::strictInt($data['rate_limit_per_minute'] ?? null, 60),
             toolRateLimits: is_array($toolRateLimits) ? $toolRateLimits : [],
-            maxConcurrentActions: Coerce::int($data['max_concurrent_actions'] ?? null, 1),
+            maxConcurrentActions: Coerce::strictInt($data['max_concurrent_actions'] ?? null, 1),
         );
     }
 }
