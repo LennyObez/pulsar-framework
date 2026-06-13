@@ -78,7 +78,7 @@ final class TrackingServiceGoalConversionTest extends TestCase
             pageViewRepository: $pageViewRepo,
             eventRepository: $eventRepo,
             siteRepository: $this->siteRepo,
-            config: new AnalyticsConfig(privacy: new PrivacyConfig(respectDnt: false)),
+            config: new AnalyticsConfig(privacy: new PrivacyConfig(respectDnt: false, requireConsent: false)),
             goalService: $goalService,
         );
     }
