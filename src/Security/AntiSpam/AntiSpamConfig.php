@@ -49,6 +49,9 @@ final readonly class AntiSpamConfig
      * @param int $timeTrapMinSeconds Minimum plausible human fill time in seconds (faster ⇒ flagged)
      * @param int $timeTrapMaxSeconds Maximum stamp age in seconds before a page is treated as stale
      * @param string $timeTrapFieldName Hidden field name carrying the signed render timestamp
+     * @param bool $behaviorEnabled Enable the self-hosted behavioural-signals score-only check (opt-in)
+     * @param string $behaviorFieldName Hidden field name carrying the client behavioural blob
+     * @param array<string, int|float> $behaviorWeights HeuristicScorer weight overrides (see HeuristicScorer::fromWeights)
      */
     public function __construct(
         public bool $honeypotEnabled = true,
@@ -80,6 +83,9 @@ final readonly class AntiSpamConfig
         public int $timeTrapMinSeconds = 3,
         public int $timeTrapMaxSeconds = 3600,
         public string $timeTrapFieldName = 'pulsar-form-ts',
+        public bool $behaviorEnabled = false,
+        public string $behaviorFieldName = 'pulsar-bx',
+        public array $behaviorWeights = [],
     ) {}
 
     /**
@@ -113,12 +119,16 @@ final readonly class AntiSpamConfig
      *     time_trap_min_seconds?: int,
      *     time_trap_max_seconds?: int,
      *     time_trap_field_name?: string,
+     *     behavior_enabled?: bool,
+     *     behavior_field_name?: string,
+     *     behavior_weights?: array<string, int|float>,
      * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         $cooldownTiers = $data['cooldown_tiers'] ?? null;
+        $behaviorWeights = $data['behavior_weights'] ?? null;
 
         return new self(
             honeypotEnabled: Coerce::strictBool($data['honeypot_enabled'] ?? null, true),
@@ -150,6 +160,9 @@ final readonly class AntiSpamConfig
             timeTrapMinSeconds: Coerce::int($data['time_trap_min_seconds'] ?? null, 3),
             timeTrapMaxSeconds: Coerce::int($data['time_trap_max_seconds'] ?? null, 3600),
             timeTrapFieldName: Coerce::string($data['time_trap_field_name'] ?? null, 'pulsar-form-ts'),
+            behaviorEnabled: Coerce::strictBool($data['behavior_enabled'] ?? null),
+            behaviorFieldName: Coerce::string($data['behavior_field_name'] ?? null, 'pulsar-bx'),
+            behaviorWeights: is_array($behaviorWeights) ? $behaviorWeights : [],
         );
     }
 }

@@ -19,6 +19,12 @@ use Pulsar\Security\AntiSpam\AntiSpamCheckInterface;
 use Pulsar\Security\AntiSpam\AntiSpamConfig;
 use Pulsar\Security\AntiSpam\AntiSpamPipeline;
 use Pulsar\Security\AntiSpam\AntiSpamPipelineInterface;
+use Pulsar\Security\AntiSpam\Behavior\BehavioralSignalsCheck;
+use Pulsar\Security\AntiSpam\Behavior\BehaviorCollectorRenderer;
+use Pulsar\Security\AntiSpam\Behavior\BehaviorFeatureSink;
+use Pulsar\Security\AntiSpam\Behavior\BehaviorScorerInterface;
+use Pulsar\Security\AntiSpam\Behavior\HeuristicScorer;
+use Pulsar\Security\AntiSpam\Behavior\NullBehaviorFeatureSink;
 use Pulsar\Security\AntiSpam\ContentQualityGate;
 use Pulsar\Security\AntiSpam\DuplicateDetector;
 use Pulsar\Security\AntiSpam\HCaptchaVerifier;
@@ -163,6 +169,11 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface
             }
         }
 
+        // 10. Behavioural signals (score-only, self-hosted). Opt-in.
+        if ($config->behaviorEnabled) {
+            $checks[] = $this->wireBehavioralSignals($container, $config, $router);
+        }
+
         // Build the pipeline
         $pipeline = new AntiSpamPipeline($checks, $config->shortCircuit);
         $container->instance(AntiSpamPipeline::class, $pipeline);
@@ -298,6 +309,43 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface
             $config->timeTrapMinSeconds,
             $config->timeTrapMaxSeconds,
         );
+    }
+
+    /**
+     * Wire the score-only behavioural-signals check.
+     *
+     * Uses an application-bound scorer/sink when present, otherwise the default
+     * HeuristicScorer (config-tuned weights) and the zero-retention NullSink.
+     */
+    private function wireBehavioralSignals(
+        ContainerInterface $container,
+        AntiSpamConfig $config,
+        Router $router,
+    ): BehavioralSignalsCheck {
+        $scorer = $container->has(BehaviorScorerInterface::class)
+            ? $container->get(BehaviorScorerInterface::class)
+            : HeuristicScorer::fromWeights($config->behaviorWeights);
+        /** @var BehaviorScorerInterface $scorer */
+        $sink = $container->has(BehaviorFeatureSink::class)
+            ? $container->get(BehaviorFeatureSink::class)
+            : new NullBehaviorFeatureSink();
+        /** @var BehaviorFeatureSink $sink */
+
+        // Same-origin collector asset + the hidden-field renderer backing @shield.
+        $base = '/_pulsar/anti-spam';
+        $assetController = $container->has(ManagedChallengeAssetController::class)
+            ? $container->get(ManagedChallengeAssetController::class)
+            : new ManagedChallengeAssetController();
+        /** @var ManagedChallengeAssetController $assetController */
+        $container->instance(ManagedChallengeAssetController::class, $assetController);
+        $scriptUrl = $base . '/behavior-collector.js';
+        $router->get($scriptUrl, [ManagedChallengeAssetController::class, 'behaviorCollector'], 'pulsar.anti_spam.behavior.collector');
+
+        $renderer = new BehaviorCollectorRenderer($config->behaviorFieldName, $scriptUrl);
+        $container->instance(BehaviorCollectorRenderer::class, $renderer);
+        BehaviorCollectorRenderer::setGlobalInstance($renderer);
+
+        return new BehavioralSignalsCheck($scorer, $sink, $config->behaviorFieldName);
     }
 
     private function loadConfig(ConfigManager $configManager): AntiSpamConfig
