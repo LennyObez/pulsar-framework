@@ -67,13 +67,20 @@ When the anti-spam pipeline runs (e.g. the CMS comment or Forum post middleware)
 
 When enabled, three same-origin routes are registered (cached with an ETag, refreshed on framework upgrade):
 
-| Route                                            | Purpose                              |
-| ------------------------------------------------ | ------------------------------------ |
-| `/_pulsar/anti-spam/managed-challenge.js`        | Widget bootstrap (classic script)    |
-| `/_pulsar/anti-spam/managed-challenge.worker.js` | Proof-of-work Web Worker (ES module) |
-| `/_pulsar/anti-spam/managed-challenge.pow.js`    | Shared SHA-256 / proof-of-work core  |
+| Route                                            | Purpose                                  |
+| ------------------------------------------------ | ---------------------------------------- |
+| `/_pulsar/anti-spam/managed-challenge.js`        | Widget bootstrap (classic script)        |
+| `/_pulsar/anti-spam/managed-challenge.worker.js` | Proof-of-work Web Worker (ES module)     |
+| `/_pulsar/anti-spam/managed-challenge.pow.js`    | Shared SHA-256 / proof-of-work core      |
+| `/_pulsar/anti-spam/managed-challenge/refresh`   | Mints a fresh challenge (silent refresh) |
 
-The Web Worker is an ES-module worker, so the widget requires a browser supporting module workers. Under a strict CSP, allow `script-src 'self'` and `worker-src 'self'`.
+The Web Worker is an ES-module worker, so the widget requires a browser supporting module workers. Under a strict CSP, allow `script-src 'self'`, `worker-src 'self'`, and `connect-src 'self'` (the refresh fetch).
+
+### Silent refresh
+
+A short TTL gives a small replay window but would reject a slow human who fills a form for minutes. The widget closes that gap without widening the window: after solving, it schedules a silent re-mint at ~80% of the TTL (and re-mints immediately on the form's first focus if the current token is already stale). It `fetch()`es a fresh challenge from the refresh endpoint, solves it in the worker, and overwrites the hidden field — never blocking the user; if a refresh fails, the last solved token is kept.
+
+The refresh endpoint is stateless, same-origin, carries no PII, and needs no auth (it only issues PUBLIC, unsolved challenges); a best-effort per-IP cache counter caps abuse. This lets `managed_challenge_ttl_seconds` stay tight (default 300) for a small replay window while the widget keeps the token fresh. **The short TTL is only safe with refresh enabled:** clients with JavaScript disabled cannot refresh, so cover them with the [time-trap](#time-trap-no-javascript-form-fill-timing) and, if a long-lived no-JS form is required, a longer configured fallback TTL.
 
 ### Security properties
 
