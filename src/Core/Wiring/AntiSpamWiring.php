@@ -30,6 +30,9 @@ use Pulsar\Security\AntiSpam\ManagedChallenge\ManagedChallengeService;
 use Pulsar\Security\AntiSpam\ManagedChallenge\ManagedChallengeVerifier;
 use Pulsar\Security\AntiSpam\ProofOfWorkVerifier;
 use Pulsar\Security\AntiSpam\ReputationCooldown;
+use Pulsar\Security\AntiSpam\TimeTrap\TimeTrapCheck;
+use Pulsar\Security\AntiSpam\TimeTrap\TimeTrapRenderer;
+use Pulsar\Security\AntiSpam\TimeTrap\TimeTrapService;
 use Pulsar\Security\AntiSpam\TurnstileVerifier;
 use Pulsar\Security\Crypto\MasterKey;
 use SodiumException;
@@ -38,6 +41,7 @@ use function is_array;
 use function is_file;
 
 use const DIRECTORY_SEPARATOR;
+use const SODIUM_CRYPTO_AUTH_KEYBYTES;
 
 /**
  * Wires the anti-spam pipeline and all its check implementations.
@@ -149,6 +153,15 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface
             }
         }
 
+        // 9. Time-trap (no-JS form-fill-timing). Opt-in; requires the master key.
+        if ($config->timeTrapEnabled) {
+            $timeTrapCheck = $this->wireTimeTrap($container, $config, $logger);
+
+            if ($timeTrapCheck !== null) {
+                $checks[] = $timeTrapCheck;
+            }
+        }
+
         // Build the pipeline
         $pipeline = new AntiSpamPipeline($checks, $config->shortCircuit);
         $container->instance(AntiSpamPipeline::class, $pipeline);
@@ -223,6 +236,56 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface
         ManagedChallengeRenderer::setGlobalInstance($renderer);
 
         return new ManagedChallengeVerifier($service);
+    }
+
+    /**
+     * Wire the no-JS time-trap check (and its renderer backing @timetrap/@shield).
+     *
+     * Derives a dedicated signing sub-key from the master key — sub-key id 17,
+     * distinct from the managed challenge's id 16 so the two features never share
+     * key material — and registers the renderer (global + container). Returns
+     * null, disabling the check rather than failing boot, when no master key is
+     * configured or key derivation fails.
+     */
+    private function wireTimeTrap(
+        ContainerInterface $container,
+        AntiSpamConfig $config,
+        LoggerInterface $logger,
+    ): ?TimeTrapCheck {
+        if (!$container->has(MasterKey::class)) {
+            $logger->warning(
+                'Time-trap anti-spam check requires a configured PULSAR_MASTER_KEY; check disabled.',
+            );
+
+            return null;
+        }
+
+        /** @var MasterKey $masterKey */
+        $masterKey = $container->get(MasterKey::class);
+
+        try {
+            $signingKey = $masterKey->deriveSubKey(17, 'antispam', SODIUM_CRYPTO_AUTH_KEYBYTES);
+        } catch (SodiumException $e) {
+            $logger->error('Time-trap signing key derivation failed; check disabled.', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+
+        $service = new TimeTrapService($signingKey);
+        $container->instance(TimeTrapService::class, $service);
+
+        $renderer = new TimeTrapRenderer($service, $config->timeTrapFieldName);
+        $container->instance(TimeTrapRenderer::class, $renderer);
+        TimeTrapRenderer::setGlobalInstance($renderer);
+
+        return new TimeTrapCheck(
+            $service,
+            $config->timeTrapFieldName,
+            $config->timeTrapMinSeconds,
+            $config->timeTrapMaxSeconds,
+        );
     }
 
     private function loadConfig(ConfigManager $configManager): AntiSpamConfig

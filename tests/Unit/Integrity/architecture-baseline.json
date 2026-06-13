@@ -63,6 +63,8 @@
   "Pulsar\\Security\\AntiSpam\\ManagedChallenge\\ManagedChallengeVerifier": "AntiSpamWiring composition root wires anti-spam pipeline stages",
   "Pulsar\\Security\\AntiSpam\\ProofOfWorkVerifier": "AntiSpamWiring composition root wires anti-spam pipeline stages",
   "Pulsar\\Security\\AntiSpam\\ReputationCooldown": "AntiSpamWiring composition root wires anti-spam pipeline stages",
+  "Pulsar\\Security\\AntiSpam\\TimeTrap\\TimeTrapCheck": "AntiSpamWiring composition root wires anti-spam pipeline stages",
+  "Pulsar\\Security\\AntiSpam\\TimeTrap\\TimeTrapService": "AntiSpamWiring composition root wires anti-spam pipeline stages",
   "Pulsar\\Security\\AntiSpam\\TurnstileVerifier": "AntiSpamWiring composition root wires anti-spam pipeline stages",
   "Pulsar\\Cloud\\Aws\\Config\\AwsConfig": "CloudWiring composition root wires cloud providers",
   "Pulsar\\Cloud\\Aws\\S3StorageAdapter": "CloudWiring composition root wires cloud providers",
