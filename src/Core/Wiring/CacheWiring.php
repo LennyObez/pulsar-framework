@@ -16,6 +16,8 @@ use Pulsar\Cache\Application\TaggedCacheInterface;
 use Pulsar\Config\CacheConfig;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Container\ContainerInterface;
+use Pulsar\Core\Wiring\Contract\DescribesWiring;
+use Pulsar\Core\Wiring\Contract\WiringContract;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
@@ -24,8 +26,25 @@ use Pulsar\Routing\Router;
 use Pulsar\Security\Crypto\MasterKey;
 
 #[Internal]
-final readonly class CacheWiring implements ServiceWiringInterface
+final readonly class CacheWiring implements ServiceWiringInterface, DescribesWiring
 {
+    public function describeWiring(): WiringContract
+    {
+        return new WiringContract(
+            component: 'cache',
+            configClass: CacheConfig::class,
+            configFile: 'cache.php',
+            provides: [
+                CacheConfig::class,
+                CacheManager::class,
+                CacheManagerInterface::class,
+                CacheItemPoolInterface::class,
+                CacheInterface::class,
+                TaggedCacheInterface::class,
+            ],
+        );
+    }
+
     public function wire(
         ContainerInterface $container,
         ConfigManager $configManager,
