@@ -114,7 +114,7 @@ final readonly class Bundle extends FhirResource
             meta: is_array($metaData) ? Meta::fromArray($metaData) : null,
             language: Coerce::nullableString($data['language'] ?? null),
             type: Coerce::nullableString($data['type'] ?? null),
-            total: $total === null ? null : Coerce::int($total, 0),
+            total: Coerce::nullableInt($total),
             link: array_values($linkList),
             entry: array_values($entryList),
             timestamp: Coerce::nullableString($data['timestamp'] ?? null),

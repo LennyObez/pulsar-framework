@@ -54,13 +54,11 @@ final readonly class ContactPoint
      */
     public static function fromArray(array $data): self
     {
-        $rank = $data['rank'] ?? null;
-
         return new self(
             system: Coerce::nullableString($data['system'] ?? null),
             value: Coerce::nullableString($data['value'] ?? null),
             use: Coerce::nullableString($data['use'] ?? null),
-            rank: $rank === null ? null : Coerce::int($rank, 0),
+            rank: Coerce::nullableInt($data['rank'] ?? null),
         );
     }
 }

@@ -55,23 +55,20 @@ final readonly class AudioMetadata
      */
     public static function fromArray(array $data): self
     {
-        $optInt = static fn(mixed $v): ?int => $v === null ? null : Coerce::int($v, 0);
-        $duration = $data['duration'] ?? null;
-
         return new self(
             title: Coerce::nullableString($data['title'] ?? null),
             artist: Coerce::nullableString($data['artist'] ?? null),
             album: Coerce::nullableString($data['album'] ?? null),
             genre: Coerce::nullableString($data['genre'] ?? null),
-            year: $optInt($data['year'] ?? null),
-            trackNumber: $optInt($data['track_number'] ?? null),
-            duration: $duration === null ? null : Coerce::float($duration, 0.0),
-            bitrate: $optInt($data['bitrate'] ?? null),
-            sampleRate: $optInt($data['sample_rate'] ?? null),
-            channels: $optInt($data['channels'] ?? null),
+            year: Coerce::nullableInt($data['year'] ?? null),
+            trackNumber: Coerce::nullableInt($data['track_number'] ?? null),
+            duration: Coerce::nullableFloat($data['duration'] ?? null),
+            bitrate: Coerce::nullableInt($data['bitrate'] ?? null),
+            sampleRate: Coerce::nullableInt($data['sample_rate'] ?? null),
+            channels: Coerce::nullableInt($data['channels'] ?? null),
             codec: Coerce::nullableString($data['codec'] ?? null),
             format: Coerce::nullableString($data['format'] ?? null),
-            fileSize: $optInt($data['file_size'] ?? null),
+            fileSize: Coerce::nullableInt($data['file_size'] ?? null),
         );
     }
 
