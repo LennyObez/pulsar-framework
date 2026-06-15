@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Pulsar\Event;
 
+use InvalidArgumentException;
 use JsonException;
 use NoDiscard;
 use Pulsar\Api\Api;
-use Pulsar\Event\Exception\EventException;
 use Random\Engine\Secure;
 use Random\RandomException;
 use Random\Randomizer;
@@ -109,7 +109,7 @@ final readonly class EventEnvelope
      * } $data
      *
      * @throws JsonException
-     * @throws EventException When a required envelope field (event_type, etc.) is missing or empty.
+     * @throws InvalidArgumentException When a required envelope field (event_type, etc.) is missing or empty.
      * @throws SodiumException
      */
     #[NoDiscard]
@@ -118,7 +118,7 @@ final readonly class EventEnvelope
         $eventType = $data['event_type'] ?? '';
 
         if ($eventType === '') {
-            throw EventException::missingEnvelopeField('eventType');
+            throw new InvalidArgumentException('EventEnvelope requires a non-empty eventType');
         }
 
         $payload = $data['payload'] ?? [];
