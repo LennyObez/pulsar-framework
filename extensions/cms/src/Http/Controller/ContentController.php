@@ -751,25 +751,16 @@ final readonly class ContentController
             }
         }
 
-        // 3. CMS default mapping: use content type for known types, fall back gracefully
-        $templateMap = [
-            'article' => 'cms::public.pages.article',
-            'page' => 'cms::public.pages.page',
-            'home' => 'cms::public.pages.home',
-        ];
-
-        // If the template matches a known type exactly, use the CMS default
-        if (isset($templateMap[$template])) {
-            return $templateMap[$template];
-        }
-
-        // For path-style templates (e.g., "pages/about"), try the last segment
+        // 3. CMS default mapping: a bare short name maps to the matching CMS
+        // front-office template under the cms:: namespace (e.g. "portfolio" ->
+        // "cms::public.pages.portfolio"). Path-style names use their last
+        // segment; an empty name falls back to the generic page template.
         $lastSegment = basename($template);
-        if (isset($templateMap[$lastSegment])) {
-            return $templateMap[$lastSegment];
+
+        if ($lastSegment === '') {
+            return 'cms::public.pages.page';
         }
 
-        // Ultimate fallback: the generic page template
-        return 'cms::public.pages.page';
+        return 'cms::public.pages.' . $lastSegment;
     }
 }
