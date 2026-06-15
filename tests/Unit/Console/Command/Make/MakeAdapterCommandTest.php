@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Console\Command\Make\MakeAdapterCommand;
 use Pulsar\Console\ExitCode;
-use Pulsar\Console\InputInterface;
+use Pulsar\Console\Input\ArrayInput;
 use Pulsar\Console\Output\BufferedOutput;
 use Pulsar\Console\OutputInterface;
 
@@ -40,8 +40,7 @@ final class MakeAdapterCommandTest extends TestCase
     {
         $command = new MakeAdapterCommand();
 
-        $input = $this->createStub(InputInterface::class);
-        $input->method('getArgument')->willReturn(null);
+        $input = new ArrayInput(null, [], []);
 
         $output = $this->createMock(OutputInterface::class);
         $output->expects(self::atLeastOnce())->method('errorln');
@@ -54,12 +53,9 @@ final class MakeAdapterCommandTest extends TestCase
     {
         $command = new MakeAdapterCommand();
 
-        $input = $this->createStub(InputInterface::class);
-        $input->method('getArgument')->willReturn('StripeProvider');
-        $input->method('getOption')->willReturnMap([
-            ['port', null, 'PaymentProvider'],
-            ['module', null, null],
-            ['path', 'app/Modules', 'app/Modules'],
+        $input = new ArrayInput(null, ['StripeProvider'], [
+            'port' => 'PaymentProvider',
+            'path' => 'app/Modules',
         ]);
 
         $output = $this->createMock(OutputInterface::class);
@@ -73,12 +69,9 @@ final class MakeAdapterCommandTest extends TestCase
     {
         $command = new MakeAdapterCommand();
 
-        $input = $this->createStub(InputInterface::class);
-        $input->method('getArgument')->willReturn('StripeProvider');
-        $input->method('getOption')->willReturnMap([
-            ['port', null, null],
-            ['module', null, 'Billing'],
-            ['path', 'app/Modules', 'app/Modules'],
+        $input = new ArrayInput(null, ['StripeProvider'], [
+            'module' => 'Billing',
+            'path' => 'app/Modules',
         ]);
 
         $output = $this->createMock(OutputInterface::class);
@@ -95,12 +88,10 @@ final class MakeAdapterCommandTest extends TestCase
         $originalDir = getcwd();
         chdir($this->tempDir);
 
-        $input = $this->createStub(InputInterface::class);
-        $input->method('getArgument')->willReturn('StripeProvider');
-        $input->method('getOption')->willReturnMap([
-            ['port', null, 'PaymentProvider'],
-            ['module', null, 'NonExistent'],
-            ['path', 'app/Modules', 'app/Modules'],
+        $input = new ArrayInput(null, ['StripeProvider'], [
+            'port' => 'PaymentProvider',
+            'module' => 'NonExistent',
+            'path' => 'app/Modules',
         ]);
 
         $output = new BufferedOutput();
@@ -123,12 +114,10 @@ final class MakeAdapterCommandTest extends TestCase
         $originalDir = getcwd();
         chdir($this->tempDir);
 
-        $input = $this->createStub(InputInterface::class);
-        $input->method('getArgument')->willReturn('StripeProvider');
-        $input->method('getOption')->willReturnMap([
-            ['port', null, 'PaymentProvider'],
-            ['module', null, 'Billing'],
-            ['path', 'app/Modules', 'app/Modules'],
+        $input = new ArrayInput(null, ['StripeProvider'], [
+            'port' => 'PaymentProvider',
+            'module' => 'Billing',
+            'path' => 'app/Modules',
         ]);
 
         $output = $this->createStub(OutputInterface::class);
