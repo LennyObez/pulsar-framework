@@ -6,9 +6,11 @@ namespace Pulsar\Extension\Fhir;
 
 use Pulsar\Api\Internal;
 use Pulsar\Container\ContainerInterface;
+use Pulsar\Database\ConnectionInterface;
 use Pulsar\Extensibility\ServiceProviderInterface;
 use Pulsar\Extension\Fhir\Audit\FhirAuditEventMapper;
 use Pulsar\Extension\Fhir\Config\FhirConfig;
+use Pulsar\Extension\Fhir\Internal\DatabaseFhirRepository;
 use Pulsar\Extension\Fhir\Internal\InMemoryFhirRepository;
 use Pulsar\Extension\Fhir\Internal\TerminologyService;
 use Pulsar\Extension\Fhir\Resource\ResourceType;
@@ -32,8 +34,16 @@ final class FhirServiceProvider implements ServiceProviderInterface
         $config = new FhirConfig();
         $container->instance(FhirConfig::class, $config);
 
-        // Repository (default: in-memory; override for production persistence)
-        $repository = new InMemoryFhirRepository();
+        // Repository: database-backed persistence when a connection is wired
+        // (production), in-memory otherwise (tests / minimal bootstraps).
+        if ($container->has(ConnectionInterface::class)) {
+            /** @var ConnectionInterface $connection */
+            $connection = $container->get(ConnectionInterface::class);
+            $repository = new DatabaseFhirRepository($connection);
+        } else {
+            $repository = new InMemoryFhirRepository();
+        }
+
         $container->instance(FhirRepositoryInterface::class, $repository);
 
         // CapabilityStatement
