@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Container\Container;
 use Pulsar\Core\Wiring\ViewWiring;
+use Pulsar\Http\Message\Response;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Routing\Router;
@@ -40,6 +41,16 @@ use function sys_get_temp_dir;
 #[CoversClass(ViewWiring::class)]
 final class ViewWiringTest extends TestCase
 {
+    protected function tearDown(): void
+    {
+        // ViewWiring::wire() installs a TemplateEngine into the static
+        // Response::$templateEngine slot. Without this reset the engine
+        // (bound to a now-deleted temp template dir) leaks into later tests
+        // — notably the CMS ContentController tests, which then fail to
+        // render cms:: templates instead of falling back to inline HTML.
+        Response::clearTemplateEngine();
+    }
+
     #[Test]
     public function wireRegistersViewServices(): void
     {
