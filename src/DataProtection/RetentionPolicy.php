@@ -29,7 +29,7 @@ final readonly class RetentionPolicy
     {
         return new self(
             category: Coerce::string($data['category'] ?? null),
-            retentionDays: Coerce::int($data['retention_days'] ?? null, 0),
+            retentionDays: Coerce::strictInt($data['retention_days'] ?? null, 0),
             legalBasis: Coerce::string($data['legal_basis'] ?? null),
         );
     }

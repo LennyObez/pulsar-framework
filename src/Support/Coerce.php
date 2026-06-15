@@ -274,4 +274,50 @@ final class Coerce
 
         return $filtered;
     }
+
+    /**
+     * String-keyed bool map: drops non-string keys and coerces each value to
+     * bool (loose, via {@see bool}). Use for `array<string, bool>` config maps
+     * such as per-variant feature toggles.
+     *
+     * @return array<string, bool>
+     */
+    public static function mapOfBool(mixed $value): array
+    {
+        if (!is_array($value)) {
+            return [];
+        }
+
+        $filtered = [];
+        foreach ($value as $k => $v) {
+            if (is_string($k)) {
+                $filtered[$k] = self::bool($v);
+            }
+        }
+
+        return $filtered;
+    }
+
+    /**
+     * String-keyed string map: keeps only entries whose key AND value are both
+     * strings (non-string values are dropped, not blanked). Use for
+     * `array<string, string>` config maps such as design tokens.
+     *
+     * @return array<string, string>
+     */
+    public static function mapOfString(mixed $value): array
+    {
+        if (!is_array($value)) {
+            return [];
+        }
+
+        $filtered = [];
+        foreach ($value as $k => $v) {
+            if (is_string($k) && is_string($v)) {
+                $filtered[$k] = $v;
+            }
+        }
+
+        return $filtered;
+    }
 }

@@ -6,6 +6,7 @@ namespace Pulsar\Extension\Cms\Config;
 
 use Pulsar\Api\Api;
 use Pulsar\Extension\Cms\Media\Watermark\WatermarkPosition;
+use Pulsar\Support\Coerce;
 
 use function max;
 use function min;
@@ -75,7 +76,7 @@ final readonly class WatermarkConfig
             fontPath: $data['font_path'] ?? '',
             fontSize: max(1, $data['font_size'] ?? 24),
             fontColor: $data['font_color'] ?? '#FFFFFF',
-            perVariant: $data['per_variant'] ?? [],
+            perVariant: Coerce::mapOfBool($data['per_variant'] ?? null),
         );
     }
 

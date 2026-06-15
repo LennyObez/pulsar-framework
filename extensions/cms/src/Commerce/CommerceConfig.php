@@ -87,12 +87,12 @@ final readonly class CommerceConfig
         return new self(
             taxRates: $taxRates,
             shippingRates: $shippingRates,
-            invoiceRenderer: Coerce::string($data['invoiceRenderer'] ?? null, 'html'),
+            invoiceRenderer: Coerce::stringFromInput($data['invoiceRenderer'] ?? null, 'html'),
             downloadTokenExpiryDays: Coerce::int($data['downloadTokenExpiryDays'] ?? null, 30),
             maxDownloads: Coerce::int($data['maxDownloads'] ?? null, 5),
             taxRequired: (bool) ($data['taxRequired'] ?? false),
-            currency: Coerce::string($data['currency'] ?? null, 'EUR'),
-            sellerCountry: Coerce::string($data['sellerCountry'] ?? null, 'US'),
+            currency: Coerce::stringFromInput($data['currency'] ?? null, 'EUR'),
+            sellerCountry: Coerce::stringFromInput($data['sellerCountry'] ?? null, 'US'),
             euCountryCodes: Coerce::listOfString($data['euCountryCodes'] ?? null, $defaultEuCodes),
         );
     }
