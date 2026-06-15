@@ -14,7 +14,6 @@ use Pulsar\Http\Message\Response;
 use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\Method;
 use Pulsar\Routing\Route;
-use Pulsar\Routing\RoutingException;
 
 #[CoversClass(Kernel::class)]
 final class KernelAutowireTest extends TestCase
@@ -94,7 +93,7 @@ final class KernelAutowireTest extends TestCase
     }
 
     #[Test]
-    public function controllerWithUnresolvableParamThrows(): void
+    public function controllerWithUnresolvableParamReturnsServerError(): void
     {
         $kernel = new Kernel();
 
@@ -106,10 +105,13 @@ final class KernelAutowireTest extends TestCase
 
         $request = new ServerRequest(method: 'GET', uri: '/unresolvable');
 
-        $this->expectException(RoutingException::class);
-        $this->expectExceptionMessage('cannot resolve constructor parameter');
+        // No exception handler is wired, so the kernel renders a generic 500
+        // (F4.11) instead of leaking the resolver's RoutingException to the
+        // SAPI. The RoutingException itself is asserted directly against the
+        // resolver in ReflectionControllerResolverTest.
+        $response = $kernel->handle($request);
 
-        $kernel->handle($request);
+        self::assertSame(500, $response->getStatusCode());
     }
 
     #[Test]
