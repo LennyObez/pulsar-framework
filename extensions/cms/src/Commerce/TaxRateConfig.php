@@ -36,7 +36,7 @@ final readonly class TaxRateConfig
             category: Coerce::string($data['category'] ?? null),
             rate: Coerce::float($data['rate'] ?? null, 0.0),
             label: Coerce::string($data['label'] ?? null),
-            countryCodes: Coerce::listOfString($data['countryCodes'] ?? null),
+            countryCodes: Coerce::stringListOrEmpty($data['countryCodes'] ?? null),
         );
     }
 }
