@@ -57,10 +57,10 @@ final readonly class StepUpConfig
     public static function fromArray(array $data): self
     {
         return new self(
-            maxAttempts: Coerce::int($data['max_attempts'] ?? null, 5),
-            cooldownSeconds: Coerce::int($data['cooldown_seconds'] ?? null, 0),
-            lockoutSeconds: Coerce::int($data['lockout_seconds'] ?? null, 900),
-            windowSeconds: Coerce::int($data['window_seconds'] ?? null, 3600),
+            maxAttempts: Coerce::strictInt($data['max_attempts'] ?? null, 5),
+            cooldownSeconds: Coerce::strictInt($data['cooldown_seconds'] ?? null, 0),
+            lockoutSeconds: Coerce::strictInt($data['lockout_seconds'] ?? null, 900),
+            windowSeconds: Coerce::strictInt($data['window_seconds'] ?? null, 3600),
         );
     }
 }

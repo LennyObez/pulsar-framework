@@ -71,15 +71,15 @@ final readonly class ForumConfig
         $bad = $data['badges'] ?? null;
 
         return new self(
-            threadsPerPage: Coerce::int($data['threads_per_page'] ?? null, 25),
-            postsPerPage: Coerce::int($data['posts_per_page'] ?? null, 20),
-            postCooldownSeconds: Coerce::int($data['post_cooldown_seconds'] ?? null, 30),
+            threadsPerPage: Coerce::strictInt($data['threads_per_page'] ?? null, 25),
+            postsPerPage: Coerce::strictInt($data['posts_per_page'] ?? null, 20),
+            postCooldownSeconds: Coerce::strictInt($data['post_cooldown_seconds'] ?? null, 30),
             requireThreadApproval: (bool) ($data['require_thread_approval'] ?? false),
             allowGuestViewing: (bool) ($data['allow_guest_viewing'] ?? true),
-            maxTitleLength: Coerce::int($data['max_title_length'] ?? null, 200),
-            maxBodyLength: Coerce::int($data['max_body_length'] ?? null, 50_000),
-            maxTagsPerThread: Coerce::int($data['max_tags_per_thread'] ?? null, 5),
-            editWindowMinutes: Coerce::int($data['edit_window_minutes'] ?? null, 30),
+            maxTitleLength: Coerce::strictInt($data['max_title_length'] ?? null, 200),
+            maxBodyLength: Coerce::strictInt($data['max_body_length'] ?? null, 50_000),
+            maxTagsPerThread: Coerce::strictInt($data['max_tags_per_thread'] ?? null, 5),
+            editWindowMinutes: Coerce::strictInt($data['edit_window_minutes'] ?? null, 30),
             moderation: ModerationConfig::fromArray(is_array($mod) ? $mod : []),
             reputation: ReputationConfig::fromArray(is_array($rep) ? $rep : []),
             badges: BadgeConfig::fromArray(is_array($bad) ? $bad : []),

@@ -39,10 +39,10 @@ final readonly class ImageVariantConfig
     {
         return new self(
             name: Coerce::string($data['name'] ?? null),
-            maxWidth: Coerce::int($data['max_width'] ?? null, 0),
-            maxHeight: Coerce::int($data['max_height'] ?? null, 0),
+            maxWidth: Coerce::strictInt($data['max_width'] ?? null, 0),
+            maxHeight: Coerce::strictInt($data['max_height'] ?? null, 0),
             format: Coerce::string($data['format'] ?? null, 'original'),
-            quality: Coerce::int($data['quality'] ?? null, 80),
+            quality: Coerce::strictInt($data['quality'] ?? null, 80),
         );
     }
 }
