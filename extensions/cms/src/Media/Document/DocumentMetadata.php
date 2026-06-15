@@ -49,19 +49,17 @@ final readonly class DocumentMetadata
      */
     public static function fromArray(array $data): self
     {
-        $optInt = static fn(mixed $v): ?int => $v === null ? null : Coerce::int($v, 0);
-
         return new self(
             title: Coerce::nullableString($data['title'] ?? null),
             author: Coerce::nullableString($data['author'] ?? null),
             subject: Coerce::nullableString($data['subject'] ?? null),
             creator: Coerce::nullableString($data['creator'] ?? null),
             producer: Coerce::nullableString($data['producer'] ?? null),
-            pageCount: $optInt($data['page_count'] ?? null),
+            pageCount: Coerce::nullableInt($data['page_count'] ?? null),
             creationDate: Coerce::nullableString($data['creation_date'] ?? null),
             modificationDate: Coerce::nullableString($data['modification_date'] ?? null),
             pdfVersion: Coerce::nullableString($data['pdf_version'] ?? null),
-            fileSize: $optInt($data['file_size'] ?? null),
+            fileSize: Coerce::nullableInt($data['file_size'] ?? null),
         );
     }
 

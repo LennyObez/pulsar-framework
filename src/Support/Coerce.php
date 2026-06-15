@@ -81,6 +81,42 @@ final class Coerce
     }
 
     /**
+     * Nullable int: numeric values (int, float, numeric string) coerce to int;
+     * anything else — including a present-but-non-numeric value — yields null.
+     * Use for optional `?int` fields where invalid input must not fabricate a 0.
+     */
+    public static function nullableInt(mixed $value): ?int
+    {
+        if (is_int($value)) {
+            return $value;
+        }
+        if (is_float($value)) {
+            return (int) $value;
+        }
+        if (is_string($value) && is_numeric($value)) {
+            return (int) $value;
+        }
+
+        return null;
+    }
+
+    /**
+     * Nullable float counterpart to {@see nullableInt}: numeric values coerce to
+     * float; present-but-non-numeric input yields null rather than 0.0.
+     */
+    public static function nullableFloat(mixed $value): ?float
+    {
+        if (is_float($value) || is_int($value)) {
+            return (float) $value;
+        }
+        if (is_string($value) && is_numeric($value)) {
+            return (float) $value;
+        }
+
+        return null;
+    }
+
+    /**
      * Raw-input string counterpart to {@see intFromInput}: an omitted key (null)
      * keeps `$absentDefault`; a value that is present but not a string collapses
      * to the empty string `''` rather than reverting to the default.
