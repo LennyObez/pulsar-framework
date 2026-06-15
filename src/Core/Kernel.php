@@ -11,7 +11,6 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface as PsrMiddlewareInterface;
 use Pulsar\Api\Internal;
-use Pulsar\Api\OpenApi\OpenApiWiring;
 use Pulsar\Cache\FrameworkCache;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\ConfigManagerInterface;
@@ -32,40 +31,8 @@ use Pulsar\Core\Boot\ProjectRouteLoader;
 use Pulsar\Core\Controller\ControllerResolverInterface;
 use Pulsar\Core\Controller\ReflectionControllerResolver;
 use Pulsar\Core\Event\TerminateEvent;
-use Pulsar\Core\Wiring\AntiSpamWiring;
-use Pulsar\Core\Wiring\ApiWiring;
 use Pulsar\Core\Wiring\AssetWiring;
-use Pulsar\Core\Wiring\AuthWiring;
-use Pulsar\Core\Wiring\CacheWiring;
-use Pulsar\Core\Wiring\CloudWiring;
-use Pulsar\Core\Wiring\ConfigWiring;
-use Pulsar\Core\Wiring\DatabaseWiring;
-use Pulsar\Core\Wiring\DeployWiring;
-use Pulsar\Core\Wiring\DiagnosticsWiring;
-use Pulsar\Core\Wiring\ErrorTrackingWiring;
-use Pulsar\Core\Wiring\EventWiring;
-use Pulsar\Core\Wiring\ExceptionHandlerWiring;
-use Pulsar\Core\Wiring\FeatureFlagWiring;
-use Pulsar\Core\Wiring\I18nWiring;
-use Pulsar\Core\Wiring\IntegrityWiring;
-use Pulsar\Core\Wiring\IntrospectionWiring;
-use Pulsar\Core\Wiring\LoggingWiring;
-use Pulsar\Core\Wiring\MailWiring;
-use Pulsar\Core\Wiring\MetricsWiring;
-use Pulsar\Core\Wiring\NotificationWiring;
-use Pulsar\Core\Wiring\QueueWiring;
-use Pulsar\Core\Wiring\RequestContextWiring;
-use Pulsar\Core\Wiring\ResilienceWiring;
-use Pulsar\Core\Wiring\RuntimeWiring;
-use Pulsar\Core\Wiring\SagaWiring;
-use Pulsar\Core\Wiring\SchedulerWiring;
-use Pulsar\Core\Wiring\SecurityWiring;
-use Pulsar\Core\Wiring\ServiceDiscoveryWiring;
-use Pulsar\Core\Wiring\StorageWiring;
-use Pulsar\Core\Wiring\SupervisorWiring;
-use Pulsar\Core\Wiring\TenancyWiring;
-use Pulsar\Core\Wiring\TracingWiring;
-use Pulsar\Core\Wiring\ViewWiring;
+use Pulsar\Core\Wiring\WiringList;
 use Pulsar\ErrorHandling\ExceptionHandler;
 use Pulsar\ErrorHandling\ProductionRenderer;
 use Pulsar\Event\EventDispatcherInterface;
@@ -298,42 +265,9 @@ final class Kernel implements KernelInterface
                 $this->configManager->load();
             }
 
-            $wirings = [
-                new ConfigWiring(),
-                new I18nWiring(),
-                new LoggingWiring(),
-                new TracingWiring(),
-                new SecurityWiring(),
-                new MetricsWiring(),
-                new RequestContextWiring(),
-                new EventWiring(),
-                new ErrorTrackingWiring(),
-                new ExceptionHandlerWiring(),
-                new AuthWiring(),
-                new DatabaseWiring(),
-                new TenancyWiring(),
-                new SagaWiring(),
-                new FeatureFlagWiring(),
-                new SchedulerWiring(),
-                new ResilienceWiring(),
-                new QueueWiring(),
-                new CacheWiring(),
-                new AntiSpamWiring(),
-                new MailWiring(),
-                new NotificationWiring(),
-                new StorageWiring(),
-                new CloudWiring(),
-                new ServiceDiscoveryWiring(),
-                new ApiWiring(),
-                new OpenApiWiring(),
-                new SupervisorWiring(),
-                new IntegrityWiring(),
-                new DeployWiring(),
-                new RuntimeWiring(),
-                new DiagnosticsWiring(),
-                new IntrospectionWiring(),
-                new ViewWiring(),
-            ];
+            // Canonical, order-significant boot wiring list (single source of
+            // truth shared with the wiring-contract harness).
+            $wirings = WiringList::default();
 
             // Asset routes are registered at boot only when not running from a
             // strict route cache; otherwise they are already in the cache and
