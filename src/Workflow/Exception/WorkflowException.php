@@ -125,27 +125,4 @@ class WorkflowException extends RuntimeException
             $definitionName,
         ));
     }
-
-    /**
-     * An ActorContext was constructed with an empty subjectId.
-     */
-    #[NoDiscard]
-    public static function emptyActorSubject(): self
-    {
-        return new self('ActorContext subjectId must not be empty');
-    }
-
-    /**
-     * A classified context value violates the field contract
-     * (wrong type, out-of-range tag, missing required attribute).
-     */
-    #[NoDiscard]
-    public static function invalidClassifiedField(string $field, string $reason): self
-    {
-        return new self(sprintf(
-            'Invalid classified-context field "%s": %s',
-            $field,
-            $reason,
-        ));
-    }
 }
