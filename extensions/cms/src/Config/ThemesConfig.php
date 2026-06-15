@@ -53,10 +53,10 @@ final readonly class ThemesConfig
             storagePath: Coerce::string($data['storage_path'] ?? null, 'storage/cms/themes'),
             assetDeployMode: Coerce::string($data['asset_deploy_mode'] ?? null, 'copy'),
             requireSignedThemes: Coerce::strictBool($data['require_signed_themes'] ?? null, true),
-            trustedPublicKeys: Coerce::listOfString($data['trusted_public_keys'] ?? null),
+            trustedPublicKeys: Coerce::stringListOrEmpty($data['trusted_public_keys'] ?? null),
             integrityCheckOnBoot: Coerce::strictBool($data['integrity_check_on_boot'] ?? null, true),
-            maxArchiveSize: Coerce::int($data['max_archive_size'] ?? null, 52_428_800),
-            maxFileCount: Coerce::int($data['max_file_count'] ?? null, 10_000),
+            maxArchiveSize: Coerce::strictInt($data['max_archive_size'] ?? null, 52_428_800),
+            maxFileCount: Coerce::strictInt($data['max_file_count'] ?? null, 10_000),
         );
     }
 }

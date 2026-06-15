@@ -6,6 +6,7 @@ namespace Pulsar\Extension\Cms\FullSiteEditor;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Support\Coerce;
 
 /**
  * Global styles configuration for full-site editing.
@@ -49,11 +50,11 @@ final readonly class GlobalStylesConfig
     public static function fromArray(array $data): self
     {
         return new self(
-            colors: $data['colors'] ?? [],
-            typography: $data['typography'] ?? [],
-            spacing: $data['spacing'] ?? [],
-            borders: $data['borders'] ?? [],
-            customCss: $data['custom_css'] ?? '',
+            colors: Coerce::mapOfString($data['colors'] ?? null),
+            typography: Coerce::mapOfString($data['typography'] ?? null),
+            spacing: Coerce::mapOfString($data['spacing'] ?? null),
+            borders: Coerce::mapOfString($data['borders'] ?? null),
+            customCss: Coerce::string($data['custom_css'] ?? null, ''),
         );
     }
 
