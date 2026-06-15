@@ -65,10 +65,10 @@ final readonly class ViewConfig
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $stepLimit = Coerce::int($data['sandbox_step_limit'] ?? null, 10_000);
-        $loopLimit = Coerce::int($data['sandbox_loop_limit'] ?? null, 1_000);
-        $outputLimit = Coerce::int($data['sandbox_output_size_limit'] ?? null, 1_048_576);
-        $wallClockInterval = Coerce::int($data['sandbox_wall_clock_check_interval'] ?? null, 500);
+        $stepLimit = Coerce::strictInt($data['sandbox_step_limit'] ?? null, 10_000);
+        $loopLimit = Coerce::strictInt($data['sandbox_loop_limit'] ?? null, 1_000);
+        $outputLimit = Coerce::strictInt($data['sandbox_output_size_limit'] ?? null, 1_048_576);
+        $wallClockInterval = Coerce::strictInt($data['sandbox_wall_clock_check_interval'] ?? null, 500);
 
         return new self(
             templatePaths: self::filterStringList($data['template_paths'] ?? null),

@@ -40,12 +40,12 @@ final readonly class RiskConfig
     public static function fromArray(array $data): self
     {
         return new self(
-            lowThreshold: Coerce::float($data['low_threshold'] ?? null, 0.3),
-            highThreshold: Coerce::float($data['high_threshold'] ?? null, 0.7),
-            velocityWindowSeconds: Coerce::int($data['velocity_window_seconds'] ?? null, 3600),
-            velocityMaxCount: Coerce::int($data['velocity_max_count'] ?? null, 10),
-            velocityMaxAmountMinorUnits: Coerce::int($data['velocity_max_amount_minor_units'] ?? null, 50000),
-            lowValueThresholdMinorUnits: Coerce::int($data['low_value_threshold_minor_units'] ?? null, 3000),
+            lowThreshold: Coerce::strictFloat($data['low_threshold'] ?? null, 0.3),
+            highThreshold: Coerce::strictFloat($data['high_threshold'] ?? null, 0.7),
+            velocityWindowSeconds: Coerce::strictInt($data['velocity_window_seconds'] ?? null, 3600),
+            velocityMaxCount: Coerce::strictInt($data['velocity_max_count'] ?? null, 10),
+            velocityMaxAmountMinorUnits: Coerce::strictInt($data['velocity_max_amount_minor_units'] ?? null, 50000),
+            lowValueThresholdMinorUnits: Coerce::strictInt($data['low_value_threshold_minor_units'] ?? null, 3000),
             velocityTracker: Coerce::string($data['velocity_tracker'] ?? null, 'memory'),
         );
     }

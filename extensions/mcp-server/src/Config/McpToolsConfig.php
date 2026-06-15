@@ -45,8 +45,8 @@ final readonly class McpToolsConfig
         return new self(
             disabledReadTools: Coerce::listOfString($data['disabled_read_tools'] ?? null),
             allowedActions: Coerce::listOfString($data['allowed_actions'] ?? null),
-            maxOutputBytes: Coerce::int($data['max_output_bytes'] ?? null, 1_048_576),
-            actionTimeout: Coerce::int($data['action_timeout'] ?? null, 120),
+            maxOutputBytes: Coerce::strictInt($data['max_output_bytes'] ?? null, 1_048_576),
+            actionTimeout: Coerce::strictInt($data['action_timeout'] ?? null, 120),
             commands: [
                 'phpunit' => Coerce::nullableString($commandsRaw['phpunit'] ?? null),
                 'composer' => Coerce::nullableString($commandsRaw['composer'] ?? null),
