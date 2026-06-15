@@ -534,14 +534,23 @@ final class Kernel implements KernelInterface
     private function renderFallbackError(Throwable $e, ServerRequestInterface $request): ResponseInterface
     {
         $renderer = new ProductionRenderer();
-        $status = $e instanceof RoutingException && str_contains($e->getMessage(), 'No route')
-            ? ResponseStatus::NotFound
-            : ResponseStatus::InternalServerError;
+        $status = match (true) {
+            $e instanceof RoutingException && $e->isNotFound() => ResponseStatus::NotFound,
+            $e instanceof RoutingException && $e->isMethodNotAllowed() => ResponseStatus::MethodNotAllowed,
+            default => ResponseStatus::InternalServerError,
+        };
 
-        return Response::html(
+        $response = Response::html(
             $renderer->render($e, $request, $status),
             $status->value,
         );
+
+        // RFC 9110 §15.5.6: a 405 response must advertise the permitted methods.
+        if ($e instanceof RoutingException && $e->isMethodNotAllowed()) {
+            $response = $response->withHeader('Allow', $e->getAllowHeader());
+        }
+
+        return $response;
     }
 
     /**
