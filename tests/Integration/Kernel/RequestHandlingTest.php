@@ -17,7 +17,6 @@ use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\Middleware\MiddlewareInterface;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Routing\Router;
-use Pulsar\Routing\RoutingException;
 
 #[CoversClass(Kernel::class)]
 final class RequestHandlingTest extends TestCase
@@ -124,23 +123,28 @@ final class RequestHandlingTest extends TestCase
     }
 
     #[Test]
-    public function kernelThrows404ForUnknownRouteWithoutErrorHandler(): void
+    public function kernelReturns404ForUnknownRouteWithoutErrorHandler(): void
     {
         $kernel = new Kernel();
         $kernel->router()->get('/', fn() => Response::text('home'));
 
-        $this->expectException(RoutingException::class);
-        $kernel->handle($this->createRequest(path: '/unknown'));
+        // F4.11: with no exception handler wired the kernel renders a generic
+        // status-correct page rather than leaking the RoutingException.
+        $response = $kernel->handle($this->createRequest(path: '/unknown'));
+
+        self::assertSame(404, $response->getStatusCode());
     }
 
     #[Test]
-    public function kernelThrows405ForMethodNotAllowedWithoutErrorHandler(): void
+    public function kernelReturns405ForMethodNotAllowedWithoutErrorHandler(): void
     {
         $kernel = new Kernel();
         $kernel->router()->get('/test', fn() => Response::text('ok'));
 
-        $this->expectException(RoutingException::class);
-        $kernel->handle($this->createRequest('POST', '/test'));
+        $response = $kernel->handle($this->createRequest('POST', '/test'));
+
+        self::assertSame(405, $response->getStatusCode());
+        self::assertNotSame('', $response->getHeaderLine('Allow'));
     }
 
     #[Test]

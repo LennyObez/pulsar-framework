@@ -14,7 +14,6 @@ use Pulsar\Http\Message\Response;
 use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Routing\Router;
-use Pulsar\Routing\RoutingException;
 
 /**
  * End-to-end tests for the complete HTTP request lifecycle.
@@ -62,15 +61,15 @@ final class FullRequestLifecycleTest extends TestCase
     }
 
     #[Test]
-    public function unmatchedRouteThrows404RoutingException(): void
+    public function unmatchedRouteReturns404(): void
     {
         $kernel = new Kernel();
         $kernel->router()->get('/', fn() => Response::text('home'));
 
-        $this->expectException(RoutingException::class);
-        $this->expectExceptionCode(404);
+        // F4.11: no exception handler wired → generic status-correct response.
+        $response = $kernel->handle($this->createRequest(path: '/nonexistent'));
 
-        $kernel->handle($this->createRequest(path: '/nonexistent'));
+        self::assertSame(404, $response->getStatusCode());
     }
 
     #[Test]
@@ -162,15 +161,15 @@ final class FullRequestLifecycleTest extends TestCase
     }
 
     #[Test]
-    public function methodNotAllowedThrows405(): void
+    public function methodNotAllowedReturns405(): void
     {
         $kernel = new Kernel();
         $kernel->router()->get('/resource', fn() => Response::text('ok'));
 
-        $this->expectException(RoutingException::class);
-        $this->expectExceptionCode(405);
+        $response = $kernel->handle($this->createRequest(method: 'DELETE', path: '/resource'));
 
-        $kernel->handle($this->createRequest(method: 'DELETE', path: '/resource'));
+        self::assertSame(405, $response->getStatusCode());
+        self::assertNotSame('', $response->getHeaderLine('Allow'));
     }
 
     #[Test]
