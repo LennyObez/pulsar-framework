@@ -221,6 +221,28 @@ final class Coerce
     }
 
     /**
+     * Lenient string-list coercion that preserves arity: each element of an
+     * array becomes itself if it is a string, otherwise the empty string `''`
+     * (positions are kept, nothing is dropped). A non-array value yields
+     * `$default`. Use where the list index is significant or blanks must stay
+     * visible, in contrast to {@see stringListFromInput} which drops non-strings.
+     *
+     * @param list<string> $default
+     * @return list<string>
+     */
+    public static function stringListOrEmpty(mixed $value, array $default = []): array
+    {
+        if (!is_array($value)) {
+            return $default;
+        }
+
+        return array_values(array_map(
+            static fn(mixed $v): string => is_string($v) ? $v : '',
+            $value,
+        ));
+    }
+
+    /**
      * @param list<int> $default
      * @return list<int>
      */
