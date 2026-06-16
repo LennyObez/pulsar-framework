@@ -39,6 +39,7 @@ final class SecurityConfigTest extends TestCase
     protected function tearDown(): void
     {
         putenv('SESSION_COOKIE_NAME');
+        putenv('APP_ENV');
     }
 
     #[Test]
@@ -99,7 +100,10 @@ final class SecurityConfigTest extends TestCase
     #[Test]
     public function defaultsAppliedWhenKeysAreMissing(): void
     {
-        $config = SecurityConfig::fromArray([], $this->environment);
+        // cookie_secure defaults to secure only in production; pin it so the
+        // secure-default assertion is deterministic.
+        putenv('APP_ENV=production');
+        $config = SecurityConfig::fromArray([], Environment::load());
 
         self::assertSame('PULSAR_SESSION', $config->session->cookieName);
         self::assertSame(7200, $config->session->lifetime);
