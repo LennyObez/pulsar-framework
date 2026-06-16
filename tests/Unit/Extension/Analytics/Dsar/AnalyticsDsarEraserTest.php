@@ -11,6 +11,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Extension\Analytics\Contracts\EventRepositoryInterface;
 use Pulsar\Extension\Analytics\Contracts\PageViewRepositoryInterface;
@@ -123,7 +124,7 @@ final class AnalyticsDsarEraserTest extends TestCase
             ->with(
                 AuditEvent::DataModification,
                 AuditOutcome::Success,
-                null,
+                AuditActor::system('dsar.analytics'),
                 'analytics.dsar.erasure',
                 'analytics_visitor:visitor-hash-xyz',
                 [
@@ -152,7 +153,7 @@ final class AnalyticsDsarEraserTest extends TestCase
             ->with(
                 AuditEvent::DataModification,
                 AuditOutcome::Success,
-                null,
+                AuditActor::system('dsar.analytics'),
                 'analytics.dsar.erasure',
                 'analytics_visitor:empty-visitor',
                 [

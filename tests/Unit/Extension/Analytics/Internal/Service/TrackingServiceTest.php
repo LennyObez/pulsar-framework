@@ -240,7 +240,7 @@ final class TrackingServiceTest extends TestCase
     public function trackPageViewIgnoresDntWhenDisabled(): void
     {
         $config = new AnalyticsConfig(
-            privacy: new PrivacyConfig(respectDnt: false),
+            privacy: new PrivacyConfig(respectDnt: false, requireConsent: false),
         );
 
         $pageViewRepo = $this->createMock(PageViewRepositoryInterface::class);
@@ -446,7 +446,10 @@ final class TrackingServiceTest extends TestCase
     #[Test]
     public function trackPageViewUsesClientIpFromRemoteAddr(): void
     {
-        $config = new AnalyticsConfig(trustedProxies: []);
+        $config = new AnalyticsConfig(
+            trustedProxies: [],
+            privacy: new PrivacyConfig(requireConsent: false),
+        );
 
         $pageViewRepo = $this->createMock(PageViewRepositoryInterface::class);
         $pageViewRepo->expects(self::once())->method('insert');
