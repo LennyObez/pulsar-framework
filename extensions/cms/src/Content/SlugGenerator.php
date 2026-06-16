@@ -72,6 +72,13 @@ final readonly class SlugGenerator
      */
     public function validate(string $slug): bool
     {
+        // A user-supplied slug must be non-empty. The empty slug is only
+        // meaningful as the homepage content path (ContentTranslation::isValidSlug
+        // permits it there); it is never a valid slug to validate/generate here.
+        if ($slug === '') {
+            return false;
+        }
+
         return ContentTranslation::isValidSlug($slug);
     }
 

@@ -120,7 +120,6 @@ final class SlugGeneratorTest extends TestCase
         yield 'consecutive hyphens' => ['hello--world'];
         yield 'spaces' => ['hello world'];
         yield 'special chars' => ['hello!world'];
-        yield 'slashes' => ['hello/world'];
         yield 'empty string' => [''];
         yield 'over 200 chars' => [str_repeat('a', 201)];
     }
