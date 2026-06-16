@@ -41,7 +41,9 @@ final class ForeachDirectiveTest extends TestCase
     {
         $compiled = $this->directive->compile('$items as $item');
 
-        self::assertStringContainsString('foreach ($items as $item):', $compiled);
+        // The iterable is materialised into $__loopItems first (generator-safe),
+        // so the emitted foreach iterates $__loopItems, not the raw expression.
+        self::assertStringContainsString('foreach ($__loopItems as $item):', $compiled);
     }
 
     #[Test]
@@ -49,7 +51,7 @@ final class ForeachDirectiveTest extends TestCase
     {
         $compiled = $this->directive->compile('$items as $key => $value');
 
-        self::assertStringContainsString('foreach ($items as $key => $value):', $compiled);
+        self::assertStringContainsString('foreach ($__loopItems as $key => $value):', $compiled);
         self::assertStringContainsString('$__loopItems = $items', $compiled);
     }
 
