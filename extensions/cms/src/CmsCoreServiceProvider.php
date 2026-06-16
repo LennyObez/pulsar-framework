@@ -614,10 +614,12 @@ final readonly class CmsCoreServiceProvider
             ),
         );
 
-        // Front-office account controller
-        $container->instance(
+        // Front-office account controller — lazy factory so register() does not
+        // eagerly resolve the customer repository (which is wired separately and
+        // may be absent in minimal/bootstrapping containers).
+        $container->bind(
             Http\Controller\AccountController::class,
-            new Http\Controller\AccountController(
+            static fn() => new Http\Controller\AccountController(
                 $container->get(Commerce\CustomerRepositoryInterface::class),
                 $container->get(Account\AccountSectionRegistry::class),
                 $container->has(\Pulsar\View\Engine\TemplateEngineInterface::class)
