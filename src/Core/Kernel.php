@@ -223,6 +223,11 @@ final class Kernel implements KernelInterface
         $cacheLoaded = false;
         $routesCached = false;
 
+        // When a strict route cache is loaded, the cached routes are
+        // authoritative: boot-time route registration (e.g. AssetWiring) is
+        // skipped so it cannot duplicate cached routes or hit the locked router.
+        $strictRouteCache = false;
+
         $cacheStart = hrtime(true);
 
         if ($this->configManager !== null && $this->container->has(FrameworkCache::class)) {
@@ -241,12 +246,16 @@ final class Kernel implements KernelInterface
                     $this->container->setResolutionHints($cached['containerHints']);
                 }
 
+                if ($cached !== null && $cached['manifest']->strict) {
+                    $strictRouteCache = true;
+                }
+
                 // Apply cached routes to the router
                 if ($cached !== null && $cached['routes'] !== null && $cached['routes'] !== []) {
                     $this->router->loadRoutes($this->reconstructCachedRoutes($cached['routes']));
                     $routesCached = true;
 
-                    if ($cached['manifest']->strict) {
+                    if ($strictRouteCache) {
                         $this->router->lock();
                     }
                 }
@@ -304,8 +313,14 @@ final class Kernel implements KernelInterface
                 new DiagnosticsWiring(),
                 new IntrospectionWiring(),
                 new ViewWiring(),
-                new AssetWiring(),
             ];
+
+            // Asset routes are registered at boot only when not running from a
+            // strict route cache; otherwise they are already in the cache and
+            // re-registering them would duplicate routes or hit the locked router.
+            if (!$strictRouteCache) {
+                $wirings[] = new AssetWiring();
+            }
 
             foreach ($wirings as $wiring) {
                 $wiring->wire($this->container, $this->configManager, $this->middleware, $this->middlewareRegistry, $this->router);
