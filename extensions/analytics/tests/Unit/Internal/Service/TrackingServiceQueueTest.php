@@ -101,7 +101,7 @@ final class TrackingServiceQueueTest extends TestCase
             siteRepository: $this->siteRepo,
             config: new AnalyticsConfig(
                 collectionDriver: $collectionDriver,
-                privacy: new PrivacyConfig(respectDnt: false),
+                privacy: new PrivacyConfig(respectDnt: false, requireConsent: false),
             ),
         );
     }
