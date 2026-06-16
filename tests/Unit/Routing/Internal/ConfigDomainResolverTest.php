@@ -11,6 +11,7 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Config\DomainConfig;
 use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\Message\Uri;
+use Pulsar\Http\TrustedProxy;
 use Pulsar\Routing\DomainContext;
 use Pulsar\Routing\Internal\ConfigDomainResolver;
 
@@ -18,8 +19,11 @@ use Pulsar\Routing\Internal\ConfigDomainResolver;
 #[CoversClass(DomainContext::class)]
 final class ConfigDomainResolverTest extends TestCase
 {
-    private function makeRequest(string $host, ?string $forwardedHost = null): ServerRequest
-    {
+    private function makeRequest(
+        string $host,
+        ?string $forwardedHost = null,
+        string $remoteAddr = '',
+    ): ServerRequest {
         $uri = new Uri(scheme: 'http', host: $host, path: '/');
 
         $headers = [];
@@ -28,7 +32,9 @@ final class ConfigDomainResolverTest extends TestCase
             $headers['X-Forwarded-Host'] = [$forwardedHost];
         }
 
-        return new ServerRequest('GET', $uri, $headers);
+        $serverParams = $remoteAddr !== '' ? ['REMOTE_ADDR' => $remoteAddr] : [];
+
+        return new ServerRequest('GET', $uri, $headers, serverParams: $serverParams);
     }
 
     #[Test]
@@ -183,10 +189,12 @@ final class ConfigDomainResolverTest extends TestCase
             defaultDomain: 'example.com',
             subdomains: ['forum' => ['forum']],
         );
-        $resolver = new ConfigDomainResolver($config);
+        // X-Forwarded-Host is only honoured from a trusted proxy (anti host-header
+        // injection); 127.0.0.1 is trusted by TrustedProxy's defaults.
+        $resolver = new ConfigDomainResolver($config, new TrustedProxy());
 
         $ctx = $resolver->resolve(
-            $this->makeRequest('internal-lb.local', 'forum.example.com'),
+            $this->makeRequest('internal-lb.local', 'forum.example.com', '127.0.0.1'),
         );
 
         self::assertSame('forum.example.com', $ctx->domain);
@@ -201,10 +209,10 @@ final class ConfigDomainResolverTest extends TestCase
             defaultDomain: 'example.com',
             subdomains: ['forum' => ['forum']],
         );
-        $resolver = new ConfigDomainResolver($config);
+        $resolver = new ConfigDomainResolver($config, new TrustedProxy());
 
         $ctx = $resolver->resolve(
-            $this->makeRequest('backend', 'forum.example.com, proxy.internal'),
+            $this->makeRequest('backend', 'forum.example.com, proxy.internal', '127.0.0.1'),
         );
 
         self::assertSame('forum.example.com', $ctx->domain);
