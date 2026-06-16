@@ -231,7 +231,10 @@ final readonly class AesGcmCipherSuite implements CipherSuiteInterface
     #[NoDiscard]
     public function name(): string
     {
-        return $this->useSodium ? 'aes-gcm-sodium' : 'aes-gcm-openssl';
+        // Stable suite identifier per CipherSuiteInterface (e.g. 'sodium',
+        // 'aes-gcm'); the sodium/openssl backend is an internal detail and must
+        // not change the identity used for payload routing.
+        return 'aes-gcm';
     }
 
     private static function validateKeyLength(string $key): void

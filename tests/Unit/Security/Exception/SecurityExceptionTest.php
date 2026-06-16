@@ -106,7 +106,7 @@ final class SecurityExceptionTest extends TestCase
     {
         $e = SecurityException::serializationForbidden('MasterKey');
 
-        self::assertSame('Serialization of MasterKey is forbidden — key material must not leave process memory', $e->getMessage());
+        self::assertSame('Serialization of MasterKey is forbidden: key material must not leave process memory', $e->getMessage());
     }
 
     #[Test]
