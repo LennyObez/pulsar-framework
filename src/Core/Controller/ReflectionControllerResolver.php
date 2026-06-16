@@ -7,22 +7,24 @@ namespace Pulsar\Core\Controller;
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Container\ContainerInterface;
+use Pulsar\Container\Exception\ContainerException;
+use Pulsar\Container\Exception\NotFoundException;
 use Pulsar\Routing\RoutingException;
 use ReflectionClass;
-use ReflectionException;
-use ReflectionNamedType;
 
 use function class_exists;
 
 /**
- * Default controller resolver: container-first, reflection-autowired fallback.
+ * Default controller resolver: delegates to the container's autowiring.
  *
- * A controller bound in the container is resolved through it (so in production
- * it benefits from compiled resolution hints). An unbound controller is
- * autowired by reflecting its constructor and pulling each class-typed
- * dependency from the container, falling back to default/nullable values.
- * This is the reflection path that previously lived inline in the Kernel; it
- * is isolated here so it can be unit-tested and replaced wholesale.
+ * A bound controller resolves through the container (so in production it
+ * benefits from compiled resolution hints and its configured lifetime). An
+ * unbound but instantiable controller is autowired by the container, which
+ * pulls each constructor dependency — autowiring plain concretes and resolving
+ * bound interfaces. The container is the single autowiring authority; this
+ * resolver only adds routing-specific guards (missing / non-instantiable class)
+ * and surfaces the controller name alongside any unresolved-dependency detail,
+ * so the failing edge is obvious instead of an opaque "no binding found".
  */
 #[Internal(reason: 'Default controller resolution strategy; depend on ControllerResolverInterface')]
 final class ReflectionControllerResolver implements ControllerResolverInterface
@@ -37,65 +39,23 @@ final class ReflectionControllerResolver implements ControllerResolverInterface
             return $this->container->get($class);
         }
 
-        // Autowire: resolve constructor dependencies from the container.
-        try {
-            if (!class_exists($class)) {
-                throw RoutingException::invalidHandler($class . ': class does not exist');
-            }
+        if (!class_exists($class)) {
+            throw RoutingException::invalidHandler($class . ': class does not exist');
+        }
 
-            $reflection = new ReflectionClass($class);
-
-            if (!$reflection->isInstantiable()) {
-                throw RoutingException::invalidHandler(
-                    $class . ' is not instantiable (abstract class or interface)',
-                );
-            }
-
-            $constructor = $reflection->getConstructor();
-
-            if ($constructor === null || $constructor->getNumberOfParameters() === 0) {
-                return $reflection->newInstance();
-            }
-
-            $args = [];
-
-            foreach ($constructor->getParameters() as $param) {
-                $type = $param->getType();
-
-                if ($type instanceof ReflectionNamedType && !$type->isBuiltin()) {
-                    $typeName = $type->getName();
-
-                    if ($this->container->has($typeName)) {
-                        $args = [...$args, $this->container->get($typeName)];
-
-                        continue;
-                    }
-                }
-
-                if ($param->isDefaultValueAvailable()) {
-                    $args = [...$args, $param->getDefaultValue()];
-
-                    continue;
-                }
-
-                if ($type instanceof ReflectionNamedType && $type->allowsNull()) {
-                    $args = [...$args, null];
-
-                    continue;
-                }
-
-                throw RoutingException::invalidHandler(
-                    $class . ': cannot resolve constructor parameter $' . $param->getName(),
-                );
-            }
-
-            return $reflection->newInstanceArgs($args);
-        } catch (RoutingException $e) {
-            throw $e;
-        } catch (ReflectionException) {
+        if (!new ReflectionClass($class)->isInstantiable()) {
             throw RoutingException::invalidHandler(
-                $class . ' (not registered in the container: required dependencies are unavailable)',
+                $class . ' is not instantiable (abstract class or interface)',
             );
+        }
+
+        try {
+            /** @var object */
+            return $this->container->get($class);
+        } catch (NotFoundException | ContainerException $e) {
+            // The container names the unresolved dependency + parameter; prefix
+            // the controller so the whole edge is visible in the 500/log.
+            throw RoutingException::invalidHandler($class . ': ' . $e->getMessage());
         }
     }
 }

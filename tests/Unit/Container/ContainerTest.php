@@ -204,6 +204,33 @@ final class ContainerTest extends TestCase
     }
 
     #[Test]
+    public function getAutowiresUnboundInstantiableConcrete(): void
+    {
+        $container = new Container();
+
+        // Neither ServiceStub nor its concrete dependency is bound — both are
+        // autowired on demand so applications need not bind every concrete.
+        $service = $container->get(ServiceStub::class);
+
+        self::assertInstanceOf(ServiceStub::class, $service);
+        self::assertInstanceOf(DependencyStub::class, $service->dependency);
+        // Autowiring does not register a binding: has() still reports false.
+        self::assertFalse($container->has(ServiceStub::class));
+    }
+
+    #[Test]
+    public function getThrowsNotFoundForUnboundInterface(): void
+    {
+        $container = new Container();
+
+        // An interface is not instantiable and cannot be autowired without a
+        // binding — it must still surface as NotFound, not silently succeed.
+        $this->expectException(NotFoundException::class);
+
+        $_ = $container->get(ServiceContractStub::class);
+    }
+
+    #[Test]
     public function autowireUsesDefaultValuesForOptionalParameters(): void
     {
         $container = new Container();
@@ -443,6 +470,8 @@ final class ContainerTest extends TestCase
 }
 
 // Test stubs
+interface ServiceContractStub {}
+
 class DependencyStub {}
 
 class ServiceStub
@@ -462,7 +491,9 @@ class OptionalDependencyStub
 class NullableDependencyStub
 {
     public function __construct(
-        public readonly ?DependencyStub $dependency = null,
+        // Interface: genuinely unresolvable without a binding, so a nullable
+        // parameter falls back to null (a nullable concrete would be autowired).
+        public readonly ?ServiceContractStub $dependency = null,
     ) {}
 }
 
