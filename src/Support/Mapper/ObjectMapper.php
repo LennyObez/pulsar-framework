@@ -95,10 +95,19 @@ final class ObjectMapper
     #[NoDiscard]
     public function mapList(array $items, string $targetClass): array
     {
-        return array_map(
-            fn(array $item): object => $this->map($item, $targetClass),
-            $items,
-        );
+        $result = [];
+
+        foreach ($items as $index => $item) {
+            if (!is_array($item)) {
+                // Surface a domain MappingException instead of a raw TypeError
+                // from the array-typed map() call when an element is malformed.
+                throw MappingException::invalidListItem($targetClass, (int) $index);
+            }
+
+            $result[] = $this->map($item, $targetClass);
+        }
+
+        return $result;
     }
 
     /**
