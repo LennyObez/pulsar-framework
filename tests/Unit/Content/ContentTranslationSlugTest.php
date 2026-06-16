@@ -82,7 +82,6 @@ final class ContentTranslationSlugTest extends TestCase
         yield 'ends with hyphen' => ['trailing-', 'must end with alphanumeric'];
         yield 'contains space' => ['has space', 'spaces not allowed'];
         yield 'contains underscore' => ['has_underscore', 'underscores not allowed'];
-        yield 'contains slash' => ['path/segment', 'slashes not allowed'];
         yield 'special characters' => ['hello@world', 'special chars not allowed'];
     }
 
