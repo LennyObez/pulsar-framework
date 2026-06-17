@@ -97,7 +97,7 @@ final class CmsImportExportProviderTest extends TestCase
             dryRun: true,
         );
 
-        $this->service->method('importBundle')->willReturn($cmsResult);
+        $this->service->method('importUnifiedFile')->willReturn($cmsResult);
 
         $result = $this->provider->import(new ImportRequest(content: '{}'));
 

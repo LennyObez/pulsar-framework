@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Console\ExitCode;
+use Pulsar\Console\Input\ArrayInput;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 use Pulsar\ImportExport\Command\ExportCommand;
@@ -29,7 +30,7 @@ final class ExportCommandTest extends TestCase
         $output->expects(self::once())->method('warning')
             ->with('No import/export providers registered.');
 
-        $code = $command->execute($this->createInputStub(), $output);
+        $code = $command->execute($this->createInput(), $output);
 
         self::assertSame(ExitCode::Success->value, $code);
     }
@@ -42,7 +43,7 @@ final class ExportCommandTest extends TestCase
 
         $command = new ExportCommand($registry);
 
-        $input = $this->createInputStub(['providers' => 'nonexistent']);
+        $input = $this->createInput(['providers' => 'nonexistent']);
 
         $output = $this->createMock(OutputInterface::class);
         $output->expects(self::once())->method('errorln')
@@ -65,7 +66,7 @@ final class ExportCommandTest extends TestCase
         $registry->register($cms);
 
         $command = new ExportCommand($registry);
-        $input = $this->createInputStub();
+        $input = $this->createInput();
 
         $output = $this->createMock(OutputInterface::class);
         $output->expects(self::atLeastOnce())->method('success');
@@ -90,17 +91,9 @@ final class ExportCommandTest extends TestCase
     /**
      * @param array<string, mixed> $options
      */
-    private function createInputStub(array $options = []): InputInterface&Stub
+    private function createInput(array $options = []): InputInterface
     {
-        $input = $this->createStub(InputInterface::class);
-        $input->method('getOption')->willReturnCallback(
-            fn(string $name) => $options[$name] ?? null,
-        );
-        $input->method('hasOption')->willReturnCallback(
-            fn(string $name) => isset($options[$name]),
-        );
-
-        return $input;
+        return new ArrayInput(null, [], $options);
     }
 
     private function createProviderStub(string $name): ImportExportProviderInterface&Stub
