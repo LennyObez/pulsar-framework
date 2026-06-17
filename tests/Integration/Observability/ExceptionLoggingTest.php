@@ -15,6 +15,8 @@ use Pulsar\Filesystem\SafePath;
 use Pulsar\Http\Message\ServerRequest;
 use RuntimeException;
 
+use function array_filter;
+use function explode;
 use function file_get_contents;
 use function file_put_contents;
 use function getcwd;
@@ -22,10 +24,11 @@ use function is_dir;
 use function is_file;
 use function ltrim;
 use function mkdir;
+use function str_contains;
 use function str_starts_with;
 use function strlen;
 use function substr;
-use function substr_count;
+use function trim;
 use function uniqid;
 
 /**
@@ -83,8 +86,6 @@ final class ExceptionLoggingTest extends TestCase
         $kernel->boot();
         $kernel->router()->get('/boom', static fn(): never => throw new RuntimeException('kaboom in production'));
 
-        self::assertFileDoesNotExist($this->logPath);
-
         $response = $kernel->handle(new ServerRequest(method: 'GET', uri: '/boom'));
 
         self::assertSame(500, $response->getStatusCode());
@@ -96,8 +97,13 @@ final class ExceptionLoggingTest extends TestCase
         self::assertStringContainsString('"level":"error"', $contents);
         self::assertStringContainsString('kaboom in production', $contents);
         self::assertStringContainsString('RuntimeException', $contents);
-        // Exactly one error entry — the top-level "level":"error" appears once
-        // per log line (the serialized exception context carries no level key).
-        self::assertSame(1, substr_count($contents, '"level":"error"'));
+        // Exactly one log line records the thrown exception. (Other boot-time
+        // entries — e.g. the security-posture summary — may also be present;
+        // the contract is that the unhandled exception is logged once.)
+        $exceptionLines = array_filter(
+            explode("\n", trim($contents)),
+            static fn(string $line): bool => str_contains($line, 'RuntimeException') && str_contains($line, 'kaboom in production'),
+        );
+        self::assertCount(1, $exceptionLines, 'the unhandled exception should be logged exactly once');
     }
 }
