@@ -13272,6 +13272,34 @@
             },
             "constants": []
         },
+        "Pulsar\\Core\\Wiring\\Contract\\WiringContractInspector": {
+            "since": "1.0.0-rc.11",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "Pulsar\\Container\\ContainerInterface $container"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "degradedFeatures": {
+                    "params": [
+                        "array $contracts"
+                    ],
+                    "return": "array",
+                    "static": false
+                },
+                "unsatisfiedRequirements": {
+                    "params": [
+                        "array $contracts"
+                    ],
+                    "return": "array",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\DataProtection\\ConsentBanner\\ConsentBannerConfig": {
             "since": "1.0.0",
             "methods": [],
@@ -55179,6 +55207,7 @@
         "Pulsar\\Console\\Command\\DebugConfigCommand",
         "Pulsar\\Console\\Command\\DebugContainerCommand",
         "Pulsar\\Console\\Command\\DebugRoutesCommand",
+        "Pulsar\\Console\\Command\\DebugWiringCommand",
         "Pulsar\\Console\\Command\\DeployCheckCommand",
         "Pulsar\\Console\\Command\\Dev\\ComposeFileGenerator",
         "Pulsar\\Console\\Command\\Dev\\DockerfileGenerator",
@@ -55251,7 +55280,6 @@
         "Pulsar\\Core\\Wiring\\CacheWiring",
         "Pulsar\\Core\\Wiring\\CloudWiring",
         "Pulsar\\Core\\Wiring\\ConfigWiring",
-        "Pulsar\\Core\\Wiring\\Contract\\WiringContractInspector",
         "Pulsar\\Core\\Wiring\\DatabaseWiring",
         "Pulsar\\Core\\Wiring\\DeployWiring",
         "Pulsar\\Core\\Wiring\\DiagnosticsWiring",
