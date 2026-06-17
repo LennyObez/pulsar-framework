@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Console\Command\Make\MakePortCommand;
 use Pulsar\Console\ExitCode;
-use Pulsar\Console\InputInterface;
+use Pulsar\Console\Input\ArrayInput;
 use Pulsar\Console\OutputInterface;
 
 #[CoversClass(MakePortCommand::class)]
@@ -39,8 +39,7 @@ final class MakePortCommandTest extends TestCase
     {
         $command = new MakePortCommand();
 
-        $input = $this->createStub(InputInterface::class);
-        $input->method('getArgument')->willReturn(null);
+        $input = new ArrayInput(null, [], []);
 
         $output = $this->createMock(OutputInterface::class);
         $output->expects(self::atLeastOnce())->method('errorln');
@@ -53,12 +52,9 @@ final class MakePortCommandTest extends TestCase
     {
         $command = new MakePortCommand();
 
-        $input = $this->createStub(InputInterface::class);
-        $input->method('getArgument')->willReturn('PaymentProvider');
-        $input->method('getOption')->willReturnMap([
-            ['module', null, null],
-            ['path', 'app/Modules', 'app/Modules'],
-            ['methods', '', ''],
+        $input = new ArrayInput(null, ['PaymentProvider'], [
+            'path' => 'app/Modules',
+            'methods' => '',
         ]);
 
         $output = $this->createMock(OutputInterface::class);
@@ -75,12 +71,10 @@ final class MakePortCommandTest extends TestCase
         $originalDir = getcwd();
         chdir($this->tempDir);
 
-        $input = $this->createStub(InputInterface::class);
-        $input->method('getArgument')->willReturn('PaymentProvider');
-        $input->method('getOption')->willReturnMap([
-            ['module', null, 'Billing'],
-            ['path', 'app/Modules', 'app/Modules'],
-            ['methods', '', 'process,refund'],
+        $input = new ArrayInput(null, ['PaymentProvider'], [
+            'module' => 'Billing',
+            'path' => 'app/Modules',
+            'methods' => 'process,refund',
         ]);
 
         $output = $this->createStub(OutputInterface::class);

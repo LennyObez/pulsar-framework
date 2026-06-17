@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Console\Command\Remove\RemoveEventIngestionCommand;
 use Pulsar\Console\ExitCode;
-use Pulsar\Console\InputInterface;
+use Pulsar\Console\Input\ArrayInput;
 use Pulsar\Console\OutputInterface;
 
 #[CoversClass(RemoveEventIngestionCommand::class)]
@@ -40,8 +40,7 @@ final class RemoveEventIngestionCommandTest extends TestCase
     {
         $command = new RemoveEventIngestionCommand();
 
-        $input = $this->createStub(InputInterface::class);
-        $input->method('getArgument')->willReturn(null);
+        $input = new ArrayInput(null, [], []);
 
         $output = $this->createMock(OutputInterface::class);
         $output->expects(self::atLeastOnce())->method('errorln');
@@ -77,13 +76,11 @@ final class RemoveEventIngestionCommandTest extends TestCase
 
         $command = new RemoveEventIngestionCommand();
 
-        $input = $this->createStub(InputInterface::class);
-        $input->method('getArgument')->willReturn('GitHub');
-        $input->method('getOption')->willReturnMap([
-            ['module', null, 'Billing'],
-            ['path', 'app/Modules', 'app/Modules'],
+        $input = new ArrayInput(null, ['GitHub'], [
+            'module' => 'Billing',
+            'path' => 'app/Modules',
+            'force' => true,
         ]);
-        $input->method('hasOption')->willReturnCallback(fn(string $name): bool => $name === 'force');
 
         $output = $this->createStub(OutputInterface::class);
 
