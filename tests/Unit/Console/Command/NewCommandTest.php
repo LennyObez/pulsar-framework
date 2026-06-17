@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Console\Command\NewCommand;
 use Pulsar\Console\ExitCode;
+use Pulsar\Console\Input\ArrayInput;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 
@@ -251,14 +252,10 @@ final class NewCommandTest extends TestCase
 
     private function createInputStub(string $name, string $preset, string $env): InputInterface
     {
-        $input = $this->createStub(InputInterface::class);
-        $input->method('getArgument')->willReturn($name);
-        $input->method('getOption')->willReturnMap([
-            ['preset', 'web', $preset],
-            ['env', 'local', $env],
+        return new ArrayInput(null, [$name], [
+            'preset' => $preset,
+            'env' => $env,
         ]);
-
-        return $input;
     }
 
     private function removeDirectory(string $dir): void
