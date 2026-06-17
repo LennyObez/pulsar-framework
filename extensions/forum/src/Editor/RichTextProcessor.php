@@ -7,11 +7,14 @@ namespace Pulsar\Extension\Forum\Editor;
 use InvalidArgumentException;
 use Pulsar\Api\Api;
 use Pulsar\Extension\Forum\Content\MarkdownRendererInterface;
+use Pulsar\Security\Html\HtmlSanitizer;
+use Pulsar\Security\Html\HtmlSanitizerPolicy;
 
 use function htmlspecialchars;
 use function nl2br;
 use function strip_tags;
 use function strlen;
+use function substr;
 use function trim;
 
 use const ENT_QUOTES;
@@ -21,7 +24,9 @@ use const ENT_QUOTES;
  *
  * Handles Markdown-to-HTML conversion, sanitization, and preview
  * generation. Works with the MarkdownRenderer for the actual
- * Markdown parsing, adding security sanitization on top.
+ * Markdown parsing, adding security sanitization on top via the
+ * framework-wide allowlist {@see HtmlSanitizer} — which strips event
+ * handlers and unsafe attributes/URL schemes rather than only tags.
  * @api
  */
 #[Api(since: '1.0.0')]
@@ -33,13 +38,53 @@ final readonly class RichTextProcessor
     private const int MAX_CONTENT_LENGTH = 100_000;
 
     /**
-     * Allowed HTML tags after sanitization.
+     * Allowed elements (and their attributes) for forum content. Anything else
+     * — including every attribute not listed and on* handlers — is removed.
+     *
+     * @var array<string, list<string>>
      */
-    private const string ALLOWED_TAGS = '<p><br><strong><em><a><code><pre><blockquote><ul><ol><li><h1><h2><h3><h4><h5><h6><img><hr><table><thead><tbody><tr><th><td><del><sup><sub><details><summary>';
+    private const array ALLOWED_ELEMENTS = [
+        'p' => [],
+        'br' => [],
+        'strong' => [],
+        'em' => [],
+        'del' => [],
+        'a' => ['href', 'rel', 'title'],
+        'code' => ['class'],
+        'pre' => [],
+        'blockquote' => [],
+        'ul' => [],
+        'ol' => [],
+        'li' => [],
+        'h1' => [],
+        'h2' => [],
+        'h3' => [],
+        'h4' => [],
+        'h5' => [],
+        'h6' => [],
+        'img' => ['src', 'alt', 'width', 'height', 'loading'],
+        'hr' => [],
+        'table' => [],
+        'thead' => [],
+        'tbody' => [],
+        'tr' => [],
+        'th' => ['scope', 'colspan', 'rowspan'],
+        'td' => ['colspan', 'rowspan'],
+        'sup' => [],
+        'sub' => [],
+        'details' => ['open'],
+        'summary' => [],
+    ];
+
+    private HtmlSanitizer $sanitizer;
 
     public function __construct(
         private MarkdownRendererInterface $markdownRenderer,
-    ) {}
+    ) {
+        $this->sanitizer = new HtmlSanitizer(
+            new HtmlSanitizerPolicy(allowedElements: self::ALLOWED_ELEMENTS),
+        );
+    }
 
     /**
      * Process editor input into safe HTML output.
@@ -84,7 +129,7 @@ final readonly class RichTextProcessor
 
     private function sanitizeHtml(string $html): string
     {
-        return strip_tags($html, self::ALLOWED_TAGS);
+        return $this->sanitizer->sanitize($html);
     }
 
     private function processPlainText(string $text): string
