@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Console\ExitCode;
+use Pulsar\Console\Input\ArrayInput;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 use Pulsar\SupplyChain\Command\SignCommand;
@@ -159,15 +160,7 @@ final class SignCommandTest extends TestCase
 
         $command = new SignCommand($tempDir);
 
-        $input = $this->createStub(InputInterface::class);
-        $input->method('hasOption')->willReturnMap([
-            ['key-file', true],
-            ['dir', false],
-            ['output', false],
-        ]);
-        $input->method('getOption')->willReturnMap([
-            ['key-file', null, $keyFile],
-        ]);
+        $input = new ArrayInput(null, [], ['key-file' => $keyFile]);
 
         $output = $this->createStub(OutputInterface::class);
 
@@ -203,16 +196,10 @@ final class SignCommandTest extends TestCase
 
         $command = new SignCommand($tempDir);
 
-        $input = $this->createStub(InputInterface::class);
-        $input->method('hasOption')->willReturnMap([
-            ['key-file', true],
-            ['dir', true],
-            ['output', true],
-        ]);
-        $input->method('getOption')->willReturnMap([
-            ['key-file', null, $keyFile],
-            ['dir', null, $distDir],
-            ['output', null, $manifestPath],
+        $input = new ArrayInput(null, [], [
+            'key-file' => $keyFile,
+            'dir' => $distDir,
+            'output' => $manifestPath,
         ]);
 
         $output = $this->createStub(OutputInterface::class);
