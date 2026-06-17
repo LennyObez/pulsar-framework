@@ -58,7 +58,7 @@ final class FeatureTemplatesTest extends TestCase
     #[Test]
     public function routeEntryUsesCorrectMethodAndPath(): void
     {
-        $output = $this->templates->routeEntry('Search', 'App\\Catalog', 'POST');
+        $output = $this->templates->routeEntry('Search', 'POST');
 
         self::assertStringContainsString('$router->post(\'/search\'', $output);
         self::assertStringContainsString('[SearchHandler::class, \'handle\']', $output);
@@ -69,7 +69,7 @@ final class FeatureTemplatesTest extends TestCase
     #[Test]
     public function routeEntryWithGetMethod(): void
     {
-        $output = $this->templates->routeEntry('Dashboard', 'App\\Admin', 'GET');
+        $output = $this->templates->routeEntry('Dashboard', 'GET');
 
         self::assertStringContainsString('$router->get(\'/dashboard\'', $output);
         self::assertStringContainsString('[DashboardHandler::class, \'handle\']', $output);
