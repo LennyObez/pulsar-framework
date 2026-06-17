@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Console\Command\Make\MakePaymentFlowCommand;
 use Pulsar\Console\ExitCode;
-use Pulsar\Console\InputInterface;
+use Pulsar\Console\Input\ArrayInput;
 use Pulsar\Console\OutputInterface;
 
 #[CoversClass(MakePaymentFlowCommand::class)]
@@ -39,8 +39,7 @@ final class MakePaymentFlowCommandTest extends TestCase
     {
         $command = new MakePaymentFlowCommand();
 
-        $input = $this->createStub(InputInterface::class);
-        $input->method('getArgument')->willReturn(null);
+        $input = new ArrayInput(null, [], []);
 
         $output = $this->createMock(OutputInterface::class);
         $output->expects(self::atLeastOnce())->method('errorln');
@@ -56,11 +55,9 @@ final class MakePaymentFlowCommandTest extends TestCase
         $originalDir = getcwd();
         chdir($this->tempDir);
 
-        $input = $this->createStub(InputInterface::class);
-        $input->method('getArgument')->willReturn('Subscription');
-        $input->method('getOption')->willReturnMap([
-            ['module', null, 'Checkout'],
-            ['path', 'app/Modules', 'app/Modules'],
+        $input = new ArrayInput(null, ['Subscription'], [
+            'module' => 'Checkout',
+            'path' => 'app/Modules',
         ]);
 
         $output = $this->createStub(OutputInterface::class);

@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Console\Command\Make\MakeFeatureCommand;
 use Pulsar\Console\ExitCode;
-use Pulsar\Console\InputInterface;
+use Pulsar\Console\Input\ArrayInput;
 use Pulsar\Console\OutputInterface;
 
 #[CoversClass(MakeFeatureCommand::class)]
@@ -39,8 +39,7 @@ final class MakeFeatureCommandTest extends TestCase
     {
         $command = new MakeFeatureCommand();
 
-        $input = $this->createStub(InputInterface::class);
-        $input->method('getArgument')->willReturn(null);
+        $input = new ArrayInput(null, [], []);
 
         $output = $this->createMock(OutputInterface::class);
         $output->expects(self::atLeastOnce())->method('errorln');
@@ -56,12 +55,10 @@ final class MakeFeatureCommandTest extends TestCase
         $originalDir = getcwd();
         chdir($this->tempDir);
 
-        $input = $this->createStub(InputInterface::class);
-        $input->method('getArgument')->willReturn('CreateOrder');
-        $input->method('getOption')->willReturnMap([
-            ['module', null, 'Billing'],
-            ['path', 'app/Modules', 'app/Modules'],
-            ['method', 'POST', 'POST'],
+        $input = new ArrayInput(null, ['CreateOrder'], [
+            'module' => 'Billing',
+            'path' => 'app/Modules',
+            'method' => 'POST',
         ]);
 
         $output = $this->createStub(OutputInterface::class);

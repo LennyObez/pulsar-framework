@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Console\Command\Remove\RemoveAdapterCommand;
 use Pulsar\Console\ExitCode;
-use Pulsar\Console\InputInterface;
+use Pulsar\Console\Input\ArrayInput;
 use Pulsar\Console\OutputInterface;
 
 #[CoversClass(RemoveAdapterCommand::class)]
@@ -41,8 +41,7 @@ final class RemoveAdapterCommandTest extends TestCase
     {
         $command = new RemoveAdapterCommand();
 
-        $input = $this->createStub(InputInterface::class);
-        $input->method('getArgument')->willReturn(null);
+        $input = new ArrayInput(null, [], []);
 
         $output = $this->createMock(OutputInterface::class);
         $output->expects(self::atLeastOnce())->method('errorln');
@@ -64,13 +63,11 @@ final class RemoveAdapterCommandTest extends TestCase
 
         $command = new RemoveAdapterCommand();
 
-        $input = $this->createStub(InputInterface::class);
-        $input->method('getArgument')->willReturn('StripePaymentProvider');
-        $input->method('getOption')->willReturnMap([
-            ['module', null, 'Billing'],
-            ['path', 'app/Modules', 'app/Modules'],
+        $input = new ArrayInput(null, ['StripePaymentProvider'], [
+            'module' => 'Billing',
+            'path' => 'app/Modules',
+            'force' => true,
         ]);
-        $input->method('hasOption')->willReturnCallback(fn(string $name): bool => $name === 'force');
 
         $output = $this->createStub(OutputInterface::class);
 
@@ -95,13 +92,10 @@ final class RemoveAdapterCommandTest extends TestCase
 
         $command = new RemoveAdapterCommand();
 
-        $input = $this->createStub(InputInterface::class);
-        $input->method('getArgument')->willReturn('NonExistent');
-        $input->method('getOption')->willReturnMap([
-            ['module', null, 'Billing'],
-            ['path', 'app/Modules', 'app/Modules'],
+        $input = new ArrayInput(null, ['NonExistent'], [
+            'module' => 'Billing',
+            'path' => 'app/Modules',
         ]);
-        $input->method('hasOption')->willReturn(false);
 
         $output = $this->createMock(OutputInterface::class);
         $output->expects(self::atLeastOnce())->method('errorln');
