@@ -254,6 +254,7 @@ final class TwoFactorManagerTest extends TestCase
             recoveryCodeGenerator: $this->recoveryCodeGenerator,
             recoveryCodeVerifier: $this->recoveryCodeVerifier,
             secretStore: $secretStore,
+            replayGuard: $this->replayGuard,
             rateLimiter: new \Pulsar\Auth\TwoFactor\AllowAllTwoFactorRateLimiter(),
         );
 
