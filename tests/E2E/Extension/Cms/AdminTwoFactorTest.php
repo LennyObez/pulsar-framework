@@ -10,6 +10,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Auth\Identity\IdentityInterface;
 use Pulsar\Auth\Identity\TwoFactorStatus;
+use Pulsar\Auth\TwoFactor\AllowAllTwoFactorRateLimiter;
 use Pulsar\Auth\TwoFactor\InMemoryTotpReplayGuard;
 use Pulsar\Auth\TwoFactor\InMemoryTotpSecretStore;
 use Pulsar\Auth\TwoFactor\RecoveryCodeGenerator;
@@ -48,6 +49,7 @@ final class AdminTwoFactorTest extends TestCase
             recoveryCodeCount: 8,
             replayGuard: $replayGuard,
             secretStore: $secretStore,
+            rateLimiter: new AllowAllTwoFactorRateLimiter(),
         );
 
         $identity = new E2EAdminIdentity(
@@ -185,6 +187,7 @@ final class AdminTwoFactorTest extends TestCase
             recoveryCodeGenerator: $recoveryCodeGenerator,
             recoveryCodeVerifier: $recoveryCodeVerifier,
             secretStore: $secretStore,
+            rateLimiter: new AllowAllTwoFactorRateLimiter(),
         );
 
         $result = $manager->verifyCode('non-enrolled-user', '123456');
