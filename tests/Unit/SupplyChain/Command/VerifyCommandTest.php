@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Console\ExitCode;
+use Pulsar\Console\Input\ArrayInput;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 use Pulsar\SupplyChain\Command\VerifyCommand;
@@ -220,16 +221,10 @@ final class VerifyCommandTest extends TestCase
 
         $command = new VerifyCommand($tempDir);
 
-        $input = $this->createStub(InputInterface::class);
-        $input->method('hasOption')->willReturnMap([
-            ['key-file', true],
-            ['dir', true],
-            ['manifest', true],
-        ]);
-        $input->method('getOption')->willReturnMap([
-            ['key-file', null, $keyFile],
-            ['dir', null, $distDir],
-            ['manifest', null, $manifestPath],
+        $input = new ArrayInput(null, [], [
+            'key-file' => $keyFile,
+            'dir' => $distDir,
+            'manifest' => $manifestPath,
         ]);
 
         $output = $this->createStub(OutputInterface::class);
@@ -283,16 +278,10 @@ final class VerifyCommandTest extends TestCase
 
         $command = new VerifyCommand($tempDir);
 
-        $input = $this->createStub(InputInterface::class);
-        $input->method('hasOption')->willReturnMap([
-            ['key-file', true],
-            ['dir', true],
-            ['manifest', true],
-        ]);
-        $input->method('getOption')->willReturnMap([
-            ['key-file', null, $keyFile],
-            ['dir', null, $distDir],
-            ['manifest', null, $manifestPath],
+        $input = new ArrayInput(null, [], [
+            'key-file' => $keyFile,
+            'dir' => $distDir,
+            'manifest' => $manifestPath,
         ]);
 
         $output = $this->createStub(OutputInterface::class);
