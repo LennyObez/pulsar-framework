@@ -86,7 +86,7 @@ final readonly class JwtSigner implements JwtSignerInterface
     }
 
     #[Override]
-    public function verify(string $jwt, string $keyId): ?array
+    public function verify(string $jwt, string $keyId, ?string $expectedAudience = null): ?array
     {
         $parts = explode('.', $jwt);
 
@@ -137,7 +137,7 @@ final readonly class JwtSigner implements JwtSignerInterface
             return null;
         }
 
-        if (!$this->validateClaims($claims)) {
+        if (!$this->validateClaims($claims, $expectedAudience)) {
             return null;
         }
 
@@ -147,7 +147,7 @@ final readonly class JwtSigner implements JwtSignerInterface
     /**
      * @param array<string, mixed> $claims
      */
-    private function validateClaims(array $claims): bool
+    private function validateClaims(array $claims, ?string $expectedAudience): bool
     {
         $now = time();
 
@@ -184,24 +184,26 @@ final readonly class JwtSigner implements JwtSignerInterface
             }
         }
 
-        // aud (RFC 7519 §4.1.3): when the `aud` claim is present, the principal
-        // verifying the token MUST be among its values, otherwise the token is
-        // rejected. For OP-issued, self-verified tokens that principal is the
-        // issuer URL — the OP both mints and consumes these. Skipping this check
-        // is the classic confused-deputy / token-redirect hole: a token minted
-        // for audience B would be silently accepted by verifier A.
-        //
-        // (RP-bound ID tokens, whose `aud` is the client_id, are verified
-        // elsewhere by JwksIdTokenVerifier against the client_id, not here.)
-        if ($this->config->issuer !== '' && isset($claims['aud'])) {
+        // aud (RFC 7519 §4.1.3): a JWT is bound to the recipients named in its
+        // `aud` claim, and "each principal intended to process the JWT MUST
+        // identify itself with a value in the audience claim". The recipient
+        // is supplied by the caller via $expectedAudience (e.g. an OAuth
+        // client_id for an ID token, or the OP's own identifier for a
+        // self-issued token) — JwtSigner is the OP and does not have a single
+        // fixed audience of its own. When an expected audience is given and the
+        // token carries an `aud`, that audience MUST be present, else the token
+        // is rejected (anti confused-deputy / token-redirect). When no expected
+        // audience is supplied, `aud` is not constrained here: the relying party
+        // validates it against its own client_id.
+        if ($expectedAudience !== null && isset($claims['aud'])) {
             $aud = $claims['aud'];
 
             if (is_string($aud)) {
-                if ($aud !== $this->config->issuer) {
+                if ($aud !== $expectedAudience) {
                     return false;
                 }
             } elseif (is_array($aud)) {
-                if (!in_array($this->config->issuer, $aud, true)) {
+                if (!in_array($expectedAudience, $aud, true)) {
                     return false;
                 }
             } else {

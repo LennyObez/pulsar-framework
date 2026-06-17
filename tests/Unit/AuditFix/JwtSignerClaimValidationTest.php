@@ -128,7 +128,7 @@ final class JwtSignerClaimValidationTest extends TestCase
         ];
 
         $jwt = $this->signer->sign($claims, self::KID);
-        $decoded = $this->signer->verify($jwt, self::KID);
+        $decoded = $this->signer->verify($jwt, self::KID, 'https://auth.example.com');
 
         self::assertNull($decoded, 'Token with wrong audience should be rejected');
     }
@@ -144,7 +144,7 @@ final class JwtSignerClaimValidationTest extends TestCase
         ];
 
         $jwt = $this->signer->sign($claims, self::KID);
-        $decoded = $this->signer->verify($jwt, self::KID);
+        $decoded = $this->signer->verify($jwt, self::KID, 'https://auth.example.com');
 
         self::assertNotNull($decoded);
     }
@@ -160,7 +160,7 @@ final class JwtSignerClaimValidationTest extends TestCase
         ];
 
         $jwt = $this->signer->sign($claims, self::KID);
-        $decoded = $this->signer->verify($jwt, self::KID);
+        $decoded = $this->signer->verify($jwt, self::KID, 'https://auth.example.com');
 
         self::assertNull($decoded, 'Token with aud array not containing issuer should be rejected');
     }
