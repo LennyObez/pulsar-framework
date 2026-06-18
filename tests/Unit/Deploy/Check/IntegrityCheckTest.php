@@ -54,13 +54,16 @@ final class IntegrityCheckTest extends TestCase
     }
 
     #[Test]
-    public function it_warns_when_integrity_disabled_in_production(): void
+    public function it_errors_when_integrity_disabled_in_production(): void
     {
         $check = new IntegrityCheck($this->buildConfig(enabled: false));
 
         $result = $check->check('production');
 
-        self::assertSame(CheckSeverity::Warning, $result->severity);
+        // TOOL-DEP-01/02 (external audit): production fail-closes on missing
+        // integrity verification — a deploy-gating Error, not a soft warning
+        // operators routinely ignore (PCI Req 11, HIPAA §164.312(c)(1)).
+        self::assertSame(CheckSeverity::Error, $result->severity);
         self::assertStringContainsString('File integrity verification is disabled', $result->message);
         self::assertNotEmpty($result->recommendations);
     }
