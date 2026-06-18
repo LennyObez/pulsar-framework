@@ -11,9 +11,6 @@ use Pulsar\I18n\Exception\I18nException;
 use Pulsar\I18n\TranslatorInterface;
 use Pulsar\Routing\Router;
 
-use function str_starts_with;
-use function strlen;
-use function substr;
 use function trim;
 
 /**
@@ -116,33 +113,40 @@ final class LocalizedUrlGenerator
      */
     private function localizedPath(string $key, array $params, string $locale): string
     {
-        $slug = $this->registry->slugFor($key, $locale);
-
         if ($this->router !== null && $this->router->getByName($key) !== null) {
-            // Reuse Router::url() for parameter substitution + encoding, then
-            // swap the canonical key prefix for the locale's slug.
-            return $this->swapPrefix($this->router->url($key, $params), $key, $slug);
+            // Localize by the resolved PATH, not the route name. A detail route
+            // is named e.g. `development/projects.detail` but its path is
+            // `/development/projects/{slug}` — the `.detail` suffix never appears
+            // in the path. Matching the route name against the path therefore
+            // fails to find the slug prefix. Instead, Router::url() fills params
+            // + encodes, and the slug prefix is matched against the path (longest
+            // registered key-prefix), preserving the parameter tail.
+            return $this->localizeByPath($this->router->url($key, $params), $locale);
         }
 
-        return '/' . $slug;
+        return '/' . $this->registry->slugFor($key, $locale);
     }
 
     /**
-     * Replace the leading `/{key}` of a canonical path with `/{slug}`.
+     * Translate the registered key-prefix of a canonical path to the locale's
+     * slug, preserving the remainder (the parameter segments).
+     *
+     * Paths whose prefix is not a registered slug key are returned unchanged
+     * (so e.g. `blog.post` without a localized parent slug stays `/blog/{slug}`).
      */
-    private function swapPrefix(string $canonicalPath, string $key, string $slug): string
+    private function localizeByPath(string $canonicalPath, string $locale): string
     {
-        $keyPath = '/' . $key;
+        $match = $this->registry->matchKey($canonicalPath);
 
-        if ($canonicalPath === $keyPath) {
-            return '/' . $slug;
+        if ($match === null) {
+            return $canonicalPath;
         }
 
-        if (str_starts_with($canonicalPath, $keyPath . '/')) {
-            return '/' . $slug . substr($canonicalPath, strlen($keyPath));
-        }
+        $slug = $this->registry->slugFor($match->key, $locale);
 
-        return $canonicalPath;
+        return $match->remainder !== ''
+            ? '/' . $slug . '/' . $match->remainder
+            : '/' . $slug;
     }
 
     private function normalizeLocale(?string $locale): string
