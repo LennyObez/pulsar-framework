@@ -21,7 +21,9 @@ use Pulsar\Api\Internal;
  * bucket / Redis-backed) scoped to identity + IP + timeframe.
  */
 #[Internal(reason: 'Dev/test placeholder; refused in production deploy check')]
-final readonly class AllowAllTwoFactorRateLimiter implements TwoFactorRateLimiterInterface
+final readonly class AllowAllTwoFactorRateLimiter implements
+    TwoFactorRateLimiterInterface,
+    NonEnforcingTwoFactorRateLimiterInterface
 {
     #[Override]
     public function attempt(string $identityId, TwoFactorPurpose $purpose, array $context = []): bool
