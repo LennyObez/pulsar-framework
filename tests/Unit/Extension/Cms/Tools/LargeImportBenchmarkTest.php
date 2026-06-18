@@ -25,6 +25,8 @@ use Pulsar\Extension\Cms\Tools\ImportConfig;
 use Pulsar\Extension\Cms\Tools\SiteDefinition;
 
 use function memory_get_peak_usage;
+use function memory_get_usage;
+use function memory_reset_peak_usage;
 use function microtime;
 use function range;
 use function sprintf;
@@ -154,8 +156,12 @@ final class LargeImportBenchmarkTest extends TestCase
 
         $definition = $this->buildLargeSiteDefinition();
 
-        // Act: run in dry-run mode and measure
-        $memBefore = memory_get_peak_usage(true);
+        // Act: run in dry-run mode and measure. Reset the peak tracker first so
+        // the measurement reflects this import's footprint rather than memory
+        // already retained by earlier tests in a shared full-suite process
+        // (memory_get_peak_usage is monotonic across the whole process).
+        memory_reset_peak_usage();
+        $memBefore = memory_get_usage(true);
         $startTime = microtime(true);
 
         $result = $parser->importSiteDefinition($definition, dryRun: true);
@@ -316,7 +322,11 @@ final class LargeImportBenchmarkTest extends TestCase
 
         $definition = $this->buildLargeSiteDefinition();
 
-        // Act: run non-dry-run and measure
+        // Act: run non-dry-run and measure. Reset the peak tracker first so the
+        // measurement reflects this import's footprint rather than memory already
+        // retained by earlier tests in a shared full-suite process
+        // (memory_get_peak_usage is monotonic across the whole process).
+        memory_reset_peak_usage();
         $startTime = microtime(true);
 
         $result = $parser->importSiteDefinition($definition, dryRun: false);
