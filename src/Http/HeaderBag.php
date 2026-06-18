@@ -53,6 +53,13 @@ final readonly class HeaderBag implements IteratorAggregate
     private const string HEADER_NAME_PATTERN = '/^[A-Za-z0-9!#$%&\'*+\-.^_`|~]+$/';
 
     /**
+     * RFC 7230 §3.2.6 permits only VCHAR, SP and HTAB (0x09) inside a header
+     * value, so any other control character (NUL, CR, LF, and the rest of
+     * \x00-\x08, \x0A-\x1F, \x7F) is forbidden and enables header smuggling.
+     */
+    private const string VALUE_CONTROL_CHAR_PATTERN = '/[\x00-\x08\x0A-\x1F\x7F]/';
+
+    /**
      * @param array<string, string|list<string>> $headers
      *
      * @throws UnsafeHeaderException When a name or value violates RFC 7230 §3.2.
@@ -99,10 +106,8 @@ final readonly class HeaderBag implements IteratorAggregate
     private static function assertValidValue(string $name, string $value): void
     {
         // Reject NUL, CR, LF and any other ASCII control character in the
-        // header value. RFC 7230 §3.2.6 only permits VCHAR, SP and HTAB
-        // (0x09) inside `field-content`, so the deny range is
-        // \x00-\x08, \x0A-\x1F, and \x7F (DEL).
-        if (preg_match('/[\x00-\x08\x0A-\x1F\x7F]/', $value) === 1) {
+        // header value (RFC 7230 §3.2.6 — see VALUE_CONTROL_CHAR_PATTERN).
+        if (preg_match(self::VALUE_CONTROL_CHAR_PATTERN, $value) === 1) {
             throw UnsafeHeaderException::controlCharactersInValue($name);
         }
     }
@@ -263,11 +268,25 @@ final readonly class HeaderBag implements IteratorAggregate
 
             if (str_starts_with($key, 'HTTP_')) {
                 $name = str_replace('_', '-', substr($key, 5));
-                $headers[$name] = $value;
             } elseif (in_array($key, ['CONTENT_TYPE', 'CONTENT_LENGTH', 'CONTENT_MD5'], true)) {
                 $name = str_replace('_', '-', $key);
-                $headers[$name] = $value;
+            } else {
+                continue;
             }
+
+            // $_SERVER is untrusted external input. Silently drop header-
+            // injection attempts (control characters in the value, malformed
+            // names) here rather than letting the strict constructor throw:
+            // request parsing must stay robust against hostile input. A request
+            // left without a valid Host is rejected later as a 400.
+            if (
+                preg_match(self::HEADER_NAME_PATTERN, $name) !== 1
+                || preg_match(self::VALUE_CONTROL_CHAR_PATTERN, $value) === 1
+            ) {
+                continue;
+            }
+
+            $headers[$name] = $value;
         }
 
         return new self($headers);
