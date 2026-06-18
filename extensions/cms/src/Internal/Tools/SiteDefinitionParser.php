@@ -741,55 +741,23 @@ final readonly class SiteDefinitionParser
             /** @var mixed $location */
             $location = $menuData['location'] ?? null;
 
-            // Handle menus without explicit location: derive from name
-            if (($location === null || $location === '') && isset($menuData['name'])) {
-                /** @var mixed $name */
-                $name = $menuData['name'];
-
-                if (is_array($name)) {
-                    // Multilingual name object: use the first value slugified as location,
-                    // and expand into per-locale entries
-                    $firstLocale = array_key_first($name);
-
-                    if ($firstLocale === null) {
-                        continue;
-                    }
-
-                    $firstName = is_string($name[$firstLocale]) ? $name[$firstLocale] : '';
-                    $location = strtolower(preg_replace('/[^a-z0-9]+/i', '-', $firstName) ?? '');
-                    $location = trim($location, '-');
-
-                    if ($location !== '') {
-                        // Convert multilingual format to per-locale entries
-                        /** @var mixed $localeName */
-                        foreach ($name as $locale => $localeName) {
-                            if (!is_string($locale) || !is_string($localeName)) {
-                                continue;
-                            }
-
-                            $localeEntry = $menuData;
-                            $localeEntry['location'] = $location;
-                            $localeEntry['locale'] = $locale;
-                            $localeEntry['name'] = $localeName;
-                            $menusByLocation[$location][] = $localeEntry;
-                        }
-
-                        continue;
-                    }
-                } elseif (is_string($name) && $name !== '') {
-                    $location = strtolower(preg_replace('/[^a-z0-9]+/i', '-', $name) ?? '');
-                    $location = trim($location, '-');
-                }
-            }
-
+            // `location` is the menu's natural key and its theme-region binding.
+            // An entry without an explicit, non-empty location is structurally
+            // incomplete: deriving one from the display name would yield a key
+            // that matches no theme region — a silently-orphaned menu that
+            // renders nowhere. Skip it and surface an actionable diagnostic
+            // instead, mirroring the taxonomy (missing slug) and content
+            // (missing slug + import_id) contracts.
             if ($location === null || $location === '' || !is_string($location)) {
-                $warnings[] = 'Menu entry missing location and name, skipped';
+                $name = self::asNullableString($menuData, 'name');
+                $warnings[] = $name !== null
+                    ? sprintf('Menu entry "%s" skipped: missing location', $name)
+                    : 'Menu entry skipped: missing location';
 
                 continue;
             }
 
-            $locationKey = $location;
-            $menusByLocation[$locationKey][] = $menuData;
+            $menusByLocation[$location][] = $menuData;
         }
 
         foreach ($menusByLocation as $location => $localeEntries) {
