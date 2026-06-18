@@ -25,9 +25,11 @@ final class SlugPathTest extends TestCase
         self::assertTrue(ContentTranslation::isValidSlug('my-article-2024'));
         self::assertTrue(ContentTranslation::isValidSlug('a'));
         self::assertTrue(ContentTranslation::isValidSlug('123'));
+        // Empty slug is valid: it denotes the site root (homepage) page —
+        // consistent with ContentTranslation::isValidSlug and its other tests.
+        self::assertTrue(ContentTranslation::isValidSlug(''));
 
         // Invalid slugs
-        self::assertFalse(ContentTranslation::isValidSlug(''));
         self::assertFalse(ContentTranslation::isValidSlug('Hello-World')); // uppercase
         self::assertFalse(ContentTranslation::isValidSlug('-leading-dash'));
         self::assertFalse(ContentTranslation::isValidSlug('trailing-dash-'));
