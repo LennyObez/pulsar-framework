@@ -87,21 +87,31 @@ final readonly class ContentController
     {
         $rawPath = ltrim($request->getUri()->getPath(), '/');
 
-        // Resolve locale from middleware attributes.
+        // Resolve the active locale from middleware attributes.
         //
-        // The core LocalePrefixMiddleware (global) extracts the locale from the
-        // full URI and strips the prefix BEFORE route matching. It sets `_locale`.
-        // The CMS route middleware then sees the stripped path, finds no prefix,
-        // and defaults to the default locale in `cms_locale`.
+        // Two middlewares may set a locale: the core LocalePrefixMiddleware /
+        // LocaleMiddleware set `_locale` (from the URL prefix when present, else
+        // from an Accept-Language header or cookie), and CmsLocaleMiddleware sets
+        // `cms_locale` (extracted from the URL path prefix, or the configured
+        // default when the path carries no prefix).
         //
-        // Priority: _locale (global, from full URI) > cms_locale (route) > config default
+        // The most explicit signal is a locale that appears in the URL itself.
+        // So when the request path still carries a `{cms_locale}/` prefix, that
+        // CMS locale wins over a `_locale` that may have come from a header or
+        // cookie. Otherwise (the global middleware already stripped the prefix,
+        // or `cms_locale` is merely the default) fall back to `_locale`, then the
+        // configured default.
         /** @var string|null $coreLocale */
         $coreLocale = $request->getAttribute('_locale');
 
         /** @var string|null $cmsLocale */
         $cmsLocale = $request->getAttribute('cms_locale');
 
-        $locale = $coreLocale ?? $cmsLocale ?? $this->config->defaultLocale;
+        if ($cmsLocale !== null && $cmsLocale !== '' && str_starts_with($rawPath, $cmsLocale . '/')) {
+            $locale = $cmsLocale;
+        } else {
+            $locale = $coreLocale ?? $cmsLocale ?? $this->config->defaultLocale;
+        }
 
         if (!in_array($locale, $this->config->supportedLocales, true)) {
             $locale = $this->config->defaultLocale;
