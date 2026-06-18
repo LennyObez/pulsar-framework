@@ -14,6 +14,7 @@ use Pulsar\Support\Coerce;
 use function array_map;
 use function implode;
 use function is_array;
+use function is_numeric;
 use function is_scalar;
 use function json_decode;
 use function json_encode;
@@ -212,7 +213,12 @@ final readonly class PgVectorStore implements VectorStoreInterface
             return 0;
         }
 
-        return $first->getInt('cnt');
+        // A COUNT(*) result is normally a numeric scalar; treat a missing,
+        // null, or otherwise non-numeric cnt as zero rather than throwing —
+        // "how many rows?" has a well-defined empty answer.
+        $cnt = $first->getOrDefault('cnt', 0);
+
+        return is_numeric($cnt) ? (int) $cnt : 0;
     }
 
     /**
