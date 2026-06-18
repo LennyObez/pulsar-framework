@@ -132,7 +132,7 @@ final class PrivateMediaAccessTest extends TestCase
 
         $identity = $this->createIdentity(authenticated: true);
         $request = $this->createRequest(identity: $identity);
-        $response = $this->controller->serve($request, 'thumb', 'abc123', 'test');
+        $response = $this->controller->serve($request, 'thumb', 'abc123', 'webp');
 
         self::assertSame(200, $response->getStatusCode());
         self::assertSame('private, no-store', $response->getHeaderLine('Cache-Control'));
@@ -160,7 +160,7 @@ final class PrivateMediaAccessTest extends TestCase
         $this->disk->method('read')->willReturn('derivative-contents');
 
         $request = $this->createRequest(identity: null);
-        $response = $this->controller->serve($request, 'thumb', 'abc123', 'test');
+        $response = $this->controller->serve($request, 'thumb', 'abc123', 'webp');
 
         self::assertSame(200, $response->getStatusCode());
         self::assertStringContainsString('public', $response->getHeaderLine('Cache-Control'));
