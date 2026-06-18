@@ -53,7 +53,7 @@ final class ComposeFileGeneratorTest extends TestCase
 
         self::assertStringNotContainsString('postgres:', $output);
         self::assertStringNotContainsString('mysql:', $output);
-        self::assertStringContainsString('DB_DRIVER: sqlite', $output);
+        self::assertStringContainsString('DB_CONNECTION: sqlite', $output);
         self::assertStringNotContainsString('db-data:', $output);
     }
 
