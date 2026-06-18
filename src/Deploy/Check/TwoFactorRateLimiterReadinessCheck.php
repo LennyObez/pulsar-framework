@@ -6,7 +6,7 @@ namespace Pulsar\Deploy\Check;
 
 use Override;
 use Pulsar\Api\Internal;
-use Pulsar\Auth\TwoFactor\AllowAllTwoFactorRateLimiter;
+use Pulsar\Auth\TwoFactor\NonEnforcingTwoFactorRateLimiterInterface;
 use Pulsar\Auth\TwoFactor\TwoFactorRateLimiterInterface;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Deploy\CheckResult;
@@ -15,11 +15,11 @@ use Pulsar\Deploy\DeployCheckInterface;
 /**
  * Validates that a real two-factor rate limiter is wired in production.
  *
- * SEC-2FA-01: {@see TwoFactorManager} fails closed when no rate limiter is
- * present, but {@see AllowAllTwoFactorRateLimiter} is an explicit dev/test
- * placeholder that lets every attempt through. Deploying it to production
- * would silently disable 2FA brute-force protection, so the deploy gate
- * refuses it (and a missing binding) in staging/production environments.
+ * SEC-2FA-01: TwoFactorManager fails closed when no rate limiter is present,
+ * but a {@see NonEnforcingTwoFactorRateLimiterInterface} (e.g. the dev/test
+ * AllowAllTwoFactorRateLimiter) lets every attempt through. Deploying one to
+ * production would silently disable 2FA brute-force protection, so the deploy
+ * gate refuses it (and a missing binding) in staging/production environments.
  */
 #[Internal]
 final readonly class TwoFactorRateLimiterReadinessCheck implements DeployCheckInterface
@@ -65,12 +65,12 @@ final readonly class TwoFactorRateLimiterReadinessCheck implements DeployCheckIn
 
         $instance = $this->container->get(TwoFactorRateLimiterInterface::class);
 
-        if ($instance instanceof AllowAllTwoFactorRateLimiter) {
+        if ($instance instanceof NonEnforcingTwoFactorRateLimiterInterface) {
             return CheckResult::error(
                 self::CHECK_NAME,
-                "AllowAllTwoFactorRateLimiter is wired in $environment",
+                "A non-enforcing two-factor rate limiter is wired in $environment",
                 [
-                    'AllowAllTwoFactorRateLimiter is a dev/test placeholder that disables rate limiting.',
+                    'A non-enforcing rate limiter (e.g. AllowAllTwoFactorRateLimiter) disables rate limiting.',
                     'Replace it with a real implementation before deploying to staging or production.',
                 ],
             );
