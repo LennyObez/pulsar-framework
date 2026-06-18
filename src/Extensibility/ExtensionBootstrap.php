@@ -422,16 +422,26 @@ final class ExtensionBootstrap
     ): ServiceProviderInterface {
         try {
             $resolved = $container->get($providerClass);
-        } catch (Throwable $e) {
-            throw new ExtensionException(
-                sprintf(
-                    'Extension service provider "%s" could not be resolved through the container: %s. '
-                    . 'Bind it explicitly in your composition root or make its constructor autowire-friendly.',
-                    $providerClass,
-                    $e->getMessage(),
-                ),
-                previous: $e,
-            );
+        } catch (Throwable $containerError) {
+            // F3.4: fall back to direct instantiation for providers that declare
+            // no required constructor dependencies — the common case, and the
+            // path that runs before the container is fully wired. An
+            // autowire-friendly (zero-argument) provider must work without an
+            // explicit binding, as the diagnostic below promises. Providers with
+            // genuinely unmet dependencies fall through to the helpful error.
+            try {
+                $resolved = new $providerClass();
+            } catch (Throwable) {
+                throw new ExtensionException(
+                    sprintf(
+                        'Extension service provider "%s" could not be resolved through the container: %s. '
+                        . 'Bind it explicitly in your composition root or make its constructor autowire-friendly.',
+                        $providerClass,
+                        $containerError->getMessage(),
+                    ),
+                    previous: $containerError,
+                );
+            }
         }
 
         if (!$resolved instanceof ServiceProviderInterface) {
