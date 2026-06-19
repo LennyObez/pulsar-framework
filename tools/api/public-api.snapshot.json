@@ -4330,6 +4330,12 @@
             },
             "constants": []
         },
+        "Pulsar\\Auth\\TwoFactor\\NonEnforcingTwoFactorRateLimiterInterface": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": [],
+            "constants": []
+        },
         "Pulsar\\Auth\\TwoFactor\\RecoveryCodeConsumeResult": {
             "since": "1.0.0",
             "methods": [],
