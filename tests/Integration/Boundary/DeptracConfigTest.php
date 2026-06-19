@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 use function array_slice;
+use function basename;
 use function dirname;
 use function file_get_contents;
 use function glob;
@@ -16,6 +17,7 @@ use function implode;
 use function preg_match;
 use function sprintf;
 use function str_contains;
+use function str_replace;
 
 use const DIRECTORY_SEPARATOR;
 use const GLOB_ONLYDIR;
@@ -103,13 +105,14 @@ final class DeptracConfigTest extends TestCase
 
         if ($extDirs !== false) {
             foreach ($extDirs as $extDir) {
-                if (preg_match('/extensions[\\\\\/]([^\\\\\/]+)[\\\\\/]src$/', $extDir, $matches) === 1) {
-                    $extName = $matches[1];
-                    $namespace = 'Pulsar\\\\Extension\\\\' . str_replace(' ', '', ucwords(str_replace('-', ' ', $extName)));
+                $pattern = $this->extensionNamespacePattern($extDir);
 
-                    if (!str_contains($content, $namespace)) {
-                        $uncovered[] = $extName;
-                    }
+                if ($pattern === null) {
+                    continue;
+                }
+
+                if (!str_contains($content, $pattern)) {
+                    $uncovered[] = basename(dirname($extDir));
                 }
             }
         }
@@ -118,6 +121,34 @@ final class DeptracConfigTest extends TestCase
             $uncovered,
             "Extensions not covered by Deptrac config:\n- " . implode("\n- ", $uncovered),
         );
+    }
+
+    /**
+     * Resolve an extension's root namespace (e.g. "Pulsar\\Extension\\OpenTelemetry")
+     * from its actual source, in the regex-escaped form deptrac.yaml uses. Reading
+     * the declared namespace avoids guessing it from the directory name, which
+     * fails for camelCase names such as "opentelemetry" -> "OpenTelemetry".
+     */
+    private function extensionNamespacePattern(string $extSrcDir): ?string
+    {
+        $candidates = glob($extSrcDir . DIRECTORY_SEPARATOR . '*.php') ?: [];
+
+        if ($candidates === []) {
+            $candidates = glob(
+                $extSrcDir . DIRECTORY_SEPARATOR . '*' . DIRECTORY_SEPARATOR . '*.php',
+            ) ?: [];
+        }
+
+        foreach ($candidates as $file) {
+            $source = (string) file_get_contents($file);
+
+            if (preg_match('/namespace\s+(Pulsar\\\\Extension\\\\[A-Za-z0-9_]+)/', $source, $matches) === 1) {
+                // deptrac.yaml stores namespaces as regex with escaped backslashes.
+                return str_replace('\\', '\\\\', $matches[1]);
+            }
+        }
+
+        return null;
     }
 
     #[Test]
