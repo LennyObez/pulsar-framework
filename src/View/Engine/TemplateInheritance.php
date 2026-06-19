@@ -12,6 +12,7 @@ use Pulsar\View\ViewException;
 use function array_key_exists;
 use function array_pop;
 use function count;
+use function implode;
 use function ob_get_clean;
 use function ob_start;
 
@@ -29,6 +30,12 @@ final class TemplateInheritance
 
     /** @var list<string> Stack of section names currently being captured */
     private array $sectionStack = [];
+
+    /** @var array<string, list<string>> Stack name → ordered contributions (@push) */
+    private array $stacks = [];
+
+    /** @var list<string> Names of @push blocks currently capturing (nesting) */
+    private array $pushStack = [];
 
     /** The parent template name, set by @extends */
     private ?string $parent = null;
@@ -130,6 +137,47 @@ final class TemplateInheritance
     public function hasSection(string $name): bool
     {
         return array_key_exists($name, $this->sections);
+    }
+
+    /**
+     * Begin capturing a @push block onto the named stack.
+     *
+     * Stacks live on the engine ($__env), like sections, so contributions
+     * survive the @extends boundary — a child's @push reaches the parent
+     * layout's @stack even though the parent renders in a separate pass.
+     */
+    public function startPush(string $name): void
+    {
+        $this->pushStack[] = $name;
+        ob_start();
+    }
+
+    /**
+     * Finish the current @push block, appending its content to the stack.
+     *
+     * @throws ViewException If there is no open @push.
+     */
+    public function stopPush(): void
+    {
+        if ($this->pushStack === []) {
+            throw ViewException::invalidDirective('endpush', 'no matching @push');
+        }
+
+        $name = array_pop($this->pushStack);
+        $this->stacks[$name][] = (string) ob_get_clean();
+    }
+
+    /**
+     * Render a stack (called by @stack): all @push contributions, in order.
+     *
+     * Stacks live on $__env, so they survive the @extends boundary — the child
+     * (which @pushes) always renders before the parent layout (which @stacks),
+     * so by the time @stack runs the contributions are already present.
+     */
+    #[NoDiscard]
+    public function renderStack(string $name): string
+    {
+        return implode('', $this->stacks[$name] ?? []);
     }
 
     /**
@@ -274,6 +322,8 @@ final class TemplateInheritance
     {
         $this->sections = [];
         $this->sectionStack = [];
+        $this->stacks = [];
+        $this->pushStack = [];
         $this->parent = null;
         $this->componentStack = [];
         $this->slotStack = [];
