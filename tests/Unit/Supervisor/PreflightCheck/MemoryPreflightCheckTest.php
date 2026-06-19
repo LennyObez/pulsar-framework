@@ -66,8 +66,12 @@ final class MemoryPreflightCheckTest extends TestCase
     #[Test]
     public function it_uses_default_threshold_of_256_mb(): void
     {
-        // Use a generous threshold — CI with PCOV coverage can exceed 256 MB
-        $check = new MemoryPreflightCheck(thresholdMb: 512);
+        // Inject a fixed reading (100 MB) so the assertion exercises the 256 MB
+        // default threshold deterministically, independent of the test process's
+        // accumulated heap — which the full suite inflates well past 256 MB.
+        $check = new MemoryPreflightCheck(
+            memoryReader: static fn(): int => 100 * 1024 * 1024,
+        );
 
         $result = $check->check();
 
