@@ -48,6 +48,7 @@ final readonly class PendingRequest
      *
      * @param array<string, string> $headers
      */
+    #[NoDiscard]
     public function withHeaders(array $headers): self
     {
         return clone($this, ['headers' => [...$this->headers, ...$headers]]);
@@ -56,6 +57,7 @@ final readonly class PendingRequest
     /**
      * Add a single header.
      */
+    #[NoDiscard]
     public function withHeader(string $name, string $value): self
     {
         return clone($this, ['headers' => [...$this->headers, $name => $value]]);
@@ -64,6 +66,7 @@ final readonly class PendingRequest
     /**
      * Add a Bearer token Authorization header.
      */
+    #[NoDiscard]
     public function withToken(string $token): self
     {
         return $this->withHeader('Authorization', sprintf('Bearer %s', $token));
@@ -72,6 +75,7 @@ final readonly class PendingRequest
     /**
      * Add a Basic Authentication header.
      */
+    #[NoDiscard]
     public function withBasicAuth(string $username, string $password): self
     {
         $encoded = base64_encode(sprintf('%s:%s', $username, $password));
@@ -82,6 +86,7 @@ final readonly class PendingRequest
     /**
      * Set a raw string body.
      */
+    #[NoDiscard]
     public function withBody(string $body, string $contentType = 'application/octet-stream'): self
     {
         return clone($this, [
@@ -143,6 +148,7 @@ final readonly class PendingRequest
      *
      * @param array<string, string> $params
      */
+    #[NoDiscard]
     public function withQuery(array $params): self
     {
         return clone($this, ['query' => [...$this->query, ...$params]]);
@@ -159,6 +165,7 @@ final readonly class PendingRequest
     /**
      * Set a User-Agent header.
      */
+    #[NoDiscard]
     public function withUserAgent(string $agent): self
     {
         return $this->withHeader('User-Agent', $agent);
