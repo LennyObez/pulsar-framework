@@ -151,7 +151,6 @@ final class EntityDehydrator
             /** @var mixed $value */
             $value = $toDb($value);
         } else {
-            /** @var mixed $value */
             $value = $this->typeCaster->toDatabase($value, $col->type);
         }
 
