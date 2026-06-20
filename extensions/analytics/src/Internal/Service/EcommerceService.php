@@ -15,7 +15,6 @@ use Pulsar\Extension\Analytics\Domain\EcommerceTransaction;
 use function array_key_first;
 use function array_map;
 use function array_slice;
-use function array_values;
 use function json_decode;
 use function json_encode;
 use function round;
@@ -232,7 +231,7 @@ final readonly class EcommerceService implements EcommerceServiceInterface
 
         usort($products, static fn(array $a, array $b): int => $b['revenue'] <=> $a['revenue']);
 
-        return array_slice(array_values($products), 0, $limit);
+        return array_slice($products, 0, $limit);
     }
 
     #[Override]

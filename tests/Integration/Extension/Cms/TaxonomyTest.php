@@ -246,8 +246,7 @@ final class InMemoryTaxonomyRepository implements TaxonomyRepositoryInterface
     public function updateTermParent(string $termId, string $parentId): void
     {
         if (isset($this->terms[$termId])) {
-            $old = $this->terms[$termId];
-            $this->terms[$termId] = clone($old, ['parentId' => $parentId]);
+            $this->terms[$termId] = $this->terms[$termId]->withParent($parentId);
         }
     }
 }

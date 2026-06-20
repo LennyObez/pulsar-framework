@@ -38,4 +38,15 @@ final readonly class TaxonomyTerm
         public DateTimeImmutable $createdAt,
         public ?string $importId = null,
     ) {}
+
+    /**
+     * Return a copy of this term re-parented under the given parent term,
+     * or detached to the taxonomy root when $parentId is null.
+     *
+     * @param string|null $parentId UUIDv7 of the new parent term, or null to detach
+     */
+    public function withParent(?string $parentId): self
+    {
+        return clone($this, ['parentId' => $parentId]);
+    }
 }

@@ -165,8 +165,9 @@ final class QrCodeEncoderPropertyTest extends TestCase
         );
 
         // Width and height should match (QR codes are square)
-        preg_match('/width="(\d+)"/', $svg, $widthMatch);
-        preg_match('/height="(\d+)"/', $svg, $heightMatch);
+        self::assertSame(1, preg_match('/width="(\d+)"/', $svg, $widthMatch));
+        self::assertSame(1, preg_match('/height="(\d+)"/', $svg, $heightMatch));
+        self::assertTrue(isset($widthMatch[1], $heightMatch[1]));
 
         self::assertSame(
             $widthMatch[1],

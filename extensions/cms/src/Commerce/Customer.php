@@ -43,4 +43,34 @@ final readonly class Customer
     {
         return $this->userId !== null;
     }
+
+    /**
+     * Return a copy with updated profile fields and a refreshed update timestamp.
+     *
+     * @param array<string, mixed>|null $billingAddress Structured billing address
+     * @param array<string, mixed>|null $shippingAddress Structured shipping address
+     */
+    public function withProfile(
+        ?string $displayName,
+        ?array $billingAddress,
+        ?array $shippingAddress,
+    ): self {
+        return clone($this, [
+            'displayName' => $displayName,
+            'billingAddress' => $billingAddress,
+            'shippingAddress' => $shippingAddress,
+            'updatedAt' => new DateTimeImmutable(),
+        ]);
+    }
+
+    /**
+     * Return a copy with replaced admin notes and a refreshed update timestamp.
+     */
+    public function withNotes(?string $notes): self
+    {
+        return clone($this, [
+            'notes' => $notes,
+            'updatedAt' => new DateTimeImmutable(),
+        ]);
+    }
 }

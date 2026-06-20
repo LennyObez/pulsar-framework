@@ -247,8 +247,8 @@ final class ListenerProvider implements ListenerProviderInterface, ListenerMetad
         }
 
         if (is_array($listener)) {
-            /** @var array{0: object|string, 1: string} $listener */
-            $class = is_string($listener[0]) ? $listener[0] : get_class($listener[0]);
+            $target = $listener[0];
+            $class = is_string($target) ? $target : get_class($target);
 
             return $class . '::' . $listener[1];
         }
