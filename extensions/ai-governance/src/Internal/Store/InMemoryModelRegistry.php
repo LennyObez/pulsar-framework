@@ -58,7 +58,6 @@ final class InMemoryModelRegistry implements AiModelRegistryInterface
             throw AiGovernanceException::modelNotFound($modelId);
         }
 
-        /** @var list<string> $allowedTransitions */
         $allowedTransitions = self::VALID_TRANSITIONS[$model->status->value] ?? [];
 
         /** @var string $candidate */
