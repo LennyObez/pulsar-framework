@@ -103,7 +103,7 @@ final class Kernel implements KernelInterface
      * Router state captured at boot() entry, restored on shutdown() so a re-boot
      * does not accumulate duplicate routes/bindings. Null until first boot().
      *
-     * @var array{routes: list<Route>, namedRoutes: array<string, Route>, staticRoutes: array<string, array<string, Route>>, dynamicRouteBuckets: array<string, array<string, list<Route>>>, explicitBindings: list<ExplicitBinding>, locked: bool}|null
+     * @var array{routes: list<Route>, namedRoutes: array<string, Route>, staticRoutes: array<string, array<string, Route>>, dynamicRouteBuckets: array<string, array<string, array<int, Route>>>, explicitBindings: list<ExplicitBinding>, locked: bool, hasHostConstrainedRoutes: bool}|null
      */
     private ?array $routerSnapshot = null;
 

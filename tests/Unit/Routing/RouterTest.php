@@ -436,6 +436,113 @@ final class RouterTest extends TestCase
     }
 
     #[Test]
+    public function matchWithPortedHostMatchesHostConstrainedRoute(): void
+    {
+        // FR-1: a Host header on a non-default port must still match a route
+        // declared against the port-less host.
+        $router = new Router();
+        $router->add(new Route(
+            methods: [Method::GET],
+            path: '/',
+            handler: fn() => 'api',
+            host: 'api.example.com',
+        ));
+
+        $matched = $router->match(Method::GET, '/', 'api.example.com:8000');
+
+        /** @var callable(): string $handler */
+        $handler = $matched->getHandler();
+        self::assertSame('api', $handler());
+    }
+
+    #[Test]
+    public function matchWithPortedHostCapturesHostParameter(): void
+    {
+        // FR-1: subdomain capture must work when the Host header carries a port.
+        $router = new Router();
+        $router->add(new Route(
+            methods: [Method::GET],
+            path: '/dashboard',
+            handler: fn() => null,
+            host: '{tenant}.app.com',
+        ));
+
+        $matched = $router->match(Method::GET, '/dashboard', 'acme.app.com:8000');
+
+        self::assertSame('acme', $matched->parameter('tenant'));
+    }
+
+    #[Test]
+    public function matchWithPortedIpv6HostMatchesHostConstrainedRoute(): void
+    {
+        // FR-1: a bracketed IPv6 authority strips only the trailing port.
+        $router = new Router();
+        $router->add(new Route(
+            methods: [Method::GET],
+            path: '/',
+            handler: fn() => 'local',
+            host: '[::1]',
+        ));
+
+        $matched = $router->match(Method::GET, '/', '[::1]:8000');
+
+        /** @var callable(): string $handler */
+        $handler = $matched->getHandler();
+        self::assertSame('local', $handler());
+    }
+
+    #[Test]
+    public function matchHonorsRegistrationOrderBetweenCatchAllAndStaticFirstSegment(): void
+    {
+        // FR-2: an earlier-registered catch-all (/{lang}/{slug}) must win over a
+        // later-registered static-first-segment route (/blog/{slug}) for
+        // /blog/hello — first-registered-wins across the bucket split. Before the
+        // fix the first-segment bucket was always scanned ahead of the catch-all
+        // bucket, so /blog/{slug} wrongly won.
+        $router = new Router();
+        $router->add(new Route(
+            methods: [Method::GET],
+            path: '/{lang}/{slug}',
+            handler: fn() => 'catch-all',
+        ));
+        $router->add(new Route(
+            methods: [Method::GET],
+            path: '/blog/{slug}',
+            handler: fn() => 'blog',
+        ));
+
+        $matched = $router->match(Method::GET, '/blog/hello');
+
+        /** @var callable(): string $handler */
+        $handler = $matched->getHandler();
+        self::assertSame('catch-all', $handler());
+        self::assertSame('blog', $matched->parameter('lang'));
+        self::assertSame('hello', $matched->parameter('slug'));
+    }
+
+    #[Test]
+    public function matchPrefersStaticRouteOverDynamicCatchAllWithHostHeaderPresent(): void
+    {
+        // FR-39: a host-less static route keeps its O(1) precedence over a dynamic
+        // catch-all even when the request carries a Host header. Before the fix the
+        // static fast path was skipped whenever a Host was present, so the
+        // earlier-registered catch-all wrongly captured the static path.
+        $router = new Router();
+        $router->add(new Route(
+            methods: [Method::GET],
+            path: '/{slug}',
+            handler: fn() => 'catch-all',
+        ));
+        $router->add(Route::get('/about', fn() => 'about'));
+
+        $matched = $router->match(Method::GET, '/about', 'example.com:8080');
+
+        /** @var callable(): string $handler */
+        $handler = $matched->getHandler();
+        self::assertSame('about', $handler());
+    }
+
+    #[Test]
     public function matchWithoutHostSkipsHostConstrainedRoutes(): void
     {
         $router = new Router();
