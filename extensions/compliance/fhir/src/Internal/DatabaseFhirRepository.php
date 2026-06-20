@@ -199,6 +199,11 @@ final readonly class DatabaseFhirRepository implements FhirRepositoryInterface
         /** @var mixed $decoded */
         $decoded = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
 
-        return is_array($decoded) ? $decoded : [];
+        if (!is_array($decoded)) {
+            return [];
+        }
+
+        /** @var array<string, mixed> $decoded */
+        return $decoded;
     }
 }

@@ -115,8 +115,8 @@ final readonly class Bundle extends FhirResource
             language: Coerce::nullableString($data['language'] ?? null),
             type: Coerce::nullableString($data['type'] ?? null),
             total: Coerce::nullableInt($total),
-            link: array_values($linkList),
-            entry: array_values($entryList),
+            link: $linkList,
+            entry: $entryList,
             timestamp: Coerce::nullableString($data['timestamp'] ?? null),
         );
     }

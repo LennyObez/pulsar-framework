@@ -66,6 +66,7 @@ final readonly class FilterGroup
         if (is_array($rawConditions)) {
             foreach ($rawConditions as $condData) {
                 if (is_array($condData)) {
+                    /** @var array<string, mixed> $condData */
                     $conditions[] = FilterCondition::fromArray($condData);
                 }
             }
@@ -76,6 +77,7 @@ final readonly class FilterGroup
         if (is_array($rawGroups)) {
             foreach ($rawGroups as $groupData) {
                 if (is_array($groupData)) {
+                    /** @var array<string, mixed> $groupData */
                     $groups[] = self::fromArray($groupData);
                 }
             }
