@@ -150,7 +150,6 @@ final class MediaUploadThroughputBench
             $this->request,
             'thumbnail',
             $this->asset->fileHash,
-            'image',
             'webp',
         );
     }
@@ -162,7 +161,6 @@ final class MediaUploadThroughputBench
         $response = $this->controller->serveOriginal(
             $this->request,
             $this->asset->fileHash,
-            'benchmark-image.jpg',
         );
     }
 }

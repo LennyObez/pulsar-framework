@@ -275,7 +275,7 @@ final class SchemaControllerTest extends TestCase
         $introspector = new DatabaseIntrospector($connection);
         $controller = $this->makeControllerWithIntrospector($introspector);
 
-        $response = $controller->createForm($this->makeHtmlRequest('/admin/schema/create'));
+        $response = $controller->createForm();
 
         self::assertSame(200, $response->getStatusCode());
         self::assertStringContainsString('text/html', $response->getHeaderLine('Content-Type'));
@@ -497,7 +497,7 @@ final class SchemaControllerTest extends TestCase
         $introspector = new DatabaseIntrospector($connection);
         $controller = $this->makeControllerWithIntrospector($introspector);
 
-        $response = $controller->createForm($this->makeHtmlRequest());
+        $response = $controller->createForm();
 
         self::assertSame(200, $response->getStatusCode());
         self::assertStringContainsString('Create table', (string) $response->getBody());
