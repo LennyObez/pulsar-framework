@@ -35,11 +35,13 @@ final readonly class ManifestEntry
     public static function fromArray(array $data): self
     {
         $methods = $data['methods'] ?? null;
+        /** @var list<array{name: string, full_name: string, type: string, input_type: string, output_type: string, handler: string}> $methodList */
+        $methodList = is_array($methods) ? $methods : [];
 
         return new self(
             serviceName: Coerce::string($data['service_name'] ?? null),
             handlerClass: Coerce::string($data['handler_class'] ?? null),
-            methods: is_array($methods) ? $methods : [],
+            methods: $methodList,
         );
     }
 

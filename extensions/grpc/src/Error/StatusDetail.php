@@ -41,11 +41,13 @@ final readonly class StatusDetail
     {
         $codeValue = Coerce::strictInt($data['code'] ?? null, GrpcStatus::Unknown->value);
         $details = $data['details'] ?? null;
+        /** @var array<string, mixed> $detailsArr */
+        $detailsArr = is_array($details) ? $details : [];
 
         return new self(
             code: GrpcStatus::tryFrom($codeValue) ?? GrpcStatus::Unknown,
             message: Coerce::string($data['message'] ?? null),
-            details: is_array($details) ? $details : [],
+            details: $detailsArr,
         );
     }
 

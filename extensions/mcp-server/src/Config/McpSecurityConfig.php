@@ -36,11 +36,13 @@ final readonly class McpSecurityConfig
     public static function fromArray(array $data): self
     {
         $toolRateLimits = $data['tool_rate_limits'] ?? null;
+        /** @var array<string, int> $toolRateLimitsMap */
+        $toolRateLimitsMap = is_array($toolRateLimits) ? $toolRateLimits : [];
 
         return new self(
             pathAllowlist: Coerce::listOfString($data['path_allowlist'] ?? null),
             rateLimitPerMinute: Coerce::strictInt($data['rate_limit_per_minute'] ?? null, 60),
-            toolRateLimits: is_array($toolRateLimits) ? $toolRateLimits : [],
+            toolRateLimits: $toolRateLimitsMap,
             maxConcurrentActions: Coerce::strictInt($data['max_concurrent_actions'] ?? null, 1),
         );
     }

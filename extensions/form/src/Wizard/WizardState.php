@@ -49,6 +49,7 @@ final readonly class WizardState
         if (!is_array($stepData)) {
             $stepData = [];
         }
+        /** @var array<int, array<string, mixed>> $stepData */
 
         return new self(
             wizardId: Coerce::string($data['wizard_id'] ?? null),
