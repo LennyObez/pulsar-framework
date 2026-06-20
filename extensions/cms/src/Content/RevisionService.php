@@ -204,9 +204,7 @@ final readonly class RevisionService
         $compareFields = ['title', 'slug', 'body', 'excerpt', 'metaTitle', 'metaDescription'];
 
         foreach ($compareFields as $field) {
-            /** @var mixed $fromValue */
             $fromValue = $from->{$field};
-            /** @var mixed $toValue */
             $toValue = $to->{$field};
 
             if ($fromValue !== $toValue) {
