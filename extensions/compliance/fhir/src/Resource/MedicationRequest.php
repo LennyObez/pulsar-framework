@@ -137,7 +137,15 @@ final readonly class MedicationRequest extends FhirResource
      */
     public static function fromArray(array $data): self
     {
-        $opt = static fn(string $k): ?array => is_array($data[$k] ?? null) ? $data[$k] : null;
+        $opt = static function (string $k) use ($data): ?array {
+            $value = $data[$k] ?? null;
+            if (!is_array($value)) {
+                return null;
+            }
+
+            /** @var array<string, mixed> */
+            return $value;
+        };
         $list = static function (string $k) use ($data): array {
             $raw = $data[$k] ?? null;
             if (!is_array($raw)) {
@@ -146,6 +154,7 @@ final readonly class MedicationRequest extends FhirResource
             $out = [];
             foreach ($raw as $entry) {
                 if (is_array($entry)) {
+                    /** @var array<string, mixed> $entry */
                     $out[] = $entry;
                 }
             }
