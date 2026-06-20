@@ -73,7 +73,7 @@ final class ObjectMapper
         if (method_exists($targetClass, 'fromArray')) {
             try {
                 /** @var T */
-                return call_user_func([$targetClass, 'fromArray'], $data);
+                return $targetClass::fromArray($data);
             } catch (Throwable $e) {
                 throw MappingException::factoryFailed($targetClass, $e);
             }

@@ -97,6 +97,9 @@ final readonly class CalendarBlock implements BlockTypeInterface
 
         $daysInMonth = cal_days_in_month(CAL_GREGORIAN, $month, $year);
         $timestamp = mktime(0, 0, 0, $month, 1, $year);
+        if ($timestamp === false) {
+            $timestamp = time();
+        }
         $firstDayOfWeek = (int) date('w', $timestamp);
         $monthName = date('F', $timestamp);
         $days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
