@@ -292,10 +292,6 @@ final readonly class SvgSanitizer
         $toRemove = [];
         $attributes = $element->attributes;
 
-        if ($attributes === null) {
-            return;
-        }
-
         /** @var DOMAttr $attr */
         foreach (iterator_to_array($attributes) as $attr) {
             $attrNameLower = strtolower($attr->name);
