@@ -24,31 +24,32 @@ final class OnceDirectiveTest extends TestCase
     }
 
     #[Test]
-    public function compileGeneratesOnceBlock(): void
+    public function compileDelegatesToEnvRenderOnce(): void
     {
         $result = $this->directive->compile('');
 
-        self::assertStringContainsString('$__once_blocks', $result);
-        self::assertStringContainsString('$__once_id', $result);
+        // The once-registry now lives on the shared $__env so it survives
+        // @include boundaries (once per request), not on a template-local var.
+        self::assertStringContainsString('$__env->renderOnce(', $result);
+    }
+
+    #[Test]
+    public function compileUsesFileAndLineIdentity(): void
+    {
+        $result = $this->directive->compile('');
+
         self::assertStringContainsString('__FILE__', $result);
         self::assertStringContainsString('__LINE__', $result);
     }
 
     #[Test]
-    public function compileOutputChecksForPreviousRendering(): void
+    public function compileOpensAnIfGuardClosedByEndonce(): void
     {
         $result = $this->directive->compile('');
 
-        // Must check if block was already rendered
-        self::assertStringContainsString('!isset($__once_blocks[$__once_id])', $result);
-    }
-
-    #[Test]
-    public function compileOutputMarksBlockAsRendered(): void
-    {
-        $result = $this->directive->compile('');
-
-        // Must mark block as rendered
-        self::assertStringContainsString('$__once_blocks[$__once_id] = true', $result);
+        // Alternative-syntax `if (...):` so the @endonce directive's `endif;`
+        // closes it.
+        self::assertStringContainsString('if (', $result);
+        self::assertStringContainsString('):', $result);
     }
 }

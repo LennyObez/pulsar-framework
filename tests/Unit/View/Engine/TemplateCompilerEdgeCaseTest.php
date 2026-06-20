@@ -103,6 +103,68 @@ final class TemplateCompilerEdgeCaseTest extends TestCase
     }
 
     #[Test]
+    public function directiveNameWithUnderscoreCompilesAsWholeName(): void
+    {
+        // FR-4: the directive-name scanner must include underscores (and digits)
+        // so built-ins like @escape_js / @csp_nonce resolve as whole names instead
+        // of stopping at the underscore (which shipped raw JS and an empty nonce).
+        $compiler = $this->createCompiler();
+        $compiler->registerDirective('escape_js', static fn(string $expr): string => "<?php echo jsEscape({$expr}); ?>");
+
+        $result = $compiler->compileSource('@escape_js($payload)');
+
+        self::assertSame('<?php echo jsEscape($payload); ?>', $result);
+        self::assertStringNotContainsString('@escape', $result);
+    }
+
+    #[Test]
+    public function directiveExpressionPreservesParensInsideStringLiterals(): void
+    {
+        // FR-5: the balanced-paren scanner must ignore parentheses (and escaped
+        // quotes) inside string literals, otherwise common expressions miscompile
+        // to invalid PHP.
+        $compiler = $this->createCompiler();
+        $compiler->registerDirective('if', static fn(string $expr): string => "<?php if ({$expr}): ?>");
+
+        self::assertSame(
+            '<?php if ($label === "(none)"): ?>',
+            $compiler->compileSource('@if($label === "(none)")'),
+        );
+        self::assertSame(
+            "<?php if (str_contains(\$s, ')')): ?>",
+            $compiler->compileSource("@if(str_contains(\$s, ')'))"),
+        );
+    }
+
+    #[Test]
+    public function escapedEchoIsEscapedByDefault(): void
+    {
+        $compiler = $this->createCompiler();
+
+        $result = $compiler->compileSource('{{ $value }}');
+
+        self::assertStringContainsString('ContextEscaper::html', $result);
+    }
+
+    #[Test]
+    public function escapedEchoEmitsRawOutputWhenAutoEscapeDisabled(): void
+    {
+        // FR-40: ViewConfig::autoEscape=false must actually disable {{ }} escaping
+        // instead of being a silent no-op.
+        $config = new ViewConfig(
+            templatePaths: [$this->templateDir],
+            cachePath: $this->cacheDir,
+            autoEscape: false,
+        );
+        $compiler = new TemplateCompiler($config, new TemplateCache($this->cacheDir));
+
+        $result = $compiler->compileSource('{{ $value }}');
+
+        self::assertStringNotContainsString('ContextEscaper', $result);
+        self::assertSame('<?php echo (string) ($value); ?>', $result);
+    }
+
+    #[Test]
     public function resolveHandlesNamespacedTemplates(): void
     {
         $this->writeTemplate('admin.dashboard', '<h1>Dashboard</h1>');

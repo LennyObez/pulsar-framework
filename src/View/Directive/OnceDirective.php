@@ -27,9 +27,10 @@ final readonly class OnceDirective implements DirectiveInterface
 
     public function compile(string $expression): string
     {
-        return '<?php if (!isset($__once_blocks)) { $__once_blocks = []; } '
-            . '$__once_id = __FILE__ . ":" . __LINE__; '
-            . 'if (!isset($__once_blocks[$__once_id])): '
-            . '$__once_blocks[$__once_id] = true; ?>';
+        // Delegate to the shared $__env so the once-registry survives @include
+        // boundaries (once per request) instead of a template-local variable that
+        // is recreated on every isolated template execution. @endonce emits the
+        // matching `endif`.
+        return '<?php if ($__env->renderOnce(__FILE__ . ":" . __LINE__)): ?>';
     }
 }

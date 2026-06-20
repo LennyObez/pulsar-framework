@@ -46,8 +46,11 @@ final class TemplateInheritance
     /** @var list<array{name: string}> Slot stack */
     private array $slotStack = [];
 
-    /** @var array<string, array<string, string>> Component name → slot name → content */
+    /** @var array<int, array<string, string>> Component stack depth → slot name → content */
     private array $componentSlots = [];
+
+    /** @var array<string, true> Identifiers of @once blocks already rendered this request */
+    private array $onceIds = [];
 
     /** Callback for rendering sub-templates (set by the engine) */
     private ?Closure $renderCallback = null;
@@ -244,7 +247,9 @@ final class TemplateInheritance
     public function startComponent(string $name, array $data = []): void
     {
         $this->componentStack[] = ['name' => $name, 'data' => $data];
-        $this->componentSlots[$name] = [];
+        // Key slots by stack depth, not name, so nesting two components of the
+        // same name does not let the inner instance wipe the outer's slots.
+        $this->componentSlots[count($this->componentStack) - 1] = [];
         ob_start();
     }
 
@@ -264,8 +269,10 @@ final class TemplateInheritance
         $name = $component['name'];
         $data = $component['data'];
 
-        $slots = $this->componentSlots[$name] ?? [];
-        unset($this->componentSlots[$name]);
+        // The popped component lived at depth count() (its former last index).
+        $depth = count($this->componentStack);
+        $slots = $this->componentSlots[$depth] ?? [];
+        unset($this->componentSlots[$depth]);
 
         $data['slot'] = $defaultContent;
 
@@ -306,13 +313,31 @@ final class TemplateInheritance
             throw ViewException::invalidDirective('endslot', 'no enclosing @component');
         }
 
-        $componentName = $this->componentStack[count($this->componentStack) - 1]['name'];
+        $componentDepth = count($this->componentStack) - 1;
 
-        if (!isset($this->componentSlots[$componentName])) {
-            $this->componentSlots[$componentName] = [];
+        if (!isset($this->componentSlots[$componentDepth])) {
+            $this->componentSlots[$componentDepth] = [];
         }
 
-        $this->componentSlots[$componentName][$slot['name']] = $content;
+        $this->componentSlots[$componentDepth][$slot['name']] = $content;
+    }
+
+    /**
+     * Register a @once block by id and report whether it should render now.
+     *
+     * The registry lives on the shared $__env, so a @once block inside a partial
+     * that is @included N times renders only on the first encounter — the
+     * once-per-request contract — instead of once per isolated template execution.
+     */
+    public function renderOnce(string $id): bool
+    {
+        if (array_key_exists($id, $this->onceIds)) {
+            return false;
+        }
+
+        $this->onceIds[$id] = true;
+
+        return true;
     }
 
     /**
@@ -328,5 +353,6 @@ final class TemplateInheritance
         $this->componentStack = [];
         $this->slotStack = [];
         $this->componentSlots = [];
+        $this->onceIds = [];
     }
 }
