@@ -39,7 +39,6 @@ final readonly class InterfaceParser
         $tokenCount = count($tokens);
 
         for ($i = 0; $i < $tokenCount; $i++) {
-            assert($i >= 0);
             $token = $tokens[$i];
 
             if (!is_array($token) || $token[0] !== T_FUNCTION) {
