@@ -365,11 +365,7 @@ final readonly class SafeHttpClient
         $lastHeaders = http_get_last_response_headers();
 
         if ($lastHeaders !== null) {
-            /** @var mixed $header */
             foreach ($lastHeaders as $header) {
-                if (!is_string($header)) {
-                    continue;
-                }
                 if (str_starts_with($header, 'HTTP/')) {
                     $parts = explode(' ', $header, 3);
                     $statusCode = (int) ($parts[1] ?? 200);
