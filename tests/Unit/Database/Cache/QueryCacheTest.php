@@ -13,6 +13,7 @@ use Pulsar\Database\Cache\QueryCache;
 use Pulsar\Database\Result;
 
 use function array_key_exists;
+use function in_array;
 
 #[CoversClass(QueryCache::class)]
 final class QueryCacheTest extends TestCase
@@ -77,6 +78,29 @@ final class QueryCacheTest extends TestCase
         self::assertNull($this->queryCache->get('key1'));
         self::assertNull($this->queryCache->get('key2'));
         self::assertNotNull($this->queryCache->get('key3'));
+    }
+
+    #[Test]
+    public function invalidateSurvivesConcurrentTaggedWrites(): void
+    {
+        // FR-13: two requests caching under the same tag concurrently each read
+        // the tag bookkeeping before the other commits. A per-tag key-list index
+        // loses one entry to that read-modify-write, and the lost entry then
+        // survives invalidation as stale data. Stamping each entry with the tag
+        // version records the tags independently of any shared list, so
+        // invalidation reaches every entry regardless of write interleaving.
+        $cache = new InterleavedCache($this->memoryCache, ['key1', 'key2']);
+        $queryCache = new QueryCache($cache);
+
+        $cache->freezeBookkeeping = true;
+        $queryCache->put('key1', Result::fromArrays([['id' => 1]]), 60, ['users']);
+        $queryCache->put('key2', Result::fromArrays([['id' => 2]]), 60, ['users']);
+        $cache->freezeBookkeeping = false;
+
+        $queryCache->invalidateByTags(['users']);
+
+        self::assertNull($queryCache->get('key1'), 'a concurrently cached entry must not survive invalidation');
+        self::assertNull($queryCache->get('key2'));
     }
 
     #[Test]
@@ -205,5 +229,87 @@ final class InMemoryCache implements CacheInterface
     public function getTtl(string $key): ?int
     {
         return $this->ttls[$key] ?? null;
+    }
+}
+
+/**
+ * Wraps a PSR-16 cache to model two requests writing under the same tag
+ * concurrently. While {@see self::$freezeBookkeeping} is on, a read of any
+ * bookkeeping key (anything outside the configured result keys) returns the
+ * value captured at its first read — what a second request would observe
+ * before the first commits its update.
+ *
+ * @internal
+ */
+final class InterleavedCache implements CacheInterface
+{
+    public bool $freezeBookkeeping = false;
+
+    /** @var array<string, mixed> */
+    private array $frozen = [];
+
+    /** @param list<string> $resultKeys */
+    public function __construct(
+        private readonly CacheInterface $inner,
+        private readonly array $resultKeys,
+    ) {}
+
+    public function get(string $key, mixed $default = null): mixed
+    {
+        if ($this->freezeBookkeeping && !in_array($key, $this->resultKeys, true)) {
+            if (!array_key_exists($key, $this->frozen)) {
+                /** @var mixed $value */
+                $value = $this->inner->get($key, $default);
+                $this->frozen[$key] = $value;
+            }
+
+            return $this->frozen[$key];
+        }
+
+        return $this->inner->get($key, $default);
+    }
+
+    public function set(string $key, mixed $value, null|int|DateInterval $ttl = null): bool
+    {
+        return $this->inner->set($key, $value, $ttl);
+    }
+
+    public function delete(string $key): bool
+    {
+        return $this->inner->delete($key);
+    }
+
+    public function clear(): bool
+    {
+        return $this->inner->clear();
+    }
+
+    /** @param iterable<string> $keys */
+    public function getMultiple(iterable $keys, mixed $default = null): iterable
+    {
+        $result = [];
+
+        foreach ($keys as $key) {
+            $result[$key] = $this->get($key, $default);
+        }
+
+        return $result;
+    }
+
+    /** @param iterable<mixed, mixed> $values */
+    public function setMultiple(iterable $values, null|int|DateInterval $ttl = null): bool
+    {
+        return $this->inner->setMultiple($values, $ttl);
+    }
+
+    /** @param iterable<string> $keys */
+    public function deleteMultiple(iterable $keys): bool
+    {
+        return $this->inner->deleteMultiple($keys);
+    }
+
+    public function has(string $key): bool
+    {
+        return $this->inner->has($key);
     }
 }
