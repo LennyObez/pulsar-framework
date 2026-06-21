@@ -85,9 +85,19 @@ final readonly class ExpressionCompiler
      * Compile an IN (...) clause.
      *
      * @param list<mixed> $values
+     *
+     * @throws QueryBuilderException If $values is empty (an empty IN list
+     *                               compiles to syntactically invalid SQL).
      */
     public function in(string $column, array $values, bool $not = false): Expression
     {
+        if ($values === []) {
+            throw QueryBuilderException::invalid(sprintf(
+                '%s clause requires at least one value; an empty list compiles to invalid SQL.',
+                $not ? 'NOT IN' : 'IN',
+            ));
+        }
+
         $placeholders = [];
         $bindings = [];
         /** @var mixed $val */

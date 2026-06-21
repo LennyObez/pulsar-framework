@@ -64,7 +64,11 @@ final readonly class AuditingPersister
             $values[$versionCol->columnName] = 1;
         }
 
-        $insertBuilder = new InsertBuilder($this->connection, $metadata->qualifiedTableName());
+        $insertBuilder = new InsertBuilder(
+            $this->connection,
+            $metadata->qualifiedTableName(),
+            $metadata->primaryKey->columnName,
+        );
         $lastInsertId = $insertBuilder->values($values)->execute();
 
         // Set the generated ID and initial version back on the entity
@@ -104,9 +108,6 @@ final readonly class AuditingPersister
             $values[$metadata->updatedAtColumn] = date('Y-m-d H:i:s');
         }
 
-        $updateBuilder = new UpdateBuilder($this->connection, $metadata->qualifiedTableName());
-        $updateBuilder->set($values)->where($metadata->primaryKey->columnName, $id);
-
         // Optimistic locking
         if ($metadata->versionProperty !== null) {
             $currentVersion = $this->dehydrator->extractVersion($entity);
@@ -120,7 +121,11 @@ final readonly class AuditingPersister
             $allValues = $values;
             $allValues[$versionCol->columnName] = $newVersion;
 
-            $versionedBuilder = new UpdateBuilder($this->connection, $metadata->tableName);
+            // Schema-qualified like every other write here: a bare table name
+            // resolves against the session search_path on PostgreSQL, targeting
+            // the wrong (or no) table — the UPDATE then affects 0 rows and is
+            // misreported as a stale-entity optimistic-lock conflict.
+            $versionedBuilder = new UpdateBuilder($this->connection, $metadata->qualifiedTableName());
             $affected = $versionedBuilder
                 ->set($allValues)
                 ->where($metadata->primaryKey->columnName, $id)
@@ -136,7 +141,11 @@ final readonly class AuditingPersister
             $prop = $reflection->getProperty($metadata->versionProperty);
             $prop->setValue($entity, $newVersion);
         } else {
-            $updateBuilder->execute();
+            $updateBuilder = new UpdateBuilder($this->connection, $metadata->qualifiedTableName());
+            $updateBuilder
+                ->set($values)
+                ->where($metadata->primaryKey->columnName, $id)
+                ->execute();
         }
 
         $this->logAudit($metadata, $context, 'update', $id);
