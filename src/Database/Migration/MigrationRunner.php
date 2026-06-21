@@ -12,6 +12,7 @@ use Pulsar\Database\Exception\DatabaseException;
 use Pulsar\Database\Row;
 use Pulsar\Database\Schema\SchemaException;
 use Pulsar\Database\Schema\SchemaIdentifier;
+use Pulsar\Support\Coerce;
 use Throwable;
 
 use function array_diff_key;
@@ -20,7 +21,6 @@ use function array_values;
 use function fclose;
 use function flock;
 use function fopen;
-use function is_int;
 use function is_scalar;
 use function sprintf;
 use function sys_get_temp_dir;
@@ -308,7 +308,10 @@ final readonly class MigrationRunner implements MigrationRunnerInterface
         /** @var mixed $maxBatch */
         $maxBatch = $first->getOrDefault('max_batch', 0);
 
-        return is_int($maxBatch) ? $maxBatch : 0;
+        // MySQL/PostgreSQL return MAX(batch) as a numeric STRING; a strict
+        // is_int() check would yield 0, colliding batch numbers in runPending()
+        // and silently no-op'ing rollbackLastBatch(). Coerce tolerates the string.
+        return Coerce::int($maxBatch, 0);
     }
 
     /**
