@@ -20,7 +20,10 @@ use function sprintf;
 #[Api(since: '1.0.0')]
 final readonly class Uuid implements RuleInterface
 {
-    private const string PATTERN = '/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i';
+    // \A and \z (not ^...$) so a trailing newline cannot slip through: $ matches
+    // before a final \n, which would let "…000000000000\n" validate and risk
+    // log/line injection, DB mismatch, or header smuggling downstream.
+    private const string PATTERN = '/\A[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\z/i';
 
     public function __construct(
         private string $message = '',
