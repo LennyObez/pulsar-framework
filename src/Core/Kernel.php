@@ -511,6 +511,7 @@ final class Kernel implements KernelInterface
         $status = match (true) {
             $e instanceof RoutingException && $e->isNotFound() => ResponseStatus::NotFound,
             $e instanceof RoutingException && $e->isMethodNotAllowed() => ResponseStatus::MethodNotAllowed,
+            $e instanceof RoutingException && $e->isNotImplemented() => ResponseStatus::NotImplemented,
             default => ResponseStatus::InternalServerError,
         };
 
@@ -556,7 +557,10 @@ final class Kernel implements KernelInterface
         $method = $request->getMethod();
         $path = $request->getUri()->getPath();
 
-        $methodEnum = Method::from($method);
+        // FR-22: an unrecognized verb (PROPFIND, garbage) must not surface as a
+        // 500. tryFrom yields null instead of throwing, mapped to 501 Not
+        // Implemented via the routing exception handler.
+        $methodEnum = Method::tryFrom($method) ?? throw RoutingException::notImplemented($method);
 
         if ($this->metricsRegistry !== null) {
             $matchStart = hrtime(true);
