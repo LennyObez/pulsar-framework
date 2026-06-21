@@ -40,6 +40,17 @@ final class UrlPrefixExtractorTest extends TestCase
     }
 
     #[Test]
+    public function extractAcceptsConfiguredLocalesOfAnyShape(): void
+    {
+        // FR-25: a configured locale resolves whatever its shape — 3-letter ISO
+        // 639-2/3 (fil, gsw) or underscore region (fr_CA) — instead of being
+        // pre-rejected by a fixed 2-letter / xx-YY pattern.
+        self::assertSame('fil', $this->extractor->extract('/fil/about', ['en', 'fil']));
+        self::assertSame('gsw', $this->extractor->extract('/gsw/docs', ['en', 'gsw']));
+        self::assertSame('fr_CA', $this->extractor->extract('/fr_CA/about', ['en', 'fr_CA']));
+    }
+
+    #[Test]
     public function extractReturnsNullForEmptyPath(): void
     {
         self::assertNull($this->extractor->extract('/', ['en', 'fr']));
@@ -108,9 +119,13 @@ final class UrlPrefixExtractorTest extends TestCase
     }
 
     #[Test]
-    public function extractReturnsNullForTooLongSegment(): void
+    public function extractReturnsNullForUnconfiguredLongSegment(): void
     {
-        self::assertNull($this->extractor->extract('/abcdef/page', ['en', 'abcdef']));
+        // A long path segment that is not a configured locale is not a prefix.
+        // (Rejection follows from the segment being absent from the supported
+        // list — not from a shape heuristic, which FR-25 showed wrongly rejects
+        // legitimate 3-letter / underscore-region locales.)
+        self::assertNull($this->extractor->extract('/abcdef/page', ['en', 'fr']));
     }
 
     // ── stripPrefix() ───────────────────────────────────────────────────
