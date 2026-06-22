@@ -41,18 +41,23 @@ final readonly class DataProtectionConfig
         if (is_array($rawRetention)) {
             foreach ($rawRetention as $entry) {
                 if (is_array($entry)) {
+                    /** @var array<string, mixed> $entry */
                     $retention[] = RetentionPolicy::fromArray($entry);
                 }
             }
         }
 
         $purge = $data['purge'] ?? null;
+        /** @var array<string, mixed> $purgeArr */
+        $purgeArr = is_array($purge) ? $purge : [];
         $consent = $data['consent'] ?? null;
+        /** @var array<string, mixed> $consentArr */
+        $consentArr = is_array($consent) ? $consent : [];
 
         return new self(
             retention: $retention,
-            purge: PurgeConfig::fromArray(is_array($purge) ? $purge : []),
-            consent: ConsentConfig::fromArray(is_array($consent) ? $consent : []),
+            purge: PurgeConfig::fromArray($purgeArr),
+            consent: ConsentConfig::fromArray($consentArr),
         );
     }
 }

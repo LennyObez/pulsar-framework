@@ -11,6 +11,7 @@ use Pulsar\Auth\Exception\AuthenticationException;
 
 use function array_all;
 use function array_key_exists;
+use function array_values;
 use function in_array;
 use function is_array;
 use function is_int;
@@ -125,6 +126,8 @@ final readonly class Identity implements IdentityInterface
         if (!is_array($roles) || !array_all($roles, static fn(mixed $v): bool => is_string($v))) {
             throw AuthenticationException::invalidIdentityData('roles must be a list of strings');
         }
+        /** @var list<string> $roles */
+        $roles = array_values($roles);
 
         /** @var mixed $rawAttributes */
         $rawAttributes = $data['attributes'] ?? [];

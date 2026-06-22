@@ -37,12 +37,16 @@ final readonly class CompiledCatalogIndex
     public static function fromArray(array $data): self
     {
         $index = $data['index'] ?? null;
+        /** @var array<string, array<string, list<string>>> $indexArr */
+        $indexArr = is_array($index) ? $index : [];
         $fileHashes = $data['file_hashes'] ?? null;
+        /** @var array<string, string> $fileHashesArr */
+        $fileHashesArr = is_array($fileHashes) ? $fileHashes : [];
 
         return new self(
             locales: Coerce::listOfString($data['locales'] ?? null),
-            index: is_array($index) ? $index : [],
-            fileHashes: is_array($fileHashes) ? $fileHashes : [],
+            index: $indexArr,
+            fileHashes: $fileHashesArr,
             totalHash: Coerce::string($data['total_hash'] ?? null),
         );
     }

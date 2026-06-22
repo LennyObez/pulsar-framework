@@ -82,8 +82,13 @@ final readonly class CompiledBindingMap
 
         foreach ($data as $routeName => $parameters) {
             foreach ($parameters as $paramName => $metaData) {
+                $class = $metaData['class'] ?? '';
+                if ($class === '') {
+                    // A binding without a target class cannot resolve anything; skip.
+                    continue;
+                }
                 $map[$routeName][$paramName] = new BindingMeta(
-                    class: $metaData['class'] ?? '',
+                    class: $class,
                     keyName: $metaData['key_name'] ?? 'id',
                     keyType: $metaData['key_type'] ?? 'int',
                     scoped: ($metaData['scoped'] ?? false) === true,
