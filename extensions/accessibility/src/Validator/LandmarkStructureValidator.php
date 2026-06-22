@@ -6,6 +6,7 @@ namespace Pulsar\Extension\Accessibility\Validator;
 
 use DOMAttr;
 use DOMElement;
+use DOMNamedNodeMap;
 use DOMNode;
 use DOMXPath;
 
@@ -196,8 +197,13 @@ final readonly class LandmarkStructureValidator implements ValidatorInterface
     {
         $tag = '<' . $element->nodeName;
 
+        // DOMElement always exposes a DOMNamedNodeMap; the base DOMNode type is
+        // nullable, so narrow it explicitly for analyzers that follow the base type.
+        /** @var DOMNamedNodeMap $attributes */
+        $attributes = $element->attributes;
+
         /** @var DOMAttr $attr */
-        foreach ($element->attributes as $attr) {
+        foreach ($attributes as $attr) {
             $tag .= ' ' . $attr->nodeName . '="' . htmlspecialchars($attr->nodeValue ?? '', ENT_QUOTES, 'UTF-8') . '"';
         }
 

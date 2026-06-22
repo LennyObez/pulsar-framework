@@ -8,6 +8,7 @@ use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Support\Coerce;
 
+use function array_keys;
 use function is_array;
 use function is_string;
 use function strtoupper;
@@ -109,7 +110,7 @@ final readonly class PaymentsConfig
             invoiceRetentionDays: Coerce::int($data['invoice_retention_days'] ?? null, 3650),
             dunningMaxRetries: Coerce::int($data['dunning_max_retries'] ?? null, 4),
             trialMaxDays: Coerce::int($data['trial_max_days'] ?? null, 30),
-            countryPaymentMethods: self::parseCountryPaymentMethods(is_array($data['country_payment_methods'] ?? null) ? $data['country_payment_methods'] : []),
+            countryPaymentMethods: self::parseCountryPaymentMethods($sub('country_payment_methods')),
             requireTenantContext: (bool) ($data['require_tenant_context'] ?? false),
         );
     }
@@ -130,9 +131,9 @@ final readonly class PaymentsConfig
             }
             $filtered = [];
 
-            foreach ($methods as $method) {
-                if (is_string($method)) {
-                    $filtered[] = $method;
+            foreach (array_keys($methods) as $methodKey) {
+                if (is_string($methods[$methodKey])) {
+                    $filtered[] = $methods[$methodKey];
                 }
             }
 
