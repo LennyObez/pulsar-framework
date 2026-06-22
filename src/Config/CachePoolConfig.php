@@ -13,6 +13,11 @@ use Pulsar\Api\Api;
 #[Api(since: '1.0.0')]
 final readonly class CachePoolConfig
 {
+    /**
+     * @param list<class-string>|null $allowedClasses Classes permitted when
+     *        deserializing with the 'php' serializer. Null or empty allows no
+     *        objects (fail-closed); the 'json' serializer ignores this.
+     */
     public function __construct(
         public string $name,
         public CacheDriverType $driver = CacheDriverType::Filesystem,
@@ -24,5 +29,6 @@ final readonly class CachePoolConfig
         public ?string $host = null,
         public ?int $port = null,
         public ?string $path = null,
+        public ?array $allowedClasses = null,
     ) {}
 }

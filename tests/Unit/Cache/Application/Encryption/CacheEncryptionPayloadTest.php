@@ -61,25 +61,25 @@ final class CacheEncryptionPayloadTest extends TestCase
     }
 
     #[Test]
-    public function toJsonAndFromJsonRoundTripWithTtlSeconds(): void
+    public function toJsonAndFromJsonRoundTripWithExpiresAt(): void
     {
         $payload = new CacheEncryptionPayload(
             version: 2,
             keyId: 'key-id-456',
             ciphertext: 'encrypted-data',
             aadHash: 'aad-hash-value',
-            ttlSeconds: 3600,
+            expiresAt: 1_700_000_000,
         );
 
         $json = $payload->toJson();
         $restored = CacheEncryptionPayload::fromJson($json);
 
         self::assertNotNull($restored);
-        self::assertSame(3600, $restored->ttlSeconds);
+        self::assertSame(1_700_000_000, $restored->expiresAt);
     }
 
     #[Test]
-    public function ttlSecondsDefaultsToNull(): void
+    public function expiresAtDefaultsToNull(): void
     {
         $payload = new CacheEncryptionPayload(
             version: 1,
@@ -88,12 +88,12 @@ final class CacheEncryptionPayloadTest extends TestCase
             aadHash: 'aad-hash-value',
         );
 
-        self::assertNull($payload->ttlSeconds);
+        self::assertNull($payload->expiresAt);
 
         $json = $payload->toJson();
         $restored = CacheEncryptionPayload::fromJson($json);
 
         self::assertNotNull($restored);
-        self::assertNull($restored->ttlSeconds);
+        self::assertNull($restored->expiresAt);
     }
 }

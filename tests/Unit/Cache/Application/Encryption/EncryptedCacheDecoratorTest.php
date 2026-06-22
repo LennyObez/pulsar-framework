@@ -11,6 +11,7 @@ use Pulsar\Cache\Application\Driver\ArrayDriver;
 use Pulsar\Cache\Application\Encryption\EncryptedCacheDecorator;
 use Pulsar\Cache\Application\Exception\UnsupportedCapabilityException;
 use Pulsar\Security\Crypto\MasterKey;
+use ReflectionMethod;
 
 #[CoversClass(EncryptedCacheDecorator::class)]
 final class EncryptedCacheDecoratorTest extends TestCase
@@ -187,5 +188,70 @@ final class EncryptedCacheDecoratorTest extends TestCase
         $raw = $this->inner->get('rotation-key');
         self::assertNotNull($raw);
         self::assertNotSame('secret-data', $raw);
+    }
+
+    #[Test]
+    public function setStampsPayloadWithAbsoluteExpiry(): void
+    {
+        // FR-33: set() now stamps the payload with an absolute expiry ('exp') so
+        // a re-encrypt on key rotation preserves it. Previously it stored only
+        // the raw TTL duration ('ttl'), which the rotation re-encrypt restarted
+        // from the read moment, extending the entry's lifetime indefinitely.
+        $before = time();
+        $this->decorator->set('expiring', 'value', 100);
+
+        $raw = $this->inner->get('expiring');
+        self::assertNotNull($raw);
+
+        /** @var array<string, mixed> $decoded */
+        $decoded = json_decode($raw, true);
+        self::assertArrayHasKey('exp', $decoded);
+        self::assertIsInt($decoded['exp']);
+        // Absolute timestamp ~ now + 100, not the bare duration 100.
+        self::assertGreaterThanOrEqual($before + 100, $decoded['exp']);
+        self::assertLessThanOrEqual(time() + 100, $decoded['exp']);
+    }
+
+    #[Test]
+    public function rotationReEncryptsPreviousKeyEntryAndPreservesExpiry(): void
+    {
+        // FR-33: an entry written under the previous master key must be readable
+        // after rotation (re-encrypted under the current key), and the re-encrypt
+        // must keep the original absolute expiry rather than restart the TTL.
+        // The AAD MAC also rotates, so without a previous-key fallback the
+        // integrity check rejected the entry before re-encryption could run.
+        $inner = new ArrayDriver();
+        $keyA = str_repeat('ab', 32);
+        $keyB = str_repeat('cd', 32);
+
+        // Write under key A with an absolute expiry only seconds away.
+        $producer = new EncryptedCacheDecorator(
+            inner: $inner,
+            masterKey: MasterKey::fromHex($keyA),
+            poolName: 'test-pool',
+        );
+        $encrypt = new ReflectionMethod($producer, 'encryptValue');
+        $blob = $encrypt->invoke($producer, 'rk', 'secret', time() + 3);
+        self::assertIsString($blob);
+        $inner->set('rk', $blob, null);
+
+        // Rotate: key A becomes previous, key B current.
+        $rotated = new EncryptedCacheDecorator(
+            inner: $inner,
+            masterKey: MasterKey::fromHex($keyB, $keyA),
+            poolName: 'test-pool',
+        );
+
+        // The previous-key entry is decrypted and re-encrypted on read.
+        self::assertSame('secret', $rotated->get('rk'));
+
+        // The re-written entry keeps the original absolute expiry, not now+ttl.
+        $reEncrypted = $inner->get('rk');
+        self::assertNotNull($reEncrypted);
+        /** @var array<string, mixed> $decoded */
+        $decoded = json_decode($reEncrypted, true);
+        self::assertArrayHasKey('exp', $decoded);
+        self::assertIsInt($decoded['exp']);
+        self::assertLessThanOrEqual(time() + 5, $decoded['exp'], 'rotation must preserve the original expiry, not extend it');
     }
 }
