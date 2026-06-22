@@ -38,9 +38,7 @@ final readonly class InterfaceParser
         $methods = [];
         $tokenCount = count($tokens);
 
-        for ($i = 0; $i < $tokenCount; $i++) {
-            $token = $tokens[$i];
-
+        foreach ($tokens as $i => $token) {
             if (!is_array($token) || $token[0] !== T_FUNCTION) {
                 continue;
             }
