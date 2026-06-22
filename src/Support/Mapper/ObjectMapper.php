@@ -24,10 +24,10 @@ use function class_exists;
 use function enum_exists;
 use function is_a;
 use function is_array;
+use function is_callable;
 use function is_int;
 use function is_string;
 use function lcfirst;
-use function method_exists;
 use function preg_replace_callback;
 use function str_contains;
 use function strtolower;
@@ -69,11 +69,15 @@ final class ObjectMapper
     #[NoDiscard]
     public function map(array $data, string $targetClass): object
     {
-        // Check for fromArray() factory first (Pulsar convention)
-        if (method_exists($targetClass, 'fromArray')) {
+        // Check for fromArray() factory first (Pulsar convention). is_callable()
+        // also confirms the method is a publicly invocable static factory, which
+        // is exactly the call shape used here.
+        $factory = [$targetClass, 'fromArray'];
+
+        if (is_callable($factory)) {
             try {
                 /** @var T */
-                return $targetClass::fromArray($data);
+                return $factory($data);
             } catch (Throwable $e) {
                 throw MappingException::factoryFailed($targetClass, $e);
             }
@@ -86,7 +90,7 @@ final class ObjectMapper
      * Map a list of arrays to a list of objects.
      *
      * @template T of object
-     * @param list<array<mixed, mixed>> $items
+     * @param list<mixed> $items Raw list; each element is validated to be an array
      * @param class-string<T> $targetClass
      * @return list<T>
      *
@@ -101,7 +105,7 @@ final class ObjectMapper
             if (!is_array($item)) {
                 // Surface a domain MappingException instead of a raw TypeError
                 // from the array-typed map() call when an element is malformed.
-                throw MappingException::invalidListItem($targetClass, (int) $index);
+                throw MappingException::invalidListItem($targetClass, $index);
             }
 
             $result[] = $this->map($item, $targetClass);
