@@ -195,7 +195,14 @@ final class Coerce
             return $default;
         }
 
-        return array_values(array_filter($value, is_string(...)));
+        $result = [];
+        foreach (array_keys($value) as $key) {
+            if (is_string($value[$key])) {
+                $result[] = $value[$key];
+            }
+        }
+
+        return $result;
     }
 
     /**
@@ -252,7 +259,14 @@ final class Coerce
             return $default;
         }
 
-        return array_values(array_filter($value, is_int(...)));
+        $result = [];
+        foreach (array_keys($value) as $key) {
+            if (is_int($value[$key])) {
+                $result[] = $value[$key];
+            }
+        }
+
+        return $result;
     }
 
     /**
@@ -266,9 +280,9 @@ final class Coerce
         }
 
         $filtered = [];
-        foreach ($value as $k => $v) {
+        foreach (array_keys($value) as $k) {
             if (is_string($k)) {
-                $filtered[$k] = $v;
+                $filtered[$k] = $value[$k];
             }
         }
 
@@ -289,9 +303,9 @@ final class Coerce
         }
 
         $filtered = [];
-        foreach ($value as $k => $v) {
+        foreach (array_keys($value) as $k) {
             if (is_string($k)) {
-                $filtered[$k] = self::bool($v);
+                $filtered[$k] = self::bool($value[$k]);
             }
         }
 
@@ -312,9 +326,9 @@ final class Coerce
         }
 
         $filtered = [];
-        foreach ($value as $k => $v) {
-            if (is_string($k) && is_string($v)) {
-                $filtered[$k] = $v;
+        foreach (array_keys($value) as $k) {
+            if (is_string($k) && is_string($value[$k])) {
+                $filtered[$k] = $value[$k];
             }
         }
 
