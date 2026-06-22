@@ -8,9 +8,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Api\OpenApi\SwaggerUiController;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
 
 use function sys_get_temp_dir;
 
@@ -40,18 +37,6 @@ final class SwaggerUiControllerTest extends TestCase
             // @phpcs:ignore -- path is a test-owned constant, not user input
             unlink($path); // nosemgrep: php.lang.security.unlink-use.unlink-use
         }
-    }
-
-    private function createRequest(): Request
-    {
-        return new Request(
-            method: Method::GET,
-            uri: '/api/docs',
-            path: '/api/docs',
-            queryString: '',
-            headers: new HeaderBag(),
-            body: '',
-        );
     }
 
     private function writeSpecFile(string $content): void

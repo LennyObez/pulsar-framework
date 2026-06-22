@@ -522,21 +522,4 @@ final readonly class MediaMetadata
             default => 'Unknown',
         };
     }
-
-    private static function toNullableFloat(mixed $value): ?float
-    {
-        if ($value === null) {
-            return null;
-        }
-
-        if (is_float($value)) {
-            return $value;
-        }
-
-        if (is_int($value)) {
-            return (float) $value;
-        }
-
-        return null;
-    }
 }

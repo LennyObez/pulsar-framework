@@ -13,6 +13,7 @@ use ReflectionFunctionAbstract;
 use ReflectionMethod;
 
 use function is_array;
+use function is_object;
 use function is_string;
 use function str_contains;
 
@@ -54,6 +55,10 @@ final class CallableReflector
         }
 
         // Invokable object
-        return new ReflectionMethod($callable, '__invoke');
+        if (is_object($callable)) {
+            return new ReflectionMethod($callable, '__invoke');
+        }
+
+        throw new ReflectionException('Callable could not be reflected to a method.');
     }
 }
