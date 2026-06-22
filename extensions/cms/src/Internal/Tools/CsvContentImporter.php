@@ -63,7 +63,7 @@ final readonly class CsvContentImporter
         /** @var list<string> $headers */
         $results = [];
 
-        while (($row = fgetcsv($stream, escape: '')) !== false) {
+        while (is_array($row = fgetcsv($stream, escape: ''))) {
             if (count($row) !== count($headers)) {
                 continue;
             }

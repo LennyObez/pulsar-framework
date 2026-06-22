@@ -7,6 +7,7 @@ namespace Pulsar\Extension\Cms\Media\Security;
 use DOMAttr;
 use DOMDocument;
 use DOMElement;
+use DOMNamedNodeMap;
 use DOMNode;
 use DOMProcessingInstruction;
 use Pulsar\Api\Api;
@@ -290,6 +291,9 @@ final readonly class SvgSanitizer
     private function filterAttributes(DOMElement $element): void
     {
         $toRemove = [];
+        // DOMElement always exposes a DOMNamedNodeMap; the base DOMNode type is
+        // nullable, so narrow it explicitly for analyzers that follow the base type.
+        /** @var DOMNamedNodeMap $attributes */
         $attributes = $element->attributes;
 
         /** @var DOMAttr $attr */
