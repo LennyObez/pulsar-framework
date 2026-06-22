@@ -45,7 +45,7 @@ final readonly class ConsentBannerConfig
      *     enabled?: bool,
      *     position?: string,
      *     privacy_policy_url?: string,
-     *     categories?: array<array-key, array<string, mixed>>,
+     *     categories?: array<array-key, mixed>,
      *     granular_opt_in?: bool,
      *     cookie_name?: string,
      *     cookie_ttl_days?: int,

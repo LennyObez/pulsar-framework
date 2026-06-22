@@ -40,7 +40,7 @@ final readonly class NotificationConfig
     /**
      * @param array{
      *     enabled?: bool,
-     *     default_channels?: list<string>,
+     *     default_channels?: list<mixed>,
      *     rate_limit_per_minute?: int,
      *     regulated?: bool,
      *     audit_hash_enabled?: bool,

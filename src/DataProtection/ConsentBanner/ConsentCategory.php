@@ -34,7 +34,7 @@ final readonly class ConsentCategory
     ) {}
 
     /**
-     * @param array<string, mixed> $data
+     * @param array<array-key, mixed> $data Raw category config; only string keys are read.
      */
     #[NoDiscard]
     public static function fromArray(string $key, array $data): self

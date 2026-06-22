@@ -8,8 +8,7 @@ use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Support\Coerce;
 
-use function array_filter;
-use function array_values;
+use function array_keys;
 use function in_array;
 use function is_array;
 use function is_string;
@@ -44,7 +43,7 @@ final readonly class DomainConfig
      *
      * @param array{
      *     default_domain?: string,
-     *     subdomains?: array<string, string|array<array-key, mixed>>,
+     *     subdomains?: array<array-key, string|array<array-key, mixed>>,
      *     cors_across_subdomains?: bool,
      *     shared_session_domain?: string,
      *     scheme?: string,
@@ -57,13 +56,20 @@ final readonly class DomainConfig
         $rawSubs = $data['subdomains'] ?? null;
         if (is_array($rawSubs)) {
             foreach ($rawSubs as $subdomain => $scopes) {
+                // PHP coerces numeric-string array keys to int; skip non-string keys.
                 if (!is_string($subdomain)) {
                     continue;
                 }
                 if (is_string($scopes)) {
                     $subdomains[$subdomain] = [$scopes];
                 } elseif (is_array($scopes)) {
-                    $subdomains[$subdomain] = array_values(array_filter($scopes, is_string(...)));
+                    $scopeList = [];
+                    foreach (array_keys($scopes) as $scopeKey) {
+                        if (is_string($scopes[$scopeKey])) {
+                            $scopeList[] = $scopes[$scopeKey];
+                        }
+                    }
+                    $subdomains[$subdomain] = $scopeList;
                 }
             }
         }
