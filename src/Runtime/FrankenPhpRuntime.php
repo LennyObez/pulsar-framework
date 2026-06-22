@@ -80,7 +80,6 @@ final class FrankenPhpRuntime implements ReloadableRuntimeInterface
         $continueWorking = true;
 
         while ($continueWorking && $this->status === RuntimeStatus::Running) {
-            /** @var mixed $result */
             $result = frankenphp_handle_request(function (): void {
                 $this->handleRequest();
             });
@@ -268,12 +267,7 @@ final class FrankenPhpRuntime implements ReloadableRuntimeInterface
             return;
         }
 
-        /**
-         * @psalm-suppress UndefinedConstant POSIX-only, guarded by OS check
-         * @var int $sigint
-         * @var int $sigterm
-         * @var int $sigusr1
-         */
+        /** @psalm-suppress UndefinedConstant POSIX-only, guarded by OS check */
         $sigint = (int) SIGINT;
         /** @psalm-suppress UndefinedConstant */
         $sigterm = (int) SIGTERM;
