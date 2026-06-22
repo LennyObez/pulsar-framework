@@ -304,7 +304,6 @@ final class AstInterpreter
 
         // Dot notation: $user.name → $data['user']['name']
         $parts = explode('.', $key);
-        /** @var mixed $current */
         $current = $data;
 
         foreach ($parts as $part) {
