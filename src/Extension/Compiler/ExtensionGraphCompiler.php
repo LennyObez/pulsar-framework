@@ -216,7 +216,7 @@ final class ExtensionGraphCompiler
         $merged = array_merge($a, $b);
         sort($merged, SORT_STRING);
 
-        return array_values($merged);
+        return $merged;
     }
 
     /**

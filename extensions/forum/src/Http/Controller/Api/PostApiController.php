@@ -95,9 +95,8 @@ final readonly class PostApiController
         $rawParentId = $body['parent_id'] ?? null;
         $parentId = is_string($rawParentId) ? $rawParentId : null;
 
-        /** @var mixed $rawBodyText */
-        $rawBodyText = $body['body'] ?? null;
-        $rawBody = is_string($rawBodyText) ? $rawBodyText : '';
+        // $body['body'] is a validated non-empty string by the guard above.
+        $rawBody = $body['body'];
 
         try {
             $post = $this->forumService->createPost(
@@ -161,9 +160,8 @@ final readonly class PostApiController
             ], 422);
         }
 
-        /** @var mixed $rawBodyText */
-        $rawBodyText = $body['body'] ?? null;
-        $rawBody = is_string($rawBodyText) ? $rawBodyText : '';
+        // $body['body'] is a validated non-empty string by the guard above.
+        $rawBody = $body['body'];
 
         $isModerator = $this->gate !== null && $this->gate->allows($identity, 'forum.moderate');
 

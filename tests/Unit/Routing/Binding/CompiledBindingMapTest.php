@@ -128,7 +128,7 @@ final class CompiledBindingMapTest extends TestCase
                     'scoped' => true,
                     'parent_relation' => 'users',
                     'authz_policy' => 'user.view',
-                    'custom_resolver' => 'App\\Resolvers\\UserResolver',
+                    'custom_resolver' => CompiledBindingMap::class,
                 ],
             ],
         ];
@@ -145,7 +145,7 @@ final class CompiledBindingMapTest extends TestCase
         self::assertTrue($meta->scoped);
         self::assertSame('users', $meta->parentRelation);
         self::assertSame('user.view', $meta->authzPolicy);
-        self::assertSame('App\\Resolvers\\UserResolver', $meta->customResolver);
+        self::assertSame(CompiledBindingMap::class, $meta->customResolver);
     }
 
     #[Test]
