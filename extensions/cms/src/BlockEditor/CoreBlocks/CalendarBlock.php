@@ -96,6 +96,9 @@ final readonly class CalendarBlock implements BlockTypeInterface
         }
 
         $daysInMonth = cal_days_in_month(CAL_GREGORIAN, $month, $year);
+        // mktime() can return false for invalid date components; one analyzer's
+        // stub narrows the full-argument form to int, so state the real type.
+        /** @var int|false $timestamp */
         $timestamp = mktime(0, 0, 0, $month, 1, $year);
         if ($timestamp === false) {
             $timestamp = time();

@@ -104,6 +104,9 @@ final class RedisRealtimeBroadcaster implements RealtimeBroadcasterInterface
     public function getRecentEvents(string $channelId, int $sinceIndex = 0): array
     {
         $key = self::EVENTS_PREFIX . $channelId;
+        // Treat the Redis client return as an untyped boundary; entries are
+        // decoded defensively below regardless of the stub's element typing.
+        /** @var array<int, mixed>|false $entries */
         $entries = $this->redis->lRange($key, $sinceIndex, -1);
 
         if ($entries === false || $entries === []) {
