@@ -27,7 +27,13 @@ interface FormSubmissionServiceInterface
      *     form_block_id?: string,
      *     content_id?: string,
      *     tenant_id?: string|null,
-     * } $meta Request metadata (IP, user agent, CSRF token, etc.)
+     *     _hp_field?: string,
+     *     _pow_nonce?: string,
+     *     _pow_challenge?: string,
+     *     _form_rendered_at?: mixed,
+     * } $meta Request metadata: identity (IP, user agent, CSRF token) plus the
+     *         anti-spam signals (honeypot, proof-of-work, render timestamp) the
+     *         spam detectors consume.
      */
     public function submit(array $formData, array $meta): FormSubmission;
 
