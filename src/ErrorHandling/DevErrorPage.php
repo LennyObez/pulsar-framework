@@ -466,7 +466,7 @@ final readonly class DevErrorPage implements ExceptionRendererInterface
             $unit++;
         }
 
-        return number_format($size, 2) . ' ' . $units[$unit];
+        return number_format($size, 2) . ' ' . ($units[$unit] ?? 'B');
     }
 
     /**

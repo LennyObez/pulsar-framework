@@ -151,9 +151,12 @@ final readonly class LocaleNegotiator implements LocaleNegotiatorInterface
         $entries = [];
         $limit = min($count, self::MAX_ACCEPT_LANGUAGE_TOKENS);
 
-        for ($i = 0; $i < $limit; $i++) {
-            $tag = str_replace('-', '_', $matches[1][$i]);
-            $rawQ = $matches[2][$i];
+        foreach ($matches[1] as $i => $rawTag) {
+            if ($i >= $limit) {
+                break;
+            }
+            $tag = str_replace('-', '_', $rawTag);
+            $rawQ = $matches[2][$i] ?? '';
             $quality = 1.0;
 
             if ($rawQ !== '') {

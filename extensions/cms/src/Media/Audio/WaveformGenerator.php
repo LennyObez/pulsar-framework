@@ -127,10 +127,8 @@ final readonly class WaveformGenerator
         }
 
         if ($globalMax > 0.0) {
-            $count = count($peaks);
-
-            for ($i = 0; $i < $count; $i++) {
-                $peaks[$i] = (float) $peaks[$i] / $globalMax;
+            foreach ($peaks as $i => $peak) {
+                $peaks[$i] = $peak / $globalMax;
             }
         }
 

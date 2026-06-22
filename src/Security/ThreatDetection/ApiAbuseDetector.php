@@ -131,11 +131,12 @@ final class ApiAbuseDetector implements ThreatDetectorInterface
             sort($sortedIds);
             $sequential = 0;
 
-            $idsCount = count($sortedIds);
-            for ($i = 1; $i < $idsCount; $i++) {
-                if ($sortedIds[$i] === $sortedIds[$i - 1] + 1) {
+            $previous = null;
+            foreach ($sortedIds as $id) {
+                if ($previous !== null && $id === $previous + 1) {
                     $sequential++;
                 }
+                $previous = $id;
             }
 
             // If 80%+ of IDs are sequential, it's enumeration
