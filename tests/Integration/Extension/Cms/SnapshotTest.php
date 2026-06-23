@@ -11,20 +11,12 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Cms\EventStore\ContentSnapshot;
 use Pulsar\Extension\Cms\EventStore\ContentSnapshotService;
 
-use function in_array;
 use function strlen;
 
 #[CoversClass(ContentSnapshot::class)]
 #[CoversClass(ContentSnapshotService::class)]
 final class SnapshotTest extends TestCase
 {
-    protected function setUp(): void
-    {
-        if (!in_array('blake2b', hash_algos(), true)) {
-            self::markTestSkipped('blake2b hash algorithm is not available in this PHP build');
-        }
-    }
-
     #[Test]
     public function captureSnapshotIncludesAllLocales(): void
     {

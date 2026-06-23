@@ -11,7 +11,6 @@ use Pulsar\Extension\Cms\Content\ContentRevision;
 use Pulsar\Extension\Cms\Content\ContentTranslation;
 use ReflectionClass;
 
-use function in_array;
 use function strlen;
 
 #[CoversClass(ContentRevision::class)]
@@ -19,13 +18,6 @@ final class ContentRevisionTest extends TestCase
 {
     private const string CONTENT_ID = '01912345-6789-7abc-8def-0123456789ab';
     private const string AUTHOR_ID = '01912345-6789-7abc-8def-0123456789cd';
-
-    protected function setUp(): void
-    {
-        if (!in_array('blake2b', hash_algos(), true)) {
-            self::markTestSkipped('blake2b hash algorithm is not available in this PHP build');
-        }
-    }
 
     #[Test]
     public function fromTranslationCreatesRevision(): void

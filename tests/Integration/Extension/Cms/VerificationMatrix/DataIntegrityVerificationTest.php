@@ -225,10 +225,6 @@ final class DataIntegrityVerificationTest extends TestCase
     #[Test]
     public function d9EventStoreMonotonicity(): void
     {
-        if (!in_array('blake2b', hash_algos(), true)) {
-            self::markTestSkipped('blake2b not available');
-        }
-
         $store = new DataIntegrityEventStore();
 
         $store->append($this->createEvent('content-001', 1, 'Created'));
@@ -254,10 +250,6 @@ final class DataIntegrityVerificationTest extends TestCase
     #[Test]
     public function d10AtomicSnapshot(): void
     {
-        if (!in_array('blake2b', hash_algos(), true)) {
-            self::markTestSkipped('blake2b not available');
-        }
-
         $event = $this->createEvent('content-001', 1, 'ContentCreated');
 
         // Evidence hash should be deterministic

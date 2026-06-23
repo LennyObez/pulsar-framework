@@ -12,20 +12,12 @@ use Pulsar\Extension\Cms\Config\CmsConfig;
 use Pulsar\Extension\Cms\EventStore\ContentEvent;
 use Pulsar\Extension\Cms\EventStore\ContentEventService;
 
-use function in_array;
 use function strlen;
 
 #[CoversClass(ContentEvent::class)]
 #[CoversClass(ContentEventService::class)]
 final class EventStoreTest extends TestCase
 {
-    protected function setUp(): void
-    {
-        if (!in_array('blake2b', hash_algos(), true)) {
-            self::markTestSkipped('blake2b hash algorithm is not available in this PHP build');
-        }
-    }
-
     #[Test]
     public function appendEventWithEvidenceHash(): void
     {
