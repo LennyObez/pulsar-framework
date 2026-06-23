@@ -136,9 +136,12 @@ final readonly class DbThreadRepository implements ThreadRepositoryInterface
             AND deleted_at IS NULL
         SQL;
 
+    // Clamp to >= 0 with a portable CASE expression (GREATEST is unavailable in
+    // SQLite). :delta is bound twice under distinct names because native prepared
+    // statements do not allow reusing a single named placeholder.
     private const string SQL_INCREMENT_REPLY_COUNT = <<<'SQL'
         UPDATE forum_threads
-        SET reply_count = GREATEST(0, reply_count + :delta),
+        SET reply_count = CASE WHEN reply_count + :delta > 0 THEN reply_count + :delta_value ELSE 0 END,
             last_activity_at = :updated_at,
             updated_at = :updated_at
         WHERE id = :id
@@ -420,6 +423,7 @@ final readonly class DbThreadRepository implements ThreadRepositoryInterface
         $this->connection->execute(self::SQL_INCREMENT_REPLY_COUNT, [
             'id' => $id,
             'delta' => $delta,
+            'delta_value' => $delta,
             'updated_at' => $now->format('c'),
             'tenant_key' => $this->tenantId ?? self::SENTINEL_TENANT,
         ]);

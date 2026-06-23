@@ -351,9 +351,30 @@ final class DbThreadRepositoryTest extends TestCase
     #[Test]
     public function incrementReplyCountModifiesCount(): void
     {
-        // GREATEST() is not available in PHP's bundled SQLite (needs SQLITE_ENABLE_MATH_FUNCTIONS)
-        // This method is tested on PostgreSQL in CI
-        self::markTestSkipped('GREATEST() not available in bundled SQLite');
+        $thread = Thread::create(
+            id: 'thread-reply',
+            categoryId: 'cat-001',
+            authorId: 'user-001',
+            title: 'Reply Thread',
+            slug: 'reply-thread',
+            type: ThreadType::Discussion,
+            ipHash: 'hash-ip',
+            userAgentHash: 'hash-ua',
+        );
+        $this->repository->save($thread);
+
+        $this->repository->incrementReplyCount('thread-reply', 4);
+
+        $found = $this->repository->findById('thread-reply');
+        self::assertNotNull($found);
+        self::assertSame(4, $found->replyCount);
+
+        // Decrementing past zero must floor at 0, never go negative.
+        $this->repository->incrementReplyCount('thread-reply', -10);
+
+        $found = $this->repository->findById('thread-reply');
+        self::assertNotNull($found);
+        self::assertSame(0, $found->replyCount);
     }
 
     #[Test]

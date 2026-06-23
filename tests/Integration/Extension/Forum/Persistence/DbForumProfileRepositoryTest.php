@@ -146,15 +146,27 @@ final class DbForumProfileRepositoryTest extends TestCase
     #[Test]
     public function incrementPostCountAddsToCount(): void
     {
-        // GREATEST() is not available in PHP's bundled SQLite (needs SQLITE_ENABLE_MATH_FUNCTIONS)
-        self::markTestSkipped('GREATEST() not available in bundled SQLite');
+        $profile = ForumProfile::create(id: 'prof-inc-post', userId: 'user-inc-post');
+        $this->repository->save($profile);
+
+        $this->repository->incrementPostCount('user-inc-post', delta: 3);
+
+        $found = $this->repository->findByUser('user-inc-post');
+        self::assertNotNull($found);
+        self::assertSame(3, $found->postCount);
     }
 
     #[Test]
     public function incrementThreadCountAddsToCount(): void
     {
-        // GREATEST() is not available in PHP's bundled SQLite (needs SQLITE_ENABLE_MATH_FUNCTIONS)
-        self::markTestSkipped('GREATEST() not available in bundled SQLite');
+        $profile = ForumProfile::create(id: 'prof-inc-thread', userId: 'user-inc-thread');
+        $this->repository->save($profile);
+
+        $this->repository->incrementThreadCount('user-inc-thread', delta: 2);
+
+        $found = $this->repository->findByUser('user-inc-thread');
+        self::assertNotNull($found);
+        self::assertSame(2, $found->threadCount);
     }
 
     #[Test]
@@ -202,8 +214,16 @@ final class DbForumProfileRepositoryTest extends TestCase
     #[Test]
     public function decrementPostCountFloorsAtZero(): void
     {
-        // GREATEST() is not available in PHP's bundled SQLite (needs SQLITE_ENABLE_MATH_FUNCTIONS)
-        self::markTestSkipped('GREATEST() not available in bundled SQLite');
+        $profile = ForumProfile::create(id: 'prof-floor', userId: 'user-floor');
+        $this->repository->save($profile);
+
+        $this->repository->incrementPostCount('user-floor', delta: 3);
+        // Decrementing past zero must floor at 0, never go negative.
+        $this->repository->incrementPostCount('user-floor', delta: -10);
+
+        $found = $this->repository->findByUser('user-floor');
+        self::assertNotNull($found);
+        self::assertSame(0, $found->postCount);
     }
 
     #[Test]
