@@ -12,11 +12,13 @@ use Pulsar\Extension\Cms\EventStore\ContentSnapshot;
 use Pulsar\Extension\Cms\EventStore\ContentSnapshotServiceInterface;
 use Pulsar\Extension\Cms\Support\UuidGenerator;
 
-use function hash;
+use function bin2hex;
 use function json_decode;
 use function json_encode;
+use function sodium_crypto_generichash;
 
 use const JSON_THROW_ON_ERROR;
+use const SODIUM_CRYPTO_GENERICHASH_BYTES_MAX;
 
 /**
  * @psalm-api Bound to ContentSnapshotServiceInterface in the CMS service provider;
@@ -68,7 +70,7 @@ final readonly class DbContentSnapshotRepository implements ContentSnapshotServi
             translationsJson: [],
             blocksJson: [],
             taxonomyTermIds: [],
-            evidenceHash: hash('blake2b', ''),
+            evidenceHash: bin2hex(sodium_crypto_generichash('', '', SODIUM_CRYPTO_GENERICHASH_BYTES_MAX)),
             reason: $reason,
             createdBy: $createdBy,
             createdAt: new DateTimeImmutable(),

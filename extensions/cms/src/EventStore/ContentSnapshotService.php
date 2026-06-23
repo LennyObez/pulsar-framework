@@ -16,7 +16,11 @@ use Pulsar\Extension\Cms\Content\ContentTranslationRepositoryInterface;
 use Pulsar\Extension\Cms\Exception\CmsException;
 use Pulsar\Extension\Cms\Support\UuidGenerator;
 
+use function bin2hex;
+use function sodium_crypto_generichash;
 use function sprintf;
+
+use const SODIUM_CRYPTO_GENERICHASH_BYTES_MAX;
 
 /**
  * Service for atomic content snapshots across all locales.
@@ -280,7 +284,7 @@ final readonly class ContentSnapshotService implements ContentSnapshotServiceInt
             'taxonomy_term_ids' => $taxonomyTermIds,
         ], JSON_THROW_ON_ERROR);
 
-        return hash('blake2b', $data);
+        return bin2hex(sodium_crypto_generichash($data, '', SODIUM_CRYPTO_GENERICHASH_BYTES_MAX));
     }
 
 }

@@ -12,7 +12,6 @@ use Pulsar\Extension\Cms\EventStore\ContentSnapshot;
 use Pulsar\Extension\Cms\EventStore\ContentSnapshotService;
 use ReflectionClass;
 
-use function in_array;
 use function strlen;
 
 #[CoversClass(ContentSnapshotService::class)]
@@ -20,13 +19,6 @@ use function strlen;
 final class ContentSnapshotServiceTest extends TestCase
 {
     private const string CONTENT_ID = '01912345-6789-7abc-8def-0123456789ab';
-
-    protected function setUp(): void
-    {
-        if (!in_array('blake2b', hash_algos(), true)) {
-            self::markTestSkipped('blake2b hash algorithm is not available in this PHP build');
-        }
-    }
 
     // ── Snapshot entity ──────────────────────────────────────────────
 

@@ -13,11 +13,13 @@ use Pulsar\ImportExport\ImportExportProviderInterface;
 use Pulsar\ImportExport\ImportRequest;
 use Pulsar\ImportExport\ImportResult;
 
-use function hash;
+use function bin2hex;
 use function in_array;
 use function json_encode;
+use function sodium_crypto_generichash;
 
 use const JSON_THROW_ON_ERROR;
+use const SODIUM_CRYPTO_GENERICHASH_BYTES_MAX;
 
 /**
  * Import/export provider for booking data.
@@ -70,7 +72,7 @@ final class BookingImportExportProvider implements ImportExportProviderInterface
             providerName: 'booking',
             data: $data,
             format: $request->format,
-            evidenceHash: hash('blake2b', $serialized),
+            evidenceHash: bin2hex(sodium_crypto_generichash($serialized, '', SODIUM_CRYPTO_GENERICHASH_BYTES_MAX)),
             entityTypes: $entityTypes,
             createdAt: new DateTimeImmutable(),
         );
