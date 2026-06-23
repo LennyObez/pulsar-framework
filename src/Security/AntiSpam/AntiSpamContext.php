@@ -26,9 +26,9 @@ final readonly class AntiSpamContext
      * @param string $reputationTier User reputation tier: 'new', 'established', 'moderator'
      * @param list<string> $recentBodies Recent submission bodies for duplicate detection
      * @param array<string, mixed> $formFields All form field values (for honeypot detection)
-     * @param string|null $powChallenge Proof-of-work challenge value
-     * @param string|null $powNonce Proof-of-work nonce value
-     * @param string|null $captchaToken CAPTCHA response token
+     * @param string|null $captchaToken CAPTCHA response token. For the self-hosted
+     *        managed challenge this is the solved, signed, single-use proof-of-work
+     *        token; {@see \Pulsar\Security\AntiSpam\CaptchaVerifierInterface} verifies it.
      * @param int $submissionTimestamp Unix timestamp of submission
      * @param string $formId Identifier of the form/route being submitted. The
      *        time-trap check requires a stamp minted for this exact form, so an
@@ -47,8 +47,6 @@ final readonly class AntiSpamContext
         public string $reputationTier = 'new',
         public array $recentBodies = [],
         public array $formFields = [],
-        public ?string $powChallenge = null,
-        public ?string $powNonce = null,
         public ?string $captchaToken = null,
         public int $submissionTimestamp = 0,
         public string $formId = '',

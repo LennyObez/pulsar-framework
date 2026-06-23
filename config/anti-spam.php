@@ -28,10 +28,6 @@ return [
     'max_uppercase_ratio' => 0.8,
     'max_repeated_char_ratio' => 0.5,
 
-    // Proof of work: client-side SHA-256 challenge
-    'proof_of_work_enabled' => false,
-    'proof_of_work_prefix' => '0000',
-
     // CAPTCHA: external verification (hCaptcha or Cloudflare Turnstile)
     'captcha_enabled' => false,
     'captcha_provider' => 'hcaptcha', // 'hcaptcha' or 'turnstile'

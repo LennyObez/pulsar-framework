@@ -8,6 +8,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Cms\BlockEditor\CoreBlocks\ContactFormBlock;
+use Pulsar\Security\AntiSpam\ManagedChallenge\ManagedChallengeRenderer;
+use Pulsar\Security\AntiSpam\ManagedChallenge\ManagedChallengeService;
 use Pulsar\Security\Csrf\CsrfTokenManagerInterface;
 
 #[CoversClass(ContactFormBlock::class)]
@@ -38,7 +40,11 @@ final class ContactFormBlockTest extends TestCase
             ],
         ]);
 
-        self::assertStringContainsString('data-pow-challenge="', $html);
+        // The legacy unsigned proof-of-work challenge/fields are retired: no
+        // client-controlled challenge is minted in the markup anymore.
+        self::assertStringNotContainsString('data-pow-challenge', $html);
+        self::assertStringNotContainsString('name="_pow_challenge"', $html);
+        self::assertStringNotContainsString('name="_pow_nonce"', $html);
         self::assertStringContainsString('<form class="contact-form" method="post" action=""', $html);
         self::assertStringContainsString('<input type="hidden" name="_csrf_token" value="test-csrf-token-abc123">', $html);
         self::assertStringContainsString('<label for="field-email">Your Email</label>', $html);
@@ -46,6 +52,32 @@ final class ContactFormBlockTest extends TestCase
         self::assertStringContainsString('<label for="field-message">Message</label>', $html);
         self::assertStringContainsString('<input type="text" id="field-message" name="message">', $html);
         self::assertStringContainsString('<button type="submit" class="contact-form__submit">Submit</button>', $html);
+    }
+
+    #[Test]
+    public function rendersManagedChallengeWidgetWhenConfigured(): void
+    {
+        $csrf = $this->createStub(CsrfTokenManagerInterface::class);
+        $csrf->method('getToken')->willReturn('csrf');
+        $renderer = new ManagedChallengeRenderer(
+            new ManagedChallengeService('0123456789abcdef0123456789abcdef', 12, 300),
+            'pulsar-challenge-response',
+            '/_pulsar/anti-spam/managed-challenge.js',
+            '/_pulsar/anti-spam/managed-challenge.worker.js',
+        );
+        $block = new ContactFormBlock($csrf, $renderer);
+
+        $html = $block->render([
+            'fields' => [
+                ['name' => 'email', 'type' => 'email', 'label' => 'Email'],
+            ],
+        ]);
+
+        // The signed, single-use managed-challenge widget replaces the retired
+        // bespoke proof of work; its hidden token field rides inside the form.
+        self::assertStringContainsString('class="pulsar-managed-challenge"', $html);
+        self::assertStringContainsString('name="pulsar-challenge-response"', $html);
+        self::assertStringEndsWith('</form>', $html);
     }
 
     #[Test]

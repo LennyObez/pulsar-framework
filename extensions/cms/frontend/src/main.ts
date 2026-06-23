@@ -30,9 +30,6 @@ import './gallery/GalleryComponent';
 import './gallery/Lightbox';
 import './gallery/ImageCompare';
 
-// --- Forms ---
-import './forms/ProofOfWork';
-
 // --- Newsletter ---
 import './newsletter/NewsletterSignup';
 

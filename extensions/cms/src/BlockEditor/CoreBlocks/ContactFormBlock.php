@@ -7,14 +7,14 @@ namespace Pulsar\Extension\Cms\BlockEditor\CoreBlocks;
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Cms\BlockEditor\BlockTypeInterface;
+use Pulsar\Security\AntiSpam\ManagedChallenge\ManagedChallengeRenderer;
 use Pulsar\Security\Csrf\CsrfTokenManagerInterface;
 
-use function bin2hex;
 use function htmlspecialchars;
 use function in_array;
 use function is_array;
 use function is_string;
-use function random_bytes;
+use function time;
 
 use const ENT_QUOTES;
 
@@ -25,6 +25,7 @@ final readonly class ContactFormBlock implements BlockTypeInterface
 
     public function __construct(
         private CsrfTokenManagerInterface $csrfTokenManager,
+        private ?ManagedChallengeRenderer $challengeRenderer = null,
     ) {}
 
     #[Override]
@@ -70,11 +71,7 @@ final readonly class ContactFormBlock implements BlockTypeInterface
         $submitText = htmlspecialchars(is_string($rawSubmitText) ? $rawSubmitText : 'Submit', ENT_QUOTES, 'UTF-8');
         $action = htmlspecialchars(is_string($rawAction) ? $rawAction : '', ENT_QUOTES, 'UTF-8');
 
-        // Generate a unique proof-of-work challenge per form render
-        $powChallenge = bin2hex(random_bytes(16));
-        $escapedChallenge = htmlspecialchars($powChallenge, ENT_QUOTES, 'UTF-8');
-
-        $html = "<form class=\"contact-form\" method=\"post\" action=\"$action\" data-pow-challenge=\"$escapedChallenge\">";
+        $html = "<form class=\"contact-form\" method=\"post\" action=\"$action\">";
 
         // CSRF protection
         $csrfToken = htmlspecialchars($this->csrfTokenManager->getToken(), ENT_QUOTES, 'UTF-8');
@@ -88,9 +85,11 @@ final readonly class ContactFormBlock implements BlockTypeInterface
         $html .= '<input type="text" name="_hp_field" tabindex="-1" autocomplete="off">';
         $html .= '</div>';
 
-        // Proof-of-work fields: challenge is set server-side, nonce computed by ProofOfWork.ts
-        $html .= "<input type=\"hidden\" name=\"_pow_challenge\" value=\"$escapedChallenge\">";
-        $html .= '<input type="hidden" name="_pow_nonce" value="">';
+        // Self-hosted managed challenge (signed, single-use, TTL-bound proof of
+        // work). Renders the hidden token field + same-origin widget when the
+        // 'managed' captcha provider is configured; otherwise emits nothing and
+        // the form degrades to the remaining honeypot/timing/content checks.
+        $html .= $this->challengeRenderer?->render() ?? '';
 
         foreach ($fields as $field) {
             if (!is_array($field)) {

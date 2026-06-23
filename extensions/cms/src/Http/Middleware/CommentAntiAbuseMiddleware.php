@@ -57,10 +57,6 @@ final readonly class CommentAntiAbuseMiddleware implements MiddlewareInterface
 
         $ipHash = $this->resolveIpHash($request);
 
-        /** @var mixed $rawPowChallenge */
-        $rawPowChallenge = $parsedBody['_pow_challenge'] ?? null;
-        /** @var mixed $rawPowNonce */
-        $rawPowNonce = $parsedBody['_pow_nonce'] ?? null;
         /** @var mixed $rawCaptchaToken */
         $rawCaptchaToken = $parsedBody['_captcha_token'] ?? null;
 
@@ -68,8 +64,6 @@ final readonly class CommentAntiAbuseMiddleware implements MiddlewareInterface
             body: $body,
             ipHash: $ipHash,
             formFields: $parsedBody,
-            powChallenge: is_string($rawPowChallenge) ? $rawPowChallenge : null,
-            powNonce: is_string($rawPowNonce) ? $rawPowNonce : null,
             captchaToken: is_string($rawCaptchaToken) ? $rawCaptchaToken : null,
             submissionTimestamp: time(),
             ip: $this->resolveIp($request),
