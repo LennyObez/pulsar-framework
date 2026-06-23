@@ -6,8 +6,8 @@ namespace Pulsar\Extension\Analytics\Internal\Service;
 
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Analytics\Domain\ReferrerSource;
+use Pulsar\Support\Coerce;
 
-use function is_string;
 use function parse_str;
 use function parse_url;
 use function preg_replace;
@@ -97,14 +97,10 @@ final readonly class ReferrerParser
         if ($queryString !== '') {
             parse_str($queryString, $queryParams);
             if (isset($queryParams['utm_source']) && $queryParams['utm_source'] !== '') {
-                $utmSource = $queryParams['utm_source'];
-                $utmMedium = $queryParams['utm_medium'] ?? '';
-                $utmCampaign = $queryParams['utm_campaign'] ?? '';
-
                 return ReferrerSource::fromUtm(
-                    source: is_string($utmSource) ? $utmSource : '',
-                    medium: is_string($utmMedium) ? $utmMedium : '',
-                    campaign: is_string($utmCampaign) ? $utmCampaign : '',
+                    source: Coerce::string($queryParams['utm_source']),
+                    medium: Coerce::string($queryParams['utm_medium'] ?? null),
+                    campaign: Coerce::string($queryParams['utm_campaign'] ?? null),
                     rawUrl: $referrerUrl,
                 );
             }

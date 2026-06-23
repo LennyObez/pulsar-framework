@@ -30,6 +30,7 @@ final readonly class FormConfig
     public static function fromArray(array $data): self
     {
         $sub = static function (string $k) use ($data): array {
+            /** @var mixed $value */
             $value = $data[$k] ?? null;
 
             /** @var array<string, mixed> */
