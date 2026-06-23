@@ -279,12 +279,10 @@ final class Coerce
             return $default;
         }
 
-        $filtered = [];
-        foreach (array_keys($value) as $k) {
-            if (is_string($k)) {
-                $filtered[$k] = $value[$k];
-            }
-        }
+        // Keep only string-keyed entries; filtering inside array_filter avoids a
+        // per-element mixed write while preserving order and the mixed values.
+        /** @var array<string, mixed> $filtered */
+        $filtered = array_filter($value, is_string(...), ARRAY_FILTER_USE_KEY);
 
         return $filtered;
     }
