@@ -7,6 +7,7 @@ namespace Pulsar\Tests\Unit\Security\AntiSpam\ManagedChallenge;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\I18n\TranslatorInterface;
 use Pulsar\Security\AntiSpam\ManagedChallenge\ManagedChallengeRenderer;
 use Pulsar\Security\AntiSpam\ManagedChallenge\ManagedChallengeService;
 
@@ -145,5 +146,79 @@ final class ManagedChallengeRendererTest extends TestCase
         ManagedChallengeRenderer::setGlobalInstance($this->renderer());
 
         self::assertStringContainsString('pulsar-managed-challenge', ManagedChallengeRenderer::renderGlobal());
+    }
+
+    #[Test]
+    public function renders_english_status_strings_by_default(): void
+    {
+        $html = $this->renderer()->render();
+
+        self::assertStringContainsString(
+            '<noscript>This form requires JavaScript to complete a security check.</noscript>',
+            $html,
+        );
+        self::assertStringContainsString('data-pmc-msg-solving="Verifying your request', $html);
+        self::assertStringContainsString('data-pmc-msg-solved="Security check complete."', $html);
+        self::assertStringContainsString('data-pmc-msg-error="Security verification failed. Please reload the page."', $html);
+    }
+
+    #[Test]
+    public function resolves_status_strings_from_the_shield_translation_domain(): void
+    {
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('has')->willReturnCallback(
+            static fn(string $key, ?string $locale, string $domain): bool => $domain === 'shield',
+        );
+        $translator->method('translate')->willReturnCallback(
+            static fn(string $key): string => match ($key) {
+                'noscript' => 'Ce formulaire nécessite JavaScript.',
+                'verifying' => 'Vérification en cours…',
+                'complete' => 'Vérification terminée.',
+                'error' => 'Échec de la vérification.',
+                default => $key,
+            },
+        );
+
+        $html = $this->translatedRenderer($translator)->render();
+
+        self::assertStringContainsString('<noscript>Ce formulaire nécessite JavaScript.</noscript>', $html);
+        self::assertStringContainsString('data-pmc-msg-solving="Vérification en cours', $html);
+        self::assertStringContainsString('data-pmc-msg-error="Échec de la vérification."', $html);
+        self::assertStringNotContainsString('This form requires JavaScript', $html);
+    }
+
+    #[Test]
+    public function falls_back_to_english_when_a_translation_key_is_absent(): void
+    {
+        // A translator is wired but the host defined no 'shield' keys: the
+        // built-in English default must be used — never the raw key (which
+        // translate() returns in non-strict mode) nor a strict-mode exception.
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('has')->willReturn(false);
+        $translator->method('translate')->willReturnCallback(static fn(string $key): string => $key);
+
+        $html = $this->translatedRenderer($translator)->render();
+
+        self::assertStringContainsString(
+            '<noscript>This form requires JavaScript to complete a security check.</noscript>',
+            $html,
+        );
+        self::assertStringContainsString('data-pmc-msg-solving="Verifying your request', $html);
+        // The raw key must never leak into the markup.
+        self::assertStringNotContainsString('>noscript<', $html);
+        self::assertStringNotContainsString('data-pmc-msg-solving="verifying"', $html);
+    }
+
+    private function translatedRenderer(TranslatorInterface $translator): ManagedChallengeRenderer
+    {
+        return new ManagedChallengeRenderer(
+            new ManagedChallengeService('0123456789abcdef0123456789abcdef', 12, 300),
+            'pulsar-challenge-response',
+            '/_pulsar/anti-spam/managed-challenge.js',
+            '/_pulsar/anti-spam/managed-challenge.worker.js',
+            '',
+            0,
+            $translator,
+        );
     }
 }
