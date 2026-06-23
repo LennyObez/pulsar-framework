@@ -196,6 +196,7 @@ final readonly class JwtSigner implements JwtSignerInterface
         // audience is supplied, `aud` is not constrained here: the relying party
         // validates it against its own client_id.
         if ($expectedAudience !== null && isset($claims['aud'])) {
+            /** @var mixed $aud */
             $aud = $claims['aud'];
 
             if (is_string($aud)) {

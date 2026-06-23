@@ -81,6 +81,7 @@ final readonly class DatabaseTokenStore implements TokenStoreInterface
             $stmt = $this->pdo->prepare($sql);
             $stmt->execute([':token' => $token]);
 
+            /** @var mixed $result */
             $result = $stmt->fetchColumn();
 
             return is_string($result) ? $result : null;

@@ -175,6 +175,7 @@ final readonly class CompressionMiddleware implements MiddlewareInterface
             return null;
         }
 
+        /** @var string|false $result */
         $result = brotli_compress($data);
 
         return is_string($result) ? $result : null;
@@ -186,6 +187,7 @@ final readonly class CompressionMiddleware implements MiddlewareInterface
             return null;
         }
 
+        /** @var string|false $result */
         $result = zstd_compress($data);
 
         return is_string($result) ? $result : null;
