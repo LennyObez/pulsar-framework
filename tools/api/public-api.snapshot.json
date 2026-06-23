@@ -22368,7 +22368,8 @@
                         "?int $size",
                         "int $error",
                         "?string $clientFilename",
-                        "?string $clientMediaType"
+                        "?string $clientMediaType",
+                        "bool $sapiUpload"
                     ],
                     "return": null,
                     "static": false
@@ -23424,7 +23425,8 @@
             "signatures": {
                 "emit": {
                     "params": [
-                        "Psr\\Http\\Message\\ResponseInterface $response"
+                        "Psr\\Http\\Message\\ResponseInterface $response",
+                        "?string $requestMethod"
                     ],
                     "return": "void",
                     "static": false

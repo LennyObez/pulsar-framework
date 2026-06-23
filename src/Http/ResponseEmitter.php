@@ -6,10 +6,14 @@ namespace Pulsar\Http;
 
 use Psr\Http\Message\ResponseInterface;
 use Pulsar\Api\Api;
+use Pulsar\Http\Response\StreamedResponse;
 use RuntimeException;
 
+use function is_string;
 use function sprintf;
 use function str_replace;
+use function strlen;
+use function strtoupper;
 
 /**
  * Emits an HTTP response to the client.
@@ -21,17 +25,31 @@ final class ResponseEmitter
     /**
      * Emit the response to the client.
      *
-     * This sends headers and outputs the body. Should only be called once.
+     * Sends the status line and headers, then the body. Pass the request method
+     * so a HEAD request emits headers (including Content-Length) without a body,
+     * per RFC 9110. Should only be called once.
      *
      * @codeCoverageIgnore Emits HTTP headers/body via PHP built-ins: requires live SAPI
      */
-    public function emit(ResponseInterface $response): void
+    public function emit(ResponseInterface $response, ?string $requestMethod = null): void
     {
         $this->assertHeadersNotSent();
 
         $this->emitStatusLine($response);
         $this->emitHeaders($response);
-        $this->emitBody($response);
+
+        if ($this->shouldEmitBody($requestMethod)) {
+            $this->emitBody($response);
+        }
+    }
+
+    /**
+     * Whether the response body should be written. A HEAD response carries the
+     * same headers as the equivalent GET but never a body (RFC 9110 §9.3.2).
+     */
+    private function shouldEmitBody(?string $requestMethod): bool
+    {
+        return $requestMethod === null || strtoupper($requestMethod) !== 'HEAD';
     }
 
     /**
@@ -69,10 +87,20 @@ final class ResponseEmitter
     /**
      * Emit the response body.
      *
+     * A StreamedResponse advertises Transfer-Encoding: chunked and must be
+     * written chunk-by-chunk with chunked framing and flushed as it is produced,
+     * rather than materialized into one buffer via getBody().
+     *
      * @codeCoverageIgnore Emits HTTP body via echo: requires live SAPI
      */
     private function emitBody(ResponseInterface $response): void
     {
+        if ($response instanceof StreamedResponse) {
+            $this->emitChunked($response);
+
+            return;
+        }
+
         $body = $response->getBody();
 
         if ($body->getSize() === 0) {
@@ -80,6 +108,38 @@ final class ResponseEmitter
         }
 
         echo $body;
+    }
+
+    /**
+     * Stream a response with HTTP/1.1 chunked transfer-encoding framing, flushing
+     * each chunk so it reaches the client as it is generated.
+     *
+     * @codeCoverageIgnore Emits chunked body via echo/flush: requires live SAPI
+     */
+    private function emitChunked(StreamedResponse $response): void
+    {
+        /** @var mixed $chunk */
+        foreach ($response->getSource() as $chunk) {
+            $data = is_string($chunk) ? $chunk : '';
+
+            if ($data !== '') {
+                echo $this->chunkFrame($data);
+                flush();
+            }
+        }
+
+        // Final zero-length chunk terminates the stream.
+        echo "0\r\n\r\n";
+        flush();
+    }
+
+    /**
+     * Frame one chunk for chunked transfer encoding: byte length in hex, CRLF,
+     * the data, CRLF.
+     */
+    private function chunkFrame(string $data): string
+    {
+        return sprintf("%x\r\n%s\r\n", strlen($data), $data);
     }
 
     /**

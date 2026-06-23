@@ -538,7 +538,7 @@ final class Kernel implements KernelInterface
         $request = ServerRequest::fromGlobals();
         $response = $this->handle($request);
 
-        new ResponseEmitter()->emit($response);
+        new ResponseEmitter()->emit($response, $request->getMethod());
 
         $this->terminate($request, $response);
     }
