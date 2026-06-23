@@ -185,7 +185,7 @@ final class KernelStudioIntegrationTest extends TestCase
             new StudioExtension(),
             ExtensionManifest::fromArray([
                 'name' => 'pulsar/studio',
-                'version' => '1.0.0-rc.1',
+                'version' => '1.0.0-rc.1', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
                 'extension_class' => StudioExtension::class,
             ]),
         );

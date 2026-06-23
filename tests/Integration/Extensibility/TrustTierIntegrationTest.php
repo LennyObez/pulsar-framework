@@ -210,7 +210,7 @@ final class TrustTierIntegrationTest extends TestCase
     {
         return ExtensionManifest::fromArray([
             'name' => $name,
-            'version' => '1.0.0',
+            'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
             'extension_class' => 'TestExtension',
             'trust_tier' => $trustTier,
         ]);
