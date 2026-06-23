@@ -86,6 +86,7 @@ final readonly class ForumAntiAbuseMiddleware implements MiddlewareInterface
             powNonce: is_string($rawPowNonce) ? $rawPowNonce : null,
             captchaToken: is_string($rawCaptchaToken) ? $rawCaptchaToken : null,
             submissionTimestamp: time(),
+            ip: $this->resolveIp($request),
         );
 
         $result = $this->pipeline->evaluate($context);
@@ -120,12 +121,16 @@ final readonly class ForumAntiAbuseMiddleware implements MiddlewareInterface
         return $handler->handle($request);
     }
 
-    private function resolveIpHash(ServerRequestInterface $request): string
+    private function resolveIp(ServerRequestInterface $request): ?string
     {
         /** @var mixed $ip */
         $ip = $request->getServerParams()['REMOTE_ADDR'] ?? null;
-        $raw = is_string($ip) ? $ip : 'unknown';
 
-        return hash('xxh3', $raw);
+        return is_string($ip) ? $ip : null;
+    }
+
+    private function resolveIpHash(ServerRequestInterface $request): string
+    {
+        return hash('xxh3', $this->resolveIp($request) ?? 'unknown');
     }
 }
