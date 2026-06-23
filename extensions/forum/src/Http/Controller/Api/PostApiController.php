@@ -75,7 +75,10 @@ final readonly class PostApiController
         /** @var array<string, mixed> $body */
         $body = $parsed;
 
-        if (!is_string($body['body'] ?? null) || ($body['body'] ?? '') === '') {
+        /** @var mixed $rawBody */
+        $rawBody = $body['body'] ?? null;
+
+        if (!is_string($rawBody) || $rawBody === '') {
             return Response::json([
                 'error' => 'Validation failed',
                 'status' => 422,
@@ -94,9 +97,6 @@ final readonly class PostApiController
         /** @var mixed $rawParentId */
         $rawParentId = $body['parent_id'] ?? null;
         $parentId = is_string($rawParentId) ? $rawParentId : null;
-
-        // $body['body'] is a validated non-empty string by the guard above.
-        $rawBody = $body['body'];
 
         try {
             $post = $this->forumService->createPost(
@@ -152,16 +152,16 @@ final readonly class PostApiController
         /** @var array<string, mixed> $body */
         $body = $parsed;
 
-        if (!is_string($body['body'] ?? null) || ($body['body'] ?? '') === '') {
+        /** @var mixed $rawBody */
+        $rawBody = $body['body'] ?? null;
+
+        if (!is_string($rawBody) || $rawBody === '') {
             return Response::json([
                 'error' => 'Validation failed',
                 'status' => 422,
                 'details' => ['body' => 'Post body is required'],
             ], 422);
         }
-
-        // $body['body'] is a validated non-empty string by the guard above.
-        $rawBody = $body['body'];
 
         $isModerator = $this->gate !== null && $this->gate->allows($identity, 'forum.moderate');
 
