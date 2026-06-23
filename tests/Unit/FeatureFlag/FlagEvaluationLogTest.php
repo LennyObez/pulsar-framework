@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use Pulsar\FeatureFlag\FlagContext;
 use Pulsar\FeatureFlag\FlagEvaluation;
 use Pulsar\FeatureFlag\FlagEvaluationLog;
@@ -156,7 +157,15 @@ final class FlagEvaluationLogTest extends TestCase
     #[Test]
     public function observerExceptionDoesNotPreventRecording(): void
     {
-        $log = new FlagEvaluationLog();
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())
+            ->method('error')
+            ->with('Feature flag evaluation observer failed', self::callback(
+                static fn(array $context): bool => ($context['flag'] ?? null) === 'flag'
+                    && ($context['exception'] ?? null) instanceof RuntimeException,
+            ));
+
+        $log = new FlagEvaluationLog($logger);
 
         $log->addObserver(static function (): void {
             throw new RuntimeException('observer failure');

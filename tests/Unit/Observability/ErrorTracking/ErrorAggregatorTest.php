@@ -9,6 +9,7 @@ use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use Pulsar\Observability\ErrorTracking\ErrorAggregator;
 use Pulsar\Observability\ErrorTracking\ErrorEvent;
 use Pulsar\Observability\ErrorTracking\ErrorFingerprint;
@@ -101,7 +102,14 @@ final class ErrorAggregatorTest extends TestCase
     #[Test]
     public function observerExceptionDoesNotPreventCapture(): void
     {
-        $aggregator = new ErrorAggregator();
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())
+            ->method('error')
+            ->with('Error aggregator observer failed while handling captured error', self::callback(
+                static fn(array $context): bool => ($context['exception'] ?? null) instanceof RuntimeException,
+            ));
+
+        $aggregator = new ErrorAggregator(logger: $logger);
 
         $aggregator->addObserver(static function (): void {
             throw new RuntimeException('observer failure');

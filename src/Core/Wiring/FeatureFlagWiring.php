@@ -20,6 +20,7 @@ use Pulsar\FeatureFlag\Storage\InMemoryFlagStorage;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Routing\Router;
+use Psr\Log\LoggerInterface;
 
 #[Internal]
 final readonly class FeatureFlagWiring implements ServiceWiringInterface
@@ -61,7 +62,9 @@ final readonly class FeatureFlagWiring implements ServiceWiringInterface
         $container->instance($storage::class, $storage);
 
         // Evaluation log
-        $evaluationLog = new FlagEvaluationLog();
+        $evaluationLog = new FlagEvaluationLog(
+            $container->has(LoggerInterface::class) ? $container->get(LoggerInterface::class) : null,
+        );
         $container->instance(FlagEvaluationLog::class, $evaluationLog);
         $container->instance(FlagEvaluationLogInterface::class, $evaluationLog);
 

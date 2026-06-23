@@ -5,12 +5,11 @@ declare(strict_types=1);
 namespace Pulsar\Observability\ErrorTracking;
 
 use Override;
+use Psr\Log\LoggerInterface;
 use Throwable;
 
 use function array_values;
 use function count;
-use function error_log;
-use function sprintf;
 use function usort;
 
 /**
@@ -30,6 +29,7 @@ final class ErrorAggregator implements ErrorAggregatorInterface
     public function __construct(
         private readonly int $maxGroups = 500,
         private readonly int $maxRecentEventsPerGroup = 5,
+        private readonly ?LoggerInterface $logger = null,
     ) {}
 
     /**
@@ -54,15 +54,13 @@ final class ErrorAggregator implements ErrorAggregatorInterface
             try {
                 $observer($event);
             } catch (Throwable $observerException) {
-                // Observer failures must not interfere with the
-                // capture path: an Aggregator that throws because
-                // one observer is broken would itself become a
-                // source of errors. Log via error_log() so the
-                // failure is still visible to operators (C-4).
-                error_log(sprintf(
-                    '[pulsar.ErrorAggregator] observer failed while handling captured error: %s',
-                    $observerException->getMessage(),
-                ));
+                // Observer failures must not interfere with the capture path:
+                // an Aggregator that throws because one observer is broken
+                // would itself become a source of errors. Surface it through
+                // the injected logger so the failure stays visible (C-4).
+                $this->logger?->error('Error aggregator observer failed while handling captured error', [
+                    'exception' => $observerException,
+                ]);
             }
         }
     }
