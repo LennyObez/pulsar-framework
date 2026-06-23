@@ -172,7 +172,7 @@ final class SessionGuardTest extends TestCase
     #[Test]
     public function storeIdentityRejectsNonIdentityImplementation(): void
     {
-        $session = $this->createMock(SessionInterface::class);
+        $session = $this->createStub(SessionInterface::class);
         $session->method('isStarted')->willReturn(false);
 
         $guard = new SessionGuard($session);
