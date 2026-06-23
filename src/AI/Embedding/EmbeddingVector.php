@@ -7,7 +7,6 @@ namespace Pulsar\AI\Embedding;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function assert;
 use function count;
 use function sqrt;
 
