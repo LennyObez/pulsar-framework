@@ -14,7 +14,6 @@ use Pulsar\Routing\MatchedRoute;
 use Throwable;
 
 use function array_slice;
-use function assert;
 use function count;
 use function file;
 use function htmlspecialchars;

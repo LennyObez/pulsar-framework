@@ -9,8 +9,6 @@ use Pulsar\Api\Internal;
 use Pulsar\Extension\Cms\Media\Video\FfmpegProcessInterface;
 
 use function array_fill;
-use function assert;
-use function count;
 use function file_exists;
 use function json_encode;
 use function max;

@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
 
 use function array_key_exists;
 use function array_keys;
+use function is_array;
 use function is_string;
 
 /**

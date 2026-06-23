@@ -19,7 +19,6 @@ use ValueError;
 
 use function array_key_exists;
 use function array_map;
-use function call_user_func;
 use function class_exists;
 use function enum_exists;
 use function is_a;

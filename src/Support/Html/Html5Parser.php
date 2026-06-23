@@ -12,7 +12,6 @@ use function array_filter;
 use function array_map;
 use function implode;
 use function in_array;
-use function is_string;
 use function strtolower;
 use function trim;
 

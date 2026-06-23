@@ -9,6 +9,7 @@ use PDOException;
 use Pulsar\Api\Api;
 use Pulsar\Security\Exception\SecurityException;
 
+use function is_string;
 use function preg_match;
 use function sprintf;
 
