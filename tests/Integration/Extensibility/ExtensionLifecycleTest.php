@@ -32,7 +32,7 @@ final class ExtensionLifecycleTest extends TestCase
         $extension = new TestableExtension();
         $manifest = ExtensionManifest::fromArray([
             'name' => 'test/extension',
-            'version' => '1.0.0',
+            'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
             'extension_class' => TestableExtension::class,
             'provides' => [
                 'services' => [TestableService::class],
@@ -71,7 +71,7 @@ final class ExtensionLifecycleTest extends TestCase
         $extension = new TestableExtension();
         $manifest = ExtensionManifest::fromArray([
             'name' => 'test/extension',
-            'version' => '1.0.0',
+            'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
             'extension_class' => TestableExtension::class,
         ]);
 
@@ -103,7 +103,7 @@ final class ExtensionLifecycleTest extends TestCase
         $extension = new ExtensionWithProvider();
         $manifest = ExtensionManifest::fromArray([
             'name' => 'test/provider-extension',
-            'version' => '1.0.0',
+            'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
             'extension_class' => ExtensionWithProvider::class,
         ]);
 
@@ -192,13 +192,13 @@ final class ExtensionLifecycleTest extends TestCase
 
         $manifestA = ExtensionManifest::fromArray([
             'name' => 'ext/a',
-            'version' => '1.0.0',
+            'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
             'extension_class' => 'ExtA',
         ]);
 
         $manifestB = ExtensionManifest::fromArray([
             'name' => 'ext/b',
-            'version' => '1.0.0',
+            'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
             'extension_class' => 'ExtB',
             'requires' => ['ext/a' => '1.0'],
         ]);

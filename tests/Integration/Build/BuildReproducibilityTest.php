@@ -49,12 +49,12 @@ final class BuildReproducibilityTest extends TestCase
         $manifests = [
             ExtensionManifest::fromArray([
                 'name' => 'vendor/ext-b',
-                'version' => '1.0.0',
+                'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
                 'extension_class' => 'Vendor\\ExtB\\Extension',
             ], $pathB),
             ExtensionManifest::fromArray([
                 'name' => 'vendor/ext-a',
-                'version' => '1.0.0',
+                'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
                 'extension_class' => 'Vendor\\ExtA\\Extension',
             ], $pathA),
         ];
@@ -107,7 +107,7 @@ final class BuildReproducibilityTest extends TestCase
         $manifests = [
             ExtensionManifest::fromArray([
                 'name' => 'vendor/ext-a',
-                'version' => '1.0.0',
+                'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
                 'extension_class' => 'Vendor\\ExtA\\Extension',
             ], $path),
         ];
@@ -148,18 +148,18 @@ final class BuildReproducibilityTest extends TestCase
         $manifests = [
             ExtensionManifest::fromArray([
                 'name' => 'vendor/admin',
-                'version' => '1.0.0',
+                'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
                 'extension_class' => 'Vendor\\Admin\\Extension',
                 'requires' => ['vendor/auth' => '>=1.0.0'],
             ], $pathAdmin),
             ExtensionManifest::fromArray([
                 'name' => 'vendor/core',
-                'version' => '1.0.0',
+                'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
                 'extension_class' => 'Vendor\\Core\\Extension',
             ], $pathCore),
             ExtensionManifest::fromArray([
                 'name' => 'vendor/auth',
-                'version' => '1.0.0',
+                'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
                 'extension_class' => 'Vendor\\Auth\\Extension',
                 'requires' => ['vendor/core' => '>=1.0.0'],
             ], $pathAuth),
