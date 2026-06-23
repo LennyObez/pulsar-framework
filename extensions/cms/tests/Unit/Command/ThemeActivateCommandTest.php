@@ -203,7 +203,7 @@ final class ThemeActivateCommandTest extends TestCase
         $savedThemes = [];
 
         $repo = $this->createMock(ThemeRepositoryInterface::class);
-        $repo->method('findBySlug')->with('new-theme')->willReturn($targetTheme);
+        $repo->method('findBySlug')->willReturnMap([['new-theme', $targetTheme]]);
         $repo->method('findActive')->willReturn($currentActive);
         $repo->expects(self::exactly(2))
             ->method('save')
@@ -265,7 +265,7 @@ final class ThemeActivateCommandTest extends TestCase
         $savedTheme = null;
 
         $repo = $this->createMock(ThemeRepositoryInterface::class);
-        $repo->method('findBySlug')->with('first-theme')->willReturn($targetTheme);
+        $repo->method('findBySlug')->willReturnMap([['first-theme', $targetTheme]]);
         $repo->method('findActive')->willReturn(null);
         $repo->expects(self::once())
             ->method('save')
