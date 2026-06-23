@@ -105,6 +105,7 @@ final readonly class OpenApiConfig
         }
 
         $servers = [];
+        /** @var mixed $item */
         foreach ($items as $item) {
             if (
                 is_array($item)
@@ -129,6 +130,7 @@ final readonly class OpenApiConfig
         }
 
         $schemes = [];
+        /** @var mixed $item */
         foreach ($items as $item) {
             if ($item instanceof SecuritySchemeDefinition) {
                 $schemes[] = $item;

@@ -152,6 +152,7 @@ final readonly class MedicationRequest extends FhirResource
                 return [];
             }
             $out = [];
+            /** @var mixed $entry */
             foreach ($raw as $entry) {
                 if (is_array($entry)) {
                     /** @var array<string, mixed> $entry */
