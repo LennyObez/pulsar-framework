@@ -37,6 +37,7 @@ final readonly class McpToolsConfig
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
+        /** @var mixed $commandsRaw */
         $commandsRaw = $data['commands'] ?? null;
         if (!is_array($commandsRaw)) {
             $commandsRaw = [];

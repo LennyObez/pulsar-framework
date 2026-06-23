@@ -34,6 +34,7 @@ final readonly class ManifestEntry
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
+        /** @var mixed $methods */
         $methods = $data['methods'] ?? null;
         /** @var list<array{name: string, full_name: string, type: string, input_type: string, output_type: string, handler: string}> $methodList */
         $methodList = is_array($methods) ? $methods : [];

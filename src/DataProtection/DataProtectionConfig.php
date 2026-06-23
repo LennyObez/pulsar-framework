@@ -37,8 +37,10 @@ final readonly class DataProtectionConfig
     public static function fromArray(array $data): self
     {
         $retention = [];
+        /** @var mixed $rawRetention */
         $rawRetention = $data['retention'] ?? null;
         if (is_array($rawRetention)) {
+            /** @var mixed $entry */
             foreach ($rawRetention as $entry) {
                 if (is_array($entry)) {
                     /** @var array<string, mixed> $entry */
@@ -47,9 +49,11 @@ final readonly class DataProtectionConfig
             }
         }
 
+        /** @var mixed $purge */
         $purge = $data['purge'] ?? null;
         /** @var array<string, mixed> $purgeArr */
         $purgeArr = is_array($purge) ? $purge : [];
+        /** @var mixed $consent */
         $consent = $data['consent'] ?? null;
         /** @var array<string, mixed> $consentArr */
         $consentArr = is_array($consent) ? $consent : [];

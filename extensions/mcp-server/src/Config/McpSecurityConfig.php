@@ -35,6 +35,7 @@ final readonly class McpSecurityConfig
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
+        /** @var mixed $toolRateLimits */
         $toolRateLimits = $data['tool_rate_limits'] ?? null;
         /** @var array<string, int> $toolRateLimitsMap */
         $toolRateLimitsMap = is_array($toolRateLimits) ? $toolRateLimits : [];

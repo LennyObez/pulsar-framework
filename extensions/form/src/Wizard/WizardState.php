@@ -45,6 +45,7 @@ final readonly class WizardState
      */
     public static function fromArray(array $data): self
     {
+        /** @var mixed $stepData */
         $stepData = $data['step_data'] ?? null;
         if (!is_array($stepData)) {
             $stepData = [];

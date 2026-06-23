@@ -59,6 +59,7 @@ final readonly class AuthenticationFailed implements EnvelopeRequiredEvent
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
+        /** @var mixed $occurredAt */
         $occurredAt = $data['occurred_at'] ?? null;
 
         return new self(

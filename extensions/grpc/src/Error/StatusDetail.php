@@ -40,6 +40,7 @@ final readonly class StatusDetail
     public static function fromArray(array $data): self
     {
         $codeValue = Coerce::strictInt($data['code'] ?? null, GrpcStatus::Unknown->value);
+        /** @var mixed $details */
         $details = $data['details'] ?? null;
         /** @var array<string, mixed> $detailsArr */
         $detailsArr = is_array($details) ? $details : [];
