@@ -133,6 +133,7 @@ final class DirectiveRegistry
         $this->register(new I18nDirective());
         $this->register(new TranslateDirective());
         $this->register(new TranslateRawDirective());
+        $this->register(new RouteDirective());
 
         // Type safety
         $this->register(new TypedDirective());

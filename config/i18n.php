@@ -99,4 +99,32 @@ return [
     | false, redirect /en/about → /about with a 301 (GET/HEAD only).
     */
     'canonical_redirect' => true,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Localized Route Slugs
+    |--------------------------------------------------------------------------
+    | Translate static URL path segments per locale. Each key is the canonical
+    | (default-locale) path a route is registered under; the value maps locale
+    | tags to translated slugs. Multi-segment keys are supported. Locales
+    | without an entry fall back to the key.
+    |
+    | With the example below and supported_locales ['en','fr','nl']:
+    |   /development            → 200 (en, canonical)
+    |   /fr/developpement       → 200 (fr, canonical)
+    |   /fr/development         → 301 → /fr/developpement (key alias)
+    |   /nl/ontwikkeling/projecten/{slug} → 200, params after the slug intact
+    |
+    | Requires url_strategy = 'path_prefix'. Validate with `php bin/pulsar
+    | i18n:slugs:lint` (run in CI). Empty by default — zero overhead when unset.
+    |
+    | 'localized_slugs' => [
+    |     'development' => ['fr' => 'developpement', 'nl' => 'ontwikkeling'],
+    |     'development/projects' => [
+    |         'fr' => 'developpement/projets',
+    |         'nl' => 'ontwikkeling/projecten',
+    |     ],
+    | ],
+    */
+    'localized_slugs' => [],
 ];

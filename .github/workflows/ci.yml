@@ -418,6 +418,14 @@ jobs:
             php bin/pulsar optimize:clear
           fi
 
+      - name: Lint localized route slugs (completeness + collisions)
+        # Validates config/i18n.php localized_slugs: every key has a slug for
+        # every supported locale and no per-locale slug collisions. Empty config
+        # passes as a no-op; downstream projects inherit the same gate.
+        run: |
+          export PULSAR_MASTER_KEY="$(openssl rand -hex 32)"
+          php bin/pulsar i18n:slugs:lint
+
   adr-check:
     name: ADR Governance Check
     runs-on: ubuntu-latest

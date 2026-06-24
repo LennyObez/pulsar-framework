@@ -9,6 +9,9 @@ use Pulsar\Api\Api;
 use Pulsar\I18n\Locale\LocaleUrlStrategy;
 use Pulsar\Support\Coerce;
 
+use function is_array;
+use function is_string;
+
 /**
  * Typed configuration DTO for `config/i18n.php`.
  *
@@ -21,6 +24,7 @@ final readonly class I18nConfig
     /**
      * @param list<string> $supportedLocales
      * @param list<string> $fallbackLocales
+     * @param array<string, array<string, string>> $localizedSlugs Route key => (locale => translated slug).
      */
     public function __construct(
         public string $defaultLocale,
@@ -33,6 +37,7 @@ final readonly class I18nConfig
         public LocaleUrlStrategy $urlStrategy = LocaleUrlStrategy::None,
         public bool $defaultLocaleInUrl = false,
         public bool $canonicalRedirect = true,
+        public array $localizedSlugs = [],
     ) {}
 
     /**
@@ -49,6 +54,7 @@ final readonly class I18nConfig
      *     url_strategy?: string,
      *     default_locale_in_url?: bool|int|string,
      *     canonical_redirect?: bool|int|string,
+     *     localized_slugs?: array<string, array<string, string>>,
      * } $data Raw array from config/i18n.php
      */
     #[NoDiscard]
@@ -85,6 +91,7 @@ final readonly class I18nConfig
             urlStrategy: $urlStrategy,
             defaultLocaleInUrl: (bool) ($data['default_locale_in_url'] ?? false),
             canonicalRedirect: (bool) ($data['canonical_redirect'] ?? true),
+            localizedSlugs: self::parseLocalizedSlugs($data['localized_slugs'] ?? null),
         );
     }
 
@@ -94,5 +101,46 @@ final readonly class I18nConfig
             '1', 'true', 'yes', 'on' => true,
             default => false,
         };
+    }
+
+    /**
+     * Coerce the raw `localized_slugs` config into a typed `key => (locale => slug)` map.
+     *
+     * Non-string keys/values and non-array entries are dropped rather than
+     * throwing: a malformed slug entry must never take down the whole boot.
+     * The {@see \Pulsar\I18n\Locale\SlugRegistry} and the `i18n:slugs:lint`
+     * command surface configuration mistakes explicitly.
+     *
+     * @return array<string, array<string, string>>
+     */
+    private static function parseLocalizedSlugs(mixed $raw): array
+    {
+        if (!is_array($raw)) {
+            return [];
+        }
+
+        $result = [];
+
+        /** @var mixed $slugMap */
+        foreach ($raw as $key => $slugMap) {
+            if (!is_string($key) || !is_array($slugMap)) {
+                continue;
+            }
+
+            $perLocale = [];
+
+            /** @var mixed $slug */
+            foreach ($slugMap as $locale => $slug) {
+                if (is_string($locale) && is_string($slug) && $slug !== '') {
+                    $perLocale[$locale] = $slug;
+                }
+            }
+
+            if ($perLocale !== []) {
+                $result[$key] = $perLocale;
+            }
+        }
+
+        return $result;
     }
 }
