@@ -92,6 +92,17 @@ final class BuildException extends RuntimeException
     }
 
     #[NoDiscard]
+    public static function signatureVerificationUnavailable(): self
+    {
+        return new self(
+            'Build manifest is signed but the cryptographic services required to verify '
+            . 'it are unavailable. Refusing to boot rather than trust an unverifiable '
+            . 'signature (fail closed). Provide PULSAR_MASTER_KEY in production, or rebuild '
+            . 'without a signature if signing is not required.',
+        );
+    }
+
+    #[NoDiscard]
     public static function atomicWriteFailed(string $tmpPath, string $finalPath): self
     {
         return new self(sprintf(

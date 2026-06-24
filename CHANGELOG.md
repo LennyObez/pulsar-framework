@@ -18,6 +18,10 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Anti-spam proof of work is now exclusively the signed, single-use, TTL-bound Managed Challenge. The legacy client-controlled proof-of-work check accepted any client-minted `(challenge, nonce)` pair with no signature, expiry, or replay tracking — a solved pair was replayable indefinitely — and has been retired in favour of the audited managed-challenge engine. **Breaking:** the `#[Api]` `ProofOfWorkVerifierInterface` is removed, `AntiSpamConfig` no longer exposes `proof_of_work_enabled`/`proof_of_work_prefix`, and `AntiSpamContext` drops the `powChallenge`/`powNonce` constructor parameters. Enable `captcha_provider: 'managed'` for invisible proof of work; the CMS contact form now renders the `@shield` widget and verifies the solved token through the `#[Api]` `CaptchaVerifierInterface`.
 
+### Security
+
+- Build-artifact signatures are now actually verified at boot. `BuildArtifactVerifier` runs before `SecurityWiring` binds the crypto services, so it previously skipped signature verification whenever they were absent and fell back to hash-only checks — which an attacker with write access to `var/cache` defeats by tampering with an artifact and recomputing its hash. The verifier now bootstraps the HMAC + key provider from the master key itself (independent of wiring order) and is **fail-closed**: a signed `build-manifest.json` whose key material is unavailable refuses to boot rather than trusting the manifest on its hashes alone.
+
 ## [1.0.0-rc.11] - 2026-02-12
 
 ### Added
