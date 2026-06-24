@@ -27,6 +27,7 @@ final class ExtensionManifestTest extends TestCase
             'name' => 'vendor/test-extension',
             'version' => '1.0.0',
             'extension_class' => 'Vendor\\Test\\TestExtension',
+            'pulsar' => ['min_version' => '1.0.0-rc.11'],
             'description' => 'A test extension',
         ];
 
@@ -48,6 +49,7 @@ final class ExtensionManifestTest extends TestCase
         $_ = ExtensionManifest::fromArray([
             'version' => '1.0.0',
             'extension_class' => 'Test',
+            'pulsar' => ['min_version' => '1.0.0-rc.11'],
         ]);
     }
 
@@ -60,6 +62,7 @@ final class ExtensionManifestTest extends TestCase
         $_ = ExtensionManifest::fromArray([
             'name' => 'test',
             'extension_class' => 'Test',
+            'pulsar' => ['min_version' => '1.0.0-rc.11'],
         ]);
     }
 
@@ -85,6 +88,7 @@ final class ExtensionManifestTest extends TestCase
             'name' => 'test',
             'version' => 'invalid',
             'extension_class' => 'Test',
+            'pulsar' => ['min_version' => '1.0.0-rc.11'],
         ]);
     }
 
@@ -114,6 +118,7 @@ final class ExtensionManifestTest extends TestCase
             'name' => 'test',
             'version' => '1.0.0',
             'extension_class' => 'Test',
+            'pulsar' => ['min_version' => '1.0.0-rc.11'],
             'provides' => [
                 'services' => ['ServiceA', 'ServiceB'],
                 'commands' => ['CommandA'],
@@ -137,6 +142,7 @@ final class ExtensionManifestTest extends TestCase
             'name' => 'test',
             'version' => '1.0.0',
             'extension_class' => 'Test',
+            'pulsar' => ['min_version' => '1.0.0-rc.11'],
             'requires' => [
                 'vendor/other' => '^1.0',
             ],
@@ -155,6 +161,7 @@ final class ExtensionManifestTest extends TestCase
             'name' => 'vendor/test-extension',
             'version' => '1.0.0',
             'extension_class' => 'Test',
+            'pulsar' => ['min_version' => '1.0.0-rc.11'],
         ]);
 
         self::assertSame('test-extension', $manifest->shortName());
@@ -167,6 +174,7 @@ final class ExtensionManifestTest extends TestCase
             'name' => 'vendor/test-extension',
             'version' => '1.0.0',
             'extension_class' => 'Test',
+            'pulsar' => ['min_version' => '1.0.0-rc.11'],
         ]);
 
         self::assertSame('vendor', $manifest->vendor());
@@ -179,6 +187,7 @@ final class ExtensionManifestTest extends TestCase
             'name' => 'test',
             'version' => '1.0.0',
             'extension_class' => 'Test',
+            'pulsar' => ['min_version' => '1.0.0-rc.11'],
             'requires' => ['other' => '1.0'],
         ]);
 
@@ -192,6 +201,7 @@ final class ExtensionManifestTest extends TestCase
             'name' => 'test',
             'version' => '1.0.0',
             'extension_class' => 'Test',
+            'pulsar' => ['min_version' => '1.0.0-rc.11'],
         ]);
 
         self::assertFalse($manifest->hasDependencies());
@@ -204,6 +214,7 @@ final class ExtensionManifestTest extends TestCase
             'name' => 'test',
             'version' => '1.0.0',
             'extension_class' => 'Test',
+            'pulsar' => ['min_version' => '1.0.0-rc.11'],
             'requires' => [
                 'dep1' => '1.0',
                 'dep2' => '2.0',
@@ -220,6 +231,7 @@ final class ExtensionManifestTest extends TestCase
             'name' => 'test',
             'version' => '1.0.0',
             'extension_class' => 'Test',
+            'pulsar' => ['min_version' => '1.0.0-rc.11'],
         ]);
 
         self::assertSame(TrustTier::Community, $manifest->requestedTrustTier);
@@ -232,6 +244,7 @@ final class ExtensionManifestTest extends TestCase
             'name' => 'test',
             'version' => '1.0.0',
             'extension_class' => 'Test',
+            'pulsar' => ['min_version' => '1.0.0-rc.11'],
             'trust_tier' => 'core',
         ]);
 
@@ -245,6 +258,7 @@ final class ExtensionManifestTest extends TestCase
             'name' => 'test',
             'version' => '1.0.0',
             'extension_class' => 'Test',
+            'pulsar' => ['min_version' => '1.0.0-rc.11'],
             'trust_tier' => 'verified',
         ]);
 
@@ -258,6 +272,7 @@ final class ExtensionManifestTest extends TestCase
             'name' => 'test',
             'version' => '1.0.0',
             'extension_class' => 'Test',
+            'pulsar' => ['min_version' => '1.0.0-rc.11'],
             'trust_tier' => 'untrusted',
         ]);
 
@@ -271,6 +286,7 @@ final class ExtensionManifestTest extends TestCase
             'name' => 'test',
             'version' => '1.0.0',
             'extension_class' => 'Test',
+            'pulsar' => ['min_version' => '1.0.0-rc.11'],
             'trust_tier' => 'invalid',
         ]);
 
@@ -284,6 +300,7 @@ final class ExtensionManifestTest extends TestCase
             'name' => 'vendor/cms',
             'version' => '1.0.0',
             'extension_class' => 'Vendor\\Cms\\CmsExtension',
+            'pulsar' => ['min_version' => '1.0.0-rc.11'],
             'provides' => [
                 'services' => ['ContentService'],
                 'routes' => true,
