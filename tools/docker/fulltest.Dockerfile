@@ -43,7 +43,7 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 # Create the non-root user before COPY so ownership is set during the copy
 # (a recursive chown of /app would be a huge, slow extra layer). Redis/Memcached
 # run on loopback high ports with state under /tmp, so root is never needed at runtime.
-RUN useradd --create-home --uid 1000 pulsar
+RUN useradd --create-home --uid 1000 pulsar && mkdir -p /app && chown pulsar:pulsar /app
 WORKDIR /app
 COPY --chown=pulsar:pulsar . /app
 USER pulsar
