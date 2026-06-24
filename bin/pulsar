@@ -39,6 +39,7 @@ use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\DatabaseConfig;
 use Pulsar\Config\Environment;
+use Pulsar\Config\I18nConfig;
 use Pulsar\Config\IntegrityConfig;
 use Pulsar\Config\QueueConfig;
 use Pulsar\Config\ReplConfig;
@@ -111,6 +112,7 @@ use Pulsar\Console\Command\ReleaseCheckerInterface;
 use Pulsar\Console\Command\RepairCommand;
 use Pulsar\Console\Command\RoutesCacheCommand;
 use Pulsar\Console\Command\RuntimeReloadCommand;
+use Pulsar\Console\Command\SlugsLintCommand;
 use Pulsar\Console\Command\RuntimeServeCommand;
 use Pulsar\Console\Command\ServeCommand;
 use Pulsar\Console\Command\RuntimeStatusCommand;
@@ -146,6 +148,7 @@ use Pulsar\Deploy\MaintenanceMode;
 use Pulsar\Extensibility\ExtensionRegistry;
 use Pulsar\I18n\Extractor\TranslationExtractor;
 use Pulsar\I18n\Linter\TranslationLinter;
+use Pulsar\I18n\Locale\SlugRegistry;
 use Pulsar\Resilience\HealthCheck\HealthCheckRunnerInterface;
 use Pulsar\Resilience\Repair\RepairRunnerInterface;
 use Pulsar\Routing\RouterInterface;
@@ -487,6 +490,15 @@ if ($kernel->container()->has(TranslationLinter::class)) {
   /** @var TranslationLinter $linter */
   $linter = $kernel->container()->get(TranslationLinter::class);
   $application->add(new I18nLintCommand($linter));
+}
+
+// Localized route-slug linter (completeness + collision checks)
+if ($kernel->container()->has(SlugRegistry::class) && $kernel->container()->has(I18nConfig::class)) {
+  /** @var SlugRegistry $slugRegistry */
+  $slugRegistry = $kernel->container()->get(SlugRegistry::class);
+  /** @var I18nConfig $i18nConfig */
+  $i18nConfig = $kernel->container()->get(I18nConfig::class);
+  $application->add(new SlugsLintCommand($slugRegistry, $i18nConfig));
 }
 
 // Register IDE helper command

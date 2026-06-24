@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Pulsar\I18n\Exception\I18nException;
+use Pulsar\I18n\Locale\LocalizedUrlGenerator;
 use Pulsar\I18n\Translator;
 
 if (!function_exists('__')) {
@@ -77,5 +78,25 @@ if (!function_exists('trans')) {
     function trans(string $key, array $parameters = [], ?string $locale = null, string $domain = 'messages'): string
     {
         return Translator::getGlobalInstance()->translate($key, $parameters, $locale, $domain);
+    }
+}
+
+if (!function_exists('route')) {
+    /**
+     * Generate a localized URL for a route key.
+     *
+     * Translates the key's URL slug for the target locale (or the current
+     * request locale when none is given) and applies the locale prefix per
+     * the configured URL strategy. Backs the @route directive.
+     *
+     * @param string $key Canonical route key (e.g. 'development/projects')
+     * @param array<string, string> $params Route parameter values
+     * @param ?string $locale Target locale; defaults to the current locale
+     *
+     * @throws I18nException If localized routing is not booted
+     */
+    function route(string $key, array $params = [], ?string $locale = null): string
+    {
+        return LocalizedUrlGenerator::getGlobalInstance()->route($key, $params, $locale);
     }
 }

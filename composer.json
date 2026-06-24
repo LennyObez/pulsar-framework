@@ -154,6 +154,7 @@
     "extension:coverage": "php scripts/check_extension_coverage.php",
     "compliance:check": "php scripts/check_compliance_claims.php",
     "wiring:check": "php scripts/wiring_check.php",
+    "slugs:lint": "php bin/pulsar i18n:slugs:lint",
     "security:lint": "semgrep --config=tools/security/semgrep-pulsar-rules.yml src/ extensions/",
     "security:lint:strict": "semgrep --config=tools/security/semgrep-pulsar-rules.yml --severity=ERROR --error src/ extensions/",
     "mutation": "vendor/bin/infection --threads=4 --min-msi=80",
