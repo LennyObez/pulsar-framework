@@ -13,10 +13,10 @@ use function array_values;
 use function bin2hex;
 use function chr;
 use function date;
-use function explode;
 use function is_array;
 use function is_string;
 use function ord;
+use function preg_split;
 use function random_bytes;
 use function sprintf;
 use function str_starts_with;
@@ -168,7 +168,10 @@ final readonly class SbomGenerator
     private function extractPnpmComponents(string $contents): array
     {
         $components = [];
-        $lines = explode("\n", $contents);
+        // Normalize line endings (\R matches \r\n, \r and \n) so a CRLF lockfile
+        // does not leave a "\r" that the blank-line/section-boundary checks below
+        // would mistake for a non-indented top-level key.
+        $lines = preg_split('/\R/', $contents) ?: [];
         $inPackages = false;
 
         foreach ($lines as $line) {
@@ -178,7 +181,7 @@ final readonly class SbomGenerator
                 continue;
             }
 
-            if ($inPackages && $line !== '' && !str_starts_with($line, ' ') && !str_starts_with($line, "\t")) {
+            if ($inPackages && trim($line) !== '' && !str_starts_with($line, ' ') && !str_starts_with($line, "\t")) {
                 $inPackages = false;
 
                 continue;
