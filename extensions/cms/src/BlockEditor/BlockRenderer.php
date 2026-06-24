@@ -33,8 +33,11 @@ final readonly class BlockRenderer
      * Render a list of content blocks to a concatenated HTML string.
      *
      * @param list<ContentBlock> $blocks Ordered list of content blocks
+     * @param string|null $cspNonce Request CSP nonce, exposed to blocks via the
+     *        `_csp_nonce` render-context key so script-emitting blocks (e.g. the
+     *        contact form's managed-challenge widget) can stamp it.
      */
-    public function render(array $blocks): string
+    public function render(array $blocks, ?string $cspNonce = null): string
     {
         $parts = [];
 
@@ -58,7 +61,7 @@ final readonly class BlockRenderer
                 continue;
             }
 
-            $parts[] = $blockType->render($block->data);
+            $parts[] = $blockType->render(self::withNonce($block->data, $cspNonce));
         }
 
         return implode("\n", $parts);
@@ -71,8 +74,10 @@ final readonly class BlockRenderer
      * nested blocks from raw data arrays without fabricating identity fields.
      *
      * @param list<mixed> $blocks
+     * @param string|null $cspNonce Request CSP nonce, propagated to each block via
+     *        the `_csp_nonce` render-context key (see {@see render()}).
      */
-    public function renderRawBlocks(array $blocks): string
+    public function renderRawBlocks(array $blocks, ?string $cspNonce = null): string
     {
         $parts = [];
 
@@ -109,9 +114,26 @@ final readonly class BlockRenderer
                 continue;
             }
 
-            $parts[] = $blockType->render($data);
+            $parts[] = $blockType->render(self::withNonce($data, $cspNonce));
         }
 
         return implode("\n", $parts);
+    }
+
+    /**
+     * Expose the request CSP nonce to a block through the `_csp_nonce` render
+     * key, leaving the block data untouched when no nonce is available.
+     *
+     * @param array<string, mixed> $data
+     *
+     * @return array<string, mixed>
+     */
+    private static function withNonce(array $data, ?string $cspNonce): array
+    {
+        if ($cspNonce === null || $cspNonce === '') {
+            return $data;
+        }
+
+        return [...$data, '_csp_nonce' => $cspNonce];
     }
 }

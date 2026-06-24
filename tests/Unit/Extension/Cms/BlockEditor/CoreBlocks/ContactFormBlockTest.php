@@ -81,6 +81,30 @@ final class ContactFormBlockTest extends TestCase
     }
 
     #[Test]
+    public function stampsCspNonceOnTheChallengeWidgetScript(): void
+    {
+        $csrf = $this->createStub(CsrfTokenManagerInterface::class);
+        $csrf->method('getToken')->willReturn('csrf');
+        $renderer = new ManagedChallengeRenderer(
+            new ManagedChallengeService('0123456789abcdef0123456789abcdef', 12, 300),
+            'pulsar-challenge-response',
+            '/_pulsar/anti-spam/managed-challenge.js',
+            '/_pulsar/anti-spam/managed-challenge.worker.js',
+        );
+        $block = new ContactFormBlock($csrf, $renderer);
+
+        // The block forwards the request CSP nonce (supplied by the renderer via
+        // the _csp_nonce render-context key) to the managed-challenge widget, so
+        // its <script> stays valid under a strict nonce-based CSP.
+        $html = $block->render([
+            'fields' => [['name' => 'email', 'type' => 'email', 'label' => 'Email']],
+            '_csp_nonce' => 'nonce-xyz789',
+        ]);
+
+        self::assertStringContainsString('nonce="nonce-xyz789"', $html);
+    }
+
+    #[Test]
     public function rendersHiddenCsrfTokenField(): void
     {
         $html = $this->block->render([

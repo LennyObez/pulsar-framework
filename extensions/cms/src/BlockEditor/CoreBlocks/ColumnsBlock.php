@@ -70,6 +70,12 @@ final readonly class ColumnsBlock implements BlockTypeInterface
 
         $html = "<div class=\"columns\" style=\"display:grid;grid-template-columns:repeat($columnCount,1fr);gap:1rem\">";
 
+        // Propagate the request CSP nonce to nested blocks (e.g. a contact form
+        // placed inside a column) so their script tags stay nonce-compliant.
+        /** @var mixed $rawNonce */
+        $rawNonce = $data['_csp_nonce'] ?? null;
+        $cspNonce = is_string($rawNonce) && $rawNonce !== '' ? $rawNonce : null;
+
         foreach ($columns as $column) {
             if (!is_array($column)) {
                 continue;
@@ -82,7 +88,7 @@ final readonly class ColumnsBlock implements BlockTypeInterface
 
             if (is_array($blocks)) {
                 /** @var list<mixed> $blocks */
-                $html .= $this->renderer->renderRawBlocks($blocks);
+                $html .= $this->renderer->renderRawBlocks($blocks, $cspNonce);
             }
 
             $html .= '</div>';
