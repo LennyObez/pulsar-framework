@@ -4,17 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Core\Wiring;
 
-use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Config\AppConfig;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Container\ContainerInterface;
-use Pulsar\Http\Message\Response;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
-use Pulsar\Http\ResponseStatus;
 use Pulsar\Observability\Diagnostics\DiagnosticsAuthGuard;
-use Pulsar\Observability\Diagnostics\DiagnosticsRenderer;
+use Pulsar\Observability\Diagnostics\DiagnosticsController;
 use Pulsar\Observability\ErrorTracking\ErrorAggregator;
 use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Observability\Rum\RumCollector;
@@ -55,41 +52,33 @@ final readonly class DiagnosticsWiring implements ServiceWiringInterface
         $guard = new DiagnosticsAuthGuard($expectedToken);
         $container->instance(DiagnosticsAuthGuard::class, $guard);
 
-        $router->get('/_pulsar/diagnostics', static function (ServerRequestInterface $request) use ($container, $guard): Response {
-            if (!$guard->isAuthorized($request)) {
-                return Response::text(
-                    'Diagnostics endpoint requires Bearer token from PULSAR_DIAGNOSTICS_TOKEN.',
-                    ResponseStatus::Unauthorized->value,
-                )->withHeader('WWW-Authenticate', 'Bearer realm="pulsar-diagnostics"');
-            }
+        /** @var MetricRegistry $registry */
+        $registry = $container->get(MetricRegistry::class);
 
-            /** @var MetricRegistry $registry */
-            $registry = $container->get(MetricRegistry::class);
+        $spanCollector = $container->has(InMemorySpanCollector::class)
+            ? $container->get(InMemorySpanCollector::class)
+            : null;
 
-            $collector = $container->has(InMemorySpanCollector::class)
-                ? $container->get(InMemorySpanCollector::class)
-                : null;
+        $errorAggregator = $container->has(ErrorAggregator::class)
+            ? $container->get(ErrorAggregator::class)
+            : null;
 
-            $aggregator = $container->has(ErrorAggregator::class)
-                ? $container->get(ErrorAggregator::class)
-                : null;
+        /** @var InMemorySpanCollector|null $spanCollector */
+        /** @var ErrorAggregator|null $errorAggregator */
+        $container->instance(
+            DiagnosticsController::class,
+            new DiagnosticsController($guard, $registry, $spanCollector, $errorAggregator),
+        );
 
-            /** @var InMemorySpanCollector|null $collector */
-            /** @var ErrorAggregator|null $aggregator */
-            $renderer = new DiagnosticsRenderer($registry, $collector, $aggregator);
-
-            return Response::html($renderer->render());
-        });
+        // Class-based handler so the route compiles into the strict route cache.
+        $router->get('/_pulsar/diagnostics', [DiagnosticsController::class, 'show']);
 
         // RUM (Real User Monitoring): collection endpoint for frontend metrics
-        /** @var MetricRegistry $metricsRegistry */
-        $metricsRegistry = $container->get(MetricRegistry::class);
-        $rumCollector = new RumCollector($metricsRegistry);
+        $rumCollector = new RumCollector($registry);
         $container->instance(RumCollector::class, $rumCollector);
+        $container->instance(RumController::class, new RumController($rumCollector));
 
-        $rumController = new RumController($rumCollector);
-        $container->instance(RumController::class, $rumController);
-
-        $router->post('/_pulsar/rum/collect', $rumController);
+        // Array handler (not the invokable instance) so it also caches under --strict.
+        $router->post('/_pulsar/rum/collect', [RumController::class, '__invoke']);
     }
 }

@@ -11,6 +11,7 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Container\Container;
 use Pulsar\Core\Wiring\AssetWiring;
+use Pulsar\Http\Controller\AssetController;
 use Pulsar\Http\Method;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
@@ -60,5 +61,18 @@ final class AssetWiringTest extends TestCase
         $matched = $this->router->match(Method::GET, '/cms/assets/cms-public.css');
 
         self::assertSame('pulsar.assets.cms', $matched->getName());
+    }
+
+    #[Test]
+    public function assetRoutesUseClassBasedHandlersNotClosures(): void
+    {
+        // Regression: closure handlers cannot be serialized into the strict route
+        // cache (`optimize --strict`), so the asset routes must use a class-based
+        // [AssetController::class, method] handler.
+        $ui = $this->router->match(Method::GET, '/ui/css/tokens.css');
+        $cms = $this->router->match(Method::GET, '/cms/assets/cms-public.css');
+
+        self::assertSame([AssetController::class, 'ui'], $ui->route->handler);
+        self::assertSame([AssetController::class, 'cms'], $cms->route->handler);
     }
 }
