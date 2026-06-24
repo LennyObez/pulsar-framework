@@ -44,8 +44,5 @@ arsort($files);
 echo "files=" . count($files) . "\n";
 $i = 0;
 foreach ($files as $f => $n) {
-    if ($i++ >= 50) {
-        break;
-    }
     printf("%4d  %s\n", $n, $f);
 }
