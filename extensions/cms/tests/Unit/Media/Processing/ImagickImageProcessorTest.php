@@ -216,10 +216,25 @@ final class ImagickImageProcessorTest extends TestCase
         $image = imagecreatetruecolor($width, $height);
         self::assertNotFalse($image);
 
-        $bg = imagecolorallocate($image, 100, 150, 200);
+        // Deterministic high-frequency pattern. A solid fill compresses to the
+        // same tiny size at any JPEG quality, so the quality-vs-size assertion
+        // in uses_configured_jpeg_quality() would compare two near-identical
+        // sizes whose ordering is build-dependent noise. Per-pixel variation
+        // gives the DCT real high-frequency content, so quality 10 yields a
+        // measurably smaller file than quality 100 on every ImageMagick build.
+        for ($y = 0; $y < $height; $y++) {
+            for ($x = 0; $x < $width; $x++) {
+                $color = imagecolorallocate(
+                    $image,
+                    ($x * 17 + $y * 7) % 256,
+                    ($x * 5 + $y * 23) % 256,
+                    ($x * 11 + $y * 13) % 256,
+                );
 
-        if ($bg !== false) {
-            imagefilledrectangle($image, 0, 0, $width - 1, $height - 1, $bg);
+                if ($color !== false) {
+                    imagesetpixel($image, $x, $y, $color);
+                }
+            }
         }
 
         $path = $this->testDir . '/test_' . bin2hex(random_bytes(4)) . '.jpg';
