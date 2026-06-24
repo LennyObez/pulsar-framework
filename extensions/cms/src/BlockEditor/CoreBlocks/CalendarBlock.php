@@ -8,14 +8,12 @@ use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Cms\BlockEditor\BlockTypeInterface;
 
-use function cal_days_in_month;
 use function date;
 use function htmlspecialchars;
 use function is_array;
 use function is_int;
 use function is_string;
 
-use const CAL_GREGORIAN;
 use const ENT_QUOTES;
 
 #[Internal]
@@ -95,7 +93,6 @@ final readonly class CalendarBlock implements BlockTypeInterface
             }
         }
 
-        $daysInMonth = cal_days_in_month(CAL_GREGORIAN, $month, $year);
         // mktime() can return false for invalid date components; one analyzer's
         // stub narrows the full-argument form to int, so state the real type.
         /** @var int|false $timestamp */
@@ -103,6 +100,9 @@ final readonly class CalendarBlock implements BlockTypeInterface
         if ($timestamp === false) {
             $timestamp = time();
         }
+        // date('t') gives the number of days in the month — portable and free of
+        // the ext-calendar dependency (cal_days_in_month is not bundled everywhere).
+        $daysInMonth = (int) date('t', $timestamp);
         $firstDayOfWeek = (int) date('w', $timestamp);
         $monthName = date('F', $timestamp);
         $days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
