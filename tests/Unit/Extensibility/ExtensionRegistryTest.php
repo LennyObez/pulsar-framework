@@ -211,6 +211,7 @@ final class ExtensionRegistryTest extends TestCase
             'name' => $name,
             'version' => '1.0.0',
             'extension_class' => 'TestExtension',
+            'pulsar' => ['min_version' => '1.0.0-rc.11'],
         ]);
     }
 }

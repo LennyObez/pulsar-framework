@@ -328,6 +328,7 @@ final class ExtensionBootstrapTest extends TestCase
             'name' => 'test/ext',
             'version' => '1.0.0',
             'extension_class' => 'Test',
+            'pulsar' => ['min_version' => '1.0.0-rc.11'],
             'provides' => [
                 'commands' => ['TestCommand', 'OtherCommand'],
             ],
@@ -520,6 +521,7 @@ final class ExtensionBootstrapTest extends TestCase
             'name' => 'test/good',
             'version' => '1.0.0',
             'extension_class' => 'NonExistentGoodClass',
+            'pulsar' => ['min_version' => '1.0.0-rc.11'],
         ]));
 
         // Bad extension with invalid JSON (parse error during discovery)
@@ -659,6 +661,7 @@ final class ExtensionBootstrapTest extends TestCase
             'name' => $name,
             'version' => '1.0.0',
             'extension_class' => 'TestExtension',
+            'pulsar' => ['min_version' => '1.0.0-rc.11'],
         ]);
     }
 }

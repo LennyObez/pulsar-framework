@@ -44,7 +44,7 @@ final class ExtensionLoaderTest extends TestCase
         mkdir($extDir);
         file_put_contents($extDir . '/pulsar.json', json_encode([
             'name' => 'test/extension',
-            'version' => '1.0.0',
+            'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
             'extension_class' => 'Test\\Extension',
         ]));
 
@@ -79,13 +79,13 @@ final class ExtensionLoaderTest extends TestCase
         // Extension B depends on A
         $manifestA = ExtensionManifest::fromArray([
             'name' => 'ext/a',
-            'version' => '1.0.0',
+            'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
             'extension_class' => 'ExtA',
         ]);
 
         $manifestB = ExtensionManifest::fromArray([
             'name' => 'ext/b',
-            'version' => '1.0.0',
+            'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
             'extension_class' => 'ExtB',
             'requires' => ['ext/a' => '1.0'],
         ]);
@@ -101,7 +101,7 @@ final class ExtensionLoaderTest extends TestCase
     {
         $manifest = ExtensionManifest::fromArray([
             'name' => 'ext/a',
-            'version' => '1.0.0',
+            'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
             'extension_class' => 'ExtA',
             'requires' => ['ext/missing' => '1.0'],
         ]);
@@ -119,14 +119,14 @@ final class ExtensionLoaderTest extends TestCase
     {
         $manifestA = ExtensionManifest::fromArray([
             'name' => 'ext/a',
-            'version' => '1.0.0',
+            'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
             'extension_class' => 'ExtA',
             'requires' => ['ext/b' => '1.0'],
         ]);
 
         $manifestB = ExtensionManifest::fromArray([
             'name' => 'ext/b',
-            'version' => '1.0.0',
+            'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
             'extension_class' => 'ExtB',
             'requires' => ['ext/a' => '1.0'],
         ]);
@@ -142,13 +142,13 @@ final class ExtensionLoaderTest extends TestCase
     {
         $manifestA = ExtensionManifest::fromArray([
             'name' => 'ext/a',
-            'version' => '1.0.0',
+            'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
             'extension_class' => 'ExtA',
         ]);
 
         $manifestB = ExtensionManifest::fromArray([
             'name' => 'ext/b',
-            'version' => '1.0.0',
+            'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
             'extension_class' => 'ExtB',
         ]);
 
@@ -165,7 +165,7 @@ final class ExtensionLoaderTest extends TestCase
         mkdir($extDir);
         file_put_contents($extDir . '/pulsar.json', json_encode([
             'name' => 'test/individual',
-            'version' => '1.0.0',
+            'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
             'extension_class' => 'Test\\IndividualExtension',
         ]));
 
@@ -184,7 +184,7 @@ final class ExtensionLoaderTest extends TestCase
         mkdir($extDir);
         file_put_contents($extDir . '/pulsar.json', json_encode([
             'name' => 'test/dedup',
-            'version' => '1.0.0',
+            'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
             'extension_class' => 'Test\\DedupExtension',
         ]));
 
@@ -203,7 +203,7 @@ final class ExtensionLoaderTest extends TestCase
         mkdir($parentDir . '/ext-a', 0o755, true);
         file_put_contents($parentDir . '/ext-a/pulsar.json', json_encode([
             'name' => 'framework/ext-a',
-            'version' => '1.0.0',
+            'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
             'extension_class' => 'Framework\\ExtA',
         ]));
 
@@ -212,7 +212,7 @@ final class ExtensionLoaderTest extends TestCase
         mkdir($appExtDir);
         file_put_contents($appExtDir . '/pulsar.json', json_encode([
             'name' => 'app/custom',
-            'version' => '1.0.0',
+            'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
             'extension_class' => 'App\\CustomExtension',
         ]));
 
@@ -229,7 +229,7 @@ final class ExtensionLoaderTest extends TestCase
     {
         $manifest = ExtensionManifest::fromArray([
             'name' => 'test/stub',
-            'version' => '1.0.0',
+            'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
             'extension_class' => StubExtension::class,
         ]);
 

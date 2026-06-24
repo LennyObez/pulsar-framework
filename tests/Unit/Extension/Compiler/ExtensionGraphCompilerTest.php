@@ -46,13 +46,13 @@ final class ExtensionGraphCompilerTest extends TestCase
         $manifests = [
             ExtensionManifest::fromArray([
                 'name' => 'vendor/ext-a',
-                'version' => '1.0.0',
+                'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
                 'extension_class' => 'Vendor\\ExtA\\Extension',
                 'requires' => ['vendor/ext-b' => '>=1.0.0'],
             ], $pathA),
             ExtensionManifest::fromArray([
                 'name' => 'vendor/ext-b',
-                'version' => '1.0.0',
+                'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
                 'extension_class' => 'Vendor\\ExtB\\Extension',
                 'requires' => ['vendor/ext-a' => '>=1.0.0'],
             ], $pathB),
@@ -74,7 +74,7 @@ final class ExtensionGraphCompilerTest extends TestCase
         $manifests = [
             ExtensionManifest::fromArray([
                 'name' => 'vendor/ext-a',
-                'version' => '1.0.0',
+                'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
                 'extension_class' => 'Vendor\\ExtA\\Extension',
                 'requires' => ['vendor/ext-missing' => '>=1.0.0'],
             ], $pathA),
@@ -98,17 +98,17 @@ final class ExtensionGraphCompilerTest extends TestCase
         $manifests = [
             ExtensionManifest::fromArray([
                 'name' => 'vendor/ext-c',
-                'version' => '1.0.0',
+                'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
                 'extension_class' => 'Vendor\\ExtC\\Extension',
             ], $pathC),
             ExtensionManifest::fromArray([
                 'name' => 'vendor/ext-a',
-                'version' => '1.0.0',
+                'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
                 'extension_class' => 'Vendor\\ExtA\\Extension',
             ], $pathA),
             ExtensionManifest::fromArray([
                 'name' => 'vendor/ext-b',
-                'version' => '1.0.0',
+                'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
                 'extension_class' => 'Vendor\\ExtB\\Extension',
             ], $pathB),
         ];
@@ -132,17 +132,17 @@ final class ExtensionGraphCompilerTest extends TestCase
         $manifests = [
             ExtensionManifest::fromArray([
                 'name' => 'vendor/gamma',
-                'version' => '1.0.0',
+                'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
                 'extension_class' => 'Vendor\\Gamma\\Extension',
             ], $pathC),
             ExtensionManifest::fromArray([
                 'name' => 'vendor/alpha',
-                'version' => '1.0.0',
+                'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
                 'extension_class' => 'Vendor\\Alpha\\Extension',
             ], $pathA),
             ExtensionManifest::fromArray([
                 'name' => 'vendor/beta',
-                'version' => '1.0.0',
+                'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
                 'extension_class' => 'Vendor\\Beta\\Extension',
             ], $pathB),
         ];
@@ -167,12 +167,12 @@ final class ExtensionGraphCompilerTest extends TestCase
         $manifests = [
             ExtensionManifest::fromArray([
                 'name' => 'vendor/ext-a',
-                'version' => '1.0.0',
+                'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
                 'extension_class' => 'Vendor\\ExtA\\Extension',
             ], $pathA),
             ExtensionManifest::fromArray([
                 'name' => 'vendor/ext-b',
-                'version' => '1.0.0',
+                'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
                 'extension_class' => 'Vendor\\ExtB\\Extension',
             ], $pathB),
         ];
@@ -207,7 +207,7 @@ final class ExtensionGraphCompilerTest extends TestCase
         $manifests = [
             ExtensionManifest::fromArray([
                 'name' => 'vendor/ext-a',
-                'version' => '1.0.0',
+                'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
                 'extension_class' => 'Vendor\\ExtA\\Extension',
             ], $pathA),
         ];
@@ -241,7 +241,7 @@ final class ExtensionGraphCompilerTest extends TestCase
         $manifests = [
             ExtensionManifest::fromArray([
                 'name' => 'vendor/single',
-                'version' => '2.0.0',
+                'version' => '2.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
                 'extension_class' => 'Vendor\\Single\\Extension',
             ], $path),
         ];
@@ -265,19 +265,19 @@ final class ExtensionGraphCompilerTest extends TestCase
         $manifests = [
             ExtensionManifest::fromArray([
                 'name' => 'vendor/admin',
-                'version' => '1.0.0',
+                'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
                 'extension_class' => 'Vendor\\Admin\\Extension',
                 'requires' => ['vendor/auth' => '>=1.0.0'],
             ], $pathAdmin),
             ExtensionManifest::fromArray([
                 'name' => 'vendor/auth',
-                'version' => '1.0.0',
+                'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
                 'extension_class' => 'Vendor\\Auth\\Extension',
                 'requires' => ['vendor/core' => '>=1.0.0'],
             ], $pathAuth),
             ExtensionManifest::fromArray([
                 'name' => 'vendor/core',
-                'version' => '1.0.0',
+                'version' => '1.0.0', 'pulsar' => ['min_version' => '1.0.0-rc.11'],
                 'extension_class' => 'Vendor\\Core\\Extension',
             ], $pathCore),
         ];
