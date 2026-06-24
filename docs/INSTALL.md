@@ -4,30 +4,30 @@ Pulsar Framework 1.0.0-rc.11: Installation and setup for PHP 8.5 HMVC applicatio
 
 ## System requirements
 
-| Requirement    | Minimum Version | Notes                                                                          |
-| -------------- | --------------- | ------------------------------------------------------------------------------ |
-| PHP            | 8.5.0           | CLI and web SAPI                                                               |
-| Composer       | 2.6+            | Dependency management                                                          |
-| ext-ctype      | (bundled)       | Character type checking                                                        |
-| ext-curl       | (bundled)       | Outbound HTTP (fetcher, OAuth2 client, webhook delivery)                       |
-| ext-dom        | (bundled)       | XML parsing for SVG/PDF metadata validation (CMS/Accessibility extensions)     |
-| ext-exif       | (bundled)       | Image-metadata extraction (CMS media pipeline, photo upload validators)        |
-| ext-fileinfo   | (bundled)       | MIME-type detection on uploaded files                                          |
-| ext-gd         | (bundled)       | Image processing pipeline (CMS thumbnails, accessibility contrast checks)     |
-| ext-json       | (bundled)       | JSON encoding/decoding                                                         |
-| ext-libxml     | (bundled)       | Underlying XML parser used by ext-dom and ext-simplexml                        |
-| ext-mbstring   | (bundled)       | Multibyte string support                                                       |
-| ext-openssl    | (bundled)       | TLS for outbound HTTP, JWT signing fallbacks (libsodium remains primary)       |
-| ext-pcre       | (bundled)       | Regular expression support                                                     |
-| ext-pdo        | (bundled)       | Database abstraction                                                           |
-| ext-simplexml  | (bundled)       | OAS / RSS / sitemap fixture parsing                                            |
-| ext-sodium     | (bundled)       | Cryptographic operations (HMAC chain, AEAD, KDF — see ADR-0006)                |
-| ext-zip        | (bundled)       | Asset bundle export, language-pack archives, OAS bundle ingestion              |
-| ext-opcache    | (recommended)   | Required for JIT and preloading                                                |
-| ext-apcu       | (optional)      | In-memory caching for config/routing                                           |
-| ext-iconv      | (optional)      | Optimised slug generation                                                      |
-| ext-intl       | (optional)      | ICU MessageFormat, number/date/currency formatting                             |
-| ext-redis      | (optional)      | Redis-backed sessions and caching                                              |
+| Requirement   | Minimum Version | Notes                                                                      |
+| ------------- | --------------- | -------------------------------------------------------------------------- |
+| PHP           | 8.5.0           | CLI and web SAPI                                                           |
+| Composer      | 2.6+            | Dependency management                                                      |
+| ext-ctype     | (bundled)       | Character type checking                                                    |
+| ext-curl      | (bundled)       | Outbound HTTP (fetcher, OAuth2 client, webhook delivery)                   |
+| ext-dom       | (bundled)       | XML parsing for SVG/PDF metadata validation (CMS/Accessibility extensions) |
+| ext-exif      | (bundled)       | Image-metadata extraction (CMS media pipeline, photo upload validators)    |
+| ext-fileinfo  | (bundled)       | MIME-type detection on uploaded files                                      |
+| ext-gd        | (bundled)       | Image processing pipeline (CMS thumbnails, accessibility contrast checks)  |
+| ext-json      | (bundled)       | JSON encoding/decoding                                                     |
+| ext-libxml    | (bundled)       | Underlying XML parser used by ext-dom and ext-simplexml                    |
+| ext-mbstring  | (bundled)       | Multibyte string support                                                   |
+| ext-openssl   | (bundled)       | TLS for outbound HTTP, JWT signing fallbacks (libsodium remains primary)   |
+| ext-pcre      | (bundled)       | Regular expression support                                                 |
+| ext-pdo       | (bundled)       | Database abstraction                                                       |
+| ext-simplexml | (bundled)       | OAS / RSS / sitemap fixture parsing                                        |
+| ext-sodium    | (bundled)       | Cryptographic operations (HMAC chain, AEAD, KDF — see ADR-0006)            |
+| ext-zip       | (bundled)       | Asset bundle export, language-pack archives, OAS bundle ingestion          |
+| ext-opcache   | (recommended)   | Required for JIT and preloading                                            |
+| ext-apcu      | (optional)      | In-memory caching for config/routing                                       |
+| ext-iconv     | (optional)      | Optimised slug generation                                                  |
+| ext-intl      | (optional)      | ICU MessageFormat, number/date/currency formatting                         |
+| ext-redis     | (optional)      | Redis-backed sessions and caching                                          |
 
 ### Migration note: rc.10 → rc.11
 
