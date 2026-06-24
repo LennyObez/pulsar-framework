@@ -792,7 +792,7 @@ final class ForumHighFindingsTest extends TestCase
         $redis = $this->createMock(Redis::class);
         $redis->expects(self::once())
             ->method('publish')
-            ->with(self::stringStartsWith('forum:rt:'), self::isType('string'));
+            ->with(self::stringStartsWith('forum:rt:'), self::callback(is_string(...)));
         $redis->expects(self::once())->method('rPush');
         $redis->expects(self::once())->method('lTrim');
         $redis->expects(self::once())->method('expire');
@@ -818,7 +818,7 @@ final class ForumHighFindingsTest extends TestCase
         $redis = $this->createMock(Redis::class);
         $redis->expects(self::once())
             ->method('zAdd')
-            ->with('forum:presence:ch-1', self::isType('int'), 'user-1');
+            ->with('forum:presence:ch-1', self::callback(is_int(...)), 'user-1');
         $redis->expects(self::once())->method('expire');
 
         $broadcaster = new RedisRealtimeBroadcaster($redis);

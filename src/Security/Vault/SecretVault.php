@@ -180,11 +180,20 @@ final class SecretVault
 
         if (!is_dir($dir)) {
             mkdir($dir, 0o700, true);
-        }
+        } else {
+            // Best-effort tightening of a pre-existing directory. A failed chmod
+            // (the directory is owned by another user, or the filesystem disallows
+            // it) is non-fatal — we cannot harden what we do not own — so suppress
+            // the warning rather than leak it. Directories we create above are
+            // already 0o700.
+            set_error_handler(static fn(): bool => true);
 
-        // Tighten directory permissions if a prior installation created it
-        // with looser permissions.
-        chmod($dir, 0o700);
+            try {
+                chmod($dir, 0o700);
+            } finally {
+                restore_error_handler();
+            }
+        }
 
         // Atomic write: write to a temp file under the same directory
         // (so the rename is an atomic filesystem operation on POSIX) then
