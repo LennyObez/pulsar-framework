@@ -1,0 +1,12 @@
+# Build context for tools/docker images. Exclude host artifacts so the Linux
+# image builds its own vendor/ and stays small (and never clobbers host vendor/).
+.git
+vendor
+node_modules
+.idea
+.vscode
+*.log
+.php-cs-fixer.cache
+.qodana
+coverage
+tools/docker/.out
