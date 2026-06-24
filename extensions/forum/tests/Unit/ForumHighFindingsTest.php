@@ -59,6 +59,8 @@ use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Mail\MailManagerInterface;
 use Redis;
 
+use function is_float;
+use function is_int;
 use function json_decode;
 
 /**
@@ -818,7 +820,11 @@ final class ForumHighFindingsTest extends TestCase
         $redis = $this->createMock(Redis::class);
         $redis->expects(self::once())
             ->method('zAdd')
-            ->with('forum:presence:ch-1', self::callback(is_int(...)), 'user-1');
+            // phpredis types the score as `string|float ...`, so the int returned
+            // by time() is coerced to float at the mock boundary. Assert a numeric
+            // timestamp score rather than a strict int (equivalent verification,
+            // robust to the typed-parameter coercion).
+            ->with('forum:presence:ch-1', self::callback(static fn(mixed $score): bool => is_int($score) || is_float($score)), 'user-1');
         $redis->expects(self::once())->method('expire');
 
         $broadcaster = new RedisRealtimeBroadcaster($redis);
