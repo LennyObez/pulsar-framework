@@ -39,6 +39,27 @@ final class I18nConfigTest extends TestCase
         self::assertFalse($config->regulated);
         self::assertSame(50, $config->maxSupportedLocales);
         self::assertFalse($config->strictMode);
+        // Locale-cookie/courtesy features default OFF (backward-compatible).
+        self::assertFalse($config->courtesyRedirect);
+        self::assertSame('', $config->courtesyFallbackLocale);
+        self::assertFalse($config->localeCookieEnabled);
+        self::assertSame('pulsar_locale', $config->localeCookieName);
+    }
+
+    #[Test]
+    public function constructsLocaleCookieAndCourtesyFromArray(): void
+    {
+        $config = I18nConfig::fromArray([
+            'courtesy_redirect' => true,
+            'courtesy_fallback_locale' => 'en',
+            'locale_cookie_enabled' => true,
+            'locale_cookie_name' => 'lang',
+        ], Environment::load());
+
+        self::assertTrue($config->courtesyRedirect);
+        self::assertSame('en', $config->courtesyFallbackLocale);
+        self::assertTrue($config->localeCookieEnabled);
+        self::assertSame('lang', $config->localeCookieName);
     }
 
     #[Test]

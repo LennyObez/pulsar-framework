@@ -25,10 +25,11 @@ use function is_string;
 #[Internal]
 final readonly class CookieAwareLocaleNegotiator implements LocaleNegotiatorInterface
 {
-    private const string COOKIE_NAME = 'pulsar_locale';
+    public const string DEFAULT_COOKIE_NAME = 'pulsar_locale';
 
     public function __construct(
         private LocaleNegotiator $inner,
+        private string $cookieName = self::DEFAULT_COOKIE_NAME,
     ) {}
 
     public function negotiate(ServerRequestInterface $request, array $supported, string $default): string
@@ -40,7 +41,7 @@ final readonly class CookieAwareLocaleNegotiator implements LocaleNegotiatorInte
         // 1. Cookie
         $cookies = $request->getCookieParams();
         /** @var mixed $cookieLocale */
-        $cookieLocale = $cookies[self::COOKIE_NAME] ?? null;
+        $cookieLocale = $cookies[$this->cookieName] ?? null;
 
         if (is_string($cookieLocale) && $cookieLocale !== '' && in_array($cookieLocale, $supported, true)) {
             return $cookieLocale;

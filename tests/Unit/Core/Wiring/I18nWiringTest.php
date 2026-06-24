@@ -7,6 +7,7 @@ namespace Pulsar\Tests\Unit\Core\Wiring;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\I18nConfig;
 use Pulsar\Container\Container;
@@ -18,6 +19,8 @@ use Pulsar\I18n\Format\CurrencyFormatterInterface;
 use Pulsar\I18n\Format\DateFormatterInterface;
 use Pulsar\I18n\Format\MessageFormatterInterface;
 use Pulsar\I18n\Format\NumberFormatterInterface;
+use Pulsar\I18n\Locale\CookieAwareLocaleNegotiator;
+use Pulsar\I18n\Locale\LocaleNegotiator;
 use Pulsar\I18n\Locale\LocaleUrlGenerator;
 use Pulsar\I18n\Locale\UrlPrefixExtractor;
 use Pulsar\I18n\LocaleNegotiatorInterface;
@@ -57,6 +60,76 @@ final class I18nWiringTest extends TestCase
         self::assertTrue($container->has(TranslatorInterface::class));
         self::assertTrue($container->has(Translator::class));
         self::assertTrue($container->has(LocaleNegotiatorInterface::class));
+    }
+
+    #[Test]
+    public function wiresPlainNegotiatorWhenLocaleCookieDisabled(): void
+    {
+        $container = new Container();
+        $configManager = $this->createConfigManager(); // locale_cookie_enabled defaults false
+        $configManager->load();
+
+        new I18nWiring()->wire($container, $configManager, new MiddlewarePipeline($container), new MiddlewareRegistry(), new Router());
+
+        // CookieAwareLocaleNegotiator wraps (does not extend) LocaleNegotiator, so
+        // asserting the plain class is sufficient to prove the cookie-aware
+        // decorator was not wired.
+        self::assertInstanceOf(LocaleNegotiator::class, $container->get(LocaleNegotiatorInterface::class));
+    }
+
+    #[Test]
+    public function wiresCookieAwareNegotiatorWhenLocaleCookieEnabled(): void
+    {
+        $container = new Container();
+        $configManager = $this->createConfigManagerWithLocaleCookie();
+        $configManager->load();
+
+        new I18nWiring()->wire($container, $configManager, new MiddlewarePipeline($container), new MiddlewareRegistry(), new Router());
+
+        self::assertInstanceOf(CookieAwareLocaleNegotiator::class, $container->get(LocaleNegotiatorInterface::class));
+    }
+
+    #[Test]
+    public function warnsWhenCourtesyFallbackLocaleIsNotSupported(): void
+    {
+        $container = new Container();
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())
+            ->method('warning')
+            ->with(self::stringContains('courtesy_fallback_locale'));
+        $container->instance(LoggerInterface::class, $logger);
+
+        $configManager = $this->createConfigManagerWithUnsupportedCourtesyFallback();
+        $configManager->load();
+
+        new I18nWiring()->wire($container, $configManager, new MiddlewarePipeline($container), new MiddlewareRegistry(), new Router());
+    }
+
+    private function createConfigManagerWithUnsupportedCourtesyFallback(): ConfigManager
+    {
+        $configPath = sys_get_temp_dir() . '/pulsar_i18n_wiring_badfb_' . bin2hex(random_bytes(4));
+        @mkdir($configPath, 0o755, true);
+
+        file_put_contents($configPath . '/app.php', '<?php return ["name" => "Test", "env" => "testing", "debug" => false, "timezone" => "UTC", "locale" => "en"];');
+        file_put_contents($configPath . '/observability.php', '<?php return ["logging" => ["default_channel" => "file", "level" => "debug", "channels" => []]];');
+        file_put_contents($configPath . '/security.php', '<?php return ["session" => [], "csrf" => [], "headers" => [], "rate_limit" => []];');
+        // courtesy_fallback_locale 'ja' is NOT in supported_locales -> boot warning.
+        file_put_contents($configPath . '/i18n.php', '<?php return ["default_locale" => "en", "supported_locales" => ["en", "fr"], "fallback_locales" => ["en"], "url_strategy" => "path_prefix", "courtesy_redirect" => true, "courtesy_fallback_locale" => "ja"];');
+
+        return new ConfigManager($configPath);
+    }
+
+    private function createConfigManagerWithLocaleCookie(): ConfigManager
+    {
+        $configPath = sys_get_temp_dir() . '/pulsar_i18n_wiring_cookie_' . bin2hex(random_bytes(4));
+        @mkdir($configPath, 0o755, true);
+
+        file_put_contents($configPath . '/app.php', '<?php return ["name" => "Test", "env" => "testing", "debug" => false, "timezone" => "UTC", "locale" => "en"];');
+        file_put_contents($configPath . '/observability.php', '<?php return ["logging" => ["default_channel" => "file", "level" => "debug", "channels" => []]];');
+        file_put_contents($configPath . '/security.php', '<?php return ["session" => [], "csrf" => [], "headers" => [], "rate_limit" => []];');
+        file_put_contents($configPath . '/i18n.php', '<?php return ["default_locale" => "en", "supported_locales" => ["en", "fr"], "fallback_locales" => ["en"], "regulated" => false, "locale_cookie_enabled" => true];');
+
+        return new ConfigManager($configPath);
     }
 
     #[Test]

@@ -29,6 +29,17 @@ final readonly class I18nConfig
      *        Accept-Language negotiation; when false, it is always the default locale, so unprefixed (default-locale)
      *        URLs stay canonical and are never redirected to a negotiated translation. The negotiated preference is
      *        still exposed via the `_negotiated_locale` request attribute for courtesy redirects.
+     * @param bool $courtesyRedirect Opt-in (default false). When true, an unprefixed GET/HEAD request is 302-redirected
+     *        to the visitor's negotiated locale prefix (e.g. `/about` → `/en/about`) — except when the negotiated locale
+     *        is the default locale, whose canonical URL is the unprefixed one (avoids a redirect loop with the canonical
+     *        301). Pairs with `courtesy_fallback_locale` for visitors with no detectable preference.
+     * @param string $courtesyFallbackLocale Locale a courtesy redirect targets when negotiation finds no supported match
+     *        (e.g. the browser language is unsupported). Empty (default) falls back to {@see $defaultLocale}; set to
+     *        e.g. `'en'` to send undetected visitors to English while keeping the default locale canonical.
+     * @param bool $localeCookieEnabled Opt-in (default false). When true, the cookie-aware negotiator is wired (cookie
+     *        and session take precedence over Accept-Language) and prefixed pages emit a `Set-Cookie` remembering the
+     *        chosen locale, so a visitor's footer selection sticks across visits.
+     * @param string $localeCookieName Name of the locale-preference cookie ({@see $localeCookieEnabled}).
      */
     public function __construct(
         public string $defaultLocale,
@@ -43,6 +54,10 @@ final readonly class I18nConfig
         public bool $canonicalRedirect = true,
         public array $localizedSlugs = [],
         public bool $negotiateUnprefixedLocale = true,
+        public bool $courtesyRedirect = false,
+        public string $courtesyFallbackLocale = '',
+        public bool $localeCookieEnabled = false,
+        public string $localeCookieName = 'pulsar_locale',
     ) {}
 
     /**
@@ -61,6 +76,10 @@ final readonly class I18nConfig
      *     canonical_redirect?: bool|int|string,
      *     localized_slugs?: array<string, array<string, string>>,
      *     negotiate_unprefixed_locale?: bool|int|string,
+     *     courtesy_redirect?: bool|int|string,
+     *     courtesy_fallback_locale?: string,
+     *     locale_cookie_enabled?: bool|int|string,
+     *     locale_cookie_name?: string,
      * } $data Raw array from config/i18n.php
      */
     #[NoDiscard]
@@ -99,6 +118,10 @@ final readonly class I18nConfig
             canonicalRedirect: (bool) ($data['canonical_redirect'] ?? true),
             localizedSlugs: self::parseLocalizedSlugs($data['localized_slugs'] ?? null),
             negotiateUnprefixedLocale: (bool) ($data['negotiate_unprefixed_locale'] ?? true),
+            courtesyRedirect: (bool) ($data['courtesy_redirect'] ?? false),
+            courtesyFallbackLocale: Coerce::string($data['courtesy_fallback_locale'] ?? null),
+            localeCookieEnabled: (bool) ($data['locale_cookie_enabled'] ?? false),
+            localeCookieName: Coerce::string($data['locale_cookie_name'] ?? null, 'pulsar_locale'),
         );
     }
 
