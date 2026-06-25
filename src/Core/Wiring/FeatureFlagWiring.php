@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Core\Wiring;
 
+use Psr\Log\LoggerInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\FeatureFlagConfig;
@@ -20,7 +21,6 @@ use Pulsar\FeatureFlag\Storage\InMemoryFlagStorage;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Routing\Router;
-use Psr\Log\LoggerInterface;
 
 #[Internal]
 final readonly class FeatureFlagWiring implements ServiceWiringInterface
