@@ -42,6 +42,9 @@ final readonly class AntiSpamConfig
      * @param bool $reputationCooldownEnabled Enable reputation-based cooldowns
      * @param array<string, int> $cooldownTiers Cooldown seconds per reputation tier
      * @param bool $shortCircuit Stop on first failure instead of running all checks
+     * @param int $managedChallengeBits Proof-of-work difficulty (leading zero bits) for the self-hosted 'managed' captcha provider
+     * @param int $managedChallengeTtlSeconds Lifetime of an issued managed challenge
+     * @param string $managedChallengeFieldName Form field name the managed-challenge widget writes its solved token into
      */
     public function __construct(
         public bool $honeypotEnabled = true,
@@ -66,6 +69,9 @@ final readonly class AntiSpamConfig
         public bool $reputationCooldownEnabled = true,
         public array $cooldownTiers = ['new' => 60, 'established' => 10, 'moderator' => 0],
         public bool $shortCircuit = false,
+        public int $managedChallengeBits = 16,
+        public int $managedChallengeTtlSeconds = 300,
+        public string $managedChallengeFieldName = 'pulsar-challenge-response',
     ) {}
 
     /**
@@ -92,6 +98,9 @@ final readonly class AntiSpamConfig
      *     reputation_cooldown_enabled?: bool,
      *     cooldown_tiers?: array<string, int>,
      *     short_circuit?: bool,
+     *     managed_challenge_bits?: int,
+     *     managed_challenge_ttl_seconds?: int,
+     *     managed_challenge_field_name?: string,
      * } $data
      */
     #[NoDiscard]
@@ -122,6 +131,9 @@ final readonly class AntiSpamConfig
             reputationCooldownEnabled: Coerce::strictBool($data['reputation_cooldown_enabled'] ?? null, true),
             cooldownTiers: is_array($cooldownTiers) ? $cooldownTiers : ['new' => 60, 'established' => 10, 'moderator' => 0],
             shortCircuit: Coerce::strictBool($data['short_circuit'] ?? null),
+            managedChallengeBits: Coerce::int($data['managed_challenge_bits'] ?? null, 16),
+            managedChallengeTtlSeconds: Coerce::int($data['managed_challenge_ttl_seconds'] ?? null, 300),
+            managedChallengeFieldName: Coerce::string($data['managed_challenge_field_name'] ?? null, 'pulsar-challenge-response'),
         );
     }
 }

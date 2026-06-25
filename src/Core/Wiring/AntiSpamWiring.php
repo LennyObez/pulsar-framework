@@ -24,9 +24,15 @@ use Pulsar\Security\AntiSpam\DuplicateDetector;
 use Pulsar\Security\AntiSpam\HCaptchaVerifier;
 use Pulsar\Security\AntiSpam\HoneypotDetector;
 use Pulsar\Security\AntiSpam\LinkDensityChecker;
+use Pulsar\Security\AntiSpam\ManagedChallenge\ManagedChallengeAssetController;
+use Pulsar\Security\AntiSpam\ManagedChallenge\ManagedChallengeRenderer;
+use Pulsar\Security\AntiSpam\ManagedChallenge\ManagedChallengeService;
+use Pulsar\Security\AntiSpam\ManagedChallenge\ManagedChallengeVerifier;
 use Pulsar\Security\AntiSpam\ProofOfWorkVerifier;
 use Pulsar\Security\AntiSpam\ReputationCooldown;
 use Pulsar\Security\AntiSpam\TurnstileVerifier;
+use Pulsar\Security\Crypto\MasterKey;
+use SodiumException;
 
 use function is_array;
 use function is_file;
@@ -109,38 +115,114 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface
             $checks[] = new ReputationCooldown($cache, $config->cooldownTiers);
         }
 
-        // 8. CAPTCHA verifier (conditional on config keys being set)
-        if (
-            $config->captchaEnabled
-            && $config->captchaSiteKey !== ''
-            && $config->captchaSecretKey !== ''
-            && $container->has(HttpClientInterface::class)
-        ) {
-            /** @var HttpClientInterface $httpClient */
-            $httpClient = $container->get(HttpClientInterface::class);
+        // 8. CAPTCHA verifier
+        if ($config->captchaEnabled) {
+            if ($config->captchaProvider === 'managed') {
+                // Self-hosted managed challenge: no keys, no external service.
+                $managedVerifier = $this->wireManagedChallenge($container, $config, $logger, $router);
 
-            $captchaVerifier = match ($config->captchaProvider) {
-                'turnstile' => new TurnstileVerifier(
-                    $httpClient,
-                    $logger,
-                    $config->captchaSiteKey,
-                    $config->captchaSecretKey,
-                ),
-                default => new HCaptchaVerifier(
-                    $httpClient,
-                    $logger,
-                    $config->captchaSiteKey,
-                    $config->captchaSecretKey,
-                ),
-            };
+                if ($managedVerifier !== null) {
+                    $checks[] = $managedVerifier;
+                }
+            } elseif (
+                $config->captchaSiteKey !== ''
+                && $config->captchaSecretKey !== ''
+                && $container->has(HttpClientInterface::class)
+            ) {
+                /** @var HttpClientInterface $httpClient */
+                $httpClient = $container->get(HttpClientInterface::class);
 
-            $checks[] = $captchaVerifier;
+                $checks[] = match ($config->captchaProvider) {
+                    'turnstile' => new TurnstileVerifier(
+                        $httpClient,
+                        $logger,
+                        $config->captchaSiteKey,
+                        $config->captchaSecretKey,
+                    ),
+                    default => new HCaptchaVerifier(
+                        $httpClient,
+                        $logger,
+                        $config->captchaSiteKey,
+                        $config->captchaSecretKey,
+                    ),
+                };
+            }
         }
 
         // Build the pipeline
         $pipeline = new AntiSpamPipeline($checks, $config->shortCircuit);
         $container->instance(AntiSpamPipeline::class, $pipeline);
         $container->instance(AntiSpamPipelineInterface::class, $pipeline);
+    }
+
+    /**
+     * Wire the self-hosted managed-challenge captcha (no external service).
+     *
+     * Derives a dedicated signing sub-key from the master key, registers the
+     * same-origin widget/worker/pow asset routes, the renderer (global +
+     * container) backing the @shield directive, and returns the verifier for
+     * the pipeline. Returns null — disabling the provider rather than failing
+     * boot — when no master key is configured or key derivation fails.
+     */
+    private function wireManagedChallenge(
+        ContainerInterface $container,
+        AntiSpamConfig $config,
+        LoggerInterface $logger,
+        Router $router,
+    ): ?ManagedChallengeVerifier {
+        if (!$container->has(MasterKey::class)) {
+            $logger->warning(
+                'Managed challenge captcha requires a configured PULSAR_MASTER_KEY; provider disabled.',
+            );
+
+            return null;
+        }
+
+        /** @var MasterKey $masterKey */
+        $masterKey = $container->get(MasterKey::class);
+
+        try {
+            // Sub-key id 16, domain-separated context (8 chars) for anti-spam signing.
+            $signingKey = $masterKey->deriveSubKey(16, 'antispam');
+        } catch (SodiumException $e) {
+            $logger->error('Managed challenge signing key derivation failed; provider disabled.', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+
+        $cache = $container->has(TaggedCacheInterface::class)
+            ? $container->get(TaggedCacheInterface::class)
+            : null;
+        /** @var TaggedCacheInterface|null $cache */
+
+        $service = new ManagedChallengeService(
+            $signingKey,
+            $config->managedChallengeBits,
+            $config->managedChallengeTtlSeconds,
+            $cache,
+            $logger,
+        );
+        $container->instance(ManagedChallengeService::class, $service);
+
+        // Same-origin asset routes keep the widget CSP `script-src 'self'` clean.
+        $base = '/_pulsar/anti-spam';
+        $container->instance(ManagedChallengeAssetController::class, new ManagedChallengeAssetController());
+        $router->get($base . '/managed-challenge.js', [ManagedChallengeAssetController::class, 'widget'], 'pulsar.anti_spam.mc.widget');
+        $router->get($base . '/managed-challenge.worker.js', [ManagedChallengeAssetController::class, 'worker'], 'pulsar.anti_spam.mc.worker');
+        $router->get($base . '/managed-challenge.pow.js', [ManagedChallengeAssetController::class, 'pow'], 'pulsar.anti_spam.mc.pow');
+
+        $renderer = new ManagedChallengeRenderer(
+            $service,
+            $config->managedChallengeFieldName,
+            $base . '/managed-challenge.js',
+            $base . '/managed-challenge.worker.js',
+        );
+        $container->instance(ManagedChallengeRenderer::class, $renderer);
+        ManagedChallengeRenderer::setGlobalInstance($renderer);
+
+        return new ManagedChallengeVerifier($service);
     }
 
     private function loadConfig(ConfigManager $configManager): AntiSpamConfig

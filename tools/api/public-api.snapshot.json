@@ -39191,7 +39191,10 @@
                         "int $minAccountAgeSeconds",
                         "bool $reputationCooldownEnabled",
                         "array $cooldownTiers",
-                        "bool $shortCircuit"
+                        "bool $shortCircuit",
+                        "int $managedChallengeBits",
+                        "int $managedChallengeTtlSeconds",
+                        "string $managedChallengeFieldName"
                     ],
                     "return": null,
                     "static": false
@@ -39314,6 +39317,49 @@
             "since": "1.0.0",
             "methods": [],
             "signatures": [],
+            "constants": []
+        },
+        "Pulsar\\Security\\AntiSpam\\ManagedChallenge\\ManagedChallengeRenderer": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "Pulsar\\Security\\AntiSpam\\ManagedChallenge\\ManagedChallengeService $service",
+                        "string $fieldName",
+                        "string $scriptUrl",
+                        "string $workerUrl"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "render": {
+                    "params": [
+                        "?string $cspNonce"
+                    ],
+                    "return": "string",
+                    "static": false
+                },
+                "renderGlobal": {
+                    "params": [
+                        "?string $cspNonce"
+                    ],
+                    "return": "string",
+                    "static": true
+                },
+                "resetGlobalInstance": {
+                    "params": [],
+                    "return": "void",
+                    "static": true
+                },
+                "setGlobalInstance": {
+                    "params": [
+                        "Pulsar\\Security\\AntiSpam\\ManagedChallenge\\ManagedChallengeRenderer $instance"
+                    ],
+                    "return": "void",
+                    "static": true
+                }
+            },
             "constants": []
         },
         "Pulsar\\Security\\AntiSpam\\ProofOfWorkVerifierInterface": {
@@ -55354,6 +55400,10 @@
         "Pulsar\\Security\\AntiSpam\\HCaptchaVerifier",
         "Pulsar\\Security\\AntiSpam\\HoneypotDetector",
         "Pulsar\\Security\\AntiSpam\\LinkDensityChecker",
+        "Pulsar\\Security\\AntiSpam\\ManagedChallenge\\ManagedChallenge",
+        "Pulsar\\Security\\AntiSpam\\ManagedChallenge\\ManagedChallengeAssetController",
+        "Pulsar\\Security\\AntiSpam\\ManagedChallenge\\ManagedChallengeService",
+        "Pulsar\\Security\\AntiSpam\\ManagedChallenge\\ManagedChallengeVerifier",
         "Pulsar\\Security\\AntiSpam\\ProofOfWorkVerifier",
         "Pulsar\\Security\\AntiSpam\\ReputationCooldown",
         "Pulsar\\Security\\AntiSpam\\TurnstileVerifier",
@@ -55447,6 +55497,7 @@
         "Pulsar\\View\\Directive\\RouteDirective",
         "Pulsar\\View\\Directive\\SanitizeDirective",
         "Pulsar\\View\\Directive\\SectionDirective",
+        "Pulsar\\View\\Directive\\ShieldDirective",
         "Pulsar\\View\\Directive\\SimpleDirective",
         "Pulsar\\View\\Directive\\SlotDirective",
         "Pulsar\\View\\Directive\\StackDirective",

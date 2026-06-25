@@ -10,6 +10,7 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 
 - Native localized route slugs: translate URL path segments per locale (`/fr/developpement`, `/nl/ontwikkeling`) for a single route registered under a canonical key. Includes `SlugRegistry`, `LocalizedSlugMiddleware` (constant-time rewrite + configurable canonical 301 for non-canonical aliases, route parameters preserved), `LocalizedUrlGenerator` with the `route()` helper and `@route` directive, slug-aware hreflang/`x-default` output, and the `i18n:slugs:lint` console command (completeness + collision checks, wired into CI). Compiled once at boot with zero runtime cost when unconfigured.
+- Managed Challenge: a self-hosted, privacy-preserving CAPTCHA provider (`captcha_provider: 'managed'`) — an invisible proof-of-work alternative to Cloudflare Turnstile / hCaptcha with no external service, no cookies, and no fingerprinting. Signed, single-use, expiring challenges (`sodium_crypto_auth`, master sub-key) solved in a Web Worker and verified server-side (signature → freshness → proof-of-work → replay cache). Ships `ManagedChallengeService`/`Verifier`/`Renderer`, the `@shield` directive, same-origin widget + worker assets (CSP `script-src 'self'` clean), and `managed_challenge_bits`/`ttl`/`field_name` config.
 
 ## [1.0.0-rc.11] - 2026-02-12
 
