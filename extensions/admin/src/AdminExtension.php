@@ -16,6 +16,13 @@ use Pulsar\Extension\Admin\Config\AdminConfig;
 use Pulsar\Extension\Admin\Contracts\ResourceRegistryInterface;
 use Pulsar\Extension\Admin\Internal\Adapter\IntrospectedResourceFactory;
 use Pulsar\Extension\Admin\Internal\AdminStudioModule;
+use Pulsar\Extension\Admin\Internal\Middleware\AdminAccessMiddleware;
+use Pulsar\Extension\Admin\Internal\Middleware\AdminAuditMiddleware;
+use Pulsar\Extension\Admin\Internal\Middleware\AdminAuthMiddleware;
+use Pulsar\Extension\Admin\Internal\Middleware\AdminCspMiddleware;
+use Pulsar\Extension\Admin\Internal\Middleware\AdminCsrfMiddleware;
+use Pulsar\Extension\Admin\Internal\Middleware\AdminRateLimitMiddleware;
+use Pulsar\Extension\Admin\Internal\Middleware\AdminSchemaMiddleware;
 use Pulsar\Extension\Admin\Server\Controller\ActionHistoryController;
 use Pulsar\Extension\Admin\Server\Controller\BulkActionController;
 use Pulsar\Extension\Admin\Server\Controller\DashboardController;
@@ -31,6 +38,8 @@ use Pulsar\Extension\Admin\Server\Controller\SchemaApiController;
 use Pulsar\Extension\Admin\Server\Controller\SchemaController;
 use Pulsar\Extension\Admin\Server\Controller\SearchController;
 use Pulsar\Extension\Studio\Contracts\StudioModuleRegistryInterface;
+use Pulsar\Http\Method;
+use Pulsar\Routing\Route;
 use Pulsar\Routing\RouterInterface;
 
 use function is_array;
@@ -113,66 +122,84 @@ final readonly class AdminExtension implements ExtensionInterface, PreBootExtens
 
         $prefix = rtrim($config->routePrefix, '/');
 
+        // Every admin route runs the full security stack (outermost first):
+        // audit log -> CSP headers -> panel-enabled gate -> rate limit ->
+        // authentication/2FA/access-gate -> CSRF. The bound middlewares only
+        // execute when attached to the route; without this the admin panel
+        // would serve unauthenticated CRUD and schema DDL.
+        $secure = [
+            AdminAuditMiddleware::class,
+            AdminCspMiddleware::class,
+            AdminAccessMiddleware::class,
+            AdminRateLimitMiddleware::class,
+            AdminAuthMiddleware::class,
+            AdminCsrfMiddleware::class,
+        ];
+
+        // Schema DDL routes additionally enforce per-operation permissions
+        // and step-up auth for destructive changes.
+        $schemaSecure = [...$secure, AdminSchemaMiddleware::class];
+
         // Dashboard
-        $router->get($prefix, [DashboardController::class, 'index'], 'admin.dashboard');
+        $this->route($router, Method::GET, $prefix, [DashboardController::class, 'index'], 'admin.dashboard', $secure);
 
         // Search
-        $router->get("$prefix/search", [SearchController::class, 'search'], 'admin.search');
+        $this->route($router, Method::GET, "$prefix/search", [SearchController::class, 'search'], 'admin.search', $secure);
 
         // Resource index
-        $router->get("$prefix/resources", [ResourceIndexController::class, 'index'], 'admin.resources');
+        $this->route($router, Method::GET, "$prefix/resources", [ResourceIndexController::class, 'index'], 'admin.resources', $secure);
 
         // Action history
-        $router->get("$prefix/activity", [ActionHistoryController::class, 'recent'], 'admin.activity');
-        $router->get("$prefix/activity/{resource}", [ActionHistoryController::class, 'forResource'], 'admin.activity.resource');
+        $this->route($router, Method::GET, "$prefix/activity", [ActionHistoryController::class, 'recent'], 'admin.activity', $secure);
+        $this->route($router, Method::GET, "$prefix/activity/{resource}", [ActionHistoryController::class, 'forResource'], 'admin.activity.resource', $secure);
 
         // Resource CRUD
-        $router->get("$prefix/resources/{resource}", [ResourceListController::class, 'list'], 'admin.resource.list');
-        $router->get("$prefix/resources/{resource}/create", [ResourceCreateController::class, 'form'], 'admin.resource.create.form');
-        $router->post("$prefix/resources/{resource}", [ResourceCreateController::class, 'store'], 'admin.resource.create');
-        $router->get("$prefix/resources/{resource}/export", [ExportController::class, 'export'], 'admin.resource.export');
-        $router->get("$prefix/resources/{resource}/{id}", [ResourceViewController::class, 'view'], 'admin.resource.view');
-        $router->get("$prefix/resources/{resource}/{id}/edit", [ResourceUpdateController::class, 'form'], 'admin.resource.edit.form');
-        $router->put("$prefix/resources/{resource}/{id}", [ResourceUpdateController::class, 'update'], 'admin.resource.update');
-        $router->delete("$prefix/resources/{resource}/{id}", [ResourceDeleteController::class, 'delete'], 'admin.resource.delete');
+        $this->route($router, Method::GET, "$prefix/resources/{resource}", [ResourceListController::class, 'list'], 'admin.resource.list', $secure);
+        $this->route($router, Method::GET, "$prefix/resources/{resource}/create", [ResourceCreateController::class, 'form'], 'admin.resource.create.form', $secure);
+        $this->route($router, Method::POST, "$prefix/resources/{resource}", [ResourceCreateController::class, 'store'], 'admin.resource.create', $secure);
+        $this->route($router, Method::GET, "$prefix/resources/{resource}/export", [ExportController::class, 'export'], 'admin.resource.export', $secure);
+        $this->route($router, Method::GET, "$prefix/resources/{resource}/{id}", [ResourceViewController::class, 'view'], 'admin.resource.view', $secure);
+        $this->route($router, Method::GET, "$prefix/resources/{resource}/{id}/edit", [ResourceUpdateController::class, 'form'], 'admin.resource.edit.form', $secure);
+        $this->route($router, Method::PUT, "$prefix/resources/{resource}/{id}", [ResourceUpdateController::class, 'update'], 'admin.resource.update', $secure);
+        $this->route($router, Method::DELETE, "$prefix/resources/{resource}/{id}", [ResourceDeleteController::class, 'delete'], 'admin.resource.delete', $secure);
 
         // Bulk actions
-        $router->post("$prefix/resources/{resource}/bulk", [BulkActionController::class, 'execute'], 'admin.resource.bulk');
+        $this->route($router, Method::POST, "$prefix/resources/{resource}/bulk", [BulkActionController::class, 'execute'], 'admin.resource.bulk', $secure);
 
         // Saved views
-        $router->get("$prefix/resources/{resource}/views", [SavedViewsController::class, 'list'], 'admin.resource.views');
-        $router->post("$prefix/resources/{resource}/views", [SavedViewsController::class, 'store'], 'admin.resource.views.store');
-        $router->delete("$prefix/resources/{resource}/views/{viewId}", [SavedViewsController::class, 'delete'], 'admin.resource.views.delete');
+        $this->route($router, Method::GET, "$prefix/resources/{resource}/views", [SavedViewsController::class, 'list'], 'admin.resource.views', $secure);
+        $this->route($router, Method::POST, "$prefix/resources/{resource}/views", [SavedViewsController::class, 'store'], 'admin.resource.views.store', $secure);
+        $this->route($router, Method::DELETE, "$prefix/resources/{resource}/views/{viewId}", [SavedViewsController::class, 'delete'], 'admin.resource.views.delete', $secure);
 
         // Schema Builder routes (gated by config)
         if ($config->schema->enabled) {
             // HTML pages
-            $router->get("$prefix/schema", [SchemaController::class, 'list'], 'admin.schema');
-            $router->get("$prefix/schema/create", [SchemaController::class, 'createForm'], 'admin.schema.create.form');
-            $router->get("$prefix/schema/changelog", [SchemaController::class, 'changelog'], 'admin.schema.changelog');
-            $router->get("$prefix/schema/{table}", [SchemaController::class, 'view'], 'admin.schema.view');
+            $this->route($router, Method::GET, "$prefix/schema", [SchemaController::class, 'list'], 'admin.schema', $schemaSecure);
+            $this->route($router, Method::GET, "$prefix/schema/create", [SchemaController::class, 'createForm'], 'admin.schema.create.form', $schemaSecure);
+            $this->route($router, Method::GET, "$prefix/schema/changelog", [SchemaController::class, 'changelog'], 'admin.schema.changelog', $schemaSecure);
+            $this->route($router, Method::GET, "$prefix/schema/{table}", [SchemaController::class, 'view'], 'admin.schema.view', $schemaSecure);
 
             // JSON API: mutations
-            $router->post("$prefix/api/schema", [SchemaApiController::class, 'create'], 'admin.api.schema.create');
-            $router->delete("$prefix/api/schema/{table}", [SchemaApiController::class, 'dropTable'], 'admin.api.schema.drop');
-            $router->post("$prefix/api/schema/{table}/rename", [SchemaApiController::class, 'renameTable'], 'admin.api.schema.rename');
-            $router->post("$prefix/api/schema/{table}/columns", [SchemaApiController::class, 'addColumn'], 'admin.api.schema.add_column');
-            $router->delete("$prefix/api/schema/{table}/columns/{col}", [SchemaApiController::class, 'dropColumn'], 'admin.api.schema.drop_column');
-            $router->post("$prefix/api/schema/{table}/indexes", [SchemaApiController::class, 'addIndex'], 'admin.api.schema.add_index');
-            $router->delete("$prefix/api/schema/{table}/indexes/{name}", [SchemaApiController::class, 'dropIndex'], 'admin.api.schema.drop_index');
+            $this->route($router, Method::POST, "$prefix/api/schema", [SchemaApiController::class, 'create'], 'admin.api.schema.create', $schemaSecure);
+            $this->route($router, Method::DELETE, "$prefix/api/schema/{table}", [SchemaApiController::class, 'dropTable'], 'admin.api.schema.drop', $schemaSecure);
+            $this->route($router, Method::POST, "$prefix/api/schema/{table}/rename", [SchemaApiController::class, 'renameTable'], 'admin.api.schema.rename', $schemaSecure);
+            $this->route($router, Method::POST, "$prefix/api/schema/{table}/columns", [SchemaApiController::class, 'addColumn'], 'admin.api.schema.add_column', $schemaSecure);
+            $this->route($router, Method::DELETE, "$prefix/api/schema/{table}/columns/{col}", [SchemaApiController::class, 'dropColumn'], 'admin.api.schema.drop_column', $schemaSecure);
+            $this->route($router, Method::POST, "$prefix/api/schema/{table}/indexes", [SchemaApiController::class, 'addIndex'], 'admin.api.schema.add_index', $schemaSecure);
+            $this->route($router, Method::DELETE, "$prefix/api/schema/{table}/indexes/{name}", [SchemaApiController::class, 'dropIndex'], 'admin.api.schema.drop_index', $schemaSecure);
 
             // Preview routes (read-only)
-            $router->post("$prefix/api/schema/preview/create", [SchemaApiController::class, 'previewCreate'], 'admin.api.schema.preview.create');
-            $router->post("$prefix/api/schema/preview/{table}/add-column", [SchemaApiController::class, 'previewAddColumn'], 'admin.api.schema.preview.add_column');
-            $router->post("$prefix/api/schema/preview/{table}/drop-column", [SchemaApiController::class, 'previewDropColumn'], 'admin.api.schema.preview.drop_column');
-            $router->post("$prefix/api/schema/preview/{table}/add-index", [SchemaApiController::class, 'previewAddIndex'], 'admin.api.schema.preview.add_index');
-            $router->post("$prefix/api/schema/preview/{table}/drop-index", [SchemaApiController::class, 'previewDropIndex'], 'admin.api.schema.preview.drop_index');
-            $router->post("$prefix/api/schema/preview/{table}/drop", [SchemaApiController::class, 'previewDropTable'], 'admin.api.schema.preview.drop');
-            $router->post("$prefix/api/schema/preview/{table}/rename", [SchemaApiController::class, 'previewRenameTable'], 'admin.api.schema.preview.rename');
+            $this->route($router, Method::POST, "$prefix/api/schema/preview/create", [SchemaApiController::class, 'previewCreate'], 'admin.api.schema.preview.create', $schemaSecure);
+            $this->route($router, Method::POST, "$prefix/api/schema/preview/{table}/add-column", [SchemaApiController::class, 'previewAddColumn'], 'admin.api.schema.preview.add_column', $schemaSecure);
+            $this->route($router, Method::POST, "$prefix/api/schema/preview/{table}/drop-column", [SchemaApiController::class, 'previewDropColumn'], 'admin.api.schema.preview.drop_column', $schemaSecure);
+            $this->route($router, Method::POST, "$prefix/api/schema/preview/{table}/add-index", [SchemaApiController::class, 'previewAddIndex'], 'admin.api.schema.preview.add_index', $schemaSecure);
+            $this->route($router, Method::POST, "$prefix/api/schema/preview/{table}/drop-index", [SchemaApiController::class, 'previewDropIndex'], 'admin.api.schema.preview.drop_index', $schemaSecure);
+            $this->route($router, Method::POST, "$prefix/api/schema/preview/{table}/drop", [SchemaApiController::class, 'previewDropTable'], 'admin.api.schema.preview.drop', $schemaSecure);
+            $this->route($router, Method::POST, "$prefix/api/schema/preview/{table}/rename", [SchemaApiController::class, 'previewRenameTable'], 'admin.api.schema.preview.rename', $schemaSecure);
 
             // Changelog API + export
-            $router->get("$prefix/api/schema/changelog", [SchemaApiController::class, 'changelog'], 'admin.api.schema.changelog');
-            $router->get("$prefix/api/schema/changelog/export", [SchemaApiController::class, 'exportBundle'], 'admin.api.schema.changelog.export');
+            $this->route($router, Method::GET, "$prefix/api/schema/changelog", [SchemaApiController::class, 'changelog'], 'admin.api.schema.changelog', $schemaSecure);
+            $this->route($router, Method::GET, "$prefix/api/schema/changelog/export", [SchemaApiController::class, 'exportBundle'], 'admin.api.schema.changelog.export', $schemaSecure);
         }
 
         // Auto-discover database tables when no resources are manually registered
@@ -193,6 +220,23 @@ final readonly class AdminExtension implements ExtensionInterface, PreBootExtens
                 }
             }
         }
+    }
+
+    /**
+     * Register a single admin route with its security middleware stack.
+     *
+     * @param array{0: class-string, 1: string} $handler
+     * @param list<class-string>                 $middleware
+     */
+    private function route(RouterInterface $router, Method $method, string $path, array $handler, string $name, array $middleware): void
+    {
+        $router->add(new Route(
+            methods: [$method],
+            path: $path,
+            handler: $handler,
+            name: $name,
+            middleware: $middleware,
+        ));
     }
 
     /**

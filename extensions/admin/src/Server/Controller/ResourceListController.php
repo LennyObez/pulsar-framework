@@ -60,11 +60,12 @@ final readonly class ResourceListController
         /** @var mixed $pageRaw */
         $pageRaw = $queryParams['page'] ?? 1;
         $page = max(1, (is_int($pageRaw) || is_string($pageRaw)) && is_numeric($pageRaw) ? (int) $pageRaw : 1);
+        $defaultPerPage = $this->config->pagination->defaultPerPage;
         /** @var mixed $perPageRaw */
-        $perPageRaw = $queryParams['per_page'] ?? 25;
+        $perPageRaw = $queryParams['per_page'] ?? $defaultPerPage;
         $perPage = min(
             $this->config->pagination->maxPerPage,
-            max(1, (is_int($perPageRaw) || is_string($perPageRaw)) && is_numeric($perPageRaw) ? (int) $perPageRaw : 25),
+            max(1, (is_int($perPageRaw) || is_string($perPageRaw)) && is_numeric($perPageRaw) ? (int) $perPageRaw : $defaultPerPage),
         );
 
         try {
