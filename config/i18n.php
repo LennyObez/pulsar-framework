@@ -102,6 +102,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Negotiate Unprefixed Locale
+    |--------------------------------------------------------------------------
+    | When true (default), the active locale for an unprefixed URL is chosen by
+    | Accept-Language negotiation. When false, an unprefixed URL is always the
+    | default locale, so default-locale URLs stay canonical and are never
+    | redirected to a negotiated translation (recommended with localized_slugs
+    | and default_locale_in_url = false). The negotiated preference is still
+    | exposed via the `_negotiated_locale` request attribute, so an application
+    | can offer its own courtesy redirect at `/` (e.g. 302 a first-time `fr`
+    | visitor to `/fr`) without it contaminating slug resolution.
+    */
+    'negotiate_unprefixed_locale' => true,
+
+    /*
+    |--------------------------------------------------------------------------
     | Localized Route Slugs
     |--------------------------------------------------------------------------
     | Translate static URL path segments per locale. Each key is the canonical
