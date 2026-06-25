@@ -29,6 +29,17 @@ interface AiImpactAssessmentInterface
     public function assess(string $modelId, array $categories = []): void;
 
     /**
+     * Determine whether an impact assessment has been performed for a model.
+     *
+     * Distinguishes "assessed with no adverse findings" (passes) from "never
+     * assessed" (fails) — getFindings() alone cannot tell them apart.
+     *
+     * @param non-empty-string $modelId The model to check
+     */
+    #[NoDiscard]
+    public function hasAssessment(string $modelId): bool;
+
+    /**
      * Retrieve findings from the most recent assessment of a model.
      *
      * @return list<ImpactFinding>

@@ -19,6 +19,7 @@ final class AiGovernanceConfigTest extends TestCase
         self::assertTrue($config->requireImpactAssessment);
         self::assertFalse($config->requireModelCard);
         self::assertTrue($config->requireConsentForTrainingData);
+        self::assertSame(7.0, $config->impactRiskThreshold);
         self::assertSame('memory', $config->registryStore);
         self::assertSame('memory', $config->dataGovernanceStore);
         self::assertSame('memory', $config->explainabilityStore);
@@ -31,6 +32,7 @@ final class AiGovernanceConfigTest extends TestCase
             'require_impact_assessment' => false,
             'require_model_card' => true,
             'require_consent_for_training_data' => false,
+            'impact_risk_threshold' => 5.5,
             'registry_store' => 'App\\Store\\DatabaseModelRegistry',
             'data_governance_store' => 'App\\Store\\DatabaseDataGovernance',
             'explainability_store' => 'App\\Store\\DatabaseExplainability',
@@ -40,6 +42,7 @@ final class AiGovernanceConfigTest extends TestCase
         self::assertFalse($config->requireImpactAssessment);
         self::assertTrue($config->requireModelCard);
         self::assertFalse($config->requireConsentForTrainingData);
+        self::assertSame(5.5, $config->impactRiskThreshold);
         self::assertSame('App\\Store\\DatabaseModelRegistry', $config->registryStore);
         self::assertSame('App\\Store\\DatabaseDataGovernance', $config->dataGovernanceStore);
         self::assertSame('App\\Store\\DatabaseExplainability', $config->explainabilityStore);

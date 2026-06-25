@@ -35,6 +35,12 @@ final class InMemoryImpactAssessmentStore implements AiImpactAssessmentInterface
         }
     }
 
+    #[Override]
+    public function hasAssessment(string $modelId): bool
+    {
+        return isset($this->findings[$modelId]);
+    }
+
     /**
      * Add a finding for a model. Used by tests and manual assessments.
      */
