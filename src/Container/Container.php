@@ -8,8 +8,7 @@ use Closure;
 use NoDiscard;
 use Override;
 use Pulsar\Api\Api;
-use Pulsar\Container\Compiler\ContainerBuilder;
-use Pulsar\Container\Compiler\Pass\ValidateLifetimesPass;
+use Pulsar\Container\Compiler\CompilerPassProcessor;
 use Pulsar\Container\Compiler\PassRunner;
 use Pulsar\Container\Decorator\DecoratorChain;
 use Pulsar\Container\Exception\ContainerException;
@@ -278,19 +277,7 @@ final class Container implements AdvancedContainerInterface
     #[Override]
     public function processCompilerPasses(PassRunner $runner): void
     {
-        $builder = new ContainerBuilder();
-
-        foreach ($this->definitions as $id => $definition) {
-            $builder->setDefinition($id, $definition);
-        }
-
-        $runner->run($builder);
-
-        // Re-import processed definitions
-        $this->definitions = [];
-        foreach ($builder->allDefinitions() as $id => $definition) {
-            $this->definitions[$id] = $definition;
-        }
+        $this->definitions = CompilerPassProcessor::process($this->definitions, $runner);
     }
 
     #[Override]
@@ -631,14 +618,7 @@ final class Container implements AdvancedContainerInterface
     #[Override]
     public function validateScopeGraph(): void
     {
-        $builder = new ContainerBuilder();
-
-        foreach ($this->definitions as $id => $definition) {
-            $builder->setDefinition($id, $definition);
-        }
-
-        $pass = new ValidateLifetimesPass();
-        $pass->process($builder);
+        CompilerPassProcessor::validateScopeGraph($this->definitions);
     }
 
     #[Override]
