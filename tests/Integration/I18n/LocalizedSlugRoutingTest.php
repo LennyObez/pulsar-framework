@@ -35,7 +35,7 @@ use function is_string;
 #[CoversClass(SlugRegistry::class)]
 final class LocalizedSlugRoutingTest extends TestCase
 {
-    private function config(): I18nConfig
+    private function config(bool $negotiateUnprefixedLocale = true): I18nConfig
     {
         return new I18nConfig(
             defaultLocale: 'en',
@@ -52,12 +52,17 @@ final class LocalizedSlugRoutingTest extends TestCase
                 'development' => ['fr' => 'developpement', 'nl' => 'ontwikkeling'],
                 'development/projects' => ['fr' => 'developpement/projets', 'nl' => 'ontwikkeling/projecten'],
             ],
+            negotiateUnprefixedLocale: $negotiateUnprefixedLocale,
         );
     }
 
-    private function dispatch(string $method, string $uri): ResponseInterface
-    {
-        $config = $this->config();
+    private function dispatch(
+        string $method,
+        string $uri,
+        ?string $acceptLanguage = null,
+        bool $negotiateUnprefixedLocale = true,
+    ): ResponseInterface {
+        $config = $this->config($negotiateUnprefixedLocale);
         $extractor = new UrlPrefixExtractor();
 
         $translator = new class implements TranslatorInterface {
@@ -113,7 +118,13 @@ final class LocalizedSlugRoutingTest extends TestCase
             }
         };
 
-        return $pipeline->process(new ServerRequest(method: $method, uri: $uri), $finalHandler);
+        $request = new ServerRequest(method: $method, uri: $uri);
+
+        if ($acceptLanguage !== null) {
+            $request = $request->withHeader('Accept-Language', $acceptLanguage);
+        }
+
+        return $pipeline->process($request, $finalHandler);
     }
 
     #[Test]
@@ -176,5 +187,40 @@ final class LocalizedSlugRoutingTest extends TestCase
         $response = $this->dispatch('GET', '/fr/inconnu');
 
         self::assertSame(404, $response->getStatusCode());
+    }
+
+    #[Test]
+    public function unprefixed_default_locale_url_stays_canonical_under_foreign_accept_language(): void
+    {
+        // With negotiation disabled, a French browser hitting the canonical
+        // English URL is served the English page — not bounced to /fr/...
+        $response = $this->dispatch('GET', '/development', acceptLanguage: 'fr-FR,fr;q=0.9', negotiateUnprefixedLocale: false);
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame('development', (string) $response->getBody());
+    }
+
+    #[Test]
+    public function localized_paths_unaffected_by_disabled_negotiation(): void
+    {
+        // The prefix is URL-authoritative regardless of the negotiation flag.
+        $canonical = $this->dispatch('GET', '/fr/developpement', acceptLanguage: 'en-US', negotiateUnprefixedLocale: false);
+        self::assertSame(200, $canonical->getStatusCode());
+        self::assertSame('development', (string) $canonical->getBody());
+
+        $alias = $this->dispatch('GET', '/fr/development', acceptLanguage: 'en-US', negotiateUnprefixedLocale: false);
+        self::assertSame(301, $alias->getStatusCode());
+        self::assertSame('/fr/developpement', $alias->getHeaderLine('Location'));
+    }
+
+    #[Test]
+    public function unprefixed_url_follows_accept_language_when_negotiation_enabled(): void
+    {
+        // Default (BC) behaviour: an unprefixed URL is negotiated, so a French
+        // browser is redirected to the localized slug.
+        $response = $this->dispatch('GET', '/development', acceptLanguage: 'fr-FR,fr;q=0.9', negotiateUnprefixedLocale: true);
+
+        self::assertSame(301, $response->getStatusCode());
+        self::assertSame('/fr/developpement', $response->getHeaderLine('Location'));
     }
 }

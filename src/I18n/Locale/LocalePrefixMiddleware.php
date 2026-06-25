@@ -81,15 +81,25 @@ final readonly class LocalePrefixMiddleware implements MiddlewareInterface
         ServerRequestInterface $request,
         RequestHandlerInterface $handler,
     ): ResponseInterface {
-        $locale = $this->negotiator->negotiate(
+        $negotiated = $this->negotiator->negotiate(
             $request,
             $this->config->supportedLocales,
             $this->config->defaultLocale,
         );
 
+        // The active locale for an unprefixed URL is URL-authoritative: it is the
+        // default locale unless Accept-Language negotiation is explicitly allowed
+        // to choose it. This keeps unprefixed (default-locale) URLs canonical so
+        // they are not rewritten/redirected to a negotiated translation by the
+        // localized-slug middleware. The negotiated preference is exposed
+        // separately so an application can still offer a courtesy redirect at /.
+        $locale = $this->config->negotiateUnprefixedLocale ? $negotiated : $this->config->defaultLocale;
+
         $this->translator->locale = $locale;
 
-        $request = $request->withAttribute('_locale', $locale);
+        $request = $request
+            ->withAttribute('_locale', $locale)
+            ->withAttribute('_negotiated_locale', $negotiated);
 
         return $handler->handle($request);
     }

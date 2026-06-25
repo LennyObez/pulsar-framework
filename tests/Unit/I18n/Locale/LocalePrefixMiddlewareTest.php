@@ -54,6 +54,7 @@ final class LocalePrefixMiddlewareTest extends TestCase
         array $supportedLocales = ['en', 'fr', 'de'],
         bool $canonicalRedirect = true,
         bool $defaultLocaleInUrl = false,
+        bool $negotiateUnprefixedLocale = true,
     ): I18nConfig {
         return new I18nConfig(
             defaultLocale: $defaultLocale,
@@ -66,7 +67,16 @@ final class LocalePrefixMiddlewareTest extends TestCase
             urlStrategy: LocaleUrlStrategy::PathPrefix,
             defaultLocaleInUrl: $defaultLocaleInUrl,
             canonicalRedirect: $canonicalRedirect,
+            negotiateUnprefixedLocale: $negotiateUnprefixedLocale,
         );
+    }
+
+    private function makeNegotiator(string $returns): LocaleNegotiatorInterface
+    {
+        $negotiator = $this->createStub(LocaleNegotiatorInterface::class);
+        $negotiator->method('negotiate')->willReturn($returns);
+
+        return $negotiator;
     }
 
     private function makeMiddleware(
@@ -382,5 +392,60 @@ final class LocalePrefixMiddlewareTest extends TestCase
 
         // Collapsed from //evil.com to /evil.com — no protocol-relative path
         self::assertSame('/evil.com', $capturedPath);
+    }
+
+    #[Test]
+    public function unprefixedLocaleIsDefaultWhenNegotiationDisabled(): void
+    {
+        $middleware = $this->makeMiddleware(
+            $this->makeConfig(negotiateUnprefixedLocale: false),
+            $this->makeNegotiator('fr'),
+        );
+        $request = new ServerRequest(method: 'GET', uri: '/docs');
+
+        $capturedLocale = null;
+        $capturedNegotiated = null;
+        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler->expects(self::once())
+            ->method('handle')
+            ->willReturnCallback(static function (ServerRequestInterface $r) use (&$capturedLocale, &$capturedNegotiated): ResponseInterface {
+                $capturedLocale = $r->getAttribute('_locale');
+                $capturedNegotiated = $r->getAttribute('_negotiated_locale');
+
+                return Response::text('OK');
+            });
+
+        $middleware->process($request, $handler);
+
+        // Active locale is the default (URL-authoritative), not the negotiated one.
+        self::assertSame('en', $capturedLocale);
+        self::assertSame('en', $this->translator->locale);
+        // The negotiated preference is still exposed for a courtesy redirect at /.
+        self::assertSame('fr', $capturedNegotiated);
+    }
+
+    #[Test]
+    public function unprefixedLocaleIsNegotiatedByDefault(): void
+    {
+        // Default (negotiate_unprefixed_locale = true) preserves prior behaviour.
+        $middleware = $this->makeMiddleware($this->makeConfig(), $this->makeNegotiator('fr'));
+        $request = new ServerRequest(method: 'GET', uri: '/docs');
+
+        $capturedLocale = null;
+        $capturedNegotiated = null;
+        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler->expects(self::once())
+            ->method('handle')
+            ->willReturnCallback(static function (ServerRequestInterface $r) use (&$capturedLocale, &$capturedNegotiated): ResponseInterface {
+                $capturedLocale = $r->getAttribute('_locale');
+                $capturedNegotiated = $r->getAttribute('_negotiated_locale');
+
+                return Response::text('OK');
+            });
+
+        $middleware->process($request, $handler);
+
+        self::assertSame('fr', $capturedLocale);
+        self::assertSame('fr', $capturedNegotiated);
     }
 }
