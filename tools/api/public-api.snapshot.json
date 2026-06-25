@@ -38771,6 +38771,144 @@
             "signatures": [],
             "constants": []
         },
+        "Pulsar\\Security\\AntiSpam\\AiCrawler\\AiCrawler": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "cases": {
+                    "params": [],
+                    "return": "array",
+                    "static": true
+                },
+                "category": {
+                    "params": [],
+                    "return": "Pulsar\\Security\\AntiSpam\\AiCrawler\\AiCrawlerCategory",
+                    "static": false
+                },
+                "from": {
+                    "params": [
+                        "string|int $value"
+                    ],
+                    "return": "static",
+                    "static": true
+                },
+                "isRequestCrawler": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
+                "isRobotsTxtOnly": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
+                "tryFrom": {
+                    "params": [
+                        "string|int $value"
+                    ],
+                    "return": "?static",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Security\\AntiSpam\\AiCrawler\\AiCrawlerAction": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "cases": {
+                    "params": [],
+                    "return": "array",
+                    "static": true
+                },
+                "from": {
+                    "params": [
+                        "string|int $value"
+                    ],
+                    "return": "static",
+                    "static": true
+                },
+                "fromString": {
+                    "params": [
+                        "string $value",
+                        "Pulsar\\Security\\AntiSpam\\AiCrawler\\AiCrawlerAction $default"
+                    ],
+                    "return": "Pulsar\\Security\\AntiSpam\\AiCrawler\\AiCrawlerAction",
+                    "static": true
+                },
+                "tryFrom": {
+                    "params": [
+                        "string|int $value"
+                    ],
+                    "return": "?static",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Security\\AntiSpam\\AiCrawler\\AiCrawlerCategory": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "cases": {
+                    "params": [],
+                    "return": "array",
+                    "static": true
+                },
+                "from": {
+                    "params": [
+                        "string|int $value"
+                    ],
+                    "return": "static",
+                    "static": true
+                },
+                "tryFrom": {
+                    "params": [
+                        "string|int $value"
+                    ],
+                    "return": "?static",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Security\\AntiSpam\\AiCrawler\\AiCrawlerConfig": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "bool $enabled",
+                        "Pulsar\\Security\\AntiSpam\\AiCrawler\\AiCrawlerAction $trainingAction",
+                        "Pulsar\\Security\\AntiSpam\\AiCrawler\\AiCrawlerAction $assistantAction",
+                        "Pulsar\\Security\\AntiSpam\\AiCrawler\\AiCrawlerAction $searchAction",
+                        "array $overrides",
+                        "array $customCrawlers",
+                        "bool $sendTdmReservation",
+                        "int $rateLimitMaxRequests",
+                        "int $rateLimitWindowSeconds"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "fromArray": {
+                    "params": [
+                        "array $data"
+                    ],
+                    "return": "Pulsar\\Security\\AntiSpam\\AiCrawler\\AiCrawlerConfig",
+                    "static": true
+                },
+                "resolveAction": {
+                    "params": [
+                        "string $token",
+                        "Pulsar\\Security\\AntiSpam\\AiCrawler\\AiCrawlerCategory $category"
+                    ],
+                    "return": "Pulsar\\Security\\AntiSpam\\AiCrawler\\AiCrawlerAction",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\Security\\AntiSpam\\AntiSpamCheckInterface": {
             "since": "1.0.0",
             "methods": [],
@@ -55582,6 +55720,9 @@
         "Pulsar\\Saga\\Internal\\StepBuilder",
         "Pulsar\\Saga\\Storage\\InMemorySagaStateStorage",
         "Pulsar\\Security\\AntiSpam\\AccountAgeGate",
+        "Pulsar\\Security\\AntiSpam\\AiCrawler\\AiCrawlerDetector",
+        "Pulsar\\Security\\AntiSpam\\AiCrawler\\AiCrawlerMiddleware",
+        "Pulsar\\Security\\AntiSpam\\AiCrawler\\DetectedAiCrawler",
         "Pulsar\\Security\\AntiSpam\\AntiSpamPipeline",
         "Pulsar\\Security\\AntiSpam\\Behavior\\BehavioralSignalsCheck",
         "Pulsar\\Security\\AntiSpam\\Behavior\\HeuristicScorer",
