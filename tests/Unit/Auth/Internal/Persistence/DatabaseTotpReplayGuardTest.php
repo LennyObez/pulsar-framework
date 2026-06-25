@@ -153,8 +153,13 @@ final class DatabaseTotpReplayGuardTest extends TestCase
             self::assertTrue($result);
         }
 
-        // Verify replay is still detected
-        self::assertFalse($this->guard->markUsed('user-bulk', TwoFactorPurpose::Login, 25, 1709800100));
+        // Verify replay is still detected. The replay timestamp must stay
+        // within the guard's TTL window (2 periods = 60s) of the original entry
+        // (time step 25 was used at 1709800025); otherwise the guard's
+        // probabilistic pruning may legitimately evict it first, making this
+        // assertion flaky (~5% under the 1-in-20 prune lottery — failed once in
+        // a full Windows run while passing on Linux at the same commit).
+        self::assertFalse($this->guard->markUsed('user-bulk', TwoFactorPurpose::Login, 25, 1709800050));
     }
 
     /**
