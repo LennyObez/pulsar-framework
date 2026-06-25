@@ -10,18 +10,16 @@ use Pulsar\Config\DomainConfig;
 use Pulsar\Http\Method;
 use Pulsar\Routing\Binding\ExplicitBinding;
 
-use function array_values;
 use function count;
-use function is_string;
-use function preg_replace;
-use function rawurlencode;
 use function sprintf;
-use function str_replace;
-use function strstr;
 use function trim;
 
 /**
  * HTTP router for route registration and matching.
+ *
+ * A thin facade over three focused collaborators: {@see RouteIndex} owns the
+ * fast-lookup tables and matching, {@see RouteUrlGenerator} builds URLs, and
+ * {@see ResourceRegistrar} scaffolds RESTful resource route sets.
  * @api
  */
 #[Api(since: '1.0.0')]
@@ -38,40 +36,6 @@ final class Router implements RouterInterface
     public private(set) array $namedRoutes = [];
 
     /**
-     * Method-indexed lookup table for fast matching.
-     *
-     * O(1) hash map for static routes (no dynamic segments).
-     *
-     * Indexed by HTTP method then normalized path, enabling constant-time
-     * lookups for routes without parameters: the most common case.
-     *
-     * @var array<string, array<string, Route>>
-     */
-    private array $staticRoutes = [];
-
-    /**
-     * F2.21: first-segment bucket index for dynamic routes.
-     *
-     * Maps `method => firstStaticSegment => list<Route>` so the
-     * dynamic-route scan for `/users/{id}` requests only walks
-     * routes whose pattern begins with the `users` segment,
-     * instead of every dynamic route registered for that
-     * method. For a typical REST API with N entities × ~5
-     * routes each, the bucket narrows the scan from O(5N) to
-     * O(5) — a partial-trie win without the full trie's
-     * implementation surface.
-     *
-     * The catch-all bucket `''` holds routes whose pattern
-     * starts with a dynamic segment (e.g. `/{lang}/posts`) —
-     * those still walk the full bucket because we can't pre-
-     * partition by an unknown first segment. They are
-     * comparatively rare in practice.
-     *
-     * @var array<string, array<string, list<Route>>>
-     */
-    private array $dynamicRouteBuckets = [];
-
-    /**
      * Explicit parameter-to-model bindings registered via model().
      *
      * @var list<ExplicitBinding>
@@ -83,6 +47,16 @@ final class Router implements RouterInterface
      * When locked, addRoute() throws RoutingException::routerLocked().
      */
     public private(set) bool $locked = false;
+
+    /**
+     * Fast-lookup index + matcher. Populated as routes are registered.
+     */
+    private readonly RouteIndex $index;
+
+    public function __construct()
+    {
+        $this->index = new RouteIndex();
+    }
 
     /**
      * Add a route to the router.
@@ -101,61 +75,9 @@ final class Router implements RouterInterface
             $this->namedRoutes[$route->name] = $route;
         }
 
-        $this->indexRouteByMethod($route);
+        $this->index->index($route);
 
         return $this;
-    }
-
-    /**
-     * Add a route to the method-indexed and static lookup tables.
-     */
-    private function indexRouteByMethod(Route $route): void
-    {
-        // Index static routes (no dynamic segments) for O(1) lookup
-        if ($route->compiledPattern === null && $route->host === null) {
-            $normalizedPath = '/' . trim($route->path, '/');
-            foreach ($route->methods as $method) {
-                $this->staticRoutes[$method->value][$normalizedPath] = $route;
-            }
-            return;
-        }
-
-        // F2.21: bucket dynamic routes by their first static
-        // segment. A pattern like `/users/{id}` buckets under
-        // `users`; `/{lang}/posts` buckets under `''` (catch-
-        // all). At match() time we scan only the bucket that
-        // matches the request path's first segment plus the
-        // catch-all — narrows the dynamic scan from O(N) to
-        // O(per-bucket) for the typical REST shape.
-        $firstSegment = $this->firstStaticSegment($route->path);
-        foreach ($route->methods as $method) {
-            $this->dynamicRouteBuckets[$method->value][$firstSegment][] = $route;
-        }
-    }
-
-    /**
-     * F2.21: extract the first static (non-`{...}`) path segment
-     * of a route pattern. `/users/{id}` → `users`,
-     * `/api/v1/users/{id}` → `api`, `/{lang}/posts` → `''`,
-     * `/` → `''`.
-     */
-    private function firstStaticSegment(string $path): string
-    {
-        $normalized = trim($path, '/');
-        if ($normalized === '') {
-            return '';
-        }
-
-        $first = strstr($normalized, '/', true);
-        $first = $first === false ? $normalized : $first;
-
-        // A `{...}` first segment can't be pre-partitioned; the
-        // route lives in the catch-all bucket.
-        if ($first === '' || $first[0] === '{') {
-            return '';
-        }
-
-        return $first;
     }
 
     /**
@@ -283,99 +205,7 @@ final class Router implements RouterInterface
      */
     public function match(Method $method, string $path, ?string $host = null): MatchedRoute
     {
-        $normalizedPath = '/' . trim($path, '/');
-
-        // Fast path: O(1) lookup for static routes without host constraints
-        if ($host === null && isset($this->staticRoutes[$method->value][$normalizedPath])) {
-            return new MatchedRoute($this->staticRoutes[$method->value][$normalizedPath], []);
-        }
-
-        // F2.21: narrow the dynamic-route scan to the first-
-        // segment bucket of the request path + the catch-all
-        // bucket (routes whose pattern starts with `{...}`).
-        // For an API with N entities × ~5 routes each, this
-        // typically cuts the scan from O(5N) to O(5 + |catch-all|).
-        $requestFirstSegment = $this->firstStaticSegment($normalizedPath);
-        $methodBuckets = $this->dynamicRouteBuckets[$method->value] ?? [];
-
-        /** @var list<Route> $candidates */
-        $candidates = [];
-        if (isset($methodBuckets[$requestFirstSegment])) {
-            $candidates = $methodBuckets[$requestFirstSegment];
-        }
-        if ($requestFirstSegment !== '' && isset($methodBuckets[''])) {
-            $candidates = [...$candidates, ...$methodBuckets['']];
-        }
-
-        // F2.21: when the request carries a host header, the
-        // static-route fast path was skipped above — but a
-        // host-less static route can still be a legitimate
-        // fallback for the host. Append the matching static
-        // route to the candidates so the host-aware scan can
-        // find it.
-        if ($host !== null && isset($this->staticRoutes[$method->value][$normalizedPath])) {
-            $candidates[] = $this->staticRoutes[$method->value][$normalizedPath];
-        }
-
-        foreach ($candidates as $route) {
-            $matchResult = $this->matchRouteAgainstHostAndPath($route, $path, $host);
-            if ($matchResult !== null) {
-                return new MatchedRoute($route, $matchResult);
-            }
-        }
-
-        // Cold path: no match found: scan all routes for 405 detection
-        $pathMatches = [];
-
-        foreach ($this->routes as $route) {
-            $matchResult = $this->matchRouteAgainstHostAndPath($route, $path, $host);
-            if ($matchResult !== null) {
-                $pathMatches[] = $route;
-            }
-        }
-
-        if ($pathMatches !== []) {
-            $allowedMethodsMap = [];
-
-            foreach ($pathMatches as $route) {
-                foreach ($route->methods as $m) {
-                    $allowedMethodsMap[$m->value] = $m;
-                }
-            }
-
-            throw RoutingException::methodNotAllowed($path, $method, array_values($allowedMethodsMap));
-        }
-
-        throw RoutingException::notFound($path);
-    }
-
-    /**
-     * Check if a route matches the given host and path.
-     *
-     * Returns merged host+path parameters on match, null on no match.
-     *
-     * @return array<string, string>|null
-     */
-    private function matchRouteAgainstHostAndPath(Route $route, string $path, ?string $host): ?array
-    {
-        if ($host !== null) {
-            $hostParams = $route->matchesHost($host);
-            if ($hostParams === null) {
-                return null;
-            }
-        } else {
-            $hostParams = [];
-            if ($route->host !== null) {
-                return null;
-            }
-        }
-
-        $params = $route->matchesPath($path);
-        if ($params === null) {
-            return null;
-        }
-
-        return [...$hostParams, ...$params];
+        return $this->index->match($method, $path, $host, $this->routes);
     }
 
     /**
@@ -403,57 +233,7 @@ final class Router implements RouterInterface
         $route = $this->getByName($name)
             ?? throw new InvalidArgumentException(sprintf('Route "%s" not found', $name));
 
-        $path = $route->path;
-
-        if ($parameters !== []) {
-            $search = [];
-            $replace = [];
-
-            foreach ($parameters as $key => $value) {
-                // RFC 3986 §2 path-segment encoding (F2.7): a raw value
-                // containing `/`, `?`, `#`, `..`, ` `, or any reserved
-                // byte would otherwise punch out of its segment and
-                // either change the route taken or become a path-
-                // traversal vector against routes downstream of this URL.
-                // `rawurlencode` percent-encodes everything outside the
-                // unreserved set so a parameter like `'../admin'` is
-                // rendered as `%2E%2E%2Fadmin` and stays inside its slot.
-                $encoded = rawurlencode($value);
-                $search[] = '{' . $key . '}';
-                $search[] = '{' . $key . '?}';
-                $replace[] = $encoded;
-                $replace[] = $encoded;
-            }
-
-            $path = str_replace($search, $replace, $path);
-        }
-
-        // Remove unfilled optional parameters
-        $replaced = preg_replace('#\{[a-zA-Z_][a-zA-Z0-9_]*\?}#', '', $path);
-        $path = $replaced ?? $path;
-
-        // Clean up double slashes
-        $replaced = preg_replace('#//+#', '/', $path);
-        $path = $replaced ?? $path;
-
-        $relativePath = '/' . trim($path, '/');
-
-        // Domain-aware URL generation: if a route has a scope attribute and
-        // that scope is mapped to a subdomain, generate a fully-qualified URL
-        if ($domainConfig !== null && $domainConfig->hasSubdomainMappings()) {
-            /** @var mixed $scope */
-            $scope = $route->attributes['scope'] ?? null;
-
-            if (is_string($scope)) {
-                $subdomain = $domainConfig->subdomainForScope($scope);
-
-                if ($subdomain !== null) {
-                    return $domainConfig->scheme . '://' . $subdomain . '.' . $domainConfig->defaultDomain . $relativePath;
-                }
-            }
-        }
-
-        return $relativePath;
+        return RouteUrlGenerator::generate($route, $parameters, $domainConfig);
     }
 
     /**
@@ -513,17 +293,9 @@ final class Router implements RouterInterface
      */
     public function resource(string $name, string $controller, array $middleware = []): self
     {
-        $prefix = '/' . trim($name, '/');
-        $paramName = $this->singularize($name);
-        $paramSegment = '/{' . $paramName . '}';
-
-        $this->add(new Route([Method::GET, Method::HEAD], $prefix, [$controller, 'index'], $name . '.index', middleware: $middleware));
-        $this->add(new Route([Method::GET, Method::HEAD], $prefix . '/create', [$controller, 'create'], $name . '.create', middleware: $middleware));
-        $this->add(new Route([Method::POST], $prefix, [$controller, 'store'], $name . '.store', middleware: $middleware));
-        $this->add(new Route([Method::GET, Method::HEAD], $prefix . $paramSegment, [$controller, 'show'], $name . '.show', middleware: $middleware));
-        $this->add(new Route([Method::GET, Method::HEAD], $prefix . $paramSegment . '/edit', [$controller, 'edit'], $name . '.edit', middleware: $middleware));
-        $this->add(new Route([Method::PUT, Method::PATCH], $prefix . $paramSegment, [$controller, 'update'], $name . '.update', middleware: $middleware));
-        $this->add(new Route([Method::DELETE], $prefix . $paramSegment, [$controller, 'destroy'], $name . '.destroy', middleware: $middleware));
+        foreach (ResourceRegistrar::resourceRoutes($name, $controller, $middleware) as $route) {
+            $this->add($route);
+        }
 
         return $this;
     }
@@ -541,47 +313,11 @@ final class Router implements RouterInterface
      */
     public function apiResource(string $name, string $controller, array $middleware = []): self
     {
-        $prefix = '/' . trim($name, '/');
-        $paramName = $this->singularize($name);
-        $paramSegment = '/{' . $paramName . '}';
-
-        $this->add(new Route([Method::GET, Method::HEAD], $prefix, [$controller, 'index'], $name . '.index', middleware: $middleware));
-        $this->add(new Route([Method::POST], $prefix, [$controller, 'store'], $name . '.store', middleware: $middleware));
-        $this->add(new Route([Method::GET, Method::HEAD], $prefix . $paramSegment, [$controller, 'show'], $name . '.show', middleware: $middleware));
-        $this->add(new Route([Method::PUT, Method::PATCH], $prefix . $paramSegment, [$controller, 'update'], $name . '.update', middleware: $middleware));
-        $this->add(new Route([Method::DELETE], $prefix . $paramSegment, [$controller, 'destroy'], $name . '.destroy', middleware: $middleware));
+        foreach (ResourceRegistrar::apiResourceRoutes($name, $controller, $middleware) as $route) {
+            $this->add($route);
+        }
 
         return $this;
-    }
-
-    /**
-     * Naive English pluralization: derive singular from plural resource name.
-     *
-     * Handles common suffixes: -ies -> -y, -ses/-xes/-zes/-shes/-ches -> drop suffix, -s -> drop s.
-     * For irregular nouns, the user should specify the parameter name via route constraints.
-     */
-    private function singularize(string $name): string
-    {
-        // Only take the last segment if nested (e.g. 'admin/photos' -> 'photos')
-        if (str_contains($name, '/')) {
-            $segments = explode('/', trim($name, '/'));
-            $name = end($segments);
-        }
-
-        if (str_ends_with($name, 'ies')) {
-            return substr($name, 0, -3) . 'y';
-        }
-
-        if (str_ends_with($name, 'ses') || str_ends_with($name, 'xes') || str_ends_with($name, 'zes')
-            || str_ends_with($name, 'shes') || str_ends_with($name, 'ches')) {
-            return substr($name, 0, -2);
-        }
-
-        if (str_ends_with($name, 's') && !str_ends_with($name, 'ss')) {
-            return substr($name, 0, -1);
-        }
-
-        return $name;
     }
 
     /**
@@ -598,7 +334,7 @@ final class Router implements RouterInterface
                 $this->namedRoutes[$route->name] = $route;
             }
 
-            $this->indexRouteByMethod($route);
+            $this->index->index($route);
         }
     }
 }
