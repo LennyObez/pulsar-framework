@@ -7,6 +7,7 @@ namespace Pulsar\Core\Wiring;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Pulsar\Api\Internal;
+use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\DatabaseConfig;
 use Pulsar\Container\ContainerInterface;
@@ -17,6 +18,9 @@ use Pulsar\Database\Monitor\ConnectionAuditor;
 use Pulsar\Database\Monitor\MonitoredConnection;
 use Pulsar\Database\Monitor\SlowQueryDetector;
 use Pulsar\Database\Monitor\SqlLogger;
+use Pulsar\Database\Routing\ReadWriteRouter;
+use Pulsar\Database\Routing\RoutingConnectionManager;
+use Pulsar\Database\Routing\StickinessContext;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Observability\Metrics\MetricRegistry;
@@ -44,41 +48,78 @@ final readonly class DatabaseWiring implements ServiceWiringInterface
 
         $connectionManager = ConnectionManager::fromConfig($dbConfig);
         $container->instance(ConnectionManager::class, $connectionManager);
-        $container->instance(ConnectionManagerInterface::class, $connectionManager);
 
-        // Convenience binding: default connection available as ConnectionInterface.
-        // When SQL monitoring is enabled, decorate the connection with logging,
-        // slow-query detection, and connection auditing. The decorator is built
-        // lazily and memoised so the single shared connection is wrapped exactly
-        // once, independent of the wiring order of the logger/metrics services.
-        if ($dbConfig->monitor->enabled) {
-            $monitorConfig = $dbConfig->monitor;
-            $monitored = null;
+        // Read/write routing: when enabled, route SELECTs to read replicas and
+        // keep writes (plus post-write reads, via stickiness) on the primary.
+        // RoutingConnectionManager is a drop-in ConnectionManagerInterface that
+        // wraps the plain manager and falls back to the primary when no read
+        // hosts are configured, so enabling it without replicas is safe. Built
+        // lazily so the optional audit logger is resolved after all wiring.
+        if ($dbConfig->readWrite->enabled) {
+            $readWriteConfig = $dbConfig->readWrite;
+            $routingManager = null;
             $container->bind(
-                ConnectionInterface::class,
-                static function () use ($container, $connectionManager, $monitorConfig, &$monitored): ConnectionInterface {
-                    if ($monitored instanceof ConnectionInterface) {
-                        return $monitored;
+                ConnectionManagerInterface::class,
+                static function () use ($container, $connectionManager, $readWriteConfig, &$routingManager): ConnectionManagerInterface {
+                    if ($routingManager instanceof ConnectionManagerInterface) {
+                        return $routingManager;
                     }
 
-                    $logger = $container->has(LoggerInterface::class)
-                        ? $container->get(LoggerInterface::class)
-                        : new NullLogger();
-                    $metricRegistry = $container->has(MetricRegistry::class)
-                        ? $container->get(MetricRegistry::class)
+                    $auditLogger = $container->has(AuditLoggerInterface::class)
+                        ? $container->get(AuditLoggerInterface::class)
                         : null;
 
-                    return $monitored = new MonitoredConnection(
-                        $connectionManager->connection(),
-                        new SqlLogger($logger, $monitorConfig),
-                        new SlowQueryDetector($monitorConfig, $logger, $metricRegistry),
-                        new ConnectionAuditor($logger),
+                    return $routingManager = new RoutingConnectionManager(
+                        $connectionManager,
+                        new ReadWriteRouter(),
+                        new StickinessContext(),
+                        $readWriteConfig,
+                        $auditLogger,
                     );
                 },
             );
         } else {
-            $container->bind(ConnectionInterface::class, static fn(): ConnectionInterface => $connectionManager->connection());
+            $container->instance(ConnectionManagerInterface::class, $connectionManager);
         }
+
+        // Convenience binding: default connection available as ConnectionInterface,
+        // resolved through the (possibly routing-aware) connection manager. When SQL
+        // monitoring is enabled, the connection is additionally decorated with
+        // logging, slow-query detection, and connection auditing. Built lazily and
+        // memoised so the shared connection is resolved/wrapped exactly once,
+        // independent of the wiring order of the manager/logger/metrics services.
+        $monitorConfig = $dbConfig->monitor;
+        $connection = null;
+        $container->bind(
+            ConnectionInterface::class,
+            static function () use ($container, $monitorConfig, &$connection): ConnectionInterface {
+                if ($connection instanceof ConnectionInterface) {
+                    return $connection;
+                }
+
+                /** @var ConnectionManagerInterface $manager */
+                $manager = $container->get(ConnectionManagerInterface::class);
+                $resolved = $manager->connection();
+
+                if (!$monitorConfig->enabled) {
+                    return $connection = $resolved;
+                }
+
+                $logger = $container->has(LoggerInterface::class)
+                    ? $container->get(LoggerInterface::class)
+                    : new NullLogger();
+                $metricRegistry = $container->has(MetricRegistry::class)
+                    ? $container->get(MetricRegistry::class)
+                    : null;
+
+                return $connection = new MonitoredConnection(
+                    $resolved,
+                    new SqlLogger($logger, $monitorConfig),
+                    new SlowQueryDetector($monitorConfig, $logger, $metricRegistry),
+                    new ConnectionAuditor($logger),
+                );
+            },
+        );
 
         // Seeder runner: discovers and executes database seeders.
         // Uses lazy binding so ConnectionInterface is resolved at use time, not at wiring time.
