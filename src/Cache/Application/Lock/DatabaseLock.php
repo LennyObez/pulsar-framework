@@ -31,8 +31,9 @@ final class DatabaseLock implements LockInterface
 
     public function __construct(
         private readonly ConnectionInterface $connection,
+        ?Randomizer $randomizer = null,
     ) {
-        $this->randomizer = new Randomizer(new Secure());
+        $this->randomizer = $randomizer ?? new Randomizer(new Secure());
     }
 
     public function acquire(string $resource, int $ttlSeconds = 30, int $timeoutMs = 0): LockHandle

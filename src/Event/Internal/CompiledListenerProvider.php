@@ -13,7 +13,6 @@ use Pulsar\Event\ListenerProviderInterface;
 
 use function array_keys;
 use function array_push;
-use function get_class;
 use function usort;
 
 /**
@@ -48,8 +47,7 @@ final class CompiledListenerProvider implements ListenerProviderInterface, Liste
     #[Override]
     public function getListenersForEvent(object $event): iterable
     {
-        /** @var class-string $eventClass */
-        $eventClass = get_class($event);
+        $eventClass = $event::class;
 
         if (isset($this->sortedCache[$eventClass])) {
             return $this->sortedCache[$eventClass];

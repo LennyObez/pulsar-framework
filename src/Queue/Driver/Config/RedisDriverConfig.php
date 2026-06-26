@@ -45,4 +45,21 @@ final readonly class RedisDriverConfig
             timeout: Coerce::float($data['timeout'] ?? null, 0.0),
         );
     }
+
+    /**
+     * Prevent the connection password from leaking in debug output.
+     *
+     * @return array<string, string|int|float>
+     */
+    public function __debugInfo(): array
+    {
+        return [
+            'host' => $this->host,
+            'port' => $this->port,
+            'password' => $this->password !== '' ? '[REDACTED]' : '',
+            'database' => $this->database,
+            'prefix' => $this->prefix,
+            'timeout' => $this->timeout,
+        ];
+    }
 }

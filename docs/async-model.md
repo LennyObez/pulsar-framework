@@ -14,21 +14,22 @@ All framework code executes in a single thread with deterministic ordering. Ther
 ## What Pulsar is NOT
 
 - **Not an async framework**: Pulsar does not use an event loop (ReactPHP, Amp, Revolt, etc.).
-- **Not a Fiber scheduler**: Pulsar does not suspend, resume, or multiplex Fibers for concurrency.
+- **Not a general-purpose Fiber scheduler**: Pulsar does not run a request-wide event loop that multiplexes Fibers for application concurrency. The sole exception is `FanOut` (see below), a bounded infrastructure-only primitive that creates, starts, and round-robin resumes Fibers within a single call frame for framework internals such as health probes.
 - **Not implicitly parallel**: No framework code creates threads, forks processes, or runs background tasks behind the caller's back.
 
 If you need concurrent I/O, use external workers (queue jobs, separate processes, or dedicated async runtimes). Pulsar handles the request path; concurrency lives outside the request lifecycle.
 
 ## Where fibers are used
 
-Fibers are used in exactly one place: **Studio context isolation**.
+Fibers are used in exactly two places: **Studio context isolation** and the **`FanOut` infrastructure concurrency primitive** (documented in its own section below).
 
 ### Components
 
-| Component                    | File                                                   | Role                                         |
-| ---------------------------- | ------------------------------------------------------ | -------------------------------------------- |
-| `FiberScopedContextProvider` | `extensions/studio/src/FiberScopedContextProvider.php` | Manages per-Fiber correlation context stacks |
-| `ContextScope`               | `extensions/studio/src/ContextScope.php`               | RAII guard that enters/exits a context scope |
+| Component                    | File                                                   | Role                                                                  |
+| ---------------------------- | ------------------------------------------------------ | --------------------------------------------------------------------- |
+| `FiberScopedContextProvider` | `extensions/studio/src/FiberScopedContextProvider.php` | Manages per-Fiber correlation context stacks                          |
+| `ContextScope`               | `extensions/studio/src/ContextScope.php`               | RAII guard that enters/exits a context scope                          |
+| `FanOut`                     | `src/Concurrency/FanOut.php`                           | Bounded, infrastructure-only round-robin Fiber scheduler (see below)  |
 
 ### How it works
 
@@ -124,7 +125,7 @@ Pulsar provides the following concurrency guarantees:
 
 ## JIT compatibility
 
-Pulsar's Fiber usage (Studio context isolation only) is compatible with both tracing and function JIT modes. Because Pulsar does not implement a Fiber scheduler or suspend/resume Fibers for concurrency, there are no JIT interaction edge cases.
+Pulsar's Fiber usage (Studio context isolation and the `FanOut` infrastructure primitive) is compatible with both tracing and function JIT modes. Studio context isolation never suspends or resumes Fibers for concurrency, so it has no JIT interaction edge cases. `FanOut` does suspend and resume Fibers in a round-robin loop; its scheduling code path is not on the request hot path and runs only for explicitly invoked infrastructure tasks (health probes, cache warming), so any JIT deoptimization around its suspend/resume boundaries is confined to that bounded, non-hot scope rather than the request lifecycle.
 
 - **Tracing JIT**: Works correctly. Pulsar's synchronous execution model produces predictable hot paths that the tracing JIT can optimize effectively.
 - **Function JIT**: Works correctly. Individual function compilation is straightforward since there is no control-flow complexity from Fiber suspension.

@@ -89,7 +89,24 @@ final class InListBuilderTest extends TestCase
             ['abc-123', 'def-456', 'ghi-789'],
         );
 
-        self::assertSame(['ids' => '{abc-123,def-456,ghi-789}'], $bindings);
+        self::assertSame(['ids' => '{"abc-123","def-456","ghi-789"}'], $bindings);
+    }
+
+    #[Test]
+    public function expandParamsPostgresqlEscapesSpecialCharacters(): void
+    {
+        $bindings = InListBuilder::expandParams(
+            Driver::PostgreSQL,
+            'ids',
+            ['foo,bar', '{nested}', 'has "quote"', 'back\\slash'],
+        );
+
+        // Each element is double-quoted so that embedded commas/braces are not
+        // treated as PostgreSQL array delimiters, and `"` / `\` are escaped.
+        self::assertSame(
+            ['ids' => '{"foo,bar","{nested}","has \\"quote\\"","back\\\\slash"}'],
+            $bindings,
+        );
     }
 
     #[Test]

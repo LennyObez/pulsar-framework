@@ -99,6 +99,8 @@ final readonly class TenantFanOutDispatcher
                     metadata: [
                         'innerJobClass' => $innerJobClass,
                         'error' => $e->getMessage(),
+                        'exceptionClass' => $e::class,
+                        'exceptionCode' => $e->getCode(),
                     ],
                 );
             }

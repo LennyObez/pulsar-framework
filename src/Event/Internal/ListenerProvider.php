@@ -72,8 +72,11 @@ final class ListenerProvider implements ListenerProviderInterface, ListenerMetad
             'moduleId' => $moduleId,
         ];
 
+        // Only the sorted listener order changes on registration; an event
+        // class's parent/interface hierarchy is intrinsic to the class itself
+        // and never changes when a listener is added, so the hierarchy cache
+        // must not be invalidated here (doing so forced needless re-resolution).
         $this->sortedCache = [];
-        $this->classHierarchyCache = [];
     }
 
     #[Override]
@@ -94,8 +97,7 @@ final class ListenerProvider implements ListenerProviderInterface, ListenerMetad
     #[Override]
     public function getListenersForEvent(object $event): iterable
     {
-        /** @var class-string $eventClass */
-        $eventClass = get_class($event);
+        $eventClass = $event::class;
 
         if (isset($this->sortedCache[$eventClass])) {
             return $this->sortedCache[$eventClass];

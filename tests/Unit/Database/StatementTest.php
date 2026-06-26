@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Database\Driver;
+use Pulsar\Database\Param;
 use Pulsar\Database\PdoConnection;
 use Pulsar\Database\Statement;
 
@@ -97,6 +98,33 @@ final class StatementTest extends TestCase
 
         self::assertCount(1, $result->rows);
         self::assertSame('alpha', $result->rows[0]->getString('name'));
+    }
+
+    /**
+     * A binary {@see Param} bound through the Statement API must be stored with
+     * PDO::PARAM_LOB and survive a round-trip byte-for-byte. The earlier
+     * implementation lacked a Param branch in bindAll(), so binary values fell
+     * through to PDO::PARAM_STR and were corrupted (regression guard).
+     */
+    #[Test]
+    public function executeBindsBinaryParamWithoutCorruption(): void
+    {
+        $this->connection->execute('ALTER TABLE items ADD COLUMN payload BLOB');
+
+        // Non-UTF-8 bytes, including a NUL, that PARAM_STR would mangle.
+        $bytes = "\x00\xff\x01\x80binary\x00data\xfe";
+
+        $stmt = $this->connection->prepare('UPDATE items SET payload = :payload WHERE name = :name');
+        $affected = $stmt->executeAffecting(['payload' => Param::binary($bytes), 'name' => 'alpha']);
+
+        self::assertSame(1, $affected);
+
+        $result = $this->connection->query(
+            'SELECT payload FROM items WHERE name = :name',
+            ['name' => 'alpha'],
+        );
+
+        self::assertSame($bytes, $result->rows[0]->getString('payload'));
     }
 
     #[Test]

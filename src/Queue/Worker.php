@@ -26,6 +26,7 @@ use Pulsar\Queue\Retry\RetryDecision;
 use Pulsar\Queue\Serialization\TypeRegistry;
 use Throwable;
 
+use function ceil;
 use function class_exists;
 use function function_exists;
 use function hrtime;
@@ -239,7 +240,19 @@ final class Worker
         try {
             $job->handle($context);
         } finally {
-            $this->contextHolder?->clear();
+            // Cleanup must never mask the original job exception. If the context
+            // holder throws during clear() (e.g. a backing-store failure), log it
+            // separately and let the original Throwable propagate from the try block.
+            try {
+                $this->contextHolder?->clear();
+            } catch (Throwable $cleanupError) {
+                $this->logger?->error(sprintf(
+                    'Request context cleanup failed after job "%s": %s',
+                    $envelope->id,
+                    $cleanupError->getMessage(),
+                ));
+            }
+
             unset($job, $context);
         }
     }
@@ -301,7 +314,9 @@ final class Worker
     ): void {
         $nextEnvelope = $envelope->withNextAttempt();
         $delayMs = $policy->getDelay($envelope->attempt);
-        $delaySeconds = (int) ($delayMs / 1000);
+        // Round up so that a positive sub-second delay (e.g. 500ms) is never
+        // truncated to an immediate retry; whole-second delays are unaffected.
+        $delaySeconds = $delayMs > 0 ? (int) ceil($delayMs / 1000) : 0;
 
         $serialized = $this->envelopeSerializer->serialize($nextEnvelope);
         $this->driver->push($queue, $nextEnvelope->jobClass, $serialized, $delaySeconds);

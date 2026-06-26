@@ -6,7 +6,10 @@ namespace Pulsar\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Tenancy\Exception\TenancyException;
 use Pulsar\Tenancy\TenantResolverStrategy;
+
+use function sprintf;
 
 /**
  * Typed configuration DTO for `config/tenancy.php`.
@@ -48,9 +51,16 @@ final readonly class TenancyConfig
             ? $environment->get('TENANCY_ENABLED') === 'true'
             : (bool) ($data['enabled'] ?? false);
 
+        $resolverValue = $data['resolver'] ?? 'header';
+        $resolver = TenantResolverStrategy::tryFrom($resolverValue)
+            ?? throw TenancyException::invalidConfiguration(sprintf(
+                'Unknown resolver strategy "%s". Expected one of: header, subdomain, path.',
+                $resolverValue,
+            ));
+
         return new self(
             enabled: $enabled,
-            resolver: TenantResolverStrategy::from($data['resolver'] ?? 'header'),
+            resolver: $resolver,
             headerName: $data['header_name'] ?? 'X-Tenant-ID',
             subdomainSuffix: $data['subdomain_suffix'] ?? '',
             pathPrefix: $data['path_prefix'] ?? '/t/',

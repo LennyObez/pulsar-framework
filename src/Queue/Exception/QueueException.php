@@ -161,6 +161,17 @@ final class QueueException extends RuntimeException
     }
 
     /**
+     * A DLQ bulk purge was attempted without a reason in regulated mode.
+     */
+    #[NoDiscard]
+    public static function purgeReasonRequired(): self
+    {
+        return new self(
+            'Purging the dead-letter queue requires an explicit reason in regulated mode',
+        );
+    }
+
+    /**
      * A job was rejected because the queue rate limit was exceeded.
      */
     #[NoDiscard]

@@ -105,4 +105,54 @@ final class SubdomainTenantResolverTest extends TestCase
         self::assertSame('acme', $tenant->id);
         self::assertSame('Acme Corp', $tenant->name);
     }
+
+    #[Test]
+    public function doesNotTruncateBracketedIpv6HostAtInnerColon(): void
+    {
+        $config = new TenancyConfig(
+            enabled: true,
+            resolver: TenantResolverStrategy::Subdomain,
+            subdomainSuffix: '.example.com',
+            tenants: ['acme' => ['name' => 'Acme Corp']],
+        );
+
+        $resolver = new SubdomainTenantResolver($config);
+
+        // A bracketed IPv6 literal with a port must not be mangled into "["
+        // by truncating at the first inner colon. It simply does not match the
+        // configured subdomain suffix, so no tenant is resolved.
+        $request = new ServerRequest(
+            method: 'GET',
+            uri: '/dashboard',
+            headers: ['Host' => '[::1]:8080'],
+        );
+
+        self::assertNull($resolver->resolve($request));
+    }
+
+    #[Test]
+    public function resolvesTenantFromSubdomainWhenPortStrippedFromIpStyleSuffix(): void
+    {
+        // Confirms the port-only stripping leaves a legitimate subdomain host
+        // intact even when a port is appended, complementing the IPv6 case.
+        $config = new TenancyConfig(
+            enabled: true,
+            resolver: TenantResolverStrategy::Subdomain,
+            subdomainSuffix: '.example.com',
+            tenants: ['acme' => ['name' => 'Acme Corp']],
+        );
+
+        $resolver = new SubdomainTenantResolver($config);
+
+        $request = new ServerRequest(
+            method: 'GET',
+            uri: '/dashboard',
+            headers: ['Host' => 'acme.example.com:443'],
+        );
+
+        $tenant = $resolver->resolve($request);
+
+        self::assertNotNull($tenant);
+        self::assertSame('acme', $tenant->id);
+    }
 }

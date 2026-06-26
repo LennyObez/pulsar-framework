@@ -190,6 +190,42 @@ final class DeadLetterQueueTest extends TestCase
         $dlq->retry('orig-q');
     }
 
+    #[Test]
+    public function regulated_purge_requires_a_reason(): void
+    {
+        $dlq = new DeadLetterQueue($this->driver, regulated: true);
+        $dlq->store($this->makeRecord('reg-1', 'default', 'App\\Jobs\\A', '{}', 1), 'Err');
+
+        $this->expectException(QueueException::class);
+        $this->expectExceptionMessageMatches('/explicit reason in regulated mode/');
+
+        $dlq->purge();
+    }
+
+    #[Test]
+    public function regulated_purge_succeeds_with_a_reason(): void
+    {
+        $dlq = new DeadLetterQueue($this->driver, regulated: true);
+        $dlq->store($this->makeRecord('reg-2', 'default', 'App\\Jobs\\A', '{}', 1), 'Err');
+        $dlq->store($this->makeRecord('reg-3', 'default', 'App\\Jobs\\B', '{}', 1), 'Err');
+
+        $purged = $dlq->purge(actorId: 'admin', reason: 'Quarterly compliance cleanup');
+
+        self::assertSame(2, $purged);
+        self::assertCount(0, $dlq->list());
+    }
+
+    #[Test]
+    public function non_regulated_purge_does_not_require_a_reason(): void
+    {
+        $this->dlq->store($this->makeRecord('np-1', 'default', 'App\\Jobs\\A', '{}', 1), 'Err');
+
+        $purged = $this->dlq->purge();
+
+        self::assertSame(1, $purged);
+        self::assertCount(0, $this->dlq->list());
+    }
+
     private function makeRecord(
         string $id,
         string $queue,

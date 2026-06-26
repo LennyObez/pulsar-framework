@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Config\TenantDatabaseConfig;
+use Pulsar\Tenancy\Exception\TenancyException;
 use Pulsar\Tenancy\TenantDatabaseStrategy;
 
 #[CoversClass(TenantDatabaseConfig::class)]
@@ -41,5 +42,14 @@ final class TenantDatabaseConfigTest extends TestCase
 
         self::assertSame(TenantDatabaseStrategy::Prefix, $config->strategy);
         self::assertSame('tenant_{tenant_id}_', $config->prefixTemplate);
+    }
+
+    #[Test]
+    public function invalidStrategyThrowsTenancyException(): void
+    {
+        $this->expectException(TenancyException::class);
+        $this->expectExceptionMessage('Unknown database strategy "sharded"');
+
+        (void) TenantDatabaseConfig::fromArray(['strategy' => 'sharded']);
     }
 }

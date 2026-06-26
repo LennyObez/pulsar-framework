@@ -48,10 +48,12 @@ final readonly class TenantResolutionMiddleware implements MiddlewareInterface
 
             $this->logger?->info('Tenant resolved', [
                 'tenant_id' => $tenant->id,
-                'tenant_name' => $tenant->name,
             ]);
         } else {
-            $this->logger?->info('No tenant resolved for request');
+            $this->logger?->info('No tenant resolved for request', [
+                'path' => $request->getUri()->getPath(),
+                'resolver_strategy' => $this->config->resolver->value,
+            ]);
         }
 
         return $handler->handle($request);

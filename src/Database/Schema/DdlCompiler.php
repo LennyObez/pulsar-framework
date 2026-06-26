@@ -7,10 +7,10 @@ namespace Pulsar\Database\Schema;
 use Pulsar\Api\Api;
 use Pulsar\Database\Driver;
 
+use function array_any;
 use function array_map;
 use function count;
 use function implode;
-use function in_array;
 use function is_bool;
 use function is_float;
 use function is_int;
@@ -418,9 +418,9 @@ final readonly class DdlCompiler
             }
         }
 
-        return $autoIncrementPks === 1 && in_array(true, array_map(
-            static fn(SchemaColumn $c): bool => $c->primaryKey,
+        return $autoIncrementPks === 1 && array_any(
             $def->columns,
-        ), true);
+            static fn(SchemaColumn $c): bool => $c->primaryKey,
+        );
     }
 }

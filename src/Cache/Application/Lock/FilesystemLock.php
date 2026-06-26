@@ -22,6 +22,7 @@ use function hash;
 use function hash_equals;
 use function is_dir;
 use function is_file;
+use function is_link;
 use function json_decode;
 use function json_encode;
 use function microtime;
@@ -48,8 +49,9 @@ final class FilesystemLock implements LockInterface
 
     public function __construct(
         private readonly string $directory,
+        ?Randomizer $randomizer = null,
     ) {
-        $this->randomizer = new Randomizer(new Secure());
+        $this->randomizer = $randomizer ?? new Randomizer(new Secure());
 
         if (!is_dir($this->directory)) {
             mkdir($this->directory, 0o700, true);
@@ -62,6 +64,14 @@ final class FilesystemLock implements LockInterface
         $deadlineNs = hrtime(true) + ($timeoutMs * 1_000_000);
 
         do {
+            // Reject a pre-planted symlink at the lock path before opening:
+            // 'c+' follows symlinks, so an attacker who can predict the path
+            // could otherwise redirect the lock-metadata write to an arbitrary
+            // target. Mirrors CacheIntegrity::validateFile()'s symlink guard.
+            if (is_link($path)) {
+                throw LockAcquisitionException::unavailable($resource, 'Lock path is a symlink');
+            }
+
             $handle = fopen($path, 'c+');
 
             if ($handle === false) {

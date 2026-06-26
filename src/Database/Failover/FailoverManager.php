@@ -15,9 +15,10 @@ use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Resilience\CircuitBreaker;
 use Pulsar\Resilience\CircuitBreakerState;
 
+use function bin2hex;
 use function microtime;
+use function random_bytes;
 use function sprintf;
-use function uniqid;
 
 /**
  * Manages database failover detection and endpoint switching.
@@ -109,7 +110,7 @@ final class FailoverManager implements FailoverManagerInterface
                 targetEndpoint: $target,
                 affectedOperationCount: 0,
                 durationMs: $durationMs,
-                correlationId: uniqid('fo_', true),
+                correlationId: sprintf('fo_%s', bin2hex(random_bytes(16))),
                 occurredAt: new DateTimeImmutable(),
             );
             $this->events[] = $event;

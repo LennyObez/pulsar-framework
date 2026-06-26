@@ -109,6 +109,8 @@ final readonly class TenantFanOutSchedule
                         metadata: [
                             'jobName' => $job->getName(),
                             'error' => $e->getMessage(),
+                            'exceptionClass' => $e::class,
+                            'exceptionCode' => $e->getCode(),
                         ],
                     );
                 }

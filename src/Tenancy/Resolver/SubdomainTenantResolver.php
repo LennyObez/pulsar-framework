@@ -10,6 +10,7 @@ use Pulsar\Config\TenancyConfig;
 use Pulsar\Tenancy\Tenant;
 use Pulsar\Tenancy\TenantResolverInterface;
 
+use function preg_replace;
 use function str_ends_with;
 use function strlen;
 use function substr;
@@ -35,12 +36,10 @@ final readonly class SubdomainTenantResolver implements TenantResolverInterface
             return null;
         }
 
-        // Strip port if present
-        $colonPos = strpos($host, ':');
-
-        if ($colonPos !== false) {
-            $host = substr($host, 0, $colonPos);
-        }
+        // Strip a trailing ":port" only. Using a digits-anchored pattern keeps
+        // bracketed IPv6 literals (e.g. "[::1]:8080") intact instead of
+        // truncating at the first colon inside the address.
+        $host = (string) preg_replace('/:\d+$/', '', $host);
 
         $suffix = $this->config->subdomainSuffix;
 

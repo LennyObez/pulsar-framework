@@ -39,4 +39,19 @@ final readonly class SqsDriverConfig
             prefix: Coerce::string($data['prefix'] ?? null),
         );
     }
+
+    /**
+     * Prevent credentials from leaking in debug output.
+     *
+     * @return array<string, string>
+     */
+    public function __debugInfo(): array
+    {
+        return [
+            'region' => $this->region,
+            'key' => $this->key !== '' ? '[REDACTED]' : '',
+            'secret' => $this->secret !== '' ? '[REDACTED]' : '',
+            'prefix' => $this->prefix,
+        ];
+    }
 }

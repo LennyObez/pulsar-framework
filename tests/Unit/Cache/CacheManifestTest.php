@@ -295,6 +295,32 @@ final class CacheManifestTest extends TestCase
     }
 
     #[Test]
+    public function loadReturnsNullForUnknownSchemaVersion(): void
+    {
+        // Write a correctly-signed manifest declaring a schema version this
+        // build does not understand. The HMAC is valid, so the only thing that
+        // can reject it is the schema-version guard. A newer deployment may
+        // have written fields this build cannot interpret.
+        $_ = CacheManifest::write(
+            hmac: $this->hmac,
+            cachePath: $this->tempDir,
+            hmacKey: $this->hmacKey,
+            schemaVersion: CacheManifest::SCHEMA_VERSION + 1,
+            frameworkVersion: '2.0.0',
+            appEnv: 'production',
+            invalidationKey: hash('sha256', 'test'),
+            allowedClassesHash: hash('sha256', '[]'),
+            caches: [],
+            strict: false,
+            encrypted: false,
+        );
+
+        $result = CacheManifest::load($this->hmac, $this->tempDir, $this->hmacKey);
+
+        self::assertNull($result);
+    }
+
+    #[Test]
     public function loadReturnsNullForMissingHmacField(): void
     {
         $manifestPath = $this->tempDir . DIRECTORY_SEPARATOR . 'manifest.json';

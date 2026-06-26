@@ -16,6 +16,7 @@ use Pulsar\Queue\JobRecord;
 use Pulsar\Queue\JobRecordStatus;
 use Pulsar\Queue\QueueableInterface;
 use Pulsar\Queue\QueueDriverInterface;
+use Pulsar\Queue\Retry\QueueRetryPolicy;
 use Pulsar\Queue\Serialization\TypeRegistry;
 use Pulsar\Queue\Worker;
 use Pulsar\Queue\WorkerOptions;
@@ -153,6 +154,54 @@ final class WorkerTest extends TestCase
         $processed = $worker->processNextJob('default');
 
         self::assertTrue($processed);
+    }
+
+    #[Test]
+    public function it_rounds_sub_second_retry_delay_up_to_one_second(): void
+    {
+        $record = $this->makeRecord('job-subsec', 'default', WorkerTestFailingJob::class, attempt: 1, maxAttempts: 3);
+
+        // baseDelayMs of 500 yields getDelay(1) === 500ms; the worker converts
+        // milliseconds to whole seconds for the driver and must round up so the
+        // retry is not scheduled with a zero (immediate) delay.
+        $policy = new QueueRetryPolicy(
+            maxAttempts: 3,
+            baseDelayMs: 500,
+            maxDelayMs: 16_000,
+            multiplier: 2.0,
+        );
+
+        $capturedDelay = null;
+
+        $driver = $this->createMock(QueueDriverInterface::class);
+        $driver
+            ->expects(self::once())
+            ->method('pop')
+            ->willReturn($record);
+        $driver
+            ->expects(self::once())
+            ->method('push')
+            ->with(
+                'default',
+                WorkerTestFailingJob::class,
+                self::callback(static fn(mixed $v): bool => is_string($v)),
+                self::callback(static function (mixed $v) use (&$capturedDelay): bool {
+                    $capturedDelay = $v;
+
+                    return is_int($v);
+                }),
+            );
+        $driver
+            ->expects(self::once())
+            ->method('acknowledge')
+            ->with('job-subsec');
+
+        $options = new WorkerOptions();
+        $worker = new Worker($driver, $options, typeRegistry: $this->typeRegistry, retryPolicy: $policy);
+
+        $worker->processNextJob('default');
+
+        self::assertSame(1, $capturedDelay);
     }
 
     #[Test]

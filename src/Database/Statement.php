@@ -132,6 +132,12 @@ final class Statement
     {
         /** @var mixed $value */
         foreach ($bindings as $key => $value) {
+            if ($value instanceof Param) {
+                $this->statement->bindValue(':' . ltrim($key, ':'), $value->bytes(), $value->pdoType());
+
+                continue;
+            }
+
             $paramType = match (true) {
                 $value === null => PDO::PARAM_NULL,
                 is_int($value) => PDO::PARAM_INT,

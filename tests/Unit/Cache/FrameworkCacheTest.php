@@ -302,6 +302,48 @@ final class FrameworkCacheTest extends TestCase
     }
 
     #[Test]
+    public function loadRejectsTamperedConfigCacheFileWithIntactManifest(): void
+    {
+        $cache = new FrameworkCache($this->basePath, $this->masterKey, new HmacService());
+        $configManager = new ConfigManager($this->basePath . DIRECTORY_SEPARATOR . 'config');
+        $configManager->load();
+        $repository = $configManager->repository();
+
+        $cache->warm($repository, [], [], 'testing', false);
+        self::assertTrue($cache->isWarm());
+
+        // Replace the config cache binary while leaving the manifest (and its
+        // own HMAC) untouched. The manifest HMAC still validates because it
+        // only signs the recorded per-file signatures, not the files. load()
+        // must still reject because the per-file signature no longer matches.
+        $configFile = $cache->cachePath() . DIRECTORY_SEPARATOR . ConfigCache::FILENAME;
+        file_put_contents($configFile, 'tampered-cache-payload');
+
+        $loaded = $cache->load($this->basePath . DIRECTORY_SEPARATOR . 'config');
+
+        self::assertNull($loaded);
+    }
+
+    #[Test]
+    public function loadRejectsTamperedRouteCacheFileWithIntactManifest(): void
+    {
+        $cache = new FrameworkCache($this->basePath, $this->masterKey, new HmacService());
+        $configManager = new ConfigManager($this->basePath . DIRECTORY_SEPARATOR . 'config');
+        $configManager->load();
+        $repository = $configManager->repository();
+
+        $cache->warm($repository, [Route::get('/x', self::class, 'x.index')], [], 'testing', false);
+        self::assertTrue($cache->isWarm());
+
+        $routeFile = $cache->cachePath() . DIRECTORY_SEPARATOR . RouteCache::FILENAME;
+        file_put_contents($routeFile, 'tampered-route-payload');
+
+        $loaded = $cache->load($this->basePath . DIRECTORY_SEPARATOR . 'config');
+
+        self::assertNull($loaded);
+    }
+
+    #[Test]
     public function clearOnEmptyDirectoryDoesNotThrow(): void
     {
         $cache = new FrameworkCache($this->basePath, $this->masterKey, new HmacService());

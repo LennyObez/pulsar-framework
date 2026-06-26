@@ -31,6 +31,15 @@ use function unlink;
 #[CoversClass(MigrationFlockHolder::class)]
 final class MigrationRunnerTest extends TestCase
 {
+    /**
+     * Lock path the runner derives for the 'migrations' tracking table.
+     *
+     * Mirrors {@see MigrationRunner::acquireSqliteFlock()}: the holder is now
+     * keyed by this path so concurrent runners for different tables do not
+     * clobber each other.
+     */
+    private string $flockLockPath;
+
     private PdoConnection $connection;
     private string $migrationsPath;
     private MigrationRepository $repository;
@@ -51,6 +60,7 @@ final class MigrationRunnerTest extends TestCase
 
         $this->repository = new MigrationRepository($this->migrationsPath);
         $this->runner = new MigrationRunner($this->connection, $this->repository, 'migrations');
+        $this->flockLockPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'pulsar_migrate_migrations.lock';
     }
 
     protected function tearDown(): void
@@ -364,7 +374,7 @@ final class MigrationRunnerTest extends TestCase
     public function runPendingAcquiresAndReleasesFlockForSqlite(): void
     {
         // Before running, the flock holder should be empty
-        self::assertNull(MigrationFlockHolder::get());
+        self::assertNull(MigrationFlockHolder::get($this->flockLockPath));
 
         $this->writeMigrationFile('20240101120000', 'create_items_table', <<<'PHP'
             <?php
@@ -381,7 +391,7 @@ final class MigrationRunnerTest extends TestCase
         $this->runner->runPending();
 
         // After runPending completes, the flock must be released
-        self::assertNull(MigrationFlockHolder::get());
+        self::assertNull(MigrationFlockHolder::get($this->flockLockPath));
 
         // Verify the migration actually ran
         $result = $this->connection->query("SELECT name FROM sqlite_master WHERE type='table' AND name='items'");
@@ -407,7 +417,7 @@ final class MigrationRunnerTest extends TestCase
         $this->runner->rollbackLastBatch();
 
         // Flock released after rollback
-        self::assertNull(MigrationFlockHolder::get());
+        self::assertNull(MigrationFlockHolder::get($this->flockLockPath));
 
         // Table should be dropped
         $result = $this->connection->query("SELECT name FROM sqlite_master WHERE type='table' AND name='widgets'");
@@ -432,7 +442,7 @@ final class MigrationRunnerTest extends TestCase
         $this->runner->runPending();
         $this->runner->reset();
 
-        self::assertNull(MigrationFlockHolder::get());
+        self::assertNull(MigrationFlockHolder::get($this->flockLockPath));
     }
 
     #[Test]

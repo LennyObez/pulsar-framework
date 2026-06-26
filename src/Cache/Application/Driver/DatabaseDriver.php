@@ -24,10 +24,15 @@ final class DatabaseDriver extends AbstractCacheDriver
 {
     private bool $tableCreated = false;
 
+    /** Dialect-specific upsert statement, resolved once from the connection driver. */
+    private readonly string $upsertSql;
+
     public function __construct(
         private readonly ConnectionInterface $connection,
         private readonly string $pool = 'default',
-    ) {}
+    ) {
+        $this->upsertSql = $this->buildUpsertSql($connection->driver());
+    }
 
     public function get(string $key): ?string
     {
@@ -70,17 +75,8 @@ final class DatabaseDriver extends AbstractCacheDriver
 
         $expiresAt = $ttl !== null ? time() + $ttl : null;
 
-        $sql = match ($this->connection->driver()) {
-            Driver::SQLite => 'INSERT INTO cache_entries (pool, cache_key, value, expires_at) VALUES (:pool, :cache_key, :value, :expires_at)'
-                . ' ON CONFLICT(pool, cache_key) DO UPDATE SET value = excluded.value, expires_at = excluded.expires_at',
-            Driver::MySQL => 'INSERT INTO cache_entries (pool, cache_key, value, expires_at) VALUES (:pool, :cache_key, :value, :expires_at)'
-                . ' ON DUPLICATE KEY UPDATE value = VALUES(value), expires_at = VALUES(expires_at)',
-            Driver::PostgreSQL => 'INSERT INTO cache_entries (pool, cache_key, value, expires_at) VALUES (:pool, :cache_key, :value, :expires_at)'
-                . ' ON CONFLICT (pool, cache_key) DO UPDATE SET value = EXCLUDED.value, expires_at = EXCLUDED.expires_at',
-        };
-
         try {
-            $this->connection->execute($sql, [
+            $this->connection->execute($this->upsertSql, [
                 'pool' => $this->pool,
                 'cache_key' => $key,
                 'value' => $value,
@@ -200,6 +196,25 @@ final class DatabaseDriver extends AbstractCacheDriver
     public function name(): string
     {
         return 'database';
+    }
+
+    /**
+     * Build the dialect-specific upsert statement for the connection driver.
+     *
+     * The connection's driver type is invariant for the lifetime of this
+     * object, so the statement is resolved once at construction rather than
+     * on every set() call.
+     */
+    private function buildUpsertSql(Driver $driver): string
+    {
+        return match ($driver) {
+            Driver::SQLite => 'INSERT INTO cache_entries (pool, cache_key, value, expires_at) VALUES (:pool, :cache_key, :value, :expires_at)'
+                . ' ON CONFLICT(pool, cache_key) DO UPDATE SET value = excluded.value, expires_at = excluded.expires_at',
+            Driver::MySQL => 'INSERT INTO cache_entries (pool, cache_key, value, expires_at) VALUES (:pool, :cache_key, :value, :expires_at)'
+                . ' ON DUPLICATE KEY UPDATE value = VALUES(value), expires_at = VALUES(expires_at)',
+            Driver::PostgreSQL => 'INSERT INTO cache_entries (pool, cache_key, value, expires_at) VALUES (:pool, :cache_key, :value, :expires_at)'
+                . ' ON CONFLICT (pool, cache_key) DO UPDATE SET value = EXCLUDED.value, expires_at = EXCLUDED.expires_at',
+        };
     }
 
     private function ensureTable(): void

@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace Pulsar\Concurrency;
 
 use Fiber;
+use InvalidArgumentException;
 use NoDiscard;
 use Pulsar\Api\Api;
 use Throwable;
 
 use function array_key_exists;
 use function array_keys;
+use function assert;
 use function hrtime;
 
 /**
@@ -39,14 +41,42 @@ final class FanOut
      * wrapped in a {@see FanOutResult}. Tasks that do not complete within
      * the timeout are marked as timed out.
      *
+     * Timeout is checked once per full round-robin pass. A task that calls
+     * {@see Fiber::suspend()} many times within a single pass will consume the
+     * corresponding scheduling quantum before the deadline is re-evaluated.
+     *
+     * Timed-out tasks are abandoned, not forcibly terminated. Their Fibers are
+     * garbage-collected when this method returns. Callables that acquire
+     * resources (connections, handles, locks) must use `try`/`finally`
+     * internally to guarantee cleanup, since an abandoned Fiber's body never
+     * resumes past its current suspension point.
+     *
+     * $timeoutMs must be a positive integer (milliseconds). The value is
+     * validated at runtime by the guard below, which throws on zero or negative
+     * input. The PHPDoc type is intentionally a plain `int` rather than
+     * `positive-int`: a `positive-int` docblock causes the static analysers to
+     * narrow the method body and treat the runtime guard as unreachable dead
+     * code, which would silently drop the protection. The runtime guard is the
+     * source of truth for this contract and covers every caller, including
+     * dynamic/computed values, reflection, and callers analysed at a level that
+     * does not enforce the narrower type.
+     *
      * @param array<int|string, callable(): mixed> $tasks Keyed callables to execute
-     * @param positive-int $timeoutMs Maximum wall-clock time in milliseconds
+     * @param int $timeoutMs Maximum wall-clock time in milliseconds; must be > 0
      *
      * @return array<int|string, FanOutResult> Results keyed identically to $tasks
+     *
+     * @throws InvalidArgumentException If $timeoutMs is not a positive integer
      */
     #[NoDiscard]
     public static function run(array $tasks, int $timeoutMs = 5000): array
     {
+        if ($timeoutMs <= 0) {
+            throw new InvalidArgumentException(
+                "timeoutMs must be a positive integer, got {$timeoutMs}.",
+            );
+        }
+
         if ($tasks === []) {
             return [];
         }
@@ -85,8 +115,18 @@ final class FanOut
         // Round-robin resume until all complete or timeout
         while ($fibers !== []) {
             if (hrtime(true) >= $deadlineNs) {
-                // Mark all remaining fibers as timed out
-                foreach (array_keys($fibers) as $key) {
+                // Harvest any fiber that already completed before the deadline
+                // fired this pass; mark only genuinely unfinished ones as timed out.
+                foreach ($fibers as $key => $fiber) {
+                    if ($fiber->isTerminated()) {
+                        $results[$key] = new FanOutResult(
+                            success: true,
+                            value: $fiber->getReturn(),
+                        );
+
+                        continue;
+                    }
+
                     $results[$key] = new FanOutResult(
                         success: false,
                         timedOut: true,
@@ -98,23 +138,23 @@ final class FanOut
 
             foreach ($fibers as $key => $fiber) {
                 if ($fiber->isTerminated()) {
-                    try {
-                        $results[$key] = new FanOutResult(
-                            success: true,
-                            value: $fiber->getReturn(),
-                        );
-                    } catch (Throwable $e) {
-                        $results[$key] = new FanOutResult(
-                            success: false,
-                            error: $e,
-                        );
-                    }
+                    // A fiber that returned via an uncaught exception is removed
+                    // from $fibers in the resume catch below, so any terminated
+                    // fiber still tracked here returned normally — getReturn()
+                    // cannot throw under single-threaded PHP semantics.
+                    $results[$key] = new FanOutResult(
+                        success: true,
+                        value: $fiber->getReturn(),
+                    );
                     unset($fibers[$key]);
 
                     continue;
                 }
 
                 if (!$fiber->isSuspended()) {
+                    // Not suspended and not terminated means the fiber was just
+                    // resumed to completion this pass; it will be detected as
+                    // terminated and harvested on the next round-robin pass.
                     continue;
                 }
 
@@ -130,12 +170,13 @@ final class FanOut
             }
         }
 
-        // Preserve original key order
+        // Preserve original key order. Every task key is guaranteed to have a
+        // result: each fiber is either harvested on completion, removed with a
+        // result on failure during start/resume, or marked timed out.
         $ordered = [];
         foreach (array_keys($tasks) as $key) {
-            if (array_key_exists($key, $results)) {
-                $ordered[$key] = $results[$key];
-            }
+            assert(array_key_exists($key, $results));
+            $ordered[$key] = $results[$key];
         }
 
         return $ordered;

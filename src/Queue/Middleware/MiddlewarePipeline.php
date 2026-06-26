@@ -17,21 +17,42 @@ use function array_reverse;
  * outermost layer. The pipeline builds a nested closure chain and invokes
  * it with the given envelope.
  *
- * The middleware list is reversed once at construction so that process()
- * can iterate without allocating a reversed copy on every call.
+ * The composed middleware chain is built once at construction. process()
+ * binds the per-call terminal handler into that pre-built chain, so no
+ * per-layer closures are allocated on each invocation — only the chain's
+ * entry point is invoked.
  */
 #[Internal(reason: 'Pipeline orchestration is an implementation detail of the queue system')]
 final readonly class MiddlewarePipeline
 {
-    /** @var list<JobMiddlewareInterface> Middleware in reversed (nesting) order. */
-    private array $reversed;
+    /**
+     * Pre-composed chain: given an envelope and a terminal handler, runs every
+     * middleware layer (outermost first) and finally invokes the handler.
+     *
+     * @var Closure(JobEnvelope, Closure(JobEnvelope): mixed): mixed
+     */
+    private Closure $chain;
 
     /**
      * @param list<JobMiddlewareInterface> $middleware Middleware in execution order.
      */
     public function __construct(array $middleware = [])
     {
-        $this->reversed = array_reverse($middleware);
+        // Compose once: start from a passthrough that calls the per-call
+        // destination, then wrap each layer (innermost last) so the first
+        // middleware added becomes the outermost layer at invocation time.
+        $chain = static fn(JobEnvelope $envelope, Closure $destination): mixed => $destination($envelope);
+
+        foreach (array_reverse($middleware) as $layer) {
+            $next = $chain;
+            $chain = static function (JobEnvelope $envelope, Closure $destination) use ($layer, $next): mixed {
+                $forward = static fn(JobEnvelope $e): mixed => $next($e, $destination);
+
+                return $layer->handle($envelope, $forward);
+            };
+        }
+
+        $this->chain = $chain;
     }
 
     /**
@@ -41,13 +62,6 @@ final readonly class MiddlewarePipeline
      */
     public function process(JobEnvelope $envelope, Closure $destination): mixed
     {
-        /** @var Closure(JobEnvelope): mixed $next */
-        $next = $destination;
-
-        foreach ($this->reversed as $layer) {
-            $next = static fn(JobEnvelope $e): mixed => $layer->handle($e, $next);
-        }
-
-        return $next($envelope);
+        return ($this->chain)($envelope, $destination);
     }
 }

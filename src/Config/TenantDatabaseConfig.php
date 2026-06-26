@@ -6,7 +6,10 @@ namespace Pulsar\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Tenancy\Exception\TenancyException;
 use Pulsar\Tenancy\TenantDatabaseStrategy;
+
+use function sprintf;
 
 /**
  * Tenant database isolation configuration sub-DTO.
@@ -29,8 +32,15 @@ final readonly class TenantDatabaseConfig
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
+        $strategyValue = $data['strategy'] ?? 'prefix';
+        $strategy = TenantDatabaseStrategy::tryFrom($strategyValue)
+            ?? throw TenancyException::invalidConfiguration(sprintf(
+                'Unknown database strategy "%s". Expected one of: prefix, separate_connection, shared.',
+                $strategyValue,
+            ));
+
         return new self(
-            strategy: TenantDatabaseStrategy::from($data['strategy'] ?? 'prefix'),
+            strategy: $strategy,
             prefixTemplate: $data['prefix_template'] ?? 'tenant_{tenant_id}_',
         );
     }
