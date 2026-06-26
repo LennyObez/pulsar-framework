@@ -38,6 +38,17 @@ final readonly class SessionMiddleware implements MiddlewareInterface
 
         $this->sessionManager->save();
 
+        // Emit the session cookie so the client retains the session id across
+        // requests — without this, session-backed CSRF (token stored server-side
+        // in the session) can never validate a GET-rendered token on the POST.
+        // Only sent when the id is new/rotated or the session was destroyed;
+        // withAddedHeader preserves any other Set-Cookie headers (device, locale).
+        $setCookie = $this->sessionManager->pendingSetCookieHeader();
+
+        if ($setCookie !== null) {
+            $response = $response->withAddedHeader('Set-Cookie', $setCookie);
+        }
+
         return $response;
     }
 }
