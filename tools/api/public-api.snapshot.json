@@ -33317,7 +33317,8 @@
                 "purge": {
                     "params": [
                         "string $actorId",
-                        "string $correlationId"
+                        "string $correlationId",
+                        "string $reason"
                     ],
                     "return": "int",
                     "static": false
@@ -33766,6 +33767,11 @@
                     "params": [
                         "string $jobClass"
                     ],
+                    "return": "Pulsar\\Queue\\Exception\\QueueException",
+                    "static": true
+                },
+                "purgeReasonRequired": {
+                    "params": [],
                     "return": "Pulsar\\Queue\\Exception\\QueueException",
                     "static": true
                 },

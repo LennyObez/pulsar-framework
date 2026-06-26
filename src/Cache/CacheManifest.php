@@ -11,16 +11,22 @@ use Pulsar\Security\Crypto\HmacInterface;
 use SodiumException;
 use Throwable;
 
+use function dirname;
 use function file_get_contents;
 use function file_put_contents;
+use function getmypid;
 use function hash_equals;
+use function hrtime;
 use function is_array;
 use function is_file;
 use function is_string;
 use function json_decode;
 use function json_encode;
 use function ksort;
+use function rename;
+use function unlink;
 
+use const DIRECTORY_SEPARATOR;
 use const JSON_PRETTY_PRINT;
 use const JSON_THROW_ON_ERROR;
 use const JSON_UNESCAPED_SLASHES;
@@ -38,6 +44,16 @@ use const LOCK_EX;
 final class CacheManifest
 {
     private const string FILENAME = 'manifest.json';
+
+    /**
+     * Manifest schema version this build understands.
+     *
+     * A manifest carrying any other schema_version is rejected at load time:
+     * a newer deployment may have written fields this build cannot interpret,
+     * and silently coercing them would produce a structurally valid but
+     * semantically wrong manifest. Kept in sync with FrameworkCache.
+     */
+    public const int SCHEMA_VERSION = 1;
 
     /**
      * @param int $schemaVersion Manifest schema version
@@ -67,6 +83,7 @@ final class CacheManifest
      *
      * @param array<string, array{sha256: string, hmac: string}> $caches
      *
+     * @throws CacheException If the manifest file cannot be written or renamed.
      * @throws JsonException
      * @throws SodiumException
      */
@@ -104,9 +121,49 @@ final class CacheManifest
         $json = json_encode($data, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
         $path = $cachePath . DIRECTORY_SEPARATOR . self::FILENAME;
-        file_put_contents($path, $json, LOCK_EX);
+        self::atomicWrite($path, $json);
 
         return $manifest;
+    }
+
+    /**
+     * Atomically write the manifest via temp-file + rename.
+     *
+     * A bare `file_put_contents(..., LOCK_EX)` only guards against concurrent
+     * writers and lets readers observe a partial write (and is purely advisory
+     * on Windows / NFS). The temp-file-then-rename pattern guarantees readers
+     * see either the old file or the complete new file, never a torn write.
+     *
+     * @throws CacheException If the manifest cannot be written or renamed.
+     */
+    private static function atomicWrite(string $path, string $content): void
+    {
+        $dir = dirname($path);
+        $pid = getmypid();
+        $tmpFile = $dir . DIRECTORY_SEPARATOR . '.tmp.' . ($pid !== false ? $pid : 0) . '.' . hrtime(true);
+
+        $result = file_put_contents($tmpFile, $content, LOCK_EX);
+
+        if ($result === false) {
+            throw CacheException::writeFailure($path, 'failed to write temporary manifest file');
+        }
+
+        $renamed = @rename($tmpFile, $path);
+
+        if (!$renamed) {
+            // Windows fallback: unlink target then rename.
+            if (is_file($path)) {
+                @unlink($path);
+            }
+
+            $renamed = @rename($tmpFile, $path);
+
+            if (!$renamed) {
+                @unlink($tmpFile);
+
+                throw CacheException::writeFailure($path, 'failed to rename temporary manifest file');
+            }
+        }
     }
 
     /**
@@ -199,6 +256,13 @@ final class CacheManifest
      */
     private static function fromArray(array $data): ?self
     {
+        // Reject any manifest whose schema version this build does not
+        // understand. Coercing an unknown version into the current shape
+        // would yield a valid-looking but semantically wrong manifest.
+        if (($data['schema_version'] ?? 0) !== self::SCHEMA_VERSION) {
+            return null;
+        }
+
         try {
             return new self(
                 schemaVersion: $data['schema_version'] ?? 0,

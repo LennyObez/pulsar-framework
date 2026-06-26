@@ -561,7 +561,7 @@ final readonly class MigrationRunner implements MigrationRunnerInterface
             );
         }
 
-        MigrationFlockHolder::set($handle);
+        MigrationFlockHolder::set($lockPath, $handle);
     }
 
     /**
@@ -569,12 +569,13 @@ final readonly class MigrationRunner implements MigrationRunnerInterface
      */
     private function releaseSqliteFlock(): void
     {
-        $handle = MigrationFlockHolder::get();
+        $lockPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'pulsar_migrate_' . $this->tableName . '.lock';
+        $handle = MigrationFlockHolder::get($lockPath);
 
         if ($handle !== null) {
             flock($handle, LOCK_UN);
             fclose($handle);
-            MigrationFlockHolder::clear();
+            MigrationFlockHolder::clear($lockPath);
         }
     }
 }

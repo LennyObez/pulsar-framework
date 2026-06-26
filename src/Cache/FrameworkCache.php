@@ -42,8 +42,8 @@ final class FrameworkCache implements FrameworkCacheInterface
     /** MasterKey KDF context for cache HMAC. */
     private const string HMAC_CONTEXT = 'fw_cache';
 
-    /** Manifest schema version. */
-    private const int SCHEMA_VERSION = 1;
+    /** Manifest schema version (single source of truth: CacheManifest). */
+    private const int SCHEMA_VERSION = CacheManifest::SCHEMA_VERSION;
 
     /** Environment variables that participate in cache invalidation. */
     private const array ENV_INVALIDATION_KEYS = [
@@ -63,6 +63,7 @@ final class FrameworkCache implements FrameworkCacheInterface
 
     private readonly string $cachePath;
     private readonly HmacInterface $hmac;
+    private readonly string $hmacKey;
     private readonly CacheIntegrity $integrity;
     private readonly ConfigCache $configCache;
     private readonly RouteCache $routeCache;
@@ -79,9 +80,9 @@ final class FrameworkCache implements FrameworkCacheInterface
         $this->hmac = $hmac;
         $this->cachePath = $basePath . DIRECTORY_SEPARATOR . 'var' . DIRECTORY_SEPARATOR . 'cache' . DIRECTORY_SEPARATOR . 'framework';
 
-        $hmacKey = $this->masterKey->deriveSubKey(self::HMAC_SUB_KEY_ID, self::HMAC_CONTEXT);
+        $this->hmacKey = $this->masterKey->deriveSubKey(self::HMAC_SUB_KEY_ID, self::HMAC_CONTEXT);
 
-        $this->integrity = new CacheIntegrity($this->hmac, $hmacKey, $this->encrypt ? $encryptor : null);
+        $this->integrity = new CacheIntegrity($this->hmac, $this->hmacKey, $this->encrypt ? $encryptor : null);
         $this->configCache = new ConfigCache($this->integrity);
         $this->routeCache = new RouteCache($this->integrity);
         $this->containerCache = new ContainerCache($this->integrity);
@@ -154,9 +155,7 @@ final class FrameworkCache implements FrameworkCacheInterface
      */
     public function isWarm(): bool
     {
-        $hmacKey = $this->masterKey->deriveSubKey(self::HMAC_SUB_KEY_ID, self::HMAC_CONTEXT);
-
-        return CacheManifest::load($this->hmac, $this->cachePath, $hmacKey) !== null;
+        return CacheManifest::load($this->hmac, $this->cachePath, $this->hmacKey) !== null;
     }
 
     /**
@@ -180,8 +179,7 @@ final class FrameworkCache implements FrameworkCacheInterface
             return null;
         }
 
-        $hmacKey = $this->masterKey->deriveSubKey(self::HMAC_SUB_KEY_ID, self::HMAC_CONTEXT);
-        $manifest = CacheManifest::load($this->hmac, $this->cachePath, $hmacKey);
+        $manifest = CacheManifest::load($this->hmac, $this->cachePath, $this->hmacKey);
 
         if ($manifest === null) {
             return null;
@@ -211,6 +209,36 @@ final class FrameworkCache implements FrameworkCacheInterface
 
         if (!hash_equals($manifest->allowedClassesHash, $classesHash)) {
             return null;
+        }
+
+        // Verify each cache file against the per-file SHA-256 + HMAC recorded
+        // in the manifest. The manifest HMAC only proves the manifest text is
+        // authentic — it does NOT prove the cache binaries themselves are
+        // intact. Re-reading and verifying each file here closes the
+        // file-replacement gap (an attacker swapping config.cache.bin while
+        // leaving the manifest untouched).
+        $cacheFiles = [
+            'config' => $this->cachePath . DIRECTORY_SEPARATOR . ConfigCache::FILENAME,
+            'routes' => $this->cachePath . DIRECTORY_SEPARATOR . RouteCache::FILENAME,
+            'container' => $this->cachePath . DIRECTORY_SEPARATOR . ContainerCache::FILENAME,
+        ];
+
+        foreach ($cacheFiles as $name => $file) {
+            $signature = $manifest->caches[$name] ?? null;
+
+            if ($signature === null) {
+                return null;
+            }
+
+            $content = file_get_contents($file);
+
+            if ($content === false) {
+                return null;
+            }
+
+            if (!$this->integrity->verify($content, $signature['sha256'], $signature['hmac'])) {
+                return null;
+            }
         }
 
         // Load individual caches
@@ -334,11 +362,10 @@ final class FrameworkCache implements FrameworkCacheInterface
         $invalidationKey = $this->computeInvalidationKey($configPath);
 
         // Write manifest
-        $hmacKey = $this->masterKey->deriveSubKey(self::HMAC_SUB_KEY_ID, self::HMAC_CONTEXT);
         CacheManifest::write(
             hmac: $this->hmac,
             cachePath: $this->cachePath,
-            hmacKey: $hmacKey,
+            hmacKey: $this->hmacKey,
             schemaVersion: self::SCHEMA_VERSION,
             frameworkVersion: Version::full(),
             appEnv: $appEnv,

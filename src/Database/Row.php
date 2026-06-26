@@ -16,6 +16,7 @@ use function is_int;
 use function is_numeric;
 use function is_resource;
 use function is_string;
+use function preg_match;
 use function stream_get_contents;
 
 /**
@@ -75,7 +76,7 @@ readonly class Row
             return $value;
         }
 
-        if (is_string($value) && $value !== '' && ($value === '0' || ltrim($value, '-0123456789') === '')) {
+        if (is_string($value) && preg_match('/^-?\d+$/D', $value) === 1) {
             return (int) $value;
         }
 
@@ -171,7 +172,7 @@ readonly class Row
             return $value;
         }
 
-        if (is_string($value) && $value !== '' && ($value === '0' || ltrim($value, '-0123456789') === '')) {
+        if (is_string($value) && preg_match('/^-?\d+$/D', $value) === 1) {
             return (int) $value;
         }
 

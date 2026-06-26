@@ -175,17 +175,27 @@ final class DeadLetterQueue
     /**
      * Remove all failed jobs from the dead-letter queue.
      *
+     * In regulated mode, a non-empty reason is mandatory — mirroring
+     * {@see self::delete()} — so that bulk removals remain auditable.
+     *
      * @return int The number of jobs purged.
+     *
+     * @throws QueueException If a reason is required but not provided.
      */
-    public function purge(string $actorId = '', string $correlationId = ''): int
+    public function purge(string $actorId = '', string $correlationId = '', string $reason = ''): int
     {
+        if ($this->regulated && trim($reason) === '') {
+            throw QueueException::purgeReasonRequired();
+        }
+
         $count = count($this->failedJobs);
+        $auditReason = trim($reason) === '' ? 'Bulk purge' : $reason;
 
         foreach ($this->failedJobs as $failedJob) {
             $this->eventDispatcher?->dispatch(new DlqJobDeleted(
                 jobId: $failedJob->id,
                 actorId: $actorId,
-                reason: 'Bulk purge',
+                reason: $auditReason,
                 correlationId: $correlationId,
                 timestamp: time(),
             ));

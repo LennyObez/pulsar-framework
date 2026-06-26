@@ -37,6 +37,7 @@ use Throwable;
 use function array_reverse;
 use function bin2hex;
 use function count;
+use function implode;
 use function sprintf;
 
 /**

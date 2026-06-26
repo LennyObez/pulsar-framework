@@ -200,9 +200,6 @@ final readonly class EventEnvelope
 
     private static function defaultRandomizer(): Randomizer
     {
-        /** @var Randomizer|null $randomizer */
-        static $randomizer = null;
-
-        return $randomizer ??= new Randomizer(new Secure());
+        return new Randomizer(new Secure());
     }
 }
