@@ -19020,9 +19020,15 @@
                         "Pulsar\\Extensibility\\Manifest\\PulsarVersionConfig $pulsar",
                         "Pulsar\\Extensibility\\Manifest\\ProvidesConfig $provides",
                         "Pulsar\\Extensibility\\Manifest\\RequiresConfig $requires",
-                        "Pulsar\\Extensibility\\TrustTier $requestedTrustTier"
+                        "Pulsar\\Extensibility\\TrustTier $requestedTrustTier",
+                        "array $autoload"
                     ],
                     "return": null,
+                    "static": false
+                },
+                "autoloadMap": {
+                    "params": [],
+                    "return": "array",
                     "static": false
                 },
                 "fromArray": {
@@ -55242,6 +55248,7 @@
         "Pulsar\\Event\\Internal\\Outbox\\OutboxRelay",
         "Pulsar\\Event\\Internal\\Outbox\\OutboxRelayTickResult",
         "Pulsar\\Event\\Internal\\StormGuard",
+        "Pulsar\\Extensibility\\ExtensionAutoloader",
         "Pulsar\\Extensibility\\ExtensionLoader",
         "Pulsar\\Extensibility\\ExtensionRegistry",
         "Pulsar\\Extensibility\\Internal\\ExtensionBehaviorMonitor",

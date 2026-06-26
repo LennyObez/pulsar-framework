@@ -20,6 +20,14 @@ declare(strict_types=1);
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use Pulsar\Api\Api;
+use Pulsar\Extensibility\ExtensionAutoloader;
+
+// Extensions are not in the root composer.json autoload (ADR-0004: no privileged
+// built-in access), so register PSR-4 autoloading for them. This boundary check
+// reflects imported classes to read their #[Api] attribute; without the
+// autoloader, extension classes would be unresolvable and every cross-extension
+// import would be misreported as targeting a non-#[Api] class.
+ExtensionAutoloader::registerForPaths([__DIR__ . '/../extensions']);
 
 // ---------------------------------------------------------------------------
 // BoundaryAnalyzer — core analysis logic (testable independently)

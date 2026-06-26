@@ -127,6 +127,17 @@ final class ExtensionBootstrap
             ));
         }
 
+        // Register PSR-4 autoloading for the discovered extensions before any of
+        // their classes are referenced. Extensions are not baked into the root
+        // composer.json autoload (ADR-0004: no privileged built-in access), so
+        // this is what makes `validateExtensionClass()` / `instantiate()` below —
+        // and the extensions themselves — resolvable.
+        $autoloader = new ExtensionAutoloader();
+        foreach ($manifests as $manifest) {
+            $autoloader->addPsr4($manifest->autoloadMap());
+        }
+        $autoloader->register();
+
         // Validate each manifest individually: skip failures, don't abort all
         $validManifests = [];
 
