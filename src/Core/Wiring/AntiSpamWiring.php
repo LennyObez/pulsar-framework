@@ -17,6 +17,7 @@ use Pulsar\Http\Client\HttpClientInterface;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Http\RateLimit\SlidingWindowRateLimiter;
+use Pulsar\Http\TrustedProxy;
 use Pulsar\I18n\TranslatorInterface;
 use Pulsar\Routing\Router;
 use Pulsar\Security\AntiSpam\AccountAgeGate;
@@ -49,6 +50,8 @@ use Pulsar\Security\AntiSpam\Risk\AdaptiveChallengeMiddleware;
 use Pulsar\Security\AntiSpam\Risk\AdaptiveRiskConfig;
 use Pulsar\Security\AntiSpam\Risk\AdaptiveRiskEngine;
 use Pulsar\Security\AntiSpam\Risk\BotScoreSignalProvider;
+use Pulsar\Security\AntiSpam\Risk\Ja4Config;
+use Pulsar\Security\AntiSpam\Risk\Ja4SignalProvider;
 use Pulsar\Security\AntiSpam\TimeTrap\TimeTrapCheck;
 use Pulsar\Security\AntiSpam\TimeTrap\TimeTrapRenderer;
 use Pulsar\Security\AntiSpam\TimeTrap\TimeTrapService;
@@ -84,6 +87,7 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
                 AntiSpamPipelineInterface::class,
                 AiCrawlerConfig::class,
                 AdaptiveRiskConfig::class,
+                Ja4Config::class,
             ],
             optional: [
                 new OptionalBinding(
@@ -244,6 +248,9 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
         $config = $this->loadAdaptiveRiskConfig($configManager);
         $container->instance(AdaptiveRiskConfig::class, $config);
 
+        $ja4Config = $this->loadJa4Config($configManager);
+        $container->instance(Ja4Config::class, $ja4Config);
+
         if (!$config->enabled) {
             return;
         }
@@ -252,10 +259,17 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
             ? $container->get(BotDetector::class)
             : new BotDetector();
 
-        $engine = new AdaptiveRiskEngine(
-            $config,
-            [new BotScoreSignalProvider($botDetector)],
-        );
+        $signalProviders = [new BotScoreSignalProvider($botDetector)];
+
+        // JA4/JA4+ TLS-fingerprint signal: edge-supplied, trusted-proxy gated.
+        if ($ja4Config->enabled) {
+            $trustedProxy = $container->has(TrustedProxy::class)
+                ? $container->get(TrustedProxy::class)
+                : null;
+            $signalProviders[] = new Ja4SignalProvider($ja4Config, $trustedProxy);
+        }
+
+        $engine = new AdaptiveRiskEngine($config, $signalProviders);
         $container->instance(AdaptiveRiskEngine::class, $engine);
 
         $riskMiddleware = new AdaptiveChallengeMiddleware($engine, $logger);
@@ -284,6 +298,28 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
         }
 
         return new AdaptiveRiskConfig();
+    }
+
+    private function loadJa4Config(ConfigManager $configManager): Ja4Config
+    {
+        $configPath = $configManager->configPath();
+
+        if ($configPath !== null && is_file($configPath . DIRECTORY_SEPARATOR . 'anti-spam.php')) {
+            /**
+             * @psalm-suppress UnresolvableInclude
+             * @var mixed $data
+             */
+            $data = require $configPath . DIRECTORY_SEPARATOR . 'anti-spam.php';
+
+            if (is_array($data) && isset($data['ja4']) && is_array($data['ja4'])) {
+                /** @var array<string, mixed> $ja4 */
+                $ja4 = $data['ja4'];
+
+                return Ja4Config::fromArray($ja4);
+            }
+        }
+
+        return new Ja4Config();
     }
 
     /**
