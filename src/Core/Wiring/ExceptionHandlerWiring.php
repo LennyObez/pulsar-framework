@@ -40,15 +40,27 @@ final readonly class ExceptionHandlerWiring implements ServiceWiringInterface
         /** @var SensitiveDataScrubber|null $scrubber */
         $devRenderer = new DevelopmentRenderer($scrubber ?? new SensitiveDataScrubber());
 
-        $templateEngine = $container->has(TemplateEngineInterface::class)
-            ? $container->get(TemplateEngineInterface::class)
-            : null;
+        // Resolve the template engine lazily: ViewWiring binds it AFTER this
+        // wiring runs, so capturing it eagerly here would always be null and
+        // every error would fall back to the inline page. The closure is a lazy
+        // factory from the composition root (not a service locator leaked into
+        // the renderer); it is invoked at render time, by which point the engine
+        // is bound.
+        $templateEngineResolver = static function () use ($container): ?TemplateEngineInterface {
+            if (!$container->has(TemplateEngineInterface::class)) {
+                return null;
+            }
 
-        /** @var TemplateEngineInterface|null $templateEngine */
+            /** @var TemplateEngineInterface $engine */
+            $engine = $container->get(TemplateEngineInterface::class);
+
+            return $engine;
+        };
+
         $renderer = new ErrorPageRenderer(
-            templateEngine: $templateEngine,
             devRenderer: $devRenderer,
             debug: $appConfig->debug,
+            templateEngineResolver: $templateEngineResolver,
         );
         $container->instance(ExceptionRendererInterface::class, $renderer);
 
