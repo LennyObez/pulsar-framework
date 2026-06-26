@@ -42,7 +42,10 @@ final readonly class BodySizeLimitMiddleware implements MiddlewareInterface
         if ($contentLength !== '') {
             $length = (int) $contentLength;
 
-            if ($length > $this->maxBytes) {
+            // A negative Content-Length is malformed (RFC 9110 defines it as a
+            // non-negative integer) and would silently bypass the `> maxBytes`
+            // check, so reject it outright alongside oversized bodies.
+            if ($length < 0 || $length > $this->maxBytes) {
                 return new Response(413);
             }
         }

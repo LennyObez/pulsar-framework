@@ -33,6 +33,7 @@ final readonly class DeployConfig
         'request-size-limits' => ['enabled' => true, 'severity' => 'warn'],
         'trusted-proxies' => ['enabled' => true, 'severity' => 'warn'],
         'integrity' => ['enabled' => true, 'severity' => 'fail'],
+        'audit-logger' => ['enabled' => true, 'severity' => 'fail'],
     ];
 
     /**

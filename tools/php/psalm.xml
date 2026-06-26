@@ -281,8 +281,13 @@
                 <!-- (C) Optional ext-imagick: see UndefinedClass rationale above. -->
                 <file name="../../extensions/cms/src/Media/Document/PdfThumbnailGenerator.php"/>
                 <file name="../../extensions/cms/src/Media/Processing/ImagickImageProcessor.php"/>
-                <!-- (C) DI container is type-generic at the boundary by design. -->
+                <!-- (C) DI container is type-generic at the boundary by design.
+                     CompiledContainer::call() resolves arbitrary callable args
+                     (user input + container returns) — the same inherently-mixed
+                     boundary as Container::call(); de-duplicating both call()
+                     bodies into one CallableInvoker helper is a tracked follow-up. -->
                 <file name="../../src/Container/Container.php"/>
+                <file name="../../src/Container/Compiled/CompiledContainer.php"/>
                 <file name="../../src/Support/Arr.php"/>
                 <!-- (A) PHP 8.5 ext-dom Dom\NodeList iteration: Psalm narrows
                      iteration values to mixed (DOMNodeList::current() returns
