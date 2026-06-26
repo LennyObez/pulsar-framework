@@ -160,7 +160,13 @@ final class SessionMiddlewareTest extends TestCase
 
         $result = $this->middleware->process($request, $handler);
 
-        self::assertSame($expectedResponse, $result);
+        // The handler's response is passed through with its status and body
+        // intact. The middleware adds a Set-Cookie header for this new session,
+        // so it returns a PSR-7-derived response rather than the identical
+        // object — assert on the passed-through content, not object identity.
+        self::assertSame(200, $result->getStatusCode());
+        self::assertSame('Custom body', (string) $result->getBody());
+        self::assertNotEmpty($result->getHeader('Set-Cookie'), 'new session must emit its cookie');
     }
 }
 

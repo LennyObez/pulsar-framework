@@ -18,6 +18,7 @@ use Random\Randomizer;
 
 use function array_key_exists;
 use function bin2hex;
+use function implode;
 use function is_array;
 use function is_bool;
 use function is_int;
@@ -26,6 +27,7 @@ use function is_string;
 use function json_decode;
 use function json_encode;
 use function preg_match;
+use function strcasecmp;
 use function time;
 
 use const JSON_THROW_ON_ERROR;
@@ -47,6 +49,19 @@ final class SessionManager implements SessionInterface
     private bool $started = false;
 
     private string $sessionId = '';
+
+    /**
+     * Whether the session id was generated or rotated this request and so must
+     * be (re-)sent to the client. An id received from the client's cookie does
+     * not need re-emitting, so this stays false in that case.
+     */
+    private bool $idIsNew = false;
+
+    /**
+     * Whether an active session was destroyed this request, so an expiring
+     * cookie must be sent to make the client drop the now-dead session id.
+     */
+    private bool $cookieCleared = false;
 
     /** @var array<string, mixed> */
     private array $data = [];
@@ -79,6 +94,7 @@ final class SessionManager implements SessionInterface
 
         if ($this->sessionId === '') {
             $this->sessionId = $this->generateId();
+            $this->idIsNew = true;
         }
 
         $this->handler->open($this->config->savePath, $this->config->effectiveCookieName());
@@ -123,6 +139,7 @@ final class SessionManager implements SessionInterface
             $this->sessionId = $existingId;
         } else {
             $this->sessionId = $this->generateId();
+            $this->idIsNew = true;
         }
 
         $this->handler->open($this->config->savePath, $this->config->effectiveCookieName());
@@ -283,6 +300,7 @@ final class SessionManager implements SessionInterface
 
         $oldId = $this->sessionId;
         $this->sessionId = $this->generateId();
+        $this->idIsNew = true;
 
         if ($deleteOldSession) {
             $this->handler->destroy($oldId);
@@ -296,12 +314,14 @@ final class SessionManager implements SessionInterface
     {
         if ($this->sessionId !== '') {
             $this->handler->destroy($this->sessionId);
+            $this->cookieCleared = true;
         }
 
         $this->data = [];
         $this->metadata = null;
         $this->sessionId = '';
         $this->started = false;
+        $this->idIsNew = false;
     }
 
     /**
@@ -343,6 +363,83 @@ final class SessionManager implements SessionInterface
     public function getConfig(): SessionConfig
     {
         return $this->config;
+    }
+
+    /**
+     * Build the `Set-Cookie` header value the session lifecycle must emit on the
+     * outgoing response this request, or null when nothing changed.
+     *
+     * Returns a cookie carrying the session id when the id was generated or
+     * rotated this request (a returning id from the client is not re-emitted),
+     * an expiring cookie when the session was destroyed, or null otherwise. The
+     * {@see SessionMiddleware} adds this to the response via withAddedHeader so
+     * it never clobbers other Set-Cookie headers.
+     */
+    #[NoDiscard]
+    public function pendingSetCookieHeader(): ?string
+    {
+        if ($this->started && $this->sessionId !== '' && $this->idIsNew) {
+            // A lifetime of 0 means a session cookie (no Max-Age, expires when the
+            // browser closes); a positive lifetime sets an explicit Max-Age.
+            return $this->buildCookieHeader(
+                $this->sessionId,
+                $this->config->lifetime > 0 ? $this->config->lifetime : null,
+            );
+        }
+
+        if ($this->cookieCleared) {
+            return $this->buildCookieHeader('', 0);
+        }
+
+        return null;
+    }
+
+    /**
+     * Build an RFC 6265 `Set-Cookie` header value from the session configuration.
+     *
+     * @param string $value   Cookie value (the session id, or '' to clear).
+     * @param int|null $maxAge Max-Age in seconds; 0 expires immediately, null
+     *                         omits the attribute (a browser-session cookie).
+     */
+    private function buildCookieHeader(string $value, ?int $maxAge): string
+    {
+        $hostPrefixed = $this->config->cookieHostPrefix;
+        $sameSite = $this->config->cookieSameSite;
+
+        // `__Host-` cookies and `SameSite=None` both require the Secure flag
+        // (browsers reject the cookie otherwise) — enforce it regardless of the
+        // configured cookieSecure value so a misconfiguration cannot silently
+        // produce a cookie the client drops.
+        $secure = $this->config->cookieSecure
+            || $hostPrefixed
+            || strcasecmp($sameSite, 'None') === 0;
+
+        $parts = [$this->config->effectiveCookieName() . '=' . $value];
+
+        // `__Host-` mandates Path=/ and no Domain.
+        $parts[] = 'Path=' . ($hostPrefixed || $this->config->cookiePath === '' ? '/' : $this->config->cookiePath);
+
+        if (!$hostPrefixed && $this->config->cookieDomain !== '') {
+            $parts[] = 'Domain=' . $this->config->cookieDomain;
+        }
+
+        if ($maxAge !== null) {
+            $parts[] = 'Max-Age=' . $maxAge;
+        }
+
+        if ($secure) {
+            $parts[] = 'Secure';
+        }
+
+        if ($this->config->cookieHttpOnly) {
+            $parts[] = 'HttpOnly';
+        }
+
+        if ($sameSite !== '') {
+            $parts[] = 'SameSite=' . $sameSite;
+        }
+
+        return implode('; ', $parts);
     }
 
     /**

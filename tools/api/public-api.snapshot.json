@@ -46363,6 +46363,11 @@
                     "return": "bool",
                     "static": false
                 },
+                "pendingSetCookieHeader": {
+                    "params": [],
+                    "return": "?string",
+                    "static": false
+                },
                 "regenerate": {
                     "params": [
                         "bool $deleteOldSession"
