@@ -24,7 +24,9 @@ use const SODIUM_CRYPTO_GENERICHASH_KEYBYTES_MIN;
 /**
  * HMAC-based API request signing using libsodium BLAKE2b.
  *
- * Signs: METHOD + PATH + TIMESTAMP + BODY_HASH
+ * Signs: METHOD + PATH(+QUERY) + TIMESTAMP + BODY_HASH
+ * The query string is folded into the signed path component so query
+ * parameters cannot be tampered with after signing.
  * Similar in spirit to AWS Signature V4 but using BLAKE2b keyed hashing.
  *
  * Headers used:
@@ -60,7 +62,7 @@ final readonly class RequestSigner
 
         $components = new SignedRequestComponents(
             method: $request->getMethod(),
-            path: $request->getUri()->getPath(),
+            path: $this->canonicalPath($request),
             timestamp: $timestamp,
             bodyHash: hash('sha256', $body),
             keyId: $this->keyId,
@@ -116,7 +118,7 @@ final readonly class RequestSigner
 
         $components = new SignedRequestComponents(
             method: $request->getMethod(),
-            path: $request->getUri()->getPath(),
+            path: $this->canonicalPath($request),
             timestamp: $timestamp,
             bodyHash: hash('sha256', $body),
             keyId: $keyId,
@@ -129,6 +131,24 @@ final readonly class RequestSigner
         }
 
         return SignatureVerificationResult::success();
+    }
+
+    /**
+     * Build the path component covered by the signature.
+     *
+     * Includes the query string (when present) so query parameters cannot be
+     * mutated in transit without invalidating the signature. The query is
+     * appended only when non-empty, preserving signatures for query-less
+     * requests. Mirrors AWS Signature V4's inclusion of the canonical query
+     * string in the signed material.
+     */
+    private function canonicalPath(ServerRequestInterface $request): string
+    {
+        $uri = $request->getUri();
+        $path = $uri->getPath();
+        $query = $uri->getQuery();
+
+        return $query === '' ? $path : $path . '?' . $query;
     }
 
     /**
