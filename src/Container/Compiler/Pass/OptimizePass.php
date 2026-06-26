@@ -34,7 +34,7 @@ final class OptimizePass implements CompilerPassInterface
     {
         $this->hints = [];
 
-        foreach ($builder->allDefinitions() as $id => $definition) {
+        foreach ($builder->allDefinitions() as $definition) {
             $concrete = $definition->concrete;
 
             if (!is_string($concrete) || !class_exists($concrete)) {
@@ -70,8 +70,12 @@ final class OptimizePass implements CompilerPassInterface
             }
 
             if (!$skip && $params !== []) {
-                /** @var class-string $id */
-                $this->hints[$id] = $params;
+                // Key by the concrete class name: Container::build() looks up
+                // resolution hints by the concrete it instantiates, not by the
+                // binding id. Keying by id would make hints a dead letter for
+                // every interface→class binding (the dominant pattern).
+                /** @var class-string $concrete */
+                $this->hints[$concrete] = $params;
             }
         }
     }

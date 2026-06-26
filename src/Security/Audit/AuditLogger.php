@@ -6,6 +6,7 @@ namespace Pulsar\Security\Audit;
 
 use DateTimeImmutable;
 use Fiber;
+use InvalidArgumentException;
 use JsonException;
 use Override;
 use Pulsar\Api\Api;
@@ -46,9 +47,6 @@ final class AuditLogger implements AuditLoggerInterface
     /** Cooperative fiber mutex for HMAC chain integrity. */
     private bool $chainLocked = false;
 
-    /**
-     * @throws SodiumException
-     */
     private readonly Randomizer $randomizer;
 
     /**
@@ -57,6 +55,9 @@ final class AuditLogger implements AuditLoggerInterface
      *                           chain cannot be safely resumed and we
      *                           refuse to silently re-seed over the
      *                           corrupt state (F24.3).
+     * @throws InvalidArgumentException When the audit key is shorter than
+     *                                  the libsodium minimum and the seed
+     *                                  HMAC cannot be computed.
      * @throws SodiumException
      */
     public function __construct(

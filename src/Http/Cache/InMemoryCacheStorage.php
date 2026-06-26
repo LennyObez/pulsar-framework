@@ -13,8 +13,9 @@ use function count;
  * In-memory HTTP response cache storage.
  *
  * Ideal for persistent workers (RoadRunner, FrankenPHP) where the process
- * lifetime spans multiple requests. Entries are evicted on expiration
- * or when max capacity is reached (LRU).
+ * lifetime spans multiple requests. Entries are evicted on expiration, or
+ * when max capacity is reached the entry with the earliest expiration
+ * (least future lifetime) is evicted first.
  * @api
  */
 #[Api(since: '1.0.0')]
@@ -52,7 +53,7 @@ final class InMemoryCacheStorage implements CacheStorageInterface
 
     public function set(string $key, CachedResponse $response, int $ttl, array $tags = []): void
     {
-        // LRU eviction
+        // Evict the entry closest to expiry once at capacity (see evictOldest).
         if (count($this->store) >= $this->maxEntries && !isset($this->store[$key])) {
             $this->evictOldest();
         }
