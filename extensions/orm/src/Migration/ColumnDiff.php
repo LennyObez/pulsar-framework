@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Database\Migration;
+namespace Pulsar\Extension\Orm\Migration;
 
 use Pulsar\Api\Api;
 use Pulsar\Extension\Orm\Domain\ColumnMetadata;

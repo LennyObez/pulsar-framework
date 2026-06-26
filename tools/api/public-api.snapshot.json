@@ -14909,43 +14909,6 @@
             },
             "constants": []
         },
-        "Pulsar\\Database\\Migration\\ColumnDiff": {
-            "since": "1.0.0",
-            "methods": [],
-            "signatures": {
-                "__construct": {
-                    "params": [
-                        "array $addColumns",
-                        "array $dropColumns"
-                    ],
-                    "return": null,
-                    "static": false
-                }
-            },
-            "constants": []
-        },
-        "Pulsar\\Database\\Migration\\DiffGenerator": {
-            "since": "1.0.0",
-            "methods": [],
-            "signatures": {
-                "__construct": {
-                    "params": [
-                        "Pulsar\\Extension\\Orm\\Contracts\\MetadataRegistryInterface $metadataRegistry",
-                        "Pulsar\\Database\\Introspection\\DatabaseIntrospector $introspector"
-                    ],
-                    "return": null,
-                    "static": false
-                },
-                "generate": {
-                    "params": [
-                        "array $entityClasses"
-                    ],
-                    "return": "Pulsar\\Database\\Migration\\DiffResult",
-                    "static": false
-                }
-            },
-            "constants": []
-        },
         "Pulsar\\Database\\Migration\\DiffResult": {
             "since": "1.0.0",
             "methods": [],
@@ -54682,7 +54645,6 @@
         "Pulsar\\Deploy\\Check\\CacheSettingsCheck",
         "Pulsar\\Deploy\\Check\\DebugModeCheck",
         "Pulsar\\Deploy\\Check\\DependencyIntegrityCheck",
-        "Pulsar\\Deploy\\Check\\EidasProductionReadinessCheck",
         "Pulsar\\Deploy\\Check\\FilesystemScanCheck",
         "Pulsar\\Deploy\\Check\\HealthEndpointCheck",
         "Pulsar\\Deploy\\Check\\Http3ReadinessCheck",
@@ -54690,7 +54652,6 @@
         "Pulsar\\Deploy\\Check\\IntegrityCheck",
         "Pulsar\\Deploy\\Check\\JitCheck",
         "Pulsar\\Deploy\\Check\\OpcacheCheck",
-        "Pulsar\\Deploy\\Check\\PluginSignatureRequiredCheck",
         "Pulsar\\Deploy\\Check\\RateLimitCheck",
         "Pulsar\\Deploy\\Check\\RequestSizeCheck",
         "Pulsar\\Deploy\\Check\\SecurityHeadersReadinessCheck",
