@@ -39280,6 +39280,123 @@
             },
             "constants": []
         },
+        "Pulsar\\Security\\AntiSpam\\PrivacyPass\\PrivacyPassChallengeIssuer": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "Pulsar\\Security\\AntiSpam\\PrivacyPass\\TokenChallenge $challenge",
+                        "string $tokenKeyDer"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "headerValue": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Security\\AntiSpam\\PrivacyPass\\PrivacyPassConfig": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "bool $enabled",
+                        "string $issuerName",
+                        "string $originInfo",
+                        "string $tokenKey",
+                        "int $tokenType"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "challenge": {
+                    "params": [],
+                    "return": "Pulsar\\Security\\AntiSpam\\PrivacyPass\\TokenChallenge",
+                    "static": false
+                },
+                "fromArray": {
+                    "params": [
+                        "array $data"
+                    ],
+                    "return": "Pulsar\\Security\\AntiSpam\\PrivacyPass\\PrivacyPassConfig",
+                    "static": true
+                },
+                "isUsable": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Security\\AntiSpam\\PrivacyPass\\PrivateAccessTokenVerifier": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "Pulsar\\Security\\AntiSpam\\PrivacyPass\\Internal\\IssuerPublicKey $issuerKey",
+                        "?Pulsar\\Security\\AntiSpam\\PrivacyPass\\Internal\\RsaSsaPssVerifier $signature"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "fromBase64UrlKey": {
+                    "params": [
+                        "string $tokenKey"
+                    ],
+                    "return": "Pulsar\\Security\\AntiSpam\\PrivacyPass\\PrivateAccessTokenVerifier",
+                    "static": true
+                },
+                "isSupported": {
+                    "params": [],
+                    "return": "bool",
+                    "static": true
+                },
+                "verify": {
+                    "params": [
+                        "string $base64UrlToken",
+                        "Pulsar\\Security\\AntiSpam\\PrivacyPass\\TokenChallenge $expectedChallenge"
+                    ],
+                    "return": "bool",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Security\\AntiSpam\\PrivacyPass\\TokenChallenge": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "int $tokenType",
+                        "string $issuerName",
+                        "string $originInfo",
+                        "string $redemptionContext"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "digest": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "encode": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\Security\\AntiSpam\\ReputationCooldownInterface": {
             "since": "1.0.0",
             "methods": [],
@@ -55894,6 +56011,12 @@
         "Pulsar\\Security\\AntiSpam\\ManagedChallenge\\ManagedChallengeRefreshController",
         "Pulsar\\Security\\AntiSpam\\ManagedChallenge\\ManagedChallengeService",
         "Pulsar\\Security\\AntiSpam\\ManagedChallenge\\ManagedChallengeVerifier",
+        "Pulsar\\Security\\AntiSpam\\PrivacyPass\\Internal\\IssuerPublicKey",
+        "Pulsar\\Security\\AntiSpam\\PrivacyPass\\Internal\\PrivateToken",
+        "Pulsar\\Security\\AntiSpam\\PrivacyPass\\Internal\\PrivateTokenHeaderParser",
+        "Pulsar\\Security\\AntiSpam\\PrivacyPass\\Internal\\RsaSsaPssVerifier",
+        "Pulsar\\Security\\AntiSpam\\PrivacyPass\\PrivateTokenBypassProvider",
+        "Pulsar\\Security\\AntiSpam\\PrivacyPass\\PrivateTokenChallengeMiddleware",
         "Pulsar\\Security\\AntiSpam\\ReputationCooldown",
         "Pulsar\\Security\\AntiSpam\\Risk\\AdaptiveChallengeMiddleware",
         "Pulsar\\Security\\AntiSpam\\Risk\\BotScoreSignalProvider",

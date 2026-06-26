@@ -45,6 +45,12 @@ use Pulsar\Security\AntiSpam\ManagedChallenge\ManagedChallengeRefreshController;
 use Pulsar\Security\AntiSpam\ManagedChallenge\ManagedChallengeRenderer;
 use Pulsar\Security\AntiSpam\ManagedChallenge\ManagedChallengeService;
 use Pulsar\Security\AntiSpam\ManagedChallenge\ManagedChallengeVerifier;
+use Pulsar\Security\AntiSpam\PrivacyPass\Internal\IssuerPublicKey;
+use Pulsar\Security\AntiSpam\PrivacyPass\PrivacyPassChallengeIssuer;
+use Pulsar\Security\AntiSpam\PrivacyPass\PrivacyPassConfig;
+use Pulsar\Security\AntiSpam\PrivacyPass\PrivateAccessTokenVerifier;
+use Pulsar\Security\AntiSpam\PrivacyPass\PrivateTokenBypassProvider;
+use Pulsar\Security\AntiSpam\PrivacyPass\PrivateTokenChallengeMiddleware;
 use Pulsar\Security\AntiSpam\ReputationCooldown;
 use Pulsar\Security\AntiSpam\Risk\AdaptiveChallengeMiddleware;
 use Pulsar\Security\AntiSpam\Risk\AdaptiveRiskConfig;
@@ -59,6 +65,7 @@ use Pulsar\Security\AntiSpam\TurnstileVerifier;
 use Pulsar\Security\Crypto\MasterKey;
 use Pulsar\Security\ThreatDetection\BotDetector;
 use SodiumException;
+use Throwable;
 
 use function is_array;
 use function is_file;
@@ -88,6 +95,7 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
                 AiCrawlerConfig::class,
                 AdaptiveRiskConfig::class,
                 Ja4Config::class,
+                PrivacyPassConfig::class,
             ],
             optional: [
                 new OptionalBinding(
@@ -251,6 +259,9 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
         $ja4Config = $this->loadJa4Config($configManager);
         $container->instance(Ja4Config::class, $ja4Config);
 
+        $privacyPassConfig = $this->loadPrivacyPassConfig($configManager);
+        $container->instance(PrivacyPassConfig::class, $privacyPassConfig);
+
         if (!$config->enabled) {
             return;
         }
@@ -269,13 +280,73 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
             $signalProviders[] = new Ja4SignalProvider($ja4Config, $trustedProxy);
         }
 
-        $engine = new AdaptiveRiskEngine($config, $signalProviders);
+        // Private Access Token (Privacy Pass): a valid token bypasses scoring.
+        $patBypass = $this->wirePrivacyPass($container, $privacyPassConfig, $logger);
+        $bypassProviders = $patBypass !== null ? [$patBypass] : [];
+
+        $engine = new AdaptiveRiskEngine($config, $signalProviders, $bypassProviders);
         $container->instance(AdaptiveRiskEngine::class, $engine);
 
         $riskMiddleware = new AdaptiveChallengeMiddleware($engine, $logger);
         $container->instance(AdaptiveChallengeMiddleware::class, $riskMiddleware);
 
         $middleware->pipe($riskMiddleware);
+
+        // The PAT challenge advertiser must sit OUTSIDE the adaptive middleware
+        // (piped last => outermost) so it can stamp WWW-Authenticate onto the
+        // engine's 403 block response.
+        if ($container->has(PrivateTokenChallengeMiddleware::class)) {
+            /** @var PrivateTokenChallengeMiddleware $challengeMiddleware */
+            $challengeMiddleware = $container->get(PrivateTokenChallengeMiddleware::class);
+            $middleware->pipe($challengeMiddleware);
+        }
+    }
+
+    /**
+     * Wire the Private Access Token (Privacy Pass) verifier, bypass provider, and
+     * challenge advertiser when configured and supported.
+     *
+     * Returns the bypass provider for the engine, or null when Privacy Pass is
+     * disabled, the environment lacks ext-gmp, or the issuer key is malformed —
+     * each a non-fatal, logged degrade (the rest of the engine still runs).
+     */
+    private function wirePrivacyPass(
+        ContainerInterface $container,
+        PrivacyPassConfig $config,
+        LoggerInterface $logger,
+    ): ?PrivateTokenBypassProvider {
+        if (!$config->isUsable()) {
+            return null;
+        }
+
+        if (!PrivateAccessTokenVerifier::isSupported()) {
+            $logger->warning('Privacy Pass is enabled but ext-gmp is unavailable; token verification is disabled.');
+
+            return null;
+        }
+
+        try {
+            $issuerKey = IssuerPublicKey::fromBase64Url($config->tokenKey);
+        } catch (Throwable $e) {
+            $logger->warning('Privacy Pass token_key is malformed; token verification is disabled.', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+
+        $challenge = $config->challenge();
+        $verifier = new PrivateAccessTokenVerifier($issuerKey);
+        $container->instance(PrivateAccessTokenVerifier::class, $verifier);
+
+        $issuer = new PrivacyPassChallengeIssuer($challenge, $issuerKey->spkiDer);
+        $container->instance(PrivacyPassChallengeIssuer::class, $issuer);
+        $container->instance(PrivateTokenChallengeMiddleware::class, new PrivateTokenChallengeMiddleware($issuer));
+
+        $bypass = new PrivateTokenBypassProvider($verifier, $challenge);
+        $container->instance(PrivateTokenBypassProvider::class, $bypass);
+
+        return $bypass;
     }
 
     private function loadAdaptiveRiskConfig(ConfigManager $configManager): AdaptiveRiskConfig
@@ -320,6 +391,28 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
         }
 
         return new Ja4Config();
+    }
+
+    private function loadPrivacyPassConfig(ConfigManager $configManager): PrivacyPassConfig
+    {
+        $configPath = $configManager->configPath();
+
+        if ($configPath !== null && is_file($configPath . DIRECTORY_SEPARATOR . 'anti-spam.php')) {
+            /**
+             * @psalm-suppress UnresolvableInclude
+             * @var mixed $data
+             */
+            $data = require $configPath . DIRECTORY_SEPARATOR . 'anti-spam.php';
+
+            if (is_array($data) && isset($data['privacy_pass']) && is_array($data['privacy_pass'])) {
+                /** @var array<string, mixed> $privacyPass */
+                $privacyPass = $data['privacy_pass'];
+
+                return PrivacyPassConfig::fromArray($privacyPass);
+            }
+        }
+
+        return new PrivacyPassConfig();
     }
 
     /**

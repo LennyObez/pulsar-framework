@@ -90,4 +90,17 @@ return [
         'known_bad_fingerprints' => [], // operator-supplied exact JA4 strings
         'match_score' => 0.9,
     ],
+
+    // Private Access Tokens (Privacy Pass, RFC 9577/9578). Pulsar acts as the
+    // Origin: it advertises a token challenge on denied responses and accepts a
+    // redeemed token as proof of a legitimate client — a valid token bypasses
+    // the adaptive_risk challenge above. Pulsar does not issue tokens; configure
+    // the issuer name and its public key (base64url SPKI using id-RSASSA-PSS)
+    // out of band. Requires adaptive_risk enabled and the gmp PHP extension.
+    'privacy_pass' => [
+        'enabled' => false,
+        'issuer_name' => '',  // e.g. 'demo-issuer.example'
+        'origin_info' => '',  // your origin host (comma-separated), or '' for any
+        'token_key' => '',    // base64url SPKI of the issuer public key
+    ],
 ];
