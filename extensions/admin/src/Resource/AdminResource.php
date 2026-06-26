@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Live\Admin;
+namespace Pulsar\Extension\Admin\Resource;
 
 use Pulsar\Api\Api;
 use Pulsar\Extension\Admin\Contracts\DataResourceInterface;

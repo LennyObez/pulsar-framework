@@ -2,24 +2,24 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Tests\Unit\Live\Admin;
+namespace Pulsar\Tests\Unit\Extension\Admin\Resource;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Admin\Domain\FieldType;
-use Pulsar\Live\Admin\BooleanField;
-use Pulsar\Live\Admin\DateField;
-use Pulsar\Live\Admin\DateTimeField;
-use Pulsar\Live\Admin\EmailField;
-use Pulsar\Live\Admin\Field;
-use Pulsar\Live\Admin\JsonField;
-use Pulsar\Live\Admin\NumberField;
-use Pulsar\Live\Admin\RelationField;
-use Pulsar\Live\Admin\SelectField;
-use Pulsar\Live\Admin\TextareaField;
-use Pulsar\Live\Admin\TextField;
-use Pulsar\Live\Admin\UrlField;
+use Pulsar\Extension\Admin\Resource\BooleanField;
+use Pulsar\Extension\Admin\Resource\DateField;
+use Pulsar\Extension\Admin\Resource\DateTimeField;
+use Pulsar\Extension\Admin\Resource\EmailField;
+use Pulsar\Extension\Admin\Resource\Field;
+use Pulsar\Extension\Admin\Resource\JsonField;
+use Pulsar\Extension\Admin\Resource\NumberField;
+use Pulsar\Extension\Admin\Resource\RelationField;
+use Pulsar\Extension\Admin\Resource\SelectField;
+use Pulsar\Extension\Admin\Resource\TextareaField;
+use Pulsar\Extension\Admin\Resource\TextField;
+use Pulsar\Extension\Admin\Resource\UrlField;
 
 #[CoversClass(Field::class)]
 #[CoversClass(TextField::class)]

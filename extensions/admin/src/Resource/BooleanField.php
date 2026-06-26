@@ -2,20 +2,20 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Live\Admin;
+namespace Pulsar\Extension\Admin\Resource;
 
 use Pulsar\Api\Api;
 use Pulsar\Extension\Admin\Domain\FieldType;
 
 /**
- * Textarea (long text) field for admin resources.
+ * Boolean (checkbox/toggle) field for admin resources.
  * @api
  */
 #[Api(since: '1.0.0')]
-final class TextareaField extends Field
+final class BooleanField extends Field
 {
     public static function make(string $name): self
     {
-        return new self($name, FieldType::Text);
+        return new self($name, FieldType::Boolean);
     }
 }
