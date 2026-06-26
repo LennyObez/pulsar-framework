@@ -18089,7 +18089,8 @@
                     "params": [
                         "?Pulsar\\View\\Engine\\TemplateEngineInterface $templateEngine",
                         "?Pulsar\\ErrorHandling\\ExceptionRendererInterface $devRenderer",
-                        "bool $debug"
+                        "bool $debug",
+                        "?Closure $templateEngineResolver"
                     ],
                     "return": null,
                     "static": false
@@ -18114,7 +18115,8 @@
                 },
                 "resolveTemplate": {
                     "params": [
-                        "int $code"
+                        "int $code",
+                        "?Pulsar\\View\\Engine\\TemplateEngineInterface $engine"
                     ],
                     "return": "?string",
                     "static": false

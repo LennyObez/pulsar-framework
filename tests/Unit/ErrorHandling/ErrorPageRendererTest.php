@@ -413,6 +413,65 @@ final class ErrorPageRendererTest extends TestCase
     }
 
     // =========================================================================
+    // Rendering — Lazy template-engine resolution (wiring-order independence)
+    // =========================================================================
+
+    #[Test]
+    public function renderUsesTemplateEngineFromLazyResolver(): void
+    {
+        // The engine is provided via the lazy resolver (not the direct param),
+        // exactly as ExceptionHandlerWiring supplies it. The "engine bound only
+        // after the renderer is constructed" timing is covered end-to-end by
+        // ExceptionHandlerWiringTest::errorPageRendererResolvesTemplateEngineBoundAfterWiring.
+        $engine = $this->createTemplateEngine(
+            existingTemplates: ['errors.404'],
+            renderOutput: '<html>lazy 404</html>',
+        );
+        $renderer = new ErrorPageRenderer(
+            templateEngineResolver: static fn(): TemplateEngineInterface => $engine,
+        );
+
+        $html = $renderer->render(
+            new RuntimeException('not found'),
+            $this->createRequest(),
+            ResponseStatus::NotFound,
+        );
+
+        self::assertSame('<html>lazy 404</html>', $html);
+        self::assertSame(['errors.404'], $engine->renderedTemplates);
+    }
+
+    #[Test]
+    public function renderUsesInlineFallbackWhenLazyResolverYieldsNull(): void
+    {
+        // Resolver present but the engine is never bound (e.g. ViewWiring absent):
+        // must degrade to the inline fallback, not error.
+        $renderer = new ErrorPageRenderer(
+            templateEngineResolver: static fn(): ?TemplateEngineInterface => null,
+        );
+
+        $html = $renderer->render(
+            new RuntimeException('test'),
+            $this->createRequest(),
+            ResponseStatus::NotFound,
+        );
+
+        self::assertStringContainsString('<!DOCTYPE html>', $html);
+        self::assertStringContainsString('404', $html);
+    }
+
+    #[Test]
+    public function resolveTemplateUsesLazilyResolvedEngine(): void
+    {
+        $engine = $this->createTemplateEngine(['errors.500', 'errors.5xx']);
+        $renderer = new ErrorPageRenderer(
+            templateEngineResolver: static fn(): TemplateEngineInterface => $engine,
+        );
+
+        self::assertSame('errors.500', $renderer->resolveTemplate(500));
+    }
+
+    // =========================================================================
     // Rendering — Inline Fallback
     // =========================================================================
 
