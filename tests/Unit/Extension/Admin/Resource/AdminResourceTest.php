@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Tests\Unit\Live\Admin;
+namespace Pulsar\Tests\Unit\Extension\Admin\Resource;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -10,14 +10,14 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Admin\Domain\FieldDefinition;
 use Pulsar\Extension\Admin\Domain\FieldType;
 use Pulsar\Extension\Admin\Domain\ResourceOperation;
-use Pulsar\Live\Admin\AdminResource;
-use Pulsar\Live\Admin\BooleanField;
-use Pulsar\Live\Admin\DateField;
-use Pulsar\Live\Admin\DateRangeFilter;
-use Pulsar\Live\Admin\EmailField;
-use Pulsar\Live\Admin\SelectField;
-use Pulsar\Live\Admin\SelectFilter;
-use Pulsar\Live\Admin\TextField;
+use Pulsar\Extension\Admin\Resource\AdminResource;
+use Pulsar\Extension\Admin\Resource\BooleanField;
+use Pulsar\Extension\Admin\Resource\DateField;
+use Pulsar\Extension\Admin\Resource\DateRangeFilter;
+use Pulsar\Extension\Admin\Resource\EmailField;
+use Pulsar\Extension\Admin\Resource\SelectField;
+use Pulsar\Extension\Admin\Resource\SelectFilter;
+use Pulsar\Extension\Admin\Resource\TextField;
 
 #[CoversClass(AdminResource::class)]
 final class AdminResourceTest extends TestCase
