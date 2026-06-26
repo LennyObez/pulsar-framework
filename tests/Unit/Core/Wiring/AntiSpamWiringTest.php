@@ -4,19 +4,27 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Core\Wiring;
 
+use LogicException;
 use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Cache\Application\TaggedCacheInterface;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Container\Container;
 use Pulsar\Core\Wiring\AntiSpamWiring;
+use Pulsar\Http\Client\HttpClientInterface;
+use Pulsar\Http\Client\HttpResponse;
+use Pulsar\Http\HeaderBag;
 use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
+use Pulsar\Http\ResponseStatus;
 use Pulsar\Routing\Router;
 use Pulsar\Security\AntiSpam\AiCrawler\AiCrawlerConfig;
 use Pulsar\Security\AntiSpam\AiCrawler\AiCrawlerMiddleware;
+use Pulsar\Security\AntiSpam\PrivacyPass\Internal\PrivacyPassDirectoryClient;
 use Pulsar\Security\AntiSpam\PrivacyPass\PrivacyPassConfig;
+use Pulsar\Security\AntiSpam\PrivacyPass\PrivacyPassRefreshKeysCommand;
 use Pulsar\Security\AntiSpam\PrivacyPass\PrivateTokenChallengeMiddleware;
 use Pulsar\Security\AntiSpam\PrivacyPass\TokenChallenge;
 use Pulsar\Security\AntiSpam\Risk\AdaptiveChallengeMiddleware;
@@ -25,10 +33,12 @@ use Pulsar\Security\AntiSpam\Risk\AdaptiveRiskEngine;
 use Pulsar\Security\AntiSpam\Risk\Ja4Config;
 use Pulsar\Security\AntiSpam\Risk\RiskDecision;
 use Pulsar\Tests\Unit\Security\AntiSpam\PrivacyPass\PrivacyPassTokenFactory;
+use RuntimeException;
 
 use function base64_encode;
 use function bin2hex;
 use function file_put_contents;
+use function json_encode;
 use function mkdir;
 use function random_bytes;
 use function rtrim;
@@ -195,9 +205,135 @@ final class AntiSpamWiringTest extends TestCase
         self::assertTrue($assessment->bypassed);
     }
 
+    #[Test]
+    #[RequiresPhpExtension('gmp')]
+    public function privacyPassUsesKeysDiscoveredFromTheIssuerDirectory(): void
+    {
+        $container = new Container();
+        $pipeline = new MiddlewarePipeline($container);
+
+        $challenge = new TokenChallenge(0x0002, 'issuer.example', 'origin.example');
+        $issued = PrivacyPassTokenFactory::issue($challenge);
+        $directoryUrl = 'https://issuer.example/.well-known/private-token-issuer-directory';
+
+        // A directory whose only key is the one our token is signed under.
+        $directoryJson = (string) json_encode([
+            'token-keys' => [['token-type' => 2, 'token-key' => $this->base64Url($issued['spkiDer'])]],
+        ]);
+
+        // Bind a cache + HTTP client, then prime the directory cache via a refresh
+        // so the wiring (which reads the cache at boot) discovers the key.
+        $cache = $this->inMemoryCache();
+        $http = $this->httpReturning(200, $directoryJson);
+        $container->instance(TaggedCacheInterface::class, $cache);
+        $container->instance(HttpClientInterface::class, $http);
+        new PrivacyPassDirectoryClient($http, $cache)->refresh($directoryUrl);
+
+        // No static token_key — keys come solely from the directory.
+        $this->wire(
+            $container,
+            $pipeline,
+            "'adaptive_risk' => ['enabled' => true], "
+            . "'privacy_pass' => ['enabled' => true, 'issuer_name' => 'issuer.example', "
+            . "'origin_info' => 'origin.example', 'directory_url' => '" . $directoryUrl . "']",
+        );
+
+        self::assertTrue($container->has(PrivacyPassRefreshKeysCommand::class), 'refresh command is registered');
+
+        $engine = $container->get(AdaptiveRiskEngine::class);
+        self::assertInstanceOf(AdaptiveRiskEngine::class, $engine);
+
+        $request = new ServerRequest(
+            method: 'GET',
+            uri: '/',
+            headers: ['Authorization' => 'PrivateToken token="' . $this->base64Url($issued['token']) . '"'],
+        );
+
+        $assessment = $engine->assess($request);
+
+        self::assertSame(RiskDecision::Allow, $assessment->decision, 'a token under a directory-discovered key bypasses');
+        self::assertTrue($assessment->bypassed);
+    }
+
     private function base64Url(string $value): string
     {
         return rtrim(strtr(base64_encode($value), '+/', '-_'), '=');
+    }
+
+    private function inMemoryCache(): TaggedCacheInterface
+    {
+        return new class implements TaggedCacheInterface {
+            /** @var array<string, mixed> */
+            private array $store = [];
+
+            public function get(string $key): mixed
+            {
+                return $this->store[$key] ?? null;
+            }
+
+            public function set(string $key, mixed $value, array $tags, ?int $ttlSeconds = null): bool
+            {
+                $this->store[$key] = $value;
+
+                return true;
+            }
+
+            public function delete(string $key): bool
+            {
+                unset($this->store[$key]);
+
+                return true;
+            }
+
+            public function invalidateTag(string $tag): void {}
+
+            public function invalidateTags(array $tags): void {}
+        };
+    }
+
+    private function httpReturning(int $status, string $body): HttpClientInterface
+    {
+        return new class ($status, $body) implements HttpClientInterface {
+            public function __construct(
+                private readonly int $status,
+                private readonly string $body,
+            ) {}
+
+            public function get(string $url, array $options = []): HttpResponse
+            {
+                return new HttpResponse(ResponseStatus::from($this->status), new HeaderBag(), $this->body);
+            }
+
+            public function post(string $url, array $options = []): HttpResponse
+            {
+                throw new LogicException('unused');
+            }
+
+            public function put(string $url, array $options = []): HttpResponse
+            {
+                throw new LogicException('unused');
+            }
+
+            public function patch(string $url, array $options = []): HttpResponse
+            {
+                throw new LogicException('unused');
+            }
+
+            public function delete(string $url, array $options = []): HttpResponse
+            {
+                throw new RuntimeException('unused');
+            }
+
+            public function head(string $url, array $options = []): HttpResponse
+            {
+                throw new LogicException('unused');
+            }
+
+            public function options(string $url, array $options = []): HttpResponse
+            {
+                throw new LogicException('unused');
+            }
+        };
     }
 
     private function wire(Container $container, MiddlewarePipeline $pipeline, string $antiSpamBody): void

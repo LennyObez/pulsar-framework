@@ -305,6 +305,7 @@ Pulsar implements token type `0x0002` (Blind RSA, publicly verifiable): the toke
     'origin_info' => '',  // your origin host (comma-separated), or '' for any
     'token_key' => '',    // base64url SPKI of the (primary) issuer public key (id-RSASSA-PSS)
     'token_keys' => [],   // additional keys for seamless rotation
+    'directory_url' => '', // RFC 9576 issuer directory (auto-discovery)
     'single_use' => true, // reject a token's nonce on replay (requires the cache)
     'single_use_ttl_seconds' => 86400,
 ],
@@ -312,6 +313,8 @@ Pulsar implements token type `0x0002` (Blind RSA, publicly verifiable): the toke
 
 The issuer name and public key(s) are operator-supplied out of band. The verifier requires the `gmp` extension for the RSA arithmetic; if it is missing, or every key is malformed, Privacy Pass disables itself with a logged warning and the rest of the engine continues — it never fails a request open.
 
+**Issuer-directory discovery.** Instead of pasting keys, point `directory_url` at the issuer's directory (RFC 9576) and let Pulsar discover them. Discovery is decoupled from the request path: run `php pulsar privacy-pass:keys:refresh` (on a schedule / cron) to fetch the directory and cache its token keys; the verifier reads the cached keys at boot and unions them with any static `token_key`/`token_keys`. A failed or non-200 refresh keeps the previously cached keys, so a transient issuer outage never drops trust. On a cold cache (before the first successful refresh) Privacy Pass stays disabled until the keys are populated.
+
 ### Honest limitation
 
-A token only proves the client passed _some_ issuer's attester; trust follows entirely from which issuer you configure. This release accepts the publicly verifiable Blind-RSA token type (0x0002) only. Issuer keys are configured directly. Deploy Private Access Tokens as a fast lane for attested clients layered on top of the rest of the pipeline, not as the sole gate.
+A token only proves the client passed _some_ issuer's attester; trust follows entirely from which issuer you configure. This release accepts the publicly verifiable Blind-RSA token type (0x0002) only — the VOPRF (privately verifiable) types require the Origin to share a secret with the issuer and are out of scope. Deploy Private Access Tokens as a fast lane for attested clients layered on top of the rest of the pipeline, not as the sole gate.
