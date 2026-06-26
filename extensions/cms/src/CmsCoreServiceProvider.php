@@ -148,6 +148,8 @@ use Pulsar\Mail\MailManager;
 use Pulsar\Mail\MailManagerInterface;
 use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Queue\QueueDriverInterface;
+use Pulsar\Security\AntiSpam\AiCrawler\AiCrawlerConfig;
+use Pulsar\Security\AntiSpam\AiCrawler\AiCrawlerRobotsPolicy;
 use Pulsar\Security\AntiSpam\CaptchaVerifierInterface;
 use Pulsar\Security\Crypto\HmacInterface;
 use Pulsar\Security\Crypto\MasterKey;
@@ -344,9 +346,16 @@ final readonly class CmsCoreServiceProvider
             new SitemapGenerator($contentRepository, $translationRepository, $config),
         );
 
+        $aiCrawlerPolicy = null;
+        if ($container->has(AiCrawlerConfig::class)) {
+            /** @var AiCrawlerConfig $aiCrawlerConfig */
+            $aiCrawlerConfig = $container->get(AiCrawlerConfig::class);
+            $aiCrawlerPolicy = new AiCrawlerRobotsPolicy($aiCrawlerConfig);
+        }
+
         $container->instance(
             RobotsTxtGeneratorInterface::class,
-            new RobotsTxtGenerator(),
+            new RobotsTxtGenerator($aiCrawlerPolicy),
         );
 
         $container->instance(
