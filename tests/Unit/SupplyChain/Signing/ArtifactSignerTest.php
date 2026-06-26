@@ -100,8 +100,11 @@ final class ArtifactSignerTest extends TestCase
 
         $signature = $this->signer->sign($file, $this->secretKey);
 
-        // Corrupt the signature by replacing a character
-        $corrupted = 'X' . substr($signature, 1);
+        // Corrupt the signature by replacing the first character with a
+        // different one. Guard the rare case where the signature already
+        // starts with the replacement char (which would leave it unchanged
+        // and valid — a ~1-in-64 flake for base64 signatures).
+        $corrupted = ($signature[0] === 'X' ? 'Y' : 'X') . substr($signature, 1);
 
         $isValid = $this->signer->verify($file, $corrupted, $this->publicKey);
 
