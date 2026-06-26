@@ -19,10 +19,22 @@ use function unpack;
 use const FILTER_VALIDATE_IP;
 
 /**
- * Validates URLs against SSRF attacks by checking for private/reserved IP ranges.
+ * Validates URL *host literals* against private/reserved IP ranges.
  *
- * Rejects URLs that resolve to RFC 1918 private addresses, loopback, link-local,
- * and cloud metadata endpoints.
+ * Rejects URLs whose host is an IP literal in an RFC 1918 private range,
+ * loopback, link-local, current-network range, or a known cloud-metadata
+ * endpoint (the latter even when {@see self::validate()} is called with
+ * `$allowPrivateNetworks = true`).
+ *
+ * IMPORTANT — this is NOT complete SSRF protection. The host is only checked
+ * when it is an IP literal; a *hostname* (e.g. `internal.example.com`) is NOT
+ * resolved here, so a name that resolves to a private address passes this
+ * check. Even if resolution were performed, it would not defend against DNS
+ * rebinding, where a name validated as public rebinds to a private address
+ * before the request is made. Callers that fetch user-controlled URLs MUST
+ * additionally resolve-and-pin the host at fetch time and re-check the pinned
+ * IP against these ranges. Treat this validator as one defence-in-depth layer,
+ * not a sufficient SSRF guard on its own.
  * @api
  */
 #[Api(since: '1.0.0')]
@@ -93,13 +105,14 @@ final class UrlSafetyValidator
             return UrlValidationResult::allowed();
         }
 
-        // Validate the host is not a private/reserved IP
+        // Validate the host literal is not a private/reserved IP. Hostnames
+        // are not resolved here — see the class docblock for the SSRF caveat.
         if (self::isPrivateIpv4($host)) {
-            return UrlValidationResult::rejected('URL resolves to a private IPv4 address');
+            return UrlValidationResult::rejected('URL host is a private IPv4 address');
         }
 
         if (self::isPrivateIpv6($host)) {
-            return UrlValidationResult::rejected('URL resolves to a private IPv6 address');
+            return UrlValidationResult::rejected('URL host is a private IPv6 address');
         }
 
         return UrlValidationResult::allowed();

@@ -154,17 +154,31 @@ final class WafEngine
     }
 
     /**
+     * Maximum nesting depth flattened from request parameters.
+     *
+     * PSR-7 `getParsedBody()` / query / cookie arrays can be arbitrarily
+     * nested by a hostile client (e.g. `a[a][a]...`); recursing without a
+     * bound is a stack-overflow / memory DoS. Legitimate request data never
+     * approaches this depth, so anything deeper is silently dropped.
+     */
+    private const int MAX_FLATTEN_DEPTH = 64;
+
+    /**
      * @param array<mixed, mixed> $params
      * @return list<string>
      */
-    private function flattenParams(array $params): array
+    private function flattenParams(array $params, int $depth = 0): array
     {
         $values = [];
+
+        if ($depth >= self::MAX_FLATTEN_DEPTH) {
+            return $values;
+        }
 
         /** @var mixed $value */
         foreach ($params as $value) {
             if (is_array($value)) {
-                foreach ($this->flattenParams($value) as $nested) {
+                foreach ($this->flattenParams($value, $depth + 1) as $nested) {
                     $values[] = $nested;
                 }
             } else {

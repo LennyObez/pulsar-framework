@@ -75,16 +75,24 @@ final class ContextEscaper
      */
     public static function css(string $value): string
     {
-        // Remove any CSS function calls that could execute code
-        $stripped = preg_replace(
-            '/(?:expression|url|import|calc|attr|var|env)\s*\(/i',
-            '',
-            $value,
-        );
+        // Remove any CSS function calls that could execute code. The strip
+        // runs until the string stabilises so that overlapping or nested
+        // function names (e.g. "expexpression(ression(") cannot reconstruct
+        // a dangerous "expression(" prefix after a single pass.
+        $stripped = $value;
 
-        if ($stripped === null) {
-            return '';
-        }
+        do {
+            $previous = $stripped;
+            $stripped = preg_replace(
+                '/(?:expression|url|import|calc|attr|var|env)\s*\(/i',
+                '',
+                $stripped,
+            );
+
+            if ($stripped === null) {
+                return '';
+            }
+        } while ($stripped !== $previous);
 
         // Allow safe CSS characters only
         $safe = preg_replace('/[^a-zA-Z0-9\s\-_.,#%()\/]/', '', $stripped);

@@ -8,6 +8,7 @@ use NoDiscard;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Log\LoggerInterface;
 use Pulsar\Api\Api;
+use Pulsar\Audit\AuditActor;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditLogger;
 use Pulsar\Security\Audit\AuditOutcome;
@@ -43,6 +44,13 @@ final readonly class HijackDetector
         $currentIp = $this->extractIp($request);
         $currentUserAgent = $request->getHeaderLine('User-Agent');
 
+        // Hijack detection must always be recorded. For unauthenticated
+        // sessions ($metadata->userId === null) a null actor would make
+        // AuditLogger throw AuditActorMissingException (absent a request
+        // context), which would unwind detection and lose the event. Fall
+        // back to an explicit anonymous actor so the entry is never dropped.
+        $auditActor = $metadata->userId ?? AuditActor::anonymous();
+
         // User-agent change is always treated as hijacking (session replay)
         if ($metadata->userAgent !== '' && $currentUserAgent !== $metadata->userAgent) {
             $this->logger->warning('Session hijacking suspected: user-agent changed', [
@@ -56,7 +64,7 @@ final readonly class HijackDetector
             $this->auditLogger?->log(
                 AuditEvent::SecurityEvent,
                 AuditOutcome::Denied,
-                $metadata->userId,
+                $auditActor,
                 'session.hijack.user_agent_change',
                 '',
                 [
@@ -80,7 +88,7 @@ final readonly class HijackDetector
             $this->auditLogger?->log(
                 AuditEvent::SecurityEvent,
                 AuditOutcome::Denied,
-                $metadata->userId,
+                $auditActor,
                 'session.hijack.ip_change',
                 '',
                 [

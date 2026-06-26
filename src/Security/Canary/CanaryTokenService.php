@@ -69,10 +69,15 @@ final class CanaryTokenService
 
         $this->registry[$id] = $token;
 
+        // A null $createdBy would make AuditLogger throw
+        // AuditActorMissingException (absent a request context) and lose
+        // the canary-creation record. Attribute system-originated creates
+        // to the same system actor used by scan() so the compliance trail
+        // always records who planted a canary.
         $this->auditLogger?->log(
             event: AuditEvent::SecurityEvent,
             outcome: AuditOutcome::Success,
-            actor: $createdBy,
+            actor: $createdBy ?? AuditActor::system('security.canary'),
             action: 'canary.created',
             resource: $label,
             metadata: ['token_id' => $id, 'context' => $context],
