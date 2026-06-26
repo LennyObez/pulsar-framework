@@ -101,6 +101,9 @@ return [
         'enabled' => false,
         'issuer_name' => '',  // e.g. 'demo-issuer.example'
         'origin_info' => '',  // your origin host (comma-separated), or '' for any
-        'token_key' => '',    // base64url SPKI of the issuer public key
+        'token_key' => '',    // base64url SPKI of the (primary) issuer public key
+        'token_keys' => [],   // additional keys for seamless rotation (old + new both verify)
+        'single_use' => true, // reject a redeemed token's nonce on replay (needs the cache)
+        'single_use_ttl_seconds' => 86400,
     ],
 ];
