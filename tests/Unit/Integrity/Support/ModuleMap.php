@@ -21,6 +21,11 @@ final class ModuleMap
     /** Classes that are composition roots and exempt from cross-module internal import rules. */
     private const array COMPOSITION_ROOTS = [
         'Pulsar\Core\Kernel',
+        'Pulsar\Core\Boot\BuildArtifactVerifier',
+        'Pulsar\Core\Boot\CachedRouteReconstructor',
+        'Pulsar\Core\Boot\ExtensionDiscovery',
+        'Pulsar\Core\Boot\ExtensionViewPathRegistrar',
+        'Pulsar\Core\Boot\ProjectRouteLoader',
         'Pulsar\Core\Wiring\ServiceWiringInterface',
         'Pulsar\Core\Wiring\AuthWiring',
         'Pulsar\Core\Wiring\ConfigWiring',

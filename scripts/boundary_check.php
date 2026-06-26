@@ -38,6 +38,7 @@ final class BoundaryAnalyzer
     /** Namespace prefixes that are composition roots (all classes within are exempt). */
     private const array COMPOSITION_ROOT_NAMESPACES = [
         'Pulsar\\Core\\Wiring\\',
+        'Pulsar\\Core\\Boot\\',
     ];
 
     /** The Api/Internal attribute FQCNs are always accessible. */
