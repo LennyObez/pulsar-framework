@@ -34,6 +34,15 @@ if ($autoloader === null) {
 
 require $autoloader;
 
+// Extensions are not in the root composer.json autoload (ADR-0004: no
+// privileged built-in access), so register PSR-4 autoloading for them before
+// any Pulsar\Extension\* class is referenced below (Studio console commands,
+// StudioConfig, etc.). Scans the project's extensions/ and the framework's own.
+\Pulsar\Extensibility\ExtensionAutoloader::registerForPaths(array_values(array_filter([
+  getcwd() . '/extensions',
+  __DIR__ . '/../extensions',
+], 'is_dir')));
+
 use Pulsar\Cache\FrameworkCache;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Config\ConfigManager;

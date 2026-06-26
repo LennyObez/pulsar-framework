@@ -15,6 +15,14 @@ require_once __DIR__ . '/../../vendor/autoload.php';
 
 use Pulsar\Api\Api;
 use Pulsar\Api\Internal;
+use Pulsar\Extensibility\ExtensionAutoloader;
+
+// Some core classes implement extension #[Api] interfaces (e.g. src/Live/Admin,
+// src/Deploy/Check, src/Database/Migration). Those extension classes are no
+// longer in the root composer autoload (ADR-0004), so register extension PSR-4
+// autoloading before reflecting src/ — otherwise ReflectionClass on those core
+// classes fatals on the unresolvable interface.
+ExtensionAutoloader::registerForPaths([__DIR__ . '/../../extensions']);
 
 $srcDir = __DIR__ . '/../../src';
 $outputPath = __DIR__ . '/public-api.snapshot.json';
