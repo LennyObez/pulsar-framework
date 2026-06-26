@@ -376,6 +376,68 @@ final class ModelBindingMiddlewareTest extends TestCase
         self::assertSame(403, $response->getStatusCode());
     }
 
+    // ── Authorization policy propagation (declared authzPolicy) ──────────
+
+    #[Test]
+    public function enforcesDeclaredAuthorizationPolicyFromBindingMeta(): void
+    {
+        // Regression: the middleware must enforce the authorization policy
+        // declared for the binding (carried on the compiled BindingMeta), not
+        // a bare meta that silently downgrades every binding to the hook's
+        // default 'view' permission and under-authorizes edit/delete routes.
+        $model = new stdClass();
+
+        $capturedMeta = null;
+        $authHook = $this->createStub(AuthorizationHookInterface::class);
+        $authHook->method('authorize')
+            ->willReturnCallback(static function (
+                IdentityInterface $identity,
+                object $boundModel,
+                BindingMeta $meta,
+            ) use (&$capturedMeta): bool {
+                $capturedMeta = $meta;
+                return true;
+            });
+
+        $resolver = $this->createStub(ModelResolverPort::class);
+        $resolver->method('resolve')->willReturn($model);
+
+        // Compiled binding declares a non-default authorization policy.
+        $map = [
+            'users.show' => [
+                'user' => new BindingMeta(
+                    class: stdClass::class,
+                    keyName: 'id',
+                    keyType: 'string',
+                    authzPolicy: 'delete',
+                ),
+            ],
+        ];
+        $binder = new ModelBinder(
+            defaultResolver: $resolver,
+            bindingResolver: new BindingResolver(compiledMap: new CompiledBindingMap($map)),
+            container: $this->createStub(ContainerInterface::class),
+        );
+
+        $middleware = new ModelBindingMiddleware(
+            binder: $binder,
+            config: new ModelBindingConfig(preset: 'standard'),
+            authHook: $authHook,
+            identityResolver: fn() => $this->createAuthenticatedIdentity('user-1'),
+        );
+
+        $matched = $this->createMatchedRoute(['user' => '42']);
+        $request = $this->createRequestWithRoute($matched);
+        $handler = $this->createHandlerReturning($this->nextResponse);
+
+        $response = $middleware->process($request, $handler);
+
+        self::assertSame($this->nextResponse, $response);
+        self::assertInstanceOf(BindingMeta::class, $capturedMeta);
+        self::assertSame('delete', $capturedMeta->authzPolicy);
+        self::assertSame(stdClass::class, $capturedMeta->class);
+    }
+
     #[Test]
     public function standardPresetSkipsAuthzWhenWithoutAuthorizationSet(): void
     {

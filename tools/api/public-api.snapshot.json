@@ -35533,6 +35533,15 @@
                     ],
                     "return": "array",
                     "static": false
+                },
+                "bindWithMeta": {
+                    "params": [
+                        "Pulsar\\Routing\\MatchedRoute $matchedRoute",
+                        "Psr\\Http\\Message\\ServerRequestInterface $request",
+                        "Pulsar\\Routing\\Binding\\ResolutionContext $context"
+                    ],
+                    "return": "Pulsar\\Routing\\Binding\\ResolvedBindings",
+                    "static": false
                 }
             },
             "constants": []
@@ -54824,6 +54833,7 @@
         "Pulsar\\Routing\\Binding\\ExplicitBinding",
         "Pulsar\\Routing\\Binding\\ModelBindingMiddleware",
         "Pulsar\\Routing\\Binding\\PolicyAuthorizationHook",
+        "Pulsar\\Routing\\Binding\\ResolvedBindings",
         "Pulsar\\Routing\\Internal\\ConfigDomainResolver",
         "Pulsar\\Routing\\ResourceRegistrar",
         "Pulsar\\Routing\\RouteUrlGenerator",

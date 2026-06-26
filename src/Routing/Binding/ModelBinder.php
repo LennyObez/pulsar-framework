@@ -46,12 +46,32 @@ final readonly class ModelBinder
         ServerRequestInterface $request,
         ResolutionContext $context,
     ): array {
+        return $this->bindWithMeta($matchedRoute, $request, $context)->models;
+    }
+
+    /**
+     * Resolve all model bindings for a matched route, returning both the
+     * resolved models and the {@see BindingMeta} that produced each one.
+     *
+     * Authorization enforcement needs the per-parameter binding metadata —
+     * in particular the declared `authzPolicy` — which {@see bind()} discards.
+     * Resolving once and returning both keeps the (uncached) reflection /
+     * compiled-map lookup off the request hot path for a second pass.
+     *
+     * @throws ModelBindingException When a model cannot be found or key validation fails
+     */
+    #[NoDiscard]
+    public function bindWithMeta(
+        MatchedRoute $matchedRoute,
+        ServerRequestInterface $request,
+        ResolutionContext $context,
+    ): ResolvedBindings {
         /** @var mixed $handler */
         $handler = $matchedRoute->getHandler();
         $handlerInfo = $this->resolveHandlerInfo($handler);
 
         if ($handlerInfo === null) {
-            return [];
+            return new ResolvedBindings([], []);
         }
 
         [$controllerClass, $controllerMethod] = $handlerInfo;
@@ -63,10 +83,11 @@ final readonly class ModelBinder
         );
 
         if ($bindingMetas === []) {
-            return [];
+            return new ResolvedBindings([], []);
         }
 
         $resolved = [];
+        $resolvedMetas = [];
         $previousModel = null;
 
         foreach ($bindingMetas as $paramName => $meta) {
@@ -101,10 +122,11 @@ final readonly class ModelBinder
             }
 
             $resolved[$paramName] = $model;
+            $resolvedMetas[$paramName] = $meta;
             $previousModel = $model;
         }
 
-        return $resolved;
+        return new ResolvedBindings($resolved, $resolvedMetas);
     }
 
     /**

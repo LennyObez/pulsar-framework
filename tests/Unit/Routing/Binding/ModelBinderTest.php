@@ -56,6 +56,43 @@ final class ModelBinderTest extends TestCase
     }
 
     #[Test]
+    public function bindWithMetaReturnsResolvedModelsAndTheirMetadata(): void
+    {
+        $model = new stdClass();
+
+        $defaultResolver = $this->createStub(ModelResolverPort::class);
+        $defaultResolver->method('resolve')->willReturn($model);
+
+        $meta = new BindingMeta(
+            class: stdClass::class,
+            keyName: 'id',
+            keyType: 'string',
+            authzPolicy: 'delete',
+        );
+        $bindingResolver = $this->createBindingResolverWithCompiledMap([
+            'users.show' => ['user' => $meta],
+        ]);
+
+        $binder = new ModelBinder($defaultResolver, $bindingResolver, $this->createStub(ContainerInterface::class));
+
+        $route = new Route([Method::GET], '/users/{user}', [ModelBinderTestController::class, 'show'], 'users.show');
+        $matched = new MatchedRoute($route, ['user' => '42']);
+        $request = $this->createStub(ServerRequestInterface::class);
+        $context = new ResolutionContext();
+
+        $resolved = $binder->bindWithMeta($matched, $request, $context);
+
+        // Models and the metadata that produced them are returned together,
+        // keyed by parameter name, so authorization can read the declared policy.
+        self::assertSame(['user' => $model], $resolved->models);
+        self::assertArrayHasKey('user', $resolved->metas);
+        self::assertSame('delete', $resolved->metas['user']->authzPolicy);
+
+        // bind() stays a thin BC delegate returning only the models.
+        self::assertSame(['user' => $model], $binder->bind($matched, $request, $context));
+    }
+
+    #[Test]
     public function strictKeyCoercionThrowsForNonIntegerValue(): void
     {
         $defaultResolver = $this->createStub(ModelResolverPort::class);
