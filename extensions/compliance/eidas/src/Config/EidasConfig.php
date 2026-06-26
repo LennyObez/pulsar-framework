@@ -16,7 +16,7 @@ use Pulsar\Support\Coerce;
  * These are NOT eIDAS-conformant providers. Production deployments must
  * wire qualified providers (QSeal/QES via a Qualified Trust Service
  * Provider, QTSA for timestamps, persistent delivery) and the
- * {@see \Pulsar\Deploy\Check\EidasProductionReadinessCheck} deploy gate
+ * {@see \Pulsar\Extension\Eidas\Deploy\EidasProductionReadinessCheck} deploy gate
  * refuses these defaults in staging/production.
  * @api
  */
