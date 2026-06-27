@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Resilience;
 
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Config\RetryConfig;
 use Pulsar\Resilience\RetryPolicy;
@@ -173,6 +175,27 @@ final class RetryPolicyTest extends TestCase
         self::assertFalse($result->succeeded);
         self::assertSame(1, $result->attempts);
         self::assertSame([], $result->attemptDelays);
+    }
+
+    #[Test]
+    #[TestWith([0])]
+    #[TestWith([-1])]
+    #[TestWith([-100])]
+    public function constructorRejectsNonPositiveMaxAttempts(int $maxAttempts): void
+    {
+        // Without the guard, a non-positive maxAttempts lets execute() skip the
+        // loop entirely, leaving $lastException null and triggering a fatal
+        // null-dereference in the "all attempts exhausted" branch.
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('RetryPolicy requires maxAttempts >= 1');
+
+        new RetryPolicy(
+            maxAttempts: $maxAttempts,
+            baseDelayMs: 1,
+            maxDelayMs: 100,
+            multiplier: 2.0,
+            jitter: false,
+        );
     }
 
     #[Test]

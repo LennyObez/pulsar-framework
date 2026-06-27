@@ -67,7 +67,7 @@ final class ServiceTtlEntryTest extends TestCase
 
         $entry->refreshHeartbeat(2000);
 
-        self::assertSame(2000, $entry->lastHeartbeat);
+        self::assertSame(2000, $entry->lastHeartbeat());
         self::assertFalse($entry->isExpired(2059));
     }
 

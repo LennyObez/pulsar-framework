@@ -7953,7 +7953,8 @@
                         "Pulsar\\Compliance\\Verification\\CustomControlRegistry $customControlRegistry",
                         "Pulsar\\Compliance\\Verification\\VerificationConfig $config",
                         "?Pulsar\\Compliance\\Verification\\EvidenceChain $evidenceChain",
-                        "array $checks"
+                        "array $checks",
+                        "?Psr\\Log\\LoggerInterface $logger"
                     ],
                     "return": null,
                     "static": false
@@ -8040,7 +8041,7 @@
                         "string $id",
                         "string $name",
                         "string $description",
-                        "mixed $verifier",
+                        "Closure $verifier",
                         "string $category"
                     ],
                     "return": null,
@@ -34977,7 +34978,8 @@
                         "string $name",
                         "int $failureThreshold",
                         "int $successThreshold",
-                        "int $openTimeoutSeconds"
+                        "int $openTimeoutSeconds",
+                        "?Psr\\Log\\LoggerInterface $logger"
                     ],
                     "return": null,
                     "static": false
@@ -35005,7 +35007,8 @@
                 "fromConfig": {
                     "params": [
                         "string $name",
-                        "Pulsar\\Config\\CircuitBreakerConfig $config"
+                        "Pulsar\\Config\\CircuitBreakerConfig $config",
+                        "?Psr\\Log\\LoggerInterface $logger"
                     ],
                     "return": "Pulsar\\Resilience\\CircuitBreaker",
                     "static": true
@@ -47854,7 +47857,8 @@
                 },
                 "unhealthy": {
                     "params": [
-                        "string $reason"
+                        "string $reason",
+                        "?float $latencyMs"
                     ],
                     "return": "Pulsar\\ServiceDiscovery\\HealthCheckResult",
                     "static": true
@@ -53115,6 +53119,14 @@
                     "return": "Pulsar\\Webhook\\Exception\\WebhookException",
                     "static": true
                 },
+                "invalidConfiguration": {
+                    "params": [
+                        "string $parameter",
+                        "string $constraint"
+                    ],
+                    "return": "Pulsar\\Webhook\\Exception\\WebhookException",
+                    "static": true
+                },
                 "invalidSignature": {
                     "params": [],
                     "return": "Pulsar\\Webhook\\Exception\\WebhookException",
@@ -54605,6 +54617,7 @@
         "Pulsar\\Compliance\\Frameworks\\Psd2Mapping",
         "Pulsar\\Compliance\\Frameworks\\Soc2Mapping",
         "Pulsar\\Compliance\\Frameworks\\SwiftCspMapping",
+        "Pulsar\\Compliance\\MfaScopeRank",
         "Pulsar\\Config\\BusinessProfileProvider",
         "Pulsar\\Config\\ConfigManager",
         "Pulsar\\Config\\ConfigOverrides",

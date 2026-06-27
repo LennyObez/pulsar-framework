@@ -9,6 +9,7 @@ use Override;
 use Pulsar\Webhook\Exception\WebhookException;
 
 use function abs;
+use function count;
 use function ctype_xdigit;
 use function str_starts_with;
 use function strlen;
@@ -32,6 +33,22 @@ final readonly class HmacWebhookVerifier implements WebhookVerifierInterface
      * though the constant-time guarantee holds).
      */
     private const int HMAC_HEX_LENGTH = 64;
+
+    /**
+     * F25.8: a 13+ digit timestamp saturates the (int) cast toward
+     * PHP_INT_MAX on 64-bit. 12 digits covers Unix seconds through the
+     * year 33658, so any legitimate timestamp fits and overflow inputs
+     * are rejected as malformed.
+     */
+    private const int MAX_TIMESTAMP_DIGITS = 12;
+
+    /**
+     * F25.8: cap the number of v1= candidates a single header may carry.
+     * Each candidate forces one HMAC computation in verify(); without a
+     * cap a single request can demand thousands of HMACs (CPU
+     * amplification). Five comfortably covers any key-rotation window.
+     */
+    private const int MAX_V1_SIGNATURES = 5;
 
     public function __construct(
         private ?DateTimeImmutable $now = null,
@@ -94,7 +111,13 @@ final readonly class HmacWebhookVerifier implements WebhookVerifierInterface
 
             if (str_starts_with($part, 't=')) {
                 $value = substr($part, 2);
-                if (!ctype_digit($value)) {
+
+                // Reject non-numeric timestamps and any digit string longer
+                // than 12 chars: a 13+ digit value silently saturates the
+                // (int) cast toward PHP_INT_MAX on 64-bit and produces a
+                // nonsensical "too old" age. 12 digits covers Unix
+                // timestamps through year 33658 — generous for any caller.
+                if (!ctype_digit($value) || strlen($value) > self::MAX_TIMESTAMP_DIGITS) {
                     throw WebhookException::malformedHeader('invalid timestamp');
                 }
                 $timestamp = (int) $value;
@@ -107,6 +130,14 @@ final readonly class HmacWebhookVerifier implements WebhookVerifierInterface
                     // matches the parser's lexical order (missing
                     // timestamp wins over malformed v1).
                     $signatures[] = $value;
+
+                    // Cap the candidate count BEFORE any HMAC work: each v1
+                    // entry forces one hash_hmac + hash_equals in verify(),
+                    // so an unbounded header is a CPU-amplification vector.
+                    // Five is generous for any key-rotation window.
+                    if (count($signatures) > self::MAX_V1_SIGNATURES) {
+                        throw WebhookException::malformedHeader('too many v1 signatures');
+                    }
                 }
             }
         }

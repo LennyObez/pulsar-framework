@@ -65,4 +65,14 @@ final class WebhookException extends RuntimeException
             'Webhook secret cannot be empty: refusing to construct a processor that would accept any signature',
         );
     }
+
+    #[NoDiscard]
+    public static function invalidConfiguration(string $parameter, string $constraint): self
+    {
+        return new self(sprintf(
+            'Webhook processor "%s" must be %s',
+            $parameter,
+            $constraint,
+        ));
+    }
 }

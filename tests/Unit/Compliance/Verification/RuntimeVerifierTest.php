@@ -122,8 +122,11 @@ final class RuntimeVerifierTest extends TestCase
         self::assertStringContainsString('Tamper-evident', $auditResult->message);
     }
 
-    public function testAuditLoggingInactiveFailsWithoutTamperEvident(): void
+    public function testAuditLoggingInactiveSkippedWhenNoFrameworkRequiresIt(): void
     {
+        // When audit logging is inactive AND no framework mandates tamper-evident
+        // audit, the check must SKIP, not FAIL: an application with no audit
+        // requirement should not carry a permanent failing check.
         $verifier = new RuntimeVerifier(
             profile: $this->createProfile(tamperEvidentAudit: false),
             auditLogActive: false,
@@ -132,7 +135,7 @@ final class RuntimeVerifierTest extends TestCase
         $results = $verifier->verify();
         $auditResult = $this->findResult($results, 'runtime.audit_logging');
 
-        self::assertSame(CheckStatus::Fail, $auditResult->status);
+        self::assertSame(CheckStatus::Skip, $auditResult->status);
         self::assertStringNotContainsString('Tamper-evident', $auditResult->message);
     }
 

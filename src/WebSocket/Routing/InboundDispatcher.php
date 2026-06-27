@@ -110,7 +110,12 @@ final class InboundDispatcher
         }
 
         $handler = $this->resolveHandler($route->handler);
-        $handler->onDisconnect($connection, $code, $reason);
+
+        try {
+            $handler->onDisconnect($connection, $code, $reason);
+        } catch (Throwable $error) {
+            $this->routeError($handler, $connection, $error);
+        }
     }
 
     /**

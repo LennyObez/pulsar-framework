@@ -65,6 +65,23 @@ final readonly class WebhookProcessor
         if ($this->secret === '') {
             throw WebhookException::emptySecret();
         }
+
+        // Guard degenerate numeric configuration. A negative tolerance makes
+        // every timestamp check fail; a non-positive body cap inverts the DoS
+        // guard (empty bodies pass, single-byte bodies are rejected); a
+        // non-positive dedup TTL silently disables replay protection (events
+        // expire at the instant they commit). Fail fast at construction.
+        if ($this->toleranceSeconds < 0) {
+            throw WebhookException::invalidConfiguration('toleranceSeconds', '>= 0');
+        }
+
+        if ($this->maxBodyBytes <= 0) {
+            throw WebhookException::invalidConfiguration('maxBodyBytes', '> 0');
+        }
+
+        if ($this->deduplicationTtlSeconds <= 0) {
+            throw WebhookException::invalidConfiguration('deduplicationTtlSeconds', '> 0');
+        }
     }
 
     /**
@@ -95,8 +112,16 @@ final readonly class WebhookProcessor
         // Step 1: Verify signature
         try {
             $this->verifier->verify($rawBody, $signatureHeader, $this->secret, $this->toleranceSeconds);
-        } catch (WebhookException) {
-            return new WebhookProcessingResult(WebhookProcessingStatus::InvalidSignature);
+        } catch (WebhookException $e) {
+            // Surface the verification failure reason so callers can audit
+            // "expired timestamp" vs "malformed header" vs "invalid signature".
+            // None of these messages reveal an oracle: invalidSignature() is a
+            // fixed generic string, expiredTimestamp() carries only numeric
+            // ages, and malformedHeader() carries fixed reason strings.
+            return new WebhookProcessingResult(
+                status: WebhookProcessingStatus::InvalidSignature,
+                error: $e->getMessage(),
+            );
         }
 
         // Step 2: Decode payload (capped depth — F25.6).
@@ -155,7 +180,24 @@ final readonly class WebhookProcessor
         }
 
         // Step 5: Commit
-        $this->eventLog->commit($eventId);
+        //
+        // The handler has already run successfully, but commit() may fail in a
+        // persistent log implementation (duplicate key, connection loss). If it
+        // throws, the bare path would leak the in-flight claim and let the
+        // exception escape process(), violating the WebhookProcessingResult
+        // return contract. Release the claim so a retry can re-process cleanly,
+        // then surface the failure as a structured HandlerError result.
+        try {
+            $this->eventLog->commit($eventId);
+        } catch (Throwable $e) {
+            $this->eventLog->release($eventId);
+
+            return new WebhookProcessingResult(
+                status: WebhookProcessingStatus::HandlerError,
+                eventId: $eventId,
+                error: 'Event log commit failed: ' . $e->getMessage(),
+            );
+        }
 
         return new WebhookProcessingResult(
             status: WebhookProcessingStatus::Processed,

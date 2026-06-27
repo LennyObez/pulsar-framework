@@ -15,11 +15,17 @@ use Pulsar\Compliance\Verification\CheckResult;
 use Pulsar\Compliance\Verification\ComplianceCheckDomain;
 use Pulsar\Compliance\Verification\EvidenceChain;
 use Pulsar\Compliance\Verification\VerificationReport;
+use Pulsar\Security\Crypto\Hmac;
 use Random\Engine\Mt19937;
 use Random\Randomizer;
 
 use function count;
+use function json_encode;
 use function strlen;
+
+use const JSON_THROW_ON_ERROR;
+use const JSON_UNESCAPED_SLASHES;
+use const JSON_UNESCAPED_UNICODE;
 
 #[CoversClass(EvidenceChain::class)]
 final class EvidenceChainTest extends TestCase
@@ -259,6 +265,91 @@ final class EvidenceChainTest extends TestCase
         self::assertSame(1, $result['verified']);
         self::assertContains('tampered-1', $result['broken_at']);
         self::assertNotContains($valid->id, $result['broken_at']);
+    }
+
+    #[Test]
+    public function verifyChainDetectsTruncatedHead(): void
+    {
+        // Truncation attack: an attacker who cannot forge HMACs discards the
+        // earliest records and presents a tail-only chain. Each surviving
+        // record's own HMAC is still intact, so HMAC-only verification would
+        // (incorrectly) report the chain valid. The previous-signature linkage
+        // must catch that the first presented record no longer chains to genesis.
+        $chain = $this->createChain();
+
+        $chain->record($this->createReport(passes: 1));
+        $r2 = $chain->record($this->createReport(passes: 2));
+        $r3 = $chain->record($this->createReport(passes: 3));
+
+        // Present only [r2, r3] — r1 (the genuine head) has been dropped.
+        $result = $chain->verifyChain([$r2, $r3]);
+
+        self::assertFalse($result['valid']);
+        // r2's stored previous_signature points to r1, not to genesis, so r2
+        // is flagged; r3 still chains correctly to r2.
+        self::assertContains($r2->id, $result['broken_at']);
+        self::assertNotContains($r3->id, $result['broken_at']);
+    }
+
+    #[Test]
+    public function verifyChainDetectsReorderedRecords(): void
+    {
+        // Reordering breaks the linkage even though every individual HMAC is valid.
+        $chain = $this->createChain();
+
+        $r1 = $chain->record($this->createReport(passes: 1));
+        $r2 = $chain->record($this->createReport(passes: 2));
+        $r3 = $chain->record($this->createReport(passes: 3));
+
+        // Swap r2 and r3.
+        $result = $chain->verifyChain([$r1, $r3, $r2]);
+
+        self::assertFalse($result['valid']);
+        self::assertContains($r3->id, $result['broken_at']);
+    }
+
+    #[Test]
+    public function verifyChainAcceptsFullChainFromGenesis(): void
+    {
+        // The complete, in-order chain (first record chaining to genesis) is valid.
+        $chain = $this->createChain();
+
+        $r1 = $chain->record($this->createReport(passes: 1));
+        $r2 = $chain->record($this->createReport(passes: 2));
+        $r3 = $chain->record($this->createReport(passes: 3));
+
+        $result = $chain->verifyChain([$r1, $r2, $r3]);
+
+        self::assertTrue($result['valid']);
+        self::assertSame(3, $result['verified']);
+        self::assertSame([], $result['broken_at']);
+    }
+
+    #[Test]
+    public function verifyChainRejectsRecordWithMissingPreviousSignature(): void
+    {
+        // A record whose own HMAC is valid but whose data omits the
+        // previous_signature linkage key must be rejected.
+        $chain = $this->createChain();
+
+        $data = ['pass_count' => 1, 'fail_count' => 0, 'skip_count' => 0, 'pass_rate' => 100.0];
+        $message = (string) json_encode($data, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        $signature = Hmac::computeHex($message, self::TEST_KEY);
+
+        $record = new EvidenceRecord(
+            id: 'no-linkage-1',
+            controlId: 'compliance.verification_run',
+            type: 'verification_evidence',
+            description: 'Missing linkage',
+            data: $data,
+            collectedAt: new DateTimeImmutable(),
+            signature: $signature,
+        );
+
+        $result = $chain->verifyChain([$record]);
+
+        self::assertFalse($result['valid']);
+        self::assertContains('no-linkage-1', $result['broken_at']);
     }
 
     #[Test]

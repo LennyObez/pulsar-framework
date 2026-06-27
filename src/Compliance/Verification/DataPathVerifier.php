@@ -12,7 +12,6 @@ use function array_values;
 use function implode;
 use function preg_replace;
 use function sprintf;
-use function str_contains;
 use function strtolower;
 
 /**
@@ -131,21 +130,44 @@ final readonly class DataPathVerifier
     }
 
     /**
-     * Check if the route's middleware list contains a given middleware (by name fragment match).
+     * Check if the route's middleware list satisfies a required control.
+     *
+     * A required control token (e.g. 'encryption') is satisfied only by a
+     * middleware whose canonical name is exactly that token, optionally with the
+     * framework's conventional 'Middleware' suffix — case-insensitively and
+     * ignoring non-alphanumeric separators. So 'encryption', 'Encryption',
+     * 'EncryptionMiddleware' and 'encryption_middleware' all satisfy 'encryption'.
+     *
+     * Substring matching is deliberately rejected: an arbitrary middleware that
+     * merely contains the token (e.g. 'EncryptionBypassLogger') must NOT be
+     * accepted as the protective control. Loose matching on a security
+     * requirement is a false-positive that lets a non-compliant route appear
+     * compliant.
      *
      * @param list<string> $routeMiddleware
      */
     private function routeHasMiddleware(array $routeMiddleware, string $required): bool
     {
-        foreach ($routeMiddleware as $middleware) {
-            $normalized = strtolower($middleware);
+        $needle = $this->canonicalize($required);
+        $needleWithSuffix = $needle . 'middleware';
 
-            if (str_contains($normalized, strtolower($required))) {
+        foreach ($routeMiddleware as $middleware) {
+            $candidate = $this->canonicalize($middleware);
+
+            if ($candidate === $needle || $candidate === $needleWithSuffix) {
                 return true;
             }
         }
 
         return false;
+    }
+
+    /**
+     * Lowercase a middleware/control name and strip non-alphanumeric separators.
+     */
+    private function canonicalize(string $name): string
+    {
+        return strtolower(preg_replace('/[^a-zA-Z0-9]+/', '', $name) ?? $name);
     }
 
     private function sanitizeCheckId(string $path): string

@@ -106,11 +106,58 @@ final class DataPathVerifierTest extends TestCase
     {
         $verifier = new DataPathVerifier($this->createProfile(true, true));
 
+        // Mixed-case names and the conventional 'Middleware' suffix (with or
+        // without separators) all canonicalize to the required control token.
         $results = $verifier->verify([
             [
                 'path' => '/api/data',
                 'classification' => 'sensitive',
-                'middleware' => ['AUTHENTICATION_GUARD', 'audit_logger'],
+                'middleware' => ['AUTHENTICATION', 'audit_middleware'],
+            ],
+        ]);
+
+        self::assertCount(1, $results);
+        self::assertSame(CheckStatus::Pass, $results[0]->status);
+    }
+
+    public function testSubstringNamedMiddlewareDoesNotSatisfyRequirement(): void
+    {
+        // A middleware whose name merely *contains* a required token as a
+        // substring must NOT be accepted: 'EncryptionBypassLogger' must not
+        // satisfy the 'encryption' requirement, nor 'AuthenticationDebugger'
+        // the 'authentication' requirement. Only exact (case-insensitive)
+        // middleware names count.
+        $verifier = new DataPathVerifier($this->createProfile(true, true));
+
+        $results = $verifier->verify([
+            [
+                'path' => '/api/payments',
+                'classification' => 'pci',
+                'middleware' => [
+                    'EncryptionBypassLogger',
+                    'AuthenticationDebugger',
+                    'AuditMiddleware',
+                    'CsrfMiddleware',
+                ],
+            ],
+        ]);
+
+        self::assertCount(1, $results);
+        self::assertSame(CheckStatus::Fail, $results[0]->status);
+        self::assertStringContainsString('encryption', $results[0]->message);
+        self::assertStringContainsString('authentication', $results[0]->message);
+    }
+
+    public function testExactMiddlewareNameSatisfiesRequirement(): void
+    {
+        // Exact, case-insensitive matches against the required tokens pass.
+        $verifier = new DataPathVerifier($this->createProfile(true, true));
+
+        $results = $verifier->verify([
+            [
+                'path' => '/api/payments',
+                'classification' => 'pci',
+                'middleware' => ['Encryption', 'AUTHENTICATION', 'audit', 'csrf'],
             ],
         ]);
 

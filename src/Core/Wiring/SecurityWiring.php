@@ -372,6 +372,11 @@ final readonly class SecurityWiring implements ServiceWiringInterface
 
         // Data Purge Orchestrator: wire up reference purge implementations
         if (!$container->has(DataPurgeOrchestrator::class)) {
+            /** @var LoggerInterface|null $purgeLogger */
+            $purgeLogger = $container->has(LoggerInterface::class)
+                ? $container->get(LoggerInterface::class)
+                : null;
+
             /** @var array<string, DataPurgeInterface> $purgers */
             $purgers = [];
 
@@ -381,13 +386,15 @@ final readonly class SecurityWiring implements ServiceWiringInterface
                 $obsConfigForPurge = $repository->get(ObservabilityConfig::class);
 
                 if ($obsConfigForPurge->audit->enabled) {
-                    $purgers['audit_logs'] = new AuditLogPurge($obsConfigForPurge->audit->logPath);
+                    $purgers['audit_logs'] = new AuditLogPurge($obsConfigForPurge->audit->logPath, $purgeLogger);
                 }
             }
 
-            // Session purge: uses the active session handler
+            // Session purge: uses the active session handler. The key must
+            // match the retention policy category ('user_sessions' in
+            // config/data_protection.php) or the orchestrator skips it.
             if ($container->has(SessionHandlerInterface::class)) {
-                $purgers['sessions'] = new SessionPurge($container->get(SessionHandlerInterface::class));
+                $purgers['user_sessions'] = new SessionPurge($container->get(SessionHandlerInterface::class));
             }
 
             // Build policies from DataProtectionConfig
@@ -415,6 +422,7 @@ final readonly class SecurityWiring implements ServiceWiringInterface
                 policies: $policies,
                 config: $dpConfig,
                 auditLogger: $auditLogger,
+                logger: $purgeLogger,
             );
             $container->instance(DataPurgeOrchestrator::class, $orchestrator);
         }

@@ -156,6 +156,38 @@ final class HmacWebhookVerifierTest extends TestCase
         self::assertInstanceOf(HmacWebhookVerifier::class, $this->verifier);
     }
 
+    #[Test]
+    public function overlongNumericTimestampRejected(): void
+    {
+        // F25.8: a 13+ digit numeric timestamp passes ctype_digit but
+        // saturates the (int) cast on 64-bit, producing a nonsensical age.
+        // It must be rejected as a malformed timestamp, not silently coerced.
+        $header = sprintf('t=%s,v1=%s', str_repeat('9', 20), str_repeat('a', 64));
+
+        $this->expectException(WebhookException::class);
+        $this->expectExceptionMessage('invalid timestamp');
+
+        $this->verifier->verify('{}', $header, self::SECRET, 300);
+    }
+
+    #[Test]
+    public function tooManyV1SignaturesRejected(): void
+    {
+        // F25.8: each v1= entry forces one HMAC computation. An unbounded
+        // header is a CPU-amplification vector, so the parser caps the
+        // candidate count and rejects before any HMAC work.
+        $timestamp = 1700000000;
+        $header = sprintf('t=%d', $timestamp);
+        for ($i = 0; $i < 6; $i++) {
+            $header .= sprintf(',v1=%s', str_repeat('a', 64));
+        }
+
+        $this->expectException(WebhookException::class);
+        $this->expectExceptionMessage('too many v1 signatures');
+
+        $this->verifier->verify('{}', $header, self::SECRET, 300);
+    }
+
     private function computeSignature(string $payload, int $timestamp, string $secret): string
     {
         return hash_hmac('sha256', $timestamp . '.' . $payload, $secret);

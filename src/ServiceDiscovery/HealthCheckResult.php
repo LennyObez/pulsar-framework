@@ -29,11 +29,12 @@ final readonly class HealthCheckResult
         );
     }
 
-    public static function unhealthy(string $reason): self
+    public static function unhealthy(string $reason, ?float $latencyMs = null): self
     {
         return new self(
             status: ServiceHealthStatus::Unhealthy,
             message: $reason,
+            latencyMs: $latencyMs,
             checkedAt: time(),
         );
     }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Tests\Unit\Idempotency;
 
 use DateTimeImmutable;
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -157,6 +158,49 @@ final class InMemoryIdempotencyStoreTest extends TestCase
         $now = new DateTimeImmutable();
         $claim = $store->claim('nonexistent', 'hash-1', 'op', $now, 3600);
         self::assertSame(IdempotencyClaimStatus::Claimed, $claim->status);
+    }
+
+    #[Test]
+    public function pruneClearsInFlightForUncommittedExpiredClaim(): void
+    {
+        // Regression: prune() removed the record but left the in-flight
+        // mutex orphaned, so the next claim() threw a spurious
+        // ConcurrentClaim and locked the key forever.
+        $store = new InMemoryIdempotencyStore();
+        $now = new DateTimeImmutable('@1700000000');
+
+        // Claim but never commit — the key stays in-flight.
+        $store->claim('key-1', 'hash-1', 'op', $now, 1);
+
+        // Prune past the (short) TTL while the key is still in-flight.
+        $later = new DateTimeImmutable('@1700000010');
+        self::assertSame(1, $store->prune($later));
+
+        // The mutex must have been cleared alongside the record: a fresh
+        // claim succeeds rather than throwing ConcurrentClaim.
+        $claim = $store->claim('key-1', 'hash-1', 'op', $later, 60);
+        self::assertSame(IdempotencyClaimStatus::Claimed, $claim->status);
+    }
+
+    #[Test]
+    public function claimRejectsZeroTtl(): void
+    {
+        $store = new InMemoryIdempotencyStore();
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('TTL must be a positive');
+
+        $store->claim('key-1', 'hash-1', 'op', new DateTimeImmutable(), 0);
+    }
+
+    #[Test]
+    public function claimRejectsNegativeTtl(): void
+    {
+        $store = new InMemoryIdempotencyStore();
+
+        $this->expectException(InvalidArgumentException::class);
+
+        $store->claim('key-1', 'hash-1', 'op', new DateTimeImmutable(), -5);
     }
 
     #[Test]

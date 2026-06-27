@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
 use Pulsar\Idempotency\Exception\IdempotencyException;
 use Pulsar\Security\Crypto\Hmac;
 use Pulsar\Security\Crypto\KeyProviderInterface;
+use Pulsar\Security\Crypto\SubKeyId;
 use SodiumException;
 
 use function base64_decode;
@@ -50,10 +51,12 @@ use function substr;
 final readonly class SignedIdempotencyEnvelope
 {
     /**
-     * KDF subkey id reserved for idempotency-cache HMAC. See
-     * `MasterKey::deriveSubKey()` for the framework-wide subkey table.
+     * KDF subkey id reserved for idempotency-cache HMAC. Sourced from the
+     * framework-wide {@see SubKeyId} registry (ADR-0006) so the registry is
+     * the single source of truth and a future drift between this envelope
+     * and the registry becomes a compile-time impossibility.
      */
-    private const int SUB_KEY_ID = 12;
+    private const int SUB_KEY_ID = SubKeyId::IdempotencyEnvelope->value;
 
     /**
      * 8-byte KDF context separating this signing key from any other

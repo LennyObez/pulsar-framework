@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Pulsar\Compliance\Verification;
 
 use NoDiscard;
+use Psr\Log\LoggerInterface;
 use Pulsar\Api\Api;
 use Pulsar\Compliance\ComplianceProfile;
+use Throwable;
 
 use function array_merge;
 
@@ -32,6 +34,7 @@ final readonly class ComplianceVerificationEngine
         private VerificationConfig $config,
         private ?EvidenceChain $evidenceChain = null,
         private array $checks = [],
+        private ?LoggerInterface $logger = null,
     ) {}
 
     /**
@@ -70,7 +73,7 @@ final readonly class ComplianceVerificationEngine
         );
 
         // 5. Record to evidence chain
-        $this->evidenceChain?->record($report);
+        $this->recordEvidence($report);
 
         return $report;
     }
@@ -109,7 +112,7 @@ final readonly class ComplianceVerificationEngine
             generatedAt: time(),
         );
 
-        $this->evidenceChain?->record($report);
+        $this->recordEvidence($report);
 
         return $report;
     }
@@ -154,9 +157,33 @@ final readonly class ComplianceVerificationEngine
             generatedAt: time(),
         );
 
-        $this->evidenceChain?->record($report);
+        $this->recordEvidence($report);
 
         return $report;
+    }
+
+    /**
+     * Record the completed report to the evidence chain, if one is configured.
+     *
+     * Evidence recording is a side-effect that must never discard an
+     * already-built report: a sodium/json failure inside the chain is logged
+     * (when a logger is available) and swallowed so the caller still receives
+     * the verification result.
+     */
+    private function recordEvidence(VerificationReport $report): void
+    {
+        if ($this->evidenceChain === null) {
+            return;
+        }
+
+        try {
+            $this->evidenceChain->record($report);
+        } catch (Throwable $e) {
+            $this->logger?->error(
+                'Compliance evidence chain recording failed; verification report preserved.',
+                ['exception' => $e],
+            );
+        }
     }
 
     /**

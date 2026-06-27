@@ -203,4 +203,31 @@ final class StaticServiceDiscoveryTest extends TestCase
         self::assertCount(1, $instances);
         self::assertSame(9090, $instances[0]->port);
     }
+
+    #[Test]
+    public function registerDeduplicatesByHostAndPort(): void
+    {
+        $discovery = new StaticServiceDiscovery();
+        $discovery->register(new ServiceInstance('api', 'api.local', 8080, healthy: true));
+        // Same host:port registered again — must replace, not accumulate.
+        $discovery->register(new ServiceInstance('api', 'api.local', 8080, healthy: false));
+
+        $instances = $discovery->instances('api');
+
+        self::assertCount(1, $instances);
+        self::assertSame('api.local', $instances[0]->host);
+        self::assertSame(8080, $instances[0]->port);
+        // Last registration wins (keyed-map semantics).
+        self::assertFalse($instances[0]->healthy);
+    }
+
+    #[Test]
+    public function registerKeepsDistinctHostPortPairs(): void
+    {
+        $discovery = new StaticServiceDiscovery();
+        $discovery->register(new ServiceInstance('api', 'api.local', 8080));
+        $discovery->register(new ServiceInstance('api', 'api.local', 9090));
+
+        self::assertCount(2, $discovery->instances('api'));
+    }
 }

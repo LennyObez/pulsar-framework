@@ -38,6 +38,7 @@ final readonly class DsarRequest
     public function isOverdue(): bool
     {
         return $this->status !== DsarStatus::Completed
+            && $this->status !== DsarStatus::Downloaded
             && $this->status !== DsarStatus::Rejected
             && $this->deadline < new DateTimeImmutable();
     }

@@ -6,8 +6,11 @@ namespace Pulsar\Tests\Unit\Compliance\Verification;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\AbstractLogger;
 use Pulsar\Compliance\ComplianceFramework;
 use Pulsar\Compliance\ComplianceProfile;
+use Pulsar\Compliance\Evidence\EvidenceRecord;
+use Pulsar\Compliance\Evidence\EvidenceStoreInterface;
 use Pulsar\Compliance\Verification\CheckResult;
 use Pulsar\Compliance\Verification\ComplianceCheckDomain;
 use Pulsar\Compliance\Verification\ComplianceCheckInterface;
@@ -16,10 +19,13 @@ use Pulsar\Compliance\Verification\ComplianceVerificationEngine;
 use Pulsar\Compliance\Verification\ConflictDetector;
 use Pulsar\Compliance\Verification\CustomControlRegistry;
 use Pulsar\Compliance\Verification\DataPathVerifier;
+use Pulsar\Compliance\Verification\EvidenceChain;
 use Pulsar\Compliance\Verification\RegressionDetector;
 use Pulsar\Compliance\Verification\RegressionInput;
 use Pulsar\Compliance\Verification\RuntimeVerifier;
 use Pulsar\Compliance\Verification\VerificationConfig;
+use RuntimeException;
+use Stringable;
 
 use function count;
 
@@ -250,6 +256,70 @@ final class ComplianceVerificationEngineTest extends TestCase
 
         self::assertTrue($report->hasConflicts());
         self::assertGreaterThan(0, count($report->conflicts));
+    }
+
+    public function testEvidenceChainFailurePreservesReportAndIsLogged(): void
+    {
+        $profile = $this->createProfile();
+
+        // A store whose store() throws makes EvidenceChain::record() throw.
+        $throwingStore = new class implements EvidenceStoreInterface {
+            public function store(EvidenceRecord $record): void
+            {
+                throw new RuntimeException('evidence store unavailable');
+            }
+
+            /** @return list<EvidenceRecord> */
+            public function forControl(string $controlId): array
+            {
+                return [];
+            }
+
+            /** @return list<EvidenceRecord> */
+            public function all(): array
+            {
+                return [];
+            }
+
+            public function get(string $id): ?EvidenceRecord
+            {
+                return null;
+            }
+
+            public function countForControl(string $controlId): int
+            {
+                return 0;
+            }
+        };
+
+        $logger = new class extends AbstractLogger {
+            /** @var list<string> */
+            public array $errors = [];
+
+            /**
+             * @param array<array-key, mixed> $context
+             */
+            public function log(mixed $level, string|Stringable $message, array $context = []): void
+            {
+                $this->errors[] = (string) $message;
+            }
+        };
+
+        $engine = new ComplianceVerificationEngine(
+            profile: $profile,
+            runtimeVerifier: new RuntimeVerifier($profile, true, true, true, true),
+            conflictDetector: new ConflictDetector(),
+            customControlRegistry: new CustomControlRegistry(),
+            config: new VerificationConfig(),
+            evidenceChain: new EvidenceChain($throwingStore, 'test-evidence-key-long-enough-for-blake2b'),
+            logger: $logger,
+        );
+
+        // The already-built report must be returned despite the recording failure.
+        $report = $engine->verify();
+
+        self::assertGreaterThan(0, $report->totalCount());
+        self::assertNotEmpty($logger->errors);
     }
 
     private function createProfile(): ComplianceProfile

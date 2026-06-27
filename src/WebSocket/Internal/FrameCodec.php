@@ -60,6 +60,20 @@ final readonly class FrameCodec
             return null;
         }
 
+        // RFC 6455 Section 5.2: a receiver MUST fail the connection if any RSV
+        // bit is set and no extension defining its meaning has been negotiated.
+        // This codec negotiates no extensions, so any RSV bit is a protocol
+        // violation. Returning null signals the transport to close with 1002.
+        if (($firstByte & 0x70) !== 0) {
+            return null;
+        }
+
+        // RFC 6455 Section 5.5: control frames MUST NOT be fragmented. A control
+        // opcode with FIN unset is a protocol violation (transport closes 1002).
+        if (!$fin && $opcode->isControl()) {
+            return null;
+        }
+
         $masked = ($secondByte & 0x80) !== 0;
         $payloadLength = $secondByte & 0x7F;
         $offset = 2;
@@ -112,12 +126,17 @@ final readonly class FrameCodec
             $payload = WebSocketFrame::applyMask($payload, $maskKey);
         }
 
+        // The payload above is already unmasked, so the decoded frame must
+        // carry the clear-text bytes with no mask state. Preserving the wire
+        // `masked`/`maskKey` here would cause `WebSocketFrame::encode()` to
+        // XOR the clear text a second time on any re-encode (frame forwarding,
+        // proxy, echo), silently corrupting the payload.
         $frame = new WebSocketFrame(
             opcode: $opcode,
             payload: $payload,
             fin: $fin,
-            masked: $masked,
-            maskKey: $maskKey,
+            masked: false,
+            maskKey: '',
         );
 
         $totalConsumed = $offset + $payloadLength;

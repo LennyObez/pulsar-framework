@@ -14,6 +14,7 @@ use function date;
 use function is_dir;
 use function json_encode;
 use function mkdir;
+use function preg_replace;
 use function sprintf;
 
 use const DIRECTORY_SEPARATOR;
@@ -82,9 +83,15 @@ final readonly class DsarPackager
                 'attachment_count' => count($dataSet->attachments),
             ];
 
+            $safeSource = self::sanitizePathComponent($dataSet->sourceName);
+
             // Add data records
             if ($dataSet->records !== []) {
-                $dataPath = sprintf('data/%s/%s.json', $dataSet->sourceName, $dataSet->category);
+                $dataPath = sprintf(
+                    'data/%s/%s.json',
+                    $safeSource,
+                    self::sanitizePathComponent($dataSet->category),
+                );
                 $zip->addFromString(
                     $dataPath,
                     json_encode($dataSet->records, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
@@ -93,7 +100,11 @@ final readonly class DsarPackager
 
             // Add attachments
             foreach ($dataSet->attachments as $attachment) {
-                $attachmentPath = sprintf('attachments/%s/%s', $dataSet->sourceName, $attachment->filename);
+                $attachmentPath = sprintf(
+                    'attachments/%s/%s',
+                    $safeSource,
+                    self::sanitizePathComponent($attachment->filename),
+                );
                 $zip->addFromString($attachmentPath, $attachment->content);
             }
         }
@@ -106,5 +117,19 @@ final readonly class DsarPackager
         $zip->close();
 
         return $zipPath;
+    }
+
+    /**
+     * Sanitize a single ZIP internal path component to prevent zip-slip.
+     *
+     * Strips directory separators and parent-directory traversal sequences so
+     * a malicious collector cannot place archive members outside the intended
+     * data/ or attachments/ subtree when the package is extracted.
+     */
+    private static function sanitizePathComponent(string $component): string
+    {
+        $sanitized = preg_replace('#\.{2,}|[\\\\\\/]#', '_', $component) ?? '';
+
+        return $sanitized === '' ? '_' : $sanitized;
     }
 }

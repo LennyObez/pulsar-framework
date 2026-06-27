@@ -77,9 +77,15 @@ final class StaticServiceDiscovery implements ServiceDiscoveryInterface
     #[Override]
     public function register(ServiceInstance $instance): void
     {
-        if (!array_key_exists($instance->name, $this->registry)) {
-            $this->registry[$instance->name] = [];
-        }
+        // Deduplicate by host:port so repeated registrations of the same
+        // coordinates replace rather than accumulate, matching the keyed-map
+        // semantics of InMemoryServiceRegistry.
+        $existing = $this->registry[$instance->name] ?? [];
+
+        $this->registry[$instance->name] = array_values(array_filter(
+            $existing,
+            static fn(ServiceInstance $i): bool => $i->host !== $instance->host || $i->port !== $instance->port,
+        ));
 
         $this->registry[$instance->name][] = $instance;
     }
