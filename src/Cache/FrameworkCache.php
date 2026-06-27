@@ -72,7 +72,7 @@ final class FrameworkCache implements FrameworkCacheInterface
     /** @throws SodiumException */
     public function __construct(
         private readonly string $basePath,
-        private readonly KeyProviderInterface $masterKey,
+        KeyProviderInterface $masterKey,
         HmacInterface $hmac,
         private readonly bool $encrypt = false,
         ?EncryptorInterface $encryptor = null,
@@ -80,7 +80,7 @@ final class FrameworkCache implements FrameworkCacheInterface
         $this->hmac = $hmac;
         $this->cachePath = $basePath . DIRECTORY_SEPARATOR . 'var' . DIRECTORY_SEPARATOR . 'cache' . DIRECTORY_SEPARATOR . 'framework';
 
-        $this->hmacKey = $this->masterKey->deriveSubKey(self::HMAC_SUB_KEY_ID, self::HMAC_CONTEXT);
+        $this->hmacKey = $masterKey->deriveSubKey(self::HMAC_SUB_KEY_ID, self::HMAC_CONTEXT);
 
         $this->integrity = new CacheIntegrity($this->hmac, $this->hmacKey, $this->encrypt ? $encryptor : null);
         $this->configCache = new ConfigCache($this->integrity);
