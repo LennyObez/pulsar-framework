@@ -202,14 +202,32 @@ final readonly class SagaOrchestrator implements SagaOrchestratorInterface
         string $failedStepName,
         Throwable $error,
     ): SagaState {
-        $state = $this->runCompensation($state, $definition);
+        try {
+            $state = $this->runCompensation($state, $definition);
+        } catch (Throwable $compensationError) {
+            // Compensation itself failed: report it honestly so listeners and
+            // the audit trail see compensationSuccessful=false. Previously this
+            // throw propagated before any SagaFailedEvent was dispatched, and
+            // the (only) success-path dispatch hardcoded the flag to true via a
+            // tautology ($state->status === Failed is always true here).
+            $this->eventDispatcher->dispatch(new SagaFailedEvent(
+                sagaId: $state->sagaId,
+                definitionId: $definition->name,
+                failedStepName: $failedStepName,
+                errorMessage: $error->getMessage(),
+                compensationSuccessful: false,
+                occurredAt: new DateTimeImmutable(),
+            ));
+
+            throw $compensationError;
+        }
 
         $this->eventDispatcher->dispatch(new SagaFailedEvent(
             sagaId: $state->sagaId,
             definitionId: $definition->name,
             failedStepName: $failedStepName,
             errorMessage: $error->getMessage(),
-            compensationSuccessful: $state->status === SagaStatus::Failed,
+            compensationSuccessful: true,
             occurredAt: new DateTimeImmutable(),
         ));
 
