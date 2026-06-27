@@ -30,6 +30,7 @@ use Pulsar\DataProtection\RetentionPolicyInterface;
 use Pulsar\DataProtection\SessionPurge;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
+use Pulsar\Http\TrustedProxy;
 use Pulsar\Routing\DomainResolverInterface;
 use Pulsar\Routing\Internal\ConfigDomainResolver;
 use Pulsar\Routing\Router;
@@ -273,17 +274,34 @@ final readonly class SecurityWiring implements ServiceWiringInterface
             }
         }
 
+        // Trusted-proxy-aware client-IP resolution, shared by session capture,
+        // the session validators, and (via the container) hijack/account-takeover
+        // detection — so all of them resolve the same client IP behind a proxy
+        // and never disagree (which would cause false-positive session/hijack
+        // alerts). Constructed only when proxies are configured; otherwise null,
+        // which preserves the raw-REMOTE_ADDR behaviour.
+        $repository = $configManager->repository();
+        /** @var list<string> $trustedProxies */
+        $trustedProxies = $repository->has(DeployConfig::class)
+            ? $repository->get(DeployConfig::class)->trustedProxies
+            : [];
+        $trustedProxy = $trustedProxies !== [] ? new TrustedProxy($trustedProxies) : null;
+        if ($trustedProxy !== null) {
+            $container->instance(TrustedProxy::class, $trustedProxy);
+        }
+
         // Session: build handler, validators, and manager
         $sessionHandler = $this->buildSessionHandler($securityConfig, $container, $sessionEncryption);
         $container->instance(SessionHandlerInterface::class, $sessionHandler);
 
-        $validators = $this->buildValidators($securityConfig, $hmacService, $masterKey);
+        $validators = $this->buildValidators($securityConfig, $hmacService, $masterKey, $trustedProxy);
 
         $sessionManager = new SessionManager(
             $sessionHandler,
             $securityConfig->session,
             $validators,
             $sessionEncryption,
+            $trustedProxy,
         );
         $container->instance(SessionManager::class, $sessionManager);
         $container->instance(SessionInterface::class, $sessionManager);
@@ -316,12 +334,8 @@ final readonly class SecurityWiring implements ServiceWiringInterface
         $csrfMiddleware = new CsrfMiddleware($csrfTokenManager, $securityConfig->csrf);
         $container->instance(CsrfMiddleware::class, $csrfMiddleware);
 
-        // Security Headers: gate X-Forwarded-Proto on trusted proxy IPs (CFR-71)
-        $repository = $configManager->repository();
-        /** @var list<string> $trustedProxies */
-        $trustedProxies = $repository->has(DeployConfig::class)
-            ? $repository->get(DeployConfig::class)->trustedProxies
-            : [];
+        // Security Headers: gate X-Forwarded-Proto on trusted proxy IPs (CFR-71).
+        // Reuses the $trustedProxies resolved above for the session/IP stack.
         $headersMiddleware = new SecurityHeadersMiddleware($securityConfig->headers, $trustedProxies);
         $container->instance(SecurityHeadersMiddleware::class, $headersMiddleware);
 
@@ -473,6 +487,7 @@ final readonly class SecurityWiring implements ServiceWiringInterface
         SecurityConfig $securityConfig,
         HmacInterface $hmacService,
         ?MasterKey $masterKey,
+        ?TrustedProxy $trustedProxy = null,
     ): array {
         $validatorConfigs = $securityConfig->session->validators;
         $validators = [];
@@ -488,7 +503,7 @@ final readonly class SecurityWiring implements ServiceWiringInterface
             $mode = isset($ipConfig['mode']) && $ipConfig['mode'] === 'strict' ? 'strict' : 'subnet';
             $ipv4Mask = $ipConfig['ipv4_mask'] ?? 24;
             $ipv6Mask = $ipConfig['ipv6_mask'] ?? 48;
-            $validators[] = new RemoteAddressValidator($mode, $ipv4Mask, $ipv6Mask);
+            $validators[] = new RemoteAddressValidator($mode, $ipv4Mask, $ipv6Mask, $trustedProxy);
         }
 
         $fpConfig = $validatorConfigs['fingerprint'] ?? [];

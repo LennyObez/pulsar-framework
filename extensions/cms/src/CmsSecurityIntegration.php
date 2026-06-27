@@ -16,6 +16,7 @@ use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Http\RateLimit\AdaptiveRateLimiter;
 use Pulsar\Http\RateLimit\EndpointRateLimitPolicy;
 use Pulsar\Http\RateLimit\SlidingWindowRateLimiter;
+use Pulsar\Http\TrustedProxy;
 use Pulsar\Security\Dlp\DlpConfig;
 use Pulsar\Security\Dlp\DlpScanMiddleware;
 use Pulsar\Security\Dlp\SensitivePatternRegistry;
@@ -105,7 +106,15 @@ final readonly class CmsSecurityIntegration
         $container->instance(BotDetectionMiddleware::class, $botMiddleware);
 
         // === Session Hijack Detector ===
-        $hijackDetector = $this->buildHijackDetector($logger, $auditLogger);
+        // Share the core TrustedProxy (registered by SecurityWiring) so the
+        // hijack detector resolves the same client IP the session captured —
+        // otherwise, behind a configured trusted proxy, stored (resolved) and
+        // observed (raw proxy) IPs would diverge and trigger false hijack alerts.
+        /** @var TrustedProxy|null $hijackTrustedProxy */
+        $hijackTrustedProxy = $container->has(TrustedProxy::class)
+            ? $container->get(TrustedProxy::class)
+            : null;
+        $hijackDetector = $this->buildHijackDetector($logger, $auditLogger, $hijackTrustedProxy);
         $container->instance(HijackDetector::class, $hijackDetector);
 
         // === Justified Access ===
@@ -210,6 +219,7 @@ final readonly class CmsSecurityIntegration
     private function buildHijackDetector(
         LoggerInterface $logger,
         ?AuditLoggerInterface $auditLogger,
+        ?TrustedProxy $trustedProxy = null,
     ): HijackDetector {
         $auditLoggerInstance = $auditLogger instanceof \Pulsar\Security\Audit\AuditLogger
             ? $auditLogger
@@ -219,6 +229,7 @@ final readonly class CmsSecurityIntegration
             logger: $logger,
             ipChangePolicy: HijackPolicy::Challenge,
             auditLogger: $auditLoggerInstance,
+            trustedProxy: $trustedProxy,
         );
     }
 

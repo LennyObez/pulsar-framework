@@ -7,6 +7,7 @@ namespace Pulsar\Security\Session\Validator;
 use Override;
 use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
+use Pulsar\Http\TrustedProxy;
 use Pulsar\Security\Session\SessionMetadata;
 
 use function chr;
@@ -28,15 +29,14 @@ final readonly class RemoteAddressValidator implements SessionValidatorInterface
         private string $mode = 'subnet',
         private int $ipv4Mask = 24,
         private int $ipv6Mask = 48,
+        private ?TrustedProxy $trustedProxy = null,
     ) {}
 
     #[Override]
     public function validate(SessionMetadata $metadata, ServerRequestInterface $request): bool
     {
         $storedIp = $metadata->ipAddress;
-        /** @var mixed $remoteAddr */
-        $remoteAddr = $request->getServerParams()['REMOTE_ADDR'] ?? '';
-        $currentIp = is_string($remoteAddr) ? $remoteAddr : '';
+        $currentIp = $this->resolveClientIp($request);
 
         if ($this->mode === 'strict') {
             return $storedIp === $currentIp;
@@ -49,6 +49,23 @@ final readonly class RemoteAddressValidator implements SessionValidatorInterface
     public function getName(): string
     {
         return 'remote_address';
+    }
+
+    /**
+     * Resolve the request's client IP the same way the session captured it, so
+     * a trusted-proxy deployment compares real client IPs rather than the
+     * constant proxy address (and a non-proxy deployment is unchanged).
+     */
+    private function resolveClientIp(ServerRequestInterface $request): string
+    {
+        if ($this->trustedProxy !== null) {
+            return $this->trustedProxy->resolveClientIp($request);
+        }
+
+        /** @var mixed $remoteAddr */
+        $remoteAddr = $request->getServerParams()['REMOTE_ADDR'] ?? '';
+
+        return is_string($remoteAddr) ? $remoteAddr : '';
     }
 
     private function matchSubnet(string $ip1, string $ip2): bool

@@ -10,6 +10,7 @@ use Override;
 use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Api;
 use Pulsar\Config\SessionConfig;
+use Pulsar\Http\TrustedProxy;
 use Pulsar\Security\Exception\SecurityException;
 use Pulsar\Security\Session\Handler\SessionHandlerInterface;
 use Pulsar\Security\Session\Validator\SessionValidatorInterface;
@@ -70,18 +71,26 @@ final class SessionManager implements SessionInterface
 
     private ?SessionEncryption $encryption;
 
+    private readonly ?TrustedProxy $trustedProxy;
+
     private readonly Randomizer $randomizer;
 
     /**
      * @param list<SessionValidatorInterface> $validators
+     * @param TrustedProxy|null $trustedProxy Resolves the real client IP behind
+     *        trusted reverse proxies. When null, the raw REMOTE_ADDR is used.
+     *        Must be the SAME instance the session validators use, so the IP
+     *        captured here matches the IP they later compare against.
      */
     public function __construct(
         private readonly SessionHandlerInterface $handler,
         private readonly SessionConfig $config,
         private readonly array $validators = [],
         ?SessionEncryption $encryption = null,
+        ?TrustedProxy $trustedProxy = null,
     ) {
         $this->encryption = $encryption;
+        $this->trustedProxy = $trustedProxy;
         $this->randomizer = new Randomizer(new Secure());
     }
 
@@ -152,9 +161,7 @@ final class SessionManager implements SessionInterface
             $this->loadStoredPayload($decrypted);
         }
 
-        /** @var mixed $rawIp */
-        $rawIp = $request->getServerParams()['REMOTE_ADDR'] ?? '';
-        $ipAddress = is_string($rawIp) ? $rawIp : '';
+        $ipAddress = $this->resolveClientIp($request);
         $userAgent = $request->getHeaderLine('User-Agent');
 
         if ($this->metadata === null) {
@@ -566,6 +573,23 @@ final class SessionManager implements SessionInterface
     private function generateId(): string
     {
         return bin2hex($this->randomizer->getBytes(32));
+    }
+
+    /**
+     * Resolve the client IP to record in session metadata. Behind a configured
+     * trusted proxy this is the real client IP (so subsequent validation
+     * compares like for like); otherwise the raw REMOTE_ADDR.
+     */
+    private function resolveClientIp(ServerRequestInterface $request): string
+    {
+        if ($this->trustedProxy !== null) {
+            return $this->trustedProxy->resolveClientIp($request);
+        }
+
+        /** @var mixed $rawIp */
+        $rawIp = $request->getServerParams()['REMOTE_ADDR'] ?? '';
+
+        return is_string($rawIp) ? $rawIp : '';
     }
 
     private function encryptIfEnabled(string $data): string
