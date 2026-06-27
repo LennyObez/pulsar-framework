@@ -102,6 +102,6 @@ final readonly class PrivacyPassDirectoryClient
 
     private function cacheKey(string $directoryUrl): string
     {
-        return 'privacy-pass:directory:' . hash('sha256', $directoryUrl);
+        return 'privacy-pass.directory.' . hash('sha256', $directoryUrl);
     }
 }
