@@ -8,6 +8,7 @@ use NoDiscard;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Log\LoggerInterface;
 use Pulsar\Api\Api;
+use Pulsar\Http\TrustedProxy;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditLogger;
 use Pulsar\Security\Audit\AuditOutcome;
@@ -45,6 +46,7 @@ final readonly class AccountTakeoverGuard
             SensitiveOperation::AccountDelete,
         ],
         private ?AuditLogger $auditLogger = null,
+        private ?TrustedProxy $trustedProxy = null,
     ) {}
 
     /**
@@ -131,6 +133,10 @@ final readonly class AccountTakeoverGuard
 
     private function extractIp(ServerRequestInterface $request): string
     {
+        if ($this->trustedProxy !== null) {
+            return $this->trustedProxy->resolveClientIp($request);
+        }
+
         /** @var mixed $ip */
         $ip = $request->getServerParams()['REMOTE_ADDR'] ?? '';
 

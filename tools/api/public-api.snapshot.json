@@ -3969,7 +3969,8 @@
                         "Psr\\Log\\LoggerInterface $logger",
                         "int $reauthWindowSeconds",
                         "array $requiresReauth",
-                        "?Pulsar\\Security\\Audit\\AuditLogger $auditLogger"
+                        "?Pulsar\\Security\\Audit\\AuditLogger $auditLogger",
+                        "?Pulsar\\Http\\TrustedProxy $trustedProxy"
                     ],
                     "return": null,
                     "static": false
@@ -45470,7 +45471,8 @@
                     "params": [
                         "Psr\\Log\\LoggerInterface $logger",
                         "Pulsar\\Security\\Session\\HijackPolicy $ipChangePolicy",
-                        "?Pulsar\\Security\\Audit\\AuditLogger $auditLogger"
+                        "?Pulsar\\Security\\Audit\\AuditLogger $auditLogger",
+                        "?Pulsar\\Http\\TrustedProxy $trustedProxy"
                     ],
                     "return": null,
                     "static": false
@@ -45771,7 +45773,8 @@
                         "Pulsar\\Security\\Session\\Handler\\SessionHandlerInterface $handler",
                         "Pulsar\\Config\\SessionConfig $config",
                         "array $validators",
-                        "?Pulsar\\Security\\Session\\SessionEncryption $encryption"
+                        "?Pulsar\\Security\\Session\\SessionEncryption $encryption",
+                        "?Pulsar\\Http\\TrustedProxy $trustedProxy"
                     ],
                     "return": null,
                     "static": false
