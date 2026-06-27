@@ -105,7 +105,10 @@ return [
         'header_name' => 'X-JA4',
         'trusted_proxies_only' => true,
         'known_bad_fingerprints' => [], // operator-supplied exact JA4 strings
-        'match_score' => 0.9,
+        'known_bad_prefixes' => [],     // JA4 prefixes (e.g. the JA4_a component) flagging a family
+        'known_good_fingerprints' => [], // exact allowlist; overrides the prefix denylist
+        'match_score' => 0.9,           // exact denylist hit
+        'partial_match_score' => 0.6,   // prefix/family hit (lower confidence)
     ],
 
     // Private Access Tokens (Privacy Pass, RFC 9577/9578). Pulsar acts as the

@@ -115,6 +115,83 @@ final class Ja4SignalProviderTest extends TestCase
         self::assertSame(0.9, $provider->evaluate($request)->score);
     }
 
+    #[Test]
+    public function partialPrefixMatchScoresPartialMatchScore(): void
+    {
+        $provider = new Ja4SignalProvider(
+            new Ja4Config(
+                enabled: true,
+                trustedProxiesOnly: false,
+                knownBadPrefixes: ['t13d1516'],
+                partialMatchScore: 0.6,
+            ),
+            null,
+        );
+
+        // BAD starts with the bad prefix but is not on the exact denylist.
+        $signal = $provider->evaluate($this->request(self::BAD, '203.0.113.7'));
+
+        self::assertSame(0.6, $signal->score, 'a family/prefix match scores the partial score');
+    }
+
+    #[Test]
+    public function nonMatchingPrefixScoresZero(): void
+    {
+        $provider = new Ja4SignalProvider(
+            new Ja4Config(enabled: true, trustedProxiesOnly: false, knownBadPrefixes: ['q99x']),
+            null,
+        );
+
+        self::assertSame(0.0, $provider->evaluate($this->request(self::BAD, '203.0.113.7'))->score);
+    }
+
+    #[Test]
+    public function allowlistOverridesPrefixDenylist(): void
+    {
+        $provider = new Ja4SignalProvider(
+            new Ja4Config(
+                enabled: true,
+                trustedProxiesOnly: false,
+                knownBadPrefixes: ['t13d1516'],
+                knownGoodFingerprints: [self::BAD],
+                partialMatchScore: 0.6,
+            ),
+            null,
+        );
+
+        // BAD matches the bad prefix, but the exact allowlist entry wins.
+        self::assertSame(0.0, $provider->evaluate($this->request(self::BAD, '203.0.113.7'))->score);
+    }
+
+    #[Test]
+    public function exactDenylistTakesPrecedenceOverPrefix(): void
+    {
+        $provider = new Ja4SignalProvider(
+            new Ja4Config(
+                enabled: true,
+                trustedProxiesOnly: false,
+                knownBadFingerprints: [self::BAD],
+                knownBadPrefixes: ['t13d1516'],
+                matchScore: 0.9,
+                partialMatchScore: 0.6,
+            ),
+            null,
+        );
+
+        self::assertSame(0.9, $provider->evaluate($this->request(self::BAD, '203.0.113.7'))->score);
+    }
+
+    #[Test]
+    public function allowlistedFingerprintScoresZero(): void
+    {
+        $provider = new Ja4SignalProvider(
+            new Ja4Config(enabled: true, trustedProxiesOnly: false, knownGoodFingerprints: [self::BAD]),
+            null,
+        );
+
+        self::assertSame(0.0, $provider->evaluate($this->request(self::BAD, '203.0.113.7'))->score);
+    }
+
     private function request(string $fingerprint, string $remoteAddr): ServerRequest
     {
         return new ServerRequest(
