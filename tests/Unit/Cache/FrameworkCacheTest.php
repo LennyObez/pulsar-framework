@@ -12,6 +12,7 @@ use Pulsar\Cache\ContainerCache;
 use Pulsar\Cache\FrameworkCache;
 use Pulsar\Cache\RouteCache;
 use Pulsar\Config\ConfigManager;
+use Pulsar\Config\Environment;
 use Pulsar\Routing\Route;
 use Pulsar\Security\Crypto\HmacService;
 use Pulsar\Security\Crypto\MasterKey;
@@ -96,6 +97,40 @@ final class FrameworkCacheTest extends TestCase
         $key2 = $cache->computeInvalidationKey($configPath);
 
         self::assertNotSame($key1, $key2);
+    }
+
+    #[Test]
+    public function it_incorporates_environment_resolved_values_in_invalidation_key(): void
+    {
+        // Regression: the env fingerprint must read structural keys through the
+        // injected Environment (OS env + .env), not bare getenv(). A key present
+        // only in .env (not the OS process env) must still change the fingerprint.
+        $configPath = $this->basePath . DIRECTORY_SEPARATOR . 'config';
+        $envFileA = $this->basePath . DIRECTORY_SEPARATOR . '.env.a';
+        $envFileB = $this->basePath . DIRECTORY_SEPARATOR . '.env.b';
+        file_put_contents($envFileA, 'PULSAR_MASTER_KEY=' . str_repeat('aa', 32) . "\n");
+        file_put_contents($envFileB, 'PULSAR_MASTER_KEY=' . str_repeat('bb', 32) . "\n");
+
+        // Ensure the OS env does not shadow the .env value (OS wins in Environment).
+        $original = getenv('PULSAR_MASTER_KEY');
+        putenv('PULSAR_MASTER_KEY');
+
+        try {
+            $cacheA = new FrameworkCache($this->basePath, $this->masterKey, new HmacService(), false, null, Environment::load($envFileA));
+            $cacheB = new FrameworkCache($this->basePath, $this->masterKey, new HmacService(), false, null, Environment::load($envFileB));
+
+            self::assertNotSame(
+                $cacheA->computeInvalidationKey($configPath),
+                $cacheB->computeInvalidationKey($configPath),
+                'A master key provided only in .env must participate in cache invalidation',
+            );
+        } finally {
+            if ($original === false) {
+                putenv('PULSAR_MASTER_KEY');
+            } else {
+                putenv('PULSAR_MASTER_KEY=' . $original);
+            }
+        }
     }
 
     #[Test]

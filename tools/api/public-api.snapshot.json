@@ -39961,6 +39961,7 @@
                     "params": [
                         "bool $debugMode",
                         "bool $hstsEnabled",
+                        "?string $masterKeyHex",
                         "?Pulsar\\Config\\HstsConfig $hstsConfig",
                         "?Pulsar\\Config\\SessionConfig $sessionConfig"
                     ],

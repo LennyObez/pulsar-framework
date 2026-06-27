@@ -7,6 +7,7 @@ namespace Pulsar\Cache;
 use JsonException;
 use Pulsar\Api\Internal;
 use Pulsar\Config\ConfigRepository;
+use Pulsar\Config\Environment;
 use Pulsar\Core\Version;
 use Pulsar\Routing\Route;
 use Pulsar\Security\Crypto\EncryptorInterface;
@@ -76,6 +77,7 @@ final class FrameworkCache implements FrameworkCacheInterface
         HmacInterface $hmac,
         private readonly bool $encrypt = false,
         ?EncryptorInterface $encryptor = null,
+        private readonly ?Environment $environment = null,
     ) {
         $this->hmac = $hmac;
         $this->cachePath = $basePath . DIRECTORY_SEPARATOR . 'var' . DIRECTORY_SEPARATOR . 'cache' . DIRECTORY_SEPARATOR . 'framework';
@@ -291,11 +293,19 @@ final class FrameworkCache implements FrameworkCacheInterface
             }
         }
 
-        // Hash structural env vars
+        // Hash structural env vars. Resolve through the Environment repository
+        // (OS env + .env) when available so a key provided only in .env still
+        // participates in invalidation; fall back to getenv() only when no
+        // Environment was injected (e.g. the dev bootstrap).
         $envParts = [];
         foreach (self::ENV_INVALIDATION_KEYS as $key) {
-            $value = getenv($key);
-            $envParts[] = $key . '=' . ($value !== false ? $value : '');
+            if ($this->environment !== null) {
+                $value = $this->environment->get($key);
+            } else {
+                $osValue = getenv($key);
+                $value = $osValue === false ? null : $osValue;
+            }
+            $envParts[] = $key . '=' . ($value ?? '');
         }
         $parts[] = hash('sha256', implode(':', $envParts));
 
