@@ -11,10 +11,12 @@ use Pulsar\Config\ConfigManager;
 use Pulsar\Config\TenancyConfig;
 use Pulsar\Container\Container;
 use Pulsar\Core\Wiring\TenancyWiring;
+use Pulsar\Database\ConnectionManagerInterface;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Routing\Router;
 use Pulsar\Tenancy\Middleware\TenantResolutionMiddleware;
+use Pulsar\Tenancy\TenantAwareConnectionManager;
 use Pulsar\Tenancy\TenantContext;
 use Pulsar\Tenancy\TenantResolverInterface;
 
@@ -44,6 +46,52 @@ final class TenancyWiringTest extends TestCase
         self::assertTrue($container->has(TenantContext::class));
         self::assertTrue($container->has(TenantResolverInterface::class));
         self::assertTrue($container->has(TenantResolutionMiddleware::class));
+    }
+
+    #[Test]
+    public function wireRebindsConnectionManagerInterfaceToTenantAwareDecorator(): void
+    {
+        $container = new Container();
+        $router = new Router();
+        $middleware = new MiddlewarePipeline($container);
+        $middlewareRegistry = new MiddlewareRegistry();
+
+        // DatabaseWiring binds the base manager first.
+        $inner = $this->createStub(ConnectionManagerInterface::class);
+        $container->instance(ConnectionManagerInterface::class, $inner);
+
+        $configManager = $this->createConfigManager(enabled: true, resolver: 'header');
+        $configManager->load();
+
+        $wiring = new TenancyWiring();
+        $wiring->wire($container, $configManager, $middleware, $middlewareRegistry, $router);
+
+        // Regression: the interface must now resolve to the tenant-aware
+        // decorator, not the inner manager — otherwise the decorator is built
+        // but never used and every consumer routes to the default connection.
+        $resolved = $container->get(ConnectionManagerInterface::class);
+        self::assertInstanceOf(TenantAwareConnectionManager::class, $resolved);
+        self::assertNotSame($inner, $resolved);
+    }
+
+    #[Test]
+    public function wireLeavesConnectionManagerUnboundWhenNoneRegistered(): void
+    {
+        $container = new Container();
+        $router = new Router();
+        $middleware = new MiddlewarePipeline($container);
+        $middlewareRegistry = new MiddlewareRegistry();
+
+        $configManager = $this->createConfigManager(enabled: true, resolver: 'header');
+        $configManager->load();
+
+        $wiring = new TenancyWiring();
+        $wiring->wire($container, $configManager, $middleware, $middlewareRegistry, $router);
+
+        // No base manager present (no DatabaseWiring): nothing to decorate, so
+        // the interface stays unbound rather than failing.
+        self::assertFalse($container->has(ConnectionManagerInterface::class));
+        self::assertFalse($container->has(TenantAwareConnectionManager::class));
     }
 
     #[Test]
