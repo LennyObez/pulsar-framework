@@ -78,6 +78,15 @@ final readonly class TenancyWiring implements ServiceWiringInterface
 
             $tenantAwareManager = new TenantAwareConnectionManager($innerManager, $tenantContext, $tenancyConfig);
             $container->instance(TenantAwareConnectionManager::class, $tenantAwareManager);
+
+            // Rebind the interface itself so every consumer that resolves
+            // ConnectionManagerInterface at request time receives the tenant-aware
+            // decorator and routes to the correct tenant connection. Without this
+            // the decorator was built but never used — consumers kept the inner,
+            // non-tenant-aware manager. The decorator delegates to the inner
+            // manager whenever no tenant context is resolved (boot, non-tenant
+            // requests), so behaviour outside a resolved tenant scope is unchanged.
+            $container->instance(ConnectionManagerInterface::class, $tenantAwareManager);
         }
     }
 }
