@@ -417,6 +417,59 @@ final class Router implements RouterInterface
     }
 
     /**
+     * Capture the full router state for the kernel boot/shutdown lifecycle.
+     *
+     * @internal Intended for {@see \Pulsar\Core\Kernel} reboot handling only:
+     *           the kernel snapshots state at boot() entry and restores it on
+     *           shutdown() so a subsequent boot does not accumulate duplicate
+     *           routes/bindings. Not for application use.
+     *
+     * @return array{
+     *     routes: list<Route>,
+     *     namedRoutes: array<string, Route>,
+     *     staticRoutes: array<string, array<string, Route>>,
+     *     dynamicRouteBuckets: array<string, array<string, list<Route>>>,
+     *     explicitBindings: list<ExplicitBinding>,
+     *     locked: bool,
+     * }
+     */
+    public function snapshot(): array
+    {
+        return [
+            'routes' => $this->routes,
+            'namedRoutes' => $this->namedRoutes,
+            'staticRoutes' => $this->staticRoutes,
+            'dynamicRouteBuckets' => $this->dynamicRouteBuckets,
+            'explicitBindings' => $this->explicitBindings,
+            'locked' => $this->locked,
+        ];
+    }
+
+    /**
+     * Restore router state from a {@see snapshot()}.
+     *
+     * @internal Intended for {@see \Pulsar\Core\Kernel} reboot handling only.
+     *
+     * @param array{
+     *     routes: list<Route>,
+     *     namedRoutes: array<string, Route>,
+     *     staticRoutes: array<string, array<string, Route>>,
+     *     dynamicRouteBuckets: array<string, array<string, list<Route>>>,
+     *     explicitBindings: list<ExplicitBinding>,
+     *     locked: bool,
+     * } $snapshot
+     */
+    public function restoreFromSnapshot(array $snapshot): void
+    {
+        $this->routes = $snapshot['routes'];
+        $this->namedRoutes = $snapshot['namedRoutes'];
+        $this->staticRoutes = $snapshot['staticRoutes'];
+        $this->dynamicRouteBuckets = $snapshot['dynamicRouteBuckets'];
+        $this->explicitBindings = $snapshot['explicitBindings'];
+        $this->locked = $snapshot['locked'];
+    }
+
+    /**
      * Register an explicit parameter-to-model binding.
      *
      * When the model binding middleware resolves route parameters, explicit

@@ -18873,6 +18873,11 @@
                     "return": "void",
                     "static": false
                 },
+                "resetLifecycle": {
+                    "params": [],
+                    "return": "void",
+                    "static": false
+                },
                 "setEnabledFilter": {
                     "params": [
                         "?array $names"
@@ -36185,7 +36190,19 @@
                     "return": "Pulsar\\Routing\\Router",
                     "static": false
                 },
+                "restoreFromSnapshot": {
+                    "params": [
+                        "array $snapshot"
+                    ],
+                    "return": "void",
+                    "static": false
+                },
                 "routes": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
+                },
+                "snapshot": {
                     "params": [],
                     "return": "array",
                     "static": false
