@@ -57,6 +57,7 @@ use Pulsar\Core\Wiring\QueueWiring;
 use Pulsar\Core\Wiring\RequestContextWiring;
 use Pulsar\Core\Wiring\ResilienceWiring;
 use Pulsar\Core\Wiring\RuntimeWiring;
+use Pulsar\Core\Wiring\SagaWiring;
 use Pulsar\Core\Wiring\SchedulerWiring;
 use Pulsar\Core\Wiring\SecurityWiring;
 use Pulsar\Core\Wiring\ServiceDiscoveryWiring;
@@ -311,6 +312,7 @@ final class Kernel implements KernelInterface
                 new AuthWiring(),
                 new DatabaseWiring(),
                 new TenancyWiring(),
+                new SagaWiring(),
                 new FeatureFlagWiring(),
                 new SchedulerWiring(),
                 new ResilienceWiring(),
