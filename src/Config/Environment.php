@@ -39,6 +39,14 @@ final class Environment
     private array $variables;
 
     /**
+     * Process-global "active" environment that the global {@see env()} helper
+     * resolves against. This is bootstrap configuration — set once at boot from
+     * immutable, already-merged data — not mutable service state, and it is
+     * never exported to the OS process environment. See ADR-0033.
+     */
+    private static ?self $active = null;
+
+    /**
      * @param array<string, string> $variables
      */
     private function __construct(array $variables)
@@ -246,6 +254,66 @@ final class Environment
     public function has(string $key): bool
     {
         return array_key_exists(self::normalizeKey($key), $this->variables);
+    }
+
+    /**
+     * Bind this instance as the process-global active environment that the
+     * {@see env()} helper resolves against.
+     *
+     * Called by {@see \Pulsar\Config\ConfigManager} at boot, immediately after
+     * the environment is built and before any `config/*.php` file is required,
+     * so config files (and application code) resolve `.env` values through
+     * `env()`. See ADR-0033 for why this bootstrap global is acceptable under
+     * the project's "avoid global state" rule.
+     */
+    public static function activate(self $environment): void
+    {
+        self::$active = $environment;
+    }
+
+    /**
+     * The active environment, or null before bootstrap (for example in unit
+     * tests that do not load configuration).
+     */
+    #[NoDiscard]
+    public static function active(): ?self
+    {
+        return self::$active;
+    }
+
+    /**
+     * Read a raw (un-coerced) variable through the active environment, falling
+     * back to `getenv()` when no environment is active (pre-bootstrap / tests).
+     *
+     * Unlike {@see env()} this performs no boolean/null coercion, so it is the
+     * correct accessor for opaque secrets and paths (API keys, tokens, credential
+     * file paths) whose literal value — including strings like "null" or "false"
+     * — must be preserved. `.env`-only values resolve here once the environment
+     * is active (ADR-0033).
+     */
+    #[NoDiscard]
+    public static function read(string $key, string $default = ''): string
+    {
+        if (self::$active !== null) {
+            $value = self::$active->get($key);
+
+            if ($value !== null) {
+                return $value;
+            }
+        }
+
+        $raw = getenv($key);
+
+        return $raw === false ? $default : $raw;
+    }
+
+    /**
+     * Clear the active environment. Used by the test harness to isolate the
+     * process-global between tests (see ResetActiveEnvironmentExtension).
+     */
+    public static function resetActive(): void
+    {
+        self::$active = null;
     }
 
     /**
