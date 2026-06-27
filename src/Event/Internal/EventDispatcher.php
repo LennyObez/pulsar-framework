@@ -164,10 +164,17 @@ final readonly class EventDispatcher implements EventDispatcherInterface
             return EventScope::CrossModule;
         }
 
-        $listenerModuleIds = $this->metadataProvider->listenerModuleIdsFor($envelope::class);
+        // Use the logical event type (e.g. "order.placed"), not $envelope::class
+        // which is always "Pulsar\Event\EventEnvelope" — the wrapper class no
+        // listener is ever keyed by. ListenerProvider / CompiledListenerProvider
+        // key their maps by the event type passed to addListener() / compiled.
+        $listenerModuleIds = $this->metadataProvider->listenerModuleIdsFor($envelope->eventType);
 
         if ($listenerModuleIds === []) {
-            return EventScope::Internal;
+            // Unknown listener coverage (e.g. fresh / pre-compiled deploy) must
+            // default to CrossModule — the safe-fail direction. Internal would
+            // silently suppress outbox routing for genuine cross-module events.
+            return EventScope::CrossModule;
         }
 
         return array_any($listenerModuleIds, static fn(string $moduleId): bool => $moduleId !== $envelope->originModule)
