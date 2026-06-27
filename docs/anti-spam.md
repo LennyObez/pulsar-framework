@@ -285,6 +285,13 @@ Matching, in precedence order:
 
 An absent or otherwise-unknown fingerprint adds no risk.
 
+### Request-velocity and datacenter-IP signals
+
+Two more self-hosted signals approximate the **local reputation** the engine otherwise lacks:
+
+- **Velocity** (`velocity`) — counts a client's requests (keyed on the trusted-proxy-resolved IP) in a fixed window. Below `threshold` it contributes nothing; above it the score scales with the overage up to `max_score`, so a client hammering the origin looks riskier than a browser. Requires the cache to hold the per-client counter.
+- **Datacenter IP** (`datacenter`) — scores a client whose IP falls in operator-supplied hosting/datacenter CIDR `ranges`, since automated traffic skews toward datacenters. There is **no bundled ASN database** (a deliberate no-external-data choice); export the ranges from your cloud provider or threat feed.
+
 ### Configuration
 
 ```php
@@ -304,11 +311,22 @@ An absent or otherwise-unknown fingerprint adds no risk.
     'match_score' => 0.9,           // exact hit
     'partial_match_score' => 0.6,   // family/prefix hit
 ],
+'velocity' => [
+    'enabled' => false,           // requires the cache
+    'threshold' => 120,
+    'window_seconds' => 60,
+    'max_score' => 0.7,
+],
+'datacenter' => [
+    'enabled' => false,
+    'ranges' => [],               // operator-supplied datacenter CIDRs
+    'score' => 0.5,
+],
 ```
 
 ### Honest limitation
 
-The engine is only as good as its signals. Out of the box it scores header/`User-Agent` heuristics plus (when configured) an edge-supplied JA4 denylist; it has no global cross-site reputation. JA4 in particular depends on an edge that computes the fingerprint and on you maintaining the known-bad list — without a trusted proxy emitting it, the JA4 signal is correctly inert. Compose it with the other pipeline layers rather than relying on the score alone.
+The engine is only as good as its signals. Out of the box it scores header/`User-Agent` heuristics, request velocity, an edge-supplied JA4 list, and operator-supplied datacenter ranges — all **per-origin**. It has **no global cross-site reputation**, the network effect a large third-party service derives from seeing a device across millions of sites; that is irreconcilable with self-hosting and deliberately out of scope. JA4 depends on a trusted edge emitting it, velocity on the cache, and datacenter on you maintaining the ranges — each is correctly inert when its prerequisite is absent. Compose them as layers rather than relying on the score alone.
 
 ## Private Access Tokens (Privacy Pass)
 
