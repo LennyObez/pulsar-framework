@@ -13,6 +13,9 @@ use Psr\SimpleCache\CacheInterface;
 use Pulsar\Cache\Application\CacheManager;
 use Pulsar\Cache\Application\Driver\CacheDriverInterface;
 use Pulsar\Cache\Application\Encryption\EncryptedCacheDecorator;
+use Pulsar\Cache\Application\Event\CacheEvent;
+use Pulsar\Cache\Application\Event\CacheHitEvent;
+use Pulsar\Cache\Application\Event\CacheMissEvent;
 use Pulsar\Cache\Application\Exception\CacheException;
 use Pulsar\Cache\Application\Lock\FilesystemLock;
 use Pulsar\Cache\Application\Lock\LockInterface;
@@ -24,6 +27,8 @@ use Pulsar\Config\CachePoolConfig;
 use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Security\Crypto\MasterKey;
 use ReflectionMethod;
+
+use function array_map;
 
 #[CoversClass(CacheManager::class)]
 final class CacheManagerTest extends TestCase
@@ -57,6 +62,28 @@ final class CacheManagerTest extends TestCase
         $pool = $this->manager->pool('default');
 
         self::assertInstanceOf(CacheItemPoolInterface::class, $pool);
+    }
+
+    #[Test]
+    public function addEventListenerReceivesHitAndMissEvents(): void
+    {
+        /** @var list<CacheEvent> $events */
+        $events = [];
+        $this->manager->addEventListener(static function (CacheEvent $event) use (&$events): void {
+            $events[] = $event;
+        });
+
+        $pool = $this->manager->pool('default');
+
+        // Absent key → miss; after a save the next read is a hit.
+        $item = $pool->getItem('profiler.probe');
+        $item->set('value');
+        $pool->save($item);
+        $pool->getItem('profiler.probe');
+
+        $types = array_map(static fn(CacheEvent $event): string => $event::class, $events);
+        self::assertContains(CacheMissEvent::class, $types);
+        self::assertContains(CacheHitEvent::class, $types);
     }
 
     #[Test]
