@@ -82,7 +82,9 @@ use Pulsar\Http\ResponseEmitter;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Http\RouteContext;
 use Pulsar\Observability\Metrics\MetricRegistry;
+use Pulsar\Routing\Binding\ExplicitBinding;
 use Pulsar\Routing\MatchedRoute;
+use Pulsar\Routing\Route;
 use Pulsar\Routing\Router;
 use Pulsar\Routing\RouterInterface;
 use Pulsar\Routing\RoutingException;
@@ -128,6 +130,21 @@ final class Kernel implements KernelInterface
     private ?BootProfile $bootProfile = null;
     private ?MetricRegistry $metricsRegistry = null;
     private bool $dispatchHandlerSet = false;
+
+    /**
+     * Router state captured at boot() entry, restored on shutdown() so a re-boot
+     * does not accumulate duplicate routes/bindings. Null until first boot().
+     *
+     * @var array{routes: list<Route>, namedRoutes: array<string, Route>, staticRoutes: array<string, array<string, Route>>, dynamicRouteBuckets: array<string, array<string, list<Route>>>, explicitBindings: list<ExplicitBinding>, locked: bool}|null
+     */
+    private ?array $routerSnapshot = null;
+
+    /**
+     * Middleware-pipeline stack captured at boot() entry, restored on shutdown().
+     *
+     * @var list<PsrMiddlewareInterface|class-string<PsrMiddlewareInterface>>|null
+     */
+    private ?array $middlewareSnapshot = null;
 
     /** @var array<string, bool> */
     private array $handlerUsesArrayParams = [];
@@ -210,6 +227,13 @@ final class Kernel implements KernelInterface
         if ($this->booted) {
             return;
         }
+
+        // Capture the pre-boot router/middleware baseline so shutdown() can
+        // restore it. A re-boot (handle() after shutdown()) re-runs the wirings,
+        // route loading, and extension boot, which would otherwise stack
+        // duplicate middleware and routes onto the already-populated instances.
+        $this->routerSnapshot = $this->router->snapshot();
+        $this->middlewareSnapshot = $this->middleware->snapshot();
 
         $bootStart = hrtime(true);
 
@@ -892,7 +916,33 @@ final class Kernel implements KernelInterface
                     ));
                 }
             }
+
+            // Reset the boot phase so a re-boot re-runs extension boot (without
+            // re-registering — see ExtensionBootstrap::resetLifecycle()).
+            $this->extensionBootstrap->resetLifecycle();
         }
+
+        // Restore the pre-boot router/middleware baseline so a re-boot rebuilds
+        // from a clean slate instead of stacking duplicates. Routes/middleware
+        // registered before the first boot() are part of the snapshot and thus
+        // survive; wiring-, extension-, and route-file-registered ones are
+        // re-added by the next boot().
+        if ($this->routerSnapshot !== null) {
+            $this->router->restoreFromSnapshot($this->routerSnapshot);
+            $this->routerSnapshot = null;
+        }
+
+        if ($this->middlewareSnapshot !== null) {
+            $this->middleware->restoreFromSnapshot($this->middlewareSnapshot);
+            $this->middlewareSnapshot = null;
+        }
+
+        // Reset boot-derived per-process state so the next boot() rebuilds it.
+        $this->dispatchHandlerSet = false;
+        $this->exceptionHandler = null;
+        $this->routeContext = null;
+        $this->metricsRegistry = null;
+        $this->bootProfile = null;
 
         $this->booted = false;
     }

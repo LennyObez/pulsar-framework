@@ -138,6 +138,34 @@ final class MiddlewarePipeline implements MiddlewarePipelineInterface, PsrReques
     }
 
     /**
+     * Capture the current middleware stack for the kernel boot/shutdown
+     * lifecycle. Intended for kernel use only.
+     *
+     * @return list<PsrMiddlewareInterface|class-string<PsrMiddlewareInterface>>
+     */
+    public function snapshot(): array
+    {
+        return $this->middleware;
+    }
+
+    /**
+     * Restore the middleware stack from a {@see snapshot()}.
+     *
+     * Clears all derived caches (resolved instances, cached chain, fallback
+     * handler) so the next handle() re-resolves from the restored stack rather
+     * than serving stale pre-shutdown instances. Intended for kernel use only.
+     *
+     * @param list<PsrMiddlewareInterface|class-string<PsrMiddlewareInterface>> $snapshot
+     */
+    public function restoreFromSnapshot(array $snapshot): void
+    {
+        $this->middleware = $snapshot;
+        $this->resolvedMiddleware = null;
+        $this->cachedChain = null;
+        $this->fallbackHandler = null;
+    }
+
+    /**
      * Build a chained RequestHandler from the middleware stack and a final handler.
      */
     private function createPipeline(PsrRequestHandlerInterface $handler): PsrRequestHandlerInterface

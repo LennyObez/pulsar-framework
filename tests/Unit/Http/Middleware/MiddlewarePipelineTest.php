@@ -81,6 +81,56 @@ final class MiddlewarePipelineTest extends TestCase
     }
 
     #[Test]
+    public function restoreFromSnapshotReplacesStackAndClearsCachedChain(): void
+    {
+        /** @var ArrayObject<int, string> $order */
+        $order = new ArrayObject();
+        $pipeline = new MiddlewarePipeline();
+
+        $record = static function (string $label) use ($order): MiddlewareInterface {
+            return new class ($order, $label) implements MiddlewareInterface {
+                /** @param ArrayObject<int, string> $order */
+                public function __construct(private readonly ArrayObject $order, private readonly string $label) {}
+
+                public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
+                {
+                    $this->order->append($this->label);
+
+                    return $handler->handle($request);
+                }
+            };
+        };
+
+        $pipeline->pipe($record('A'));
+        $snapshot = $pipeline->snapshot();
+        self::assertCount(1, $snapshot);
+
+        $pipeline->pipe($record('B'));
+        self::assertSame(2, $pipeline->count());
+
+        $handler = new class implements RequestHandlerInterface {
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                return Response::text('ok');
+            }
+        };
+
+        // Prime the cached chain with the [A, B] stack.
+        $pipeline->process($this->createRequest(), $handler);
+
+        // Restoring the [A] snapshot must clear the cached chain so the next
+        // process() rebuilds from the restored stack rather than re-running B
+        // from the stale cached chain (same handler, so process() alone would
+        // not invalidate it).
+        $pipeline->restoreFromSnapshot($snapshot);
+        self::assertSame(1, $pipeline->count());
+
+        $pipeline->process($this->createRequest(), $handler);
+
+        self::assertSame(['A', 'B', 'A'], $order->getArrayCopy());
+    }
+
+    #[Test]
     public function middlewareCanModifyRequest(): void
     {
         $pipeline = new MiddlewarePipeline();

@@ -210,6 +210,58 @@ final class ExtensionBootstrapTest extends TestCase
     }
 
     #[Test]
+    public function resetLifecycleAllowsRebootWithoutReRegistering(): void
+    {
+        $registerCount = 0;
+        $bootCount = 0;
+        $extension = new class ($registerCount, $bootCount) implements ExtensionInterface {
+            public function __construct(private int &$registerCount, private int &$bootCount) {}
+
+            public function name(): string
+            {
+                return 'test/ext';
+            }
+
+            public function register(ContainerInterface $container): void
+            {
+                $this->registerCount++;
+            }
+
+            public function boot(ContainerInterface $container, RouterInterface $router): void
+            {
+                $this->bootCount++;
+            }
+
+            public function providers(): array
+            {
+                return [];
+            }
+        };
+
+        $this->bootstrap->addExtension($extension, $this->createManifest('test/ext'));
+        $this->bootstrap->register($this->container);
+        $this->bootstrap->boot($this->container, $this->router);
+
+        self::assertSame(1, $registerCount);
+        self::assertSame(1, $bootCount);
+        self::assertTrue($this->bootstrap->booted);
+        self::assertSame(ExtensionLifecycle::Booted, $this->bootstrap->registry->getState('test/ext'));
+
+        $this->bootstrap->resetLifecycle();
+
+        // Boot phase reset; registration retained, state dropped Booted -> Registered.
+        self::assertFalse($this->bootstrap->booted);
+        self::assertTrue($this->bootstrap->registered);
+        self::assertSame(ExtensionLifecycle::Registered, $this->bootstrap->registry->getState('test/ext'));
+
+        // Re-boot runs boot() again but does NOT re-run register().
+        $this->bootstrap->boot($this->container, $this->router);
+
+        self::assertSame(1, $registerCount);
+        self::assertSame(2, $bootCount);
+    }
+
+    #[Test]
     public function bootIsIdempotent(): void
     {
         $callCount = 0;
