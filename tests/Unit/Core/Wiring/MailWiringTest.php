@@ -7,10 +7,14 @@ namespace Pulsar\Tests\Unit\Core\Wiring;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Client\ClientInterface;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\MailConfig;
 use Pulsar\Container\Container;
 use Pulsar\Core\Wiring\MailWiring;
+use Pulsar\Http\Message\Response;
 use Pulsar\Http\Method;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
@@ -18,6 +22,10 @@ use Pulsar\Mail\MailManager;
 use Pulsar\Mail\MailManagerInterface;
 use Pulsar\Mail\Security\PhiScrubber;
 use Pulsar\Mail\Security\PhiScrubberInterface;
+use Pulsar\Mail\Transport\CurlMailHttpClient;
+use Pulsar\Mail\Transport\MailHttpClientInterface;
+use Pulsar\Mail\Transport\MailHttpResponse;
+use Pulsar\Mail\Transport\Psr18MailHttpClient;
 use Pulsar\Mail\Webhook\MailWebhookController;
 use Pulsar\Mail\Webhook\WebhookHandlerInterface;
 use Pulsar\Routing\Router;
@@ -137,6 +145,63 @@ final class MailWiringTest extends TestCase
         new MailWiring()->wire($container, $configManager, $middleware, new MiddlewareRegistry(), $router);
 
         self::assertFalse($container->has(MailWebhookController::class));
+    }
+
+    #[Test]
+    public function wireBindsDefaultCurlHttpClientWhenNoneProvided(): void
+    {
+        // Acceptance: with no app wiring, an API-capable HTTP client is bound so
+        // mailgun/ses/postmark/sendgrid work out of the box (no "required" error).
+        $container = new Container();
+        $configManager = $this->createConfigManager(enabled: true, hipaaMode: false);
+        $configManager->load();
+
+        new MailWiring()->wire($container, $configManager, new MiddlewarePipeline($container), new MiddlewareRegistry(), new Router());
+
+        self::assertTrue($container->has(MailHttpClientInterface::class));
+        self::assertInstanceOf(CurlMailHttpClient::class, $container->get(MailHttpClientInterface::class));
+    }
+
+    #[Test]
+    public function wirePrefersContainerPsr18ClientForMail(): void
+    {
+        // When the application provides a PSR-18 client, mail reuses it via the
+        // adapter instead of the built-in cURL client.
+        $container = new Container();
+        $container->instance(ClientInterface::class, new class implements ClientInterface {
+            public function sendRequest(RequestInterface $request): ResponseInterface
+            {
+                return Response::text('ok');
+            }
+        });
+
+        $configManager = $this->createConfigManager(enabled: true, hipaaMode: false);
+        $configManager->load();
+
+        new MailWiring()->wire($container, $configManager, new MiddlewarePipeline($container), new MiddlewareRegistry(), new Router());
+
+        self::assertInstanceOf(Psr18MailHttpClient::class, $container->get(MailHttpClientInterface::class));
+    }
+
+    #[Test]
+    public function wirePreservesApplicationProvidedHttpClient(): void
+    {
+        $appClient = new class implements MailHttpClientInterface {
+            public function request(string $method, string $url, array $headers, string $body): MailHttpResponse
+            {
+                return new MailHttpResponse(200, '');
+            }
+        };
+
+        $container = new Container();
+        $container->instance(MailHttpClientInterface::class, $appClient);
+
+        $configManager = $this->createConfigManager(enabled: true, hipaaMode: false);
+        $configManager->load();
+
+        new MailWiring()->wire($container, $configManager, new MiddlewarePipeline($container), new MiddlewareRegistry(), new Router());
+
+        self::assertSame($appClient, $container->get(MailHttpClientInterface::class));
     }
 
     private function createConfigManagerWithWebhooks(): ConfigManager

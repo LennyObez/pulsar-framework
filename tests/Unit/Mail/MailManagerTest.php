@@ -20,6 +20,8 @@ use Pulsar\Mail\Mailable;
 use Pulsar\Mail\MailManager;
 use Pulsar\Mail\Message;
 use Pulsar\Mail\Transport\ArrayTransport;
+use Pulsar\Mail\Transport\MailgunTransport;
+use Pulsar\Mail\Transport\MailHttpClientInterface;
 use RuntimeException;
 
 #[CoversClass(MailManager::class)]
@@ -76,6 +78,38 @@ final class MailManagerTest extends TestCase
         $this->expectExceptionMessage('not configured');
 
         $manager->driver('nonexistent');
+    }
+
+    #[Test]
+    public function it_resolves_api_transport_when_http_client_is_provided(): void
+    {
+        // With an HTTP client supplied (as MailWiring now does by default), an
+        // API-based driver resolves instead of throwing "required".
+        $config = new MailConfig(
+            enabled: true,
+            defaultDriver: MailDriverType::Mailgun,
+            driverOptions: ['mailgun' => ['domain' => 'example.com', 'api_key' => 'key-abc']],
+        );
+        $manager = new MailManager($config, $this->createStub(MailHttpClientInterface::class));
+
+        self::assertInstanceOf(MailgunTransport::class, $manager->driver('mailgun'));
+    }
+
+    #[Test]
+    public function it_throws_for_api_transport_without_http_client(): void
+    {
+        // The original bug: no client -> API transports are unusable.
+        $config = new MailConfig(
+            enabled: true,
+            defaultDriver: MailDriverType::Mailgun,
+            driverOptions: ['mailgun' => ['domain' => 'example.com', 'api_key' => 'key-abc']],
+        );
+        $manager = new MailManager($config);
+
+        $this->expectException(MailException::class);
+        $this->expectExceptionMessage('MailHttpClientInterface is required');
+
+        $manager->driver('mailgun');
     }
 
     #[Test]

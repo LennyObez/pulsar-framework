@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Pulsar\Core\Wiring;
 
+use Psr\Http\Client\ClientInterface;
+use Psr\Http\Message\RequestFactoryInterface;
+use Psr\Http\Message\StreamFactoryInterface;
 use Psr\Log\LoggerInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Audit\AuditLoggerInterface;
@@ -12,6 +15,8 @@ use Pulsar\Config\ConfigManager;
 use Pulsar\Config\MailConfig;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Event\EventDispatcherInterface;
+use Pulsar\Http\Factory\RequestFactory;
+use Pulsar\Http\Factory\StreamFactory;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Http\TrustedProxy;
@@ -19,7 +24,9 @@ use Pulsar\Mail\MailManager;
 use Pulsar\Mail\MailManagerInterface;
 use Pulsar\Mail\Security\PhiScrubber;
 use Pulsar\Mail\Security\PhiScrubberInterface;
+use Pulsar\Mail\Transport\CurlMailHttpClient;
 use Pulsar\Mail\Transport\MailHttpClientInterface;
+use Pulsar\Mail\Transport\Psr18MailHttpClient;
 use Pulsar\Mail\Webhook\BounceHandler;
 use Pulsar\Mail\Webhook\CacheBackedDeduplicationStore;
 use Pulsar\Mail\Webhook\ComplaintHandler;
@@ -61,12 +68,21 @@ final readonly class MailWiring implements ServiceWiringInterface
             return;
         }
 
-        // Resolve optional dependencies
-        $httpClient = $container->has(MailHttpClientInterface::class)
-            ? $container->get(MailHttpClientInterface::class)
-            : null;
+        // API-based transports (mailgun/ses/postmark/sendgrid) need an HTTP
+        // client. An application may bind its own MailHttpClientInterface;
+        // otherwise register a default so those drivers work with no wiring —
+        // adapting a container PSR-18 client when present, else the built-in
+        // cURL client.
+        if (!$container->has(MailHttpClientInterface::class)) {
+            $container->instance(
+                MailHttpClientInterface::class,
+                $this->buildDefaultHttpClient($container),
+            );
+        }
 
-        /** @var MailHttpClientInterface|null $httpClient */
+        /** @var MailHttpClientInterface $httpClient */
+        $httpClient = $container->get(MailHttpClientInterface::class);
+
         $eventDispatcher = $container->has(EventDispatcherInterface::class)
             ? $container->get(EventDispatcherInterface::class)
             : null;
@@ -106,6 +122,33 @@ final readonly class MailWiring implements ServiceWiringInterface
         }
 
         $this->wireWebhooks($container, $mailConfig, $router, $auditLogger, $logger);
+    }
+
+    /**
+     * Build the framework's default mail HTTP client when the application has
+     * not bound one. Prefer adapting a PSR-18 client from the container so mail
+     * reuses the application's HTTP stack (pooling, retries, proxy, test
+     * doubles); otherwise fall back to the built-in cURL client.
+     */
+    private function buildDefaultHttpClient(ContainerInterface $container): MailHttpClientInterface
+    {
+        if (!$container->has(ClientInterface::class)) {
+            return new CurlMailHttpClient();
+        }
+
+        /** @var ClientInterface $psr18 */
+        $psr18 = $container->get(ClientInterface::class);
+
+        $requestFactory = $container->has(RequestFactoryInterface::class)
+            ? $container->get(RequestFactoryInterface::class)
+            : new RequestFactory();
+        /** @var RequestFactoryInterface $requestFactory */
+        $streamFactory = $container->has(StreamFactoryInterface::class)
+            ? $container->get(StreamFactoryInterface::class)
+            : new StreamFactory();
+        /** @var StreamFactoryInterface $streamFactory */
+
+        return new Psr18MailHttpClient($psr18, $requestFactory, $streamFactory);
     }
 
     /**
