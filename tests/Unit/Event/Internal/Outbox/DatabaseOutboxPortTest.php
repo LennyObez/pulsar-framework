@@ -14,6 +14,7 @@ use Pulsar\Database\PdoConnection;
 use Pulsar\Event\EventEnvelope;
 use Pulsar\Event\EventMetadata;
 use Pulsar\Event\Internal\Outbox\DatabaseOutboxPort;
+use Pulsar\Event\Internal\Outbox\PendingEnvelope;
 
 #[CoversClass(DatabaseOutboxPort::class)]
 final class DatabaseOutboxPortTest extends TestCase
@@ -97,6 +98,94 @@ final class DatabaseOutboxPortTest extends TestCase
         }
 
         self::assertCount(2, $this->outbox->pendingEvents(2));
+    }
+
+    #[Test]
+    public function recordFailureDeadLettersEnvelopeWhenAttemptsReachCap(): void
+    {
+        $envelope = $this->makeEnvelope('order.placed', []);
+        $this->outbox->store($envelope);
+
+        // cap = 3: the first two failures keep it pending...
+        $this->outbox->recordFailure($envelope->eventId, 'fail-1', 3);
+        $this->outbox->recordFailure($envelope->eventId, 'fail-2', 3);
+        self::assertCount(1, $this->outbox->pendingEvents());
+        self::assertSame([], $this->outbox->deadLetteredEvents());
+
+        // ...the third reaches the cap and dead-letters it.
+        $this->outbox->recordFailure($envelope->eventId, 'fail-3', 3);
+        self::assertSame([], $this->outbox->pendingEvents());
+
+        $deadLettered = $this->outbox->deadLetteredEvents();
+        self::assertCount(1, $deadLettered);
+        self::assertSame($envelope->eventId, $deadLettered[0]->eventId);
+    }
+
+    #[Test]
+    public function deadLetteredEnvelopeIsExcludedFromPendingForRelay(): void
+    {
+        $envelope = $this->makeEnvelope('order.placed', []);
+        $this->outbox->store($envelope);
+
+        $this->outbox->recordFailure($envelope->eventId, 'fail-1', 2);
+        $this->outbox->recordFailure($envelope->eventId, 'fail-2', 2);
+
+        self::assertSame([], $this->outbox->pendingForRelay(100, 2));
+    }
+
+    #[Test]
+    public function healthyEventsAreNotStarvedByPoisonEnvelope(): void
+    {
+        // Poison stored first (oldest = FIFO head), healthy second.
+        $poison = $this->makeEnvelope('poison', []);
+        $this->outbox->store($poison);
+        $healthy = $this->makeEnvelope('healthy', []);
+        $this->outbox->store($healthy);
+
+        // Dead-letter the poison (cap = 1 -> one failure exhausts it).
+        $this->outbox->recordFailure($poison->eventId, 'permanent', 1);
+
+        // Even with a batch size of 1 the relay now reaches the healthy event;
+        // before the fix the poison stayed at the FIFO head forever.
+        $batch = $this->outbox->pendingForRelay(1, 1);
+
+        self::assertCount(1, $batch);
+        self::assertSame('healthy', $batch[0]->envelope->eventType);
+    }
+
+    #[Test]
+    public function pendingForRelayPairsEnvelopeWithItsAttemptCount(): void
+    {
+        $envelope = $this->makeEnvelope('order.placed', []);
+        $this->outbox->store($envelope);
+
+        $this->outbox->recordFailure($envelope->eventId, 'fail-1', 100);
+        $this->outbox->recordFailure($envelope->eventId, 'fail-2', 100);
+
+        $batch = $this->outbox->pendingForRelay(100, 100);
+
+        self::assertCount(1, $batch);
+        self::assertInstanceOf(PendingEnvelope::class, $batch[0]);
+        self::assertSame(2, $batch[0]->publishAttempts);
+    }
+
+    #[Test]
+    public function deadLetteredEventsReturnsEmptyOnFreshTable(): void
+    {
+        self::assertSame([], $this->outbox->deadLetteredEvents());
+    }
+
+    #[Test]
+    public function migrateSchemaIsIdempotentWhenColumnAlreadyPresent(): void
+    {
+        // installSchema() (setUp) already added dead_lettered_at; migrateSchema()
+        // must be a safe no-op and leave the table fully usable.
+        $this->outbox->migrateSchema();
+        $this->outbox->migrateSchema();
+
+        $envelope = $this->makeEnvelope('order.placed', []);
+        $this->outbox->store($envelope);
+        self::assertCount(1, $this->outbox->pendingEvents());
     }
 
     /**

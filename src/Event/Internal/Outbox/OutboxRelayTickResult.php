@@ -20,5 +20,6 @@ final readonly class OutboxRelayTickResult
         public int $attempted,
         public int $published,
         public int $failed,
+        public int $deadLettered = 0,
     ) {}
 }
