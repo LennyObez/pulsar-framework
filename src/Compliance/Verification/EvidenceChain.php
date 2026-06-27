@@ -18,6 +18,7 @@ use function array_filter;
 use function array_values;
 use function bin2hex;
 use function count;
+use function is_string;
 use function json_encode;
 use function round;
 use function sprintf;
@@ -37,6 +38,12 @@ use const JSON_UNESCAPED_UNICODE;
 #[Api(since: '1.0.0')]
 final class EvidenceChain
 {
+    /**
+     * Deterministic genesis label hashed (under the evidence key) to seed the
+     * first record's {@see previousSignature}.
+     */
+    private const string GENESIS_SEED = 'PULSAR_EVIDENCE_SEED';
+
     private string $previousSignature;
 
     private readonly Randomizer $randomizer;
@@ -51,7 +58,7 @@ final class EvidenceChain
         private readonly string $evidenceKey,
         ?Randomizer $randomizer = null,
     ) {
-        $this->previousSignature = Hmac::computeHex('PULSAR_EVIDENCE_SEED', $this->evidenceKey);
+        $this->previousSignature = Hmac::computeHex(self::GENESIS_SEED, $this->evidenceKey);
         $this->randomizer = $randomizer ?? new Randomizer(new Secure());
     }
 
@@ -111,6 +118,12 @@ final class EvidenceChain
         $verified = 0;
         $brokenAt = [];
 
+        // The first record must chain back to the deterministic genesis seed;
+        // every subsequent record must chain back to the prior record's actual
+        // signature. This linkage check is what makes truncation, reordering, or
+        // injection detectable even when each surviving record's own HMAC is intact.
+        $expectedPrevious = Hmac::computeHex(self::GENESIS_SEED, $this->evidenceKey);
+
         foreach ($records as $record) {
             if ($record->signature === null) {
                 $brokenAt[] = $record->id;
@@ -122,11 +135,20 @@ final class EvidenceChain
             $recordMessage = json_encode($data, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
             $expectedSignature = Hmac::computeHex($recordMessage, $this->evidenceKey);
 
-            if (hash_equals($expectedSignature, $record->signature)) {
+            /** @var mixed $recordedPrevious */
+            $recordedPrevious = $data['previous_signature'] ?? null;
+            $linkageIntact = is_string($recordedPrevious)
+                && hash_equals($expectedPrevious, $recordedPrevious);
+
+            if ($linkageIntact && hash_equals($expectedSignature, $record->signature)) {
                 $verified++;
             } else {
                 $brokenAt[] = $record->id;
             }
+
+            // Advance the expected linkage to this record's actual signature so
+            // the next record is validated against the real predecessor.
+            $expectedPrevious = $record->signature;
         }
 
         return [

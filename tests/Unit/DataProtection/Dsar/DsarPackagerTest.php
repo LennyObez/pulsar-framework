@@ -217,6 +217,54 @@ final class DsarPackagerTest extends TestCase
         self::assertSame(2, $manifest['sources'][0]['attachment_count']);
     }
 
+    /**
+     * Finding [5]: a malicious collector returning a sourceName/category/
+     * filename containing traversal sequences must not produce ZIP members
+     * with `..` or directory separators — that is a zip-slip vector when the
+     * DSAR package is extracted on the data subject's machine.
+     */
+    #[Test]
+    public function packageSanitizesPathTraversalInZipMemberNames(): void
+    {
+        $packager = new DsarPackager(sys_get_temp_dir());
+        $request = $this->makeRequest('pkg-slip');
+        $dataSets = [
+            new DsarDataSet(
+                '../../etc',
+                '..\\..\\windows',
+                [['leaked' => 'secret']],
+                [new DsarAttachment('../../../evil.sh', 'rm -rf /', 'text/x-shellscript')],
+            ),
+        ];
+
+        $path = $packager->package($request, $dataSets);
+
+        $zip = new ZipArchive();
+        $zip->open($path);
+
+        $names = [];
+
+        for ($i = 0; $i < $zip->numFiles; $i++) {
+            $entry = $zip->getNameIndex($i);
+
+            if ($entry !== false) {
+                $names[] = $entry;
+            }
+        }
+
+        $zip->close();
+
+        foreach ($names as $name) {
+            self::assertStringNotContainsString('..', $name, 'ZIP member must not contain parent traversal');
+            self::assertStringNotContainsString('\\', $name, 'ZIP member must not contain backslash separators');
+        }
+
+        // The sanitized data + attachment members must still be present under
+        // the intended subtrees (each ".." or separator collapses to "_").
+        self::assertContains('data/____etc/____windows.json', $names);
+        self::assertContains('attachments/____etc/______evil.sh', $names);
+    }
+
     private function makeRequest(string $id): DsarRequest
     {
         return new DsarRequest(

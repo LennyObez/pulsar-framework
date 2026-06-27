@@ -13,6 +13,8 @@ use function in_array;
 use function json_encode;
 
 use const JSON_THROW_ON_ERROR;
+use const JSON_UNESCAPED_SLASHES;
+use const JSON_UNESCAPED_UNICODE;
 
 /**
  * In-memory broadcast manager for single-server deployments.
@@ -96,7 +98,10 @@ final class InMemoryBroadcastManager implements BroadcastManagerInterface
             $message['channel'] = $channel;
         }
 
-        $json = json_encode($message, JSON_THROW_ON_ERROR);
+        $json = json_encode(
+            $message,
+            JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE,
+        );
 
         return WebSocketFrame::text($json)->encode();
     }

@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Pulsar\Compliance\Verification;
 
 use Pulsar\Api\Api;
+use Pulsar\Compliance\ComplianceFramework;
 use Pulsar\Compliance\ComplianceProfile;
+use Pulsar\Compliance\MfaScopeRank;
 
 use function sprintf;
 
@@ -139,22 +141,12 @@ final readonly class RegressionDetector
     }
 
     /**
-     * MFA scope ranking (lower = broader).
-     */
-    private const array MFA_SCOPE_RANK = [
-        'always' => 0,
-        'privileged' => 1,
-        'sensitive-data' => 2,
-        'none' => 3,
-    ];
-
-    /**
      * @return list<RegressionViolation>
      */
     private function checkMfaScope(string $currentScope): array
     {
-        $requiredRank = self::MFA_SCOPE_RANK[$this->profile->mfaRequirement] ?? 3;
-        $currentRank = self::MFA_SCOPE_RANK[$currentScope] ?? 3;
+        $requiredRank = MfaScopeRank::rank($this->profile->mfaRequirement);
+        $currentRank = MfaScopeRank::rank($currentScope);
 
         if ($currentRank > $requiredRank) {
             return [new RegressionViolation(
@@ -171,6 +163,12 @@ final readonly class RegressionDetector
         return [];
     }
 
+    /** HSTS max-age baseline (1 year) applied to all compliance profiles. */
+    private const int HSTS_MIN_AGE_BASELINE = 31536000;
+
+    /** HSTS max-age (2 years) required by frameworks that mandate a longer floor. */
+    private const int HSTS_MIN_AGE_EXTENDED = 63072000;
+
     /**
      * Resolve the minimum HSTS max-age required across enabled frameworks.
      *
@@ -178,6 +176,12 @@ final readonly class RegressionDetector
      */
     private function resolveMinHstsAge(): int
     {
-        return 31536000; // 1 year baseline for all compliance profiles
+        foreach ($this->profile->enabledFrameworks as $framework) {
+            if ($framework === ComplianceFramework::Hipaa || $framework === ComplianceFramework::Nis2) {
+                return self::HSTS_MIN_AGE_EXTENDED;
+            }
+        }
+
+        return self::HSTS_MIN_AGE_BASELINE;
     }
 }

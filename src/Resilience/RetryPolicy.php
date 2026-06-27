@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Resilience;
 
 use Closure;
+use InvalidArgumentException;
 use NoDiscard;
 use Psr\Log\LoggerInterface;
 use Pulsar\Api\Api;
@@ -35,6 +36,12 @@ final readonly class RetryPolicy
         private bool $jitter,
         ?Randomizer $randomizer = null,
     ) {
+        if ($maxAttempts < 1) {
+            throw new InvalidArgumentException(
+                sprintf('RetryPolicy requires maxAttempts >= 1, got %d.', $maxAttempts),
+            );
+        }
+
         $this->randomizer = $randomizer ?? new Randomizer(new Secure());
     }
 

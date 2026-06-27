@@ -172,4 +172,26 @@ final class DsarRequestTest extends TestCase
 
         self::assertTrue($request->isOverdue());
     }
+
+    /**
+     * Finding [7]: a Downloaded request is fulfilled, so it must not be
+     * reported overdue. This aligns isOverdue() with DsarDeadlineTracker,
+     * which already skips Downloaded — otherwise getOverdueRequests() raises
+     * false compliance alerts on completed-and-collected requests.
+     */
+    #[Test]
+    public function isOverdueReturnsFalseForDownloadedRequests(): void
+    {
+        $request = new DsarRequest(
+            id: 'req-8',
+            subjectId: 'sub-8',
+            email: 'h@i.com',
+            status: DsarStatus::Downloaded,
+            createdAt: new DateTimeImmutable('-40 days'),
+            deadline: new DateTimeImmutable('-10 days'),
+            completedAt: new DateTimeImmutable('-12 days'),
+        );
+
+        self::assertFalse($request->isOverdue());
+    }
 }

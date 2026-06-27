@@ -11,6 +11,8 @@ use Throwable;
 
 use function file_get_contents;
 use function microtime;
+use function restore_error_handler;
+use function set_error_handler;
 use function sprintf;
 use function stream_context_create;
 
@@ -60,11 +62,23 @@ final readonly class HttpHealthCheck implements HealthCheckInterface
 
             /** @var list<string> $http_response_header */
             $http_response_header = [];
-            $response = @file_get_contents($url, false, $context);
+
+            // Transport failures (DNS, TCP refused, timeout) emit a PHP warning
+            // and return false. Suppress the warning with a scoped error handler
+            // rather than the `@` operator (project rule); the `=== false` check
+            // below handles the failure path.
+            set_error_handler(static fn(): bool => true);
+
+            try {
+                $response = file_get_contents($url, false, $context);
+            } finally {
+                restore_error_handler();
+            }
+
             $latencyMs = (microtime(true) - $start) * 1000.0;
 
             if ($response === false) {
-                return HealthCheckResult::unhealthy('Connection failed');
+                return HealthCheckResult::unhealthy('Connection failed', $latencyMs);
             }
 
             // Extract HTTP status from response headers

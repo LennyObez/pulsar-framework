@@ -6,7 +6,9 @@ namespace Pulsar\DataProtection;
 
 use DateTimeImmutable;
 use Override;
+use Psr\Log\LoggerInterface;
 use Pulsar\Api\Internal;
+use RuntimeException;
 
 use function array_filter;
 use function fclose;
@@ -36,6 +38,7 @@ final readonly class AuditLogPurge implements DataPurgeInterface
 {
     public function __construct(
         private string $logPath,
+        private ?LoggerInterface $logger = null,
     ) {}
 
     #[Override]
@@ -121,6 +124,14 @@ final readonly class AuditLogPurge implements DataPurgeInterface
 
             if (is_array($decoded)) {
                 $entries[] = $decoded;
+            } else {
+                // A malformed line is not retained on rewrite, so it would be
+                // silently lost from the audit trail. Surface it instead of
+                // destroying it without record.
+                $this->logger?->warning('Skipping malformed audit log entry', [
+                    'log_path' => $this->logPath,
+                    'line' => trim($line),
+                ]);
             }
         }
 
@@ -142,7 +153,14 @@ final readonly class AuditLogPurge implements DataPurgeInterface
             ) . "\n";
         }
 
-        file_put_contents($this->logPath, $content, LOCK_EX);
+        $written = file_put_contents($this->logPath, $content, LOCK_EX);
+
+        if ($written === false) {
+            // Surface I/O failure rather than letting purge() report a
+            // non-zero count as success — a false compliance assertion that
+            // the audit trail was actually rewritten.
+            throw new RuntimeException('Failed to write audit log: ' . $this->logPath);
+        }
     }
 
     /**

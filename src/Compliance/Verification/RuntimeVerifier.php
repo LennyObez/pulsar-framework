@@ -194,11 +194,10 @@ final readonly class RuntimeVerifier
             );
         }
 
-        return CheckResult::fail(
+        return CheckResult::skip(
             'runtime.audit_logging',
-            'Audit logging is not active.',
+            'Audit logging is not active; no compliance framework mandates it for this profile.',
             ComplianceCheckDomain::AuditLogging,
-            ['Configure audit logging in config/security.php.'],
         );
     }
 

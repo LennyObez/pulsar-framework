@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Compliance\Verification;
 
+use Closure;
 use Pulsar\Api\Api;
 
 /**
@@ -14,13 +15,13 @@ use Pulsar\Api\Api;
 final readonly class CustomControl
 {
     /**
-     * @param callable(): CheckResult $verifier
+     * @param Closure(): CheckResult $verifier Produces the control's CheckResult on demand
      */
     public function __construct(
         public string $id,
         public string $name,
         public string $description,
-        public mixed $verifier,
+        public Closure $verifier,
         public string $category = 'custom',
     ) {}
 }

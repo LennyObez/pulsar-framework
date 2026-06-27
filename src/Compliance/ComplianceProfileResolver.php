@@ -50,14 +50,6 @@ final readonly class ComplianceProfileResolver
     /** Default data retention (1 year) when no framework specifies one. */
     private const int DEFAULT_DATA_RETENTION_DAYS = 365;
 
-    /** MFA scope ranking from broadest (0) to narrowest (3). */
-    private const array MFA_SCOPE_RANK = [
-        'always' => 0,
-        'privileged' => 1,
-        'sensitive-data' => 2,
-        'none' => 3,
-    ];
-
     /**
      * Resolve the most restrictive ComplianceProfile for the given frameworks.
      *
@@ -270,13 +262,13 @@ final readonly class ComplianceProfileResolver
      */
     private function resolveMfaRequirement(array $requirements): string
     {
-        $bestRank = self::MFA_SCOPE_RANK['none'];
+        $bestRank = MfaScopeRank::rank('none');
         $bestScope = 'none';
 
         foreach ($requirements as $req) {
             if ($req instanceof HasAccessControl) {
                 $scope = $req->mfaRequirement();
-                $rank = self::MFA_SCOPE_RANK[$scope] ?? self::MFA_SCOPE_RANK['none'];
+                $rank = MfaScopeRank::rank($scope);
 
                 if ($rank < $bestRank) {
                     $bestRank = $rank;
