@@ -24,6 +24,9 @@ use Pulsar\Security\AntiSpam\AccountAgeGate;
 use Pulsar\Security\AntiSpam\AiCrawler\AiCrawlerConfig;
 use Pulsar\Security\AntiSpam\AiCrawler\AiCrawlerDetector;
 use Pulsar\Security\AntiSpam\AiCrawler\AiCrawlerMiddleware;
+use Pulsar\Security\AntiSpam\AiCrawler\AiCrawlerVerificationConfig;
+use Pulsar\Security\AntiSpam\AiCrawler\Internal\CrawlerIdentityVerifier;
+use Pulsar\Security\AntiSpam\AiCrawler\Internal\SystemCrawlerDnsResolver;
 use Pulsar\Security\AntiSpam\AntiSpamCheckInterface;
 use Pulsar\Security\AntiSpam\AntiSpamConfig;
 use Pulsar\Security\AntiSpam\AntiSpamPipeline;
@@ -97,6 +100,7 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
                 AntiSpamPipeline::class,
                 AntiSpamPipelineInterface::class,
                 AiCrawlerConfig::class,
+                AiCrawlerVerificationConfig::class,
                 AdaptiveRiskConfig::class,
                 Ja4Config::class,
                 PrivacyPassConfig::class,
@@ -478,6 +482,9 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
         $config = $this->loadAiCrawlerConfig($configManager);
         $container->instance(AiCrawlerConfig::class, $config);
 
+        $verificationConfig = $this->loadAiCrawlerVerificationConfig($configManager);
+        $container->instance(AiCrawlerVerificationConfig::class, $verificationConfig);
+
         if (!$config->enabled) {
             return;
         }
@@ -490,10 +497,47 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
             $config->rateLimitWindowSeconds,
         );
 
-        $aiMiddleware = new AiCrawlerMiddleware($config, $detector, $rateLimiter, $logger);
+        // Identity verification defeats User-Agent spoofing: a forged crawler UA
+        // from an IP outside the issuer's published ranges / reverse DNS is blocked.
+        $identityVerifier = null;
+        $trustedProxy = null;
+        if ($verificationConfig->enabled) {
+            $cache = $container->has(TaggedCacheInterface::class)
+                ? $container->get(TaggedCacheInterface::class)
+                : null;
+            $identityVerifier = new CrawlerIdentityVerifier($verificationConfig, new SystemCrawlerDnsResolver(), $cache);
+            $container->instance(CrawlerIdentityVerifier::class, $identityVerifier);
+            $trustedProxy = $container->has(TrustedProxy::class)
+                ? $container->get(TrustedProxy::class)
+                : null;
+        }
+
+        $aiMiddleware = new AiCrawlerMiddleware($config, $detector, $rateLimiter, $logger, $identityVerifier, $trustedProxy);
         $container->instance(AiCrawlerMiddleware::class, $aiMiddleware);
 
         $middleware->pipe($aiMiddleware);
+    }
+
+    private function loadAiCrawlerVerificationConfig(ConfigManager $configManager): AiCrawlerVerificationConfig
+    {
+        $configPath = $configManager->configPath();
+
+        if ($configPath !== null && is_file($configPath . DIRECTORY_SEPARATOR . 'anti-spam.php')) {
+            /**
+             * @psalm-suppress UnresolvableInclude
+             * @var mixed $data
+             */
+            $data = require $configPath . DIRECTORY_SEPARATOR . 'anti-spam.php';
+
+            if (is_array($data) && isset($data['ai_crawler_verification']) && is_array($data['ai_crawler_verification'])) {
+                /** @var array<string, mixed> $verification */
+                $verification = $data['ai_crawler_verification'];
+
+                return AiCrawlerVerificationConfig::fromArray($verification);
+            }
+        }
+
+        return new AiCrawlerVerificationConfig();
     }
 
     private function loadAiCrawlerConfig(ConfigManager $configManager): AiCrawlerConfig

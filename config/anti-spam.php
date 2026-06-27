@@ -66,6 +66,23 @@ return [
         'rate_limit_window_seconds' => 60,
     ],
 
+    // AI-crawler identity verification: defeat User-Agent spoofing by checking
+    // that a declared crawler connects from its operator's published IP ranges
+    // (issuers publish these, e.g. OpenAI's gptbot.json) and/or forward-confirmed
+    // reverse DNS. A crawler with verification data that matches nothing is
+    // treated as an impersonator and blocked, regardless of its action.
+    'ai_crawler_verification' => [
+        'enabled' => false,
+        'reverse_dns' => false, // also accept forward-confirmed reverse DNS (blocking lookups, cached)
+        'ranges' => [           // UA token => published IP/CIDR ranges
+            // 'GPTBot' => ['203.0.113.0/24', '198.51.100.0/24'],
+        ],
+        'domains' => [          // UA token => expected reverse-DNS host suffixes
+            // 'GPTBot' => ['openai.com'],
+        ],
+        'cache_ttl_seconds' => 3600,
+    ],
+
     // Adaptive, risk-based challenge escalation: composes risk signals
     // (bot heuristics, JA4, ...) into a single score and escalates —
     // allow below challenge_threshold, challenge between, block above

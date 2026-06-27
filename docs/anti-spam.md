@@ -229,13 +229,33 @@ When `send_tdm_reservation` is on, responses also carry the TDM (Text & Data Min
 
 `overrides` change the action for a specific named crawler; `custom_crawlers` add UA tokens the built-in list doesn't know yet, mapped to a category — both let you adapt without waiting for a release.
 
+### Identity verification (anti-spoofing)
+
+A `User-Agent` is trivially forged: a scraper can claim to be an _allowed_ crawler to slip past. When `ai_crawler_verification` is enabled, a detected crawler's real client IP (resolved through trusted proxies) is checked against the crawler's **published IP ranges** and/or **forward-confirmed reverse DNS**:
+
+- **Ranges** — the IP must fall in the operator-supplied CIDR list for that crawler. Issuers publish these (e.g. OpenAI's `gptbot.json`, Google's, Bing's); paste the ranges per UA token.
+- **Reverse DNS (FCrDNS)** — opt-in: the IP's PTR host must end in an expected suffix _and_ forward-resolve back to the same IP, the method search engines recommend. Lookups are blocking, so results are cached (`cache_ttl_seconds`).
+
+A crawler that **is** verifiable (you configured ranges or domains for it) but matches nothing is treated as an **impersonator** and blocked with `403`, regardless of its configured action. A crawler with no verification data is left to its normal action (we can't judge it). So you only need to supply data for the crawlers you actually allow and want to protect from impersonation.
+
+```php
+// config/anti-spam.php
+'ai_crawler_verification' => [
+    'enabled' => false,
+    'reverse_dns' => false,
+    'ranges' => ['GPTBot' => ['203.0.113.0/24']],
+    'domains' => ['GPTBot' => ['openai.com']],
+    'cache_ttl_seconds' => 3600,
+],
+```
+
 ### robots.txt advisory layer
 
 The middleware enforces at request time, but some AI opt-out tokens — `Google-Extended`, `Applebot-Extended` — are **never sent as a request `User-Agent`**; they are only meaningful as robots.txt directives. The CMS `robots.txt` generator therefore renders directives from the **same `AiCrawlerConfig`** (`AiCrawlerRobotsPolicy`): every crawler whose resolved action is `block` gets a `User-agent: …` / `Disallow: /` block, including those opt-out-only tokens. `allow` and `rate_limit` crawlers are left unrestricted in robots.txt — rate limits cannot be expressed there and are enforced at the middleware. Driving both layers from one config keeps the advisory and enforced policies from drifting apart.
 
 ### Honest limitation
 
-This layer recognises crawlers that **declare themselves**. A scraper that forges a browser `User-Agent` is not caught here — that is the job of the other layers (rate limiting, behavioural signals, the adaptive engine, and the JA4 signal below). Treat AI-scraper defense as the polite-but-enforced front door for honest bots, not as anti-evasion.
+With identity verification configured, a scraper that **forges a known crawler's** `User-Agent` is caught (its IP won't match). What this layer cannot judge is a scraper that forges an ordinary _browser_ `User-Agent` and claims no crawler identity at all — that is the job of the other layers (rate limiting, behavioural signals, the adaptive engine, and the JA4 signal below). Treat AI-scraper defense as the enforced front door for crawlers, layered with the rest of the pipeline.
 
 ## Adaptive Risk Engine (risk-based escalation)
 
