@@ -7,10 +7,13 @@ namespace Pulsar\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
+use function array_keys;
 use function array_map;
 use function is_array;
 use function is_scalar;
 use function is_string;
+use function sprintf;
+use function strcasecmp;
 
 /**
  * Typed configuration DTO for security headers.
@@ -48,7 +51,14 @@ final readonly class SecurityHeadersConfig
     ];
 
     /**
-     * @param array<string, string> $headers Header name => value pairs applied to every response
+     * @param array<string, string> $headers Header name => value pairs applied to
+     *     every response. A literal entry is authoritative — "what you write is
+     *     what's emitted" — and takes precedence over the matching structured
+     *     sub-config for `Strict-Transport-Security` (over {@see HstsConfig}) and
+     *     `Permissions-Policy` (over {@see PermissionsPolicyConfig}). A literal
+     *     `Strict-Transport-Security` is still emitted only on secure requests
+     *     (RFC 6797 §7.2). See {@see shadowedStructuredHeaders()} for the boot
+     *     warning raised when a literal shadows an active structured config.
      */
     public function __construct(
         public array $headers,
@@ -99,9 +109,14 @@ final readonly class SecurityHeadersConfig
             $headers['Cross-Origin-Resource-Policy'] = $this->crossOrigin->resourcePolicy;
         }
 
-        $permissionsPolicyValue = $this->permissionsPolicy->toHeaderValue();
-        if ($permissionsPolicyValue !== '') {
-            $headers['Permissions-Policy'] = $permissionsPolicyValue;
+        // A literal `Permissions-Policy` in `headers` is authoritative — "what you
+        // write is what's emitted" — and is never overridden by the structured
+        // PermissionsPolicyConfig (whose defaults are always non-empty).
+        if ($this->literalHeader('Permissions-Policy') === null) {
+            $permissionsPolicyValue = $this->permissionsPolicy->toHeaderValue();
+            if ($permissionsPolicyValue !== '') {
+                $headers['Permissions-Policy'] = $permissionsPolicyValue;
+            }
         }
 
         if ($this->nel->enabled) {
@@ -116,7 +131,104 @@ final readonly class SecurityHeadersConfig
             }
         }
 
+        // Strict-Transport-Security is emitted conditionally — secure requests
+        // only (RFC 6797 §7.2 forbids it over plaintext HTTP) — by the middleware
+        // via effectiveHstsHeader(). Drop any literal here so a configured value
+        // can never be sent unconditionally, including over plain HTTP.
+        foreach (array_keys($headers) as $name) {
+            if (strcasecmp($name, 'Strict-Transport-Security') === 0) {
+                unset($headers[$name]);
+            }
+        }
+
         return $headers;
+    }
+
+    /**
+     * Resolve the `Strict-Transport-Security` value to emit, or null when none
+     * applies.
+     *
+     * A literal `Strict-Transport-Security` set in `headers` takes precedence
+     * over the structured {@see HstsConfig} ("what you write is what's emitted").
+     * When no literal is set, the structured config is used while it is enabled.
+     *
+     * Callers MUST gate emission on a secure request: RFC 6797 §7.2 forbids
+     * sending HSTS over plaintext HTTP.
+     */
+    #[NoDiscard]
+    public function effectiveHstsHeader(): ?string
+    {
+        $literal = $this->literalHeader('Strict-Transport-Security');
+        if ($literal !== null && $literal !== '') {
+            return $literal;
+        }
+
+        if ($this->hsts->enabled) {
+            return $this->hsts->toHeaderValue();
+        }
+
+        return null;
+    }
+
+    /**
+     * Case-insensitive lookup of a literal header value set in `headers`.
+     *
+     * HTTP field names are case-insensitive (RFC 9110 §5.1), so an operator may
+     * write `strict-transport-security` or `Strict-Transport-Security`. Returns
+     * the configured value, or null when the header was not set literally.
+     */
+    #[NoDiscard]
+    public function literalHeader(string $name): ?string
+    {
+        foreach ($this->headers as $key => $value) {
+            if (strcasecmp($key, $name) === 0) {
+                return $value;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Describe literal headers that shadow an active structured sub-config with a
+     * DIFFERENT value.
+     *
+     * The literal is authoritative; this lets the composition root warn the
+     * operator once at boot that the structured config is being ignored, so the
+     * override is never silent in either direction.
+     *
+     * @return list<string> Human-readable conflict descriptions (empty when none)
+     */
+    #[NoDiscard]
+    public function shadowedStructuredHeaders(): array
+    {
+        $conflicts = [];
+
+        $literalHsts = $this->literalHeader('Strict-Transport-Security');
+        if ($literalHsts !== null && $literalHsts !== '' && $this->hsts->enabled) {
+            $structuredHsts = $this->hsts->toHeaderValue();
+            if ($literalHsts !== $structuredHsts) {
+                $conflicts[] = sprintf(
+                    'A literal "Strict-Transport-Security" header (%s) overrides the structured "hsts" config (%s); the literal value is emitted.',
+                    $literalHsts,
+                    $structuredHsts,
+                );
+            }
+        }
+
+        $literalPermissions = $this->literalHeader('Permissions-Policy');
+        if ($literalPermissions !== null && $literalPermissions !== '') {
+            $structuredPermissions = $this->permissionsPolicy->toHeaderValue();
+            if ($structuredPermissions !== '' && $literalPermissions !== $structuredPermissions) {
+                $conflicts[] = sprintf(
+                    'A literal "Permissions-Policy" header (%s) overrides the structured "permissions_policy" config (%s); the literal value is emitted.',
+                    $literalPermissions,
+                    $structuredPermissions,
+                );
+            }
+        }
+
+        return $conflicts;
     }
 
     /**

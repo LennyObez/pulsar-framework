@@ -238,7 +238,7 @@ final readonly class SecurityWiring implements ServiceWiringInterface
 
             $assertionRunner = new SecurityAssertionRunner(
                 debugMode: $debugMode,
-                httpsEnforced: $securityConfig->headers->hsts->enabled,
+                hstsEnabled: $securityConfig->headers->hsts->enabled,
                 hstsConfig: $securityConfig->headers->hsts,
                 sessionConfig: $securityConfig->session,
             );
@@ -338,6 +338,24 @@ final readonly class SecurityWiring implements ServiceWiringInterface
         // Reuses the $trustedProxies resolved above for the session/IP stack.
         $headersMiddleware = new SecurityHeadersMiddleware($securityConfig->headers, $trustedProxies);
         $container->instance(SecurityHeadersMiddleware::class, $headersMiddleware);
+
+        // Warn once at boot when a literal header in `headers` shadows an active
+        // structured sub-config with a different value (e.g. a literal
+        // Strict-Transport-Security overriding the typed `hsts` block, or a
+        // literal Permissions-Policy overriding `permissions_policy`). The literal
+        // is authoritative ("what you write is what's emitted"); surfacing the
+        // override keeps it from being silent in either direction.
+        $shadowedHeaders = $securityConfig->headers->shadowedStructuredHeaders();
+        if ($shadowedHeaders !== []) {
+            /** @var LoggerInterface|null $headersLogger */
+            $headersLogger = $container->has(LoggerInterface::class)
+                ? $container->get(LoggerInterface::class)
+                : null;
+
+            foreach ($shadowedHeaders as $conflict) {
+                $headersLogger?->warning($conflict, ['component' => 'security.headers']);
+            }
+        }
 
         // Pipe globally (F9.1, F12.10): every response — including routes
         // that do not opt into the `web` / `api` middleware groups — must
