@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Database\Migration;
 
+use InvalidArgumentException;
 use Pulsar\Api\Api;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Driver;
 use Pulsar\Database\Exception\DatabaseException;
 use Pulsar\Database\Row;
+use Pulsar\Database\Schema\SchemaException;
+use Pulsar\Database\Schema\SchemaIdentifier;
 use Throwable;
 
 use function array_diff_key;
@@ -48,11 +51,27 @@ final readonly class MigrationRunner implements MigrationRunnerInterface
      */
     private int $advisoryLockKey;
 
+    /**
+     * @throws InvalidArgumentException If the migrations table name is not a valid
+     *                                  SQL identifier. The name is interpolated into
+     *                                  DDL/DML, MySQL GET_LOCK/RELEASE_LOCK string
+     *                                  literals, and the SQLite flock path, so it must
+     *                                  be validated before any of those are composed.
+     */
     public function __construct(
         private ConnectionInterface $connection,
         private MigrationRepository $repository,
         private string $tableName,
     ) {
+        try {
+            SchemaIdentifier::validateTable($this->tableName);
+        } catch (SchemaException $e) {
+            throw new InvalidArgumentException(
+                sprintf('MigrationRunner: invalid migrations table name "%s": %s', $this->tableName, $e->getMessage()),
+                previous: $e,
+            );
+        }
+
         // Use a positive 31-bit integer for MySQL GET_LOCK / pg_advisory_lock compatibility
         $this->advisoryLockKey = crc32('pulsar_migrate:' . $this->tableName) & 0x7FFF_FFFF;
     }
