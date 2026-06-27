@@ -9504,7 +9504,8 @@
                         "Pulsar\\Config\\MailEncryptionPolicy $encryptionPolicy",
                         "bool $hipaaMode",
                         "bool $auditHashEnabled",
-                        "array $driverOptions"
+                        "array $driverOptions",
+                        "Pulsar\\Mail\\Webhook\\MailWebhookConfig $webhooks"
                     ],
                     "return": null,
                     "static": false
@@ -30318,6 +30319,37 @@
                         "string $ip",
                         "string $provider"
                     ],
+                    "return": "bool",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Mail\\Webhook\\MailWebhookConfig": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "bool $enabled",
+                        "string $provider",
+                        "string $secret",
+                        "string $path",
+                        "int $replayWindowSeconds",
+                        "array $ipAllowlist"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "fromArray": {
+                    "params": [
+                        "array $data"
+                    ],
+                    "return": "Pulsar\\Mail\\Webhook\\MailWebhookConfig",
+                    "static": true
+                },
+                "isUsable": {
+                    "params": [],
                     "return": "bool",
                     "static": false
                 }
@@ -56040,9 +56072,11 @@
         "Pulsar\\Mail\\Transport\\SesTransport",
         "Pulsar\\Mail\\Transport\\SmtpTransport",
         "Pulsar\\Mail\\Webhook\\BounceHandler",
+        "Pulsar\\Mail\\Webhook\\CacheBackedDeduplicationStore",
         "Pulsar\\Mail\\Webhook\\ComplaintHandler",
         "Pulsar\\Mail\\Webhook\\ConfigurableIpAllowlist",
         "Pulsar\\Mail\\Webhook\\InMemoryDeduplicationStore",
+        "Pulsar\\Mail\\Webhook\\MailWebhookController",
         "Pulsar\\Mail\\Webhook\\Verifier\\MailgunWebhookVerifier",
         "Pulsar\\Mail\\Webhook\\Verifier\\PostmarkWebhookVerifier",
         "Pulsar\\Mail\\Webhook\\Verifier\\SendgridWebhookVerifier",

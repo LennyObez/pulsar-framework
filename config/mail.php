@@ -144,4 +144,20 @@ return [
         //     'api_key' => '',
         // ],
     ],
+
+    /*
+    | Inbound provider webhooks (bounces/complaints). Opt-in: when enabled,
+    | Pulsar exposes a single POST endpoint that verifies the provider
+    | signature, rejects replays/stale events, deduplicates, and audit-logs
+    | bounces and complaints. SES uses certificate verification (no secret);
+    | mailgun/postmark/sendgrid use a shared secret.
+    */
+    'webhooks' => [
+        'enabled' => false,
+        'provider' => '',        // 'mailgun' | 'postmark' | 'sendgrid' | 'ses'
+        'secret' => '',          // provider signing secret/token (not needed for ses)
+        'path' => '/_pulsar/mail/webhook',
+        'replay_window_seconds' => 300,
+        'ip_allowlist' => [],    // optional source IP/CIDR allowlist for the endpoint
+    ],
 ];
