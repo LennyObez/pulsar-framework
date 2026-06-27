@@ -102,6 +102,58 @@ final class OutboxRelayTest extends TestCase
         self::assertSame([], $bus->published);
     }
 
+    #[Test]
+    public function tickDeadLettersEnvelopeAfterMaxPublishAttempts(): void
+    {
+        $bus = new FailingBus();
+        $relay = new OutboxRelay($this->outbox, $bus, maxPublishAttempts: 3);
+
+        $this->outbox->store($this->makeEnvelope('order.placed', []));
+
+        $relay->tick();         // attempt 1
+        $relay->tick();         // attempt 2
+        $result = $relay->tick(); // attempt 3 -> reaches the cap, dead-letters
+
+        self::assertSame(1, $result->deadLettered);
+        self::assertSame([], $this->outbox->pendingEvents());
+        self::assertCount(1, $this->outbox->deadLetteredEvents());
+    }
+
+    #[Test]
+    public function tickPublishesHealthyEventAndDeadLettersPoison(): void
+    {
+        // Poison stored first (FIFO head); a cap of 1 dead-letters it on the
+        // first failed attempt, so the relay still publishes the healthy event
+        // behind it in the same tick instead of being starved.
+        $bus = new FailForTypeBus('poison');
+        $relay = new OutboxRelay($this->outbox, $bus, maxPublishAttempts: 1);
+
+        $this->outbox->store($this->makeEnvelope('poison', []));
+        $this->outbox->store($this->makeEnvelope('healthy', []));
+
+        $result = $relay->tick();
+
+        self::assertSame(1, $result->published);
+        self::assertSame(1, $result->failed);
+        self::assertSame(1, $result->deadLettered);
+        self::assertSame([], $this->outbox->pendingEvents());
+
+        $deadLettered = $this->outbox->deadLetteredEvents();
+        self::assertCount(1, $deadLettered);
+        self::assertSame('poison', $deadLettered[0]->eventType);
+    }
+
+    #[Test]
+    public function tickDeadLetterCounterIsZeroOnHappyPath(): void
+    {
+        $bus = new RecordingBus();
+        $relay = new OutboxRelay($this->outbox, $bus);
+
+        $this->outbox->store($this->makeEnvelope('order.placed', []));
+
+        self::assertSame(0, $relay->tick()->deadLettered);
+    }
+
     /**
      * @param array<string, mixed> $payload
      */
@@ -156,6 +208,21 @@ final class FailFirstBus implements IntegrationEventBusPort
         $this->calls++;
         if ($this->calls === 1) {
             throw new RuntimeException('transient');
+        }
+    }
+}
+
+/**
+ * @internal
+ */
+final class FailForTypeBus implements IntegrationEventBusPort
+{
+    public function __construct(private readonly string $failType) {}
+
+    public function publish(string $eventType, array $payload): void
+    {
+        if ($eventType === $this->failType) {
+            throw new RuntimeException('permanent failure for ' . $eventType);
         }
     }
 }

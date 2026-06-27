@@ -37,13 +37,19 @@ final readonly class OutboxRelay
         private DatabaseOutboxPort $outbox,
         private IntegrationEventBusPort $bus,
         private int $batchSize = 100,
+        private int $maxPublishAttempts = 5,
     ) {}
 
     /**
      * Process a single batch of pending events.
      *
-     * @return OutboxRelayTickResult Counts of published / failed events
-     *                                so callers can drive metrics or
+     * Envelopes that reach {@see $maxPublishAttempts} are dead-lettered by
+     * {@see DatabaseOutboxPort::recordFailure()} and excluded from subsequent
+     * batches, so a permanently-failing "poison" envelope can no longer starve
+     * the FIFO-ordered healthy events behind it.
+     *
+     * @return OutboxRelayTickResult Counts of published / failed / dead-lettered
+     *                                events so callers can drive metrics or
      *                                back-pressure logic.
      *
      * @throws JsonException
@@ -51,22 +57,35 @@ final readonly class OutboxRelay
      */
     public function tick(): OutboxRelayTickResult
     {
-        $pending = $this->outbox->pendingEvents($this->batchSize);
+        $pending = $this->outbox->pendingForRelay($this->batchSize, $this->maxPublishAttempts);
 
         $published = 0;
         $failed = 0;
+        $deadLettered = 0;
 
-        foreach ($pending as $envelope) {
+        foreach ($pending as $pendingEnvelope) {
+            $envelope = $pendingEnvelope->envelope;
+
             try {
                 $this->publish($envelope);
                 $this->outbox->markPublished($envelope->eventId);
                 $published++;
             } catch (Throwable $error) {
+                // Determined from the pre-failure count fetched alongside the
+                // envelope, so counting dead-letters costs no extra query. The
+                // same threshold drives recordFailure()'s dead_lettered_at stamp.
+                $isDeadLettered = ($pendingEnvelope->publishAttempts + 1) >= $this->maxPublishAttempts;
+
                 $this->outbox->recordFailure(
                     $envelope->eventId,
                     $this->describeError($error),
+                    $this->maxPublishAttempts,
                 );
                 $failed++;
+
+                if ($isDeadLettered) {
+                    $deadLettered++;
+                }
             }
         }
 
@@ -74,6 +93,7 @@ final readonly class OutboxRelay
             attempted: $published + $failed,
             published: $published,
             failed: $failed,
+            deadLettered: $deadLettered,
         );
     }
 
