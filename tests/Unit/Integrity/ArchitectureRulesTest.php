@@ -27,6 +27,7 @@ use function is_array;
 use function json_decode;
 use function preg_match;
 use function sprintf;
+use function str_starts_with;
 
 use const DIRECTORY_SEPARATOR;
 use const GLOB_ONLYDIR;
@@ -139,6 +140,56 @@ final class ArchitectureRulesTest extends TestCase
         self::assertEmpty(
             $violations,
             "Cross-module controller references found:\n- " . implode("\n- ", $violations),
+        );
+    }
+
+    // ---------------------------------------------------------------
+    // Rule 1b: No competitor-framework dependencies in production code
+    // ---------------------------------------------------------------
+
+    #[Test]
+    public function competitor_framework_imports_are_forbidden_in_production_code(): void
+    {
+        // Pulsar builds its own components — production code must not depend on
+        // competitor frameworks. This also guards against an undeclared
+        // transitive dependency leaking into production: Symfony's Filesystem
+        // was used here without a composer `require` entry and would fatal on
+        // `composer install --no-dev`. Reimplement natively or use a PSR
+        // interface (Psr\* is allowed — those are standards, not frameworks).
+        $forbiddenPrefixes = [
+            'Symfony\\',
+            'Illuminate\\',
+            'Laravel\\',
+            'Doctrine\\',
+            'GuzzleHttp\\',
+            'Monolog\\',
+            'Laminas\\',
+            'Zend\\',
+            'Nette\\',
+            'Yiisoft\\',
+            'Cake\\',
+            'Slim\\',
+        ];
+
+        $violations = [];
+
+        foreach (self::$fileReferences as $filePath => $references) {
+            foreach ($references as $ref) {
+                foreach ($forbiddenPrefixes as $prefix) {
+                    if (str_starts_with($ref, $prefix)) {
+                        $violations[] = sprintf('%s imports %s', self::shortPath($filePath), $ref);
+
+                        break;
+                    }
+                }
+            }
+        }
+
+        self::assertEmpty(
+            $violations,
+            'Production code (src/ + extensions/*/src/) must not import competitor frameworks — '
+            . "Pulsar builds its own components. Reimplement natively or depend on a PSR interface.\nFound:\n- "
+            . implode("\n- ", $violations),
         );
     }
 

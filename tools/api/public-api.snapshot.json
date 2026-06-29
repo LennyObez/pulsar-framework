@@ -19670,7 +19670,7 @@
             "signatures": {
                 "__construct": {
                     "params": [
-                        "?Symfony\\Component\\Filesystem\\Filesystem $fs"
+                        "?Closure $remove"
                     ],
                     "return": null,
                     "static": false
