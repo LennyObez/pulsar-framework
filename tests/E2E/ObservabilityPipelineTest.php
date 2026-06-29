@@ -15,6 +15,7 @@ use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\Middleware\MetricsMiddleware;
 use Pulsar\Http\Middleware\TracingMiddleware;
 use Pulsar\Http\ResponseStatus;
+use Pulsar\Http\TrustedProxy;
 use Pulsar\Observability\Log\LogEntry;
 use Pulsar\Observability\Log\Logger;
 use Pulsar\Observability\Log\LogLevel;
@@ -225,11 +226,20 @@ final class ObservabilityPipelineTest extends TestCase
     public function tracingMiddlewarePropagatesIncomingTraceContext(): void
     {
         $collector = new InMemorySpanCollector();
-        $middleware = new TracingMiddleware($collector, new W3CTraceContextParser(), 1.0);
+        $middleware = new TracingMiddleware(
+            $collector,
+            new W3CTraceContextParser(),
+            1.0,
+            trustedProxy: new TrustedProxy(['10.0.0.1/32']),
+        );
 
         $incomingTraceparent = '00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01';
-        $request = $this->createRequest(
+        // Propagation is only honoured from the trusted upstream proxy.
+        $request = new ServerRequest(
+            method: 'GET',
+            uri: '/',
             headers: ['traceparent' => $incomingTraceparent],
+            serverParams: ['REMOTE_ADDR' => '10.0.0.1'],
         );
 
         $response = $middleware->process(

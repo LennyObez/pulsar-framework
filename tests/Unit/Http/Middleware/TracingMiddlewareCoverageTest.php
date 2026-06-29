@@ -13,6 +13,7 @@ use Pulsar\Http\Message\Response;
 use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\Middleware\TracingMiddleware;
 use Pulsar\Http\RouteContext;
+use Pulsar\Http\TrustedProxy;
 use Pulsar\Observability\Tracing\InMemorySpanCollector;
 use Pulsar\Observability\Tracing\SpanStatus;
 use Pulsar\Observability\Tracing\W3CTraceContextParser;
@@ -116,13 +117,15 @@ final class TracingMiddlewareCoverageTest extends TestCase
             collector: $this->collector,
             traceContextParser: $this->parser,
             samplingRate: 0.0, // Would normally skip
+            trustedProxy: new TrustedProxy(['10.0.0.1/32']),
         );
 
-        // traceparent with sampled flag (01)
+        // traceparent with sampled flag (01), from the trusted upstream
         $request = new ServerRequest(
             method: 'GET',
             uri: '/api',
             headers: ['traceparent' => '00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01'],
+            serverParams: ['REMOTE_ADDR' => '10.0.0.1'],
         );
 
         $handler = $this->createStub(RequestHandlerInterface::class);
@@ -142,13 +145,15 @@ final class TracingMiddlewareCoverageTest extends TestCase
             collector: $this->collector,
             traceContextParser: $this->parser,
             samplingRate: 1.0, // Would normally sample
+            trustedProxy: new TrustedProxy(['10.0.0.1/32']),
         );
 
-        // traceparent with unsampled flag (00)
+        // traceparent with unsampled flag (00), from the trusted upstream
         $request = new ServerRequest(
             method: 'GET',
             uri: '/api',
             headers: ['traceparent' => '00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-00'],
+            serverParams: ['REMOTE_ADDR' => '10.0.0.1'],
         );
 
         $handler = $this->createStub(RequestHandlerInterface::class);
@@ -242,6 +247,7 @@ final class TracingMiddlewareCoverageTest extends TestCase
         $middleware = new TracingMiddleware(
             collector: $this->collector,
             traceContextParser: $this->parser,
+            trustedProxy: new TrustedProxy(['10.0.0.1/32']),
         );
 
         $parentTraceparent = '00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01';
@@ -249,6 +255,7 @@ final class TracingMiddlewareCoverageTest extends TestCase
             method: 'GET',
             uri: '/api',
             headers: ['traceparent' => $parentTraceparent],
+            serverParams: ['REMOTE_ADDR' => '10.0.0.1'],
         );
 
         $handler = $this->createStub(RequestHandlerInterface::class);
