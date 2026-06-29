@@ -96,4 +96,36 @@ final class RelationshipDefinitionTest extends TestCase
 
         self::assertNull($rel->pivotTable);
     }
+
+    /**
+     * A corrupted or future-version persisted snapshot may carry an
+     * unknown relation `type`. Deserialization must not crash the CLI
+     * with an uncatchable \ValueError — it falls back to HasMany.
+     */
+    #[Test]
+    public function fromArrayFallsBackToHasManyForUnknownType(): void
+    {
+        $rel = RelationshipDefinition::fromArray([
+            'type' => 'not_a_real_relation_type',
+            'relatedEntity' => 'Post',
+            'foreignKey' => 'author_id',
+            'localKey' => 'id',
+        ]);
+
+        self::assertSame(RelationType::HasMany, $rel->type);
+    }
+
+    /**
+     * A missing `type` key must also degrade gracefully rather than
+     * throwing on `BackedEnum::from('')`.
+     */
+    #[Test]
+    public function fromArrayFallsBackToHasManyForMissingType(): void
+    {
+        $rel = RelationshipDefinition::fromArray([
+            'relatedEntity' => 'Post',
+        ]);
+
+        self::assertSame(RelationType::HasMany, $rel->type);
+    }
 }

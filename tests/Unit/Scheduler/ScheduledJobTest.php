@@ -7,6 +7,7 @@ namespace Pulsar\Tests\Unit\Scheduler;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use Pulsar\Scheduler\JobContext;
 use Pulsar\Scheduler\JobStatus;
 use Pulsar\Scheduler\Schedule;
@@ -14,9 +15,15 @@ use Pulsar\Scheduler\ScheduleBuilder;
 use Pulsar\Scheduler\ScheduledJob;
 use RuntimeException;
 
+use function bin2hex;
+use function file_exists;
 use function file_get_contents;
+use function random_bytes;
+use function str_contains;
 use function sys_get_temp_dir;
 use function tempnam;
+
+use const DIRECTORY_SEPARATOR;
 
 final class ScheduledJobTest extends TestCase
 {
@@ -171,6 +178,43 @@ final class ScheduledJobTest extends TestCase
 
         $contents = file_get_contents($tempFile);
         self::assertSame("latest\n", $contents);
+    }
+
+    #[Test]
+    public function outputWriteFailureIsLoggedAsWarning(): void
+    {
+        // Target a path whose parent directory does not exist, so
+        // file_put_contents() returns false on every platform without
+        // relying on permissions or disk state. No file is created.
+        $unwritablePath = sys_get_temp_dir()
+            . DIRECTORY_SEPARATOR . 'pulsar_sched_missing_dir_' . bin2hex(random_bytes(8))
+            . DIRECTORY_SEPARATOR . 'output.log';
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())
+            ->method('warning')
+            ->with(self::callback(
+                static fn(string $message): bool => str_contains($message, 'failed to write output')
+                    && str_contains($message, 'warn-job'),
+            ));
+
+        $job = ScheduleBuilder::job('warn-job', static fn() => 'some output')
+            ->daily()
+            ->sendOutputTo($unwritablePath)
+            ->build();
+
+        $context = new JobContext(
+            scheduledAt: new DateTimeImmutable(),
+            startedAt: new DateTimeImmutable(),
+            logger: $logger,
+        );
+
+        // The job itself still succeeds — the write failure is non-fatal but
+        // must be surfaced rather than silently swallowed.
+        $result = $job->execute($context);
+
+        self::assertSame(JobStatus::Success, $result->status);
+        self::assertFalse(file_exists($unwritablePath));
     }
 
     #[Test]

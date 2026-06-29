@@ -15,6 +15,7 @@ use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 use Pulsar\Database\Introspection\DatabaseIntrospectorInterface;
+use RuntimeException;
 
 use function file_exists;
 use function file_put_contents;
@@ -97,8 +98,10 @@ final class FromSchemaCommand extends Command
         $output->newLine();
 
         $entityDir = $basePath . DIRECTORY_SEPARATOR . 'Entity';
-        if (!is_dir($entityDir)) {
-            mkdir($entityDir, 0o750, true);
+        if (!is_dir($entityDir) && !mkdir($entityDir, 0o750, true) && !is_dir($entityDir)) {
+            $output->errorln(sprintf('Failed to create entity directory: %s', $entityDir));
+
+            return ExitCode::Error->value;
         }
 
         /** @var array<string, EntityDefinition> $entities */
@@ -143,7 +146,9 @@ final class FromSchemaCommand extends Command
                 JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE,
             );
 
-            file_put_contents($filePath, $json . "\n");
+            if (file_put_contents($filePath, $json . "\n") === false) {
+                throw new RuntimeException(sprintf('Failed to write entity file: %s', $filePath));
+            }
 
             $output->writeln(sprintf(
                 '  %s -> %s\\%s (%s)',

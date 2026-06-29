@@ -12,6 +12,9 @@ use Throwable;
 
 use function file_put_contents;
 use function is_string;
+use function restore_error_handler;
+use function set_error_handler;
+use function sprintf;
 
 use const FILE_APPEND;
 
@@ -103,7 +106,7 @@ final class ScheduledJob implements JobInterface
             $output = ($this->callback)($context);
             $outputStr = is_string($output) ? $output : '';
 
-            $this->handleOutput($outputStr);
+            $this->handleOutput($outputStr, $context);
 
             return JobResult::success($this->name, $startedAt, $outputStr);
         } catch (Throwable $e) {
@@ -146,14 +149,33 @@ final class ScheduledJob implements JobInterface
         unset(self::$runningJobs[$this->name]);
     }
 
-    private function handleOutput(string $output): void
+    private function handleOutput(string $output, JobContext $context): void
     {
         if ($this->outputPath === null || $output === '') {
             return;
         }
 
         $flags = $this->appendOutput ? FILE_APPEND : 0;
-        file_put_contents($this->outputPath, $output . "\n", $flags);
+
+        // Convert the native I/O warning emitted by file_put_contents() on an
+        // unwritable target into a structured log entry instead of letting it
+        // escape as an uncontrolled PHP warning. The handler is scoped to the
+        // single call and always restored.
+        set_error_handler(static fn(): bool => true);
+
+        try {
+            $written = file_put_contents($this->outputPath, $output . "\n", $flags);
+        } finally {
+            restore_error_handler();
+        }
+
+        if ($written === false) {
+            $context->logger?->warning(sprintf(
+                'Scheduled job "%s" failed to write output to "%s"',
+                $this->name,
+                $this->outputPath,
+            ));
+        }
     }
 
     /**

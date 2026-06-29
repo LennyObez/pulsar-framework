@@ -12,6 +12,7 @@ use Pulsar\WebSocket\ChannelManager;
 use Pulsar\WebSocket\WebSocketConnection;
 
 use function is_string;
+use function strtolower;
 
 /**
  * HTTP controller that handles channel authentication for private/presence channels.
@@ -40,6 +41,18 @@ final readonly class BroadcastAuthController
         if (!is_string($channelName) || !is_string($socketId) || $channelName === '' || $socketId === '') {
             return Response::json(
                 ['error' => 'Missing channel_name or socket_id'],
+                400,
+            );
+        }
+
+        // Channel-type detection is prefix-based and case-sensitive
+        // (ChannelManager::isPrivateChannel / isPresenceChannel). A mixed-case
+        // prefix such as "Private-orders" would otherwise bypass the prefix
+        // checks and be authorized as a public channel. Reject any non-lowercase
+        // channel name rather than silently accepting an ambiguous one.
+        if ($channelName !== strtolower($channelName)) {
+            return Response::json(
+                ['error' => 'Invalid channel_name: must be lowercase'],
                 400,
             );
         }

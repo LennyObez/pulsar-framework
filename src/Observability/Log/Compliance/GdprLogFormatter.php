@@ -4,14 +4,19 @@ declare(strict_types=1);
 
 namespace Pulsar\Observability\Log\Compliance;
 
+use InvalidArgumentException;
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Observability\Log\LogEntry;
 use Pulsar\Security\Crypto\Hmac;
 
 use function is_string;
+use function sprintf;
+use function strlen;
 use function strtolower;
 use function substr;
+
+use const SODIUM_CRYPTO_GENERICHASH_KEYBYTES_MIN;
 
 /**
  * Pseudonymizes personal data fields in log entries for GDPR compliance.
@@ -41,11 +46,23 @@ final class GdprLogFormatter implements ComplianceLogFormatter
     /**
      * @param string      $hmacKey HMAC key for keyed pseudonymization (min 16 bytes)
      * @param list<string> $fields  Field names to pseudonymize (case-insensitive matching)
+     *
+     * @throws InvalidArgumentException If the HMAC key is shorter than the minimum
+     *                                  keyed-hash length, which would weaken GDPR
+     *                                  Article 4(5) pseudonymization.
      */
     public function __construct(
         private readonly string $hmacKey,
         array $fields = self::DEFAULT_FIELDS,
     ) {
+        if (strlen($this->hmacKey) < SODIUM_CRYPTO_GENERICHASH_KEYBYTES_MIN) {
+            throw new InvalidArgumentException(sprintf(
+                'GDPR pseudonymization HMAC key must be at least %d bytes, got %d',
+                SODIUM_CRYPTO_GENERICHASH_KEYBYTES_MIN,
+                strlen($this->hmacKey),
+            ));
+        }
+
         $this->fieldsToMask = $fields;
     }
 

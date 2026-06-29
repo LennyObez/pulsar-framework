@@ -127,6 +127,14 @@ final class MfaEnrollment extends LiveComponent
     public function complete(): void
     {
         $this->step = 'complete';
+
+        // Enrollment is finished: zero the TOTP secret, provisioning URI, and
+        // recovery codes so they are no longer dehydrated into the state blob
+        // returned to the browser on every subsequent render (least privilege).
+        $this->secret = '';
+        $this->secretBase32 = '';
+        $this->provisioningUri = '';
+        $this->recoveryCodes = [];
     }
 
     public function render(): string

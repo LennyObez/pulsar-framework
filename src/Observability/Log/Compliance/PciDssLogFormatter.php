@@ -11,9 +11,11 @@ use Pulsar\Observability\Log\LogEntry;
 use function in_array;
 use function is_array;
 use function is_string;
+use function preg_replace;
 use function preg_replace_callback;
 use function str_repeat;
 use function strlen;
+use function strtolower;
 use function substr;
 
 /**

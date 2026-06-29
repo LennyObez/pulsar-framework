@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Codegen\Schema\SchemaOperation;
 use Pulsar\Codegen\Schema\SchemaOperationType;
+use RuntimeException;
 
 #[CoversClass(SchemaOperation::class)]
 #[CoversClass(SchemaOperationType::class)]
@@ -76,6 +77,24 @@ final class SchemaOperationTest extends TestCase
         self::assertSame($original->table, $restored->table);
         self::assertSame($original->column, $restored->column);
         self::assertSame($original->metadata, $restored->metadata);
+    }
+
+    /**
+     * A corrupted or future-version persisted diff may carry an unknown
+     * operation `type`. Deserialization must surface a catchable
+     * RuntimeException rather than an uncatchable \ValueError, so the
+     * CLI can report a useful error instead of crashing.
+     */
+    #[Test]
+    public function fromArrayThrowsCatchableExceptionForUnknownType(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Invalid schema operation type "not_a_real_op"');
+
+        (void) SchemaOperation::fromArray([
+            'type' => 'not_a_real_op',
+            'table' => 'users',
+        ]);
     }
 
     #[Test]

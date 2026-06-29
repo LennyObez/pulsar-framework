@@ -35,9 +35,14 @@ abstract class AbstractGenerator implements GeneratorInterface
 
         $fileSet = new GeneratedFileSet($files);
 
-        // If not forcing, check for conflicts and apply overwrite policy
-        if (!$config->force && $fileSet->hasConflicts()) {
-            $this->enforceOverwritePolicies($fileSet);
+        // If not forcing, check for conflicts and apply overwrite policy.
+        // Compute conflicts once and reuse to avoid stat-ing every path twice.
+        if (!$config->force) {
+            $conflicts = $fileSet->conflicts();
+
+            if ($conflicts !== []) {
+                $this->enforceOverwritePolicies($conflicts);
+            }
         }
 
         return $fileSet;
@@ -53,11 +58,13 @@ abstract class AbstractGenerator implements GeneratorInterface
     /**
      * Enforce overwrite policies on conflicting files.
      *
+     * @param list<GeneratedFile> $conflicts Files whose target paths already exist on disk
+     *
      * @throws InvalidArgumentException If any file has OverwritePolicy::Fail and exists on disk
      */
-    private function enforceOverwritePolicies(GeneratedFileSet $fileSet): void
+    private function enforceOverwritePolicies(array $conflicts): void
     {
-        foreach ($fileSet->conflicts() as $conflict) {
+        foreach ($conflicts as $conflict) {
             if ($conflict->overwritePolicy === OverwritePolicy::Fail) {
                 throw new InvalidArgumentException(
                     "File already exists and overwrite policy is Fail: $conflict->targetPath",

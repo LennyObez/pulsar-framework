@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Observability\Rum;
 
+use JsonException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
@@ -41,8 +42,12 @@ final readonly class RumController
             return Response::json(['error' => 'Empty body'], 400);
         }
 
-        /** @var array<string, mixed>|null $payload */
-        $payload = json_decode($body, true, 16, JSON_THROW_ON_ERROR);
+        try {
+            /** @var array<string, mixed>|null $payload */
+            $payload = json_decode($body, true, 16, JSON_THROW_ON_ERROR);
+        } catch (JsonException) {
+            return Response::json(['error' => 'Invalid JSON'], 400);
+        }
 
         if (!is_array($payload)) {
             return Response::json(['error' => 'Invalid JSON'], 400);

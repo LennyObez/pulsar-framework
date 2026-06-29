@@ -58,7 +58,7 @@ final readonly class RelationshipDefinition
     public static function fromArray(array $data): self
     {
         return new self(
-            type: RelationType::from($data['type'] ?? ''),
+            type: RelationType::tryFrom($data['type'] ?? '') ?? RelationType::HasMany,
             relatedEntity: $data['relatedEntity'] ?? '',
             foreignKey: $data['foreignKey'] ?? '',
             localKey: $data['localKey'] ?? '',

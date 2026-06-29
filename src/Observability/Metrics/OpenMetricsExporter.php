@@ -177,7 +177,7 @@ final readonly class OpenMetricsExporter
             $parts = explode('=', $pair, 2);
 
             if (isset($parts[1])) {
-                $result[$parts[0]] = $parts[1];
+                $result[$parts[0]] = LabelSet::unescapeValue($parts[1]);
             }
         }
 

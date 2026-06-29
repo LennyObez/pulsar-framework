@@ -121,6 +121,40 @@ final class CronFieldsTest extends TestCase
     }
 
     #[Test]
+    public function matchesWithCommaSeparatedRange(): void
+    {
+        // Minute field "1,2-5": the single value 1 plus the range 2..5.
+        // Before the fix, intval('2-5') truncated to 2, so minutes 3, 4 and 5
+        // were silently never matched.
+        $fields = CronFields::parse('1,2-5 * * * *');
+
+        self::assertTrue($fields->matches(new DateTimeImmutable('2026-01-05 09:01:00')));
+        self::assertTrue($fields->matches(new DateTimeImmutable('2026-01-05 09:02:00')));
+        self::assertTrue($fields->matches(new DateTimeImmutable('2026-01-05 09:03:00')));
+        self::assertTrue($fields->matches(new DateTimeImmutable('2026-01-05 09:04:00')));
+        self::assertTrue($fields->matches(new DateTimeImmutable('2026-01-05 09:05:00')));
+        self::assertFalse($fields->matches(new DateTimeImmutable('2026-01-05 09:00:00')));
+        self::assertFalse($fields->matches(new DateTimeImmutable('2026-01-05 09:06:00')));
+    }
+
+    #[Test]
+    public function matchesWithCommaSeparatedStep(): void
+    {
+        // Minute field "0,20-40/5": minute 0 plus the stepped range 20..40/5
+        // (20, 25, 30, 35, 40). Before the fix, intval('20-40/5') collapsed
+        // the stepped-range token to 20.
+        $fields = CronFields::parse('0,20-40/5 * * * *');
+
+        self::assertTrue($fields->matches(new DateTimeImmutable('2026-01-05 09:00:00')));
+        self::assertTrue($fields->matches(new DateTimeImmutable('2026-01-05 09:20:00')));
+        self::assertTrue($fields->matches(new DateTimeImmutable('2026-01-05 09:25:00')));
+        self::assertTrue($fields->matches(new DateTimeImmutable('2026-01-05 09:35:00')));
+        self::assertTrue($fields->matches(new DateTimeImmutable('2026-01-05 09:40:00')));
+        self::assertFalse($fields->matches(new DateTimeImmutable('2026-01-05 09:22:00')));
+        self::assertFalse($fields->matches(new DateTimeImmutable('2026-01-05 09:45:00')));
+    }
+
+    #[Test]
     public function matchesWithRangeAndStep(): void
     {
         // Minutes 0-30, every 10 minutes: 0, 10, 20, 30

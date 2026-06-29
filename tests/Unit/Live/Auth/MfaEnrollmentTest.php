@@ -145,6 +145,36 @@ final class MfaEnrollmentTest extends TestCase
     }
 
     #[Test]
+    public function completeZeroesSecretMaterial(): void
+    {
+        $identity = $this->createStub(IdentityInterface::class);
+        $identity->method('id')->willReturn('user-42');
+
+        $manager = $this->createStub(TwoFactorManagerInterface::class);
+        $manager->method('beginSetup')->willReturn([
+            'provisioning_uri' => 'otpauth://totp/Pulsar:user@example.com?secret=ABC',
+            'secret_base32' => 'ABC123',
+            'secret' => 'raw-secret',
+            'recovery_codes' => ['code-1', 'code-2'],
+        ]);
+
+        $component = new MfaEnrollment();
+        $component->mount(['twoFactorManager' => $manager, 'identity' => $identity]);
+
+        // Sanity: the secret material is present after setup.
+        self::assertSame('raw-secret', $component->secret);
+
+        $component->complete();
+
+        // Once enrollment is finished none of the secret material may remain,
+        // otherwise it keeps getting dehydrated into the transmitted state blob.
+        self::assertSame('', $component->secret);
+        self::assertSame('', $component->secretBase32);
+        self::assertSame('', $component->provisioningUri);
+        self::assertSame([], $component->recoveryCodes);
+    }
+
+    #[Test]
     public function renderSetupStepContainsQrSection(): void
     {
         $component = new MfaEnrollment();

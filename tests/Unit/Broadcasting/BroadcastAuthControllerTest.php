@@ -113,6 +113,40 @@ final class BroadcastAuthControllerTest extends TestCase
     }
 
     #[Test]
+    #[DataProvider('mixedCaseChannelProvider')]
+    public function mixedCasePrivateOrPresenceChannelIsRejectedNotAuthorizedAsPublic(
+        string $channelName,
+    ): void {
+        // Without lowercase validation, a mixed-case "private-"/"presence-"
+        // prefix bypasses the case-sensitive prefix checks and falls through to
+        // the public-channel path, returning auth:true with no authorization
+        // call. The guard must reject it with 400 instead.
+        $authorizer = $this->createStub(ChannelAuthorizerInterface::class);
+        $controller = new BroadcastAuthController($authorizer);
+
+        $request = $this->buildRequest($channelName, 'sock-mixed');
+        $response = $controller->authenticate($request);
+
+        /** @var array<string, mixed> $body */
+        $body = json_decode((string) $response->getBody(), true);
+
+        self::assertSame(400, $response->getStatusCode());
+        self::assertArrayHasKey('error', $body);
+        self::assertArrayNotHasKey('auth', $body);
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function mixedCaseChannelProvider(): iterable
+    {
+        yield 'capitalized private prefix' => ['Private-orders'];
+        yield 'uppercase private prefix' => ['PRIVATE-orders'];
+        yield 'capitalized presence prefix' => ['Presence-chat'];
+        yield 'mixed-case public channel' => ['Updates'];
+    }
+
+    #[Test]
     #[DataProvider('invalidInputProvider')]
     public function invalidInputReturns400(
         mixed $channelName,

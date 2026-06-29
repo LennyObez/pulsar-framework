@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Live\Auth;
 
 use Pulsar\Api\Api;
+use Pulsar\Live\CssColor;
 use Pulsar\Live\LiveAction;
 use Pulsar\Live\LiveComponent;
 use Pulsar\Live\LiveProp;
@@ -113,7 +114,7 @@ final class SignupPage extends LiveComponent
         $e = static fn(string $v): string => htmlspecialchars($v, ENT_QUOTES, 'UTF-8');
 
         $darkClass = $config->darkMode ? ' pulsar-auth--dark' : '';
-        $accentVar = $e($config->accentColor);
+        $accentVar = $e(CssColor::sanitize($config->accentColor));
 
         $logo = '';
         if ($config->logoUrl !== '') {

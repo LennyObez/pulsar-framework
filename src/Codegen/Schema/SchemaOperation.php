@@ -6,8 +6,10 @@ namespace Pulsar\Codegen\Schema;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use RuntimeException;
 
 use function ksort;
+use function sprintf;
 
 /**
  * A single schema change operation produced by the diff engine.
@@ -61,8 +63,18 @@ final readonly class SchemaOperation
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
+        $rawType = $data['type'] ?? '';
+        $type = SchemaOperationType::tryFrom($rawType);
+
+        if ($type === null) {
+            throw new RuntimeException(sprintf(
+                'Invalid schema operation type "%s" in persisted diff data.',
+                $rawType,
+            ));
+        }
+
         return new self(
-            type: SchemaOperationType::from($data['type'] ?? ''),
+            type: $type,
             table: $data['table'] ?? '',
             column: $data['column'] ?? null,
             metadata: $data['metadata'] ?? [],
