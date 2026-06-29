@@ -38,7 +38,17 @@ final readonly class JsonLdCollection
             ? $this->items[0]
             : ['@graph' => $this->items];
 
-        $json = json_encode($graph, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+        // JSON_HEX_TAG is mandatory here: this JSON is embedded inside a
+        // <script> block, so any "<" or ">" in a value (a CMS-controlled
+        // title, author, description, …) must be hex-escaped to < /
+        // >. Without it a "</script>" in user content closes the block
+        // early and the remainder is parsed as HTML — stored XSS. We keep
+        // JSON_UNESCAPED_SLASHES for readable URLs; with tags hex-escaped a
+        // literal "/" can no longer participate in a "</script>" breakout.
+        $json = json_encode(
+            $graph,
+            JSON_HEX_TAG | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR,
+        );
 
         return '<script type="application/ld+json">' . $json . '</script>';
     }
