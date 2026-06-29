@@ -52090,6 +52090,14 @@
                     "return": "Pulsar\\View\\Engine\\CompiledTemplate",
                     "static": false
                 },
+                "composer": {
+                    "params": [
+                        "array|string $patterns",
+                        "callable $composer"
+                    ],
+                    "return": "void",
+                    "static": false
+                },
                 "exists": {
                     "params": [
                         "string $template"
@@ -52103,6 +52111,14 @@
                         "array $data"
                     ],
                     "return": "string",
+                    "static": false
+                },
+                "share": {
+                    "params": [
+                        "array|string $key",
+                        "mixed $value"
+                    ],
+                    "return": "void",
                     "static": false
                 }
             },
@@ -52186,6 +52202,49 @@
                 "timings": {
                     "params": [],
                     "return": "array",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\View\\Engine\\ViewContext": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "string $template",
+                        "array $data"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "added": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
+                },
+                "get": {
+                    "params": [
+                        "string $key",
+                        "mixed $default"
+                    ],
+                    "return": "mixed",
+                    "static": false
+                },
+                "has": {
+                    "params": [
+                        "string $key"
+                    ],
+                    "return": "bool",
+                    "static": false
+                },
+                "with": {
+                    "params": [
+                        "string $key",
+                        "mixed $value"
+                    ],
+                    "return": "Pulsar\\View\\Engine\\ViewContext",
                     "static": false
                 }
             },
@@ -55081,6 +55140,7 @@
         "Pulsar\\View\\Engine\\TemplateCompiler",
         "Pulsar\\View\\Engine\\TemplateEngine",
         "Pulsar\\View\\Engine\\TemplateInheritance",
+        "Pulsar\\View\\Engine\\ViewComposers",
         "Pulsar\\View\\Sandbox\\AstInterpreter",
         "Pulsar\\View\\Sandbox\\AstNode",
         "Pulsar\\View\\Sandbox\\AstNodeType",

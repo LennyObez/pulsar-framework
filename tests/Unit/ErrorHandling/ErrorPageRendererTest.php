@@ -946,6 +946,12 @@ final class StubTemplateEngine implements TemplateEngineInterface
     /** @var list<array<string, mixed>> */
     public array $renderedData = [];
 
+    /** @var list<array{string|array<string, mixed>, mixed}> */
+    public array $sharedCalls = [];
+
+    /** @var list<array{string|list<string>, callable}> */
+    public array $composerCalls = [];
+
     /**
      * @param list<string> $existingTemplates
      */
@@ -974,6 +980,18 @@ final class StubTemplateEngine implements TemplateEngineInterface
     {
         return in_array($template, $this->existingTemplates, true);
     }
+
+    #[Override]
+    public function share(string|array $key, mixed $value = null): void
+    {
+        $this->sharedCalls[] = [$key, $value];
+    }
+
+    #[Override]
+    public function composer(string|array $patterns, callable $composer): void
+    {
+        $this->composerCalls[] = [$patterns, $composer];
+    }
 }
 
 /**
@@ -983,6 +1001,12 @@ final class StubTemplateEngine implements TemplateEngineInterface
  */
 final class BrokenTemplateEngine implements TemplateEngineInterface
 {
+    /** @var list<array{string|array<string, mixed>, mixed}> */
+    public array $sharedCalls = [];
+
+    /** @var list<array{string|list<string>, callable}> */
+    public array $composerCalls = [];
+
     #[Override]
     public function render(string $template, array $data = []): string
     {
@@ -999,5 +1023,17 @@ final class BrokenTemplateEngine implements TemplateEngineInterface
     public function exists(string $template): bool
     {
         return true; // pretend template exists
+    }
+
+    #[Override]
+    public function share(string|array $key, mixed $value = null): void
+    {
+        $this->sharedCalls[] = [$key, $value];
+    }
+
+    #[Override]
+    public function composer(string|array $patterns, callable $composer): void
+    {
+        $this->composerCalls[] = [$patterns, $composer];
     }
 }

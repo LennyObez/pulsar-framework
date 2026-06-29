@@ -132,6 +132,24 @@ final class ExceptionHandlerWiringTest extends TestCase
             {
                 return $template === 'errors.404';
             }
+
+            /** @var list<array{string|array<string, mixed>, mixed}> */
+            public array $sharedCalls = [];
+
+            /** @var list<array{string|list<string>, callable}> */
+            public array $composerCalls = [];
+
+            #[Override]
+            public function share(string|array $key, mixed $value = null): void
+            {
+                $this->sharedCalls[] = [$key, $value];
+            }
+
+            #[Override]
+            public function composer(string|array $patterns, callable $composer): void
+            {
+                $this->composerCalls[] = [$patterns, $composer];
+            }
         };
         $container->instance(TemplateEngineInterface::class, $engine);
 

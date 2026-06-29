@@ -14,6 +14,7 @@ use Pulsar\Http\Message\Response;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Routing\Router;
+use Pulsar\Runtime\RequestResetRegistry;
 use Pulsar\View\Command\PlaygroundServeCommand;
 use Pulsar\View\Command\ViewCompileCommand;
 use Pulsar\View\Directive\DirectiveRegistry;
@@ -22,6 +23,7 @@ use Pulsar\View\Engine\TemplateCompiler;
 use Pulsar\View\Engine\TemplateEngine;
 use Pulsar\View\Engine\TemplateEngineInterface;
 use Pulsar\View\Engine\TemplateInheritance;
+use Pulsar\View\Engine\ViewComposers;
 use Pulsar\View\Escaping\AttributeEscaper;
 use Pulsar\View\Escaping\CssEscaper;
 use Pulsar\View\Escaping\EscaperInterface;
@@ -72,6 +74,7 @@ final class ViewWiringTest extends TestCase
         self::assertTrue($container->has(TemplateInheritance::class));
         self::assertTrue($container->has(TemplateEngineInterface::class));
         self::assertTrue($container->has(TemplateEngine::class));
+        self::assertTrue($container->has(ViewComposers::class));
 
         // Escapers
         self::assertTrue($container->has(EscaperInterface::class));
@@ -88,6 +91,41 @@ final class ViewWiringTest extends TestCase
         // CLI commands
         self::assertTrue($container->has(ViewCompileCommand::class));
         self::assertTrue($container->has(PlaygroundServeCommand::class));
+    }
+
+    #[Test]
+    public function wireConnectsViewComposersToTheEngineAndTheResetRegistry(): void
+    {
+        // Arrange — a container where RuntimeWiring already bound the reset
+        // registry (its real boot order: RuntimeWiring runs before ViewWiring)
+        $container = new Container();
+        $resetRegistry = new RequestResetRegistry();
+        $container->instance(RequestResetRegistry::class, $resetRegistry);
+
+        $configManager = $this->createConfigManager();
+        $configManager->load();
+
+        // Act
+        new ViewWiring()->wire(
+            $container,
+            $configManager,
+            new MiddlewarePipeline($container),
+            new MiddlewareRegistry(),
+            new Router(),
+        );
+
+        // Assert — the engine renders through the SAME store instance the
+        // container exposes (a share on one is visible through the other), and
+        // the store is reset between requests via the registry
+        /** @var TemplateEngine $engine */
+        $engine = $container->get(TemplateEngine::class);
+        /** @var ViewComposers $store */
+        $store = $container->get(ViewComposers::class);
+
+        $engine->share('connected', 'yes');
+        self::assertSame('yes', $store->resolve('any.template', [])['connected']);
+        self::assertSame($store, $engine->composers());
+        self::assertContains(ViewComposers::class, $resetRegistry->resettableIds);
     }
 
     #[Test]

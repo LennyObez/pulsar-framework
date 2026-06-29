@@ -299,6 +299,14 @@
                      generator, and a per-key get() loop would regress the batch
                      lookup. Same type-generic boundary as Container::call() above. -->
                 <file name="../../src/Cache/Application/SimpleCache.php"/>
+                <!-- (C) View shared data / composers: ViewComposers::share()
+                     accumulates inherently-mixed view-data values (mixed by the
+                     TemplateEngineInterface::share() #[Api] contract) into the
+                     per-request array<string, mixed> store. Iterating and
+                     offset-writing those mixed values is MixedAssignment with no
+                     narrower honest type — the same type-generic boundary as
+                     PSR-16 SimpleCache above. -->
+                <file name="../../src/View/Engine/ViewComposers.php"/>
                 <!-- (A) PHP 8.5 ext-dom Dom\NodeList iteration: Psalm narrows
                      iteration values to mixed (DOMNodeList::current() returns
                      DOMNode in stubs but Psalm doesn't recognise ext-dom 8.5
