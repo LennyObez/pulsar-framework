@@ -4,15 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Filesystem;
 
-use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Filesystem\SafeFilesystem;
 use Pulsar\Filesystem\SafePath;
-use Symfony\Component\Filesystem\Exception\IOException;
-use Symfony\Component\Filesystem\Filesystem;
 
+use function basename;
 use function file_put_contents;
 use function is_dir;
 use function mkdir;
@@ -20,11 +18,14 @@ use function sprintf;
 use function sys_get_temp_dir;
 use function uniqid;
 
+use const DIRECTORY_SEPARATOR;
+
 /**
- * Covers {@see SafeFilesystem::rmdirWithRetry()} escalating-backoff
- * retry path and the best-effort {@see SafeFilesystem::removeFile()}
- * IOException swallow — the only non-trivial logic in the class and
- * previously untested.
+ * Covers {@see SafeFilesystem::rmdirWithRetry()} escalating-backoff retry path
+ * and the best-effort {@see SafeFilesystem::removeFile()} swallow — the only
+ * non-trivial logic in the class. The native deletion primitive is injected as
+ * a counting closure so retry counts are asserted deterministically without
+ * touching the real filesystem.
  */
 #[CoversClass(SafeFilesystem::class)]
 final class SafeFilesystemTest extends TestCase
@@ -45,60 +46,81 @@ final class SafeFilesystemTest extends TestCase
 
     protected function tearDown(): void
     {
-        if ($this->root !== '' && is_dir($this->root)) {
-            // Clean up with the real component; the fake under test
-            // never actually deletes, so the leaf directory remains.
-            new Filesystem()->remove($this->root);
+        if ($this->root === '' || !is_dir($this->root)) {
+            return;
+        }
+
+        // Clean up with the real component (default native remover); the
+        // injected counting closures under test never actually delete, so the
+        // tree is left behind.
+        $safe = SafePath::resolveUnder(basename($this->root), sys_get_temp_dir());
+        if ($safe !== null) {
+            new SafeFilesystem()->removeDirectoryRecursive($safe);
         }
     }
 
     #[Test]
-    public function rmdirRetriesThenSucceedsAfterTransientIoException(): void
+    public function rmdirRetriesThenSucceedsAfterTransientFailure(): void
     {
-        // Fail only the first attempt, then "succeed" (no-op).
-        $fs = new CountingThrowingFilesystem(throwUpTo: 1);
+        $calls = 0;
+        // Fail only the first attempt, then "succeed" (no real deletion).
+        $remove = static function (string $path) use (&$calls): bool {
+            ++$calls;
 
-        new SafeFilesystem($fs)->removeDirectoryRecursive($this->safeRoot());
+            return $calls > 1;
+        };
 
-        // One failed attempt + one successful retry = exactly 2 calls;
-        // the loop must stop on success and not exhaust the schedule.
-        self::assertSame(2, $fs->calls);
+        new SafeFilesystem($remove)->removeDirectoryRecursive($this->safeRoot());
+
+        // One failed attempt + one successful retry = exactly 2 calls; the loop
+        // must stop on success and not exhaust the schedule.
+        self::assertSame(2, $calls);
     }
 
     #[Test]
-    public function rmdirExhaustsScheduleThenSwallowsPersistentIoException(): void
+    public function rmdirExhaustsScheduleThenSwallowsPersistentFailure(): void
     {
-        // Throw on every call so the whole schedule is exercised.
-        $fs = new CountingThrowingFilesystem(throwUpTo: PHP_INT_MAX);
+        $calls = 0;
+        // Never succeed so the whole backoff schedule is exercised.
+        $remove = static function (string $path) use (&$calls): bool {
+            ++$calls;
+
+            return false;
+        };
 
         // Must not propagate despite every attempt failing.
-        new SafeFilesystem($fs)->removeDirectoryRecursive($this->safeRoot());
+        new SafeFilesystem($remove)->removeDirectoryRecursive($this->safeRoot());
 
         // 5 backoff attempts + 1 final best-effort attempt = 6 calls.
-        self::assertSame(6, $fs->calls);
+        self::assertSame(6, $calls);
     }
 
     #[Test]
-    public function removeFileSwallowsIoException(): void
+    public function removeFileSwallowsFailure(): void
     {
         $leaf = $this->root . DIRECTORY_SEPARATOR . 'leaf.txt';
         file_put_contents($leaf, 'x');
 
-        $fs = new CountingThrowingFilesystem(throwUpTo: PHP_INT_MAX);
+        $calls = 0;
+        $remove = static function (string $path) use (&$calls): bool {
+            ++$calls;
+
+            return false;
+        };
 
         $safe = SafePath::resolveUnder('leaf.txt', $this->root);
         self::assertNotNull($safe);
 
         // Best-effort: a failed leaf removal must not throw.
-        new SafeFilesystem($fs)->removeFile($safe);
+        new SafeFilesystem($remove)->removeFile($safe);
 
-        self::assertSame(1, $fs->calls);
+        self::assertSame(1, $calls);
     }
 
     private function safeRoot(): SafePath
     {
-        // An empty real directory: removeDirectoryRecursive() finds no
-        // children and proceeds straight to rmdirWithRetry().
+        // An empty real directory: removeDirectoryRecursive() finds no children
+        // and proceeds straight to rmdirWithRetry().
         $child = 'dir_' . uniqid('', true);
         $full = $this->root . DIRECTORY_SEPARATOR . $child;
         if (!mkdir($full, 0o750) && !is_dir($full)) {
@@ -109,32 +131,5 @@ final class SafeFilesystemTest extends TestCase
         self::assertNotNull($safe);
 
         return $safe;
-    }
-}
-
-/**
- * Test double that counts {@see Filesystem::remove()} calls and throws
- * an {@see IOException} for the first `$throwUpTo` invocations, then
- * becomes a no-op. It never touches the real filesystem so callers can
- * assert exact retry counts deterministically.
- */
-final class CountingThrowingFilesystem extends Filesystem
-{
-    public int $calls = 0;
-
-    public function __construct(private readonly int $throwUpTo) {}
-
-    /**
-     * @param string|iterable<string> $files
-     */
-    #[Override]
-    public function remove(string|iterable $files): void
-    {
-        ++$this->calls;
-        if ($this->calls <= $this->throwUpTo) {
-            throw new IOException('simulated filesystem lock');
-        }
-        // Past the throw window: intentionally a no-op so the leaf
-        // directory survives for deterministic assertions.
     }
 }
