@@ -631,11 +631,19 @@ final class SelectBuilder implements EntityQueryBuilderInterface
      */
     public function cursorPaginate(int $perPage = 15, ?string $cursor = null, string $cursorColumn = 'id'): CursorPaginator
     {
+        IdentifierValidator::validateQualified($cursorColumn);
+
         if ($cursor !== null) {
             $decoded = CursorPaginator::decodeCursor($cursor);
 
-            if ($decoded !== null) {
-                $this->whereOp($decoded['column'], '>', $decoded['value']);
+            // The cursor is client-supplied and opaque: only its VALUE is
+            // trusted (it is bound as a parameter). The column it carries
+            // must equal the column this query was configured to page by —
+            // a tampered cursor naming any other column is rejected so it
+            // can never steer the WHERE/ORDER BY onto an attacker-chosen
+            // identifier.
+            if ($decoded !== null && $decoded['column'] === $cursorColumn) {
+                $this->whereOp($cursorColumn, '>', $decoded['value']);
             }
         }
 
