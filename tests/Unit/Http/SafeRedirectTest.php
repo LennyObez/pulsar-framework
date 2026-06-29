@@ -100,4 +100,52 @@ final class SafeRedirectTest extends TestCase
         $this->expectExceptionMessage('relative path');
         SafeRedirect::validate('not-a-url');
     }
+
+    /**
+     * Browsers normalise "\" to "/" before resolving the authority, so
+     * `/\evil.com` becomes the protocol-relative `//evil.com` and navigates
+     * off-site. The "//" prefix check alone misses this; the backslash
+     * spelling must be rejected too.
+     */
+    #[Test]
+    public function rejectsBackslashObfuscatedProtocolRelativeUrl(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Protocol-relative');
+        SafeRedirect::validate('/\\evil.com/phish');
+    }
+
+    #[Test]
+    public function rejectsLeadingDoubleBackslashUrl(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Protocol-relative');
+        SafeRedirect::validate('\\\\evil.com/phish');
+    }
+
+    #[Test]
+    public function rejectsBackslashSlashProtocolRelativeUrl(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Protocol-relative');
+        SafeRedirect::validate('/\\/evil.com');
+    }
+
+    #[Test]
+    public function rejectsCarriageReturnLineFeedForHeaderInjection(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('control characters');
+        SafeRedirect::validate("/dashboard\r\nSet-Cookie: session=hijacked");
+    }
+
+    #[Test]
+    public function stillAllowsBackslashInsideRelativePath(): void
+    {
+        // A backslash that is NOT part of a leading authority is harmless —
+        // the browser keeps it same-origin. Do not over-reject.
+        $result = SafeRedirect::validate('/files/path\\to\\doc');
+
+        self::assertSame('/files/path\\to\\doc', $result);
+    }
 }
