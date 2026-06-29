@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Broadcasting;
 
 use Pulsar\Api\Api;
+use Pulsar\Auth\Identity\IdentityInterface;
 use Pulsar\Http\Message\Response;
 use Pulsar\Http\Request;
 use Pulsar\WebSocket\ChannelAuthorizerInterface;
@@ -12,6 +13,7 @@ use Pulsar\WebSocket\ChannelManager;
 use Pulsar\WebSocket\WebSocketConnection;
 
 use function is_string;
+use function preg_match;
 use function strtolower;
 
 /**
@@ -19,11 +21,29 @@ use function strtolower;
  *
  * Clients POST to this endpoint with `channel_name` and `socket_id` to get
  * an auth token that allows subscribing to private or presence channels.
+ *
+ * Private and presence channels require an AUTHENTICATED requester: the
+ * identity resolved by the authentication middleware (request attribute
+ * `identity`) is attached to the connection handed to the channel authorizer,
+ * so authorizers decide with a real principal
+ * ({@see WebSocketConnection::userId()}) instead of an anonymous ephemeral
+ * connection. Requests without an authenticated identity are denied with 401
+ * before the authorizer runs — route this endpoint through the authentication
+ * middleware. Public channels remain auth-free.
  * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class BroadcastAuthController
 {
+    /**
+     * Conservative allowlist for client-supplied socket ids: 1–64 chars,
+     * starting alphanumeric, then alphanumerics plus `. _ : -`. Covers the
+     * common transport formats ("123.456", "conn-99") while rejecting control
+     * characters, separators, and anything header-/log-injection shaped before
+     * the value reaches the authorizer or any log line.
+     */
+    private const string SOCKET_ID_PATTERN = '/^[A-Za-z0-9][A-Za-z0-9._:-]{0,63}$/';
+
     public function __construct(
         private ChannelAuthorizerInterface $authorizer,
     ) {}
@@ -45,6 +65,13 @@ final readonly class BroadcastAuthController
             );
         }
 
+        if (preg_match(self::SOCKET_ID_PATTERN, $socketId) !== 1) {
+            return Response::json(
+                ['error' => 'Invalid socket_id format'],
+                400,
+            );
+        }
+
         // Channel-type detection is prefix-based and case-sensitive
         // (ChannelManager::isPrivateChannel / isPresenceChannel). A mixed-case
         // prefix such as "Private-orders" would otherwise bypass the prefix
@@ -57,9 +84,27 @@ final readonly class BroadcastAuthController
             );
         }
 
+        $isPresence = ChannelManager::isPresenceChannel($channelName);
+        $isPrivate = !$isPresence && ChannelManager::isPrivateChannel($channelName);
+
         $connection = new WebSocketConnection($socketId, (float) time());
 
-        if (ChannelManager::isPresenceChannel($channelName)) {
+        if ($isPresence || $isPrivate) {
+            // Deny-by-default: a private/presence subscription is an
+            // identity-bound grant, so an unauthenticated requester is
+            // rejected before the authorizer ever runs.
+            $identity = $request->attribute('identity');
+
+            if (!$identity instanceof IdentityInterface || !$identity->isAuthenticated()) {
+                return Response::json(['error' => 'Unauthenticated'], 401);
+            }
+
+            // The authorizer decides with the real principal: userId() carries
+            // the authenticated identity, not a client-asserted value.
+            $connection->authenticate($identity->id());
+        }
+
+        if ($isPresence) {
             $userInfo = $this->authorizer->authorizePresence($channelName, $connection);
 
             if ($userInfo === null) {
@@ -73,7 +118,7 @@ final readonly class BroadcastAuthController
             ]);
         }
 
-        if (ChannelManager::isPrivateChannel($channelName)) {
+        if ($isPrivate) {
             $authorized = $this->authorizer->authorizePrivate($channelName, $connection);
 
             if (!$authorized) {
