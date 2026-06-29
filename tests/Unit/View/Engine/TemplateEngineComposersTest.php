@@ -133,6 +133,32 @@ final class TemplateEngineComposersTest extends TestCase
     }
 
     #[Test]
+    public function inheritedParentDataWinsOverAPartialComposerOnKeyCollision(): void
+    {
+        // Arrange — a wildcard composer resolves 'banner' at the page level; a
+        // partial-scoped composer (registered LATER, so it would win at the
+        // composer tier) contests 'banner' and adds its own key. The partial
+        // inherits the parent's resolved data as explicit data.
+        $this->writeTemplate('page', "@include('theme.partials.box')");
+        $this->writeTemplate('theme.partials.box', '<b>{{ $banner }}</b><i>{{ $partialOnly }}</i>');
+
+        $this->engine->composer('*', static fn(): array => ['banner' => 'page-level']);
+        $this->engine->composer('theme.partials.*', static fn(): array => [
+            'banner' => 'partial-level',
+            'partialOnly' => 'added-by-partial',
+        ]);
+
+        // Act
+        $html = $this->engine->render('page');
+
+        // Assert — the documented nuance: the inherited (explicit) value wins
+        // the collision, while the partial composer still adds new keys
+        self::assertStringContainsString('<b>page-level</b>', $html);
+        self::assertStringNotContainsString('partial-level', $html);
+        self::assertStringContainsString('<i>added-by-partial</i>', $html);
+    }
+
+    #[Test]
     public function composerIsLazyAndNeverRunsWhenNoMatchingTemplateRenders(): void
     {
         // Arrange — a composer whose pattern matches nothing we render

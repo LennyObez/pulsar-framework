@@ -471,8 +471,9 @@ $engine->composer(['errors.*', '*'], ...);  // multiple patterns / match everyth
 
 Guarantees:
 
-- **Lazy** — a composer runs only when a matching template actually renders, and **at most once per request** (its output is memoized), so an expensive nav tree is built once even when header, footer and drawer all match.
+- **Lazy** — a composer runs only when a matching template actually renders, and **at most once per request** (its output is memoized), so an expensive nav tree is built once even when header, footer and drawer all match. Pattern matching itself runs on every render; only the composer's execution is memoized.
 - **Deterministic precedence**, low to high: shared data → composer output (registration order; later overrides earlier) → the explicit `render()` data. Explicit data always wins.
+- **Nested includes inherit, and inherited data wins** — an `@include` partial receives the parent render's resolved data as its explicit data. On a key collision the inherited value therefore wins: a partial-matching composer cannot override a key the parent already resolved (e.g. from a `'*'` composer); it can only add keys the parent did not provide.
 - **No hot-path cost** when nothing is registered: `render()` short-circuits.
 
 ### Error pages get the chrome for free

@@ -65,9 +65,16 @@ interface TemplateEngineInterface
      * returning an associative array or by calling {@see ViewContext::with()}.
      * It runs at most once per request (its output is memoized the first time a
      * pattern matches), so expensive shared data is built once even when several
-     * partials match. Multiple matching composers run in registration order
-     * (later may override earlier). Precedence, low to high: shared data →
-     * composer output → explicit render() data.
+     * partials match. Pattern matching itself runs on every render; only the
+     * composer's execution is memoized. Multiple matching composers run in
+     * registration order (later may override earlier). Precedence, low to high:
+     * shared data → composer output → explicit render() data.
+     *
+     * Nested renders (`@include` partials) inherit the parent render's resolved
+     * data as their explicit data. On a key collision that inherited value
+     * therefore wins: a partial-matching composer cannot override a key the
+     * parent render already resolved (e.g. from a wildcard composer) — it can
+     * only add keys the parent did not provide.
      *
      * Register composers at boot (after the engine is bound, before the first
      * render) so they also apply to early/error-path renders.
