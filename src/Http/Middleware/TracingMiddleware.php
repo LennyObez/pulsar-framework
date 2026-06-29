@@ -33,11 +33,11 @@ use function sprintf;
  * client can spoof trace ids into the topology, force `sampled=01` to
  * bypass our sampling rate (collector memory exhaustion), or attempt
  * to correlate with internal trace ids leaked elsewhere. The middleware
- * accepts the inbound header only when (a) no TrustedProxy is wired
- * (single-tenant deployments behind their own auth), or (b) the request
- * arrives from a trusted proxy in the configured chain. Any other
- * source has its `traceparent` discarded and a fresh root span is
- * minted.
+ * accepts the inbound header ONLY when the request arrives from a trusted
+ * proxy in the configured chain (`deploy.trusted_proxies`). With no
+ * TrustedProxy wired nothing is trusted: every client gets a fresh root
+ * span (deny-by-default). Deployments wanting distributed-trace
+ * continuity declare their upstream proxies explicitly.
  */
 final readonly class TracingMiddleware implements MiddlewareInterface
 {
@@ -143,15 +143,18 @@ final readonly class TracingMiddleware implements MiddlewareInterface
 
     /**
      * F8.7: traceparent is honoured only when the request comes from a
-     * trusted proxy (or no TrustedProxy was wired, in which case we
-     * trust every direct caller — single-tenant / behind-own-auth
-     * deployments). The TrustedProxy class already validates remote
-     * IP against a configurable proxy chain.
+     * trusted proxy. With no TrustedProxy wired, NOTHING is trusted
+     * (deny-by-default): otherwise any unauthenticated client could force
+     * sampling (`sampled=01` on every request exhausts the collector) or
+     * inject forged trace/span ids into the topology. Deployments that want
+     * distributed-trace continuity declare their upstream in
+     * `deploy.trusted_proxies`; TracingWiring then wires the TrustedProxy
+     * that validates REMOTE_ADDR against that chain.
      */
     private function shouldHonourInboundTraceparent(ServerRequestInterface $request): bool
     {
         if ($this->trustedProxy === null) {
-            return true;
+            return false;
         }
 
         $remoteAddr = $request->getServerParams()['REMOTE_ADDR'] ?? null;
