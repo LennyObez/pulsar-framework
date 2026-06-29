@@ -135,7 +135,7 @@ final class SchemaFileParserTest extends TestCase
         self::assertSame('float', $props[1]->phpType);
         self::assertSame('bool', $props[2]->phpType);
         self::assertSame('array', $props[3]->phpType);
-        self::assertSame('DateTimeImmutable', $props[4]->phpType);
+        self::assertSame('\\DateTimeImmutable', $props[4]->phpType);
     }
 
     #[Test]

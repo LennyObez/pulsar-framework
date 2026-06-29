@@ -281,7 +281,7 @@ final readonly class SchemaFileParser
             'int', 'integer', 'bigint', 'smallint', 'tinyint' => 'int',
             'float', 'double', 'decimal', 'numeric' => 'float',
             'bool', 'boolean' => 'bool',
-            'datetime', 'timestamp', 'date', 'time' => 'DateTimeImmutable',
+            'datetime', 'timestamp', 'date', 'time' => '\\DateTimeImmutable',
             'json', 'jsonb' => 'array',
             'blob', 'binary' => 'string',
             default => 'mixed',

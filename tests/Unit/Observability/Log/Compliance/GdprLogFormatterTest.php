@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Tests\Unit\Observability\Log\Compliance;
 
 use DateTimeImmutable;
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -194,6 +195,23 @@ final class GdprLogFormatterTest extends TestCase
         self::assertSame($entry->message, $result->message);
         self::assertSame($entry->channel, $result->channel);
         self::assertSame($entry->timestamp, $result->timestamp);
+    }
+
+    #[Test]
+    public function rejectsEmptyHmacKey(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        new GdprLogFormatter('');
+    }
+
+    #[Test]
+    public function rejectsHmacKeyShorterThanMinimum(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        // 15 bytes — one short of the 16-byte keyed-hash minimum.
+        new GdprLogFormatter('123456789012345');
     }
 
     #[Test]

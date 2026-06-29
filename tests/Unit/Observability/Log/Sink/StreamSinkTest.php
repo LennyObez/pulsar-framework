@@ -12,6 +12,8 @@ use Pulsar\Observability\Log\LogEntry;
 use Pulsar\Observability\Log\LogLevel;
 use Pulsar\Observability\Log\Sink\StreamSink;
 
+use function count;
+
 #[CoversClass(StreamSink::class)]
 final class StreamSinkTest extends TestCase
 {
@@ -61,5 +63,38 @@ final class StreamSinkTest extends TestCase
         $this->expectException(LogException::class);
 
         new StreamSink('invalid://nonexistent_stream_uri');
+    }
+
+    #[Test]
+    public function destructorClosesOwnedFileStream(): void
+    {
+        $path = $this->tempDir . '/owned_stream.log';
+        file_put_contents($path, '');
+
+        $before = count(get_resources('stream'));
+
+        $sink = new StreamSink($path);
+
+        self::assertSame($before + 1, count(get_resources('stream')), 'sink should hold one open stream');
+
+        // Dropping the only reference triggers __destruct deterministically.
+        unset($sink);
+
+        self::assertSame($before, count(get_resources('stream')), 'descriptor must be released on destruction');
+    }
+
+    #[Test]
+    public function destructorDoesNotCloseStandardStreams(): void
+    {
+        // Closing php://stderr would tear down the process's error stream for
+        // every other consumer, so a StreamSink over it must never own/close it.
+        $sink = new StreamSink('php://stderr');
+
+        unset($sink);
+
+        // stderr is still usable: opening it again succeeds (it would fail if
+        // the underlying descriptor had been closed).
+        $reopened = fopen('php://stderr', 'a');
+        self::assertIsResource($reopened);
     }
 }

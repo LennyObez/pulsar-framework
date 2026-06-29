@@ -196,6 +196,61 @@ final class MigrationDiffCommandTest extends TestCase
         self::assertTrue($hasCustomName);
     }
 
+    /**
+     * When a custom migration name is supplied and more than one entity
+     * has schema changes, every generated migration file must still have
+     * a distinct target path. Without disambiguating by table name, both
+     * entities collide on the same `<timestamp>_<customName>.php` filename
+     * and the second generation aborts (OverwritePolicy::Fail).
+     */
+    #[Test]
+    public function itDisambiguatesCustomNameAcrossMultipleEntities(): void
+    {
+        $users = $this->createEntity();
+        $posts = $this->createNamedEntity('Post', 'posts');
+
+        $currentSnapshot = new SchemaSnapshot(
+            entities: ['users' => $users, 'posts' => $posts],
+            version: '1',
+        );
+
+        $store = $this->createStub(SchemaSnapshotStoreInterface::class);
+        $store->method('load')->willReturn(null);
+
+        $command = $this->createCommand($currentSnapshot, $store);
+
+        $input = $this->createStub(InputInterface::class);
+        $input->method('getStringOption')->willReturnCallback(
+            static fn(string $name, string $default = ''): string => match ($name) {
+                'path' => '/project',
+                'name' => 'create_table',
+                default => $default,
+            },
+        );
+        $input->method('hasOption')->willReturn(false);
+
+        $generatedPaths = [];
+        $output = $this->createStub(OutputInterface::class);
+        $output->method('writeln')->willReturnCallback(
+            static function (string $line) use (&$generatedPaths): void {
+                if (str_contains($line, 'Generated:')) {
+                    $generatedPaths[] = $line;
+                }
+            },
+        );
+
+        $result = $command->execute($input, $output);
+
+        self::assertSame(ExitCode::Success->value, $result);
+        self::assertCount(2, $generatedPaths);
+        // Both retain the custom name but must be distinguished by table.
+        self::assertNotSame($generatedPaths[0], $generatedPaths[1]);
+
+        $combined = $generatedPaths[0] . "\n" . $generatedPaths[1];
+        self::assertStringContainsString('create_table_users', $combined);
+        self::assertStringContainsString('create_table_posts', $combined);
+    }
+
     #[Test]
     public function itDoesNotSaveSnapshotWhenNoChanges(): void
     {
@@ -245,10 +300,15 @@ final class MigrationDiffCommandTest extends TestCase
 
     private function createEntity(): EntityDefinition
     {
+        return $this->createNamedEntity('User', 'users');
+    }
+
+    private function createNamedEntity(string $className, string $tableName): EntityDefinition
+    {
         return new EntityDefinition(
-            className: 'User',
+            className: $className,
             namespace: 'App\\Entity',
-            tableName: 'users',
+            tableName: $tableName,
             properties: [
                 new PropertyDefinition(
                     name: 'id',

@@ -180,6 +180,47 @@ final class LoginPageTest extends TestCase
     }
 
     #[Test]
+    public function submitSuccessfulClearsPlaintextPassword(): void
+    {
+        $authenticator = $this->createStub(AuthenticatorInterface::class);
+        $authenticator->method('attempt')->willReturn(AuthResult::ok('/dashboard'));
+
+        $page = new LoginPage();
+        $page->mount(['config' => new AuthUiConfig(), 'authenticator' => $authenticator]);
+        $page->email = 'test@example.com';
+        $page->password = 'super-secret-password';
+
+        $page->submit();
+
+        // The plaintext password must not survive the successful-login path,
+        // otherwise it is dehydrated into the encrypted state blob.
+        self::assertSame('', $page->password);
+    }
+
+    #[Test]
+    public function renderSanitizesMaliciousAccentColor(): void
+    {
+        $page = new LoginPage();
+        $page->mount(['config' => new AuthUiConfig(accentColor: '#000; background: url(//evil.com)')]);
+
+        $html = $page->render();
+
+        self::assertStringNotContainsString('url(//evil.com)', $html);
+        self::assertStringContainsString('--pulsar-accent: #4f46e5', $html);
+    }
+
+    #[Test]
+    public function renderKeepsValidAccentColor(): void
+    {
+        $page = new LoginPage();
+        $page->mount(['config' => new AuthUiConfig(accentColor: '#abc123')]);
+
+        $html = $page->render();
+
+        self::assertStringContainsString('--pulsar-accent: #abc123', $html);
+    }
+
+    #[Test]
     public function renderMfaChallengeWhenRequired(): void
     {
         $page = new LoginPage();

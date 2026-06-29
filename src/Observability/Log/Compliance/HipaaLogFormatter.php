@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Observability\Log\Compliance;
 
+use InvalidArgumentException;
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Observability\Log\LogEntry;
@@ -11,8 +12,12 @@ use Pulsar\Security\Crypto\Hmac;
 
 use function in_array;
 use function is_string;
+use function sprintf;
+use function strlen;
 use function strtolower;
 use function substr;
+
+use const SODIUM_CRYPTO_GENERICHASH_KEYBYTES_MIN;
 
 /**
  * Marks PHI access and pseudonymizes patient identifiers in log entries.
@@ -61,10 +66,22 @@ final class HipaaLogFormatter implements ComplianceLogFormatter
 
     /**
      * @param string $hmacKey HMAC key for keyed pseudonymization (min 16 bytes)
+     *
+     * @throws InvalidArgumentException If the HMAC key is shorter than the minimum
+     *                                  keyed-hash length, which would weaken HIPAA
+     *                                  Safe Harbor pseudonymization of patient identifiers.
      */
     public function __construct(
         private readonly string $hmacKey,
-    ) {}
+    ) {
+        if (strlen($this->hmacKey) < SODIUM_CRYPTO_GENERICHASH_KEYBYTES_MIN) {
+            throw new InvalidArgumentException(sprintf(
+                'HIPAA pseudonymization HMAC key must be at least %d bytes, got %d',
+                SODIUM_CRYPTO_GENERICHASH_KEYBYTES_MIN,
+                strlen($this->hmacKey),
+            ));
+        }
+    }
 
     #[Override]
     public function format(LogEntry $entry): LogEntry

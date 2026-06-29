@@ -31755,7 +31755,8 @@
                         "Pulsar\\Observability\\Log\\LogLevel $threshold",
                         "string $channel",
                         "bool $debug",
-                        "mixed $stderr"
+                        "mixed $stderr",
+                        "?Closure $fallbackEmitter"
                     ],
                     "return": null,
                     "static": false
@@ -32097,6 +32098,13 @@
                     "params": [],
                     "return": "array",
                     "static": false
+                },
+                "unescapeValue": {
+                    "params": [
+                        "string $value"
+                    ],
+                    "return": "string",
+                    "static": true
                 }
             },
             "constants": []
@@ -54899,6 +54907,7 @@
         "Pulsar\\Introspection\\Internal\\ConfigSchemaReflector",
         "Pulsar\\Introspection\\Internal\\CoreRuntimeProbe",
         "Pulsar\\Introspection\\Internal\\SnapshotFileReader",
+        "Pulsar\\Live\\CssColor",
         "Pulsar\\Live\\Internal\\ActionDispatcher",
         "Pulsar\\Live\\Internal\\ComponentHydrator",
         "Pulsar\\Live\\Internal\\ComponentStateEncryptor",
