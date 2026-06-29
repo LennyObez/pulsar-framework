@@ -14,6 +14,7 @@ use Throwable;
 
 use function is_string;
 use function json_encode;
+use function preg_match;
 use function sprintf;
 
 use const JSON_THROW_ON_ERROR;
@@ -76,6 +77,13 @@ final readonly class PushChannel implements NotificationChannelInterface
             $fcmMessage['webpush'] = [
                 'fcm_options' => ['link' => $message->clickAction],
             ];
+        }
+
+        if (preg_match('/^[a-z0-9-]+$/', $this->projectId) !== 1) {
+            throw NotificationException::channelNotAvailable(
+                $this->name(),
+                'FCM project ID is malformed; expected a Firebase project ID (lowercase alphanumerics and hyphens)',
+            );
         }
 
         $payload = ['message' => $fcmMessage];

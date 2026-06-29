@@ -165,4 +165,62 @@ final class StaticSiteGeneratorCoverageTest extends TestCase
 
         self::assertCount(2, $ssg->pages());
     }
+
+    #[Test]
+    public function writeToDiskRefusesParentDirectoryTraversal(): void
+    {
+        $renderer = $this->createStub(PageRendererInterface::class);
+        $renderer->method('render')->willReturn('<p>pwned</p>');
+
+        $config = new StaticSiteConfig(
+            outputDir: $this->tempDir . DIRECTORY_SEPARATOR . 'output',
+            excludePatterns: [],
+        );
+        $ssg = new StaticSiteGenerator($config, $renderer);
+        $ssg->renderRoute('/../escape');
+
+        $written = $ssg->writeToDisk();
+
+        self::assertSame(0, $written);
+        self::assertCount(1, $ssg->errors());
+        self::assertStringContainsString('path traversal', $ssg->errors()[0]);
+        // The traversal target one level above the output dir must not exist.
+        self::assertFileDoesNotExist(
+            $this->tempDir . DIRECTORY_SEPARATOR . 'escape' . DIRECTORY_SEPARATOR . 'index.html',
+        );
+    }
+
+    #[Test]
+    public function writeToDiskRecordsDirectoryCreationFailure(): void
+    {
+        $renderer = $this->createStub(PageRendererInterface::class);
+        $renderer->method('render')->willReturn('<p>blocked</p>');
+
+        // Place a regular file where writeToDisk() must create a directory,
+        // forcing mkdir() to fail for the nested page.
+        $blocker = $this->tempDir . DIRECTORY_SEPARATOR . 'blocked';
+        file_put_contents($blocker, 'not a directory');
+
+        $config = new StaticSiteConfig(
+            outputDir: $this->tempDir,
+            excludePatterns: [],
+        );
+        $ssg = new StaticSiteGenerator($config, $renderer);
+        $ssg->renderRoute('/blocked/page');
+
+        // Suppress the expected mkdir() warning emitted by the source code when
+        // directory creation legitimately fails; the failure is asserted via
+        // the recorded error below.
+        set_error_handler(static fn(): bool => true);
+
+        try {
+            $written = $ssg->writeToDisk();
+        } finally {
+            restore_error_handler();
+        }
+
+        self::assertSame(0, $written);
+        self::assertCount(1, $ssg->errors());
+        self::assertStringContainsString('Failed to create directory', $ssg->errors()[0]);
+    }
 }

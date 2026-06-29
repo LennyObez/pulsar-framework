@@ -11,6 +11,7 @@ use Throwable;
 use function array_keys;
 use function count;
 use function dirname;
+use function explode;
 use function file_put_contents;
 use function is_dir;
 use function mkdir;
@@ -89,14 +90,25 @@ final class StaticSiteGenerator
 
         foreach ($this->pages as $path => $html) {
             $filePath = $this->pathToFile($path);
+
+            if ($filePath === null) {
+                $this->errors[] = sprintf('Refused to write %s: path traversal detected', $path);
+
+                continue;
+            }
+
             $dir = dirname($filePath);
 
-            if (!is_dir($dir)) {
-                mkdir($dir, 0o755, true);
+            if (!is_dir($dir) && !mkdir($dir, 0o755, true) && !is_dir($dir)) {
+                $this->errors[] = sprintf('Failed to create directory %s', $dir);
+
+                continue;
             }
 
             if (file_put_contents($filePath, $html) !== false) {
                 $written++;
+            } else {
+                $this->errors[] = sprintf('Failed to write %s', $filePath);
             }
         }
 
@@ -153,7 +165,14 @@ final class StaticSiteGenerator
         return false;
     }
 
-    private function pathToFile(string $path): string
+    /**
+     * Map a route path to its on-disk file location.
+     *
+     * Returns null when the path contains a parent-directory traversal
+     * segment ("..") that would resolve outside the configured output
+     * directory, so the caller can refuse the write.
+     */
+    private function pathToFile(string $path): ?string
     {
         $outputDir = rtrim($this->config->outputDir, '/\\');
 
@@ -162,6 +181,12 @@ final class StaticSiteGenerator
         }
 
         $path = trim($path, '/');
+
+        foreach (explode('/', str_replace('\\', '/', $path)) as $segment) {
+            if ($segment === '..') {
+                return null;
+            }
+        }
 
         return $outputDir . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $path) . DIRECTORY_SEPARATOR . 'index.html';
     }

@@ -6,9 +6,6 @@ namespace Pulsar\View\Directive;
 
 use Pulsar\Api\Internal;
 
-use function sprintf;
-use function trim;
-
 /**
  * Compiles the @guest directive for unauthenticated user checks.
  *
@@ -24,8 +21,6 @@ final readonly class GuestDirective implements DirectiveInterface
 
     public function compile(string $expression): string
     {
-        $guard = trim($expression) !== '' ? trim($expression) : 'null';
-
-        return sprintf('<?php if (!$__auth->check(%s)): ?>', $guard);
+        return '<?php if ($__auth->guest()): ?>';
     }
 }

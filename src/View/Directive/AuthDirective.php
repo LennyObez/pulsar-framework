@@ -6,14 +6,10 @@ namespace Pulsar\View\Directive;
 
 use Pulsar\Api\Internal;
 
-use function sprintf;
-use function trim;
-
 /**
  * Compiles the @auth directive for authenticated user checks.
  *
  * Renders content only if the current user is authenticated.
- * Optionally accepts a guard name.
  */
 #[Internal(reason: 'Directive implementation detail')]
 final readonly class AuthDirective implements DirectiveInterface
@@ -29,8 +25,6 @@ final readonly class AuthDirective implements DirectiveInterface
 
     public function compile(string $expression): string
     {
-        $guard = trim($expression) !== '' ? trim($expression) : 'null';
-
-        return sprintf('<?php if ($__auth->check(%s)): ?>', $guard);
+        return '<?php if ($__auth->authenticated()): ?>';
     }
 }

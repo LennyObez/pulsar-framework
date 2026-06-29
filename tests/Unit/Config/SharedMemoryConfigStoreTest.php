@@ -15,6 +15,12 @@ use function extension_loaded;
 #[CoversClass(SharedMemoryConfigStore::class)]
 final class SharedMemoryConfigStoreTest extends TestCase
 {
+    /**
+     * A 32-byte key, matching the framework's libsodium subkey size and the
+     * NIST SP 800-107 minimum for HMAC-SHA256.
+     */
+    private const string VALID_KEY = 'test-secret-key-0123456789abcdef';
+
     #[Test]
     public function constructorRequiresShmopExtension(): void
     {
@@ -27,7 +33,7 @@ final class SharedMemoryConfigStoreTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('ext-shmop is required');
 
-        new SharedMemoryConfigStore(hmacKey: 'test-key');
+        new SharedMemoryConfigStore(hmacKey: self::VALID_KEY);
     }
 
     #[Test]
@@ -44,6 +50,20 @@ final class SharedMemoryConfigStoreTest extends TestCase
     }
 
     #[Test]
+    public function constructorRejectsShortHmacKey(): void
+    {
+        if (!extension_loaded('shmop')) {
+            self::markTestSkipped('ext-shmop not available');
+        }
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('HMAC key must be at least 32 bytes');
+
+        // 31 bytes: one short of the HMAC-SHA256 minimum.
+        new SharedMemoryConfigStore(hmacKey: 'short-key-0123456789abcdefghij');
+    }
+
+    #[Test]
     public function readReturnsNullWhenNoSegmentExists(): void
     {
         if (!extension_loaded('shmop')) {
@@ -51,7 +71,7 @@ final class SharedMemoryConfigStoreTest extends TestCase
         }
 
         $store = new SharedMemoryConfigStore(
-            hmacKey: 'test-secret-key',
+            hmacKey: self::VALID_KEY,
             projectId: 'test_nonexistent_' . uniqid(),
         );
 
@@ -67,7 +87,7 @@ final class SharedMemoryConfigStoreTest extends TestCase
         }
 
         $store = new SharedMemoryConfigStore(
-            hmacKey: 'test-secret-key',
+            hmacKey: self::VALID_KEY,
             projectId: 'test_delete_' . uniqid(),
         );
 

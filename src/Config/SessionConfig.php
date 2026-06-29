@@ -6,6 +6,7 @@ namespace Pulsar\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Config\Exception\ConfigException;
 
 /**
  * Typed configuration DTO for session settings.
@@ -95,7 +96,7 @@ readonly class SessionConfig
     #[NoDiscard]
     public static function fromArray(array $data, Environment $environment): self
     {
-        return new self(
+        $config = new self(
             cookieName: $environment->get('SESSION_COOKIE_NAME') ?? $data['cookie_name'] ?? 'PULSAR_SESSION',
             lifetime: $data['lifetime'] ?? 7200,
             cookieHttpOnly: (bool) ($data['cookie_httponly'] ?? true),
@@ -116,5 +117,21 @@ readonly class SessionConfig
             idleTimeout: $data['idle_timeout'] ?? 900,
             cookieHostPrefix: (bool) ($data['cookie_host_prefix'] ?? false),
         );
+
+        // The `__Host-` cookie prefix is only honoured by browsers when the cookie
+        // is Secure, has Path=/, and carries no Domain attribute. A mismatched
+        // combination produces a cookie name that every browser silently rejects,
+        // breaking the session (and thus authentication) with no error. Reject it
+        // at config-build time so the misconfiguration surfaces immediately.
+        if ($config->cookieHostPrefix
+            && ($config->cookieSecure !== true || $config->cookiePath !== '/' || $config->cookieDomain !== '')
+        ) {
+            throw ConfigException::invalidValue(
+                'security.session.cookie_host_prefix',
+                "__Host- prefix requires cookie_secure=true, cookie_path='/', and empty cookie_domain",
+            );
+        }
+
+        return $config;
     }
 }

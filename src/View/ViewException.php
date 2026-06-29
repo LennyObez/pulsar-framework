@@ -7,6 +7,7 @@ namespace Pulsar\View;
 use NoDiscard;
 use Pulsar\Api\Api;
 use RuntimeException;
+use Throwable;
 
 use function sprintf;
 
@@ -30,13 +31,16 @@ final class ViewException extends RuntimeException
     }
 
     #[NoDiscard]
-    public static function compilationFailed(string $template, string $reason): self
+    public static function compilationFailed(string $template, string $reason, ?Throwable $previous = null): self
     {
-        return new self(sprintf(
-            'Failed to compile template "%s": %s',
-            $template,
-            $reason,
-        ));
+        return new self(
+            sprintf(
+                'Failed to compile template "%s": %s',
+                $template,
+                $reason,
+            ),
+            previous: $previous,
+        );
     }
 
     #[NoDiscard]

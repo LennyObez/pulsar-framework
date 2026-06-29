@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Mail\Webhook;
 
+use JsonException;
 use Pulsar\Api\Internal;
 use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditLoggerInterface;
@@ -67,8 +68,21 @@ final readonly class WebhookHandler implements WebhookHandlerInterface
             );
         }
 
-        /** @var mixed $decoded */
-        $decoded = json_decode($request->payload, true, flags: JSON_THROW_ON_ERROR);
+        try {
+            /** @var mixed $decoded */
+            $decoded = json_decode($request->payload, true, flags: JSON_THROW_ON_ERROR);
+        } catch (JsonException) {
+            $this->logEvent($request, 'webhook.rejected', AuditOutcome::Denied, [
+                'reason' => 'malformed_payload',
+            ]);
+
+            return new WebhookResult(
+                accepted: false,
+                eventId: '',
+                eventType: WebhookEventType::Delivery,
+            );
+        }
+
         /** @var array<string, mixed> $data */
         $data = is_array($decoded) ? $decoded : [];
 

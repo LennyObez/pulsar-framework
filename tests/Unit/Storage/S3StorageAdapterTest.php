@@ -363,6 +363,38 @@ final class S3StorageAdapterTest extends TestCase
         yield 'us-gov-west-1' => ['us-gov-west-1'];
     }
 
+    // --- Header injection prevention (sanitizeHeaderValue) ---
+
+    #[Test]
+    public function sanitizeHeaderValueStripsCrlf(): void
+    {
+        $adapter = new S3StorageAdapter(
+            region: 'us-east-1',
+            bucket: 'bucket',
+        );
+
+        $malicious = "image/jpeg\r\nX-Injected: evil";
+        $clean = $this->callPrivateMethod($adapter, 'sanitizeHeaderValue', $malicious);
+
+        self::assertSame('image/jpegX-Injected: evil', $clean);
+        self::assertStringNotContainsString("\r", $clean);
+        self::assertStringNotContainsString("\n", $clean);
+    }
+
+    #[Test]
+    public function sanitizeHeaderValueLeavesCleanValueUnchanged(): void
+    {
+        $adapter = new S3StorageAdapter(
+            region: 'us-east-1',
+            bucket: 'bucket',
+        );
+
+        $value = 'text/plain; charset=utf-8';
+        $clean = $this->callPrivateMethod($adapter, 'sanitizeHeaderValue', $value);
+
+        self::assertSame($value, $clean);
+    }
+
     private function callPrivateMethod(object $object, string $method, mixed ...$args): mixed
     {
         $ref = new ReflectionMethod($object, $method);

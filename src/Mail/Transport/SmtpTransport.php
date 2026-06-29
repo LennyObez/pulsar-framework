@@ -15,16 +15,20 @@ use Throwable;
 
 use function base64_encode;
 use function bin2hex;
+use function chunk_split;
 use function count;
 use function fclose;
 use function fgets;
 use function fwrite;
 use function implode;
+use function in_array;
+use function quoted_printable_encode;
 use function random_bytes;
 use function sprintf;
 use function str_replace;
 use function str_starts_with;
 use function stream_context_create;
+use function stream_set_timeout;
 use function stream_socket_client;
 use function substr;
 
@@ -94,6 +98,7 @@ final class SmtpTransport implements TransportInterface
         }
 
         $this->socket = $socket;
+        stream_set_timeout($this->socket, $this->config->timeout);
         $this->readResponse('220');
     }
 
@@ -131,7 +136,7 @@ final class SmtpTransport implements TransportInterface
             return;
         }
 
-        if ($this->config->encryption === '' || $this->config->encryption === 'none') {
+        if (!in_array($this->config->encryption, ['tls', 'ssl'], true)) {
             throw MailException::driverError('smtp', 'Cannot authenticate over unencrypted connection');
         }
 
@@ -142,7 +147,7 @@ final class SmtpTransport implements TransportInterface
 
     private function mailFrom(Address $from): void
     {
-        $this->sendCommand(sprintf('MAIL FROM:<%s>', $from->email), '250');
+        $this->sendCommand(sprintf('MAIL FROM:<%s>', self::sanitizeHeaderValue($from->email)), '250');
     }
 
     private function rcptTo(Message $message): void
@@ -150,7 +155,7 @@ final class SmtpTransport implements TransportInterface
         $recipients = [...$message->to, ...$message->cc, ...$message->bcc];
 
         foreach ($recipients as $recipient) {
-            $this->sendCommand(sprintf('RCPT TO:<%s>', $recipient->email), '250');
+            $this->sendCommand(sprintf('RCPT TO:<%s>', self::sanitizeHeaderValue($recipient->email)), '250');
         }
     }
 
@@ -218,7 +223,7 @@ final class SmtpTransport implements TransportInterface
                 $parts[] = 'Content-Type: text/plain; charset=UTF-8';
                 $parts[] = 'Content-Transfer-Encoding: quoted-printable';
                 $parts[] = '';
-                $parts[] = $message->textBody;
+                $parts[] = quoted_printable_encode($message->textBody);
             }
 
             if ($message->htmlBody !== null) {
@@ -226,7 +231,7 @@ final class SmtpTransport implements TransportInterface
                 $parts[] = 'Content-Type: text/html; charset=UTF-8';
                 $parts[] = 'Content-Transfer-Encoding: quoted-printable';
                 $parts[] = '';
-                $parts[] = $message->htmlBody;
+                $parts[] = quoted_printable_encode($message->htmlBody);
             }
 
             foreach ($message->attachments as $attachment) {
@@ -235,9 +240,9 @@ final class SmtpTransport implements TransportInterface
 
             $parts[] = sprintf('--%s--', $boundary);
         } elseif ($message->htmlBody !== null) {
-            $parts[] = $message->htmlBody;
+            $parts[] = quoted_printable_encode($message->htmlBody);
         } elseif ($message->textBody !== null) {
-            $parts[] = $message->textBody;
+            $parts[] = quoted_printable_encode($message->textBody);
         }
 
         return implode("\r\n", $parts);
@@ -264,7 +269,7 @@ final class SmtpTransport implements TransportInterface
         }
 
         $lines[] = '';
-        $lines[] = base64_encode($attachment->content);
+        $lines[] = chunk_split(base64_encode($attachment->content), 76, "\r\n");
 
         return implode("\r\n", $lines);
     }

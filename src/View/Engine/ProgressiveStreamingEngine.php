@@ -129,6 +129,7 @@ final readonly class ProgressiveStreamingEngine
             throw ViewException::compilationFailed(
                 $_path_,
                 'execution failed: ' . $e->getMessage(),
+                $e,
             );
         }
 

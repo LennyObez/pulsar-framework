@@ -72,6 +72,10 @@ final class SharedMemoryConfigStore
             throw new RuntimeException('HMAC key must not be empty');
         }
 
+        if (strlen($this->hmacKey) < 32) {
+            throw new RuntimeException('HMAC key must be at least 32 bytes (256 bits) for HMAC-SHA256');
+        }
+
         $this->shmKey = $this->generateKey($projectId);
     }
 
