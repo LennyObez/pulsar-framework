@@ -7,6 +7,9 @@ namespace Pulsar\View\Directive;
 use Override;
 use Pulsar\Api\Internal;
 
+use function sprintf;
+use function trim;
+
 /**
  * Notifications directive: renders a bell icon with unread count.
  *
@@ -27,9 +30,11 @@ final readonly class NotificationsDirective implements DirectiveInterface
     #[Override]
     public function compile(string $expression): string
     {
-        return <<<'PHP'
-            <?php
-            $__notifUserId = $expression;
+        $userId = trim($expression) !== '' ? trim($expression) : 'null';
+
+        $setup = sprintf('<?php' . "\n" . '$__notifUserId = %s;', $userId);
+
+        $body = <<<'PHP'
             $__notifRepo = $__notifRepo ?? null;
             $__notifCount = 0;
             $__notifItems = [];
@@ -62,5 +67,7 @@ final readonly class NotificationsDirective implements DirectiveInterface
             </div>
             <?php unset($__notifUserId, $__notifRepo, $__notifCount, $__notifItems, $__notif); ?>
             PHP;
+
+        return $setup . "\n" . $body;
     }
 }

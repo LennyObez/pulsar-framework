@@ -146,7 +146,11 @@ final readonly class LocalStorageAdapter implements StorageAdapterInterface
         }
 
         $realCandidate = realpath($candidate);
-        if ($realCandidate !== false && !str_starts_with($realCandidate, $realBase)) {
+        if (
+            $realCandidate !== false
+            && $realCandidate !== $realBase
+            && !str_starts_with($realCandidate, $realBase . DIRECTORY_SEPARATOR)
+        ) {
             throw StorageException::invalidKey($key, 'symlink escapes storage base path');
         }
 
@@ -198,7 +202,7 @@ final readonly class LocalStorageAdapter implements StorageAdapterInterface
             $relativeKey = substr($fullPath, strlen($basePath) + 1);
             $relativeKey = str_replace('\\', '/', $relativeKey);
 
-            $fileStat = @stat($fullPath);
+            $fileStat = file_exists($fullPath) ? stat($fullPath) : false;
 
             if ($fileStat === false) {
                 continue;

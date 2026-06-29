@@ -52327,7 +52327,8 @@
                 "compilationFailed": {
                     "params": [
                         "string $template",
-                        "string $reason"
+                        "string $reason",
+                        "?Throwable $previous"
                     ],
                     "return": "Pulsar\\View\\ViewException",
                     "static": true

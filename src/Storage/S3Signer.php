@@ -28,6 +28,9 @@ final class S3Signer
     private const string ALGORITHM = 'AWS4-HMAC-SHA256';
     private const string SERVICE = 's3';
 
+    private ?string $cachedSigningKey = null;
+    private ?string $cachedSigningDate = null;
+
     public function __construct(
         private readonly string $accessKey,
         private readonly string $secretKey,
@@ -149,11 +152,19 @@ final class S3Signer
 
     private function deriveSigningKey(string $dateStamp): string
     {
+        if ($this->cachedSigningKey !== null && $this->cachedSigningDate === $dateStamp) {
+            return $this->cachedSigningKey;
+        }
+
         $dateKey = hash_hmac('sha256', $dateStamp, 'AWS4' . $this->secretKey, true);
         $regionKey = hash_hmac('sha256', $this->region, $dateKey, true);
         $serviceKey = hash_hmac('sha256', self::SERVICE, $regionKey, true);
+        $signingKey = hash_hmac('sha256', 'aws4_request', $serviceKey, true);
 
-        return hash_hmac('sha256', 'aws4_request', $serviceKey, true);
+        $this->cachedSigningDate = $dateStamp;
+        $this->cachedSigningKey = $signingKey;
+
+        return $signingKey;
     }
 
     /**

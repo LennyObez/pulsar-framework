@@ -51,7 +51,9 @@ final readonly class SmimeEncryptor implements MailEncryptorInterface
         }
 
         try {
-            file_put_contents($inputFile, $body);
+            if (file_put_contents($inputFile, $body) === false) {
+                throw MailException::sendFailed('Failed to write plaintext to temp file for S/MIME encryption');
+            }
 
             $result = openssl_pkcs7_encrypt(
                 $inputFile,

@@ -187,6 +187,36 @@ final class PushChannelTest extends TestCase
     }
 
     #[Test]
+    public function throwsAndDoesNotCallHttpWhenProjectIdIsMalformed(): void
+    {
+        $httpClient = $this->createMock(NotificationHttpClientInterface::class);
+        $httpClient->expects(self::never())->method('request');
+
+        // Slash would break out of the project segment of the FCM endpoint URL.
+        $channel = new PushChannel($httpClient, 'evil/../path', 'token');
+
+        $notifiable = $this->createStub(NotifiableInterface::class);
+        $notifiable->method('routeNotificationFor')->willReturn('device-token');
+        $notifiable->method('getNotifiableId')->willReturn('u1');
+
+        $notification = new class extends Notification {
+            public function via(NotifiableInterface $notifiable): array
+            {
+                return ['push'];
+            }
+
+            public function toPush(NotifiableInterface $notifiable): PushMessage
+            {
+                return new PushMessage('T', 'B');
+            }
+        };
+
+        $this->expectException(NotificationException::class);
+        $this->expectExceptionMessage('FCM project ID is malformed');
+        $channel->send($notifiable, $notification);
+    }
+
+    #[Test]
     public function nameReturnsPush(): void
     {
         $httpClient = $this->createStub(NotificationHttpClientInterface::class);

@@ -14,6 +14,7 @@ use Pulsar\Storage\StorageAdapterInterface;
 use Pulsar\Storage\StorageException;
 use Pulsar\Storage\StorageMetadata;
 use Pulsar\Storage\StorageObject;
+use Throwable;
 
 use function hash;
 use function intval;
@@ -72,11 +73,11 @@ final class S3StorageAdapter implements StorageAdapterInterface
 
         if ($metadata !== null) {
             if ($metadata->contentType !== null) {
-                $headers['Content-Type'] = $metadata->contentType;
+                $headers['Content-Type'] = $this->sanitizeHeaderValue($metadata->contentType);
             }
 
             if ($metadata->cacheControl !== null) {
-                $headers['Cache-Control'] = $metadata->cacheControl;
+                $headers['Cache-Control'] = $this->sanitizeHeaderValue($metadata->cacheControl);
             }
         }
 
@@ -230,7 +231,7 @@ final class S3StorageAdapter implements StorageAdapterInterface
             }
 
             $this->completeMultipartUpload($key, $uploadId, $parts);
-        } catch (StorageException $e) {
+        } catch (Throwable $e) {
             $this->abortMultipartUpload($key, $uploadId);
 
             throw $e;
@@ -245,7 +246,7 @@ final class S3StorageAdapter implements StorageAdapterInterface
         $headers = ['Host' => $this->getHost()];
 
         if ($metadata !== null && $metadata->contentType !== null) {
-            $headers['Content-Type'] = $metadata->contentType;
+            $headers['Content-Type'] = $this->sanitizeHeaderValue($metadata->contentType);
         }
 
         $uri = $this->buildUri($objectKey);
@@ -367,6 +368,15 @@ final class S3StorageAdapter implements StorageAdapterInterface
         } catch (CloudException) {
             // Best-effort abort: don't throw from cleanup
         }
+    }
+
+    /**
+     * Strip CR/LF from user-supplied header values to prevent HTTP header
+     * injection (CRLF injection) into the outbound S3 request.
+     */
+    private function sanitizeHeaderValue(string $value): string
+    {
+        return str_replace(["\r", "\n"], '', $value);
     }
 
     private function buildObjectKey(string $key): string

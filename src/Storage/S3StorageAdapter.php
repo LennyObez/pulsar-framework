@@ -7,6 +7,7 @@ namespace Pulsar\Storage;
 use NoDiscard;
 use Override;
 
+use function curl_close;
 use function curl_errno;
 use function curl_error;
 use function curl_exec;
@@ -19,6 +20,7 @@ use function libxml_use_internal_errors;
 use function ltrim;
 use function simplexml_load_string;
 use function sprintf;
+use function str_replace;
 use function str_starts_with;
 use function strlen;
 use function substr;
@@ -59,11 +61,11 @@ final class S3StorageAdapter implements StorageAdapterInterface
 
         if ($metadata !== null) {
             if ($metadata->contentType !== null) {
-                $headers['Content-Type'] = $metadata->contentType;
+                $headers['Content-Type'] = $this->sanitizeHeaderValue($metadata->contentType);
             }
 
             if ($metadata->cacheControl !== null) {
-                $headers['Cache-Control'] = $metadata->cacheControl;
+                $headers['Cache-Control'] = $this->sanitizeHeaderValue($metadata->cacheControl);
             }
         }
 
@@ -201,19 +203,33 @@ final class S3StorageAdapter implements StorageAdapterInterface
 
         /** @phpstan-ignore argument.type (cURL option array types are overly strict in PHPStan stubs) */
         curl_setopt_array($ch, $options);
-        $responseBody = curl_exec($ch);
 
-        if (curl_errno($ch) !== 0) {
-            $error = curl_error($ch);
-            throw StorageException::connectionFailed($error);
+        try {
+            $responseBody = curl_exec($ch);
+
+            if (curl_errno($ch) !== 0) {
+                $error = curl_error($ch);
+                throw StorageException::connectionFailed($error);
+            }
+
+            $statusCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+            return [
+                'status' => $statusCode,
+                'body' => is_string($responseBody) ? $responseBody : '',
+            ];
+        } finally {
+            curl_close($ch);
         }
+    }
 
-        $statusCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-
-        return [
-            'status' => $statusCode,
-            'body' => is_string($responseBody) ? $responseBody : '',
-        ];
+    /**
+     * Strip CR/LF from user-supplied header values to prevent HTTP header
+     * injection (CRLF injection) into the outbound S3 request.
+     */
+    private function sanitizeHeaderValue(string $value): string
+    {
+        return str_replace(["\r", "\n"], '', $value);
     }
 
     private function buildObjectKey(string $key): string

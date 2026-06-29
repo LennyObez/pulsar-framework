@@ -97,6 +97,10 @@ final readonly class MailChannel implements NotificationChannelInterface
             $this->unsubscribeUrlPattern,
         );
 
+        // Defence in depth: strip any CR/LF that an operator-misconfigured pattern could
+        // carry into the assembled URL, which would otherwise produce SMTP/MIME header injection.
+        $unsubscribeUrl = str_replace(["\r", "\n"], '', $unsubscribeUrl);
+
         $mailable->header('List-Unsubscribe', '<' . $unsubscribeUrl . '>');
         $mailable->header('List-Unsubscribe-Post', 'List-Unsubscribe=One-Click');
     }

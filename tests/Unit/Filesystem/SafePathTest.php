@@ -8,10 +8,39 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Filesystem\SafePath;
+use Symfony\Component\Filesystem\Filesystem;
+
+use function is_dir;
+use function mkdir;
+use function realpath;
+use function sprintf;
+use function sys_get_temp_dir;
+use function uniqid;
 
 #[CoversClass(SafePath::class)]
 final class SafePathTest extends TestCase
 {
+    private string $root = '';
+
+    protected function setUp(): void
+    {
+        $base = sys_get_temp_dir() . DIRECTORY_SEPARATOR
+            . sprintf('pulsar_sp_%s', uniqid('', true));
+
+        if (!mkdir($base, 0o750, true) && !is_dir($base)) {
+            self::markTestSkipped('Could not create temp directory for SafePath test.');
+        }
+
+        $this->root = $base;
+    }
+
+    protected function tearDown(): void
+    {
+        if ($this->root !== '' && is_dir($this->root)) {
+            new Filesystem()->remove($this->root);
+        }
+    }
+
     #[Test]
     public function resolveUnderCwdAcceptsSimpleRelativePath(): void
     {
@@ -103,5 +132,42 @@ final class SafePathTest extends TestCase
 
         self::assertNotNull($under);
         self::assertNull($outside);
+    }
+
+    #[Test]
+    public function adoptExistingRejectsSiblingSharingBoundaryNamePrefix(): void
+    {
+        // Trust boundary = <root>/app ; sibling = <root>/appdata.
+        // A naive str_starts_with('<root>/appdata', '<root>/app')
+        // would mistakenly accept the sibling as in-boundary.
+        $boundaryDir = $this->root . DIRECTORY_SEPARATOR . 'app';
+        $siblingDir = $this->root . DIRECTORY_SEPARATOR . 'appdata';
+        self::assertTrue(mkdir($boundaryDir, 0o750));
+        self::assertTrue(mkdir($siblingDir, 0o750));
+        self::assertTrue(mkdir($boundaryDir . DIRECTORY_SEPARATOR . 'inside', 0o750));
+
+        // Build a SafePath whose trust boundary IS <root>/app (the
+        // boundary field is the realpath of the directory passed to
+        // resolveUnder).
+        $boundary = SafePath::resolveUnder('inside', $boundaryDir);
+        self::assertNotNull($boundary);
+        self::assertSame(realpath($boundaryDir), $boundary->boundary);
+
+        self::assertNull(SafePath::adoptExisting($siblingDir, $boundary));
+        self::assertNotNull(SafePath::adoptExisting($boundaryDir, $boundary));
+        self::assertNotNull(
+            SafePath::adoptExisting($boundaryDir . DIRECTORY_SEPARATOR . 'inside', $boundary),
+        );
+    }
+
+    #[Test]
+    public function resolveUnderRejectsPathUnderExistingFileComponent(): void
+    {
+        // A regular file cannot host a child directory, so a candidate
+        // of <file>/sub must be rejected rather than walked past.
+        $file = $this->root . DIRECTORY_SEPARATOR . 'leaf.txt';
+        file_put_contents($file, 'x');
+
+        self::assertNull(SafePath::resolveUnder('leaf.txt/sub', $this->root));
     }
 }
