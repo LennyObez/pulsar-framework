@@ -12,8 +12,11 @@ use function chr;
 use function openssl_pkey_get_public;
 use function ord;
 use function pack;
+use function str_pad;
 use function str_replace;
 use function strlen;
+
+use const STR_PAD_LEFT;
 
 /**
  * Immutable JWK (JSON Web Key) representation.
@@ -136,9 +139,18 @@ final readonly class JwkKey
         }
 
         $curveOid = self::ecCurveOid($crv);
-        if ($curveOid === null) {
+        $fieldSize = self::ecFieldSize($crv);
+        if ($curveOid === null || $fieldSize === null) {
             return null;
         }
+
+        // Left-pad each coordinate to the curve's field size. A JWK coordinate
+        // whose leading byte is zero is commonly emitted without that byte
+        // (OpenSSL strips it), so it decodes to fewer than field-size bytes;
+        // concatenating it directly would make the uncompressed point malformed
+        // and OpenSSL would reject the reconstructed key (~1/256 of EC keys).
+        $xBytes = str_pad($xBytes, $fieldSize, "\x00", STR_PAD_LEFT);
+        $yBytes = str_pad($yBytes, $fieldSize, "\x00", STR_PAD_LEFT);
 
         // Uncompressed EC point: 0x04 || x || y
         $point = "\x04" . $xBytes . $yBytes;
@@ -169,6 +181,20 @@ final readonly class JwkKey
             'P-256' => "\x06\x08\x2a\x86\x48\xce\x3d\x03\x01\x07",
             'P-384' => "\x06\x05\x2b\x81\x04\x00\x22",
             'P-521' => "\x06\x05\x2b\x81\x04\x00\x23",
+            default => null,
+        };
+    }
+
+    /**
+     * Field-element byte width for a named EC curve — the fixed length each
+     * affine coordinate must occupy in an uncompressed point.
+     */
+    private static function ecFieldSize(string $crv): ?int
+    {
+        return match ($crv) {
+            'P-256' => 32,
+            'P-384' => 48,
+            'P-521' => 66,
             default => null,
         };
     }
