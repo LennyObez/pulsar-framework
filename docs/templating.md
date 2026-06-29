@@ -442,6 +442,55 @@ All `{{ }}` output is HTML-escaped by default. For other contexts, use the dedic
 
 The `url()` helper actively blocks dangerous URI schemes (`javascript:`, `data:`, `vbscript:`) by normalizing away invisible Unicode characters before checking, preventing bypass attempts.
 
+## Shared data and view composers
+
+Partials such as the site header and footer need global data (localized navigation, current locale, section bar) on every page — including pages the framework renders itself, such as the themed `errors/404` and `errors/5xx` pages, where no controller runs. Instead of threading that data through every controller, register it once on the engine; it is merged into **every** render the engine performs, framework-internal renders included.
+
+### Shared data
+
+```php
+$engine = $container->get(TemplateEngineInterface::class);
+
+$engine->share('siteName', 'Acme');             // single key
+$engine->share(['locale' => 'fr', 'tz' => 'UTC']); // bulk
+```
+
+Shared data is **request-scoped**: it never leaks across requests or Fibers (persistent-worker runtimes reset it between requests automatically). For application-lifetime constants, prefer a wildcard composer.
+
+### View composers
+
+A composer is a callable invoked **lazily** for renders whose template name matches a glob pattern. It contributes data by returning an array or via `ViewContext::with()`:
+
+```php
+$engine->composer('theme.partials.*', function (ViewContext $ctx): array {
+    return ['nav' => $this->navBuilder->build($ctx->get('locale', 'en'))];
+});
+
+$engine->composer(['errors.*', '*'], ...);  // multiple patterns / match everything
+```
+
+Guarantees:
+
+- **Lazy** — a composer runs only when a matching template actually renders, and **at most once per request** (its output is memoized), so an expensive nav tree is built once even when header, footer and drawer all match.
+- **Deterministic precedence**, low to high: shared data → composer output (registration order; later overrides earlier) → the explicit `render()` data. Explicit data always wins.
+- **No hot-path cost** when nothing is registered: `render()` short-circuits.
+
+### Error pages get the chrome for free
+
+`ErrorPageRenderer` resolves the same configured engine, so with the composer above registered, a routing miss under `APP_DEBUG=false` renders the themed `errors/404` with the real `@include('theme.partials.header')` chrome — zero controller involvement, no undefined-variable fallback.
+
+### Where to register
+
+Register shares/composers once at boot, after the engine is bound and before the first render — an extension's boot hook (ADR-0004) is the canonical place:
+
+```php
+public function boot(ContainerInterface $container): void
+{
+    $engine = $container->get(TemplateEngineInterface::class);
+    $engine->composer('theme.partials.*', new NavComposer($container->get(NavBuilder::class)));
+}
+```
+
 ## Trusted vs untrusted templates
 
 Pulsar enforces a strict separation between trusted and untrusted templates with fundamentally different execution models.

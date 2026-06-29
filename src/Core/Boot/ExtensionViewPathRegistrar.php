@@ -98,8 +98,18 @@ final class ExtensionViewPathRegistrar
 
         $container->instance(\Pulsar\View\Engine\TemplateCompiler::class, $newCompiler);
 
-        // Rebuild the engine with the new compiler
-        $newEngine = new \Pulsar\View\Engine\TemplateEngine($newCompiler);
+        // Rebuild the engine with the new compiler, carrying the shared-data /
+        // view-composer store across the swap: shares and composers registered
+        // on the original engine at boot live in that store, and omitting it
+        // here would silently discard them (the constructor would fall back to
+        // an empty store) for every project with a theme/ or extension views.
+        $composers = null;
+        if ($container->has(\Pulsar\View\Engine\ViewComposers::class)) {
+            /** @var \Pulsar\View\Engine\ViewComposers $composers */
+            $composers = $container->get(\Pulsar\View\Engine\ViewComposers::class);
+        }
+
+        $newEngine = new \Pulsar\View\Engine\TemplateEngine($newCompiler, $composers);
         $container->instance(\Pulsar\View\Engine\TemplateEngineInterface::class, $newEngine);
         $container->instance(\Pulsar\View\Engine\TemplateEngine::class, $newEngine);
         \Pulsar\Http\Message\Response::setTemplateEngine($newEngine);
