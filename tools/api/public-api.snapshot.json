@@ -55026,6 +55026,7 @@
         "Pulsar\\Core\\Wiring\\TenancyWiring",
         "Pulsar\\Core\\Wiring\\TracingWiring",
         "Pulsar\\Core\\Wiring\\ViewWiring",
+        "Pulsar\\Core\\Wiring\\WiringList",
         "Pulsar\\DataProtection\\AuditLogPurge",
         "Pulsar\\DataProtection\\DefaultRetentionPolicy",
         "Pulsar\\DataProtection\\SessionPurge",

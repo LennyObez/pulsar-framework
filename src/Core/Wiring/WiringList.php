@@ -1,0 +1,66 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pulsar\Core\Wiring;
+
+use Pulsar\Api\Internal;
+use Pulsar\Api\OpenApi\OpenApiWiring;
+
+/**
+ * Canonical, ordered list of the framework's always-on service wirings.
+ *
+ * Single source of truth shared by {@see \Pulsar\Core\Kernel} (which runs them
+ * at boot) and the wiring-contract integration harness (which verifies their
+ * declared contracts). Order is significant — a wiring may depend on a binding
+ * an earlier one provides — so this list IS the boot order.
+ *
+ * `AssetWiring` is deliberately absent: the kernel appends it conditionally
+ * (only when not serving from a strict route cache), so it is not "always on".
+ */
+#[Internal]
+final readonly class WiringList
+{
+    /**
+     * @return list<ServiceWiringInterface>
+     */
+    public static function default(): array
+    {
+        return [
+            new ConfigWiring(),
+            new I18nWiring(),
+            new LoggingWiring(),
+            new TracingWiring(),
+            new SecurityWiring(),
+            new MetricsWiring(),
+            new RequestContextWiring(),
+            new EventWiring(),
+            new ErrorTrackingWiring(),
+            new ExceptionHandlerWiring(),
+            new AuthWiring(),
+            new DatabaseWiring(),
+            new TenancyWiring(),
+            new SagaWiring(),
+            new FeatureFlagWiring(),
+            new SchedulerWiring(),
+            new ResilienceWiring(),
+            new QueueWiring(),
+            new CacheWiring(),
+            new AntiSpamWiring(),
+            new MailWiring(),
+            new NotificationWiring(),
+            new StorageWiring(),
+            new CloudWiring(),
+            new ServiceDiscoveryWiring(),
+            new ApiWiring(),
+            new OpenApiWiring(),
+            new SupervisorWiring(),
+            new IntegrityWiring(),
+            new DeployWiring(),
+            new RuntimeWiring(),
+            new DiagnosticsWiring(),
+            new IntrospectionWiring(),
+            new ViewWiring(),
+        ];
+    }
+}
