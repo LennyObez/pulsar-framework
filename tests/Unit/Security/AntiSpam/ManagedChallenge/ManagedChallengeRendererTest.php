@@ -61,6 +61,35 @@ final class ManagedChallengeRendererTest extends TestCase
     }
 
     #[Test]
+    public function exposes_refresh_url_and_ttl_for_silent_refresh(): void
+    {
+        $renderer = new ManagedChallengeRenderer(
+            new ManagedChallengeService('0123456789abcdef0123456789abcdef', 12, 300),
+            'pulsar-challenge-response',
+            '/_pulsar/anti-spam/managed-challenge.js',
+            '/_pulsar/anti-spam/managed-challenge.worker.js',
+            '/_pulsar/anti-spam/managed-challenge/refresh',
+            300,
+        );
+
+        $html = $renderer->render();
+
+        self::assertStringContainsString('data-pmc-refresh="/_pulsar/anti-spam/managed-challenge/refresh"', $html);
+        self::assertStringContainsString('data-pmc-ttl="300"', $html);
+    }
+
+    #[Test]
+    public function refresh_attributes_default_to_empty_when_not_configured(): void
+    {
+        // Backward compatible: a renderer built without a refresh endpoint emits
+        // an empty refresh URL and zero TTL, so the widget simply never refreshes.
+        $html = $this->renderer()->render();
+
+        self::assertStringContainsString('data-pmc-refresh=""', $html);
+        self::assertStringContainsString('data-pmc-ttl="0"', $html);
+    }
+
+    #[Test]
     public function each_render_mints_a_distinct_challenge(): void
     {
         $renderer = $this->renderer();

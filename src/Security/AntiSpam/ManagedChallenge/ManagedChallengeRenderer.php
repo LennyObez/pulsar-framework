@@ -35,6 +35,8 @@ final class ManagedChallengeRenderer
         private readonly string $fieldName,
         private readonly string $scriptUrl,
         private readonly string $workerUrl,
+        private readonly string $refreshUrl = '',
+        private readonly int $ttlSeconds = 0,
     ) {}
 
     /**
@@ -56,9 +58,14 @@ final class ManagedChallengeRenderer
         // data-pmc-id exposes the challenge id the worker hashes over. It is not
         // trusted server-side: verification recomputes the proof-of-work against
         // the id inside the signed token, so a tampered id simply fails the check.
+        // data-pmc-refresh + data-pmc-ttl let the widget silently re-mint a fresh
+        // challenge at ~80% of the TTL, so a slow human is never rejected while
+        // the server keeps a tight (small replay window) TTL. Both are optional:
+        // when the refresh endpoint is not wired the widget simply never refreshes.
         return sprintf(
             '<div class="pulsar-managed-challenge" data-pmc-challenge="%s" data-pmc-id="%s" data-pmc-bits="%d"'
-            . ' data-pmc-field="%s" data-pmc-worker="%s" role="status" aria-live="polite">'
+            . ' data-pmc-field="%s" data-pmc-worker="%s" data-pmc-refresh="%s" data-pmc-ttl="%d"'
+            . ' role="status" aria-live="polite">'
             . '<input type="hidden" name="%s" value="" autocomplete="off">'
             . '<noscript>This form requires JavaScript to complete a security check.</noscript>'
             . '</div>'
@@ -68,6 +75,8 @@ final class ManagedChallengeRenderer
             $challenge->bits,
             $field,
             self::escape($this->workerUrl),
+            self::escape($this->refreshUrl),
+            $this->ttlSeconds,
             $field,
             self::escape($this->scriptUrl),
             $nonceAttr,

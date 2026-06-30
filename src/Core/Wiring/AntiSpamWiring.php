@@ -25,6 +25,7 @@ use Pulsar\Security\AntiSpam\HCaptchaVerifier;
 use Pulsar\Security\AntiSpam\HoneypotDetector;
 use Pulsar\Security\AntiSpam\LinkDensityChecker;
 use Pulsar\Security\AntiSpam\ManagedChallenge\ManagedChallengeAssetController;
+use Pulsar\Security\AntiSpam\ManagedChallenge\ManagedChallengeRefreshController;
 use Pulsar\Security\AntiSpam\ManagedChallenge\ManagedChallengeRenderer;
 use Pulsar\Security\AntiSpam\ManagedChallenge\ManagedChallengeService;
 use Pulsar\Security\AntiSpam\ManagedChallenge\ManagedChallengeVerifier;
@@ -226,11 +227,22 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface
         $router->get($base . '/managed-challenge.worker.js', [ManagedChallengeAssetController::class, 'worker'], 'pulsar.anti_spam.mc.worker');
         $router->get($base . '/managed-challenge.pow.js', [ManagedChallengeAssetController::class, 'pow'], 'pulsar.anti_spam.mc.pow');
 
+        // Same-origin refresh endpoint for the widget's silent re-mint. Reuses
+        // the tagged cache (when bound) for a best-effort per-IP rate cap.
+        $refreshPath = $base . '/managed-challenge/refresh';
+        $container->instance(
+            ManagedChallengeRefreshController::class,
+            new ManagedChallengeRefreshController($service, $cache),
+        );
+        $router->get($refreshPath, [ManagedChallengeRefreshController::class, 'refresh'], 'pulsar.anti_spam.mc.refresh');
+
         $renderer = new ManagedChallengeRenderer(
             $service,
             $config->managedChallengeFieldName,
             $base . '/managed-challenge.js',
             $base . '/managed-challenge.worker.js',
+            $refreshPath,
+            $config->managedChallengeTtlSeconds,
         );
         $container->instance(ManagedChallengeRenderer::class, $renderer);
         ManagedChallengeRenderer::setGlobalInstance($renderer);

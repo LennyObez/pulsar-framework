@@ -59,6 +59,7 @@
   "Pulsar\\Security\\AntiSpam\\HoneypotDetector": "AntiSpamWiring composition root wires anti-spam pipeline stages",
   "Pulsar\\Security\\AntiSpam\\LinkDensityChecker": "AntiSpamWiring composition root wires anti-spam pipeline stages",
   "Pulsar\\Security\\AntiSpam\\ManagedChallenge\\ManagedChallengeAssetController": "AntiSpamWiring composition root wires anti-spam pipeline stages",
+  "Pulsar\\Security\\AntiSpam\\ManagedChallenge\\ManagedChallengeRefreshController": "AntiSpamWiring composition root wires anti-spam pipeline stages",
   "Pulsar\\Security\\AntiSpam\\ManagedChallenge\\ManagedChallengeService": "AntiSpamWiring composition root wires anti-spam pipeline stages",
   "Pulsar\\Security\\AntiSpam\\ManagedChallenge\\ManagedChallengeVerifier": "AntiSpamWiring composition root wires anti-spam pipeline stages",
   "Pulsar\\Security\\AntiSpam\\ProofOfWorkVerifier": "AntiSpamWiring composition root wires anti-spam pipeline stages",
