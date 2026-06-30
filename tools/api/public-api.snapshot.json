@@ -38875,7 +38875,9 @@
                         "Pulsar\\Security\\AntiSpam\\ManagedChallenge\\ManagedChallengeService $service",
                         "string $fieldName",
                         "string $scriptUrl",
-                        "string $workerUrl"
+                        "string $workerUrl",
+                        "string $refreshUrl",
+                        "int $ttlSeconds"
                     ],
                     "return": null,
                     "static": false
@@ -55081,6 +55083,7 @@
         "Pulsar\\Security\\AntiSpam\\LinkDensityChecker",
         "Pulsar\\Security\\AntiSpam\\ManagedChallenge\\ManagedChallenge",
         "Pulsar\\Security\\AntiSpam\\ManagedChallenge\\ManagedChallengeAssetController",
+        "Pulsar\\Security\\AntiSpam\\ManagedChallenge\\ManagedChallengeRefreshController",
         "Pulsar\\Security\\AntiSpam\\ManagedChallenge\\ManagedChallengeService",
         "Pulsar\\Security\\AntiSpam\\ManagedChallenge\\ManagedChallengeVerifier",
         "Pulsar\\Security\\AntiSpam\\ProofOfWorkVerifier",
