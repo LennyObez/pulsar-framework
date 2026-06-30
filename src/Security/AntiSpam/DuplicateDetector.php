@@ -49,7 +49,9 @@ final readonly class DuplicateDetector implements DuplicateDetectorInterface
         }
 
         $bodyHash = bin2hex(sodium_crypto_generichash($context->body));
-        $cacheKey = sprintf('antispam_dedup:%s:%s', $context->ipHash, $bodyHash);
+        // Dot-separated: ':' is a PSR-6 reserved character the tagged cache
+        // rejects. ipHash and bodyHash are hex digests, so they are key-safe.
+        $cacheKey = sprintf('antispam_dedup.%s.%s', $context->ipHash, $bodyHash);
 
         // Exact duplicate check via cache
         if ($this->cache->get($cacheKey) !== null) {

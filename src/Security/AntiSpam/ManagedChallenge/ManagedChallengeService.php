@@ -213,7 +213,9 @@ final readonly class ManagedChallengeService
             return true;
         }
 
-        $key = 'antispam_managed_challenge:' . $challenge->id;
+        // Dot-separated: ':' is a PSR-6 reserved character the tagged cache
+        // rejects. The challenge id is hex, so the key is otherwise safe.
+        $key = 'antispam_managed_challenge.' . $challenge->id;
 
         if ($this->cache->get($key) !== null) {
             return false;

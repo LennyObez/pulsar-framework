@@ -8,8 +8,10 @@ use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Cache\Application\TaggedCacheInterface;
 
+use function bin2hex;
 use function is_int;
 use function is_string;
+use function sodium_crypto_generichash;
 use function sprintf;
 use function time;
 
@@ -51,8 +53,12 @@ final readonly class ReputationCooldown implements ReputationCooldownInterface
             return AntiSpamCheckResult::pass($this->name());
         }
 
+        // Hash the identity into the key: userId may be arbitrary (e.g. an
+        // email) and ':' / other PSR-6 reserved characters would be rejected by
+        // the tagged cache. A generichash digest is hex, so the key is always
+        // valid regardless of the identity's shape.
         $identity = $context->userId ?? $context->ipHash;
-        $cacheKey = sprintf('antispam_cooldown:%s', $identity);
+        $cacheKey = sprintf('antispam_cooldown.%s', bin2hex(sodium_crypto_generichash($identity)));
 
         /** @var mixed $lastSubmission */
         $lastSubmission = $this->cache->get($cacheKey);

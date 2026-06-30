@@ -10,6 +10,9 @@ use Psr\SimpleCache\CacheInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Cache\Application\CacheManager;
 use Pulsar\Cache\Application\CacheManagerInterface;
+use Pulsar\Cache\Application\Exception\CacheException;
+use Pulsar\Cache\Application\Exception\UnsupportedCapabilityException;
+use Pulsar\Cache\Application\TaggedCacheInterface;
 use Pulsar\Config\CacheConfig;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Container\ContainerInterface;
@@ -74,5 +77,21 @@ final readonly class CacheWiring implements ServiceWiringInterface
 
         // Bind default PSR-16 simple cache
         $container->instance(CacheInterface::class, $cacheManager->simple());
+
+        // Bind the tagged cache so tag-aware consumers wired later (anti-spam
+        // single-use replay protection, duplicate detection, reputation
+        // cooldowns) can resolve it. Without this binding those features detect
+        // no TaggedCacheInterface and silently disable themselves. When the
+        // default pool's driver cannot support tags we degrade with a loud log
+        // rather than aborting boot.
+        try {
+            $container->instance(TaggedCacheInterface::class, $cacheManager->tagged());
+        } catch (CacheException | UnsupportedCapabilityException $e) {
+            $logger?->warning(
+                'Tagged cache is unavailable for the default pool; tag-aware features '
+                . '(anti-spam single-use, duplicate detection, reputation cooldowns) are disabled.',
+                ['error' => $e->getMessage()],
+            );
+        }
     }
 }
