@@ -1,4 +1,5 @@
 {
+  "Pulsar\\Api\\OpenApi\\OpenApiWiring": "WiringList composition root lists every service wiring for the kernel boot order",
   "Pulsar\\Console\\Application": "CoreRuntimeProbe needs Application to introspect registered commands",
   "Pulsar\\Extensibility\\ExtensionRegistry": "CoreRuntimeProbe needs ExtensionRegistry to introspect loaded extensions",
   "Pulsar\\Container\\Container": "ExtensionBootstrap composition root wires DeferredProviderRegistry into concrete container",

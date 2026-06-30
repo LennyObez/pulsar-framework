@@ -24,10 +24,10 @@ final readonly class WiringContractInspector
     ) {}
 
     /**
-     * @param iterable<WiringContract> $contracts
+     * @param list<WiringContract> $contracts
      * @return list<DegradedFeature>   Features disabled by a missing optional binding
      */
-    public function degradedFeatures(iterable $contracts): array
+    public function degradedFeatures(array $contracts): array
     {
         $degraded = [];
 
@@ -52,13 +52,11 @@ final readonly class WiringContractInspector
      * Required bindings that no wiring in the graph provides — a hard gap that
      * should fail CI (a component declared a dependency nothing satisfies).
      *
-     * @param iterable<WiringContract> $contracts
+     * @param list<WiringContract> $contracts
      * @return list<array{component: string, binding: string}>
      */
-    public function unsatisfiedRequirements(iterable $contracts): array
+    public function unsatisfiedRequirements(array $contracts): array
     {
-        $contracts = [...$contracts];
-
         $provided = [];
 
         foreach ($contracts as $contract) {
