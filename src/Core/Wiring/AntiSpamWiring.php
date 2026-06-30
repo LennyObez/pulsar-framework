@@ -10,6 +10,9 @@ use Pulsar\Api\Internal;
 use Pulsar\Cache\Application\TaggedCacheInterface;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Container\ContainerInterface;
+use Pulsar\Core\Wiring\Contract\DescribesWiring;
+use Pulsar\Core\Wiring\Contract\OptionalBinding;
+use Pulsar\Core\Wiring\Contract\WiringContract;
 use Pulsar\Http\Client\HttpClientInterface;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
@@ -57,8 +60,36 @@ use const SODIUM_CRYPTO_AUTH_KEYBYTES;
  * Forum ForumAntiAbuseMiddleware via the AntiSpamPipelineInterface binding.
  */
 #[Internal]
-final readonly class AntiSpamWiring implements ServiceWiringInterface
+final readonly class AntiSpamWiring implements ServiceWiringInterface, DescribesWiring
 {
+    public function describeWiring(): WiringContract
+    {
+        return new WiringContract(
+            component: 'anti-spam',
+            configClass: AntiSpamConfig::class,
+            configFile: 'anti-spam.php',
+            provides: [
+                AntiSpamConfig::class,
+                AntiSpamPipeline::class,
+                AntiSpamPipelineInterface::class,
+            ],
+            optional: [
+                new OptionalBinding(
+                    binding: TaggedCacheInterface::class,
+                    feature: 'duplicate detection, reputation cooldowns, and managed-challenge single-use replay protection',
+                    fix: 'Enable the cache (CacheWiring binds TaggedCacheInterface when cache is enabled).',
+                    security: true,
+                ),
+                new OptionalBinding(
+                    binding: MasterKey::class,
+                    feature: 'managed-challenge and time-trap token signing',
+                    fix: 'Configure PULSAR_MASTER_KEY.',
+                    security: true,
+                ),
+            ],
+        );
+    }
+
     public function wire(
         ContainerInterface $container,
         ConfigManager $configManager,

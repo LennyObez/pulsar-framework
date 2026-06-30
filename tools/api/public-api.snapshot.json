@@ -13201,6 +13201,77 @@
             },
             "constants": []
         },
+        "Pulsar\\Core\\Wiring\\Contract\\DegradedFeature": {
+            "since": "1.0.0-rc.11",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "string $component",
+                        "string $feature",
+                        "string $missingBinding",
+                        "string $fix",
+                        "bool $security"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "describe": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Core\\Wiring\\Contract\\DescribesWiring": {
+            "since": "1.0.0-rc.11",
+            "methods": [],
+            "signatures": {
+                "describeWiring": {
+                    "params": [],
+                    "return": "Pulsar\\Core\\Wiring\\Contract\\WiringContract",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Core\\Wiring\\Contract\\OptionalBinding": {
+            "since": "1.0.0-rc.11",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "string $binding",
+                        "string $feature",
+                        "string $fix",
+                        "bool $security"
+                    ],
+                    "return": null,
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Core\\Wiring\\Contract\\WiringContract": {
+            "since": "1.0.0-rc.11",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "string $component",
+                        "?string $configClass",
+                        "?string $configFile",
+                        "array $provides",
+                        "array $requires",
+                        "array $optional"
+                    ],
+                    "return": null,
+                    "static": false
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\DataProtection\\ConsentBanner\\ConsentBannerConfig": {
             "since": "1.0.0",
             "methods": [],
@@ -54926,6 +54997,7 @@
         "Pulsar\\Core\\Wiring\\CacheWiring",
         "Pulsar\\Core\\Wiring\\CloudWiring",
         "Pulsar\\Core\\Wiring\\ConfigWiring",
+        "Pulsar\\Core\\Wiring\\Contract\\WiringContractInspector",
         "Pulsar\\Core\\Wiring\\DatabaseWiring",
         "Pulsar\\Core\\Wiring\\DeployWiring",
         "Pulsar\\Core\\Wiring\\DiagnosticsWiring",
