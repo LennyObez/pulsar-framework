@@ -67,6 +67,31 @@ final class AntiSpamConfigTest extends TestCase
     }
 
     #[Test]
+    public function behaviorDefaultsAreOptInOff(): void
+    {
+        $config = new AntiSpamConfig();
+
+        self::assertFalse($config->behaviorEnabled);
+        self::assertSame('pulsar-bx', $config->behaviorFieldName);
+        self::assertSame([], $config->behaviorWeights);
+        self::assertFalse(AntiSpamConfig::fromArray([])->behaviorEnabled);
+    }
+
+    #[Test]
+    public function fromArrayMapsBehaviorKeys(): void
+    {
+        $config = AntiSpamConfig::fromArray([
+            'behavior_enabled' => true,
+            'behavior_field_name' => 'bx',
+            'behavior_weights' => ['webdriver' => 50],
+        ]);
+
+        self::assertTrue($config->behaviorEnabled);
+        self::assertSame('bx', $config->behaviorFieldName);
+        self::assertSame(['webdriver' => 50], $config->behaviorWeights);
+    }
+
+    #[Test]
     public function fromArrayWithDefaults(): void
     {
         $config = AntiSpamConfig::fromArray([]);

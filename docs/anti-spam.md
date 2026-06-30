@@ -136,3 +136,38 @@ Add `@timetrap('your-form-id')` (or just `@shield`) inside the form. To bind a s
 ### Trade-offs
 
 The time-trap is a cheap, robust complement to the Managed Challenge, not a replacement: timing alone is a weak signal in isolation (a patient bot can wait), so deploy it as one layer of the pipeline. Because the stamp is a timestamp rather than a single-use nonce, the same form's stamp may be submitted more than once within the window — replay _of a different form_ is what the `formId` binding prevents.
+
+## Behavioural Signals (self-hosted, score-only)
+
+The behavioural-signals check narrows the gap to a third-party CAPTCHA's behavioural layer with **no third party**. A same-origin collector script measures how the form was used and the server grades those signals into a spam score. It is **score-only** — it never hard-rejects — because behavioural heuristics are probabilistic and a false positive must never block a real user; the score combines with the other pipeline checks.
+
+### Signals collected
+
+The collector (`@shield`, or `BehaviorCollectorRenderer`) records only **non-identifying, aggregate** measurements into the form's own hidden field: interaction-present, total fill duration, normalised pointer-movement entropy, the `navigator.webdriver` automation flag, the paste-vs-type ratio, and a keydown count. The default `HeuristicScorer` (a transparent linear model with configurable weights) grades them; an application can bind its own `BehaviorScorerInterface` — e.g. a trained model — without touching the framework. An opt-in `BehaviorFeatureSink` (default `NullBehaviorFeatureSink`, no-op) can capture `{feature_vector, score}` pairs for offline training.
+
+### Configuration
+
+```php
+// config/anti-spam.php
+return [
+    'behavior_enabled' => true,            // opt-in; default false
+    'behavior_field_name' => 'pulsar-bx',  // hidden field the collector fills
+    'behavior_weights' => [                // HeuristicScorer weight overrides
+        'webdriver' => 40,
+        'no_interaction' => 30,
+        'too_fast' => 20,
+        'no_pointer_entropy' => 10,
+        'high_paste' => 15,
+        'min_human_fill_ms' => 800,
+        'high_paste_ratio' => 0.9,
+    ],
+];
+```
+
+### Privacy (GDPR)
+
+By design the collector captures **no personal data**: no field values, no typed or pasted text, no mouse coordinates, no IP, no cookie, and **no persistent or cross-site identifier**. Only the aggregate counters above are serialised, into the form's own hidden field, and nothing is sent anywhere else. With JavaScript disabled the field stays empty and the server scores it as "no signal" (zero) — never penalising the user. This keeps the feature GDPR-clean by construction and free of the consent burden a third-party behavioural CAPTCHA carries.
+
+### Honest limitation
+
+A self-hosted engine sees only **your own** origin. It has **no global cross-site reputation** — the network effect a large third-party CAPTCHA derives from observing a device across millions of sites. That signal is deliberately out of scope: it is irreconcilable with self-hosting and zero data sharing. Deploy behavioural signals as one score-only layer among honeypot, rate limiting, content checks, the managed challenge, and the time-trap — not as a sole defence.
