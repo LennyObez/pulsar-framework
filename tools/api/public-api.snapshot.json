@@ -38740,7 +38740,10 @@
                         "bool $timeTrapEnabled",
                         "int $timeTrapMinSeconds",
                         "int $timeTrapMaxSeconds",
-                        "string $timeTrapFieldName"
+                        "string $timeTrapFieldName",
+                        "bool $behaviorEnabled",
+                        "string $behaviorFieldName",
+                        "array $behaviorWeights"
                     ],
                     "return": null,
                     "static": false
@@ -38823,6 +38826,112 @@
                     ],
                     "return": "Pulsar\\Security\\AntiSpam\\AntiSpamResult",
                     "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Security\\AntiSpam\\Behavior\\BehaviorCollectorRenderer": {
+            "since": "1.0.0-rc.11",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "string $fieldName",
+                        "string $scriptUrl"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "render": {
+                    "params": [
+                        "?string $cspNonce"
+                    ],
+                    "return": "string",
+                    "static": false
+                },
+                "renderGlobal": {
+                    "params": [
+                        "?string $cspNonce"
+                    ],
+                    "return": "string",
+                    "static": true
+                },
+                "resetGlobalInstance": {
+                    "params": [],
+                    "return": "void",
+                    "static": true
+                },
+                "setGlobalInstance": {
+                    "params": [
+                        "Pulsar\\Security\\AntiSpam\\Behavior\\BehaviorCollectorRenderer $instance"
+                    ],
+                    "return": "void",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Security\\AntiSpam\\Behavior\\BehaviorFeatureSink": {
+            "since": "1.0.0-rc.11",
+            "methods": [],
+            "signatures": {
+                "record": {
+                    "params": [
+                        "array $featureVector",
+                        "int $score"
+                    ],
+                    "return": "void",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Security\\AntiSpam\\Behavior\\BehaviorScorerInterface": {
+            "since": "1.0.0-rc.11",
+            "methods": [],
+            "signatures": {
+                "score": {
+                    "params": [
+                        "Pulsar\\Security\\AntiSpam\\Behavior\\BehaviorSignals $signals"
+                    ],
+                    "return": "int",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Security\\AntiSpam\\Behavior\\BehaviorSignals": {
+            "since": "1.0.0-rc.11",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "bool $interactionPresent",
+                        "int $fillDurationMs",
+                        "float $pointerEntropy",
+                        "bool $webdriver",
+                        "float $pasteRatio",
+                        "int $keydownCount"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "fromBlob": {
+                    "params": [
+                        "string $blob"
+                    ],
+                    "return": "Pulsar\\Security\\AntiSpam\\Behavior\\BehaviorSignals",
+                    "static": true
+                },
+                "hasSignal": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
+                "toFeatureVector": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -55076,6 +55185,9 @@
         "Pulsar\\Saga\\Storage\\InMemorySagaStateStorage",
         "Pulsar\\Security\\AntiSpam\\AccountAgeGate",
         "Pulsar\\Security\\AntiSpam\\AntiSpamPipeline",
+        "Pulsar\\Security\\AntiSpam\\Behavior\\BehavioralSignalsCheck",
+        "Pulsar\\Security\\AntiSpam\\Behavior\\HeuristicScorer",
+        "Pulsar\\Security\\AntiSpam\\Behavior\\NullBehaviorFeatureSink",
         "Pulsar\\Security\\AntiSpam\\ContentQualityGate",
         "Pulsar\\Security\\AntiSpam\\DuplicateDetector",
         "Pulsar\\Security\\AntiSpam\\HCaptchaVerifier",

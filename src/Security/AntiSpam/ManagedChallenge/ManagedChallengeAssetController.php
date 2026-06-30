@@ -34,6 +34,7 @@ final readonly class ManagedChallengeAssetController
         'managed-challenge.js',
         'managed-challenge.worker.js',
         'managed-challenge.pow.js',
+        'behavior-collector.js',
     ];
 
     public function widget(ServerRequestInterface $request): ResponseInterface
@@ -49,6 +50,11 @@ final readonly class ManagedChallengeAssetController
     public function pow(ServerRequestInterface $request): ResponseInterface
     {
         return $this->serve($request, 'managed-challenge.pow.js');
+    }
+
+    public function behaviorCollector(ServerRequestInterface $request): ResponseInterface
+    {
+        return $this->serve($request, 'behavior-collector.js');
     }
 
     private function serve(ServerRequestInterface $request, string $file): ResponseInterface

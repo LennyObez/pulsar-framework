@@ -14,7 +14,9 @@ use Pulsar\Api\Internal;
  *    proof-of-work script), passing the request CSP nonce through so the script
  *    tag stays `script-src 'self'` compliant; and
  *  - the time-trap stamp (a server-rendered hidden field, no JavaScript) which
- *    covers clients with scripting disabled.
+ *    covers clients with scripting disabled; and
+ *  - the behavioural-signals collector (hidden field + same-origin script) when
+ *    the score-only behavioural check is enabled.
  *
  * Each renderer degrades to an empty string when its provider is not
  * configured, so @shield is safe to place in any form regardless of which
@@ -31,6 +33,7 @@ final readonly class ShieldDirective implements DirectiveInterface
     public function compile(string $expression): string
     {
         return '<?php echo \Pulsar\Security\AntiSpam\ManagedChallenge\ManagedChallengeRenderer::renderGlobal($__csp_nonce ?? null)'
-            . ' . \Pulsar\Security\AntiSpam\TimeTrap\TimeTrapRenderer::renderGlobal(); ?>';
+            . ' . \Pulsar\Security\AntiSpam\TimeTrap\TimeTrapRenderer::renderGlobal()'
+            . ' . \Pulsar\Security\AntiSpam\Behavior\BehaviorCollectorRenderer::renderGlobal($__csp_nonce ?? null); ?>';
     }
 }

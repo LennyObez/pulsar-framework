@@ -37,4 +37,12 @@ final class ShieldDirectiveTest extends TestCase
         // no-JS client is still covered by the timing check.
         self::assertStringContainsString('TimeTrap\\TimeTrapRenderer::renderGlobal', $output);
     }
+
+    #[Test]
+    public function compileAlsoEmitsTheBehaviorCollector(): void
+    {
+        $output = new ShieldDirective()->compile('');
+
+        self::assertStringContainsString('Behavior\\BehaviorCollectorRenderer::renderGlobal', $output);
+    }
 }
