@@ -16,8 +16,11 @@ use Pulsar\Http\ResponseStatus;
 
 use function array_key_exists;
 use function count;
+use function hash_equals;
 use function is_string;
 use function max;
+use function str_starts_with;
+use function substr;
 use function time;
 
 /**
@@ -29,6 +32,10 @@ use function time;
 #[Internal]
 final class StatusAccessMiddleware implements MiddlewareInterface
 {
+    private const string BEARER_PREFIX = 'Bearer ';
+
+    private const int BEARER_PREFIX_LENGTH = 7;
+
     /**
      * In-memory rate limit tracker: IP => [timestamps].
      *
@@ -79,13 +86,32 @@ final class StatusAccessMiddleware implements MiddlewareInterface
     }
 
     /**
-     * Determine if the request has valid authentication.
+     * Determine if the request carries the configured bearer token.
+     *
+     * The credential is a shared secret from HealthStatusConfig::$authToken.
+     * If no token is configured authentication can never succeed — combined
+     * with requireAuth this fails CLOSED (process() returns 401), because an
+     * auth gate with no credential must not admit traffic. The token is
+     * compared in constant time so a timing side-channel cannot recover it,
+     * and only the `Bearer` scheme is accepted.
      */
     private function isAuthenticated(ServerRequestInterface $request): bool
     {
+        $configuredToken = $this->config->authToken;
+
+        if ($configuredToken === null || $configuredToken === '') {
+            return false;
+        }
+
         $authHeader = $request->getHeaderLine('Authorization');
 
-        return $authHeader !== '';
+        if (!str_starts_with($authHeader, self::BEARER_PREFIX)) {
+            return false;
+        }
+
+        $presented = substr($authHeader, self::BEARER_PREFIX_LENGTH);
+
+        return hash_equals($configuredToken, $presented);
     }
 
     /**

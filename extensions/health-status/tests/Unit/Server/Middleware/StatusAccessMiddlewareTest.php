@@ -18,19 +18,87 @@ use Pulsar\Http\ResponseStatus;
 #[CoversClass(StatusAccessMiddleware::class)]
 final class StatusAccessMiddlewareTest extends TestCase
 {
+    private const string VALID_TOKEN = 'test-token-123';
+
     #[Test]
     public function authenticatedRequestPassesThroughWhenAuthRequired(): void
     {
-        $config = new HealthStatusConfig(requireAuth: true, publicSummary: false);
+        $config = new HealthStatusConfig(requireAuth: true, publicSummary: false, authToken: self::VALID_TOKEN);
         $middleware = new StatusAccessMiddleware($config);
 
-        $request = $this->makeAuthenticatedRequest();
+        $request = $this->makeRequestWithAuthorization('Bearer ' . self::VALID_TOKEN);
         $expectedResponse = Response::html('<p>OK</p>');
         $handler = $this->makeHandler($expectedResponse);
 
         $response = $middleware->process($request, $handler);
 
         self::assertSame(200, $response->getStatusCode());
+    }
+
+    /**
+     * Regression for the no-op auth gate: previously isAuthenticated() only
+     * checked the Authorization header was non-empty, so ANY value passed.
+     * A wrong token, and a non-Bearer header, must now both be rejected.
+     */
+    #[Test]
+    public function wrongBearerTokenIsRejectedWhenAuthRequired(): void
+    {
+        $config = new HealthStatusConfig(requireAuth: true, publicSummary: false, authToken: self::VALID_TOKEN);
+        $middleware = new StatusAccessMiddleware($config);
+
+        $request = $this->makeRequestWithAuthorization('Bearer not-the-real-token');
+        $handler = $this->makeHandler(Response::html('should not reach'));
+
+        $response = $middleware->process($request, $handler);
+
+        self::assertSame(ResponseStatus::Unauthorized->value, $response->getStatusCode());
+    }
+
+    #[Test]
+    public function arbitraryNonBearerAuthorizationHeaderIsRejected(): void
+    {
+        $config = new HealthStatusConfig(requireAuth: true, publicSummary: false, authToken: self::VALID_TOKEN);
+        $middleware = new StatusAccessMiddleware($config);
+
+        // The old gate accepted this outright; the scheme must now be Bearer.
+        $request = $this->makeRequestWithAuthorization('literally-anything-non-empty');
+        $handler = $this->makeHandler(Response::html('should not reach'));
+
+        $response = $middleware->process($request, $handler);
+
+        self::assertSame(ResponseStatus::Unauthorized->value, $response->getStatusCode());
+    }
+
+    #[Test]
+    public function basicSchemeIsRejectedEvenWithMatchingCredentialBytes(): void
+    {
+        $config = new HealthStatusConfig(requireAuth: true, publicSummary: false, authToken: self::VALID_TOKEN);
+        $middleware = new StatusAccessMiddleware($config);
+
+        $request = $this->makeRequestWithAuthorization('Basic ' . self::VALID_TOKEN);
+        $handler = $this->makeHandler(Response::html('should not reach'));
+
+        $response = $middleware->process($request, $handler);
+
+        self::assertSame(ResponseStatus::Unauthorized->value, $response->getStatusCode());
+    }
+
+    /**
+     * Fail-closed: requireAuth on but no credential configured must deny
+     * every request rather than admit traffic against a missing secret.
+     */
+    #[Test]
+    public function requireAuthWithNoConfiguredTokenFailsClosed(): void
+    {
+        $config = new HealthStatusConfig(requireAuth: true, publicSummary: false, authToken: null);
+        $middleware = new StatusAccessMiddleware($config);
+
+        $request = $this->makeRequestWithAuthorization('Bearer anything-at-all');
+        $handler = $this->makeHandler(Response::html('should not reach'));
+
+        $response = $middleware->process($request, $handler);
+
+        self::assertSame(ResponseStatus::Unauthorized->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -184,14 +252,11 @@ final class StatusAccessMiddlewareTest extends TestCase
         self::assertStringNotContainsString('exception', $body);
     }
 
-    private function makeAuthenticatedRequest(): ServerRequestInterface
+    private function makeRequestWithAuthorization(string $authorization): ServerRequestInterface
     {
         $request = $this->createStub(ServerRequestInterface::class);
         $request->method('getHeaderLine')->willReturnCallback(
-            static fn(string $name): string => match (strtolower($name)) {
-                'authorization' => 'Bearer test-token-123',
-                default => '',
-            },
+            static fn(string $name): string => strtolower($name) === 'authorization' ? $authorization : '',
         );
         $request->method('getServerParams')->willReturn(['REMOTE_ADDR' => '127.0.0.1']);
         $request->method('withAttribute')->willReturn($request);
