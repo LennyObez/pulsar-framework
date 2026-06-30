@@ -96,11 +96,25 @@ readonly class SessionConfig
     #[NoDiscard]
     public static function fromArray(array $data, Environment $environment): self
     {
+        // Secure-by-default in production, relaxed otherwise: an explicit
+        // cookie_secure (config or SESSION_COOKIE_SECURE env) always wins, but
+        // when unset the cookie is marked Secure only in production. This keeps
+        // production cookies HTTPS-only while letting the session — and thus
+        // CSRF-protected forms — work over plain http:// on the local dev
+        // server, where a Secure cookie is never returned and every POST 403s.
+        $appEnv = $environment->get('APP_ENV') ?? 'local';
+        $secureEnv = $environment->get('SESSION_COOKIE_SECURE');
+        $cookieSecure = match (true) {
+            $secureEnv !== null => $secureEnv === 'true' || $secureEnv === '1',
+            isset($data['cookie_secure']) => (bool) $data['cookie_secure'],
+            default => $appEnv === 'production',
+        };
+
         $config = new self(
             cookieName: $environment->get('SESSION_COOKIE_NAME') ?? $data['cookie_name'] ?? 'PULSAR_SESSION',
             lifetime: $data['lifetime'] ?? 7200,
             cookieHttpOnly: (bool) ($data['cookie_httponly'] ?? true),
-            cookieSecure: (bool) ($data['cookie_secure'] ?? true),
+            cookieSecure: $cookieSecure,
             cookieSameSite: $data['cookie_samesite'] ?? 'Strict',
             regenerateOnPrivilegeChange: (bool) ($data['regenerate_on_privilege_change'] ?? true),
             handler: $data['handler'] ?? 'file',
