@@ -129,6 +129,7 @@ final class DirectiveRegistry
         $this->register(new CsrfDirective());
         $this->register(new MethodDirective());
         $this->register(new ShieldDirective());
+        $this->register(new TimeTrapDirective());
 
         // i18n
         $this->register(new I18nDirective());

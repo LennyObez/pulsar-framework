@@ -27,4 +27,14 @@ final class ShieldDirectiveTest extends TestCase
         self::assertStringContainsString('$__csp_nonce ?? null', $output);
         self::assertStringStartsWith('<?php echo', $output);
     }
+
+    #[Test]
+    public function compileAlsoEmitsTheNoJsTimeTrapField(): void
+    {
+        $output = new ShieldDirective()->compile('');
+
+        // @shield is the full form shield: managed challenge + time-trap so a
+        // no-JS client is still covered by the timing check.
+        self::assertStringContainsString('TimeTrap\\TimeTrapRenderer::renderGlobal', $output);
+    }
 }

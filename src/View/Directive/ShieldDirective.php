@@ -7,12 +7,18 @@ namespace Pulsar\View\Directive;
 use Pulsar\Api\Internal;
 
 /**
- * Compiles the @shield directive to render the managed-challenge widget.
+ * Compiles the @shield directive to render the full anti-spam form shield.
  *
- * Emits the self-hosted, privacy-preserving CAPTCHA widget (hidden token field
- * + same-origin proof-of-work script) into a form. Passes the request CSP
- * nonce through so the script tag stays `script-src 'self'` compliant. Renders
- * nothing when the 'managed' captcha provider is not configured.
+ * Emits two complementary, self-hosted defences into a form:
+ *  - the managed-challenge widget (hidden token field + same-origin
+ *    proof-of-work script), passing the request CSP nonce through so the script
+ *    tag stays `script-src 'self'` compliant; and
+ *  - the time-trap stamp (a server-rendered hidden field, no JavaScript) which
+ *    covers clients with scripting disabled.
+ *
+ * Each renderer degrades to an empty string when its provider is not
+ * configured, so @shield is safe to place in any form regardless of which
+ * anti-spam features an application has enabled.
  */
 #[Internal(reason: 'Directive implementation detail')]
 final readonly class ShieldDirective implements DirectiveInterface
@@ -24,6 +30,7 @@ final readonly class ShieldDirective implements DirectiveInterface
 
     public function compile(string $expression): string
     {
-        return '<?php echo \Pulsar\Security\AntiSpam\ManagedChallenge\ManagedChallengeRenderer::renderGlobal($__csp_nonce ?? null); ?>';
+        return '<?php echo \Pulsar\Security\AntiSpam\ManagedChallenge\ManagedChallengeRenderer::renderGlobal($__csp_nonce ?? null)'
+            . ' . \Pulsar\Security\AntiSpam\TimeTrap\TimeTrapRenderer::renderGlobal(); ?>';
     }
 }

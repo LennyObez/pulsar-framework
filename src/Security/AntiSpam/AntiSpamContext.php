@@ -29,6 +29,10 @@ final readonly class AntiSpamContext
      * @param string|null $powNonce Proof-of-work nonce value
      * @param string|null $captchaToken CAPTCHA response token
      * @param int $submissionTimestamp Unix timestamp of submission
+     * @param string $formId Identifier of the form/route being submitted. The
+     *        time-trap check requires a stamp minted for this exact form, so an
+     *        integrator must set the same value here that it passed to the
+     *        renderer. Defaults to '' (no form binding; timing still enforced).
      */
     public function __construct(
         public string $body,
@@ -42,6 +46,7 @@ final readonly class AntiSpamContext
         public ?string $powNonce = null,
         public ?string $captchaToken = null,
         public int $submissionTimestamp = 0,
+        public string $formId = '',
     ) {}
 
     #[NoDiscard]
