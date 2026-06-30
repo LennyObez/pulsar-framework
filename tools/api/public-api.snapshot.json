@@ -38736,7 +38736,11 @@
                         "bool $shortCircuit",
                         "int $managedChallengeBits",
                         "int $managedChallengeTtlSeconds",
-                        "string $managedChallengeFieldName"
+                        "string $managedChallengeFieldName",
+                        "bool $timeTrapEnabled",
+                        "int $timeTrapMinSeconds",
+                        "int $timeTrapMaxSeconds",
+                        "string $timeTrapFieldName"
                     ],
                     "return": null,
                     "static": false
@@ -38767,7 +38771,8 @@
                         "?string $powChallenge",
                         "?string $powNonce",
                         "?string $captchaToken",
-                        "int $submissionTimestamp"
+                        "int $submissionTimestamp",
+                        "string $formId"
                     ],
                     "return": null,
                     "static": false
@@ -38914,6 +38919,47 @@
             "since": "1.0.0",
             "methods": [],
             "signatures": [],
+            "constants": []
+        },
+        "Pulsar\\Security\\AntiSpam\\TimeTrap\\TimeTrapRenderer": {
+            "since": "1.0.0-rc.11",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "Pulsar\\Security\\AntiSpam\\TimeTrap\\TimeTrapService $service",
+                        "string $fieldName"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "render": {
+                    "params": [
+                        "string $formId"
+                    ],
+                    "return": "string",
+                    "static": false
+                },
+                "renderGlobal": {
+                    "params": [
+                        "string $formId"
+                    ],
+                    "return": "string",
+                    "static": true
+                },
+                "resetGlobalInstance": {
+                    "params": [],
+                    "return": "void",
+                    "static": true
+                },
+                "setGlobalInstance": {
+                    "params": [
+                        "Pulsar\\Security\\AntiSpam\\TimeTrap\\TimeTrapRenderer $instance"
+                    ],
+                    "return": "void",
+                    "static": true
+                }
+            },
             "constants": []
         },
         "Pulsar\\Security\\ApiSigning\\RequestSignatureMiddleware": {
@@ -55039,6 +55085,9 @@
         "Pulsar\\Security\\AntiSpam\\ManagedChallenge\\ManagedChallengeVerifier",
         "Pulsar\\Security\\AntiSpam\\ProofOfWorkVerifier",
         "Pulsar\\Security\\AntiSpam\\ReputationCooldown",
+        "Pulsar\\Security\\AntiSpam\\TimeTrap\\TimeTrapCheck",
+        "Pulsar\\Security\\AntiSpam\\TimeTrap\\TimeTrapService",
+        "Pulsar\\Security\\AntiSpam\\TimeTrap\\TimeTrapToken",
         "Pulsar\\Security\\AntiSpam\\TurnstileVerifier",
         "Pulsar\\Security\\Compliance\\Evidence\\InMemoryEvidenceExporter",
         "Pulsar\\Security\\Compliance\\Pseudonymization\\ForgetService",
@@ -55134,6 +55183,7 @@
         "Pulsar\\View\\Directive\\SimpleDirective",
         "Pulsar\\View\\Directive\\SlotDirective",
         "Pulsar\\View\\Directive\\StackDirective",
+        "Pulsar\\View\\Directive\\TimeTrapDirective",
         "Pulsar\\View\\Directive\\TranslateDirective",
         "Pulsar\\View\\Directive\\TranslateRawDirective",
         "Pulsar\\View\\Directive\\TryDirective",

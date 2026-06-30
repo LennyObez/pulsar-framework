@@ -45,6 +45,10 @@ final readonly class AntiSpamConfig
      * @param int $managedChallengeBits Proof-of-work difficulty (leading zero bits) for the self-hosted 'managed' captcha provider
      * @param int $managedChallengeTtlSeconds Lifetime of an issued managed challenge
      * @param string $managedChallengeFieldName Form field name the managed-challenge widget writes its solved token into
+     * @param bool $timeTrapEnabled Enable the no-JS form-fill-timing check (opt-in)
+     * @param int $timeTrapMinSeconds Minimum plausible human fill time in seconds (faster ⇒ flagged)
+     * @param int $timeTrapMaxSeconds Maximum stamp age in seconds before a page is treated as stale
+     * @param string $timeTrapFieldName Hidden field name carrying the signed render timestamp
      */
     public function __construct(
         public bool $honeypotEnabled = true,
@@ -72,6 +76,10 @@ final readonly class AntiSpamConfig
         public int $managedChallengeBits = 16,
         public int $managedChallengeTtlSeconds = 300,
         public string $managedChallengeFieldName = 'pulsar-challenge-response',
+        public bool $timeTrapEnabled = false,
+        public int $timeTrapMinSeconds = 3,
+        public int $timeTrapMaxSeconds = 3600,
+        public string $timeTrapFieldName = 'pulsar-form-ts',
     ) {}
 
     /**
@@ -101,6 +109,10 @@ final readonly class AntiSpamConfig
      *     managed_challenge_bits?: int,
      *     managed_challenge_ttl_seconds?: int,
      *     managed_challenge_field_name?: string,
+     *     time_trap_enabled?: bool,
+     *     time_trap_min_seconds?: int,
+     *     time_trap_max_seconds?: int,
+     *     time_trap_field_name?: string,
      * } $data
      */
     #[NoDiscard]
@@ -134,6 +146,10 @@ final readonly class AntiSpamConfig
             managedChallengeBits: Coerce::int($data['managed_challenge_bits'] ?? null, 16),
             managedChallengeTtlSeconds: Coerce::int($data['managed_challenge_ttl_seconds'] ?? null, 300),
             managedChallengeFieldName: Coerce::string($data['managed_challenge_field_name'] ?? null, 'pulsar-challenge-response'),
+            timeTrapEnabled: Coerce::strictBool($data['time_trap_enabled'] ?? null),
+            timeTrapMinSeconds: Coerce::int($data['time_trap_min_seconds'] ?? null, 3),
+            timeTrapMaxSeconds: Coerce::int($data['time_trap_max_seconds'] ?? null, 3600),
+            timeTrapFieldName: Coerce::string($data['time_trap_field_name'] ?? null, 'pulsar-form-ts'),
         );
     }
 }

@@ -1,6 +1,6 @@
 # Anti-Spam
 
-Pulsar ships a composable anti-spam pipeline (`Pulsar\Security\AntiSpam`) of independent checks — honeypot, duplicate detection, link density, content quality, proof-of-work, account-age gate, reputation cooldown, and CAPTCHA — each implementing `AntiSpamCheckInterface` and run by `AntiSpamPipeline`. Checks are enabled and tuned through `config/anti-spam.php`.
+Pulsar ships a composable anti-spam pipeline (`Pulsar\Security\AntiSpam`) of independent checks — honeypot, duplicate detection, link density, content quality, proof-of-work, account-age gate, reputation cooldown, CAPTCHA, and the no-JavaScript time-trap — each implementing `AntiSpamCheckInterface` and run by `AntiSpamPipeline`. Checks are enabled and tuned through `config/anti-spam.php`.
 
 This document focuses on the **Managed Challenge** — the self-hosted CAPTCHA provider.
 
@@ -86,3 +86,46 @@ The Web Worker is an ES-module worker, so the widget requires a browser supporti
 ### Trade-offs vs. Turnstile
 
 The Managed Challenge trades Turnstile's server-side ML/behavioural risk scoring for full self-hosting and zero data sharing. It is a strong, invisible bot-cost gate, best deployed as one layer of the pipeline (alongside honeypot, rate limiting, and content checks) rather than as a sole defence. Difficulty is fixed per configuration; adaptive difficulty under load is a planned enhancement.
+
+## Time-Trap (no-JavaScript form-fill timing)
+
+The time-trap rejects submissions whose form-fill timing is implausible for a human: posted faster than a person could read and complete the form (a bot submitting on page load), or after a stale delay (a long-cached or replayed page). Crucially it needs **no JavaScript** — the render stamp is a server-rendered hidden field — so it closes the form-timing gap the (JS-only) Managed Challenge leaves open for scripting-disabled clients.
+
+### How it works
+
+1. The `@timetrap` directive (or `@shield`, which emits it alongside the Managed Challenge) mints a stamp `{issuedAt, formId}`, signs it with `sodium_crypto_auth` (HMAC-SHA-512/256) keyed by a derived master sub-key, and embeds it as a single hidden `<input>` — no script, no inline code.
+2. On submission, `TimeTrapCheck` reads the field, verifies the signature in constant time, confirms the stamp was minted for this form (`formId`), and computes the fill duration. A duration below `time_trap_min_seconds` or above `time_trap_max_seconds` is flagged (advisory score 30, like the honeypot); a small negative clock skew (−5s) is tolerated.
+
+### Configuration
+
+```php
+// config/anti-spam.php
+return [
+    // Opt-in: defaults preserve existing behaviour (disabled).
+    'time_trap_enabled' => true,
+    // Minimum plausible human fill time; faster ⇒ flagged.
+    'time_trap_min_seconds' => 3,
+    // Maximum stamp age before the page is treated as stale.
+    'time_trap_max_seconds' => 3600,
+    // Hidden field name carrying the signed render timestamp.
+    'time_trap_field_name' => 'pulsar-form-ts',
+];
+```
+
+The check requires a configured `PULSAR_MASTER_KEY`; without one it disables itself (logged) rather than failing boot.
+
+### Rendering and verifying
+
+Add `@timetrap('your-form-id')` (or just `@shield`) inside the form. To bind a stamp to one form so it cannot be replayed against another, pass the same identifier to the renderer and set `AntiSpamContext::$formId` to it at submission. With no `formId` the stamp still enforces the fill-time window; only cross-form replay protection is waived.
+
+### Security properties
+
+- **Tamper-proof timing.** `issuedAt` and `formId` are inside the signed payload; a client cannot backdate the stamp to beat the minimum, nor extend it past the maximum.
+- **Cross-form replay resistance.** The signed `formId` binds a stamp to one form/route; constant-time compared against the submission's form.
+- **Constant-time verification.** Signature checks use `sodium_crypto_auth_verify`.
+- **Domain-separated key.** Signing uses master sub-key id 17 (`antispam` context), distinct from the Managed Challenge's id 16 so the two features never share key material.
+- **No JavaScript, CSP-clean.** The field is plain server-rendered HTML — no inline script, no external request.
+
+### Trade-offs
+
+The time-trap is a cheap, robust complement to the Managed Challenge, not a replacement: timing alone is a weak signal in isolation (a patient bot can wait), so deploy it as one layer of the pipeline. Because the stamp is a timestamp rather than a single-use nonce, the same form's stamp may be submitted more than once within the window — replay _of a different form_ is what the `formId` binding prevents.

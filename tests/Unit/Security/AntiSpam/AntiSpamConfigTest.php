@@ -37,6 +37,33 @@ final class AntiSpamConfigTest extends TestCase
         self::assertTrue($config->reputationCooldownEnabled);
         self::assertSame(['new' => 60, 'established' => 10, 'moderator' => 0], $config->cooldownTiers);
         self::assertFalse($config->shortCircuit);
+        // Time-trap is opt-in: defaults must preserve existing behaviour.
+        self::assertFalse($config->timeTrapEnabled);
+        self::assertSame(3, $config->timeTrapMinSeconds);
+        self::assertSame(3600, $config->timeTrapMaxSeconds);
+        self::assertSame('pulsar-form-ts', $config->timeTrapFieldName);
+    }
+
+    #[Test]
+    public function fromArrayMapsTimeTrapKeys(): void
+    {
+        $config = AntiSpamConfig::fromArray([
+            'time_trap_enabled' => true,
+            'time_trap_min_seconds' => 5,
+            'time_trap_max_seconds' => 1800,
+            'time_trap_field_name' => 'ts',
+        ]);
+
+        self::assertTrue($config->timeTrapEnabled);
+        self::assertSame(5, $config->timeTrapMinSeconds);
+        self::assertSame(1800, $config->timeTrapMaxSeconds);
+        self::assertSame('ts', $config->timeTrapFieldName);
+    }
+
+    #[Test]
+    public function timeTrapStaysDisabledByDefaultViaFromArray(): void
+    {
+        self::assertFalse(AntiSpamConfig::fromArray([])->timeTrapEnabled);
     }
 
     #[Test]
