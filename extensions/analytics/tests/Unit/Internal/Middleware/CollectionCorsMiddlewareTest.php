@@ -63,6 +63,10 @@ final class CollectionCorsMiddlewareTest extends TestCase
         self::assertTrue($response->hasHeader('Access-Control-Allow-Origin'));
         self::assertSame('https://example.com', $response->getHeaderLine('Access-Control-Allow-Origin'));
         self::assertSame('POST', $response->getHeaderLine('Access-Control-Allow-Methods'));
+        // ACAO is reflected per-Origin, so the response must advertise that it
+        // varies by Origin or a shared cache could leak one site's ACAO to
+        // another.
+        self::assertContains('Origin', $response->getHeader('Vary'));
     }
 
     #[Test]

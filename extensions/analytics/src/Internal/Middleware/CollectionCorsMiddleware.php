@@ -93,9 +93,14 @@ final readonly class CollectionCorsMiddleware implements MiddlewareInterface
 
     private function addCorsHeaders(ResponseInterface $response, string $origin): ResponseInterface
     {
+        // Access-Control-Allow-Origin is reflected per-request from the
+        // validated Origin, so the response varies by Origin. Without
+        // `Vary: Origin` a shared cache could serve one registered site's
+        // ACAO header to a request from a different site.
         return $response
             ->withHeader('Access-Control-Allow-Origin', $origin)
             ->withHeader('Access-Control-Allow-Methods', 'POST')
-            ->withHeader('Access-Control-Allow-Headers', 'Content-Type');
+            ->withHeader('Access-Control-Allow-Headers', 'Content-Type')
+            ->withAddedHeader('Vary', 'Origin');
     }
 }
