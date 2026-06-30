@@ -81,6 +81,31 @@ final class CacheManagerTest extends TestCase
         self::assertInstanceOf(LockInterface::class, $lock);
     }
 
+    /**
+     * Regression: the event emitter's key-hasher hashes every cache key with a
+     * master-key-derived sub-key. The HMAC arguments were swapped, so the cache
+     * KEY was used as the HMAC key — which sodium rejects above 64 bytes. A key
+     * of 200 chars (well under the 250-char validator limit) therefore 500'd as
+     * soon as a master key was configured.
+     */
+    #[Test]
+    public function longCacheKeyWithMasterKeyConfiguredDoesNotThrow(): void
+    {
+        $config = new CacheConfig(
+            enabled: true,
+            defaultPool: 'default',
+            path: sys_get_temp_dir() . '/pulsar_cache_hmac_test',
+            pools: ['default' => new CachePoolConfig(name: 'default', driver: CacheDriverType::Array)],
+        );
+        $manager = new CacheManager($config, masterKey: MasterKey::fromHex(str_repeat('ab', 32)));
+
+        $key = str_repeat('k', 200);
+        $cache = $manager->simple('default');
+        $cache->set($key, 'value');
+
+        self::assertSame('value', $cache->get($key));
+    }
+
     #[Test]
     public function driverReturnsCacheDriverInterface(): void
     {

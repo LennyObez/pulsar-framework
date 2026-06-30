@@ -77,8 +77,13 @@ final class CacheManager implements CacheManagerInterface
         ?LoggerInterface $logger = null,
     ) {
         $masterKey = $this->masterKey;
+        // computeHex(message, key): the cache key is the MESSAGE (arbitrary
+        // length) and the 32-byte derived sub-key is the KEY. Passing them the
+        // other way round made the variable-length cache key the HMAC key, which
+        // sodium_crypto_generichash rejects above 64 bytes — so any cache key
+        // longer than 64 bytes (well under the 250-char validator limit) threw.
         $keyHasher = $masterKey !== null
-            ? fn(string $key): string => Hmac::computeHex($masterKey->deriveSubKey(9, 'app_cobs'), $key)
+            ? fn(string $key): string => Hmac::computeHex($key, $masterKey->deriveSubKey(9, 'app_cobs'))
             : null;
 
         $this->eventEmitter = new CacheEventEmitter($metrics, $logger, $keyHasher);
