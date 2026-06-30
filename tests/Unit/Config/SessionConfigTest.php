@@ -123,9 +123,19 @@ final class SessionConfigTest extends TestCase
         self::assertSame(3600, $config->cookieReplayWindow);
     }
 
+    protected function tearDown(): void
+    {
+        // Defensive cleanup: the cookie-secure tests toggle these env vars.
+        putenv('APP_ENV');
+        putenv('SESSION_COOKIE_SECURE');
+    }
+
     #[Test]
     public function fromArrayDefaults(): void
     {
+        // cookie_secure defaults are env-aware; pin production so the secure
+        // default is asserted deterministically here.
+        putenv('APP_ENV=production');
         $env = Environment::load();
 
         $config = SessionConfig::fromArray([], $env);
@@ -141,6 +151,42 @@ final class SessionConfigTest extends TestCase
         self::assertSame(3, $config->maxConcurrentSessions);
         self::assertSame('/', $config->cookiePath);
         self::assertSame('', $config->cookieDomain);
+    }
+
+    #[Test]
+    public function cookieSecureDefaultsToTrueInProduction(): void
+    {
+        putenv('APP_ENV=production');
+
+        self::assertTrue(SessionConfig::fromArray([], Environment::load())->cookieSecure);
+    }
+
+    #[Test]
+    public function cookieSecureDefaultsToFalseOutsideProduction(): void
+    {
+        // The dev-server scenario: over plain http a Secure cookie is never
+        // returned, so every CSRF-protected POST 403s. Default it off in dev.
+        putenv('APP_ENV=local');
+
+        self::assertFalse(SessionConfig::fromArray([], Environment::load())->cookieSecure);
+    }
+
+    #[Test]
+    public function explicitCookieSecureConfigWinsOverEnvDefault(): void
+    {
+        putenv('APP_ENV=local');
+
+        self::assertTrue(SessionConfig::fromArray(['cookie_secure' => true], Environment::load())->cookieSecure);
+    }
+
+    #[Test]
+    public function sessionCookieSecureEnvVarOverridesEverything(): void
+    {
+        putenv('APP_ENV=production');
+        putenv('SESSION_COOKIE_SECURE=false');
+
+        // Explicit env opt-out wins even over a true config in production.
+        self::assertFalse(SessionConfig::fromArray(['cookie_secure' => true], Environment::load())->cookieSecure);
     }
 
     #[Test]
