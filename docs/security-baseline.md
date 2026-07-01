@@ -417,3 +417,45 @@ All security errors throw `Pulsar\Security\Exception\SecurityException` with des
 | `decryptionFailed()`        | Ciphertext tampered or wrong key          |
 | `auditIntegrityViolation()` | Audit entry HMAC verification fails       |
 | `auditWriteFailed()`        | Audit file sink cannot write              |
+
+## Security posture preflight
+
+At the end of boot, `SecurityPostureWiring` runs a preflight that evaluates the
+deployment's security posture against the fully wired container and produces a
+`SecurityPostureReport` of per-control items, each `OK`, `DEGRADED`, or `FAIL`
+with a reason and a fix. It fails **loud** instead of letting a control run
+silently inert — most importantly, a security feature disabled by a missing
+binding (e.g. a captcha whose single-use replay cache is unbound because
+`TaggedCacheInterface` is missing) is reported as a `FAIL`, not dropped.
+
+Controls evaluated: debug mode, CSRF protection, HTTPS/HSTS, master key
+presence and strength, session encryption, session cookie flags
+(`Secure`/`HttpOnly`/`SameSite`), baseline security headers, and every
+security feature flagged inert by the wiring-contract detector. Outside
+production, production-only weaknesses surface as `DEGRADED` warnings rather
+than failures, so they remain visible without breaking local development.
+
+### Inspecting the posture
+
+```bash
+php bin/pulsar security:check
+```
+
+Prints every control with its status and fix and exits non-zero when any
+control failed, so it doubles as a CI / pre-start deployment gate. The same
+report is surfaced through the health endpoint and `health:check` as the
+`security_posture` check (`UNHEALTHY` on failure, `DEGRADED` on warning).
+
+### Enforcement
+
+Enforcement is opt-in and ops-controlled, so the default stays backward-safe
+(report only, never abort boot):
+
+| Environment variable              | Effect                                                |
+| --------------------------------- | ----------------------------------------------------- |
+| `PULSAR_SECURITY_POSTURE_ENFORCE` | `true` → in production, blocking items abort boot     |
+| `PULSAR_SECURITY_POSTURE_STRICT`  | `true` → `DEGRADED` items block too (not only `FAIL`) |
+
+When enforcement is enabled and running in production, blocking items throw
+`SecurityPostureException` during boot rather than starting the application in
+a weakened state.

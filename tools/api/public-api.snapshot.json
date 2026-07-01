@@ -45529,6 +45529,216 @@
             },
             "constants": []
         },
+        "Pulsar\\Security\\Posture\\SecurityPostureCheck": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "Pulsar\\Config\\SecurityConfig $config",
+                        "bool $isProduction",
+                        "bool $debugMode",
+                        "?string $masterKey",
+                        "array $degradedSecurityFeatures"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "evaluate": {
+                    "params": [],
+                    "return": "Pulsar\\Security\\Posture\\SecurityPostureReport",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Security\\Posture\\SecurityPostureConfig": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "bool $enforce",
+                        "array $failOn"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "blocks": {
+                    "params": [
+                        "Pulsar\\Security\\Posture\\SecurityPostureStatus $status"
+                    ],
+                    "return": "bool",
+                    "static": false
+                },
+                "fromEnvironment": {
+                    "params": [
+                        "Pulsar\\Config\\Environment $environment"
+                    ],
+                    "return": "Pulsar\\Security\\Posture\\SecurityPostureConfig",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Security\\Posture\\SecurityPostureException": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "blocked": {
+                    "params": [
+                        "array $blocking"
+                    ],
+                    "return": "Pulsar\\Security\\Posture\\SecurityPostureException",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Security\\Posture\\SecurityPostureHealthCheck": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "Pulsar\\Security\\Posture\\SecurityPostureReport $report"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "check": {
+                    "params": [],
+                    "return": "Pulsar\\Resilience\\HealthCheck\\HealthCheckResult",
+                    "static": false
+                },
+                "getName": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Security\\Posture\\SecurityPostureItem": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "string $name",
+                        "Pulsar\\Security\\Posture\\SecurityPostureStatus $status",
+                        "string $reason",
+                        "string $fix"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "degraded": {
+                    "params": [
+                        "string $name",
+                        "string $reason",
+                        "string $fix"
+                    ],
+                    "return": "Pulsar\\Security\\Posture\\SecurityPostureItem",
+                    "static": true
+                },
+                "fail": {
+                    "params": [
+                        "string $name",
+                        "string $reason",
+                        "string $fix"
+                    ],
+                    "return": "Pulsar\\Security\\Posture\\SecurityPostureItem",
+                    "static": true
+                },
+                "ok": {
+                    "params": [
+                        "string $name",
+                        "string $reason"
+                    ],
+                    "return": "Pulsar\\Security\\Posture\\SecurityPostureItem",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Security\\Posture\\SecurityPostureReport": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "array $items"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "degraded": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
+                },
+                "failures": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
+                },
+                "hasDegraded": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
+                "hasFailures": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
+                "overallStatus": {
+                    "params": [],
+                    "return": "Pulsar\\Security\\Posture\\SecurityPostureStatus",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Security\\Posture\\SecurityPostureStatus": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "cases": {
+                    "params": [],
+                    "return": "array",
+                    "static": true
+                },
+                "from": {
+                    "params": [
+                        "string|int $value"
+                    ],
+                    "return": "static",
+                    "static": true
+                },
+                "rank": {
+                    "params": [],
+                    "return": "int",
+                    "static": false
+                },
+                "tryFrom": {
+                    "params": [
+                        "string|int $value"
+                    ],
+                    "return": "?static",
+                    "static": true
+                },
+                "worst": {
+                    "params": [
+                        "Pulsar\\Security\\Posture\\SecurityPostureStatus $other"
+                    ],
+                    "return": "Pulsar\\Security\\Posture\\SecurityPostureStatus",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\Security\\SecurityTxt\\SecurityTxtConfig": {
             "since": "1.0.0",
             "methods": [],
@@ -55018,6 +55228,7 @@
         "Pulsar\\Core\\Wiring\\RuntimeWiring",
         "Pulsar\\Core\\Wiring\\SagaWiring",
         "Pulsar\\Core\\Wiring\\SchedulerWiring",
+        "Pulsar\\Core\\Wiring\\SecurityPostureWiring",
         "Pulsar\\Core\\Wiring\\SecurityWiring",
         "Pulsar\\Core\\Wiring\\ServiceDiscoveryWiring",
         "Pulsar\\Core\\Wiring\\ServiceWiringInterface",

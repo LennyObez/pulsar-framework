@@ -112,6 +112,7 @@ use Pulsar\Console\Command\DoctorCommand;
 use Pulsar\Console\Command\ExtensionListCommand;
 use Pulsar\Console\Command\ExtensionValidateCommand;
 use Pulsar\Console\Command\HealthCheckCommand;
+use Pulsar\Console\Command\SecurityCheckCommand;
 use Pulsar\Console\Command\I18nExtractCommand;
 use Pulsar\Console\Command\I18nLintCommand;
 use Pulsar\Console\Command\IdeHelperCommand;
@@ -160,6 +161,7 @@ use Pulsar\I18n\Linter\TranslationLinter;
 use Pulsar\I18n\Locale\SlugRegistry;
 use Pulsar\Resilience\HealthCheck\HealthCheckRunnerInterface;
 use Pulsar\Resilience\Repair\RepairRunnerInterface;
+use Pulsar\Security\Posture\SecurityPostureReport;
 use Pulsar\Routing\RouterInterface;
 use Pulsar\Runtime\RuntimeFactory;
 use Pulsar\Runtime\RuntimeResolver;
@@ -486,6 +488,13 @@ if ($kernel->container()->has(RepairRunnerInterface::class)) {
   /** @var RepairRunnerInterface $repairRunner */
   $repairRunner = $kernel->container()->get(RepairRunnerInterface::class);
   $application->add(new RepairCommand($repairRunner));
+}
+
+// Register the security-posture preflight report command
+if ($kernel->container()->has(SecurityPostureReport::class)) {
+  /** @var SecurityPostureReport $posture */
+  $posture = $kernel->container()->get(SecurityPostureReport::class);
+  $application->add(new SecurityCheckCommand($posture));
 }
 
 // Register i18n commands
