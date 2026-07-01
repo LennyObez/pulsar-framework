@@ -105,6 +105,7 @@ use Pulsar\Console\Command\BuildCommand;
 use Pulsar\Console\Command\DbFreshCommand;
 use Pulsar\Console\Command\DbInspectCommand;
 use Pulsar\Console\Command\DbSeedCommand;
+use Pulsar\Console\Command\ConfigReferenceCommand;
 use Pulsar\Console\Command\DebugConfigCommand;
 use Pulsar\Console\Command\DebugContainerCommand;
 use Pulsar\Console\Command\DebugRoutesCommand;
@@ -442,6 +443,7 @@ if ($kernel->container()->has(ProjectMetadataService::class)) {
     : new SensitiveDataScrubber();
   /** @var SensitiveDataScrubber $scrubber */
   $application->add(new MetadataExportCommand($metadataService, $scrubber));
+  $application->add(new ConfigReferenceCommand($metadataService));
 }
 
 // Register doctor command (optional database dependency)
