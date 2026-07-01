@@ -93,6 +93,23 @@ final class UploadedFileHandlerFullTest extends TestCase
     }
 
     #[Test]
+    public function handleStoresPolyglotWithMimeDerivedExtensionNotClientPhp(): void
+    {
+        // PNG magic bytes + appended PHP, uploaded as "evil.php". The magic-byte
+        // sniff passes the image/png allowlist; the file must be stored as .png
+        // (the detected type), never as the client-supplied executable .php.
+        $polyglot = "\x89PNG\r\n\x1A\n" . '<?php system($_GET["c"]); ?>';
+        $tmpPath = $this->createTmpFile($polyglot);
+
+        $result = $this->createHandler()->handle($tmpPath, 'evil.php', 'avatar', ['image/png']);
+
+        self::assertSame('image/png', $result->mimeType);
+        self::assertStringEndsWith('.png', $result->storageName);
+        self::assertStringNotContainsString('.php', $result->storageName);
+        self::assertStringNotContainsString('.php', $result->storagePath);
+    }
+
+    #[Test]
     public function handleCreatesStorageDirectoryWhenMissing(): void
     {
         $tmpPath = $this->createTmpFile('data');
