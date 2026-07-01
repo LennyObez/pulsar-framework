@@ -52,6 +52,7 @@ final class LocalizedUrlGeneratorTest extends TestCase
         return [
             'development' => ['fr' => 'developpement', 'nl' => 'ontwikkeling'],
             'development/projects' => ['fr' => 'developpement/projets', 'nl' => 'ontwikkeling/projecten'],
+            'development/clients' => ['fr' => 'developpement/clients', 'nl' => 'ontwikkeling/clienten'],
             'about' => ['fr' => 'a-propos'],
         ];
     }
@@ -139,6 +140,41 @@ final class LocalizedUrlGeneratorTest extends TestCase
         self::assertSame(
             '/development/projects/my-project',
             $generator->route('development/projects', ['slug' => 'my-project'], 'en'),
+        );
+    }
+
+    #[Test]
+    public function localizes_parameterized_detail_route_named_with_dotted_suffix(): void
+    {
+        $router = new Router();
+        // Detail routes are named with a dotted suffix, but their path has no
+        // such segment — the slug prefix must still be localized by path.
+        $router->get('/development/projects/{slug}', 'Handler', 'development/projects.detail');
+        $router->get('/development/clients/{slug}', 'Handler', 'development/clients.detail');
+        $router->get('/blog/{slug}', 'Handler', 'blog.post');
+
+        $generator = $this->makeGenerator(router: $router);
+
+        self::assertSame(
+            '/fr/developpement/projets/x',
+            $generator->route('development/projects.detail', ['slug' => 'x'], 'fr'),
+        );
+        self::assertSame(
+            '/nl/ontwikkeling/projecten/x',
+            $generator->route('development/projects.detail', ['slug' => 'x'], 'nl'),
+        );
+        self::assertSame(
+            '/fr/developpement/clients/x',
+            $generator->route('development/clients.detail', ['slug' => 'x'], 'fr'),
+        );
+
+        // No localized parent slug for blog → path stays canonical (locale-prefixed only).
+        self::assertSame('/fr/blog/x', $generator->route('blog.post', ['slug' => 'x'], 'fr'));
+
+        // English default (no prefix) stays canonical.
+        self::assertSame(
+            '/development/projects/x',
+            $generator->route('development/projects.detail', ['slug' => 'x'], 'en'),
         );
     }
 
