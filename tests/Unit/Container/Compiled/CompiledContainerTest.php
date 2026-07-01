@@ -38,6 +38,31 @@ final class CompiledContainerTest extends TestCase
     }
 
     #[Test]
+    public function getAutowiresUnboundInstantiableConcrete(): void
+    {
+        $container = new TestCompiledContainer();
+
+        // Absent from the method map: autowired so a controller and its plain
+        // dependencies resolve the same in compiled production as in dev.
+        $service = $container->get(CompiledAutowireService::class);
+
+        self::assertInstanceOf(CompiledAutowireService::class, $service);
+        self::assertInstanceOf(CompiledAutowireDependency::class, $service->dependency);
+        self::assertFalse($container->has(CompiledAutowireService::class));
+    }
+
+    #[Test]
+    public function getThrowsNotFoundForUnboundInterface(): void
+    {
+        $container = new TestCompiledContainer();
+
+        // An interface is not instantiable and cannot be autowired.
+        $this->expectException(NotFoundException::class);
+
+        $_ = $container->get(CompiledAutowireContract::class);
+    }
+
+    #[Test]
     public function hasTrueForMethodMap(): void
     {
         $container = new TestCompiledContainer();
@@ -188,6 +213,15 @@ final class CompiledContainerTest extends TestCase
 
         $scopeManager->endScope(Lifetime::RequestScope);
     }
+}
+
+interface CompiledAutowireContract {}
+
+final class CompiledAutowireDependency {}
+
+final class CompiledAutowireService
+{
+    public function __construct(public readonly CompiledAutowireDependency $dependency) {}
 }
 
 final class TestCompiledContainer extends CompiledContainer

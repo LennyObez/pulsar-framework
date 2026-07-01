@@ -258,10 +258,14 @@ final class DefaultParamController
     }
 }
 
+interface NullableServiceContract {}
+
 final class NullableParamController
 {
     public function __construct(
-        private readonly ?GreeterService $greeter = null,
+        // An unbound interface cannot be autowired, so the nullable parameter
+        // falls back to null (a nullable concrete would now be autowired).
+        private readonly ?NullableServiceContract $greeter = null,
     ) {}
 
     public function handle(ServerRequestInterface $request): ResponseInterface

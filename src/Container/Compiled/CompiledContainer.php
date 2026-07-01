@@ -17,11 +17,13 @@ use Pulsar\Container\Exception\NotFoundException;
 use Pulsar\Container\Lifetime;
 use Pulsar\Container\Provider\DeferredServiceProviderInterface;
 use Pulsar\Container\Scope\ScopeManager;
+use ReflectionClass;
 use ReflectionException;
 use ReflectionNamedType;
 
 use function array_keys;
 use function array_pop;
+use function class_exists;
 use function in_array;
 use function sprintf;
 
@@ -92,6 +94,16 @@ abstract class CompiledContainer implements AdvancedContainerInterface
         }
 
         if (!isset($this->methodMap[$id])) {
+            // Parity with the dynamic container: autowire an unbound but
+            // instantiable concrete on demand, so a controller and its plain
+            // dependencies resolve the same way in compiled production as on the
+            // dev server (no "works in dev, 500s in prod" trap). Compiled
+            // bindings remain the reflection-free fast path above; this runs
+            // only for ids absent from the method map.
+            if (class_exists($id) && new ReflectionClass($id)->isInstantiable()) {
+                return $this->autowire($id);
+            }
+
             throw NotFoundException::forId($id);
         }
 
@@ -134,6 +146,83 @@ abstract class CompiledContainer implements AdvancedContainerInterface
     public function has(string $id): bool
     {
         return isset($this->methodMap[$id]) || isset($this->instances[$id]);
+    }
+
+    /**
+     * Reflection-autowire an unbound instantiable concrete (parity fallback).
+     *
+     * Resolves each class-typed constructor dependency through the container
+     * (compiled deps hit the method map; unbound concretes recurse here),
+     * falling back to default/nullable values, and otherwise failing with a
+     * message that names the unresolved dependency and parameter.
+     *
+     * @param class-string $id
+     *
+     * @throws ContainerException When a required dependency cannot be resolved.
+     */
+    private function autowire(string $id): object
+    {
+        if (in_array($id, $this->resolving, true)) {
+            throw ContainerException::circularDependency($id, $this->resolving);
+        }
+
+        $this->resolving[] = $id;
+
+        try {
+            $constructor = new ReflectionClass($id)->getConstructor();
+
+            if ($constructor === null) {
+                return new $id();
+            }
+
+            /** @var list<mixed> $dependencies */
+            $dependencies = [];
+
+            foreach ($constructor->getParameters() as $parameter) {
+                $type = $parameter->getType();
+
+                if ($type instanceof ReflectionNamedType && !$type->isBuiltin()) {
+                    /** @var class-string $dependencyClass */
+                    $dependencyClass = $type->getName();
+
+                    try {
+                        $dependencies[] = $this->get($dependencyClass);
+
+                        continue;
+                    } catch (NotFoundException) {
+                        // Unbound interface/abstract: fall through to default /
+                        // nullable / failure below.
+                    }
+                }
+
+                if ($parameter->isDefaultValueAvailable()) {
+                    /** @var mixed $default */
+                    $default = $parameter->getDefaultValue();
+                    $dependencies[] = $default;
+
+                    continue;
+                }
+
+                if ($type instanceof ReflectionNamedType && $type->allowsNull()) {
+                    $dependencies[] = null;
+
+                    continue;
+                }
+
+                throw ContainerException::unresolvable(
+                    $id,
+                    sprintf(
+                        'Unable to resolve dependency "%s" for parameter "%s"',
+                        $type instanceof ReflectionNamedType ? $type->getName() : 'mixed',
+                        $parameter->getName(),
+                    ),
+                );
+            }
+
+            return new $id(...$dependencies);
+        } finally {
+            array_pop($this->resolving);
+        }
     }
 
     #[Override]

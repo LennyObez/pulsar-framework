@@ -192,6 +192,17 @@ final class Container implements AdvancedContainerInterface
             return $this->resolveAfterDeferredRegistration($id);
         }
 
+        // Autowire an unbound but instantiable concrete class on demand, so
+        // applications need not bind every concrete (a controller and its plain
+        // dependencies "just work"). has() still reports false for such ids.
+        // Interfaces, abstract classes and non-class ids fall through to
+        // NotFoundException; an unresolvable dependency deeper in the graph
+        // surfaces as a ContainerException naming the consumer and parameter
+        // (see buildFromReflection) rather than an opaque "no binding found".
+        if (class_exists($id) && new ReflectionClass($id)->isInstantiable()) {
+            return $this->build($id);
+        }
+
         throw NotFoundException::forId($id);
     }
 
