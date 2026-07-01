@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Core\Wiring\Contract;
 
-use Pulsar\Api\Internal;
+use Pulsar\Api\Api;
 use Pulsar\Container\ContainerInterface;
 
 /**
@@ -14,9 +14,11 @@ use Pulsar\Container\ContainerInterface;
  * (a) required bindings that no wiring satisfied — an intra-framework gap — and
  * (b) features degraded because an optional binding is unbound. This is the
  * single check that would have caught the TaggedCacheInterface regression the
- * instant it shipped.
+ * instant it shipped, and the engine behind `debug:wiring` and the
+ * security-posture preflight.
+ * @api
  */
-#[Internal]
+#[Api(since: '1.0.0-rc.11')]
 final readonly class WiringContractInspector
 {
     public function __construct(

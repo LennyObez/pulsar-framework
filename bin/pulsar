@@ -108,6 +108,7 @@ use Pulsar\Console\Command\DbSeedCommand;
 use Pulsar\Console\Command\DebugConfigCommand;
 use Pulsar\Console\Command\DebugContainerCommand;
 use Pulsar\Console\Command\DebugRoutesCommand;
+use Pulsar\Console\Command\DebugWiringCommand;
 use Pulsar\Console\Command\DoctorCommand;
 use Pulsar\Console\Command\ExtensionListCommand;
 use Pulsar\Console\Command\ExtensionValidateCommand;
@@ -456,6 +457,9 @@ if ($kernel->container()->has(ConfigRepository::class)) {
   $configRepository = $kernel->container()->get(ConfigRepository::class);
   $application->add(new DebugConfigCommand($configRepository, []));
 }
+
+// Wiring-contract introspection: what each wiring provides/requires and what is degraded
+$application->add(new DebugWiringCommand($kernel->container()));
 
 if ($kernel->container()->has(RouterInterface::class)) {
   /** @var RouterInterface $router */
