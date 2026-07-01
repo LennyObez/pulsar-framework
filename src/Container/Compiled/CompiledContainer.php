@@ -169,10 +169,11 @@ abstract class CompiledContainer implements AdvancedContainerInterface
         $this->resolving[] = $id;
 
         try {
-            $constructor = new ReflectionClass($id)->getConstructor();
+            $reflector = new ReflectionClass($id);
+            $constructor = $reflector->getConstructor();
 
             if ($constructor === null) {
-                return new $id();
+                return $reflector->newInstance();
             }
 
             /** @var list<mixed> $dependencies */
@@ -219,7 +220,7 @@ abstract class CompiledContainer implements AdvancedContainerInterface
                 );
             }
 
-            return new $id(...$dependencies);
+            return $reflector->newInstanceArgs($dependencies);
         } finally {
             array_pop($this->resolving);
         }
