@@ -19,6 +19,6 @@ final readonly class EndPushDirective implements DirectiveInterface
 
     public function compile(string $expression): string
     {
-        return '<?php $__stacks[$__current_stack][] = ob_get_clean(); ?>';
+        return '<?php $__env->stopPush(); ?>';
     }
 }

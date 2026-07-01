@@ -29,7 +29,7 @@ final readonly class StackDirective implements DirectiveInterface
         $stack = trim($expression, " \t\n\r\0\x0B'\"");
 
         return sprintf(
-            '<?php echo implode("", $__stacks[%s] ?? []); ?>',
+            '<?php echo $__env->renderStack(%s); ?>',
             var_export($stack, true),
         );
     }
