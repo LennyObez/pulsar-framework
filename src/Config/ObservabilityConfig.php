@@ -7,6 +7,8 @@ namespace Pulsar\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
+use function is_string;
+
 /**
  * Typed configuration DTO for `config/observability.php`.
  *
@@ -36,6 +38,9 @@ final readonly class ObservabilityConfig
      *     logging?: array{
      *         default_channel?: string,
      *         level?: string,
+     *         driver?: string,
+     *         path?: string|null,
+     *         stream?: string|null,
      *         channels?: array<string, array{
      *             driver?: string,
      *             path?: string|null,
@@ -63,6 +68,24 @@ final readonly class ObservabilityConfig
                 driver: $channelData['driver'] ?? 'file',
                 path: $channelData['path'] ?? null,
                 stream: $channelData['stream'] ?? null,
+            );
+        }
+
+        // No explicit `channels` map: synthesise a single default channel from
+        // the flat `driver`/`path`/`stream` shape (or a file default). Without
+        // this an empty channels list left the logger with NO sinks, so every
+        // entry — including unhandled-exception records the error handler emits
+        // before rendering the 500 page — was silently dropped and the log file
+        // was never created.
+        if ($channelConfigs === []) {
+            $flatDriver = $logging['driver'] ?? null;
+            $flatPath = $logging['path'] ?? null;
+            $flatStream = $logging['stream'] ?? null;
+            $channelConfigs[] = new LoggingChannelConfig(
+                name: $defaultChannel,
+                driver: is_string($flatDriver) ? $flatDriver : 'file',
+                path: is_string($flatPath) ? $flatPath : null,
+                stream: is_string($flatStream) ? $flatStream : null,
             );
         }
 
