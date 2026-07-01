@@ -169,13 +169,47 @@ final class FilenameSanitizerTest extends TestCase
     }
 
     #[Test]
-    public function generateStorageNameSanitizesBeforeExtracting(): void
+    public function generateStorageNameSanitizesPathTraversalAndDropsExecutableExtension(): void
     {
         $storageName = $this->sanitizer->generateStorageName("../../../evil\x00.php");
 
-        // Should sanitize the path traversal and null bytes before extracting extension
-        self::assertStringEndsWith('.php', $storageName);
+        // Path traversal/null bytes stripped, AND a server-executable extension
+        // is never written — otherwise the upload could be stored as <uuid>.php
+        // and executed (RCE) if the upload directory is web-served.
         self::assertStringNotContainsString('..', $storageName);
+        self::assertStringNotContainsString('.php', $storageName);
+    }
+
+    #[Test]
+    public function generateStorageNameDerivesExtensionFromDetectedMime(): void
+    {
+        // A polyglot named .php but sniffed as image/png is stored as .png.
+        $storageName = $this->sanitizer->generateStorageName('evil.php', 'image/png');
+
+        self::assertStringEndsWith('.png', $storageName);
+        self::assertStringNotContainsString('.php', $storageName);
+    }
+
+    #[Test]
+    public function generateStorageNameDropsExecutableExtensionWhenMimeUnmapped(): void
+    {
+        foreach (['shell.php', 'x.phtml', 'a.phar', 'b.cgi', 'c.sh', 'd.aspx', 'e.exe'] as $name) {
+            $storageName = $this->sanitizer->generateStorageName($name, 'application/octet-stream');
+
+            self::assertMatchesRegularExpression(
+                '/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/',
+                $storageName,
+                "Executable extension must be dropped for {$name}",
+            );
+        }
+    }
+
+    #[Test]
+    public function generateStorageNameKeepsSafeClientExtensionWhenMimeUnmapped(): void
+    {
+        $storageName = $this->sanitizer->generateStorageName('notes.csv', 'application/octet-stream');
+
+        self::assertStringEndsWith('.csv', $storageName);
     }
 
     #[Test]
