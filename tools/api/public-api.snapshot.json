@@ -43725,6 +43725,50 @@
             },
             "constants": []
         },
+        "Pulsar\\Security\\Html\\HtmlSanitizer": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "Pulsar\\Security\\Html\\HtmlSanitizerPolicy $policy",
+                        "?Closure $onBypass"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "sanitize": {
+                    "params": [
+                        "string $html"
+                    ],
+                    "return": "string",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Security\\Html\\HtmlSanitizerPolicy": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "array $allowedElements",
+                        "array $hrefSchemes",
+                        "array $imgSchemes",
+                        "bool $allowRelativeImg",
+                        "string $imgRelativePrefix",
+                        "bool $allowDataImages",
+                        "int $maxDataUriBytes",
+                        "bool $forceRelOnAbsoluteLinks",
+                        "array $dangerousAttributes"
+                    ],
+                    "return": null,
+                    "static": false
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\Security\\Incident\\FileIncidentReporter": {
             "since": "1.0.0",
             "methods": [],
