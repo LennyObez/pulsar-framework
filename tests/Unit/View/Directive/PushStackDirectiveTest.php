@@ -21,21 +21,20 @@ final class PushStackDirectiveTest extends TestCase
     }
 
     #[Test]
-    public function pushCompileStartsOutputBuffer(): void
+    public function pushCompileDelegatesToEnvStartPush(): void
     {
         $result = new PushDirective()->compile("'scripts'");
 
-        self::assertStringContainsString('ob_start()', $result);
-        self::assertStringContainsString('$__current_stack', $result);
+        self::assertStringContainsString('$__env->startPush(', $result);
         self::assertStringContainsString('scripts', $result);
     }
 
     #[Test]
-    public function pushCompileInitializesStacksArray(): void
+    public function pushCompilePassesTheStackName(): void
     {
         $result = new PushDirective()->compile("'styles'");
 
-        self::assertStringContainsString('$__stacks', $result);
+        self::assertStringContainsString("'styles'", $result);
     }
 
     #[Test]
@@ -57,12 +56,11 @@ final class PushStackDirectiveTest extends TestCase
     }
 
     #[Test]
-    public function endPushCompilesBufferCapture(): void
+    public function endPushDelegatesToEnvStopPush(): void
     {
         $result = new EndPushDirective()->compile('');
 
-        self::assertStringContainsString('ob_get_clean()', $result);
-        self::assertStringContainsString('$__stacks[$__current_stack]', $result);
+        self::assertStringContainsString('$__env->stopPush()', $result);
     }
 
     // ── StackDirective ────────────────────────────────────────────────
@@ -74,21 +72,19 @@ final class PushStackDirectiveTest extends TestCase
     }
 
     #[Test]
-    public function stackCompileRendersNamedStack(): void
+    public function stackCompileEchoesEnvRenderStack(): void
     {
         $result = new StackDirective()->compile("'scripts'");
 
-        self::assertStringContainsString('implode', $result);
-        self::assertStringContainsString('$__stacks', $result);
+        self::assertStringContainsString('echo $__env->renderStack(', $result);
         self::assertStringContainsString('scripts', $result);
     }
 
     #[Test]
-    public function stackCompileFallsBackToEmptyArray(): void
+    public function stackCompilePassesTheStackName(): void
     {
         $result = new StackDirective()->compile("'missing'");
 
-        // Should use ?? [] to default to empty
-        self::assertStringContainsString('?? []', $result);
+        self::assertStringContainsString("'missing'", $result);
     }
 }

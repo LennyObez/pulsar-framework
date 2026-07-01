@@ -31,7 +31,7 @@ final readonly class PushDirective implements DirectiveInterface
         $stack = trim($expression, " \t\n\r\0\x0B'\"");
 
         return sprintf(
-            '<?php if (!isset($__stacks)) { $__stacks = []; } ob_start(); $__current_stack = %s; ?>',
+            '<?php $__env->startPush(%s); ?>',
             var_export($stack, true),
         );
     }
