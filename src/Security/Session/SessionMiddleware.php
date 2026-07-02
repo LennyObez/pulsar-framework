@@ -49,6 +49,15 @@ final readonly class SessionMiddleware implements MiddlewareInterface
             $response = $response->withAddedHeader('Set-Cookie', $setCookie);
         }
 
+        // Stateless cookie handler only: emit the companion cookie carrying the
+        // encrypted session payload so the session body persists across requests.
+        // Returns null for server-backed handlers, leaving the response untouched.
+        $payloadCookie = $this->sessionManager->pendingPayloadCookieHeader();
+
+        if ($payloadCookie !== null) {
+            $response = $response->withAddedHeader('Set-Cookie', $payloadCookie);
+        }
+
         return $response;
     }
 }
