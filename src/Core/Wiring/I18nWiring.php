@@ -128,7 +128,10 @@ final readonly class I18nWiring implements ServiceWiringInterface
         $countryRegistry = new CountryRegistry();
         $container->instance(CountryRegistry::class, $countryRegistry);
 
-        $regionResolver = new RegionResolver($countryRegistry, $config->defaultLocale === 'en' ? 'US' : 'US');
+        $regionResolver = new RegionResolver(
+            $countryRegistry,
+            $this->deriveDefaultCountry($config->defaultLocale, $countryRegistry),
+        );
         $container->instance(RegionResolver::class, $regionResolver);
 
         $currencyResolver = new CurrencyResolver($countryRegistry);
@@ -193,6 +196,34 @@ final readonly class I18nWiring implements ServiceWiringInterface
         // Template helper (reads locale from translator, updated per-request by middleware)
         $helper = new TemplateLocaleHelper($translator, $urlGenerator);
         $container->instance(TemplateLocaleHelper::class, $helper);
+    }
+
+    /**
+     * Derive the default country (for region/currency defaults) from the
+     * configured default locale instead of always assuming the US. Prefers an
+     * explicit region subtag (fr-FR / en_US → FR / US); for a bare language the
+     * uppercased code is the ISO country for most locales (fr → FR); falls back
+     * to US only when the derived code is not a known country.
+     */
+    private function deriveDefaultCountry(string $locale, CountryRegistry $registry): string
+    {
+        if (preg_match('/[-_]([A-Za-z]{2})$/', $locale, $matches) === 1) {
+            $country = strtoupper($matches[1]);
+
+            if ($registry->has($country)) {
+                return $country;
+            }
+        }
+
+        if (preg_match('/^([A-Za-z]{2})/', $locale, $matches) === 1) {
+            $country = strtoupper($matches[1]);
+
+            if ($registry->has($country)) {
+                return $country;
+            }
+        }
+
+        return 'US';
     }
 
     private function buildCatalog(I18nConfig $config): CatalogInterface

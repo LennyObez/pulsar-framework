@@ -10,6 +10,7 @@ use Pulsar\I18n\Exception\I18nException;
 use Pulsar\I18n\Exception\MissingTranslationException;
 use Pulsar\I18n\Format\MessageFormatterInterface;
 
+use function array_key_exists;
 use function count;
 use function in_array;
 use function is_scalar;
@@ -45,44 +46,38 @@ final class Translator implements TranslatorInterface
         $targetLocale = $locale ?? $this->locale;
         $localeChain = $this->buildFallbackChain($targetLocale);
 
-        // Support dot-notation: "domain.key" splits to domain + key when the
-        // caller uses the default domain. This allows @t('messages.skip_to_content')
-        // to resolve as domain=messages, key=skip_to_content — matching the file-based
-        // catalog structure (resources/lang/{locale}/messages.php → ['skip_to_content']).
-        $resolvedKey = $key;
-        $resolvedDomain = $domain;
-
-        $dotPos = ($domain === 'messages') ? strpos($key, '.') : false;
-
-        if ($dotPos !== false) {
-            $candidateDomain = substr($key, 0, $dotPos);
-            $candidateKey = substr($key, $dotPos + 1);
-
-            // Only split if the candidate domain segment looks like a file name
-            // (all lowercase, no spaces) to avoid splitting actual keys like "error.404"
-            if ($candidateKey !== '' && preg_match('/^[a-z][a-z0-9_-]*$/', $candidateDomain) === 1) {
-                $resolvedDomain = $candidateDomain;
-                $resolvedKey = $candidateKey;
-            }
-        }
-
-        // Search through the locale fallback chain
+        // Resolve the literal key in the requested domain FIRST, so a key that
+        // contains dots ("error.404", "app.name") resolves to its own entry and
+        // is not split into a sibling domain that merely shares the name — the
+        // safety the previous comment claimed but the split-first code lacked
+        // (the /^[a-z]…$/ guard matches "error", so "error.404" was split).
         foreach ($localeChain as $candidateLocale) {
-            $entry = $this->catalog->get($resolvedKey, $candidateLocale, $resolvedDomain);
+            $entry = $this->catalog->get($key, $candidateLocale, $domain);
 
             if ($entry !== null) {
                 return $this->formatMessage($entry->message, $parameters, $candidateLocale);
             }
         }
 
-        // If dot-notation split didn't find a match, try the original key as-is
-        // in case the key literally contains dots (e.g., "config.app.name")
-        if ($resolvedKey !== $key) {
-            foreach ($localeChain as $candidateLocale) {
-                $entry = $this->catalog->get($key, $candidateLocale, $domain);
+        // Dot-notation fallback (default domain only): "domain.key" → domain +
+        // key, attempted only when nothing matched the literal key. This still
+        // lets @t('messages.skip_to_content') resolve as domain=messages,
+        // key=skip_to_content without shadowing a literal dotted key.
+        if ($domain === 'messages') {
+            $dotPos = strpos($key, '.');
 
-                if ($entry !== null) {
-                    return $this->formatMessage($entry->message, $parameters, $candidateLocale);
+            if ($dotPos !== false) {
+                $candidateDomain = substr($key, 0, $dotPos);
+                $candidateKey = substr($key, $dotPos + 1);
+
+                if ($candidateKey !== '' && preg_match('/^[a-z][a-z0-9_-]*$/', $candidateDomain) === 1) {
+                    foreach ($localeChain as $candidateLocale) {
+                        $entry = $this->catalog->get($candidateKey, $candidateLocale, $candidateDomain);
+
+                        if ($entry !== null) {
+                            return $this->formatMessage($entry->message, $parameters, $candidateLocale);
+                        }
+                    }
                 }
             }
         }
@@ -172,12 +167,22 @@ final class Translator implements TranslatorInterface
         // This allows translation strings like "© :year Author" to work with
         // @t('messages.copyright', ['year' => 2026]).
         if (str_contains($message, ':')) {
-            /** @var mixed $value */
-            foreach ($parameters as $key => $value) {
-                if (is_scalar($value)) {
-                    $message = str_replace(':' . $key, (string) $value, $message);
-                }
-            }
+            // Match the WHOLE :identifier token in one pass so a shorter key
+            // cannot clobber a longer one sharing its prefix (e.g. :id inside
+            // :identifier). Unknown or non-scalar placeholders are left intact.
+            $message = (string) preg_replace_callback(
+                '/:([a-zA-Z_][a-zA-Z0-9_]*)/',
+                static function (array $matches) use ($parameters): string {
+                    $name = $matches[1];
+
+                    if (array_key_exists($name, $parameters) && is_scalar($parameters[$name])) {
+                        return (string) $parameters[$name];
+                    }
+
+                    return $matches[0];
+                },
+                $message,
+            );
 
             // If all placeholders were resolved, skip the ICU formatter
             if (!str_contains($message, '{')) {
