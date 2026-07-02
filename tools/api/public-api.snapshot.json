@@ -46410,6 +46410,11 @@
                     "return": "bool",
                     "static": false
                 },
+                "pendingPayloadCookieHeader": {
+                    "params": [],
+                    "return": "?string",
+                    "static": false
+                },
                 "pendingSetCookieHeader": {
                     "params": [],
                     "return": "?string",
@@ -46534,6 +46539,21 @@
                         "Psr\\Http\\Server\\RequestHandlerInterface $handler"
                     ],
                     "return": "Psr\\Http\\Message\\ResponseInterface",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Security\\Session\\Validator\\SessionMetadataInitializerInterface": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "initializeMetadata": {
+                    "params": [
+                        "Pulsar\\Security\\Session\\SessionMetadata $metadata",
+                        "Psr\\Http\\Message\\ServerRequestInterface $request"
+                    ],
+                    "return": "Pulsar\\Security\\Session\\SessionMetadata",
                     "static": false
                 }
             },
@@ -55572,6 +55592,7 @@
         "Pulsar\\Security\\Crypto\\HmacService",
         "Pulsar\\Security\\Session\\Handler\\ArrayHandler",
         "Pulsar\\Security\\Session\\Handler\\CookieHandler",
+        "Pulsar\\Security\\Session\\Handler\\CookieSessionHandlerInterface",
         "Pulsar\\Security\\Session\\Handler\\DatabaseHandler",
         "Pulsar\\Security\\Session\\Handler\\FileHandler",
         "Pulsar\\Security\\Session\\Handler\\RedisHandler",

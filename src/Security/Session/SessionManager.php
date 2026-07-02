@@ -12,7 +12,9 @@ use Pulsar\Api\Api;
 use Pulsar\Config\SessionConfig;
 use Pulsar\Http\TrustedProxy;
 use Pulsar\Security\Exception\SecurityException;
+use Pulsar\Security\Session\Handler\CookieSessionHandlerInterface;
 use Pulsar\Security\Session\Handler\SessionHandlerInterface;
+use Pulsar\Security\Session\Validator\SessionMetadataInitializerInterface;
 use Pulsar\Security\Session\Validator\SessionValidatorInterface;
 use Random\Engine\Secure;
 use Random\Randomizer;
@@ -153,6 +155,18 @@ final class SessionManager implements SessionInterface
 
         $this->handler->open($this->config->savePath, $this->config->effectiveCookieName());
 
+        // FR-10: feed the stateless cookie handler the encrypted payload from its
+        // companion request cookie before read(), so the session body persists
+        // across requests instead of every request starting empty.
+        if ($this->handler instanceof CookieSessionHandlerInterface) {
+            /** @var mixed $payloadCookie */
+            $payloadCookie = $request->getCookieParams()[$this->payloadCookieName()] ?? null;
+
+            if (is_string($payloadCookie) && $payloadCookie !== '') {
+                $this->handler->loadFromCookie($this->sessionId, $payloadCookie);
+            }
+        }
+
         $raw = $this->handler->read($this->sessionId);
         $isExistingSession = $raw !== '' && $raw !== false;
 
@@ -161,16 +175,32 @@ final class SessionManager implements SessionInterface
             $this->loadStoredPayload($decrypted);
         }
 
+        // FR-42: an existing session record whose metadata is absent (missing
+        // _pulsar_meta, corrupt, or legacy) is untrusted. Adopting it would
+        // re-home the session to the current IP/User-Agent with no validation or
+        // idle-timeout check, so rotate to a fresh id and discard the loaded
+        // state rather than silently trusting it.
+        if ($isExistingSession && $this->metadata === null) {
+            $this->data = [];
+            $this->sessionId = $this->generateId();
+            $this->idIsNew = true;
+        }
+
         $ipAddress = $this->resolveClientIp($request);
         $userAgent = $request->getHeaderLine('User-Agent');
 
         if ($this->metadata === null) {
-            $this->metadata = new SessionMetadata(
+            // New (or rotated) session: stamp baseline metadata and seed each
+            // validator's initial state — notably the request fingerprint — so a
+            // value exists to validate against on subsequent requests (FR-9).
+            $metadata = new SessionMetadata(
                 createdAt: time(),
                 lastActivity: time(),
                 ipAddress: $ipAddress,
                 userAgent: $userAgent,
             );
+
+            $this->metadata = $this->seedValidatorState($metadata, $request);
         } else {
             // PCI-DSS 8.2.8: Enforce idle timeout before updating lastActivity
             $idleTimeout = $this->config->idleTimeout;
@@ -184,13 +214,11 @@ final class SessionManager implements SessionInterface
                 }
             }
 
-            $this->metadata = new SessionMetadata(
-                createdAt: $this->metadata->createdAt,
-                lastActivity: time(),
-                ipAddress: $this->metadata->ipAddress,
-                userAgent: $this->metadata->userAgent,
-                userId: $this->metadata->userId,
-            );
+            // FR-28: preserve ALL stored metadata fields (notably the
+            // fingerprint) on reload. withLastActivity copies them, unlike the
+            // previous partial reconstruction that reset the fingerprint to null
+            // and so silently disabled the fingerprint validator.
+            $this->metadata = $this->metadata->withLastActivity(time());
 
             foreach ($this->validators as $validator) {
                 if (!$validator->validate($this->metadata, $request)) {
@@ -201,6 +229,22 @@ final class SessionManager implements SessionInterface
         }
 
         $this->started = true;
+    }
+
+    /**
+     * Let each validator that seeds metadata stamp its initial state onto a new
+     * session's metadata, so a value exists to validate against next request.
+     */
+    #[NoDiscard]
+    private function seedValidatorState(SessionMetadata $metadata, ServerRequestInterface $request): SessionMetadata
+    {
+        foreach ($this->validators as $validator) {
+            if ($validator instanceof SessionMetadataInitializerInterface) {
+                $metadata = $validator->initializeMetadata($metadata, $request);
+            }
+        }
+
+        return $metadata;
     }
 
     #[Override]
@@ -389,16 +433,69 @@ final class SessionManager implements SessionInterface
             // A lifetime of 0 means a session cookie (no Max-Age, expires when the
             // browser closes); a positive lifetime sets an explicit Max-Age.
             return $this->buildCookieHeader(
+                $this->config->effectiveCookieName(),
                 $this->sessionId,
                 $this->config->lifetime > 0 ? $this->config->lifetime : null,
             );
         }
 
         if ($this->cookieCleared) {
-            return $this->buildCookieHeader('', 0);
+            return $this->buildCookieHeader($this->config->effectiveCookieName(), '', 0);
         }
 
         return null;
+    }
+
+    /**
+     * Build the `Set-Cookie` header carrying the encrypted session payload when a
+     * stateless cookie handler is in use, or null otherwise.
+     *
+     * The cookie handler keeps no server-side state: the session body must travel
+     * in its own cookie (the id cookie still carries the session id). Without this
+     * the cookie handler's read()/write() never see the payload, so every request
+     * starts with an empty session. {@see SessionMiddleware} emits this alongside
+     * the id cookie via withAddedHeader.
+     */
+    #[NoDiscard]
+    public function pendingPayloadCookieHeader(): ?string
+    {
+        if (!$this->handler instanceof CookieSessionHandlerInterface) {
+            return null;
+        }
+
+        if ($this->cookieCleared) {
+            return $this->buildCookieHeader($this->payloadCookieName(), '', 0);
+        }
+
+        if (!$this->started || $this->sessionId === '') {
+            return null;
+        }
+
+        $value = $this->handler->getCookieValue($this->sessionId);
+
+        if ($value === null) {
+            return null;
+        }
+
+        // The encrypted payload is standard base64, whose characters (+, /, =)
+        // are all valid cookie-octets per RFC 6265, so it travels unencoded and
+        // round-trips identically regardless of how the entry point parsed it.
+        return $this->buildCookieHeader(
+            $this->payloadCookieName(),
+            $value,
+            $this->config->lifetime > 0 ? $this->config->lifetime : null,
+        );
+    }
+
+    /**
+     * Name of the companion cookie that carries the encrypted session payload for
+     * the stateless cookie handler. Derived from the id cookie name (the `__Host-`
+     * prefix, when present, stays valid with the suffix).
+     */
+    #[NoDiscard]
+    private function payloadCookieName(): string
+    {
+        return $this->config->effectiveCookieName() . '_data';
     }
 
     /**
@@ -408,7 +505,7 @@ final class SessionManager implements SessionInterface
      * @param int|null $maxAge Max-Age in seconds; 0 expires immediately, null
      *                         omits the attribute (a browser-session cookie).
      */
-    private function buildCookieHeader(string $value, ?int $maxAge): string
+    private function buildCookieHeader(string $name, string $value, ?int $maxAge): string
     {
         $hostPrefixed = $this->config->cookieHostPrefix;
         $sameSite = $this->config->cookieSameSite;
@@ -421,7 +518,7 @@ final class SessionManager implements SessionInterface
             || $hostPrefixed
             || strcasecmp($sameSite, 'None') === 0;
 
-        $parts = [$this->config->effectiveCookieName() . '=' . $value];
+        $parts = [$name . '=' . $value];
 
         // `__Host-` mandates Path=/ and no Domain.
         $parts[] = 'Path=' . ($hostPrefixed || $this->config->cookiePath === '' ? '/' : $this->config->cookiePath);

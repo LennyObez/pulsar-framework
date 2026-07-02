@@ -31,7 +31,7 @@ use function time;
  * Not recommended for regulated workloads. Use Redis or Database handler instead.
  */
 #[Internal]
-final class CookieHandler implements SessionHandlerInterface
+final class CookieHandler implements CookieSessionHandlerInterface
 {
     private const int HARD_SIZE_CAP = 4096;
 

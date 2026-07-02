@@ -21,7 +21,7 @@ use function implode;
  * compares it against the fingerprint stored in session metadata.
  */
 #[Internal]
-final readonly class FingerprintValidator implements SessionValidatorInterface
+final readonly class FingerprintValidator implements SessionValidatorInterface, SessionMetadataInitializerInterface
 {
     private const array HEADER_MAP = [
         'accept_language' => 'Accept-Language',
@@ -54,6 +54,14 @@ final readonly class FingerprintValidator implements SessionValidatorInterface
     public function getName(): string
     {
         return 'fingerprint';
+    }
+
+    #[Override]
+    public function initializeMetadata(SessionMetadata $metadata, ServerRequestInterface $request): SessionMetadata
+    {
+        // Stamp the fingerprint when the session is created so validate() has a
+        // value to compare against on subsequent requests.
+        return $metadata->withFingerprint($this->computeFingerprint($request));
     }
 
     public function computeFingerprint(ServerRequestInterface $request): string
