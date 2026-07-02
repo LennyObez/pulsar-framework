@@ -12,6 +12,7 @@ use Pulsar\Cache\Application\Driver\CacheDriverInterface;
 use Pulsar\Cache\Application\Driver\DatabaseDriver;
 use Pulsar\Database\Driver;
 use Pulsar\Database\PdoConnection;
+use ReflectionMethod;
 
 #[CoversClass(DatabaseDriver::class)]
 final class DatabaseDriverTest extends TestCase
@@ -46,6 +47,45 @@ final class DatabaseDriverTest extends TestCase
         $result = $this->driver->increment('counter', 3);
 
         self::assertSame(3, $result);
+    }
+
+    #[Test]
+    public function createTableUsesByteaOnPostgresAndBlobElsewhere(): void
+    {
+        // FR-16: the value column holds binary payloads. PostgreSQL has no BLOB
+        // type, so the DDL must emit BYTEA there or CREATE TABLE fails outright.
+        $build = new ReflectionMethod(DatabaseDriver::class, 'buildCreateTableSql');
+
+        $postgres = $build->invoke($this->driver, Driver::PostgreSQL);
+        $sqlite = $build->invoke($this->driver, Driver::SQLite);
+        $mysql = $build->invoke($this->driver, Driver::MySQL);
+        self::assertIsString($postgres);
+        self::assertIsString($sqlite);
+        self::assertIsString($mysql);
+
+        self::assertStringContainsString('value BYTEA NOT NULL', $postgres);
+        self::assertStringContainsString('value BLOB NOT NULL', $sqlite);
+        self::assertStringContainsString('value BLOB NOT NULL', $mysql);
+    }
+
+    #[Test]
+    public function incrementCastIsDialectAware(): void
+    {
+        // FR-16: a bare CAST(value AS INTEGER) is invalid on a PostgreSQL BYTEA
+        // column and on MySQL (which needs SIGNED). Each driver gets a correct cast.
+        $build = new ReflectionMethod(DatabaseDriver::class, 'buildIncrementSql');
+
+        $postgres = $build->invoke($this->driver, Driver::PostgreSQL);
+        $mysql = $build->invoke($this->driver, Driver::MySQL);
+        $sqlite = $build->invoke($this->driver, Driver::SQLite);
+        self::assertIsString($postgres);
+        self::assertIsString($mysql);
+        self::assertIsString($sqlite);
+
+        self::assertStringContainsString('convert_from(value', $postgres);
+        self::assertStringContainsString('convert_to(', $postgres);
+        self::assertStringContainsString('CAST(value AS SIGNED)', $mysql);
+        self::assertStringContainsString('CAST(value AS INTEGER)', $sqlite);
     }
 
     #[Test]

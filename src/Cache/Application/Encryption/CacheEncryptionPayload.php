@@ -23,7 +23,7 @@ final readonly class CacheEncryptionPayload
         public string $keyId,
         public string $ciphertext,
         public string $aadHash,
-        public ?int $ttlSeconds = null,
+        public ?int $expiresAt = null,
     ) {}
 
     public function toJson(): string
@@ -35,8 +35,11 @@ final readonly class CacheEncryptionPayload
             'aad' => $this->aadHash,
         ];
 
-        if ($this->ttlSeconds !== null) {
-            $data['ttl'] = $this->ttlSeconds;
+        // Absolute expiry timestamp, not a duration: a re-encrypt on key
+        // rotation must preserve the original expiry instead of restarting the
+        // clock from the moment of the rotating read.
+        if ($this->expiresAt !== null) {
+            $data['exp'] = $this->expiresAt;
         }
 
         return json_encode($data, JSON_THROW_ON_ERROR);
@@ -45,7 +48,7 @@ final readonly class CacheEncryptionPayload
     public static function fromJson(string $json): ?self
     {
         try {
-            /** @var array{v?: int, kid?: string, ct?: string, aad?: string, ttl?: int|null} $data */
+            /** @var array{v?: int, kid?: string, ct?: string, aad?: string, exp?: int|null} $data */
             $data = json_decode($json, true, 2, JSON_THROW_ON_ERROR);
         } catch (JsonException) {
             return null;
@@ -60,7 +63,7 @@ final readonly class CacheEncryptionPayload
             keyId: $data['kid'],
             ciphertext: $data['ct'],
             aadHash: $data['aad'],
-            ttlSeconds: $data['ttl'] ?? null,
+            expiresAt: $data['exp'] ?? null,
         );
     }
 }

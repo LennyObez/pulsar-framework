@@ -16,12 +16,14 @@ use Pulsar\Cache\Application\Encryption\EncryptedCacheDecorator;
 use Pulsar\Cache\Application\Exception\CacheException;
 use Pulsar\Cache\Application\Lock\FilesystemLock;
 use Pulsar\Cache\Application\Lock\LockInterface;
+use Pulsar\Cache\Application\Serializer\CacheSerializerInterface;
 use Pulsar\Cache\Application\TaggedCacheInterface;
 use Pulsar\Config\CacheConfig;
 use Pulsar\Config\CacheDriverType;
 use Pulsar\Config\CachePoolConfig;
 use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Security\Crypto\MasterKey;
+use ReflectionMethod;
 
 #[CoversClass(CacheManager::class)]
 final class CacheManagerTest extends TestCase
@@ -55,6 +57,29 @@ final class CacheManagerTest extends TestCase
         $pool = $this->manager->pool('default');
 
         self::assertInstanceOf(CacheItemPoolInterface::class, $pool);
+    }
+
+    #[Test]
+    public function phpSerializerReceivesConfiguredAllowedClasses(): void
+    {
+        // FR-18: a pool configured serializer='php' with an allowedClasses list
+        // must yield a PhpCacheSerializer that can actually round-trip those
+        // classes. Before the fix the list was dropped, so every object decoded
+        // to __PHP_Incomplete_Class and deserialize() threw a CacheException.
+        $poolConfig = new CachePoolConfig(
+            name: 'objects',
+            serializer: 'php',
+            allowedClasses: [CacheDtoFixture::class],
+        );
+
+        $resolve = new ReflectionMethod($this->manager, 'resolveSerializer');
+        $serializer = $resolve->invoke($this->manager, $poolConfig);
+        self::assertInstanceOf(CacheSerializerInterface::class, $serializer);
+
+        $restored = $serializer->deserialize($serializer->serialize(new CacheDtoFixture('hello')));
+
+        self::assertInstanceOf(CacheDtoFixture::class, $restored);
+        self::assertSame('hello', $restored->value);
     }
 
     #[Test]
@@ -460,4 +485,16 @@ final class CacheManagerTest extends TestCase
 
         return new CacheManager($config);
     }
+}
+
+/**
+ * Simple value object used to verify the 'php' serializer allowlist round-trip.
+ *
+ * @internal
+ */
+final class CacheDtoFixture
+{
+    public function __construct(
+        public string $value,
+    ) {}
 }

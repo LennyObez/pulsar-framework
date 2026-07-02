@@ -7,7 +7,9 @@ namespace Pulsar\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
+use function class_exists;
 use function is_array;
+use function is_string;
 
 /**
  * Typed configuration DTO for `config/cache.php`.
@@ -85,6 +87,7 @@ final readonly class CacheConfig
      *     host?: string|null,
      *     port?: int|null,
      *     path?: string|null,
+     *     allowed_classes?: mixed,
      * } $data
      */
     private static function buildPoolConfig(string $name, array $data): CachePoolConfig
@@ -102,6 +105,32 @@ final readonly class CacheConfig
             host: $data['host'] ?? null,
             port: $data['port'] ?? null,
             path: $data['path'] ?? null,
+            allowedClasses: self::parseAllowedClasses($data['allowed_classes'] ?? null),
         );
+    }
+
+    /**
+     * Normalize a configured PHP-serializer allowlist into loadable class names.
+     * Non-existent entries are dropped so the allowlist can never widen
+     * deserialization to a class that is not actually present.
+     *
+     * @return list<class-string>|null
+     */
+    private static function parseAllowedClasses(mixed $value): ?array
+    {
+        if (!is_array($value)) {
+            return null;
+        }
+
+        $classes = [];
+
+        /** @var mixed $class */
+        foreach ($value as $class) {
+            if (is_string($class) && class_exists($class)) {
+                $classes[] = $class;
+            }
+        }
+
+        return $classes === [] ? null : $classes;
     }
 }

@@ -42,9 +42,15 @@ final class StrictTagStrategy implements TagStrategyInterface
             $value = $rawValues[$key] ?? null;
 
             if ($value === null) {
-                // Initialize tag version to 1
-                $this->driver->set($key, '1', null);
-                $versions[$tag] = '1';
+                // Initialize with a fresh monotonic version. A literal constant
+                // (e.g. '1') would collide with a previously stored snapshot if
+                // the version key were evicted and reinitialized after an
+                // invalidateTag(): the stale item, tagged at the same constant,
+                // would match the reset value and be served as a hit. hrtime()
+                // never repeats, matching the fallback in invalidateTag() below.
+                $version = (string) hrtime(true);
+                $this->driver->set($key, $version, null);
+                $versions[$tag] = $version;
             } else {
                 $versions[$tag] = $value;
             }

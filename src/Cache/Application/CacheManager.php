@@ -264,7 +264,7 @@ final class CacheManager implements CacheManagerInterface
     private function resolveSerializer(CachePoolConfig $poolConfig): CacheSerializerInterface
     {
         return match ($poolConfig->serializer) {
-            'php' => new PhpCacheSerializer(),
+            'php' => new PhpCacheSerializer($poolConfig->allowedClasses ?? []),
             default => new JsonCacheSerializer(),
         };
     }
