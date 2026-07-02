@@ -8,6 +8,7 @@ use Generator;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\View\Directive\DirectiveRegistry;
 use Pulsar\View\Engine\StreamingTemplateEngine;
 use Pulsar\View\Engine\TemplateCache;
 use Pulsar\View\Engine\TemplateCompiler;
@@ -55,6 +56,9 @@ final class StreamingTemplateEngineTest extends TestCase
 
         $cache = new TemplateCache($this->cacheDir);
         $compiler = new TemplateCompiler($config, $cache);
+        $directives = new DirectiveRegistry($config);
+        $directives->registerBuiltins();
+        $directives->bindTo($compiler);
         $this->engine = new StreamingTemplateEngine($compiler);
     }
 
@@ -84,6 +88,23 @@ final class StreamingTemplateEngineTest extends TestCase
         $output = implode('', $chunks);
 
         self::assertSame('<h1>Hello, World!</h1>', $output);
+    }
+
+    #[Test]
+    public function streamRendersExtendedLayout(): void
+    {
+        // FR-6: streaming a template that @extends a layout must yield the full
+        // composed layout. The child buffers its @section content into $env and
+        // produces no direct output, so without resolving inheritance the stream
+        // would be blank.
+        $this->writeTemplate('layout', '<html><body>@yield(\'content\')</body></html>');
+        $this->writeTemplate('page', "@extends('layout')@section('content')<h1>Hi</h1>@endsection");
+
+        $output = implode('', iterator_to_array($this->engine->stream('page')));
+
+        self::assertStringContainsString('<h1>Hi</h1>', $output);
+        self::assertStringContainsString('<html><body>', $output);
+        self::assertStringContainsString('</body></html>', $output);
     }
 
     #[Test]
