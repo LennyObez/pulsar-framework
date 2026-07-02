@@ -7,6 +7,7 @@ namespace Pulsar\Tests\Unit\Database\Migration;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Driver;
 use Pulsar\Database\Migration\MigrationFile;
 use Pulsar\Database\Migration\MigrationFlockHolder;
@@ -14,6 +15,9 @@ use Pulsar\Database\Migration\MigrationRecord;
 use Pulsar\Database\Migration\MigrationRepository;
 use Pulsar\Database\Migration\MigrationRunner;
 use Pulsar\Database\PdoConnection;
+use Pulsar\Database\Result;
+use Pulsar\Database\Row;
+use ReflectionMethod;
 
 use function bin2hex;
 use function file_put_contents;
@@ -95,6 +99,21 @@ final class MigrationRunnerTest extends TestCase
         $applied = $this->runner->runPending();
 
         self::assertSame([], $applied);
+    }
+
+    #[Test]
+    public function getCurrentBatchCoercesStringAggregate(): void
+    {
+        // FR-12: MySQL/PostgreSQL return MAX(batch) as a numeric STRING; a strict
+        // is_int() check yielded 0, colliding batch numbers and silently no-op'ing
+        // rollback. SQLite (used elsewhere here) returns an int, so a stubbed
+        // connection is needed to exercise the string aggregate.
+        $connection = $this->createStub(ConnectionInterface::class);
+        $connection->method('query')->willReturn(new Result([new Row(['max_batch' => '5'])]));
+
+        $runner = new MigrationRunner($connection, $this->repository, 'migrations');
+
+        self::assertSame(5, new ReflectionMethod($runner, 'getCurrentBatch')->invoke($runner));
     }
 
     #[Test]
