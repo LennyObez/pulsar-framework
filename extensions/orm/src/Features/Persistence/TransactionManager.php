@@ -10,13 +10,24 @@ use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Transaction;
 use Pulsar\Extension\Orm\Contracts\TransactionManagerInterface;
 
+use function array_pop;
+
 /**
  * Transaction management implementation wrapping the database connection.
  */
 #[Internal]
 final class TransactionManager implements TransactionManagerInterface
 {
-    private ?Transaction $currentTransaction = null;
+    /**
+     * Stack of open transaction handles, one per nesting level. A single
+     * reference would be overwritten by a nested begin(), losing the outer
+     * handle and leaving its real transaction open and untracked; the stack
+     * retains every level until it is finished in last-in-first-out order,
+     * matching the savepoint depth tracked by the connection.
+     *
+     * @var list<Transaction>
+     */
+    private array $transactions = [];
 
     public function __construct(
         private readonly ConnectionInterface $connection,
@@ -31,24 +42,24 @@ final class TransactionManager implements TransactionManagerInterface
     #[Override]
     public function begin(): void
     {
-        $this->currentTransaction = $this->connection->beginTransaction();
+        $this->transactions[] = $this->connection->beginTransaction();
     }
 
     #[Override]
     public function commit(): void
     {
-        if ($this->currentTransaction !== null) {
-            $this->currentTransaction->commit();
-            $this->currentTransaction = null;
-        }
+        $transaction = array_pop($this->transactions);
+
+        $transaction?->commit();
     }
 
     #[Override]
     public function rollback(): void
     {
-        if ($this->currentTransaction !== null && $this->currentTransaction->active) {
-            $this->currentTransaction->rollback();
-            $this->currentTransaction = null;
+        $transaction = array_pop($this->transactions);
+
+        if ($transaction !== null && $transaction->active) {
+            $transaction->rollback();
         }
     }
 

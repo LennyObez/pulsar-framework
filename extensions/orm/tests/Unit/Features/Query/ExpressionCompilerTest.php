@@ -9,6 +9,7 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Database\Driver;
 use Pulsar\Extension\Orm\Domain\LikePattern;
 use Pulsar\Extension\Orm\Domain\RawExpression;
+use Pulsar\Extension\Orm\Exception\QueryBuilderException;
 use Pulsar\Extension\Orm\Features\Query\Expression;
 use Pulsar\Extension\Orm\Features\Query\ExpressionCompiler;
 use Pulsar\Extension\Orm\Internal\Support\BindingCounter;
@@ -75,6 +76,25 @@ final class ExpressionCompilerTest extends TestCase
         $expr = $this->compiler->in('role', ['admin'], not: true);
 
         self::assertStringContainsString('NOT IN', $expr->sql);
+    }
+
+    #[Test]
+    public function inRejectsEmptyValues(): void
+    {
+        // FR-30: an empty IN list previously compiled to "col IN ()", which is
+        // invalid SQL on every supported driver. It must be rejected up front.
+        $this->expectException(QueryBuilderException::class);
+
+        $this->compiler->in('status', []);
+    }
+
+    #[Test]
+    public function notInRejectsEmptyValues(): void
+    {
+        // FR-30: the NOT IN form has the same empty-list hazard.
+        $this->expectException(QueryBuilderException::class);
+
+        $this->compiler->in('status', [], not: true);
     }
 
     #[Test]
