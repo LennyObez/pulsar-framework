@@ -110,6 +110,25 @@ final class ConnectionPool implements ConnectionPoolInterface
             lastUsedAt: time(),
         );
 
+        // A connection returned while a transaction is still open carries
+        // uncommitted, caller-private state. Recycling it would leak that
+        // transaction into the next checkout (cross-request bleed in persistent
+        // runtimes). The pool cannot guarantee a clean reset through
+        // ConnectionInterface — a bare ROLLBACK would not clear session temp
+        // tables or variables and would desynchronize the connection's own
+        // transaction-depth tracking — so the connection is destroyed (its
+        // teardown rolls the transaction back) rather than re-idled. The leak
+        // signals a caller bug and is logged.
+        if ($connection->inTransaction()) {
+            $this->logger?->warning('Connection returned to pool with an open transaction; discarding', [
+                'created_at' => $createdAt,
+            ]);
+
+            $this->destroyEntry($entry);
+
+            return;
+        }
+
         if ($this->isExpired($entry)) {
             $this->destroyEntry($entry);
 
