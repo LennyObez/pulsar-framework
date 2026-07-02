@@ -7,6 +7,7 @@ namespace Pulsar\Cache\Application\Driver;
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Driver;
+use Pulsar\Database\Param;
 use Throwable;
 
 use function random_int;
@@ -27,11 +28,15 @@ final class DatabaseDriver extends AbstractCacheDriver
     /** Dialect-specific upsert statement, resolved once from the connection driver. */
     private readonly string $upsertSql;
 
+    /** Dialect-specific atomic-increment statement, resolved once from the connection driver. */
+    private readonly string $incrementSql;
+
     public function __construct(
         private readonly ConnectionInterface $connection,
         private readonly string $pool = 'default',
     ) {
         $this->upsertSql = $this->buildUpsertSql($connection->driver());
+        $this->incrementSql = $this->buildIncrementSql($connection->driver());
     }
 
     public function get(string $key): ?string
@@ -79,7 +84,10 @@ final class DatabaseDriver extends AbstractCacheDriver
             $this->connection->execute($this->upsertSql, [
                 'pool' => $this->pool,
                 'cache_key' => $key,
-                'value' => $value,
+                // Bound as a binary parameter so it lands in the BLOB/BYTEA value
+                // column on every driver — a plain string bind cannot be assigned
+                // to a PostgreSQL BYTEA column.
+                'value' => Param::binary($value),
                 'expires_at' => $expiresAt,
             ]);
         } catch (Throwable) {
@@ -148,11 +156,12 @@ final class DatabaseDriver extends AbstractCacheDriver
                     ['pool' => $this->pool, 'cache_key' => $key, 'now' => time()],
                 );
 
-                // Atomic in-place UPDATE avoids SELECT+UPDATE lost-update races
+                // Atomic in-place UPDATE avoids SELECT+UPDATE lost-update races.
+                // The integer cast is dialect-specific (a PostgreSQL BYTEA cannot
+                // be cast straight to INTEGER), so the statement is resolved per
+                // driver in buildIncrementSql().
                 $affected = $conn->execute(
-                    'UPDATE cache_entries SET value = CAST(CAST(value AS INTEGER) + :step AS TEXT) '
-                    . 'WHERE pool = :pool AND cache_key = :cache_key '
-                    . 'AND (expires_at IS NULL OR expires_at > :now)',
+                    $this->incrementSql,
                     ['step' => $step, 'pool' => $this->pool, 'cache_key' => $key, 'now' => time()],
                 );
 
@@ -165,10 +174,10 @@ final class DatabaseDriver extends AbstractCacheDriver
                     return (int) ($result->first()?->getString('value') ?? '0');
                 }
 
-                // Row doesn't exist: insert initial value
+                // Row doesn't exist: insert initial value (binary-bound for BYTEA)
                 $conn->execute(
                     'INSERT INTO cache_entries (pool, cache_key, value, expires_at) VALUES (:pool, :cache_key, :value, NULL)',
-                    ['pool' => $this->pool, 'cache_key' => $key, 'value' => (string) $step],
+                    ['pool' => $this->pool, 'cache_key' => $key, 'value' => Param::binary((string) $step)],
                 );
 
                 return $step;
@@ -223,21 +232,57 @@ final class DatabaseDriver extends AbstractCacheDriver
             return;
         }
 
-        $this->connection->execute(
-            'CREATE TABLE IF NOT EXISTS cache_entries ('
-            . 'pool VARCHAR(255) NOT NULL, '
-            . 'cache_key VARCHAR(255) NOT NULL, '
-            . 'value BLOB NOT NULL, '
-            . 'expires_at INTEGER NULL, '
-            . 'PRIMARY KEY (pool, cache_key)'
-            . ')',
-        );
+        $this->connection->execute($this->buildCreateTableSql($this->connection->driver()));
 
         $this->connection->execute(
             'CREATE INDEX IF NOT EXISTS idx_cache_entries_expires_at ON cache_entries (expires_at)',
         );
 
         $this->tableCreated = true;
+    }
+
+    /**
+     * Build the dialect-specific CREATE TABLE statement. The value column holds
+     * arbitrary (possibly binary) serialized cache payloads, so it must use the
+     * driver's binary type: PostgreSQL has no BLOB type and uses BYTEA instead.
+     */
+    private function buildCreateTableSql(Driver $driver): string
+    {
+        $valueType = match ($driver) {
+            Driver::PostgreSQL => 'BYTEA',
+            Driver::MySQL, Driver::SQLite => 'BLOB',
+        };
+
+        return 'CREATE TABLE IF NOT EXISTS cache_entries ('
+            . 'pool VARCHAR(255) NOT NULL, '
+            . 'cache_key VARCHAR(255) NOT NULL, '
+            . 'value ' . $valueType . ' NOT NULL, '
+            . 'expires_at INTEGER NULL, '
+            . 'PRIMARY KEY (pool, cache_key)'
+            . ')';
+    }
+
+    /**
+     * Build the dialect-specific atomic-increment UPDATE. The value column is a
+     * binary type, so reading it back as an integer and writing the result back
+     * differs per driver:
+     *  - SQLite casts the BLOB straight through CAST(... AS INTEGER);
+     *  - MySQL casts to SIGNED / CHAR (it rejects CAST(... AS INTEGER));
+     *  - PostgreSQL must decode the BYTEA to text first (convert_from), do the
+     *    arithmetic, then re-encode the result to BYTEA (convert_to) — a bare
+     *    CAST(value AS INTEGER) is invalid on BYTEA.
+     */
+    private function buildIncrementSql(Driver $driver): string
+    {
+        $where = 'WHERE pool = :pool AND cache_key = :cache_key '
+            . 'AND (expires_at IS NULL OR expires_at > :now)';
+
+        return match ($driver) {
+            Driver::SQLite => 'UPDATE cache_entries SET value = CAST(CAST(value AS INTEGER) + :step AS TEXT) ' . $where,
+            Driver::MySQL => 'UPDATE cache_entries SET value = CAST(CAST(value AS SIGNED) + :step AS CHAR) ' . $where,
+            Driver::PostgreSQL => 'UPDATE cache_entries SET value = '
+                . "convert_to((convert_from(value, 'UTF8')::INTEGER + :step)::TEXT, 'UTF8') " . $where,
+        };
     }
 
     private function maybeGarbageCollect(): void

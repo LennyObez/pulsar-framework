@@ -16,7 +16,9 @@ use Pulsar\Security\Exception\SecurityException;
 use SodiumException;
 
 use function hash_equals;
+use function max;
 use function strlen;
+use function time;
 
 /**
  * Decorator that transparently encrypts/decrypts cache values.
@@ -31,6 +33,7 @@ final readonly class EncryptedCacheDecorator implements CacheDriverInterface
 {
     private EncryptorInterface $encryptor;
     private string $hmacKey;
+    private ?string $previousHmacKey;
     private string $currentKeyId;
     private ?string $previousKeyId;
 
@@ -46,6 +49,11 @@ final readonly class EncryptedCacheDecorator implements CacheDriverInterface
     ) {
         $this->encryptor = Encryptor::fromDerivedKey($masterKey, 8, 'app_cenc');
         $this->hmacKey = $masterKey->deriveSubKey(9, 'app_cobs');
+        // The AAD MAC key rotates with the master key, so an entry written under
+        // the previous key carries an AAD the current key cannot reproduce. Keep
+        // the previous MAC key too, otherwise the AAD check rejects every
+        // previous-key entry before the re-encrypt-on-read path can run.
+        $this->previousHmacKey = $masterKey->derivePreviousSubKey(9, 'app_cobs');
         $this->currentKeyId = $masterKey->keyId(8, 'app_cenc');
         $this->previousKeyId = $masterKey->previousKeyId(8, 'app_cenc');
     }
@@ -79,7 +87,10 @@ final readonly class EncryptedCacheDecorator implements CacheDriverInterface
 
     public function set(string $key, string $value, ?int $ttlSeconds): bool
     {
-        $payload = $this->encryptValue($key, $value, $ttlSeconds);
+        // Stamp the payload with an absolute expiry so a later re-encrypt on key
+        // rotation can preserve it instead of restarting the TTL clock.
+        $expiresAt = $ttlSeconds !== null ? time() + $ttlSeconds : null;
+        $payload = $this->encryptValue($key, $value, $expiresAt);
 
         return $this->inner->set($key, $payload, $ttlSeconds);
     }
@@ -143,19 +154,19 @@ final readonly class EncryptedCacheDecorator implements CacheDriverInterface
         return 'encrypted:' . $this->inner->name();
     }
 
-    private function computeAadHmac(string $key): string
+    private function computeAadHmac(string $key, string $hmacKey): string
     {
         $aadString = strlen($this->poolName) . ':' . $this->poolName
             . strlen($key) . ':' . $key
             . strlen($this->tenantId) . ':' . $this->tenantId
             . strlen($this->purpose) . ':' . $this->purpose;
 
-        return Hmac::computeHex($aadString, $this->hmacKey);
+        return Hmac::computeHex($aadString, $hmacKey);
     }
 
-    private function encryptValue(string $key, string $value, ?int $ttlSeconds = null): string
+    private function encryptValue(string $key, string $value, ?int $expiresAt = null): string
     {
-        $aadHmac = $this->computeAadHmac($key);
+        $aadHmac = $this->computeAadHmac($key, $this->hmacKey);
         $ciphertext = $this->encryptor->encrypt($value);
 
         $payload = new CacheEncryptionPayload(
@@ -163,7 +174,7 @@ final readonly class EncryptedCacheDecorator implements CacheDriverInterface
             keyId: $this->currentKeyId,
             ciphertext: $ciphertext,
             aadHash: $aadHmac,
-            ttlSeconds: $ttlSeconds,
+            expiresAt: $expiresAt,
         );
 
         return $payload->toJson();
@@ -177,9 +188,15 @@ final readonly class EncryptedCacheDecorator implements CacheDriverInterface
             return null;
         }
 
-        $expectedAadHmac = $this->computeAadHmac($key);
+        // Accept an AAD produced by either the current or the previous MAC key:
+        // a previous-key entry was written when the previous key was current, so
+        // only the previous MAC key reproduces its AAD. Both keys are tried so a
+        // rotated entry survives the integrity check and reaches re-encryption.
+        $aadValid = hash_equals($this->computeAadHmac($key, $this->hmacKey), $payload->aadHash)
+            || ($this->previousHmacKey !== null
+                && hash_equals($this->computeAadHmac($key, $this->previousHmacKey), $payload->aadHash));
 
-        if (!hash_equals($expectedAadHmac, $payload->aadHash)) {
+        if (!$aadValid) {
             return null;
         }
 
@@ -198,8 +215,14 @@ final readonly class EncryptedCacheDecorator implements CacheDriverInterface
                 return null;
             }
 
-            $reEncrypted = $this->encryptValue($key, $plaintext, $payload->ttlSeconds);
-            $this->inner->set($key, $reEncrypted, $payload->ttlSeconds);
+            // Preserve the original absolute expiry: re-encrypt with the same
+            // expiresAt and hand the inner driver only the time that remains, so
+            // a rotating read cannot extend the entry's lifetime.
+            $remainingTtl = $payload->expiresAt !== null
+                ? max(0, $payload->expiresAt - time())
+                : null;
+            $reEncrypted = $this->encryptValue($key, $plaintext, $payload->expiresAt);
+            $this->inner->set($key, $reEncrypted, $remainingTtl);
 
             return $plaintext;
         }
