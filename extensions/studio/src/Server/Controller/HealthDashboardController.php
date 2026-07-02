@@ -66,9 +66,7 @@ final readonly class HealthDashboardController
         $leakReport = null;
 
         if ($this->memoryTracker !== null) {
-            $this->memoryTracker->recentSnapshots(50);
-            $memorySnapshots = $this->memoryTracker->toArray();
-            $memorySnapshots = array_slice($memorySnapshots, -50);
+            $memorySnapshots = array_slice($this->memoryTracker->toArray(), -50);
             $leak = $this->memoryTracker->detectLeak();
 
             if ($leak !== null) {

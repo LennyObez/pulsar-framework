@@ -60,12 +60,12 @@ final class CompiledRouteTree
         $candidates = $this->dynamicRoutes[$methodValue] ?? [];
 
         foreach ($candidates as $dynamic) {
-            if ($host !== null && $dynamic->host !== null) {
-                if (!$this->matchesHost($dynamic->host, $dynamic->hostPattern, $host)) {
+            if ($dynamic->host !== null) {
+                // Host-constrained route: matches only when the request carries a
+                // host and that host matches the route's host pattern.
+                if ($host === null || !$this->matchesHost($dynamic->host, $dynamic->hostPattern, $host)) {
                     continue;
                 }
-            } elseif ($host === null && $dynamic->host !== null) {
-                continue;
             }
 
             if (preg_match($dynamic->pattern, $normalizedPath, $matches)) {

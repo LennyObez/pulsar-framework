@@ -169,18 +169,14 @@ final class ModelBindingMiddleware implements MiddlewareInterface
         foreach ($models as $paramName => $model) {
             $modelClass = $model::class;
 
-            // Regulated preset: authorization bypass forbidden unless #[PublicRoute]
-            if ($isRegulated && $withoutAuthz && !$isPublicRoute) {
-                return $this->forbiddenResponse($request);
-            }
+            // Authorization opt-out (#[WithoutAuthorization]): a regulated preset
+            // forbids bypassing authorization on a non-public route; otherwise the
+            // opt-out is honored (public route, or a permissive preset).
+            if ($withoutAuthz) {
+                if ($isRegulated && !$isPublicRoute) {
+                    return $this->forbiddenResponse($request);
+                }
 
-            // Skip authorization if explicitly opted out on a public route
-            if ($withoutAuthz && $isPublicRoute) {
-                continue;
-            }
-
-            // Skip authorization if opted out on a permissive preset
-            if ($withoutAuthz && !$isRegulated) {
                 continue;
             }
 

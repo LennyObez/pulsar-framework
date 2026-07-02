@@ -52,11 +52,13 @@ final class ManagedChallengeRendererTest extends TestCase
         // The embedded challenge must be a real signed token the service accepts.
         self::assertMatchesRegularExpression('/data-pmc-challenge="([A-Za-z0-9_-]+)"/', $html);
         self::assertSame(1, preg_match('/data-pmc-challenge="([A-Za-z0-9_-]+)"/', $html, $m));
+        self::assertTrue(isset($m[1]), 'rendered markup must carry a data-pmc-challenge attribute');
         $parsed = $service->parse($m[1]);
         self::assertNotNull($parsed);
 
         // The exposed id must match the id inside the signed token.
         self::assertSame(1, preg_match('/data-pmc-id="([0-9a-f]{32})"/', $html, $idMatch));
+        self::assertTrue(isset($idMatch[1]), 'rendered markup must carry a data-pmc-id attribute');
         self::assertSame($parsed->id, $idMatch[1]);
     }
 
@@ -94,8 +96,10 @@ final class ManagedChallengeRendererTest extends TestCase
     {
         $renderer = $this->renderer();
 
-        preg_match('/data-pmc-challenge="([^"]+)"/', $renderer->render(), $a);
-        preg_match('/data-pmc-challenge="([^"]+)"/', $renderer->render(), $b);
+        self::assertSame(1, preg_match('/data-pmc-challenge="([^"]+)"/', $renderer->render(), $a));
+        self::assertTrue(isset($a[1]), 'first render must carry a data-pmc-challenge attribute');
+        self::assertSame(1, preg_match('/data-pmc-challenge="([^"]+)"/', $renderer->render(), $b));
+        self::assertTrue(isset($b[1]), 'second render must carry a data-pmc-challenge attribute');
 
         self::assertNotSame($a[1], $b[1]);
     }

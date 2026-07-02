@@ -603,7 +603,7 @@ final readonly class RelationLoader
 
     /**
      * @param list<object> $entities
-     * @return list<mixed>
+     * @return list<scalar>
      */
     private function extractPrimaryKeys(array $entities): array
     {
@@ -614,26 +614,41 @@ final readonly class RelationLoader
         $metadata = $this->metadataRegistry->get($entities[0]::class);
         $pkProp = $metadata->primaryKey->propertyName;
 
-        return array_values(array_unique(array_map(
+        return array_values(array_unique(self::scalarKeys(array_map(
             static function (object $entity) use ($pkProp): mixed {
                 return new ReflectionProperty($entity, $pkProp)->getValue($entity);
             },
             $entities,
-        )));
+        ))));
     }
 
     /**
      * @param list<object> $entities
-     * @return list<mixed>
+     * @return list<scalar>
      */
     private function extractValues(array $entities, string $propertyName): array
     {
-        return array_map(
+        return self::scalarKeys(array_map(
             static function (object $entity) use ($propertyName): mixed {
                 return new ReflectionProperty($entity, $propertyName)->getValue($entity);
             },
             $entities,
-        );
+        ));
+    }
+
+    /**
+     * Narrow extracted relation-key values to scalars.
+     *
+     * Relation keys (primary/foreign keys) are always scalar at the database
+     * boundary; any non-scalar reflection value is dropped so the remaining
+     * keys are safely string-castable for {@see array_unique} and binding.
+     *
+     * @param list<mixed> $values
+     * @return list<scalar>
+     */
+    private static function scalarKeys(array $values): array
+    {
+        return array_values(array_filter($values, static fn(mixed $value): bool => is_scalar($value)));
     }
 
     private static function str(mixed $value): string

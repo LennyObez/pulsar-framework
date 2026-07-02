@@ -203,10 +203,7 @@ final readonly class CustomerController extends AbstractAdminController
         $authorName = $identity->id();
         $newNotes = $existingNotes . "\n[$timestamp] ($authorName) $note";
 
-        $updated = clone($customer, [
-            'notes' => trim($newNotes),
-            'updatedAt' => new DateTimeImmutable(),
-        ]);
+        $updated = $customer->withNotes(trim($newNotes));
 
         $this->customerRepository->save($updated);
 

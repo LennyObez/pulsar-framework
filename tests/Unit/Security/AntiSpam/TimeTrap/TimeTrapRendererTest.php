@@ -41,6 +41,7 @@ final class TimeTrapRendererTest extends TestCase
 
         // The value is a non-empty token that the service can verify.
         self::assertSame(1, preg_match('/value="([^"]+)"/', $html, $m));
+        self::assertTrue(isset($m[1]), 'rendered hidden field must carry a value attribute');
         $service = new TimeTrapService(self::KEY);
         $parsed = $service->parse($m[1]);
         self::assertNotNull($parsed);

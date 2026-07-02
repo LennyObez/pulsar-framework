@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Cms\Http\Controller;
 
-use DateTimeImmutable;
 use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Auth\Exception\AuthenticationException;
@@ -108,12 +107,11 @@ final readonly class AccountController
             ? $body['shipping_address']
             : $customer->shippingAddress;
 
-        $updated = clone($customer, [
-            'displayName' => $displayName,
-            'billingAddress' => $billingAddress,
-            'shippingAddress' => $shippingAddress,
-            'updatedAt' => new DateTimeImmutable(),
-        ]);
+        $updated = $customer->withProfile(
+            displayName: $displayName,
+            billingAddress: $billingAddress,
+            shippingAddress: $shippingAddress,
+        );
 
         $this->customerRepository->save($updated);
 

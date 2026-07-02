@@ -111,7 +111,9 @@ final class ManagedChallengeFlowTest extends TestCase
         // 1. Server renders the widget into a form.
         $html = $renderer->render('nonce-xyz');
         self::assertSame(1, preg_match('/data-pmc-challenge="([A-Za-z0-9_-]+)"/', $html, $tokenMatch));
+        self::assertTrue(isset($tokenMatch[1]), 'rendered markup must carry a data-pmc-challenge attribute');
         self::assertSame(1, preg_match('/data-pmc-id="([0-9a-f]{32})"/', $html, $idMatch));
+        self::assertTrue(isset($idMatch[1]), 'rendered markup must carry a data-pmc-id attribute');
 
         // 2. Client (worker) solves the proof-of-work for the exposed id.
         $solution = $this->solve($idMatch[1], self::BITS);
