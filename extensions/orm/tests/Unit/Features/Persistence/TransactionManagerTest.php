@@ -7,7 +7,10 @@ namespace Pulsar\Extension\Orm\Tests\Unit\Features\Persistence;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Config\ConnectionConfig;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Driver;
+use Pulsar\Database\PdoConnection;
 use Pulsar\Extension\Orm\Features\Persistence\TransactionManager;
 
 final class TransactionManagerTest extends TestCase
@@ -65,5 +68,37 @@ final class TransactionManagerTest extends TestCase
         $this->manager->rollback();
 
         $this->addToAssertionCount(1);
+    }
+
+    #[Test]
+    public function nestedBeginRetainsOuterTransactionHandle(): void
+    {
+        // FR-32: a nested begin() must not overwrite (and lose) the outer
+        // transaction handle. With a single reference, the second commit() is a
+        // no-op and the outer real transaction stays open; a stack commits both
+        // levels, so the connection ends with no open transaction.
+        $connection = PdoConnection::fromConfig(new ConnectionConfig(
+            name: 'tx_test',
+            driver: Driver::SQLite,
+            host: '',
+            port: 0,
+            database: ':memory:',
+            username: '',
+            password: '',
+            charset: 'utf8mb4',
+            collation: 'utf8mb4_unicode_ci',
+            options: [],
+        ));
+        $manager = new TransactionManager($connection);
+
+        $manager->begin();
+        $manager->begin();
+        $manager->commit();
+        $manager->commit();
+
+        self::assertFalse(
+            $connection->inTransaction(),
+            'the outer transaction must be committed, not left dangling',
+        );
     }
 }

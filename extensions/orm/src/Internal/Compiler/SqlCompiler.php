@@ -86,17 +86,25 @@ final readonly class SqlCompiler
      * @param string $table Quoted table name
      * @param list<string> $columns Column names (will be quoted)
      * @param list<string> $placeholders Binding placeholders
+     * @param ?string $returningColumn Primary-key column to read back via
+     *                RETURNING on dialects that support it; null omits the clause
      */
-    public function compileInsert(string $table, array $columns, array $placeholders): string
+    public function compileInsert(string $table, array $columns, array $placeholders, ?string $returningColumn = null): string
     {
         $quotedColumns = array_map(fn(string $col): string => $this->quoter->quote($col), $columns);
 
-        return sprintf(
+        $sql = sprintf(
             'INSERT INTO %s (%s) VALUES (%s)',
             $table,
             implode(', ', $quotedColumns),
             implode(', ', $placeholders),
         );
+
+        if ($returningColumn !== null && $this->dialect->supportsReturning()) {
+            $sql .= sprintf(' RETURNING %s', $this->quoter->quote($returningColumn));
+        }
+
+        return $sql;
     }
 
     /**
