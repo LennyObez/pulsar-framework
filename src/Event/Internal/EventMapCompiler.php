@@ -132,9 +132,9 @@ final class EventMapCompiler
      */
     private function parseListenerCallable(callable $listener): array
     {
-        if (is_array($listener) && isset($listener[0], $listener[1])) {
-            /** @var array{0: object|string, 1: string} $listener */
-            $class = is_string($listener[0]) ? $listener[0] : $listener[0]::class;
+        if (is_array($listener)) {
+            $target = $listener[0];
+            $class = is_string($target) ? $target : $target::class;
 
             return ['class' => $class, 'method' => $listener[1]];
         }

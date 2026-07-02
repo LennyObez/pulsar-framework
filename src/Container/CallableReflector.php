@@ -51,7 +51,6 @@ final class CallableReflector
         }
 
         if (is_array($callable)) {
-            /** @var array{0: object|class-string, 1: string} $callable */
             return new ReflectionMethod($callable[0], $callable[1]);
         }
 

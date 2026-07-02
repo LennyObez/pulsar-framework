@@ -268,26 +268,35 @@ final class Collection implements Countable, IteratorAggregate
         $groups = [];
 
         foreach ($this->items as $item) {
-            if (is_string($keyOrCallback)) {
-                if (is_array($item)) {
-                    /** @var mixed $raw */
-                    $raw = $item[$keyOrCallback] ?? '';
-                } elseif (is_object($item) && property_exists($item, $keyOrCallback)) {
-                    /** @var mixed $raw */
-                    $raw = $item->{$keyOrCallback};
-                } else {
-                    $raw = '';
-                }
-
-                $group = is_string($raw) || is_int($raw) ? (string) $raw : '';
-            } else {
-                $group = $keyOrCallback($item);
-            }
+            $group = is_string($keyOrCallback)
+                ? self::resolveStringGroupKey($item, $keyOrCallback)
+                : $keyOrCallback($item);
 
             $groups[$group][] = $item;
         }
 
         return $groups;
+    }
+
+    /**
+     * Resolve the group key for an item addressed by an array key or property name.
+     *
+     * Isolated from {@see groupBy()} so the `is_array()`/`is_object()` narrowing
+     * stays local and does not widen the element type pushed onto each group.
+     */
+    private static function resolveStringGroupKey(mixed $item, string $key): string
+    {
+        if (is_array($item)) {
+            /** @var mixed $raw */
+            $raw = $item[$key] ?? '';
+        } elseif (is_object($item) && property_exists($item, $key)) {
+            /** @var mixed $raw */
+            $raw = $item->{$key};
+        } else {
+            $raw = '';
+        }
+
+        return is_string($raw) || is_int($raw) ? (string) $raw : '';
     }
 
     /**

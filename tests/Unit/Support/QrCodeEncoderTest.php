@@ -73,11 +73,10 @@ final class QrCodeEncoderTest extends TestCase
         self::assertNotSame($svgDefault, $svgLarge);
 
         // Extract viewBox width from SVG
-        preg_match('/viewBox="0 0 (\d+) (\d+)"/', $svgDefault, $matchDefault);
-        preg_match('/viewBox="0 0 (\d+) (\d+)"/', $svgLarge, $matchLarge);
+        self::assertSame(1, preg_match('/viewBox="0 0 (\d+) (\d+)"/', $svgDefault, $matchDefault));
+        self::assertSame(1, preg_match('/viewBox="0 0 (\d+) (\d+)"/', $svgLarge, $matchLarge));
+        self::assertTrue(isset($matchDefault[1], $matchLarge[1]));
 
-        self::assertNotEmpty($matchDefault);
-        self::assertNotEmpty($matchLarge);
         self::assertGreaterThan((int) $matchDefault[1], (int) $matchLarge[1]);
     }
 
@@ -87,11 +86,10 @@ final class QrCodeEncoderTest extends TestCase
         $svgSmallZone = $this->encoder->encode('A', quietZone: 2);
         $svgLargeZone = $this->encoder->encode('A', quietZone: 8);
 
-        preg_match('/viewBox="0 0 (\d+) (\d+)"/', $svgSmallZone, $matchSmall);
-        preg_match('/viewBox="0 0 (\d+) (\d+)"/', $svgLargeZone, $matchLarge);
+        self::assertSame(1, preg_match('/viewBox="0 0 (\d+) (\d+)"/', $svgSmallZone, $matchSmall));
+        self::assertSame(1, preg_match('/viewBox="0 0 (\d+) (\d+)"/', $svgLargeZone, $matchLarge));
+        self::assertTrue(isset($matchSmall[1], $matchLarge[1]));
 
-        self::assertNotEmpty($matchSmall);
-        self::assertNotEmpty($matchLarge);
         self::assertGreaterThan((int) $matchSmall[1], (int) $matchLarge[1]);
     }
 
@@ -178,11 +176,10 @@ final class QrCodeEncoderTest extends TestCase
     {
         $svg = $this->encoder->encode('Test', moduleSize: 4, quietZone: 4);
 
-        preg_match('/width="(\d+)"/', $svg, $widthMatch);
-        preg_match('/height="(\d+)"/', $svg, $heightMatch);
+        self::assertSame(1, preg_match('/width="(\d+)"/', $svg, $widthMatch));
+        self::assertSame(1, preg_match('/height="(\d+)"/', $svg, $heightMatch));
+        self::assertTrue(isset($widthMatch[1], $heightMatch[1]));
 
-        self::assertNotEmpty($widthMatch);
-        self::assertNotEmpty($heightMatch);
         // Width and height should be equal (QR is always square)
         self::assertSame($widthMatch[1], $heightMatch[1]);
     }
@@ -192,11 +189,11 @@ final class QrCodeEncoderTest extends TestCase
     {
         $svg = $this->encoder->encode('ABC');
 
-        preg_match('/viewBox="0 0 (\d+) (\d+)"/', $svg, $viewBox);
-        preg_match('/width="(\d+)"/', $svg, $width);
-        preg_match('/height="(\d+)"/', $svg, $height);
+        self::assertSame(1, preg_match('/viewBox="0 0 (\d+) (\d+)"/', $svg, $viewBox));
+        self::assertSame(1, preg_match('/width="(\d+)"/', $svg, $width));
+        self::assertSame(1, preg_match('/height="(\d+)"/', $svg, $height));
+        self::assertTrue(isset($viewBox[1], $viewBox[2], $width[1], $height[1]));
 
-        self::assertNotEmpty($viewBox);
         self::assertSame($viewBox[1], $width[1]);
         self::assertSame($viewBox[2], $height[1]);
     }
@@ -219,8 +216,8 @@ final class QrCodeEncoderTest extends TestCase
 
         self::assertStringStartsWith('<svg', $svg);
         // Version 1 = 21x21 modules, so viewBox should be 21x21
-        preg_match('/viewBox="0 0 (\d+) (\d+)"/', $svg, $viewBox);
-        self::assertNotEmpty($viewBox);
+        self::assertSame(1, preg_match('/viewBox="0 0 (\d+) (\d+)"/', $svg, $viewBox));
+        self::assertTrue(isset($viewBox[1]));
         // Size should be exactly the QR module count
         $size = (int) $viewBox[1];
         self::assertSame(21, $size);

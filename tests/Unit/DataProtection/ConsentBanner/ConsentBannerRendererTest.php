@@ -306,8 +306,9 @@ final class ConsentBannerRendererTest extends TestCase
         self::assertStringNotContainsString('na"me', $html);
 
         // The embedded JSON literal must round-trip back to the original value.
-        self::assertMatchesRegularExpression('/var cfg=(\{.*\});/U', $html);
-        preg_match('/var cfg=(\{.*\});/U', $html, $m);
+        if (preg_match('/var cfg=(\{.*\});/U', $html, $m) !== 1) {
+            self::fail('Embedded JSON config literal not found in rendered banner.');
+        }
         /** @var array{cookieName: string} $cfg */
         $cfg = json_decode($m[1], true);
         self::assertIsArray($cfg);
