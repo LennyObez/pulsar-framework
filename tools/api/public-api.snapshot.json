@@ -36477,6 +36477,11 @@
                     "return": "bool",
                     "static": false
                 },
+                "isNotImplemented": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
                 "methodNotAllowed": {
                     "params": [
                         "string $path",
@@ -36494,6 +36499,13 @@
                 "notFound": {
                     "params": [
                         "string $path"
+                    ],
+                    "return": "Pulsar\\Routing\\RoutingException",
+                    "static": true
+                },
+                "notImplemented": {
+                    "params": [
+                        "string $method"
                     ],
                     "return": "Pulsar\\Routing\\RoutingException",
                     "static": true

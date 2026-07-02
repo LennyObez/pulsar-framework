@@ -113,6 +113,10 @@ final readonly class ExceptionHandler
             if ($exception->isMethodNotAllowed()) {
                 return ResponseStatus::MethodNotAllowed;
             }
+
+            if ($exception->isNotImplemented()) {
+                return ResponseStatus::NotImplemented;
+            }
         }
 
         return ResponseStatus::InternalServerError;

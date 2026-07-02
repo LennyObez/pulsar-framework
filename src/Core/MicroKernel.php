@@ -218,7 +218,9 @@ final class MicroKernel
 
     private function dispatch(ServerRequestInterface $request): ResponseInterface
     {
-        $method = \Pulsar\Http\Method::from($request->getMethod());
+        // FR-22: an unrecognized verb maps to 501 Not Implemented, not a 500.
+        $method = \Pulsar\Http\Method::tryFrom($request->getMethod())
+            ?? throw \Pulsar\Routing\RoutingException::notImplemented($request->getMethod());
         $path = $request->getUri()->getPath();
         $host = $request->getHeaderLine('Host');
 

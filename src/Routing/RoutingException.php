@@ -60,6 +60,22 @@ final class RoutingException extends Exception
     }
 
     /**
+     * Create a "not implemented" exception for an unrecognized HTTP method.
+     *
+     * RFC 9110 §15.6.2: 501 signals the server does not support the method for
+     * any resource (e.g. a PROPFIND request to a server that only speaks the
+     * standard verbs), distinct from 405 (a known method not allowed on a path).
+     */
+    #[NoDiscard]
+    public static function notImplemented(string $method): self
+    {
+        return new self(
+            sprintf('HTTP method "%s" is not implemented', $method),
+            501,
+        );
+    }
+
+    /**
      * Get the Allow header value.
      */
     public function getAllowHeader(): string
@@ -81,6 +97,14 @@ final class RoutingException extends Exception
     public function isMethodNotAllowed(): bool
     {
         return $this->getCode() === 405;
+    }
+
+    /**
+     * Check if this is a "not implemented" exception (unrecognized HTTP method).
+     */
+    public function isNotImplemented(): bool
+    {
+        return $this->getCode() === 501;
     }
 
     /**
