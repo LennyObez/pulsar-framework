@@ -10,6 +10,7 @@ use Pulsar\View\ViewConfig;
 use Pulsar\View\ViewException;
 
 use function array_key_exists;
+use function ctype_alnum;
 use function ctype_alpha;
 use function explode;
 use function file_get_contents;
@@ -257,6 +258,17 @@ final class TemplateCompiler
      */
     private function compileEscapedEchos(string $source): string
     {
+        // Honor ViewConfig::autoEscape. Escaping stays on by default; disabling it
+        // makes {{ }} emit raw output, so it is only safe when the application
+        // escapes manually (the security trade-off is documented on the option).
+        if (!$this->config->autoEscape) {
+            return (string) preg_replace_callback(
+                '/\{\{\s*(.+?)\s*}}/s',
+                static fn(array $matches): string => '<?php echo (string) (' . trim($matches[1]) . '); ?>',
+                $source,
+            );
+        }
+
         return (string) preg_replace_callback(
             '/\{\{\s*(.+?)\s*}}/s',
             static fn(array $matches): string => '<?php echo \Pulsar\Security\Escaper\ContextEscaper::html((string) (' . trim($matches[1]) . ')); ?>',
@@ -317,12 +329,20 @@ final class TemplateCompiler
             // Copy everything before the @
             $result .= substr($source, $offset, $atPos - $offset);
 
-            // Extract directive name
+            // Extract directive name: a required alpha first char, then any
+            // alphanumerics or underscores — so @escape_js, @csp_nonce,
+            // @region_selector and @dev_reload resolve as whole names instead of
+            // stopping at the underscore (which silently emitted @escape + literal
+            // _js, shipping raw unescaped JS and an empty CSP nonce).
             $nameStart = $atPos + 1;
             $nameEnd = $nameStart;
 
-            while ($nameEnd < $len && ctype_alpha($source[$nameEnd])) {
+            if ($nameEnd < $len && ctype_alpha($source[$nameEnd])) {
                 $nameEnd++;
+
+                while ($nameEnd < $len && (ctype_alnum($source[$nameEnd]) || $source[$nameEnd] === '_')) {
+                    $nameEnd++;
+                }
             }
 
             $name = substr($source, $nameStart, $nameEnd - $nameStart);
@@ -371,10 +391,30 @@ final class TemplateCompiler
         $depth = 0;
         $len = strlen($source);
 
+        // Quote state so that parentheses inside string literals are ignored,
+        // e.g. @if($x === ')') or @foreach(explode(')', $s) as $p). Null when not
+        // inside a string, otherwise the opening quote character.
+        $quote = null;
+
         for ($i = $openPos; $i < $len; $i++) {
             $char = $source[$i];
 
-            if ($char === '(') {
+            if ($quote !== null) {
+                // Inside a string literal: a backslash escapes the next character
+                // (so an escaped quote does not close the string), otherwise a
+                // matching quote ends it.
+                if ($char === '\\') {
+                    $i++;
+                } elseif ($char === $quote) {
+                    $quote = null;
+                }
+
+                continue;
+            }
+
+            if ($char === '"' || $char === "'") {
+                $quote = $char;
+            } elseif ($char === '(') {
                 $depth++;
             } elseif ($char === ')') {
                 $depth--;

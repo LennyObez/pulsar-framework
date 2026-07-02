@@ -36,9 +36,13 @@ final readonly class ForeachDirective implements DirectiveInterface
 
         // Pre-compute the iterable count for $loop->count without exhausting
         // Generators or breaking the subsequent foreach:
-        //  - Arrays and Countable: count() is O(1)
+        //  - Arrays and Countable: count() is O(1); iterate the original
         //  - Traversable but not Countable (Generator, Iterator): materialize
-        //    once to an array so count() and foreach iterate the same data
+        //    once, PRESERVING KEYS (preserve_keys: true), so a keyed iteration
+        //    (`as $k => $v`) sees the real keys rather than 0,1,2,... and count()
+        //    and foreach walk the same data. Duplicate keys follow PHP array
+        //    semantics (last value wins), an unavoidable consequence of
+        //    materializing into an array to size $loop.
         //  - Anything else: delegate to the native foreach below for the
         //    canonical TypeError, with count = 0 so $loop is still well-formed
         return '<?php'
@@ -46,7 +50,7 @@ final readonly class ForeachDirective implements DirectiveInterface
             . ' $__loopDepth = ($__loopParent instanceof \Pulsar\View\Engine\LoopVariable) ? $__loopParent->depth + 1 : 1;'
             . ' $__loopItems = ' . $iterable . ';'
             . ' if (is_countable($__loopItems)) { $__loopCount = count($__loopItems); }'
-            . ' elseif ($__loopItems instanceof \Traversable) { $__loopItems = iterator_to_array($__loopItems, false); $__loopCount = count($__loopItems); }'
+            . ' elseif ($__loopItems instanceof \Traversable) { $__loopItems = iterator_to_array($__loopItems, true); $__loopCount = count($__loopItems); }'
             . ' else { $__loopCount = 0; }'
             . ' $loop = new \Pulsar\View\Engine\LoopVariable($__loopCount, $__loopDepth, $__loopParent instanceof \Pulsar\View\Engine\LoopVariable ? $__loopParent : null);'
             . ' foreach (' . $this->rewriteIterable($expression) . '):'

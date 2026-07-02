@@ -137,7 +137,9 @@ final readonly class StreamingTemplateEngine
      */
     private function renderFull(string $template, array $data): string
     {
-        if (!array_key_exists('__env', $data)) {
+        $isTopLevel = !array_key_exists('__env', $data);
+
+        if ($isTopLevel) {
             $env = new TemplateInheritance();
             $data['__env'] = $env;
         } else {
@@ -157,8 +159,17 @@ final readonly class StreamingTemplateEngine
         }
 
         $compiled = $this->compiler->compile($template);
+        $output = self::executeIsolated($compiled->compiledPath, $data);
 
-        return self::executeIsolated($compiled->compiledPath, $data);
+        // Only the top-level render resolves @extends inheritance (mirrors
+        // TemplateEngine::render). Without this, a child that @extends a layout
+        // buffers its sections into $env and returns empty output, so the whole
+        // streamed page is blank.
+        if ($isTopLevel) {
+            return $env->renderWithInheritance($output);
+        }
+
+        return $output;
     }
 
     /**

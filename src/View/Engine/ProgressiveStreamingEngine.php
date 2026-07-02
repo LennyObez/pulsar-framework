@@ -12,7 +12,9 @@ use Throwable;
 
 use function array_key_exists;
 use function extract;
+use function implode;
 use function ob_end_clean;
+use function ob_get_clean;
 use function ob_start;
 use function strlen;
 use function substr;
@@ -96,6 +98,18 @@ final readonly class ProgressiveStreamingEngine
             $_data_['__auth'] = new TemplateAuthHelper(null, null);
         }
 
+        /** @var TemplateInheritance $__streamEnv */
+        $__streamEnv = $_data_['__env'];
+
+        // @include and @extends need a render callback. It fully renders a
+        // sub-template to a string (not streamed), sharing the same $__env so
+        // sections/stacks carry over — without it, an inherited template would
+        // buffer its sections and stream a blank body.
+        $self = $this;
+        $__streamEnv->setRenderCallback(static function (string $t, array $d = []) use ($self, $_data_): string {
+            return $self->renderToString($t, [...$_data_, ...$d]);
+        });
+
         extract($_data_, EXTR_SKIP);
 
         /** @var list<string> $chunks */
@@ -140,7 +154,81 @@ final readonly class ProgressiveStreamingEngine
             $chunks[] = $buffer;
         }
 
-        foreach ($chunks as $chunk) {
+        // If the template @extends a layout, its body was captured into $env
+        // sections and the streamed chunks are empty/whitespace. Resolve the
+        // inheritance chain to a single composed string and chunk THAT, rather
+        // than yielding a blank page. Progressive streaming is necessarily
+        // traded away for inherited templates, whose layout wraps all output.
+        if ($__streamEnv->getParent() !== null) {
+            yield from $this->chunkString(
+                $__streamEnv->renderWithInheritance(implode('', $chunks)),
+                $_threshold_,
+            );
+        } else {
+            foreach ($chunks as $chunk) {
+                yield $chunk;
+            }
+        }
+    }
+
+    /**
+     * Fully render a sub-template (parent layout or @include) to a string,
+     * sharing the caller's $__env so sections and stacks carry over.
+     *
+     * @param array<string, mixed> $data
+     *
+     * @throws ViewException
+     */
+    private function renderToString(string $template, array $data): string
+    {
+        $compiled = $this->compiler->compile($template);
+
+        return self::executeToString($compiled->compiledPath, $data);
+    }
+
+    /**
+     * Execute a compiled template in an isolated scope and return its output.
+     *
+     * @param array<string, mixed> $_data_
+     *
+     * @throws ViewException If template execution fails
+     */
+    private static function executeToString(string $_path_, array $_data_): string
+    {
+        extract($_data_, EXTR_SKIP);
+
+        ob_start();
+
+        try {
+            /** @psalm-suppress UnresolvableInclude */
+            include $_path_;
+        } catch (Throwable $e) {
+            ob_end_clean();
+
+            throw ViewException::compilationFailed(
+                $_path_,
+                'execution failed: ' . $e->getMessage(),
+                $e,
+            );
+        }
+
+        return (string) ob_get_clean();
+    }
+
+    /**
+     * Split a fully-composed string into threshold-sized chunks.
+     *
+     * @return Generator<int, string, void, void>
+     */
+    private function chunkString(string $output, int $threshold): Generator
+    {
+        $offset = 0;
+        $length = strlen($output);
+
+        while ($offset < $length) {
+            $chunk = substr($output, $offset, $threshold);
+            $offset += strlen($chunk);
+
             yield $chunk;
         }
     }
