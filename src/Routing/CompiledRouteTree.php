@@ -49,6 +49,10 @@ final class CompiledRouteTree
         $normalizedPath = '/' . trim($path, '/');
         $methodValue = $method->value;
 
+        // Strip the port so a `Host: api.example.com:8000` header matches a route
+        // declared against `api.example.com` (shared with the live Router).
+        $host = $host === null ? null : HostNormalizer::stripPort($host);
+
         // Fast path: O(1) static route lookup (no host constraint)
         if ($host === null && isset($this->staticTable[$methodValue][$normalizedPath])) {
             $entry = $this->staticTable[$methodValue][$normalizedPath];
@@ -188,7 +192,9 @@ final class CompiledRouteTree
         $params = [];
 
         foreach ($matches as $key => $value) {
-            if (is_string($key) && $value !== '') {
+            // Keep empty-string captures (parity with Route::extractNamedParameters,
+            // which filters by key only) so both matchers return identical params.
+            if (is_string($key)) {
                 $params[$key] = $value;
             }
         }

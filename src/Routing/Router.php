@@ -12,6 +12,7 @@ use Pulsar\Routing\Binding\ExplicitBinding;
 
 use function array_values;
 use function count;
+use function ksort;
 use function sprintf;
 use function strstr;
 use function trim;
@@ -52,14 +53,28 @@ final class Router implements RouterInterface
     /**
      * F2.21: first-segment bucket index for dynamic routes.
      *
-     * Maps `method => firstStaticSegment => list<Route>` so the dynamic-route
-     * scan for `/users/{id}` requests only walks routes whose pattern begins
-     * with the `users` segment. The catch-all bucket `''` holds routes whose
-     * pattern starts with a dynamic segment (e.g. `/{lang}/posts`).
+     * Maps `method => firstStaticSegment => registrationSequence => Route` so the
+     * dynamic-route scan for `/users/{id}` requests only walks routes whose
+     * pattern begins with the `users` segment. The catch-all bucket `''` holds
+     * routes whose pattern starts with a dynamic segment (e.g. `/{lang}/posts`).
      *
-     * @var array<string, array<string, list<Route>>>
+     * Bucket entries are keyed by the route's global registration sequence so the
+     * first-segment and catch-all buckets can be merged back into registration
+     * order at match time (first-registered-wins).
+     *
+     * @var array<string, array<string, array<int, Route>>>
      */
     private array $dynamicRouteBuckets = [];
+
+    /**
+     * Whether any registered route carries a host constraint.
+     *
+     * When no route is host-constrained, the request `Host` header cannot change
+     * which route matches, so the O(1) static-route fast path stays safe even with
+     * a Host header present (the common case). When at least one host-constrained
+     * route exists, matching falls back to the host-aware candidate scan.
+     */
+    private bool $hasHostConstrainedRoutes = false;
 
     /**
      * Explicit parameter-to-model bindings registered via model().
@@ -91,16 +106,24 @@ final class Router implements RouterInterface
             $this->namedRoutes[$route->name] = $route;
         }
 
-        $this->indexRouteByMethod($route);
+        // The route's index in $this->routes is its global registration sequence.
+        $this->indexRouteByMethod($route, count($this->routes) - 1);
 
         return $this;
     }
 
     /**
      * Add a route to the method-indexed and static lookup tables.
+     *
+     * @param int $sequence The route's global registration order (its index in
+     *                      {@see $routes}), used to key dynamic-route buckets.
      */
-    private function indexRouteByMethod(Route $route): void
+    private function indexRouteByMethod(Route $route, int $sequence): void
     {
+        if ($route->host !== null) {
+            $this->hasHostConstrainedRoutes = true;
+        }
+
         // Index static routes (no dynamic segments) for O(1) lookup
         if ($route->compiledPattern === null && $route->host === null) {
             $normalizedPath = '/' . trim($route->path, '/');
@@ -112,11 +135,11 @@ final class Router implements RouterInterface
 
         // F2.21: bucket dynamic routes by their first static segment. A pattern
         // like `/users/{id}` buckets under `users`; `/{lang}/posts` buckets
-        // under `''` (catch-all). At match() time we scan only the bucket that
-        // matches the request path's first segment plus the catch-all.
+        // under `''` (catch-all). Entries are keyed by registration sequence so
+        // match() can merge the buckets back into first-registered-wins order.
         $firstSegment = $this->firstStaticSegment($route->path);
         foreach ($route->methods as $method) {
-            $this->dynamicRouteBuckets[$method->value][$firstSegment][] = $route;
+            $this->dynamicRouteBuckets[$method->value][$firstSegment][$sequence] = $route;
         }
     }
 
@@ -271,30 +294,40 @@ final class Router implements RouterInterface
     {
         $normalizedPath = '/' . trim($path, '/');
 
-        // Fast path: O(1) lookup for static routes without host constraints
-        if ($host === null && isset($this->staticRoutes[$method->value][$normalizedPath])) {
+        // Strip the port (and IPv6 brackets' port) so a `Host: api.example.com:8000`
+        // header matches a route declared against `api.example.com`.
+        $host = $host === null ? null : HostNormalizer::stripPort($host);
+
+        // Fast path: O(1) lookup for static routes. Safe when the request carries
+        // no host, OR when no route is host-constrained (a Host header then cannot
+        // change which route matches) — so real traffic still hits the hash map.
+        if (
+            ($host === null || !$this->hasHostConstrainedRoutes)
+            && isset($this->staticRoutes[$method->value][$normalizedPath])
+        ) {
             return new MatchedRoute($this->staticRoutes[$method->value][$normalizedPath], []);
         }
 
-        // F2.21: narrow the dynamic-route scan to the first-segment bucket of
-        // the request path + the catch-all bucket (routes whose pattern starts
-        // with `{...}`).
+        // F2.21: narrow the dynamic-route scan to the first-segment bucket of the
+        // request path + the catch-all bucket (patterns starting with `{...}`),
+        // merged back into registration order via their sequence keys so an
+        // earlier catch-all wins over a later static-first-segment overlap.
         $requestFirstSegment = $this->firstStaticSegment($normalizedPath);
         $methodBuckets = $this->dynamicRouteBuckets[$method->value] ?? [];
 
-        /** @var list<Route> $candidates */
-        $candidates = [];
-        if (isset($methodBuckets[$requestFirstSegment])) {
-            $candidates = $methodBuckets[$requestFirstSegment];
-        }
+        $candidates = $methodBuckets[$requestFirstSegment] ?? [];
         if ($requestFirstSegment !== '' && isset($methodBuckets[''])) {
-            $candidates = [...$candidates, ...$methodBuckets['']];
+            $candidates += $methodBuckets[''];
+            ksort($candidates);
         }
 
+        /** @var list<Route> $candidates */
+        $candidates = array_values($candidates);
+
         // F2.21: when the request carries a host header, the static-route fast
-        // path was skipped above — but a host-less static route can still be a
-        // legitimate fallback for the host. Append the matching static route to
-        // the candidates so the host-aware scan can find it.
+        // path may have been skipped above — but a host-less static route can
+        // still be a legitimate fallback. Append it (lowest precedence) so the
+        // host-aware scan finds it after any host-constrained candidate.
         if ($host !== null && isset($this->staticRoutes[$method->value][$normalizedPath])) {
             $candidates[] = $this->staticRoutes[$method->value][$normalizedPath];
         }
@@ -428,9 +461,10 @@ final class Router implements RouterInterface
      *     routes: list<Route>,
      *     namedRoutes: array<string, Route>,
      *     staticRoutes: array<string, array<string, Route>>,
-     *     dynamicRouteBuckets: array<string, array<string, list<Route>>>,
+     *     dynamicRouteBuckets: array<string, array<string, array<int, Route>>>,
      *     explicitBindings: list<ExplicitBinding>,
      *     locked: bool,
+     *     hasHostConstrainedRoutes: bool,
      * }
      */
     public function snapshot(): array
@@ -442,6 +476,7 @@ final class Router implements RouterInterface
             'dynamicRouteBuckets' => $this->dynamicRouteBuckets,
             'explicitBindings' => $this->explicitBindings,
             'locked' => $this->locked,
+            'hasHostConstrainedRoutes' => $this->hasHostConstrainedRoutes,
         ];
     }
 
@@ -454,9 +489,10 @@ final class Router implements RouterInterface
      *     routes: list<Route>,
      *     namedRoutes: array<string, Route>,
      *     staticRoutes: array<string, array<string, Route>>,
-     *     dynamicRouteBuckets: array<string, array<string, list<Route>>>,
+     *     dynamicRouteBuckets: array<string, array<string, array<int, Route>>>,
      *     explicitBindings: list<ExplicitBinding>,
      *     locked: bool,
+     *     hasHostConstrainedRoutes: bool,
      * } $snapshot
      */
     public function restoreFromSnapshot(array $snapshot): void
@@ -467,6 +503,7 @@ final class Router implements RouterInterface
         $this->dynamicRouteBuckets = $snapshot['dynamicRouteBuckets'];
         $this->explicitBindings = $snapshot['explicitBindings'];
         $this->locked = $snapshot['locked'];
+        $this->hasHostConstrainedRoutes = $snapshot['hasHostConstrainedRoutes'];
     }
 
     /**
@@ -539,7 +576,7 @@ final class Router implements RouterInterface
                 $this->namedRoutes[$route->name] = $route;
             }
 
-            $this->indexRouteByMethod($route);
+            $this->indexRouteByMethod($route, count($this->routes) - 1);
         }
     }
 }
