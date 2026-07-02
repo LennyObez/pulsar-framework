@@ -92,6 +92,32 @@ final class ConnectionPoolTest extends TestCase
     }
 
     #[Test]
+    public function checkinDiscardsConnectionWithOpenTransaction(): void
+    {
+        // FR-11: a connection returned mid-transaction must not be re-idled —
+        // recycling it would leak the uncommitted transaction into the next
+        // checkout. It is destroyed instead.
+        $pool = new ConnectionPool(
+            new PoolConfig(
+                maxConnections: 2,
+                idleTimeoutSeconds: 3600,
+                maxLifetimeSeconds: 7200,
+                healthCheckIntervalSeconds: 3600,
+            ),
+            $this->connectionConfig,
+        );
+
+        $leaked = $this->createStub(ConnectionInterface::class);
+        $leaked->method('inTransaction')->willReturn(true);
+
+        $pool->checkin($leaked);
+
+        $stats = $pool->stats();
+        self::assertSame(0, $stats->idleCount, 'a leaked-transaction connection must not be recycled');
+        self::assertSame(1, $stats->totalDestroyed);
+    }
+
+    #[Test]
     public function poolExhaustedThrowsException(): void
     {
         $pool = new ConnectionPool(
