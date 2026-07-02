@@ -35,6 +35,40 @@ final class TranslatorTest extends TestCase
     }
 
     #[Test]
+    public function translateSubstitutesPrefixCollidingPlaceholders(): void
+    {
+        // FR-26: a shorter :id placeholder must not clobber a longer :identifier
+        // that shares its prefix, whatever the parameter ordering. The old
+        // ordered str_replace turned ":identifier" into "7entifier".
+        $catalog = $this->createStub(CatalogInterface::class);
+        $catalog->method('get')->willReturn(new TranslationEntry(key: 'audit', message: 'User :id is :identifier'));
+
+        $translator = new Translator($catalog, $this->makeConfig());
+
+        self::assertSame('User 7 is X', $translator->translate('audit', ['id' => 7, 'identifier' => 'X']));
+    }
+
+    #[Test]
+    public function translateResolvesLiteralDottedKeyOverSiblingDomain(): void
+    {
+        // FR-27: a literal dotted key ("error.404") must resolve to its own entry
+        // in the requested domain first, never be split into a sibling 'error'
+        // domain that merely shares the prefix.
+        $catalog = $this->createStub(CatalogInterface::class);
+        $catalog->method('get')->willReturnCallback(
+            static fn(string $key, string $locale, string $domain): ?TranslationEntry => $key === 'error.404' && $domain === 'messages'
+                ? new TranslationEntry(key: 'error.404', message: 'Literal page not found')
+                : ($key === '404' && $domain === 'error'
+                    ? new TranslationEntry(key: '404', message: 'Sibling page not found')
+                    : null),
+        );
+
+        $translator = new Translator($catalog, $this->makeConfig());
+
+        self::assertSame('Literal page not found', $translator->translate('error.404'));
+    }
+
+    #[Test]
     public function translateReturnsKeyWhenNotFoundInNonStrictMode(): void
     {
         $catalog = $this->createStub(CatalogInterface::class);

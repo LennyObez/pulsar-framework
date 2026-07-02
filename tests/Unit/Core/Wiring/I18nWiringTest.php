@@ -21,10 +21,12 @@ use Pulsar\I18n\Format\NumberFormatterInterface;
 use Pulsar\I18n\Locale\LocaleUrlGenerator;
 use Pulsar\I18n\Locale\UrlPrefixExtractor;
 use Pulsar\I18n\LocaleNegotiatorInterface;
+use Pulsar\I18n\Region\CountryRegistry;
 use Pulsar\I18n\Translator;
 use Pulsar\I18n\TranslatorInterface;
 use Pulsar\Routing\Router;
 use Pulsar\View\Engine\TemplateLocaleHelper;
+use ReflectionMethod;
 
 use function bin2hex;
 use function extension_loaded;
@@ -55,6 +57,24 @@ final class I18nWiringTest extends TestCase
         self::assertTrue($container->has(TranslatorInterface::class));
         self::assertTrue($container->has(Translator::class));
         self::assertTrue($container->has(LocaleNegotiatorInterface::class));
+    }
+
+    #[Test]
+    public function deriveDefaultCountryUsesLocaleRegionInsteadOfHardcodedUs(): void
+    {
+        // FR-41: the region/currency default country is derived from the
+        // configured default locale — explicit region subtag first (fr-FR / fr_CA),
+        // then the bare language code when it is itself a known ISO country (fr →
+        // FR) — instead of always assuming the US.
+        $wiring = new I18nWiring();
+        $registry = new CountryRegistry();
+        $derive = new ReflectionMethod($wiring, 'deriveDefaultCountry');
+
+        self::assertSame('FR', $derive->invoke($wiring, 'fr-FR', $registry));
+        self::assertSame('CA', $derive->invoke($wiring, 'fr_CA', $registry));
+        self::assertSame('FR', $derive->invoke($wiring, 'fr', $registry));
+        // An unknown derived code still falls back to the US default.
+        self::assertSame('US', $derive->invoke($wiring, 'xx', $registry));
     }
 
     #[Test]
