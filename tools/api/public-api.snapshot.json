@@ -55508,6 +55508,7 @@
         "Pulsar\\Routing\\Binding\\ModelBindingMiddleware",
         "Pulsar\\Routing\\Binding\\PolicyAuthorizationHook",
         "Pulsar\\Routing\\Binding\\ResolvedBindings",
+        "Pulsar\\Routing\\HostNormalizer",
         "Pulsar\\Routing\\Internal\\ConfigDomainResolver",
         "Pulsar\\Routing\\ResourceRegistrar",
         "Pulsar\\Routing\\RouteUrlGenerator",
