@@ -40,8 +40,6 @@ final class AntiSpamContextTest extends TestCase
         self::assertSame('new', $context->reputationTier);
         self::assertSame([], $context->recentBodies);
         self::assertSame([], $context->formFields);
-        self::assertNull($context->powChallenge);
-        self::assertNull($context->powNonce);
         self::assertNull($context->captchaToken);
         self::assertSame(0, $context->submissionTimestamp);
     }
@@ -57,8 +55,6 @@ final class AntiSpamContextTest extends TestCase
             reputationTier: 'moderator',
             recentBodies: ['prev1', 'prev2'],
             formFields: ['name' => 'test'],
-            powChallenge: 'challenge',
-            powNonce: 'nonce',
             captchaToken: 'token',
             submissionTimestamp: 1700000000,
         );
@@ -68,8 +64,6 @@ final class AntiSpamContextTest extends TestCase
         self::assertSame(3600, $context->accountAgeSeconds);
         self::assertSame('moderator', $context->reputationTier);
         self::assertCount(2, $context->recentBodies);
-        self::assertSame('challenge', $context->powChallenge);
-        self::assertSame('nonce', $context->powNonce);
         self::assertSame('token', $context->captchaToken);
     }
 }

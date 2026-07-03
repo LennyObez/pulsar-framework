@@ -31,8 +31,6 @@ final readonly class AntiSpamConfig
      * @param int $minContentLength Minimum body length in characters
      * @param float $maxUppercaseRatio Maximum ratio of uppercase characters (0.0–1.0)
      * @param float $maxRepeatedCharRatio Maximum ratio of repeated characters (0.0–1.0)
-     * @param bool $proofOfWorkEnabled Enable proof-of-work verification
-     * @param string $proofOfWorkPrefix SHA-256 hash prefix requirement
      * @param bool $captchaEnabled Enable CAPTCHA verification
      * @param string $captchaProvider CAPTCHA provider: 'hcaptcha' or 'turnstile'
      * @param string $captchaSiteKey CAPTCHA site key
@@ -65,8 +63,6 @@ final readonly class AntiSpamConfig
         public int $minContentLength = 10,
         public float $maxUppercaseRatio = 0.8,
         public float $maxRepeatedCharRatio = 0.5,
-        public bool $proofOfWorkEnabled = false,
-        public string $proofOfWorkPrefix = '0000',
         public bool $captchaEnabled = false,
         public string $captchaProvider = 'hcaptcha',
         public string $captchaSiteKey = '',
@@ -101,8 +97,6 @@ final readonly class AntiSpamConfig
      *     min_content_length?: int,
      *     max_uppercase_ratio?: float,
      *     max_repeated_char_ratio?: float,
-     *     proof_of_work_enabled?: bool,
-     *     proof_of_work_prefix?: string,
      *     captcha_enabled?: bool,
      *     captcha_provider?: string,
      *     captcha_site_key?: string,
@@ -142,8 +136,6 @@ final readonly class AntiSpamConfig
             minContentLength: Coerce::int($data['min_content_length'] ?? null, 10),
             maxUppercaseRatio: Coerce::float($data['max_uppercase_ratio'] ?? null, 0.8),
             maxRepeatedCharRatio: Coerce::float($data['max_repeated_char_ratio'] ?? null, 0.5),
-            proofOfWorkEnabled: Coerce::strictBool($data['proof_of_work_enabled'] ?? null),
-            proofOfWorkPrefix: Coerce::string($data['proof_of_work_prefix'] ?? null, '0000'),
             captchaEnabled: Coerce::strictBool($data['captcha_enabled'] ?? null),
             captchaProvider: Coerce::string($data['captcha_provider'] ?? null, 'hcaptcha'),
             captchaSiteKey: Coerce::string($data['captcha_site_key'] ?? null),

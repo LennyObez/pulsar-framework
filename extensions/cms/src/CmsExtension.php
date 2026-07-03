@@ -119,6 +119,7 @@ use Pulsar\Queue\QueueDriverInterface;
 use Pulsar\Routing\Route;
 use Pulsar\Routing\RouterInterface;
 use Pulsar\Scheduler\JobRegistry;
+use Pulsar\Security\AntiSpam\ManagedChallenge\ManagedChallengeRenderer;
 use Pulsar\Security\Audit\AuditChainVerifier;
 use Pulsar\Security\Csrf\CsrfTokenManagerInterface;
 
@@ -324,7 +325,15 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
         if ($container->has(CsrfTokenManagerInterface::class)) {
             /** @var CsrfTokenManagerInterface $csrfManager */
             $csrfManager = $container->get(CsrfTokenManagerInterface::class);
-            $registry->register(new BlockEditor\CoreBlocks\ContactFormBlock($csrfManager));
+
+            $challengeRenderer = null;
+
+            if ($container->has(ManagedChallengeRenderer::class)) {
+                /** @var ManagedChallengeRenderer $challengeRenderer */
+                $challengeRenderer = $container->get(ManagedChallengeRenderer::class);
+            }
+
+            $registry->register(new BlockEditor\CoreBlocks\ContactFormBlock($csrfManager, $challengeRenderer));
             $registry->register(new BlockEditor\CoreBlocks\LoginFormBlock($csrfManager));
             $registry->register(new BlockEditor\CoreBlocks\CommentsBlock($csrfManager));
         }
