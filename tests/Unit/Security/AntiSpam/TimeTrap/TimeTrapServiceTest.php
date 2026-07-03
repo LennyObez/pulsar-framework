@@ -11,6 +11,7 @@ use Pulsar\Security\AntiSpam\TimeTrap\TimeTrapService;
 use Pulsar\Security\AntiSpam\TimeTrap\TimeTrapToken;
 
 use function str_repeat;
+use function strlen;
 use function substr;
 
 #[CoversClass(TimeTrapService::class)]
