@@ -36,8 +36,40 @@
     const ttl = parseInt(el.getAttribute('data-pmc-ttl') || '0', 10);
     const input = el.querySelector('input[type="hidden"]');
 
+    // Localized status messages, supplied by the server via data-pmc-msg-*
+    // attributes (resolved from the i18n 'shield' domain) with English defaults
+    // when the host provides no translation — so the announced text matches the
+    // page locale without a second hardcoded copy living in this bundle.
+    const messages = {
+      solving: el.getAttribute('data-pmc-msg-solving') || 'Verifying your request…',
+      solved: el.getAttribute('data-pmc-msg-solved') || 'Security check complete.',
+      error:
+        el.getAttribute('data-pmc-msg-error') ||
+        'Security verification failed. Please reload the page.',
+    };
+
+    // A visually-hidden text node inside the role="status" aria-live region, so
+    // screen readers announce the localized status as it changes. Sighted users
+    // are unaffected (the widget is otherwise invisible).
+    const status = document.createElement('span');
+    status.className = 'pulsar-managed-challenge-status';
+    el.appendChild(status);
+
+    /**
+     * Move the widget to a state: drive the data-pmc-state hook (styling) and
+     * announce the matching localized message in the live region.
+     * @param {('solving'|'solved'|'error')} state
+     */
+    const setState = (state) => {
+      el.setAttribute('data-pmc-state', state);
+
+      if (messages[state]) {
+        status.textContent = messages[state];
+      }
+    };
+
     if (!initialChallenge || !initialId || !workerUrl || !input || Number.isNaN(initialBits)) {
-      el.setAttribute('data-pmc-state', 'error');
+      setState('error');
       return;
     }
 
@@ -74,7 +106,7 @@
         // Fail closed only on the FIRST solve (no token yet); a failed refresh
         // keeps the previous valid token.
         if (!solved) {
-          el.setAttribute('data-pmc-state', 'error');
+          setState('error');
         }
         return;
       }
@@ -86,7 +118,7 @@
           input.value = challenge + '.' + data.solution;
           solved = true;
           mintedAt = Date.now();
-          el.setAttribute('data-pmc-state', 'solved');
+          setState('solved');
 
           if (form) {
             form.removeEventListener('submit', blockUntilSolved);
@@ -95,7 +127,7 @@
           el.dispatchEvent(new CustomEvent('pulsar:challenge-solved', { bubbles: true }));
           scheduleRefresh();
         } else if (!solved) {
-          el.setAttribute('data-pmc-state', 'error');
+          setState('error');
           el.dispatchEvent(new CustomEvent('pulsar:challenge-error', { bubbles: true }));
         }
 
@@ -103,7 +135,7 @@
       });
 
       if (!solved) {
-        el.setAttribute('data-pmc-state', 'solving');
+        setState('solving');
       }
       worker.postMessage({ id, bits });
     }

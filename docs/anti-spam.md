@@ -59,6 +59,30 @@ Renders nothing when the `managed` provider is not configured, so templates degr
 
 In a controller you can inject `ManagedChallengeRenderer` and call `render(?string $cspNonce)` directly.
 
+### Localization
+
+The widget's user-facing strings — the `<noscript>` fallback for clients with JavaScript disabled, and the status the widget announces into its `role="status"` live region for screen readers — are resolved from the **`shield`** translation domain, falling back to built-in English. No host configuration is required; provide a `shield` catalog only for the locales you want to translate.
+
+| Key         | Default (English)                                           | Where it appears                    |
+| ----------- | ----------------------------------------------------------- | ----------------------------------- |
+| `noscript`  | This form requires JavaScript to complete a security check. | `<noscript>` fallback (no-JS users) |
+| `verifying` | Verifying your request…                                     | live-region status while solving    |
+| `complete`  | Security check complete.                                    | live-region status once solved      |
+| `error`     | Security verification failed. Please reload the page.       | live-region status on failure       |
+
+Example `lang/fr/shield.php`:
+
+```php
+return [
+    'noscript' => 'Ce formulaire nécessite JavaScript pour effectuer une vérification de sécurité.',
+    'verifying' => 'Vérification de votre requête…',
+    'complete' => 'Vérification de sécurité terminée.',
+    'error' => 'Échec de la vérification de sécurité. Veuillez recharger la page.',
+];
+```
+
+The status strings are rendered into `data-pmc-msg-*` attributes on the widget element and read by the worker, so the same translation feeds both server and client with no second hardcoded copy in the JS bundle. A key absent from the catalog uses the English default (it is never emitted as a raw key, even in i18n strict mode).
+
 ### Verifying a submission
 
 When the anti-spam pipeline runs (e.g. the CMS comment or Forum post middleware), populate `AntiSpamContext::$captchaToken` from the `managed_challenge_field_name` field. The pipeline's CAPTCHA check (`ManagedChallengeVerifier`, named `captcha`) verifies it. No code change is needed beyond selecting `captcha_provider: 'managed'`.

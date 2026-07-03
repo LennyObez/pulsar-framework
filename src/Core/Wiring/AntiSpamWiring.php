@@ -16,6 +16,7 @@ use Pulsar\Core\Wiring\Contract\WiringContract;
 use Pulsar\Http\Client\HttpClientInterface;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
+use Pulsar\I18n\TranslatorInterface;
 use Pulsar\Routing\Router;
 use Pulsar\Security\AntiSpam\AccountAgeGate;
 use Pulsar\Security\AntiSpam\AntiSpamCheckInterface;
@@ -278,6 +279,13 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
         );
         $router->get($refreshPath, [ManagedChallengeRefreshController::class, 'refresh'], 'pulsar.anti_spam.mc.refresh');
 
+        $translator = null;
+
+        if ($container->has(TranslatorInterface::class)) {
+            /** @var TranslatorInterface $translator */
+            $translator = $container->get(TranslatorInterface::class);
+        }
+
         $renderer = new ManagedChallengeRenderer(
             $service,
             $config->managedChallengeFieldName,
@@ -285,6 +293,7 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
             $base . '/managed-challenge.worker.js',
             $refreshPath,
             $config->managedChallengeTtlSeconds,
+            $translator,
         );
         $container->instance(ManagedChallengeRenderer::class, $renderer);
         ManagedChallengeRenderer::setGlobalInstance($renderer);

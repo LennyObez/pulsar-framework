@@ -6,6 +6,7 @@ namespace Pulsar\Security\AntiSpam\ManagedChallenge;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\I18n\TranslatorInterface;
 
 use function htmlspecialchars;
 use function sprintf;
@@ -28,6 +29,13 @@ use const ENT_SUBSTITUTE;
 #[Api(since: '1.0.0')]
 final class ManagedChallengeRenderer
 {
+    /**
+     * Translation domain for the widget's user-facing strings. The host may
+     * provide a catalog for this domain in any locale; absent keys fall back to
+     * the built-in English defaults, so no host configuration is required.
+     */
+    private const string I18N_DOMAIN = 'shield';
+
     private static ?self $globalInstance = null;
 
     public function __construct(
@@ -37,6 +45,7 @@ final class ManagedChallengeRenderer
         private readonly string $workerUrl,
         private readonly string $refreshUrl = '',
         private readonly int $ttlSeconds = 0,
+        private readonly ?TranslatorInterface $translator = null,
     ) {}
 
     /**
@@ -62,12 +71,18 @@ final class ManagedChallengeRenderer
         // challenge at ~80% of the TTL, so a slow human is never rejected while
         // the server keeps a tight (small replay window) TTL. Both are optional:
         // when the refresh endpoint is not wired the widget simply never refreshes.
+        // The user-facing strings (the no-JS fallback and the screen-reader
+        // status announcements the widget injects per state) are resolved from
+        // the 'shield' translation domain, falling back to English. The status
+        // strings travel as data-pmc-msg-* attributes so the worker localizes
+        // without a second hardcoded copy in the JS bundle.
         return sprintf(
             '<div class="pulsar-managed-challenge" data-pmc-challenge="%s" data-pmc-id="%s" data-pmc-bits="%d"'
             . ' data-pmc-field="%s" data-pmc-worker="%s" data-pmc-refresh="%s" data-pmc-ttl="%d"'
+            . ' data-pmc-msg-solving="%s" data-pmc-msg-solved="%s" data-pmc-msg-error="%s"'
             . ' role="status" aria-live="polite">'
             . '<input type="hidden" name="%s" value="" autocomplete="off">'
-            . '<noscript>This form requires JavaScript to complete a security check.</noscript>'
+            . '<noscript>%s</noscript>'
             . '</div>'
             . '<script src="%s"%s defer></script>',
             self::escape($token),
@@ -77,10 +92,29 @@ final class ManagedChallengeRenderer
             self::escape($this->workerUrl),
             self::escape($this->refreshUrl),
             $this->ttlSeconds,
+            self::escape($this->localize('verifying', 'Verifying your request…')),
+            self::escape($this->localize('complete', 'Security check complete.')),
+            self::escape($this->localize('error', 'Security verification failed. Please reload the page.')),
             $field,
+            self::escape($this->localize('noscript', 'This form requires JavaScript to complete a security check.')),
             self::escape($this->scriptUrl),
             $nonceAttr,
         );
+    }
+
+    /**
+     * Resolve a widget string from the 'shield' domain, falling back to the
+     * built-in English default. The default is used both when no translator is
+     * wired and when the host has not provided the key (has() is checked so a
+     * missing key never returns the raw key string or throws in strict mode).
+     */
+    private function localize(string $key, string $default): string
+    {
+        if ($this->translator === null || !$this->translator->has($key, null, self::I18N_DOMAIN)) {
+            return $default;
+        }
+
+        return $this->translator->translate($key, [], null, self::I18N_DOMAIN);
     }
 
     /**
