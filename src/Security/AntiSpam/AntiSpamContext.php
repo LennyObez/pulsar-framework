@@ -19,7 +19,8 @@ final readonly class AntiSpamContext
 {
     /**
      * @param string $body The submitted content body
-     * @param string $ipHash Hashed IP address of the submitter
+     * @param string $ipHash Hashed IP address of the submitter, for internal
+     *        reputation/rate-limiting (never sent to third parties)
      * @param string|null $userId Authenticated user ID (null for anonymous)
      * @param int|null $accountAgeSeconds Account age in seconds (null for anonymous)
      * @param string $reputationTier User reputation tier: 'new', 'established', 'moderator'
@@ -33,6 +34,10 @@ final readonly class AntiSpamContext
      *        time-trap check requires a stamp minted for this exact form, so an
      *        integrator must set the same value here that it passed to the
      *        renderer. Defaults to '' (no form binding; timing still enforced).
+     * @param string|null $ip Real client IP address. Used only by external CAPTCHA
+     *        verifiers (hCaptcha/Turnstile) that require the genuine client IP for
+     *        their server-side risk scoring; a hash would defeat that. Null when
+     *        unavailable. Internal checks use $ipHash, not this.
      */
     public function __construct(
         public string $body,
@@ -47,6 +52,7 @@ final readonly class AntiSpamContext
         public ?string $captchaToken = null,
         public int $submissionTimestamp = 0,
         public string $formId = '',
+        public ?string $ip = null,
     ) {}
 
     #[NoDiscard]

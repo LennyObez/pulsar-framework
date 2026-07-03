@@ -47,7 +47,9 @@ final readonly class HCaptchaVerifier implements CaptchaVerifierInterface
             );
         }
 
-        $remoteIp = $context->ipHash;
+        // hCaptcha uses remoteip for its own IP risk analysis, so it must be the
+        // real client IP — a hash would defeat that scoring. Empty when unknown.
+        $remoteIp = $context->ip ?? '';
         $verified = $this->verify($context->captchaToken, $remoteIp);
 
         if (!$verified) {
