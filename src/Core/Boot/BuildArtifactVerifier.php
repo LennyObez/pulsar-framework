@@ -11,7 +11,9 @@ use Pulsar\Build\VerificationStatus;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Security\Crypto\HmacInterface;
+use Pulsar\Security\Crypto\HmacService;
 use Pulsar\Security\Crypto\KeyProviderInterface;
+use Pulsar\Security\Crypto\MasterKey;
 use Throwable;
 
 use const DIRECTORY_SEPARATOR;
@@ -61,16 +63,25 @@ final class BuildArtifactVerifier
                 throw BuildException::missingArtifact('build-manifest.json');
             }
 
-            // Verify signature FIRST (if present and crypto services available)
-            // This ensures the manifest itself is authentic before trusting its hashes
-            if ($manifest->signature !== null
-                && $container->has(HmacInterface::class)
-                && $container->has(KeyProviderInterface::class)
-            ) {
-                /** @var HmacInterface $hmac */
-                $hmac = $container->get(HmacInterface::class);
-                /** @var KeyProviderInterface $keyProvider */
-                $keyProvider = $container->get(KeyProviderInterface::class);
+            // Verify the signature FIRST, so the manifest's hashes are trusted
+            // only once the manifest itself is authenticated. This runs early in
+            // boot, before SecurityWiring binds the crypto services, so the
+            // verifier bootstraps them from the master key itself when the
+            // container has none — keeping signature verification independent of
+            // wiring order. A signed manifest is fail-closed: if the key material
+            // needed to authenticate it is unavailable, refuse to boot rather than
+            // trust the manifest on its hashes alone (which an attacker rewrites).
+            if ($manifest->signature !== null) {
+                $hmac = $container->has(HmacInterface::class)
+                    ? $container->get(HmacInterface::class)
+                    : new HmacService();
+                $keyProvider = $container->has(KeyProviderInterface::class)
+                    ? $container->get(KeyProviderInterface::class)
+                    : self::masterKeyFromEnvironment($configManager);
+
+                if (!$hmac instanceof HmacInterface || !$keyProvider instanceof KeyProviderInterface) {
+                    throw BuildException::signatureVerificationUnavailable();
+                }
 
                 if (!$loader->verifySignature($manifest, $hmac, $keyProvider)) {
                     throw BuildException::signatureVerificationFailed();
@@ -106,6 +117,29 @@ final class BuildArtifactVerifier
             return $appEnv === 'production';
         } catch (Throwable) {
             return false;
+        }
+    }
+
+    /**
+     * Build a key provider from the master key in the environment, so manifest
+     * signatures can be verified before SecurityWiring runs. Returns null when no
+     * (valid) master key is available — the caller fails closed. Signing uses a
+     * sub-key derived directly from the master key, so a plain {@see MasterKey}
+     * yields the same signing key the wired CompositeKeyProvider would.
+     */
+    private static function masterKeyFromEnvironment(?ConfigManager $configManager): ?KeyProviderInterface
+    {
+        try {
+            $hex = $configManager?->environment()->get('PULSAR_MASTER_KEY');
+
+            if ($hex === null || $hex === '') {
+                return null;
+            }
+
+            return MasterKey::fromHex($hex);
+        } catch (Throwable) {
+            // Unloaded environment or malformed key → cannot verify → fail closed.
+            return null;
         }
     }
 }

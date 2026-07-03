@@ -5064,6 +5064,11 @@
                     "return": "Pulsar\\Build\\BuildException",
                     "static": true
                 },
+                "signatureVerificationUnavailable": {
+                    "params": [],
+                    "return": "Pulsar\\Build\\BuildException",
+                    "static": true
+                },
                 "staleBuild": {
                     "params": [
                         "string $artifact",
