@@ -18,6 +18,7 @@ use function rtrim;
 use function str_starts_with;
 
 use const ARRAY_FILTER_USE_KEY;
+use const PHP_OS_FAMILY;
 
 /**
  * Loads environment variables from the OS and an optional `.env` file.
@@ -157,7 +158,7 @@ final class Environment
         ?array $prefixAllowlist,
         ?array $literalAllowlist,
     ): self {
-        $osVars = self::readOsVars();
+        $osVars = self::normalizeKeys(self::readOsVars());
 
         if ($prefixAllowlist !== null) {
             $osVars = self::applyAllowlist($osVars, $prefixAllowlist, $literalAllowlist ?? []);
@@ -166,7 +167,7 @@ final class Environment
         $fileVars = [];
 
         if ($envFilePath !== null && is_file($envFilePath) && is_readable($envFilePath)) {
-            $fileVars = self::parseEnvFile($envFilePath);
+            $fileVars = self::normalizeKeys(self::parseEnvFile($envFilePath));
         }
 
         // OS vars take precedence: file vars fill in gaps only
@@ -187,6 +188,14 @@ final class Environment
      */
     private static function applyAllowlist(array $vars, array $prefixAllowlist, array $literalAllowlist): array
     {
+        // Keys arrive already canonicalised (see normalizeKeys()); fold the
+        // caller-supplied allowlist to the same form on case-insensitive hosts
+        // so a POSIX-cased entry (e.g. 'PATH') still matches the OS's 'Path'.
+        if (self::isCaseInsensitiveEnv()) {
+            $literalAllowlist = array_values(array_map(strtoupper(...), $literalAllowlist));
+            $prefixAllowlist = array_values(array_map(strtoupper(...), $prefixAllowlist));
+        }
+
         return array_filter(
             $vars,
             static function (string $key) use ($prefixAllowlist, $literalAllowlist): bool {
@@ -212,7 +221,7 @@ final class Environment
     #[NoDiscard]
     public function get(string $key, ?string $default = null): ?string
     {
-        return $this->variables[$key] ?? $default;
+        return $this->variables[self::normalizeKey($key)] ?? $default;
     }
 
     /**
@@ -222,11 +231,13 @@ final class Environment
      */
     public function require(string $key): string
     {
-        if (!array_key_exists($key, $this->variables)) {
+        $normalized = self::normalizeKey($key);
+
+        if (!array_key_exists($normalized, $this->variables)) {
             throw ConfigException::missingRequired($key, 'environment');
         }
 
-        return $this->variables[$key];
+        return $this->variables[$normalized];
     }
 
     /**
@@ -234,7 +245,7 @@ final class Environment
      */
     public function has(string $key): bool
     {
-        return array_key_exists($key, $this->variables);
+        return array_key_exists(self::normalizeKey($key), $this->variables);
     }
 
     /**
@@ -274,6 +285,52 @@ final class Environment
         $env = getenv();
 
         return $env;
+    }
+
+    /**
+     * Whether the host treats environment-variable names case-insensitively.
+     *
+     * Windows environment variables are case-insensitive and `getenv()` returns
+     * them in the OS's own casing (e.g. `Path`); POSIX names are case-sensitive
+     * (`PATH` and `path` are distinct). Lookups and allowlist matching follow
+     * the host's own semantics rather than assuming POSIX everywhere.
+     */
+    private static function isCaseInsensitiveEnv(): bool
+    {
+        return PHP_OS_FAMILY === 'Windows';
+    }
+
+    /**
+     * Fold a variable name to its canonical host form: upper-case on
+     * case-insensitive platforms (Windows), unchanged on POSIX. Env-var names
+     * are ASCII, so a plain `strtoupper()` is the correct case fold.
+     */
+    private static function normalizeKey(string $key): string
+    {
+        return self::isCaseInsensitiveEnv() ? strtoupper($key) : $key;
+    }
+
+    /**
+     * Canonicalise every key in a variable map for the host platform, so that
+     * storage and {@see get()}/{@see has()}/{@see require()} agree on casing.
+     *
+     * @param array<string, string> $vars
+     *
+     * @return array<string, string>
+     */
+    private static function normalizeKeys(array $vars): array
+    {
+        if (!self::isCaseInsensitiveEnv()) {
+            return $vars;
+        }
+
+        $normalized = [];
+
+        foreach ($vars as $key => $value) {
+            $normalized[strtoupper($key)] = $value;
+        }
+
+        return $normalized;
     }
 
     /**

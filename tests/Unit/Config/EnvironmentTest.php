@@ -11,6 +11,8 @@ use Pulsar\Config\Environment;
 use Pulsar\Config\EnvironmentMode;
 use Pulsar\Config\Exception\ConfigException;
 
+use const PHP_OS_FAMILY;
+
 #[CoversClass(Environment::class)]
 final class EnvironmentTest extends TestCase
 {
@@ -261,5 +263,33 @@ final class EnvironmentTest extends TestCase
         $env = Environment::loadFiltered();
 
         self::assertNotNull($env->get('PATH'));
+    }
+
+    #[Test]
+    public function lookupHonoursPlatformEnvNameCasing(): void
+    {
+        // Regression: Windows reports env names in the OS's own casing (e.g.
+        // "Path"), so loadFiltered() must match its POSIX-cased allowlist and
+        // resolve get() case-insensitively there; on POSIX names stay distinct.
+        putenv('PULSAR_CASE_PROBE=on');
+
+        try {
+            $env = Environment::loadFiltered();
+
+            self::assertSame('on', $env->get('PULSAR_CASE_PROBE'));
+
+            if (PHP_OS_FAMILY === 'Windows') {
+                // A differently-cased lookup resolves, and the case-insensitive
+                // literal allowlist keeps the OS-cased "Path" reachable as PATH.
+                self::assertSame('on', $env->get('pulsar_case_probe'));
+                self::assertNotNull($env->get('PATH'));
+                self::assertNotNull($env->get('Path'));
+            } else {
+                // POSIX: a differently-cased lookup misses (PATH !== path).
+                self::assertNull($env->get('pulsar_case_probe'));
+            }
+        } finally {
+            putenv('PULSAR_CASE_PROBE');
+        }
     }
 }
