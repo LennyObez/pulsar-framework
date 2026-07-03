@@ -89,6 +89,56 @@ final class UploadedFileTest extends TestCase
     }
 
     #[Test]
+    public function getStreamRejectsSapiUploadWithNonGenuinePath(): void
+    {
+        // FR-43: an upload received from the SAPI ($_FILES) whose backing path is
+        // not a genuine PHP upload — a forged tmp_name attempting path traversal
+        // or arbitrary-file read — must be refused. is_uploaded_file() is false
+        // for any path outside a real HTTP upload (including this temp file in a
+        // CLI test), so the guard fires; a programmatic upload (sapiUpload=false)
+        // is exempt, as getStreamFromFilePath above shows.
+        $tmpFile = tempnam(sys_get_temp_dir(), 'pulsar_upload_');
+        self::assertNotFalse($tmpFile);
+        file_put_contents($tmpFile, 'sensitive data');
+
+        try {
+            $uploaded = new UploadedFile($tmpFile, 14, UPLOAD_ERR_OK, sapiUpload: true);
+
+            $this->expectException(RuntimeException::class);
+            $this->expectExceptionMessage('not a file uploaded via HTTP POST');
+
+            (void) $uploaded->getStream();
+        } finally {
+            @unlink($tmpFile);
+        }
+    }
+
+    #[Test]
+    public function moveToRejectsSapiUploadWithNonGenuinePath(): void
+    {
+        // FR-43: the same guard protects moveTo(), which for a genuine upload
+        // uses move_uploaded_file(); a forged SAPI path is refused outright.
+        $tmpFile = tempnam(sys_get_temp_dir(), 'pulsar_upload_');
+        self::assertNotFalse($tmpFile);
+        file_put_contents($tmpFile, 'sensitive data');
+
+        $target = tempnam(sys_get_temp_dir(), 'pulsar_target_');
+        self::assertNotFalse($target);
+
+        try {
+            $uploaded = new UploadedFile($tmpFile, 14, UPLOAD_ERR_OK, sapiUpload: true);
+
+            $this->expectException(RuntimeException::class);
+            $this->expectExceptionMessage('not a file uploaded via HTTP POST');
+
+            $uploaded->moveTo($target);
+        } finally {
+            @unlink($tmpFile);
+            @unlink($target);
+        }
+    }
+
+    #[Test]
     public function getStreamThrowsWhenMoved(): void
     {
         $tmpFile = tempnam(sys_get_temp_dir(), 'pulsar_upload_');

@@ -199,12 +199,7 @@ final class ServerRequest implements ServerRequestInterface
         $port = null;
 
         if (isset($serverData['HTTP_HOST']) && is_string($serverData['HTTP_HOST'])) {
-            $hostParts = explode(':', $serverData['HTTP_HOST']);
-            $host = $hostParts[0];
-
-            if (isset($hostParts[1])) {
-                $port = (int) $hostParts[1];
-            }
+            [$host, $port] = self::splitHostPort($serverData['HTTP_HOST']);
         } elseif (isset($serverData['SERVER_NAME']) && is_string($serverData['SERVER_NAME'])) {
             $host = $serverData['SERVER_NAME'];
         }
@@ -261,6 +256,44 @@ final class ServerRequest implements ServerRequestInterface
             uploadedFiles: $uploadedFiles,
             parsedBody: !empty($postData) ? $postData : null,
         );
+    }
+
+    /**
+     * Split a Host authority into host and optional port, correctly handling
+     * RFC 3986 bracketed IPv6 literals such as "[::1]:8080". A naive
+     * explode(":") splits on every colon, mangling the IPv6 address into "[" and
+     * casting an empty fragment to port 0.
+     *
+     * @return array{0: string, 1: int|null}
+     */
+    private static function splitHostPort(string $authority): array
+    {
+        // IPv6 literal: "[addr]" optionally followed by ":port".
+        if ($authority !== '' && $authority[0] === '[') {
+            $closing = strpos($authority, ']');
+
+            if ($closing === false) {
+                return [$authority, null];
+            }
+
+            $host = substr($authority, 0, $closing + 1);
+            $rest = substr($authority, $closing + 1);
+            $port = $rest !== '' && $rest[0] === ':' ? substr($rest, 1) : '';
+
+            return [$host, $port === '' ? null : (int) $port];
+        }
+
+        $colon = strpos($authority, ':');
+
+        // No colon, or a bare (unbracketed) IPv6 address — multiple colons and
+        // therefore no port to take per RFC 3986: leave the authority intact.
+        if ($colon === false || strpos($authority, ':', $colon + 1) !== false) {
+            return [$authority, null];
+        }
+
+        $port = substr($authority, $colon + 1);
+
+        return [substr($authority, 0, $colon), $port === '' ? null : (int) $port];
     }
 
     // ── PSR-7 MessageInterface ──────────────────────────────────────────
@@ -1070,6 +1103,7 @@ final class ServerRequest implements ServerRequestInterface
                     error: $errors[$idx] ?? UPLOAD_ERR_NO_FILE,
                     clientFilename: $names[$idx] ?? null,
                     clientMediaType: $types[$idx] ?? null,
+                    sapiUpload: true,
                 );
             }
 
@@ -1089,6 +1123,7 @@ final class ServerRequest implements ServerRequestInterface
             error: (int) $error,
             clientFilename: isset($value['name']) && is_string($value['name']) ? $value['name'] : null,
             clientMediaType: isset($value['type']) && is_string($value['type']) ? $value['type'] : null,
+            sapiUpload: true,
         );
     }
 }

@@ -47,4 +47,32 @@ final class ResponseEmitterTest extends TestCase
         self::assertSame('max-age=31536000; includeSubDomains', $method->invoke($emitter, 'max-age=31536000; includeSubDomains'));
         self::assertSame('', $method->invoke($emitter, ''));
     }
+
+    #[Test]
+    public function chunkFrameUsesHexLengthAndCrlfFraming(): void
+    {
+        // FR-3: a StreamedResponse must be emitted with HTTP/1.1 chunked framing —
+        // each chunk is its byte length in hex, CRLF, the data, CRLF — rather than
+        // materialized and echoed as one buffer.
+        $emitter = new ResponseEmitter();
+        $method = new ReflectionMethod($emitter, 'chunkFrame');
+
+        self::assertSame("5\r\nhello\r\n", $method->invoke($emitter, 'hello'));
+        // 16 bytes => hex length "10".
+        self::assertSame("10\r\n0123456789abcdef\r\n", $method->invoke($emitter, '0123456789abcdef'));
+    }
+
+    #[Test]
+    public function shouldEmitBodyIsFalseForHeadRequests(): void
+    {
+        // FR-36: a HEAD response carries the same headers as the equivalent GET
+        // but no body. The emitter must know the request method to suppress it.
+        $emitter = new ResponseEmitter();
+        $method = new ReflectionMethod($emitter, 'shouldEmitBody');
+
+        self::assertFalse($method->invoke($emitter, 'HEAD'));
+        self::assertFalse($method->invoke($emitter, 'head'));
+        self::assertTrue($method->invoke($emitter, 'GET'));
+        self::assertTrue($method->invoke($emitter, null));
+    }
 }
