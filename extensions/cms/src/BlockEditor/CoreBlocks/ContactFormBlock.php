@@ -89,7 +89,14 @@ final readonly class ContactFormBlock implements BlockTypeInterface
         // work). Renders the hidden token field + same-origin widget when the
         // 'managed' captcha provider is configured; otherwise emits nothing and
         // the form degrades to the remaining honeypot/timing/content checks.
-        $html .= $this->challengeRenderer?->render() ?? '';
+        // The widget's <script> is same-origin (CSP `script-src 'self'` clean),
+        // but the request CSP nonce is stamped when the renderer supplies one via
+        // the `_csp_nonce` render-context key, so the form also works under a
+        // strict nonce-based policy (parity with the @shield directive).
+        /** @var mixed $rawNonce */
+        $rawNonce = $data['_csp_nonce'] ?? null;
+        $cspNonce = is_string($rawNonce) && $rawNonce !== '' ? $rawNonce : null;
+        $html .= $this->challengeRenderer?->render($cspNonce) ?? '';
 
         foreach ($fields as $field) {
             if (!is_array($field)) {

@@ -274,6 +274,12 @@ final readonly class ContentController
                 $baseUrl .= ':' . $port;
             }
 
+            // Expose the request CSP nonce (set by a strict nonce-based CSP policy,
+            // if any) so script-emitting blocks like the contact-form managed-
+            // challenge widget can stamp it; null when no nonce policy is active.
+            /** @var mixed $cspNonce */
+            $cspNonce = $request->getAttribute('csp_nonce');
+            $responseData['_csp_nonce'] = is_string($cspNonce) ? $cspNonce : null;
             $responseBody = $this->renderHtml($responseData, $template, $content, $translation, $baseUrl);
             $response = Response::html($responseBody);
         }
@@ -593,7 +599,12 @@ final readonly class ContentController
         $blockList = $data['blocks'] ?? [];
 
         if ($this->blockRenderer !== null && $blockList !== []) {
-            $renderedBlocks = $this->blockRenderer->renderRawBlocks($blockList);
+            /** @var mixed $cspNonce */
+            $cspNonce = $data['_csp_nonce'] ?? null;
+            $renderedBlocks = $this->blockRenderer->renderRawBlocks(
+                $blockList,
+                is_string($cspNonce) ? $cspNonce : null,
+            );
         }
 
         // Load navigation menu items for the layout
