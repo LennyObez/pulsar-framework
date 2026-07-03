@@ -28,8 +28,6 @@ final class AntiSpamConfigTest extends TestCase
         self::assertSame(10, $config->minContentLength);
         self::assertSame(0.8, $config->maxUppercaseRatio);
         self::assertSame(0.5, $config->maxRepeatedCharRatio);
-        self::assertFalse($config->proofOfWorkEnabled);
-        self::assertSame('0000', $config->proofOfWorkPrefix);
         self::assertFalse($config->captchaEnabled);
         self::assertSame('hcaptcha', $config->captchaProvider);
         self::assertFalse($config->accountAgeGateEnabled);
@@ -109,8 +107,6 @@ final class AntiSpamConfigTest extends TestCase
             'honeypot_field_name' => 'fax',
             'max_link_density' => 0.5,
             'min_content_length' => 20,
-            'proof_of_work_enabled' => true,
-            'proof_of_work_prefix' => '000000',
             'captcha_enabled' => true,
             'captcha_provider' => 'turnstile',
             'captcha_site_key' => 'site123',
@@ -125,8 +121,6 @@ final class AntiSpamConfigTest extends TestCase
         self::assertSame('fax', $config->honeypotFieldName);
         self::assertSame(0.5, $config->maxLinkDensity);
         self::assertSame(20, $config->minContentLength);
-        self::assertTrue($config->proofOfWorkEnabled);
-        self::assertSame('000000', $config->proofOfWorkPrefix);
         self::assertTrue($config->captchaEnabled);
         self::assertSame('turnstile', $config->captchaProvider);
         self::assertSame('site123', $config->captchaSiteKey);

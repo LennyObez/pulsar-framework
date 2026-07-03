@@ -67,10 +67,6 @@ final readonly class ForumAntiAbuseMiddleware implements MiddlewareInterface
         /** @var list<string> $recentBodies */
         $recentBodies = $request->getAttribute('recent_post_bodies') ?? [];
 
-        /** @var mixed $rawPowChallenge */
-        $rawPowChallenge = $parsedBody['_pow_challenge'] ?? null;
-        /** @var mixed $rawPowNonce */
-        $rawPowNonce = $parsedBody['_pow_nonce'] ?? null;
         /** @var mixed $rawCaptchaToken */
         $rawCaptchaToken = $parsedBody['_captcha_token'] ?? null;
 
@@ -82,8 +78,6 @@ final readonly class ForumAntiAbuseMiddleware implements MiddlewareInterface
             reputationTier: is_string($reputationTier) ? $reputationTier : 'new',
             recentBodies: $recentBodies,
             formFields: $parsedBody,
-            powChallenge: is_string($rawPowChallenge) ? $rawPowChallenge : null,
-            powNonce: is_string($rawPowNonce) ? $rawPowNonce : null,
             captchaToken: is_string($rawCaptchaToken) ? $rawCaptchaToken : null,
             submissionTimestamp: time(),
             ip: $this->resolveIp($request),

@@ -13,15 +13,23 @@ use Pulsar\Extension\Cms\Forms\SpamDetection\SpamResult;
 use Pulsar\Extension\Cms\Forms\SpamDetection\SpamScorer;
 use Pulsar\Extension\Cms\Internal\Forms\ContentHeuristicScorer;
 use Pulsar\Extension\Cms\Internal\Forms\HoneypotDetector;
-use Pulsar\Extension\Cms\Internal\Forms\ProofOfWorkVerifier;
+use Pulsar\Extension\Cms\Internal\Forms\ManagedChallengeDetector;
 use Pulsar\Extension\Cms\Internal\Forms\RateLimitDetector;
 use Pulsar\Extension\Cms\Internal\Forms\TimingDetector;
+use Pulsar\Security\AntiSpam\CaptchaVerifierInterface;
+use Pulsar\Security\AntiSpam\ManagedChallenge\ManagedChallengeService;
+use Pulsar\Security\AntiSpam\ManagedChallenge\ManagedChallengeVerifier;
+use Pulsar\Tests\Benchmark\Cms\Support\InMemoryTaggedCache;
+
+use function hash;
+use function ord;
+use function strlen;
 
 #[CoversClass(SpamResult::class)]
 #[CoversClass(SpamScorer::class)]
 #[CoversClass(ContentHeuristicScorer::class)]
 #[CoversClass(HoneypotDetector::class)]
-#[CoversClass(ProofOfWorkVerifier::class)]
+#[CoversClass(ManagedChallengeDetector::class)]
 #[CoversClass(RateLimitDetector::class)]
 #[CoversClass(TimingDetector::class)]
 final class SpamDetectionTest extends TestCase
@@ -260,61 +268,113 @@ final class SpamDetectionTest extends TestCase
         self::assertFalse($result->isSpam);
     }
 
-    // --- ProofOfWorkVerifier ---
+    // --- ManagedChallengeDetector ---
 
     #[Test]
-    public function powVerifierAcceptsValidNonce(): void
+    public function managedChallengeDetectorPassesWhenVerifierAcceptsToken(): void
     {
-        $verifier = new ProofOfWorkVerifier(prefix: '0');
-        $challenge = 'test-challenge';
+        $verifier = $this->createStub(CaptchaVerifierInterface::class);
+        $verifier->method('verify')->willReturn(true);
+        $detector = new ManagedChallengeDetector($verifier);
 
-        // Find a valid nonce
-        $nonce = $this->findValidNonce($challenge, '0');
-
-        $result = $verifier->detect(
-            ['_pow_nonce' => $nonce],
-            ['_pow_challenge' => $challenge],
-        );
+        $result = $detector->detect([], ['captcha_token' => 'signed.solution']);
 
         self::assertFalse($result->isSpam);
         self::assertSame(0.0, $result->score);
     }
 
     #[Test]
-    public function powVerifierRejectsInvalidNonce(): void
+    public function managedChallengeDetectorFlagsWhenVerifierRejectsToken(): void
     {
-        $verifier = new ProofOfWorkVerifier(prefix: '000000000');
+        $verifier = $this->createStub(CaptchaVerifierInterface::class);
+        $verifier->method('verify')->willReturn(false);
+        $detector = new ManagedChallengeDetector($verifier);
 
-        $result = $verifier->detect(
-            ['_pow_nonce' => 'wrong'],
-            ['_pow_challenge' => 'challenge'],
-        );
+        $result = $detector->detect([], ['captcha_token' => 'forged.solution']);
 
         self::assertTrue($result->isSpam);
         self::assertSame(9.0, $result->score);
-        self::assertSame('Invalid proof-of-work nonce', $result->reason);
+        self::assertSame('Managed-challenge verification failed', $result->reason);
     }
 
     #[Test]
-    public function powVerifierRejectsMissingNonce(): void
+    public function managedChallengeDetectorFlagsMissingToken(): void
     {
-        $verifier = new ProofOfWorkVerifier();
+        $verifier = $this->createStub(CaptchaVerifierInterface::class);
+        $verifier->method('verify')->willReturn(true);
+        $detector = new ManagedChallengeDetector($verifier);
 
-        $result = $verifier->detect([], ['_pow_challenge' => 'challenge']);
+        $result = $detector->detect([], []);
 
         self::assertTrue($result->isSpam);
-        self::assertSame(9.0, $result->score);
         self::assertStringContainsString('Missing', (string) $result->reason);
     }
 
     #[Test]
-    public function powVerifierRejectsMissingChallenge(): void
+    public function managedChallengeDetectorReadsTokenFromDataField(): void
     {
-        $verifier = new ProofOfWorkVerifier();
+        $verifier = $this->createStub(CaptchaVerifierInterface::class);
+        $verifier->method('verify')->willReturn(true);
+        $detector = new ManagedChallengeDetector($verifier);
 
-        $result = $verifier->detect(['_pow_nonce' => '123'], []);
+        // No meta token: the detector falls back to the raw widget field in $data.
+        $result = $detector->detect(['pulsar-challenge-response' => 'signed.solution'], []);
 
-        self::assertTrue($result->isSpam);
+        self::assertFalse($result->isSpam);
+    }
+
+    #[Test]
+    public function managedChallengeDetectorRejectsReplayEndToEnd(): void
+    {
+        // End-to-end through the real signing engine: a solved token is accepted
+        // once, then rejected on replay. This is the property the retired bespoke
+        // proof of work lacked — any valid (challenge, nonce) pair was replayable
+        // forever, with no signature, expiry, or single-use tracking.
+        $service = new ManagedChallengeService('0123456789abcdef0123456789abcdef', 4, 300, new InMemoryTaggedCache());
+        $detector = new ManagedChallengeDetector(new ManagedChallengeVerifier($service));
+
+        $challenge = $service->mint();
+        $submitted = $service->sign($challenge) . '.' . $this->solvePow($challenge->id, $challenge->bits);
+
+        self::assertFalse(
+            $detector->detect([], ['captcha_token' => $submitted])->isSpam,
+            'a freshly solved managed-challenge token must pass',
+        );
+        self::assertTrue(
+            $detector->detect([], ['captcha_token' => $submitted])->isSpam,
+            'replaying the same solved token must be rejected (single-use)',
+        );
+    }
+
+    /** Brute-force a solution meeting the difficulty (mirrors the browser worker). */
+    private function solvePow(string $id, int $bits): string
+    {
+        for ($i = 0; $i < 1_000_000; $i++) {
+            $digest = hash('sha256', $id . '.' . $i, true);
+            $count = 0;
+
+            for ($b = 0, $len = strlen($digest); $b < $len; $b++) {
+                $byte = ord($digest[$b]);
+
+                if ($byte === 0) {
+                    $count += 8;
+
+                    continue;
+                }
+
+                for ($mask = 0x80; $mask > 0; $mask >>= 1, $count++) {
+                    if (($byte & $mask) !== 0) {
+                        break 2;
+                    }
+                }
+            }
+
+            if ($count >= $bits) {
+                return (string) $i;
+            }
+        }
+
+        self::fail('No proof-of-work solution found within bound');
     }
 
     // --- TimingDetector ---
@@ -419,19 +479,5 @@ final class SpamDetectionTest extends TestCase
         $result = $detector->detect([], ['ip' => '10.0.0.1']);
 
         self::assertFalse($result->isSpam);
-    }
-
-    private function findValidNonce(string $challenge, string $prefix): string
-    {
-        for ($i = 0; $i < 100000; $i++) {
-            $nonce = (string) $i;
-            $hash = hash('sha256', $challenge . $nonce);
-
-            if (str_starts_with($hash, $prefix)) {
-                return $nonce;
-            }
-        }
-
-        self::fail('Could not find valid nonce within iterations');
     }
 }

@@ -28,12 +28,11 @@ interface FormSubmissionServiceInterface
      *     content_id?: string,
      *     tenant_id?: string|null,
      *     _hp_field?: string,
-     *     _pow_nonce?: string,
-     *     _pow_challenge?: string,
+     *     captcha_token?: string,
      *     _form_rendered_at?: mixed,
      * } $meta Request metadata: identity (IP, user agent, CSRF token) plus the
-     *         anti-spam signals (honeypot, proof-of-work, render timestamp) the
-     *         spam detectors consume.
+     *         anti-spam signals (honeypot, managed-challenge token, render
+     *         timestamp) the spam detectors consume.
      */
     public function submit(array $formData, array $meta): FormSubmission;
 

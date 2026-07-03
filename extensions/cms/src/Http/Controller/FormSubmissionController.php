@@ -7,6 +7,7 @@ namespace Pulsar\Extension\Cms\Http\Controller;
 use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Cms\Forms\FormSubmissionServiceInterface;
+use Pulsar\Extension\Cms\Internal\Forms\ManagedChallengeDetector;
 use Pulsar\Http\Message\Response;
 use RuntimeException;
 
@@ -45,10 +46,8 @@ final readonly class FormSubmissionController
         $rawCsrf = $body['_csrf_token'] ?? null;
         /** @var mixed $rawHp */
         $rawHp = $body['_hp_field'] ?? null;
-        /** @var mixed $rawPowNonce */
-        $rawPowNonce = $body['_pow_nonce'] ?? null;
-        /** @var mixed $rawPowChallenge */
-        $rawPowChallenge = $body['_pow_challenge'] ?? null;
+        /** @var mixed $rawCaptchaToken */
+        $rawCaptchaToken = $body[ManagedChallengeDetector::DEFAULT_FIELD] ?? null;
         /** @var mixed $rawFormRenderedAt */
         $rawFormRenderedAt = $body['_form_rendered_at'] ?? null;
         /** @var mixed $rawFormBlockId */
@@ -60,8 +59,7 @@ final readonly class FormSubmissionController
         $meta = [
             '_csrf_token' => is_string($rawCsrf) ? $rawCsrf : '',
             '_hp_field' => is_string($rawHp) ? $rawHp : '',
-            '_pow_nonce' => is_string($rawPowNonce) ? $rawPowNonce : '',
-            '_pow_challenge' => is_string($rawPowChallenge) ? $rawPowChallenge : '',
+            'captcha_token' => is_string($rawCaptchaToken) ? $rawCaptchaToken : '',
             '_form_rendered_at' => $rawFormRenderedAt,
             'ip' => self::extractIp($request),
             'user_agent' => $request->getHeaderLine('User-Agent'),
@@ -76,7 +74,9 @@ final readonly class FormSubmissionController
 
         /** @var mixed $value */
         foreach ($body as $key => $value) {
-            if (str_starts_with($key, '_')) {
+            // Drop internal (_-prefixed) fields and the managed-challenge token
+            // (already lifted into $meta) so neither is persisted as user data.
+            if (str_starts_with($key, '_') || $key === ManagedChallengeDetector::DEFAULT_FIELD) {
                 continue;
             }
 

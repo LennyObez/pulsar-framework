@@ -58,7 +58,7 @@ use Pulsar\Extension\Cms\Internal\Docs\DocVersionService;
 use Pulsar\Extension\Cms\Internal\Forms\ContentHeuristicScorer;
 use Pulsar\Extension\Cms\Internal\Forms\FormSubmissionService;
 use Pulsar\Extension\Cms\Internal\Forms\HoneypotDetector;
-use Pulsar\Extension\Cms\Internal\Forms\ProofOfWorkVerifier;
+use Pulsar\Extension\Cms\Internal\Forms\ManagedChallengeDetector;
 use Pulsar\Extension\Cms\Internal\Forms\RateLimitDetector;
 use Pulsar\Extension\Cms\Internal\Forms\TimingDetector;
 use Pulsar\Extension\Cms\Internal\Http\AiRequestParser;
@@ -148,6 +148,7 @@ use Pulsar\Mail\MailManager;
 use Pulsar\Mail\MailManagerInterface;
 use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Queue\QueueDriverInterface;
+use Pulsar\Security\AntiSpam\CaptchaVerifierInterface;
 use Pulsar\Security\Crypto\HmacInterface;
 use Pulsar\Security\Crypto\MasterKey;
 use Pulsar\Security\Csrf\CsrfTokenManagerInterface;
@@ -1025,7 +1026,16 @@ final readonly class CmsCoreServiceProvider
         $spamScorer->addDetector(new HoneypotDetector($formsConfig->honeypotFieldName));
         $spamScorer->addDetector(new TimingDetector());
         $spamScorer->addDetector(new ContentHeuristicScorer());
-        $spamScorer->addDetector(new ProofOfWorkVerifier());
+
+        // Managed challenge (signed, single-use, TTL-bound proof of work). Added
+        // only when the 'managed' captcha provider is configured and the core
+        // anti-spam wiring exposed the verifier; otherwise the form relies on the
+        // remaining honeypot/timing/content/rate-limit detectors.
+        if ($container->has(CaptchaVerifierInterface::class)) {
+            /** @var CaptchaVerifierInterface $captchaVerifier */
+            $captchaVerifier = $container->get(CaptchaVerifierInterface::class);
+            $spamScorer->addDetector(new ManagedChallengeDetector($captchaVerifier));
+        }
 
         // Rate limiter (needs cache)
         if ($container->has(CacheManagerInterface::class)) {

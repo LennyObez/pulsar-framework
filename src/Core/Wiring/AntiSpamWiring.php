@@ -29,6 +29,7 @@ use Pulsar\Security\AntiSpam\Behavior\BehaviorFeatureSink;
 use Pulsar\Security\AntiSpam\Behavior\BehaviorScorerInterface;
 use Pulsar\Security\AntiSpam\Behavior\HeuristicScorer;
 use Pulsar\Security\AntiSpam\Behavior\NullBehaviorFeatureSink;
+use Pulsar\Security\AntiSpam\CaptchaVerifierInterface;
 use Pulsar\Security\AntiSpam\ContentQualityGate;
 use Pulsar\Security\AntiSpam\DuplicateDetector;
 use Pulsar\Security\AntiSpam\HCaptchaVerifier;
@@ -39,7 +40,6 @@ use Pulsar\Security\AntiSpam\ManagedChallenge\ManagedChallengeRefreshController;
 use Pulsar\Security\AntiSpam\ManagedChallenge\ManagedChallengeRenderer;
 use Pulsar\Security\AntiSpam\ManagedChallenge\ManagedChallengeService;
 use Pulsar\Security\AntiSpam\ManagedChallenge\ManagedChallengeVerifier;
-use Pulsar\Security\AntiSpam\ProofOfWorkVerifier;
 use Pulsar\Security\AntiSpam\ReputationCooldown;
 use Pulsar\Security\AntiSpam\TimeTrap\TimeTrapCheck;
 use Pulsar\Security\AntiSpam\TimeTrap\TimeTrapRenderer;
@@ -141,24 +141,19 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
             );
         }
 
-        // 5. Proof of work verifier
-        if ($config->proofOfWorkEnabled) {
-            $checks[] = new ProofOfWorkVerifier($config->proofOfWorkPrefix);
-        }
-
-        // 6. Account age gate
+        // 5. Account age gate
         if ($config->accountAgeGateEnabled) {
             $checks[] = new AccountAgeGate($config->minAccountAgeSeconds);
         }
 
-        // 7. Reputation cooldown (requires cache)
+        // 6. Reputation cooldown (requires cache)
         if ($config->reputationCooldownEnabled && $container->has(TaggedCacheInterface::class)) {
             /** @var TaggedCacheInterface $cache */
             $cache = $container->get(TaggedCacheInterface::class);
             $checks[] = new ReputationCooldown($cache, $config->cooldownTiers);
         }
 
-        // 8. CAPTCHA verifier
+        // 7. CAPTCHA verifier
         if ($config->captchaEnabled) {
             if ($config->captchaProvider === 'managed') {
                 // Self-hosted managed challenge: no keys, no external service.
@@ -192,7 +187,7 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
             }
         }
 
-        // 9. Time-trap (no-JS form-fill-timing). Opt-in; requires the master key.
+        // 8. Time-trap (no-JS form-fill-timing). Opt-in; requires the master key.
         if ($config->timeTrapEnabled) {
             $timeTrapCheck = $this->wireTimeTrap($container, $config, $logger);
 
@@ -201,7 +196,7 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
             }
         }
 
-        // 10. Behavioural signals (score-only, self-hosted). Opt-in.
+        // 9. Behavioural signals (score-only, self-hosted). Opt-in.
         if ($config->behaviorEnabled) {
             $checks[] = $this->wireBehavioralSignals($container, $config, $router);
         }
@@ -298,7 +293,14 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
         $container->instance(ManagedChallengeRenderer::class, $renderer);
         ManagedChallengeRenderer::setGlobalInstance($renderer);
 
-        return new ManagedChallengeVerifier($service);
+        $verifier = new ManagedChallengeVerifier($service);
+
+        // Expose the verifier on the #[Api] CaptchaVerifierInterface so extensions
+        // (e.g. the CMS contact-form spam detector) can validate a solved managed
+        // challenge without importing the module-private ManagedChallenge internals.
+        $container->instance(CaptchaVerifierInterface::class, $verifier);
+
+        return $verifier;
     }
 
     /**

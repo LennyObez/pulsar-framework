@@ -38837,8 +38837,6 @@
                         "int $minContentLength",
                         "float $maxUppercaseRatio",
                         "float $maxRepeatedCharRatio",
-                        "bool $proofOfWorkEnabled",
-                        "string $proofOfWorkPrefix",
                         "bool $captchaEnabled",
                         "string $captchaProvider",
                         "string $captchaSiteKey",
@@ -38885,8 +38883,6 @@
                         "string $reputationTier",
                         "array $recentBodies",
                         "array $formFields",
-                        "?string $powChallenge",
-                        "?string $powNonce",
                         "?string $captchaToken",
                         "int $submissionTimestamp",
                         "string $formId",
@@ -39134,12 +39130,6 @@
                     "static": true
                 }
             },
-            "constants": []
-        },
-        "Pulsar\\Security\\AntiSpam\\ProofOfWorkVerifierInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "signatures": [],
             "constants": []
         },
         "Pulsar\\Security\\AntiSpam\\ReputationCooldownInterface": {
@@ -55594,7 +55584,6 @@
         "Pulsar\\Security\\AntiSpam\\ManagedChallenge\\ManagedChallengeRefreshController",
         "Pulsar\\Security\\AntiSpam\\ManagedChallenge\\ManagedChallengeService",
         "Pulsar\\Security\\AntiSpam\\ManagedChallenge\\ManagedChallengeVerifier",
-        "Pulsar\\Security\\AntiSpam\\ProofOfWorkVerifier",
         "Pulsar\\Security\\AntiSpam\\ReputationCooldown",
         "Pulsar\\Security\\AntiSpam\\TimeTrap\\TimeTrapCheck",
         "Pulsar\\Security\\AntiSpam\\TimeTrap\\TimeTrapService",
