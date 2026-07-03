@@ -40,9 +40,14 @@ final class TimeTrapServiceTest extends TestCase
         $service = new TimeTrapService(self::KEY);
         $token = $service->issue('contact');
 
-        // Flip the final character (part of the MAC) to corrupt the signature.
-        $lastChar = substr($token, -1) === 'A' ? 'B' : 'A';
-        $tampered = substr($token, 0, -1) . $lastChar;
+        // Corrupt a character in the MIDDLE of the token, a fully-significant
+        // base64url position. Flipping the FINAL character is unreliable: for
+        // many blob lengths its low bits are base64 padding, so the flip can
+        // decode to identical bytes and leave the MAC intact — an intermittent
+        // false pass that depended on the time-varying signature's last char.
+        $pos = intdiv(strlen($token), 2);
+        $replacement = $token[$pos] === 'A' ? 'B' : 'A';
+        $tampered = substr($token, 0, $pos) . $replacement . substr($token, $pos + 1);
 
         self::assertNull($service->parse($tampered));
     }
