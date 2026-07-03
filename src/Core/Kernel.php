@@ -250,7 +250,10 @@ final class Kernel implements KernelInterface
 
         $cacheLoadUs = (int) ((hrtime(true) - $cacheStart) / 1000);
 
-        // Build artifact verification (production mode)
+        // Build artifact verification (production mode). The verifier bootstraps
+        // the crypto it needs to authenticate a signed manifest from the master
+        // key itself, so it does not depend on SecurityWiring (wired below) and a
+        // signed manifest is verified fail-closed wherever this runs.
         BuildArtifactVerifier::verify($this->container, $this->configManager);
 
         // Register shared Randomizer (CSPRNG) singleton
