@@ -39101,7 +39101,8 @@
                         "string $scriptUrl",
                         "string $workerUrl",
                         "string $refreshUrl",
-                        "int $ttlSeconds"
+                        "int $ttlSeconds",
+                        "?Pulsar\\I18n\\TranslatorInterface $translator"
                     ],
                     "return": null,
                     "static": false

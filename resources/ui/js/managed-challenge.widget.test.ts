@@ -131,4 +131,31 @@ describe('managed-challenge widget silent refresh', () => {
 
     expect(fetch).not.toHaveBeenCalled();
   });
+
+  it('announces the localized status from data-pmc-msg-* attributes', async () => {
+    document.body.innerHTML =
+      '<form>' +
+      '<div class="pulsar-managed-challenge" data-pmc-challenge="CH0" data-pmc-id="id0" data-pmc-bits="4"' +
+      ' data-pmc-worker="/w.js" data-pmc-refresh="" data-pmc-ttl="0"' +
+      ' data-pmc-msg-solving="Vérification en cours…" data-pmc-msg-solved="Vérification terminée."' +
+      ' data-pmc-msg-error="Échec de la vérification." role="status" aria-live="polite">' +
+      '<input type="hidden" name="pulsar-challenge-response" value="">' +
+      '</div></form>';
+    await loadWidget();
+
+    // The synchronous FakeWorker drives the widget to the solved state on load,
+    // so the live region announces the localized "solved" message.
+    const status = document.querySelector('.pulsar-managed-challenge-status');
+    expect(status).not.toBeNull();
+    expect(status!.textContent).toBe('Vérification terminée.');
+  });
+
+  it('falls back to the English status when no data-pmc-msg-* attributes are present', async () => {
+    document.body.innerHTML = widgetHtml('', 0);
+    await loadWidget();
+
+    const status = document.querySelector('.pulsar-managed-challenge-status');
+    expect(status).not.toBeNull();
+    expect(status!.textContent).toBe('Security check complete.');
+  });
 });
