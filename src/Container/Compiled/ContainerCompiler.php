@@ -286,8 +286,15 @@ final class ContainerCompiler
 
             $typeName = $type->getName();
 
-            // Map to a service ID: check definitions first, then use the type name directly
+            // A bound service id is resolved directly; an unbound but instantiable
+            // concrete is recorded by class name so the compiled factory's get()
+            // autowires it at runtime, exactly as the dynamic container does.
+            // Either way the parameter keeps its position — dropping an unbound
+            // concrete shifted later arguments, raising ArgumentCountError or
+            // passing a value to the wrong parameter.
             if (isset($definitions[$typeName])) {
+                $deps[] = $typeName;
+            } elseif (class_exists($typeName) && new ReflectionClass($typeName)->isInstantiable()) {
                 $deps[] = $typeName;
             }
         }

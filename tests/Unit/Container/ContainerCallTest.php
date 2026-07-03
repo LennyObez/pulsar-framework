@@ -92,16 +92,18 @@ final class ContainerCallTest extends TestCase
     }
 
     #[Test]
-    public function callResolvesNullableToNullWhenNotInContainer(): void
+    public function callResolvesNullableToNullWhenNotResolvable(): void
     {
+        // A nullable parameter whose type cannot be autowired (an unbound
+        // interface) resolves to null. An instantiable concrete is autowired
+        // instead — see callAutowiresUnboundConcreteParameter — matching
+        // constructor injection, where get() succeeds for instantiable concretes
+        // and the nullable fallback only fires on NotFoundException.
         $container = new Container();
 
-        $result = $container->call(function (?stdClass $obj): string {
-            /** @var mixed $value */
-            $value = $obj?->value;
-
-            return is_string($value) ? $value : 'null-received';
-        });
+        $result = $container->call(
+            static fn(?CallUnresolvableInterface $obj): string => $obj === null ? 'null-received' : 'got-object',
+        );
 
         self::assertSame('null-received', $result);
     }
@@ -166,4 +168,40 @@ final class ContainerCallTest extends TestCase
 
         self::assertSame('item:99', $result);
     }
+
+    #[Test]
+    public function callAutowiresUnboundConcreteParameter(): void
+    {
+        // FR-35: a callable parameter typed to an unbound but instantiable
+        // concrete must be autowired — matching constructor injection via
+        // buildFromReflection — instead of falling through to the "cannot
+        // resolve" error because has() reports false for an unbound concrete.
+        $container = new Container();
+
+        $result = $container->call(
+            static fn(CallAutowireFixture $dep): string => $dep->marker(),
+        );
+
+        self::assertSame('autowired', $result);
+    }
 }
+
+/**
+ * Unbound, instantiable concrete used to verify call() autowiring.
+ *
+ * @internal
+ */
+final class CallAutowireFixture
+{
+    public function marker(): string
+    {
+        return 'autowired';
+    }
+}
+
+/**
+ * Unbound, non-instantiable type the container cannot autowire.
+ *
+ * @internal
+ */
+interface CallUnresolvableInterface {}
