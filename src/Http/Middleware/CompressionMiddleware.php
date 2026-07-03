@@ -9,18 +9,18 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Api\Api;
+use Pulsar\Http\ContentNegotiation;
 
 use function array_map;
 use function explode;
-use function extension_loaded;
 use function function_exists;
+use function gzcompress;
 use function gzencode;
 use function in_array;
 use function is_string;
 use function str_contains;
 use function strlen;
 use function strtolower;
-use function trim;
 
 /**
  * HTTP response compression middleware.
@@ -84,9 +84,8 @@ final readonly class CompressionMiddleware implements MiddlewareInterface
             return $response;
         }
 
-        // Negotiate encoding
-        $acceptEncoding = $request->getHeaderLine('Accept-Encoding');
-        $encoding = $this->negotiateEncoding($acceptEncoding);
+        // Negotiate encoding (quality-aware: honors q-values and q=0 refusals)
+        $encoding = $this->negotiateEncoding($request);
 
         if ($encoding === null) {
             return $response;
@@ -127,42 +126,57 @@ final readonly class CompressionMiddleware implements MiddlewareInterface
         return false;
     }
 
-    private function negotiateEncoding(string $acceptEncoding): ?string
+    private function negotiateEncoding(ServerRequestInterface $request): ?string
     {
-        if ($acceptEncoding === '') {
+        // No client preference expressed: do not compress (conservative default).
+        if ($request->getHeaderLine('Accept-Encoding') === '') {
             return null;
         }
 
-        $accepted = array_map(
-            static fn(string $s): string => trim(explode(';', $s, 2)[0]),
-            explode(',', strtolower($acceptEncoding)),
-        );
+        // ContentNegotiation honors the client's q-values and treats q=0 as an
+        // explicit refusal (RFC 9110), unlike the previous token-only parse which
+        // discarded parameters and selected gzip even when the client sent
+        // "gzip;q=0".
+        return ContentNegotiation::negotiateEncoding($request, $this->availableEncodings());
+    }
 
-        // Prefer brotli > zstd > gzip > deflate
-        if (in_array('br', $accepted, true) && extension_loaded('brotli')) {
-            return 'br';
+    /**
+     * Encodings this server can actually produce right now, in server preference
+     * order (brotli > zstd > gzip > deflate).
+     *
+     * The capability test for each optional codec is the very function compress()
+     * calls (brotli_compress / zstd_compress), so negotiation never offers an
+     * encoding the compressor cannot deliver — and conversely, whenever a codec
+     * extension is installed it is both negotiated and used. (gzip and deflate
+     * are always available through ext-zlib, which ships with PHP.)
+     *
+     * @return list<string>
+     */
+    private function availableEncodings(): array
+    {
+        $available = [];
+
+        if (function_exists('brotli_compress')) {
+            $available[] = 'br';
         }
 
-        if (in_array('zstd', $accepted, true) && function_exists('zstd_compress')) {
-            return 'zstd';
+        if (function_exists('zstd_compress')) {
+            $available[] = 'zstd';
         }
 
-        if (in_array('gzip', $accepted, true)) {
-            return 'gzip';
-        }
+        $available[] = 'gzip';
+        $available[] = 'deflate';
 
-        if (in_array('deflate', $accepted, true)) {
-            return 'deflate';
-        }
-
-        return null;
+        return $available;
     }
 
     private function compress(string $data, string $encoding): ?string
     {
         return match ($encoding) {
             'gzip' => gzencode($data, $this->gzipLevel) ?: null,
-            'deflate' => gzdeflate($data, $this->gzipLevel) ?: null,
+            // zlib-wrapped DEFLATE (RFC 1950), as RFC 9110 requires for
+            // Content-Encoding: deflate — not raw DEFLATE (gzdeflate, RFC 1951).
+            'deflate' => gzcompress($data, $this->gzipLevel) ?: null,
             'br' => $this->brotliCompress($data),
             'zstd' => $this->zstdCompress($data),
             default => null,

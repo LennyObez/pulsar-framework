@@ -199,7 +199,7 @@ final class MicroKernel
         $request = ServerRequest::fromGlobals();
         $response = $this->handle($request);
 
-        new ResponseEmitter()->emit($response);
+        new ResponseEmitter()->emit($response, $request->getMethod());
     }
 
     private function boot(): void

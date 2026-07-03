@@ -13,8 +13,11 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Http\Message\Response;
 use Pulsar\Http\Middleware\CompressionMiddleware;
+use ReflectionMethod;
 
 use function gzdecode;
+use function gzuncompress;
+use function sprintf;
 use function str_repeat;
 use function strlen;
 
@@ -129,8 +132,12 @@ final class CompressionMiddlewareTest extends TestCase
     }
 
     #[Test]
-    public function deflateEncodingSupported(): void
+    public function deflateEncodingIsZlibWrapped(): void
     {
+        // FR-38: Content-Encoding: deflate must be zlib-wrapped (RFC 1950),
+        // decodable by gzuncompress(). The previous gzdeflate() output was raw
+        // DEFLATE (RFC 1951), which gzuncompress() cannot read — so this both
+        // proves the fix and fails on the old code.
         $middleware = new CompressionMiddleware(minimumBytes: 10);
         $body = str_repeat('Compressible deflate data. ', 50);
 
@@ -141,8 +148,51 @@ final class CompressionMiddlewareTest extends TestCase
 
         self::assertSame('deflate', $response->getHeaderLine('Content-Encoding'));
 
-        $decoded = gzinflate((string) $response->getBody());
+        $decoded = gzuncompress((string) $response->getBody());
         self::assertSame($body, $decoded);
+    }
+
+    #[Test]
+    public function refusesEncodingWithZeroQValue(): void
+    {
+        // FR-21: gzip;q=0 is an explicit refusal (RFC 9110); the body must be
+        // sent uncompressed, not gzip'd as the old token-only parse did.
+        $middleware = new CompressionMiddleware(minimumBytes: 10);
+        $body = str_repeat('compressible content here ', 50);
+
+        $request = $this->createRequest(['Accept-Encoding' => 'gzip;q=0']);
+        $handler = $this->createHandler(new Response(body: $body));
+
+        $response = $middleware->process($request, $handler);
+
+        self::assertFalse($response->hasHeader('Content-Encoding'));
+        self::assertSame($body, (string) $response->getBody());
+    }
+
+    #[Test]
+    public function everyNegotiableEncodingIsProducible(): void
+    {
+        // The capability test driving negotiation must agree with what compress()
+        // can actually deliver, so an installed codec (brotli/zstd) is both
+        // negotiated and used, and a negotiated encoding is never sent
+        // uncompressed. gzip/deflate are always available; br/zstd appear only
+        // when their extension is loaded.
+        $middleware = new CompressionMiddleware(minimumBytes: 1);
+
+        $available = new ReflectionMethod($middleware, 'availableEncodings')->invoke($middleware);
+        self::assertIsArray($available);
+        self::assertContains('gzip', $available);
+        self::assertContains('deflate', $available);
+
+        $compress = new ReflectionMethod($middleware, 'compress');
+
+        foreach ($available as $encoding) {
+            self::assertIsString($encoding);
+            self::assertNotNull(
+                $compress->invoke($middleware, 'some compressible payload to encode', $encoding),
+                sprintf('Negotiable encoding "%s" must be producible by compress()', $encoding),
+            );
+        }
     }
 
     #[Test]

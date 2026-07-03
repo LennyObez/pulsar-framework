@@ -999,6 +999,37 @@ final class ServerRequestTest extends TestCase
     }
 
     #[Test]
+    public function fromGlobalsParsesBracketedIpv6Host(): void
+    {
+        // FR-23: a bracketed IPv6 authority "[::1]:8080" must split into host
+        // "[::1]" and port 8080. The old explode(":") split on every colon,
+        // yielding host "[" and port 0.
+        $request = ServerRequest::fromGlobals(
+            server: ['HTTP_HOST' => '[::1]:8080'],
+            get: [],
+            post: [],
+            cookies: [],
+        );
+
+        self::assertSame('[::1]', $request->getUri()->getHost());
+        self::assertSame(8080, $request->getUri()->getPort());
+    }
+
+    #[Test]
+    public function fromGlobalsParsesBracketedIpv6HostWithoutPort(): void
+    {
+        // FR-23: a bracketed IPv6 literal with no port keeps the whole address.
+        $request = ServerRequest::fromGlobals(
+            server: ['HTTP_HOST' => '[2001:db8::1]'],
+            get: [],
+            post: [],
+            cookies: [],
+        );
+
+        self::assertSame('[2001:db8::1]', $request->getUri()->getHost());
+    }
+
+    #[Test]
     public function fromGlobalsUsesServerNameWhenNoHttpHost(): void
     {
         $request = ServerRequest::fromGlobals(
