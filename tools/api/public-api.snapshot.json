@@ -38889,7 +38889,8 @@
                         "?string $powNonce",
                         "?string $captchaToken",
                         "int $submissionTimestamp",
-                        "string $formId"
+                        "string $formId",
+                        "?string $ip"
                     ],
                     "return": null,
                     "static": false

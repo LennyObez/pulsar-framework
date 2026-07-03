@@ -73,6 +73,39 @@ final class HCaptchaVerifierTest extends TestCase
     }
 
     #[Test]
+    public function sendsRealClientIpAsRemoteIpNotTheHash(): void
+    {
+        // FR-44: hCaptcha uses remoteip for its own IP risk scoring, so it must
+        // receive the real client IP — not the internal ipHash, which would
+        // defeat that scoring.
+        $response = $this->createSuccessResponse(true);
+
+        $captured = [];
+        $httpClient = $this->createStub(HttpClientInterface::class);
+        $httpClient->method('post')->willReturnCallback(
+            function (string $url, array $options) use (&$captured, $response): HttpResponse {
+                $captured = $options;
+
+                return $response;
+            },
+        );
+
+        $verifier = new HCaptchaVerifier($httpClient, $this->logger, 'site', 'secret');
+        $context = new AntiSpamContext(
+            body: 'test',
+            ipHash: 'HASHED-ip-value',
+            captchaToken: 'valid-token',
+            ip: '203.0.113.42',
+        );
+        $verifier->check($context);
+
+        self::assertArrayHasKey('form', $captured);
+        $form = $captured['form'];
+        self::assertIsArray($form);
+        self::assertSame('203.0.113.42', $form['remoteip'] ?? null);
+    }
+
+    #[Test]
     public function failsWithInvalidToken(): void
     {
         $response = $this->createSuccessResponse(false);
