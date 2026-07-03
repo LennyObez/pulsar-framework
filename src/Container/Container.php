@@ -672,14 +672,18 @@ final class Container implements AdvancedContainerInterface
 
             $type = $parameter->getType();
 
-            // Try to resolve from container by type hint
+            // Resolve from the container by type hint. get() autowires an
+            // unbound but instantiable concrete (has() reports false for those),
+            // so resolve via get()+catch — exactly as buildFromReflection does
+            // for constructor parameters — instead of gating on has(), which
+            // would skip autowirable concretes and fall through to the error path.
             if ($type instanceof ReflectionNamedType && !$type->isBuiltin()) {
-                $typeName = $type->getName();
-
-                if ($this->has($typeName)) {
-                    $arguments[] = $this->get($typeName);
+                try {
+                    $arguments[] = $this->get($type->getName());
 
                     continue;
+                } catch (NotFoundException) {
+                    // Not resolvable: fall through to default / null / throw.
                 }
             }
 

@@ -11,6 +11,7 @@ use Pulsar\Container\Compiled\ContainerCompiler;
 use Pulsar\Container\Exception\ContainerException;
 use Pulsar\Container\Lifetime;
 use Pulsar\Container\ServiceDefinition;
+use ReflectionMethod;
 use stdClass;
 
 #[CoversClass(ContainerCompiler::class)]
@@ -171,13 +172,45 @@ final class ContainerCompilerTest extends TestCase
         self::assertNotFalse($posZ);
         self::assertLessThan($posZ, $posA);
     }
+
+    #[Test]
+    public function resolveDependencyIdsIncludesUnboundConcretesInOrder(): void
+    {
+        // FR-14: every class-typed constructor parameter must be recorded in
+        // order — a bound service by its id, an unbound but instantiable concrete
+        // by its class name (the compiled factory autowires it via get()).
+        // Dropping the unbound middle parameter shifted later arguments, raising
+        // ArgumentCountError or binding a value to the wrong parameter.
+        $resolve = new ReflectionMethod(ContainerCompiler::class, 'resolveDependencyIds');
+
+        $deps = $resolve->invoke(null, ConsumerMixed::class, [
+            DependencyA::class => new ServiceDefinition(id: DependencyA::class, concrete: DependencyA::class),
+            DependencyC::class => new ServiceDefinition(id: DependencyC::class, concrete: DependencyC::class),
+        ]);
+
+        // DependencyB is unbound but instantiable: it sits between two bound deps.
+        self::assertSame([DependencyA::class, DependencyB::class, DependencyC::class], $deps);
+    }
 }
 
 class DependencyA {}
+
+class DependencyB {}
+
+class DependencyC {}
 
 class ConsumerA
 {
     public function __construct(
         public readonly DependencyA $dep,
+    ) {}
+}
+
+class ConsumerMixed
+{
+    public function __construct(
+        public readonly DependencyA $bound,
+        public readonly DependencyB $unbound,
+        public readonly DependencyC $bound2,
     ) {}
 }
