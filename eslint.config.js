@@ -13,6 +13,7 @@ export default tseslint.config(
       'extensions/studio/frontend/dist/**',
       'coverage/**',
       'node_modules/**',
+      'build/**',
       '*.config.js',
       '*.config.ts',
     ],
