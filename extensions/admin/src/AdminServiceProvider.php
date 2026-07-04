@@ -74,7 +74,6 @@ use Pulsar\Extension\Admin\Server\Controller\SavedViewsController;
 use Pulsar\Extension\Admin\Server\Controller\SchemaApiController;
 use Pulsar\Extension\Admin\Server\Controller\SchemaController;
 use Pulsar\Extension\Admin\Server\Controller\SearchController;
-use Pulsar\Http\RateLimit\RateLimiterInterface;
 
 use function is_string;
 
@@ -310,9 +309,10 @@ final readonly class AdminServiceProvider implements ServiceProviderInterface
             return new AdminCspMiddleware($container->get(AdminConfig::class));
         });
         $container->bind(AdminRateLimitMiddleware::class, static function () use ($container): AdminRateLimitMiddleware {
-            return new AdminRateLimitMiddleware(
-                $container->get(RateLimiterInterface::class),
-            );
+            /** @var AdminConfig $config */
+            $config = $container->get(AdminConfig::class);
+
+            return new AdminRateLimitMiddleware($config->rateLimit);
         });
         $container->bind(AdminAuditMiddleware::class, static function () use ($container): AdminAuditMiddleware {
             return new AdminAuditMiddleware($container->get(AuditLoggerInterface::class));
