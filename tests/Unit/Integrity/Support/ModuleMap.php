@@ -27,6 +27,7 @@ final class ModuleMap
         'Pulsar\Core\Boot\ExtensionViewPathRegistrar',
         'Pulsar\Core\Boot\ProjectRouteLoader',
         'Pulsar\Core\Wiring\ServiceWiringInterface',
+        'Pulsar\Core\Wiring\AntiSpamWiring',
         'Pulsar\Core\Wiring\AssetWiring',
         'Pulsar\Core\Wiring\AuthWiring',
         'Pulsar\Core\Wiring\ConfigWiring',

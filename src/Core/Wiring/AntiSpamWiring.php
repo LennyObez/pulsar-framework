@@ -16,9 +16,13 @@ use Pulsar\Core\Wiring\Contract\WiringContract;
 use Pulsar\Http\Client\HttpClientInterface;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
+use Pulsar\Http\RateLimit\SlidingWindowRateLimiter;
 use Pulsar\I18n\TranslatorInterface;
 use Pulsar\Routing\Router;
 use Pulsar\Security\AntiSpam\AccountAgeGate;
+use Pulsar\Security\AntiSpam\AiCrawler\AiCrawlerConfig;
+use Pulsar\Security\AntiSpam\AiCrawler\AiCrawlerDetector;
+use Pulsar\Security\AntiSpam\AiCrawler\AiCrawlerMiddleware;
 use Pulsar\Security\AntiSpam\AntiSpamCheckInterface;
 use Pulsar\Security\AntiSpam\AntiSpamConfig;
 use Pulsar\Security\AntiSpam\AntiSpamPipeline;
@@ -73,6 +77,7 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
                 AntiSpamConfig::class,
                 AntiSpamPipeline::class,
                 AntiSpamPipelineInterface::class,
+                AiCrawlerConfig::class,
             ],
             optional: [
                 new OptionalBinding(
@@ -205,6 +210,66 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
         $pipeline = new AntiSpamPipeline($checks, $config->shortCircuit);
         $container->instance(AntiSpamPipeline::class, $pipeline);
         $container->instance(AntiSpamPipelineInterface::class, $pipeline);
+
+        // AI-crawler defense: global request-level filtering (distinct from the
+        // form-spam pipeline above), piped as global middleware when enabled.
+        $this->wireAiCrawlerDefense($container, $middleware, $configManager, $logger);
+    }
+
+    /**
+     * Wire the AI-crawler defense: detect known AI training/assistant/search
+     * crawlers by User-Agent and allow/block/throttle them per the configured
+     * policy, while stamping a TDM-reservation header on every response. The
+     * enforcement middleware is piped globally so it covers every route; when
+     * the feature is disabled only the config is bound (for introspection).
+     */
+    private function wireAiCrawlerDefense(
+        ContainerInterface $container,
+        MiddlewarePipeline $middleware,
+        ConfigManager $configManager,
+        LoggerInterface $logger,
+    ): void {
+        $config = $this->loadAiCrawlerConfig($configManager);
+        $container->instance(AiCrawlerConfig::class, $config);
+
+        if (!$config->enabled) {
+            return;
+        }
+
+        $detector = new AiCrawlerDetector($config);
+        $container->instance(AiCrawlerDetector::class, $detector);
+
+        $rateLimiter = new SlidingWindowRateLimiter(
+            $config->rateLimitMaxRequests,
+            $config->rateLimitWindowSeconds,
+        );
+
+        $aiMiddleware = new AiCrawlerMiddleware($config, $detector, $rateLimiter, $logger);
+        $container->instance(AiCrawlerMiddleware::class, $aiMiddleware);
+
+        $middleware->pipe($aiMiddleware);
+    }
+
+    private function loadAiCrawlerConfig(ConfigManager $configManager): AiCrawlerConfig
+    {
+        $configPath = $configManager->configPath();
+
+        if ($configPath !== null && is_file($configPath . DIRECTORY_SEPARATOR . 'anti-spam.php')) {
+            /**
+             * @psalm-suppress UnresolvableInclude
+             * @var mixed $data
+             */
+            $data = require $configPath . DIRECTORY_SEPARATOR . 'anti-spam.php';
+
+            if (is_array($data) && isset($data['ai_crawlers']) && is_array($data['ai_crawlers'])) {
+                /** @var array<string, mixed> $aiCrawlers */
+                $aiCrawlers = $data['ai_crawlers'];
+
+                return AiCrawlerConfig::fromArray($aiCrawlers);
+            }
+        }
+
+        return new AiCrawlerConfig();
     }
 
     /**
