@@ -24,6 +24,7 @@ final readonly class AiAuditLogger implements AiAuditLoggerInterface
 {
     public function __construct(
         private AuditLoggerInterface $auditLogger,
+        private bool $auditInvocations = true,
     ) {}
 
     #[Override]
@@ -54,6 +55,12 @@ final readonly class AiAuditLogger implements AiAuditLoggerInterface
         array $sanitizedOutput,
         float $confidenceScore,
     ): void {
+        // Invocation auditing is opt-out via config; when disabled, model
+        // invocations are not written to the audit trail.
+        if (! $this->auditInvocations) {
+            return;
+        }
+
         $this->logAiEvent(
             event: AiAuditEvent::ModelInvoked,
             modelId: $modelId,

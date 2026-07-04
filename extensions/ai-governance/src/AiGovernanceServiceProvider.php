@@ -19,6 +19,9 @@ use Pulsar\Extension\AiGovernance\Contracts\AiModelRegistryInterface;
 use Pulsar\Extension\AiGovernance\Contracts\ExplainabilityInterface;
 use Pulsar\Extension\AiGovernance\Internal\AiAuditLogger;
 use Pulsar\Extension\AiGovernance\Internal\AiLifecycleManager;
+use Pulsar\Extension\AiGovernance\Internal\ConsentEnforcingDataGovernance;
+use Pulsar\Extension\AiGovernance\Internal\Gate\ImpactAssessmentGate;
+use Pulsar\Extension\AiGovernance\Internal\Gate\ModelCardGate;
 use Pulsar\Extension\AiGovernance\Internal\Store\InMemoryDataGovernanceStore;
 use Pulsar\Extension\AiGovernance\Internal\Store\InMemoryExplainabilityStore;
 use Pulsar\Extension\AiGovernance\Internal\Store\InMemoryImpactAssessmentStore;
@@ -75,7 +78,10 @@ final class AiGovernanceServiceProvider implements ServiceProviderInterface
             /** @var AuditLoggerInterface $auditLogger */
             $auditLogger = $container->get(AuditLoggerInterface::class);
 
-            return new AiAuditLogger($auditLogger);
+            /** @var AiGovernanceConfig $config */
+            $config = $container->get(AiGovernanceConfig::class);
+
+            return new AiAuditLogger($auditLogger, $config->auditInvocations);
         });
 
         // Data Governance
@@ -83,16 +89,20 @@ final class AiGovernanceServiceProvider implements ServiceProviderInterface
             /** @var AiGovernanceConfig $config */
             $config = $container->get(AiGovernanceConfig::class);
 
-            if ($config->dataGovernanceStore === 'memory') {
-                return new InMemoryDataGovernanceStore();
-            }
+            $store = $config->dataGovernanceStore === 'memory'
+                ? new InMemoryDataGovernanceStore()
+                : TypedServiceResolver::resolve(
+                    $container,
+                    $config->dataGovernanceStore,
+                    AiDataGovernanceInterface::class,
+                    'ai_governance.data_governance_store',
+                );
 
-            return TypedServiceResolver::resolve(
-                $container,
-                $config->dataGovernanceStore,
-                AiDataGovernanceInterface::class,
-                'ai_governance.data_governance_store',
-            );
+            // Enforce the consent requirement at the boundary so the config
+            // toggle is a real guarantee rather than inert metadata.
+            return $config->requireConsentForTrainingData
+                ? new ConsentEnforcingDataGovernance($store)
+                : $store;
         });
 
         // Explainability
@@ -120,7 +130,25 @@ final class AiGovernanceServiceProvider implements ServiceProviderInterface
             /** @var AiAuditLoggerInterface $auditLogger */
             $auditLogger = $container->get(AiAuditLoggerInterface::class);
 
-            return new AiLifecycleManager($registry, $auditLogger);
+            /** @var AiGovernanceConfig $config */
+            $config = $container->get(AiGovernanceConfig::class);
+
+            $manager = new AiLifecycleManager($registry, $auditLogger);
+
+            // Translate the configured deployment requirements into gates the
+            // lifecycle manager enforces on deploy(); without this the
+            // require* toggles are inert.
+            if ($config->requireModelCard) {
+                $manager->addDeploymentGate(new ModelCardGate());
+            }
+
+            if ($config->requireImpactAssessment) {
+                /** @var AiImpactAssessmentInterface $assessments */
+                $assessments = $container->get(AiImpactAssessmentInterface::class);
+                $manager->addDeploymentGate(new ImpactAssessmentGate($assessments, $config->impactRiskThreshold));
+            }
+
+            return $manager;
         });
     }
 

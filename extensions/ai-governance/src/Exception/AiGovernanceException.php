@@ -71,4 +71,12 @@ final class AiGovernanceException extends InvalidArgumentException
     {
         return new self(sprintf('AI model "%s" is already registered', $modelId));
     }
+
+    public static function consentRequired(string $datasetId): self
+    {
+        return new self(sprintf(
+            'Cannot record provenance for dataset "%s": consent is required for all training data',
+            $datasetId,
+        ));
+    }
 }
