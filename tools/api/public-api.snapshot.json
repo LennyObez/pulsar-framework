@@ -39332,6 +39332,31 @@
             },
             "constants": []
         },
+        "Pulsar\\Security\\AntiSpam\\Risk\\Ja4Config": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "bool $enabled",
+                        "string $headerName",
+                        "bool $trustedProxiesOnly",
+                        "array $knownBadFingerprints",
+                        "float $matchScore"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "fromArray": {
+                    "params": [
+                        "array $data"
+                    ],
+                    "return": "Pulsar\\Security\\AntiSpam\\Risk\\Ja4Config",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\Security\\AntiSpam\\Risk\\RiskAssessment": {
             "since": "1.0.0",
             "methods": [],
@@ -55872,6 +55897,7 @@
         "Pulsar\\Security\\AntiSpam\\ReputationCooldown",
         "Pulsar\\Security\\AntiSpam\\Risk\\AdaptiveChallengeMiddleware",
         "Pulsar\\Security\\AntiSpam\\Risk\\BotScoreSignalProvider",
+        "Pulsar\\Security\\AntiSpam\\Risk\\Ja4SignalProvider",
         "Pulsar\\Security\\AntiSpam\\TimeTrap\\TimeTrapCheck",
         "Pulsar\\Security\\AntiSpam\\TimeTrap\\TimeTrapService",
         "Pulsar\\Security\\AntiSpam\\TimeTrap\\TimeTrapToken",

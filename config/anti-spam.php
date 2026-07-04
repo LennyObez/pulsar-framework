@@ -48,4 +48,46 @@ return [
 
     // Short-circuit: stop on first failure instead of running all checks
     'short_circuit' => false,
+
+    // AI-scraper / LLM-crawler defense: identify declared AI crawlers by
+    // User-Agent and act per category. Opt-in; when enabled a global
+    // middleware emits an X-Robots-Tag: noai, noimageai signal and applies
+    // the configured action. Per-crawler 'overrides' and 'custom_crawlers'
+    // let you extend the built-in list without a release.
+    'ai_crawlers' => [
+        'enabled' => false,
+        'training_action' => 'block',   // 'allow' | 'block' | 'rate_limit'
+        'assistant_action' => 'allow',
+        'search_action' => 'allow',
+        'overrides' => [],              // ['GPTBot' => 'rate_limit', ...]
+        'custom_crawlers' => [],        // ['MyBot' => 'training', ...]
+        'send_tdm_reservation' => true, // emit the TDM reservation header
+        'rate_limit_max_requests' => 60,
+        'rate_limit_window_seconds' => 60,
+    ],
+
+    // Adaptive, risk-based challenge escalation: composes risk signals
+    // (bot heuristics, JA4, ...) into a single score and escalates —
+    // allow below challenge_threshold, challenge between, block above
+    // block_threshold. Opt-in; attaches the assessment to the request so
+    // downstream form/challenge layers can react.
+    'adaptive_risk' => [
+        'enabled' => false,
+        'challenge_threshold' => 0.5,
+        'block_threshold' => 0.9,
+    ],
+
+    // JA4/JA4+ TLS-fingerprint risk signal. The application cannot compute a
+    // JA4 fingerprint (no access to the raw TLS ClientHello), so it must be
+    // computed at the TLS-terminating edge and forwarded in 'header_name'.
+    // Honoured only for requests arriving through a trusted proxy
+    // (trusted_proxies_only — requires deploy.trusted_proxies), so a direct
+    // client cannot spoof the header. Feeds the adaptive_risk engine above.
+    'ja4' => [
+        'enabled' => false,
+        'header_name' => 'X-JA4',
+        'trusted_proxies_only' => true,
+        'known_bad_fingerprints' => [], // operator-supplied exact JA4 strings
+        'match_score' => 0.9,
+    ],
 ];

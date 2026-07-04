@@ -195,3 +195,82 @@ By design the collector captures **no personal data**: no field values, no typed
 ### Honest limitation
 
 A self-hosted engine sees only **your own** origin. It has **no global cross-site reputation** — the network effect a large third-party CAPTCHA derives from observing a device across millions of sites. That signal is deliberately out of scope: it is irreconcilable with self-hosting and zero data sharing. Deploy behavioural signals as one score-only layer among honeypot, rate limiting, content checks, the managed challenge, and the time-trap — not as a sole defence.
+
+## AI-Scraper Defense (declared LLM crawlers)
+
+Declared AI crawlers — training scrapers, assistant fetchers, and AI search indexers — identify themselves by `User-Agent`. The AI-scraper defense matches those tokens against a built-in list (extensible at runtime) and acts per **category**, so you can block training-corpus harvesting while still allowing the assistant and search fetchers that drive referral traffic. It is opt-in; when enabled, a global middleware runs before routing.
+
+### How it works
+
+`AiCrawlerDetector` classifies the request's `User-Agent` into a category (`training`, `assistant`, `search`) and `AiCrawlerMiddleware` applies the configured `AiCrawlerAction`:
+
+- **block** → `403` with `X-Robots-Tag: noai, noimageai`.
+- **rate_limit** → a sliding-window limiter (`rate_limit_max_requests` / `rate_limit_window_seconds`); over the limit returns `429`.
+- **allow** → passes through, but still stamps `X-Robots-Tag: noai, noimageai` so a compliant crawler honours the opt-out.
+
+When `send_tdm_reservation` is on, responses also carry the TDM (Text & Data Mining) reservation header — the machine-readable opt-out from the EU DSM Directive — so reservation is asserted even for crawlers you allow to fetch.
+
+### Configuration
+
+```php
+// config/anti-spam.php
+'ai_crawlers' => [
+    'enabled' => false,             // opt-in
+    'training_action' => 'block',   // 'allow' | 'block' | 'rate_limit'
+    'assistant_action' => 'allow',
+    'search_action' => 'allow',
+    'overrides' => [],              // ['GPTBot' => 'rate_limit', ...]
+    'custom_crawlers' => [],        // ['MyBot' => 'training', ...]  (UA token => category)
+    'send_tdm_reservation' => true,
+    'rate_limit_max_requests' => 60,
+    'rate_limit_window_seconds' => 60,
+],
+```
+
+`overrides` change the action for a specific named crawler; `custom_crawlers` add UA tokens the built-in list doesn't know yet, mapped to a category — both let you adapt without waiting for a release.
+
+### Honest limitation
+
+This layer recognises crawlers that **declare themselves**. A scraper that forges a browser `User-Agent` is not caught here — that is the job of the other layers (rate limiting, behavioural signals, the adaptive engine, and the JA4 signal below). Treat AI-scraper defense as the polite-but-enforced front door for honest bots, not as anti-evasion.
+
+## Adaptive Risk Engine (risk-based escalation)
+
+Rather than applying one fixed challenge to everyone, the adaptive engine composes several **risk signals** into a single score and escalates proportionally: allow low-risk traffic untouched, challenge the ambiguous middle, and block the clearly malicious. This keeps friction off legitimate users while raising cost on bots.
+
+### How it works
+
+Each registered `RiskSignalProviderInterface` returns a score in `[0.0, 1.0]`. `AdaptiveRiskEngine` combines them **probabilistically** — `1 − ∏(1 − sᵢ)` — so independent weak signals accumulate without ever exceeding `1.0`, then maps the result to a decision:
+
+- below `challenge_threshold` → **allow**
+- between the thresholds → **challenge**
+- at/above `block_threshold` → **block**
+
+A `RiskBypassProviderInterface` can short-circuit to allow (e.g. an authenticated, trusted principal) before any scoring runs. `AdaptiveChallengeMiddleware` blocks `block`-rated requests with `403`; otherwise it attaches the `RiskAssessment` to the request (`RiskAssessment::REQUEST_ATTRIBUTE`) so the downstream form/challenge layer can decide how to present the challenge. The default signal provider adapts the transparent `BotDetector` (header/`User-Agent` heuristics, scored 0–100) into a normalised signal.
+
+### JA4/JA4+ TLS fingerprint
+
+A JA4 fingerprint summarises the TLS ClientHello — cipher suites, extensions, ALPN — into a stable string that is far harder to forge than a `User-Agent`, because it reflects the actual TLS stack. The application layer **cannot compute it**: by the time a request reaches PHP, the TLS handshake is over and the raw ClientHello is gone. So JA4 must be computed at the TLS-terminating edge / reverse proxy and forwarded in a header (default `X-JA4`).
+
+Because a client connecting directly could simply _send_ that header, it is honoured **only for requests arriving through a trusted proxy** (`trusted_proxies_only`, on by default — requires `deploy.trusted_proxies`). `Ja4SignalProvider` checks `REMOTE_ADDR` against the trusted set via `TrustedProxy`; an untrusted source's header is ignored and contributes zero risk. It is a **denylist** signal — an absent or unknown fingerprint adds no risk; only an operator-supplied known-bad fingerprint scores `match_score`, feeding the engine above. Known-bad lists are operator-supplied (e.g. from a threat feed) rather than baked in, since JA4 values shift with TLS-stack versions and a hardcoded list would rot.
+
+### Configuration
+
+```php
+// config/anti-spam.php
+'adaptive_risk' => [
+    'enabled' => false,           // opt-in
+    'challenge_threshold' => 0.5,
+    'block_threshold' => 0.9,
+],
+'ja4' => [
+    'enabled' => false,           // opt-in; requires a TLS-terminating edge
+    'header_name' => 'X-JA4',
+    'trusted_proxies_only' => true,
+    'known_bad_fingerprints' => [], // exact JA4 strings treated as malicious
+    'match_score' => 0.9,
+],
+```
+
+### Honest limitation
+
+The engine is only as good as its signals. Out of the box it scores header/`User-Agent` heuristics plus (when configured) an edge-supplied JA4 denylist; it has no global cross-site reputation. JA4 in particular depends on an edge that computes the fingerprint and on you maintaining the known-bad list — without a trusted proxy emitting it, the JA4 signal is correctly inert. Compose it with the other pipeline layers rather than relying on the score alone.
