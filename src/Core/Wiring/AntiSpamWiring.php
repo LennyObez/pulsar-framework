@@ -45,11 +45,16 @@ use Pulsar\Security\AntiSpam\ManagedChallenge\ManagedChallengeRenderer;
 use Pulsar\Security\AntiSpam\ManagedChallenge\ManagedChallengeService;
 use Pulsar\Security\AntiSpam\ManagedChallenge\ManagedChallengeVerifier;
 use Pulsar\Security\AntiSpam\ReputationCooldown;
+use Pulsar\Security\AntiSpam\Risk\AdaptiveChallengeMiddleware;
+use Pulsar\Security\AntiSpam\Risk\AdaptiveRiskConfig;
+use Pulsar\Security\AntiSpam\Risk\AdaptiveRiskEngine;
+use Pulsar\Security\AntiSpam\Risk\BotScoreSignalProvider;
 use Pulsar\Security\AntiSpam\TimeTrap\TimeTrapCheck;
 use Pulsar\Security\AntiSpam\TimeTrap\TimeTrapRenderer;
 use Pulsar\Security\AntiSpam\TimeTrap\TimeTrapService;
 use Pulsar\Security\AntiSpam\TurnstileVerifier;
 use Pulsar\Security\Crypto\MasterKey;
+use Pulsar\Security\ThreatDetection\BotDetector;
 use SodiumException;
 
 use function is_array;
@@ -78,6 +83,7 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
                 AntiSpamPipeline::class,
                 AntiSpamPipelineInterface::class,
                 AiCrawlerConfig::class,
+                AdaptiveRiskConfig::class,
             ],
             optional: [
                 new OptionalBinding(
@@ -214,6 +220,70 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
         // AI-crawler defense: global request-level filtering (distinct from the
         // form-spam pipeline above), piped as global middleware when enabled.
         $this->wireAiCrawlerDefense($container, $middleware, $configManager, $logger);
+
+        // Adaptive, risk-based challenge escalation: scores each request and
+        // blocks/flags-for-challenge/allows with progressive friction.
+        $this->wireAdaptiveRisk($container, $middleware, $configManager, $logger);
+    }
+
+    /**
+     * Wire the adaptive risk engine and its global middleware.
+     *
+     * Composes the built-in signal providers (the transparent bot-score
+     * detector) into the engine; JA4 fingerprinting and Private Access Token
+     * bypass plug in here as further signal/bypass providers. The middleware is
+     * piped globally when enabled so high-risk requests are rejected and the
+     * assessment is exposed for downstream adaptive friction.
+     */
+    private function wireAdaptiveRisk(
+        ContainerInterface $container,
+        MiddlewarePipeline $middleware,
+        ConfigManager $configManager,
+        LoggerInterface $logger,
+    ): void {
+        $config = $this->loadAdaptiveRiskConfig($configManager);
+        $container->instance(AdaptiveRiskConfig::class, $config);
+
+        if (!$config->enabled) {
+            return;
+        }
+
+        $botDetector = $container->has(BotDetector::class)
+            ? $container->get(BotDetector::class)
+            : new BotDetector();
+
+        $engine = new AdaptiveRiskEngine(
+            $config,
+            [new BotScoreSignalProvider($botDetector)],
+        );
+        $container->instance(AdaptiveRiskEngine::class, $engine);
+
+        $riskMiddleware = new AdaptiveChallengeMiddleware($engine, $logger);
+        $container->instance(AdaptiveChallengeMiddleware::class, $riskMiddleware);
+
+        $middleware->pipe($riskMiddleware);
+    }
+
+    private function loadAdaptiveRiskConfig(ConfigManager $configManager): AdaptiveRiskConfig
+    {
+        $configPath = $configManager->configPath();
+
+        if ($configPath !== null && is_file($configPath . DIRECTORY_SEPARATOR . 'anti-spam.php')) {
+            /**
+             * @psalm-suppress UnresolvableInclude
+             * @var mixed $data
+             */
+            $data = require $configPath . DIRECTORY_SEPARATOR . 'anti-spam.php';
+
+            if (is_array($data) && isset($data['adaptive_risk']) && is_array($data['adaptive_risk'])) {
+                /** @var array<string, mixed> $adaptiveRisk */
+                $adaptiveRisk = $data['adaptive_risk'];
+
+                return AdaptiveRiskConfig::fromArray($adaptiveRisk);
+            }
+        }
+
+        return new AdaptiveRiskConfig();
     }
 
     /**
