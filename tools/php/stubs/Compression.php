@@ -1,0 +1,23 @@
+<?php
+
+/**
+ * Stub for the optional ext-brotli and ext-zstd compression extensions.
+ *
+ * Provides type declarations for Psalm static analysis so the result is
+ * identical whether or not these extensions are loaded. The real functions
+ * are provided by ext-brotli / ext-zstd at runtime; the source always guards
+ * usage behind function_exists().
+ *
+ * Coverage is scoped to the symbols used by:
+ *   src/Http/Middleware/CompressionMiddleware.php
+ */
+
+function brotli_compress(string $data, int $level = 11, int $mode = 0): string|false
+{
+    return false;
+}
+
+function zstd_compress(string $data, int $level = 3): string|false
+{
+    return false;
+}

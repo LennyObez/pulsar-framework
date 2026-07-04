@@ -72,6 +72,9 @@
         <file name="stubs/Grpc.php"/>
         <file name="stubs/RoadRunner.php"/>
         <file name="stubs/Psr7.php"/>
+        <file name="stubs/Imagick.php"/>
+        <file name="stubs/Compression.php"/>
+        <file name="stubs/FrankenPhp.php"/>
     </stubs>
 
     <plugins>
@@ -201,32 +204,13 @@
             </errorLevel>
         </TypeDoesNotContainType>
 
-        <!-- (C) ext-imagick is an optional runtime dependency. Psalm has no
-             bundled stub, and the source-code stub approach was reverted on
-             2026-04-28 (regulated repo policy — no in-repo stubs for optional
-             extensions). Suppress Imagick-related issues file-narrow on the
-             two implementations that touch the extension API directly. -->
-        <UndefinedClass>
-            <errorLevel type="suppress">
-                <file name="../../extensions/cms/src/Media/Document/PdfThumbnailGenerator.php"/>
-                <file name="../../extensions/cms/src/Media/Processing/ImagickImageProcessor.php"/>
-            </errorLevel>
-        </UndefinedClass>
-        <MixedArgument>
-            <errorLevel type="suppress">
-                <file name="../../extensions/cms/src/Media/Document/PdfThumbnailGenerator.php"/>
-                <file name="../../extensions/cms/src/Media/Processing/ImagickImageProcessor.php"/>
-            </errorLevel>
-        </MixedArgument>
+        <!-- (C) Optional-extension symbols (ext-imagick, ext-brotli, ext-zstd,
+             FrankenPHP) are declared in tools/php/stubs/ so analysis is identical
+             whether or not the extension is loaded. That removes the previously
+             environment-fragile UndefinedClass / MixedArgument / per-file
+             UnusedParam / MixedAssignment suppressions for these files. -->
         <UnusedParam>
             <errorLevel type="suppress">
-                <!-- (C) Optional ext-imagick: see UndefinedClass rationale above. -->
-                <file name="../../extensions/cms/src/Media/Processing/ImagickImageProcessor.php"/>
-                <file name="../../extensions/cms/src/Media/Document/PdfThumbnailGenerator.php"/>
-                <!-- (C) Optional ext-brotli / ext-zstd inside function_exists guards. -->
-                <file name="../../src/Http/Middleware/CompressionMiddleware.php"/>
-                <!-- (C) FrankenPHP-only frankenphp_early_hints function. -->
-                <file name="../../src/Runtime/FrankenPhpRuntime.php"/>
                 <!-- (C) Magic __serialize / __unserialize methods that exist solely to
                      forbid serialization. PHP mandates the signature; the body throws
                      before reading $data. -->
@@ -278,9 +262,6 @@
              pass through the mixed return type from $inner->get() unchanged. -->
         <MixedAssignment>
             <errorLevel type="suppress">
-                <!-- (C) Optional ext-imagick: see UndefinedClass rationale above. -->
-                <file name="../../extensions/cms/src/Media/Document/PdfThumbnailGenerator.php"/>
-                <file name="../../extensions/cms/src/Media/Processing/ImagickImageProcessor.php"/>
                 <!-- (C) DI container is type-generic at the boundary by design.
                      CompiledContainer::call() resolves arbitrary callable args
                      (user input + container returns) — the same inherently-mixed
