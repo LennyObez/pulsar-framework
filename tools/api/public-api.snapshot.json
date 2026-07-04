@@ -39286,6 +39286,138 @@
             "signatures": [],
             "constants": []
         },
+        "Pulsar\\Security\\AntiSpam\\Risk\\AdaptiveRiskConfig": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "bool $enabled",
+                        "float $challengeThreshold",
+                        "float $blockThreshold"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "fromArray": {
+                    "params": [
+                        "array $data"
+                    ],
+                    "return": "Pulsar\\Security\\AntiSpam\\Risk\\AdaptiveRiskConfig",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Security\\AntiSpam\\Risk\\AdaptiveRiskEngine": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "Pulsar\\Security\\AntiSpam\\Risk\\AdaptiveRiskConfig $config",
+                        "array $signalProviders",
+                        "array $bypassProviders"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "assess": {
+                    "params": [
+                        "Psr\\Http\\Message\\ServerRequestInterface $request"
+                    ],
+                    "return": "Pulsar\\Security\\AntiSpam\\Risk\\RiskAssessment",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Security\\AntiSpam\\Risk\\RiskAssessment": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "float $score",
+                        "Pulsar\\Security\\AntiSpam\\Risk\\RiskDecision $decision",
+                        "array $signals",
+                        "bool $bypassed"
+                    ],
+                    "return": null,
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Security\\AntiSpam\\Risk\\RiskBypassProviderInterface": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "shouldBypass": {
+                    "params": [
+                        "Psr\\Http\\Message\\ServerRequestInterface $request"
+                    ],
+                    "return": "bool",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Security\\AntiSpam\\Risk\\RiskDecision": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "cases": {
+                    "params": [],
+                    "return": "array",
+                    "static": true
+                },
+                "from": {
+                    "params": [
+                        "string|int $value"
+                    ],
+                    "return": "static",
+                    "static": true
+                },
+                "tryFrom": {
+                    "params": [
+                        "string|int $value"
+                    ],
+                    "return": "?static",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Security\\AntiSpam\\Risk\\RiskSignal": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "float $score",
+                        "string $source"
+                    ],
+                    "return": null,
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Security\\AntiSpam\\Risk\\RiskSignalProviderInterface": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "evaluate": {
+                    "params": [
+                        "Psr\\Http\\Message\\ServerRequestInterface $request"
+                    ],
+                    "return": "Pulsar\\Security\\AntiSpam\\Risk\\RiskSignal",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\Security\\AntiSpam\\TimeTrap\\TimeTrapRenderer": {
             "since": "1.0.0-rc.11",
             "methods": [],
@@ -55738,6 +55870,8 @@
         "Pulsar\\Security\\AntiSpam\\ManagedChallenge\\ManagedChallengeService",
         "Pulsar\\Security\\AntiSpam\\ManagedChallenge\\ManagedChallengeVerifier",
         "Pulsar\\Security\\AntiSpam\\ReputationCooldown",
+        "Pulsar\\Security\\AntiSpam\\Risk\\AdaptiveChallengeMiddleware",
+        "Pulsar\\Security\\AntiSpam\\Risk\\BotScoreSignalProvider",
         "Pulsar\\Security\\AntiSpam\\TimeTrap\\TimeTrapCheck",
         "Pulsar\\Security\\AntiSpam\\TimeTrap\\TimeTrapService",
         "Pulsar\\Security\\AntiSpam\\TimeTrap\\TimeTrapToken",

@@ -14,6 +14,8 @@ use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Routing\Router;
 use Pulsar\Security\AntiSpam\AiCrawler\AiCrawlerConfig;
 use Pulsar\Security\AntiSpam\AiCrawler\AiCrawlerMiddleware;
+use Pulsar\Security\AntiSpam\Risk\AdaptiveChallengeMiddleware;
+use Pulsar\Security\AntiSpam\Risk\AdaptiveRiskConfig;
 
 use function bin2hex;
 use function file_put_contents;
@@ -50,6 +52,20 @@ final class AntiSpamWiringTest extends TestCase
         self::assertTrue($container->has(AiCrawlerConfig::class), 'config is always bound for introspection');
         self::assertFalse($container->has(AiCrawlerMiddleware::class));
         self::assertSame($before, $pipeline->count(), 'nothing piped when disabled');
+    }
+
+    #[Test]
+    public function pipesAdaptiveChallengeMiddlewareWhenEnabled(): void
+    {
+        $container = new Container();
+        $pipeline = new MiddlewarePipeline($container);
+        $before = $pipeline->count();
+
+        $this->wire($container, $pipeline, "'adaptive_risk' => ['enabled' => true]");
+
+        self::assertTrue($container->has(AdaptiveRiskConfig::class));
+        self::assertTrue($container->has(AdaptiveChallengeMiddleware::class), 'middleware is bound when enabled');
+        self::assertSame($before + 1, $pipeline->count(), 'middleware is piped globally');
     }
 
     private function wire(Container $container, MiddlewarePipeline $pipeline, string $antiSpamBody): void
