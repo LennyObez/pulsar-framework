@@ -15367,7 +15367,8 @@
                         "int $slowQueryThresholdMs",
                         "bool $logRawBindings",
                         "bool $requireEnvironmentConfirmation",
-                        "array $piiColumns"
+                        "array $piiColumns",
+                        "bool $enabled"
                     ],
                     "return": null,
                     "static": false
