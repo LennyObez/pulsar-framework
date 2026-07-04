@@ -117,6 +117,34 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Courtesy Redirect (opt-in, default off)
+    |--------------------------------------------------------------------------
+    | When true, an unprefixed GET/HEAD request is 302-redirected to the
+    | visitor's negotiated locale prefix (e.g. `/about` -> `/en/about`). The
+    | default locale is exempt — its canonical URL is the unprefixed one — so
+    | there is no loop with `canonical_redirect`. `courtesy_fallback_locale` is
+    | the locale used when no supported language is detected (e.g. send
+    | undetected visitors to `en` while keeping the default locale canonical).
+    | Pair with `locale_cookie_enabled` so a visitor's footer choice sticks.
+    */
+    'courtesy_redirect' => false,
+    'courtesy_fallback_locale' => '', // '' = use default_locale; e.g. 'en'
+
+    /*
+    |--------------------------------------------------------------------------
+    | Persist Locale Cookie (opt-in, default off)
+    |--------------------------------------------------------------------------
+    | When true, the cookie-aware negotiator is wired (the cookie and session
+    | take precedence over Accept-Language) and prefixed pages emit a
+    | `Set-Cookie` remembering the chosen locale. The cookie is a functional
+    | preference (ePrivacy-exempt), server-set, `HttpOnly`, `SameSite=Lax`,
+    | `Secure` on HTTPS, and never carries tracking data.
+    */
+    'locale_cookie_enabled' => false,
+    'locale_cookie_name' => 'pulsar_locale',
+
+    /*
+    |--------------------------------------------------------------------------
     | Localized Route Slugs
     |--------------------------------------------------------------------------
     | Translate static URL path segments per locale. Each key is the canonical

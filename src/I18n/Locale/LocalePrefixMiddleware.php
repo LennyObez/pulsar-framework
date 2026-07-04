@@ -16,6 +16,7 @@ use Pulsar\I18n\LocaleNegotiatorInterface;
 use Pulsar\I18n\TranslatorInterface;
 
 use function in_array;
+use function sprintf;
 
 /**
  * HTTP middleware that detects locale from URL path prefixes.
@@ -63,7 +64,7 @@ final readonly class LocalePrefixMiddleware implements MiddlewareInterface
             $query = $request->getUri()->getQuery();
             $redirectUrl = $query !== '' ? $strippedPath . '?' . $query : $strippedPath;
 
-            return Response::redirect($redirectUrl, 301);
+            return $this->persistLocale(Response::redirect($redirectUrl, 301), $locale, $request);
         }
 
         $this->translator->locale = $locale;
@@ -74,13 +75,21 @@ final readonly class LocalePrefixMiddleware implements MiddlewareInterface
             ->withAttribute('_locale', $locale)
             ->withAttribute('_locale_prefix', $locale);
 
-        return $handler->handle($request);
+        return $this->persistLocale($handler->handle($request), $locale, $request);
     }
 
     private function handleUnprefixedRequest(
         ServerRequestInterface $request,
         RequestHandlerInterface $handler,
     ): ResponseInterface {
+        if ($this->config->courtesyRedirect && in_array($request->getMethod(), ['GET', 'HEAD'], true)) {
+            $redirect = $this->courtesyRedirect($request);
+
+            if ($redirect !== null) {
+                return $redirect;
+            }
+        }
+
         $negotiated = $this->negotiator->negotiate(
             $request,
             $this->config->supportedLocales,
@@ -101,7 +110,18 @@ final readonly class LocalePrefixMiddleware implements MiddlewareInterface
             ->withAttribute('_locale', $locale)
             ->withAttribute('_negotiated_locale', $negotiated);
 
-        return $handler->handle($request);
+        $response = $handler->handle($request);
+
+        // When the served locale is negotiated, the body depends on the request's
+        // Accept-Language (and on the cookie/session once the cookie-aware
+        // negotiator is wired), so a shared cache must key on them — otherwise it
+        // could serve one visitor's locale to another.
+        if ($this->config->negotiateUnprefixedLocale) {
+            $vary = $this->config->localeCookieEnabled ? 'Accept-Language, Cookie' : 'Accept-Language';
+            $response = $response->withAddedHeader('Vary', $vary);
+        }
+
+        return $response;
     }
 
     private function shouldCanonicalRedirect(ServerRequestInterface $request, string $locale): bool
@@ -110,5 +130,68 @@ final readonly class LocalePrefixMiddleware implements MiddlewareInterface
             && $this->config->canonicalRedirect
             && !$this->config->defaultLocaleInUrl
             && in_array($request->getMethod(), ['GET', 'HEAD'], true);
+    }
+
+    /**
+     * Build a courtesy 302 to the visitor's negotiated locale prefix, or null
+     * when no redirect should happen.
+     *
+     * The default locale is never redirected: its canonical URL is the
+     * unprefixed one, so redirecting would loop with the canonical 301. Visitors
+     * with no supported preference fall back to `courtesy_fallback_locale` (e.g.
+     * `en`), which still leaves the default locale canonical.
+     */
+    private function courtesyRedirect(ServerRequestInterface $request): ?ResponseInterface
+    {
+        $arrival = $this->config->courtesyFallbackLocale !== ''
+            ? $this->config->courtesyFallbackLocale
+            : $this->config->defaultLocale;
+
+        $target = $this->negotiator->negotiate($request, $this->config->supportedLocales, $arrival);
+
+        if ($target === $this->config->defaultLocale || !in_array($target, $this->config->supportedLocales, true)) {
+            return null;
+        }
+
+        $path = $request->getUri()->getPath();
+        $targetPath = '/' . $target . ($path === '/' ? '' : $path);
+        $query = $request->getUri()->getQuery();
+        $url = $query !== '' ? $targetPath . '?' . $query : $targetPath;
+
+        return Response::redirect($url, 302)->withHeader('Vary', 'Accept-Language, Cookie');
+    }
+
+    /**
+     * Stamp the locale-preference cookie on a response (when persistence is
+     * enabled), so a visitor's chosen locale survives across visits. The cookie
+     * is a functional preference: server-set, HttpOnly (only the server reads
+     * it), Path=/, SameSite=Lax, Secure on HTTPS, one-year lifetime, no tracking
+     * payload. Skipped when the request already carries the same value, so the
+     * header is not re-sent on every hit.
+     */
+    private function persistLocale(
+        ResponseInterface $response,
+        string $locale,
+        ServerRequestInterface $request,
+    ): ResponseInterface {
+        if (!$this->config->localeCookieEnabled) {
+            return $response;
+        }
+
+        $cookies = $request->getCookieParams();
+
+        if (($cookies[$this->config->localeCookieName] ?? null) === $locale) {
+            return $response;
+        }
+
+        $secure = $request->getUri()->getScheme() === 'https' ? '; Secure' : '';
+        $cookie = sprintf(
+            '%s=%s; Path=/; Max-Age=31536000; HttpOnly; SameSite=Lax%s',
+            $this->config->localeCookieName,
+            $locale,
+            $secure,
+        );
+
+        return $response->withAddedHeader('Set-Cookie', $cookie);
     }
 }

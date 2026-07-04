@@ -139,4 +139,19 @@ final class CookieAwareLocaleNegotiatorTest extends TestCase
 
         self::assertSame('de', $locale);
     }
+
+    #[Test]
+    public function honoursACustomCookieName(): void
+    {
+        $negotiator = new CookieAwareLocaleNegotiator(new LocaleNegotiator(), 'lang');
+
+        $request = $this->createStub(ServerRequestInterface::class);
+        // The default 'pulsar_locale' must be ignored; only the configured name counts.
+        $request->method('getCookieParams')->willReturn(['pulsar_locale' => 'fr', 'lang' => 'de']);
+        $request->method('getQueryParams')->willReturn([]);
+        $request->method('getAttribute')->willReturn(null);
+        $request->method('getHeaderLine')->willReturn('en');
+
+        self::assertSame('de', $negotiator->negotiate($request, ['en', 'fr', 'de'], 'en'));
+    }
 }

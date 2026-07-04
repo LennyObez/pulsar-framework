@@ -9401,7 +9401,11 @@
                         "bool $defaultLocaleInUrl",
                         "bool $canonicalRedirect",
                         "array $localizedSlugs",
-                        "bool $negotiateUnprefixedLocale"
+                        "bool $negotiateUnprefixedLocale",
+                        "bool $courtesyRedirect",
+                        "string $courtesyFallbackLocale",
+                        "bool $localeCookieEnabled",
+                        "string $localeCookieName"
                     ],
                     "return": null,
                     "static": false
