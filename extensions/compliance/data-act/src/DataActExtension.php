@@ -39,11 +39,11 @@ final readonly class DataActExtension implements ExtensionInterface
     #[Override]
     public function boot(ContainerInterface $container, RouterInterface $router): void
     {
-        /** @var DataAccessController $controller */
-        $controller = $container->get(DataAccessController::class);
-
-        $router->get('/data-act/export', [$controller, 'requestExport']);
-        $router->get('/data-act/export/{requestId}', [$controller, 'exportStatus']);
+        // Class-string handlers (DataAccessController is bound by
+        // DataActServiceProvider and resolved on dispatch) so the routes compile
+        // into the strict route cache instead of being skipped as non-serializable.
+        $router->get('/data-act/export', [DataAccessController::class, 'requestExport']);
+        $router->get('/data-act/export/{requestId}', [DataAccessController::class, 'exportStatus']);
     }
 
     /**
