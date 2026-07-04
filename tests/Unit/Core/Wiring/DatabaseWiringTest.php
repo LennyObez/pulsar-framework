@@ -15,6 +15,7 @@ use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\ConnectionManager;
 use Pulsar\Database\ConnectionManagerInterface;
 use Pulsar\Database\Monitor\MonitoredConnection;
+use Pulsar\Database\Routing\RoutingConnectionManager;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Routing\Router;
@@ -92,7 +93,42 @@ final class DatabaseWiringTest extends TestCase
         self::assertNotInstanceOf(MonitoredConnection::class, $container->get(ConnectionInterface::class));
     }
 
-    private function createConfigManager(bool $withDatabase, bool $monitorEnabled = false): ConfigManager
+    #[Test]
+    public function wireRoutesConnectionsWhenReadWriteEnabled(): void
+    {
+        $container = new Container();
+        $router = new Router();
+        $middleware = new MiddlewarePipeline($container);
+        $middlewareRegistry = new MiddlewareRegistry();
+
+        $configManager = $this->createConfigManager(withDatabase: true, readWriteEnabled: true);
+        $configManager->load();
+
+        new DatabaseWiring()->wire($container, $configManager, $middleware, $middlewareRegistry, $router);
+
+        self::assertInstanceOf(RoutingConnectionManager::class, $container->get(ConnectionManagerInterface::class));
+    }
+
+    #[Test]
+    public function wireUsesPlainManagerWhenReadWriteDisabled(): void
+    {
+        $container = new Container();
+        $router = new Router();
+        $middleware = new MiddlewarePipeline($container);
+        $middlewareRegistry = new MiddlewareRegistry();
+
+        // Read/write routing is off by default.
+        $configManager = $this->createConfigManager(withDatabase: true);
+        $configManager->load();
+
+        new DatabaseWiring()->wire($container, $configManager, $middleware, $middlewareRegistry, $router);
+
+        $manager = $container->get(ConnectionManagerInterface::class);
+        self::assertNotInstanceOf(RoutingConnectionManager::class, $manager);
+        self::assertInstanceOf(ConnectionManager::class, $manager);
+    }
+
+    private function createConfigManager(bool $withDatabase, bool $monitorEnabled = false, bool $readWriteEnabled = false): ConfigManager
     {
         $configPath = sys_get_temp_dir() . '/pulsar_db_wiring_' . bin2hex(random_bytes(4));
         @mkdir($configPath, 0o755, true);
@@ -103,7 +139,8 @@ final class DatabaseWiringTest extends TestCase
 
         if ($withDatabase) {
             $monitor = $monitorEnabled ? ', "monitor" => ["enabled" => true]' : '';
-            file_put_contents($configPath . '/database.php', '<?php return ["default" => "sqlite", "connections" => ["sqlite" => ["driver" => "sqlite", "database" => ":memory:"]]' . $monitor . '];');
+            $readWrite = $readWriteEnabled ? ', "read_write" => ["enabled" => true]' : '';
+            file_put_contents($configPath . '/database.php', '<?php return ["default" => "sqlite", "connections" => ["sqlite" => ["driver" => "sqlite", "database" => ":memory:"]]' . $monitor . $readWrite . '];');
         }
 
         return new ConfigManager($configPath);
