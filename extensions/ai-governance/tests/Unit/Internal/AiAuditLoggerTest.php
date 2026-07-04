@@ -90,6 +90,21 @@ final class AiAuditLoggerTest extends TestCase
     }
 
     #[Test]
+    public function logInvocationIsSuppressedWhenAuditingDisabled(): void
+    {
+        $coreLogger = $this->createMock(AuditLoggerInterface::class);
+        $coreLogger->expects(self::never())->method('log');
+
+        $logger = new AiAuditLogger($coreLogger, auditInvocations: false);
+        $logger->logInvocation(
+            modelId: 'model-x',
+            sanitizedInput: ['prompt' => 'test'],
+            sanitizedOutput: ['response' => 'answer'],
+            confidenceScore: 0.5,
+        );
+    }
+
+    #[Test]
     public function logHumanOverrideRecordsReasonAndOverrider(): void
     {
         $this->logger->logHumanOverride(

@@ -20,6 +20,8 @@ final readonly class AiGovernanceConfig
      * @param bool $requireImpactAssessment Whether models must pass impact assessment before deployment
      * @param bool $requireModelCard Whether models must have a model card attached before deployment
      * @param bool $requireConsentForTrainingData Whether consent must be recorded for all training data
+     * @param float $impactRiskThreshold Maximum acceptable impact risk score (0.0-10.0) a model may
+     *        carry and still pass the deployment gate when $requireImpactAssessment is enabled
      * @param string $registryStore Store implementation ('memory' or a service class name)
      * @param string $dataGovernanceStore Store implementation ('memory' or a service class name)
      * @param string $explainabilityStore Store implementation ('memory' or a service class name)
@@ -29,6 +31,7 @@ final readonly class AiGovernanceConfig
         public bool $requireImpactAssessment = true,
         public bool $requireModelCard = false,
         public bool $requireConsentForTrainingData = true,
+        public float $impactRiskThreshold = 7.0,
         public string $registryStore = 'memory',
         public string $dataGovernanceStore = 'memory',
         public string $explainabilityStore = 'memory',
@@ -42,6 +45,7 @@ final readonly class AiGovernanceConfig
      *     require_impact_assessment?: bool|int|string,
      *     require_model_card?: bool|int|string,
      *     require_consent_for_training_data?: bool|int|string,
+     *     impact_risk_threshold?: float|int|string,
      *     registry_store?: string,
      *     data_governance_store?: string,
      *     explainability_store?: string,
@@ -55,6 +59,7 @@ final readonly class AiGovernanceConfig
             requireImpactAssessment: (bool) ($data['require_impact_assessment'] ?? true),
             requireModelCard: (bool) ($data['require_model_card'] ?? false),
             requireConsentForTrainingData: (bool) ($data['require_consent_for_training_data'] ?? true),
+            impactRiskThreshold: Coerce::nullableFloat($data['impact_risk_threshold'] ?? null) ?? 7.0,
             registryStore: Coerce::string($data['registry_store'] ?? null, 'memory'),
             dataGovernanceStore: Coerce::string($data['data_governance_store'] ?? null, 'memory'),
             explainabilityStore: Coerce::string($data['explainability_store'] ?? null, 'memory'),
