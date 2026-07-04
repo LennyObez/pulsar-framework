@@ -55,6 +55,10 @@ final class LocalePrefixMiddlewareTest extends TestCase
         bool $canonicalRedirect = true,
         bool $defaultLocaleInUrl = false,
         bool $negotiateUnprefixedLocale = true,
+        bool $courtesyRedirect = false,
+        string $courtesyFallbackLocale = '',
+        bool $localeCookieEnabled = false,
+        string $localeCookieName = 'pulsar_locale',
     ): I18nConfig {
         return new I18nConfig(
             defaultLocale: $defaultLocale,
@@ -68,7 +72,23 @@ final class LocalePrefixMiddlewareTest extends TestCase
             defaultLocaleInUrl: $defaultLocaleInUrl,
             canonicalRedirect: $canonicalRedirect,
             negotiateUnprefixedLocale: $negotiateUnprefixedLocale,
+            courtesyRedirect: $courtesyRedirect,
+            courtesyFallbackLocale: $courtesyFallbackLocale,
+            localeCookieEnabled: $localeCookieEnabled,
+            localeCookieName: $localeCookieName,
         );
+    }
+
+    private function echoDefaultNegotiator(): LocaleNegotiatorInterface
+    {
+        // Returns whatever default it is given — models "no supported preference
+        // detected", so a courtesy redirect resolves to courtesy_fallback_locale.
+        $negotiator = $this->createStub(LocaleNegotiatorInterface::class);
+        $negotiator->method('negotiate')->willReturnCallback(
+            static fn(ServerRequestInterface $r, array $supported, string $default): string => $default,
+        );
+
+        return $negotiator;
     }
 
     private function makeNegotiator(string $returns): LocaleNegotiatorInterface
@@ -447,5 +467,160 @@ final class LocalePrefixMiddlewareTest extends TestCase
 
         self::assertSame('fr', $capturedLocale);
         self::assertSame('fr', $capturedNegotiated);
+    }
+
+    #[Test]
+    public function courtesyRedirectsNonDefaultLocaleToPrefix(): void
+    {
+        $middleware = $this->makeMiddleware(
+            $this->makeConfig(defaultLocale: 'en', courtesyRedirect: true),
+            $this->makeNegotiator('fr'),
+        );
+        $request = new ServerRequest(method: 'GET', uri: '/about');
+
+        $response = $middleware->process($request, $this->createStub(RequestHandlerInterface::class));
+
+        self::assertSame(302, $response->getStatusCode());
+        self::assertSame('/fr/about', $response->getHeaderLine('Location'));
+        self::assertSame('Accept-Language, Cookie', $response->getHeaderLine('Vary'));
+    }
+
+    #[Test]
+    public function courtesyRedirectPreservesQueryString(): void
+    {
+        $middleware = $this->makeMiddleware(
+            $this->makeConfig(defaultLocale: 'en', courtesyRedirect: true),
+            $this->makeNegotiator('de'),
+        );
+        $request = new ServerRequest(method: 'GET', uri: '/search?q=hello');
+
+        $response = $middleware->process($request, $this->createStub(RequestHandlerInterface::class));
+
+        self::assertSame(302, $response->getStatusCode());
+        self::assertSame('/de/search?q=hello', $response->getHeaderLine('Location'));
+    }
+
+    #[Test]
+    public function courtesyRedirectSkipsDefaultLocaleToAvoidLoop(): void
+    {
+        // The default locale keeps the canonical unprefixed URL; redirecting it
+        // would loop with the canonical 301 strip.
+        $middleware = $this->makeMiddleware(
+            $this->makeConfig(defaultLocale: 'en', courtesyRedirect: true),
+            $this->makeNegotiator('en'),
+        );
+        $request = new ServerRequest(method: 'GET', uri: '/about');
+
+        $captured = null;
+        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler->expects(self::once())->method('handle')->willReturnCallback(
+            static function (ServerRequestInterface $r) use (&$captured): ResponseInterface {
+                $captured = $r->getAttribute('_locale');
+
+                return Response::text('OK');
+            },
+        );
+
+        $response = $middleware->process($request, $handler);
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame('en', $captured);
+    }
+
+    #[Test]
+    public function courtesyRedirectUsesArrivalFallbackForUndetectedVisitor(): void
+    {
+        // No supported preference -> negotiate returns the arrival fallback, which
+        // is redirected because it differs from the default locale.
+        $middleware = $this->makeMiddleware(
+            $this->makeConfig(defaultLocale: 'en', courtesyRedirect: true, courtesyFallbackLocale: 'de'),
+            $this->echoDefaultNegotiator(),
+        );
+        $request = new ServerRequest(method: 'GET', uri: '/about');
+
+        $response = $middleware->process($request, $this->createStub(RequestHandlerInterface::class));
+
+        self::assertSame(302, $response->getStatusCode());
+        self::assertSame('/de/about', $response->getHeaderLine('Location'));
+    }
+
+    #[Test]
+    public function courtesyRedirectIgnoredForNonGetRequests(): void
+    {
+        $middleware = $this->makeMiddleware(
+            $this->makeConfig(defaultLocale: 'en', courtesyRedirect: true),
+            $this->makeNegotiator('fr'),
+        );
+        $request = new ServerRequest(method: 'POST', uri: '/about');
+
+        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler->expects(self::once())->method('handle')->willReturn(Response::text('OK'));
+
+        self::assertSame(200, $middleware->process($request, $handler)->getStatusCode());
+    }
+
+    #[Test]
+    public function persistsLocaleCookieOnPrefixedPage(): void
+    {
+        $middleware = $this->makeMiddleware(
+            $this->makeConfig(defaultLocale: 'en', localeCookieEnabled: true),
+            $this->makeNegotiator('fr'),
+        );
+        $request = new ServerRequest(method: 'GET', uri: '/fr/docs');
+
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(Response::text('OK'));
+
+        $cookie = $middleware->process($request, $handler)->getHeaderLine('Set-Cookie');
+
+        self::assertStringContainsString('pulsar_locale=fr', $cookie);
+        self::assertStringContainsString('Path=/', $cookie);
+        self::assertStringContainsString('SameSite=Lax', $cookie);
+    }
+
+    #[Test]
+    public function persistsCustomCookieName(): void
+    {
+        $middleware = $this->makeMiddleware(
+            $this->makeConfig(defaultLocale: 'en', localeCookieEnabled: true, localeCookieName: 'lang'),
+            $this->makeNegotiator('de'),
+        );
+        $request = new ServerRequest(method: 'GET', uri: '/de/docs');
+
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(Response::text('OK'));
+
+        self::assertStringContainsString('lang=de', $middleware->process($request, $handler)->getHeaderLine('Set-Cookie'));
+    }
+
+    #[Test]
+    public function noLocaleCookieWhenPersistenceDisabled(): void
+    {
+        $middleware = $this->makeMiddleware(
+            $this->makeConfig(defaultLocale: 'en', localeCookieEnabled: false),
+            $this->makeNegotiator('fr'),
+        );
+        $request = new ServerRequest(method: 'GET', uri: '/fr/docs');
+
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(Response::text('OK'));
+
+        self::assertSame('', $middleware->process($request, $handler)->getHeaderLine('Set-Cookie'));
+    }
+
+    #[Test]
+    public function doesNotResendCookieWhenAlreadyEqualToTheServedLocale(): void
+    {
+        $middleware = $this->makeMiddleware(
+            $this->makeConfig(defaultLocale: 'en', localeCookieEnabled: true),
+            $this->makeNegotiator('fr'),
+        );
+        // Request already carries pulsar_locale=fr and lands on /fr/docs → no re-send.
+        $request = new ServerRequest(method: 'GET', uri: '/fr/docs')->withCookieParams(['pulsar_locale' => 'fr']);
+
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(Response::text('OK'));
+
+        self::assertSame('', $middleware->process($request, $handler)->getHeaderLine('Set-Cookie'));
     }
 }

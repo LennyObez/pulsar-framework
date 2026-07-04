@@ -28,6 +28,7 @@ use Pulsar\I18n\Format\IntlDateFormatter;
 use Pulsar\I18n\Format\IntlNumberFormatter;
 use Pulsar\I18n\Format\MessageFormatterInterface;
 use Pulsar\I18n\Format\NumberFormatterInterface;
+use Pulsar\I18n\Locale\CookieAwareLocaleNegotiator;
 use Pulsar\I18n\Locale\LocaleMiddleware;
 use Pulsar\I18n\Locale\LocaleNegotiator;
 use Pulsar\I18n\Locale\LocalePrefixMiddleware;
@@ -51,6 +52,8 @@ use Pulsar\Routing\Router;
 use Pulsar\View\Engine\TemplateLocaleHelper;
 
 use function extension_loaded;
+use function in_array;
+use function sprintf;
 
 /**
  * Wires the i18n translation system into the container.
@@ -103,9 +106,31 @@ final readonly class I18nWiring implements ServiceWiringInterface
         $container->instance(TranslatorInterface::class, $translator);
         $container->instance(Translator::class, $translator);
 
-        // Locale negotiator
-        $negotiator = new LocaleNegotiator();
+        // Locale negotiator. When locale-cookie persistence is enabled, wrap the
+        // core negotiator so the cookie and session take precedence over
+        // Accept-Language; otherwise stay Accept-Language-only (default behaviour).
+        $negotiator = $config->localeCookieEnabled
+            ? new CookieAwareLocaleNegotiator(new LocaleNegotiator(), $config->localeCookieName)
+            : new LocaleNegotiator();
         $container->instance(LocaleNegotiatorInterface::class, $negotiator);
+
+        // Surface a misconfigured courtesy fallback at boot: a non-empty
+        // courtesy_fallback_locale outside supported_locales would silently skip
+        // the redirect for visitors with no detectable locale.
+        if (
+            $config->courtesyRedirect
+            && $config->courtesyFallbackLocale !== ''
+            && !in_array($config->courtesyFallbackLocale, $config->supportedLocales, true)
+        ) {
+            $courtesyLogger = $container->has(LoggerInterface::class)
+                ? $container->get(LoggerInterface::class)
+                : null;
+            /** @var ?LoggerInterface $courtesyLogger */
+            $courtesyLogger?->warning(sprintf(
+                'i18n courtesy_fallback_locale "%s" is not in supported_locales; the courtesy redirect is skipped for visitors with no detectable locale.',
+                $config->courtesyFallbackLocale,
+            ));
+        }
 
         // Register Intl formatters if ext-intl is available
         if ($intlAvailable) {
