@@ -8,6 +8,7 @@ use Pulsar\Api\Internal;
 use Pulsar\Cache\Application\TaggedCacheInterface;
 use Pulsar\Security\AntiSpam\AiCrawler\AiCrawlerVerificationConfig;
 use Pulsar\Security\AntiSpam\AiCrawler\CrawlerIdentity;
+use Pulsar\Support\Net\CidrMatcher;
 
 use function array_any;
 use function hash;
@@ -71,7 +72,7 @@ final readonly class CrawlerIdentityVerifier
      */
     private function forwardConfirmedReverseDns(string $clientIp, array $domains): bool
     {
-        $cacheKey = 'ai-crawler:fcrdns:' . hash('sha256', $clientIp);
+        $cacheKey = 'ai-crawler.fcrdns.' . hash('sha256', $clientIp);
 
         /** @var mixed $cached */
         $cached = $this->cache?->get($cacheKey);

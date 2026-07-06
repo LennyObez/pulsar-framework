@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Tests\Unit\Security\AntiSpam\AiCrawler;
+namespace Pulsar\Tests\Unit\Support\Net;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Security\AntiSpam\AiCrawler\Internal\CidrMatcher;
+use Pulsar\Support\Net\CidrMatcher;
 
 #[CoversClass(CidrMatcher::class)]
 final class CidrMatcherTest extends TestCase

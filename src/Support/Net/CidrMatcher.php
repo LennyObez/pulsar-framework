@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Security\AntiSpam\AiCrawler\Internal;
+namespace Pulsar\Support\Net;
 
-use Pulsar\Api\Internal;
+use Pulsar\Api\Api;
 
 use function array_any;
 use function explode;
@@ -17,10 +17,12 @@ use function unpack;
 /**
  * Matches an IP address against CIDR ranges (IPv4 and IPv6) or a bare address.
  *
- * Used to confirm a declared crawler connects from one of the issuer's published
- * IP ranges. A malformed address or range never matches (fail closed).
+ * A malformed address or range never matches (fail closed). Used wherever the
+ * framework checks an address against a set of networks — trusted proxies,
+ * crawler identity ranges, datacenter-IP risk signals.
+ * @api
  */
-#[Internal]
+#[Api(since: '1.0.0')]
 final class CidrMatcher
 {
     /**

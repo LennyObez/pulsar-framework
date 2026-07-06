@@ -61,8 +61,12 @@ use Pulsar\Security\AntiSpam\Risk\AdaptiveChallengeMiddleware;
 use Pulsar\Security\AntiSpam\Risk\AdaptiveRiskConfig;
 use Pulsar\Security\AntiSpam\Risk\AdaptiveRiskEngine;
 use Pulsar\Security\AntiSpam\Risk\BotScoreSignalProvider;
+use Pulsar\Security\AntiSpam\Risk\DatacenterIpConfig;
+use Pulsar\Security\AntiSpam\Risk\DatacenterIpSignalProvider;
 use Pulsar\Security\AntiSpam\Risk\Ja4Config;
 use Pulsar\Security\AntiSpam\Risk\Ja4SignalProvider;
+use Pulsar\Security\AntiSpam\Risk\VelocityConfig;
+use Pulsar\Security\AntiSpam\Risk\VelocitySignalProvider;
 use Pulsar\Security\AntiSpam\TimeTrap\TimeTrapCheck;
 use Pulsar\Security\AntiSpam\TimeTrap\TimeTrapRenderer;
 use Pulsar\Security\AntiSpam\TimeTrap\TimeTrapService;
@@ -103,6 +107,8 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
                 AiCrawlerVerificationConfig::class,
                 AdaptiveRiskConfig::class,
                 Ja4Config::class,
+                VelocityConfig::class,
+                DatacenterIpConfig::class,
                 PrivacyPassConfig::class,
             ],
             optional: [
@@ -270,6 +276,12 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
         $privacyPassConfig = $this->loadPrivacyPassConfig($configManager);
         $container->instance(PrivacyPassConfig::class, $privacyPassConfig);
 
+        $velocityConfig = $this->loadVelocityConfig($configManager);
+        $container->instance(VelocityConfig::class, $velocityConfig);
+
+        $datacenterConfig = $this->loadDatacenterIpConfig($configManager);
+        $container->instance(DatacenterIpConfig::class, $datacenterConfig);
+
         if (!$config->enabled) {
             return;
         }
@@ -280,12 +292,29 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
 
         $signalProviders = [new BotScoreSignalProvider($botDetector)];
 
+        $trustedProxy = $container->has(TrustedProxy::class)
+            ? $container->get(TrustedProxy::class)
+            : null;
+
         // JA4/JA4+ TLS-fingerprint signal: edge-supplied, trusted-proxy gated.
         if ($ja4Config->enabled) {
-            $trustedProxy = $container->has(TrustedProxy::class)
-                ? $container->get(TrustedProxy::class)
-                : null;
             $signalProviders[] = new Ja4SignalProvider($ja4Config, $trustedProxy);
+        }
+
+        // Request-velocity signal: per-client rate within a window (needs cache).
+        if ($velocityConfig->enabled) {
+            if ($container->has(TaggedCacheInterface::class)) {
+                /** @var TaggedCacheInterface $velocityCache */
+                $velocityCache = $container->get(TaggedCacheInterface::class);
+                $signalProviders[] = new VelocitySignalProvider($velocityConfig, $velocityCache, $trustedProxy);
+            } else {
+                $logger->warning('Velocity risk signal disabled: no cache bound to track request rates.');
+            }
+        }
+
+        // Datacenter/hosting-IP signal: operator-supplied CIDR ranges.
+        if ($datacenterConfig->enabled && $datacenterConfig->ranges !== []) {
+            $signalProviders[] = new DatacenterIpSignalProvider($datacenterConfig, $trustedProxy);
         }
 
         // Private Access Token (Privacy Pass): a valid token bypasses scoring.
@@ -442,6 +471,50 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
         }
 
         return new Ja4Config();
+    }
+
+    private function loadVelocityConfig(ConfigManager $configManager): VelocityConfig
+    {
+        $configPath = $configManager->configPath();
+
+        if ($configPath !== null && is_file($configPath . DIRECTORY_SEPARATOR . 'anti-spam.php')) {
+            /**
+             * @psalm-suppress UnresolvableInclude
+             * @var mixed $data
+             */
+            $data = require $configPath . DIRECTORY_SEPARATOR . 'anti-spam.php';
+
+            if (is_array($data) && isset($data['velocity']) && is_array($data['velocity'])) {
+                /** @var array<string, mixed> $velocity */
+                $velocity = $data['velocity'];
+
+                return VelocityConfig::fromArray($velocity);
+            }
+        }
+
+        return new VelocityConfig();
+    }
+
+    private function loadDatacenterIpConfig(ConfigManager $configManager): DatacenterIpConfig
+    {
+        $configPath = $configManager->configPath();
+
+        if ($configPath !== null && is_file($configPath . DIRECTORY_SEPARATOR . 'anti-spam.php')) {
+            /**
+             * @psalm-suppress UnresolvableInclude
+             * @var mixed $data
+             */
+            $data = require $configPath . DIRECTORY_SEPARATOR . 'anti-spam.php';
+
+            if (is_array($data) && isset($data['datacenter']) && is_array($data['datacenter'])) {
+                /** @var array<string, mixed> $datacenter */
+                $datacenter = $data['datacenter'];
+
+                return DatacenterIpConfig::fromArray($datacenter);
+            }
+        }
+
+        return new DatacenterIpConfig();
     }
 
     private function loadPrivacyPassConfig(ConfigManager $configManager): PrivacyPassConfig

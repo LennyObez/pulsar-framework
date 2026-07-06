@@ -111,6 +111,25 @@ return [
         'partial_match_score' => 0.6,   // prefix/family hit (lower confidence)
     ],
 
+    // Request-velocity risk signal: a client exceeding `threshold` requests per
+    // `window_seconds` contributes risk to the adaptive engine, scaling to
+    // `max_score`. Per-origin local reputation; requires the cache.
+    'velocity' => [
+        'enabled' => false,
+        'threshold' => 120,
+        'window_seconds' => 60,
+        'max_score' => 0.7,
+    ],
+
+    // Datacenter/hosting-IP risk signal: a client whose (trusted-proxy-resolved)
+    // IP falls in operator-supplied datacenter CIDR ranges contributes `score`.
+    // No bundled ASN database — export ranges from your provider/threat feed.
+    'datacenter' => [
+        'enabled' => false,
+        'ranges' => [], // e.g. ['198.51.100.0/24', '2001:db8::/32']
+        'score' => 0.5,
+    ],
+
     // Private Access Tokens (Privacy Pass, RFC 9577/9578). Pulsar acts as the
     // Origin: it advertises a token challenge on denied responses and accepts a
     // redeemed token as proof of a legitimate client — a valid token bypasses

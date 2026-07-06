@@ -35,8 +35,10 @@ use Pulsar\Security\AntiSpam\PrivacyPass\TokenChallenge;
 use Pulsar\Security\AntiSpam\Risk\AdaptiveChallengeMiddleware;
 use Pulsar\Security\AntiSpam\Risk\AdaptiveRiskConfig;
 use Pulsar\Security\AntiSpam\Risk\AdaptiveRiskEngine;
+use Pulsar\Security\AntiSpam\Risk\DatacenterIpConfig;
 use Pulsar\Security\AntiSpam\Risk\Ja4Config;
 use Pulsar\Security\AntiSpam\Risk\RiskDecision;
+use Pulsar\Security\AntiSpam\Risk\VelocityConfig;
 use Pulsar\Tests\Unit\Security\AntiSpam\PrivacyPass\PrivacyPassTokenFactory;
 use RuntimeException;
 
@@ -299,6 +301,57 @@ final class AntiSpamWiringTest extends TestCase
 
         self::assertSame(RiskDecision::Allow, $assessment->decision, 'a token under a directory-discovered key bypasses');
         self::assertTrue($assessment->bypassed);
+    }
+
+    #[Test]
+    public function datacenterSignalFeedsTheEngineWhenWired(): void
+    {
+        $container = new Container();
+        $pipeline = new MiddlewarePipeline($container);
+
+        // 0.0.0.0/0 matches any IPv4; a high score forces a block, proving the
+        // datacenter provider is wired into the engine.
+        $this->wire(
+            $container,
+            $pipeline,
+            "'adaptive_risk' => ['enabled' => true], "
+            . "'datacenter' => ['enabled' => true, 'ranges' => ['0.0.0.0/0'], 'score' => 0.95]",
+        );
+
+        self::assertTrue($container->has(DatacenterIpConfig::class));
+
+        $engine = $container->get(AdaptiveRiskEngine::class);
+        self::assertInstanceOf(AdaptiveRiskEngine::class, $engine);
+
+        $request = new ServerRequest(method: 'GET', uri: '/', serverParams: ['REMOTE_ADDR' => '203.0.113.5']);
+
+        self::assertSame(RiskDecision::Block, $engine->assess($request)->decision);
+    }
+
+    #[Test]
+    public function velocitySignalFeedsTheEngineWhenWired(): void
+    {
+        $container = new Container();
+        $pipeline = new MiddlewarePipeline($container);
+        $container->instance(TaggedCacheInterface::class, $this->inMemoryCache());
+
+        $this->wire(
+            $container,
+            $pipeline,
+            "'adaptive_risk' => ['enabled' => true], "
+            . "'velocity' => ['enabled' => true, 'threshold' => 1, 'window_seconds' => 300, 'max_score' => 0.95]",
+        );
+
+        self::assertTrue($container->has(VelocityConfig::class));
+
+        $engine = $container->get(AdaptiveRiskEngine::class);
+        self::assertInstanceOf(AdaptiveRiskEngine::class, $engine);
+
+        $request = new ServerRequest(method: 'GET', uri: '/', serverParams: ['REMOTE_ADDR' => '203.0.113.5']);
+
+        (void) $engine->assess($request); // count 1 (== threshold)
+        // count 2 is over threshold => velocity contributes maxScore => block.
+        self::assertSame(RiskDecision::Block, $engine->assess($request)->decision);
     }
 
     private function base64Url(string $value): string
