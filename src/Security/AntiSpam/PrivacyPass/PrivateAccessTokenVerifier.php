@@ -159,7 +159,7 @@ final readonly class PrivateAccessTokenVerifier
             return true;
         }
 
-        $key = 'privacy-pass:nonce:' . bin2hex($nonce);
+        $key = 'privacy-pass.nonce.' . bin2hex($nonce);
 
         if ($this->replayCache->get($key) !== null) {
             return false;
