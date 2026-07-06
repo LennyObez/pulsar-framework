@@ -229,6 +229,10 @@ When `send_tdm_reservation` is on, responses also carry the TDM (Text & Data Min
 
 `overrides` change the action for a specific named crawler; `custom_crawlers` add UA tokens the built-in list doesn't know yet, mapped to a category — both let you adapt without waiting for a release.
 
+### robots.txt advisory layer
+
+The middleware enforces at request time, but some AI opt-out tokens — `Google-Extended`, `Applebot-Extended` — are **never sent as a request `User-Agent`**; they are only meaningful as robots.txt directives. The CMS `robots.txt` generator therefore renders directives from the **same `AiCrawlerConfig`** (`AiCrawlerRobotsPolicy`): every crawler whose resolved action is `block` gets a `User-agent: …` / `Disallow: /` block, including those opt-out-only tokens. `allow` and `rate_limit` crawlers are left unrestricted in robots.txt — rate limits cannot be expressed there and are enforced at the middleware. Driving both layers from one config keeps the advisory and enforced policies from drifting apart.
+
 ### Honest limitation
 
 This layer recognises crawlers that **declare themselves**. A scraper that forges a browser `User-Agent` is not caught here — that is the job of the other layers (rate limiting, behavioural signals, the adaptive engine, and the JA4 signal below). Treat AI-scraper defense as the polite-but-enforced front door for honest bots, not as anti-evasion.

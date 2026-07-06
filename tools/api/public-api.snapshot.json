@@ -38909,6 +38909,25 @@
             },
             "constants": []
         },
+        "Pulsar\\Security\\AntiSpam\\AiCrawler\\AiCrawlerRobotsPolicy": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "Pulsar\\Security\\AntiSpam\\AiCrawler\\AiCrawlerConfig $config"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "directives": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\Security\\AntiSpam\\AntiSpamCheckInterface": {
             "since": "1.0.0",
             "methods": [],
