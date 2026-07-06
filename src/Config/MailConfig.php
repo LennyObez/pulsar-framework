@@ -6,6 +6,7 @@ namespace Pulsar\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Mail\Webhook\MailWebhookConfig;
 use Pulsar\Support\Coerce;
 
 use function is_array;
@@ -30,6 +31,7 @@ final readonly class MailConfig
         public bool $hipaaMode = false,
         public bool $auditHashEnabled = false,
         public array $driverOptions = [],
+        public MailWebhookConfig $webhooks = new MailWebhookConfig(),
     ) {}
 
     /**
@@ -43,11 +45,13 @@ final readonly class MailConfig
      *     hipaa_mode?: bool|int|string,
      *     audit_hash_enabled?: bool|int|string,
      *     driver_options?: array<string, mixed>,
+     *     webhooks?: array<string, mixed>,
      * } $data Raw array from config/mail.php
      */
     #[NoDiscard]
     public static function fromArray(array $data, Environment $environment): self
     {
+        $webhooks = $data['webhooks'] ?? null;
         $enabled = $environment->get('MAIL_ENABLED') !== null
             ? $environment->get('MAIL_ENABLED') === 'true'
             : Coerce::strictBool($data['enabled'] ?? null);
@@ -83,6 +87,7 @@ final readonly class MailConfig
             hipaaMode: $hipaaMode,
             auditHashEnabled: $auditHashEnabled,
             driverOptions: is_array($driverOptions) ? $driverOptions : [],
+            webhooks: MailWebhookConfig::fromArray(is_array($webhooks) ? $webhooks : []),
         );
     }
 }
