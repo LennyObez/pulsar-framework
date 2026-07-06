@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Core\Wiring;
 
+use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Config\ConfigManager;
@@ -15,16 +16,23 @@ use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Routing\Router;
 use Pulsar\Security\AntiSpam\AiCrawler\AiCrawlerConfig;
 use Pulsar\Security\AntiSpam\AiCrawler\AiCrawlerMiddleware;
+use Pulsar\Security\AntiSpam\PrivacyPass\PrivacyPassConfig;
+use Pulsar\Security\AntiSpam\PrivacyPass\PrivateTokenChallengeMiddleware;
+use Pulsar\Security\AntiSpam\PrivacyPass\TokenChallenge;
 use Pulsar\Security\AntiSpam\Risk\AdaptiveChallengeMiddleware;
 use Pulsar\Security\AntiSpam\Risk\AdaptiveRiskConfig;
 use Pulsar\Security\AntiSpam\Risk\AdaptiveRiskEngine;
 use Pulsar\Security\AntiSpam\Risk\Ja4Config;
 use Pulsar\Security\AntiSpam\Risk\RiskDecision;
+use Pulsar\Tests\Unit\Security\AntiSpam\PrivacyPass\PrivacyPassTokenFactory;
 
+use function base64_encode;
 use function bin2hex;
 use function file_put_contents;
 use function mkdir;
 use function random_bytes;
+use function rtrim;
+use function strtr;
 use function sys_get_temp_dir;
 
 final class AntiSpamWiringTest extends TestCase
@@ -130,6 +138,66 @@ final class AntiSpamWiringTest extends TestCase
         $withoutHeader = $engine->assess(new ServerRequest(method: 'GET', uri: '/'))->score;
 
         self::assertSame($withoutHeader, $withHeader, 'JA4 header inert when ja4 disabled');
+    }
+
+    #[Test]
+    public function privacyPassConfigIsAlwaysBoundForIntrospection(): void
+    {
+        $container = new Container();
+        $pipeline = new MiddlewarePipeline($container);
+
+        // adaptive_risk on, privacy_pass absent => no PAT challenge middleware.
+        $this->wire($container, $pipeline, "'adaptive_risk' => ['enabled' => true]");
+
+        self::assertTrue($container->has(PrivacyPassConfig::class));
+        self::assertFalse(
+            $container->has(PrivateTokenChallengeMiddleware::class),
+            'no PAT middleware when privacy_pass disabled',
+        );
+    }
+
+    #[Test]
+    #[RequiresPhpExtension('gmp')]
+    public function privacyPassTokenBypassesTheEngineWhenWired(): void
+    {
+        $container = new Container();
+        $pipeline = new MiddlewarePipeline($container);
+        $before = $pipeline->count();
+
+        // Mint a token bound to the stateless (empty-context) challenge the
+        // config produces, signed with a key we control.
+        $issued = PrivacyPassTokenFactory::issue(new TokenChallenge(0x0002, 'issuer.example', 'origin.example'));
+        $key = $this->base64Url($issued['spkiDer']);
+
+        $this->wire(
+            $container,
+            $pipeline,
+            "'adaptive_risk' => ['enabled' => true], "
+            . "'privacy_pass' => ['enabled' => true, 'issuer_name' => 'issuer.example', "
+            . "'origin_info' => 'origin.example', 'token_key' => '" . $key . "']",
+        );
+
+        // adaptive challenge middleware + the outer PAT challenge advertiser.
+        self::assertSame($before + 2, $pipeline->count(), 'adaptive + PAT challenge middleware piped');
+
+        $engine = $container->get(AdaptiveRiskEngine::class);
+        self::assertInstanceOf(AdaptiveRiskEngine::class, $engine);
+
+        $request = new ServerRequest(
+            method: 'GET',
+            uri: '/',
+            headers: ['Authorization' => 'PrivateToken token="' . $this->base64Url($issued['token']) . '"'],
+        );
+
+        $assessment = $engine->assess($request);
+
+        self::assertSame(RiskDecision::Allow, $assessment->decision, 'a valid PAT bypasses scoring');
+        self::assertTrue($assessment->bypassed);
+    }
+
+    private function base64Url(string $value): string
+    {
+        return rtrim(strtr(base64_encode($value), '+/', '-_'), '=');
     }
 
     private function wire(Container $container, MiddlewarePipeline $pipeline, string $antiSpamBody): void
