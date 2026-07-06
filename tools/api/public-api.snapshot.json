@@ -39521,6 +39521,29 @@
             },
             "constants": []
         },
+        "Pulsar\\Security\\AntiSpam\\Risk\\DatacenterIpConfig": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "bool $enabled",
+                        "array $ranges",
+                        "float $score"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "fromArray": {
+                    "params": [
+                        "array $data"
+                    ],
+                    "return": "Pulsar\\Security\\AntiSpam\\Risk\\DatacenterIpConfig",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\Security\\AntiSpam\\Risk\\Ja4Config": {
             "since": "1.0.0",
             "methods": [],
@@ -39631,6 +39654,30 @@
                     ],
                     "return": "Pulsar\\Security\\AntiSpam\\Risk\\RiskSignal",
                     "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Security\\AntiSpam\\Risk\\VelocityConfig": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "bool $enabled",
+                        "int $threshold",
+                        "int $windowSeconds",
+                        "float $maxScore"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "fromArray": {
+                    "params": [
+                        "array $data"
+                    ],
+                    "return": "Pulsar\\Security\\AntiSpam\\Risk\\VelocityConfig",
+                    "static": true
                 }
             },
             "constants": []
@@ -50877,6 +50924,29 @@
             },
             "constants": []
         },
+        "Pulsar\\Support\\Net\\CidrMatcher": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "matches": {
+                    "params": [
+                        "string $ip",
+                        "string $cidr"
+                    ],
+                    "return": "bool",
+                    "static": true
+                },
+                "matchesAny": {
+                    "params": [
+                        "string $ip",
+                        "array $ranges"
+                    ],
+                    "return": "bool",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\Support\\Pipeline": {
             "since": "1.0.0",
             "methods": [],
@@ -56073,7 +56143,6 @@
         "Pulsar\\Security\\AntiSpam\\AiCrawler\\AiCrawlerMiddleware",
         "Pulsar\\Security\\AntiSpam\\AiCrawler\\CrawlerIdentity",
         "Pulsar\\Security\\AntiSpam\\AiCrawler\\DetectedAiCrawler",
-        "Pulsar\\Security\\AntiSpam\\AiCrawler\\Internal\\CidrMatcher",
         "Pulsar\\Security\\AntiSpam\\AiCrawler\\Internal\\CrawlerDnsResolver",
         "Pulsar\\Security\\AntiSpam\\AiCrawler\\Internal\\CrawlerIdentityVerifier",
         "Pulsar\\Security\\AntiSpam\\AiCrawler\\Internal\\SystemCrawlerDnsResolver",
@@ -56103,7 +56172,9 @@
         "Pulsar\\Security\\AntiSpam\\ReputationCooldown",
         "Pulsar\\Security\\AntiSpam\\Risk\\AdaptiveChallengeMiddleware",
         "Pulsar\\Security\\AntiSpam\\Risk\\BotScoreSignalProvider",
+        "Pulsar\\Security\\AntiSpam\\Risk\\DatacenterIpSignalProvider",
         "Pulsar\\Security\\AntiSpam\\Risk\\Ja4SignalProvider",
+        "Pulsar\\Security\\AntiSpam\\Risk\\VelocitySignalProvider",
         "Pulsar\\Security\\AntiSpam\\TimeTrap\\TimeTrapCheck",
         "Pulsar\\Security\\AntiSpam\\TimeTrap\\TimeTrapService",
         "Pulsar\\Security\\AntiSpam\\TimeTrap\\TimeTrapToken",
