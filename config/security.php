@@ -100,6 +100,18 @@ return [
     |--------------------------------------------------------------------------
     | Security Headers
     |--------------------------------------------------------------------------
+    |
+    | Literal `Name => value` entries are emitted verbatim — "what you write is
+    | what's emitted". A literal `Strict-Transport-Security` or `Permissions-Policy`
+    | takes precedence over the structured `hsts` / `permissions_policy` blocks
+    | below; the framework logs a one-time boot warning when a literal shadows an
+    | active structured block so the override is never silent. (A literal
+    | `Strict-Transport-Security` is still emitted only over HTTPS — RFC 6797 §7.2.)
+    |
+    | Prefer the structured blocks (`csp`, `hsts`, `cross_origin`, `permissions_policy`,
+    | `nel`): they are typed and validated. Note the HSTS key is spelled
+    | `include_sub_domains` (with underscores).
+    |
     */
     'headers' => [
         'X-Content-Type-Options' => 'nosniff',

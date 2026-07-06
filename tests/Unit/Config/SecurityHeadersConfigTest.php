@@ -167,6 +167,109 @@ final class SecurityHeadersConfigTest extends TestCase
     }
 
     #[Test]
+    public function effectiveHeadersDropsLiteralHstsForConditionalEmission(): void
+    {
+        // A literal Strict-Transport-Security must NOT appear in the unconditional
+        // header set; the middleware emits it conditionally (secure requests only,
+        // RFC 6797 §7.2) via effectiveHstsHeader().
+        $config = new SecurityHeadersConfig(
+            headers: ['Strict-Transport-Security' => 'max-age=63072000; preload'],
+        );
+
+        self::assertArrayNotHasKey('Strict-Transport-Security', $config->effectiveHeaders());
+    }
+
+    #[Test]
+    public function effectiveHstsHeaderHonorsLiteralOverStructured(): void
+    {
+        $config = new SecurityHeadersConfig(
+            headers: ['Strict-Transport-Security' => 'max-age=63072000; includeSubDomains; preload'],
+            hsts: new HstsConfig(enabled: true, maxAge: 63072000, includeSubDomains: true, preload: false),
+        );
+
+        self::assertSame('max-age=63072000; includeSubDomains; preload', $config->effectiveHstsHeader());
+    }
+
+    #[Test]
+    public function effectiveHstsHeaderFallsBackToStructuredWhenNoLiteral(): void
+    {
+        $config = new SecurityHeadersConfig(
+            headers: [],
+            hsts: new HstsConfig(enabled: true, maxAge: 31536000, includeSubDomains: false),
+        );
+
+        self::assertSame('max-age=31536000', $config->effectiveHstsHeader());
+    }
+
+    #[Test]
+    public function effectiveHstsHeaderReturnsNullWhenDisabledAndNoLiteral(): void
+    {
+        $config = new SecurityHeadersConfig(
+            headers: [],
+            hsts: new HstsConfig(enabled: false),
+        );
+
+        self::assertNull($config->effectiveHstsHeader());
+    }
+
+    #[Test]
+    public function literalHeaderLookupIsCaseInsensitive(): void
+    {
+        $config = new SecurityHeadersConfig(
+            headers: ['strict-transport-security' => 'max-age=600'],
+        );
+
+        self::assertSame('max-age=600', $config->literalHeader('Strict-Transport-Security'));
+        self::assertNull($config->literalHeader('X-Absent'));
+        // A lowercase literal is still honored by effectiveHstsHeader().
+        self::assertSame('max-age=600', $config->effectiveHstsHeader());
+    }
+
+    #[Test]
+    public function literalPermissionsPolicyOverridesStructuredInEffectiveHeaders(): void
+    {
+        $config = new SecurityHeadersConfig(
+            headers: ['Permissions-Policy' => 'geolocation=(self)'],
+        );
+
+        self::assertSame('geolocation=(self)', $config->effectiveHeaders()['Permissions-Policy']);
+    }
+
+    #[Test]
+    public function shadowedStructuredHeadersReportsHstsConflict(): void
+    {
+        $config = new SecurityHeadersConfig(
+            headers: ['Strict-Transport-Security' => 'max-age=63072000; includeSubDomains; preload'],
+            hsts: new HstsConfig(enabled: true, maxAge: 63072000, includeSubDomains: true, preload: false),
+        );
+
+        $conflicts = $config->shadowedStructuredHeaders();
+
+        self::assertCount(1, $conflicts);
+        self::assertStringContainsString('Strict-Transport-Security', $conflicts[0]);
+        self::assertStringContainsString('preload', $conflicts[0]);
+    }
+
+    #[Test]
+    public function shadowedStructuredHeadersEmptyWhenLiteralMatchesStructured(): void
+    {
+        $config = new SecurityHeadersConfig(
+            headers: ['Strict-Transport-Security' => 'max-age=63072000; includeSubDomains'],
+            hsts: new HstsConfig(enabled: true, maxAge: 63072000, includeSubDomains: true, preload: false),
+        );
+
+        self::assertSame([], $config->shadowedStructuredHeaders());
+    }
+
+    #[Test]
+    public function shadowedStructuredHeadersEmptyWithNoLiterals(): void
+    {
+        $config = new SecurityHeadersConfig(headers: []);
+
+        self::assertSame([], $config->shadowedStructuredHeaders());
+    }
+
+    #[Test]
     public function fromArrayWithFullConfig(): void
     {
         $config = SecurityHeadersConfig::fromArray([

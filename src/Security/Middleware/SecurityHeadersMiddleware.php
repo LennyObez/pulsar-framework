@@ -60,11 +60,12 @@ final readonly class SecurityHeadersMiddleware implements MiddlewareInterface
             $response = $response->withHeader($name, $value);
         }
 
-        if ($this->config->hsts->enabled && $this->isSecureRequest($request)) {
-            $response = $response->withHeader(
-                'Strict-Transport-Security',
-                $this->config->hsts->toHeaderValue(),
-            );
+        // HSTS is emitted only on secure requests (RFC 6797 §7.2). A literal
+        // Strict-Transport-Security in `headers` takes precedence over the
+        // structured HstsConfig — both resolved by effectiveHstsHeader().
+        $hsts = $this->config->effectiveHstsHeader();
+        if ($hsts !== null && $this->isSecureRequest($request)) {
+            $response = $response->withHeader('Strict-Transport-Security', $hsts);
         }
 
         // Alt-Svc: advertise HTTP/3 support when configured

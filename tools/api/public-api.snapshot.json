@@ -10035,12 +10035,29 @@
                     "return": "array",
                     "static": false
                 },
+                "effectiveHstsHeader": {
+                    "params": [],
+                    "return": "?string",
+                    "static": false
+                },
                 "fromArray": {
                     "params": [
                         "array $data"
                     ],
                     "return": "Pulsar\\Config\\SecurityHeadersConfig",
                     "static": true
+                },
+                "literalHeader": {
+                    "params": [
+                        "string $name"
+                    ],
+                    "return": "?string",
+                    "static": false
+                },
+                "shadowedStructuredHeaders": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -39943,7 +39960,7 @@
                 "__construct": {
                     "params": [
                         "bool $debugMode",
-                        "bool $httpsEnforced",
+                        "bool $hstsEnabled",
                         "?Pulsar\\Config\\HstsConfig $hstsConfig",
                         "?Pulsar\\Config\\SessionConfig $sessionConfig"
                     ],

@@ -237,7 +237,13 @@ return [
 ];
 ```
 
-The `SecurityHeadersConfig` DTO is a readonly object constructed from this array via `fromArray()`. Headers are applied in the order they appear in the configuration.
+The `SecurityHeadersConfig` DTO is a readonly object constructed from this array via `fromArray()`.
+
+#### Literal headers vs. structured blocks
+
+The `headers` array also accepts structured sub-blocks (`csp`, `hsts`, `cross_origin`, `permissions_policy`, `nel`) that are typed and validated — these are the recommended way to configure CSP, HSTS, Cross-Origin isolation, Permissions-Policy, and NEL.
+
+When a **literal** `Strict-Transport-Security` or `Permissions-Policy` key is set alongside its structured block, the **literal wins** — "what you write is what's emitted". To make the override explicit rather than silent, Pulsar logs a one-time boot warning (`component: security.headers`) whenever a literal shadows an active structured block with a different value. A literal `Strict-Transport-Security` is still emitted **only over HTTPS** (RFC 6797 §7.2 forbids HSTS over plaintext HTTP), exactly like the structured `hsts` block.
 
 ### HSTS recommendation
 
@@ -255,6 +261,21 @@ For production deployments served over HTTPS, add the `Strict-Transport-Security
 | `max-age=31536000`  | Browsers remember HTTPS-only for 1 year (recommended minimum) |
 | `includeSubDomains` | Apply the policy to all subdomains                            |
 | `preload`           | Optional: submit to the HSTS preload list for browser vendors |
+
+Alternatively, use the structured `hsts` block, which is typed and validated. Note the key spelling differs from the literal header directive — the config key is **`include_sub_domains`** (snake_case), while the emitted directive is `includeSubDomains` (the RFC 6797 token):
+
+```php
+'headers' => [
+    'hsts' => [
+        'enabled'             => true,
+        'max_age'            => 63072000,
+        'include_sub_domains' => true,  // emitted as `includeSubDomains`
+        'preload'             => true,
+    ],
+],
+```
+
+A literal `Strict-Transport-Security` (e.g. with `preload`) overrides this structured block — see [Literal headers vs. structured blocks](#literal-headers-vs-structured-blocks).
 
 **Do not enable HSTS** unless all of the following are true:
 

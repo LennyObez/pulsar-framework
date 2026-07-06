@@ -289,6 +289,74 @@ final class SecurityHeadersMiddlewareTest extends TestCase
     }
 
     #[Test]
+    public function literalHstsWithPreloadReachesTheWireOnSecureRequest(): void
+    {
+        // A literal Strict-Transport-Security in `headers` must be emitted exactly
+        // as written, including `preload`, instead of being silently overwritten by
+        // the structured HstsConfig (whose preload defaults to false).
+        $config = new SecurityHeadersConfig(
+            headers: ['Strict-Transport-Security' => 'max-age=63072000; includeSubDomains; preload'],
+            hsts: new HstsConfig(enabled: true, maxAge: 63072000, includeSubDomains: true, preload: false),
+        );
+
+        $middleware = new SecurityHeadersMiddleware($config);
+
+        $response = $middleware->process($this->createHttpsRequest(), $this->textHandler());
+
+        self::assertSame(
+            'max-age=63072000; includeSubDomains; preload',
+            $response->getHeaderLine('Strict-Transport-Security'),
+        );
+    }
+
+    #[Test]
+    public function literalHstsTakesPrecedenceOverStructuredConfig(): void
+    {
+        $config = new SecurityHeadersConfig(
+            headers: ['Strict-Transport-Security' => 'max-age=300'],
+            hsts: new HstsConfig(enabled: true, maxAge: 63072000, includeSubDomains: true, preload: true),
+        );
+
+        $middleware = new SecurityHeadersMiddleware($config);
+
+        $response = $middleware->process($this->createHttpsRequest(), $this->textHandler());
+
+        self::assertSame('max-age=300', $response->getHeaderLine('Strict-Transport-Security'));
+    }
+
+    #[Test]
+    public function literalHstsNotEmittedOverPlaintextHttp(): void
+    {
+        // RFC 6797 §7.2: HSTS must never be emitted over plaintext HTTP, even when
+        // the operator set it as a literal header.
+        $config = new SecurityHeadersConfig(
+            headers: ['Strict-Transport-Security' => 'max-age=63072000; includeSubDomains; preload'],
+        );
+
+        $middleware = new SecurityHeadersMiddleware($config);
+
+        $response = $middleware->process($this->createRequest(), $this->textHandler());
+
+        self::assertSame('', $response->getHeaderLine('Strict-Transport-Security'));
+    }
+
+    #[Test]
+    public function literalPermissionsPolicyIsHonoredOverStructuredDefault(): void
+    {
+        // The structured PermissionsPolicyConfig defaults are always non-empty, so
+        // before the fix they silently overwrote any literal Permissions-Policy.
+        $config = new SecurityHeadersConfig(
+            headers: ['Permissions-Policy' => 'geolocation=(self), camera=*'],
+        );
+
+        $middleware = new SecurityHeadersMiddleware($config);
+
+        $response = $middleware->process($this->createRequest(), $this->textHandler());
+
+        self::assertSame('geolocation=(self), camera=*', $response->getHeaderLine('Permissions-Policy'));
+    }
+
+    #[Test]
     public function cspHeaderPresentInResponse(): void
     {
         $config = new SecurityHeadersConfig(

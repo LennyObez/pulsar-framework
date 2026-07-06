@@ -7,6 +7,9 @@ namespace Pulsar\Tests\Unit\Core\Wiring;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\AbstractLogger;
+use Psr\Log\LoggerInterface;
+use Psr\Log\LogLevel;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Container\Container;
 use Pulsar\Core\Wiring\SecurityWiring;
@@ -28,6 +31,7 @@ use Pulsar\Security\Session\SessionInterface;
 use Pulsar\Security\Session\SessionManager;
 use Pulsar\Security\Session\SessionMiddleware;
 use Random\Randomizer;
+use Stringable;
 
 use function bin2hex;
 use function file_put_contents;
@@ -229,7 +233,76 @@ final class SecurityWiringTest extends TestCase
         self::assertNotSame('', $response->getHeaderLine('Content-Security-Policy'));
     }
 
-    private function createConfigManager(?string $masterKeyHex = null, string $sessionHandler = 'file'): ConfigManager
+    #[Test]
+    public function wireLogsWarningWhenLiteralHeaderShadowsStructuredConfig(): void
+    {
+        $container = new Container();
+        $container->instance(Randomizer::class, new Randomizer());
+
+        $logger = new class extends AbstractLogger {
+            /** @var list<string> */
+            public array $warnings = [];
+
+            public function log(mixed $level, string|Stringable $message, array $context = []): void
+            {
+                if ($level === LogLevel::WARNING) {
+                    $this->warnings[] = (string) $message;
+                }
+            }
+        };
+        $container->instance(LoggerInterface::class, $logger);
+
+        $router = new Router();
+        $middleware = new MiddlewarePipeline($container);
+        $middlewareRegistry = new MiddlewareRegistry();
+
+        // A literal Strict-Transport-Security that disagrees with the typed hsts
+        // block (preload differs) must trigger a one-time boot warning.
+        $configManager = $this->createConfigManager(
+            headersBody: '"Strict-Transport-Security" => "max-age=63072000; includeSubDomains; preload", "hsts" => ["enabled" => true, "preload" => false]',
+        );
+        $configManager->load();
+
+        $wiring = new SecurityWiring();
+        $wiring->wire($container, $configManager, $middleware, $middlewareRegistry, $router);
+
+        self::assertNotEmpty($logger->warnings);
+        self::assertStringContainsString('Strict-Transport-Security', implode("\n", $logger->warnings));
+    }
+
+    #[Test]
+    public function wireDoesNotWarnForDefaultHeaders(): void
+    {
+        $container = new Container();
+        $container->instance(Randomizer::class, new Randomizer());
+
+        $logger = new class extends AbstractLogger {
+            /** @var list<string> */
+            public array $warnings = [];
+
+            public function log(mixed $level, string|Stringable $message, array $context = []): void
+            {
+                if ($level === LogLevel::WARNING) {
+                    $this->warnings[] = (string) $message;
+                }
+            }
+        };
+        $container->instance(LoggerInterface::class, $logger);
+
+        $router = new Router();
+        $middleware = new MiddlewarePipeline($container);
+        $middlewareRegistry = new MiddlewareRegistry();
+
+        $configManager = $this->createConfigManager();
+        $configManager->load();
+
+        $wiring = new SecurityWiring();
+        $wiring->wire($container, $configManager, $middleware, $middlewareRegistry, $router);
+
+        self::assertSame([], $logger->warnings);
+    }
+
+    private function createConfigManager(?string $masterKeyHex = null, string $sessionHandler = 'file', string $headersBody = ''): ConfigManager
     {
         $configPath = sys_get_temp_dir() . '/pulsar_security_wiring_' . bin2hex(random_bytes(4));
         @mkdir($configPath, 0o755, true);
@@ -243,7 +316,7 @@ final class SecurityWiringTest extends TestCase
 
         file_put_contents($configPath . '/app.php', '<?php return ["name" => "Test", "env" => "testing", "debug" => false, "timezone" => "UTC", "locale" => "en"];');
         file_put_contents($configPath . '/observability.php', '<?php return ["logging" => ["default_channel" => "file", "level" => "debug", "channels" => []], "audit" => ["enabled" => false]];');
-        file_put_contents($configPath . '/security.php', '<?php return ["session" => ["handler" => "' . $sessionHandler . '", "lifetime" => 120, "encryption" => false, "validators" => []], "csrf" => [], "headers" => [], "rate_limit" => [], "cors" => ["enabled" => false]];');
+        file_put_contents($configPath . '/security.php', '<?php return ["session" => ["handler" => "' . $sessionHandler . '", "lifetime" => 120, "encryption" => false, "validators" => []], "csrf" => [], "headers" => [' . $headersBody . '], "rate_limit" => [], "cors" => ["enabled" => false]];');
 
         return new ConfigManager($configPath);
     }
