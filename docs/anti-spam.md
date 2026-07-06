@@ -275,7 +275,15 @@ A `RiskBypassProviderInterface` can short-circuit to allow (e.g. an authenticate
 
 A JA4 fingerprint summarises the TLS ClientHello — cipher suites, extensions, ALPN — into a stable string that is far harder to forge than a `User-Agent`, because it reflects the actual TLS stack. The application layer **cannot compute it**: by the time a request reaches PHP, the TLS handshake is over and the raw ClientHello is gone. So JA4 must be computed at the TLS-terminating edge / reverse proxy and forwarded in a header (default `X-JA4`).
 
-Because a client connecting directly could simply _send_ that header, it is honoured **only for requests arriving through a trusted proxy** (`trusted_proxies_only`, on by default — requires `deploy.trusted_proxies`). `Ja4SignalProvider` checks `REMOTE_ADDR` against the trusted set via `TrustedProxy`; an untrusted source's header is ignored and contributes zero risk. It is a **denylist** signal — an absent or unknown fingerprint adds no risk; only an operator-supplied known-bad fingerprint scores `match_score`, feeding the engine above. Known-bad lists are operator-supplied (e.g. from a threat feed) rather than baked in, since JA4 values shift with TLS-stack versions and a hardcoded list would rot.
+Because a client connecting directly could simply _send_ that header, it is honoured **only for requests arriving through a trusted proxy** (`trusted_proxies_only`, on by default — requires `deploy.trusted_proxies`). `Ja4SignalProvider` checks `REMOTE_ADDR` against the trusted set via `TrustedProxy`; an untrusted source's header is ignored and contributes zero risk. Known lists are operator-supplied (e.g. from a threat feed) rather than baked in, since JA4 values shift with TLS-stack versions and a hardcoded list would rot.
+
+Matching, in precedence order:
+
+- **`known_good_fingerprints`** — an exact allowlist entry is always safe (score 0) and **overrides** the prefix denylist, so you can flag a family yet permit known-good members.
+- **`known_bad_fingerprints`** — an exact denylist hit scores `match_score`.
+- **`known_bad_prefixes`** — a **family/partial** match: when the fingerprint starts with a configured prefix (typically the `JA4_a` component, which summarises TLS version and ciphers), it scores the lower-confidence `partial_match_score`. This catches a fingerprint family even as the later components vary.
+
+An absent or otherwise-unknown fingerprint adds no risk.
 
 ### Configuration
 
@@ -291,7 +299,10 @@ Because a client connecting directly could simply _send_ that header, it is hono
     'header_name' => 'X-JA4',
     'trusted_proxies_only' => true,
     'known_bad_fingerprints' => [], // exact JA4 strings treated as malicious
-    'match_score' => 0.9,
+    'known_bad_prefixes' => [],     // JA4 prefixes flagging a fingerprint family
+    'known_good_fingerprints' => [], // exact allowlist; overrides the prefix denylist
+    'match_score' => 0.9,           // exact hit
+    'partial_match_score' => 0.6,   // family/prefix hit
 ],
 ```
 

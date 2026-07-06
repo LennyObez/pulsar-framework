@@ -39531,7 +39531,10 @@
                         "string $headerName",
                         "bool $trustedProxiesOnly",
                         "array $knownBadFingerprints",
-                        "float $matchScore"
+                        "array $knownBadPrefixes",
+                        "array $knownGoodFingerprints",
+                        "float $matchScore",
+                        "float $partialMatchScore"
                     ],
                     "return": null,
                     "static": false
