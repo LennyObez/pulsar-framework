@@ -40,9 +40,19 @@ final readonly class SecurityAssertionRunner
      */
     private const int MIN_MASTER_KEY_HEX_LENGTH = 64;
 
+    /**
+     * @param bool $hstsEnabled Whether HSTS is enabled — mirrors
+     *     `headers.hsts.enabled` from config/security.php. Pulsar treats an
+     *     enabled HSTS policy as the operator's declaration that the application
+     *     is HTTPS-only, so this flag gates the `https_enforced` posture
+     *     self-check below. It is consumed ONLY by the assertions in this class
+     *     and does NOT itself enforce HTTPS: it emits no redirect, sets no
+     *     cookie, and writes no header (header emission is the
+     *     SecurityHeadersMiddleware's responsibility).
+     */
     public function __construct(
         private bool $debugMode,
-        private bool $httpsEnforced,
+        private bool $hstsEnabled,
         private ?HstsConfig $hstsConfig,
         private ?SessionConfig $sessionConfig,
     ) {}
@@ -78,7 +88,9 @@ final readonly class SecurityAssertionRunner
             );
         }
 
-        if (!$this->httpsEnforced) {
+        // HTTPS enforcement is declared to browsers via HSTS; an absent HSTS
+        // policy means the application is not asserting HTTPS-only.
+        if (!$this->hstsEnabled) {
             $violations[] = new SecurityViolation(
                 'https_enforced',
                 'HTTPS is not enforced',
@@ -144,7 +156,8 @@ final readonly class SecurityAssertionRunner
      */
     private function assertHttpsEnforced(): void
     {
-        if (!$this->httpsEnforced) {
+        // HTTPS enforcement is declared to browsers via HSTS (see $hstsEnabled).
+        if (!$this->hstsEnabled) {
             throw SecurityException::assertionFailed(
                 'https_enforced',
                 'HTTPS must be enforced in production',

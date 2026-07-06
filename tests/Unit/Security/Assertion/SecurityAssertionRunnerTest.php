@@ -24,7 +24,7 @@ final class SecurityAssertionRunnerTest extends TestCase
         try {
             $runner = new SecurityAssertionRunner(
                 debugMode: false,
-                httpsEnforced: true,
+                hstsEnabled: true,
                 hstsConfig: new HstsConfig(enabled: true, maxAge: 63072000),
                 sessionConfig: new SessionConfig(
                     cookieName: 'sid',
@@ -54,7 +54,7 @@ final class SecurityAssertionRunnerTest extends TestCase
     {
         $runner = new SecurityAssertionRunner(
             debugMode: true,
-            httpsEnforced: true,
+            hstsEnabled: true,
             hstsConfig: new HstsConfig(enabled: true, maxAge: 63072000),
             sessionConfig: null,
         );
@@ -70,7 +70,7 @@ final class SecurityAssertionRunnerTest extends TestCase
     {
         $runner = new SecurityAssertionRunner(
             debugMode: false,
-            httpsEnforced: false,
+            hstsEnabled: false,
             hstsConfig: new HstsConfig(enabled: true, maxAge: 63072000),
             sessionConfig: null,
         );
@@ -86,7 +86,7 @@ final class SecurityAssertionRunnerTest extends TestCase
     {
         $runner = new SecurityAssertionRunner(
             debugMode: false,
-            httpsEnforced: true,
+            hstsEnabled: true,
             hstsConfig: new HstsConfig(enabled: false),
             sessionConfig: null,
         );
@@ -102,7 +102,7 @@ final class SecurityAssertionRunnerTest extends TestCase
     {
         $runner = new SecurityAssertionRunner(
             debugMode: false,
-            httpsEnforced: true,
+            hstsEnabled: true,
             hstsConfig: new HstsConfig(enabled: true, maxAge: 3600),
             sessionConfig: null,
         );
@@ -122,7 +122,7 @@ final class SecurityAssertionRunnerTest extends TestCase
         try {
             $runner = new SecurityAssertionRunner(
                 debugMode: false,
-                httpsEnforced: true,
+                hstsEnabled: true,
                 hstsConfig: new HstsConfig(enabled: true, maxAge: 63072000),
                 sessionConfig: new SessionConfig(
                     cookieName: 'sid',
@@ -153,7 +153,7 @@ final class SecurityAssertionRunnerTest extends TestCase
     {
         $runner = new SecurityAssertionRunner(
             debugMode: true,
-            httpsEnforced: false,
+            hstsEnabled: false,
             hstsConfig: null,
             sessionConfig: null,
         );
@@ -173,7 +173,7 @@ final class SecurityAssertionRunnerTest extends TestCase
     {
         $runner = new SecurityAssertionRunner(
             debugMode: true,
-            httpsEnforced: true,
+            hstsEnabled: true,
             hstsConfig: new HstsConfig(enabled: true, maxAge: 63072000),
             sessionConfig: null,
         );
@@ -202,7 +202,7 @@ final class SecurityAssertionRunnerTest extends TestCase
         try {
             $runner = new SecurityAssertionRunner(
                 debugMode: false,
-                httpsEnforced: true,
+                hstsEnabled: true,
                 hstsConfig: new HstsConfig(enabled: true, maxAge: 63072000),
                 sessionConfig: new SessionConfig(
                     cookieName: 'sid',
