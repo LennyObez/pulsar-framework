@@ -33,13 +33,18 @@ final readonly class Ja4Config
 {
     /**
      * @param list<string> $knownBadFingerprints Exact JA4 strings treated as malicious
+     * @param list<string> $knownBadPrefixes      JA4 prefixes (e.g. the JA4_a component) flagging a fingerprint family
+     * @param list<string> $knownGoodFingerprints Exact JA4 strings always treated as safe (overrides the prefix denylist)
      */
     public function __construct(
         public bool $enabled = false,
         public string $headerName = 'X-JA4',
         public bool $trustedProxiesOnly = true,
         public array $knownBadFingerprints = [],
+        public array $knownBadPrefixes = [],
+        public array $knownGoodFingerprints = [],
         public float $matchScore = 0.9,
+        public float $partialMatchScore = 0.6,
     ) {}
 
     /**
@@ -48,20 +53,39 @@ final readonly class Ja4Config
      *     header_name?: string,
      *     trusted_proxies_only?: bool|int|string,
      *     known_bad_fingerprints?: list<string>,
+     *     known_bad_prefixes?: list<string>,
+     *     known_good_fingerprints?: list<string>,
      *     match_score?: float|int|string,
+     *     partial_match_score?: float|int|string,
      * } $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $fingerprints = $data['known_bad_fingerprints'] ?? null;
-
         return new self(
             enabled: Coerce::strictBool($data['enabled'] ?? null),
             headerName: Coerce::string($data['header_name'] ?? null, 'X-JA4'),
             trustedProxiesOnly: Coerce::strictBool($data['trusted_proxies_only'] ?? null, true),
-            knownBadFingerprints: is_array($fingerprints) ? array_values(array_filter($fingerprints, is_string(...))) : [],
+            knownBadFingerprints: self::stringList($data['known_bad_fingerprints'] ?? null),
+            knownBadPrefixes: self::stringList($data['known_bad_prefixes'] ?? null),
+            knownGoodFingerprints: self::stringList($data['known_good_fingerprints'] ?? null),
             matchScore: Coerce::nullableFloat($data['match_score'] ?? null) ?? 0.9,
+            partialMatchScore: Coerce::nullableFloat($data['partial_match_score'] ?? null) ?? 0.6,
         );
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function stringList(mixed $value): array
+    {
+        if (!is_array($value)) {
+            return [];
+        }
+
+        /** @var list<string> $strings */
+        $strings = array_values(array_filter($value, is_string(...)));
+
+        return $strings;
     }
 }
