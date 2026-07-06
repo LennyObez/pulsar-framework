@@ -325,10 +325,35 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
             return null;
         }
 
+        $tokenKeys = $config->allTokenKeys();
+        if ($tokenKeys === []) {
+            // Directory-only configuration: keys are discovered at runtime
+            // (issuer-directory refresh) and not yet available at boot.
+            $logger->warning('Privacy Pass has no issuer keys configured yet; token verification is disabled until the directory is refreshed.');
+
+            return null;
+        }
+
+        $replayCache = null;
+        if ($config->singleUse) {
+            if ($container->has(TaggedCacheInterface::class)) {
+                /** @var TaggedCacheInterface $replayCache */
+                $replayCache = $container->get(TaggedCacheInterface::class);
+            } else {
+                $logger->warning('Privacy Pass single-use enforcement disabled: no cache bound. A redeemed token may be replayed within its lifetime.');
+            }
+        }
+
         try {
-            $issuerKey = IssuerPublicKey::fromBase64Url($config->tokenKey);
+            $primaryKey = IssuerPublicKey::fromBase64Url($tokenKeys[0]);
+            $verifier = PrivateAccessTokenVerifier::fromBase64UrlKeys(
+                $tokenKeys,
+                $replayCache,
+                $config->singleUse,
+                $config->singleUseTtlSeconds,
+            );
         } catch (Throwable $e) {
-            $logger->warning('Privacy Pass token_key is malformed; token verification is disabled.', [
+            $logger->warning('Privacy Pass issuer key(s) malformed; token verification is disabled.', [
                 'error' => $e->getMessage(),
             ]);
 
@@ -336,10 +361,9 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
         }
 
         $challenge = $config->challenge();
-        $verifier = new PrivateAccessTokenVerifier($issuerKey);
         $container->instance(PrivateAccessTokenVerifier::class, $verifier);
 
-        $issuer = new PrivacyPassChallengeIssuer($challenge, $issuerKey->spkiDer);
+        $issuer = new PrivacyPassChallengeIssuer($challenge, $primaryKey->spkiDer);
         $container->instance(PrivacyPassChallengeIssuer::class, $issuer);
         $container->instance(PrivateTokenChallengeMiddleware::class, new PrivateTokenChallengeMiddleware($issuer));
 

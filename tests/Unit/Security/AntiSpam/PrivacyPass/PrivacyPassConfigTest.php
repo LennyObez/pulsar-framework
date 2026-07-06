@@ -67,6 +67,52 @@ final class PrivacyPassConfigTest extends TestCase
     }
 
     #[Test]
+    public function allTokenKeysMergesSingularAndListWithPrimaryFirstDeduped(): void
+    {
+        $config = PrivacyPassConfig::fromArray([
+            'enabled' => true,
+            'issuer_name' => 'issuer.example',
+            'token_key' => 'primary',
+            'token_keys' => ['secondary', 'primary', 'tertiary'],
+        ]);
+
+        self::assertSame(['primary', 'secondary', 'tertiary'], $config->allTokenKeys());
+    }
+
+    #[Test]
+    public function isUsableWithDirectoryUrlEvenWithoutStaticKeys(): void
+    {
+        $config = PrivacyPassConfig::fromArray([
+            'enabled' => true,
+            'issuer_name' => 'issuer.example',
+            'directory_url' => 'https://issuer.example/.well-known/private-token-issuer-directory',
+        ]);
+
+        self::assertTrue($config->isUsable());
+        self::assertSame([], $config->allTokenKeys());
+    }
+
+    #[Test]
+    public function parsesSingleUseAndTtlWithSecureDefaults(): void
+    {
+        self::assertTrue(new PrivacyPassConfig()->singleUse, 'single-use defaults on');
+        self::assertSame(86400, new PrivacyPassConfig()->singleUseTtlSeconds);
+
+        $config = PrivacyPassConfig::fromArray(['single_use' => false, 'single_use_ttl_seconds' => 3600]);
+        self::assertFalse($config->singleUse);
+        self::assertSame(3600, $config->singleUseTtlSeconds);
+    }
+
+    #[Test]
+    public function fromArrayFiltersNonStringTokenKeys(): void
+    {
+        /** @psalm-suppress InvalidArgument intentionally malformed config */
+        $config = PrivacyPassConfig::fromArray(['token_keys' => ['good', 42, null, 'also-good']]);
+
+        self::assertSame(['good', 'also-good'], $config->allTokenKeys());
+    }
+
+    #[Test]
     public function challengeUsesConfiguredIssuerOriginAndEmptyContext(): void
     {
         $config = PrivacyPassConfig::fromArray([

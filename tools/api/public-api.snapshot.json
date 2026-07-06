@@ -39329,9 +39329,18 @@
                         "string $issuerName",
                         "string $originInfo",
                         "string $tokenKey",
+                        "array $tokenKeys",
+                        "string $directoryUrl",
+                        "bool $singleUse",
+                        "int $singleUseTtlSeconds",
                         "int $tokenType"
                     ],
                     "return": null,
+                    "static": false
+                },
+                "allTokenKeys": {
+                    "params": [],
+                    "return": "array",
                     "static": false
                 },
                 "challenge": {
@@ -39358,17 +39367,22 @@
             "since": "1.0.0",
             "methods": [],
             "signatures": {
-                "__construct": {
-                    "params": [
-                        "Pulsar\\Security\\AntiSpam\\PrivacyPass\\Internal\\IssuerPublicKey $issuerKey",
-                        "?Pulsar\\Security\\AntiSpam\\PrivacyPass\\Internal\\RsaSsaPssVerifier $signature"
-                    ],
-                    "return": null,
-                    "static": false
-                },
                 "fromBase64UrlKey": {
                     "params": [
-                        "string $tokenKey"
+                        "string $tokenKey",
+                        "?Pulsar\\Cache\\Application\\TaggedCacheInterface $replayCache",
+                        "bool $singleUse",
+                        "int $singleUseTtlSeconds"
+                    ],
+                    "return": "Pulsar\\Security\\AntiSpam\\PrivacyPass\\PrivateAccessTokenVerifier",
+                    "static": true
+                },
+                "fromBase64UrlKeys": {
+                    "params": [
+                        "array $tokenKeys",
+                        "?Pulsar\\Cache\\Application\\TaggedCacheInterface $replayCache",
+                        "bool $singleUse",
+                        "int $singleUseTtlSeconds"
                     ],
                     "return": "Pulsar\\Security\\AntiSpam\\PrivacyPass\\PrivateAccessTokenVerifier",
                     "static": true

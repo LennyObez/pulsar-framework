@@ -289,9 +289,11 @@ Pulsar implements token type `0x0002` (Blind RSA, publicly verifiable): the toke
 
 1. When a request is denied (the adaptive engine blocks it, or any layer returns 401/403), `PrivateTokenChallengeMiddleware` adds a `WWW-Authenticate: PrivateToken` challenge advertising the issuer and its public key (RFC 9577 §2.1.2).
 2. A Privacy Pass-capable client redeems a token with that issuer and retries the request carrying `Authorization: PrivateToken token=...`.
-3. `PrivateTokenBypassProvider` (a risk-engine bypass) verifies the token via `PrivateAccessTokenVerifier`: token type, the issuer key id (SHA-256 of the issuer SPKI), the challenge digest, and finally the RSASSA-PSS signature (SHA-384, MGF1-SHA-384, 48-byte salt) over `token_type ‖ nonce ‖ challenge_digest ‖ token_key_id`. A valid token short-circuits scoring to **allow**.
+3. `PrivateTokenBypassProvider` (a risk-engine bypass) verifies the token via `PrivateAccessTokenVerifier`: token type, the issuer key id (SHA-256 of the issuer SPKI) against any configured key, the challenge digest, and finally the RSASSA-PSS signature (SHA-384, MGF1-SHA-384, 48-byte salt) over `token_type ‖ nonce ‖ challenge_digest ‖ token_key_id`. A valid token short-circuits scoring to **allow**.
 
-Verification is **stateless**: Pulsar advertises a fixed challenge with an empty `redemption_context`, so a token bound to this Origin verifies for the issuer key's lifetime with no server-side state. (A per-request, single-use `redemption_context` would prevent token reuse but requires the Origin to remember every issued challenge; that mode is out of scope here. A captured token is reusable within the key window, but obtaining one already required passing the attester, so reuse by the same legitimate device is the acceptable worst case — rotate the issuer key to bound it.)
+**Single-use.** After the signature is proven valid, the token's `nonce` is recorded in the cache; a second presentation of the same token is rejected, so a captured token cannot be replayed. Without a cache binding this degrades to reuse-within-lifetime (logged at boot) — the signature is still enforced, only replay protection is relaxed. Set `single_use` to `false` for clients that legitimately reuse a token.
+
+**Key rotation.** Several issuer keys can be trusted at once (`token_key` plus `token_keys`); the verifier selects the key by the token's `token_key_id`, so you can roll a new key in and retire the old one with no downtime. Pulsar advertises the primary key (`token_key`) in the challenge.
 
 ### Configuration
 
@@ -301,12 +303,15 @@ Verification is **stateless**: Pulsar advertises a fixed challenge with an empty
     'enabled' => false,   // opt-in; requires adaptive_risk enabled and ext-gmp
     'issuer_name' => '',  // e.g. 'demo-issuer.example'
     'origin_info' => '',  // your origin host (comma-separated), or '' for any
-    'token_key' => '',    // base64url SPKI of the issuer public key (id-RSASSA-PSS)
+    'token_key' => '',    // base64url SPKI of the (primary) issuer public key (id-RSASSA-PSS)
+    'token_keys' => [],   // additional keys for seamless rotation
+    'single_use' => true, // reject a token's nonce on replay (requires the cache)
+    'single_use_ttl_seconds' => 86400,
 ],
 ```
 
-The issuer name and public key are operator-supplied out of band (from the issuer's directory). The verifier requires the `gmp` extension for the RSA arithmetic; if it is missing, or the key is malformed, Privacy Pass disables itself with a logged warning and the rest of the engine continues — it never fails a request open.
+The issuer name and public key(s) are operator-supplied out of band. The verifier requires the `gmp` extension for the RSA arithmetic; if it is missing, or every key is malformed, Privacy Pass disables itself with a logged warning and the rest of the engine continues — it never fails a request open.
 
 ### Honest limitation
 
-A token only proves the client passed _some_ issuer's attester; trust follows entirely from which issuer you configure. This release verifies one issuer key at a time, accepts the publicly verifiable Blind-RSA token type only, and does not fetch issuer keys automatically or bind tokens to a single redemption — issuer-directory discovery, key rotation sets, and per-request single-use binding are deliberate follow-ups. Deploy Private Access Tokens as a fast lane for attested clients layered on top of the rest of the pipeline, not as the sole gate.
+A token only proves the client passed _some_ issuer's attester; trust follows entirely from which issuer you configure. This release accepts the publicly verifiable Blind-RSA token type (0x0002) only. Issuer keys are configured directly. Deploy Private Access Tokens as a fast lane for attested clients layered on top of the rest of the pipeline, not as the sole gate.
