@@ -38928,6 +38928,45 @@
             },
             "constants": []
         },
+        "Pulsar\\Security\\AntiSpam\\AiCrawler\\AiCrawlerVerificationConfig": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "bool $enabled",
+                        "bool $reverseDns",
+                        "array $ranges",
+                        "array $domains",
+                        "int $cacheTtlSeconds"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "domainsFor": {
+                    "params": [
+                        "string $crawlerToken"
+                    ],
+                    "return": "array",
+                    "static": false
+                },
+                "fromArray": {
+                    "params": [
+                        "array $data"
+                    ],
+                    "return": "Pulsar\\Security\\AntiSpam\\AiCrawler\\AiCrawlerVerificationConfig",
+                    "static": true
+                },
+                "rangesFor": {
+                    "params": [
+                        "string $crawlerToken"
+                    ],
+                    "return": "array",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\Security\\AntiSpam\\AntiSpamCheckInterface": {
             "since": "1.0.0",
             "methods": [],
@@ -56029,7 +56068,12 @@
         "Pulsar\\Security\\AntiSpam\\AccountAgeGate",
         "Pulsar\\Security\\AntiSpam\\AiCrawler\\AiCrawlerDetector",
         "Pulsar\\Security\\AntiSpam\\AiCrawler\\AiCrawlerMiddleware",
+        "Pulsar\\Security\\AntiSpam\\AiCrawler\\CrawlerIdentity",
         "Pulsar\\Security\\AntiSpam\\AiCrawler\\DetectedAiCrawler",
+        "Pulsar\\Security\\AntiSpam\\AiCrawler\\Internal\\CidrMatcher",
+        "Pulsar\\Security\\AntiSpam\\AiCrawler\\Internal\\CrawlerDnsResolver",
+        "Pulsar\\Security\\AntiSpam\\AiCrawler\\Internal\\CrawlerIdentityVerifier",
+        "Pulsar\\Security\\AntiSpam\\AiCrawler\\Internal\\SystemCrawlerDnsResolver",
         "Pulsar\\Security\\AntiSpam\\AntiSpamPipeline",
         "Pulsar\\Security\\AntiSpam\\Behavior\\BehavioralSignalsCheck",
         "Pulsar\\Security\\AntiSpam\\Behavior\\HeuristicScorer",

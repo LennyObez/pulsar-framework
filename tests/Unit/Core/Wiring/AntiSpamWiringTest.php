@@ -8,6 +8,9 @@ use LogicException;
 use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Cache\Application\TaggedCacheInterface;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Container\Container;
@@ -15,6 +18,7 @@ use Pulsar\Core\Wiring\AntiSpamWiring;
 use Pulsar\Http\Client\HttpClientInterface;
 use Pulsar\Http\Client\HttpResponse;
 use Pulsar\Http\HeaderBag;
+use Pulsar\Http\Message\Response;
 use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
@@ -22,6 +26,7 @@ use Pulsar\Http\ResponseStatus;
 use Pulsar\Routing\Router;
 use Pulsar\Security\AntiSpam\AiCrawler\AiCrawlerConfig;
 use Pulsar\Security\AntiSpam\AiCrawler\AiCrawlerMiddleware;
+use Pulsar\Security\AntiSpam\AiCrawler\AiCrawlerVerificationConfig;
 use Pulsar\Security\AntiSpam\PrivacyPass\Internal\PrivacyPassDirectoryClient;
 use Pulsar\Security\AntiSpam\PrivacyPass\PrivacyPassConfig;
 use Pulsar\Security\AntiSpam\PrivacyPass\PrivacyPassRefreshKeysCommand;
@@ -59,6 +64,47 @@ final class AntiSpamWiringTest extends TestCase
         self::assertTrue($container->has(AiCrawlerConfig::class));
         self::assertTrue($container->has(AiCrawlerMiddleware::class), 'middleware is bound when enabled');
         self::assertSame($before + 1, $pipeline->count(), 'middleware is piped globally');
+    }
+
+    #[Test]
+    public function aiCrawlerIdentityVerifierIsWiredAndBlocksImpersonators(): void
+    {
+        $container = new Container();
+        $pipeline = new MiddlewarePipeline($container);
+
+        // GPTBot allowed by override, but verification has its published range:
+        // a forged GPTBot UA from outside that range must be blocked by the
+        // wired middleware (proving the verifier is constructed and passed in).
+        $this->wire(
+            $container,
+            $pipeline,
+            "'ai_crawlers' => ['enabled' => true, 'overrides' => ['GPTBot' => 'allow']], "
+            . "'ai_crawler_verification' => ['enabled' => true, 'ranges' => ['GPTBot' => ['203.0.113.0/24']]]",
+        );
+
+        self::assertTrue($container->has(AiCrawlerVerificationConfig::class));
+
+        $middleware = $container->get(AiCrawlerMiddleware::class);
+        self::assertInstanceOf(AiCrawlerMiddleware::class, $middleware);
+
+        $forged = new ServerRequest(
+            method: 'GET',
+            uri: '/',
+            headers: ['User-Agent' => 'GPTBot/1.0'],
+            serverParams: ['REMOTE_ADDR' => '8.8.8.8'],
+        );
+
+        self::assertSame(403, $middleware->process($forged, $this->okHandler())->getStatusCode());
+    }
+
+    private function okHandler(): RequestHandlerInterface
+    {
+        return new class implements RequestHandlerInterface {
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                return Response::text('OK');
+            }
+        };
     }
 
     #[Test]

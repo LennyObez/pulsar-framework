@@ -14,6 +14,8 @@ use Pulsar\Http\Message\Response;
 use Pulsar\Http\Middleware\MiddlewareInterface;
 use Pulsar\Http\RateLimit\RateLimiterInterface;
 use Pulsar\Http\ResponseStatus;
+use Pulsar\Http\TrustedProxy;
+use Pulsar\Security\AntiSpam\AiCrawler\Internal\CrawlerIdentityVerifier;
 
 use function is_string;
 
@@ -25,6 +27,11 @@ use function is_string;
  * (X-Robots-Tag: noai, noimageai) is added to every response so that even
  * allowed crawlers — and crawlers that ignore robots.txt — are told the
  * content is not licensed for AI training/use.
+ *
+ * When an identity verifier is wired, a request whose User-Agent claims a known
+ * crawler but whose IP fails that crawler's published ranges / reverse DNS is
+ * treated as an impersonator and blocked (403) regardless of the crawler's
+ * configured action — closing the trivial "forge an allowed crawler's UA" bypass.
  */
 #[Internal]
 final readonly class AiCrawlerMiddleware implements MiddlewareInterface
@@ -34,6 +41,8 @@ final readonly class AiCrawlerMiddleware implements MiddlewareInterface
         private AiCrawlerDetector $detector,
         private RateLimiterInterface $rateLimiter,
         private ?LoggerInterface $logger = null,
+        private ?CrawlerIdentityVerifier $identityVerifier = null,
+        private ?TrustedProxy $trustedProxy = null,
     ) {}
 
     #[Override]
@@ -43,6 +52,12 @@ final readonly class AiCrawlerMiddleware implements MiddlewareInterface
 
         if ($detected === null) {
             return $this->withTdmReservation($handler->handle($request));
+        }
+
+        if ($this->identityVerifier !== null
+            && $this->identityVerifier->verify($detected->token, $this->verificationIp($request)) === CrawlerIdentity::Impersonator
+        ) {
+            return $this->blockImpersonator($detected);
         }
 
         return match ($this->config->resolveAction($detected->token, $detected->category)) {
@@ -61,6 +76,19 @@ final readonly class AiCrawlerMiddleware implements MiddlewareInterface
 
         return $this->withTdmReservation(Response::json(
             ['error' => 'AI crawler access is not permitted'],
+            ResponseStatus::Forbidden->value,
+        ));
+    }
+
+    private function blockImpersonator(DetectedAiCrawler $crawler): ResponseInterface
+    {
+        $this->logger?->warning('AI crawler impersonation blocked', [
+            'crawler' => $crawler->token,
+            'category' => $crawler->category->value,
+        ]);
+
+        return $this->withTdmReservation(Response::json(
+            ['error' => 'Crawler identity could not be verified'],
             ResponseStatus::Forbidden->value,
         ));
     }
@@ -105,5 +133,14 @@ final readonly class AiCrawlerMiddleware implements MiddlewareInterface
         $ip = $request->getServerParams()['REMOTE_ADDR'] ?? '';
 
         return is_string($ip) ? $ip : '';
+    }
+
+    /**
+     * The real client IP for identity verification: behind a trusted proxy the
+     * crawler's address is in X-Forwarded-For, not REMOTE_ADDR.
+     */
+    private function verificationIp(ServerRequestInterface $request): string
+    {
+        return $this->trustedProxy?->resolveClientIp($request) ?? $this->clientIp($request);
     }
 }
