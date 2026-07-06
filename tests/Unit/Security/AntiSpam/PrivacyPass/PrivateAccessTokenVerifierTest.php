@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Security\AntiSpam\PrivacyPass;
 
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Cache\Application\TaggedCacheInterface;
 use Pulsar\Security\AntiSpam\PrivacyPass\Internal\IssuerPublicKey;
 use Pulsar\Security\AntiSpam\PrivacyPass\PrivateAccessTokenVerifier;
 use Pulsar\Security\AntiSpam\PrivacyPass\TokenChallenge;
@@ -66,12 +68,69 @@ final class PrivateAccessTokenVerifierTest extends TestCase
     public function rejectsATokenSignedUnderADifferentKey(): void
     {
         // A freshly generated, unrelated 2048-bit RSA key: its token_key_id
-        // (SHA-256 of its SPKI) differs, so the vector's token must be rejected
-        // before any signature check.
-        $otherKey = IssuerPublicKey::fromSpkiDer($this->freshRsaSpkiDer());
-        $verifier = new PrivateAccessTokenVerifier($otherKey);
+        // (SHA-256 of its SPKI) differs, so the vector's token selects no key
+        // and is rejected before any signature check.
+        $verifier = PrivateAccessTokenVerifier::fromBase64UrlKey($this->base64Url($this->freshRsaSpkiDer()));
 
         self::assertFalse($verifier->verify(Rfc9578TestVector::tokenBase64Url(), Rfc9578TestVector::challenge()));
+    }
+
+    #[Test]
+    public function verifiesTokensUnderAnyConfiguredKeyForRotation(): void
+    {
+        // Two issuers' keys trusted at once; a token signed by the second must
+        // verify (the verifier selects the key by the token's key id).
+        $challenge = new TokenChallenge(0x0002, 'issuer.example', 'origin.example');
+        $issuedA = PrivacyPassTokenFactory::issue($challenge);
+        $issuedB = PrivacyPassTokenFactory::issue($challenge);
+
+        $verifier = PrivateAccessTokenVerifier::fromBase64UrlKeys([
+            $this->base64Url($issuedA['spkiDer']),
+            $this->base64Url($issuedB['spkiDer']),
+        ]);
+
+        self::assertTrue($verifier->verify($this->base64Url($issuedA['token']), $challenge));
+        self::assertTrue($verifier->verify($this->base64Url($issuedB['token']), $challenge));
+    }
+
+    #[Test]
+    public function enforcesSingleUseWhenACacheIsBound(): void
+    {
+        $challenge = new TokenChallenge(0x0002, 'issuer.example', 'origin.example');
+        $issued = PrivacyPassTokenFactory::issue($challenge);
+
+        $verifier = PrivateAccessTokenVerifier::fromBase64UrlKey(
+            $this->base64Url($issued['spkiDer']),
+            $this->inMemoryCache(),
+            singleUse: true,
+        );
+
+        $token = $this->base64Url($issued['token']);
+
+        self::assertTrue($verifier->verify($token, $challenge), 'first redemption is accepted');
+        self::assertFalse($verifier->verify($token, $challenge), 'replay of the same token is rejected');
+    }
+
+    #[Test]
+    public function allowsReuseWhenSingleUseDisabledOrNoCache(): void
+    {
+        $challenge = new TokenChallenge(0x0002, 'issuer.example', 'origin.example');
+        $issued = PrivacyPassTokenFactory::issue($challenge);
+        $token = $this->base64Url($issued['token']);
+
+        // No cache bound: degrades to reuse-within-lifetime.
+        $verifier = PrivateAccessTokenVerifier::fromBase64UrlKey($this->base64Url($issued['spkiDer']), singleUse: true);
+
+        self::assertTrue($verifier->verify($token, $challenge));
+        self::assertTrue($verifier->verify($token, $challenge), 'reuse allowed without a replay cache');
+    }
+
+    #[Test]
+    public function fromBase64UrlKeysRejectsAnEmptyKeySet(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        (void) PrivateAccessTokenVerifier::fromBase64UrlKeys([]);
     }
 
     private function freshRsaSpkiDer(): string
@@ -133,5 +192,36 @@ final class PrivateAccessTokenVerifierTest extends TestCase
     private function base64Url(string $value): string
     {
         return rtrim(strtr(base64_encode($value), '+/', '-_'), '=');
+    }
+
+    private function inMemoryCache(): TaggedCacheInterface
+    {
+        return new class implements TaggedCacheInterface {
+            /** @var array<string, mixed> */
+            private array $store = [];
+
+            public function get(string $key): mixed
+            {
+                return $this->store[$key] ?? null;
+            }
+
+            public function set(string $key, mixed $value, array $tags, ?int $ttlSeconds = null): bool
+            {
+                $this->store[$key] = $value;
+
+                return true;
+            }
+
+            public function delete(string $key): bool
+            {
+                unset($this->store[$key]);
+
+                return true;
+            }
+
+            public function invalidateTag(string $tag): void {}
+
+            public function invalidateTags(array $tags): void {}
+        };
     }
 }
