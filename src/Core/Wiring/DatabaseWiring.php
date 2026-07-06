@@ -14,8 +14,10 @@ use Pulsar\Container\ContainerInterface;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\ConnectionManager;
 use Pulsar\Database\ConnectionManagerInterface;
+use Pulsar\Database\Monitor\CompositeSqlLogger;
 use Pulsar\Database\Monitor\ConnectionAuditor;
 use Pulsar\Database\Monitor\MonitoredConnection;
+use Pulsar\Database\Monitor\ProfilerSqlLogger;
 use Pulsar\Database\Monitor\SlowQueryDetector;
 use Pulsar\Database\Monitor\SqlLogger;
 use Pulsar\Database\Routing\ReadWriteRouter;
@@ -24,6 +26,7 @@ use Pulsar\Database\Routing\StickinessContext;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Observability\Metrics\MetricRegistry;
+use Pulsar\Observability\Profiler\RequestProfiler;
 use Pulsar\Routing\Router;
 
 #[Internal]
@@ -101,7 +104,15 @@ final readonly class DatabaseWiring implements ServiceWiringInterface
                 $manager = $container->get(ConnectionManagerInterface::class);
                 $resolved = $manager->connection();
 
-                if (!$monitorConfig->enabled) {
+                $profiler = null;
+                if ($container->has(RequestProfiler::class)) {
+                    /** @var RequestProfiler $profiler */
+                    $profiler = $container->get(RequestProfiler::class);
+                }
+
+                // Production fast path: leave the connection undecorated when neither
+                // SQL monitoring nor the request profiler needs query instrumentation.
+                if (!$monitorConfig->enabled && $profiler === null) {
                     return $connection = $resolved;
                 }
 
@@ -112,11 +123,28 @@ final readonly class DatabaseWiring implements ServiceWiringInterface
                     ? $container->get(MetricRegistry::class)
                     : null;
 
+                // Full monitor logger when monitoring is on (tee-ing into the profiler
+                // when both are active); profiler-only logger when just the profiler is
+                // enabled, so turning the profiler on is sufficient to get DB timings.
+                // Slow-query/audit logging mirror the monitor: silent when it is off,
+                // so enabling only the profiler never emits audit lines the operator
+                // turned off.
+                if ($monitorConfig->enabled) {
+                    $sqlLogger = new SqlLogger($logger, $monitorConfig);
+                    if ($profiler !== null) {
+                        $sqlLogger = new CompositeSqlLogger([$sqlLogger, new ProfilerSqlLogger($profiler)]);
+                    }
+                    $monitorLogger = $logger;
+                } else {
+                    $sqlLogger = new ProfilerSqlLogger($profiler);
+                    $monitorLogger = new NullLogger();
+                }
+
                 return $connection = new MonitoredConnection(
                     $resolved,
-                    new SqlLogger($logger, $monitorConfig),
-                    new SlowQueryDetector($monitorConfig, $logger, $metricRegistry),
-                    new ConnectionAuditor($logger),
+                    $sqlLogger,
+                    new SlowQueryDetector($monitorConfig, $monitorLogger, $metricRegistry),
+                    new ConnectionAuditor($monitorLogger),
                 );
             },
         );

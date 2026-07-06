@@ -159,6 +159,17 @@ final class CacheManager implements CacheManagerInterface
     }
 
     /**
+     * Register a listener invoked for every cache hit/miss/operation event
+     * (e.g. to feed the request profiler).
+     *
+     * @param callable(\Pulsar\Cache\Application\Event\CacheEvent): void $listener
+     */
+    public function addEventListener(callable $listener): void
+    {
+        $this->eventEmitter->addListener($listener);
+    }
+
+    /**
      * @throws CacheException If the pool is not configured or lock resolution fails
      */
     public function lock(?string $name = null): LockInterface

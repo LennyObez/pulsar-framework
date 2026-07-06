@@ -5306,6 +5306,13 @@
                     "return": null,
                     "static": false
                 },
+                "addEventListener": {
+                    "params": [
+                        "callable $listener"
+                    ],
+                    "return": "void",
+                    "static": false
+                },
                 "driver": {
                     "params": [
                         "?string $name"
@@ -17954,6 +17961,33 @@
             },
             "constants": []
         },
+        "Pulsar\\Documentation\\DocumentationConfig": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "bool $enabled",
+                        "array $versions"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "fromArray": {
+                    "params": [
+                        "array $data"
+                    ],
+                    "return": "Pulsar\\Documentation\\DocumentationConfig",
+                    "static": true
+                },
+                "isUsable": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\Edge\\AbTestEdgeFunction": {
             "since": "1.0.0",
             "methods": [],
@@ -17977,6 +18011,34 @@
                 "name": {
                     "params": [],
                     "return": "string",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Edge\\EdgeConfig": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "bool $enabled",
+                        "string $geoCountryHeader",
+                        "array $functions"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "fromArray": {
+                    "params": [
+                        "array $data"
+                    ],
+                    "return": "Pulsar\\Edge\\EdgeConfig",
+                    "static": true
+                },
+                "isUsable": {
+                    "params": [],
+                    "return": "bool",
                     "static": false
                 }
             },
@@ -32465,6 +32527,29 @@
                     "params": [],
                     "return": "array",
                     "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Observability\\Profiler\\ProfilerConfig": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "bool $enabled",
+                        "int $maxEntries",
+                        "int $maxProfiles"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "fromArray": {
+                    "params": [
+                        "array $data"
+                    ],
+                    "return": "Pulsar\\Observability\\Profiler\\ProfilerConfig",
+                    "static": true
                 }
             },
             "constants": []
@@ -55911,6 +55996,8 @@
         "Pulsar\\Core\\Wiring\\DatabaseWiring",
         "Pulsar\\Core\\Wiring\\DeployWiring",
         "Pulsar\\Core\\Wiring\\DiagnosticsWiring",
+        "Pulsar\\Core\\Wiring\\DocumentationWiring",
+        "Pulsar\\Core\\Wiring\\EdgeWiring",
         "Pulsar\\Core\\Wiring\\ErrorTrackingWiring",
         "Pulsar\\Core\\Wiring\\EventWiring",
         "Pulsar\\Core\\Wiring\\ExceptionHandlerWiring",
@@ -55922,6 +56009,7 @@
         "Pulsar\\Core\\Wiring\\MailWiring",
         "Pulsar\\Core\\Wiring\\MetricsWiring",
         "Pulsar\\Core\\Wiring\\NotificationWiring",
+        "Pulsar\\Core\\Wiring\\ProfilerWiring",
         "Pulsar\\Core\\Wiring\\QueueWiring",
         "Pulsar\\Core\\Wiring\\RequestContextWiring",
         "Pulsar\\Core\\Wiring\\ResilienceWiring",
@@ -55943,7 +56031,9 @@
         "Pulsar\\DataProtection\\SessionPurge",
         "Pulsar\\Database\\Migration\\MigrationFlockHolder",
         "Pulsar\\Database\\Migration\\MigrationPathResolver",
+        "Pulsar\\Database\\Monitor\\CompositeSqlLogger",
         "Pulsar\\Database\\Monitor\\PiiMasker",
+        "Pulsar\\Database\\Monitor\\ProfilerSqlLogger",
         "Pulsar\\Database\\Monitor\\QueryClassifier",
         "Pulsar\\Database\\Pool\\PooledEntry",
         "Pulsar\\Deploy\\Check\\AuditLoggerReadinessCheck",
@@ -55986,6 +56076,7 @@
         "Pulsar\\Dev\\Toolbar\\DevToolbarMiddleware",
         "Pulsar\\Dev\\Toolbar\\ToolbarData",
         "Pulsar\\Dev\\Toolbar\\ToolbarDataCollector",
+        "Pulsar\\Edge\\EdgeMiddleware",
         "Pulsar\\ErrorHandling\\DevErrorPage",
         "Pulsar\\Event\\Contract\\EventSerializer",
         "Pulsar\\Event\\Contract\\EventStorePort",
@@ -56102,6 +56193,7 @@
         "Pulsar\\Observability\\Log\\Compliance\\PciDssLogFormatter",
         "Pulsar\\Observability\\Log\\Compliance\\SoxLogFormatter",
         "Pulsar\\Observability\\Log\\Sink\\DeferredSink",
+        "Pulsar\\Observability\\Profiler\\ProfilerMiddleware",
         "Pulsar\\Observability\\Rum\\RumController",
         "Pulsar\\Queue\\Attribute\\EffectClassifier",
         "Pulsar\\Queue\\Batch\\InMemoryBatchRepository",

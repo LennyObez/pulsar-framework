@@ -61,6 +61,9 @@ final readonly class WiringList
             new DiagnosticsWiring(),
             new IntrospectionWiring(),
             new ViewWiring(),
+            new DocumentationWiring(),
+            new EdgeWiring(),
+            new ProfilerWiring(),
             // Last: the security-posture preflight evaluates the fully wired
             // container (so inert security features are detected) and, when
             // enforcement is enabled in production, aborts boot.

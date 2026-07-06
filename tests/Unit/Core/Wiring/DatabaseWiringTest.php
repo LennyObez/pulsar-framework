@@ -18,6 +18,7 @@ use Pulsar\Database\Monitor\MonitoredConnection;
 use Pulsar\Database\Routing\RoutingConnectionManager;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
+use Pulsar\Observability\Profiler\RequestProfiler;
 use Pulsar\Routing\Router;
 
 #[CoversClass(DatabaseWiring::class)]
@@ -91,6 +92,33 @@ final class DatabaseWiringTest extends TestCase
         new DatabaseWiring()->wire($container, $configManager, $middleware, $middlewareRegistry, $router);
 
         self::assertNotInstanceOf(MonitoredConnection::class, $container->get(ConnectionInterface::class));
+    }
+
+    #[Test]
+    public function wireFeedsProfilerEvenWhenMonitoringDisabled(): void
+    {
+        $container = new Container();
+        $router = new Router();
+        $middleware = new MiddlewarePipeline($container);
+        $middlewareRegistry = new MiddlewareRegistry();
+
+        // The request profiler is enabled while SQL monitoring stays off: turning
+        // the profiler on alone must be enough to capture query timings.
+        $profiler = new RequestProfiler(enabled: true);
+        $container->instance(RequestProfiler::class, $profiler);
+
+        $configManager = $this->createConfigManager(withDatabase: true);
+        $configManager->load();
+
+        new DatabaseWiring()->wire($container, $configManager, $middleware, $middlewareRegistry, $router);
+
+        $connection = $container->get(ConnectionInterface::class);
+        self::assertInstanceOf(MonitoredConnection::class, $connection);
+
+        $connection->query('SELECT 1');
+        $profile = $profiler->finish('GET', '/', 200);
+
+        self::assertSame(1, $profile->queryCount);
     }
 
     #[Test]
