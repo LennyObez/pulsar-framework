@@ -103,6 +103,7 @@ return [
         'origin_info' => '',  // your origin host (comma-separated), or '' for any
         'token_key' => '',    // base64url SPKI of the (primary) issuer public key
         'token_keys' => [],   // additional keys for seamless rotation (old + new both verify)
+        'directory_url' => '', // RFC 9576 issuer directory; refresh with `privacy-pass:keys:refresh`
         'single_use' => true, // reject a redeemed token's nonce on replay (needs the cache)
         'single_use_ttl_seconds' => 86400,
     ],

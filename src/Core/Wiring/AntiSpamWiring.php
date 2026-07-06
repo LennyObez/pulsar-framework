@@ -46,8 +46,10 @@ use Pulsar\Security\AntiSpam\ManagedChallenge\ManagedChallengeRenderer;
 use Pulsar\Security\AntiSpam\ManagedChallenge\ManagedChallengeService;
 use Pulsar\Security\AntiSpam\ManagedChallenge\ManagedChallengeVerifier;
 use Pulsar\Security\AntiSpam\PrivacyPass\Internal\IssuerPublicKey;
+use Pulsar\Security\AntiSpam\PrivacyPass\Internal\PrivacyPassDirectoryClient;
 use Pulsar\Security\AntiSpam\PrivacyPass\PrivacyPassChallengeIssuer;
 use Pulsar\Security\AntiSpam\PrivacyPass\PrivacyPassConfig;
+use Pulsar\Security\AntiSpam\PrivacyPass\PrivacyPassRefreshKeysCommand;
 use Pulsar\Security\AntiSpam\PrivacyPass\PrivateAccessTokenVerifier;
 use Pulsar\Security\AntiSpam\PrivacyPass\PrivateTokenBypassProvider;
 use Pulsar\Security\AntiSpam\PrivacyPass\PrivateTokenChallengeMiddleware;
@@ -67,6 +69,8 @@ use Pulsar\Security\ThreatDetection\BotDetector;
 use SodiumException;
 use Throwable;
 
+use function array_unique;
+use function array_values;
 use function is_array;
 use function is_file;
 
@@ -325,20 +329,39 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
             return null;
         }
 
-        $tokenKeys = $config->allTokenKeys();
+        $cache = null;
+        if ($container->has(TaggedCacheInterface::class)) {
+            /** @var TaggedCacheInterface $cache */
+            $cache = $container->get(TaggedCacheInterface::class);
+        }
+
+        // Issuer-directory discovery (RFC 9576): keys are cache-read at boot and
+        // refreshed out of band by the privacy-pass:keys:refresh command, so the
+        // request path never makes a network call.
+        $directoryKeys = [];
+        if ($config->directoryUrl !== '' && $cache !== null && $container->has(HttpClientInterface::class)) {
+            /** @var HttpClientInterface $http */
+            $http = $container->get(HttpClientInterface::class);
+            $directoryClient = new PrivacyPassDirectoryClient($http, $cache, logger: $logger);
+            $container->instance(PrivacyPassDirectoryClient::class, $directoryClient);
+            $container->instance(
+                PrivacyPassRefreshKeysCommand::class,
+                new PrivacyPassRefreshKeysCommand($directoryClient, $config->directoryUrl),
+            );
+            $directoryKeys = $directoryClient->cachedKeys($config->directoryUrl);
+        }
+
+        $tokenKeys = array_values(array_unique([...$config->allTokenKeys(), ...$directoryKeys]));
         if ($tokenKeys === []) {
-            // Directory-only configuration: keys are discovered at runtime
-            // (issuer-directory refresh) and not yet available at boot.
-            $logger->warning('Privacy Pass has no issuer keys configured yet; token verification is disabled until the directory is refreshed.');
+            $logger->warning('Privacy Pass has no issuer keys yet; token verification is disabled until the directory is refreshed (run privacy-pass:keys:refresh).');
 
             return null;
         }
 
         $replayCache = null;
         if ($config->singleUse) {
-            if ($container->has(TaggedCacheInterface::class)) {
-                /** @var TaggedCacheInterface $replayCache */
-                $replayCache = $container->get(TaggedCacheInterface::class);
+            if ($cache !== null) {
+                $replayCache = $cache;
             } else {
                 $logger->warning('Privacy Pass single-use enforcement disabled: no cache bound. A redeemed token may be replayed within its lifetime.');
             }
