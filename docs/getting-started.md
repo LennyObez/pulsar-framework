@@ -285,10 +285,10 @@ php bin/pulsar show:routes
 
 You have a working Pulsar application with routes, controllers, and templates. Here is where to go next:
 
-- **Extensions.** Read the [extension system guide](EXTENSIONS.md) to learn how to build modular features. Pulsar's first-party extensions (admin panel, CMS, analytics, ORM) are built using the same extension API available to you.
-- **Database.** Read the [database guide](DATABASE.md) to set up connections and run queries. The ORM extension (`pulsar/orm`) adds entity mapping, relationships, and a query builder on top of the core database layer.
-- **Authentication.** Read the [authentication guide](AUTHENTICATION.md) to protect routes with guards, sessions, and two-factor authentication.
-- **Middleware.** Read the [middleware guide](MIDDLEWARE.md) to add cross-cutting concerns like CORS, rate limiting, and logging.
-- **Templates.** Read the [template engine guide](TEMPLATING.md) for the full directive reference, context-aware escaping, and the untrusted template sandbox.
-- **Configuration.** Read the [configuration guide](CONFIGURATION.md) for typed DTOs, environment variable overrides, and per-environment settings.
+- **Extensions.** Read the [extension system guide](extensions.md) to learn how to build modular features. Pulsar's first-party extensions (admin panel, CMS, analytics, ORM) are built using the same extension API available to you.
+- **Database.** Read the [database guide](database.md) to set up connections and run queries. The ORM extension (`pulsar/orm`) adds entity mapping, relationships, and a query builder on top of the core database layer.
+- **Authentication.** Read the [authentication guide](authentication.md) to protect routes with guards, sessions, and two-factor authentication.
+- **Middleware.** Read the [middleware guide](middleware.md) to add cross-cutting concerns like CORS, rate limiting, and logging.
+- **Templates.** Read the [template engine guide](templating.md) for the full directive reference, context-aware escaping, and the untrusted template sandbox.
+- **Configuration.** Read the [configuration guide](configuration.md) for typed DTOs, environment variable overrides, and per-environment settings.
 - **CLI.** Run `php bin/pulsar list` to see all available commands, or read the [CLI reference](cli-reference.md).

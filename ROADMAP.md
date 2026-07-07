@@ -91,7 +91,7 @@
 The external audit cycle and the in-flight Pulsar audit cycle leave the
 following work between rc.11 and the 1.0.0 GA tag. Each item links to its
 audit finding ID in the internal findings register and the PRD entry in
-`docs/PRD-1.0.0.md`.
+`docs/prd-1.0.0.md`.
 
 **Blockers (GA tag cannot be cut while open)** — per **ADR-0032** (2026-05-12,
 supersedes ADR-0025 + ADR-0030):
@@ -137,7 +137,7 @@ supersedes ADR-0025 + ADR-0030):
 - Performance baseline documentation for production deployments.
 - All ADRs reviewed for code-vs-doc drift (ARCH-DRIFT-01 fixed).
 
-PRD reference: `docs/PRD-1.0.0.md`.
+PRD reference: `docs/prd-1.0.0.md`.
 
 ### Previous releases
 

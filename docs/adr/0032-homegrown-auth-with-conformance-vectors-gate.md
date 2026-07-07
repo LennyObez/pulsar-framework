@@ -152,7 +152,7 @@ document the decision history.
 - ADR-0001 (governance) — this ADR follows the standard supersede flow.
 - ADR-0006 (libsodium-only crypto policy) — still authoritative for the
   primitives.
-- `docs/PRD-1.0.0.md` — updated to reflect the new GA criteria.
+- `docs/prd-1.0.0.md` — updated to reflect the new GA criteria.
 - `ROADMAP.md` — the 1.0.0 milestone is rewritten to reflect this change.
 
 ## Date
