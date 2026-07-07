@@ -161,7 +161,7 @@ final readonly class SecurityWiring implements ServiceWiringInterface
                         || $environment->get('CACHE_ENCRYPT') === '1';
                     $configPath = $configManager->configPath();
                     if ($configPath !== null) {
-                        $frameworkCache = new FrameworkCache(dirname($configPath), $masterKey, $hmacService, $encrypt, $encrypt ? $encryptor : null);
+                        $frameworkCache = new FrameworkCache(dirname($configPath), $masterKey, $hmacService, $encrypt, $encrypt ? $encryptor : null, $environment);
                         $container->instance(FrameworkCache::class, $frameworkCache);
                         $container->instance(FrameworkCacheInterface::class, $frameworkCache);
                     }
@@ -239,6 +239,10 @@ final readonly class SecurityWiring implements ServiceWiringInterface
             $assertionRunner = new SecurityAssertionRunner(
                 debugMode: $debugMode,
                 hstsEnabled: $securityConfig->headers->hsts->enabled,
+                // Same Environment-resolved value the crypto stack uses (OS env +
+                // .env), so a key provided only in .env is not falsely reported
+                // missing — see $masterKeyHex resolved at the top of wire().
+                masterKeyHex: $masterKeyHex,
                 hstsConfig: $securityConfig->headers->hsts,
                 sessionConfig: $securityConfig->session,
             );

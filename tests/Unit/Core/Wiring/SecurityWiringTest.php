@@ -35,10 +35,12 @@ use Stringable;
 
 use function bin2hex;
 use function file_put_contents;
+use function implode;
 use function mkdir;
 use function random_bytes;
 use function sodium_bin2hex;
 use function sodium_crypto_secretbox_keygen;
+use function str_repeat;
 
 #[CoversClass(SecurityWiring::class)]
 final class SecurityWiringTest extends TestCase
@@ -302,7 +304,75 @@ final class SecurityWiringTest extends TestCase
         self::assertSame([], $logger->warnings);
     }
 
-    private function createConfigManager(?string $masterKeyHex = null, string $sessionHandler = 'file', string $headersBody = ''): ConfigManager
+    #[Test]
+    public function wireResolvesMasterKeyFromEnvFileAndDoesNotReportItMissing(): void
+    {
+        // Acceptance (Request 1): PULSAR_MASTER_KEY lives ONLY in .env, never the
+        // OS process env. A production boot must (a) build the MasterKey — so the
+        // CSRF/session crypto key is identical across FPM workers — and (b) NOT
+        // emit the spurious "master_key_present" warning that getenv() produced.
+        $originalEnv = getenv('APP_ENV');
+        $originalKey = getenv('PULSAR_MASTER_KEY');
+        // Force the production posture gate to run; ensure the key is NOT in OS env.
+        putenv('APP_ENV=production');
+        putenv('PULSAR_MASTER_KEY');
+
+        try {
+            $key = str_repeat('ab', 32); // valid 64-hex-char master key
+
+            $container = new Container();
+            $container->instance(Randomizer::class, new Randomizer());
+
+            $logger = new class extends AbstractLogger {
+                /** @var list<string> */
+                public array $warnings = [];
+
+                public function log(mixed $level, string|Stringable $message, array $context = []): void
+                {
+                    if ($level === LogLevel::WARNING) {
+                        $this->warnings[] = (string) $message;
+                    }
+                }
+            };
+            $container->instance(LoggerInterface::class, $logger);
+
+            $router = new Router();
+            $middleware = new MiddlewarePipeline($container);
+            $middlewareRegistry = new MiddlewareRegistry();
+
+            $configManager = $this->createConfigManager(
+                envFileContent: "PULSAR_MASTER_KEY={$key}\n",
+            );
+            $configManager->load();
+
+            $wiring = new SecurityWiring();
+            $wiring->wire($container, $configManager, $middleware, $middlewareRegistry, $router);
+
+            // (a) The crypto stack received the .env key — cross-worker consistency.
+            self::assertTrue(
+                $container->has(MasterKey::class),
+                'MasterKey must be built from the .env-provided key so all workers share it',
+            );
+
+            // (b) No false "master key missing" posture warning.
+            $joined = implode("\n", $logger->warnings);
+            self::assertStringNotContainsString('master_key_present', $joined);
+            self::assertStringNotContainsString('PULSAR_MASTER_KEY environment variable is not set', $joined);
+        } finally {
+            if ($originalEnv === false) {
+                putenv('APP_ENV');
+            } else {
+                putenv('APP_ENV=' . $originalEnv);
+            }
+            if ($originalKey === false) {
+                putenv('PULSAR_MASTER_KEY');
+            } else {
+                putenv('PULSAR_MASTER_KEY=' . $originalKey);
+            }
+        }
+    }
+
+    private function createConfigManager(?string $masterKeyHex = null, string $sessionHandler = 'file', string $headersBody = '', ?string $envFileContent = null): ConfigManager
     {
         $configPath = sys_get_temp_dir() . '/pulsar_security_wiring_' . bin2hex(random_bytes(4));
         @mkdir($configPath, 0o755, true);
@@ -318,6 +388,15 @@ final class SecurityWiringTest extends TestCase
         file_put_contents($configPath . '/observability.php', '<?php return ["logging" => ["default_channel" => "file", "level" => "debug", "channels" => []], "audit" => ["enabled" => false]];');
         file_put_contents($configPath . '/security.php', '<?php return ["session" => ["handler" => "' . $sessionHandler . '", "lifetime" => 120, "encryption" => false, "validators" => []], "csrf" => [], "headers" => [' . $headersBody . '], "rate_limit" => [], "cors" => ["enabled" => false]];');
 
-        return new ConfigManager($configPath);
+        // Optionally write a .env file and wire it into the ConfigManager so the
+        // Environment repository loads it (mirrors a real deployment whose secrets
+        // live in .env rather than the OS process env).
+        $envFilePath = null;
+        if ($envFileContent !== null) {
+            $envFilePath = $configPath . '/.env';
+            file_put_contents($envFilePath, $envFileContent);
+        }
+
+        return new ConfigManager($configPath, $envFilePath);
     }
 }

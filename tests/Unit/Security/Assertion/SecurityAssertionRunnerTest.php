@@ -12,41 +12,40 @@ use Pulsar\Security\Assertion\SecurityAssertionRunner;
 use Pulsar\Security\Assertion\SecurityViolationSeverity;
 use Pulsar\Security\Exception\SecurityException;
 
+use function array_map;
+use function str_repeat;
+
 final class SecurityAssertionRunnerTest extends TestCase
 {
+    /** A valid 64-hex-char (32-byte) master key. */
+    private const string VALID_KEY_HEX = 'abababababababababababababababababababababababababababababababab';
+
+    private function secureSession(bool $encryption = true): SessionConfig
+    {
+        return new SessionConfig(
+            cookieName: 'sid',
+            lifetime: 3600,
+            cookieHttpOnly: true,
+            cookieSecure: true,
+            cookieSameSite: 'Strict',
+            regenerateOnPrivilegeChange: true,
+            encryption: $encryption,
+        );
+    }
+
     #[Test]
     public function assertAllPassesWithSecureConfig(): void
     {
-        // Set master key env for the test
-        $originalKey = getenv('PULSAR_MASTER_KEY');
-        putenv('PULSAR_MASTER_KEY=' . str_repeat('ab', 32));
+        $runner = new SecurityAssertionRunner(
+            debugMode: false,
+            hstsEnabled: true,
+            masterKeyHex: self::VALID_KEY_HEX,
+            hstsConfig: new HstsConfig(enabled: true, maxAge: 63072000),
+            sessionConfig: $this->secureSession(),
+        );
 
-        try {
-            $runner = new SecurityAssertionRunner(
-                debugMode: false,
-                hstsEnabled: true,
-                hstsConfig: new HstsConfig(enabled: true, maxAge: 63072000),
-                sessionConfig: new SessionConfig(
-                    cookieName: 'sid',
-                    lifetime: 3600,
-                    cookieHttpOnly: true,
-                    cookieSecure: true,
-                    cookieSameSite: 'Strict',
-                    regenerateOnPrivilegeChange: true,
-                    encryption: true,
-                ),
-            );
-
-            // assertAll() should not throw; also verify check() returns no violations
-            $runner->assertAll();
-            self::assertSame([], $runner->check());
-        } finally {
-            if ($originalKey === false) {
-                putenv('PULSAR_MASTER_KEY');
-            } else {
-                putenv('PULSAR_MASTER_KEY=' . $originalKey);
-            }
-        }
+        $runner->assertAll();
+        self::assertSame([], $runner->check());
     }
 
     #[Test]
@@ -55,6 +54,7 @@ final class SecurityAssertionRunnerTest extends TestCase
         $runner = new SecurityAssertionRunner(
             debugMode: true,
             hstsEnabled: true,
+            masterKeyHex: self::VALID_KEY_HEX,
             hstsConfig: new HstsConfig(enabled: true, maxAge: 63072000),
             sessionConfig: null,
         );
@@ -71,6 +71,7 @@ final class SecurityAssertionRunnerTest extends TestCase
         $runner = new SecurityAssertionRunner(
             debugMode: false,
             hstsEnabled: false,
+            masterKeyHex: self::VALID_KEY_HEX,
             hstsConfig: new HstsConfig(enabled: true, maxAge: 63072000),
             sessionConfig: null,
         );
@@ -87,6 +88,7 @@ final class SecurityAssertionRunnerTest extends TestCase
         $runner = new SecurityAssertionRunner(
             debugMode: false,
             hstsEnabled: true,
+            masterKeyHex: self::VALID_KEY_HEX,
             hstsConfig: new HstsConfig(enabled: false),
             sessionConfig: null,
         );
@@ -103,6 +105,7 @@ final class SecurityAssertionRunnerTest extends TestCase
         $runner = new SecurityAssertionRunner(
             debugMode: false,
             hstsEnabled: true,
+            masterKeyHex: self::VALID_KEY_HEX,
             hstsConfig: new HstsConfig(enabled: true, maxAge: 3600),
             sessionConfig: null,
         );
@@ -114,38 +117,39 @@ final class SecurityAssertionRunnerTest extends TestCase
     }
 
     #[Test]
+    public function assertAllThrowsOnMissingMasterKey(): void
+    {
+        // The key is absent from BOTH the OS env and the resolved value: the
+        // runner must report it missing regardless of getenv() state.
+        $runner = new SecurityAssertionRunner(
+            debugMode: false,
+            hstsEnabled: true,
+            masterKeyHex: null,
+            hstsConfig: new HstsConfig(enabled: true, maxAge: 63072000),
+            sessionConfig: $this->secureSession(),
+        );
+
+        $this->expectException(SecurityException::class);
+        $this->expectExceptionMessage('master_key_present');
+
+        $runner->assertAll();
+    }
+
+    #[Test]
     public function assertAllThrowsOnSessionEncryptionDisabled(): void
     {
-        $originalKey = getenv('PULSAR_MASTER_KEY');
-        putenv('PULSAR_MASTER_KEY=' . str_repeat('ab', 32));
+        $runner = new SecurityAssertionRunner(
+            debugMode: false,
+            hstsEnabled: true,
+            masterKeyHex: self::VALID_KEY_HEX,
+            hstsConfig: new HstsConfig(enabled: true, maxAge: 63072000),
+            sessionConfig: $this->secureSession(encryption: false),
+        );
 
-        try {
-            $runner = new SecurityAssertionRunner(
-                debugMode: false,
-                hstsEnabled: true,
-                hstsConfig: new HstsConfig(enabled: true, maxAge: 63072000),
-                sessionConfig: new SessionConfig(
-                    cookieName: 'sid',
-                    lifetime: 3600,
-                    cookieHttpOnly: true,
-                    cookieSecure: true,
-                    cookieSameSite: 'Strict',
-                    regenerateOnPrivilegeChange: true,
-                    encryption: false,
-                ),
-            );
+        $this->expectException(SecurityException::class);
+        $this->expectExceptionMessage('session_encryption');
 
-            $this->expectException(SecurityException::class);
-            $this->expectExceptionMessage('session_encryption');
-
-            $runner->assertAll();
-        } finally {
-            if ($originalKey === false) {
-                putenv('PULSAR_MASTER_KEY');
-            } else {
-                putenv('PULSAR_MASTER_KEY=' . $originalKey);
-            }
-        }
+        $runner->assertAll();
     }
 
     #[Test]
@@ -154,18 +158,19 @@ final class SecurityAssertionRunnerTest extends TestCase
         $runner = new SecurityAssertionRunner(
             debugMode: true,
             hstsEnabled: false,
+            masterKeyHex: null,
             hstsConfig: null,
             sessionConfig: null,
         );
 
         $violations = $runner->check();
 
-        // At minimum: debug + https + hsts + master key
         self::assertNotEmpty($violations);
 
         $assertions = array_map(static fn($v) => $v->assertion, $violations);
         self::assertContains('debug_mode', $assertions);
         self::assertContains('https_enforced', $assertions);
+        self::assertContains('master_key_present', $assertions);
     }
 
     #[Test]
@@ -174,6 +179,7 @@ final class SecurityAssertionRunnerTest extends TestCase
         $runner = new SecurityAssertionRunner(
             debugMode: true,
             hstsEnabled: true,
+            masterKeyHex: self::VALID_KEY_HEX,
             hstsConfig: new HstsConfig(enabled: true, maxAge: 63072000),
             sessionConfig: null,
         );
@@ -194,36 +200,66 @@ final class SecurityAssertionRunnerTest extends TestCase
     }
 
     #[Test]
+    public function checkReportsMissingMasterKeyWhenHexIsNull(): void
+    {
+        $runner = new SecurityAssertionRunner(
+            debugMode: false,
+            hstsEnabled: true,
+            masterKeyHex: null,
+            hstsConfig: new HstsConfig(enabled: true, maxAge: 63072000),
+            sessionConfig: $this->secureSession(),
+        );
+
+        $assertions = array_map(static fn($v) => $v->assertion, $runner->check());
+        self::assertContains('master_key_present', $assertions);
+    }
+
+    #[Test]
+    public function checkAcceptsMasterKeyProvidedAsResolvedValue(): void
+    {
+        // Acceptance: a key supplied via the resolved param (as the wiring does
+        // from the Environment repository / .env) is honored — no
+        // master_key_present or master_key_strength violation — even though the
+        // OS env (getenv) does not contain it.
+        $runner = new SecurityAssertionRunner(
+            debugMode: false,
+            hstsEnabled: true,
+            masterKeyHex: self::VALID_KEY_HEX,
+            hstsConfig: new HstsConfig(enabled: true, maxAge: 63072000),
+            sessionConfig: $this->secureSession(),
+        );
+
+        $assertions = array_map(static fn($v) => $v->assertion, $runner->check());
+        self::assertNotContains('master_key_present', $assertions);
+        self::assertNotContains('master_key_strength', $assertions);
+    }
+
+    #[Test]
+    public function checkReportsWeakMasterKey(): void
+    {
+        $runner = new SecurityAssertionRunner(
+            debugMode: false,
+            hstsEnabled: true,
+            masterKeyHex: str_repeat('ab', 8), // 16 hex chars — below the 64 floor
+            hstsConfig: new HstsConfig(enabled: true, maxAge: 63072000),
+            sessionConfig: $this->secureSession(),
+        );
+
+        $assertions = array_map(static fn($v) => $v->assertion, $runner->check());
+        self::assertContains('master_key_strength', $assertions);
+    }
+
+    #[Test]
     public function checkReturnsEmptyWhenAllSecure(): void
     {
-        $originalKey = getenv('PULSAR_MASTER_KEY');
-        putenv('PULSAR_MASTER_KEY=' . str_repeat('ab', 32));
+        $runner = new SecurityAssertionRunner(
+            debugMode: false,
+            hstsEnabled: true,
+            masterKeyHex: self::VALID_KEY_HEX,
+            hstsConfig: new HstsConfig(enabled: true, maxAge: 63072000),
+            sessionConfig: $this->secureSession(),
+        );
 
-        try {
-            $runner = new SecurityAssertionRunner(
-                debugMode: false,
-                hstsEnabled: true,
-                hstsConfig: new HstsConfig(enabled: true, maxAge: 63072000),
-                sessionConfig: new SessionConfig(
-                    cookieName: 'sid',
-                    lifetime: 3600,
-                    cookieHttpOnly: true,
-                    cookieSecure: true,
-                    cookieSameSite: 'Strict',
-                    regenerateOnPrivilegeChange: true,
-                    encryption: true,
-                ),
-            );
-
-            $violations = $runner->check();
-
-            self::assertSame([], $violations);
-        } finally {
-            if ($originalKey === false) {
-                putenv('PULSAR_MASTER_KEY');
-            } else {
-                putenv('PULSAR_MASTER_KEY=' . $originalKey);
-            }
-        }
+        self::assertSame([], $runner->check());
     }
 }
