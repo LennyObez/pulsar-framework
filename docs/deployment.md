@@ -18,7 +18,7 @@ The `asset:publish` command copies or symlinks extension assets from `resources/
 php bin/pulsar asset:publish --copy
 ```
 
-Without `--copy`, the command creates symlinks (useful for development). See the [Assets guide](ASSETS.md) for full details.
+Without `--copy`, the command creates symlinks (useful for development). See the [Assets guide](assets.md) for full details.
 
 ## Framework optimization
 

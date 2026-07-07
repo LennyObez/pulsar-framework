@@ -360,7 +360,7 @@ Your `pulsar.json` declares a requested trust tier, but the host application's c
 
 For most community extensions, the `Community` tier is appropriate. Extensions that need access to sensitive services (cryptographic keys, raw database connections, audit sinks) should document this requirement clearly and explain why the elevated access is necessary. The host application operator makes the final decision.
 
-See the [extension trust tiers documentation](../EXTENSIONS.md) and [ADR-0023](../adr/0023-extension-trust-tiers.md) for the full capability model.
+See the [extension trust tiers documentation](../extensions.md) and [ADR-0023](../adr/0023-extension-trust-tiers.md) for the full capability model.
 
 ## Common pitfalls
 
