@@ -6,6 +6,7 @@ namespace Pulsar\Cloud\Aws\Config;
 
 use NoDiscard;
 use Pulsar\Api\Internal;
+use Pulsar\Config\Environment;
 use Pulsar\Support\Coerce;
 use SensitiveParameter;
 
@@ -47,8 +48,8 @@ final readonly class AwsConfig
     #[NoDiscard]
     public function resolveCredentials(): array
     {
-        $accessKey = $this->accessKey !== '' ? $this->accessKey : (getenv('AWS_ACCESS_KEY_ID') ?: '');
-        $secretKey = $this->secretKey !== '' ? $this->secretKey : (getenv('AWS_SECRET_ACCESS_KEY') ?: '');
+        $accessKey = $this->accessKey !== '' ? $this->accessKey : Environment::read('AWS_ACCESS_KEY_ID');
+        $secretKey = $this->secretKey !== '' ? $this->secretKey : Environment::read('AWS_SECRET_ACCESS_KEY');
 
         return [
             'access_key' => $accessKey,

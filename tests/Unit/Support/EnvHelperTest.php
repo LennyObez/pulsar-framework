@@ -8,6 +8,13 @@ use PHPUnit\Framework\Attributes\CoversFunction;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Config\Environment;
+
+use function bin2hex;
+use function file_put_contents;
+use function random_bytes;
+use function sys_get_temp_dir;
+use function unlink;
 
 /**
  * Tests for env(), base_path(), storage_path(), resource_path(),
@@ -21,12 +28,68 @@ use PHPUnit\Framework\TestCase;
 #[CoversFunction('public_path')]
 final class EnvHelperTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        // The getenv-path tests below require no active environment bound.
+        Environment::resetActive();
+    }
+
     protected function tearDown(): void
     {
         // Clean up env vars set during tests
         putenv('PULSAR_TEST_ENV_KEY');
         putenv('PULSAR_TEST_BOOL');
         putenv('PULSAR_BASE_PATH');
+        Environment::resetActive();
+    }
+
+    #[Test]
+    public function envReadsActiveEnvironmentValueNotInGetenv(): void
+    {
+        // A key present only in .env (loaded into the Environment, absent from
+        // the OS process env) must resolve through env() once the Environment is
+        // active — the core of ADR-0033.
+        putenv('PULSAR_DOTENV_ONLY'); // ensure NOT in getenv
+        $envFile = sys_get_temp_dir() . '/pulsar_env_helper_' . bin2hex(random_bytes(4)) . '.env';
+        file_put_contents($envFile, "PULSAR_DOTENV_ONLY=from_dotenv\n");
+
+        try {
+            Environment::activate(Environment::load($envFile));
+
+            self::assertSame('from_dotenv', env('PULSAR_DOTENV_ONLY'));
+            self::assertFalse(getenv('PULSAR_DOTENV_ONLY')); // proves it is not in the OS env
+        } finally {
+            Environment::resetActive();
+            unlink($envFile);
+        }
+    }
+
+    #[Test]
+    public function envCoercesValueFromActiveEnvironment(): void
+    {
+        $envFile = sys_get_temp_dir() . '/pulsar_env_helper_' . bin2hex(random_bytes(4)) . '.env';
+        file_put_contents($envFile, "PULSAR_DOTENV_FLAG=true\n");
+
+        try {
+            Environment::activate(Environment::load($envFile));
+
+            self::assertTrue(env('PULSAR_DOTENV_FLAG'));
+        } finally {
+            Environment::resetActive();
+            unlink($envFile);
+        }
+    }
+
+    #[Test]
+    public function envReturnsDefaultWhenActiveEnvironmentLacksKey(): void
+    {
+        Environment::activate(Environment::load(null)); // OS env only, no .env
+
+        try {
+            self::assertSame('fallback', env('PULSAR_DEFINITELY_ABSENT_KEY_XYZ', 'fallback'));
+        } finally {
+            Environment::resetActive();
+        }
     }
 
     #[Test]

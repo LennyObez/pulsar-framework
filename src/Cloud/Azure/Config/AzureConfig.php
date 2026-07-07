@@ -6,6 +6,7 @@ namespace Pulsar\Cloud\Azure\Config;
 
 use NoDiscard;
 use Pulsar\Api\Internal;
+use Pulsar\Config\Environment;
 use Pulsar\Support\Coerce;
 use SensitiveParameter;
 
@@ -49,13 +50,7 @@ final readonly class AzureConfig
             return $this->accessToken;
         }
 
-        $envToken = getenv('AZURE_ACCESS_TOKEN') ?: '';
-
-        if ($envToken !== '') {
-            return $envToken;
-        }
-
-        return '';
+        return Environment::read('AZURE_ACCESS_TOKEN');
     }
 
     /**
@@ -68,7 +63,7 @@ final readonly class AzureConfig
             return $this->tenantId;
         }
 
-        return getenv('AZURE_TENANT_ID') ?: '';
+        return Environment::read('AZURE_TENANT_ID');
     }
 
     /**
