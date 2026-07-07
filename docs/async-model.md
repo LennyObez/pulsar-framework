@@ -25,11 +25,11 @@ Fibers are used in exactly two places: **Studio context isolation** and the **`F
 
 ### Components
 
-| Component                    | File                                                   | Role                                                                  |
-| ---------------------------- | ------------------------------------------------------ | --------------------------------------------------------------------- |
-| `FiberScopedContextProvider` | `extensions/studio/src/FiberScopedContextProvider.php` | Manages per-Fiber correlation context stacks                          |
-| `ContextScope`               | `extensions/studio/src/ContextScope.php`               | RAII guard that enters/exits a context scope                          |
-| `FanOut`                     | `src/Concurrency/FanOut.php`                           | Bounded, infrastructure-only round-robin Fiber scheduler (see below)  |
+| Component                    | File                                                   | Role                                                                 |
+| ---------------------------- | ------------------------------------------------------ | -------------------------------------------------------------------- |
+| `FiberScopedContextProvider` | `extensions/studio/src/FiberScopedContextProvider.php` | Manages per-Fiber correlation context stacks                         |
+| `ContextScope`               | `extensions/studio/src/ContextScope.php`               | RAII guard that enters/exits a context scope                         |
+| `FanOut`                     | `src/Concurrency/FanOut.php`                           | Bounded, infrastructure-only round-robin Fiber scheduler (see below) |
 
 ### How it works
 
