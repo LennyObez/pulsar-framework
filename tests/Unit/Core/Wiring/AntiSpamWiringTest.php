@@ -11,6 +11,9 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Psr\Log\AbstractLogger;
+use Psr\Log\LoggerInterface;
+use Psr\Log\LogLevel;
 use Pulsar\Cache\Application\TaggedCacheInterface;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Container\Container;
@@ -41,6 +44,7 @@ use Pulsar\Security\AntiSpam\Risk\RiskDecision;
 use Pulsar\Security\AntiSpam\Risk\VelocityConfig;
 use Pulsar\Tests\Unit\Security\AntiSpam\PrivacyPass\PrivacyPassTokenFactory;
 use RuntimeException;
+use Stringable;
 
 use function base64_encode;
 use function bin2hex;
@@ -49,6 +53,7 @@ use function json_encode;
 use function mkdir;
 use function random_bytes;
 use function rtrim;
+use function str_contains;
 use function strtr;
 use function sys_get_temp_dir;
 
@@ -354,6 +359,94 @@ final class AntiSpamWiringTest extends TestCase
         self::assertSame(RiskDecision::Block, $engine->assess($request)->decision);
     }
 
+    #[Test]
+    public function duplicateDetectionWithoutCacheLogsSecurityWarning(): void
+    {
+        $container = new Container();
+        $pipeline = new MiddlewarePipeline($container);
+        $logger = new WarningSpyLogger();
+        $container->instance(LoggerInterface::class, $logger);
+
+        // Enabled but no TaggedCacheInterface bound => previously a SILENT no-op.
+        $this->wire($container, $pipeline, "'duplicate_detection_enabled' => true, 'reputation_cooldown_enabled' => false");
+
+        self::assertTrue(
+            $logger->hasWarningContaining('Duplicate detection'),
+            'an enabled cache-dependent check must warn loudly when no cache is bound',
+        );
+        self::assertTrue($logger->hasWarningContaining('no cache is bound'));
+    }
+
+    #[Test]
+    public function reputationCooldownWithoutCacheLogsSecurityWarning(): void
+    {
+        $container = new Container();
+        $pipeline = new MiddlewarePipeline($container);
+        $logger = new WarningSpyLogger();
+        $container->instance(LoggerInterface::class, $logger);
+
+        $this->wire($container, $pipeline, "'duplicate_detection_enabled' => false, 'reputation_cooldown_enabled' => true");
+
+        self::assertTrue($logger->hasWarningContaining('Reputation cooldown'));
+    }
+
+    #[Test]
+    public function velocitySignalWithoutCacheLogsSecurityWarning(): void
+    {
+        $container = new Container();
+        $pipeline = new MiddlewarePipeline($container);
+        $logger = new WarningSpyLogger();
+        $container->instance(LoggerInterface::class, $logger);
+
+        $this->wire(
+            $container,
+            $pipeline,
+            "'duplicate_detection_enabled' => false, 'reputation_cooldown_enabled' => false, "
+            . "'adaptive_risk' => ['enabled' => true], 'velocity' => ['enabled' => true]",
+        );
+
+        self::assertTrue($logger->hasWarningContaining('Velocity risk signal'));
+    }
+
+    #[Test]
+    public function cacheDependentFeaturesDoNotWarnWhenCacheIsBound(): void
+    {
+        $container = new Container();
+        $pipeline = new MiddlewarePipeline($container);
+        $logger = new WarningSpyLogger();
+        $container->instance(LoggerInterface::class, $logger);
+        $container->instance(TaggedCacheInterface::class, $this->inMemoryCache());
+
+        $this->wire(
+            $container,
+            $pipeline,
+            "'duplicate_detection_enabled' => true, 'reputation_cooldown_enabled' => true, "
+            . "'adaptive_risk' => ['enabled' => true], 'velocity' => ['enabled' => true]",
+        );
+
+        self::assertFalse(
+            $logger->hasWarningContaining('no cache is bound'),
+            'no cache-degradation warning when the tagged cache is bound',
+        );
+    }
+
+    #[Test]
+    public function disabledCacheDependentFeaturesDoNotWarn(): void
+    {
+        $container = new Container();
+        $pipeline = new MiddlewarePipeline($container);
+        $logger = new WarningSpyLogger();
+        $container->instance(LoggerInterface::class, $logger);
+
+        // All cache-dependent features off; velocity off (adaptive_risk absent).
+        $this->wire($container, $pipeline, "'duplicate_detection_enabled' => false, 'reputation_cooldown_enabled' => false");
+
+        self::assertFalse(
+            $logger->hasWarningContaining('no cache is bound'),
+            'a disabled feature must not warn about a missing cache',
+        );
+    }
+
     private function base64Url(string $value): string
     {
         return rtrim(strtr(base64_encode($value), '+/', '-_'), '=');
@@ -444,5 +537,32 @@ final class AntiSpamWiringTest extends TestCase
         $configManager = new ConfigManager($configPath);
 
         new AntiSpamWiring()->wire($container, $configManager, $pipeline, new MiddlewareRegistry(), new Router());
+    }
+}
+
+/**
+ * @internal Test helper: collects warning-level log messages for assertions.
+ */
+final class WarningSpyLogger extends AbstractLogger
+{
+    /** @var list<string> */
+    public array $warnings = [];
+
+    public function log(mixed $level, string|Stringable $message, array $context = []): void
+    {
+        if ($level === LogLevel::WARNING) {
+            $this->warnings[] = (string) $message;
+        }
+    }
+
+    public function hasWarningContaining(string $needle): bool
+    {
+        foreach ($this->warnings as $warning) {
+            if (str_contains($warning, $needle)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
