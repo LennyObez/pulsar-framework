@@ -302,10 +302,9 @@ foreach ($extensionPaths as $path) {
 $configManager = null;
 // basePath is ALWAYS the project root (never the framework directory)
 $basePath = $projectRoot;
+$envFile = $basePath . DIRECTORY_SEPARATOR . '.env';
 
 if (is_dir($configPath)) {
-  $envFile = $basePath . DIRECTORY_SEPARATOR . '.env';
-
   // Auto-generate .env with secure defaults if it does not exist.
   // This ensures pulsar serve and all CLI commands work out of the box
   // without manual configuration — the master key, APP_KEY, and SQLite
@@ -352,13 +351,19 @@ $kernel = new Kernel(
   configManager: $configManager,
 );
 
-// Pre-boot FrameworkCache registration so cache-aware boot path works
-$masterKeyHex = getenv('PULSAR_MASTER_KEY');
-if ($masterKeyHex !== false && $masterKeyHex !== '' && $configManager !== null) {
+// Pre-boot FrameworkCache registration so the cache-aware boot path works.
+// Resolve PULSAR_MASTER_KEY / CACHE_ENCRYPT through a .env-aware Environment
+// (not raw getenv), so values provided only in .env are honoured here and by
+// the doctor command below — getenv() never sees parsed .env values, which
+// otherwise makes a .env-only master key look absent.
+$cliEnvironment = Environment::load($envFile);
+$masterKeyHex = $cliEnvironment->get('PULSAR_MASTER_KEY') ?? '';
+if ($masterKeyHex !== '' && $configManager !== null) {
   try {
     $earlyMasterKey = MasterKey::fromHex($masterKeyHex);
-    $encrypt = getenv('CACHE_ENCRYPT') === 'true' || getenv('CACHE_ENCRYPT') === '1';
-    $earlyCache = new FrameworkCache($basePath, $earlyMasterKey, new HmacService(), $encrypt);
+    $cacheEncrypt = $cliEnvironment->get('CACHE_ENCRYPT');
+    $encrypt = $cacheEncrypt === 'true' || $cacheEncrypt === '1';
+    $earlyCache = new FrameworkCache($basePath, $earlyMasterKey, new HmacService(), $encrypt, environment: $cliEnvironment);
     $kernel->container()->instance(FrameworkCache::class, $earlyCache);
   } catch (Throwable) {
     // Invalid key or sodium failure — skip pre-boot cache
