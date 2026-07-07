@@ -106,6 +106,9 @@ final class ConfigManager implements ConfigManagerInterface
         }
 
         $this->environment = Environment::load($this->envFilePath);
+        // Bind the active environment so env() resolves .env even on the cached
+        // config path (ADR-0033).
+        Environment::activate($this->environment);
         $this->repository = $cached;
 
         return true;
@@ -153,6 +156,9 @@ final class ConfigManager implements ConfigManagerInterface
         $this->validateRequiredConfigs();
 
         $this->environment = Environment::load($this->envFilePath);
+        // Bind the active environment before any config/*.php is required, so
+        // env() calls inside config files resolve .env values (ADR-0033).
+        Environment::activate($this->environment);
         $this->repository = new ConfigRepository();
 
         // Load app config

@@ -9,6 +9,7 @@ declare(strict_types=1);
  * Each function delegates to its static class counterpart.
  */
 
+use Pulsar\Config\Environment;
 use Pulsar\ErrorHandling\HttpException;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Support\Collection;
@@ -161,15 +162,38 @@ if (!function_exists('env')) {
     /**
      * Retrieve an environment variable with type coercion and default fallback.
      *
-     * Reads from getenv() and coerces well-known string representations
-     * of booleans, null, and empty to their native PHP types.
+     * A bootstrap-time helper. Resolution order:
+     *   1. the active {@see Environment} (OS env + `.env`, merged, OS-wins,
+     *      honouring the loader's allowlist) once ConfigManager has bound it;
+     *   2. `getenv()` — for the pre-bootstrap window and unit tests that do not
+     *      load configuration;
+     *   3. the supplied default.
+     *
+     * This is what makes a value set only in `.env` resolve through `env()`
+     * (see ADR-0033). Coerces the well-known string representations of booleans,
+     * null, and empty to their native PHP types.
+     *
+     * Runtime application code should prefer typed config (ConfigManager / config
+     * DTOs) or `Environment::get()` rather than `env()`.
      */
     function env(string $key, mixed $default = null): mixed
     {
-        $value = getenv($key);
+        $active = Environment::active();
 
-        if ($value === false) {
-            return $default;
+        if ($active !== null) {
+            $value = $active->get($key);
+
+            if ($value === null) {
+                return $default;
+            }
+        } else {
+            $raw = getenv($key);
+
+            if ($raw === false) {
+                return $default;
+            }
+
+            $value = $raw;
         }
 
         return match (strtolower($value)) {

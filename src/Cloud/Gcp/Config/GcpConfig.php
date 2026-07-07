@@ -6,6 +6,7 @@ namespace Pulsar\Cloud\Gcp\Config;
 
 use NoDiscard;
 use Pulsar\Api\Internal;
+use Pulsar\Config\Environment;
 use Pulsar\Support\Coerce;
 use SensitiveParameter;
 
@@ -52,7 +53,7 @@ final readonly class GcpConfig
             return $this->projectId;
         }
 
-        $envProjectId = getenv('GCLOUD_PROJECT') ?: (getenv('GOOGLE_CLOUD_PROJECT') ?: '');
+        $envProjectId = Environment::read('GCLOUD_PROJECT') ?: Environment::read('GOOGLE_CLOUD_PROJECT');
 
         if ($envProjectId !== '') {
             return $envProjectId;
@@ -73,13 +74,7 @@ final readonly class GcpConfig
             return $this->accessToken;
         }
 
-        $envToken = getenv('GOOGLE_ACCESS_TOKEN') ?: '';
-
-        if ($envToken !== '') {
-            return $envToken;
-        }
-
-        return '';
+        return Environment::read('GOOGLE_ACCESS_TOKEN');
     }
 
     /**
@@ -90,7 +85,7 @@ final readonly class GcpConfig
     #[NoDiscard]
     public function loadCredentials(): array
     {
-        $path = $this->credentialsPath !== '' ? $this->credentialsPath : (getenv('GOOGLE_APPLICATION_CREDENTIALS') ?: '');
+        $path = $this->credentialsPath !== '' ? $this->credentialsPath : Environment::read('GOOGLE_APPLICATION_CREDENTIALS');
 
         if ($path === '' || !file_exists($path)) {
             return [];
