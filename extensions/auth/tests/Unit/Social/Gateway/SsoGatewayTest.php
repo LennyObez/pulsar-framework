@@ -19,6 +19,7 @@ use Pulsar\Extension\Auth\Social\Domain\LinkedIdentityResult;
 use Pulsar\Extension\Auth\Social\Domain\OAuthTokenSet;
 use Pulsar\Extension\Auth\Social\Domain\SocialIdentity;
 use Pulsar\Extension\Auth\Social\Features\ExchangeCode\ExchangeCodeHandler;
+use Pulsar\Extension\Auth\Social\Features\InitiateLogin\InitiateLoginHandler;
 use Pulsar\Extension\Auth\Social\Features\MapIdentity\MapIdentityHandler;
 use Pulsar\Extension\Auth\Social\Gateway\SsoGateway;
 
@@ -58,13 +59,14 @@ final class SsoGatewayTest extends TestCase
             ],
         ]);
 
+        $initiateHandler = new InitiateLoginHandler($registry, $stateManager, $nonceVerifier, $config);
         $exchangeHandler = new ExchangeCodeHandler($registry, $stateManager, $nonceVerifier, $idTokenVerifier, $config);
         $mapHandler = new MapIdentityHandler($registry);
 
         $linker = $this->createStub(SocialIdentityLinkerInterface::class);
         $linker->method('link')->willReturn($linkResult);
 
-        $gateway = new SsoGateway($exchangeHandler, $mapHandler, $linker);
+        $gateway = new SsoGateway($initiateHandler, $exchangeHandler, $mapHandler, $linker);
 
         $result = $gateway->fullLogin('google', 'auth-code', 'valid-state');
 
@@ -108,17 +110,59 @@ final class SsoGatewayTest extends TestCase
             ],
         ]);
 
+        $initiateHandler = new InitiateLoginHandler($registry, $stateManager, $nonceVerifier, $config);
         $exchangeHandler = new ExchangeCodeHandler($registry, $stateManager, $nonceVerifier, $idTokenVerifier, $config);
         $mapHandler = new MapIdentityHandler($registry);
 
         $linker = $this->createStub(SocialIdentityLinkerInterface::class);
         $linker->method('link')->willReturn($linkResult);
 
-        $gateway = new SsoGateway($exchangeHandler, $mapHandler, $linker);
+        $gateway = new SsoGateway($initiateHandler, $exchangeHandler, $mapHandler, $linker);
 
         $result = $gateway->fullLogin('google', 'code', 'state');
 
         self::assertFalse($result->linkResult->linked);
         self::assertSame(LinkAction::Unlinked, $result->linkResult->action);
+    }
+
+    #[Test]
+    public function initiateBuildsTheProviderAuthorizationUrl(): void
+    {
+        $provider = $this->createStub(OAuthProviderInterface::class);
+        $provider->method('authorizationUrl')->willReturn('https://auth.example.com/authorize?state=st');
+
+        $registry = $this->createStub(OAuthProviderRegistryInterface::class);
+        $registry->method('get')->willReturn($provider);
+
+        $stateManager = $this->createStub(OAuthStateManagerInterface::class);
+        $stateManager->method('generate')->willReturn('state-token');
+
+        $nonceVerifier = $this->createStub(NonceVerifierInterface::class);
+        $idTokenVerifier = $this->createStub(IdTokenVerifierInterface::class);
+
+        $config = SocialSsoConfig::fromArray([
+            'providers' => [
+                'google' => [
+                    'type' => 'oauth2',
+                    'client_id' => 'id',
+                    'client_secret' => 'secret',
+                    'authorization_url' => 'https://auth.example.com/authorize',
+                    'token_url' => 'https://auth.example.com/token',
+                    'scopes' => [],
+                ],
+            ],
+        ]);
+
+        $initiateHandler = new InitiateLoginHandler($registry, $stateManager, $nonceVerifier, $config);
+        $exchangeHandler = new ExchangeCodeHandler($registry, $stateManager, $nonceVerifier, $idTokenVerifier, $config);
+        $mapHandler = new MapIdentityHandler($registry);
+        $linker = $this->createStub(SocialIdentityLinkerInterface::class);
+
+        $gateway = new SsoGateway($initiateHandler, $exchangeHandler, $mapHandler, $linker);
+
+        $result = $gateway->initiate('google');
+
+        self::assertSame('https://auth.example.com/authorize?state=st', $result->authorizationUrl);
+        self::assertSame('state-token', $result->state);
     }
 }

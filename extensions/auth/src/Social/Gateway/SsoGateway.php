@@ -11,22 +11,41 @@ use Pulsar\Extension\Auth\Social\Domain\SsoLoginResult;
 use Pulsar\Extension\Auth\Social\Exception\SsoException;
 use Pulsar\Extension\Auth\Social\Features\ExchangeCode\ExchangeCodeHandler;
 use Pulsar\Extension\Auth\Social\Features\ExchangeCode\ExchangeCodeRequest;
+use Pulsar\Extension\Auth\Social\Features\InitiateLogin\InitiateLoginHandler;
+use Pulsar\Extension\Auth\Social\Features\InitiateLogin\InitiateLoginRequest;
+use Pulsar\Extension\Auth\Social\Features\InitiateLogin\InitiateLoginResult;
 use Pulsar\Extension\Auth\Social\Features\MapIdentity\MapIdentityHandler;
 use Pulsar\Extension\Auth\Social\Features\MapIdentity\MapIdentityRequest;
 
 /**
  * Top-level SSO gateway orchestrator.
  *
- * Coordinates the full OAuth callback flow: code exchange,
- * identity mapping, and account linking into a single result.
+ * Coordinates both legs of the OAuth flow: the initiate step (build the
+ * provider authorization URL) and the callback (code exchange, identity
+ * mapping, and account linking into a single result).
  */
 final readonly class SsoGateway implements SsoGatewayInterface
 {
     public function __construct(
+        private InitiateLoginHandler $initiateHandler,
         private ExchangeCodeHandler $exchangeHandler,
         private MapIdentityHandler $mapHandler,
         private SocialIdentityLinkerInterface $linker,
     ) {}
+
+    /**
+     * @throws SsoException
+     */
+    #[Override]
+    public function initiate(string $providerName, ?string $redirectUri = null): InitiateLoginResult
+    {
+        return $this->initiateHandler->handle(
+            new InitiateLoginRequest(
+                providerName: $providerName,
+                redirectUri: $redirectUri,
+            ),
+        );
+    }
 
     /**
      * @throws SsoException
