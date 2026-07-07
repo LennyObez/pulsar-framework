@@ -9,7 +9,6 @@ use Pulsar\Config\HstsConfig;
 use Pulsar\Config\SessionConfig;
 use Pulsar\Security\Exception\SecurityException;
 
-use function getenv;
 use function sprintf;
 use function strlen;
 
@@ -49,10 +48,17 @@ final readonly class SecurityAssertionRunner
      *     and does NOT itself enforce HTTPS: it emits no redirect, sets no
      *     cookie, and writes no header (header emission is the
      *     SecurityHeadersMiddleware's responsibility).
+     * @param ?string $masterKeyHex The framework-resolved `PULSAR_MASTER_KEY`
+     *     value (hex), or null when absent. This is the SAME value the runtime
+     *     resolves through the {@see \Pulsar\Config\Environment} repository (OS
+     *     env + `.env`), NOT a fresh `getenv()` read — so a key provided only in
+     *     `.env` is honored here exactly as it is by the crypto stack, instead of
+     *     producing a false "not set" violation.
      */
     public function __construct(
         private bool $debugMode,
         private bool $hstsEnabled,
+        private ?string $masterKeyHex,
         private ?HstsConfig $hstsConfig,
         private ?SessionConfig $sessionConfig,
     ) {}
@@ -112,8 +118,8 @@ final readonly class SecurityAssertionRunner
             );
         }
 
-        $masterKey = getenv('PULSAR_MASTER_KEY');
-        if ($masterKey === false || $masterKey === '') {
+        $masterKey = $this->masterKeyHex;
+        if ($masterKey === null || $masterKey === '') {
             $violations[] = new SecurityViolation(
                 'master_key_present',
                 'PULSAR_MASTER_KEY environment variable is not set',
@@ -190,9 +196,9 @@ final readonly class SecurityAssertionRunner
      */
     private function assertMasterKeyStrength(): void
     {
-        $masterKey = getenv('PULSAR_MASTER_KEY');
+        $masterKey = $this->masterKeyHex;
 
-        if ($masterKey === false || $masterKey === '') {
+        if ($masterKey === null || $masterKey === '') {
             throw SecurityException::assertionFailed(
                 'master_key_present',
                 'PULSAR_MASTER_KEY environment variable is not set',
