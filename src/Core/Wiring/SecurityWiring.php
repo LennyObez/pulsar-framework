@@ -28,6 +28,7 @@ use Pulsar\DataProtection\DefaultRetentionPolicy;
 use Pulsar\DataProtection\InMemoryConsentManager;
 use Pulsar\DataProtection\RetentionPolicyInterface;
 use Pulsar\DataProtection\SessionPurge;
+use Pulsar\ErrorHandling\ExceptionRendererInterface;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Http\TrustedProxy;
@@ -335,7 +336,22 @@ final readonly class SecurityWiring implements ServiceWiringInterface
         $container->instance(CsrfTokenManager::class, $csrfTokenManager);
         $container->instance(CsrfTokenManagerInterface::class, $csrfTokenManager);
 
-        $csrfMiddleware = new CsrfMiddleware($csrfTokenManager, $securityConfig->csrf);
+        // Lazy resolver: the error-page renderer is wired by ExceptionHandlerWiring,
+        // which runs after this wiring, so the CSRF middleware resolves it at
+        // request time to theme its 403 page (mirrors ExceptionHandlerWiring's
+        // own templateEngineResolver pattern).
+        $errorRendererResolver = static function () use ($container): ?ExceptionRendererInterface {
+            if (!$container->has(ExceptionRendererInterface::class)) {
+                return null;
+            }
+
+            /** @var ExceptionRendererInterface $renderer */
+            $renderer = $container->get(ExceptionRendererInterface::class);
+
+            return $renderer;
+        };
+
+        $csrfMiddleware = new CsrfMiddleware($csrfTokenManager, $securityConfig->csrf, $errorRendererResolver);
         $container->instance(CsrfMiddleware::class, $csrfMiddleware);
 
         // Security Headers: gate X-Forwarded-Proto on trusted proxy IPs (CFR-71).

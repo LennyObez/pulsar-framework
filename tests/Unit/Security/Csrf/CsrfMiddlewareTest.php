@@ -8,13 +8,16 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Config\CsrfConfig;
+use Pulsar\ErrorHandling\ExceptionRendererInterface;
 use Pulsar\Http\Message\Response;
 use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Security\Csrf\CsrfMiddleware;
 use Pulsar\Security\Csrf\CsrfTokenManagerInterface;
+use Throwable;
 
 #[CoversClass(CsrfMiddleware::class)]
 final class CsrfMiddlewareTest extends TestCase
@@ -511,5 +514,39 @@ final class CsrfMiddlewareTest extends TestCase
         $response = $middleware->process($request, $this->successHandler());
 
         self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
+    }
+
+    #[Test]
+    public function rendersThemedHtmlViaConfiguredRendererForBrowserRequest(): void
+    {
+        // A configured error-page renderer themes/localizes the 403 page just
+        // like every other 4xx; the middleware must delegate to it (not emit a
+        // hardcoded document) when one is wired through the composition root.
+        $renderer = new class implements ExceptionRendererInterface {
+            public function render(Throwable $exception, ServerRequestInterface $request, ResponseStatus $status): string
+            {
+                return '<main data-themed="1">' . $status->value . ': ' . $exception->getMessage() . '</main>';
+            }
+        };
+
+        $middleware = new CsrfMiddleware(
+            $this->tokenManager,
+            $this->config,
+            static fn(): ExceptionRendererInterface => $renderer,
+        );
+
+        $request = $this->createRequest(
+            'POST',
+            '/submit',
+            headers: ['Accept' => 'text/html'],
+        );
+        $response = $middleware->process($request, $this->successHandler());
+
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
+        self::assertStringContainsString('text/html', $response->getHeaderLine('Content-Type'));
+        self::assertSame(
+            '<main data-themed="1">403: CSRF token is missing</main>',
+            (string) $response->getBody(),
+        );
     }
 }

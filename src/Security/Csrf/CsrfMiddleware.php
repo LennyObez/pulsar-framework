@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Security\Csrf;
 
+use Closure;
 use JsonException;
 use Override;
 use Psr\Http\Message\ResponseInterface;
@@ -11,6 +12,8 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Api\Api;
 use Pulsar\Config\CsrfConfig;
+use Pulsar\ErrorHandling\ExceptionRendererInterface;
+use Pulsar\ErrorHandling\HttpException;
 use Pulsar\Http\Message\Response;
 use Pulsar\Http\Middleware\MiddlewareInterface;
 use Pulsar\Http\ResponseStatus;
@@ -42,15 +45,27 @@ use const JSON_THROW_ON_ERROR;
  * - The configured header (default: `X-CSRF-Token`)
  * - The configured POST field (default: `_csrf_token`)
  *
- * Returns a 403 Forbidden JSON response when validation fails.
+ * Returns a 403 Forbidden response when validation fails, content-negotiated:
+ * JSON for API clients, and — for browsers — HTML rendered by the application's
+ * configured {@see ExceptionRendererInterface} (themed and localized like every
+ * other 4xx) when one is wired, falling back to a minimal page otherwise. The
+ * response is returned (not thrown) so it still flows through the outer
+ * middleware (e.g. security headers) before reaching the client.
  * @api
  */
 #[Api(since: '1.0.0')]
 final readonly class CsrfMiddleware implements MiddlewareInterface
 {
+    /**
+     * @param (Closure(): ?ExceptionRendererInterface)|null $errorRendererResolver
+     *     Lazy resolver for the error-page renderer, supplied by the composition
+     *     root because the renderer is wired after this middleware. Invoked at
+     *     request time to theme the 403 HTML page; null yields a minimal page.
+     */
     public function __construct(
         private CsrfTokenManagerInterface $tokenManager,
         private CsrfConfig $config,
+        private ?Closure $errorRendererResolver = null,
     ) {}
 
     #[Override]
@@ -243,13 +258,17 @@ final readonly class CsrfMiddleware implements MiddlewareInterface
     }
 
     /**
-     * Create a 403 Forbidden response, content-negotiated for the client.
+     * Build a 403 Forbidden response, content-negotiated for the client.
+     *
+     * JSON clients (Accept: application/json or X-Requested-With: XMLHttpRequest)
+     * get a JSON body. Browsers get HTML rendered by the configured error-page
+     * renderer — themed and localized like every other 4xx — when one is wired;
+     * otherwise a minimal inline page. The response is returned (not thrown) so
+     * the outer middleware (e.g. security headers) still applies to it.
      */
     private function forbiddenResponse(ServerRequestInterface $request, string $message): ResponseInterface
     {
-        $accept = $request->getHeaderLine('Accept');
-
-        if (str_contains($accept, 'application/json')
+        if (str_contains($request->getHeaderLine('Accept'), 'application/json')
             || $request->getHeaderLine('X-Requested-With') === 'XMLHttpRequest'
         ) {
             return Response::json(
@@ -258,13 +277,20 @@ final readonly class CsrfMiddleware implements MiddlewareInterface
             );
         }
 
-        $escapedMessage = htmlspecialchars($message);
+        $renderer = $this->errorRendererResolver !== null ? ($this->errorRendererResolver)() : null;
+
+        if ($renderer instanceof ExceptionRendererInterface) {
+            return Response::html(
+                $renderer->render(HttpException::forbidden($message), $request, ResponseStatus::Forbidden),
+                ResponseStatus::Forbidden->value,
+            );
+        }
 
         return Response::html(
             sprintf(
                 '<!DOCTYPE html><html><head><title>403 Forbidden</title></head>'
                 . '<body><h1>403 Forbidden</h1><p>%s</p></body></html>',
-                $escapedMessage,
+                htmlspecialchars($message),
             ),
             ResponseStatus::Forbidden->value,
         );
