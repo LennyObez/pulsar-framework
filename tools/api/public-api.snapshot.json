@@ -9133,6 +9133,18 @@
             "since": "1.0.0",
             "methods": [],
             "signatures": {
+                "activate": {
+                    "params": [
+                        "Pulsar\\Config\\Environment $environment"
+                    ],
+                    "return": "void",
+                    "static": true
+                },
+                "active": {
+                    "params": [],
+                    "return": "?Pulsar\\Config\\Environment",
+                    "static": true
+                },
                 "all": {
                     "params": [],
                     "return": "array",
@@ -9169,12 +9181,25 @@
                     "return": "Pulsar\\Config\\Environment",
                     "static": true
                 },
+                "read": {
+                    "params": [
+                        "string $key",
+                        "string $default"
+                    ],
+                    "return": "string",
+                    "static": true
+                },
                 "require": {
                     "params": [
                         "string $key"
                     ],
                     "return": "string",
                     "static": false
+                },
+                "resetActive": {
+                    "params": [],
+                    "return": "void",
+                    "static": true
                 },
                 "resolveMode": {
                     "params": [],
@@ -43574,7 +43599,8 @@
                 "__construct": {
                     "params": [
                         "Pulsar\\Security\\Csrf\\CsrfTokenManagerInterface $tokenManager",
-                        "Pulsar\\Config\\CsrfConfig $config"
+                        "Pulsar\\Config\\CsrfConfig $config",
+                        "?Closure $errorRendererResolver"
                     ],
                     "return": null,
                     "static": false
@@ -56172,11 +56198,13 @@
         "Pulsar\\Mail\\Transport\\Config\\SendgridTransportConfig",
         "Pulsar\\Mail\\Transport\\Config\\SesTransportConfig",
         "Pulsar\\Mail\\Transport\\Config\\SmtpTransportConfig",
+        "Pulsar\\Mail\\Transport\\CurlMailHttpClient",
         "Pulsar\\Mail\\Transport\\LogTransport",
         "Pulsar\\Mail\\Transport\\MailHttpClientInterface",
         "Pulsar\\Mail\\Transport\\MailHttpResponse",
         "Pulsar\\Mail\\Transport\\MailgunTransport",
         "Pulsar\\Mail\\Transport\\PostmarkTransport",
+        "Pulsar\\Mail\\Transport\\Psr18MailHttpClient",
         "Pulsar\\Mail\\Transport\\SendgridTransport",
         "Pulsar\\Mail\\Transport\\SesTransport",
         "Pulsar\\Mail\\Transport\\SmtpTransport",
