@@ -102,6 +102,7 @@ use Pulsar\Console\Command\Remove\RemovePaymentFlowCommand;
 use Pulsar\Console\Command\Remove\RemovePortCommand;
 use Pulsar\Console\Command\Remove\RemoveWebhookHandlerCommand;
 use Pulsar\Console\Command\BuildCommand;
+use Pulsar\Console\Command\DbFailoverWatchCommand;
 use Pulsar\Console\Command\DbFreshCommand;
 use Pulsar\Console\Command\DbInspectCommand;
 use Pulsar\Console\Command\DbSeedCommand;
@@ -655,6 +656,13 @@ if ($kernel->container()->has(DeployCheck::class)) {
   /** @var DeployCheck $deployCheck */
   $deployCheck = $kernel->container()->get(DeployCheck::class);
   $application->add(new DeployCheckCommand($deployCheck));
+}
+
+// Register the database failover watcher (only when failover is enabled + wired)
+if ($kernel->container()->has(DbFailoverWatchCommand::class)) {
+  /** @var DbFailoverWatchCommand $failoverWatch */
+  $failoverWatch = $kernel->container()->get(DbFailoverWatchCommand::class);
+  $application->add($failoverWatch);
 }
 
 // Register migration commands (only if database is configured)
