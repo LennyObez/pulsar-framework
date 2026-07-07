@@ -36,6 +36,7 @@ final class ModuleMap
         'Pulsar\Core\Wiring\DiagnosticsWiring',
         'Pulsar\Core\Wiring\ErrorTrackingWiring',
         'Pulsar\Core\Wiring\ExceptionHandlerWiring',
+        'Pulsar\Core\Wiring\FailoverWiring',
         'Pulsar\Core\Wiring\FeatureFlagWiring',
         'Pulsar\Core\Wiring\IntegrityWiring',
         'Pulsar\Core\Wiring\I18nWiring',

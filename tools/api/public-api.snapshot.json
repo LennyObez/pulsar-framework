@@ -14811,6 +14811,30 @@
             },
             "constants": []
         },
+        "Pulsar\\Database\\Failover\\FailoverStateStore": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "clear": {
+                    "params": [],
+                    "return": "void",
+                    "static": false
+                },
+                "currentEndpoint": {
+                    "params": [],
+                    "return": "?string",
+                    "static": false
+                },
+                "recordFailover": {
+                    "params": [
+                        "string $endpoint"
+                    ],
+                    "return": "void",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\Database\\Failover\\FailoverStrategyInterface": {
             "since": "1.0.0",
             "methods": [],
@@ -56045,6 +56069,7 @@
         "Pulsar\\Core\\Wiring\\ErrorTrackingWiring",
         "Pulsar\\Core\\Wiring\\EventWiring",
         "Pulsar\\Core\\Wiring\\ExceptionHandlerWiring",
+        "Pulsar\\Core\\Wiring\\FailoverWiring",
         "Pulsar\\Core\\Wiring\\FeatureFlagWiring",
         "Pulsar\\Core\\Wiring\\I18nWiring",
         "Pulsar\\Core\\Wiring\\IntegrityWiring",
@@ -56073,6 +56098,8 @@
         "Pulsar\\DataProtection\\AuditLogPurge",
         "Pulsar\\DataProtection\\DefaultRetentionPolicy",
         "Pulsar\\DataProtection\\SessionPurge",
+        "Pulsar\\Database\\Failover\\CacheBackedFailoverStateStore",
+        "Pulsar\\Database\\Failover\\FailoverConnectionManager",
         "Pulsar\\Database\\Migration\\MigrationFlockHolder",
         "Pulsar\\Database\\Migration\\MigrationPathResolver",
         "Pulsar\\Database\\Monitor\\CompositeSqlLogger",
