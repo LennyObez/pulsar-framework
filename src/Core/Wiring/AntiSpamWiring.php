@@ -80,6 +80,7 @@ use function array_unique;
 use function array_values;
 use function is_array;
 use function is_file;
+use function sprintf;
 
 use const DIRECTORY_SEPARATOR;
 use const SODIUM_CRYPTO_AUTH_KEYBYTES;
@@ -154,14 +155,16 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
         }
 
         // 2. Duplicate detector (requires cache)
-        if ($config->duplicateDetectionEnabled && $container->has(TaggedCacheInterface::class)) {
-            /** @var TaggedCacheInterface $cache */
-            $cache = $container->get(TaggedCacheInterface::class);
-            $checks[] = new DuplicateDetector(
-                $cache,
-                $config->duplicateWindowSeconds,
-                $config->duplicateSimilarityThreshold,
-            );
+        if ($config->duplicateDetectionEnabled) {
+            $cache = $this->requireTaggedCache($container, $logger, 'Duplicate detection');
+
+            if ($cache !== null) {
+                $checks[] = new DuplicateDetector(
+                    $cache,
+                    $config->duplicateWindowSeconds,
+                    $config->duplicateSimilarityThreshold,
+                );
+            }
         }
 
         // 3. Link density checker
@@ -184,10 +187,12 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
         }
 
         // 6. Reputation cooldown (requires cache)
-        if ($config->reputationCooldownEnabled && $container->has(TaggedCacheInterface::class)) {
-            /** @var TaggedCacheInterface $cache */
-            $cache = $container->get(TaggedCacheInterface::class);
-            $checks[] = new ReputationCooldown($cache, $config->cooldownTiers);
+        if ($config->reputationCooldownEnabled) {
+            $cache = $this->requireTaggedCache($container, $logger, 'Reputation cooldown');
+
+            if ($cache !== null) {
+                $checks[] = new ReputationCooldown($cache, $config->cooldownTiers);
+            }
         }
 
         // 7. CAPTCHA verifier
@@ -303,12 +308,10 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
 
         // Request-velocity signal: per-client rate within a window (needs cache).
         if ($velocityConfig->enabled) {
-            if ($container->has(TaggedCacheInterface::class)) {
-                /** @var TaggedCacheInterface $velocityCache */
-                $velocityCache = $container->get(TaggedCacheInterface::class);
+            $velocityCache = $this->requireTaggedCache($container, $logger, 'Velocity risk signal');
+
+            if ($velocityCache !== null) {
                 $signalProviders[] = new VelocitySignalProvider($velocityConfig, $velocityCache, $trustedProxy);
-            } else {
-                $logger->warning('Velocity risk signal disabled: no cache bound to track request rates.');
             }
         }
 
@@ -816,6 +819,38 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
         BehaviorCollectorRenderer::setGlobalInstance($renderer);
 
         return new BehavioralSignalsCheck($scorer, $sink, $config->behaviorFieldName);
+    }
+
+    /**
+     * Resolve the tagged cache for a cache-dependent feature the operator has
+     * enabled, logging a loud, security-relevant warning when it is absent so
+     * the feature cannot silently become a no-op.
+     *
+     * CacheWiring binds {@see TaggedCacheInterface} whenever the cache is
+     * enabled (config/cache.php). Without it, duplicate detection, reputation
+     * cooldowns, and the velocity risk signal cannot run; this surfaces that
+     * gap at boot instead of letting an enabled security control go inert in
+     * silence. Returns null (feature skipped) when no cache is bound.
+     */
+    private function requireTaggedCache(
+        ContainerInterface $container,
+        LoggerInterface $logger,
+        string $feature,
+    ): ?TaggedCacheInterface {
+        if ($container->has(TaggedCacheInterface::class)) {
+            /** @var TaggedCacheInterface $cache */
+            $cache = $container->get(TaggedCacheInterface::class);
+
+            return $cache;
+        }
+
+        $logger->warning(sprintf(
+            '%s is enabled but no cache is bound (TaggedCacheInterface); it is inert. '
+            . 'Enable the cache so CacheWiring binds the tagged cache.',
+            $feature,
+        ));
+
+        return null;
     }
 
     private function loadConfig(ConfigManager $configManager): AntiSpamConfig
