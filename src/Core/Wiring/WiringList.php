@@ -48,6 +48,7 @@ final readonly class WiringList
             new CacheWiring(),
             new FailoverWiring(),
             new AntiSpamWiring(),
+            new ThreatDetectionWiring(),
             new MailWiring(),
             new NotificationWiring(),
             new StorageWiring(),
