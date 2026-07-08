@@ -13,7 +13,7 @@ use Pulsar\Extension\Admin\Features\ViewResource\ViewResourceResult;
 final class ViewResourceResultTest extends TestCase
 {
     #[Test]
-    public function constructor_sets_data(): void
+    public function constructorSetsData(): void
     {
         $data = ['id' => '1', 'name' => 'John', 'email' => 'john@example.com'];
 
@@ -23,7 +23,7 @@ final class ViewResourceResultTest extends TestCase
     }
 
     #[Test]
-    public function empty_data(): void
+    public function emptyData(): void
     {
         $result = new ViewResourceResult(data: []);
 

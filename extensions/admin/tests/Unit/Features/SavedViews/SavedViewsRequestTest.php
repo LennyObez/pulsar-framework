@@ -14,7 +14,7 @@ use Pulsar\Extension\Admin\Features\SavedViews\SavedViewsRequest;
 final class SavedViewsRequestTest extends TestCase
 {
     #[Test]
-    public function list_operation(): void
+    public function listOperation(): void
     {
         $request = new SavedViewsRequest(
             operation: 'list',
@@ -28,7 +28,7 @@ final class SavedViewsRequestTest extends TestCase
     }
 
     #[Test]
-    public function save_operation(): void
+    public function saveOperation(): void
     {
         $view = new SavedView(
             id: 'view-1',
@@ -50,7 +50,7 @@ final class SavedViewsRequestTest extends TestCase
     }
 
     #[Test]
-    public function delete_operation(): void
+    public function deleteOperation(): void
     {
         $request = new SavedViewsRequest(
             operation: 'delete',
@@ -62,7 +62,7 @@ final class SavedViewsRequestTest extends TestCase
     }
 
     #[Test]
-    public function get_operation(): void
+    public function getOperation(): void
     {
         $request = new SavedViewsRequest(
             operation: 'get',

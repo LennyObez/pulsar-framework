@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Tests\Unit\Exception;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Admin\Domain\ResourceOperation;
@@ -12,10 +13,14 @@ use Pulsar\Extension\Admin\Exception\AdminException;
 use Pulsar\Extension\Admin\Exception\ResourceNotFoundException;
 use Pulsar\Extension\Admin\Exception\ResourceValidationException;
 
+#[CoversClass(AdminException::class)]
+#[CoversClass(AdminAccessDeniedException::class)]
+#[CoversClass(ResourceNotFoundException::class)]
+#[CoversClass(ResourceValidationException::class)]
 final class AdminExceptionTest extends TestCase
 {
     #[Test]
-    public function admin_exception_disabled(): void
+    public function disabledProducesCorrectMessage(): void
     {
         $e = AdminException::disabled();
 
@@ -24,15 +29,16 @@ final class AdminExceptionTest extends TestCase
     }
 
     #[Test]
-    public function admin_exception_invalid_configuration(): void
+    public function invalidConfigurationIncludesDetail(): void
     {
-        $e = AdminException::invalidConfiguration('missing route prefix');
+        $e = AdminException::invalidConfiguration('missing route_prefix');
 
-        self::assertStringContainsString('missing route prefix', $e->getMessage());
+        self::assertStringContainsString('missing route_prefix', $e->getMessage());
+        self::assertStringContainsString('Invalid admin configuration', $e->getMessage());
     }
 
     #[Test]
-    public function admin_exception_resource_already_registered(): void
+    public function resourceAlreadyRegisteredIncludesName(): void
     {
         $e = AdminException::resourceAlreadyRegistered('users');
 
@@ -41,7 +47,7 @@ final class AdminExceptionTest extends TestCase
     }
 
     #[Test]
-    public function access_denied_insufficient_role(): void
+    public function insufficientRoleIncludesRole(): void
     {
         $e = AdminAccessDeniedException::insufficientRole('admin');
 
@@ -50,24 +56,34 @@ final class AdminExceptionTest extends TestCase
     }
 
     #[Test]
-    public function access_denied_operation_denied(): void
+    public function operationDeniedIncludesResourceAndOperation(): void
     {
         $e = AdminAccessDeniedException::operationDenied('users', ResourceOperation::Delete);
 
-        self::assertStringContainsString('users', $e->getMessage());
         self::assertStringContainsString('delete', $e->getMessage());
+        self::assertStringContainsString('users', $e->getMessage());
+        self::assertStringContainsString('Access denied', $e->getMessage());
     }
 
     #[Test]
-    public function access_denied_two_factor_required(): void
+    public function twoFactorRequiredMessage(): void
     {
         $e = AdminAccessDeniedException::twoFactorRequired();
 
         self::assertStringContainsString('two-factor', $e->getMessage());
+        self::assertStringContainsString('Access denied', $e->getMessage());
     }
 
     #[Test]
-    public function resource_not_found_resource(): void
+    public function adminAccessDeniedExtendsAdminException(): void
+    {
+        $e = AdminAccessDeniedException::insufficientRole('admin');
+
+        self::assertInstanceOf(AdminException::class, $e);
+    }
+
+    #[Test]
+    public function resourceNotFoundResource(): void
     {
         $e = ResourceNotFoundException::resource('widgets');
 
@@ -75,7 +91,7 @@ final class AdminExceptionTest extends TestCase
     }
 
     #[Test]
-    public function resource_not_found_record(): void
+    public function resourceNotFoundRecord(): void
     {
         $e = ResourceNotFoundException::record('users', 'user-123');
 
@@ -84,7 +100,7 @@ final class AdminExceptionTest extends TestCase
     }
 
     #[Test]
-    public function resource_validation_exception_from_violations(): void
+    public function resourceValidationExceptionFromViolations(): void
     {
         $violations = [
             ['field' => 'name', 'message' => 'Name is required', 'rule' => 'required'],
@@ -100,7 +116,7 @@ final class AdminExceptionTest extends TestCase
     }
 
     #[Test]
-    public function resource_validation_exception_single_violation(): void
+    public function resourceValidationExceptionSingleViolation(): void
     {
         $violations = [
             ['field' => 'title', 'message' => 'Title required', 'rule' => 'required'],
@@ -113,7 +129,7 @@ final class AdminExceptionTest extends TestCase
     }
 
     #[Test]
-    public function resource_validation_exception_empty_violations(): void
+    public function resourceValidationExceptionEmptyViolations(): void
     {
         $e = ResourceValidationException::fromViolations([]);
 

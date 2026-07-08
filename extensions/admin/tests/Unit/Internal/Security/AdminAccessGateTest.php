@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Admin\Tests\Unit\Internal\Security;
 
 use Closure;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Auth\Authorization\PolicyContext;
 use Pulsar\Auth\Authorization\PolicyInterface;
@@ -17,77 +19,129 @@ use Pulsar\Extension\Admin\Domain\ResourceOperation;
 use Pulsar\Extension\Admin\Exception\AdminAccessDeniedException;
 use Pulsar\Extension\Admin\Internal\Security\AdminAccessGate;
 
+#[CoversClass(AdminAccessGate::class)]
 final class AdminAccessGateTest extends TestCase
 {
-    private function createGate(bool $policyResult): AdminAccessGate
-    {
-        $policy = $this->createStub(PolicyInterface::class);
-        $policy->method('evaluate')->willReturn($policyResult);
-
-        return new AdminAccessGate($policy);
-    }
-
-    private function createGateWithCallback(Closure $callback): AdminAccessGate
-    {
-        $policy = $this->createStub(PolicyInterface::class);
-        $policy->method('evaluate')->willReturnCallback($callback);
-
-        return new AdminAccessGate($policy);
-    }
-
     #[Test]
-    public function assert_can_access_passes_for_allowed_identity(): void
+    public function assertCanAccessAllowsWhenPolicyReturnsTrue(): void
     {
-        $gate = $this->createGate(true);
-        $identity = new Identity('admin-1', 'Admin', ['admin']);
+        /** @var PolicyInterface&MockObject $policy */
+        $policy = $this->createMock(PolicyInterface::class);
+        $policy->expects(self::once())->method('evaluate')->willReturn(true);
+        $identity = $this->createStub(IdentityInterface::class);
 
-        $gate->assertCanAccess($identity);
+        $gate = new AdminAccessGate($policy);
 
-        $this->addToAssertionCount(1);
-    }
-
-    #[Test]
-    public function assert_can_access_throws_for_denied_identity(): void
-    {
-        $gate = $this->createGate(false);
-        $identity = new Identity('user-1', 'User', ['viewer']);
-
-        $this->expectException(AdminAccessDeniedException::class);
+        // Should not throw — policy was consulted exactly once
         $gate->assertCanAccess($identity);
     }
 
     #[Test]
-    public function assert_can_access_throws_for_anonymous(): void
+    public function assertCanAccessThrowsWhenPolicyReturnsFalse(): void
+    {
+        $policy = $this->createStub(PolicyInterface::class);
+        $policy->method('evaluate')->willReturn(false);
+        $identity = $this->createStub(IdentityInterface::class);
+
+        $gate = new AdminAccessGate($policy);
+
+        $this->expectException(AdminAccessDeniedException::class);
+        $this->expectExceptionMessage('admin');
+
+        $gate->assertCanAccess($identity);
+    }
+
+    #[Test]
+    public function assertCanAccessThrowsWhenPolicyReturnsNull(): void
+    {
+        $policy = $this->createStub(PolicyInterface::class);
+        $policy->method('evaluate')->willReturn(null);
+        $identity = $this->createStub(IdentityInterface::class);
+
+        $gate = new AdminAccessGate($policy);
+
+        $this->expectException(AdminAccessDeniedException::class);
+
+        $gate->assertCanAccess($identity);
+    }
+
+    #[Test]
+    public function assertCanAccessThrowsForAnonymous(): void
     {
         $gate = $this->createGate(false);
 
         $this->expectException(AdminAccessDeniedException::class);
+
         $gate->assertCanAccess(new AnonymousIdentity());
     }
 
     #[Test]
-    public function assert_can_perform_passes_for_allowed_operation(): void
+    public function assertCanPerformAllowsWhenPolicyReturnsTrue(): void
     {
-        $gate = $this->createGate(true);
-        $identity = new Identity('admin-1', 'Admin', ['admin']);
+        /** @var PolicyInterface&MockObject $policy */
+        $policy = $this->createMock(PolicyInterface::class);
+        $policy->expects(self::once())->method('evaluate')->willReturn(true);
+        $identity = $this->createStub(IdentityInterface::class);
 
+        $gate = new AdminAccessGate($policy);
+
+        // Should not throw — policy was consulted exactly once
         $gate->assertCanPerform($identity, 'users', ResourceOperation::List);
-
-        $this->addToAssertionCount(1);
     }
 
     #[Test]
-    public function assert_can_perform_throws_for_denied_operation(): void
+    public function assertCanPerformThrowsWhenPolicyReturnsFalse(): void
     {
-        $gate = $this->createGate(false);
-        $identity = new Identity('user-1', 'User', []);
+        $policy = $this->createStub(PolicyInterface::class);
+        $policy->method('evaluate')->willReturn(false);
+        $identity = $this->createStub(IdentityInterface::class);
+
+        $gate = new AdminAccessGate($policy);
 
         $this->expectException(AdminAccessDeniedException::class);
+        $this->expectExceptionMessage('users');
+
         $gate->assertCanPerform($identity, 'users', ResourceOperation::Delete);
     }
 
     #[Test]
-    public function assert_can_perform_uses_manage_resources_for_crud_operations(): void
+    public function assertCanPerformPassesCorrectPermissionForExport(): void
+    {
+        /** @var PolicyInterface&MockObject $policy */
+        $policy = $this->createMock(PolicyInterface::class);
+        $policy->expects(self::once())
+            ->method('evaluate')
+            ->with(
+                self::anything(),
+                self::callback(static fn(PolicyContext $ctx): bool => $ctx->permission === 'admin.export'),
+            )
+            ->willReturn(true);
+        $identity = $this->createStub(IdentityInterface::class);
+
+        $gate = new AdminAccessGate($policy);
+        $gate->assertCanPerform($identity, 'orders', ResourceOperation::Export);
+    }
+
+    #[Test]
+    public function assertCanPerformPassesResourceNameInContext(): void
+    {
+        /** @var PolicyInterface&MockObject $policy */
+        $policy = $this->createMock(PolicyInterface::class);
+        $policy->expects(self::once())
+            ->method('evaluate')
+            ->with(
+                self::anything(),
+                self::callback(static fn(PolicyContext $ctx): bool => $ctx->resource === 'users'),
+            )
+            ->willReturn(true);
+        $identity = $this->createStub(IdentityInterface::class);
+
+        $gate = new AdminAccessGate($policy);
+        $gate->assertCanPerform($identity, 'users', ResourceOperation::View);
+    }
+
+    #[Test]
+    public function assertCanPerformUsesManageResourcesForCrudOperations(): void
     {
         $capturedContexts = [];
         $gate = $this->createGateWithCallback(
@@ -119,27 +173,7 @@ final class AdminAccessGateTest extends TestCase
     }
 
     #[Test]
-    public function assert_can_perform_uses_export_data_for_export(): void
-    {
-        $capturedContext = null;
-        $gate = $this->createGateWithCallback(
-            static function (IdentityInterface $identity, PolicyContext $context) use (&$capturedContext): bool {
-                $capturedContext = $context;
-
-                return true;
-            },
-        );
-
-        $identity = new Identity('admin-1', 'Admin', ['admin']);
-        $gate->assertCanPerform($identity, 'orders', ResourceOperation::Export);
-
-        self::assertNotNull($capturedContext);
-        self::assertSame(AdminPermission::ExportData->value, $capturedContext->permission);
-        self::assertSame('orders', $capturedContext->resource);
-    }
-
-    #[Test]
-    public function assert_can_perform_passes_operation_in_context_attributes(): void
+    public function assertCanPerformPassesOperationInContextAttributes(): void
     {
         $capturedContext = null;
         $gate = $this->createGateWithCallback(
@@ -155,5 +189,21 @@ final class AdminAccessGateTest extends TestCase
 
         self::assertNotNull($capturedContext);
         self::assertSame('create', $capturedContext->attributes['operation']);
+    }
+
+    private function createGate(bool $policyResult): AdminAccessGate
+    {
+        $policy = $this->createStub(PolicyInterface::class);
+        $policy->method('evaluate')->willReturn($policyResult);
+
+        return new AdminAccessGate($policy);
+    }
+
+    private function createGateWithCallback(Closure $callback): AdminAccessGate
+    {
+        $policy = $this->createStub(PolicyInterface::class);
+        $policy->method('evaluate')->willReturnCallback($callback);
+
+        return new AdminAccessGate($policy);
     }
 }

@@ -14,7 +14,7 @@ use Pulsar\Extension\Admin\Features\UpdateResource\UpdateResourceResult;
 final class UpdateResourceResultTest extends TestCase
 {
     #[Test]
-    public function constructor_wraps_action_result(): void
+    public function constructorWrapsActionResult(): void
     {
         $actionResult = ActionResult::success('Updated');
 

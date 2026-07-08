@@ -16,7 +16,7 @@ use Pulsar\Extension\Admin\Filter\FilterOperator;
 final class FilterGroupTest extends TestCase
 {
     #[Test]
-    public function empty_group_is_empty(): void
+    public function emptyGroupIsEmpty(): void
     {
         $group = new FilterGroup();
 
@@ -25,7 +25,7 @@ final class FilterGroupTest extends TestCase
     }
 
     #[Test]
-    public function group_with_conditions_is_not_empty(): void
+    public function groupWithConditionsIsNotEmpty(): void
     {
         $group = new FilterGroup(
             conditions: [
@@ -38,7 +38,7 @@ final class FilterGroupTest extends TestCase
     }
 
     #[Test]
-    public function group_with_nested_groups_is_not_empty(): void
+    public function groupWithNestedGroupsIsNotEmpty(): void
     {
         $nested = new FilterGroup(
             conditions: [
@@ -51,7 +51,7 @@ final class FilterGroupTest extends TestCase
     }
 
     #[Test]
-    public function total_conditions_counts_nested(): void
+    public function totalConditionsCountsNested(): void
     {
         $nested = new FilterGroup(
             conditions: [
@@ -70,7 +70,7 @@ final class FilterGroupTest extends TestCase
     }
 
     #[Test]
-    public function from_array_parses_basic_group(): void
+    public function fromArrayParsesBasicGroup(): void
     {
         $group = FilterGroup::fromArray([
             'logic' => 'or',
@@ -85,7 +85,7 @@ final class FilterGroupTest extends TestCase
     }
 
     #[Test]
-    public function from_array_defaults_to_and_logic(): void
+    public function fromArrayDefaultsToAndLogic(): void
     {
         $group = FilterGroup::fromArray([]);
 
@@ -95,7 +95,7 @@ final class FilterGroupTest extends TestCase
     }
 
     #[Test]
-    public function from_array_with_non_string_logic_defaults(): void
+    public function fromArrayWithNonStringLogicDefaults(): void
     {
         $group = FilterGroup::fromArray(['logic' => 123]);
 
@@ -103,7 +103,7 @@ final class FilterGroupTest extends TestCase
     }
 
     #[Test]
-    public function from_array_parses_nested_groups(): void
+    public function fromArrayParsesNestedGroups(): void
     {
         $group = FilterGroup::fromArray([
             'logic' => 'and',
@@ -125,7 +125,7 @@ final class FilterGroupTest extends TestCase
     }
 
     #[Test]
-    public function from_array_skips_non_array_conditions(): void
+    public function fromArraySkipsNonArrayConditions(): void
     {
         $group = FilterGroup::fromArray([
             'conditions' => ['not_an_array', 42],
@@ -135,7 +135,7 @@ final class FilterGroupTest extends TestCase
     }
 
     #[Test]
-    public function from_array_skips_non_array_groups(): void
+    public function fromArraySkipsNonArrayGroups(): void
     {
         $group = FilterGroup::fromArray([
             'groups' => ['not_an_array', 42],
@@ -145,7 +145,7 @@ final class FilterGroupTest extends TestCase
     }
 
     #[Test]
-    public function to_array_produces_correct_structure(): void
+    public function toArrayProducesCorrectStructure(): void
     {
         $group = new FilterGroup(
             logic: FilterLogic::Or,
@@ -164,7 +164,7 @@ final class FilterGroupTest extends TestCase
     }
 
     #[Test]
-    public function to_array_round_trips(): void
+    public function toArrayRoundTrips(): void
     {
         $original = new FilterGroup(
             logic: FilterLogic::And,

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Tests\Unit\Internal\Policy;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
@@ -14,70 +16,76 @@ use Pulsar\Extension\Admin\Internal\Policy\AdminResourcePolicy;
 
 use function in_array;
 
+#[CoversClass(AdminResourcePolicy::class)]
 final class AdminResourcePolicyTest extends TestCase
 {
     #[Test]
-    public function non_admin_permission_returns_null(): void
+    public function nonAdminPermissionReturnsNull(): void
     {
         $policy = $this->createPolicy();
         $identity = $this->createIdentity(authenticated: true, roles: ['admin']);
-        $context = new PolicyContext('users.view');
 
-        self::assertNull($policy->evaluate($identity, $context));
+        self::assertNull($policy->evaluate($identity, new PolicyContext('users.view')));
     }
 
     #[Test]
-    public function unauthenticated_user_denied(): void
+    public function unauthenticatedUserDenied(): void
     {
         $policy = $this->createPolicy();
         $identity = $this->createIdentity(authenticated: false);
-        $context = new PolicyContext('admin.access');
 
-        self::assertFalse($policy->evaluate($identity, $context));
+        self::assertFalse($policy->evaluate($identity, new PolicyContext('admin.access')));
     }
 
     #[Test]
-    public function missing_required_role_denied(): void
+    public function missingRequiredRoleDenied(): void
     {
         $policy = $this->createPolicy();
         $identity = $this->createIdentity(authenticated: true, roles: ['user']);
-        $context = new PolicyContext('admin.access');
 
-        self::assertFalse($policy->evaluate($identity, $context));
+        self::assertFalse($policy->evaluate($identity, new PolicyContext('admin.access')));
     }
 
     #[Test]
-    public function access_panel_allowed_for_admin(): void
+    public function accessPanelAllowedForAdmin(): void
     {
         $policy = $this->createPolicy();
         $identity = $this->createIdentity(authenticated: true, roles: ['admin']);
-        $context = new PolicyContext('admin.access');
 
-        self::assertTrue($policy->evaluate($identity, $context));
+        self::assertTrue($policy->evaluate($identity, new PolicyContext('admin.access')));
     }
 
     #[Test]
-    public function view_dashboard_allowed_for_admin(): void
+    public function viewDashboardAllowedForAdmin(): void
     {
         $policy = $this->createPolicy();
         $identity = $this->createIdentity(authenticated: true, roles: ['admin']);
-        $context = new PolicyContext('admin.dashboard');
 
-        self::assertTrue($policy->evaluate($identity, $context));
+        self::assertTrue($policy->evaluate($identity, new PolicyContext('admin.dashboard')));
     }
 
     #[Test]
-    public function manage_resources_requires_admin_role(): void
+    #[DataProvider('adminRolePermissionsProvider')]
+    public function managePermissionsRequireAdminRole(string $permission): void
     {
         $policy = $this->createPolicy();
         $identity = $this->createIdentity(authenticated: true, roles: ['admin']);
-        $context = new PolicyContext('admin.resources.manage');
 
-        self::assertTrue($policy->evaluate($identity, $context));
+        self::assertTrue($policy->evaluate($identity, new PolicyContext($permission)));
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function adminRolePermissionsProvider(): iterable
+    {
+        yield 'manage resources' => ['admin.resources.manage'];
+        yield 'export data' => ['admin.export'];
+        yield 'view audit log' => ['admin.audit.view'];
     }
 
     #[Test]
-    public function manage_settings_requires_super_admin(): void
+    public function manageSettingsRequiresSuperAdmin(): void
     {
         $policy = $this->createPolicy();
 
@@ -89,7 +97,7 @@ final class AdminResourcePolicyTest extends TestCase
     }
 
     #[Test]
-    public function schema_permissions_return_null(): void
+    public function schemaPermissionsReturnNull(): void
     {
         $policy = $this->createPolicy();
         $identity = $this->createIdentity(authenticated: true, roles: ['admin']);
@@ -102,17 +110,16 @@ final class AdminResourcePolicyTest extends TestCase
     }
 
     #[Test]
-    public function invalid_admin_permission_returns_null(): void
+    public function invalidAdminPermissionReturnsNull(): void
     {
         $policy = $this->createPolicy();
         $identity = $this->createIdentity(authenticated: true, roles: ['admin']);
-        $context = new PolicyContext('admin.unknown.permission');
 
-        self::assertNull($policy->evaluate($identity, $context));
+        self::assertNull($policy->evaluate($identity, new PolicyContext('admin.unknown.permission')));
     }
 
     #[Test]
-    public function custom_required_role(): void
+    public function customRequiredRole(): void
     {
         $config = AdminConfig::fromArray(['security' => ['required_role' => 'manager']]);
         $policy = new AdminResourcePolicy($config);

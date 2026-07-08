@@ -14,7 +14,7 @@ use Pulsar\Extension\Admin\Features\CreateResource\CreateResourceRequest;
 final class CreateResourceRequestTest extends TestCase
 {
     #[Test]
-    public function constructor_sets_all_properties(): void
+    public function constructorSetsAllProperties(): void
     {
         $context = new MutationContext(actor: 'admin', reason: 'create user');
         $data = ['name' => 'John', 'email' => 'john@example.com'];
@@ -31,7 +31,7 @@ final class CreateResourceRequestTest extends TestCase
     }
 
     #[Test]
-    public function empty_data(): void
+    public function emptyData(): void
     {
         $context = new MutationContext(actor: 'system', reason: 'default');
 

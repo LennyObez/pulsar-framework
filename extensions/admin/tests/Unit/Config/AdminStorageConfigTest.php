@@ -13,7 +13,7 @@ use Pulsar\Extension\Admin\Config\AdminStorageConfig;
 final class AdminStorageConfigTest extends TestCase
 {
     #[Test]
-    public function from_array_with_defaults(): void
+    public function fromArrayWithDefaults(): void
     {
         $config = AdminStorageConfig::fromArray([]);
 
@@ -22,7 +22,7 @@ final class AdminStorageConfigTest extends TestCase
     }
 
     #[Test]
-    public function from_array_with_database_driver(): void
+    public function fromArrayWithDatabaseDriver(): void
     {
         $config = AdminStorageConfig::fromArray([
             'driver' => 'database',
@@ -34,7 +34,7 @@ final class AdminStorageConfigTest extends TestCase
     }
 
     #[Test]
-    public function from_array_with_null_path(): void
+    public function fromArrayWithNullPath(): void
     {
         $config = AdminStorageConfig::fromArray([
             'driver' => 'sqlite',
@@ -46,7 +46,7 @@ final class AdminStorageConfigTest extends TestCase
     }
 
     #[Test]
-    public function constructor_properties_are_accessible(): void
+    public function constructorPropertiesAreAccessible(): void
     {
         $config = new AdminStorageConfig(
             driver: 'database',

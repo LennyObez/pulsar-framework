@@ -15,7 +15,7 @@ final class AdminPermissionTest extends TestCase
 {
     #[Test]
     #[DataProvider('permissionCaseProvider')]
-    public function permission_has_correct_value(AdminPermission $case, string $expectedValue): void
+    public function permissionHasCorrectValue(AdminPermission $case, string $expectedValue): void
     {
         self::assertSame($expectedValue, $case->value);
     }
@@ -39,7 +39,7 @@ final class AdminPermissionTest extends TestCase
     }
 
     #[Test]
-    public function all_cases_are_backed_by_string(): void
+    public function allCasesAreBackedByString(): void
     {
         $cases = AdminPermission::cases();
 
@@ -52,7 +52,7 @@ final class AdminPermissionTest extends TestCase
     }
 
     #[Test]
-    public function from_creates_valid_permission(): void
+    public function fromCreatesValidPermission(): void
     {
         $permission = AdminPermission::from('admin.access');
 
@@ -60,7 +60,7 @@ final class AdminPermissionTest extends TestCase
     }
 
     #[Test]
-    public function try_from_returns_null_for_unknown_value(): void
+    public function tryFromReturnsNullForUnknownValue(): void
     {
         $result = AdminPermission::tryFrom('admin.nonexistent');
 

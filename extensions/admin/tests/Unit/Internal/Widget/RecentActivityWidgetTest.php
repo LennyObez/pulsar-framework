@@ -4,98 +4,118 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Tests\Unit\Internal\Widget;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Admin\Internal\Storage\ActionHistoryEntry;
 use Pulsar\Extension\Admin\Internal\Storage\ActionHistoryStoreInterface;
 use Pulsar\Extension\Admin\Internal\Widget\RecentActivityWidget;
 
+#[CoversClass(RecentActivityWidget::class)]
 final class RecentActivityWidgetTest extends TestCase
 {
     #[Test]
-    public function id_returns_recent_activity(): void
+    public function idReturnsRecentActivity(): void
     {
-        $widget = new RecentActivityWidget($this->createStoreStub([]));
+        $store = $this->createStub(ActionHistoryStoreInterface::class);
+        $store->method('recent')->willReturn([]);
+
+        $widget = new RecentActivityWidget($store);
 
         self::assertSame('recent_activity', $widget->id());
     }
 
     #[Test]
-    public function label_returns_human_readable(): void
+    public function labelReturnsRecentActivity(): void
     {
-        $widget = new RecentActivityWidget($this->createStoreStub([]));
+        $store = $this->createStub(ActionHistoryStoreInterface::class);
+        $store->method('recent')->willReturn([]);
+
+        $widget = new RecentActivityWidget($store);
 
         self::assertSame('Recent Activity', $widget->label());
     }
 
     #[Test]
-    public function size_returns_large(): void
+    public function sizeReturnsLarge(): void
     {
-        $widget = new RecentActivityWidget($this->createStoreStub([]));
+        $store = $this->createStub(ActionHistoryStoreInterface::class);
+        $store->method('recent')->willReturn([]);
+
+        $widget = new RecentActivityWidget($store);
 
         self::assertSame('large', $widget->size());
     }
 
     #[Test]
-    public function render_returns_entries(): void
+    public function renderReturnsEmptyEntriesWhenNoHistory(): void
     {
-        $entries = [
-            new ActionHistoryEntry(
-                id: 'ah_001',
-                action: 'create',
-                resourceName: 'users',
-                recordId: '42',
-                actor: 'admin',
-                timestamp: 1700000000,
-                success: true,
-            ),
-            new ActionHistoryEntry(
-                id: 'ah_002',
-                action: 'delete',
-                resourceName: 'orders',
-                recordId: '99',
-                actor: 'manager',
-                timestamp: 1700000100,
-                success: false,
-                detail: 'Constraint violation',
-            ),
-        ];
+        $store = $this->createStub(ActionHistoryStoreInterface::class);
+        $store->method('recent')->willReturn([]);
 
-        $widget = new RecentActivityWidget($this->createStoreStub($entries));
+        $widget = new RecentActivityWidget($store);
         $data = $widget->render();
 
         self::assertArrayHasKey('entries', $data);
-        self::assertCount(2, $data['entries']);
-
-        self::assertSame('ah_001', $data['entries'][0]['id']);
-        self::assertSame('create', $data['entries'][0]['action']);
-        self::assertSame('users', $data['entries'][0]['resource']);
-        self::assertSame('42', $data['entries'][0]['record_id']);
-        self::assertSame('admin', $data['entries'][0]['actor']);
-        self::assertTrue($data['entries'][0]['success']);
-
-        self::assertSame('ah_002', $data['entries'][1]['id']);
-        self::assertFalse($data['entries'][1]['success']);
+        self::assertSame([], $data['entries']);
     }
 
     #[Test]
-    public function render_with_no_entries(): void
+    public function renderMapsHistoryEntriesToArrays(): void
     {
-        $widget = new RecentActivityWidget($this->createStoreStub([]));
+        $entry1 = new ActionHistoryEntry(
+            id: 'entry-1',
+            action: 'create',
+            resourceName: 'users',
+            recordId: '42',
+            actor: 'admin',
+            timestamp: 1700000000,
+            success: true,
+        );
+
+        $entry2 = new ActionHistoryEntry(
+            id: 'entry-2',
+            action: 'delete',
+            resourceName: 'orders',
+            recordId: '99',
+            actor: 'moderator',
+            timestamp: 1700000100,
+            success: false,
+        );
+
+        $store = $this->createStub(ActionHistoryStoreInterface::class);
+        $store->method('recent')->willReturn([$entry1, $entry2]);
+
+        $widget = new RecentActivityWidget($store);
         $data = $widget->render();
 
-        self::assertSame(['entries' => []], $data);
+        /** @var list<array<string, mixed>> $entries */
+        $entries = $data['entries'];
+        self::assertCount(2, $entries);
+
+        self::assertSame('entry-1', $entries[0]['id']);
+        self::assertSame('create', $entries[0]['action']);
+        self::assertSame('users', $entries[0]['resource']);
+        self::assertSame('42', $entries[0]['record_id']);
+        self::assertSame('admin', $entries[0]['actor']);
+        self::assertSame(1700000000, $entries[0]['timestamp']);
+        self::assertTrue($entries[0]['success']);
+
+        self::assertSame('entry-2', $entries[1]['id']);
+        self::assertSame('delete', $entries[1]['action']);
+        self::assertFalse($entries[1]['success']);
     }
 
-    /**
-     * @param list<ActionHistoryEntry> $entries
-     */
-    private function createStoreStub(array $entries): ActionHistoryStoreInterface&Stub
+    #[Test]
+    public function renderRequestsTwentyEntries(): void
     {
-        $store = $this->createStub(ActionHistoryStoreInterface::class);
-        $store->method('recent')->willReturn($entries);
+        $store = $this->createMock(ActionHistoryStoreInterface::class);
+        $store->expects(self::once())
+            ->method('recent')
+            ->with(20)
+            ->willReturn([]);
 
-        return $store;
+        $widget = new RecentActivityWidget($store);
+        $widget->render();
     }
 }

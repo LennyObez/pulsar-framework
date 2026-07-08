@@ -4,14 +4,16 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Tests\Unit\Internal\Storage;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Admin\Internal\Storage\ActionHistoryEntry;
 
+#[CoversClass(ActionHistoryEntry::class)]
 final class ActionHistoryEntryTest extends TestCase
 {
     #[Test]
-    public function construction_with_all_fields(): void
+    public function constructionWithAllFields(): void
     {
         $entry = new ActionHistoryEntry(
             id: 'ah_001',
@@ -35,7 +37,7 @@ final class ActionHistoryEntryTest extends TestCase
     }
 
     #[Test]
-    public function construction_with_defaults(): void
+    public function constructionWithDefaults(): void
     {
         $entry = new ActionHistoryEntry(
             id: 'ah_002',

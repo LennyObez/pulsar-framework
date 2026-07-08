@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Tests\Unit\Domain;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Admin\Domain\AdminPermission;
@@ -12,31 +13,36 @@ use Pulsar\Extension\Admin\Domain\ExportFormat;
 use Pulsar\Extension\Admin\Domain\FieldType;
 use Pulsar\Extension\Admin\Domain\ResourceOperation;
 
+#[CoversClass(AdminPermission::class)]
+#[CoversClass(BulkAction::class)]
+#[CoversClass(ExportFormat::class)]
+#[CoversClass(FieldType::class)]
+#[CoversClass(ResourceOperation::class)]
 final class AdminDomainEnumsTest extends TestCase
 {
     // --- ExportFormat ---
 
     #[Test]
-    public function export_format_csv(): void
+    public function exportFormatCsv(): void
     {
         self::assertSame('csv', ExportFormat::Csv->value);
     }
 
     #[Test]
-    public function export_format_json(): void
+    public function exportFormatJson(): void
     {
         self::assertSame('json', ExportFormat::Json->value);
     }
 
     #[Test]
-    public function export_format_from_string(): void
+    public function exportFormatFromString(): void
     {
         self::assertSame(ExportFormat::Csv, ExportFormat::from('csv'));
         self::assertSame(ExportFormat::Json, ExportFormat::from('json'));
     }
 
     #[Test]
-    public function export_format_try_from_invalid_returns_null(): void
+    public function exportFormatTryFromInvalidReturnsNull(): void
     {
         self::assertNull(ExportFormat::tryFrom('xml'));
     }
@@ -44,7 +50,7 @@ final class AdminDomainEnumsTest extends TestCase
     // --- FieldType ---
 
     #[Test]
-    public function field_type_all_cases(): void
+    public function fieldTypeAllCases(): void
     {
         $cases = FieldType::cases();
         self::assertCount(31, $cases);
@@ -92,7 +98,7 @@ final class AdminDomainEnumsTest extends TestCase
     // --- AdminPermission ---
 
     #[Test]
-    public function admin_permission_all_cases(): void
+    public function adminPermissionAllCases(): void
     {
         $cases = AdminPermission::cases();
         self::assertCount(11, $cases);
@@ -111,7 +117,7 @@ final class AdminDomainEnumsTest extends TestCase
     }
 
     #[Test]
-    public function admin_permission_try_from_invalid(): void
+    public function adminPermissionTryFromInvalid(): void
     {
         self::assertNull(AdminPermission::tryFrom('admin.nonexistent'));
     }
@@ -119,7 +125,7 @@ final class AdminDomainEnumsTest extends TestCase
     // --- ResourceOperation ---
 
     #[Test]
-    public function resource_operation_all_cases(): void
+    public function resourceOperationAllCases(): void
     {
         $cases = ResourceOperation::cases();
         self::assertCount(7, $cases);
@@ -136,7 +142,7 @@ final class AdminDomainEnumsTest extends TestCase
     // --- BulkAction ---
 
     #[Test]
-    public function bulk_action_construction(): void
+    public function bulkActionConstruction(): void
     {
         $action = new BulkAction(
             name: 'archive',
@@ -154,7 +160,7 @@ final class AdminDomainEnumsTest extends TestCase
     }
 
     #[Test]
-    public function bulk_action_defaults(): void
+    public function bulkActionDefaults(): void
     {
         $action = new BulkAction(
             name: 'publish',

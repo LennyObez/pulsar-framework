@@ -15,28 +15,33 @@ use Pulsar\Extension\Admin\Internal\Middleware\AdminCspMiddleware;
 use Pulsar\Http\Message\Response;
 use Pulsar\Http\Message\ServerRequest;
 
+use function strlen;
+
 #[CoversClass(AdminCspMiddleware::class)]
 final class AdminCspMiddlewareTest extends TestCase
 {
-    #[Test]
-    public function can_be_constructed(): void
+    private static function makeRequest(): ServerRequest
     {
-        $config = AdminConfig::fromArray(['enabled' => true]);
-
-        $middleware = new AdminCspMiddleware($config);
-
-        self::assertInstanceOf(AdminCspMiddleware::class, $middleware);
+        return new ServerRequest(
+            method: 'GET',
+            uri: '/admin/dashboard',
+        );
     }
 
-    /**
-     * F33.5: when csp_nonce is enabled the middleware MUST emit
-     * `style-src 'self' 'nonce-<value>'` instead of
-     * `'self' 'unsafe-inline'`. The nonce branch is the
-     * structural defence against CSS-attribute-injection XSS,
-     * so this regression test pins the contract.
-     */
+    private static function makeHandler(Response $response): RequestHandlerInterface
+    {
+        return new class ($response) implements RequestHandlerInterface {
+            public function __construct(private readonly Response $response) {}
+
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                return $this->response;
+            }
+        };
+    }
+
     #[Test]
-    public function nonceModeBindsStyleSrcToNonce(): void
+    public function addsCspHeaderWithNonce(): void
     {
         $config = AdminConfig::fromArray([
             'enabled' => true,
@@ -44,32 +49,19 @@ final class AdminCspMiddlewareTest extends TestCase
         ]);
         $middleware = new AdminCspMiddleware($config);
 
-        $request = new ServerRequest(method: 'GET', uri: '/admin/users');
-        $response = $middleware->process($request, $this->okHandler());
+        $handler = self::makeHandler(new Response(body: 'ok'));
+
+        $response = $middleware->process(self::makeRequest(), $handler);
 
         $csp = $response->getHeaderLine('Content-Security-Policy');
-        self::assertMatchesRegularExpression(
-            "/style-src 'self' 'nonce-[a-f0-9]+'/",
-            $csp,
-            'csp_nonce mode must emit a nonce-bound style-src',
-        );
-        self::assertStringNotContainsString(
-            "'unsafe-inline'",
-            $csp,
-            'csp_nonce mode must NOT emit unsafe-inline anywhere',
-        );
+        self::assertNotEmpty($csp);
+        self::assertStringContainsString("'nonce-", $csp);
+        self::assertStringContainsString("default-src 'self'", $csp);
+        self::assertStringContainsString("frame-ancestors 'none'", $csp);
     }
 
-    /**
-     * F33.5: with csp_nonce explicitly disabled the middleware
-     * falls back to `'self' 'unsafe-inline'` so the legacy
-     * admin template's inline `<style>` blocks render. F33.12
-     * tracks the bundled-asset migration that removes inline-
-     * style dependency entirely; until then this branch is the
-     * documented less-strict fallback.
-     */
     #[Test]
-    public function nonceDisabledFallsBackToUnsafeInline(): void
+    public function addsCspHeaderWithoutNonce(): void
     {
         $config = AdminConfig::fromArray([
             'enabled' => true,
@@ -77,20 +69,123 @@ final class AdminCspMiddlewareTest extends TestCase
         ]);
         $middleware = new AdminCspMiddleware($config);
 
-        $request = new ServerRequest(method: 'GET', uri: '/admin/users');
-        $response = $middleware->process($request, $this->okHandler());
+        $handler = self::makeHandler(new Response(body: 'ok'));
+
+        $response = $middleware->process(self::makeRequest(), $handler);
+
+        $csp = $response->getHeaderLine('Content-Security-Policy');
+        self::assertNotEmpty($csp);
+        self::assertStringContainsString("script-src 'self'", $csp);
+        self::assertStringNotContainsString('nonce-', $csp);
+    }
+
+    #[Test]
+    public function setsNonceAttributeOnRequest(): void
+    {
+        $config = AdminConfig::fromArray([
+            'enabled' => true,
+            'security' => ['csp_nonce' => true],
+        ]);
+        $middleware = new AdminCspMiddleware($config);
+
+        $receivedNonce = null;
+        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler->expects($this->once())->method('handle')->willReturnCallback(
+            function (ServerRequestInterface $req) use (&$receivedNonce): ResponseInterface {
+                $receivedNonce = $req->getAttribute('csp_nonce');
+                return new Response(body: 'ok');
+            },
+        );
+
+        $middleware->process(self::makeRequest(), $handler);
+
+        self::assertNotNull($receivedNonce);
+        self::assertIsString($receivedNonce);
+        self::assertSame(32, strlen($receivedNonce)); // 16 bytes = 32 hex chars
+    }
+
+    #[Test]
+    public function doesNotSetNonceAttributeWhenDisabled(): void
+    {
+        $config = AdminConfig::fromArray([
+            'enabled' => true,
+            'security' => ['csp_nonce' => false],
+        ]);
+        $middleware = new AdminCspMiddleware($config);
+
+        $receivedNonce = null;
+        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler->expects($this->once())->method('handle')->willReturnCallback(
+            function (ServerRequestInterface $req) use (&$receivedNonce): ResponseInterface {
+                $receivedNonce = $req->getAttribute('csp_nonce');
+                return new Response(body: 'ok');
+            },
+        );
+
+        $middleware->process(self::makeRequest(), $handler);
+
+        self::assertNull($receivedNonce);
+    }
+
+    /**
+     * F33.5: when csp_nonce is enabled the style-src binds to the
+     * generated nonce, not `'unsafe-inline'`. The previous
+     * assertion was the pre-F33.5 less-strict shape.
+     */
+    #[Test]
+    public function cspBindsStyleSrcToNonceWhenEnabled(): void
+    {
+        $config = AdminConfig::fromArray([
+            'enabled' => true,
+            'security' => ['csp_nonce' => true],
+        ]);
+        $middleware = new AdminCspMiddleware($config);
+
+        $handler = self::makeHandler(new Response(body: 'ok'));
+
+        $response = $middleware->process(self::makeRequest(), $handler);
+
+        $csp = $response->getHeaderLine('Content-Security-Policy');
+        self::assertNotEmpty($csp);
+        self::assertMatchesRegularExpression(
+            "/style-src 'self' 'nonce-[a-f0-9]+'/",
+            $csp,
+        );
+        self::assertStringNotContainsString("'unsafe-inline'", $csp);
+    }
+
+    #[Test]
+    public function cspIncludesBaseUriSelf(): void
+    {
+        $config = AdminConfig::fromArray([
+            'enabled' => true,
+            'security' => ['csp_nonce' => true],
+        ]);
+        $middleware = new AdminCspMiddleware($config);
+
+        $handler = self::makeHandler(new Response(body: 'ok'));
+
+        $response = $middleware->process(self::makeRequest(), $handler);
+
+        $csp = $response->getHeaderLine('Content-Security-Policy');
+        self::assertNotEmpty($csp);
+        self::assertStringContainsString("base-uri 'self'", $csp);
+        self::assertStringContainsString("form-action 'self'", $csp);
+    }
+
+    #[Test]
+    public function cspFallsBackToUnsafeInlineWhenNonceDisabled(): void
+    {
+        $config = AdminConfig::fromArray([
+            'enabled' => true,
+            'security' => ['csp_nonce' => false],
+        ]);
+        $middleware = new AdminCspMiddleware($config);
+        $handler = self::makeHandler(new Response(body: 'ok'));
+
+        $response = $middleware->process(self::makeRequest(), $handler);
 
         $csp = $response->getHeaderLine('Content-Security-Policy');
         self::assertStringContainsString("style-src 'self' 'unsafe-inline'", $csp);
-    }
-
-    private function okHandler(): RequestHandlerInterface
-    {
-        return new class implements RequestHandlerInterface {
-            public function handle(ServerRequestInterface $request): ResponseInterface
-            {
-                return Response::text('OK');
-            }
-        };
     }
 }

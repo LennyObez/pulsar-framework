@@ -14,7 +14,7 @@ use Pulsar\Extension\Admin\Exception\ResourceNotFoundException;
 final class ResourceNotFoundExceptionTest extends TestCase
 {
     #[Test]
-    public function extends_admin_exception(): void
+    public function extendsAdminException(): void
     {
         $exception = ResourceNotFoundException::resource('users');
 
@@ -22,7 +22,7 @@ final class ResourceNotFoundExceptionTest extends TestCase
     }
 
     #[Test]
-    public function resource_includes_name(): void
+    public function resourceIncludesName(): void
     {
         $exception = ResourceNotFoundException::resource('orders');
 
@@ -31,7 +31,7 @@ final class ResourceNotFoundExceptionTest extends TestCase
     }
 
     #[Test]
-    public function record_includes_resource_and_id(): void
+    public function recordIncludesResourceAndId(): void
     {
         $exception = ResourceNotFoundException::record('users', '42');
 
@@ -40,7 +40,7 @@ final class ResourceNotFoundExceptionTest extends TestCase
     }
 
     #[Test]
-    public function record_with_uuid_id(): void
+    public function recordWithUuidId(): void
     {
         $exception = ResourceNotFoundException::record('invoices', 'a1b2c3d4-e5f6-7890-abcd-ef1234567890');
 

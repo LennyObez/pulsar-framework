@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Tests\Unit\Features\Dashboard;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
@@ -11,49 +12,64 @@ use Pulsar\Extension\Admin\Contracts\DataResourceInterface;
 use Pulsar\Extension\Admin\Contracts\ResourceRegistryInterface;
 use Pulsar\Extension\Admin\Contracts\WidgetInterface;
 use Pulsar\Extension\Admin\Features\Dashboard\DashboardHandler;
-use Pulsar\Extension\Admin\Features\Dashboard\DashboardResult;
 
+#[CoversClass(DashboardHandler::class)]
 final class DashboardHandlerTest extends TestCase
 {
-    #[Test]
-    public function execute_returns_widgets_and_resources(): void
+    private ResourceRegistryInterface&Stub $registry;
+
+    protected function setUp(): void
     {
+        $this->registry = $this->createStub(ResourceRegistryInterface::class);
+    }
+
+    #[Test]
+    public function rendersDashboardWithWidgets(): void
+    {
+        /** @var WidgetInterface&Stub $widget */
         $widget = $this->createStub(WidgetInterface::class);
-        $widget->method('id')->willReturn('test_widget');
-        $widget->method('label')->willReturn('Test Widget');
+        $widget->method('id')->willReturn('total-users');
+        $widget->method('label')->willReturn('Total Users');
         $widget->method('size')->willReturn('small');
         $widget->method('render')->willReturn(['count' => 42]);
 
-        $resource = $this->createStub(DataResourceInterface::class);
-        $resource->method('pluralLabel')->willReturn('Users');
-        $resource->method('icon')->willReturn('user');
+        $this->registry->method('all')->willReturn([]);
 
-        $registry = $this->createStub(ResourceRegistryInterface::class);
-        $registry->method('all')->willReturn(['users' => $resource]);
-
-        $handler = new DashboardHandler($registry, [$widget]);
+        $handler = new DashboardHandler($this->registry, [$widget]);
         $result = $handler->execute();
 
-        self::assertInstanceOf(DashboardResult::class, $result);
         self::assertCount(1, $result->widgets);
-        self::assertSame('test_widget', $result->widgets[0]['id']);
-        self::assertSame('Test Widget', $result->widgets[0]['label']);
+        self::assertSame('total-users', $result->widgets[0]['id']);
+        self::assertSame('Total Users', $result->widgets[0]['label']);
         self::assertSame('small', $result->widgets[0]['size']);
         self::assertSame(['count' => 42], $result->widgets[0]['data']);
+    }
+
+    #[Test]
+    public function listsRegisteredResources(): void
+    {
+        /** @var DataResourceInterface&Stub $resource */
+        $resource = $this->createStub(DataResourceInterface::class);
+        $resource->method('pluralLabel')->willReturn('Users');
+        $resource->method('icon')->willReturn('users-icon');
+
+        $this->registry->method('all')->willReturn(['users' => $resource]);
+
+        $handler = new DashboardHandler($this->registry, []);
+        $result = $handler->execute();
 
         self::assertCount(1, $result->resources);
         self::assertSame('users', $result->resources[0]['name']);
         self::assertSame('Users', $result->resources[0]['label']);
-        self::assertSame('user', $result->resources[0]['icon']);
+        self::assertSame('users-icon', $result->resources[0]['icon']);
     }
 
     #[Test]
-    public function execute_with_no_widgets_and_no_resources(): void
+    public function handlesEmptyDashboard(): void
     {
-        $registry = $this->createStub(ResourceRegistryInterface::class);
-        $registry->method('all')->willReturn([]);
+        $this->registry->method('all')->willReturn([]);
 
-        $handler = new DashboardHandler($registry, []);
+        $handler = new DashboardHandler($this->registry, []);
         $result = $handler->execute();
 
         self::assertSame([], $result->widgets);
@@ -61,15 +77,25 @@ final class DashboardHandlerTest extends TestCase
     }
 
     #[Test]
-    public function execute_with_multiple_widgets(): void
+    public function rendersMultipleWidgets(): void
     {
-        $widget1 = $this->createWidgetStub('w1', 'Widget 1', 'medium', ['a' => 1]);
-        $widget2 = $this->createWidgetStub('w2', 'Widget 2', 'large', ['b' => 2]);
+        /** @var WidgetInterface&Stub $widget1 */
+        $widget1 = $this->createStub(WidgetInterface::class);
+        $widget1->method('id')->willReturn('w1');
+        $widget1->method('label')->willReturn('Widget 1');
+        $widget1->method('size')->willReturn('medium');
+        $widget1->method('render')->willReturn(['value' => 10]);
 
-        $registry = $this->createStub(ResourceRegistryInterface::class);
-        $registry->method('all')->willReturn([]);
+        /** @var WidgetInterface&Stub $widget2 */
+        $widget2 = $this->createStub(WidgetInterface::class);
+        $widget2->method('id')->willReturn('w2');
+        $widget2->method('label')->willReturn('Widget 2');
+        $widget2->method('size')->willReturn('large');
+        $widget2->method('render')->willReturn(['value' => 20]);
 
-        $handler = new DashboardHandler($registry, [$widget1, $widget2]);
+        $this->registry->method('all')->willReturn([]);
+
+        $handler = new DashboardHandler($this->registry, [$widget1, $widget2]);
         $result = $handler->execute();
 
         self::assertCount(2, $result->widgets);
@@ -77,17 +103,29 @@ final class DashboardHandlerTest extends TestCase
         self::assertSame('w2', $result->widgets[1]['id']);
     }
 
-    /**
-     * @param array<string, mixed> $data
-     */
-    private function createWidgetStub(string $id, string $label, string $size, array $data): WidgetInterface&Stub
+    #[Test]
+    public function listsMultipleResources(): void
     {
-        $widget = $this->createStub(WidgetInterface::class);
-        $widget->method('id')->willReturn($id);
-        $widget->method('label')->willReturn($label);
-        $widget->method('size')->willReturn($size);
-        $widget->method('render')->willReturn($data);
+        /** @var DataResourceInterface&Stub $resource1 */
+        $resource1 = $this->createStub(DataResourceInterface::class);
+        $resource1->method('pluralLabel')->willReturn('Users');
+        $resource1->method('icon')->willReturn('user-icon');
 
-        return $widget;
+        /** @var DataResourceInterface&Stub $resource2 */
+        $resource2 = $this->createStub(DataResourceInterface::class);
+        $resource2->method('pluralLabel')->willReturn('Orders');
+        $resource2->method('icon')->willReturn('order-icon');
+
+        $this->registry->method('all')->willReturn([
+            'users' => $resource1,
+            'orders' => $resource2,
+        ]);
+
+        $handler = new DashboardHandler($this->registry, []);
+        $result = $handler->execute();
+
+        self::assertCount(2, $result->resources);
+        self::assertSame('users', $result->resources[0]['name']);
+        self::assertSame('orders', $result->resources[1]['name']);
     }
 }

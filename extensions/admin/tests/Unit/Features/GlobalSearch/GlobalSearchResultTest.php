@@ -13,7 +13,7 @@ use Pulsar\Extension\Admin\Features\GlobalSearch\GlobalSearchResult;
 final class GlobalSearchResultTest extends TestCase
 {
     #[Test]
-    public function constructor_sets_results_and_total(): void
+    public function constructorSetsResultsAndTotal(): void
     {
         $results = [
             'users' => [['id' => '1', 'name' => 'John']],
@@ -27,7 +27,7 @@ final class GlobalSearchResultTest extends TestCase
     }
 
     #[Test]
-    public function empty_results(): void
+    public function emptyResults(): void
     {
         $result = new GlobalSearchResult(results: [], totalMatches: 0);
 

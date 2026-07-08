@@ -15,7 +15,7 @@ use ReflectionClass;
 final class SavedViewStoreInterfaceTest extends TestCase
 {
     #[Test]
-    public function interface_defines_expected_methods(): void
+    public function interfaceDefinesExpectedMethods(): void
     {
         $reflection = new ReflectionClass(SavedViewStoreInterface::class);
 
@@ -27,7 +27,7 @@ final class SavedViewStoreInterfaceTest extends TestCase
     }
 
     #[Test]
-    public function stub_returns_configured_values(): void
+    public function stubReturnsConfiguredValues(): void
     {
         $view = new SavedView(
             id: 'v1',
@@ -48,7 +48,7 @@ final class SavedViewStoreInterfaceTest extends TestCase
     }
 
     #[Test]
-    public function stub_find_returns_null_for_missing(): void
+    public function stubFindReturnsNullForMissing(): void
     {
         $store = $this->createStub(SavedViewStoreInterface::class);
         $store->method('find')->willReturn(null);

@@ -13,7 +13,7 @@ use Pulsar\Extension\Admin\Config\AdminSecurityConfig;
 final class AdminSecurityConfigTest extends TestCase
 {
     #[Test]
-    public function from_array_with_defaults(): void
+    public function fromArrayWithDefaults(): void
     {
         $config = AdminSecurityConfig::fromArray([]);
 
@@ -24,7 +24,7 @@ final class AdminSecurityConfigTest extends TestCase
     }
 
     #[Test]
-    public function from_array_with_all_disabled(): void
+    public function fromArrayWithAllDisabled(): void
     {
         $config = AdminSecurityConfig::fromArray([
             'required_role' => 'viewer',
@@ -40,7 +40,7 @@ final class AdminSecurityConfigTest extends TestCase
     }
 
     #[Test]
-    public function constructor_properties_are_accessible(): void
+    public function constructorPropertiesAreAccessible(): void
     {
         $config = new AdminSecurityConfig(
             requiredRole: 'superadmin',

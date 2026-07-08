@@ -14,7 +14,7 @@ use ReflectionClass;
 final class ResourceRegistryInterfaceTest extends TestCase
 {
     #[Test]
-    public function interface_defines_all_methods(): void
+    public function interfaceDefinesAllMethods(): void
     {
         $reflection = new ReflectionClass(ResourceRegistryInterface::class);
 

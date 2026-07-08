@@ -18,7 +18,7 @@ use ReflectionClass;
 final class DataResourceInterfaceTest extends TestCase
 {
     #[Test]
-    public function interface_defines_all_methods(): void
+    public function interfaceDefinesAllMethods(): void
     {
         $reflection = new ReflectionClass(DataResourceInterface::class);
 
@@ -38,7 +38,7 @@ final class DataResourceInterfaceTest extends TestCase
     }
 
     #[Test]
-    public function stub_returns_configured_values(): void
+    public function stubReturnsConfiguredValues(): void
     {
         $stub = $this->createStub(DataResourceInterface::class);
         $stub->method('name')->willReturn('users');

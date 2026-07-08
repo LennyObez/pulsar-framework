@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Admin\Tests\Unit\Filter;
 
 use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Admin\Filter\FilterCompiler;
@@ -13,6 +14,7 @@ use Pulsar\Extension\Admin\Filter\FilterGroup;
 use Pulsar\Extension\Admin\Filter\FilterLogic;
 use Pulsar\Extension\Admin\Filter\FilterOperator;
 
+#[CoversClass(FilterCompiler::class)]
 final class FilterCompilerTest extends TestCase
 {
     private FilterCompiler $compiler;

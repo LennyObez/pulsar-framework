@@ -19,7 +19,7 @@ use Pulsar\Http\Message\ServerRequest;
 final class AdminCsrfMiddlewareTest extends TestCase
 {
     #[Test]
-    public function can_be_constructed(): void
+    public function canBeConstructed(): void
     {
         $config = AdminConfig::fromArray(['enabled' => true]);
 

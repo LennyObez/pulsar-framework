@@ -17,7 +17,7 @@ use Pulsar\Extension\Admin\Config\AdminConfig;
 final class AdminServeCommandTest extends TestCase
 {
     #[Test]
-    public function execute_returns_error_when_disabled(): void
+    public function executeReturnsErrorWhenDisabled(): void
     {
         $config = AdminConfig::fromArray(['enabled' => false]);
         $command = new AdminServeCommand($config, '/tmp');
@@ -31,7 +31,7 @@ final class AdminServeCommandTest extends TestCase
     }
 
     #[Test]
-    public function execute_returns_error_when_router_script_missing(): void
+    public function executeReturnsErrorWhenRouterScriptMissing(): void
     {
         $config = AdminConfig::fromArray(['enabled' => true]);
         $command = new AdminServeCommand($config, '/nonexistent/path');
@@ -48,7 +48,7 @@ final class AdminServeCommandTest extends TestCase
     }
 
     #[Test]
-    public function command_name_and_description(): void
+    public function commandNameAndDescription(): void
     {
         $config = AdminConfig::fromArray([]);
         $command = new AdminServeCommand($config, '/tmp');

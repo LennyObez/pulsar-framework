@@ -14,7 +14,7 @@ use Pulsar\Extension\Admin\Config\AdminRateLimitConfig;
 final class AdminRateLimitConfigTest extends TestCase
 {
     #[Test]
-    public function from_array_with_defaults(): void
+    public function fromArrayWithDefaults(): void
     {
         $config = AdminRateLimitConfig::fromArray([]);
 
@@ -25,7 +25,7 @@ final class AdminRateLimitConfigTest extends TestCase
     }
 
     #[Test]
-    public function from_array_with_custom_values(): void
+    public function fromArrayWithCustomValues(): void
     {
         $config = AdminRateLimitConfig::fromArray([
             'read_limit' => 200,
@@ -42,7 +42,7 @@ final class AdminRateLimitConfigTest extends TestCase
 
     #[Test]
     #[DataProvider('partialConfigProvider')]
-    public function from_array_with_partial_values(string $key, mixed $value, string $property, mixed $expected): void
+    public function fromArrayWithPartialValues(string $key, mixed $value, string $property, mixed $expected): void
     {
         $config = AdminRateLimitConfig::fromArray([$key => $value]);
 
@@ -61,7 +61,7 @@ final class AdminRateLimitConfigTest extends TestCase
     }
 
     #[Test]
-    public function constructor_properties_are_readonly(): void
+    public function constructorPropertiesAreReadonly(): void
     {
         $config = new AdminRateLimitConfig(
             readLimit: 100,

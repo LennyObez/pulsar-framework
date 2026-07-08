@@ -14,7 +14,7 @@ use Pulsar\Extension\Admin\Features\BulkAction\BulkActionResult;
 final class BulkActionResultTest extends TestCase
 {
     #[Test]
-    public function constructor_wraps_action_result(): void
+    public function constructorWrapsActionResult(): void
     {
         $actionResult = ActionResult::success('3 records archived');
 
@@ -26,7 +26,7 @@ final class BulkActionResultTest extends TestCase
     }
 
     #[Test]
-    public function wraps_failure_result(): void
+    public function wrapsFailureResult(): void
     {
         $actionResult = ActionResult::failure('Bulk action failed');
 

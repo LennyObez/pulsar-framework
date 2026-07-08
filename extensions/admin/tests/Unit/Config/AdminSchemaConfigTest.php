@@ -8,12 +8,13 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Admin\Config\AdminSchemaConfig;
+use ReflectionClass;
 
 #[CoversClass(AdminSchemaConfig::class)]
 final class AdminSchemaConfigTest extends TestCase
 {
     #[Test]
-    public function from_array_with_defaults(): void
+    public function fromArrayWithDefaults(): void
     {
         $config = AdminSchemaConfig::fromArray([]);
 
@@ -24,23 +25,23 @@ final class AdminSchemaConfigTest extends TestCase
     }
 
     #[Test]
-    public function from_array_with_custom_values(): void
+    public function fromArrayWithExplicitValues(): void
     {
         $config = AdminSchemaConfig::fromArray([
             'enabled' => true,
             'allowed_operations' => ['create', 'alter'],
-            'deny_table_prefixes' => ['secret_'],
+            'deny_table_prefixes' => ['system_'],
             'require_step_up_for' => ['drop'],
         ]);
 
         self::assertTrue($config->enabled);
         self::assertSame(['create', 'alter'], $config->allowedOperations);
-        self::assertSame(['secret_'], $config->denyTablePrefixes);
+        self::assertSame(['system_'], $config->denyTablePrefixes);
         self::assertSame(['drop'], $config->requireStepUpFor);
     }
 
     #[Test]
-    public function constructor_defaults(): void
+    public function constructorDefaults(): void
     {
         $config = new AdminSchemaConfig();
 
@@ -51,7 +52,7 @@ final class AdminSchemaConfigTest extends TestCase
     }
 
     #[Test]
-    public function from_array_with_empty_lists(): void
+    public function fromArrayWithEmptyLists(): void
     {
         $config = AdminSchemaConfig::fromArray([
             'enabled' => true,
@@ -64,5 +65,14 @@ final class AdminSchemaConfigTest extends TestCase
         self::assertSame([], $config->allowedOperations);
         self::assertSame([], $config->denyTablePrefixes);
         self::assertSame([], $config->requireStepUpFor);
+    }
+
+    #[Test]
+    public function isReadonly(): void
+    {
+        $config = AdminSchemaConfig::fromArray([]);
+
+        $reflection = new ReflectionClass($config);
+        self::assertTrue($reflection->isReadOnly());
     }
 }

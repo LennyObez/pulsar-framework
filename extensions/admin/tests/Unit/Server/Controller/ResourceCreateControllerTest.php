@@ -24,7 +24,7 @@ use Pulsar\Extension\Admin\Server\Controller\ResourceCreateController;
 final class ResourceCreateControllerTest extends TestCase
 {
     #[Test]
-    public function store_returns_json_success(): void
+    public function storeReturnsJsonSuccess(): void
     {
         $resource = $this->createStub(DataResourceInterface::class);
         $resource->method('name')->willReturn('users');

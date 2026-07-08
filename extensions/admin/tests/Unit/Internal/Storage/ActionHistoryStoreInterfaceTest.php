@@ -15,7 +15,7 @@ use ReflectionClass;
 final class ActionHistoryStoreInterfaceTest extends TestCase
 {
     #[Test]
-    public function interface_defines_expected_methods(): void
+    public function interfaceDefinesExpectedMethods(): void
     {
         $reflection = new ReflectionClass(ActionHistoryStoreInterface::class);
 
@@ -26,7 +26,7 @@ final class ActionHistoryStoreInterfaceTest extends TestCase
     }
 
     #[Test]
-    public function stub_returns_configured_entries(): void
+    public function stubReturnsConfiguredEntries(): void
     {
         $entry = new ActionHistoryEntry(
             id: 'e1',

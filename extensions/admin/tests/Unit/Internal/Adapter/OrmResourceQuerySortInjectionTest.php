@@ -44,7 +44,7 @@ final class OrmResourceQuerySortInjectionTest extends TestCase
 
     #[Test]
     #[DataProvider('maliciousSortFieldProvider')]
-    public function rejects_malicious_default_sort_field(string $maliciousField): void
+    public function rejectsMaliciousDefaultSortField(string $maliciousField): void
     {
         $connection = $this->createStub(ConnectionInterface::class);
         $connection->method('query')->willReturn(new Result([]));
@@ -64,7 +64,7 @@ final class OrmResourceQuerySortInjectionTest extends TestCase
     }
 
     #[Test]
-    public function safe_default_sort_field_is_quoted(): void
+    public function safeDefaultSortFieldIsQuoted(): void
     {
         $row = $this->createStub(\Pulsar\Database\Row::class);
         $row->method('get')->willReturn(0);
@@ -97,7 +97,7 @@ final class OrmResourceQuerySortInjectionTest extends TestCase
 
     #[Test]
     #[DataProvider('maliciousUserSortFieldProvider')]
-    public function rejects_malicious_user_supplied_sort_field(string $maliciousField): void
+    public function rejectsMaliciousUserSuppliedSortField(string $maliciousField): void
     {
         $connection = $this->createStub(ConnectionInterface::class);
         $connection->method('query')->willReturn(new Result([]));
@@ -125,7 +125,7 @@ final class OrmResourceQuerySortInjectionTest extends TestCase
     }
 
     #[Test]
-    public function valid_user_sort_field_is_quoted(): void
+    public function validUserSortFieldIsQuoted(): void
     {
         $row = $this->createStub(\Pulsar\Database\Row::class);
         $row->method('get')->willReturn(0);

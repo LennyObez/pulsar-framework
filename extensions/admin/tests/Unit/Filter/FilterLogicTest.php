@@ -13,31 +13,31 @@ use Pulsar\Extension\Admin\Filter\FilterLogic;
 final class FilterLogicTest extends TestCase
 {
     #[Test]
-    public function and_has_correct_value(): void
+    public function andHasCorrectValue(): void
     {
         self::assertSame('and', FilterLogic::And->value);
     }
 
     #[Test]
-    public function or_has_correct_value(): void
+    public function orHasCorrectValue(): void
     {
         self::assertSame('or', FilterLogic::Or->value);
     }
 
     #[Test]
-    public function cases_returns_both(): void
+    public function casesReturnsBoth(): void
     {
         self::assertCount(2, FilterLogic::cases());
     }
 
     #[Test]
-    public function try_from_returns_null_for_invalid(): void
+    public function tryFromReturnsNullForInvalid(): void
     {
         self::assertNull(FilterLogic::tryFrom('xor'));
     }
 
     #[Test]
-    public function from_constructs_from_string(): void
+    public function fromConstructsFromString(): void
     {
         self::assertSame(FilterLogic::And, FilterLogic::from('and'));
         self::assertSame(FilterLogic::Or, FilterLogic::from('or'));

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Tests\Unit\Domain;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Admin\Domain\ActionResult;
@@ -17,10 +18,18 @@ use Pulsar\Extension\Admin\Domain\ValidationRule;
 
 use function count;
 
+#[CoversClass(ActionResult::class)]
+#[CoversClass(AdminPermission::class)]
+#[CoversClass(ExportFormat::class)]
+#[CoversClass(FieldDefinition::class)]
+#[CoversClass(FieldType::class)]
+#[CoversClass(ResourceOperation::class)]
+#[CoversClass(SavedView::class)]
+#[CoversClass(ValidationRule::class)]
 final class AdminDomainTest extends TestCase
 {
     #[Test]
-    public function action_result_success(): void
+    public function actionResultSuccess(): void
     {
         $result = ActionResult::success('Created', ['id' => '123']);
 
@@ -30,7 +39,7 @@ final class AdminDomainTest extends TestCase
     }
 
     #[Test]
-    public function action_result_failure(): void
+    public function actionResultFailure(): void
     {
         $result = ActionResult::failure('Validation failed');
 
@@ -39,7 +48,7 @@ final class AdminDomainTest extends TestCase
     }
 
     #[Test]
-    public function action_result_default_metadata(): void
+    public function actionResultDefaultMetadata(): void
     {
         $result = ActionResult::success('OK');
 
@@ -47,7 +56,7 @@ final class AdminDomainTest extends TestCase
     }
 
     #[Test]
-    public function admin_permission_values(): void
+    public function adminPermissionValues(): void
     {
         self::assertSame('admin.access', AdminPermission::AccessPanel->value);
         self::assertSame('admin.dashboard', AdminPermission::ViewDashboard->value);
@@ -63,7 +72,7 @@ final class AdminDomainTest extends TestCase
     }
 
     #[Test]
-    public function resource_operation_values(): void
+    public function resourceOperationValues(): void
     {
         self::assertSame('list', ResourceOperation::List->value);
         self::assertSame('view', ResourceOperation::View->value);
@@ -75,14 +84,14 @@ final class AdminDomainTest extends TestCase
     }
 
     #[Test]
-    public function export_format_values(): void
+    public function exportFormatValues(): void
     {
         self::assertSame('csv', ExportFormat::Csv->value);
         self::assertSame('json', ExportFormat::Json->value);
     }
 
     #[Test]
-    public function field_type_covers_all_types(): void
+    public function fieldTypeCoversAllTypes(): void
     {
         $types = FieldType::cases();
 
@@ -102,7 +111,7 @@ final class AdminDomainTest extends TestCase
     }
 
     #[Test]
-    public function field_definition_construction_with_defaults(): void
+    public function fieldDefinitionConstructionWithDefaults(): void
     {
         $field = new FieldDefinition(
             name: 'title',
@@ -130,7 +139,7 @@ final class AdminDomainTest extends TestCase
     }
 
     #[Test]
-    public function field_definition_construction_with_all_options(): void
+    public function fieldDefinitionConstructionWithAllOptions(): void
     {
         $field = new FieldDefinition(
             name: 'ssn',
@@ -159,7 +168,7 @@ final class AdminDomainTest extends TestCase
     }
 
     #[Test]
-    public function saved_view_construction(): void
+    public function savedViewConstruction(): void
     {
         $view = new SavedView(
             id: 'v1',
@@ -185,7 +194,7 @@ final class AdminDomainTest extends TestCase
     }
 
     #[Test]
-    public function saved_view_defaults(): void
+    public function savedViewDefaults(): void
     {
         $view = new SavedView(
             id: 'v1',

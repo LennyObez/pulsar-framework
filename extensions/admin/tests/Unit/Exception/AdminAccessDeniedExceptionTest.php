@@ -15,47 +15,48 @@ use Pulsar\Extension\Admin\Exception\AdminException;
 final class AdminAccessDeniedExceptionTest extends TestCase
 {
     #[Test]
-    public function extends_admin_exception(): void
+    public function extendsAdminException(): void
     {
-        $exception = AdminAccessDeniedException::insufficientRole('admin');
+        $e = AdminAccessDeniedException::insufficientRole('admin');
 
-        self::assertInstanceOf(AdminException::class, $exception);
+        self::assertInstanceOf(AdminException::class, $e);
     }
 
     #[Test]
-    public function insufficient_role_includes_role_name(): void
+    public function insufficientRoleIncludesRoleName(): void
     {
-        $exception = AdminAccessDeniedException::insufficientRole('superadmin');
+        $e = AdminAccessDeniedException::insufficientRole('superadmin');
 
-        self::assertStringContainsString('superadmin', $exception->getMessage());
-        self::assertStringContainsString('required', $exception->getMessage());
+        self::assertStringContainsString('superadmin', $e->getMessage());
+        self::assertStringContainsString('role', $e->getMessage());
+        self::assertStringContainsString('required', $e->getMessage());
     }
 
     #[Test]
-    public function operation_denied_includes_resource_and_operation(): void
+    public function operationDeniedIncludesResourceAndOperation(): void
     {
-        $exception = AdminAccessDeniedException::operationDenied('users', ResourceOperation::Delete);
+        $e = AdminAccessDeniedException::operationDenied('users', ResourceOperation::Delete);
 
-        self::assertStringContainsString('users', $exception->getMessage());
-        self::assertStringContainsString('delete', $exception->getMessage());
+        self::assertStringContainsString('delete', $e->getMessage());
+        self::assertStringContainsString('users', $e->getMessage());
     }
 
     #[Test]
-    public function two_factor_required_message(): void
+    public function operationDeniedCoversEveryOperation(): void
     {
-        $exception = AdminAccessDeniedException::twoFactorRequired();
+        foreach (ResourceOperation::cases() as $operation) {
+            $e = AdminAccessDeniedException::operationDenied('orders', $operation);
 
-        self::assertStringContainsString('two-factor', $exception->getMessage());
-    }
-
-    #[Test]
-    public function operation_denied_with_each_operation(): void
-    {
-        foreach (ResourceOperation::cases() as $op) {
-            $exception = AdminAccessDeniedException::operationDenied('orders', $op);
-
-            self::assertStringContainsString($op->value, $exception->getMessage());
-            self::assertStringContainsString('orders', $exception->getMessage());
+            self::assertStringContainsString($operation->value, $e->getMessage());
+            self::assertStringContainsString('orders', $e->getMessage());
         }
+    }
+
+    #[Test]
+    public function twoFactorRequiredMessage(): void
+    {
+        $e = AdminAccessDeniedException::twoFactorRequired();
+
+        self::assertStringContainsString('two-factor', $e->getMessage());
     }
 }

@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Tests\Unit\Internal\Export;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Admin\Domain\ExportFormat;
 use Pulsar\Extension\Admin\Internal\Export\JsonExportDriver;
 
+#[CoversClass(JsonExportDriver::class)]
 final class JsonExportDriverTest extends TestCase
 {
     private JsonExportDriver $driver;
@@ -19,75 +21,141 @@ final class JsonExportDriverTest extends TestCase
     }
 
     #[Test]
-    public function format_returns_json(): void
+    public function formatReturnsJson(): void
     {
         self::assertSame(ExportFormat::Json, $this->driver->format());
     }
 
     #[Test]
-    public function mime_type(): void
+    public function mimeTypeIsCorrect(): void
     {
         self::assertSame('application/json; charset=utf-8', $this->driver->mimeType());
     }
 
     #[Test]
-    public function file_extension(): void
+    public function fileExtensionIsJson(): void
     {
         self::assertSame('json', $this->driver->fileExtension());
     }
 
     #[Test]
-    public function export_with_data(): void
+    public function exportProducesValidJson(): void
     {
-        $columns = ['id', 'name'];
-        $rows = [
-            ['id' => 1, 'name' => 'Alice'],
-            ['id' => 2, 'name' => 'Bob'],
-        ];
+        $output = $this->driver->export(
+            ['id', 'name'],
+            [
+                ['id' => 1, 'name' => 'Alice'],
+                ['id' => 2, 'name' => 'Bob'],
+            ],
+        );
 
-        $output = $this->driver->export($columns, $rows);
+        /** @var array<string, mixed> $decoded */
         $decoded = json_decode($output, true, 512, JSON_THROW_ON_ERROR);
 
-        self::assertSame(2, $decoded['total']);
-        self::assertSame(['id', 'name'], $decoded['columns']);
-        self::assertCount(2, $decoded['data']);
-        self::assertSame(['id' => 1, 'name' => 'Alice'], $decoded['data'][0]);
-        self::assertSame(['id' => 2, 'name' => 'Bob'], $decoded['data'][1]);
+        self::assertArrayHasKey('data', $decoded);
+        self::assertArrayHasKey('columns', $decoded);
+        self::assertArrayHasKey('total', $decoded);
     }
 
     #[Test]
-    public function export_empty_rows(): void
+    public function exportIncludesDataRows(): void
     {
-        $output = $this->driver->export(['id'], []);
+        $output = $this->driver->export(
+            ['id', 'name'],
+            [
+                ['id' => 1, 'name' => 'Alice'],
+            ],
+        );
+
+        /** @var array{data: list<array<string, mixed>>, columns: list<string>, total: int} $decoded */
         $decoded = json_decode($output, true, 512, JSON_THROW_ON_ERROR);
 
-        self::assertSame(0, $decoded['total']);
+        self::assertCount(1, $decoded['data']);
+        self::assertSame(1, $decoded['data'][0]['id']);
+        self::assertSame('Alice', $decoded['data'][0]['name']);
+    }
+
+    #[Test]
+    public function exportIncludesColumnNames(): void
+    {
+        $output = $this->driver->export(['id', 'name', 'email'], []);
+
+        /** @var array{columns: list<string>} $decoded */
+        $decoded = json_decode($output, true, 512, JSON_THROW_ON_ERROR);
+
+        self::assertSame(['id', 'name', 'email'], $decoded['columns']);
+    }
+
+    #[Test]
+    public function exportIncludesTotalCount(): void
+    {
+        $output = $this->driver->export(
+            ['id'],
+            [
+                ['id' => 1],
+                ['id' => 2],
+                ['id' => 3],
+            ],
+        );
+
+        /** @var array{total: int} $decoded */
+        $decoded = json_decode($output, true, 512, JSON_THROW_ON_ERROR);
+
+        self::assertSame(3, $decoded['total']);
+    }
+
+    #[Test]
+    public function exportHandlesMissingColumnValues(): void
+    {
+        $output = $this->driver->export(
+            ['id', 'name'],
+            [
+                ['id' => 1],
+            ],
+        );
+
+        /** @var array{data: list<array<string, mixed>>} $decoded */
+        $decoded = json_decode($output, true, 512, JSON_THROW_ON_ERROR);
+
+        self::assertNull($decoded['data'][0]['name']);
+    }
+
+    #[Test]
+    public function exportHandlesEmptyRows(): void
+    {
+        $output = $this->driver->export(['id', 'name'], []);
+
+        /** @var array{data: list<array<string, mixed>>, total: int} $decoded */
+        $decoded = json_decode($output, true, 512, JSON_THROW_ON_ERROR);
+
         self::assertSame([], $decoded['data']);
-        self::assertSame(['id'], $decoded['columns']);
+        self::assertSame(0, $decoded['total']);
     }
 
     #[Test]
-    public function export_missing_column_values_are_null(): void
+    public function exportUsesUnescapedSlashes(): void
     {
         $output = $this->driver->export(
-            ['name', 'missing'],
-            [['name' => 'Alice']],
+            ['url'],
+            [
+                ['url' => 'https://example.com/path'],
+            ],
         );
-        $decoded = json_decode($output, true, 512, JSON_THROW_ON_ERROR);
 
-        self::assertNull($decoded['data'][0]['missing']);
+        self::assertStringContainsString('https://example.com/path', $output);
+        self::assertStringNotContainsString('\\/', $output);
     }
 
     #[Test]
-    public function export_produces_valid_json(): void
+    public function exportUsesUnescapedUnicode(): void
     {
         $output = $this->driver->export(
-            ['a'],
-            [['a' => 'value/with/slashes'], ['a' => 'unicode: ']],
+            ['name'],
+            [
+                ['name' => 'Muller'],
+            ],
         );
 
-        // Should not throw
-        $decoded = json_decode($output, true, 512, JSON_THROW_ON_ERROR);
-        self::assertSame(2, $decoded['total']);
+        self::assertStringContainsString('Muller', $output);
     }
 }

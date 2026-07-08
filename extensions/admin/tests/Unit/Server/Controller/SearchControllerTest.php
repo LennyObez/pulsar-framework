@@ -22,7 +22,7 @@ use Pulsar\Extension\Admin\Server\Controller\SearchController;
 final class SearchControllerTest extends TestCase
 {
     #[Test]
-    public function search_returns_json_for_json_accept(): void
+    public function searchReturnsJsonForJsonAccept(): void
     {
         $resource = $this->createStub(DataResourceInterface::class);
         $resource->method('name')->willReturn('users');
@@ -53,7 +53,7 @@ final class SearchControllerTest extends TestCase
     }
 
     #[Test]
-    public function search_uses_empty_string_when_no_query(): void
+    public function searchUsesEmptyStringWhenNoQuery(): void
     {
         $registry = $this->createStub(ResourceRegistryInterface::class);
         $registry->method('all')->willReturn([]);

@@ -14,7 +14,7 @@ use Pulsar\Extension\Admin\Features\DeleteResource\DeleteResourceResult;
 final class DeleteResourceResultTest extends TestCase
 {
     #[Test]
-    public function constructor_wraps_action_result(): void
+    public function constructorWrapsActionResult(): void
     {
         $actionResult = ActionResult::success('Deleted');
 

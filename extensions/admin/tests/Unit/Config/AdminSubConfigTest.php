@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Tests\Unit\Config;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Admin\Config\AdminPaginationConfig;
@@ -12,12 +13,17 @@ use Pulsar\Extension\Admin\Config\AdminSchemaConfig;
 use Pulsar\Extension\Admin\Config\AdminSecurityConfig;
 use Pulsar\Extension\Admin\Config\AdminStorageConfig;
 
+#[CoversClass(AdminPaginationConfig::class)]
+#[CoversClass(AdminRateLimitConfig::class)]
+#[CoversClass(AdminSchemaConfig::class)]
+#[CoversClass(AdminSecurityConfig::class)]
+#[CoversClass(AdminStorageConfig::class)]
 final class AdminSubConfigTest extends TestCase
 {
     // --- AdminRateLimitConfig ---
 
     #[Test]
-    public function rate_limit_defaults(): void
+    public function rateLimitDefaults(): void
     {
         $config = AdminRateLimitConfig::fromArray([]);
 
@@ -28,7 +34,7 @@ final class AdminSubConfigTest extends TestCase
     }
 
     #[Test]
-    public function rate_limit_custom_values(): void
+    public function rateLimitCustomValues(): void
     {
         $config = AdminRateLimitConfig::fromArray([
             'read_limit' => 200,
@@ -46,7 +52,7 @@ final class AdminSubConfigTest extends TestCase
     // --- AdminSchemaConfig ---
 
     #[Test]
-    public function schema_config_defaults(): void
+    public function schemaConfigDefaults(): void
     {
         $config = AdminSchemaConfig::fromArray([]);
 
@@ -57,7 +63,7 @@ final class AdminSubConfigTest extends TestCase
     }
 
     #[Test]
-    public function schema_config_custom_values(): void
+    public function schemaConfigCustomValues(): void
     {
         $config = AdminSchemaConfig::fromArray([
             'enabled' => true,
@@ -75,7 +81,7 @@ final class AdminSubConfigTest extends TestCase
     // --- AdminStorageConfig ---
 
     #[Test]
-    public function storage_config_defaults(): void
+    public function storageConfigDefaults(): void
     {
         $config = AdminStorageConfig::fromArray([]);
 
@@ -84,7 +90,7 @@ final class AdminSubConfigTest extends TestCase
     }
 
     #[Test]
-    public function storage_config_custom_values(): void
+    public function storageConfigCustomValues(): void
     {
         $config = AdminStorageConfig::fromArray([
             'driver' => 'database',
@@ -98,7 +104,7 @@ final class AdminSubConfigTest extends TestCase
     // --- AdminSecurityConfig (edge cases) ---
 
     #[Test]
-    public function security_config_partial_override(): void
+    public function securityConfigPartialOverride(): void
     {
         $config = AdminSecurityConfig::fromArray([
             'required_role' => 'manager',
@@ -113,7 +119,7 @@ final class AdminSubConfigTest extends TestCase
     // --- AdminPaginationConfig (edge cases) ---
 
     #[Test]
-    public function pagination_config_partial_override(): void
+    public function paginationConfigPartialOverride(): void
     {
         $config = AdminPaginationConfig::fromArray([
             'default_per_page' => 15,

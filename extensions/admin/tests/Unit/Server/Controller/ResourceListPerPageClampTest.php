@@ -41,7 +41,7 @@ final class ResourceListPerPageClampTest extends TestCase
 
     #[Test]
     #[DataProvider('perPageClampProvider')]
-    public function per_page_is_clamped_to_max(string $rawPerPage, int $expectedPerPage): void
+    public function perPageIsClampedToMax(string $rawPerPage, int $expectedPerPage): void
     {
         $capturedPerPage = null;
 

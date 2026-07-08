@@ -13,7 +13,7 @@ use Pulsar\Extension\Admin\Features\ListResource\ListResourceRequest;
 final class ListResourceRequestTest extends TestCase
 {
     #[Test]
-    public function constructor_sets_all_properties(): void
+    public function constructorSetsAllProperties(): void
     {
         $request = new ListResourceRequest(
             resourceName: 'users',
@@ -31,7 +31,7 @@ final class ListResourceRequestTest extends TestCase
     }
 
     #[Test]
-    public function defaults_for_optional_properties(): void
+    public function defaultsForOptionalProperties(): void
     {
         $request = new ListResourceRequest(resourceName: 'orders');
 
