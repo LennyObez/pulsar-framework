@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Tests\Unit;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Container\ContainerInterface;
@@ -24,6 +25,7 @@ use Pulsar\Routing\Router;
  * unauthenticated CRUD and schema DDL. Each admin route must carry the full
  * security stack; schema routes must additionally enforce the schema guard.
  */
+#[CoversClass(AdminExtension::class)]
 final class AdminRouteSecurityTest extends TestCase
 {
     /** @var list<class-string> */

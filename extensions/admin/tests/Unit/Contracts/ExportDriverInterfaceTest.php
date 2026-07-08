@@ -15,7 +15,7 @@ use ReflectionClass;
 final class ExportDriverInterfaceTest extends TestCase
 {
     #[Test]
-    public function interface_defines_all_methods(): void
+    public function interfaceDefinesAllMethods(): void
     {
         $reflection = new ReflectionClass(ExportDriverInterface::class);
 
@@ -27,7 +27,7 @@ final class ExportDriverInterfaceTest extends TestCase
     }
 
     #[Test]
-    public function stub_returns_configured_values(): void
+    public function stubReturnsConfiguredValues(): void
     {
         $stub = $this->createStub(ExportDriverInterface::class);
         $stub->method('format')->willReturn(ExportFormat::Csv);

@@ -16,7 +16,7 @@ use Pulsar\Extension\Admin\Internal\Security\AdminAccessGate;
 final class AdminAuthMiddlewareTest extends TestCase
 {
     #[Test]
-    public function can_be_constructed(): void
+    public function canBeConstructed(): void
     {
         $config = AdminConfig::fromArray(['enabled' => true]);
         $policy = new AdminResourcePolicy($config);

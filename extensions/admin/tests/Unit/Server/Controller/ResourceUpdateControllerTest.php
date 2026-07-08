@@ -24,7 +24,7 @@ use Pulsar\Extension\Admin\Server\Controller\ResourceUpdateController;
 final class ResourceUpdateControllerTest extends TestCase
 {
     #[Test]
-    public function update_returns_json_success(): void
+    public function updateReturnsJsonSuccess(): void
     {
         $resource = $this->createStub(DataResourceInterface::class);
         $resource->method('name')->willReturn('users');

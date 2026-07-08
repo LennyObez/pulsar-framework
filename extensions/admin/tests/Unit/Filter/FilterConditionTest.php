@@ -14,7 +14,7 @@ use Pulsar\Extension\Admin\Filter\FilterOperator;
 final class FilterConditionTest extends TestCase
 {
     #[Test]
-    public function constructor_sets_properties(): void
+    public function constructorSetsProperties(): void
     {
         $condition = new FilterCondition(
             field: 'name',
@@ -28,7 +28,7 @@ final class FilterConditionTest extends TestCase
     }
 
     #[Test]
-    public function constructor_value_defaults_to_null(): void
+    public function constructorValueDefaultsToNull(): void
     {
         $condition = new FilterCondition(
             field: 'status',
@@ -39,7 +39,7 @@ final class FilterConditionTest extends TestCase
     }
 
     #[Test]
-    public function from_array_parses_condition(): void
+    public function fromArrayParsesCondition(): void
     {
         $condition = FilterCondition::fromArray([
             'field' => 'age',
@@ -53,7 +53,7 @@ final class FilterConditionTest extends TestCase
     }
 
     #[Test]
-    public function from_array_defaults_empty_field(): void
+    public function fromArrayDefaultsEmptyField(): void
     {
         $condition = FilterCondition::fromArray([]);
 
@@ -63,7 +63,7 @@ final class FilterConditionTest extends TestCase
     }
 
     #[Test]
-    public function from_array_with_non_string_field_defaults_to_empty(): void
+    public function fromArrayWithNonStringFieldDefaultsToEmpty(): void
     {
         $condition = FilterCondition::fromArray([
             'field' => 123,
@@ -74,7 +74,7 @@ final class FilterConditionTest extends TestCase
     }
 
     #[Test]
-    public function from_array_with_non_string_operator_defaults_to_eq(): void
+    public function fromArrayWithNonStringOperatorDefaultsToEq(): void
     {
         $condition = FilterCondition::fromArray([
             'field' => 'name',
@@ -85,7 +85,7 @@ final class FilterConditionTest extends TestCase
     }
 
     #[Test]
-    public function to_array_produces_correct_structure(): void
+    public function toArrayProducesCorrectStructure(): void
     {
         $condition = new FilterCondition(
             field: 'email',
@@ -101,7 +101,7 @@ final class FilterConditionTest extends TestCase
     }
 
     #[Test]
-    public function to_array_round_trips_through_from_array(): void
+    public function toArrayRoundTripsThroughFromArray(): void
     {
         $original = new FilterCondition(
             field: 'status',

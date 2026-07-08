@@ -14,7 +14,7 @@ use ReflectionClass;
 final class WritableStreamInterfaceTest extends TestCase
 {
     #[Test]
-    public function interface_defines_all_methods(): void
+    public function interfaceDefinesAllMethods(): void
     {
         $reflection = new ReflectionClass(WritableStreamInterface::class);
 
@@ -25,7 +25,7 @@ final class WritableStreamInterfaceTest extends TestCase
     }
 
     #[Test]
-    public function stub_returns_configured_content(): void
+    public function stubReturnsConfiguredContent(): void
     {
         $stub = $this->createStub(WritableStreamInterface::class);
         $stub->method('contents')->willReturn('Hello World');

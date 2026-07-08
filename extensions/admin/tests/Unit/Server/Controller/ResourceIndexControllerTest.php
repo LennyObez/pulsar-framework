@@ -18,7 +18,7 @@ use Pulsar\Extension\Admin\Server\Controller\ResourceIndexController;
 final class ResourceIndexControllerTest extends TestCase
 {
     #[Test]
-    public function index_returns_json_when_accept_json(): void
+    public function indexReturnsJsonWhenAcceptJson(): void
     {
         $resource = $this->createStub(DataResourceInterface::class);
         $resource->method('label')->willReturn('User');
@@ -43,7 +43,7 @@ final class ResourceIndexControllerTest extends TestCase
     }
 
     #[Test]
-    public function index_returns_json_with_empty_registry(): void
+    public function indexReturnsJsonWithEmptyRegistry(): void
     {
         $registry = $this->createStub(ResourceRegistryInterface::class);
         $registry->method('all')->willReturn([]);

@@ -14,7 +14,7 @@ use Pulsar\Extension\Admin\Features\BulkAction\BulkActionRequest;
 final class BulkActionRequestTest extends TestCase
 {
     #[Test]
-    public function constructor_sets_all_properties(): void
+    public function constructorSetsAllProperties(): void
     {
         $context = new MutationContext(actor: 'admin', reason: 'bulk archive');
 
@@ -34,7 +34,7 @@ final class BulkActionRequestTest extends TestCase
     }
 
     #[Test]
-    public function empty_ids_and_parameters(): void
+    public function emptyIdsAndParameters(): void
     {
         $context = new MutationContext(actor: 'admin', reason: 'test');
 

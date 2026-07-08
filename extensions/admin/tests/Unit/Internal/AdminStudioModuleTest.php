@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Tests\Unit\Internal;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Admin\Internal\AdminStudioModule;
 use Pulsar\Extension\Studio\Contracts\StudioNavEntry;
 use Pulsar\Routing\RouterInterface;
 
+#[CoversClass(AdminStudioModule::class)]
 final class AdminStudioModuleTest extends TestCase
 {
     private AdminStudioModule $module;
@@ -20,7 +22,7 @@ final class AdminStudioModuleTest extends TestCase
     }
 
     #[Test]
-    public function module_id(): void
+    public function moduleId(): void
     {
         self::assertSame('admin', $this->module->moduleId());
     }
@@ -38,7 +40,7 @@ final class AdminStudioModuleTest extends TestCase
     }
 
     #[Test]
-    public function nav_entries(): void
+    public function navEntries(): void
     {
         $entries = $this->module->navEntries();
 
@@ -59,19 +61,19 @@ final class AdminStudioModuleTest extends TestCase
     }
 
     #[Test]
-    public function route_prefix(): void
+    public function routePrefix(): void
     {
         self::assertSame('/studio/admin', $this->module->routePrefix());
     }
 
     #[Test]
-    public function nav_order(): void
+    public function navOrder(): void
     {
         self::assertSame(50, $this->module->navOrder());
     }
 
     #[Test]
-    public function register_routes_is_noop(): void
+    public function registerRoutesIsNoop(): void
     {
         $router = $this->createStub(RouterInterface::class);
 

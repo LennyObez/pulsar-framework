@@ -4,148 +4,226 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Tests\Unit\Domain;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Admin\Domain\ValidationRule;
 
+#[CoversClass(ValidationRule::class)]
 final class ValidationRuleTest extends TestCase
 {
     #[Test]
-    public function required_passes_for_non_empty(): void
+    public function requiredFailsOnNull(): void
     {
         $rule = new ValidationRule('required');
 
-        self::assertNull($rule->validate('hello', 'name'));
-        self::assertNull($rule->validate(0, 'count'));
-        self::assertNull($rule->validate(false, 'flag'));
+        $error = $rule->validate(null, 'name');
+
+        self::assertSame('name is required', $error);
     }
 
     #[Test]
-    public function required_fails_for_null(): void
+    public function requiredFailsOnEmptyString(): void
     {
         $rule = new ValidationRule('required');
 
-        self::assertNotNull($rule->validate(null, 'name'));
+        $error = $rule->validate('', 'email');
+
+        self::assertSame('email is required', $error);
     }
 
     #[Test]
-    public function required_fails_for_empty_string(): void
+    public function requiredPassesWithValue(): void
     {
         $rule = new ValidationRule('required');
 
-        self::assertNotNull($rule->validate('', 'name'));
+        self::assertNull($rule->validate('John', 'name'));
     }
 
     #[Test]
-    public function required_custom_message(): void
+    public function requiredUsesCustomMessage(): void
     {
-        $rule = new ValidationRule('required', message: 'Fill this in');
+        $rule = new ValidationRule('required', 'Please provide your name');
 
-        self::assertSame('Fill this in', $rule->validate(null, 'name'));
+        $error = $rule->validate(null, 'name');
+
+        self::assertSame('Please provide your name', $error);
     }
 
     #[Test]
-    public function min_length_passes_for_sufficient_length(): void
+    public function minLengthFailsWhenTooShort(): void
     {
-        $rule = new ValidationRule('min_length', parameter: 3);
+        $rule = new ValidationRule('min_length', null, 3);
+
+        $error = $rule->validate('ab', 'name');
+
+        self::assertSame('name must be at least 3 characters', $error);
+    }
+
+    #[Test]
+    public function minLengthPassesWhenExactLength(): void
+    {
+        $rule = new ValidationRule('min_length', null, 3);
 
         self::assertNull($rule->validate('abc', 'name'));
+    }
+
+    #[Test]
+    public function minLengthPassesWhenLonger(): void
+    {
+        $rule = new ValidationRule('min_length', null, 3);
+
         self::assertNull($rule->validate('abcdef', 'name'));
     }
 
     #[Test]
-    public function min_length_fails_for_short_string(): void
+    public function minLengthSkipsNonString(): void
     {
-        $rule = new ValidationRule('min_length', parameter: 5);
-
-        self::assertNotNull($rule->validate('ab', 'name'));
-    }
-
-    #[Test]
-    public function min_length_ignores_non_string(): void
-    {
-        $rule = new ValidationRule('min_length', parameter: 3);
+        $rule = new ValidationRule('min_length', null, 3);
 
         self::assertNull($rule->validate(42, 'count'));
     }
 
     #[Test]
-    public function max_length_passes_for_short_string(): void
+    public function maxLengthFailsWhenTooLong(): void
     {
-        $rule = new ValidationRule('max_length', parameter: 10);
+        $rule = new ValidationRule('max_length', null, 5);
 
-        self::assertNull($rule->validate('hello', 'name'));
+        $error = $rule->validate('toolong', 'code');
+
+        self::assertSame('code must not exceed 5 characters', $error);
     }
 
     #[Test]
-    public function max_length_fails_for_long_string(): void
+    public function maxLengthPassesWhenExactLength(): void
     {
-        $rule = new ValidationRule('max_length', parameter: 3);
+        $rule = new ValidationRule('max_length', null, 5);
 
-        self::assertNotNull($rule->validate('toolong', 'name'));
+        self::assertNull($rule->validate('12345', 'code'));
     }
 
     #[Test]
-    public function min_passes_for_sufficient_value(): void
+    public function maxLengthPassesWhenShorter(): void
     {
-        $rule = new ValidationRule('min', parameter: 10);
+        $rule = new ValidationRule('max_length', null, 10);
+
+        self::assertNull($rule->validate('abc', 'code'));
+    }
+
+    #[Test]
+    public function maxLengthSkipsNonString(): void
+    {
+        $rule = new ValidationRule('max_length', null, 5);
+
+        self::assertNull($rule->validate(123456, 'value'));
+    }
+
+    #[Test]
+    public function minFailsWhenBelowMinimum(): void
+    {
+        $rule = new ValidationRule('min', null, 10);
+
+        $error = $rule->validate(5, 'age');
+
+        self::assertSame('age must be at least 10', $error);
+    }
+
+    #[Test]
+    public function minPassesWhenAtMinimum(): void
+    {
+        $rule = new ValidationRule('min', null, 10);
 
         self::assertNull($rule->validate(10, 'age'));
-        self::assertNull($rule->validate(100, 'age'));
     }
 
     #[Test]
-    public function min_fails_for_insufficient_value(): void
+    public function minPassesWhenAboveMinimum(): void
     {
-        $rule = new ValidationRule('min', parameter: 10);
+        $rule = new ValidationRule('min', null, 10);
 
-        self::assertNotNull($rule->validate(5, 'age'));
+        self::assertNull($rule->validate(20, 'age'));
     }
 
     #[Test]
-    public function max_passes_for_small_value(): void
+    public function minSkipsNonNumeric(): void
     {
-        $rule = new ValidationRule('max', parameter: 100);
+        $rule = new ValidationRule('min', null, 10);
 
-        self::assertNull($rule->validate(50, 'price'));
+        self::assertNull($rule->validate('abc', 'age'));
     }
 
     #[Test]
-    public function max_fails_for_excessive_value(): void
+    public function maxFailsWhenAboveMaximum(): void
     {
-        $rule = new ValidationRule('max', parameter: 100);
+        $rule = new ValidationRule('max', null, 100);
 
-        self::assertNotNull($rule->validate(150, 'price'));
+        $error = $rule->validate(150, 'score');
+
+        self::assertSame('score must not exceed 100', $error);
     }
 
     #[Test]
-    public function pattern_validates_regex(): void
+    public function maxPassesWhenAtMaximum(): void
     {
-        $rule = new ValidationRule('pattern', parameter: '/^[A-Z]{3}$/');
+        $rule = new ValidationRule('max', null, 100);
 
-        self::assertNull($rule->validate('ABC', 'code'));
-        self::assertNotNull($rule->validate('ab', 'code'));
+        self::assertNull($rule->validate(100, 'score'));
     }
 
     #[Test]
-    public function pattern_ignores_non_string(): void
+    public function maxPassesWhenBelowMaximum(): void
     {
-        $rule = new ValidationRule('pattern', parameter: '/^\d+$/');
+        $rule = new ValidationRule('max', null, 100);
 
-        self::assertNull($rule->validate(42, 'num'));
+        self::assertNull($rule->validate(50, 'score'));
     }
 
     #[Test]
-    public function email_validates_format(): void
+    public function patternFailsWhenNoMatch(): void
+    {
+        $rule = new ValidationRule('pattern', null, '/^[A-Z]{2}-\d{4}$/');
+
+        $error = $rule->validate('invalid', 'code');
+
+        self::assertSame('code format is invalid', $error);
+    }
+
+    #[Test]
+    public function patternPassesWhenMatches(): void
+    {
+        $rule = new ValidationRule('pattern', null, '/^[A-Z]{2}-\d{4}$/');
+
+        self::assertNull($rule->validate('AB-1234', 'code'));
+    }
+
+    #[Test]
+    public function patternSkipsNonString(): void
+    {
+        $rule = new ValidationRule('pattern', null, '/^\d+$/');
+
+        self::assertNull($rule->validate(42, 'value'));
+    }
+
+    #[Test]
+    public function emailFailsForInvalidEmail(): void
+    {
+        $rule = new ValidationRule('email');
+
+        $error = $rule->validate('not-an-email', 'email');
+
+        self::assertSame('email must be a valid email address', $error);
+    }
+
+    #[Test]
+    public function emailPassesForValidEmail(): void
     {
         $rule = new ValidationRule('email');
 
         self::assertNull($rule->validate('user@example.com', 'email'));
-        self::assertNotNull($rule->validate('not-an-email', 'email'));
     }
 
     #[Test]
-    public function email_allows_empty_string(): void
+    public function emailPassesForEmptyString(): void
     {
         $rule = new ValidationRule('email');
 
@@ -153,16 +231,33 @@ final class ValidationRuleTest extends TestCase
     }
 
     #[Test]
-    public function url_validates_format(): void
+    public function emailSkipsNonString(): void
+    {
+        $rule = new ValidationRule('email');
+
+        self::assertNull($rule->validate(42, 'email'));
+    }
+
+    #[Test]
+    public function urlFailsForInvalidUrl(): void
+    {
+        $rule = new ValidationRule('url');
+
+        $error = $rule->validate('not-a-url', 'website');
+
+        self::assertSame('website must be a valid URL', $error);
+    }
+
+    #[Test]
+    public function urlPassesForValidUrl(): void
     {
         $rule = new ValidationRule('url');
 
         self::assertNull($rule->validate('https://example.com', 'website'));
-        self::assertNotNull($rule->validate('not-a-url', 'website'));
     }
 
     #[Test]
-    public function url_allows_empty_string(): void
+    public function urlPassesForEmptyString(): void
     {
         $rule = new ValidationRule('url');
 
@@ -170,7 +265,15 @@ final class ValidationRuleTest extends TestCase
     }
 
     #[Test]
-    public function unknown_rule_returns_null(): void
+    public function urlSkipsNonString(): void
+    {
+        $rule = new ValidationRule('url');
+
+        self::assertNull($rule->validate(42, 'website'));
+    }
+
+    #[Test]
+    public function unknownRuleReturnsNull(): void
     {
         $rule = new ValidationRule('custom_rule');
 
@@ -178,7 +281,45 @@ final class ValidationRuleTest extends TestCase
     }
 
     #[Test]
-    public function construction_stores_parameters(): void
+    public function urlUsesCustomMessage(): void
+    {
+        $rule = new ValidationRule('url', 'Enter a proper URL');
+
+        $error = $rule->validate('invalid', 'website');
+
+        self::assertSame('Enter a proper URL', $error);
+    }
+
+    #[Test]
+    public function emailUsesCustomMessage(): void
+    {
+        $rule = new ValidationRule('email', 'Bad email format');
+
+        $error = $rule->validate('notvalid', 'email');
+
+        self::assertSame('Bad email format', $error);
+    }
+
+    #[Test]
+    public function minWithFloatValues(): void
+    {
+        $rule = new ValidationRule('min', null, 1.5);
+
+        self::assertNotNull($rule->validate(1.0, 'rate'));
+        self::assertNull($rule->validate(2.0, 'rate'));
+    }
+
+    #[Test]
+    public function maxWithFloatValues(): void
+    {
+        $rule = new ValidationRule('max', null, 99.9);
+
+        self::assertNotNull($rule->validate(100.0, 'percent'));
+        self::assertNull($rule->validate(50.5, 'percent'));
+    }
+
+    #[Test]
+    public function constructionStoresParameters(): void
     {
         $rule = new ValidationRule('min_length', 'Too short', 5);
 

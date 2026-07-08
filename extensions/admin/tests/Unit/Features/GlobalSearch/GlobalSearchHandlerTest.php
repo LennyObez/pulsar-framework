@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Tests\Unit\Features\GlobalSearch;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Admin\Contracts\DataResourceInterface;
 use Pulsar\Extension\Admin\Contracts\ResourceQueryInterface;
@@ -17,26 +17,20 @@ use Pulsar\Extension\Admin\Features\GlobalSearch\GlobalSearchRequest;
 use Pulsar\Extension\Admin\Features\GlobalSearch\GlobalSearchResult;
 use Pulsar\Extension\Admin\Internal\Policy\FieldVisibilityFilter;
 
+#[CoversClass(GlobalSearchHandler::class)]
+#[CoversClass(GlobalSearchRequest::class)]
+#[CoversClass(GlobalSearchResult::class)]
 final class GlobalSearchHandlerTest extends TestCase
 {
-    private ResourceRegistryInterface&Stub $registry;
-    private ResourceQueryInterface&Stub $query;
-    private FieldVisibilityFilter $visibilityFilter;
-    private GlobalSearchHandler $handler;
-
-    protected function setUp(): void
-    {
-        $this->registry = $this->createStub(ResourceRegistryInterface::class);
-        $this->query = $this->createStub(ResourceQueryInterface::class);
-        $this->visibilityFilter = new FieldVisibilityFilter();
-        $this->handler = new GlobalSearchHandler($this->registry, $this->query, $this->visibilityFilter);
-    }
-
     #[Test]
-    public function execute_returns_empty_for_blank_query(): void
+    public function emptyQueryReturnsEmptyResult(): void
     {
-        $request = new GlobalSearchRequest(query: '');
-        $result = $this->handler->execute($request);
+        $registry = $this->createStub(ResourceRegistryInterface::class);
+        $query = $this->createStub(ResourceQueryInterface::class);
+        $filter = new FieldVisibilityFilter();
+
+        $handler = new GlobalSearchHandler($registry, $query, $filter);
+        $result = $handler->execute(new GlobalSearchRequest(query: ''));
 
         self::assertInstanceOf(GlobalSearchResult::class, $result);
         self::assertSame([], $result->results);
@@ -44,47 +38,74 @@ final class GlobalSearchHandlerTest extends TestCase
     }
 
     #[Test]
-    public function execute_searches_across_multiple_resources(): void
+    public function searchAcrossMultipleResources(): void
     {
-        $usersResource = $this->createResourceStub();
-        $ordersResource = $this->createResourceStub();
+        $resource1 = $this->createResourceStub('users');
+        $resource2 = $this->createResourceStub('orders');
 
-        $this->registry->method('all')->willReturn([
-            'users' => $usersResource,
-            'orders' => $ordersResource,
-        ]);
+        $registry = $this->createStub(ResourceRegistryInterface::class);
+        $registry->method('all')->willReturn(['users' => $resource1, 'orders' => $resource2]);
 
-        $this->query->method('search')->willReturnOnConsecutiveCalls(
-            [['id' => '1', 'name' => 'Jane']],
-            [['id' => 'ord-1', 'customer' => 'Jane']],
+        $query = $this->createStub(ResourceQueryInterface::class);
+        $query->method('search')->willReturnCallback(
+            static fn(DataResourceInterface $r): array => match ($r->name()) {
+                'users' => [['id' => '1', 'name' => 'John']],
+                'orders' => [['id' => '10', 'name' => 'Order A'], ['id' => '11', 'name' => 'Order B']],
+                default => [],
+            },
         );
 
-        $request = new GlobalSearchRequest(query: 'Jane', limitPerResource: 5);
-        $result = $this->handler->execute($request);
+        $filter = new FieldVisibilityFilter();
+        $handler = new GlobalSearchHandler($registry, $query, $filter);
 
-        self::assertSame(2, $result->totalMatches);
+        $result = $handler->execute(new GlobalSearchRequest(query: 'test', limitPerResource: 10));
+
+        self::assertCount(2, $result->results);
         self::assertArrayHasKey('users', $result->results);
         self::assertArrayHasKey('orders', $result->results);
+        self::assertSame(3, $result->totalMatches);
     }
 
     #[Test]
-    public function execute_skips_resources_with_no_matches(): void
+    public function skipsResourcesWithNoMatches(): void
     {
-        $usersResource = $this->createResourceStub();
-        $ordersResource = $this->createResourceStub();
+        $resource = $this->createResourceStub('products');
 
-        $this->registry->method('all')->willReturn([
-            'users' => $usersResource,
-            'orders' => $ordersResource,
-        ]);
+        $registry = $this->createStub(ResourceRegistryInterface::class);
+        $registry->method('all')->willReturn(['products' => $resource]);
 
-        $this->query->method('search')->willReturnOnConsecutiveCalls(
-            [['id' => '1', 'name' => 'Match']],
-            [],
+        $query = $this->createStub(ResourceQueryInterface::class);
+        $query->method('search')->willReturn([]);
+
+        $filter = new FieldVisibilityFilter();
+        $handler = new GlobalSearchHandler($registry, $query, $filter);
+
+        $result = $handler->execute(new GlobalSearchRequest(query: 'nonexistent'));
+
+        self::assertSame([], $result->results);
+        self::assertSame(0, $result->totalMatches);
+    }
+
+    #[Test]
+    public function skipsOnlyResourcesWithNoMatchesWhenOthersMatch(): void
+    {
+        $matching = $this->createResourceStub('users');
+        $empty = $this->createResourceStub('orders');
+
+        $registry = $this->createStub(ResourceRegistryInterface::class);
+        $registry->method('all')->willReturn(['users' => $matching, 'orders' => $empty]);
+
+        $query = $this->createStub(ResourceQueryInterface::class);
+        $query->method('search')->willReturnCallback(
+            static fn(DataResourceInterface $r): array => $r->name() === 'users'
+                ? [['id' => '1', 'name' => 'Match']]
+                : [],
         );
 
-        $request = new GlobalSearchRequest(query: 'Match');
-        $result = $this->handler->execute($request);
+        $filter = new FieldVisibilityFilter();
+        $handler = new GlobalSearchHandler($registry, $query, $filter);
+
+        $result = $handler->execute(new GlobalSearchRequest(query: 'Match'));
 
         self::assertSame(1, $result->totalMatches);
         self::assertArrayHasKey('users', $result->results);
@@ -92,26 +113,27 @@ final class GlobalSearchHandlerTest extends TestCase
     }
 
     #[Test]
-    public function execute_returns_zero_matches_when_no_resources_match(): void
+    public function requestDefaultLimitPerResource(): void
     {
-        $resource = $this->createResourceStub();
-        $this->registry->method('all')->willReturn(['items' => $resource]);
-        $this->query->method('search')->willReturn([]);
+        $request = new GlobalSearchRequest(query: 'search term');
 
-        $request = new GlobalSearchRequest(query: 'nonexistent');
-        $result = $this->handler->execute($request);
-
-        self::assertSame(0, $result->totalMatches);
-        self::assertSame([], $result->results);
+        self::assertSame('search term', $request->query);
+        self::assertSame(5, $request->limitPerResource);
     }
 
-    private function createResourceStub(): DataResourceInterface&Stub
+    private function createResourceStub(string $name): DataResourceInterface
     {
+        $field = new FieldDefinition(
+            name: 'name',
+            type: FieldType::Text,
+            label: 'Name',
+        );
+
         $resource = $this->createStub(DataResourceInterface::class);
+        $resource->method('name')->willReturn($name);
+        $resource->method('fields')->willReturn([$field]);
         $resource->method('primaryKey')->willReturn('id');
-        $resource->method('fields')->willReturn([
-            new FieldDefinition(name: 'id', type: FieldType::Text, label: 'ID'),
-        ]);
+        $resource->method('exportableFields')->willReturn(['name']);
 
         return $resource;
     }

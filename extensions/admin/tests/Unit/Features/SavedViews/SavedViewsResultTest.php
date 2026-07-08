@@ -14,7 +14,7 @@ use Pulsar\Extension\Admin\Features\SavedViews\SavedViewsResult;
 final class SavedViewsResultTest extends TestCase
 {
     #[Test]
-    public function successful_list_result(): void
+    public function successfulListResult(): void
     {
         $view = new SavedView(
             id: 'v1',
@@ -34,7 +34,7 @@ final class SavedViewsResultTest extends TestCase
     }
 
     #[Test]
-    public function successful_get_result(): void
+    public function successfulGetResult(): void
     {
         $view = new SavedView(
             id: 'v1',
@@ -54,7 +54,7 @@ final class SavedViewsResultTest extends TestCase
     }
 
     #[Test]
-    public function default_values(): void
+    public function defaultValues(): void
     {
         $result = new SavedViewsResult(success: false);
 

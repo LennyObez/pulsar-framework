@@ -13,7 +13,7 @@ use Pulsar\Extension\Admin\Config\AdminPaginationConfig;
 final class AdminPaginationConfigTest extends TestCase
 {
     #[Test]
-    public function from_array_with_defaults(): void
+    public function fromArrayWithDefaults(): void
     {
         $config = AdminPaginationConfig::fromArray([]);
 
@@ -22,7 +22,7 @@ final class AdminPaginationConfigTest extends TestCase
     }
 
     #[Test]
-    public function from_array_with_custom_values(): void
+    public function fromArrayWithCustomValues(): void
     {
         $config = AdminPaginationConfig::fromArray([
             'default_per_page' => 10,
@@ -34,7 +34,7 @@ final class AdminPaginationConfigTest extends TestCase
     }
 
     #[Test]
-    public function constructor_properties_are_accessible(): void
+    public function constructorPropertiesAreAccessible(): void
     {
         $config = new AdminPaginationConfig(
             defaultPerPage: 15,

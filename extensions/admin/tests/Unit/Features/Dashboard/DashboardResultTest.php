@@ -13,7 +13,7 @@ use Pulsar\Extension\Admin\Features\Dashboard\DashboardResult;
 final class DashboardResultTest extends TestCase
 {
     #[Test]
-    public function constructor_sets_widgets_and_resources(): void
+    public function constructorSetsWidgetsAndResources(): void
     {
         $widgets = [
             ['id' => 'count', 'label' => 'Total', 'size' => 'small', 'data' => ['count' => 42]],
@@ -31,7 +31,7 @@ final class DashboardResultTest extends TestCase
     }
 
     #[Test]
-    public function empty_widgets_and_resources(): void
+    public function emptyWidgetsAndResources(): void
     {
         $result = new DashboardResult(widgets: [], resources: []);
 

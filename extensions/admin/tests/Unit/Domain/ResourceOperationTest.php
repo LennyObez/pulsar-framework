@@ -15,7 +15,7 @@ final class ResourceOperationTest extends TestCase
 {
     #[Test]
     #[DataProvider('operationCaseProvider')]
-    public function operation_has_correct_value(ResourceOperation $case, string $expected): void
+    public function operationHasCorrectValue(ResourceOperation $case, string $expected): void
     {
         self::assertSame($expected, $case->value);
     }
@@ -35,13 +35,13 @@ final class ResourceOperationTest extends TestCase
     }
 
     #[Test]
-    public function cases_count(): void
+    public function casesCount(): void
     {
         self::assertCount(7, ResourceOperation::cases());
     }
 
     #[Test]
-    public function try_from_returns_null_for_invalid(): void
+    public function tryFromReturnsNullForInvalid(): void
     {
         self::assertNull(ResourceOperation::tryFrom('unknown'));
     }

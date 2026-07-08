@@ -20,7 +20,7 @@ use Pulsar\Http\Message\ServerRequest;
 final class AdminRateLimitMiddlewareTest extends TestCase
 {
     #[Test]
-    public function can_be_constructed(): void
+    public function canBeConstructed(): void
     {
         $middleware = new AdminRateLimitMiddleware($this->config());
 

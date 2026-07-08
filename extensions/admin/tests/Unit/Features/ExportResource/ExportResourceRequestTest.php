@@ -14,7 +14,7 @@ use Pulsar\Extension\Admin\Features\ExportResource\ExportResourceRequest;
 final class ExportResourceRequestTest extends TestCase
 {
     #[Test]
-    public function constructor_sets_all_properties(): void
+    public function constructorSetsAllProperties(): void
     {
         $request = new ExportResourceRequest(
             resourceName: 'users',
@@ -30,7 +30,7 @@ final class ExportResourceRequestTest extends TestCase
     }
 
     #[Test]
-    public function defaults_empty_filters_and_max_rows(): void
+    public function defaultsEmptyFiltersAndMaxRows(): void
     {
         $request = new ExportResourceRequest(
             resourceName: 'orders',

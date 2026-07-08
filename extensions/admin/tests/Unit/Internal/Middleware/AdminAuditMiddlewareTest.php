@@ -18,7 +18,7 @@ use Pulsar\Extension\Admin\Internal\Middleware\AdminAuditMiddleware;
 final class AdminAuditMiddlewareTest extends TestCase
 {
     #[Test]
-    public function process_logs_get_request_and_returns_response(): void
+    public function processLogsGetRequestAndReturnsResponse(): void
     {
         $auditLogger = $this->createMock(AuditLoggerInterface::class);
         $auditLogger->expects(self::once())->method('log');
@@ -46,7 +46,7 @@ final class AdminAuditMiddlewareTest extends TestCase
     }
 
     #[Test]
-    public function process_logs_post_as_mutation(): void
+    public function processLogsPostAsMutation(): void
     {
         $auditLogger = $this->createMock(AuditLoggerInterface::class);
         $auditLogger->expects(self::once())->method('log');

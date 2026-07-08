@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Tests\Unit\Internal\Middleware;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
@@ -12,63 +13,117 @@ use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Extension\Admin\Config\AdminConfig;
 use Pulsar\Extension\Admin\Internal\Middleware\AdminAccessMiddleware;
 use Pulsar\Http\Message\Response;
-use Pulsar\Http\Message\Uri;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\ResponseStatus;
 
+#[CoversClass(AdminAccessMiddleware::class)]
 final class AdminAccessMiddlewareTest extends TestCase
 {
-    private function makeConfig(bool $enabled): AdminConfig
+    private static function makeRequest(): ServerRequest
     {
-        return AdminConfig::fromArray(['enabled' => $enabled]);
+        return new ServerRequest(
+            method: 'GET',
+            uri: '/admin/dashboard',
+        );
     }
 
-    private function makeRequest(): ServerRequestInterface
+    private static function makeHandler(Response $response): RequestHandlerInterface
     {
-        $request = $this->createStub(ServerRequestInterface::class);
-        $request->method('getMethod')->willReturn('GET');
-        $request->method('getUri')->willReturn(new Uri('http', 'localhost', '/admin'));
+        $handler = new class ($response) implements RequestHandlerInterface {
+            public function __construct(private readonly Response $response) {}
 
-        return $request;
-    }
-
-    private function makeHandler(ResponseInterface $response): RequestHandlerInterface
-    {
-        $handler = $this->createStub(RequestHandlerInterface::class);
-        $handler->method('handle')->willReturn($response);
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                return $this->response;
+            }
+        };
 
         return $handler;
     }
 
     #[Test]
-    public function enabled_admin_passes_through(): void
+    public function allowsRequestWhenEnabled(): void
     {
-        $middleware = new AdminAccessMiddleware($this->makeConfig(true));
-        $expectedResponse = Response::json(['ok' => true]);
-        $handler = $this->makeHandler($expectedResponse);
+        $config = AdminConfig::fromArray(['enabled' => true]);
+        $middleware = new AdminAccessMiddleware($config);
 
-        $response = $middleware->process($this->makeRequest(), $handler);
+        $expectedResponse = Response::json(['status' => 'ok']);
+        $handler = self::makeHandler($expectedResponse);
 
-        self::assertSame($expectedResponse, $response);
+        $response = $middleware->process(self::makeRequest(), $handler);
+
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
     }
 
     #[Test]
-    public function disabled_admin_returns_not_found(): void
+    public function blocksRequestWhenDisabled(): void
     {
-        $middleware = new AdminAccessMiddleware($this->makeConfig(false));
-        $handler = $this->makeHandler(Response::json(['should' => 'not reach']));
+        $config = AdminConfig::fromArray(['enabled' => false]);
+        $middleware = new AdminAccessMiddleware($config);
 
-        $response = $middleware->process($this->makeRequest(), $handler);
+        $handler = self::makeHandler(Response::json(['status' => 'ok']));
+
+        $response = $middleware->process(self::makeRequest(), $handler);
+
+        self::assertSame(ResponseStatus::NotFound->value, $response->getStatusCode());
+        self::assertStringContainsString('disabled', (string) $response->getBody());
+    }
+
+    #[Test]
+    public function doesNotCallNextWhenDisabled(): void
+    {
+        $config = AdminConfig::fromArray(['enabled' => false]);
+        $middleware = new AdminAccessMiddleware($config);
+
+        $called = false;
+        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler->expects($this->never())->method('handle');
+
+        $middleware->process(self::makeRequest(), $handler);
+    }
+
+    #[Test]
+    public function passesRequestToNextWhenEnabled(): void
+    {
+        $config = AdminConfig::fromArray(['enabled' => true]);
+        $middleware = new AdminAccessMiddleware($config);
+
+        $receivedRequest = null;
+        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler->expects($this->once())->method('handle')->willReturnCallback(
+            function (ServerRequestInterface $req) use (&$receivedRequest): ResponseInterface {
+                $receivedRequest = $req;
+                return Response::json(['status' => 'ok']);
+            },
+        );
+
+        $request = self::makeRequest();
+        $middleware->process($request, $handler);
+
+        self::assertSame($request, $receivedRequest);
+    }
+
+    #[Test]
+    public function defaultConfigIsDisabled(): void
+    {
+        $config = AdminConfig::fromArray([]);
+        $middleware = new AdminAccessMiddleware($config);
+
+        $handler = self::makeHandler(Response::json(['status' => 'ok']));
+
+        $response = $middleware->process(self::makeRequest(), $handler);
 
         self::assertSame(ResponseStatus::NotFound->value, $response->getStatusCode());
     }
 
     #[Test]
-    public function disabled_admin_response_contains_error_message(): void
+    public function blocksRequestWithErrorBodyWhenDisabled(): void
     {
-        $middleware = new AdminAccessMiddleware($this->makeConfig(false));
-        $handler = $this->makeHandler(Response::json([]));
+        $config = AdminConfig::fromArray(['enabled' => false]);
+        $middleware = new AdminAccessMiddleware($config);
+        $handler = self::makeHandler(Response::json([]));
 
-        $response = $middleware->process($this->makeRequest(), $handler);
+        $response = $middleware->process(self::makeRequest(), $handler);
         $body = json_decode((string) $response->getBody(), true);
 
         self::assertSame(['error' => 'Admin panel is disabled'], $body);

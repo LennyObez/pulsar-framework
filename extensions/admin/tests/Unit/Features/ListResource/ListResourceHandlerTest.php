@@ -4,121 +4,221 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Tests\Unit\Features\ListResource;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Admin\Config\AdminConfig;
-use Pulsar\Extension\Admin\Config\AdminPaginationConfig;
-use Pulsar\Extension\Admin\Config\AdminRateLimitConfig;
-use Pulsar\Extension\Admin\Config\AdminSchemaConfig;
-use Pulsar\Extension\Admin\Config\AdminSecurityConfig;
-use Pulsar\Extension\Admin\Config\AdminStorageConfig;
 use Pulsar\Extension\Admin\Contracts\DataResourceInterface;
 use Pulsar\Extension\Admin\Contracts\ResourceQueryInterface;
 use Pulsar\Extension\Admin\Contracts\ResourceRegistryInterface;
-use Pulsar\Extension\Admin\Domain\FieldDefinition;
-use Pulsar\Extension\Admin\Domain\FieldType;
-use Pulsar\Extension\Admin\Domain\ListResourceResult;
 use Pulsar\Extension\Admin\Features\ListResource\ListResourceHandler;
 use Pulsar\Extension\Admin\Features\ListResource\ListResourceRequest;
 use Pulsar\Extension\Admin\Internal\Policy\FieldVisibilityFilter;
 
+#[CoversClass(ListResourceHandler::class)]
 final class ListResourceHandlerTest extends TestCase
 {
     private ResourceRegistryInterface&Stub $registry;
     private ResourceQueryInterface&Stub $query;
-    private FieldVisibilityFilter $visibilityFilter;
-    private AdminConfig $config;
+    private DataResourceInterface&Stub $resource;
     private ListResourceHandler $handler;
 
     protected function setUp(): void
     {
         $this->registry = $this->createStub(ResourceRegistryInterface::class);
         $this->query = $this->createStub(ResourceQueryInterface::class);
-        $this->visibilityFilter = new FieldVisibilityFilter();
-        $this->config = new AdminConfig(
-            enabled: true,
-            routePrefix: '/admin',
-            security: AdminSecurityConfig::fromArray([]),
-            pagination: new AdminPaginationConfig(defaultPerPage: 25, maxPerPage: 100),
-            rateLimit: AdminRateLimitConfig::fromArray([]),
-            storage: AdminStorageConfig::fromArray([]),
-            schema: AdminSchemaConfig::fromArray([]),
-        );
+        $this->resource = $this->createStub(DataResourceInterface::class);
+        $config = AdminConfig::fromArray(['enabled' => true]);
+
+        $this->registry->method('get')->willReturn($this->resource);
+
         $this->handler = new ListResourceHandler(
             $this->registry,
             $this->query,
-            $this->visibilityFilter,
-            $this->config,
+            new FieldVisibilityFilter(),
+            $config,
+        );
+    }
+
+    private function handlerWithMocks(
+        ResourceQueryInterface|null $query = null,
+    ): ListResourceHandler {
+        return new ListResourceHandler(
+            $this->registry,
+            $query ?? $this->query,
+            new FieldVisibilityFilter(),
+            AdminConfig::fromArray(['enabled' => true]),
         );
     }
 
     #[Test]
-    public function execute_returns_paginated_results(): void
+    public function listsResourcesWithPagination(): void
     {
-        $resource = $this->createResourceStub();
-        $this->registry->method('get')->willReturn($resource);
-
+        $this->resource->method('fields')->willReturn([]);
+        $this->resource->method('primaryKey')->willReturn('id');
         $this->query->method('list')->willReturn([
-            'data' => [['id' => '1', 'name' => 'Alice'], ['id' => '2', 'name' => 'Bob']],
-            'total' => 50,
+            'data' => [
+                ['id' => '1', 'name' => 'Alice'],
+                ['id' => '2', 'name' => 'Bob'],
+            ],
+            'total' => 10,
             'page' => 1,
             'per_page' => 25,
         ]);
 
-        $request = new ListResourceRequest(resourceName: 'users', page: 1, perPage: 25);
+        $request = new ListResourceRequest(
+            resourceName: 'users',
+            page: 1,
+            perPage: 25,
+        );
+
         $result = $this->handler->execute($request);
 
-        self::assertInstanceOf(ListResourceResult::class, $result);
-        self::assertCount(2, $result->data);
-        self::assertSame(50, $result->total);
-        self::assertSame(2, $result->totalPages);
-    }
-
-    #[Test]
-    public function execute_clamps_per_page_to_max(): void
-    {
-        $resource = $this->createResourceStub();
-        $this->registry->method('get')->willReturn($resource);
-
-        $this->query->method('list')->willReturn([
-            'data' => [],
-            'total' => 0,
-            'page' => 1,
-            'per_page' => 100,
-        ]);
-
-        $request = new ListResourceRequest(resourceName: 'users', page: 1, perPage: 999);
-        $result = $this->handler->execute($request);
-
+        self::assertSame(10, $result->total);
+        self::assertSame(1, $result->page);
+        self::assertSame(25, $result->perPage);
         self::assertSame(1, $result->totalPages);
     }
 
     #[Test]
-    public function execute_clamps_per_page_minimum_to_one(): void
+    public function calculatesTotalPagesCorrectly(): void
     {
-        $resource = $this->createResourceStub();
-        $this->registry->method('get')->willReturn($resource);
-
+        $this->resource->method('fields')->willReturn([]);
+        $this->resource->method('primaryKey')->willReturn('id');
         $this->query->method('list')->willReturn([
             'data' => [['id' => '1']],
-            'total' => 1,
+            'total' => 53,
             'page' => 1,
-            'per_page' => 1,
+            'per_page' => 10,
         ]);
 
-        $request = new ListResourceRequest(resourceName: 'users', page: 1, perPage: 0);
+        $request = new ListResourceRequest(
+            resourceName: 'users',
+            page: 1,
+            perPage: 10,
+        );
+
         $result = $this->handler->execute($request);
 
-        self::assertSame(1, $result->perPage);
+        self::assertSame(53, $result->total);
+        self::assertSame(6, $result->totalPages);
     }
 
     #[Test]
-    public function execute_returns_one_total_page_when_empty(): void
+    public function clampsPerPageToMaxPerPage(): void
     {
-        $resource = $this->createResourceStub();
-        $this->registry->method('get')->willReturn($resource);
+        $this->resource->method('fields')->willReturn([]);
+        $this->resource->method('primaryKey')->willReturn('id');
 
+        /** @var ResourceQueryInterface&MockObject $query */
+        $query = $this->createMock(ResourceQueryInterface::class);
+        $query->expects($this->once())
+            ->method('list')
+            ->with(
+                $this->resource,
+                [],
+                [],
+                1,
+                100, // maxPerPage from default config
+            )
+            ->willReturn([
+                'data' => [],
+                'total' => 0,
+                'page' => 1,
+                'per_page' => 100,
+            ]);
+
+        $handler = $this->handlerWithMocks(query: $query);
+
+        $request = new ListResourceRequest(
+            resourceName: 'users',
+            perPage: 999,
+        );
+
+        $handler->execute($request);
+    }
+
+    #[Test]
+    public function clampsPerPageToMinimumOfOne(): void
+    {
+        $this->resource->method('fields')->willReturn([]);
+        $this->resource->method('primaryKey')->willReturn('id');
+
+        /** @var ResourceQueryInterface&MockObject $query */
+        $query = $this->createMock(ResourceQueryInterface::class);
+        $query->expects($this->once())
+            ->method('list')
+            ->with(
+                $this->resource,
+                [],
+                [],
+                1,
+                1,
+            )
+            ->willReturn([
+                'data' => [],
+                'total' => 0,
+                'page' => 1,
+                'per_page' => 1,
+            ]);
+
+        $handler = $this->handlerWithMocks(query: $query);
+
+        $request = new ListResourceRequest(
+            resourceName: 'users',
+            perPage: -5,
+        );
+
+        $handler->execute($request);
+    }
+
+    #[Test]
+    public function passesFiltersAndSortToQuery(): void
+    {
+        $this->resource->method('fields')->willReturn([]);
+        $this->resource->method('primaryKey')->willReturn('id');
+
+        $filters = ['status' => 'active'];
+        $sort = ['name' => 'asc'];
+
+        /** @var ResourceQueryInterface&MockObject $query */
+        $query = $this->createMock(ResourceQueryInterface::class);
+        $query->expects($this->once())
+            ->method('list')
+            ->with(
+                $this->resource,
+                $filters,
+                $sort,
+                2,
+                25,
+            )
+            ->willReturn([
+                'data' => [],
+                'total' => 0,
+                'page' => 2,
+                'per_page' => 25,
+            ]);
+
+        $handler = $this->handlerWithMocks(query: $query);
+
+        $request = new ListResourceRequest(
+            resourceName: 'users',
+            filters: $filters,
+            sort: $sort,
+            page: 2,
+            perPage: 25,
+        );
+
+        $handler->execute($request);
+    }
+
+    #[Test]
+    public function returnsTotalPagesOneWhenEmpty(): void
+    {
+        $this->resource->method('fields')->willReturn([]);
+        $this->resource->method('primaryKey')->willReturn('id');
         $this->query->method('list')->willReturn([
             'data' => [],
             'total' => 0,
@@ -127,21 +227,45 @@ final class ListResourceHandlerTest extends TestCase
         ]);
 
         $request = new ListResourceRequest(resourceName: 'users');
+
         $result = $this->handler->execute($request);
 
         self::assertSame(0, $result->total);
         self::assertSame(1, $result->totalPages);
+        self::assertSame([], $result->data);
     }
 
-    private function createResourceStub(): DataResourceInterface&Stub
+    #[Test]
+    public function clampsPageToMinimumOfOne(): void
     {
-        $resource = $this->createStub(DataResourceInterface::class);
-        $resource->method('primaryKey')->willReturn('id');
-        $resource->method('fields')->willReturn([
-            new FieldDefinition(name: 'id', type: FieldType::Text, label: 'ID'),
-            new FieldDefinition(name: 'name', type: FieldType::Text, label: 'Name'),
-        ]);
+        $this->resource->method('fields')->willReturn([]);
+        $this->resource->method('primaryKey')->willReturn('id');
 
-        return $resource;
+        /** @var ResourceQueryInterface&MockObject $query */
+        $query = $this->createMock(ResourceQueryInterface::class);
+        $query->expects($this->once())
+            ->method('list')
+            ->with(
+                $this->resource,
+                [],
+                [],
+                1,
+                25,
+            )
+            ->willReturn([
+                'data' => [],
+                'total' => 0,
+                'page' => 1,
+                'per_page' => 25,
+            ]);
+
+        $handler = $this->handlerWithMocks(query: $query);
+
+        $request = new ListResourceRequest(
+            resourceName: 'users',
+            page: -1,
+        );
+
+        $handler->execute($request);
     }
 }

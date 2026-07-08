@@ -4,14 +4,16 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Tests\Unit\Domain;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Admin\Domain\ListResourceResult;
 
+#[CoversClass(ListResourceResult::class)]
 final class ListResourceResultTest extends TestCase
 {
     #[Test]
-    public function construction_with_data(): void
+    public function constructionWithData(): void
     {
         $result = new ListResourceResult(
             data: [
@@ -32,7 +34,7 @@ final class ListResourceResultTest extends TestCase
     }
 
     #[Test]
-    public function empty_result(): void
+    public function emptyResult(): void
     {
         $result = new ListResourceResult(
             data: [],

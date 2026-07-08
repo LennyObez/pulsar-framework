@@ -4,16 +4,18 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Tests\Unit\Domain;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Admin\Domain\FieldDefinition;
 use Pulsar\Extension\Admin\Domain\FieldType;
 use Pulsar\Extension\Admin\Domain\ValidationRule;
 
+#[CoversClass(FieldDefinition::class)]
 final class FieldDefinitionTest extends TestCase
 {
     #[Test]
-    public function construction_with_defaults(): void
+    public function constructWithRequiredProperties(): void
     {
         $field = new FieldDefinition(
             name: 'email',
@@ -24,6 +26,17 @@ final class FieldDefinitionTest extends TestCase
         self::assertSame('email', $field->name);
         self::assertSame(FieldType::Email, $field->type);
         self::assertSame('Email Address', $field->label);
+    }
+
+    #[Test]
+    public function defaultValues(): void
+    {
+        $field = new FieldDefinition(
+            name: 'name',
+            type: FieldType::String,
+            label: 'Name',
+        );
+
         self::assertFalse($field->sortable);
         self::assertFalse($field->filterable);
         self::assertFalse($field->searchable);
@@ -41,10 +54,9 @@ final class FieldDefinitionTest extends TestCase
     }
 
     #[Test]
-    public function construction_fully_customized(): void
+    public function constructWithAllProperties(): void
     {
-        $rule = new ValidationRule('required', 'This field is required');
-
+        $rule = new ValidationRule(rule: 'required');
         $field = new FieldDefinition(
             name: 'status',
             type: FieldType::Enum,
@@ -54,35 +66,36 @@ final class FieldDefinitionTest extends TestCase
             searchable: true,
             redacted: false,
             exportable: false,
-            editable: true,
+            editable: false,
             visibleOnList: true,
             visibleOnDetail: true,
-            visibleOnForm: true,
+            visibleOnForm: false,
             rules: [$rule],
-            enumValues: ['active', 'inactive', 'pending'],
-            placeholder: 'Select a status',
-            helpText: 'Choose the item status',
+            enumValues: ['active', 'inactive'],
+            relationResource: null,
+            placeholder: 'Select status',
+            helpText: 'Choose the current status',
         );
 
-        self::assertSame('status', $field->name);
-        self::assertSame(FieldType::Enum, $field->type);
         self::assertTrue($field->sortable);
         self::assertTrue($field->filterable);
         self::assertTrue($field->searchable);
         self::assertFalse($field->exportable);
+        self::assertFalse($field->editable);
+        self::assertFalse($field->visibleOnForm);
         self::assertCount(1, $field->rules);
-        self::assertSame(['active', 'inactive', 'pending'], $field->enumValues);
-        self::assertSame('Select a status', $field->placeholder);
-        self::assertSame('Choose the item status', $field->helpText);
+        self::assertSame(['active', 'inactive'], $field->enumValues);
+        self::assertSame('Select status', $field->placeholder);
+        self::assertSame('Choose the current status', $field->helpText);
     }
 
     #[Test]
-    public function redacted_field(): void
+    public function redactedField(): void
     {
         $field = new FieldDefinition(
-            name: 'password',
+            name: 'ssn',
             type: FieldType::String,
-            label: 'Password',
+            label: 'SSN',
             redacted: true,
             visibleOnList: false,
             exportable: false,
@@ -94,7 +107,7 @@ final class FieldDefinitionTest extends TestCase
     }
 
     #[Test]
-    public function relation_field(): void
+    public function relationField(): void
     {
         $field = new FieldDefinition(
             name: 'author_id',

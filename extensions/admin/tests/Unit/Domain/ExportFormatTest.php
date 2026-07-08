@@ -14,19 +14,19 @@ use ValueError;
 final class ExportFormatTest extends TestCase
 {
     #[Test]
-    public function csv_has_correct_value(): void
+    public function csvHasCorrectValue(): void
     {
         self::assertSame('csv', ExportFormat::Csv->value);
     }
 
     #[Test]
-    public function json_has_correct_value(): void
+    public function jsonHasCorrectValue(): void
     {
         self::assertSame('json', ExportFormat::Json->value);
     }
 
     #[Test]
-    public function cases_returns_all_formats(): void
+    public function casesReturnsAllFormats(): void
     {
         $cases = ExportFormat::cases();
 
@@ -36,14 +36,14 @@ final class ExportFormatTest extends TestCase
     }
 
     #[Test]
-    public function from_creates_valid_format(): void
+    public function fromCreatesValidFormat(): void
     {
         self::assertSame(ExportFormat::Csv, ExportFormat::from('csv'));
         self::assertSame(ExportFormat::Json, ExportFormat::from('json'));
     }
 
     #[Test]
-    public function from_throws_for_unknown_format(): void
+    public function fromThrowsForUnknownFormat(): void
     {
         $this->expectException(ValueError::class);
 
@@ -51,7 +51,7 @@ final class ExportFormatTest extends TestCase
     }
 
     #[Test]
-    public function try_from_returns_null_for_unknown(): void
+    public function tryFromReturnsNullForUnknown(): void
     {
         self::assertNull(ExportFormat::tryFrom('xml'));
     }

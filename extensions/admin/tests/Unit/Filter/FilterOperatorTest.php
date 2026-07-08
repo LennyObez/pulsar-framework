@@ -14,14 +14,14 @@ use Pulsar\Extension\Admin\Filter\FilterOperator;
 final class FilterOperatorTest extends TestCase
 {
     #[Test]
-    public function cases_count(): void
+    public function casesCount(): void
     {
         self::assertCount(15, FilterOperator::cases());
     }
 
     #[Test]
     #[DataProvider('requiresValueProvider')]
-    public function requires_value(FilterOperator $op, bool $expected): void
+    public function requiresValue(FilterOperator $op, bool $expected): void
     {
         self::assertSame($expected, $op->requiresValue());
     }
@@ -43,7 +43,7 @@ final class FilterOperatorTest extends TestCase
 
     #[Test]
     #[DataProvider('multiValueProvider')]
-    public function is_multi_value(FilterOperator $op, bool $expected): void
+    public function isMultiValue(FilterOperator $op, bool $expected): void
     {
         self::assertSame($expected, $op->isMultiValue());
     }
@@ -63,7 +63,7 @@ final class FilterOperatorTest extends TestCase
 
     #[Test]
     #[DataProvider('sqlProvider')]
-    public function to_sql_returns_correct_operator(FilterOperator $op, string $expected): void
+    public function toSqlReturnsCorrectOperator(FilterOperator $op, string $expected): void
     {
         self::assertSame($expected, $op->toSql());
     }

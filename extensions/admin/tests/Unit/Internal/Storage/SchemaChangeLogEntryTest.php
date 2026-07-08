@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Tests\Unit\Internal\Storage;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Admin\Internal\Storage\SchemaChangeLogEntry;
 
+#[CoversClass(SchemaChangeLogEntry::class)]
 final class SchemaChangeLogEntryTest extends TestCase
 {
     #[Test]
@@ -39,7 +41,7 @@ final class SchemaChangeLogEntryTest extends TestCase
     }
 
     #[Test]
-    public function construction_with_null_correlation(): void
+    public function constructionWithNullCorrelation(): void
     {
         $entry = new SchemaChangeLogEntry(
             id: 'scl_002',
@@ -59,7 +61,7 @@ final class SchemaChangeLogEntryTest extends TestCase
     }
 
     #[Test]
-    public function multiple_statements(): void
+    public function multipleStatements(): void
     {
         $entry = new SchemaChangeLogEntry(
             id: 'scl_003',

@@ -17,7 +17,7 @@ use ReflectionClass;
 final class ResourceMutatorInterfaceTest extends TestCase
 {
     #[Test]
-    public function interface_defines_all_methods(): void
+    public function interfaceDefinesAllMethods(): void
     {
         $reflection = new ReflectionClass(ResourceMutatorInterface::class);
 
@@ -29,7 +29,7 @@ final class ResourceMutatorInterfaceTest extends TestCase
     }
 
     #[Test]
-    public function stub_returns_action_results(): void
+    public function stubReturnsActionResults(): void
     {
         $stub = $this->createStub(ResourceMutatorInterface::class);
         $stub->method('create')->willReturn(ActionResult::success('Created'));

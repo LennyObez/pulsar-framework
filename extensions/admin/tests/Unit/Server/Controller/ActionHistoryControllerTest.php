@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Tests\Unit\Server\Controller;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
@@ -20,6 +21,7 @@ use function json_decode;
 
 use const JSON_THROW_ON_ERROR;
 
+#[CoversClass(ActionHistoryController::class)]
 final class ActionHistoryControllerTest extends TestCase
 {
     private ActionHistoryController $controller;

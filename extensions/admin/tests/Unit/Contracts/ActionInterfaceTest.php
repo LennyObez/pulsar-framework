@@ -17,7 +17,7 @@ use ReflectionClass;
 final class ActionInterfaceTest extends TestCase
 {
     #[Test]
-    public function interface_defines_expected_methods(): void
+    public function interfaceDefinesExpectedMethods(): void
     {
         $reflection = new ReflectionClass(ActionInterface::class);
 
@@ -28,7 +28,7 @@ final class ActionInterfaceTest extends TestCase
     }
 
     #[Test]
-    public function stub_returns_configured_values(): void
+    public function stubReturnsConfiguredValues(): void
     {
         $stub = $this->createStub(ActionInterface::class);
         $stub->method('name')->willReturn('archive');

@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Tests\Unit\Features\CreateResource;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Audit\MutationContext;
@@ -20,14 +22,18 @@ use Pulsar\Extension\Admin\Exception\AdminException;
 use Pulsar\Extension\Admin\Exception\ResourceValidationException;
 use Pulsar\Extension\Admin\Features\CreateResource\CreateResourceHandler;
 use Pulsar\Extension\Admin\Features\CreateResource\CreateResourceRequest;
-use Pulsar\Extension\Admin\Features\CreateResource\CreateResourceResult;
+use Pulsar\Extension\Admin\Internal\Storage\ActionHistoryEntry;
 use Pulsar\Extension\Admin\Internal\Storage\ActionHistoryStoreInterface;
 
+use function assert;
+
+#[CoversClass(CreateResourceHandler::class)]
 final class CreateResourceHandlerTest extends TestCase
 {
     private ResourceRegistryInterface&Stub $registry;
     private ResourceMutatorInterface&Stub $mutator;
     private ActionHistoryStoreInterface&Stub $actionHistory;
+    private DataResourceInterface&Stub $resource;
     private CreateResourceHandler $handler;
 
     protected function setUp(): void
@@ -35,79 +41,89 @@ final class CreateResourceHandlerTest extends TestCase
         $this->registry = $this->createStub(ResourceRegistryInterface::class);
         $this->mutator = $this->createStub(ResourceMutatorInterface::class);
         $this->actionHistory = $this->createStub(ActionHistoryStoreInterface::class);
-        $this->handler = new CreateResourceHandler($this->registry, $this->mutator, $this->actionHistory);
+        $this->resource = $this->createStub(DataResourceInterface::class);
+
+        $this->registry->method('get')->willReturn($this->resource);
+
+        $this->handler = new CreateResourceHandler(
+            $this->registry,
+            $this->mutator,
+            $this->actionHistory,
+        );
+    }
+
+    private function handlerWithMocks(
+        ActionHistoryStoreInterface|null $actionHistory = null,
+    ): CreateResourceHandler {
+        return new CreateResourceHandler(
+            $this->registry,
+            $this->mutator,
+            $actionHistory ?? $this->actionHistory,
+        );
     }
 
     #[Test]
-    public function execute_creates_resource_successfully(): void
+    public function createsResourceSuccessfully(): void
     {
-        $resource = $this->createStub(DataResourceInterface::class);
-        $resource->method('operations')->willReturn([ResourceOperation::Create]);
-        $resource->method('fields')->willReturn([]);
+        $this->resource->method('operations')->willReturn([ResourceOperation::Create]);
+        $this->resource->method('fields')->willReturn([]);
 
-        $this->registry->method('get')->willReturn($resource);
-
-        $actionResult = ActionResult::success('Created', ['id' => 'new-123']);
+        $actionResult = ActionResult::success('Created', ['id' => '42']);
         $this->mutator->method('create')->willReturn($actionResult);
 
-        $context = new MutationContext(actor: 'admin@test.com', reason: 'create user');
+        /** @var ActionHistoryStoreInterface&MockObject $actionHistory */
+        $actionHistory = $this->createMock(ActionHistoryStoreInterface::class);
+        $actionHistory->expects($this->once())->method('record');
+
+        $handler = $this->handlerWithMocks(actionHistory: $actionHistory);
+
         $request = new CreateResourceRequest(
             resourceName: 'users',
-            data: ['name' => 'Jane Doe', 'email' => 'jane@example.com'],
-            context: $context,
+            data: ['name' => 'Alice'],
+            context: new MutationContext('admin', 'Test create'),
         );
 
-        $result = $this->handler->execute($request);
+        $result = $handler->execute($request);
 
-        self::assertInstanceOf(CreateResourceResult::class, $result);
         self::assertTrue($result->result->success);
         self::assertSame('Created', $result->result->message);
     }
 
     #[Test]
-    public function execute_throws_when_create_not_supported(): void
+    public function throwsWhenCreateNotSupported(): void
     {
-        $resource = $this->createStub(DataResourceInterface::class);
-        $resource->method('operations')->willReturn([ResourceOperation::List, ResourceOperation::View]);
+        $this->resource->method('operations')->willReturn([ResourceOperation::List, ResourceOperation::View]);
 
-        $this->registry->method('get')->willReturn($resource);
-
-        $context = new MutationContext(actor: 'admin@test.com', reason: 'test');
         $request = new CreateResourceRequest(
             resourceName: 'audit_logs',
-            data: ['entry' => 'test'],
-            context: $context,
+            data: ['name' => 'test'],
+            context: new MutationContext('admin', 'Test create'),
         );
 
         $this->expectException(AdminException::class);
-        $this->expectExceptionMessage('Create operation not supported on resource "audit_logs"');
+        $this->expectExceptionMessage('Create operation not supported');
 
         $this->handler->execute($request);
     }
 
     #[Test]
-    public function execute_throws_validation_exception_for_required_field(): void
+    public function throwsOnValidationFailure(): void
     {
-        $requiredRule = new ValidationRule(rule: 'required');
-        $field = new FieldDefinition(
-            name: 'email',
-            type: FieldType::Email,
-            label: 'Email',
-            editable: true,
-            rules: [$requiredRule],
-        );
+        $this->resource->method('operations')->willReturn([ResourceOperation::Create]);
+        $this->resource->method('fields')->willReturn([
+            new FieldDefinition(
+                name: 'email',
+                type: FieldType::Email,
+                label: 'Email',
+                editable: true,
+                rules: [new ValidationRule('required'), new ValidationRule('email')],
+            ),
+        ]);
 
-        $resource = $this->createStub(DataResourceInterface::class);
-        $resource->method('operations')->willReturn([ResourceOperation::Create]);
-        $resource->method('fields')->willReturn([$field]);
-
-        $this->registry->method('get')->willReturn($resource);
-
-        $context = new MutationContext(actor: 'admin@test.com', reason: 'test');
         $request = new CreateResourceRequest(
             resourceName: 'users',
-            data: [],
-            context: $context,
+            data: ['email' => ''],
+            context: new MutationContext('admin', 'Test create'),
         );
 
         $this->expectException(ResourceValidationException::class);
@@ -116,35 +132,109 @@ final class CreateResourceHandlerTest extends TestCase
     }
 
     #[Test]
-    public function execute_skips_validation_on_non_editable_fields(): void
+    public function skipsValidationForNonEditableFields(): void
     {
-        $requiredRule = new ValidationRule(rule: 'required');
-        $readOnlyField = new FieldDefinition(
-            name: 'id',
-            type: FieldType::Text,
-            label: 'ID',
-            editable: false,
-            rules: [$requiredRule],
-        );
+        $this->resource->method('operations')->willReturn([ResourceOperation::Create]);
+        $this->resource->method('fields')->willReturn([
+            new FieldDefinition(
+                name: 'id',
+                type: FieldType::Integer,
+                label: 'ID',
+                editable: false,
+                rules: [new ValidationRule('required')],
+            ),
+            new FieldDefinition(
+                name: 'name',
+                type: FieldType::String,
+                label: 'Name',
+                editable: true,
+                rules: [],
+            ),
+        ]);
 
-        $resource = $this->createStub(DataResourceInterface::class);
-        $resource->method('operations')->willReturn([ResourceOperation::Create]);
-        $resource->method('fields')->willReturn([$readOnlyField]);
-
-        $this->registry->method('get')->willReturn($resource);
-
-        $actionResult = ActionResult::success('Created');
+        $actionResult = ActionResult::success('Created', ['id' => '1']);
         $this->mutator->method('create')->willReturn($actionResult);
 
-        $context = new MutationContext(actor: 'admin@test.com', reason: 'test');
+        /** @var ActionHistoryStoreInterface&MockObject $actionHistory */
+        $actionHistory = $this->createMock(ActionHistoryStoreInterface::class);
+        $actionHistory->expects($this->once())->method('record');
+
+        $handler = $this->handlerWithMocks(actionHistory: $actionHistory);
+
         $request = new CreateResourceRequest(
             resourceName: 'users',
-            data: [],
-            context: $context,
+            data: ['name' => 'Alice'],
+            context: new MutationContext('admin', 'Test create'),
         );
 
-        $result = $this->handler->execute($request);
+        $result = $handler->execute($request);
 
         self::assertTrue($result->result->success);
+    }
+
+    #[Test]
+    public function recordsActionHistoryOnCreate(): void
+    {
+        $this->resource->method('operations')->willReturn([ResourceOperation::Create]);
+        $this->resource->method('fields')->willReturn([]);
+
+        $actionResult = ActionResult::success('Created', ['id' => '99']);
+        $this->mutator->method('create')->willReturn($actionResult);
+
+        /** @var ActionHistoryStoreInterface&MockObject $actionHistory */
+        $actionHistory = $this->createMock(ActionHistoryStoreInterface::class);
+        $actionHistory->expects($this->once())
+            ->method('record')
+            ->with($this->callback(static function (mixed $entry): bool {
+                assert($entry instanceof ActionHistoryEntry);
+
+                return $entry->action === 'create'
+                    && $entry->resourceName === 'users'
+                    && $entry->actor === 'admin'
+                    && $entry->success === true
+                    && $entry->recordId === '99';
+            }));
+
+        $handler = $this->handlerWithMocks(actionHistory: $actionHistory);
+
+        $request = new CreateResourceRequest(
+            resourceName: 'users',
+            data: ['name' => 'Bob'],
+            context: new MutationContext('admin', 'Test create'),
+        );
+
+        $handler->execute($request);
+    }
+
+    #[Test]
+    public function validatesMultipleRulesOnSingleField(): void
+    {
+        $this->resource->method('operations')->willReturn([ResourceOperation::Create]);
+        $this->resource->method('fields')->willReturn([
+            new FieldDefinition(
+                name: 'username',
+                type: FieldType::String,
+                label: 'Username',
+                editable: true,
+                rules: [
+                    new ValidationRule('required'),
+                    new ValidationRule('min_length', parameter: 3),
+                ],
+            ),
+        ]);
+
+        $request = new CreateResourceRequest(
+            resourceName: 'users',
+            data: ['username' => ''],
+            context: new MutationContext('admin', 'Test'),
+        );
+
+        try {
+            $this->handler->execute($request);
+            self::fail('Expected ResourceValidationException');
+        } catch (ResourceValidationException $e) {
+            self::assertNotEmpty($e->violations);
+            self::assertSame('username', $e->violations[0]['field']);
+        }
     }
 }

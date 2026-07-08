@@ -14,7 +14,7 @@ use Pulsar\Extension\Admin\Features\DeleteResource\DeleteResourceRequest;
 final class DeleteResourceRequestTest extends TestCase
 {
     #[Test]
-    public function constructor_sets_all_properties(): void
+    public function constructorSetsAllProperties(): void
     {
         $context = new MutationContext(actor: 'admin', reason: 'delete user');
 

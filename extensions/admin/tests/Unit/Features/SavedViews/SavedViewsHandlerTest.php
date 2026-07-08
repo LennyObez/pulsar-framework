@@ -4,15 +4,17 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Tests\Unit\Features\SavedViews;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Admin\Domain\SavedView;
 use Pulsar\Extension\Admin\Features\SavedViews\SavedViewsHandler;
 use Pulsar\Extension\Admin\Features\SavedViews\SavedViewsRequest;
-use Pulsar\Extension\Admin\Features\SavedViews\SavedViewsResult;
 use Pulsar\Extension\Admin\Internal\Storage\SavedViewStoreInterface;
 
+#[CoversClass(SavedViewsHandler::class)]
 final class SavedViewsHandlerTest extends TestCase
 {
     private SavedViewStoreInterface&Stub $store;
@@ -25,7 +27,7 @@ final class SavedViewsHandlerTest extends TestCase
     }
 
     #[Test]
-    public function list_returns_views_for_resource(): void
+    public function listsViewsForResource(): void
     {
         $view = new SavedView(
             id: 'v1',
@@ -37,33 +39,41 @@ final class SavedViewsHandlerTest extends TestCase
             createdBy: 'admin',
         );
 
-        $this->store->method('listForResource')->willReturn([$view]);
+        $this->store->method('listForResource')
+            ->willReturn([$view]);
 
-        $request = new SavedViewsRequest(operation: 'list', resourceName: 'users');
+        $request = new SavedViewsRequest(
+            operation: 'list',
+            resourceName: 'users',
+        );
+
         $result = $this->handler->execute($request);
 
-        self::assertInstanceOf(SavedViewsResult::class, $result);
         self::assertTrue($result->success);
         self::assertCount(1, $result->views);
-        self::assertSame('v1', $result->views[0]->id);
+        self::assertSame('Active Users', $result->views[0]->label);
     }
 
     #[Test]
-    public function get_returns_view_when_found(): void
+    public function getsViewById(): void
     {
         $view = new SavedView(
             id: 'v1',
             resourceName: 'users',
-            label: 'Test View',
+            label: 'Active Users',
             filters: [],
             sort: [],
-            perPage: 10,
+            perPage: 25,
             createdBy: 'admin',
         );
 
         $this->store->method('find')->willReturn($view);
 
-        $request = new SavedViewsRequest(operation: 'get', viewId: 'v1');
+        $request = new SavedViewsRequest(
+            operation: 'get',
+            viewId: 'v1',
+        );
+
         $result = $this->handler->execute($request);
 
         self::assertTrue($result->success);
@@ -72,11 +82,15 @@ final class SavedViewsHandlerTest extends TestCase
     }
 
     #[Test]
-    public function get_returns_unsuccessful_when_not_found(): void
+    public function getReturnsNotFoundWhenViewMissing(): void
     {
         $this->store->method('find')->willReturn(null);
 
-        $request = new SavedViewsRequest(operation: 'get', viewId: 'missing');
+        $request = new SavedViewsRequest(
+            operation: 'get',
+            viewId: 'nonexistent',
+        );
+
         $result = $this->handler->execute($request);
 
         self::assertFalse($result->success);
@@ -84,41 +98,92 @@ final class SavedViewsHandlerTest extends TestCase
     }
 
     #[Test]
-    public function save_persists_view_and_returns_it(): void
+    public function savesView(): void
     {
         $view = new SavedView(
-            id: 'v2',
-            resourceName: 'orders',
-            label: 'Recent Orders',
-            filters: ['date' => '2026-01-01'],
-            sort: ['created_at' => 'desc'],
+            id: 'v1',
+            resourceName: 'users',
+            label: 'My View',
+            filters: ['role' => 'admin'],
+            sort: ['name' => 'asc'],
             perPage: 50,
             createdBy: 'admin',
         );
 
-        $request = new SavedViewsRequest(operation: 'save', view: $view);
-        $result = $this->handler->execute($request);
+        /** @var SavedViewStoreInterface&MockObject $store */
+        $store = $this->createMock(SavedViewStoreInterface::class);
+        $store->expects($this->once())
+            ->method('save')
+            ->with($view);
+
+        $handler = new SavedViewsHandler($store);
+
+        $request = new SavedViewsRequest(
+            operation: 'save',
+            view: $view,
+        );
+
+        $result = $handler->execute($request);
 
         self::assertTrue($result->success);
         self::assertNotNull($result->view);
-        self::assertSame('v2', $result->view->id);
+        self::assertSame('My View', $result->view->label);
     }
 
     #[Test]
-    public function save_returns_unsuccessful_when_view_is_null(): void
+    public function saveFailsWhenViewIsNull(): void
     {
-        $request = new SavedViewsRequest(operation: 'save');
-        $result = $this->handler->execute($request);
+        /** @var SavedViewStoreInterface&MockObject $store */
+        $store = $this->createMock(SavedViewStoreInterface::class);
+        $store->expects($this->never())->method('save');
+
+        $handler = new SavedViewsHandler($store);
+
+        $request = new SavedViewsRequest(
+            operation: 'save',
+            view: null,
+        );
+
+        $result = $handler->execute($request);
 
         self::assertFalse($result->success);
     }
 
     #[Test]
-    public function delete_succeeds(): void
+    public function deletesView(): void
     {
-        $request = new SavedViewsRequest(operation: 'delete', viewId: 'v1');
+        /** @var SavedViewStoreInterface&MockObject $store */
+        $store = $this->createMock(SavedViewStoreInterface::class);
+        $store->expects($this->once())
+            ->method('delete')
+            ->with('v1');
+
+        $handler = new SavedViewsHandler($store);
+
+        $request = new SavedViewsRequest(
+            operation: 'delete',
+            viewId: 'v1',
+        );
+
+        $result = $handler->execute($request);
+
+        self::assertTrue($result->success);
+    }
+
+    #[Test]
+    public function listReturnsEmptyArrayForUnknownResource(): void
+    {
+        $this->store->method('listForResource')
+            ->willReturn([]);
+
+        $request = new SavedViewsRequest(
+            operation: 'list',
+            resourceName: 'nonexistent',
+        );
+
         $result = $this->handler->execute($request);
 
         self::assertTrue($result->success);
+        self::assertSame([], $result->views);
     }
 }

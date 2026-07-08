@@ -4,16 +4,20 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Tests\Unit\Exception;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Admin\Exception\AdminException;
 use Pulsar\Extension\Admin\Exception\ResourceNotFoundException;
 use Pulsar\Extension\Admin\Exception\ResourceValidationException;
 
+#[CoversClass(AdminException::class)]
+#[CoversClass(ResourceNotFoundException::class)]
+#[CoversClass(ResourceValidationException::class)]
 final class ResourceValidationExceptionTest extends TestCase
 {
     #[Test]
-    public function from_violations_single(): void
+    public function fromViolationsSingle(): void
     {
         $violations = [
             ['field' => 'email', 'message' => 'Email is required', 'rule' => 'required'],
@@ -29,7 +33,7 @@ final class ResourceValidationExceptionTest extends TestCase
     }
 
     #[Test]
-    public function from_violations_multiple(): void
+    public function fromViolationsMultiple(): void
     {
         $violations = [
             ['field' => 'name', 'message' => 'Name is required', 'rule' => 'required'],
@@ -44,7 +48,7 @@ final class ResourceValidationExceptionTest extends TestCase
     }
 
     #[Test]
-    public function resource_validation_exception_extends_admin_exception(): void
+    public function resourceValidationExceptionExtendsAdminException(): void
     {
         $exception = ResourceValidationException::fromViolations([]);
 
@@ -54,7 +58,7 @@ final class ResourceValidationExceptionTest extends TestCase
     // --- ResourceNotFoundException ---
 
     #[Test]
-    public function resource_not_found_resource(): void
+    public function resourceNotFoundResource(): void
     {
         $exception = ResourceNotFoundException::resource('products');
 
@@ -63,7 +67,7 @@ final class ResourceValidationExceptionTest extends TestCase
     }
 
     #[Test]
-    public function resource_not_found_record(): void
+    public function resourceNotFoundRecord(): void
     {
         $exception = ResourceNotFoundException::record('users', '42');
 
@@ -73,7 +77,7 @@ final class ResourceValidationExceptionTest extends TestCase
     // --- AdminException ---
 
     #[Test]
-    public function admin_exception_disabled(): void
+    public function adminExceptionDisabled(): void
     {
         $exception = AdminException::disabled();
 
@@ -81,7 +85,7 @@ final class ResourceValidationExceptionTest extends TestCase
     }
 
     #[Test]
-    public function admin_exception_invalid_configuration(): void
+    public function adminExceptionInvalidConfiguration(): void
     {
         $exception = AdminException::invalidConfiguration('missing required key');
 
@@ -90,7 +94,7 @@ final class ResourceValidationExceptionTest extends TestCase
     }
 
     #[Test]
-    public function admin_exception_resource_already_registered(): void
+    public function adminExceptionResourceAlreadyRegistered(): void
     {
         $exception = AdminException::resourceAlreadyRegistered('users');
 

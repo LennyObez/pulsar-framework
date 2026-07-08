@@ -14,7 +14,7 @@ use ReflectionClass;
 final class SchemaChangeLogStoreInterfaceTest extends TestCase
 {
     #[Test]
-    public function interface_defines_expected_methods(): void
+    public function interfaceDefinesExpectedMethods(): void
     {
         $reflection = new ReflectionClass(SchemaChangeLogStoreInterface::class);
 
@@ -26,7 +26,7 @@ final class SchemaChangeLogStoreInterfaceTest extends TestCase
     }
 
     #[Test]
-    public function stub_returns_configured_values(): void
+    public function stubReturnsConfiguredValues(): void
     {
         $store = $this->createStub(SchemaChangeLogStoreInterface::class);
         $store->method('recent')->willReturn([]);

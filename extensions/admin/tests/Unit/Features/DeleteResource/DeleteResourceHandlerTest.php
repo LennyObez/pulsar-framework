@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Tests\Unit\Features\DeleteResource;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Audit\MutationContext;
@@ -16,14 +18,18 @@ use Pulsar\Extension\Admin\Domain\ResourceOperation;
 use Pulsar\Extension\Admin\Exception\AdminException;
 use Pulsar\Extension\Admin\Features\DeleteResource\DeleteResourceHandler;
 use Pulsar\Extension\Admin\Features\DeleteResource\DeleteResourceRequest;
-use Pulsar\Extension\Admin\Features\DeleteResource\DeleteResourceResult;
+use Pulsar\Extension\Admin\Internal\Storage\ActionHistoryEntry;
 use Pulsar\Extension\Admin\Internal\Storage\ActionHistoryStoreInterface;
 
+use function assert;
+
+#[CoversClass(DeleteResourceHandler::class)]
 final class DeleteResourceHandlerTest extends TestCase
 {
     private ResourceRegistryInterface&Stub $registry;
     private ResourceMutatorInterface&Stub $mutator;
     private ActionHistoryStoreInterface&Stub $actionHistory;
+    private DataResourceInterface&Stub $resource;
     private DeleteResourceHandler $handler;
 
     protected function setUp(): void
@@ -31,76 +37,159 @@ final class DeleteResourceHandlerTest extends TestCase
         $this->registry = $this->createStub(ResourceRegistryInterface::class);
         $this->mutator = $this->createStub(ResourceMutatorInterface::class);
         $this->actionHistory = $this->createStub(ActionHistoryStoreInterface::class);
-        $this->handler = new DeleteResourceHandler($this->registry, $this->mutator, $this->actionHistory);
+        $this->resource = $this->createStub(DataResourceInterface::class);
+
+        $this->registry->method('get')->willReturn($this->resource);
+
+        $this->handler = new DeleteResourceHandler(
+            $this->registry,
+            $this->mutator,
+            $this->actionHistory,
+        );
+    }
+
+    private function handlerWithMocks(
+        ActionHistoryStoreInterface|null $actionHistory = null,
+        ResourceMutatorInterface|null $mutator = null,
+    ): DeleteResourceHandler {
+        return new DeleteResourceHandler(
+            $this->registry,
+            $mutator ?? $this->mutator,
+            $actionHistory ?? $this->actionHistory,
+        );
     }
 
     #[Test]
-    public function execute_deletes_resource_successfully(): void
+    public function deletesResourceSuccessfully(): void
     {
-        $resource = $this->createStub(DataResourceInterface::class);
-        $resource->method('operations')->willReturn([ResourceOperation::Delete]);
-
-        $this->registry->method('get')->willReturn($resource);
+        $this->resource->method('operations')->willReturn([ResourceOperation::Delete]);
 
         $actionResult = ActionResult::success('Deleted');
         $this->mutator->method('delete')->willReturn($actionResult);
 
-        $context = new MutationContext(actor: 'admin@test.com', reason: 'remove user');
+        /** @var ActionHistoryStoreInterface&MockObject $actionHistory */
+        $actionHistory = $this->createMock(ActionHistoryStoreInterface::class);
+        $actionHistory->expects($this->once())->method('record');
+
+        $handler = $this->handlerWithMocks(actionHistory: $actionHistory);
+
         $request = new DeleteResourceRequest(
             resourceName: 'users',
-            id: 'user-456',
-            context: $context,
+            id: '42',
+            context: new MutationContext('admin', 'Test delete'),
         );
 
-        $result = $this->handler->execute($request);
+        $result = $handler->execute($request);
 
-        self::assertInstanceOf(DeleteResourceResult::class, $result);
         self::assertTrue($result->result->success);
         self::assertSame('Deleted', $result->result->message);
     }
 
     #[Test]
-    public function execute_throws_when_delete_not_supported(): void
+    public function throwsWhenDeleteNotSupported(): void
     {
-        $resource = $this->createStub(DataResourceInterface::class);
-        $resource->method('operations')->willReturn([ResourceOperation::List, ResourceOperation::View]);
+        $this->resource->method('operations')->willReturn([ResourceOperation::List, ResourceOperation::View]);
 
-        $this->registry->method('get')->willReturn($resource);
-
-        $context = new MutationContext(actor: 'admin@test.com', reason: 'test');
         $request = new DeleteResourceRequest(
             resourceName: 'audit_logs',
-            id: 'log-1',
-            context: $context,
+            id: '1',
+            context: new MutationContext('admin', 'Test delete'),
         );
 
         $this->expectException(AdminException::class);
-        $this->expectExceptionMessage('Delete operation not supported on resource "audit_logs"');
+        $this->expectExceptionMessage('Delete operation not supported');
 
         $this->handler->execute($request);
     }
 
     #[Test]
-    public function execute_records_failed_deletion_in_history(): void
+    public function recordsActionHistoryOnDelete(): void
     {
-        $resource = $this->createStub(DataResourceInterface::class);
-        $resource->method('operations')->willReturn([ResourceOperation::Delete]);
+        $this->resource->method('operations')->willReturn([ResourceOperation::Delete]);
 
-        $this->registry->method('get')->willReturn($resource);
+        $actionResult = ActionResult::success('Deleted');
+        $this->mutator->method('delete')->willReturn($actionResult);
 
-        $failureResult = ActionResult::failure('Record not found');
-        $this->mutator->method('delete')->willReturn($failureResult);
+        /** @var ActionHistoryStoreInterface&MockObject $actionHistory */
+        $actionHistory = $this->createMock(ActionHistoryStoreInterface::class);
+        $actionHistory->expects($this->once())
+            ->method('record')
+            ->with($this->callback(static function (mixed $entry): bool {
+                assert($entry instanceof ActionHistoryEntry);
 
-        $context = new MutationContext(actor: 'admin@test.com', reason: 'cleanup');
+                return $entry->action === 'delete'
+                    && $entry->resourceName === 'users'
+                    && $entry->recordId === '42'
+                    && $entry->actor === 'admin'
+                    && $entry->success === true;
+            }));
+
+        $handler = $this->handlerWithMocks(actionHistory: $actionHistory);
+
         $request = new DeleteResourceRequest(
             resourceName: 'users',
-            id: 'missing-id',
+            id: '42',
+            context: new MutationContext('admin', 'Test delete'),
+        );
+
+        $handler->execute($request);
+    }
+
+    #[Test]
+    public function recordsFailedDeleteInHistory(): void
+    {
+        $this->resource->method('operations')->willReturn([ResourceOperation::Delete]);
+
+        $actionResult = ActionResult::failure('Not found');
+        $this->mutator->method('delete')->willReturn($actionResult);
+
+        /** @var ActionHistoryStoreInterface&MockObject $actionHistory */
+        $actionHistory = $this->createMock(ActionHistoryStoreInterface::class);
+        $actionHistory->expects($this->once())
+            ->method('record')
+            ->with($this->callback(static function (mixed $entry): bool {
+                assert($entry instanceof ActionHistoryEntry);
+
+                return $entry->action === 'delete'
+                    && $entry->success === false
+                    && $entry->detail === 'Not found';
+            }));
+
+        $handler = $this->handlerWithMocks(actionHistory: $actionHistory);
+
+        $request = new DeleteResourceRequest(
+            resourceName: 'users',
+            id: '999',
+            context: new MutationContext('admin', 'Test delete'),
+        );
+
+        $result = $handler->execute($request);
+
+        self::assertFalse($result->result->success);
+    }
+
+    #[Test]
+    public function passesContextToMutator(): void
+    {
+        $this->resource->method('operations')->willReturn([ResourceOperation::Delete]);
+
+        $context = new MutationContext('superadmin', 'Removing spam user');
+
+        /** @var ResourceMutatorInterface&MockObject $mutator */
+        $mutator = $this->createMock(ResourceMutatorInterface::class);
+        $mutator->expects($this->once())
+            ->method('delete')
+            ->with($this->resource, '7', $context)
+            ->willReturn(ActionResult::success('Deleted'));
+
+        $handler = $this->handlerWithMocks(mutator: $mutator);
+
+        $request = new DeleteResourceRequest(
+            resourceName: 'users',
+            id: '7',
             context: $context,
         );
 
-        $result = $this->handler->execute($request);
-
-        self::assertFalse($result->result->success);
-        self::assertSame('Record not found', $result->result->message);
+        $handler->execute($request);
     }
 }

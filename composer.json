@@ -72,6 +72,7 @@
   "autoload-dev": {
     "psr-4": {
       "Pulsar\\Tests\\": "tests/",
+      "Pulsar\\Extension\\Admin\\Tests\\": "extensions/admin/tests/",
       "Pulsar\\Extension\\Tickets\\Tests\\": "extensions/tickets/tests/",
       "Pulsar\\Extension\\Booking\\Tests\\": "extensions/booking/tests/",
       "Pulsar\\Extension\\Messaging\\Tests\\": "extensions/messaging/tests/",

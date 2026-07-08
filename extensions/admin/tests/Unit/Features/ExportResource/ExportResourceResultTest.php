@@ -13,7 +13,7 @@ use Pulsar\Extension\Admin\Features\ExportResource\ExportResourceResult;
 final class ExportResourceResultTest extends TestCase
 {
     #[Test]
-    public function constructor_sets_all_properties(): void
+    public function constructorSetsAllProperties(): void
     {
         $result = new ExportResourceResult(
             content: 'id,name\n1,John',
@@ -31,7 +31,7 @@ final class ExportResourceResultTest extends TestCase
     }
 
     #[Test]
-    public function empty_export(): void
+    public function emptyExport(): void
     {
         $result = new ExportResourceResult(
             content: '',

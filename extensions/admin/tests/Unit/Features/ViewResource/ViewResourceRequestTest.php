@@ -13,7 +13,7 @@ use Pulsar\Extension\Admin\Features\ViewResource\ViewResourceRequest;
 final class ViewResourceRequestTest extends TestCase
 {
     #[Test]
-    public function constructor_sets_properties(): void
+    public function constructorSetsProperties(): void
     {
         $request = new ViewResourceRequest(
             resourceName: 'users',

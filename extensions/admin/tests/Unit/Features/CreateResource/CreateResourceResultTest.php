@@ -14,7 +14,7 @@ use Pulsar\Extension\Admin\Features\CreateResource\CreateResourceResult;
 final class CreateResourceResultTest extends TestCase
 {
     #[Test]
-    public function constructor_wraps_action_result(): void
+    public function constructorWrapsActionResult(): void
     {
         $actionResult = ActionResult::success('Created', ['id' => '42']);
 
@@ -26,7 +26,7 @@ final class CreateResourceResultTest extends TestCase
     }
 
     #[Test]
-    public function wraps_failure_result(): void
+    public function wrapsFailureResult(): void
     {
         $actionResult = ActionResult::failure('Validation failed');
 

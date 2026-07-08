@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Tests\Unit\Features\UpdateResource;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Audit\MutationContext;
@@ -20,14 +22,18 @@ use Pulsar\Extension\Admin\Exception\AdminException;
 use Pulsar\Extension\Admin\Exception\ResourceValidationException;
 use Pulsar\Extension\Admin\Features\UpdateResource\UpdateResourceHandler;
 use Pulsar\Extension\Admin\Features\UpdateResource\UpdateResourceRequest;
-use Pulsar\Extension\Admin\Features\UpdateResource\UpdateResourceResult;
+use Pulsar\Extension\Admin\Internal\Storage\ActionHistoryEntry;
 use Pulsar\Extension\Admin\Internal\Storage\ActionHistoryStoreInterface;
 
+use function assert;
+
+#[CoversClass(UpdateResourceHandler::class)]
 final class UpdateResourceHandlerTest extends TestCase
 {
     private ResourceRegistryInterface&Stub $registry;
     private ResourceMutatorInterface&Stub $mutator;
     private ActionHistoryStoreInterface&Stub $actionHistory;
+    private DataResourceInterface&Stub $resource;
     private UpdateResourceHandler $handler;
 
     protected function setUp(): void
@@ -35,127 +41,209 @@ final class UpdateResourceHandlerTest extends TestCase
         $this->registry = $this->createStub(ResourceRegistryInterface::class);
         $this->mutator = $this->createStub(ResourceMutatorInterface::class);
         $this->actionHistory = $this->createStub(ActionHistoryStoreInterface::class);
-        $this->handler = new UpdateResourceHandler($this->registry, $this->mutator, $this->actionHistory);
+        $this->resource = $this->createStub(DataResourceInterface::class);
+
+        $this->registry->method('get')->willReturn($this->resource);
+
+        $this->handler = new UpdateResourceHandler(
+            $this->registry,
+            $this->mutator,
+            $this->actionHistory,
+        );
+    }
+
+    private function handlerWithMocks(
+        ActionHistoryStoreInterface|null $actionHistory = null,
+    ): UpdateResourceHandler {
+        return new UpdateResourceHandler(
+            $this->registry,
+            $this->mutator,
+            $actionHistory ?? $this->actionHistory,
+        );
     }
 
     #[Test]
-    public function execute_updates_resource_successfully(): void
+    public function updatesResourceSuccessfully(): void
     {
-        $resource = $this->createStub(DataResourceInterface::class);
-        $resource->method('operations')->willReturn([ResourceOperation::Update]);
-        $resource->method('fields')->willReturn([]);
-
-        $this->registry->method('get')->willReturn($resource);
+        $this->resource->method('operations')->willReturn([ResourceOperation::Update]);
+        $this->resource->method('fields')->willReturn([]);
 
         $actionResult = ActionResult::success('Updated');
         $this->mutator->method('update')->willReturn($actionResult);
 
-        $context = new MutationContext(actor: 'admin@test.com', reason: 'update user');
+        /** @var ActionHistoryStoreInterface&MockObject $actionHistory */
+        $actionHistory = $this->createMock(ActionHistoryStoreInterface::class);
+        $actionHistory->expects($this->once())->method('record');
+
+        $handler = $this->handlerWithMocks(actionHistory: $actionHistory);
+
         $request = new UpdateResourceRequest(
             resourceName: 'users',
-            id: 'user-123',
+            id: '42',
             data: ['name' => 'Updated Name'],
-            context: $context,
+            context: new MutationContext('admin', 'Test update'),
         );
 
-        $result = $this->handler->execute($request);
+        $result = $handler->execute($request);
 
-        self::assertInstanceOf(UpdateResourceResult::class, $result);
         self::assertTrue($result->result->success);
         self::assertSame('Updated', $result->result->message);
     }
 
     #[Test]
-    public function execute_throws_when_update_not_supported(): void
+    public function throwsWhenUpdateNotSupported(): void
     {
-        $resource = $this->createStub(DataResourceInterface::class);
-        $resource->method('operations')->willReturn([ResourceOperation::List]);
+        $this->resource->method('operations')->willReturn([ResourceOperation::List, ResourceOperation::View]);
 
-        $this->registry->method('get')->willReturn($resource);
-
-        $context = new MutationContext(actor: 'admin@test.com', reason: 'test');
         $request = new UpdateResourceRequest(
-            resourceName: 'logs',
-            id: 'log-1',
-            data: ['level' => 'error'],
-            context: $context,
+            resourceName: 'audit_logs',
+            id: '1',
+            data: ['name' => 'test'],
+            context: new MutationContext('admin', 'Test update'),
         );
 
         $this->expectException(AdminException::class);
-        $this->expectExceptionMessage('Update operation not supported on resource "logs"');
+        $this->expectExceptionMessage('Update operation not supported');
 
         $this->handler->execute($request);
     }
 
     #[Test]
-    public function execute_validates_only_submitted_fields(): void
+    public function throwsOnValidationFailure(): void
     {
-        $requiredRule = new ValidationRule(rule: 'required');
-        $nameField = new FieldDefinition(
-            name: 'name',
-            type: FieldType::Text,
-            label: 'Name',
-            editable: true,
-            rules: [$requiredRule],
-        );
-        $emailField = new FieldDefinition(
-            name: 'email',
-            type: FieldType::Email,
-            label: 'Email',
-            editable: true,
-            rules: [$requiredRule],
-        );
+        $this->resource->method('operations')->willReturn([ResourceOperation::Update]);
+        $this->resource->method('fields')->willReturn([
+            new FieldDefinition(
+                name: 'email',
+                type: FieldType::Email,
+                label: 'Email',
+                editable: true,
+                rules: [new ValidationRule('email')],
+            ),
+        ]);
 
-        $resource = $this->createStub(DataResourceInterface::class);
-        $resource->method('operations')->willReturn([ResourceOperation::Update]);
-        $resource->method('fields')->willReturn([$nameField, $emailField]);
-
-        $this->registry->method('get')->willReturn($resource);
-
-        $actionResult = ActionResult::success('Updated');
-        $this->mutator->method('update')->willReturn($actionResult);
-
-        $context = new MutationContext(actor: 'admin@test.com', reason: 'partial update');
         $request = new UpdateResourceRequest(
             resourceName: 'users',
-            id: 'user-1',
-            data: ['name' => 'New Name'],
-            context: $context,
-        );
-
-        $result = $this->handler->execute($request);
-
-        self::assertTrue($result->result->success);
-    }
-
-    #[Test]
-    public function execute_throws_validation_exception_for_invalid_submitted_field(): void
-    {
-        $requiredRule = new ValidationRule(rule: 'required');
-        $nameField = new FieldDefinition(
-            name: 'name',
-            type: FieldType::Text,
-            label: 'Name',
-            editable: true,
-            rules: [$requiredRule],
-        );
-
-        $resource = $this->createStub(DataResourceInterface::class);
-        $resource->method('operations')->willReturn([ResourceOperation::Update]);
-        $resource->method('fields')->willReturn([$nameField]);
-
-        $this->registry->method('get')->willReturn($resource);
-
-        $context = new MutationContext(actor: 'admin@test.com', reason: 'test');
-        $request = new UpdateResourceRequest(
-            resourceName: 'users',
-            id: 'user-1',
-            data: ['name' => null],
-            context: $context,
+            id: '1',
+            data: ['email' => 'not-an-email'],
+            context: new MutationContext('admin', 'Test update'),
         );
 
         $this->expectException(ResourceValidationException::class);
 
         $this->handler->execute($request);
+    }
+
+    #[Test]
+    public function skipsValidationForFieldsNotInData(): void
+    {
+        $this->resource->method('operations')->willReturn([ResourceOperation::Update]);
+        $this->resource->method('fields')->willReturn([
+            new FieldDefinition(
+                name: 'email',
+                type: FieldType::Email,
+                label: 'Email',
+                editable: true,
+                rules: [new ValidationRule('required')],
+            ),
+            new FieldDefinition(
+                name: 'name',
+                type: FieldType::String,
+                label: 'Name',
+                editable: true,
+                rules: [new ValidationRule('required')],
+            ),
+        ]);
+
+        $actionResult = ActionResult::success('Updated');
+        $this->mutator->method('update')->willReturn($actionResult);
+
+        /** @var ActionHistoryStoreInterface&MockObject $actionHistory */
+        $actionHistory = $this->createMock(ActionHistoryStoreInterface::class);
+        $actionHistory->expects($this->once())->method('record');
+
+        $handler = $this->handlerWithMocks(actionHistory: $actionHistory);
+
+        // Only update name, should not validate email
+        $request = new UpdateResourceRequest(
+            resourceName: 'users',
+            id: '1',
+            data: ['name' => 'New Name'],
+            context: new MutationContext('admin', 'Partial update'),
+        );
+
+        $result = $handler->execute($request);
+
+        self::assertTrue($result->result->success);
+    }
+
+    #[Test]
+    public function recordsActionHistoryOnUpdate(): void
+    {
+        $this->resource->method('operations')->willReturn([ResourceOperation::Update]);
+        $this->resource->method('fields')->willReturn([]);
+
+        $actionResult = ActionResult::success('Updated');
+        $this->mutator->method('update')->willReturn($actionResult);
+
+        /** @var ActionHistoryStoreInterface&MockObject $actionHistory */
+        $actionHistory = $this->createMock(ActionHistoryStoreInterface::class);
+        $actionHistory->expects($this->once())
+            ->method('record')
+            ->with($this->callback(static function (mixed $entry): bool {
+                assert($entry instanceof ActionHistoryEntry);
+
+                return $entry->action === 'update'
+                    && $entry->resourceName === 'users'
+                    && $entry->recordId === '42'
+                    && $entry->actor === 'admin'
+                    && $entry->success === true;
+            }));
+
+        $handler = $this->handlerWithMocks(actionHistory: $actionHistory);
+
+        $request = new UpdateResourceRequest(
+            resourceName: 'users',
+            id: '42',
+            data: ['name' => 'Updated'],
+            context: new MutationContext('admin', 'Test'),
+        );
+
+        $handler->execute($request);
+    }
+
+    #[Test]
+    public function skipsValidationForNonEditableFields(): void
+    {
+        $this->resource->method('operations')->willReturn([ResourceOperation::Update]);
+        $this->resource->method('fields')->willReturn([
+            new FieldDefinition(
+                name: 'id',
+                type: FieldType::Integer,
+                label: 'ID',
+                editable: false,
+                rules: [new ValidationRule('required')],
+            ),
+        ]);
+
+        $actionResult = ActionResult::success('Updated');
+        $this->mutator->method('update')->willReturn($actionResult);
+
+        /** @var ActionHistoryStoreInterface&MockObject $actionHistory */
+        $actionHistory = $this->createMock(ActionHistoryStoreInterface::class);
+        $actionHistory->expects($this->once())->method('record');
+
+        $handler = $this->handlerWithMocks(actionHistory: $actionHistory);
+
+        $request = new UpdateResourceRequest(
+            resourceName: 'users',
+            id: '1',
+            data: ['id' => ''],
+            context: new MutationContext('admin', 'Test'),
+        );
+
+        $result = $handler->execute($request);
+
+        self::assertTrue($result->result->success);
     }
 }

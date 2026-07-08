@@ -22,7 +22,7 @@ use Pulsar\Extension\Admin\Server\Controller\ResourceViewController;
 final class ResourceViewControllerTest extends TestCase
 {
     #[Test]
-    public function view_returns_json_when_accept_json(): void
+    public function viewReturnsJsonWhenAcceptJson(): void
     {
         $resource = $this->createStub(DataResourceInterface::class);
         $resource->method('name')->willReturn('users');
@@ -50,7 +50,7 @@ final class ResourceViewControllerTest extends TestCase
     }
 
     #[Test]
-    public function view_returns_404_when_record_not_found(): void
+    public function viewReturns404WhenRecordNotFound(): void
     {
         $resource = $this->createStub(DataResourceInterface::class);
         $resource->method('name')->willReturn('users');

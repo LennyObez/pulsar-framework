@@ -13,7 +13,7 @@ use Pulsar\Extension\Admin\Features\GlobalSearch\GlobalSearchRequest;
 final class GlobalSearchRequestTest extends TestCase
 {
     #[Test]
-    public function constructor_sets_query(): void
+    public function constructorSetsQuery(): void
     {
         $request = new GlobalSearchRequest(query: 'john doe');
 
@@ -22,7 +22,7 @@ final class GlobalSearchRequestTest extends TestCase
     }
 
     #[Test]
-    public function constructor_with_custom_limit(): void
+    public function constructorWithCustomLimit(): void
     {
         $request = new GlobalSearchRequest(query: 'test', limitPerResource: 10);
 

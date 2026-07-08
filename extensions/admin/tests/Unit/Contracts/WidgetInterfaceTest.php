@@ -14,7 +14,7 @@ use ReflectionClass;
 final class WidgetInterfaceTest extends TestCase
 {
     #[Test]
-    public function interface_defines_all_methods(): void
+    public function interfaceDefinesAllMethods(): void
     {
         $reflection = new ReflectionClass(WidgetInterface::class);
 
@@ -26,7 +26,7 @@ final class WidgetInterfaceTest extends TestCase
     }
 
     #[Test]
-    public function stub_returns_configured_values(): void
+    public function stubReturnsConfiguredValues(): void
     {
         $stub = $this->createStub(WidgetInterface::class);
         $stub->method('id')->willReturn('resource_count');

@@ -15,7 +15,7 @@ use Pulsar\Extension\Admin\Server\Controller\ExtractsRequestActor;
 final class ExtractsRequestActorTest extends TestCase
 {
     #[Test]
-    public function resolves_actor_from_identity_attribute(): void
+    public function resolvesActorFromIdentityAttribute(): void
     {
         $harness = new class {
             use ExtractsRequestActor;
@@ -36,7 +36,7 @@ final class ExtractsRequestActorTest extends TestCase
     }
 
     #[Test]
-    public function returns_anonymous_when_no_identity(): void
+    public function returnsAnonymousWhenNoIdentity(): void
     {
         $harness = new class {
             use ExtractsRequestActor;

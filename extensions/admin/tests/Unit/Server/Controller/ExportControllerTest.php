@@ -23,7 +23,7 @@ use Pulsar\Extension\Admin\Server\Controller\ExportController;
 final class ExportControllerTest extends TestCase
 {
     #[Test]
-    public function export_returns_csv_response(): void
+    public function exportReturnsCsvResponse(): void
     {
         $resource = $this->createStub(DataResourceInterface::class);
         $resource->method('name')->willReturn('users');
@@ -62,7 +62,7 @@ final class ExportControllerTest extends TestCase
     }
 
     #[Test]
-    public function export_defaults_to_csv_when_no_format(): void
+    public function exportDefaultsToCsvWhenNoFormat(): void
     {
         $resource = $this->createStub(DataResourceInterface::class);
         $resource->method('name')->willReturn('users');

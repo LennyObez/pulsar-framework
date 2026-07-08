@@ -13,7 +13,7 @@ use Pulsar\Extension\Admin\Domain\BulkAction;
 final class BulkActionTest extends TestCase
 {
     #[Test]
-    public function constructor_sets_required_properties(): void
+    public function constructorSetsRequiredProperties(): void
     {
         $action = new BulkAction(
             name: 'archive',
@@ -28,7 +28,7 @@ final class BulkActionTest extends TestCase
     }
 
     #[Test]
-    public function constructor_sets_all_properties(): void
+    public function constructorSetsAllProperties(): void
     {
         $action = new BulkAction(
             name: 'delete',
@@ -46,7 +46,7 @@ final class BulkActionTest extends TestCase
     }
 
     #[Test]
-    public function non_destructive_action_without_confirmation(): void
+    public function nonDestructiveActionWithoutConfirmation(): void
     {
         $action = new BulkAction(
             name: 'tag',
