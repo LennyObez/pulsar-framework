@@ -39,6 +39,8 @@ use Pulsar\I18n\Locale\LocalizedSlugMiddleware;
 use Pulsar\I18n\Locale\LocalizedUrlGenerator;
 use Pulsar\I18n\Locale\RouteBasedLocaleUrlResolver;
 use Pulsar\I18n\Locale\SlugLocaleUrlResolver;
+use Pulsar\I18n\Extractor\TranslationExtractor;
+use Pulsar\I18n\Linter\TranslationLinter;
 use Pulsar\I18n\Locale\SlugRegistry;
 use Pulsar\I18n\Locale\UrlPrefixExtractor;
 use Pulsar\I18n\LocaleNegotiatorInterface;
@@ -95,6 +97,14 @@ final readonly class I18nWiring implements ServiceWiringInterface
         // Build catalog
         $catalog = $this->buildCatalog($config);
         $container->instance(CatalogInterface::class, $catalog);
+
+        // Bind the translation CLI tooling so the i18n:extract and i18n:lint
+        // commands (registered conditionally in bin/pulsar on these bindings)
+        // become available once i18n is configured — matching the slug linter,
+        // which is already wired off SlugRegistry. The linter reuses the
+        // catalog and config built above; the extractor is stateless.
+        $container->instance(TranslationExtractor::class, new TranslationExtractor());
+        $container->instance(TranslationLinter::class, new TranslationLinter($catalog, $config));
 
         // Build message formatter
         $messageFormatter = $this->buildMessageFormatter($intlAvailable, $container);

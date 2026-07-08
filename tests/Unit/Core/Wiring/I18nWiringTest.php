@@ -15,6 +15,8 @@ use Pulsar\Core\Wiring\I18nWiring;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\I18n\CatalogInterface;
+use Pulsar\I18n\Extractor\TranslationExtractor;
+use Pulsar\I18n\Linter\TranslationLinter;
 use Pulsar\I18n\Format\CurrencyFormatterInterface;
 use Pulsar\I18n\Format\DateFormatterInterface;
 use Pulsar\I18n\Format\MessageFormatterInterface;
@@ -60,6 +62,8 @@ final class I18nWiringTest extends TestCase
         self::assertTrue($container->has(TranslatorInterface::class));
         self::assertTrue($container->has(Translator::class));
         self::assertTrue($container->has(LocaleNegotiatorInterface::class));
+        self::assertTrue($container->has(TranslationExtractor::class));
+        self::assertTrue($container->has(TranslationLinter::class));
     }
 
     #[Test]
