@@ -14,6 +14,10 @@ use Pulsar\Database\ConnectionManagerInterface;
 use Pulsar\Extensibility\ExtensionInterface;
 use Pulsar\Extensibility\PostBootExtensionInterface;
 use Pulsar\Extensibility\PreBootExtensionInterface;
+use Pulsar\Extension\Studio\Command\Console\ConsoleExportCommand;
+use Pulsar\Extension\Studio\Command\Console\ConsoleVerifyCommand;
+use Pulsar\Extension\Studio\Command\Console\Guardian\GuardianCheckCommand;
+use Pulsar\Extension\Studio\Command\Console\Guardian\GuardianSupervisorRunOnceCommand;
 use Pulsar\Extension\Studio\Config\StudioConfig;
 use Pulsar\Extension\Studio\Console\Aggregation\DashboardAggregator;
 use Pulsar\Extension\Studio\Console\Aggregation\TimelineBuilder;
@@ -41,6 +45,7 @@ use Pulsar\Extension\Studio\Contracts\StudioModuleRegistryInterface;
 use Pulsar\Extension\Studio\Internal\StudioModuleRegistry;
 use Pulsar\Extension\Studio\Security\StudioAccessGate;
 use Pulsar\FeatureFlag\FlagEvaluationLogInterface;
+use Pulsar\Supervisor\SupervisorInterface;
 use Pulsar\Http\Middleware\MiddlewarePipelineInterface;
 use Pulsar\Observability\Context\CorrelationContextProviderInterface;
 use Pulsar\Observability\ErrorTracking\ErrorAggregatorInterface;
@@ -290,6 +295,33 @@ final class StudioExtension implements ExtensionInterface, PreBootExtensionInter
             hasDecryptionKey: $hasDecryptionKey,
         );
         $container->instance(EvidenceExporter::class, $evidenceExporter);
+
+        // Console commands: evidence export/verify and guardian diagnostics.
+        // Bound explicitly here (over the evidence + supervisor services already
+        // composed) so the console application resolves them from the manifest's
+        // provides.commands list. The guardian commands require the core
+        // SupervisorInterface and register only when it is available.
+        $container->instance(
+            ConsoleExportCommand::class,
+            new ConsoleExportCommand($evidenceExporter),
+        );
+        $container->instance(
+            ConsoleVerifyCommand::class,
+            new ConsoleVerifyCommand($evidenceVerifier, archiveMacKey: $archiveMacKey),
+        );
+
+        if ($container->has(SupervisorInterface::class)) {
+            /** @var SupervisorInterface $supervisor */
+            $supervisor = $container->get(SupervisorInterface::class);
+            $container->instance(
+                GuardianCheckCommand::class,
+                new GuardianCheckCommand($supervisor),
+            );
+            $container->instance(
+                GuardianSupervisorRunOnceCommand::class,
+                new GuardianSupervisorRunOnceCommand($supervisor),
+            );
+        }
 
         // Register RuntimeCollectorInterface for PersistentRuntime
         if ($container->has(MetricRegistry::class)) {

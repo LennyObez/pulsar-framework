@@ -22,6 +22,7 @@ use Pulsar\Extension\Forum\Internal\AntiAbuse\ForumAntiAbuseMiddleware;
 use Pulsar\Extension\Forum\Internal\Notification\ForumNotificationDispatcher;
 use Pulsar\Extension\Forum\Post\PostRepositoryInterface;
 use Pulsar\Extension\Forum\Profile\ForumProfileRepositoryInterface;
+use Pulsar\Extension\Forum\Command\ForumServeCommand;
 use Pulsar\Extension\Forum\Realtime\RealtimeBroadcasterInterface;
 use Pulsar\Extension\Forum\Realtime\SseRealtimeBroadcaster;
 use Pulsar\Extension\Forum\Report\ForumModerationLogRepositoryInterface;
@@ -161,6 +162,13 @@ final class ForumCoreServiceProviderTest extends TestCase
         self::assertInstanceOf(
             SseRealtimeBroadcaster::class,
             $instanceMap[RealtimeBroadcasterInterface::class],
+        );
+
+        // Console command: the standalone Forum development server.
+        self::assertArrayHasKey(ForumServeCommand::class, $instanceMap);
+        self::assertInstanceOf(
+            ForumServeCommand::class,
+            $instanceMap[ForumServeCommand::class],
         );
     }
 }

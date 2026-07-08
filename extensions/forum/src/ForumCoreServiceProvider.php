@@ -13,6 +13,7 @@ use Pulsar\Event\EventDispatcherInterface;
 use Pulsar\Extension\Forum\Badge\BadgeServiceInterface;
 use Pulsar\Extension\Forum\Badge\UserBadgeRepositoryInterface;
 use Pulsar\Extension\Forum\Category\CategoryRepositoryInterface;
+use Pulsar\Extension\Forum\Command\ForumServeCommand;
 use Pulsar\Extension\Forum\Config\ForumConfig;
 use Pulsar\Extension\Forum\Content\ForumBodyPolicy;
 use Pulsar\Extension\Forum\Content\MarkdownRenderer;
@@ -97,6 +98,20 @@ final readonly class ForumCoreServiceProvider
         if (!$container->has(RealtimeBroadcasterInterface::class)) {
             $container->instance(RealtimeBroadcasterInterface::class, new SseRealtimeBroadcaster());
         }
+
+        // Console command: the standalone Forum development server (forum:serve).
+        // Bound over the resolved ForumConfig + project base path so the console
+        // application resolves it from the manifest's provides.commands list.
+        // `serve` runs PHP's built-in server for the whole app; forum:serve boots
+        // the framework kernel with all Forum routes for standalone development.
+        /** @var string $forumServeBasePath */
+        $forumServeBasePath = $container->has('app.base_path')
+            ? $container->get('app.base_path')
+            : (getcwd() ?: '.');
+        $container->instance(
+            ForumServeCommand::class,
+            new ForumServeCommand($config, $forumServeBasePath),
+        );
 
         // Anti-abuse middleware (delegates to the shared anti-spam pipeline)
         /** @var AntiSpamPipelineInterface $antiSpamPipeline */
