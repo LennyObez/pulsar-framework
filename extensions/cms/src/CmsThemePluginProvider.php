@@ -12,6 +12,8 @@ use Pulsar\Cache\Application\TaggedCacheInterface;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Event\EventDispatcherInterface;
+use Pulsar\Extension\Cms\Command\ThemeActivateCommand;
+use Pulsar\Extension\Cms\Command\ThemeInstallCommand;
 use Pulsar\Extension\Cms\Config\CmsConfig;
 use Pulsar\Extension\Cms\Internal\LiveCss\CspHashComputer;
 use Pulsar\Extension\Cms\Internal\LiveCss\CssValidator;
@@ -143,6 +145,28 @@ final readonly class CmsThemePluginProvider
                 ),
             );
         }
+
+        // Console theme commands: activate + install. Bound over the theme
+        // repository (and, for install, the resolved absolute themes storage
+        // directory) so the console application resolves them from the
+        // manifest's provides.commands list.
+        /** @var string $themesCommandBasePath */
+        $themesCommandBasePath = $container->has('app.base_path')
+            ? $container->get('app.base_path')
+            : (getcwd() ?: '.');
+        $configuredThemesPath = $themesConfig->storagePath;
+        $themesStoragePath = str_starts_with($configuredThemesPath, '/')
+            ? $configuredThemesPath
+            : rtrim($themesCommandBasePath, '/') . '/' . $configuredThemesPath;
+
+        $container->instance(
+            ThemeActivateCommand::class,
+            new ThemeActivateCommand($themeRepository),
+        );
+        $container->instance(
+            ThemeInstallCommand::class,
+            new ThemeInstallCommand($themeRepository, $themesStoragePath),
+        );
 
         // Plugin stack
         $securityConfig = $config->security;

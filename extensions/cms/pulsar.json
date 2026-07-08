@@ -31,7 +31,9 @@
     "commands": [
       "Pulsar\\Extension\\Cms\\Command\\CmsServeCommand",
       "Pulsar\\Extension\\Cms\\Command\\CmsPublishScheduledCommand",
-      "Pulsar\\Extension\\Cms\\Command\\CmsImportCommand"
+      "Pulsar\\Extension\\Cms\\Command\\CmsImportCommand",
+      "Pulsar\\Extension\\Cms\\Command\\ThemeActivateCommand",
+      "Pulsar\\Extension\\Cms\\Command\\ThemeInstallCommand"
     ]
   }
 }

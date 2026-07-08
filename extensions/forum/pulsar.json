@@ -21,6 +21,7 @@
       "TagRepositoryInterface"
     ],
     "routes": true,
-    "migrations": ["src/Migration"]
+    "migrations": ["src/Migration"],
+    "commands": ["Pulsar\\Extension\\Forum\\Command\\ForumServeCommand"]
   }
 }
