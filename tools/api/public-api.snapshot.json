@@ -56092,6 +56092,7 @@
         "Pulsar\\Core\\Wiring\\StorageWiring",
         "Pulsar\\Core\\Wiring\\SupervisorWiring",
         "Pulsar\\Core\\Wiring\\TenancyWiring",
+        "Pulsar\\Core\\Wiring\\ThreatDetectionWiring",
         "Pulsar\\Core\\Wiring\\TracingWiring",
         "Pulsar\\Core\\Wiring\\ViewWiring",
         "Pulsar\\Core\\Wiring\\WiringList",

@@ -270,4 +270,28 @@ return [
         'bypass_ips' => [],
         'custom_rules_path' => null,
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Threat Detection
+    |--------------------------------------------------------------------------
+    |
+    | Active, request-time threat detection. Brute-force, credential-stuffing,
+    | API-abuse, and injection-attempt detectors feed a single engine; the
+    | middleware blocks or challenges on the highest-severity hit and records a
+    | compliance-grade incident. Opt-in (disabled by default) so it never blocks
+    | legitimate traffic unexpectedly — enable and tune the thresholds per app.
+    |
+    */
+    'threat_detection' => [
+        'enabled' => false,
+        'brute_force_threshold' => 5,
+        'brute_force_window_seconds' => 600,
+        'stuffing_threshold' => 10,
+        'stuffing_window_seconds' => 300,
+        'api_abuse_threshold' => 100,
+        'api_abuse_window_seconds' => 60,
+        'geo_travel_speed_kmh' => 900,
+        'injection_detection_enabled' => true,
+    ],
 ];
