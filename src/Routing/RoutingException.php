@@ -9,6 +9,7 @@ use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Http\Method;
 
+use function implode;
 use function sprintf;
 
 /**
@@ -116,6 +117,22 @@ final class RoutingException extends Exception
         return new self(
             'Router is locked in strict cached mode. Register all routes before `pulsar optimize --strict`, or use non-strict mode.',
             423,
+        );
+    }
+
+    /**
+     * Create a "route collisions detected" exception used to fail closed in debug
+     * mode when a later route (typically an extension) shadows an already
+     * registered route for the same method and path.
+     *
+     * @param list<string> $messages One human-readable description per collision.
+     */
+    #[NoDiscard]
+    public static function routeCollisions(array $messages): self
+    {
+        return new self(
+            "Route collisions detected at boot (debug mode fails closed):\n - " . implode("\n - ", $messages),
+            500,
         );
     }
 

@@ -33,6 +33,9 @@ final readonly class BookingConfig
         public string $vonageApiSecret,
         public string $vonageFromNumber,
         public string $googleServiceAccountKeyPath,
+        public bool $routesEnabled = true,
+        public string $routePrefix = '/booking',
+        public string $adminRoutePrefix = '/admin/booking',
     ) {}
 
     /**
@@ -57,6 +60,9 @@ final readonly class BookingConfig
      *     vonage_api_secret?: string,
      *     vonage_from_number?: string,
      *     google_service_account_key_path?: string,
+     *     routes_enabled?: bool|int|string,
+     *     route_prefix?: string,
+     *     admin_route_prefix?: string,
      * } $data Raw array from config/booking.php
      */
     #[NoDiscard]
@@ -81,6 +87,9 @@ final readonly class BookingConfig
             vonageApiSecret: $data['vonage_api_secret'] ?? '',
             vonageFromNumber: $data['vonage_from_number'] ?? '',
             googleServiceAccountKeyPath: $data['google_service_account_key_path'] ?? '',
+            routesEnabled: (bool) ($data['routes_enabled'] ?? true),
+            routePrefix: $data['route_prefix'] ?? '/booking',
+            adminRoutePrefix: $data['admin_route_prefix'] ?? '/admin/booking',
         );
     }
 }
