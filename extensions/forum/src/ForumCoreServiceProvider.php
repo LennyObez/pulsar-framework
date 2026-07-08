@@ -33,6 +33,8 @@ use Pulsar\Extension\Forum\Internal\Service\TagService;
 use Pulsar\Extension\Forum\Internal\Service\VoteService;
 use Pulsar\Extension\Forum\Post\PostRepositoryInterface;
 use Pulsar\Extension\Forum\Profile\ForumProfileRepositoryInterface;
+use Pulsar\Extension\Forum\Realtime\RealtimeBroadcasterInterface;
+use Pulsar\Extension\Forum\Realtime\SseRealtimeBroadcaster;
 use Pulsar\Extension\Forum\Report\ForumModerationLogRepositoryInterface;
 use Pulsar\Extension\Forum\Report\PostReportRepositoryInterface;
 use Pulsar\Extension\Forum\Report\ThreadReportRepositoryInterface;
@@ -86,6 +88,15 @@ final readonly class ForumCoreServiceProvider
 
         $bodyPolicy = new ForumBodyPolicy();
         $container->instance(ForumBodyPolicy::class, $bodyPolicy);
+
+        // Real-time broadcaster: the in-memory SSE implementation is a working
+        // single-server default (it buffers recent events and tracks presence
+        // per channel). Multi-server deployments scale out by binding a
+        // Redis-backed RealtimeBroadcasterInterface (RedisRealtimeBroadcaster)
+        // before this provider runs; an app-provided binding is preserved.
+        if (!$container->has(RealtimeBroadcasterInterface::class)) {
+            $container->instance(RealtimeBroadcasterInterface::class, new SseRealtimeBroadcaster());
+        }
 
         // Anti-abuse middleware (delegates to the shared anti-spam pipeline)
         /** @var AntiSpamPipelineInterface $antiSpamPipeline */

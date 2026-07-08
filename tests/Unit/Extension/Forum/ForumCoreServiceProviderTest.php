@@ -22,6 +22,8 @@ use Pulsar\Extension\Forum\Internal\AntiAbuse\ForumAntiAbuseMiddleware;
 use Pulsar\Extension\Forum\Internal\Notification\ForumNotificationDispatcher;
 use Pulsar\Extension\Forum\Post\PostRepositoryInterface;
 use Pulsar\Extension\Forum\Profile\ForumProfileRepositoryInterface;
+use Pulsar\Extension\Forum\Realtime\RealtimeBroadcasterInterface;
+use Pulsar\Extension\Forum\Realtime\SseRealtimeBroadcaster;
 use Pulsar\Extension\Forum\Report\ForumModerationLogRepositoryInterface;
 use Pulsar\Extension\Forum\Report\PostReportRepositoryInterface;
 use Pulsar\Extension\Forum\Report\ThreadReportRepositoryInterface;
@@ -153,5 +155,12 @@ final class ForumCoreServiceProviderTest extends TestCase
         self::assertArrayHasKey(TagServiceInterface::class, $instanceMap);
         self::assertArrayHasKey(ForumServiceInterface::class, $instanceMap);
         self::assertArrayHasKey(ForumNotificationDispatcher::class, $instanceMap);
+
+        // Real-time broadcaster: bound to the single-server SSE default.
+        self::assertArrayHasKey(RealtimeBroadcasterInterface::class, $instanceMap);
+        self::assertInstanceOf(
+            SseRealtimeBroadcaster::class,
+            $instanceMap[RealtimeBroadcasterInterface::class],
+        );
     }
 }
