@@ -130,6 +130,10 @@ use Pulsar\Console\Command\RoutesCacheCommand;
 use Pulsar\Console\Command\RuntimeReloadCommand;
 use Pulsar\Console\Command\SlugsLintCommand;
 use Pulsar\Console\Command\AssetPublishCommand;
+use Pulsar\Console\Command\Dev\DevConfig;
+use Pulsar\Console\Command\Dev\DevStartCommand;
+use Pulsar\Console\Command\Dev\DevStatusCommand;
+use Pulsar\Console\Command\Dev\DevStopCommand;
 use Pulsar\Console\Command\DocsCommand;
 use Pulsar\Console\Command\RuntimeServeCommand;
 use Pulsar\Console\Command\ServeCommand;
@@ -436,6 +440,19 @@ $application->add(new ServeCommand($basePath));
 
 // Register asset publish command (always available; resolves bundled framework assets)
 $application->add(new AssetPublishCommand($basePath));
+
+// Register the Docker development-environment commands (dev:start / dev:status /
+// dev:stop). These scaffold and manage a Docker Compose dev stack and are
+// distinct from `serve` (the built-in PHP server). The base DevConfig is read
+// from config/dev.php when present; each command re-resolves it against CLI
+// options at run time. (require returns 1 if the file was already loaded, so
+// fall back to defaults unless it yields an array.)
+$devConfigFile = $basePath . '/config/dev.php';
+$devConfigData = file_exists($devConfigFile) && is_array($loaded = require $devConfigFile) ? $loaded : [];
+$devConfig = DevConfig::fromArray($devConfigData);
+$application->add(new DevStartCommand($devConfig, $basePath));
+$application->add(new DevStatusCommand($devConfig));
+$application->add(new DevStopCommand($devConfig));
 
 // Register optimize + key commands (always visible)
 $frameworkCache = $kernel->container()->has(FrameworkCache::class)
