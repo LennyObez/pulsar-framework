@@ -8,6 +8,7 @@ use Pulsar\Container\ContainerInterface;
 use Pulsar\Extensibility\ExtensionInterface;
 use Pulsar\Extensibility\PostBootExtensionInterface;
 use Pulsar\Extensibility\ServiceProviderInterface;
+use Pulsar\Extension\Booking\Domain\BookingConfig;
 use Pulsar\Extension\Booking\Http\Controller\Admin\AdminAppointmentController;
 use Pulsar\Extension\Booking\Http\Controller\Admin\AdminBookingDashboardController;
 use Pulsar\Extension\Booking\Http\Controller\Admin\AdminBookingSettingsController;
@@ -40,36 +41,51 @@ final class BookingExtension implements ExtensionInterface, PostBootExtensionInt
 
     public function boot(ContainerInterface $container, RouterInterface $router): void
     {
+        /** @var BookingConfig|null $bound */
+        $bound = $container->has(BookingConfig::class)
+            ? $container->get(BookingConfig::class)
+            : null;
+        $config = $bound ?? BookingConfig::fromArray([]);
+
+        // Opt-out: a project that owns "/booking" itself can disable these routes
+        // (routes_enabled => false) so the extension never shadows an app route.
+        if (!$config->routesEnabled) {
+            return;
+        }
+
+        $prefix = $config->routePrefix;
+        $adminPrefix = $config->adminRoutePrefix;
+
         // Front-office routes
-        $router->get('/booking', [BookingController::class, 'form'], 'booking.form');
-        $router->post('/booking', [BookingController::class, 'submit'], 'booking.submit');
-        $router->get('/booking/{number}/status', [BookingController::class, 'status'], 'booking.status');
-        $router->post('/booking/available-slots', [BookingController::class, 'availableSlots'], 'booking.available_slots');
+        $router->get($prefix, [BookingController::class, 'form'], 'booking.form');
+        $router->post($prefix, [BookingController::class, 'submit'], 'booking.submit');
+        $router->get($prefix . '/{number}/status', [BookingController::class, 'status'], 'booking.status');
+        $router->post($prefix . '/available-slots', [BookingController::class, 'availableSlots'], 'booking.available_slots');
 
         // Admin dashboard
-        $router->get('/admin/booking', [AdminBookingDashboardController::class, 'index'], 'booking.admin.dashboard');
+        $router->get($adminPrefix, [AdminBookingDashboardController::class, 'index'], 'booking.admin.dashboard');
 
         // Admin appointment management
-        $router->get('/admin/booking/appointments', [AdminAppointmentController::class, 'list'], 'booking.admin.appointments.list');
-        $router->get('/admin/booking/appointments/{id}', [AdminAppointmentController::class, 'show'], 'booking.admin.appointments.show');
-        $router->post('/admin/booking/appointments/{id}/confirm', [AdminAppointmentController::class, 'confirm'], 'booking.admin.appointments.confirm');
-        $router->post('/admin/booking/appointments/{id}/cancel', [AdminAppointmentController::class, 'cancel'], 'booking.admin.appointments.cancel');
-        $router->post('/admin/booking/appointments/{id}/reschedule', [AdminAppointmentController::class, 'reschedule'], 'booking.admin.appointments.reschedule');
-        $router->post('/admin/booking/appointments/{id}/complete', [AdminAppointmentController::class, 'complete'], 'booking.admin.appointments.complete');
-        $router->post('/admin/booking/appointments/{id}/no-show', [AdminAppointmentController::class, 'noShow'], 'booking.admin.appointments.no_show');
+        $router->get($adminPrefix . '/appointments', [AdminAppointmentController::class, 'list'], 'booking.admin.appointments.list');
+        $router->get($adminPrefix . '/appointments/{id}', [AdminAppointmentController::class, 'show'], 'booking.admin.appointments.show');
+        $router->post($adminPrefix . '/appointments/{id}/confirm', [AdminAppointmentController::class, 'confirm'], 'booking.admin.appointments.confirm');
+        $router->post($adminPrefix . '/appointments/{id}/cancel', [AdminAppointmentController::class, 'cancel'], 'booking.admin.appointments.cancel');
+        $router->post($adminPrefix . '/appointments/{id}/reschedule', [AdminAppointmentController::class, 'reschedule'], 'booking.admin.appointments.reschedule');
+        $router->post($adminPrefix . '/appointments/{id}/complete', [AdminAppointmentController::class, 'complete'], 'booking.admin.appointments.complete');
+        $router->post($adminPrefix . '/appointments/{id}/no-show', [AdminAppointmentController::class, 'noShow'], 'booking.admin.appointments.no_show');
 
         // Admin service management
-        $router->get('/admin/booking/services', [AdminServiceController::class, 'listServices'], 'booking.admin.services.list');
-        $router->post('/admin/booking/services', [AdminServiceController::class, 'createService'], 'booking.admin.services.create');
-        $router->put('/admin/booking/services/{id}', [AdminServiceController::class, 'updateService'], 'booking.admin.services.update');
-        $router->delete('/admin/booking/services/{id}', [AdminServiceController::class, 'deleteService'], 'booking.admin.services.delete');
+        $router->get($adminPrefix . '/services', [AdminServiceController::class, 'listServices'], 'booking.admin.services.list');
+        $router->post($adminPrefix . '/services', [AdminServiceController::class, 'createService'], 'booking.admin.services.create');
+        $router->put($adminPrefix . '/services/{id}', [AdminServiceController::class, 'updateService'], 'booking.admin.services.update');
+        $router->delete($adminPrefix . '/services/{id}', [AdminServiceController::class, 'deleteService'], 'booking.admin.services.delete');
 
         // Admin categories
-        $router->get('/admin/booking/categories', [AdminServiceController::class, 'listCategories'], 'booking.admin.categories.list');
-        $router->post('/admin/booking/categories', [AdminServiceController::class, 'createCategory'], 'booking.admin.categories.create');
+        $router->get($adminPrefix . '/categories', [AdminServiceController::class, 'listCategories'], 'booking.admin.categories.list');
+        $router->post($adminPrefix . '/categories', [AdminServiceController::class, 'createCategory'], 'booking.admin.categories.create');
 
         // Admin settings
-        $router->get('/admin/booking/settings', [AdminBookingSettingsController::class, 'show'], 'booking.admin.settings');
+        $router->get($adminPrefix . '/settings', [AdminBookingSettingsController::class, 'show'], 'booking.admin.settings');
     }
 
     public function postBoot(ContainerInterface $container): void

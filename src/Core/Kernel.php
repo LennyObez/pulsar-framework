@@ -12,6 +12,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface as PsrMiddlewareInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Cache\FrameworkCache;
+use Pulsar\Config\AppConfig;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\ConfigManagerInterface;
 use Pulsar\Container\AdvancedContainerInterface;
@@ -28,6 +29,7 @@ use Pulsar\Core\Boot\CachedRouteReconstructor;
 use Pulsar\Core\Boot\ExtensionDiscovery;
 use Pulsar\Core\Boot\ExtensionViewPathRegistrar;
 use Pulsar\Core\Boot\ProjectRouteLoader;
+use Pulsar\Core\Boot\RouteCollisionReporter;
 use Pulsar\Core\Controller\ControllerResolverInterface;
 use Pulsar\Core\Controller\ReflectionControllerResolver;
 use Pulsar\Core\Event\TerminateEvent;
@@ -103,7 +105,7 @@ final class Kernel implements KernelInterface
      * Router state captured at boot() entry, restored on shutdown() so a re-boot
      * does not accumulate duplicate routes/bindings. Null until first boot().
      *
-     * @var array{routes: list<Route>, namedRoutes: array<string, Route>, staticRoutes: array<string, array<string, Route>>, dynamicRouteBuckets: array<string, array<string, array<int, Route>>>, explicitBindings: list<ExplicitBinding>, locked: bool, hasHostConstrainedRoutes: bool}|null
+     * @var array{routes: list<Route>, namedRoutes: array<string, Route>, staticRoutes: array<string, array<string, Route>>, dynamicRouteBuckets: array<string, array<string, array<int, Route>>>, registeredRouteKeys: array<string, array<string, array<string, Route>>>, collisions: list<\Pulsar\Routing\RouteCollision>, explicitBindings: list<ExplicitBinding>, locked: bool, hasHostConstrainedRoutes: bool}|null
      */
     private ?array $routerSnapshot = null;
 
@@ -348,6 +350,18 @@ final class Kernel implements KernelInterface
         // After extensions boot, add their view paths to the template engine.
         // Extensions may provide Pulse templates under resources/views/ (e.g., cms::public.pages.page).
         ExtensionViewPathRegistrar::register($this->container, $this->extensionBootstrap);
+
+        // All routes (framework wirings, project, extensions) are now registered.
+        // Surface any collision where a later route shadowed an earlier one for the
+        // same method+path: warn in production, fail closed in debug so a silent
+        // wrong-page bug (e.g. an extension shadowing a project route) cannot ship.
+        $debug = false;
+        if ($this->container->has(AppConfig::class)) {
+            /** @var AppConfig $appConfig */
+            $appConfig = $this->container->get(AppConfig::class);
+            $debug = $appConfig->debug;
+        }
+        RouteCollisionReporter::report($this->router, $this->container, $debug);
 
         $this->booted = true;
 

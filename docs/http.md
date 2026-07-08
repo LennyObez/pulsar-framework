@@ -221,6 +221,27 @@ $router->add(new Route(
 ));
 ```
 
+## Route precedence and collisions
+
+Routes are registered in a fixed order: framework wirings first, then the
+project's `routes/web.php` and `routes/api.php`, then enabled extensions.
+Registration is first-registered-wins for both static and dynamic routes, keyed
+by method, path, and host. The effective precedence is therefore framework >
+project > extension, so an application route always wins over an extension route
+that declares the same method and path.
+
+When a later route claims an already-registered key with a different handler, it
+is recorded as a collision and excluded from matching rather than silently
+overriding the winner. At boot the framework logs a warning for each collision
+in production and fails closed (throws) when `app.debug` is true, so a shadowed
+route cannot ship unnoticed. Re-registering the exact same route (identical
+handler and name), which happens when a non-strict route cache is replayed, is a
+benign duplicate and is ignored. The recorded collisions are available on
+`Router::$collisions` for diagnostics, and both routes remain visible to
+`route:list`.
+
+See [ADR-0034](adr/0034-route-registration-precedence.md) for the full rationale.
+
 ## Host-based routing
 
 Routes can be constrained to specific hostnames using the `host` parameter:

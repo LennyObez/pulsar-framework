@@ -3,6 +3,21 @@
 declare(strict_types=1);
 
 return [
+    /*
+    |--------------------------------------------------------------------------
+    | Routes
+    |--------------------------------------------------------------------------
+    |
+    | The extension registers its front-office and admin routes under these
+    | prefixes. A project that owns the "/booking" path itself can disable the
+    | extension routes (routes_enabled => false) or move them to a distinct
+    | prefix, so the extension never silently shadows an application route.
+    |
+    */
+    'routes_enabled' => true,
+    'route_prefix' => '/booking',
+    'admin_route_prefix' => '/admin/booking',
+
     'deposit_required' => false,
     'deposit_percent' => 20,
     'min_advance_hours' => 24,

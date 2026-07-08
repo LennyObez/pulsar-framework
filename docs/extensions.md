@@ -489,6 +489,35 @@ php bin/pulsar show:container     # Shows all container bindings (including exte
 php bin/pulsar show:routes        # Shows all routes (including extension routes)
 ```
 
+## Registering routes
+
+Extensions register their routes during `boot()`. Routes are first-registered-wins
+and application routes register before extensions, so an extension route on the
+same method and path as a project route is treated as a collision: it is excluded
+from matching, logged as a warning in production, and fails the boot in debug mode
+(see [ADR-0034](adr/0034-route-registration-precedence.md)).
+
+Because of this, an extension must not claim a bare top-level path
+unconditionally. Make routes **opt-in and prefix-configurable** so an application
+that owns a path can disable or relocate them. The `pulsar/booking` extension is
+the reference: `config/booking.php` exposes `routes_enabled`, `route_prefix`, and
+`admin_route_prefix`, and `boot()` returns early when routes are disabled and
+prefixes every path with the configured value.
+
+```php
+public function boot(ContainerInterface $container, RouterInterface $router): void
+{
+    $config = $container->get(BookingConfig::class);
+
+    if (!$config->routesEnabled) {
+        return;
+    }
+
+    $router->get($config->routePrefix, [BookingController::class, 'form'], 'booking.form');
+    // ...
+}
+```
+
 ## Error handling
 
 The extension system uses specific exception types:

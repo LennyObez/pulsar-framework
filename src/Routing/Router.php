@@ -77,6 +77,31 @@ final class Router implements RouterInterface
     private bool $hasHostConstrainedRoutes = false;
 
     /**
+     * Diagnostic records of routes shadowed by an earlier registration of the
+     * same (method, path, host) key.
+     *
+     * Registration is first-registered-wins (framework > project > extension), so
+     * a later route claiming an already-registered key is recorded here and
+     * excluded from the match tables rather than silently overriding the winner.
+     * Read by the boot-time {@see \Pulsar\Core\Boot\RouteCollisionReporter}, which
+     * warns in production and fails closed in debug mode.
+     *
+     * @var list<RouteCollision>
+     */
+    public private(set) array $collisions = [];
+
+    /**
+     * Registration-key index backing collision detection.
+     *
+     * Maps `method => normalizedPath => hostKey => winner Route`. The first route
+     * registered for a key becomes the winner; any later route with a different
+     * handler is a collision.
+     *
+     * @var array<string, array<string, array<string, Route>>>
+     */
+    private array $registeredRouteKeys = [];
+
+    /**
      * Explicit parameter-to-model bindings registered via model().
      *
      * @var list<ExplicitBinding>
@@ -124,22 +149,49 @@ final class Router implements RouterInterface
             $this->hasHostConstrainedRoutes = true;
         }
 
-        // Index static routes (no dynamic segments) for O(1) lookup
-        if ($route->compiledPattern === null && $route->host === null) {
-            $normalizedPath = '/' . trim($route->path, '/');
-            foreach ($route->methods as $method) {
-                $this->staticRoutes[$method->value][$normalizedPath] = $route;
-            }
-            return;
-        }
+        // A static route has no dynamic segments and no host constraint, so it can
+        // live in the O(1) static table; everything else is bucketed by its first
+        // static segment. F2.21: `/users/{id}` buckets under `users`, `/{lang}/x`
+        // under `''` (catch-all), keyed by registration sequence.
+        $isStatic = $route->compiledPattern === null && $route->host === null;
+        $normalizedPath = '/' . trim($route->path, '/');
+        $hostKey = $route->host ?? '';
+        $firstSegment = $isStatic ? '' : $this->firstStaticSegment($route->path);
 
-        // F2.21: bucket dynamic routes by their first static segment. A pattern
-        // like `/users/{id}` buckets under `users`; `/{lang}/posts` buckets
-        // under `''` (catch-all). Entries are keyed by registration sequence so
-        // match() can merge the buckets back into first-registered-wins order.
-        $firstSegment = $this->firstStaticSegment($route->path);
         foreach ($route->methods as $method) {
-            $this->dynamicRouteBuckets[$method->value][$firstSegment][$sequence] = $route;
+            $existing = $this->registeredRouteKeys[$method->value][$normalizedPath][$hostKey] ?? null;
+
+            if ($existing !== null) {
+                // Benign duplicate: the SAME route re-registered. A non-strict route
+                // cache replays every route (including extension routes) and the
+                // extension then boots again and re-registers identical routes;
+                // matching handler + name means it is the same route, not a
+                // conflict, so ignore it silently.
+                if ($existing->handler == $route->handler && $existing->name === $route->name) {
+                    continue;
+                }
+
+                // Genuine conflict: a different handler claims an already-registered
+                // key. First-registered wins (framework > project > extension), so
+                // the earlier route stays in the match tables and the later one is
+                // recorded for the boot-time reporter rather than silently shadowing.
+                $this->collisions[] = new RouteCollision(
+                    $method->value,
+                    $normalizedPath,
+                    $route->host,
+                    $existing,
+                    $route,
+                );
+                continue;
+            }
+
+            $this->registeredRouteKeys[$method->value][$normalizedPath][$hostKey] = $route;
+
+            if ($isStatic) {
+                $this->staticRoutes[$method->value][$normalizedPath] = $route;
+            } else {
+                $this->dynamicRouteBuckets[$method->value][$firstSegment][$sequence] = $route;
+            }
         }
     }
 
@@ -462,6 +514,8 @@ final class Router implements RouterInterface
      *     namedRoutes: array<string, Route>,
      *     staticRoutes: array<string, array<string, Route>>,
      *     dynamicRouteBuckets: array<string, array<string, array<int, Route>>>,
+     *     registeredRouteKeys: array<string, array<string, array<string, Route>>>,
+     *     collisions: list<RouteCollision>,
      *     explicitBindings: list<ExplicitBinding>,
      *     locked: bool,
      *     hasHostConstrainedRoutes: bool,
@@ -474,6 +528,8 @@ final class Router implements RouterInterface
             'namedRoutes' => $this->namedRoutes,
             'staticRoutes' => $this->staticRoutes,
             'dynamicRouteBuckets' => $this->dynamicRouteBuckets,
+            'registeredRouteKeys' => $this->registeredRouteKeys,
+            'collisions' => $this->collisions,
             'explicitBindings' => $this->explicitBindings,
             'locked' => $this->locked,
             'hasHostConstrainedRoutes' => $this->hasHostConstrainedRoutes,
@@ -490,6 +546,8 @@ final class Router implements RouterInterface
      *     namedRoutes: array<string, Route>,
      *     staticRoutes: array<string, array<string, Route>>,
      *     dynamicRouteBuckets: array<string, array<string, array<int, Route>>>,
+     *     registeredRouteKeys: array<string, array<string, array<string, Route>>>,
+     *     collisions: list<RouteCollision>,
      *     explicitBindings: list<ExplicitBinding>,
      *     locked: bool,
      *     hasHostConstrainedRoutes: bool,
@@ -501,6 +559,8 @@ final class Router implements RouterInterface
         $this->namedRoutes = $snapshot['namedRoutes'];
         $this->staticRoutes = $snapshot['staticRoutes'];
         $this->dynamicRouteBuckets = $snapshot['dynamicRouteBuckets'];
+        $this->registeredRouteKeys = $snapshot['registeredRouteKeys'];
+        $this->collisions = $snapshot['collisions'];
         $this->explicitBindings = $snapshot['explicitBindings'];
         $this->locked = $snapshot['locked'];
         $this->hasHostConstrainedRoutes = $snapshot['hasHostConstrainedRoutes'];
