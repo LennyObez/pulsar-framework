@@ -226,6 +226,72 @@ final class KernelErrorHandlingTest extends TestCase
         self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
     }
 
+    #[Test]
+    public function errorResponsesCarrySameSecurityHeadersAsSuccess(): void
+    {
+        // Regression: 404/405/500/HttpException responses were produced outside
+        // the global middleware pipeline, so SecurityHeadersMiddleware never
+        // applied CSP/XFO/etc. to them while a 200 received the full set.
+        $securityHeaders = [
+            'X-Content-Type-Options',
+            'X-Frame-Options',
+            'Referrer-Policy',
+            'X-XSS-Protection',
+            'Permissions-Policy',
+            'X-Permitted-Cross-Domain-Policies',
+            'Content-Security-Policy',
+            'Cross-Origin-Opener-Policy',
+            'Cross-Origin-Embedder-Policy',
+            'Cross-Origin-Resource-Policy',
+        ];
+
+        $kernel = $this->createKernel();
+        $kernel->router()->get('/ok', fn() => Response::text('ok'));
+        $kernel->router()->get('/boom', fn() => throw new RuntimeException('boom'));
+        $kernel->router()->get('/nope', fn() => throw HttpException::forbidden('No access'));
+
+        $success = $kernel->handle($this->createRequest(path: '/ok'));
+        self::assertSame(200, $success->getStatusCode());
+
+        $baseline = [];
+        foreach ($securityHeaders as $name) {
+            $value = $success->getHeaderLine($name);
+            self::assertNotSame('', $value, "The 200 baseline is missing security header {$name}");
+            $baseline[$name] = $value;
+        }
+
+        $errorResponses = [
+            '404' => $kernel->handle($this->createRequest(path: '/does-not-exist')),
+            '405' => $kernel->handle($this->createRequest('POST', '/ok')),
+            '500' => $kernel->handle($this->createRequest(path: '/boom')),
+            '403' => $kernel->handle($this->createRequest(path: '/nope')),
+        ];
+
+        foreach ($errorResponses as $label => $response) {
+            self::assertGreaterThanOrEqual(
+                400,
+                $response->getStatusCode(),
+                "The {$label} case must be an error status",
+            );
+
+            foreach ($baseline as $name => $value) {
+                self::assertSame(
+                    $value,
+                    $response->getHeaderLine($name),
+                    "The {$label} error response header {$name} must match the 200 baseline",
+                );
+                self::assertCount(
+                    1,
+                    $response->getHeader($name),
+                    "The {$label} error response emitted {$name} more than once",
+                );
+            }
+        }
+
+        // 405 must still advertise the permitted methods alongside the security headers.
+        self::assertNotEmpty($errorResponses['405']->getHeaderLine('Allow'));
+    }
+
     /**
      * F4.11: previously the kernel re-threw uncaught exceptions when
      * no ExceptionHandler was registered, leaking stack traces to the
