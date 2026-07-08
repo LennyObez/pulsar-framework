@@ -75,27 +75,33 @@ final readonly class OrmServiceProvider implements ServiceProviderInterface
             return $registry;
         });
 
-        // Encryption (optional)
-        $container->bind(ColumnEncryptorInterface::class, static function () use ($container): ?ColumnEncryptorInterface {
-            /** @var OrmConfig $config */
-            $config = $container->get(OrmConfig::class);
+        // Encryption (optional). Bound ONLY when encryption is enabled AND the crypto
+        // stack is present, so Container::has(ColumnEncryptorInterface) answers honestly
+        // and the has()-guards in the hydrator/dehydrator can legitimately fall back to
+        // null. Binding an always-on factory that returns null makes the container reject
+        // resolution ("Factory must return an object"), which used to make EntityManager
+        // unresolvable in the default (encryption-disabled) configuration.
+        /** @var OrmConfig $ormConfig */
+        $ormConfig = $container->get(OrmConfig::class);
 
-            if (!$config->encryption->enabled) {
-                return null;
-            }
+        if (
+            $ormConfig->encryption->enabled
+            && $container->has(EncryptorInterface::class)
+            && $container->has(KeyProviderInterface::class)
+        ) {
+            $container->bind(ColumnEncryptorInterface::class, static function () use ($container): ColumnEncryptorInterface {
+                /** @var OrmConfig $config */
+                $config = $container->get(OrmConfig::class);
 
-            if (!$container->has(EncryptorInterface::class) || !$container->has(KeyProviderInterface::class)) {
-                return null;
-            }
+                /** @var EncryptorInterface $encryptor */
+                $encryptor = $container->get(EncryptorInterface::class);
 
-            /** @var EncryptorInterface $encryptor */
-            $encryptor = $container->get(EncryptorInterface::class);
+                /** @var MasterKey $keyProvider */
+                $keyProvider = $container->get(KeyProviderInterface::class);
 
-            /** @var MasterKey $keyProvider */
-            $keyProvider = $container->get(KeyProviderInterface::class);
-
-            return new AttributeColumnEncryptor($encryptor, $keyProvider, $config->encryption);
-        });
+                return new AttributeColumnEncryptor($encryptor, $keyProvider, $config->encryption);
+            });
+        }
 
         // Hydration
         $container->bind(EntityHydratorInterface::class, static function () use ($container): EntityHydratorInterface {
@@ -130,19 +136,21 @@ final readonly class OrmServiceProvider implements ServiceProviderInterface
             return new TenantColumnResolver($config);
         });
 
-        $container->bind(TenantInsertEnricher::class, static function () use ($container): ?TenantInsertEnricher {
-            if (!$container->has(Contracts\TenantScopeInterface::class)) {
-                return null;
-            }
+        // Tenant enrichment (optional). Bound ONLY when a TenantScope is available, so
+        // has(TenantInsertEnricher) is honest and AuditingPersister's guard can fall back
+        // to null in the single-tenant default. TenantScopeInterface is app-provided and
+        // must be bound before this provider registers to be picked up.
+        if ($container->has(Contracts\TenantScopeInterface::class)) {
+            $container->bind(TenantInsertEnricher::class, static function () use ($container): TenantInsertEnricher {
+                /** @var Contracts\TenantScopeInterface $tenantScope */
+                $tenantScope = $container->get(Contracts\TenantScopeInterface::class);
 
-            /** @var Contracts\TenantScopeInterface $tenantScope */
-            $tenantScope = $container->get(Contracts\TenantScopeInterface::class);
+                /** @var TenantColumnResolver $columnResolver */
+                $columnResolver = $container->get(TenantColumnResolver::class);
 
-            /** @var TenantColumnResolver $columnResolver */
-            $columnResolver = $container->get(TenantColumnResolver::class);
-
-            return new TenantInsertEnricher($tenantScope, $columnResolver);
-        });
+                return new TenantInsertEnricher($tenantScope, $columnResolver);
+            });
+        }
 
         // Encrypted column guard
         $container->bind(EncryptedColumnGuard::class, static function () use ($container): EncryptedColumnGuard {
