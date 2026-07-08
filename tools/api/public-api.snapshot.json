@@ -56058,6 +56058,7 @@
         "Pulsar\\Core\\Wiring\\ApiWiring",
         "Pulsar\\Core\\Wiring\\AssetWiring",
         "Pulsar\\Core\\Wiring\\AuthWiring",
+        "Pulsar\\Core\\Wiring\\BroadcastWiring",
         "Pulsar\\Core\\Wiring\\CacheWiring",
         "Pulsar\\Core\\Wiring\\CloudWiring",
         "Pulsar\\Core\\Wiring\\ConfigWiring",

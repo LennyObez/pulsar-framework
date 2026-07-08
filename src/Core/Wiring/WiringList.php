@@ -51,6 +51,7 @@ final readonly class WiringList
             new ThreatDetectionWiring(),
             new MailWiring(),
             new NotificationWiring(),
+            new BroadcastWiring(),
             new StorageWiring(),
             new CloudWiring(),
             new ServiceDiscoveryWiring(),
