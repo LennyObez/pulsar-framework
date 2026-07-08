@@ -15,12 +15,14 @@ use function sprintf;
  * Collects column, index, and foreign key definitions via a chainable
  * API and compiles them into a {@see TableDefinition}.
  *
- * Usage inside a migration:
+ * Usage inside a migration (entry point is {@see SchemaBuilder::for()}):
  * ```php
- * Schema::create($connection, 'users', function (Blueprint $table) {
+ * $schema = SchemaBuilder::for($connection);
+ *
+ * $schema->create('users', function (Blueprint $table) {
  *     $table->id();
  *     $table->string('name');
- *     $table->string('email')->unique();
+ *     $table->string('email', 191)->unique();
  *     $table->timestamps();
  * });
  * ```
