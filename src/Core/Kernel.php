@@ -470,7 +470,7 @@ final class Kernel implements KernelInterface
         // Set the dispatch handler once (cached by the pipeline for subsequent requests)
         if ($this->middleware->count() > 0 && !$this->dispatchHandlerSet) {
             $this->middleware->setHandler(new CallableRequestHandler(
-                fn(ServerRequestInterface $req): ResponseInterface => $this->dispatchRoute($req),
+                fn(ServerRequestInterface $req): ResponseInterface => $this->dispatchWithErrorHandling($req),
             ));
             $this->dispatchHandlerSet = true;
         }
@@ -483,22 +483,48 @@ final class Kernel implements KernelInterface
                 return $this->middleware->handle($request);
             }
 
-            // No global middleware: dispatch directly
+            // No global middleware: dispatch directly (still error-guarded).
+            return $this->dispatchWithErrorHandling($request);
+        } catch (Throwable $e) {
+            // Last-resort safety net: reached only when a global middleware — or
+            // the exception handler itself — throws. The route-dispatch path is
+            // already guarded inside dispatchWithErrorHandling(), so its errors
+            // are converted to a Response at the innermost handler and flow back
+            // out through the pipeline, picking up security headers like any 200.
+            return $this->handleException($e, $request);
+        }
+    }
+
+    /**
+     * Dispatch the route, converting any thrown error into a Response at the
+     * innermost pipeline handler so the error response flows back out through
+     * every global middleware — SecurityHeadersMiddleware in particular — and
+     * receives the same header set (CSP, HSTS, framing, COOP/COEP/CORP, etc.)
+     * as a 200. Without this, 404/405/500 responses were produced outside the
+     * pipeline and shipped with none of the application security headers.
+     */
+    private function dispatchWithErrorHandling(ServerRequestInterface $request): ResponseInterface
+    {
+        try {
             return $this->dispatchRoute($request);
         } catch (Throwable $e) {
-            if ($this->exceptionHandler !== null) {
-                return $this->exceptionHandler->handle($e, $request);
-            }
-
-            // F4.11: previously a missing exceptionHandler re-threw the
-            // exception, letting the SAPI emit a default error page
-            // with file paths + stack trace — a leak vector when an
-            // application boots before its production exception
-            // handler has been wired. Fall back to a minimal
-            // ProductionRenderer so the response is a generic 500
-            // with no internals exposed.
-            return $this->renderFallbackError($e, $request);
+            return $this->handleException($e, $request);
         }
+    }
+
+    /**
+     * Convert a Throwable into an error Response via the registered exception
+     * handler, falling back to the minimum-leak ProductionRenderer when none is
+     * wired (F4.11: never re-throw to the SAPI, which would leak file paths and
+     * a stack trace).
+     */
+    private function handleException(Throwable $e, ServerRequestInterface $request): ResponseInterface
+    {
+        if ($this->exceptionHandler !== null) {
+            return $this->exceptionHandler->handle($e, $request);
+        }
+
+        return $this->renderFallbackError($e, $request);
     }
 
     /**
