@@ -10,6 +10,7 @@ use LogicException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface as PsrMiddlewareInterface;
+use Psr\Log\LoggerInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Cache\FrameworkCache;
 use Pulsar\Config\AppConfig;
@@ -29,7 +30,6 @@ use Pulsar\Core\Boot\CachedRouteReconstructor;
 use Pulsar\Core\Boot\ExtensionDiscovery;
 use Pulsar\Core\Boot\ExtensionViewPathRegistrar;
 use Pulsar\Core\Boot\ProjectRouteLoader;
-use Pulsar\Core\Boot\RouteCollisionReporter;
 use Pulsar\Core\Controller\ControllerResolverInterface;
 use Pulsar\Core\Controller\ReflectionControllerResolver;
 use Pulsar\Core\Event\TerminateEvent;
@@ -55,6 +55,7 @@ use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Routing\Binding\ExplicitBinding;
 use Pulsar\Routing\MatchedRoute;
 use Pulsar\Routing\Route;
+use Pulsar\Routing\RouteCollisionReporter;
 use Pulsar\Routing\Router;
 use Pulsar\Routing\RouterInterface;
 use Pulsar\Routing\RoutingException;
@@ -361,7 +362,11 @@ final class Kernel implements KernelInterface
             $appConfig = $this->container->get(AppConfig::class);
             $debug = $appConfig->debug;
         }
-        RouteCollisionReporter::report($this->router, $this->container, $debug);
+        /** @var LoggerInterface|null $collisionLogger */
+        $collisionLogger = $this->container->has(LoggerInterface::class)
+            ? $this->container->get(LoggerInterface::class)
+            : null;
+        RouteCollisionReporter::report($this->router, $collisionLogger, $debug);
 
         $this->booted = true;
 

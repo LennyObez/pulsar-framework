@@ -2,16 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Tests\Unit\Core\Boot;
+namespace Pulsar\Tests\Unit\Routing;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use Pulsar\Container\ContainerInterface;
-use Pulsar\Core\Boot\RouteCollisionReporter;
 use Pulsar\Http\Method;
 use Pulsar\Routing\Route;
+use Pulsar\Routing\RouteCollisionReporter;
 use Pulsar\Routing\Router;
 use Pulsar\Routing\RoutingException;
 
@@ -37,11 +36,7 @@ final class RouteCollisionReporterTest extends TestCase
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::once())->method('warning');
 
-        $container = $this->createStub(ContainerInterface::class);
-        $container->method('has')->willReturn(true);
-        $container->method('get')->willReturn($logger);
-
-        RouteCollisionReporter::report($router, $container, false);
+        RouteCollisionReporter::report($router, $logger, false);
     }
 
     #[Test]
@@ -49,11 +44,10 @@ final class RouteCollisionReporterTest extends TestCase
     {
         $router = $this->routerWithCollision();
 
-        $container = $this->createStub(ContainerInterface::class);
-        $container->method('has')->willReturn(false);
-
+        // A null logger is a valid boot state (logging not yet wired); the reporter
+        // must still fail closed in debug mode.
         $this->expectException(RoutingException::class);
-        RouteCollisionReporter::report($router, $container, true);
+        RouteCollisionReporter::report($router, null, true);
     }
 
     #[Test]
@@ -62,12 +56,11 @@ final class RouteCollisionReporterTest extends TestCase
         $router = new Router();
         $router->get('/only', ['Controller', 'index'], 'only');
 
-        $container = $this->createMock(ContainerInterface::class);
-        $container->expects(self::never())->method('has');
-        $container->expects(self::never())->method('get');
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::never())->method('warning');
 
         // Must not throw even in debug mode when there are no collisions.
-        RouteCollisionReporter::report($router, $container, true);
+        RouteCollisionReporter::report($router, $logger, true);
         self::assertSame([], $router->collisions);
     }
 }

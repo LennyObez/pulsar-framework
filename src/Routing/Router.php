@@ -83,7 +83,7 @@ final class Router implements RouterInterface
      * Registration is first-registered-wins (framework > project > extension), so
      * a later route claiming an already-registered key is recorded here and
      * excluded from the match tables rather than silently overriding the winner.
-     * Read by the boot-time {@see \Pulsar\Core\Boot\RouteCollisionReporter}, which
+     * Read by the boot-time {@see \Pulsar\Routing\RouteCollisionReporter}, which
      * warns in production and fails closed in debug mode.
      *
      * @var list<RouteCollision>
