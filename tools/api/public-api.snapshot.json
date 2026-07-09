@@ -10111,7 +10111,8 @@
                         "int $cookieMaxPayloadSize",
                         "int $cookieReplayWindow",
                         "int $idleTimeout",
-                        "bool $cookieHostPrefix"
+                        "bool $cookieHostPrefix",
+                        "array $authenticatedMarkerKeys"
                     ],
                     "return": null,
                     "static": false
@@ -36706,6 +36707,13 @@
                     "return": "Pulsar\\Routing\\RoutingException",
                     "static": true
                 },
+                "routeCollisions": {
+                    "params": [
+                        "array $messages"
+                    ],
+                    "return": "Pulsar\\Routing\\RoutingException",
+                    "static": true
+                },
                 "routerLocked": {
                     "params": [],
                     "return": "Pulsar\\Routing\\RoutingException",
@@ -47156,6 +47164,11 @@
                     "return": "?string",
                     "static": false
                 },
+                "recoveredFromExpiry": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
                 "regenerate": {
                     "params": [
                         "bool $deleteOldSession"
@@ -47264,7 +47277,9 @@
                 "__construct": {
                     "params": [
                         "Pulsar\\Security\\Session\\SessionManager $sessionManager",
-                        "Pulsar\\Security\\Session\\Flash\\FlashBag $flashBag"
+                        "Pulsar\\Security\\Session\\Flash\\FlashBag $flashBag",
+                        "?Psr\\Log\\LoggerInterface $logger",
+                        "?Closure $errorRendererResolver"
                     ],
                     "return": null,
                     "static": false
@@ -56052,6 +56067,7 @@
         "Pulsar\\Core\\Boot\\ExtensionDiscovery",
         "Pulsar\\Core\\Boot\\ExtensionViewPathRegistrar",
         "Pulsar\\Core\\Boot\\ProjectRouteLoader",
+        "Pulsar\\Core\\Boot\\RouteCollisionReporter",
         "Pulsar\\Core\\Controller\\ReflectionControllerResolver",
         "Pulsar\\Core\\Kernel",
         "Pulsar\\Core\\Wiring\\AntiSpamWiring",
@@ -56308,6 +56324,7 @@
         "Pulsar\\Routing\\HostNormalizer",
         "Pulsar\\Routing\\Internal\\ConfigDomainResolver",
         "Pulsar\\Routing\\ResourceRegistrar",
+        "Pulsar\\Routing\\RouteCollision",
         "Pulsar\\Routing\\RouteUrlGenerator",
         "Pulsar\\Runtime\\Bridge\\PsrBridge",
         "Pulsar\\Runtime\\Fiber\\FiberScheduler",
