@@ -203,6 +203,59 @@ final class SessionAdversarialTest extends TestCase
             cookieParams: ['TEST_SESSION' => $sessionId],
         );
 
+        // Anonymous session (no authenticated identity): the hijack is thwarted by
+        // regeneration rather than a hard error. The attacker receives a fresh,
+        // rotated session and can never read the victim's data, so the session
+        // integrity property still holds without a user-facing 500.
+        $manager2->startWithRequest($request2);
+
+        self::assertTrue($manager2->recoveredFromExpiry());
+        self::assertNotSame($sessionId, $manager2->id(), 'Attacker must get a fresh, rotated session id.');
+        self::assertNull($manager2->get('secret'), 'Attacker must not access the victim session data.');
+    }
+
+    #[Test]
+    public function validatorHijackOnAuthenticatedSessionThrows(): void
+    {
+        // For an AUTHENTICATED session, a validator failure is strict: the session
+        // is destroyed and the exception forces re-authentication (PCI-DSS 8.2.8),
+        // rather than silently regenerating as an anonymous session would.
+        $validator = new RemoteAddressValidator(mode: 'strict');
+        $handler = new ArrayHandler();
+        $config = new SessionConfig(
+            cookieName: 'TEST_SESSION',
+            lifetime: 3600,
+            cookieHttpOnly: true,
+            cookieSecure: true,
+            cookieSameSite: 'Strict',
+            regenerateOnPrivilegeChange: true,
+            handler: 'array',
+            encryption: false,
+        );
+
+        $manager = new SessionManager($handler, $config, [$validator]);
+        $request1 = new ServerRequest(
+            method: 'GET',
+            uri: '/',
+            headers: ['User-Agent' => 'Chrome'],
+            serverParams: ['REMOTE_ADDR' => '192.168.1.100'],
+        );
+        $manager->startWithRequest($request1);
+        // Authenticated: the guard's identity key in session data is the source of
+        // truth for the strict (throw) path.
+        $manager->set('_pulsar_identity', ['id' => 'user-1']);
+        $manager->save();
+        $sessionId = $manager->id();
+
+        $manager2 = new SessionManager($handler, $config, [$validator]);
+        $request2 = new ServerRequest(
+            method: 'GET',
+            uri: '/',
+            headers: ['User-Agent' => 'Chrome'],
+            serverParams: ['REMOTE_ADDR' => '10.0.0.1'],
+            cookieParams: ['TEST_SESSION' => $sessionId],
+        );
+
         $this->expectException(SecurityException::class);
         $this->expectExceptionMessage('Session validation failed: remote_address');
 
@@ -233,6 +286,7 @@ final class SessionAdversarialTest extends TestCase
             serverParams: ['REMOTE_ADDR' => '127.0.0.1'],
         );
         $manager->startWithRequest($request1);
+        $manager->set('secret', 'sensitive');
         $manager->save();
         $sessionId = $manager->id();
 
@@ -246,10 +300,14 @@ final class SessionAdversarialTest extends TestCase
             cookieParams: ['TEST_SESSION' => $sessionId],
         );
 
-        $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('Session validation failed: user_agent');
-
+        // Anonymous session: the mismatched user-agent triggers regeneration, not a
+        // 500 — the attacker gets a fresh, empty session and cannot read the victim's
+        // data, so the hijack is still thwarted.
         $manager2->startWithRequest($request2);
+
+        self::assertTrue($manager2->recoveredFromExpiry());
+        self::assertNotSame($sessionId, $manager2->id());
+        self::assertNull($manager2->get('secret'), 'Attacker must not access the victim session data.');
     }
 
     #[Test]
