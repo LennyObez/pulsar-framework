@@ -160,6 +160,34 @@ final class SecurityHeadersMiddlewareTest extends TestCase
     }
 
     #[Test]
+    public function stripsFingerprintHeadersFromResponse(): void
+    {
+        // A leak header set by an upstream handler (or the SAPI, when it writes
+        // into the response) must never survive: it only helps an attacker match
+        // known CVEs (OWASP ASVS V14.4.1).
+        $config = new SecurityHeadersConfig(headers: []);
+        $middleware = new SecurityHeadersMiddleware($config);
+
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(
+            Response::text('OK')
+                ->withHeader('X-Powered-By', 'PHP/8.5.1')
+                ->withHeader('X-AspNet-Version', '4.0.30319')
+                ->withHeader('X-AspNetMvc-Version', '5.2')
+                ->withHeader('X-Runtime', '0.123456'),
+        );
+
+        $response = $middleware->process($this->createRequest(), $handler);
+
+        self::assertFalse($response->hasHeader('X-Powered-By'));
+        self::assertFalse($response->hasHeader('X-AspNet-Version'));
+        self::assertFalse($response->hasHeader('X-AspNetMvc-Version'));
+        self::assertFalse($response->hasHeader('X-Runtime'));
+        // Defensive headers are still layered on.
+        self::assertSame('nosniff', $response->getHeaderLine('X-Content-Type-Options'));
+    }
+
+    #[Test]
     public function hstsEmittedOnlyForHttpsRequests(): void
     {
         $config = new SecurityHeadersConfig(
