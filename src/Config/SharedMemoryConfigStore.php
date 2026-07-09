@@ -51,6 +51,91 @@ final class SharedMemoryConfigStore
      */
     private const int MAX_SIZE = 16 * 1024 * 1024;
 
+    /**
+     * Explicit allowlist of every class/enum reachable in a serialized
+     * ConfigRepository graph. Deliberately tight — NOT the broad
+     * {@see \Pulsar\Cache\CacheAllowedClasses} scan — so that even if the HMAC
+     * key is compromised, unserialize() can only ever instantiate this exact set
+     * of config value objects (defense in depth). Completeness is enforced by a
+     * reflection guard in the test suite: any config DTO that gains a new
+     * class/enum-typed property must be added here or the build fails, so this
+     * list can never silently drift out of sync with the config graph.
+     *
+     * @var list<class-string>
+     */
+    private const array DESERIALIZATION_ALLOWLIST = [
+        \Pulsar\Config\ConfigRepository::class,
+        \Pulsar\Config\AppConfig::class,
+        \Pulsar\Config\AppSignature::class,
+        \Pulsar\Config\EnvironmentMode::class,
+        \Pulsar\Config\DatabaseConfig::class,
+        \Pulsar\Config\ConnectionConfig::class,
+        \Pulsar\Database\Driver::class,
+        \Pulsar\Config\SecurityConfig::class,
+        \Pulsar\Config\AuthConfig::class,
+        \Pulsar\Config\TwoFactorConfig::class,
+        \Pulsar\Config\AuthorizationConfig::class,
+        \Pulsar\Config\SessionConfig::class,
+        \Pulsar\Config\CsrfConfig::class,
+        \Pulsar\Config\SecurityHeadersConfig::class,
+        \Pulsar\Config\CspConfig::class,
+        \Pulsar\Config\HstsConfig::class,
+        \Pulsar\Config\CrossOriginConfig::class,
+        \Pulsar\Config\PermissionsPolicyConfig::class,
+        \Pulsar\Config\NelConfig::class,
+        \Pulsar\Config\RateLimitConfig::class,
+        \Pulsar\Config\ObservabilityConfig::class,
+        \Pulsar\Config\LoggingChannelConfig::class,
+        \Pulsar\Config\TracingConfig::class,
+        \Pulsar\Config\MetricsConfig::class,
+        \Pulsar\Config\ErrorTrackingConfig::class,
+        \Pulsar\Config\AuditConfig::class,
+        \Pulsar\Config\IntegrityConfig::class,
+        \Pulsar\Config\IntegrityPolicyMode::class,
+        \Pulsar\Config\Environment::class,
+        \Pulsar\Database\Pool\PoolConfig::class,
+        \Pulsar\Database\Routing\ReadWriteConfig::class,
+        \Pulsar\Database\Failover\FailoverConfig::class,
+        \Pulsar\Database\Cache\QueryCacheConfig::class,
+        \Pulsar\Database\Monitor\MonitorConfig::class,
+        \Pulsar\Config\ResilienceConfig::class,
+        \Pulsar\Config\RetryConfig::class,
+        \Pulsar\Config\CircuitBreakerConfig::class,
+        \Pulsar\Config\HealthCheckConfig::class,
+        \Pulsar\Config\ApiConfig::class,
+        \Pulsar\Api\Resource\ComplexityLimits::class,
+        \Pulsar\Config\AuthGuardConfig::class,
+        \Pulsar\Config\BusinessProfileConfig::class,
+        \Pulsar\Config\CacheConfig::class,
+        \Pulsar\Config\CacheDriverType::class,
+        \Pulsar\Config\CachePoolConfig::class,
+        \Pulsar\Config\DeployConfig::class,
+        \Pulsar\Config\DiskConfig::class,
+        \Pulsar\Config\EventConfig::class,
+        \Pulsar\Config\FeatureFlagConfig::class,
+        \Pulsar\FeatureFlag\FlagStorageDriver::class,
+        \Pulsar\Config\I18nConfig::class,
+        \Pulsar\I18n\Locale\LocaleUrlStrategy::class,
+        \Pulsar\Config\MailConfig::class,
+        \Pulsar\Config\MailDriverType::class,
+        \Pulsar\Config\MailEncryptionPolicy::class,
+        \Pulsar\Mail\Webhook\MailWebhookConfig::class,
+        \Pulsar\Config\NotificationConfig::class,
+        \Pulsar\Config\QueueConfig::class,
+        \Pulsar\Config\QueueDriverType::class,
+        \Pulsar\Config\RuntimeConfig::class,
+        \Pulsar\Config\SchedulerConfig::class,
+        \Pulsar\Config\StorageConfig::class,
+        \Pulsar\Config\StorageDriver::class,
+        \Pulsar\Config\StormProtectionConfig::class,
+        \Pulsar\Config\SupervisorConfig::class,
+        \Pulsar\Config\TenancyConfig::class,
+        \Pulsar\Config\TenantDatabaseConfig::class,
+        \Pulsar\Tenancy\TenantDatabaseStrategy::class,
+        \Pulsar\Tenancy\TenantResolverStrategy::class,
+        \Pulsar\View\ViewConfig::class,
+    ];
+
     private readonly int $shmKey;
 
     /**
@@ -174,38 +259,11 @@ final class SharedMemoryConfigStore
 
             // HMAC verified: data was written by us with the correct key.
             // Restrict deserialization to the explicit set of config DTO classes
-            // that ConfigRepository contains. This prevents gadget-chain attacks
-            // even if the HMAC key is compromised (defense in depth).
+            // that a ConfigRepository graph contains (see DESERIALIZATION_ALLOWLIST).
+            // This prevents gadget-chain attacks even if the HMAC key is compromised
+            // (defense in depth).
             /** @var mixed $result */
-            $result = unserialize($serialized, ['allowed_classes' => [
-                \Pulsar\Config\ConfigRepository::class,
-                \Pulsar\Config\AppConfig::class,
-                \Pulsar\Config\AppSignature::class,
-                \Pulsar\Config\DatabaseConfig::class,
-                \Pulsar\Config\ConnectionConfig::class,
-                \Pulsar\Config\SecurityConfig::class,
-                \Pulsar\Config\SessionConfig::class,
-                \Pulsar\Config\CsrfConfig::class,
-                \Pulsar\Config\SecurityHeadersConfig::class,
-                \Pulsar\Config\RateLimitConfig::class,
-                \Pulsar\Config\ObservabilityConfig::class,
-                \Pulsar\Config\LoggingChannelConfig::class,
-                \Pulsar\Config\TracingConfig::class,
-                \Pulsar\Config\MetricsConfig::class,
-                \Pulsar\Config\ErrorTrackingConfig::class,
-                \Pulsar\Config\AuditConfig::class,
-                \Pulsar\Config\IntegrityConfig::class,
-                \Pulsar\Config\Environment::class,
-                \Pulsar\Database\Pool\PoolConfig::class,
-                \Pulsar\Database\Routing\ReadWriteConfig::class,
-                \Pulsar\Database\Failover\FailoverConfig::class,
-                \Pulsar\Database\Cache\QueryCacheConfig::class,
-                \Pulsar\Database\Monitor\MonitorConfig::class,
-                \Pulsar\Config\ResilienceConfig::class,
-                \Pulsar\Config\RetryConfig::class,
-                \Pulsar\Config\CircuitBreakerConfig::class,
-                \Pulsar\Config\HealthCheckConfig::class,
-            ]]);
+            $result = unserialize($serialized, ['allowed_classes' => self::DESERIALIZATION_ALLOWLIST]);
 
             return $result instanceof ConfigRepository ? $result : null;
         } finally {
