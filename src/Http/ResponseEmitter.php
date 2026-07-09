@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 use Pulsar\Http\Response\StreamedResponse;
 use RuntimeException;
 
+use function header_remove;
 use function is_string;
 use function sprintf;
 use function str_replace;
@@ -23,6 +24,19 @@ use function strtoupper;
 final class ResponseEmitter
 {
     /**
+     * Fingerprinting headers the SAPI registers before user code runs.
+     *
+     * PHP's `expose_php=On` registers `X-Powered-By: PHP/x.y.z` and the CLI
+     * built-in server registers a versioned `Server` value. Neither passes
+     * through the PSR-7 response, so neither can be stripped by a middleware —
+     * they must be removed here, at emit time. Advertising the runtime or its
+     * version only helps an attacker match known CVEs (OWASP ASVS V14.4.1).
+     *
+     * @var list<string>
+     */
+    private const array STRIPPED_SAPI_HEADERS = ['X-Powered-By', 'Server'];
+
+    /**
      * Emit the response to the client.
      *
      * Sends the status line and headers, then the body. Pass the request method
@@ -35,11 +49,30 @@ final class ResponseEmitter
     {
         $this->assertHeadersNotSent();
 
+        $this->stripSapiFingerprintHeaders();
         $this->emitStatusLine($response);
         $this->emitHeaders($response);
 
         if ($this->shouldEmitBody($requestMethod)) {
             $this->emitBody($response);
+        }
+    }
+
+    /**
+     * Drop SAPI-registered fingerprinting headers before emitting the response.
+     *
+     * Runs before {@see emitHeaders()} so that a value an application
+     * deliberately places on the PSR-7 response (e.g. a custom `Server`) is
+     * still emitted — only the SAPI defaults are removed. Proxy-injected
+     * headers (nginx/Apache `Server`) are out of PHP's reach and must be
+     * stripped at the web-server layer instead.
+     *
+     * @codeCoverageIgnore Calls header_remove(): requires live SAPI
+     */
+    private function stripSapiFingerprintHeaders(): void
+    {
+        foreach (self::STRIPPED_SAPI_HEADERS as $name) {
+            header_remove($name);
         }
     }
 

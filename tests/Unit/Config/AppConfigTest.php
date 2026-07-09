@@ -64,6 +64,32 @@ final class AppConfigTest extends TestCase
     }
 
     #[Test]
+    public function parsesSignatureBlock(): void
+    {
+        $env = Environment::load();
+
+        $config = AppConfig::fromArray([
+            'signature' => ['generator' => true, 'author' => 'Lenny Obez'],
+        ], $env);
+
+        self::assertTrue($config->signature->generator);
+        self::assertSame('Lenny Obez', $config->signature->author);
+    }
+
+    #[Test]
+    public function signatureDefaultsToDisabled(): void
+    {
+        $env = Environment::load();
+
+        $config = AppConfig::fromArray([], $env);
+
+        // Off by default: no framework signal is disclosed unless opted in.
+        self::assertFalse($config->signature->generator);
+        self::assertSame('', $config->signature->author);
+        self::assertSame('', $config->signature->toHtml());
+    }
+
+    #[Test]
     public function appliesDefaults(): void
     {
         $env = Environment::load();

@@ -129,6 +129,58 @@ final class ViewWiringTest extends TestCase
     }
 
     #[Test]
+    public function wireExposesOptInSignatureToEveryRender(): void
+    {
+        $container = new Container();
+
+        $configManager = $this->createConfigManager(
+            '"signature" => ["generator" => true, "author" => "Lenny Obez"], ',
+        );
+        $configManager->load();
+
+        new ViewWiring()->wire(
+            $container,
+            $configManager,
+            new MiddlewarePipeline($container),
+            new MiddlewareRegistry(),
+            new Router(),
+        );
+
+        /** @var ViewComposers $store */
+        $store = $container->get(ViewComposers::class);
+
+        // Applied to every render (composer('*')), including error pages.
+        $signature = $store->resolve('errors.404', [])['pulsarSignature'];
+        self::assertIsString($signature);
+        self::assertStringContainsString('<meta name="generator" content="Pulsar">', $signature);
+        self::assertStringContainsString('<meta name="author" content="Lenny Obez">', $signature);
+    }
+
+    #[Test]
+    public function wireExposesEmptySignatureWhenDisabled(): void
+    {
+        $container = new Container();
+
+        $configManager = $this->createConfigManager();
+        $configManager->load();
+
+        new ViewWiring()->wire(
+            $container,
+            $configManager,
+            new MiddlewarePipeline($container),
+            new MiddlewareRegistry(),
+            new Router(),
+        );
+
+        /** @var ViewComposers $store */
+        $store = $container->get(ViewComposers::class);
+
+        // Off by default: the variable is always defined so templates need no
+        // guard, but discloses nothing.
+        self::assertSame('', $store->resolve('errors.404', [])['pulsarSignature']);
+    }
+
+    #[Test]
     public function wireSkipsWhenNoConfig(): void
     {
         $container = new Container();
@@ -145,7 +197,7 @@ final class ViewWiringTest extends TestCase
         self::assertFalse($container->has(ViewConfig::class));
     }
 
-    private function createConfigManager(): ConfigManager
+    private function createConfigManager(string $appExtra = ''): ConfigManager
     {
         $configPath = sys_get_temp_dir() . '/pulsar_view_wiring_' . bin2hex(random_bytes(4));
         @mkdir($configPath, 0o755, true);
@@ -156,7 +208,7 @@ final class ViewWiringTest extends TestCase
         $templatePath = sys_get_temp_dir() . '/pulsar_view_templates_' . bin2hex(random_bytes(4));
         @mkdir($templatePath, 0o755, true);
 
-        file_put_contents($configPath . '/app.php', '<?php return ["name" => "Test", "env" => "testing", "debug" => false, "timezone" => "UTC", "locale" => "en"];');
+        file_put_contents($configPath . '/app.php', '<?php return ["name" => "Test", "env" => "testing", "debug" => false, "timezone" => "UTC", "locale" => "en", ' . $appExtra . '];');
         file_put_contents($configPath . '/observability.php', '<?php return ["logging" => ["default_channel" => "file", "level" => "debug", "channels" => []]];');
         file_put_contents($configPath . '/security.php', '<?php return ["session" => [], "csrf" => [], "headers" => [], "rate_limit" => []];');
         file_put_contents($configPath . '/view.php', '<?php return ["template_paths" => ["' . addslashes($templatePath) . '"], "cache_path" => "' . addslashes($cachePath) . '"];');

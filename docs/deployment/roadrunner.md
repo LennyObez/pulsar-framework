@@ -39,8 +39,13 @@ http:
     - gzip
     - headers
   headers:
+    # Do NOT advertise the framework or its version. An identifying header such
+    # as `X-Powered-By: Pulsar` or a versioned `Server` value is a fingerprinting
+    # leak (OWASP ASVS V14.4.1) that only helps an attacker match known CVEs.
+    # Pulsar strips `X-Powered-By` at emit time; strip the proxy `Server` header
+    # here too.
     response:
-      X-Powered-By: 'Pulsar'
+      Server: ''
   pool:
     num_workers: 8
     max_jobs: 10000

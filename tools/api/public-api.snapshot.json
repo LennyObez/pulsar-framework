@@ -8454,7 +8454,8 @@
                         "Pulsar\\Config\\EnvironmentMode $mode",
                         "bool $debug",
                         "string $timezone",
-                        "string $locale"
+                        "string $locale",
+                        "Pulsar\\Config\\AppSignature $signature"
                     ],
                     "return": null,
                     "static": false
@@ -8466,6 +8467,33 @@
                     ],
                     "return": "Pulsar\\Config\\AppConfig",
                     "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Config\\AppSignature": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "bool $generator",
+                        "string $author"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "fromArray": {
+                    "params": [
+                        "array $data"
+                    ],
+                    "return": "Pulsar\\Config\\AppSignature",
+                    "static": true
+                },
+                "toHtml": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
                 }
             },
             "constants": []

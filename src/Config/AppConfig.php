@@ -7,6 +7,8 @@ namespace Pulsar\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
+use function is_array;
+
 /**
  * Typed configuration DTO for `config/app.php`.
  *
@@ -22,6 +24,7 @@ final readonly class AppConfig
         public bool $debug,
         public string $timezone,
         public string $locale,
+        public AppSignature $signature = new AppSignature(),
     ) {}
 
     /**
@@ -33,6 +36,7 @@ final readonly class AppConfig
      *     debug?: bool|int|string,
      *     timezone?: string,
      *     locale?: string,
+     *     signature?: array{generator?: bool|int|string, author?: bool|int|string},
      * } $data Raw array from config/app.php
      */
     #[NoDiscard]
@@ -53,12 +57,18 @@ final readonly class AppConfig
             $debug = $mode->isDebugByDefault();
         }
 
+        /** @var mixed $rawSignature */
+        $rawSignature = $data['signature'] ?? [];
+        /** @var array{generator?: bool|int|string, author?: bool|int|string} $signatureData */
+        $signatureData = is_array($rawSignature) ? $rawSignature : [];
+
         return new self(
             name: $name,
             mode: $mode,
             debug: $debug,
             timezone: $data['timezone'] ?? 'UTC',
             locale: $data['locale'] ?? 'en',
+            signature: AppSignature::fromArray($signatureData),
         );
     }
 

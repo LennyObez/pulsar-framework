@@ -8,11 +8,27 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Http\ResponseEmitter;
+use ReflectionClassConstant;
 use ReflectionMethod;
 
 #[CoversClass(ResponseEmitter::class)]
 final class ResponseEmitterTest extends TestCase
 {
+    #[Test]
+    public function stripsSapiFingerprintHeaders(): void
+    {
+        // The `expose_php` X-Powered-By leak and the CLI server's versioned
+        // Server value are SAPI-injected — they never reach the PSR-7 response,
+        // so the emitter must drop them at emit time (OWASP ASVS V14.4.1).
+        $constant = new ReflectionClassConstant(ResponseEmitter::class, 'STRIPPED_SAPI_HEADERS');
+
+        /** @var list<string> $stripped */
+        $stripped = $constant->getValue();
+
+        self::assertContains('X-Powered-By', $stripped);
+        self::assertContains('Server', $stripped);
+    }
+
     #[Test]
     public function sanitizeHeaderValueStripsCrlf(): void
     {

@@ -51,6 +51,29 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Front-End Signature
+    |--------------------------------------------------------------------------
+    | Opt-in "Made with Pulsar" signal, rendered as <meta> tags in the <head>
+    | of framework-rendered pages and exposed to every template as the
+    | $pulsarSignature view variable.
+    |
+    | This is a FRONT-END signal, never an HTTP header. Pulsar deliberately does
+    | NOT emit an X-Powered-By / Server header: advertising the framework or its
+    | version to every client — including attackers — is a fingerprinting leak
+    | (OWASP ASVS V14.4.1), and those headers are stripped at the emitter. A
+    | <meta name="generator"> carries no version and is disabled by default, so
+    | nothing is disclosed unless you opt in here.
+    |
+    |   generator => emit <meta name="generator" content="Pulsar">
+    |   author    => emit <meta name="author" content="..."> (site owner; blank = omit)
+    */
+    'signature' => [
+        'generator' => false,
+        'author' => '',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Enabled Extensions
     |--------------------------------------------------------------------------
     |

@@ -53,15 +53,46 @@ enum EnvironmentMode: string
 
 Loaded from `config/app.php`. Fields:
 
-| Property   | Type              | Env Override | Default      |
-| ---------- | ----------------- | ------------ | ------------ |
-| `name`     | `string`          | `APP_NAME`   | `'Pulsar'`   |
-| `mode`     | `EnvironmentMode` | `APP_ENV`    | `Local`      |
-| `debug`    | `bool`            | `APP_DEBUG`  | Mode default |
-| `timezone` | `string`          | -            | `'UTC'`      |
-| `locale`   | `string`          | -            | `'en'`       |
+| Property    | Type              | Env Override | Default      |
+| ----------- | ----------------- | ------------ | ------------ |
+| `name`      | `string`          | `APP_NAME`   | `'Pulsar'`   |
+| `mode`      | `EnvironmentMode` | `APP_ENV`    | `Local`      |
+| `debug`     | `bool`            | `APP_DEBUG`  | Mode default |
+| `timezone`  | `string`          | -            | `'UTC'`      |
+| `locale`    | `string`          | -            | `'en'`       |
+| `signature` | `AppSignature`    | -            | disabled     |
 
 Debug resolution: `APP_DEBUG` env var > file `debug` key > `EnvironmentMode::isDebugByDefault()`.
+
+### AppSignature
+
+Loaded from the `signature` sub-array of `config/app.php`. An **opt-in, front-end**
+"Made with Pulsar" signal rendered as `<meta>` tags in the `<head>` and exposed to
+every template as the `$pulsarSignature` view variable.
+
+| Property    | Type     | Config key            | Default |
+| ----------- | -------- | --------------------- | ------- |
+| `generator` | `bool`   | `signature.generator` | `false` |
+| `author`    | `string` | `signature.author`    | `''`    |
+
+```php
+// config/app.php
+'signature' => [
+    'generator' => true,          // <meta name="generator" content="Pulsar">
+    'author' => 'Your Name',      // <meta name="author" content="Your Name">
+],
+```
+
+This is deliberately a front-end signal, **not** an HTTP header. Pulsar never emits
+an `X-Powered-By` or versioned `Server` header — advertising the framework or its
+version to every client is a fingerprinting leak (OWASP ASVS V14.4.1), and those
+headers are stripped at the emitter (`ResponseEmitter`) and in
+`SecurityHeadersMiddleware`. The `generator` tag carries **no version**, and the
+whole block is disabled by default, so nothing is disclosed unless you opt in.
+
+Render it in a custom layout with `<?php echo $pulsarSignature ?? ''; ?>` (the
+framework error layout already does). The framework-rendered pages also show a
+"Powered by Pulsar" footer via the `powered_by` translation string.
 
 ### ObservabilityConfig
 

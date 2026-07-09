@@ -36,6 +36,26 @@ use function substr;
 #[Api(since: '1.0.0')]
 final readonly class SecurityHeadersMiddleware implements MiddlewareInterface
 {
+    /**
+     * Fingerprinting headers stripped from every response.
+     *
+     * These advertise the framework, runtime, or its version and serve only to
+     * help an attacker match known CVEs (OWASP ASVS V14.4.1). None is ever
+     * legitimately set by a Pulsar application, so they are removed
+     * unconditionally. `Server` is intentionally NOT listed: an application may
+     * deliberately set it, and the SAPI/proxy default is handled elsewhere
+     * ({@see \Pulsar\Http\ResponseEmitter} for the PHP `expose_php` leak, the
+     * web-server config for a proxy-injected value).
+     *
+     * @var list<string>
+     */
+    private const array FINGERPRINT_HEADERS = [
+        'X-Powered-By',
+        'X-AspNet-Version',
+        'X-AspNetMvc-Version',
+        'X-Runtime',
+    ];
+
     /** @var list<string> */
     private array $trustedProxies;
 
@@ -55,6 +75,12 @@ final readonly class SecurityHeadersMiddleware implements MiddlewareInterface
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         $response = $handler->handle($request);
+
+        // Strip fingerprinting headers an upstream handler or the SAPI may have
+        // written into the response before layering the defensive headers on.
+        foreach (self::FINGERPRINT_HEADERS as $leak) {
+            $response = $response->withoutHeader($leak);
+        }
 
         foreach ($this->config->effectiveHeaders() as $name => $value) {
             $response = $response->withHeader($name, $value);

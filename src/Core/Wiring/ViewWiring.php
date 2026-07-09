@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Core\Wiring;
 
 use Pulsar\Api\Internal;
+use Pulsar\Config\AppConfig;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
@@ -80,6 +81,17 @@ final readonly class ViewWiring implements ServiceWiringInterface
         // render, including framework-internal renders such as error pages).
         $composers = new ViewComposers();
         $container->instance(ViewComposers::class, $composers);
+
+        // Expose the opt-in "Made with Pulsar" front-end signature to every
+        // render as $pulsarSignature (empty string when disabled). App layouts
+        // and the framework error layout echo it inside <head>. Registered as an
+        // app-lifetime composer('*') per the ViewComposers contract, since the
+        // value is a constant for the process. This is a front-end <meta> signal,
+        // never an HTTP header — see {@see \Pulsar\Config\AppSignature}.
+        $signatureHtml = $repository->has(AppConfig::class)
+            ? $repository->get(AppConfig::class)->signature->toHtml()
+            : '';
+        $composers->composer('*', static fn(): array => ['pulsarSignature' => $signatureHtml]);
 
         // Reset the per-request shared/composer state between requests. The
         // registry is built by RuntimeWiring, which runs before ViewWiring.

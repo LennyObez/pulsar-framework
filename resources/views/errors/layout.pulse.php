@@ -382,6 +382,7 @@
         }
     </style>
     @yield('extra-styles')
+    <?php echo $pulsarSignature ?? ''; ?>
 </head>
 <body>
     <a href="#error-content" class="sr-only" data-t="a11y.skip_to_content" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap">Skip to main content</a>
