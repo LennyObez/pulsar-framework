@@ -2,15 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Core\Boot;
+namespace Pulsar\Routing;
 
 use Closure;
 use Psr\Log\LoggerInterface;
 use Pulsar\Api\Internal;
-use Pulsar\Container\ContainerInterface;
-use Pulsar\Routing\RouteCollision;
-use Pulsar\Routing\Router;
-use Pulsar\Routing\RoutingException;
 
 use function get_debug_type;
 use function is_array;
@@ -27,8 +23,12 @@ use function sprintf;
  * mode, turning a silent wrong-page bug — an extension route shadowing a project
  * route — into a visible, actionable signal.
  *
- * @internal Boot-time only, invoked by {@see \Pulsar\Core\Kernel} after every
- *           route-registering step has run.
+ * Lives in the routing module because it interprets routing diagnostics, and
+ * takes the logger explicitly rather than reaching into the container: the boot
+ * orchestration in {@see \Pulsar\Core\Kernel} resolves the logger and invokes
+ * this after every route-registering step has run.
+ *
+ * @internal
  */
 #[Internal]
 final class RouteCollisionReporter
@@ -36,16 +36,11 @@ final class RouteCollisionReporter
     /**
      * @throws RoutingException When $debug is true and at least one collision exists.
      */
-    public static function report(Router $router, ContainerInterface $container, bool $debug): void
+    public static function report(Router $router, ?LoggerInterface $logger, bool $debug): void
     {
         if ($router->collisions === []) {
             return;
         }
-
-        /** @var LoggerInterface|null $logger */
-        $logger = $container->has(LoggerInterface::class)
-            ? $container->get(LoggerInterface::class)
-            : null;
 
         $messages = [];
 

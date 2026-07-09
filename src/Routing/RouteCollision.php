@@ -14,7 +14,7 @@ use Pulsar\Api\Internal;
  * project routes, which register before extensions, so the {@see $winner} is the
  * more specific/authoritative route and the later {@see $shadowed} route is
  * excluded from the match tables (it would otherwise silently override the
- * winner). The boot-time {@see \Pulsar\Core\Boot\RouteCollisionReporter} turns
+ * winner). The boot-time {@see \Pulsar\Routing\RouteCollisionReporter} turns
  * these records into a warning (or a hard failure in debug mode).
  *
  * @internal Diagnostic value object read by the collision reporter; not a
