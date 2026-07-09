@@ -172,7 +172,9 @@ final class SessionIntegrationTest extends TestCase
     public function fingerprintRejectsADifferentHeaderProfile(): void
     {
         // FR-9: once seeded, a replay from a different stable-header profile fails
-        // validation instead of silently passing.
+        // validation instead of silently passing. For an AUTHENTICATED session this is
+        // a hard failure (re-authentication required, SecurityException); an anonymous
+        // session is instead silently regenerated — covered in SessionAdversarialTest.
         $config = $this->arrayConfig();
         $handler = new ArrayHandler();
         $validator = new FingerprintValidator(new HmacService(), '0123456789abcdef0123456789abcdef');
@@ -184,6 +186,8 @@ final class SessionIntegrationTest extends TestCase
             headers: ['Accept-Language' => 'en-US'],
             serverParams: ['REMOTE_ADDR' => '127.0.0.1'],
         ));
+        // Mark the session authenticated so a fingerprint mismatch is a hard reject.
+        $manager->set('_pulsar_identity', ['id' => 'user-1']);
         $manager->save();
         $sessionId = $manager->id();
 
