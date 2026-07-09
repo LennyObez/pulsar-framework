@@ -108,5 +108,6 @@
   "Pulsar\\Storage\\FilesystemInterface": "F23.4: ServiceRestrictionMap enumerates restricted services as FQCN strings (security policy); the interface is a contract reference, not an import",
   "Pulsar\\Config\\ConfigRepositoryInterface": "F23.4: ServiceRestrictionMap enumerates restricted services as FQCN strings (security policy); the interface is a contract reference, not an import",
   "Pulsar\\Process\\ProcessManagerInterface": "F23.4: ServiceRestrictionMap enumerates restricted services as FQCN strings (security policy); the interface is a contract reference, not an import",
-  "Pulsar\\Observability\\Metrics\\MetricRegistryInterface": "F23.4: ServiceRestrictionMap enumerates restricted services as FQCN strings (security policy); the interface is a contract reference, not an import"
+  "Pulsar\\Observability\\Metrics\\MetricRegistryInterface": "F23.4: ServiceRestrictionMap enumerates restricted services as FQCN strings (security policy); the interface is a contract reference, not an import",
+  "Pulsar\\Routing\\RouteCollision": "Route-collision detection: RouteCollisionReporter (a boot component invoked by the Kernel composition root) reads Router's diagnostic collision records to warn in production and fail-closed in debug; RouteCollision is an internal-by-design value object, explicitly not application API"
 }
