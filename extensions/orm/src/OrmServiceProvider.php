@@ -41,15 +41,7 @@ final readonly class OrmServiceProvider implements ServiceProviderInterface
     {
         // Config
         $container->bind(OrmConfig::class, static function () use ($container): OrmConfig {
-            /** @var array<string, mixed> $configData */
-            $configData = [];
-
-            if ($container->has('config.orm')) {
-                /** @var array<string, mixed> $configData */
-                $configData = $container->get('config.orm');
-            }
-
-            return OrmConfig::fromArray($configData);
+            return self::loadOrmConfig($container);
         });
 
         // Metadata
@@ -81,8 +73,12 @@ final readonly class OrmServiceProvider implements ServiceProviderInterface
         // null. Binding an always-on factory that returns null makes the container reject
         // resolution ("Factory must return an object"), which used to make EntityManager
         // unresolvable in the default (encryption-disabled) configuration.
-        /** @var OrmConfig $ormConfig */
-        $ormConfig = $container->get(OrmConfig::class);
+        // Read the parsed ORM config from its raw input — the same source and code
+        // path the OrmConfig factory uses (loadOrmConfig) — instead of resolving
+        // OrmConfig from the container here. Resolving a service mid-registration,
+        // while this provider is still registering it, is fragile; the encryption
+        // decision only needs the parsed flag, and config.orm is an available input.
+        $ormConfig = self::loadOrmConfig($container);
 
         if (
             $ormConfig->encryption->enabled
@@ -219,6 +215,26 @@ final readonly class OrmServiceProvider implements ServiceProviderInterface
 
             return new EntityManager($connection, $registry, $hydrator, $persister, $txManager);
         });
+    }
+
+    /**
+     * Load and parse the ORM configuration from its raw container input.
+     *
+     * Single source of truth shared by the OrmConfig factory and the eager
+     * encryption-enablement check in register(), so the two can never diverge —
+     * the encryption decision always reflects exactly the config OrmConfig sees.
+     */
+    private static function loadOrmConfig(ContainerInterface $container): OrmConfig
+    {
+        /** @var array<string, mixed> $configData */
+        $configData = [];
+
+        if ($container->has('config.orm')) {
+            /** @var array<string, mixed> $configData */
+            $configData = $container->get('config.orm');
+        }
+
+        return OrmConfig::fromArray($configData);
     }
 
     public function provides(): array

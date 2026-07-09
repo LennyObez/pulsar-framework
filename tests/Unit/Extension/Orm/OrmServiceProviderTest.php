@@ -16,11 +16,13 @@ use Pulsar\Extension\Orm\Contracts\ColumnEncryptorInterface;
 use Pulsar\Extension\Orm\Contracts\EntityHydratorInterface;
 use Pulsar\Extension\Orm\Contracts\MetadataRegistryInterface;
 use Pulsar\Extension\Orm\Contracts\SchemaBuilderInterface;
+use Pulsar\Extension\Orm\Contracts\TenantScopeInterface;
 use Pulsar\Extension\Orm\Contracts\TransactionManagerInterface;
 use Pulsar\Extension\Orm\Features\Hydration\EntityDehydrator;
 use Pulsar\Extension\Orm\Features\Metadata\CachedMetadataRegistry;
 use Pulsar\Extension\Orm\Features\Metadata\MetadataCompiler;
 use Pulsar\Extension\Orm\Features\Persistence\AuditingPersister;
+use Pulsar\Extension\Orm\Features\Tenancy\TenantInsertEnricher;
 use Pulsar\Extension\Orm\Gateway\EntityManager;
 use Pulsar\Extension\Orm\OrmServiceProvider;
 use Pulsar\Security\Crypto\EncryptorInterface;
@@ -77,6 +79,22 @@ final class OrmServiceProviderTest extends TestCase
         $boundIds = [];
 
         $container = $this->createMock(ContainerInterface::class);
+
+        // Satisfy every optional-binding precondition so register() binds the full
+        // provides() surface: encryption enabled + crypto present (ColumnEncryptor)
+        // and a tenant scope (TenantInsertEnricher). With all capabilities active the
+        // bound set equals provides(), in the same order.
+        $container->method('has')->willReturnCallback(static fn(string $id): bool => match ($id) {
+            'config.orm',
+            EncryptorInterface::class,
+            KeyProviderInterface::class,
+            TenantScopeInterface::class => true,
+            default => false,
+        });
+        $container->method('get')->willReturnCallback(static fn(string $id): mixed => match ($id) {
+            'config.orm' => ['encryption' => ['enabled' => true]],
+            default => null,
+        });
         $container->expects(self::exactly(14))
             ->method('bind')
             ->willReturnCallback(function (string $id) use (&$boundIds): void {
@@ -86,6 +104,100 @@ final class OrmServiceProviderTest extends TestCase
         $provider->register($container);
 
         self::assertSame($provider->provides(), $boundIds);
+    }
+
+    #[Test]
+    public function registerSkipsColumnEncryptorWhenEncryptionDisabled(): void
+    {
+        $provider = new OrmServiceProvider();
+
+        /** @var list<string> $boundIds */
+        $boundIds = [];
+
+        // Crypto stack present, but encryption disabled in config: ColumnEncryptor
+        // must stay unbound so Container::has(ColumnEncryptor) answers honestly and
+        // the hydrator/dehydrator guards fall back to null (the default posture).
+        $container = $this->createStub(ContainerInterface::class);
+        $container->method('has')->willReturnCallback(static fn(string $id): bool => match ($id) {
+            EncryptorInterface::class, KeyProviderInterface::class => true,
+            default => false,
+        });
+        $container->method('get')->willReturn(null);
+        $container->method('bind')->willReturnCallback(function (string $id) use (&$boundIds): void {
+            $boundIds[] = $id;
+        });
+
+        $provider->register($container);
+
+        self::assertNotContains(ColumnEncryptorInterface::class, $boundIds);
+    }
+
+    #[Test]
+    public function registerBindsColumnEncryptorWhenEncryptionEnabledAndCryptoPresent(): void
+    {
+        $provider = new OrmServiceProvider();
+
+        /** @var list<string> $boundIds */
+        $boundIds = [];
+
+        $container = $this->createStub(ContainerInterface::class);
+        $container->method('has')->willReturnCallback(static fn(string $id): bool => match ($id) {
+            'config.orm', EncryptorInterface::class, KeyProviderInterface::class => true,
+            default => false,
+        });
+        $container->method('get')->willReturnCallback(static fn(string $id): mixed => match ($id) {
+            'config.orm' => ['encryption' => ['enabled' => true]],
+            default => null,
+        });
+        $container->method('bind')->willReturnCallback(function (string $id) use (&$boundIds): void {
+            $boundIds[] = $id;
+        });
+
+        $provider->register($container);
+
+        self::assertContains(ColumnEncryptorInterface::class, $boundIds);
+    }
+
+    #[Test]
+    public function registerSkipsTenantEnricherWithoutTenantScope(): void
+    {
+        $provider = new OrmServiceProvider();
+
+        /** @var list<string> $boundIds */
+        $boundIds = [];
+
+        $container = $this->createStub(ContainerInterface::class);
+        $container->method('has')->willReturn(false);
+        $container->method('get')->willReturn(null);
+        $container->method('bind')->willReturnCallback(function (string $id) use (&$boundIds): void {
+            $boundIds[] = $id;
+        });
+
+        $provider->register($container);
+
+        self::assertNotContains(TenantInsertEnricher::class, $boundIds);
+    }
+
+    #[Test]
+    public function registerBindsTenantEnricherWhenTenantScopePresent(): void
+    {
+        $provider = new OrmServiceProvider();
+
+        /** @var list<string> $boundIds */
+        $boundIds = [];
+
+        $container = $this->createStub(ContainerInterface::class);
+        $container->method('has')->willReturnCallback(
+            static fn(string $id): bool => $id === TenantScopeInterface::class,
+        );
+        $container->method('get')->willReturn(null);
+        $container->method('bind')->willReturnCallback(function (string $id) use (&$boundIds): void {
+            $boundIds[] = $id;
+        });
+
+        $provider->register($container);
+
+        self::assertContains(TenantInsertEnricher::class, $boundIds);
     }
 
     #[Test]
@@ -251,14 +363,12 @@ final class OrmServiceProviderTest extends TestCase
     }
 
     #[Test]
-    public function registerEncryptionReturnsNullWhenDisabled(): void
+    public function registerDoesNotBindColumnEncryptorWhenEnabledButCryptoDepsAreMissing(): void
     {
         $provider = new OrmServiceProvider();
 
         /** @var array<string, callable> $factories */
         $factories = [];
-
-        $config = OrmConfig::fromArray(['encryption' => ['enabled' => false]]);
 
         $container = $this->createStub(ContainerInterface::class);
         $container->method('bind')
@@ -266,55 +376,19 @@ final class OrmServiceProviderTest extends TestCase
                 $factories[$id] = $factory;
             });
 
-        $container->method('has')
-            ->willReturn(false);
-
-        $container->method('get')
-            ->willReturnCallback(static fn(string $id): mixed => match ($id) {
-                OrmConfig::class => $config,
-                default => null,
-            });
+        // Encryption enabled in config, but the crypto stack is absent.
+        $container->method('has')->willReturnCallback(static fn(string $id): bool => $id === 'config.orm');
+        $container->method('get')->willReturnCallback(static fn(string $id): mixed => match ($id) {
+            'config.orm' => ['encryption' => ['enabled' => true]],
+            default => null,
+        });
 
         $provider->register($container);
 
-        self::assertArrayHasKey(ColumnEncryptorInterface::class, $factories);
-
-        $result = $factories[ColumnEncryptorInterface::class]();
-        self::assertNull($result);
-    }
-
-    #[Test]
-    public function registerEncryptionReturnsNullWhenEnabledButCryptoDepsAreMissing(): void
-    {
-        $provider = new OrmServiceProvider();
-
-        /** @var array<string, callable> $factories */
-        $factories = [];
-
-        $config = OrmConfig::fromArray(['encryption' => ['enabled' => true]]);
-
-        $container = $this->createStub(ContainerInterface::class);
-        $container->method('bind')
-            ->willReturnCallback(function (string $id, callable $factory) use (&$factories): void {
-                $factories[$id] = $factory;
-            });
-
-        $container->method('has')
-            ->willReturnCallback(static fn(string $id): bool => match ($id) {
-                EncryptorInterface::class, KeyProviderInterface::class => false,
-                default => false,
-            });
-
-        $container->method('get')
-            ->willReturnCallback(static fn(string $id): mixed => match ($id) {
-                OrmConfig::class => $config,
-                default => null,
-            });
-
-        $provider->register($container);
-
-        $result = $factories[ColumnEncryptorInterface::class]();
-        self::assertNull($result);
+        // The guard requires enabled AND has(Encryptor) AND has(KeyProvider); with the
+        // crypto deps missing the ColumnEncryptor is not bound (rather than bound to a
+        // null-returning factory), keeping Container::has() honest.
+        self::assertArrayNotHasKey(ColumnEncryptorInterface::class, $factories);
     }
 
     #[Test]
