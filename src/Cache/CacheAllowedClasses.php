@@ -17,6 +17,7 @@ use ReflectionException;
 use Serializable;
 use SplFileInfo;
 
+use function array_fill_keys;
 use function array_filter;
 use function array_is_list;
 use function array_keys;
@@ -30,6 +31,7 @@ use function is_array;
 use function is_file;
 use function json_decode;
 use function json_encode;
+use function preg_match_all;
 use function sort;
 use function str_starts_with;
 
@@ -122,6 +124,92 @@ final class CacheAllowedClasses
     }
 
     /**
+     * Build the cache deserialization allowlist: the namespace {@see scan()}
+     * baseline unioned with the exact classes/enums present in each serialized
+     * blob that will be written to the cache.
+     *
+     * The scan is namespace-scoped (Config, Cache, Routing, Http), but a
+     * serialized ConfigRepository reaches config value objects that live in
+     * feature namespaces — Api, Database, Mail, Tenancy, View, ... — which no
+     * fixed namespace list reliably covers. Deriving the allowlist from the
+     * actual serialized data makes it exact and complete regardless of
+     * namespace, while the scan keeps a forward-compatible baseline for the
+     * other cached artifacts (routes, container hints).
+     *
+     * @return list<class-string>
+     *
+     * @throws CacheException When an ALWAYS_ALLOWED class or a serialized class
+     *                       fails the deserialization-safety check.
+     * @throws ReflectionException
+     */
+    #[NoDiscard]
+    public static function forCache(string $vendorPath, string $srcPath, string ...$serializedBlobs): array
+    {
+        $allowed = self::scan($vendorPath, $srcPath);
+        $seen = array_fill_keys($allowed, true);
+
+        foreach ($serializedBlobs as $blob) {
+            foreach (self::extractFromSerialized($blob) as $className) {
+                if (!isset($seen[$className])) {
+                    $seen[$className] = true;
+                    $allowed[] = $className;
+                }
+            }
+        }
+
+        sort($allowed);
+
+        return $allowed;
+    }
+
+    /**
+     * Extract the exact set of classes and backed enums that appear in a
+     * serialized string, verifying each is safe to unserialize.
+     *
+     * Namespace-agnostic and exact — the safe allowlist for what is actually
+     * cached is derived from the data itself rather than guessed from a fixed
+     * namespace list. Unknown classes (e.g. a stale serialization referencing a
+     * removed class) are skipped; a present-but-unsafe class fails closed.
+     *
+     * @return list<class-string>
+     *
+     * @throws CacheException If a serialized class implements Serializable or
+     *                       defines a dangerous magic method (a deserialization
+     *                       gadget must never be silently allow-listed).
+     */
+    #[NoDiscard]
+    public static function extractFromSerialized(string $serialized): array
+    {
+        // PHP emits O:len:"Class":... for objects and E:len:"Enum:case"; for
+        // backed enums; both stop the class token at the closing quote or the
+        // enum ':' separator.
+        preg_match_all('/(?:O|E):\d+:"([^":]++)/', $serialized, $matches);
+
+        $classes = [];
+        $seen = [];
+
+        foreach ($matches[1] as $className) {
+            if (isset($seen[$className])) {
+                continue;
+            }
+
+            $seen[$className] = true;
+
+            if (!class_exists($className) && !enum_exists($className)) {
+                continue;
+            }
+
+            self::assertSafeToDeserialize($className);
+            /** @var class-string $className */
+            $classes[] = $className;
+        }
+
+        sort($classes);
+
+        return $classes;
+    }
+
+    /**
      * Verify that an `ALWAYS_ALLOWED` class is still safe for cache
      * deserialization. Mirrors `isEligible()` minus the readonly /
      * backed-enum check — those classes are explicitly waived from
@@ -136,8 +224,23 @@ final class CacheAllowedClasses
             throw CacheException::alwaysAllowedClassMissing($className);
         }
 
-        // class_exists() above guarantees ReflectionClass cannot throw,
-        // so no try/catch is needed.
+        self::assertSafeToDeserialize($className);
+    }
+
+    /**
+     * Verify a class is safe to unserialize under an `allowed_classes` guard:
+     * it must neither implement Serializable (a custom unserialize() codepath)
+     * nor define a magic method that runs on every unserialize() even when the
+     * class is allow-listed. Fails closed — such a class is a deserialization
+     * gadget the moment it is added to any allowlist.
+     *
+     * @param class-string $className Caller guarantees the class/enum exists.
+     *
+     * @throws CacheException
+     */
+    private static function assertSafeToDeserialize(string $className): void
+    {
+        // Callers guarantee the class exists, so ReflectionClass cannot throw.
         /** @var ReflectionClass<object> $ref */
         $ref = new ReflectionClass($className);
 

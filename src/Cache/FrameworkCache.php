@@ -24,6 +24,7 @@ use function hash_equals;
 use function implode;
 use function is_dir;
 use function is_file;
+use function serialize;
 use function sort;
 
 use const DIRECTORY_SEPARATOR;
@@ -339,10 +340,15 @@ final class FrameworkCache implements FrameworkCacheInterface
         string $appEnv,
         bool $strict,
     ): array {
-        // Scan allowed classes
+        // Build the deserialization allowlist. The namespace scan cannot see
+        // config value objects in feature namespaces (Api, Database, Mail,
+        // Tenancy, View, ...), so derive the exact config-graph classes from the
+        // repository being cached and union them in; routes and container hints
+        // stay covered by the scan's Routing/Cache scope. serialize($repository)
+        // here matches exactly what ConfigCache::write() serializes.
         $vendorPath = $this->basePath . DIRECTORY_SEPARATOR . 'vendor';
         $srcPath = $this->basePath . DIRECTORY_SEPARATOR . 'src';
-        $allowedClasses = CacheAllowedClasses::scan($vendorPath, $srcPath);
+        $allowedClasses = CacheAllowedClasses::forCache($vendorPath, $srcPath, serialize($repository));
         CacheAllowedClasses::save($this->cachePath, $allowedClasses);
 
         // Compute allowed classes hash
