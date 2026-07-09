@@ -8,6 +8,10 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Cache\CacheAllowedClasses;
+use Pulsar\Cache\CacheException;
+use Pulsar\Config\ConfigManager;
+use Pulsar\Config\ConfigRepository;
+use Pulsar\View\ViewConfig;
 use ReflectionClass;
 use ReflectionMethod;
 
@@ -15,8 +19,10 @@ use function dirname;
 use function file_put_contents;
 use function json_encode;
 use function mkdir;
+use function serialize;
 use function sys_get_temp_dir;
 use function unlink;
+use function unserialize;
 
 use const JSON_THROW_ON_ERROR;
 
@@ -196,6 +202,57 @@ final class CacheAllowedClassesTest extends TestCase
         $result = $method->invoke(null, $ref);
 
         return $result;
+    }
+
+    #[Test]
+    public function forCacheCoversTheEntireSerializedConfigGraph(): void
+    {
+        // Regression guard for the namespace-scan gap: a serialized ConfigRepository
+        // reaches config value objects in feature namespaces (Api, Database, Mail,
+        // Tenancy, View, ...) that scan() does not cover. forCache() must derive
+        // those from the data so the file config cache round-trips losslessly
+        // instead of raising a __PHP_Incomplete_Class TypeError at boot.
+        $repoRoot = dirname(__DIR__, 3);
+
+        $manager = new ConfigManager($repoRoot . DIRECTORY_SEPARATOR . 'config');
+        $manager->load();
+        $serialized = serialize($manager->repository());
+
+        $allowed = CacheAllowedClasses::forCache(
+            $repoRoot . DIRECTORY_SEPARATOR . 'vendor',
+            $repoRoot . DIRECTORY_SEPARATOR . 'src',
+            $serialized,
+        );
+
+        // A feature-namespace config DTO the namespace scan alone would miss.
+        self::assertContains(ViewConfig::class, $allowed);
+
+        /** @var mixed $restored */
+        $restored = unserialize($serialized, ['allowed_classes' => $allowed]);
+        self::assertInstanceOf(ConfigRepository::class, $restored);
+        self::assertSame(
+            $serialized,
+            serialize($restored),
+            'The cache allowlist must round-trip the real config graph with no __PHP_Incomplete_Class loss.',
+        );
+    }
+
+    #[Test]
+    public function extractFromSerializedReturnsTheSafeClassesInTheBlob(): void
+    {
+        $classes = CacheAllowedClasses::extractFromSerialized(serialize(new SafeFixture()));
+
+        self::assertContains(SafeFixture::class, $classes);
+    }
+
+    #[Test]
+    public function extractFromSerializedRejectsAGadgetClass(): void
+    {
+        // A serialized class carrying a dangerous magic method must never be
+        // silently allow-listed — extractFromSerialized fails closed.
+        $this->expectException(CacheException::class);
+
+        (void) CacheAllowedClasses::extractFromSerialized(serialize(new DeclaresWakeupFixture()));
     }
 }
 
