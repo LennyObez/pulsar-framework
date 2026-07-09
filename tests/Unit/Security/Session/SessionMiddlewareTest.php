@@ -236,7 +236,6 @@ final class SessionMiddlewareTest extends TestCase
             $data['_pulsar_identity'] = ['id' => 'user-1'];
         }
 
-        $handler->open('', 'TEST_SESSION');
         $handler->write($sessionId, json_encode(
             ['data' => $data, '_pulsar_meta' => $metadata->toArray()],
             JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE,
