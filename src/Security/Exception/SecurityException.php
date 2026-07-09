@@ -20,6 +20,19 @@ use function sprintf;
 final class SecurityException extends RuntimeException
 {
     /**
+     * Exception code carried by {@see sessionIdleExpired}. The session middleware
+     * treats this as a recoverable, non-strict failure (rotate to a fresh session)
+     * rather than surfacing a 500. See {@see \Pulsar\Security\Session\SessionMiddleware}.
+     */
+    public const int CODE_SESSION_IDLE_EXPIRED = 1001;
+
+    /**
+     * Exception code carried by {@see sessionValidationFailed} (e.g. a changed
+     * User-Agent fingerprint). Recovered from by default, like the idle-timeout code.
+     */
+    public const int CODE_SESSION_VALIDATION_FAILED = 1002;
+
+    /**
      * CSRF token validation failed.
      */
     #[NoDiscard]
@@ -141,7 +154,7 @@ final class SecurityException extends RuntimeException
     #[NoDiscard]
     public static function sessionValidationFailed(string $validator): self
     {
-        return new self(sprintf('Session validation failed: %s', $validator));
+        return new self(sprintf('Session validation failed: %s', $validator), self::CODE_SESSION_VALIDATION_FAILED);
     }
 
     /**
@@ -186,7 +199,10 @@ final class SecurityException extends RuntimeException
     #[NoDiscard]
     public static function sessionIdleExpired(int $idleSeconds, int $maxIdle): self
     {
-        return new self(sprintf('Session idle timeout exceeded: %d seconds idle, maximum is %d seconds', $idleSeconds, $maxIdle));
+        return new self(
+            sprintf('Session idle timeout exceeded: %d seconds idle, maximum is %d seconds', $idleSeconds, $maxIdle),
+            self::CODE_SESSION_IDLE_EXPIRED,
+        );
     }
 
     /**

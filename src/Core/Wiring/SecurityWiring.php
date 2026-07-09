@@ -321,8 +321,27 @@ final readonly class SecurityWiring implements ServiceWiringInterface
         $flashBag = new FlashBag($sessionManager);
         $container->instance(FlashBag::class, $flashBag);
 
+        // Lazy resolver: the error-page renderer is wired by ExceptionHandlerWiring,
+        // which runs after this wiring, so the session and CSRF middleware resolve it
+        // at request time to theme their 4xx pages (mirrors ExceptionHandlerWiring's
+        // own templateEngineResolver pattern).
+        $errorRendererResolver = static function () use ($container): ?ExceptionRendererInterface {
+            if (!$container->has(ExceptionRendererInterface::class)) {
+                return null;
+            }
+
+            /** @var ExceptionRendererInterface $renderer */
+            $renderer = $container->get(ExceptionRendererInterface::class);
+
+            return $renderer;
+        };
+
         // Session middleware
-        $sessionMiddleware = new SessionMiddleware($sessionManager, $flashBag);
+        /** @var LoggerInterface|null $sessionLogger */
+        $sessionLogger = $container->has(LoggerInterface::class)
+            ? $container->get(LoggerInterface::class)
+            : null;
+        $sessionMiddleware = new SessionMiddleware($sessionManager, $flashBag, $sessionLogger, $errorRendererResolver);
         $container->instance(SessionMiddleware::class, $sessionMiddleware);
 
         // CSRF (uses SessionManager which implements SessionInterface)
@@ -335,21 +354,6 @@ final readonly class SecurityWiring implements ServiceWiringInterface
         $csrfTokenManager = new CsrfTokenManager($sessionManager, $securityConfig->csrf, $csrfRandomizer);
         $container->instance(CsrfTokenManager::class, $csrfTokenManager);
         $container->instance(CsrfTokenManagerInterface::class, $csrfTokenManager);
-
-        // Lazy resolver: the error-page renderer is wired by ExceptionHandlerWiring,
-        // which runs after this wiring, so the CSRF middleware resolves it at
-        // request time to theme its 403 page (mirrors ExceptionHandlerWiring's
-        // own templateEngineResolver pattern).
-        $errorRendererResolver = static function () use ($container): ?ExceptionRendererInterface {
-            if (!$container->has(ExceptionRendererInterface::class)) {
-                return null;
-            }
-
-            /** @var ExceptionRendererInterface $renderer */
-            $renderer = $container->get(ExceptionRendererInterface::class);
-
-            return $renderer;
-        };
 
         $csrfMiddleware = new CsrfMiddleware($csrfTokenManager, $securityConfig->csrf, $errorRendererResolver);
         $container->instance(CsrfMiddleware::class, $csrfMiddleware);

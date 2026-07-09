@@ -34,13 +34,14 @@ final class SessionIdleTimeoutTest extends TestCase
     }
 
     #[Test]
-    public function sessionIsDestroyedWhenIdleTimeoutExceeded(): void
+    public function anonymousIdleExpiredSessionIsSilentlyRegenerated(): void
     {
         $config = $this->makeConfig(idleTimeout: 300); // 5 minutes
 
-        // Create an existing session with old lastActivity
+        // Anonymous session (no userId) idle for 10 minutes: the request must
+        // survive with a fresh session rather than surfacing a 500.
         $sessionId = $this->seedSession(
-            lastActivity: time() - 600, // 10 minutes ago
+            lastActivity: time() - 600,
         );
 
         $manager = new SessionManager($this->handler, $config);
@@ -53,10 +54,43 @@ final class SessionIdleTimeoutTest extends TestCase
             cookieParams: ['TEST_SESSION' => $sessionId],
         );
 
-        $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('Session idle timeout exceeded');
+        $manager->startWithRequest($request); // must NOT throw
 
-        $manager->startWithRequest($request);
+        self::assertTrue($manager->isStarted());
+        self::assertTrue($manager->recoveredFromExpiry());
+        self::assertNotSame($sessionId, $manager->id(), 'A fresh, rotated session id must be minted, not the expired one.');
+        self::assertNull($manager->get('test-key'), 'The expired session data must be discarded.');
+    }
+
+    #[Test]
+    public function authenticatedIdleExpiredSessionThrows(): void
+    {
+        $config = $this->makeConfig(idleTimeout: 300);
+
+        // Authenticated session: forcing re-authentication is the point of
+        // PCI-DSS 8.2.8, so the strict throw is preserved.
+        $sessionId = $this->seedSession(
+            lastActivity: time() - 600,
+            authenticated: true,
+        );
+
+        $manager = new SessionManager($this->handler, $config);
+
+        $request = new ServerRequest(
+            method: 'GET',
+            uri: '/',
+            headers: ['User-Agent' => 'TestAgent'],
+            serverParams: ['REMOTE_ADDR' => '127.0.0.1'],
+            cookieParams: ['TEST_SESSION' => $sessionId],
+        );
+
+        try {
+            $manager->startWithRequest($request);
+            self::fail('An authenticated idle-expired session must throw.');
+        } catch (SecurityException $e) {
+            self::assertSame(SecurityException::CODE_SESSION_IDLE_EXPIRED, $e->getCode());
+            self::assertStringContainsString('Session idle timeout exceeded', $e->getMessage());
+        }
     }
 
     #[Test]
@@ -221,7 +255,7 @@ final class SessionIdleTimeoutTest extends TestCase
     /**
      * Seed a session with specific metadata into the handler and return its ID.
      */
-    private function seedSession(int $lastActivity): string
+    private function seedSession(int $lastActivity, bool $authenticated = false): string
     {
         $sessionId = bin2hex(random_bytes(32));
 
@@ -232,8 +266,16 @@ final class SessionIdleTimeoutTest extends TestCase
             userAgent: 'TestAgent',
         );
 
+        $data = ['test-key' => 'test-value'];
+
+        if ($authenticated) {
+            // Authenticated sessions carry the guard's identity key in session data —
+            // the single source of truth the PCI-DSS 8.2.8 idle gate keys off.
+            $data['_pulsar_identity'] = ['id' => 'user-123'];
+        }
+
         $stored = [
-            'data' => ['test-key' => 'test-value'],
+            'data' => $data,
             '_pulsar_meta' => $metadata->toArray(),
         ];
 

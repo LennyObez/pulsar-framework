@@ -294,10 +294,15 @@ final class SessionManagerTest extends TestCase
         );
 
         $manager->startWithRequest($request1);
+        // Authenticated session (identity in session data, the gate's source of
+        // truth): a validator failure must force re-authentication (PCI-DSS 8.2.8),
+        // so it still throws rather than silently regenerating (the anonymous
+        // regeneration path is covered in SessionAdversarialTest).
+        $manager->set('_pulsar_identity', ['id' => 'user-42']);
         $manager->save();
         $sessionId = $manager->id();
 
-        // Second request: different UA should fail
+        // Second request: a different UA on the authenticated session must fail
         $manager2 = new SessionManager($this->handler, $this->config, [$validator]);
         $request2 = new ServerRequest(
             method: 'GET',

@@ -13,8 +13,11 @@ use Pulsar\Auth\Guard\SessionGuard;
 use Pulsar\Auth\Identity\AnonymousIdentity;
 use Pulsar\Auth\Identity\Identity;
 use Pulsar\Auth\Identity\TwoFactorStatus;
+use Pulsar\Config\SessionConfig;
 use Pulsar\Http\Message\ServerRequest;
+use Pulsar\Security\Session\Handler\ArrayHandler;
 use Pulsar\Security\Session\SessionInterface;
+use Pulsar\Security\Session\SessionManager;
 
 #[CoversClass(SessionGuard::class)]
 final class SessionGuardTest extends TestCase
@@ -123,6 +126,50 @@ final class SessionGuardTest extends TestCase
 
         $guard = new SessionGuard($session);
         $guard->logout();
+    }
+
+    #[Test]
+    public function loginWritesAnIdentityKeyRecognisedByTheSessionAuthGate(): void
+    {
+        // Desync guard: the PCI-DSS 8.2.8 idle gate classifies a session as
+        // authenticated from SessionConfig::authenticatedMarkerKeys. Prove that a
+        // real guard login writes a session-data key those markers recognise, so the
+        // gate (SessionManager) and the guard cannot silently drift apart.
+        $config = new SessionConfig(
+            cookieName: 'TEST_SESSION',
+            lifetime: 3600,
+            cookieHttpOnly: true,
+            cookieSecure: true,
+            cookieSameSite: 'Strict',
+            regenerateOnPrivilegeChange: true,
+            handler: 'array',
+            encryption: false,
+        );
+        $session = new SessionManager(new ArrayHandler(), $config);
+        $session->start();
+
+        $identity = new Identity(
+            id: 'user-42',
+            displayName: 'Auth User',
+            roles: ['user'],
+            twoFactorStatus: TwoFactorStatus::Disabled,
+            attributes: [],
+        );
+
+        new SessionGuard($session)->login($identity);
+
+        $recognised = false;
+        foreach ($config->authenticatedMarkerKeys as $key) {
+            if ($session->get($key) !== null) {
+                $recognised = true;
+                break;
+            }
+        }
+
+        self::assertTrue(
+            $recognised,
+            'After a guard login the session must carry a data key that SessionConfig recognises as authenticated (PCI-DSS 8.2.8 gate source of truth).',
+        );
     }
 
     #[Test]

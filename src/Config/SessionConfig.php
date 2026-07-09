@@ -23,6 +23,11 @@ readonly class SessionConfig
      *     remote_address?: array{enabled?: bool, mode?: string, ipv4_mask?: int, ipv6_mask?: int},
      *     fingerprint?: array{enabled?: bool, attributes?: list<string>},
      * } $validators
+     * @param list<string> $authenticatedMarkerKeys Session-data keys whose presence marks
+     *     an authenticated session. The session subsystem reads these to force
+     *     re-authentication on idle-timeout/validator failure (PCI-DSS 8.2.8) instead of
+     *     silently regenerating. Defaults to the framework guard's `_pulsar_identity`
+     *     (mirrors `Pulsar\Auth\Guard\SessionGuard`); custom guards should add their key.
      */
     public function __construct(
         public string $cookieName,
@@ -44,6 +49,7 @@ readonly class SessionConfig
         public int $cookieReplayWindow = 86400,
         public int $idleTimeout = 900,
         public bool $cookieHostPrefix = false,
+        public array $authenticatedMarkerKeys = ['_pulsar_identity'],
     ) {}
 
     /**
@@ -91,6 +97,7 @@ readonly class SessionConfig
      *     cookie_replay_window?: int,
      *     idle_timeout?: int,
      *     cookie_host_prefix?: bool|int|string,
+     *     authenticated_marker_keys?: list<string>,
      * } $data Raw `session` sub-array from config/security.php
      */
     #[NoDiscard]
@@ -130,6 +137,7 @@ readonly class SessionConfig
             cookieReplayWindow: $data['cookie_replay_window'] ?? 86400,
             idleTimeout: $data['idle_timeout'] ?? 900,
             cookieHostPrefix: (bool) ($data['cookie_host_prefix'] ?? false),
+            authenticatedMarkerKeys: $data['authenticated_marker_keys'] ?? ['_pulsar_identity'],
         );
 
         // The `__Host-` cookie prefix is only honoured by browsers when the cookie

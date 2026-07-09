@@ -66,6 +66,13 @@ final class SessionManager implements SessionInterface
      */
     private bool $cookieCleared = false;
 
+    /**
+     * Whether {@see startWithRequest()} transparently regenerated an anonymous
+     * session after an idle-timeout or validator failure this request. Reset at
+     * the start of every startWithRequest() call and read by {@see SessionMiddleware}.
+     */
+    private bool $recoveredFromExpiry = false;
+
     /** @var array<string, mixed> */
     private array $data = [];
 
@@ -134,10 +141,19 @@ final class SessionManager implements SessionInterface
     /**
      * Start the session with request context for metadata and validation.
      *
-     * @throws SecurityException If session validation fails
+     * On an anonymous session that has idled past the timeout or failed a
+     * validator, the session is transparently regenerated (fresh id, empty data)
+     * and the request continues; only an authenticated session throws, so the
+     * caller can force re-authentication (the PCI-DSS 8.2.8 rationale applies to
+     * authenticated identity, not to a CSRF-only anonymous cookie). See
+     * {@see recoveredFromExpiry()}.
+     *
+     * @throws SecurityException If an authenticated session fails idle-timeout or a validator.
      */
     public function startWithRequest(ServerRequestInterface $request): void
     {
+        $this->recoveredFromExpiry = false;
+
         if ($this->started) {
             return;
         }
@@ -209,8 +225,9 @@ final class SessionManager implements SessionInterface
                 $idleSeconds = time() - $this->metadata->lastActivity;
 
                 if ($idleSeconds > $idleTimeout) {
-                    $this->destroy();
-                    throw SecurityException::sessionIdleExpired($idleSeconds, $idleTimeout);
+                    $this->recoverOrFail($request, SecurityException::sessionIdleExpired($idleSeconds, $idleTimeout));
+
+                    return;
                 }
             }
 
@@ -222,12 +239,94 @@ final class SessionManager implements SessionInterface
 
             foreach ($this->validators as $validator) {
                 if (!$validator->validate($this->metadata, $request)) {
-                    $this->destroy();
-                    throw SecurityException::sessionValidationFailed($validator->getName());
+                    $this->recoverOrFail($request, SecurityException::sessionValidationFailed($validator->getName()));
+
+                    return;
                 }
             }
         }
 
+        $this->started = true;
+    }
+
+    /**
+     * Whether the last {@see startWithRequest()} transparently regenerated the
+     * session after an anonymous idle-timeout or validator failure. The session
+     * middleware reads this to emit an info log line and a `session.expired`
+     * request attribute; the request itself continues normally.
+     */
+    #[NoDiscard]
+    public function recoveredFromExpiry(): bool
+    {
+        return $this->recoveredFromExpiry;
+    }
+
+    /**
+     * An existing session failed idle-timeout or a validator. Destroy it, then
+     * decide by identity: an anonymous session (CSRF-only, no security value in
+     * failing the request) is transparently replaced by a fresh session so the
+     * request continues, while an authenticated session throws so the caller can
+     * force re-authentication (PCI-DSS 8.2.8, which targets authenticated identity).
+     *
+     * @throws SecurityException When the failed session carried an authenticated identity.
+     */
+    private function recoverOrFail(ServerRequestInterface $request, SecurityException $failure): void
+    {
+        $wasAuthenticated = $this->carriesAuthenticatedIdentity();
+
+        $this->destroy();
+
+        if ($wasAuthenticated) {
+            throw $failure;
+        }
+
+        $this->beginFreshSession($request);
+        $this->recoveredFromExpiry = true;
+    }
+
+    /**
+     * Whether the loaded session carries an authenticated identity, using the same
+     * marker key(s) the authentication layer writes into session data
+     * ({@see \Pulsar\Config\SessionConfig::$authenticatedMarkerKeys}, defaulting to
+     * the framework guard's `_pulsar_identity`). Keying the strict idle/validator
+     * path off the authoritative session-data signal — the one SessionGuard,
+     * SecurityContext, and AuthManager all read — rather than a parallel field means
+     * the PCI-DSS 8.2.8 force-re-authentication gate cannot fail open by desyncing.
+     */
+    private function carriesAuthenticatedIdentity(): bool
+    {
+        foreach ($this->config->authenticatedMarkerKeys as $key) {
+            if (($this->data[$key] ?? null) !== null) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Start a brand-new anonymous session for the current request with a freshly
+     * generated id (never reusing the expired cookie's id) and validator state
+     * seeded from the request, so the replacement session validates cleanly on the
+     * next request instead of failing again. The handler is already open at this
+     * point (from {@see startWithRequest()}).
+     */
+    private function beginFreshSession(ServerRequestInterface $request): void
+    {
+        $this->data = [];
+        $this->metadata = null;
+        $this->cookieCleared = false;
+        $this->sessionId = $this->generateId();
+        $this->idIsNew = true;
+
+        $metadata = new SessionMetadata(
+            createdAt: time(),
+            lastActivity: time(),
+            ipAddress: $this->resolveClientIp($request),
+            userAgent: $request->getHeaderLine('User-Agent'),
+        );
+
+        $this->metadata = $this->seedValidatorState($metadata, $request);
         $this->started = true;
     }
 
