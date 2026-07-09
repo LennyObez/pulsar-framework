@@ -180,6 +180,7 @@ final class SharedMemoryConfigStore
             $result = unserialize($serialized, ['allowed_classes' => [
                 \Pulsar\Config\ConfigRepository::class,
                 \Pulsar\Config\AppConfig::class,
+                \Pulsar\Config\AppSignature::class,
                 \Pulsar\Config\DatabaseConfig::class,
                 \Pulsar\Config\ConnectionConfig::class,
                 \Pulsar\Config\SecurityConfig::class,
