@@ -125,6 +125,53 @@ In your layout template:
 <link rel="stylesheet" href="/assets/css/theme/main.css" />
 ```
 
+## Progressive enhancement without inline scripts
+
+The strongest, most cacheable script policy is `script-src 'self'` — no inline,
+no hash, no nonce. The one thing that classically blocks it is the inline
+"flip the page into a JS-enabled state before first paint" bootstrap
+(`<script>document.documentElement.classList.add('js')</script>`), which forces
+a `script-src 'sha256-…'` into every response.
+
+Pulsar ships that mechanism as **CSS + an external script**, so no inline code
+is needed. Reveal-on-scroll elements are marked `data-pulsar-reveal`:
+
+```html
+<head>
+  <link rel="stylesheet" href="/ui/css/progressive-enhancement.css" />
+</head>
+<body>
+  <section data-pulsar-reveal>…</section>
+  <script src="/ui/js/reveal.js" defer></script>
+</body>
+```
+
+- `progressive-enhancement.css` hides `[data-pulsar-reveal]` **only** inside
+  `@media (scripting: enabled)`, which matches from first paint when JS is on —
+  so there is no flash, and no `js` / `no-js` class is needed.
+- With JS off (or the `scripting` feature unsupported) the elements keep their
+  default visible state, so the no-JS experience is correct.
+- `reveal.js` (served same-origin at `/ui/js/reveal.js`) adds `.is-revealed` via
+  an `IntersectionObserver`. If it never loads, a CSS fail-safe animation reveals
+  the content anyway — nothing is ever permanently hidden.
+
+> **Why no `<noscript>` stylesheet?** Because the hiding rule lives _inside_
+> `@media (scripting: enabled)`, an engine that does not support the `scripting`
+> feature simply never matches it and leaves the elements visible — so there is
+> no state to correct. Scoping the hide inside the media query makes the classic
+> `<noscript><link rel="stylesheet">` fallback unnecessary, which is the stronger
+> result: one fewer request and no failure mode where content is hidden with no
+> way back.
+
+Because none of this is inline, the recommended default CSP is simply:
+
+```
+Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'
+```
+
+Hashes and nonces become **opt-in**, only for hosts that deliberately add their
+own inline scripts. See [security-baseline.md](security-baseline.md).
+
 ## Helper functions
 
 Pulsar provides path helpers for building asset references in PHP code:
