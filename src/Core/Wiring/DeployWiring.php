@@ -16,6 +16,7 @@ use Pulsar\Container\ContainerInterface;
 use Pulsar\Deploy\Check\AuditLoggerReadinessCheck;
 use Pulsar\Deploy\Check\CacheSettingsCheck;
 use Pulsar\Deploy\Check\DebugModeCheck;
+use Pulsar\Deploy\Check\DependencyIntegrityCheck;
 use Pulsar\Deploy\Check\FilesystemScanCheck;
 use Pulsar\Deploy\Check\HealthEndpointCheck;
 use Pulsar\Deploy\Check\Http3ReadinessCheck;
@@ -29,16 +30,20 @@ use Pulsar\Deploy\Check\SecurityHeadersReadinessCheck;
 use Pulsar\Deploy\Check\SeverityOverrideCheck;
 use Pulsar\Deploy\Check\SkippedCheck;
 use Pulsar\Deploy\Check\TrustedProxyCheck;
+use Pulsar\Deploy\Check\TwoFactorRateLimiterReadinessCheck;
 use Pulsar\Deploy\CheckSeverity;
 use Pulsar\Deploy\DeployCheck;
 use Pulsar\Deploy\DeployCheckInterface;
 use Pulsar\Deploy\DeployCheckRunnerInterface;
 use Pulsar\Deploy\DeploySeverity;
+use Pulsar\Deploy\Runtime\FilesystemReader;
 use Pulsar\Deploy\Runtime\PhpRuntime;
 use Pulsar\Deploy\Runtime\PhpRuntimeInterface;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Routing\Router;
+
+use function dirname;
 
 #[Internal]
 final readonly class DeployWiring implements ServiceWiringInterface
@@ -73,7 +78,7 @@ final readonly class DeployWiring implements ServiceWiringInterface
 
         $this->registerCheckOrSkip($deployCheck, 'debug-mode', $deployConfig, static fn(): DeployCheckInterface => new DebugModeCheck($appConfig));
 
-        $this->registerCheckOrSkip($deployCheck, 'opcache', $deployConfig, static fn(): DeployCheckInterface => new OpcacheCheck($phpRuntime));
+        $this->registerCheckOrSkip($deployCheck, 'opcache', $deployConfig, static fn(): DeployCheckInterface => new OpcacheCheck($phpRuntime, new FilesystemReader()));
 
         $this->registerCheckOrSkip($deployCheck, 'jit', $deployConfig, static fn(): DeployCheckInterface => new JitCheck($phpRuntime));
 
@@ -122,6 +127,11 @@ final readonly class DeployWiring implements ServiceWiringInterface
         });
 
         $this->registerCheckOrSkip($deployCheck, 'audit-logger', $deployConfig, static fn(): DeployCheckInterface => new AuditLoggerReadinessCheck($container));
+
+        $this->registerCheckOrSkip($deployCheck, 'two-factor-rate-limiter', $deployConfig, static fn(): DeployCheckInterface => new TwoFactorRateLimiterReadinessCheck($container));
+
+        $projectRoot = $configManager->configPath() !== null ? dirname($configManager->configPath()) : '.';
+        $this->registerCheckOrSkip($deployCheck, 'dependency-integrity', $deployConfig, static fn(): DeployCheckInterface => new DependencyIntegrityCheck($projectRoot));
 
         $container->instance(DeployCheck::class, $deployCheck);
         $container->instance(DeployCheckRunnerInterface::class, $deployCheck);
