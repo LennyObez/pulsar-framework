@@ -11,7 +11,7 @@ use Pulsar\DataProtection\ConsentBanner\ConsentBannerConfig;
 use Pulsar\DataProtection\ConsentBanner\ConsentBannerRenderer;
 use Pulsar\DataProtection\ConsentBanner\ConsentCategory;
 
-use function strlen;
+use const ENT_QUOTES;
 
 #[CoversClass(ConsentBannerRenderer::class)]
 #[CoversClass(ConsentBannerConfig::class)]
@@ -249,7 +249,7 @@ final class ConsentBannerRendererTest extends TestCase
     }
 
     #[Test]
-    public function renderIncludesJavaScriptConsentLogic(): void
+    public function renderReferencesTheExternalConsentScript(): void
     {
         // Arrange
         $renderer = new ConsentBannerRenderer(new ConsentBannerConfig());
@@ -257,10 +257,13 @@ final class ConsentBannerRendererTest extends TestCase
         // Act
         $html = $renderer->render();
 
-        // Assert
-        self::assertStringContainsString('<script', $html);
-        self::assertStringContainsString('saveConsent', $html);
-        self::assertStringContainsString('document.cookie', $html);
+        // Assert: the behaviour lives in a same-origin external script
+        // (script-src 'self' clean); no inline consent logic is embedded, so the
+        // banner works under the framework's default policy without a hash/nonce.
+        self::assertStringContainsString('<script src="/ui/js/consent-banner.js"', $html);
+        self::assertStringContainsString('data-consent="necessary"', $html);
+        self::assertStringNotContainsString('saveConsent', $html);
+        self::assertStringNotContainsString('document.cookie', $html);
     }
 
     #[Test]
@@ -283,13 +286,12 @@ final class ConsentBannerRendererTest extends TestCase
     }
 
     /**
-     * Finding [2]: a cookieName containing a double-quote must NOT be
-     * htmlspecialchars-escaped into the <script> block (that would emit a
-     * broken `&quot;` JS literal). It must be JSON hex-escaped so the embedded
-     * `var cfg={...}` literal stays valid, parseable JavaScript.
+     * A cookieName containing a double-quote must be htmlspecialchars-escaped
+     * into the data-cookie-name attribute so it cannot break out of the quoted
+     * attribute; the browser still decodes it back to the original value.
      */
     #[Test]
-    public function renderEmbedsValidJsonWhenCookieNameContainsQuote(): void
+    public function renderSafelyEncodesCookieNameContainingQuoteInDataAttribute(): void
     {
         // Arrange
         $config = new ConsentBannerConfig(cookieName: 'na"me');
@@ -298,29 +300,19 @@ final class ConsentBannerRendererTest extends TestCase
         // Act
         $html = $renderer->render();
 
-        // Assert: htmlspecialchars corruption (&quot;) must not appear inside
-        // the script-embedded config — that was the pre-fix bug that produced a
-        // syntactically broken JS literal. The quote is JSON hex-escaped, so the
-        // raw `na"me` substring is absent while the JSON still round-trips.
-        self::assertStringNotContainsString('&quot;', $html);
-        self::assertStringNotContainsString('na"me', $html);
-
-        // The embedded JSON literal must round-trip back to the original value.
-        if (preg_match('/var cfg=(\{.*\});/U', $html, $m) !== 1) {
-            self::fail('Embedded JSON config literal not found in rendered banner.');
-        }
-        /** @var array{cookieName: string} $cfg */
-        $cfg = json_decode($m[1], true);
-        self::assertIsArray($cfg);
-        self::assertSame('na"me', $cfg['cookieName']);
+        // Assert: the quote is emitted as &quot; (which decodes back to na"me in
+        // the browser) and never as a raw quote that would break the attribute.
+        self::assertStringContainsString('data-cookie-name="na&quot;me"', $html);
+        self::assertStringNotContainsString('data-cookie-name="na"', $html);
     }
 
     /**
-     * Finding [2]: a category key containing `</script>` must be hex-escaped so
-     * it cannot break out of the inline <script> context (XSS-safe embedding).
+     * A category key containing `</script>` must be escaped inside the
+     * data-categories attribute so it cannot break out of the attribute or
+     * inject markup, while still round-tripping to its original value.
      */
     #[Test]
-    public function renderHexEscapesScriptBreakoutInCategoryKey(): void
+    public function renderSafelyEncodesScriptBreakoutInCategoryKey(): void
     {
         // Arrange
         $config = new ConsentBannerConfig(
@@ -334,21 +326,21 @@ final class ConsentBannerRendererTest extends TestCase
         // Act
         $html = $renderer->render();
 
-        // Assert: the raw closing-script sequence must never appear verbatim in
-        // the embedded JSON config — JSON_HEX_TAG escapes < and > to < /
-        // > so the value cannot break out of the inline <script> context.
-        $scriptStart = strpos($html, 'var cfg=');
-        self::assertIsInt($scriptStart);
-        $configLine = substr($html, $scriptStart, (int) strpos($html, ';', $scriptStart) - $scriptStart);
-        self::assertStringNotContainsString('</script>', $configLine);
-        self::assertStringNotContainsString('<', $configLine);
-        // ...but the hex-escaped form IS present (JSON_HEX_TAG: '<' => '\\u003C').
-        self::assertStringContainsString('\\u003C', $configLine);
+        // Assert: extract the data-categories attribute and confirm the breakout
+        // sequence is entity-escaped (no raw `<` or `</script>`), yet still
+        // decodes and JSON-parses back to the original key.
+        if (preg_match('/data-categories="([^"]*)"/', $html, $m) !== 1) {
+            self::fail('data-categories attribute not found in rendered banner.');
+        }
+        $attr = $m[1];
 
-        // The hex-escaped key must still round-trip to its original value.
-        /** @var array{categories: list<array{key: string}>} $cfg */
-        $cfg = json_decode(substr($configLine, strlen('var cfg=')), true);
-        self::assertIsArray($cfg);
-        self::assertSame('a</script><b>', $cfg['categories'][0]['key']);
+        self::assertStringNotContainsString('</script>', $attr);
+        self::assertStringNotContainsString('<', $attr);
+        self::assertStringContainsString('&lt;', $attr);
+
+        /** @var list<array{key: string}> $categories */
+        $categories = json_decode(htmlspecialchars_decode($attr, ENT_QUOTES), true);
+        self::assertIsArray($categories);
+        self::assertSame('a</script><b>', $categories[0]['key']);
     }
 }
