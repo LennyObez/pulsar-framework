@@ -13,6 +13,9 @@ use Pulsar\Queue\Serialization\SchemaVersionRegistry;
 use Pulsar\Queue\Serialization\TypeRegistry;
 
 use function extension_loaded;
+use function ini_get;
+use function ini_set;
+use function msgpack_pack;
 
 #[CoversClass(MsgpackSerializer::class)]
 final class MsgpackSerializerTest extends TestCase
@@ -113,5 +116,43 @@ final class MsgpackSerializerTest extends TestCase
         );
 
         self::assertSame('application/x-msgpack', $serializer->contentType());
+    }
+
+    #[Test]
+    public function deserializeRejectsAnObjectInThePayload(): void
+    {
+        if (!extension_loaded('msgpack')) {
+            self::markTestSkipped('Test requires the msgpack PHP extension');
+        }
+
+        $typeRegistry = new TypeRegistry();
+        $typeRegistry->register('App\\Job\\TestJob');
+
+        $schemaRegistry = new SchemaVersionRegistry();
+        $schemaRegistry->register('App\\Job\\TestJob', 1);
+
+        $serializer = new MsgpackSerializer(
+            typeRegistry: $typeRegistry,
+            schemaRegistry: $schemaRegistry,
+        );
+
+        // A tampered/hostile payload carrying a PHP object nested in the data.
+        // With msgpack.php_only=On, msgpack_unpack() would reconstruct the object;
+        // the serializer must reject it fail-closed, matching JsonSerializer's
+        // pure-data contract (CWE-502 object-injection defense). Force php_only=On
+        // so the test is deterministic regardless of the runtime default.
+        $original = ini_get('msgpack.php_only');
+        ini_set('msgpack.php_only', '1');
+
+        try {
+            $hostile = msgpack_pack(['_value' => (object) ['x' => 1]]);
+
+            $this->expectException(QueueException::class);
+            $this->expectExceptionMessage('must be pure data');
+
+            $serializer->deserialize($hostile, 'App\\Job\\TestJob');
+        } finally {
+            ini_set('msgpack.php_only', $original === false ? '1' : $original);
+        }
     }
 }
