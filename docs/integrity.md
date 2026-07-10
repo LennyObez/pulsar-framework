@@ -29,12 +29,12 @@ return [
     ],
 
     'exclude' => [
-        'storage/**',
+        'var/**',
         'tests/**',
         'vendor/**',
     ],
 
-    'manifest_path' => 'storage/integrity/manifest.json',
+    'manifest_path' => 'var/integrity/manifest.json',
 ];
 ```
 

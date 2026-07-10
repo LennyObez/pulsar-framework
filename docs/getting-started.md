@@ -195,7 +195,7 @@ return [
     'template_paths' => [
         'resources/views',
     ],
-    'cache_path' => 'storage/cache/views',
+    'cache_path' => 'var/cache/views',
     'auto_escape' => true,
 ];
 ```

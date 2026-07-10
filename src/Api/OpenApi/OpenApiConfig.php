@@ -49,7 +49,7 @@ final readonly class OpenApiConfig
         public ?string $licenseUrl = null,
         public array $servers = [],
         public array $securitySchemes = [],
-        public string $outputPath = 'storage/api/openapi.json',
+        public string $outputPath = 'var/api/openapi.json',
         public string $swaggerUiRoute = '/api/docs',
         public bool $swaggerUiEnabled = false,
     ) {}
@@ -89,7 +89,7 @@ final readonly class OpenApiConfig
             licenseUrl: Coerce::nullableString($data['license_url'] ?? null),
             servers: self::filterServers($data['servers'] ?? null),
             securitySchemes: self::filterSecuritySchemes($data['security_schemes'] ?? null),
-            outputPath: Coerce::string($data['output_path'] ?? null, 'storage/api/openapi.json'),
+            outputPath: Coerce::string($data['output_path'] ?? null, 'var/api/openapi.json'),
             swaggerUiRoute: Coerce::string($data['swagger_ui_route'] ?? null, '/api/docs'),
             swaggerUiEnabled: ($data['swagger_ui_enabled'] ?? false) === true,
         );

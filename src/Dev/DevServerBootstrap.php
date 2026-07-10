@@ -335,7 +335,7 @@ final class DevServerBootstrap
         if ($config->templatePaths !== []) {
             $kernel->container()->instance(ViewConfig::class, new ViewConfig(
                 templatePaths: $config->templatePaths,
-                cachePath: $projectRoot . '/storage/cache/views',
+                cachePath: $projectRoot . '/var/cache/views',
                 phpDirectiveAllowed: true,
             ));
         }
@@ -495,7 +495,7 @@ final class DevServerBootstrap
         /** @var ConnectionInterface $db */
         $db = $container->get(ConnectionInterface::class);
 
-        $markerFile = $projectRoot . '/storage/.' . $config->extensionName . '-schema-ready';
+        $markerFile = $projectRoot . '/var/cache/.' . $config->extensionName . '-schema-ready';
 
         if (file_exists($markerFile)) {
             return;

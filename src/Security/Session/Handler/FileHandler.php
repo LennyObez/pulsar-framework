@@ -34,12 +34,25 @@ final class FileHandler implements SessionHandlerInterface
 {
     private string $savePath = '';
 
+    /**
+     * @param string $configuredPath Absolute session directory from
+     *        SessionConfig::$savePath (already resolved by the wiring). Empty
+     *        means "not configured": the built-in `var/sessions` default is used.
+     */
+    public function __construct(private readonly string $configuredPath = '') {}
+
     #[Override]
     public function open(string $path, string $name): bool
     {
-        // Use the provided path, or fall back to a sensible default
-        // when session.save_path is not configured.
-        $this->savePath = $path !== '' ? $path : (base_path('storage/sessions'));
+        // Precedence: the path PHP hands us (session.save_path) wins; then the
+        // configured SessionConfig::$savePath; then the built-in default under
+        // the single writable root. All three resolve to an absolute path so the
+        // location is stable regardless of the process CWD.
+        $this->savePath = match (true) {
+            $path !== '' => $path,
+            $this->configuredPath !== '' => $this->configuredPath,
+            default => var_path('sessions'),
+        };
 
         if (!is_dir($this->savePath)) {
             @mkdir($this->savePath, 0o700, true);

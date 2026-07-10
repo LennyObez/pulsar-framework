@@ -227,7 +227,7 @@ final class CacheManager implements CacheManagerInterface
         return match ($poolConfig->driver) {
             CacheDriverType::Array => new ArrayDriver(),
             CacheDriverType::Filesystem => new FilesystemDriver(
-                $poolConfig->path ?? $this->config->path,
+                $this->filesystemCachePath($poolConfig),
             ),
             CacheDriverType::Database => $this->connection !== null
                 ? new DatabaseDriver($this->connection, $poolConfig->name)
@@ -236,6 +236,17 @@ final class CacheManager implements CacheManagerInterface
             CacheDriverType::Memcached => new MemcachedDriver($this->resolveMemcachedConnection($poolConfig)),
             CacheDriverType::Apcu => new ApcuDriver(),
         };
+    }
+
+    /**
+     * Resolve the configured filesystem cache directory to an absolute path so
+     * the pool driver and its lock share one stable location regardless of the
+     * process CWD (a relative default like `var/cache` would otherwise land
+     * wherever the worker happened to be started).
+     */
+    private function filesystemCachePath(CachePoolConfig $poolConfig): string
+    {
+        return resolve_path($poolConfig->path ?? $this->config->path);
     }
 
     private function resolveRedisConnection(CachePoolConfig $poolConfig): Redis
@@ -301,7 +312,7 @@ final class CacheManager implements CacheManagerInterface
         return match ($poolConfig->driver) {
             CacheDriverType::Array => new ArrayLock(),
             CacheDriverType::Filesystem => new FilesystemLock(
-                $poolConfig->path ?? $this->config->path,
+                $this->filesystemCachePath($poolConfig),
             ),
             CacheDriverType::Database => $this->connection !== null
                 ? new DatabaseLock($this->connection)

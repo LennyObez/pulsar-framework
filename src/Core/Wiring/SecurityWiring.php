@@ -508,6 +508,14 @@ final readonly class SecurityWiring implements ServiceWiringInterface
     ): SessionHandlerInterface {
         $sessionConfig = $securityConfig->session;
 
+        // Honour SessionConfig::$savePath (config key `save_path`), resolved to
+        // an absolute path so file sessions land in the same place under CLI,
+        // PHP-FPM and long-running SAPIs. Empty config lets FileHandler fall back
+        // to its built-in `var/sessions` default.
+        $fileSavePath = $sessionConfig->savePath !== ''
+            ? resolve_path($sessionConfig->savePath)
+            : '';
+
         return match ($sessionConfig->handler) {
             'database' => $container->has(PDO::class)
                 ? new DatabaseHandler(
@@ -515,18 +523,18 @@ final readonly class SecurityWiring implements ServiceWiringInterface
                     'sessions',
                     $sessionConfig->lifetime,
                 )
-                : new FileHandler(),
+                : new FileHandler($fileSavePath),
             'redis' => $container->has(Redis::class)
                 ? new RedisHandler(
                     $container->get(Redis::class),
                     $sessionConfig->lifetime,
                 )
-                : new FileHandler(),
+                : new FileHandler($fileSavePath),
             'cookie' => $sessionEncryption !== null
                 ? new CookieHandler($sessionEncryption, $sessionConfig)
-                : new FileHandler(),
+                : new FileHandler($fileSavePath),
             'array' => new ArrayHandler(),
-            default => new FileHandler(),
+            default => new FileHandler($fileSavePath),
         };
     }
 

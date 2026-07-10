@@ -72,7 +72,7 @@ final class RuntimeReloadCommand extends Command
 
     private function detectPid(): ?int
     {
-        $pidFile = 'storage/runtime.pid';
+        $pidFile = var_path('run/runtime.pid');
 
         if (file_exists($pidFile)) {
             $content = file_get_contents($pidFile);

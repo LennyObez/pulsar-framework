@@ -265,8 +265,7 @@ final readonly class TemplateRegistry
         return <<<'TEXT'
             /vendor/
             /node_modules/
-            /var/cache/
-            /var/log/
+            /var/
             /storage/
             /.idea/
             /.vscode/
@@ -451,7 +450,7 @@ final readonly class TemplateRegistry
                     'channels' => [
                         'file' => [
                             'driver' => 'file',
-                            'path' => __DIR__ . '/../var/log/app.log',
+                            'path' => __DIR__ . '/../var/logs/app.log',
                             'level' => $_ENV['LOG_LEVEL'] ?? 'debug',
                         ],
                     ],

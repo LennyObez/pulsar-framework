@@ -31,7 +31,7 @@ return [
     |--------------------------------------------------------------------------
     | Directory for storing compiled template cache files. Must be writable.
     */
-    'cache_path' => 'storage/cache/views',
+    'cache_path' => 'var/cache/views',
 
     /*
     |--------------------------------------------------------------------------
