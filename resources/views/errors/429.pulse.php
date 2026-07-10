@@ -33,20 +33,5 @@
 @endsection
 
 @section('scripts')
-<script>
-    (function() {
-        var el = document.getElementById('retry-countdown');
-        if (!el) return;
-        var seconds = parseInt(el.textContent, 10);
-        if (isNaN(seconds) || seconds <= 0) return;
-        var timer = setInterval(function() {
-            seconds--;
-            el.textContent = seconds;
-            if (seconds <= 0) {
-                clearInterval(timer);
-                location.reload();
-            }
-        }, 1000);
-    })();
-</script>
+<script src="/ui/js/error-countdown.js" defer></script>
 @endsection
