@@ -172,6 +172,24 @@ Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'
 Hashes and nonces become **opt-in**, only for hosts that deliberately add their
 own inline scripts. See [security-baseline.md](security-baseline.md).
 
+### Error pages and the last-resort exception
+
+The framework's own shipped output honours this policy. The styled error pages
+render through Pulse templates that link `/ui/css/errors.css` — no inline
+`<script>` or `<style>`. The retry countdown (429/503) and the cookie-consent
+banner are external, same-origin scripts.
+
+The one deliberate exception is the **self-contained fallback renderers**
+(`ProductionRenderer` and the `ErrorPageRenderer` / `ExceptionHandler` inline
+fallbacks): they render precisely when the template engine or the asset routes
+are unavailable, so they keep a few lines of inline CSS. Under a strict
+`style-src 'self'` that inline CSS is simply dropped and the page degrades to
+readable semantic HTML; when the failure is severe enough that no CSP header is
+emitted either, the inline CSS applies and the page is styled. Either way the
+fallback stays legible — which is the whole point of a last-resort renderer. The
+generated `welcome.php` scaffold is likewise a self-contained placeholder you
+replace immediately.
+
 ## Helper functions
 
 Pulsar provides path helpers for building asset references in PHP code:
