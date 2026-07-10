@@ -41,7 +41,7 @@
     </form>
 
     <div class="error-page__links-section" aria-label="@t('errors.popular_links')">
-        <p style="font-size:.8125rem;color:var(--text-muted);margin-bottom:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em" data-t="errors.popular_links">
+        <p class="error-page__links-label" data-t="errors.popular_links">
             @t('errors.popular_links')
         </p>
         <div class="error-page__links">

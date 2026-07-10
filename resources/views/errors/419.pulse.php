@@ -23,25 +23,6 @@
     </a>
 @endsection
 
-@section('extra-styles')
-<style>
-    .error-page__session-hint {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        max-width: 400px;
-        margin: 0 auto 2rem;
-        padding: 1rem 1.25rem;
-        background: var(--warning-bg);
-        border: 1px solid var(--warning);
-        border-radius: var(--radius-md);
-        color: var(--warning);
-        font-size: 0.875rem;
-        text-align: left;
-    }
-    .error-page__session-hint svg { flex-shrink: 0; }
-</style>
-@endsection
 
 @section('extra-content')
     <div class="error-page__session-hint" role="alert">
