@@ -66,6 +66,16 @@ final class QueueException extends RuntimeException
         return new self(sprintf('Failed to serialize/deserialize job class "%s"', $jobClass));
     }
 
+    public static function unsafeObjectPayload(string $jobClass): self
+    {
+        return new self(sprintf(
+            'Refusing to deserialize job class "%s": the message payload contains a PHP object, '
+            . 'but queue payloads must be pure data. A tampered message must never be able to inject '
+            . 'an object (deserialization gadget) through the serializer.',
+            $jobClass,
+        ));
+    }
+
     /**
      * A job class is not in the type allowlist.
      */

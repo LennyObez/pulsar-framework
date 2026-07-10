@@ -9,6 +9,7 @@ use Pulsar\Queue\Exception\QueueException;
 
 use function extension_loaded;
 use function is_array;
+use function is_object;
 use function msgpack_pack;
 use function msgpack_unpack;
 
@@ -61,6 +62,14 @@ final readonly class MsgpackSerializer implements SerializerInterface
             throw QueueException::serializationFailed($type);
         }
 
+        // Enforce the same object-free, pure-data contract as JsonSerializer.
+        // msgpack (with the default msgpack.php_only=On) can reconstruct arbitrary
+        // PHP objects from a crafted payload — unlike json_decode(..., true), which
+        // can only ever yield arrays/scalars. Reject any object fail-closed so a
+        // tampered queue message can never inject a deserialization gadget through
+        // this serializer (CWE-502). Queue payloads are always pure data arrays.
+        self::assertObjectFree($decoded, $type);
+
         /** @var array<string, mixed> $typed */
         $typed = $decoded;
 
@@ -100,5 +109,25 @@ final readonly class MsgpackSerializer implements SerializerInterface
         }
 
         throw QueueException::incompatibleSchemaVersion($type, $fromVersion, $toVersion);
+    }
+
+    /**
+     * Recursively assert that a decoded payload contains no PHP objects, walking
+     * into nested arrays. Fails closed on the first object found: queue payloads
+     * are pure data, so any object is a tampered/hostile message.
+     *
+     * @throws QueueException If an object is present anywhere in the payload.
+     */
+    private static function assertObjectFree(mixed $value, string $type): void
+    {
+        if (is_object($value)) {
+            throw QueueException::unsafeObjectPayload($type);
+        }
+
+        if (is_array($value)) {
+            foreach ($value as $item) {
+                self::assertObjectFree($item, $type);
+            }
+        }
     }
 }
