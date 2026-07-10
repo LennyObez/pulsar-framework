@@ -62,7 +62,7 @@ final class FeatureFlagConfigTest extends TestCase
 
         self::assertFalse($config->enabled);
         self::assertSame(FlagStorageDriver::Memory, $config->storage);
-        self::assertSame('storage/flags.json', $config->filePath);
+        self::assertSame('var/flags/flags.json', $config->filePath);
         self::assertFalse($config->auditEvaluations);
         self::assertFalse($config->defaultState);
         self::assertSame([], $config->flags);

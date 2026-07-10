@@ -242,7 +242,8 @@ final class TemplateRegistryTest extends TestCase
         $gitignore = $files['.gitignore'];
         self::assertStringContainsString('/vendor/', $gitignore);
         self::assertStringContainsString('.env', $gitignore);
-        self::assertStringContainsString('/var/cache/', $gitignore);
+        self::assertStringContainsString('/var/', $gitignore);
+        self::assertStringContainsString('/storage/', $gitignore);
     }
 
     #[Test]

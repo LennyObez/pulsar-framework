@@ -33,7 +33,7 @@ final class OpenApiConfigTest extends TestCase
         self::assertNull($config->licenseUrl);
         self::assertSame([], $config->servers);
         self::assertSame([], $config->securitySchemes);
-        self::assertSame('storage/api/openapi.json', $config->outputPath);
+        self::assertSame('var/api/openapi.json', $config->outputPath);
         self::assertSame('/api/docs', $config->swaggerUiRoute);
         self::assertFalse($config->swaggerUiEnabled);
     }
@@ -247,7 +247,7 @@ final class OpenApiConfigTest extends TestCase
             'output_path' => 42,
         ]);
 
-        self::assertSame('storage/api/openapi.json', $config->outputPath);
+        self::assertSame('var/api/openapi.json', $config->outputPath);
     }
 
     // --- fromArray: swagger UI ---

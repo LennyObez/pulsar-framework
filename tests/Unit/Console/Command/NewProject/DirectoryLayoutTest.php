@@ -22,7 +22,7 @@ final class DirectoryLayoutTest extends TestCase
         self::assertContains('public', $dirs);
         self::assertContains('src', $dirs);
         self::assertContains('var/cache', $dirs);
-        self::assertContains('var/log', $dirs);
+        self::assertContains('var/logs', $dirs);
         self::assertNotContains('resources/views', $dirs);
         self::assertNotContains('src/Http/Controller', $dirs);
     }

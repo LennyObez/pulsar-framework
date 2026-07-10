@@ -65,6 +65,23 @@ final class FileHandlerTest extends TestCase
     }
 
     #[Test]
+    public function openFallsBackToConfiguredPathWhenPhpProvidesNone(): void
+    {
+        // Regression: SessionConfig::$savePath was parsed but never reached the
+        // handler, so file sessions always used the built-in default. The wiring
+        // now passes the resolved path into the constructor; when PHP hands the
+        // handler an empty save_path, that configured directory must win.
+        $configuredDir = sys_get_temp_dir() . '/pulsar_session_configured_' . uniqid('', true);
+        $handler = new FileHandler($configuredDir);
+
+        self::assertTrue($handler->open('', 'TEST_SESSION'));
+        self::assertTrue(is_dir($configuredDir), 'The configured session directory should be created and used.');
+
+        $handler->close();
+        rmdir($configuredDir);
+    }
+
+    #[Test]
     public function readReturnsEmptyStringForNonexistentSession(): void
     {
         self::assertSame('', $this->handler->read('aabbccdd0011223344556677'));

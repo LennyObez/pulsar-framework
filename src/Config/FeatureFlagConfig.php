@@ -21,7 +21,7 @@ final readonly class FeatureFlagConfig
     public function __construct(
         public bool $enabled = false,
         public FlagStorageDriver $storage = FlagStorageDriver::Memory,
-        public string $filePath = 'storage/flags.json',
+        public string $filePath = 'var/flags/flags.json',
         public bool $auditEvaluations = false,
         public bool $defaultState = false,
         public array $flags = [],
@@ -47,7 +47,7 @@ final readonly class FeatureFlagConfig
         return new self(
             enabled: $enabled,
             storage: FlagStorageDriver::from($data['storage'] ?? 'memory'),
-            filePath: $data['file_path'] ?? 'storage/flags.json',
+            filePath: $data['file_path'] ?? 'var/flags/flags.json',
             auditEvaluations: (bool) ($data['audit_evaluations'] ?? false),
             defaultState: (bool) ($data['default_state'] ?? false),
             flags: $data['flags'] ?? [],

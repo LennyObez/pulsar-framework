@@ -22,6 +22,8 @@ use function unlink;
  */
 #[CoversFunction('env')]
 #[CoversFunction('base_path')]
+#[CoversFunction('var_path')]
+#[CoversFunction('resolve_path')]
 #[CoversFunction('storage_path')]
 #[CoversFunction('resource_path')]
 #[CoversFunction('config_path')]
@@ -301,6 +303,67 @@ final class EnvHelperTest extends TestCase
         $expected = base_path('public' . DIRECTORY_SEPARATOR . $subPath);
 
         self::assertSame($expected, public_path($subPath));
+    }
+
+    // --- var_path() ---
+
+    #[Test]
+    public function varPathReturnsWritableRootWithNoArgument(): void
+    {
+        $expected = base_path('var');
+
+        self::assertSame($expected, var_path());
+    }
+
+    #[Test]
+    public function varPathReturnsWritableRootWithEmptyString(): void
+    {
+        $expected = base_path('var');
+
+        self::assertSame($expected, var_path(''));
+    }
+
+    #[Test]
+    #[DataProvider('subPathProvider')]
+    public function varPathAppendsSubPath(string $subPath): void
+    {
+        $expected = base_path('var' . DIRECTORY_SEPARATOR . $subPath);
+
+        self::assertSame($expected, var_path($subPath));
+    }
+
+    // --- resolve_path() ---
+
+    #[Test]
+    public function resolvePathResolvesRelativeAgainstProjectRoot(): void
+    {
+        $expected = base_path('var/flags/flags.json');
+
+        self::assertSame($expected, resolve_path('var/flags/flags.json'));
+    }
+
+    #[Test]
+    public function resolvePathReturnsProjectRootForEmptyString(): void
+    {
+        self::assertSame(base_path(), resolve_path(''));
+    }
+
+    #[Test]
+    public function resolvePathLeavesPosixAbsolutePathUntouched(): void
+    {
+        self::assertSame('/mnt/state/flags.json', resolve_path('/mnt/state/flags.json'));
+    }
+
+    #[Test]
+    public function resolvePathLeavesWindowsDriveAbsolutePathUntouched(): void
+    {
+        self::assertSame('C:\\shared\\flags.json', resolve_path('C:\\shared\\flags.json'));
+    }
+
+    #[Test]
+    public function resolvePathTreatsUncPathAsAbsolute(): void
+    {
+        self::assertSame('\\\\server\\share\\flags.json', resolve_path('\\\\server\\share\\flags.json'));
     }
 
     /**

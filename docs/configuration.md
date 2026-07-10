@@ -167,6 +167,59 @@ $environment = $manager->environment();
 | `LOG_LEVEL`   | `config/observability.php` → `logging.level`           | `ObservabilityConfig`      |
 | `LOG_CHANNEL` | `config/observability.php` → `logging.default_channel` | `ObservabilityConfig`      |
 
+## Filesystem paths
+
+All framework-managed writable state lives under a single root, `var/` — mount it
+as one writable volume in production. The ephemeral-vs-durable distinction is
+carried by the subdirectory name, not by a second top-level directory:
+
+| Path                   | Holds                                | Config key                               |
+| ---------------------- | ------------------------------------ | ---------------------------------------- |
+| `var/cache/`           | framework + application caches       | `config/cache.php` → `path`              |
+| `var/cache/framework/` | compiled config / routes / container | (framework-owned)                        |
+| `var/logs/`            | application + audit logs             | `config/observability.php` → `log_path`  |
+| `var/sessions/`        | file session data                    | `config/security.php` → `save_path`      |
+| `var/flags/flags.json` | file-backed feature flags            | `config/features.php` → `file_path`      |
+| `var/api/openapi.json` | generated OpenAPI artifact           | `config/openapi.php` → `output_path`     |
+| `var/integrity/`       | integrity manifest                   | `config/integrity.php` → `manifest_path` |
+| `var/run/`             | runtime pid                          | (framework-owned)                        |
+
+### Two roots, by durability class
+
+`var/` and `storage/` are **not** a historical accident — they are a deliberate
+data-classification boundary, which matters most in the regulated domains Pulsar
+targets:
+
+- **`var/`** holds framework-managed **operational state** — regenerable or
+  transient (caches, logs, sessions, flags, the OpenAPI artifact, the integrity
+  manifest, the pid). It is **safe to clear**: wiping `var/cache` on deploy, or
+  even `var/` wholesale, costs at most a rebuild and re-login.
+- **`storage/`** holds **application content** — user uploads via the `local`
+  storage disk (`config/storage.php`, default `storage/app/`). This is
+  irreplaceable data with its own backup cadence and retention rules (GDPR/HIPAA),
+  and in production it is typically an object-storage disk (S3/GCS) rather than
+  local at all.
+
+Keeping irreplaceable user content out of the same root as disposable cache means
+a routine "clear `var/`" can never destroy data — the blast radius of an
+operational mistake stays bounded to regenerable state.
+
+### Resolving paths
+
+A relative config path is resolved against the **project root**, not the process
+CWD, so the same value works under the CLI, PHP-FPM and long-running SAPIs
+(RoadRunner, FrankenPHP). Three helpers back this:
+
+| Helper                | Result                                                                         |
+| --------------------- | ------------------------------------------------------------------------------ |
+| `base_path($sub)`     | project root + `$sub`                                                          |
+| `var_path($sub)`      | `var/` writable root + `$sub`                                                  |
+| `resolve_path($path)` | absolute `$path` untouched; relative `$path` resolved against the project root |
+
+Wiring resolves every config-driven path through `resolve_path()`, so an operator
+can point any of the values above at an absolute location outside the project
+tree (for example a shared `/mnt/state` volume) and it is used verbatim.
+
 ## Extension config pattern
 
 The `ConfigLoaderInterface` establishes the pattern for extensions to provide their own typed configs:

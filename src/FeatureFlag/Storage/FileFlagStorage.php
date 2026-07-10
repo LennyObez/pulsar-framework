@@ -12,12 +12,15 @@ use Pulsar\FeatureFlag\FlagDefinition;
 use Pulsar\FeatureFlag\FlagStorageInterface;
 
 use function array_map;
+use function dirname;
 use function file_exists;
 use function file_get_contents;
 use function file_put_contents;
 use function is_array;
+use function is_dir;
 use function json_decode;
 use function json_encode;
+use function mkdir;
 use function sprintf;
 
 use const JSON_PRETTY_PRINT;
@@ -137,6 +140,16 @@ final class FileFlagStorage implements FlagStorageInterface
         $data = array_map(static fn(FlagDefinition $flag): array => $flag->toArray(), $flags);
 
         $json = json_encode($data, JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR);
+
+        // Ensure the parent directory exists (e.g. the default var/flags/) so the
+        // first write on a fresh install succeeds instead of failing on a missing
+        // directory.
+        $directory = dirname($this->filePath);
+
+        if (!is_dir($directory) && !mkdir($directory, 0o750, true) && !is_dir($directory)) {
+            throw FeatureFlagException::storageError(sprintf('Cannot create directory: %s', $directory));
+        }
+
         $result = file_put_contents($this->filePath, $json, LOCK_EX);
 
         if ($result === false) {

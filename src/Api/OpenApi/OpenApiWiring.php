@@ -15,10 +15,7 @@ use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Routing\Router;
 
-use function dirname;
 use function rtrim;
-
-use const DIRECTORY_SEPARATOR;
 
 /**
  * Wires the OpenAPI spec generation and Swagger UI into the container.
@@ -72,11 +69,7 @@ final readonly class OpenApiWiring implements ServiceWiringInterface
 
         // Swagger UI routes (only if enabled)
         if ($config->swaggerUiEnabled) {
-            $basePath = $configManager->configPath() !== null
-                ? dirname($configManager->configPath())
-                : '.';
-
-            $specPath = $basePath . DIRECTORY_SEPARATOR . $config->outputPath;
+            $specPath = resolve_path($config->outputPath);
             $specRoute = rtrim($config->swaggerUiRoute, '/') . '/openapi.json';
 
             $controller = new SwaggerUiController($specPath, $specRoute);

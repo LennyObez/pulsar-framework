@@ -80,7 +80,7 @@ final class InitCommandTest extends TestCase
         self::assertTrue(is_dir($targetDir . DIRECTORY_SEPARATOR . 'public'));
         self::assertTrue(is_dir($targetDir . DIRECTORY_SEPARATOR . 'src'));
         self::assertTrue(is_dir($targetDir . DIRECTORY_SEPARATOR . 'var' . DIRECTORY_SEPARATOR . 'cache'));
-        self::assertTrue(is_dir($targetDir . DIRECTORY_SEPARATOR . 'var' . DIRECTORY_SEPARATOR . 'log'));
+        self::assertTrue(is_dir($targetDir . DIRECTORY_SEPARATOR . 'var' . DIRECTORY_SEPARATOR . 'logs'));
 
         // Verify files created
         self::assertTrue(file_exists($targetDir . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'index.php'));

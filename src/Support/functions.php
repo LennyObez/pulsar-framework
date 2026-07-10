@@ -279,3 +279,50 @@ if (!function_exists('public_path')) {
         return base_path('public' . ($path !== '' ? DIRECTORY_SEPARATOR . $path : ''));
     }
 }
+
+if (!function_exists('var_path')) {
+    /**
+     * Resolve an absolute path relative to the project's `var/` directory — the
+     * single writable root for all framework-managed state (cache, logs,
+     * sessions, feature flags, the OpenAPI artifact, the integrity manifest and
+     * the runtime pid). Ops mount `var/` as one writable volume; the
+     * ephemeral-vs-durable distinction lives in the subdirectory names
+     * (`var/cache` is disposable, `var/sessions` is not).
+     *
+     * @param string $path Optional path segment to append within var/
+     */
+    function var_path(string $path = ''): string
+    {
+        return base_path('var' . ($path !== '' ? DIRECTORY_SEPARATOR . $path : ''));
+    }
+}
+
+if (!function_exists('resolve_path')) {
+    /**
+     * Resolve a (possibly relative) filesystem path to an absolute one.
+     *
+     * A relative path is resolved against the project root (see {@see base_path()});
+     * a path that is already absolute is returned untouched, so an operator can
+     * point a config value at a location outside the project tree (e.g. a shared
+     * `/mnt/state` volume). This is the resolver every wiring should apply to a
+     * config-driven path so the same value works regardless of the process CWD
+     * (CLI, PHP-FPM, RoadRunner, FrankenPHP).
+     *
+     * @param string $path Relative or absolute path (empty yields the project root)
+     */
+    function resolve_path(string $path): string
+    {
+        if ($path === '') {
+            return base_path();
+        }
+
+        if (
+            $path[0] === '/' || $path[0] === '\\'
+            || preg_match('#^[A-Za-z]:[/\\\\]#', $path) === 1
+        ) {
+            return $path;
+        }
+
+        return base_path($path);
+    }
+}

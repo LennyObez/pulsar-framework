@@ -49,7 +49,7 @@ final readonly class FeatureFlagWiring implements ServiceWiringInterface
         // Storage
         $storage = match ($flagConfig->storage) {
             FlagStorageDriver::Memory => new InMemoryFlagStorage(),
-            FlagStorageDriver::File => new FileFlagStorage($flagConfig->filePath),
+            FlagStorageDriver::File => new FileFlagStorage(resolve_path($flagConfig->filePath)),
         };
 
         // Load pre-configured flags

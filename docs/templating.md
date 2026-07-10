@@ -11,7 +11,7 @@ return [
     'template_paths' => [
         'resources/views',
     ],
-    'cache_path' => 'storage/cache/views',
+    'cache_path' => 'var/cache/views',
     'auto_escape' => true,
     'active_theme' => 'default',
     'php_directive_allowed' => false,
@@ -592,7 +592,7 @@ Output example:
 ```
 Compiling templates...
 Compilation complete: 47 compiled, 0 skipped, 0 errors in 0.182s
-All 47 template(s) are compiled and cached at: storage/cache/views
+All 47 template(s) are compiled and cached at: var/cache/views
 ```
 
 ### Development mode
@@ -602,7 +602,7 @@ In development, the engine automatically recompiles templates when the source fi
 ### Production deployment
 
 1. Run `pulsar view:compile` during the build step
-2. Deploy the `storage/cache/views/` directory alongside your application
+2. Deploy the `var/cache/views/` directory alongside your application
 3. Set `php_directive_allowed` to `false` in production config
 4. The engine uses cached artifacts with no runtime compilation
 

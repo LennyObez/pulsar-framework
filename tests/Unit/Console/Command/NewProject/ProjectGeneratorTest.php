@@ -41,7 +41,7 @@ final class ProjectGeneratorTest extends TestCase
         self::assertDirectoryExists($this->tempDir . DIRECTORY_SEPARATOR . 'public');
         self::assertDirectoryExists($this->tempDir . DIRECTORY_SEPARATOR . 'src');
         self::assertDirectoryExists($this->tempDir . DIRECTORY_SEPARATOR . 'var' . DIRECTORY_SEPARATOR . 'cache');
-        self::assertDirectoryExists($this->tempDir . DIRECTORY_SEPARATOR . 'var' . DIRECTORY_SEPARATOR . 'log');
+        self::assertDirectoryExists($this->tempDir . DIRECTORY_SEPARATOR . 'var' . DIRECTORY_SEPARATOR . 'logs');
 
         // Minimal preset should NOT have web or api directories
         self::assertDirectoryDoesNotExist($this->tempDir . DIRECTORY_SEPARATOR . 'resources');
