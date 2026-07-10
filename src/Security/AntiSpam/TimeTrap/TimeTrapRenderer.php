@@ -50,7 +50,7 @@ final class TimeTrapRenderer
         $token = $this->service->issue($formId);
 
         return sprintf(
-            '<input type="hidden" name="%s" value="%s" autocomplete="off">',
+            '<input type="hidden" name="%s" value="%s">',
             self::escape($this->fieldName),
             self::escape($token),
         );

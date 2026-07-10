@@ -47,7 +47,7 @@ final class BehaviorCollectorRenderer
             : '';
 
         return sprintf(
-            '<input type="hidden" name="%s" value="" autocomplete="off" data-pulsar-behavior>'
+            '<input type="hidden" name="%s" value="" data-pulsar-behavior>'
             . '<script src="%s"%s defer></script>',
             self::escape($this->fieldName),
             self::escape($this->scriptUrl),
