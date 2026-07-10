@@ -34139,6 +34139,13 @@
                     ],
                     "return": "Pulsar\\Queue\\Exception\\QueueException",
                     "static": true
+                },
+                "unsafeObjectPayload": {
+                    "params": [
+                        "string $jobClass"
+                    ],
+                    "return": "Pulsar\\Queue\\Exception\\QueueException",
+                    "static": true
                 }
             },
             "constants": []
