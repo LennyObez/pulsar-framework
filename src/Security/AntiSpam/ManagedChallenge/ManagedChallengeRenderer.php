@@ -81,7 +81,7 @@ final class ManagedChallengeRenderer
             . ' data-pmc-field="%s" data-pmc-worker="%s" data-pmc-refresh="%s" data-pmc-ttl="%d"'
             . ' data-pmc-msg-solving="%s" data-pmc-msg-solved="%s" data-pmc-msg-error="%s"'
             . ' role="status" aria-live="polite">'
-            . '<input type="hidden" name="%s" value="" autocomplete="off">'
+            . '<input type="hidden" name="%s" value="">'
             . '<noscript>%s</noscript>'
             . '</div>'
             . '<script src="%s"%s defer></script>',
