@@ -71,7 +71,6 @@ use Pulsar\Security\Session\Handler\DatabaseHandler;
 use Pulsar\Security\Session\Handler\FileHandler;
 use Pulsar\Security\Session\Handler\RedisHandler;
 use Pulsar\Security\Session\Handler\SessionHandlerInterface;
-use Pulsar\Security\Session\Session;
 use Pulsar\Security\Session\SessionEncryption;
 use Pulsar\Security\Session\SessionInterface;
 use Pulsar\Security\Session\SessionManager;
@@ -310,12 +309,6 @@ final readonly class SecurityWiring implements ServiceWiringInterface
         );
         $container->instance(SessionManager::class, $sessionManager);
         $container->instance(SessionInterface::class, $sessionManager);
-
-        // Legacy Session alias for backward compatibility with existing SessionGuard.
-        // Register the SessionManager under the Session::class key instead of creating
-        // a separate Session instance, which would result in two independent session
-        // stores and potential data inconsistency.
-        $container->instance(Session::class, $sessionManager);
 
         // Flash messages
         $flashBag = new FlashBag($sessionManager);
