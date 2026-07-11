@@ -20,6 +20,8 @@ use Pulsar\Security\ThreatDetection\ApiAbuseDetector;
 use Pulsar\Security\ThreatDetection\BruteForceDetector;
 use Pulsar\Security\ThreatDetection\CredentialStuffingDetector;
 use Pulsar\Security\ThreatDetection\GeoAnomalyDetector;
+use Pulsar\Security\ThreatDetection\HoneypotConfig;
+use Pulsar\Security\ThreatDetection\HoneypotMiddleware;
 use Pulsar\Security\ThreatDetection\InjectionAttemptDetector;
 use Pulsar\Security\ThreatDetection\ThreatDetectionConfig;
 use Pulsar\Security\ThreatDetection\ThreatDetectionEngine;
@@ -103,6 +105,18 @@ final readonly class ThreatDetectionWiring implements ServiceWiringInterface, De
         $container->instance(ThreatDetectionMiddleware::class, $threatMiddleware);
 
         $middleware->pipe($threatMiddleware);
+
+        // Honeypot paths (@api, config: threat_detection.honeypot). Fake
+        // attacker-only routes (/wp-login.php, /.env, ...) with zero
+        // false-positive risk: any hit is audited and answered per config.
+        /** @var array{enabled?: bool|int|string, paths?: list<string>, block_ip?: bool, response_action?: string|null}|null $honeypotSection */
+        $honeypotSection = is_array($section['honeypot'] ?? null) ? $section['honeypot'] : null;
+
+        if ($honeypotSection !== null && ($honeypotSection['enabled'] ?? false) === true) {
+            $honeypot = new HoneypotMiddleware(HoneypotConfig::fromArray($honeypotSection), $auditLogger);
+            $container->instance(HoneypotMiddleware::class, $honeypot);
+            $middleware->pipe($honeypot);
+        }
     }
 
     /**
