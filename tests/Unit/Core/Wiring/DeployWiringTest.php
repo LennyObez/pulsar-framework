@@ -13,6 +13,7 @@ use Pulsar\Container\Container;
 use Pulsar\Core\Wiring\DeployWiring;
 use Pulsar\Deploy\DeployCheck;
 use Pulsar\Deploy\DeployCheckRunnerInterface;
+use Pulsar\Deploy\MaintenanceMode;
 use Pulsar\Deploy\Runtime\PhpRuntimeInterface;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
@@ -44,6 +45,9 @@ final class DeployWiringTest extends TestCase
         self::assertTrue($container->has(PhpRuntimeInterface::class));
         self::assertTrue($container->has(DeployCheck::class));
         self::assertTrue($container->has(DeployCheckRunnerInterface::class));
+        // MaintenanceMode (@api) is bound so bin/pulsar can register the
+        // maintenance:enable/:disable commands and the 503 middleware is live.
+        self::assertTrue($container->has(MaintenanceMode::class));
     }
 
     #[Test]
