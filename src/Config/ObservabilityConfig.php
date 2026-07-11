@@ -29,6 +29,7 @@ final readonly class ObservabilityConfig
         public TracingConfig $tracing = new TracingConfig(),
         public ErrorTrackingConfig $errorTracking = new ErrorTrackingConfig(),
         public AuditConfig $audit = new AuditConfig(),
+        public ComplianceLoggingConfig $complianceLogging = new ComplianceLoggingConfig(),
     ) {}
 
     /**
@@ -46,6 +47,11 @@ final readonly class ObservabilityConfig
      *             path?: string|null,
      *             stream?: string|null,
      *         }>,
+     *         compliance?: array{
+     *             enabled?: bool|int|string,
+     *             frameworks?: list<string>,
+     *             path?: string,
+     *         },
      *     },
      *     metrics?: array<string, mixed>,
      *     tracing?: array<string, mixed>,
@@ -100,6 +106,7 @@ final readonly class ObservabilityConfig
             tracing: TracingConfig::fromArray($data['tracing'] ?? []),
             errorTracking: ErrorTrackingConfig::fromArray($data['error_tracking'] ?? []),
             audit: AuditConfig::fromArray($auditData, $environment),
+            complianceLogging: ComplianceLoggingConfig::fromArray($logging['compliance'] ?? []),
         );
     }
 }
