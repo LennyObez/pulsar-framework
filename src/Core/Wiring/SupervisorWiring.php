@@ -13,6 +13,8 @@ use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Routing\Router;
 use Pulsar\Security\Audit\AuditLogger;
+use Pulsar\Supervisor\PreflightCheck\DiskSpacePreflightCheck;
+use Pulsar\Supervisor\PreflightCheck\MemoryPreflightCheck;
 use Pulsar\Supervisor\PreflightCheck\PreflightRunner;
 use Pulsar\Supervisor\PreflightCheck\PreflightRunnerInterface;
 use Pulsar\Supervisor\Supervisor;
@@ -60,8 +62,14 @@ final readonly class SupervisorWiring implements ServiceWiringInterface
         $container->instance(Supervisor::class, $supervisor);
         $container->instance(SupervisorInterface::class, $supervisor);
 
-        // Preflight runner (extracted for direct injection)
-        $preflightRunner = new PreflightRunner([]);
+        // Preflight runner with the built-in checks: disk space on the project
+        // volume (where var/ lives) and available memory against the same
+        // threshold the supervisor recycles workers at -- if a worker cannot
+        // even start below it, preflight should say so before serving traffic.
+        $preflightRunner = new PreflightRunner([
+            new DiskSpacePreflightCheck(base_path()),
+            new MemoryPreflightCheck($supervisorConfig->recycleMemoryThresholdMb),
+        ]);
         $container->instance(PreflightRunner::class, $preflightRunner);
         $container->instance(PreflightRunnerInterface::class, $preflightRunner);
     }
