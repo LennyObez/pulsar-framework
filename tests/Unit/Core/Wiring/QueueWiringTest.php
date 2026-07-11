@@ -24,6 +24,8 @@ use Pulsar\Queue\Retry\QueueRetryPolicy;
 use Pulsar\Queue\Worker;
 use Pulsar\Queue\WorkerOptions;
 use Pulsar\Routing\Router;
+use Pulsar\Security\Crypto\KeyRingInterface;
+use Pulsar\Security\Crypto\MasterKey;
 use Random\Randomizer;
 
 use function bin2hex;
@@ -149,6 +151,32 @@ final class QueueWiringTest extends TestCase
         $this->expectExceptionMessage('database');
 
         new QueueWiring()->wire($container, $configManager, $middleware, $middlewareRegistry, $router);
+    }
+
+    #[Test]
+    public function wireBuildsThePipelinesWhenEncryptionIsEnabledWithKeyMaterial(): void
+    {
+        // Happy path of the config-gated middleware: with the key material
+        // bound, enabling encryption must wire cleanly end-to-end.
+        $container = new Container();
+        $container->instance(Randomizer::class, new Randomizer());
+        $container->instance(MasterKey::class, MasterKey::fromHex(bin2hex(random_bytes(32))));
+        $container->instance(KeyRingInterface::class, $this->createStub(KeyRingInterface::class));
+        $router = new Router();
+        $middleware = new MiddlewarePipeline($container);
+        $middlewareRegistry = new MiddlewareRegistry();
+
+        $configManager = $this->createConfigManager(
+            enabled: true,
+            driver: 'sync',
+            queueExtra: ', "middleware" => ["encrypt_payloads" => true]',
+        );
+        $configManager->load();
+
+        new QueueWiring()->wire($container, $configManager, $middleware, $middlewareRegistry, $router);
+
+        self::assertTrue($container->has(QueueManager::class));
+        self::assertTrue($container->has(Worker::class));
     }
 
     #[Test]
