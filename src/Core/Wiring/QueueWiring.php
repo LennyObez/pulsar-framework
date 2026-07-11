@@ -18,10 +18,18 @@ use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Queue\Attribute\EffectClassifier;
 use Pulsar\Queue\DeadLetterQueue;
+use Pulsar\Queue\Driver\AmqpDriver;
+use Pulsar\Queue\Driver\Config\AmqpDriverConfig;
+use Pulsar\Queue\Driver\Config\PubSubDriverConfig;
+use Pulsar\Queue\Driver\Config\RedisDriverConfig;
+use Pulsar\Queue\Driver\Config\SqsDriverConfig;
 use Pulsar\Queue\Driver\DatabaseDriver;
 use Pulsar\Queue\Driver\DatabaseFailedJobRepository;
 use Pulsar\Queue\Driver\InMemoryDriver;
 use Pulsar\Queue\Driver\InMemoryFailedJobRepository;
+use Pulsar\Queue\Driver\PubSubDriver;
+use Pulsar\Queue\Driver\RedisDriver;
+use Pulsar\Queue\Driver\SqsDriver;
 use Pulsar\Queue\Driver\SyncDriver;
 use Pulsar\Queue\Exception\QueueException;
 use Pulsar\Queue\FailedJobRepositoryInterface;
@@ -73,27 +81,33 @@ final readonly class QueueWiring implements ServiceWiringInterface
         /** @var Randomizer $randomizer */
         $randomizer = $container->get(Randomizer::class);
 
+        // Exhaustive driver construction -- NO silent fallback. Every durable
+        // transport either honours an application-bound driver, builds the real
+        // one (the remote drivers validate their extension/SDK in the
+        // constructor and connect lazily, so boot stays offline-safe), or fails
+        // fast. An operator who configured a durable transport must never
+        // silently run on the in-memory driver and lose every job on restart.
+        $boundDriver = $container->has(QueueDriverInterface::class)
+            ? $container->get(QueueDriverInterface::class)
+            : null;
+        /** @var QueueDriverInterface|null $boundDriver */
+
         $driver = match ($queueConfig->driver) {
             QueueDriverType::Sync => new SyncDriver($randomizer),
             QueueDriverType::Memory => new InMemoryDriver($randomizer),
-            // Durable database transport: honour an application-bound driver
-            // first, then build the framework one from the database connection.
-            // Never fall back to the in-memory driver here -- an operator who
-            // configured a durable transport must not silently lose every
-            // queued job on process restart; fail fast instead.
-            QueueDriverType::Database => match (true) {
-                $container->has(QueueDriverInterface::class) => $container->get(QueueDriverInterface::class),
-                $container->has(ConnectionManagerInterface::class) => new DatabaseDriver(
-                    $container->get(ConnectionManagerInterface::class),
-                    $randomizer,
-                ),
-                default => throw QueueException::driverNotConfigured(
+            QueueDriverType::Database => $boundDriver ?? ($container->has(ConnectionManagerInterface::class)
+                ? new DatabaseDriver($container->get(ConnectionManagerInterface::class), $randomizer)
+                : throw QueueException::driverNotConfigured(
                     'database (requires a database connection; enable the database config)',
-                ),
-            },
-            default => $container->has(QueueDriverInterface::class)
-                ? $container->get(QueueDriverInterface::class)
-                : new InMemoryDriver(),
+                )),
+            QueueDriverType::Redis => $boundDriver
+                ?? new RedisDriver(RedisDriverConfig::fromArray($queueConfig->driverOptions), $randomizer),
+            QueueDriverType::Amqp => $boundDriver
+                ?? new AmqpDriver(AmqpDriverConfig::fromArray($queueConfig->driverOptions), $randomizer),
+            QueueDriverType::Sqs => $boundDriver
+                ?? new SqsDriver(SqsDriverConfig::fromArray($queueConfig->driverOptions), $randomizer),
+            QueueDriverType::PubSub => $boundDriver
+                ?? new PubSubDriver(PubSubDriverConfig::fromArray($queueConfig->driverOptions), $randomizer),
         };
 
         if (!$container->has(QueueDriverInterface::class)) {
