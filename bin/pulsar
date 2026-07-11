@@ -124,6 +124,7 @@ use Pulsar\Console\Command\I18nLintCommand;
 use Pulsar\Console\Command\IdeHelperCommand;
 use Pulsar\Console\Command\MaintenanceDisableCommand;
 use Pulsar\Console\Command\MaintenanceEnableCommand;
+use Pulsar\Console\Command\WorkflowCheckTimeoutsCommand;
 use Pulsar\Console\Command\ReleaseCheckerInterface;
 use Pulsar\Console\Command\RepairCommand;
 use Pulsar\Console\Command\RoutesCacheCommand;
@@ -167,6 +168,7 @@ use Pulsar\Database\Introspection\DatabaseIntrospectorInterface;
 use Pulsar\Database\Seeder\SeederRunner;
 use Pulsar\Deploy\DeployCheck;
 use Pulsar\Deploy\MaintenanceMode;
+use Pulsar\Event\EventDispatcherInterface;
 use Pulsar\Extensibility\ExtensionRegistry;
 use Pulsar\I18n\Extractor\TranslationExtractor;
 use Pulsar\I18n\Linter\TranslationLinter;
@@ -178,6 +180,7 @@ use Pulsar\Routing\RouterInterface;
 use Pulsar\Runtime\RuntimeFactory;
 use Pulsar\Runtime\RuntimeResolver;
 use Pulsar\Scheduler\JobRegistry;
+use Pulsar\Workflow\Storage\WorkflowStorageInterface;
 use Pulsar\Scheduler\Scheduler;
 use Pulsar\Security\Vault\SecretVault;
 use Pulsar\Extensibility\ExtensionBootstrap;
@@ -571,6 +574,17 @@ if ($kernel->container()->has(MaintenanceMode::class)) {
   $maintenanceMode = $kernel->container()->get(MaintenanceMode::class);
   $application->add(new MaintenanceEnableCommand($maintenanceMode));
   $application->add(new MaintenanceDisableCommand($maintenanceMode));
+}
+
+// Register the workflow timeout pump (ADR-0027: scheduled polling command)
+if ($kernel->container()->has(WorkflowStorageInterface::class)) {
+  /** @var WorkflowStorageInterface $workflowStorage */
+  $workflowStorage = $kernel->container()->get(WorkflowStorageInterface::class);
+  /** @var EventDispatcherInterface|null $workflowEvents */
+  $workflowEvents = $kernel->container()->has(EventDispatcherInterface::class)
+    ? $kernel->container()->get(EventDispatcherInterface::class)
+    : null;
+  $application->add(new WorkflowCheckTimeoutsCommand($workflowStorage, $workflowEvents));
 }
 
 // Register runtime commands
