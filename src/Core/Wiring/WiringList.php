@@ -32,6 +32,7 @@ final readonly class WiringList
             new LoggingWiring(),
             new TracingWiring(),
             new SecurityWiring(),
+            new ComplianceLoggingWiring(),
             new MetricsWiring(),
             new RequestContextWiring(),
             new EventWiring(),

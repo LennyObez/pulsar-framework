@@ -30,6 +30,7 @@ final class ModuleMap
         'Pulsar\Core\Wiring\AntiSpamWiring',
         'Pulsar\Core\Wiring\AssetWiring',
         'Pulsar\Core\Wiring\AuthWiring',
+        'Pulsar\Core\Wiring\ComplianceLoggingWiring',
         'Pulsar\Core\Wiring\ConfigWiring',
         'Pulsar\Core\Wiring\DatabaseWiring',
         'Pulsar\Core\Wiring\DeployWiring',

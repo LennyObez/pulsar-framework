@@ -30,6 +30,17 @@ return [
                 'stream' => 'php://stderr',
             ],
         ],
+
+        // Compliance log sink: masks/pseudonymizes every log entry per the
+        // selected regulations (GDPR/HIPAA pseudonymization needs the security
+        // master key) and writes to a dedicated durable file, encrypted at
+        // rest when the security encryptor is available. Empty 'frameworks'
+        // applies all of: gdpr, hipaa, pci-dss, sox.
+        'compliance' => [
+            'enabled' => false,
+            'frameworks' => [],
+            'path' => 'var/logs/compliance.log',
+        ],
     ],
 
     /*

@@ -90,6 +90,7 @@ final class SharedMemoryConfigStore
         \Pulsar\Config\MetricsConfig::class,
         \Pulsar\Config\ErrorTrackingConfig::class,
         \Pulsar\Config\AuditConfig::class,
+        \Pulsar\Config\ComplianceLoggingConfig::class,
         \Pulsar\Config\IntegrityConfig::class,
         \Pulsar\Config\IntegrityPolicyMode::class,
         \Pulsar\Config\Environment::class,
