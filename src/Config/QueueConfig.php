@@ -33,6 +33,13 @@ final readonly class QueueConfig
         public int $deadLetterRetentionDays = 30,
         public array $driverOptions = [],
         public bool $deadLetterRegulated = false,
+        public bool $encryptPayloads = false,
+        public bool $enforceEffectClassification = false,
+        public bool $preventDuplicates = false,
+        public int $preventDuplicatesTtlSeconds = 300,
+        public bool $rateLimitEnabled = false,
+        public int $rateLimitTtlSeconds = 1,
+        public int $rateLimitTimeoutMs = 0,
     ) {}
 
     /**
@@ -58,6 +65,12 @@ final readonly class QueueConfig
      *         regulated?: bool|int|string,
      *     },
      *     driver_options?: array<string, mixed>,
+     *     middleware?: array{
+     *         encrypt_payloads?: bool|int|string,
+     *         enforce_effect_classification?: bool|int|string,
+     *         prevent_duplicates?: array{enabled?: bool|int|string, ttl_seconds?: int},
+     *         rate_limit?: array{enabled?: bool|int|string, ttl_seconds?: int, timeout_ms?: int},
+     *     },
      * } $data Raw array from config/queue.php
      */
     #[NoDiscard]
@@ -73,6 +86,9 @@ final readonly class QueueConfig
         $workerData = $data['worker'] ?? [];
         $retryData = $data['retry'] ?? [];
         $dlData = $data['dead_letter'] ?? [];
+        $mwData = $data['middleware'] ?? [];
+        $dedupData = $mwData['prevent_duplicates'] ?? [];
+        $rateData = $mwData['rate_limit'] ?? [];
 
         return new self(
             enabled: $enabled,
@@ -90,6 +106,13 @@ final readonly class QueueConfig
             deadLetterRetentionDays: $dlData['retention_days'] ?? 30,
             driverOptions: $data['driver_options'] ?? [],
             deadLetterRegulated: (bool) ($dlData['regulated'] ?? false),
+            encryptPayloads: (bool) ($mwData['encrypt_payloads'] ?? false),
+            enforceEffectClassification: (bool) ($mwData['enforce_effect_classification'] ?? false),
+            preventDuplicates: (bool) ($dedupData['enabled'] ?? false),
+            preventDuplicatesTtlSeconds: $dedupData['ttl_seconds'] ?? 300,
+            rateLimitEnabled: (bool) ($rateData['enabled'] ?? false),
+            rateLimitTtlSeconds: $rateData['ttl_seconds'] ?? 1,
+            rateLimitTimeoutMs: $rateData['timeout_ms'] ?? 0,
         );
     }
 }
