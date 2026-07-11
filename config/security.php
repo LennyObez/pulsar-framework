@@ -293,5 +293,15 @@ return [
         'api_abuse_window_seconds' => 60,
         'geo_travel_speed_kmh' => 900,
         'injection_detection_enabled' => true,
+
+        // Honeypot paths: fake attacker-only routes (wp-login.php, .env, ...).
+        // Zero false positives -- these paths are never valid in a Pulsar app.
+        // Empty 'paths' uses the built-in list; block_ip=false answers with a
+        // fake 404 instead of a 403.
+        'honeypot' => [
+            'enabled' => false,
+            'paths' => [],
+            'block_ip' => true,
+        ],
     ],
 ];

@@ -12,6 +12,7 @@ use Pulsar\Core\Wiring\ThreatDetectionWiring;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Routing\Router;
+use Pulsar\Security\ThreatDetection\HoneypotMiddleware;
 use Pulsar\Security\ThreatDetection\ThreatDetectionEngine;
 use Pulsar\Security\ThreatDetection\ThreatDetectionMiddleware;
 
@@ -62,6 +63,37 @@ final class ThreatDetectionWiringTest extends TestCase
 
         self::assertFalse($container->has(ThreatDetectionEngine::class));
         self::assertSame($before, $pipeline->count());
+    }
+
+    #[Test]
+    public function pipesTheHoneypotWhenItsToggleIsEnabled(): void
+    {
+        $container = new Container();
+        $pipeline = new MiddlewarePipeline($container);
+        $before = $pipeline->count();
+
+        $this->wire(
+            $container,
+            $pipeline,
+            "<?php return ['threat_detection' => ['enabled' => true, 'honeypot' => ['enabled' => true]]];",
+        );
+
+        self::assertTrue($container->has(HoneypotMiddleware::class), 'honeypot middleware is bound');
+        self::assertSame($before + 2, $pipeline->count(), 'threat-detection + honeypot are piped');
+    }
+
+    #[Test]
+    public function honeypotStaysDormantWithoutItsToggle(): void
+    {
+        // threat_detection on, honeypot absent/off: only the engine middleware pipes.
+        $container = new Container();
+        $pipeline = new MiddlewarePipeline($container);
+        $before = $pipeline->count();
+
+        $this->wire($container, $pipeline, "<?php return ['threat_detection' => ['enabled' => true]];");
+
+        self::assertFalse($container->has(HoneypotMiddleware::class));
+        self::assertSame($before + 1, $pipeline->count());
     }
 
     private function wire(Container $container, MiddlewarePipeline $pipeline, string $securityPhp): void

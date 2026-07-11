@@ -51,7 +51,12 @@ final readonly class HoneypotConfig
     }
 
     /**
+     * The `enabled` key is tolerated (and ignored) so the wiring can hand the
+     * whole `threat_detection.honeypot` config block straight through -- the
+     * toggle itself is consumed by the wiring, not by this DTO.
+     *
      * @param array{
+     *     enabled?: bool|int|string,
      *     paths?: list<string>,
      *     block_ip?: bool,
      *     response_action?: ThreatResponse|string|null,
