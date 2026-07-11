@@ -9423,7 +9423,8 @@
                 "__construct": {
                     "params": [
                         "int $intervalSeconds",
-                        "int $timeoutSeconds"
+                        "int $timeoutSeconds",
+                        "bool $fipsCheck"
                     ],
                     "return": null,
                     "static": false
@@ -55303,6 +55304,25 @@
             },
             "constants": []
         },
+        "Pulsar\\Workflow\\Event\\WorkflowTimedOutEvent": {
+            "since": "1.0.0-rc.11",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "string $instanceId",
+                        "string $definitionId",
+                        "int $definitionVersion",
+                        "string $currentState",
+                        "DateTimeImmutable $timedOutAt",
+                        "DateTimeImmutable $occurredAt"
+                    ],
+                    "return": null,
+                    "static": false
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\Workflow\\Exception\\ConcurrentTransitionException": {
             "since": "1.0.0",
             "methods": [],
@@ -56111,6 +56131,7 @@
         "Pulsar\\Console\\Command\\StatusCommand",
         "Pulsar\\Console\\Command\\TestChangedCommand",
         "Pulsar\\Console\\Command\\UpdateResult",
+        "Pulsar\\Console\\Command\\WorkflowCheckTimeoutsCommand",
         "Pulsar\\Console\\ConfigReferenceRenderer",
         "Pulsar\\Console\\Repl\\CaptureOnlyQueueDriver",
         "Pulsar\\Console\\Repl\\GuardResult",

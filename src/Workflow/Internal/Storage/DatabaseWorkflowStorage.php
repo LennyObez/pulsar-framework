@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Driver;
 use Pulsar\Database\Row;
 use Pulsar\Security\Crypto\EncryptorInterface;
 use Pulsar\Workflow\ActorContext;
@@ -246,5 +247,62 @@ final readonly class DatabaseWorkflowStorage implements WorkflowStorageInterface
             startedBy: $row->getString('started_by'),
             timeoutAt: $timeoutAt,
         );
+    }
+
+    /**
+     * Idempotent DDL: create the `workflow_instances` table. Safe to re-run.
+     * Intended for a migration or setup command, mirroring
+     * {@see DatabaseSagaStateStorage::installSchema()}.
+     */
+    public function installSchema(): void
+    {
+        match ($this->connection->driver()) {
+            Driver::SQLite => $this->connection->execute(
+                'CREATE TABLE IF NOT EXISTS workflow_instances (
+                    id TEXT PRIMARY KEY,
+                    definition_id TEXT NOT NULL,
+                    definition_version INTEGER NOT NULL,
+                    current_state TEXT NOT NULL,
+                    context TEXT NOT NULL,
+                    version INTEGER NOT NULL,
+                    status TEXT NOT NULL,
+                    started_at TEXT NOT NULL,
+                    completed_at TEXT,
+                    started_by TEXT NOT NULL,
+                    timeout_at TEXT
+                )',
+            ),
+            Driver::MySQL => $this->connection->execute(
+                'CREATE TABLE IF NOT EXISTS workflow_instances (
+                    id VARCHAR(255) NOT NULL PRIMARY KEY,
+                    definition_id VARCHAR(255) NOT NULL,
+                    definition_version INT NOT NULL,
+                    current_state VARCHAR(255) NOT NULL,
+                    context LONGTEXT NOT NULL,
+                    version INT NOT NULL,
+                    status VARCHAR(32) NOT NULL,
+                    started_at DATETIME NOT NULL,
+                    completed_at DATETIME NULL,
+                    started_by VARCHAR(255) NOT NULL,
+                    timeout_at DATETIME NULL,
+                    INDEX idx_workflow_instances_timeout (status, timeout_at)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin',
+            ),
+            Driver::PostgreSQL => $this->connection->execute(
+                'CREATE TABLE IF NOT EXISTS workflow_instances (
+                    id TEXT PRIMARY KEY,
+                    definition_id TEXT NOT NULL,
+                    definition_version INTEGER NOT NULL,
+                    current_state TEXT NOT NULL,
+                    context TEXT NOT NULL,
+                    version INTEGER NOT NULL,
+                    status TEXT NOT NULL,
+                    started_at TIMESTAMP NOT NULL,
+                    completed_at TIMESTAMP,
+                    started_by TEXT NOT NULL,
+                    timeout_at TIMESTAMP
+                )',
+            ),
+        };
     }
 }
