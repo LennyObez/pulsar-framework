@@ -12,12 +12,14 @@ use Pulsar\Config\HealthCheckConfig;
 use Pulsar\Config\ResilienceConfig;
 use Pulsar\Config\RetryConfig;
 use Pulsar\Container\ContainerInterface;
+use Pulsar\Database\ConnectionManagerInterface;
 use Pulsar\Http\Controller\HealthController;
 use Pulsar\Http\Message\Response;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Resilience\CircuitBreakerRegistry;
 use Pulsar\Resilience\HealthCheck\CacheHealthCheck;
+use Pulsar\Resilience\HealthCheck\DatabaseHealthCheck;
 use Pulsar\Resilience\HealthCheck\DiskHealthCheck;
 use Pulsar\Resilience\HealthCheck\HealthCheckRunner;
 use Pulsar\Resilience\HealthCheck\HealthCheckRunnerInterface;
@@ -25,6 +27,7 @@ use Pulsar\Resilience\Repair\RepairRunner;
 use Pulsar\Resilience\Repair\RepairRunnerInterface;
 use Pulsar\Resilience\RetryPolicy;
 use Pulsar\Routing\Router;
+use Pulsar\Security\Crypto\FipsComplianceCheck;
 
 use function in_array;
 
@@ -68,8 +71,11 @@ final readonly class ResilienceWiring implements ServiceWiringInterface
         $container->instance(HealthCheckRunner::class, $healthCheckRunner);
         $container->instance(HealthCheckRunnerInterface::class, $healthCheckRunner);
 
-        // Register built-in health checks
+        // Register built-in health checks. FIPS compliance is checked here so a
+        // FIPS-regulated deployment surfaces a broken crypto posture on /health
+        // instead of discovering it during an incident.
         $healthCheckRunner->register(new DiskHealthCheck());
+        $healthCheckRunner->register(new FipsComplianceCheck());
 
         // Health endpoint: lazily registers checks that depend on services
         // wired after ResilienceWiring (e.g. CacheWiring).
@@ -82,6 +88,18 @@ final readonly class ResilienceWiring implements ServiceWiringInterface
 
                 if (!self::hasCheck($healthCheckRunner, 'cache')) {
                     $healthCheckRunner->register(new CacheHealthCheck($cache));
+                }
+            }
+
+            // Same lazy pattern for database connectivity: DatabaseWiring runs
+            // before ResilienceWiring, but the connection may be bound by an
+            // extension or replaced at runtime, so resolve it per request.
+            if ($container->has(ConnectionManagerInterface::class)) {
+                /** @var ConnectionManagerInterface $connectionManager */
+                $connectionManager = $container->get(ConnectionManagerInterface::class);
+
+                if (!self::hasCheck($healthCheckRunner, 'database')) {
+                    $healthCheckRunner->register(new DatabaseHealthCheck($connectionManager));
                 }
             }
 
