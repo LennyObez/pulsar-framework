@@ -18,7 +18,7 @@ use Pulsar\Observability\Log\Logger;
 use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Observability\Tracing\InMemorySpanCollector;
 use Pulsar\Routing\MatchedRoute;
-use Pulsar\Security\Session\Session;
+use Pulsar\Security\Session\SessionManager;
 
 #[CoversClass(Kernel::class)]
 final class KernelBootPipelineTest extends TestCase
@@ -107,7 +107,7 @@ final class KernelBootPipelineTest extends TestCase
         $this->writeObservabilityConfig();
         $kernel = $this->bootKernel();
 
-        self::assertTrue($kernel->container()->has(Session::class));
+        self::assertTrue($kernel->container()->has(SessionManager::class));
     }
 
     #[Test]
