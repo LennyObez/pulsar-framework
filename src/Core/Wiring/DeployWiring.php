@@ -36,14 +36,20 @@ use Pulsar\Deploy\DeployCheck;
 use Pulsar\Deploy\DeployCheckInterface;
 use Pulsar\Deploy\DeployCheckRunnerInterface;
 use Pulsar\Deploy\DeploySeverity;
+use Pulsar\Deploy\MaintenanceMode;
+use Pulsar\Deploy\Middleware\MaintenanceModeMiddleware;
 use Pulsar\Deploy\Runtime\FilesystemReader;
 use Pulsar\Deploy\Runtime\PhpRuntime;
 use Pulsar\Deploy\Runtime\PhpRuntimeInterface;
+use Pulsar\Http\Factory\ResponseFactory;
+use Pulsar\Http\Factory\StreamFactory;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Routing\Router;
 
 use function dirname;
+use function is_dir;
+use function mkdir;
 
 #[Internal]
 final readonly class DeployWiring implements ServiceWiringInterface
@@ -64,6 +70,25 @@ final readonly class DeployWiring implements ServiceWiringInterface
         /** @var DeployConfig $deployConfig */
         $deployConfig = $repository->get(DeployConfig::class);
         $container->instance(DeployConfig::class, $deployConfig);
+
+        // Maintenance mode (@api MaintenanceMode + its 503 middleware). The flag
+        // file lives under the single writable root (var/framework); the
+        // maintenance:enable / :disable commands toggle it, and the middleware
+        // short-circuits every request with a 503 while it is active. Binding
+        // MaintenanceMode is also what lets bin/pulsar register those commands.
+        // Skip gracefully when the storage directory cannot be created so a
+        // read-only or misconfigured filesystem never blocks boot.
+        $maintenanceStorage = var_path('framework');
+
+        if (is_dir($maintenanceStorage) || @mkdir($maintenanceStorage, 0o750, true) || is_dir($maintenanceStorage)) {
+            $maintenanceMode = new MaintenanceMode($maintenanceStorage);
+            $container->instance(MaintenanceMode::class, $maintenanceMode);
+            $middleware->pipe(new MaintenanceModeMiddleware(
+                $maintenanceMode,
+                new ResponseFactory(),
+                new StreamFactory(),
+            ));
+        }
 
         $phpRuntime = new PhpRuntime();
         $container->instance(PhpRuntimeInterface::class, $phpRuntime);
