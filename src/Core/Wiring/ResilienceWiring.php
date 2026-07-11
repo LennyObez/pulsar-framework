@@ -71,11 +71,16 @@ final readonly class ResilienceWiring implements ServiceWiringInterface
         $container->instance(HealthCheckRunner::class, $healthCheckRunner);
         $container->instance(HealthCheckRunnerInterface::class, $healthCheckRunner);
 
-        // Register built-in health checks. FIPS compliance is checked here so a
-        // FIPS-regulated deployment surfaces a broken crypto posture on /health
-        // instead of discovering it during an incident.
+        // Register built-in health checks. The FIPS check is opt-in
+        // (health_check.fips_check): it reports "degraded" on any non-FIPS
+        // host and the health endpoint 503s on non-healthy results -- the
+        // right fail-closed signal for a FIPS-regulated deployment, but it
+        // would eject every ordinary deployment from its LB pool by default.
         $healthCheckRunner->register(new DiskHealthCheck());
-        $healthCheckRunner->register(new FipsComplianceCheck());
+
+        if ($resilienceConfig->healthCheck->fipsCheck) {
+            $healthCheckRunner->register(new FipsComplianceCheck());
+        }
 
         // Health endpoint: lazily registers checks that depend on services
         // wired after ResilienceWiring (e.g. CacheWiring).

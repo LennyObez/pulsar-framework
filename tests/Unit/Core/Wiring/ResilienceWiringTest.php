@@ -23,6 +23,7 @@ use Pulsar\Resilience\Repair\RepairRunner;
 use Pulsar\Resilience\Repair\RepairRunnerInterface;
 use Pulsar\Resilience\RetryPolicy;
 use Pulsar\Routing\Router;
+use Pulsar\Security\Crypto\FipsComplianceCheck;
 
 use function bin2hex;
 use function file_put_contents;
@@ -56,6 +57,32 @@ final class ResilienceWiringTest extends TestCase
         self::assertTrue($container->has(HealthCheckRunnerInterface::class));
         self::assertTrue($container->has(RepairRunner::class));
         self::assertTrue($container->has(RepairRunnerInterface::class));
+
+        // Regression lock: the FIPS check reports "degraded" on non-FIPS hosts
+        // and /health 503s on it, so it must NEVER register by default.
+        /** @var HealthCheckRunner $runner */
+        $runner = $container->get(HealthCheckRunner::class);
+        self::assertNotContains('fips_compliance', $runner->names());
+        self::assertNotContains('fips', $runner->names());
+    }
+
+    #[Test]
+    public function wireRegistersTheFipsCheckOnlyWhenOptedIn(): void
+    {
+        $container = new Container();
+        $router = new Router();
+        $middleware = new MiddlewarePipeline($container);
+        $middlewareRegistry = new MiddlewareRegistry();
+
+        $configManager = $this->createConfigManager(enabled: true, extra: ', "health_check" => ["fips_check" => true]');
+        $configManager->load();
+
+        $wiring = new ResilienceWiring();
+        $wiring->wire($container, $configManager, $middleware, $middlewareRegistry, $router);
+
+        /** @var HealthCheckRunner $runner */
+        $runner = $container->get(HealthCheckRunner::class);
+        self::assertContains(new FipsComplianceCheck()->getName(), $runner->names());
     }
 
     #[Test]
@@ -94,7 +121,7 @@ final class ResilienceWiringTest extends TestCase
         self::assertFalse($container->has(ResilienceConfig::class));
     }
 
-    private function createConfigManager(bool $enabled): ConfigManager
+    private function createConfigManager(bool $enabled, string $extra = ''): ConfigManager
     {
         $configPath = sys_get_temp_dir() . '/pulsar_resilience_wiring_' . bin2hex(random_bytes(4));
         @mkdir($configPath, 0o755, true);
@@ -103,7 +130,7 @@ final class ResilienceWiringTest extends TestCase
         file_put_contents($configPath . '/app.php', '<?php return ["name" => "Test", "env" => "testing", "debug" => false, "timezone" => "UTC", "locale" => "en"];');
         file_put_contents($configPath . '/observability.php', '<?php return ["logging" => ["default_channel" => "file", "level" => "debug", "channels" => []]];');
         file_put_contents($configPath . '/security.php', '<?php return ["session" => [], "csrf" => [], "headers" => [], "rate_limit" => []];');
-        file_put_contents($configPath . '/resilience.php', '<?php return ["enabled" => ' . $enabledStr . '];');
+        file_put_contents($configPath . '/resilience.php', '<?php return ["enabled" => ' . $enabledStr . $extra . '];');
 
         return new ConfigManager($configPath);
     }
