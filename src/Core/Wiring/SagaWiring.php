@@ -12,8 +12,10 @@ use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Routing\Router;
 use Pulsar\Saga\SagaStateStorageInterface;
+use Pulsar\Saga\SagaStepResultStorageInterface;
 use Pulsar\Saga\Storage\InMemorySagaStateStorage;
 use Pulsar\Workflow\Internal\Storage\DatabaseSagaStateStorage;
+use Pulsar\Workflow\Internal\Storage\DatabaseSagaStepResultStorage;
 
 /**
  * Registers a default saga-state storage so the saga engine is runnable out of
@@ -44,6 +46,15 @@ final readonly class SagaWiring implements ServiceWiringInterface
             /** @var ConnectionManagerInterface $connectionManager */
             $connectionManager = $container->get(ConnectionManagerInterface::class);
             $storage = new DatabaseSagaStateStorage($connectionManager->connection());
+
+            // Durable per-step results (idempotency across retries) mirror the
+            // state storage; only meaningful with a database behind them.
+            if (!$container->has(SagaStepResultStorageInterface::class)) {
+                $container->instance(
+                    SagaStepResultStorageInterface::class,
+                    new DatabaseSagaStepResultStorage($connectionManager->connection()),
+                );
+            }
         } else {
             $storage = new InMemorySagaStateStorage();
         }
