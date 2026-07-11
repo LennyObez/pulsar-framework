@@ -64,5 +64,12 @@ return [
     'health_check' => [
         'interval_seconds' => 30,
         'timeout_seconds' => 5,
+
+        // FIPS 140-2 compliance check on /health. Enable ONLY on deployments
+        // that must run OpenSSL in FIPS mode: on any other host the check
+        // reports "degraded" and /health answers 503, which ejects the
+        // instance from its load-balancer pool (intended fail-closed
+        // behaviour for FIPS-regulated environments).
+        'fips_check' => false,
     ],
 ];
