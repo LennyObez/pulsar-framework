@@ -27,6 +27,21 @@ final class QueueException extends RuntimeException
     }
 
     /**
+     * A queue middleware was enabled in config but a service it requires is
+     * not available. Failing fast at boot beats silently skipping a control
+     * the operator believes is active (e.g. payload encryption).
+     */
+    #[NoDiscard]
+    public static function middlewareDependencyMissing(string $middleware, string $dependency): self
+    {
+        return new self(sprintf(
+            'Queue middleware "%s" is enabled but its required dependency "%s" is not available in the container',
+            $middleware,
+            $dependency,
+        ));
+    }
+
+    /**
      * A job with the given identifier could not be found.
      */
     #[NoDiscard]

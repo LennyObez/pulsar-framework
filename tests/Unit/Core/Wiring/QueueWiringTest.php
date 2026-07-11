@@ -11,9 +11,12 @@ use Pulsar\Config\ConfigManager;
 use Pulsar\Config\QueueConfig;
 use Pulsar\Container\Container;
 use Pulsar\Core\Wiring\QueueWiring;
+use Pulsar\Database\ConnectionManagerInterface;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Queue\DeadLetterQueue;
+use Pulsar\Queue\Driver\DatabaseDriver;
+use Pulsar\Queue\Exception\QueueException;
 use Pulsar\Queue\Monitor\MetricsCollector;
 use Pulsar\Queue\QueueDriverInterface;
 use Pulsar\Queue\QueueManager;
@@ -109,7 +112,70 @@ final class QueueWiringTest extends TestCase
         self::assertFalse($container->has(QueueConfig::class));
     }
 
-    private function createConfigManager(bool $enabled, string $driver): ConfigManager
+    #[Test]
+    public function wireBuildsDatabaseDriverFromTheConnectionManager(): void
+    {
+        $container = new Container();
+        $container->instance(Randomizer::class, new Randomizer());
+        $container->instance(ConnectionManagerInterface::class, $this->createStub(ConnectionManagerInterface::class));
+        $router = new Router();
+        $middleware = new MiddlewarePipeline($container);
+        $middlewareRegistry = new MiddlewareRegistry();
+
+        $configManager = $this->createConfigManager(enabled: true, driver: 'database');
+        $configManager->load();
+
+        $wiring = new QueueWiring();
+        $wiring->wire($container, $configManager, $middleware, $middlewareRegistry, $router);
+
+        self::assertInstanceOf(DatabaseDriver::class, $container->get(QueueDriverInterface::class));
+    }
+
+    #[Test]
+    public function wireFailsFastWhenDatabaseDriverHasNoConnection(): void
+    {
+        // A durable transport must never silently degrade to the in-memory
+        // driver (jobs would be lost on restart) -- boot has to fail instead.
+        $container = new Container();
+        $container->instance(Randomizer::class, new Randomizer());
+        $router = new Router();
+        $middleware = new MiddlewarePipeline($container);
+        $middlewareRegistry = new MiddlewareRegistry();
+
+        $configManager = $this->createConfigManager(enabled: true, driver: 'database');
+        $configManager->load();
+
+        $this->expectException(QueueException::class);
+        $this->expectExceptionMessage('database');
+
+        new QueueWiring()->wire($container, $configManager, $middleware, $middlewareRegistry, $router);
+    }
+
+    #[Test]
+    public function wireFailsFastWhenEncryptionIsEnabledWithoutKeyMaterial(): void
+    {
+        // encrypt_payloads=true without the master key must be a boot error,
+        // never a silent plaintext fallback.
+        $container = new Container();
+        $container->instance(Randomizer::class, new Randomizer());
+        $router = new Router();
+        $middleware = new MiddlewarePipeline($container);
+        $middlewareRegistry = new MiddlewareRegistry();
+
+        $configManager = $this->createConfigManager(
+            enabled: true,
+            driver: 'sync',
+            queueExtra: ', "middleware" => ["encrypt_payloads" => true]',
+        );
+        $configManager->load();
+
+        $this->expectException(QueueException::class);
+        $this->expectExceptionMessage('encrypt_payloads');
+
+        new QueueWiring()->wire($container, $configManager, $middleware, $middlewareRegistry, $router);
+    }
+
+    private function createConfigManager(bool $enabled, string $driver, string $queueExtra = ''): ConfigManager
     {
         $configPath = sys_get_temp_dir() . '/pulsar_queue_wiring_' . bin2hex(random_bytes(4));
         @mkdir($configPath, 0o755, true);
@@ -118,7 +184,7 @@ final class QueueWiringTest extends TestCase
         file_put_contents($configPath . '/app.php', '<?php return ["name" => "Test", "env" => "testing", "debug" => false, "timezone" => "UTC", "locale" => "en"];');
         file_put_contents($configPath . '/observability.php', '<?php return ["logging" => ["default_channel" => "file", "level" => "debug", "channels" => []]];');
         file_put_contents($configPath . '/security.php', '<?php return ["session" => [], "csrf" => [], "headers" => [], "rate_limit" => []];');
-        file_put_contents($configPath . '/queue.php', '<?php return ["enabled" => ' . $enabledStr . ', "driver" => "' . $driver . '"];');
+        file_put_contents($configPath . '/queue.php', '<?php return ["enabled" => ' . $enabledStr . ', "driver" => "' . $driver . '"' . $queueExtra . '];');
 
         return new ConfigManager($configPath);
     }

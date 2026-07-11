@@ -9835,7 +9835,14 @@
                         "bool $deadLetterEnabled",
                         "int $deadLetterRetentionDays",
                         "array $driverOptions",
-                        "bool $deadLetterRegulated"
+                        "bool $deadLetterRegulated",
+                        "bool $encryptPayloads",
+                        "bool $enforceEffectClassification",
+                        "bool $preventDuplicates",
+                        "int $preventDuplicatesTtlSeconds",
+                        "bool $rateLimitEnabled",
+                        "int $rateLimitTtlSeconds",
+                        "int $rateLimitTimeoutMs"
                     ],
                     "return": null,
                     "static": false
@@ -34081,6 +34088,14 @@
                     "params": [
                         "string $id",
                         "int $attempts"
+                    ],
+                    "return": "Pulsar\\Queue\\Exception\\QueueException",
+                    "static": true
+                },
+                "middlewareDependencyMissing": {
+                    "params": [
+                        "string $middleware",
+                        "string $dependency"
                     ],
                     "return": "Pulsar\\Queue\\Exception\\QueueException",
                     "static": true
