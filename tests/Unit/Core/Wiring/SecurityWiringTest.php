@@ -26,7 +26,6 @@ use Pulsar\Security\Csrf\CsrfTokenManagerInterface;
 use Pulsar\Security\Middleware\SecurityHeadersMiddleware;
 use Pulsar\Security\Session\Flash\FlashBag;
 use Pulsar\Security\Session\Handler\SessionHandlerInterface;
-use Pulsar\Security\Session\Session;
 use Pulsar\Security\Session\SessionInterface;
 use Pulsar\Security\Session\SessionManager;
 use Pulsar\Security\Session\SessionMiddleware;
@@ -69,7 +68,6 @@ final class SecurityWiringTest extends TestCase
         self::assertTrue($container->has(SessionHandlerInterface::class));
         self::assertTrue($container->has(SessionManager::class));
         self::assertTrue($container->has(SessionInterface::class));
-        self::assertTrue($container->has(Session::class));
         self::assertTrue($container->has(FlashBag::class));
         self::assertTrue($container->has(SessionMiddleware::class));
         self::assertTrue($container->has(CsrfTokenManager::class));
@@ -138,33 +136,6 @@ final class SecurityWiringTest extends TestCase
         $wiring->wire($container, $configManager, $middleware, $middlewareRegistry, $router);
 
         self::assertTrue($container->has(SessionHandlerInterface::class));
-    }
-
-    #[Test]
-    public function legacySessionAliasPointsToSessionManager(): void
-    {
-        $container = new Container();
-        $container->instance(Randomizer::class, new Randomizer());
-        $router = new Router();
-        $middleware = new MiddlewarePipeline($container);
-        $middlewareRegistry = new MiddlewareRegistry();
-
-        $configManager = $this->createConfigManager();
-        $configManager->load();
-
-        $wiring = new SecurityWiring();
-        $wiring->wire($container, $configManager, $middleware, $middlewareRegistry, $router);
-
-        // Session::class must resolve to the same SessionManager instance,
-        // not a separate Session object (which would cause dual-session bugs).
-        $sessionManager = $container->get(SessionManager::class);
-        $legacySession = $container->get(Session::class);
-
-        self::assertSame(
-            $sessionManager,
-            $legacySession,
-            'Session::class alias must point to the SessionManager instance, not a separate Session',
-        );
     }
 
     #[Test]
