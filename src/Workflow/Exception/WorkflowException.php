@@ -24,6 +24,15 @@ class WorkflowException extends RuntimeException
      * A transition was attempted that is not defined or not allowed from the current state.
      */
     #[NoDiscard]
+    public static function invalidGuard(string $guardClass): self
+    {
+        return new self(sprintf(
+            'Guard class "%s" must implement %s',
+            $guardClass,
+            \Pulsar\Workflow\Guard\TransitionGuardInterface::class,
+        ));
+    }
+
     public static function invalidTransition(string $transitionName, string $fromState, string $definitionName): self
     {
         return new self(sprintf(

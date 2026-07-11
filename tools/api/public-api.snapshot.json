@@ -8769,6 +8769,29 @@
             },
             "constants": []
         },
+        "Pulsar\\Config\\ComplianceLoggingConfig": {
+            "since": "1.0.0-rc.11",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "bool $enabled",
+                        "array $frameworks",
+                        "string $path"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "fromArray": {
+                    "params": [
+                        "array $data"
+                    ],
+                    "return": "Pulsar\\Config\\ComplianceLoggingConfig",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\Config\\ConfigLoaderInterface": {
             "since": "1.0.0",
             "methods": [],
@@ -9762,7 +9785,8 @@
                         "Pulsar\\Config\\MetricsConfig $metrics",
                         "Pulsar\\Config\\TracingConfig $tracing",
                         "Pulsar\\Config\\ErrorTrackingConfig $errorTracking",
-                        "Pulsar\\Config\\AuditConfig $audit"
+                        "Pulsar\\Config\\AuditConfig $audit",
+                        "Pulsar\\Config\\ComplianceLoggingConfig $complianceLogging"
                     ],
                     "return": null,
                     "static": false
@@ -55339,6 +55363,13 @@
                     "return": "Pulsar\\Workflow\\Exception\\WorkflowException",
                     "static": true
                 },
+                "invalidGuard": {
+                    "params": [
+                        "string $guardClass"
+                    ],
+                    "return": "Pulsar\\Workflow\\Exception\\WorkflowException",
+                    "static": true
+                },
                 "invalidState": {
                     "params": [
                         "string $stateName",
@@ -56126,6 +56157,7 @@
         "Pulsar\\Core\\Wiring\\BroadcastWiring",
         "Pulsar\\Core\\Wiring\\CacheWiring",
         "Pulsar\\Core\\Wiring\\CloudWiring",
+        "Pulsar\\Core\\Wiring\\ComplianceLoggingWiring",
         "Pulsar\\Core\\Wiring\\ConfigWiring",
         "Pulsar\\Core\\Wiring\\DatabaseWiring",
         "Pulsar\\Core\\Wiring\\DeployWiring",
@@ -56162,6 +56194,7 @@
         "Pulsar\\Core\\Wiring\\TracingWiring",
         "Pulsar\\Core\\Wiring\\ViewWiring",
         "Pulsar\\Core\\Wiring\\WiringList",
+        "Pulsar\\Core\\Wiring\\WorkflowWiring",
         "Pulsar\\DataProtection\\AuditLogPurge",
         "Pulsar\\DataProtection\\DefaultRetentionPolicy",
         "Pulsar\\DataProtection\\SessionPurge",
@@ -56572,6 +56605,7 @@
         "Pulsar\\WebSocket\\Internal\\InMemoryBroadcastManager",
         "Pulsar\\WebSocket\\Internal\\NullFrameSink",
         "Pulsar\\Workflow\\Internal\\Engine\\WorkflowEngine",
+        "Pulsar\\Workflow\\Internal\\Guard\\ContainerGuardResolver",
         "Pulsar\\Workflow\\Internal\\Storage\\DatabaseSagaStateStorage",
         "Pulsar\\Workflow\\Internal\\Storage\\DatabaseSagaStepResultStorage",
         "Pulsar\\Workflow\\Internal\\Storage\\DatabaseTransitionLog",

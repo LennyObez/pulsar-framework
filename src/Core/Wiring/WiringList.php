@@ -42,6 +42,7 @@ final readonly class WiringList
             new DatabaseWiring(),
             new TenancyWiring(),
             new SagaWiring(),
+            new WorkflowWiring(),
             new FeatureFlagWiring(),
             new SchedulerWiring(),
             new ResilienceWiring(),
