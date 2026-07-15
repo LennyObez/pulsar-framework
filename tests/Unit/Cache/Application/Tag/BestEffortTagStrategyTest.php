@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Cache\Application\Driver\ArrayDriver;
+use Pulsar\Cache\Application\Driver\CacheDriverInterface;
 use Pulsar\Cache\Application\Tag\BestEffortTagStrategy;
 
 #[CoversClass(BestEffortTagStrategy::class)]
@@ -38,6 +39,23 @@ final class BestEffortTagStrategyTest extends TestCase
     {
         $first = $this->strategy->getTagVersions(['tag-a']);
         $second = $this->strategy->getTagVersions(['tag-a']);
+
+        self::assertSame($first['tag-a'], $second['tag-a']);
+    }
+
+    #[Test]
+    public function memoizesTagVersionsToAvoidRepeatedDriverReads(): void
+    {
+        // The driver must be consulted once; the second read for the same tag is
+        // served from the in-instance memo (ADR-0018's local version caching).
+        $driver = $this->createMock(CacheDriverInterface::class);
+        $driver->expects(self::once())->method('getMultiple')->willReturn([]);
+        $driver->method('set')->willReturn(true);
+
+        $strategy = new BestEffortTagStrategy($driver);
+
+        $first = $strategy->getTagVersions(['tag-a']);
+        $second = $strategy->getTagVersions(['tag-a']);
 
         self::assertSame($first['tag-a'], $second['tag-a']);
     }

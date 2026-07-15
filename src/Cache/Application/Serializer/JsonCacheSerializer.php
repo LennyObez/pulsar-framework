@@ -34,7 +34,7 @@ final class JsonCacheSerializer implements CacheSerializerInterface
             throw CacheException::serializationFailed(
                 'Default cache serializer is JSON (scalars and arrays only). '
                 . 'To cache objects, configure `serializer: \'php\'` on the pool '
-                . 'and review the security notes in docs/cache.md.',
+                . 'and review the security notes in docs/caching.md.',
             );
         }
 
