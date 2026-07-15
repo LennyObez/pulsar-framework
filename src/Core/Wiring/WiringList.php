@@ -28,6 +28,9 @@ final readonly class WiringList
     {
         return [
             new ConfigWiring(),
+            // Early: pipes the canonicalization middleware OUTERMOST (before the
+            // locale-prefix strip) so it sees the full, un-rewritten request path.
+            new RoutingWiring(),
             new I18nWiring(),
             new LoggingWiring(),
             new TracingWiring(),

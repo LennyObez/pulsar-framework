@@ -242,6 +242,51 @@ benign duplicate and is ignored. The recorded collisions are available on
 
 See [ADR-0034](adr/0034-route-registration-precedence.md) for the full rationale.
 
+## Path canonicalization
+
+`Route::matchesPath()` trims leading and trailing slashes before comparing, so a
+single registered route also answers an unbounded family of spellings — `/x`,
+`/x/`, `//x`, and `///x///` all match and return `200`. That is convenient but
+produces duplicate content: every crawlable URL exists under infinitely many
+addresses, splitting crawl budget and link equity across them, and it compounds
+with locale prefixes (`/nl//coaching` leaks a stray `//coaching` downstream).
+
+Enable canonicalization to collapse those spellings to one. In
+`config/routing.php`:
+
+```php
+return [
+    'redirect_to_canonical_path' => true,
+];
+```
+
+or set `PULSAR_ROUTING_REDIRECT_TO_CANONICAL_PATH=true`. When on, a request
+whose path is not already canonical (repeated slashes collapsed, trailing slash
+dropped) is redirected to the canonical spelling **before** routing runs:
+
+- **`GET`/`HEAD`** redirect with `301 Moved Permanently` — cacheable, the signal
+  crawlers honour.
+- **Other methods** redirect with `308 Permanent Redirect`, which preserves the
+  method and body, so a `POST` to a non-canonical path is not silently
+  downgraded to a `GET`.
+- The **query string is carried over** unchanged.
+- The **root `/` is exempt** (it is canonical by definition, so there is no
+  redirect loop).
+- The middleware runs **outermost**, before the locale-prefix strip, so
+  `/nl//coaching` redirects to `/nl/coaching` — the locale prefix is preserved
+  and the double slash never reaches the downstream stack.
+
+**Default: off.** Leaving it off preserves the historical forgiving behaviour,
+so turning it on is an opt-in, backwards-compatible tightening. The trade-off is
+one extra redirect round-trip for non-canonical requests (typically only bots
+and mistyped links) in exchange for a single canonical URL per route.
+
+Redirect targets are always origin-form — a path beginning with exactly one
+`/`. Collapsing every run of slashes to one makes a protocol-relative
+`//evil.com` spelling impossible to emit, and
+[`SafeRedirect`](../src/Http/SafeRedirect.php) rejects it as a second line of
+defence, so a slash variant can never be turned into an open redirect.
+
 ## Host-based routing
 
 Routes can be constrained to specific hostnames using the `host` parameter:
