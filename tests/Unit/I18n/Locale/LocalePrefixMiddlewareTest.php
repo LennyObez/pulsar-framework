@@ -139,6 +139,32 @@ final class LocalePrefixMiddlewareTest extends TestCase
     }
 
     #[Test]
+    public function recordsTheOriginalPrefixedUriBeforeStrippingIt(): void
+    {
+        $middleware = $this->makeMiddleware($this->makeConfig());
+        $request = new ServerRequest(method: 'GET', uri: '/fr/docs');
+
+        $originalPath = null;
+        $rewrittenPath = null;
+        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler->expects(self::once())
+            ->method('handle')
+            ->willReturnCallback(static function (ServerRequestInterface $r) use (&$originalPath, &$rewrittenPath): ResponseInterface {
+                /** @var \Psr\Http\Message\UriInterface $original */
+                $original = $r->getAttribute('_original_uri');
+                $originalPath = $original->getPath();
+                $rewrittenPath = $r->getUri()->getPath();
+
+                return Response::text('OK');
+            });
+
+        $middleware->process($request, $handler);
+
+        self::assertSame('/fr/docs', $originalPath, 'The original attribute must keep the locale-prefixed path');
+        self::assertSame('/docs', $rewrittenPath, 'The live URI is stripped, but the original is preserved');
+    }
+
+    #[Test]
     public function canonicalRedirectForDefaultLocaleOnGet(): void
     {
         $middleware = $this->makeMiddleware($this->makeConfig());

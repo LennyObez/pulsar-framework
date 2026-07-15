@@ -81,6 +81,81 @@ final class MiddlewarePipelineTest extends TestCase
     }
 
     #[Test]
+    public function prependedMiddlewareRunsBeforeAlreadyPipedMiddleware(): void
+    {
+        /** @var ArrayObject<int, string> $order */
+        $order = new ArrayObject();
+        $pipeline = new MiddlewarePipeline();
+
+        $record = static function (string $label) use ($order): MiddlewareInterface {
+            return new class ($order, $label) implements MiddlewareInterface {
+                /** @param ArrayObject<int, string> $order */
+                public function __construct(private readonly ArrayObject $order, private readonly string $label) {}
+
+                public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
+                {
+                    $this->order->append("before:{$this->label}");
+                    $response = $handler->handle($request);
+                    $this->order->append("after:{$this->label}");
+
+                    return $response;
+                }
+            };
+        };
+
+        // "framework" is piped first; "project" is prepended, so it must wrap it.
+        $pipeline->pipe($record('framework'));
+        $pipeline->prepend($record('project'));
+
+        $pipeline->dispatch($this->createRequest(), function () use ($order) {
+            $order->append('handler');
+
+            return Response::text('ok');
+        });
+
+        self::assertSame(
+            ['before:project', 'before:framework', 'handler', 'after:framework', 'after:project'],
+            $order->getArrayCopy(),
+        );
+    }
+
+    #[Test]
+    public function aPrependedMiddlewareObservesTheRequestBeforeARewriterMutatesTheUri(): void
+    {
+        $pipeline = new MiddlewarePipeline();
+
+        // A framework-style rewriter that strips a "/nl" prefix from the path.
+        $rewriter = new class implements MiddlewareInterface {
+            public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
+            {
+                $uri = $request->getUri()->withPath('/coaching');
+
+                return $handler->handle($request->withUri($uri));
+            }
+        };
+
+        $observed = null;
+        $project = new class ($observed) implements MiddlewareInterface {
+            public function __construct(private mixed &$observed) {}
+
+            public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
+            {
+                $this->observed = $request->getUri()->getPath();
+
+                return $handler->handle($request);
+            }
+        };
+
+        $pipeline->pipe($rewriter);
+        $pipeline->prepend($project);
+
+        $request = new ServerRequest(method: 'GET', uri: '/nl/coaching');
+        $pipeline->dispatch($request, fn() => Response::text('ok'));
+
+        self::assertSame('/nl/coaching', $observed, 'The prepended middleware must see the pre-rewrite path');
+    }
+
+    #[Test]
     public function restoreFromSnapshotReplacesStackAndClearsCachedChain(): void
     {
         /** @var ArrayObject<int, string> $order */

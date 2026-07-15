@@ -47,6 +47,11 @@ final readonly class LocalizedSlugMiddleware implements MiddlewareInterface
     #[Override]
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
+        // Set-once: if LocalePrefixMiddleware already ran it recorded the
+        // original (prefixed) URI, so this call is a no-op and does not
+        // overwrite it; if the slug middleware runs first, it records here.
+        $request = OriginalUriStash::remember($request);
+
         if ($this->registry->isEmpty()) {
             return $handler->handle($request);
         }

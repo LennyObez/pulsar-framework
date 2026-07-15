@@ -13,6 +13,7 @@ use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Config\I18nConfig;
 use Pulsar\Http\Message\Response;
 use Pulsar\Http\Message\ServerRequest;
+use Pulsar\Http\Message\Uri;
 use Pulsar\I18n\Locale\LocaleUrlStrategy;
 use Pulsar\I18n\Locale\LocalizedSlugMiddleware;
 use Pulsar\I18n\Locale\SlugRegistry;
@@ -83,6 +84,58 @@ final class LocalizedSlugMiddlewareTest extends TestCase
         $uri = $query !== '' ? $path . '?' . $query : $path;
 
         return new ServerRequest(method: $method, uri: $uri)->withAttribute('_locale', $locale);
+    }
+
+    #[Test]
+    public function records_the_original_uri_when_it_runs_first(): void
+    {
+        // No prior rewriter: the slug middleware itself stamps the original URI.
+        $middleware = $this->makeMiddleware($this->slugs());
+
+        $capturedOriginalPath = null;
+        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler->expects(self::once())
+            ->method('handle')
+            ->willReturnCallback(static function (ServerRequestInterface $r) use (&$capturedOriginalPath): ResponseInterface {
+                /** @var \Psr\Http\Message\UriInterface $original */
+                $original = $r->getAttribute('_original_uri');
+                $capturedOriginalPath = $original->getPath();
+
+                return Response::text('OK');
+            });
+
+        $middleware->process($this->request('GET', '/developpement', 'fr'), $handler);
+
+        self::assertSame('/developpement', $capturedOriginalPath);
+    }
+
+    #[Test]
+    public function does_not_overwrite_an_original_uri_set_by_an_earlier_rewriter(): void
+    {
+        // LocalePrefixMiddleware already recorded the full prefixed URI; the slug
+        // middleware must leave that record intact, not replace it with the
+        // already-stripped path it sees.
+        $middleware = $this->makeMiddleware($this->slugs());
+
+        $preExisting = new Uri(path: '/fr/developpement');
+        $request = $this->request('GET', '/developpement', 'fr')
+            ->withAttribute('_original_uri', $preExisting);
+
+        $capturedOriginalPath = null;
+        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler->expects(self::once())
+            ->method('handle')
+            ->willReturnCallback(static function (ServerRequestInterface $r) use (&$capturedOriginalPath): ResponseInterface {
+                /** @var \Psr\Http\Message\UriInterface $original */
+                $original = $r->getAttribute('_original_uri');
+                $capturedOriginalPath = $original->getPath();
+
+                return Response::text('OK');
+            });
+
+        $middleware->process($request, $handler);
+
+        self::assertSame('/fr/developpement', $capturedOriginalPath, 'The earlier rewriter\'s record must survive');
     }
 
     #[Test]

@@ -10014,6 +10014,28 @@
             },
             "constants": []
         },
+        "Pulsar\\Config\\RoutingConfig": {
+            "since": "1.0.0-rc.11",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "bool $redirectToCanonicalPath"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "fromArray": {
+                    "params": [
+                        "array $data",
+                        "Pulsar\\Config\\Environment $environment"
+                    ],
+                    "return": "Pulsar\\Config\\RoutingConfig",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\Config\\RuntimeConfig": {
             "since": "1.0.0",
             "methods": [],
@@ -22929,6 +22951,13 @@
                     ],
                     "return": "Pulsar\\Http\\Middleware\\MiddlewarePipelineInterface",
                     "static": false
+                },
+                "prepend": {
+                    "params": [
+                        "Psr\\Http\\Server\\MiddlewareInterface|string $middleware"
+                    ],
+                    "return": "Pulsar\\Http\\Middleware\\MiddlewarePipelineInterface",
+                    "static": false
                 }
             },
             "constants": []
@@ -27583,6 +27612,20 @@
                         "Pulsar\\I18n\\Locale\\LocalizedUrlGenerator $instance"
                     ],
                     "return": "void",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\I18n\\Locale\\OriginalUriStash": {
+            "since": "1.0.0-rc.11",
+            "methods": [],
+            "signatures": {
+                "remember": {
+                    "params": [
+                        "Psr\\Http\\Message\\ServerRequestInterface $request"
+                    ],
+                    "return": "Psr\\Http\\Message\\ServerRequestInterface",
                     "static": true
                 }
             },
@@ -56215,6 +56258,7 @@
         "Pulsar\\Core\\Wiring\\QueueWiring",
         "Pulsar\\Core\\Wiring\\RequestContextWiring",
         "Pulsar\\Core\\Wiring\\ResilienceWiring",
+        "Pulsar\\Core\\Wiring\\RoutingWiring",
         "Pulsar\\Core\\Wiring\\RuntimeWiring",
         "Pulsar\\Core\\Wiring\\SagaWiring",
         "Pulsar\\Core\\Wiring\\SchedulerWiring",
@@ -56309,6 +56353,7 @@
         "Pulsar\\Http\\Controller\\AssetController",
         "Pulsar\\Http\\Message\\ContentDispositionBuilder",
         "Pulsar\\Http\\Message\\HeaderValidator",
+        "Pulsar\\Http\\Middleware\\CanonicalPathMiddleware",
         "Pulsar\\Http\\Middleware\\MiddlewareHandler",
         "Pulsar\\Http\\Middleware\\MiddlewarePipeline",
         "Pulsar\\Http\\RateLimit\\RateLimiter",

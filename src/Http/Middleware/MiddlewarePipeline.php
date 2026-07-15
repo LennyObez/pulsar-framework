@@ -16,6 +16,7 @@ use RuntimeException;
 use Throwable;
 
 use function array_reverse;
+use function array_unshift;
 use function class_exists;
 use function count;
 use function get_debug_type;
@@ -63,6 +64,25 @@ final class MiddlewarePipeline implements MiddlewarePipelineInterface, PsrReques
     public function pipe(PsrMiddlewareInterface|string $middleware): self
     {
         $this->middleware[] = $middleware;
+        $this->resolvedMiddleware = null;
+        $this->cachedChain = null;
+
+        return $this;
+    }
+
+    /**
+     * Add middleware to the front of the pipeline.
+     *
+     * The prepended middleware executes before every middleware added so far
+     * (outermost), so it observes the request before any of them — including a
+     * rewriting middleware that mutates the URI. Derived caches are invalidated
+     * so the change takes effect on the next handle().
+     *
+     * @param PsrMiddlewareInterface|class-string<PsrMiddlewareInterface> $middleware
+     */
+    public function prepend(PsrMiddlewareInterface|string $middleware): self
+    {
+        array_unshift($this->middleware, $middleware);
         $this->resolvedMiddleware = null;
         $this->cachedChain = null;
 
