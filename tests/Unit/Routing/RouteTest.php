@@ -25,6 +25,39 @@ final class RouteTest extends TestCase
     }
 
     #[Test]
+    public function constructorAddsHeadToAnExplicitGetRoute(): void
+    {
+        // RFC 9110 §9.3.2: HEAD must be supported wherever GET is. The sugar
+        // factory always bundled the pair; the explicit constructor (the style
+        // used to attach middleware) silently produced 405 on HEAD.
+        $route = new Route(methods: [Method::GET], path: '/contact', handler: fn() => null, middleware: ['web']);
+
+        self::assertSame([Method::GET, Method::HEAD], $route->methods);
+        self::assertTrue($route->matchesMethod(Method::HEAD));
+    }
+
+    #[Test]
+    public function constructorDoesNotDuplicateAnExplicitHead(): void
+    {
+        $route = new Route([Method::GET, Method::HEAD], '/', fn() => null);
+
+        self::assertSame([Method::GET, Method::HEAD], $route->methods);
+    }
+
+    #[Test]
+    public function constructorLeavesNonGetRoutesUntouched(): void
+    {
+        // POST-only (and any GET-less) routes must keep answering 405 on HEAD.
+        $post = new Route([Method::POST], '/submit', fn() => null);
+        $put = new Route([Method::PUT, Method::DELETE], '/resource', fn() => null);
+
+        self::assertSame([Method::POST], $post->methods);
+        self::assertFalse($post->matchesMethod(Method::HEAD));
+        self::assertSame([Method::PUT, Method::DELETE], $put->methods);
+        self::assertFalse($put->matchesMethod(Method::HEAD));
+    }
+
+    #[Test]
     public function matchesPathMatchesExactPath(): void
     {
         $route = new Route([Method::GET], '/users', fn() => null);

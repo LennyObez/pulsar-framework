@@ -19,11 +19,12 @@ final class RouteCollisionReporterTest extends TestCase
 {
     private function routerWithCollision(): Router
     {
-        // Single-method routes so exactly one collision is recorded (the GET-only
-        // helper would register GET and HEAD, yielding two).
+        // Single-method routes so exactly one collision is recorded (a GET
+        // route always also serves HEAD per the Route constructor's RFC 9110
+        // normalization, which would yield two).
         $router = new Router();
-        $router->add(new Route(methods: [Method::GET], path: '/booking', handler: ['ProjectController', 'form'], name: 'project.booking'));
-        $router->add(new Route(methods: [Method::GET], path: '/booking', handler: ['ExtensionController', 'stub'], name: 'extension.booking'));
+        $router->add(new Route(methods: [Method::POST], path: '/booking', handler: ['ProjectController', 'form'], name: 'project.booking'));
+        $router->add(new Route(methods: [Method::POST], path: '/booking', handler: ['ExtensionController', 'stub'], name: 'extension.booking'));
 
         return $router;
     }

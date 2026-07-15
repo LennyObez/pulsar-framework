@@ -39,7 +39,16 @@ final readonly class Route
     public ?string $compiledHostPattern;
 
     /**
-     * @param list<Method> $methods Allowed HTTP methods
+     * Allowed HTTP methods. Normalized in the constructor: a GET route always
+     * also serves HEAD (RFC 9110 §9.3.2), so this list reflects what the
+     * router actually matches -- introspection and Allow headers stay honest.
+     *
+     * @var list<Method>
+     */
+    public array $methods;
+
+    /**
+     * @param list<Method> $methods Allowed HTTP methods (HEAD is added automatically when GET is present)
      * @param string $path The route path pattern
      * @param mixed $handler The route handler
      * @param string|null $name Optional route name
@@ -49,7 +58,7 @@ final readonly class Route
      * @param string|null $host Host pattern for host-based routing (e.g. 'api.example.com' or '{subdomain}.example.com')
      */
     public function __construct(
-        public array $methods,
+        array $methods,
         public string $path,
         public mixed $handler,
         public ?string $name = null,
@@ -58,6 +67,18 @@ final readonly class Route
         public array $constraints = [],
         public ?string $host = null,
     ) {
+        // RFC 9110 §9.3.2: HEAD is GET without a response body, and a server
+        // must support it wherever GET is supported. Route::get() always
+        // bundled the pair; normalizing here makes that the rule for every
+        // registration style (notably `new Route(methods: [Method::GET], ...)`
+        // used to attach middleware) instead of a sugar-only special case.
+        // POST/PUT/... routes are untouched, so they still 405 on HEAD.
+        if (in_array(Method::GET, $methods, true) && !in_array(Method::HEAD, $methods, true)) {
+            $methods[] = Method::HEAD;
+        }
+
+        $this->methods = $methods;
+
         $normalizedPath = '/' . trim($this->path, '/');
         $this->compiledPattern = str_contains($normalizedPath, '{')
             ? $this->pathToPattern($normalizedPath)
