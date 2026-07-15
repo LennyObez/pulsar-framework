@@ -6,10 +6,15 @@ namespace Pulsar\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Config\Exception\ConfigException;
 
+use function array_map;
 use function class_exists;
+use function get_debug_type;
+use function implode;
 use function is_array;
 use function is_string;
+use function sprintf;
 
 /**
  * Typed configuration DTO for `config/cache.php`.
@@ -37,6 +42,8 @@ final readonly class CacheConfig
      *     path?: string,
      *     pools?: array<string, mixed>,
      * } $data Raw array from config/cache.php
+     *
+     * @throws ConfigException If a pool declares an unknown cache driver
      */
     #[NoDiscard]
     public static function fromArray(array $data, Environment $environment): self
@@ -93,7 +100,7 @@ final readonly class CacheConfig
      */
     private static function buildPoolConfig(string $name, array $data): CachePoolConfig
     {
-        $driver = CacheDriverType::tryFrom($data['driver'] ?? 'filesystem') ?? CacheDriverType::Filesystem;
+        $driver = self::resolveDriver($name, $data['driver'] ?? 'filesystem');
 
         return new CachePoolConfig(
             name: $name,
@@ -109,6 +116,38 @@ final readonly class CacheConfig
             allowedClasses: self::parseAllowedClasses($data['allowed_classes'] ?? null),
             stampedeProtection: $data['stampede_protection'] ?? true,
         );
+    }
+
+    /**
+     * Resolve a configured driver name to its enum case, failing loudly on an
+     * unknown value instead of silently falling back to filesystem. A typo like
+     * `redys` must surface at boot — a regulated deployment that believes it is
+     * caching in Redis (shared, evictable) while it is actually writing to the
+     * local filesystem is a correctness and compliance hazard, not a convenience.
+     *
+     * @throws ConfigException If the driver is not one of the supported types
+     */
+    private static function resolveDriver(string $poolName, mixed $driver): CacheDriverType
+    {
+        $resolved = is_string($driver) ? CacheDriverType::tryFrom($driver) : null;
+
+        if ($resolved === null) {
+            $valid = implode(', ', array_map(
+                static fn(CacheDriverType $case): string => $case->value,
+                CacheDriverType::cases(),
+            ));
+
+            throw ConfigException::invalidValue(
+                "cache.pools.{$poolName}.driver",
+                sprintf(
+                    'unknown cache driver "%s"; valid drivers are: %s',
+                    is_string($driver) ? $driver : get_debug_type($driver),
+                    $valid,
+                ),
+            );
+        }
+
+        return $resolved;
     }
 
     /**
