@@ -136,6 +136,14 @@ return [
             'max_age' => 63072000,
             'include_sub_domains' => true,
             'preload' => false,
+
+            // Set true when TLS is terminated and HSTS asserted at the edge
+            // (CDN / reverse proxy such as CloudFront or nginx). The app then
+            // does NOT emit its own Strict-Transport-Security header (leave
+            // 'enabled' => false to avoid a duplicate), yet the security-posture
+            // checks treat HTTPS-enforcement and HSTS as satisfied instead of
+            // reporting a false HTTP-only violation on every request.
+            'emitted_at_edge' => false,
         ],
 
         // Cross-Origin headers (COOP, COEP, CORP)

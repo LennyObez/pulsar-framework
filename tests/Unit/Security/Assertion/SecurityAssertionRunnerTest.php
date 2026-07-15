@@ -85,18 +85,41 @@ final class SecurityAssertionRunnerTest extends TestCase
     #[Test]
     public function assertAllThrowsOnHstsDisabled(): void
     {
+        // HSTS disabled and not asserted at the edge: HTTPS-only is not
+        // declared, so both https_enforced and hsts_enabled fire.
         $runner = new SecurityAssertionRunner(
             debugMode: false,
-            hstsEnabled: true,
+            hstsEnabled: false,
             masterKeyHex: self::VALID_KEY_HEX,
             hstsConfig: new HstsConfig(enabled: false),
             sessionConfig: null,
         );
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('hsts_enabled');
+        $this->expectExceptionMessage('https_enforced');
 
         $runner->assertAll();
+    }
+
+    #[Test]
+    public function edgeTerminatedHstsSatisfiesHttpsAndHstsAssertions(): void
+    {
+        // TLS/HSTS terminated at the edge: the app emits no HSTS header
+        // (enabled=false) yet the deployment is HTTPS-only, so neither
+        // https_enforced nor hsts_enabled must fire.
+        $runner = new SecurityAssertionRunner(
+            debugMode: false,
+            hstsEnabled: false,
+            masterKeyHex: self::VALID_KEY_HEX,
+            hstsConfig: new HstsConfig(enabled: false, emittedAtEdge: true),
+            sessionConfig: $this->secureSession(),
+        );
+
+        $runner->assertAll();
+
+        $assertions = array_map(static fn($v): string => $v->assertion, $runner->check());
+        self::assertNotContains('https_enforced', $assertions);
+        self::assertNotContains('hsts_enabled', $assertions);
     }
 
     #[Test]

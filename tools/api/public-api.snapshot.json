@@ -9448,7 +9448,8 @@
                         "bool $enabled",
                         "int $maxAge",
                         "bool $includeSubDomains",
-                        "bool $preload"
+                        "bool $preload",
+                        "bool $emittedAtEdge"
                     ],
                     "return": null,
                     "static": false
@@ -9459,6 +9460,11 @@
                     ],
                     "return": "Pulsar\\Config\\HstsConfig",
                     "static": true
+                },
+                "isAsserted": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
                 },
                 "toHeaderValue": {
                     "params": [],
@@ -46457,7 +46463,8 @@
                 "__construct": {
                     "params": [
                         "bool $enforce",
-                        "array $failOn"
+                        "array $failOn",
+                        "bool $logAtBoot"
                     ],
                     "return": null,
                     "static": false

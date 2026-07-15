@@ -123,11 +123,15 @@ final readonly class SecurityPostureCheck
             return SecurityPostureItem::ok('https_hsts', 'HTTPS/HSTS not enforced outside production');
         }
 
+        if ($hsts->emittedAtEdge) {
+            return SecurityPostureItem::ok('https_hsts', 'HTTPS/HSTS asserted at the edge (headers.hsts.emitted_at_edge)');
+        }
+
         if (!$hsts->enabled) {
             return SecurityPostureItem::fail(
                 'https_hsts',
-                'HSTS is not enabled — connections may be downgraded to HTTP',
-                'Set security.headers.hsts.enabled=true',
+                'HSTS is not asserted — connections may be downgraded to HTTP',
+                'Set security.headers.hsts.enabled=true, or headers.hsts.emitted_at_edge=true if the edge asserts it',
             );
         }
 
