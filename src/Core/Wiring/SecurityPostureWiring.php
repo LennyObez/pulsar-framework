@@ -101,12 +101,16 @@ final readonly class SecurityPostureWiring implements ServiceWiringInterface
             throw SecurityPostureException::blocked($blocking);
         }
 
-        $this->log($container, $report);
+        $this->log($container, $report, $postureConfig);
     }
 
-    private function log(ContainerInterface $container, SecurityPostureReport $report): void
+    private function log(ContainerInterface $container, SecurityPostureReport $report, SecurityPostureConfig $postureConfig): void
     {
-        if (!$container->has(LoggerInterface::class)) {
+        // Posture is a config invariant, not a per-request event. Under a
+        // per-request SAPI (PHP-FPM) logging it every boot floods the log with an
+        // unchanging state; it is off in production by default and surfaced via
+        // /health + `security:check` + enforcement instead. See logAtBoot.
+        if (!$postureConfig->logAtBoot || !$container->has(LoggerInterface::class)) {
             return;
         }
 
@@ -123,14 +127,10 @@ final readonly class SecurityPostureWiring implements ServiceWiringInterface
             count($report->failures()),
             count($report->degraded()),
         );
-        $context = ['category' => 'security', 'posture' => $status->value];
 
-        if ($report->hasFailures()) {
-            $logger->error($message, $context);
-
-            return;
-        }
-
-        $logger->warning($message, $context);
+        // `warning`, never `error`: a failing posture is a configuration state
+        // the operator may have chosen deliberately, not an event. Reserving
+        // `error` for events keeps error-level alerting actionable.
+        $logger->warning($message, ['category' => 'security', 'posture' => $status->value]);
     }
 }
