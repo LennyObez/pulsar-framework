@@ -11,6 +11,7 @@ use Pulsar\Config\CacheConfig;
 use Pulsar\Config\CacheDriverType;
 use Pulsar\Config\CachePoolConfig;
 use Pulsar\Config\Environment;
+use Pulsar\Config\Exception\ConfigException;
 
 #[CoversClass(CacheConfig::class)]
 final class CacheConfigTest extends TestCase
@@ -138,6 +139,31 @@ final class CacheConfigTest extends TestCase
         ], $environment);
 
         self::assertSame('/custom/cache', $config->path);
+    }
+
+    #[Test]
+    public function anUnknownDriverThrowsInsteadOfSilentlyFallingBackToFilesystem(): void
+    {
+        $this->expectException(ConfigException::class);
+        $this->expectExceptionMessage('unknown cache driver "redys"');
+
+        (void) CacheConfig::fromArray([
+            'pools' => [
+                'sessions' => ['driver' => 'redys'],
+            ],
+        ], $this->environment);
+    }
+
+    #[Test]
+    public function anAbsentDriverStillDefaultsToFilesystem(): void
+    {
+        $config = CacheConfig::fromArray([
+            'pools' => [
+                'files' => ['critical' => true],
+            ],
+        ], $this->environment);
+
+        self::assertSame(CacheDriverType::Filesystem, $config->pools['files']->driver);
     }
 
     #[Test]
