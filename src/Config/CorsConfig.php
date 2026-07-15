@@ -38,7 +38,7 @@ final readonly class CorsConfig
     public function __construct(
         public bool $enabled = false,
         public array $allowedOrigins = [],
-        public array $allowedMethods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+        public array $allowedMethods = ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
         public array $allowedHeaders = ['Content-Type', 'Authorization', 'X-Requested-With', 'X-CSRF-Token'],
         public array $exposedHeaders = [],
         public bool $allowCredentials = false,
@@ -80,7 +80,7 @@ final readonly class CorsConfig
             enabled: $enabled,
             allowedOrigins: $origins,
             allowedMethods: self::normalizeStringList(
-                $data['allowed_methods'] ?? ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+                $data['allowed_methods'] ?? ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
             ),
             allowedHeaders: self::normalizeStringList(
                 $data['allowed_headers'] ?? ['Content-Type', 'Authorization', 'X-Requested-With', 'X-CSRF-Token'],

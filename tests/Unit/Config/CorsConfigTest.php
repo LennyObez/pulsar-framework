@@ -53,7 +53,9 @@ final class CorsConfigTest extends TestCase
 
         self::assertFalse($config->enabled);
         self::assertSame([], $config->allowedOrigins);
-        self::assertSame(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], $config->allowedMethods);
+        // HEAD is served wherever GET is (Route constructor normalization), so
+        // the default CORS policy must not contradict the router.
+        self::assertSame(['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], $config->allowedMethods);
     }
 
     #[Test]

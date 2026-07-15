@@ -23630,6 +23630,13 @@
                     ],
                     "return": "void",
                     "static": false
+                },
+                "headContentLength": {
+                    "params": [
+                        "Psr\\Http\\Message\\ResponseInterface $response"
+                    ],
+                    "return": "?int",
+                    "static": false
                 }
             },
             "constants": []
