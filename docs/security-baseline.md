@@ -277,7 +277,29 @@ Alternatively, use the structured `hsts` block, which is typed and validated. No
 
 A literal `Strict-Transport-Security` (e.g. with `preload`) overrides this structured block — see [Literal headers vs. structured blocks](#literal-headers-vs-structured-blocks).
 
-**Do not enable HSTS** unless all of the following are true:
+#### TLS terminated at the edge
+
+When a CDN or reverse proxy (CloudFront, nginx, …) terminates TLS and emits HSTS
+itself — on every response, including static assets and error pages that never
+reach PHP — the application must **not** emit its own `Strict-Transport-Security`
+header, or the response carries a duplicate. Leave `enabled => false` and set
+`emitted_at_edge => true`:
+
+```php
+'headers' => [
+    'hsts' => [
+        'enabled'         => false,  // app emits no header (edge already does)
+        'emitted_at_edge' => true,   // but the deployment IS HTTPS-only
+    ],
+],
+```
+
+`emitted_at_edge` changes **only** the security-posture assessment: the
+`https_enforced` and `hsts_enabled` checks are satisfied, so a correct
+edge-terminated deployment is no longer reported as a HTTP-only violation on
+every request. It never causes the app to emit the header.
+
+**Do not enable HSTS** (app-side) unless all of the following are true:
 
 - Your domain is served exclusively over HTTPS.
 - All subdomains (if using `includeSubDomains`) also support HTTPS.
@@ -472,11 +494,24 @@ report is surfaced through the health endpoint and `health:check` as the
 Enforcement is opt-in and ops-controlled, so the default stays backward-safe
 (report only, never abort boot):
 
-| Environment variable              | Effect                                                |
-| --------------------------------- | ----------------------------------------------------- |
-| `PULSAR_SECURITY_POSTURE_ENFORCE` | `true` → in production, blocking items abort boot     |
-| `PULSAR_SECURITY_POSTURE_STRICT`  | `true` → `DEGRADED` items block too (not only `FAIL`) |
+| Environment variable                  | Effect                                                                                           |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `PULSAR_SECURITY_POSTURE_ENFORCE`     | `true` → in production, blocking items abort boot                                                |
+| `PULSAR_SECURITY_POSTURE_STRICT`      | `true` → `DEGRADED` items block too (not only `FAIL`)                                            |
+| `PULSAR_SECURITY_POSTURE_LOG_AT_BOOT` | `true`/`false` → force the boot advisory log (default: on outside production, off in production) |
 
 When enforcement is enabled and running in production, blocking items throw
 `SecurityPostureException` during boot rather than starting the application in
 a weakened state.
+
+### Boot-time logging
+
+Security posture is a property of the **configuration** — it cannot change
+between two requests in the same process. Under a per-request SAPI (PHP-FPM,
+where each request is a fresh boot), logging it on every boot would repeat an
+unchanging line on every request and bury real incidents. So the advisory boot
+log is **off in production by default** (set `PULSAR_SECURITY_POSTURE_LOG_AT_BOOT=true`
+to force it on); the posture is still surfaced through `security:check`, the
+`/health` endpoint, and boot enforcement. When it does log, it uses `warning`
+(a configuration state the operator may have chosen deliberately), never
+`error` — reserving `error` for events keeps error-level alerting actionable.

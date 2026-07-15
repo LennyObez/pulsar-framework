@@ -32,7 +32,7 @@ final class SecurityPostureCheckTest extends TestCase
      * @param array<string, mixed> $session
      * @param array<string, mixed> $csrf
      */
-    private function config(array $session = [], array $csrf = ['enabled' => true]): SecurityConfig
+    private function config(array $session = [], array $csrf = ['enabled' => true], array $hsts = ['enabled' => true, 'max_age' => 63_072_000]): SecurityConfig
     {
         return SecurityConfig::fromArray([
             'session' => [
@@ -43,7 +43,7 @@ final class SecurityPostureCheckTest extends TestCase
                 ...$session,
             ],
             'csrf' => $csrf,
-            'headers' => ['hsts' => ['enabled' => true, 'max_age' => 63_072_000]],
+            'headers' => ['hsts' => $hsts],
             'rate_limiting' => ['enabled' => false],
         ], Environment::load());
     }
@@ -70,6 +70,34 @@ final class SecurityPostureCheckTest extends TestCase
         self::assertFalse($report->hasFailures(), 'A correctly configured production posture should not fail');
         self::assertSame(SecurityPostureStatus::Ok, $this->item($report, 'csrf_protection')->status);
         self::assertSame(SecurityPostureStatus::Ok, $this->item($report, 'master_key')->status);
+    }
+
+    #[Test]
+    public function httpsHstsFailsInProductionWhenNeitherEnabledNorEdgeTerminated(): void
+    {
+        $check = new SecurityPostureCheck(
+            $this->config(hsts: ['enabled' => false]),
+            isProduction: true,
+            debugMode: false,
+            masterKey: self::STRONG_KEY,
+        );
+
+        self::assertSame(SecurityPostureStatus::Fail, $this->item($check->evaluate(), 'https_hsts')->status);
+    }
+
+    #[Test]
+    public function httpsHstsPassesWhenTerminatedAtTheEdge(): void
+    {
+        // App emits no HSTS header (enabled=false) but the edge asserts it:
+        // the posture must be OK, not a false HTTP-only failure on every request.
+        $check = new SecurityPostureCheck(
+            $this->config(hsts: ['enabled' => false, 'emitted_at_edge' => true]),
+            isProduction: true,
+            debugMode: false,
+            masterKey: self::STRONG_KEY,
+        );
+
+        self::assertSame(SecurityPostureStatus::Ok, $this->item($check->evaluate(), 'https_hsts')->status);
     }
 
     #[Test]

@@ -94,23 +94,26 @@ final readonly class SecurityAssertionRunner
             );
         }
 
-        // HTTPS enforcement is declared to browsers via HSTS; an absent HSTS
-        // policy means the application is not asserting HTTPS-only.
-        if (!$this->hstsEnabled) {
+        // HTTPS-only must be asserted to browsers -- by the app emitting HSTS,
+        // or by an edge (CDN / reverse proxy) that terminates TLS and asserts
+        // HSTS there (headers.hsts.emitted_at_edge). These are two distinct
+        // questions -- "is the deployment HTTPS-only" and "does the app emit
+        // HSTS" -- but a single edge declaration answers both, so a correct
+        // edge-terminated setup is not falsely reported as HTTP-only.
+        if (!$this->httpsAsserted()) {
             $violations[] = new SecurityViolation(
                 'https_enforced',
-                'HTTPS is not enforced',
+                'HTTPS is not enforced (no app HSTS, and no edge termination declared via headers.hsts.emitted_at_edge)',
                 SecurityViolationSeverity::Critical,
             );
-        }
 
-        if ($this->hstsConfig === null || !$this->hstsConfig->enabled) {
             $violations[] = new SecurityViolation(
                 'hsts_enabled',
-                'HSTS is not enabled',
+                'HSTS is not asserted (enable headers.hsts.enabled, or set headers.hsts.emitted_at_edge if the edge asserts it)',
                 SecurityViolationSeverity::High,
             );
-        } elseif ($this->hstsConfig->maxAge < self::MIN_HSTS_MAX_AGE) {
+        } elseif ($this->hstsConfig !== null && $this->hstsConfig->enabled && $this->hstsConfig->maxAge < self::MIN_HSTS_MAX_AGE) {
+            // max-age only concerns app-emitted HSTS; an edge owns its own policy.
             $violations[] = new SecurityViolation(
                 'hsts_max_age',
                 sprintf('HSTS max-age is %d, minimum recommended is %d (1 year)', $this->hstsConfig->maxAge, self::MIN_HSTS_MAX_AGE),
@@ -162,11 +165,12 @@ final readonly class SecurityAssertionRunner
      */
     private function assertHttpsEnforced(): void
     {
-        // HTTPS enforcement is declared to browsers via HSTS (see $hstsEnabled).
-        if (!$this->hstsEnabled) {
+        // Asserted by the app emitting HSTS, or by an edge that terminates TLS
+        // and asserts HSTS there (headers.hsts.emitted_at_edge).
+        if (!$this->httpsAsserted()) {
             throw SecurityException::assertionFailed(
                 'https_enforced',
-                'HTTPS must be enforced in production',
+                'HTTPS must be enforced in production (app HSTS, or headers.hsts.emitted_at_edge)',
             );
         }
     }
@@ -176,19 +180,30 @@ final readonly class SecurityAssertionRunner
      */
     private function assertHstsEnabled(): void
     {
-        if ($this->hstsConfig === null || !$this->hstsConfig->enabled) {
+        if (!$this->httpsAsserted()) {
             throw SecurityException::assertionFailed(
                 'hsts_enabled',
-                'HSTS must be enabled in production',
+                'HSTS must be asserted in production (enable headers.hsts.enabled, or headers.hsts.emitted_at_edge)',
             );
         }
 
-        if ($this->hstsConfig->maxAge < self::MIN_HSTS_MAX_AGE) {
+        // max-age only concerns app-emitted HSTS; an edge owns its own policy.
+        if ($this->hstsConfig !== null && $this->hstsConfig->enabled && $this->hstsConfig->maxAge < self::MIN_HSTS_MAX_AGE) {
             throw SecurityException::assertionFailed(
                 'hsts_max_age',
                 sprintf('HSTS max-age is %d, minimum is %d (1 year)', $this->hstsConfig->maxAge, self::MIN_HSTS_MAX_AGE),
             );
         }
+    }
+
+    /**
+     * Whether HTTPS-only is asserted to browsers -- by app-emitted HSTS or by
+     * an edge that terminates TLS and asserts HSTS there. Shared by the throwing
+     * (assertAll) and collecting (check) paths so both honour edge termination.
+     */
+    private function httpsAsserted(): bool
+    {
+        return $this->hstsEnabled || ($this->hstsConfig !== null && $this->hstsConfig->emittedAtEdge);
     }
 
     /**
