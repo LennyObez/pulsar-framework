@@ -305,6 +305,34 @@ The built-in `InMemoryEvidenceExporter` is provided for testing and development.
 
 The `ComplianceLogSink` routes log entries through regulation-specific formatters before writing to an underlying sink. When an `EncryptorInterface` is provided, the entire log entry is encrypted after formatting.
 
+### Config-driven wiring
+
+The framework wires the sink from `config/observability.php`:
+
+```php
+'logging' => [
+    // ... regular channels ...
+    'compliance' => [
+        'enabled' => true,
+        'frameworks' => ['gdpr', 'hipaa'],   // empty list = all four
+        'path' => 'var/logs/compliance.log', // resolve_path()-ed
+    ],
+],
+```
+
+GDPR/HIPAA pseudonymization derives its HMAC key from the security master key,
+so enabling the block without `PULSAR_MASTER_KEY` (or naming an unknown
+framework) aborts boot — never a silent unmasked fallback. The entry is
+encrypted at rest when the security encryptor is bound.
+
+> **Copy semantics.** The wired sink is an **additional, masked copy** attached
+> alongside your regular channels: `var/logs/pulsar.log` (and any other
+> configured channel) still receives the **original, unmasked** entries. If raw
+> PII must not persist on disk, point the regular channels at a stream
+> (`stderr`) or apply retention to their files — the compliance file is the
+> durable masked artifact. To mask the _only_ copy of your logs, assemble the
+> sink manually around your channel's sink as shown below.
+
 ### Formatter stack
 
 ```php
