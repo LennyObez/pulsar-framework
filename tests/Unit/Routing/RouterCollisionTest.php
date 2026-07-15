@@ -19,9 +19,10 @@ use Pulsar\Routing\Router;
  * silently overriding the earlier route. These tests lock in that contract,
  * which closes the "extension silently shadows a project route" bug.
  *
- * Single-method routes are built explicitly via {@see Route} so collision counts
- * are deterministic; the convenience `get()` helper registers both GET and HEAD,
- * which legitimately produces one collision per method.
+ * Single-method routes are built explicitly via {@see Route} with POST so
+ * collision counts are deterministic; GET routes always also serve HEAD
+ * (RFC 9110 normalization in the Route constructor), which legitimately
+ * produces one collision per method.
  */
 #[CoversClass(Router::class)]
 #[CoversClass(RouteCollision::class)]
@@ -29,7 +30,7 @@ final class RouterCollisionTest extends TestCase
 {
     private static function getRoute(string $path, mixed $handler, string $name, ?string $host = null): Route
     {
-        return new Route(methods: [Method::GET], path: $path, handler: $handler, name: $name, host: $host);
+        return new Route(methods: [Method::POST], path: $path, handler: $handler, name: $name, host: $host);
     }
 
     #[Test]
@@ -41,12 +42,12 @@ final class RouterCollisionTest extends TestCase
         $router->add(self::getRoute('/booking', ['ExtensionController', 'stub'], 'extension.booking'));
 
         // The project (first-registered) route wins the match, not the extension.
-        self::assertSame('project.booking', $router->match(Method::GET, '/booking')->getName());
+        self::assertSame('project.booking', $router->match(Method::POST, '/booking')->getName());
 
         self::assertCount(1, $router->collisions);
         $collision = $router->collisions[0];
         self::assertInstanceOf(RouteCollision::class, $collision);
-        self::assertSame('GET', $collision->method);
+        self::assertSame('POST', $collision->method);
         self::assertSame('/booking', $collision->path);
         self::assertSame('project.booking', $collision->winner->name);
         self::assertSame('extension.booking', $collision->shadowed->name);
@@ -59,7 +60,7 @@ final class RouterCollisionTest extends TestCase
         $router->add(self::getRoute('/users/{id}', ['ProjectController', 'show'], 'project.user'));
         $router->add(self::getRoute('/users/{id}', ['ExtensionController', 'show'], 'extension.user'));
 
-        self::assertSame('project.user', $router->match(Method::GET, '/users/42')->getName());
+        self::assertSame('project.user', $router->match(Method::POST, '/users/42')->getName());
         self::assertCount(1, $router->collisions);
     }
 
@@ -108,7 +109,7 @@ final class RouterCollisionTest extends TestCase
         $restored->restoreFromSnapshot($router->snapshot());
 
         self::assertCount(1, $restored->collisions);
-        self::assertSame('project.booking', $restored->match(Method::GET, '/booking')->getName());
+        self::assertSame('project.booking', $restored->match(Method::POST, '/booking')->getName());
 
         // A further conflicting registration after restore is still detected.
         $restored->add(self::getRoute('/booking', ['AnotherController', 'x'], 'another.booking'));

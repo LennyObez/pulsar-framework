@@ -168,6 +168,52 @@ final class RouterTest extends TestCase
     }
 
     #[Test]
+    public function headMatchesGetRoutesFromBothRegistrationStyles(): void
+    {
+        // RFC 9110 §9.3.2 regression: the sugar path always worked, but a route
+        // registered through the explicit constructor (the middleware-attach
+        // style every contact/booking page uses) answered 405 on HEAD.
+        $router = new Router();
+        $router->get('/sugar', fn() => null);
+        $router->add(new Route(methods: [Method::GET], path: '/explicit', handler: fn() => null, middleware: ['web']));
+
+        self::assertNotNull($router->match(Method::HEAD, '/sugar'));
+        self::assertNotNull($router->match(Method::HEAD, '/explicit'));
+    }
+
+    #[Test]
+    public function headStillReturns405OnPostOnlyRoutes(): void
+    {
+        $router = new Router();
+        $router->add(new Route([Method::POST], '/submit', fn() => null));
+
+        try {
+            $router->match(Method::HEAD, '/submit');
+            self::fail('Expected RoutingException');
+        } catch (RoutingException $e) {
+            self::assertSame(405, $e->getCode());
+            self::assertStringNotContainsString('HEAD', $e->getAllowHeader());
+        }
+    }
+
+    #[Test]
+    public function allowHeaderListsHeadWhereverGetIsServed(): void
+    {
+        // The 405 Allow header must not contradict the router: HEAD is served
+        // wherever GET is, including explicit-constructor registrations.
+        $router = new Router();
+        $router->add(new Route(methods: [Method::GET], path: '/page', handler: fn() => null));
+
+        try {
+            $router->match(Method::DELETE, '/page');
+            self::fail('Expected RoutingException');
+        } catch (RoutingException $e) {
+            self::assertContains(Method::HEAD, $e->allowedMethods);
+            self::assertStringContainsString('HEAD', $e->getAllowHeader());
+        }
+    }
+
+    #[Test]
     public function matchThrowsMethodNotAllowedForWrongMethod(): void
     {
         $router = new Router();
