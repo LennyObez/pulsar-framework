@@ -42,6 +42,10 @@ final readonly class LocalePrefixMiddleware implements MiddlewareInterface
     #[Override]
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
+        // Record the pre-rewrite URI once, before stripPrefix() replaces it, so
+        // downstream can still see the URL the visitor actually requested.
+        $request = OriginalUriStash::remember($request);
+
         $path = $request->getUri()->getPath();
         $locale = $this->extractor->extract($path, $this->config->supportedLocales);
 

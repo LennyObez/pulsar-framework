@@ -19,6 +19,40 @@ Request → Middleware A → Middleware B → Middleware C → Handler
 Response ← Middleware A ← Middleware B ← Middleware C ← Response
 ```
 
+### Ordering: `pipe()` vs `prepend()`
+
+`pipe()` appends to the back of the stack, so a middleware you pipe runs
+_inside_ everything piped before it. Because the framework's own middleware
+(locale prefix, slug rewriting, security headers) is piped during boot, a
+project or extension that only ever calls `pipe()` can never place a middleware
+_ahead_ of them.
+
+`prepend()` adds to the front, so the middleware runs **outermost** — before
+every middleware added so far:
+
+```php
+$pipeline->prepend($myMiddleware); // runs before the framework's middleware
+```
+
+This matters when a middleware must observe the request before a rewriting
+middleware mutates it. `LocalePrefixMiddleware` strips the `/nl` locale prefix
+and `LocalizedSlugMiddleware` rewrites localized slugs to canonical keys, so a
+middleware piped after them sees the already-rewritten URI. Prepend to see the
+URL the visitor actually requested.
+
+### The original request URI
+
+When you need the pre-rewrite URL from _downstream_ of the locale middleware
+(canonical/hreflang links, analytics, audit) rather than from an outer
+middleware, read the `_original_uri` request attribute. Whichever locale
+rewriter runs first records the incoming `UriInterface` there, set-once, before
+mutating the URI:
+
+```php
+$original = $request->getAttribute(\Pulsar\I18n\Locale\OriginalUriStash::ATTRIBUTE);
+// e.g. "/nl/coaching" even though the live URI is now "/coaching"
+```
+
 ### Contract
 
 ```php
