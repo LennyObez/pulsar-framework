@@ -18,6 +18,32 @@ final class SecurityPostureConfigTest extends TestCase
     {
         putenv('PULSAR_SECURITY_POSTURE_ENFORCE');
         putenv('PULSAR_SECURITY_POSTURE_STRICT');
+        putenv('PULSAR_SECURITY_POSTURE_LOG_AT_BOOT');
+        putenv('APP_ENV');
+    }
+
+    #[Test]
+    public function logAtBootDefaultsOnOutsideProductionAndOffInProduction(): void
+    {
+        // Posture is a config invariant; under PHP-FPM (boot==request) logging it
+        // every boot in production floods the log, so it is off there by default.
+        putenv('APP_ENV=local');
+        self::assertTrue(SecurityPostureConfig::fromEnvironment(Environment::load())->logAtBoot);
+
+        putenv('APP_ENV=production');
+        self::assertFalse(SecurityPostureConfig::fromEnvironment(Environment::load())->logAtBoot);
+    }
+
+    #[Test]
+    public function logAtBootExplicitEnvOverridesTheEnvironmentDefault(): void
+    {
+        putenv('APP_ENV=production');
+        putenv('PULSAR_SECURITY_POSTURE_LOG_AT_BOOT=true');
+        self::assertTrue(SecurityPostureConfig::fromEnvironment(Environment::load())->logAtBoot);
+
+        putenv('APP_ENV=local');
+        putenv('PULSAR_SECURITY_POSTURE_LOG_AT_BOOT=false');
+        self::assertFalse(SecurityPostureConfig::fromEnvironment(Environment::load())->logAtBoot);
     }
 
     #[Test]

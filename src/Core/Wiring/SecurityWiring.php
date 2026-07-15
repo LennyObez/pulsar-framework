@@ -64,6 +64,7 @@ use Pulsar\Security\Exception\SecurityException;
 use Pulsar\Security\Incident\IncidentReporterInterface;
 use Pulsar\Security\Incident\InMemoryIncidentReporter;
 use Pulsar\Security\Middleware\SecurityHeadersMiddleware;
+use Pulsar\Security\Posture\SecurityPostureConfig;
 use Pulsar\Security\Session\Flash\FlashBag;
 use Pulsar\Security\Session\Handler\ArrayHandler;
 use Pulsar\Security\Session\Handler\CookieHandler;
@@ -248,31 +249,28 @@ final readonly class SecurityWiring implements ServiceWiringInterface
             );
             $container->instance(SecurityAssertionRunner::class, $assertionRunner);
 
-            // Run assertions: violations are logged via PSR-3 rather than halting boot
-            // to avoid breaking deployments with missing config.
-            // LoggingWiring runs before SecurityWiring in the kernel boot sequence,
-            // so LoggerInterface is always available here.
-            // For strict enforcement, callers use assertAll() directly.
-            $violations = $assertionRunner->check();
-            if ($violations !== []) {
-                /** @var LoggerInterface|null $logger */
-                $logger = $container->has(LoggerInterface::class)
-                    ? $container->get(LoggerInterface::class)
-                    : null;
+            // Advisory boot log of each violation. Security posture is a config
+            // invariant, so under PHP-FPM (boot==request) logging it every boot
+            // floods the log with an unchanging state -- gated by logAtBoot (off
+            // in production by default; /health + `security:check` are the prod
+            // channels, and callers use assertAll() for strict enforcement).
+            // The runner stays bound above regardless, for CLI/on-demand use.
+            if (SecurityPostureConfig::fromEnvironment($environment)->logAtBoot) {
+                $violations = $assertionRunner->check();
 
-                foreach ($violations as $violation) {
-                    $message = sprintf(
-                        '%s: %s',
-                        $violation->assertion,
-                        $violation->message,
-                    );
+                if ($violations !== [] && $container->has(LoggerInterface::class)) {
+                    /** @var LoggerInterface $logger */
+                    $logger = $container->get(LoggerInterface::class);
 
-                    if ($logger !== null) {
-                        $logger->warning($message, [
-                            'assertion' => $violation->assertion,
-                            'severity' => $violation->severity->value,
-                            'category' => 'security',
-                        ]);
+                    foreach ($violations as $violation) {
+                        $logger->warning(
+                            sprintf('%s: %s', $violation->assertion, $violation->message),
+                            [
+                                'assertion' => $violation->assertion,
+                                'severity' => $violation->severity->value,
+                                'category' => 'security',
+                            ],
+                        );
                     }
                 }
             }
