@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Http;
 
+use ArrayIterator;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Http\Message\Response;
+use Pulsar\Http\Response\StreamedResponse;
 use Pulsar\Http\ResponseEmitter;
 use ReflectionClassConstant;
 use ReflectionMethod;
@@ -90,5 +93,47 @@ final class ResponseEmitterTest extends TestCase
         self::assertFalse($method->invoke($emitter, 'head'));
         self::assertTrue($method->invoke($emitter, 'GET'));
         self::assertTrue($method->invoke($emitter, null));
+    }
+
+    #[Test]
+    public function headContentLengthIsTheBodySizeTheEquivalentGetWouldCarry(): void
+    {
+        // RFC 9110 §8.6: the Content-Length on a HEAD response MUST NOT differ
+        // from the equivalent GET. With no body written, the SAPI would derive
+        // 0 -- the emitter must advertise the real body size instead.
+        $response = new Response(statusCode: 200, body: 'Hello world');
+
+        self::assertSame(11, new ResponseEmitter()->headContentLength($response));
+    }
+
+    #[Test]
+    public function headContentLengthIsZeroForAnEmptyBody(): void
+    {
+        // The equivalent GET would also carry 0: identical, therefore conformant.
+        $response = new Response(statusCode: 204, body: '');
+
+        self::assertSame(0, new ResponseEmitter()->headContentLength($response));
+    }
+
+    #[Test]
+    public function headContentLengthDefersToAnExplicitHeader(): void
+    {
+        // An application-declared Content-Length passes through emitHeaders()
+        // untouched; emitting a second value would corrupt the response.
+        $response = new Response(statusCode: 200, body: 'Hello world')
+            ->withHeader('Content-Length', '11');
+
+        self::assertNull(new ResponseEmitter()->headContentLength($response));
+    }
+
+    #[Test]
+    public function headContentLengthIsOmittedForStreamedResponses(): void
+    {
+        // A streamed GET carries no Content-Length either (chunked framing);
+        // RFC 9110 permits omitting fields only determinable while generating
+        // the content, so identical omission is conformant.
+        $response = new StreamedResponse(new ArrayIterator(['chunk']));
+
+        self::assertNull(new ResponseEmitter()->headContentLength($response));
     }
 }

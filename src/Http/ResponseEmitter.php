@@ -55,7 +55,41 @@ final class ResponseEmitter
 
         if ($this->shouldEmitBody($requestMethod)) {
             $this->emitBody($response);
+
+            return;
         }
+
+        // HEAD: no body is written, so the SAPI cannot derive Content-Length
+        // from output and would advertise 0 -- which RFC 9110 §8.6 forbids when
+        // it differs from the equivalent GET. Emit the real body size instead.
+        $headContentLength = $this->headContentLength($response);
+
+        if ($headContentLength !== null) {
+            header('Content-Length: ' . $headContentLength, true);
+        }
+    }
+
+    /**
+     * Content-Length value a HEAD response must advertise, or null to omit it.
+     *
+     * RFC 9110 §8.6: a server MUST NOT send a Content-Length on a HEAD response
+     * that differs from what the equivalent GET would have carried. When the
+     * response already declares one it passes through {@see emitHeaders()}
+     * untouched (null here); a streamed response has no length on GET either
+     * (chunked), and an unknown body size MAY be omitted. Otherwise the body's
+     * actual size -- what the SAPI would have derived for GET -- is the value.
+     */
+    public function headContentLength(ResponseInterface $response): ?int
+    {
+        if ($response->hasHeader('Content-Length')) {
+            return null;
+        }
+
+        if ($response instanceof StreamedResponse) {
+            return null;
+        }
+
+        return $response->getBody()->getSize();
     }
 
     /**
