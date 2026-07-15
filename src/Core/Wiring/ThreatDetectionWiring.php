@@ -104,11 +104,11 @@ final readonly class ThreatDetectionWiring implements ServiceWiringInterface, De
         $threatMiddleware = new ThreatDetectionMiddleware($engine);
         $container->instance(ThreatDetectionMiddleware::class, $threatMiddleware);
 
-        $middleware->pipe($threatMiddleware);
-
         // Honeypot paths (@api, config: threat_detection.honeypot). Fake
         // attacker-only routes (/wp-login.php, /.env, ...) with zero
-        // false-positive risk: any hit is audited and answered per config.
+        // false-positive risk. Piped BEFORE the detection engine: a honeypot
+        // hit is deterministic and cheap (path match), so it must answer and
+        // be audited before any scoring or challenge can preempt it.
         /** @var array{enabled?: bool|int|string, paths?: list<string>, block_ip?: bool, response_action?: string|null}|null $honeypotSection */
         $honeypotSection = is_array($section['honeypot'] ?? null) ? $section['honeypot'] : null;
 
@@ -117,6 +117,8 @@ final readonly class ThreatDetectionWiring implements ServiceWiringInterface, De
             $container->instance(HoneypotMiddleware::class, $honeypot);
             $middleware->pipe($honeypot);
         }
+
+        $middleware->pipe($threatMiddleware);
     }
 
     /**
