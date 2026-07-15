@@ -145,6 +145,26 @@ DEPLOY_CHECK_DEBUG_MODE_SEVERITY=warn php bin/pulsar deploy:check
 
 The variable naming convention is `DEPLOY_CHECK_{NAME}_SEVERITY` where `{NAME}` is the check name in SCREAMING_SNAKE_CASE.
 
+## Application cache serializers
+
+The application cache layer (PSR-6/PSR-16 pools, [ADR-0018](adr/0018-application-cache-layer.md)) serializes every stored value. Each pool picks a serializer with `serializer:`:
+
+- **`json`** (default) — encodes scalars and arrays only. It **rejects objects** with a `CacheException` rather than silently degrading. JSON has no code-execution surface on decode, so it is the safe default.
+- **`php`** — uses PHP `serialize()`/`unserialize()` and can round-trip objects. Because unrestricted `unserialize()` is an object-injection vector, the `php` serializer is **fail-closed**: it only reconstructs classes listed in the pool's `allowed_classes`. An empty or absent allowlist permits **no** objects, and any class name in the allowlist that does not actually exist is dropped, so the allowlist can never widen deserialization to an unexpected type.
+
+```php
+// config/cache.php
+'pools' => [
+    'objects' => [
+        'driver' => 'filesystem',
+        'serializer' => 'php',
+        'allowed_classes' => [\App\Dto\Money::class], // fail-closed allowlist
+    ],
+],
+```
+
+Only enable the `php` serializer for pools whose contents are entirely under your control, and keep `allowed_classes` as narrow as possible.
+
 ## See also
 
 - [`deployment.md`](deployment.md) - Full deployment guide
