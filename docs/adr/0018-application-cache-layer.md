@@ -53,15 +53,26 @@ Two tag strategies are provided:
 
 ### Stampede protection
 
-`StampedeGuard` implements a lock-based get-or-compute pattern:
+`CachePool::remember()` implements a lock-based get-or-compute pattern, reusing
+the pool's own `LockInterface` backend so no separate lock topology is needed:
 
-1. On cache miss, acquire a lock for the key
+1. On cache miss, acquire a per-key lock (`_stampede:<key>`)
 2. Double-check the cache (another process may have regenerated)
 3. Invoke the computation callback
-4. Store the result with TTL jitter (randomized ±10% to prevent synchronized expiration)
+4. Store the result with TTL jitter (randomized, up to `stampede_jitter_factor`
+   of the TTL, to prevent synchronized expiration)
 5. Release the lock
 
-On lock timeout, the guard retries the cache read (optimistic path) and falls back to direct callback invocation (degraded path).
+On lock timeout, `remember()` retries the cache read (optimistic path) and falls
+back to direct callback invocation (degraded path) rather than failing the
+request. All reads and writes flow through the pool's `getItem()`/`save()`, so
+stampede-protected regeneration still emits the normal hit/miss/write/error
+events and honours critical mode.
+
+Protection is on by default and reuses the pool's lock backend; set
+`stampede_protection => false` on a pool to make `remember()` a plain
+get-or-compute (e.g. for the in-process `array` driver where a single worker
+never stampedes itself).
 
 ### Encryption at rest
 

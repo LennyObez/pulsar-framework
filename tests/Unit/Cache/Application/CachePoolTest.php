@@ -15,8 +15,14 @@ use Pulsar\Cache\Application\Driver\ArrayDriver;
 use Pulsar\Cache\Application\Driver\CacheDriverInterface;
 use Pulsar\Cache\Application\Event\CacheEventEmitter;
 use Pulsar\Cache\Application\Exception\CacheException;
+use Pulsar\Cache\Application\Exception\LockAcquisitionException;
+use Pulsar\Cache\Application\Lock\ArrayLock;
+use Pulsar\Cache\Application\Lock\LockHandle;
+use Pulsar\Cache\Application\Lock\LockInterface;
 use Pulsar\Cache\Application\Serializer\JsonCacheSerializer;
 use RuntimeException;
+
+use function strlen;
 
 #[CoversClass(CachePool::class)]
 final class CachePoolTest extends TestCase
@@ -587,6 +593,123 @@ final class CachePoolTest extends TestCase
         $value = $pool->remember('default-ttl', static fn(): string => 'val');
 
         self::assertSame('val', $value);
+    }
+
+    #[Test]
+    public function rememberWithStampedeLockComputesAndCachesOnMiss(): void
+    {
+        $pool = new CachePool(
+            poolName: 'test',
+            driver: new ArrayDriver(),
+            serializer: new JsonCacheSerializer(),
+            eventEmitter: new CacheEventEmitter(),
+            stampedeLock: new ArrayLock(),
+        );
+
+        $calls = 0;
+        $callback = static function () use (&$calls): string {
+            $calls++;
+
+            return 'computed';
+        };
+
+        self::assertSame('computed', $pool->remember('sg-key', $callback));
+        self::assertSame('computed', $pool->remember('sg-key', $callback));
+        self::assertSame(1, $calls, 'The value must be computed once and served from cache thereafter');
+    }
+
+    #[Test]
+    public function rememberDoesNotAcquireTheLockOnAHit(): void
+    {
+        $lock = $this->createMock(LockInterface::class);
+        $lock->expects(self::never())->method('acquire');
+
+        $pool = new CachePool(
+            poolName: 'test',
+            driver: new ArrayDriver(),
+            serializer: new JsonCacheSerializer(),
+            eventEmitter: new CacheEventEmitter(),
+            stampedeLock: $lock,
+        );
+
+        // Seed the key via save (not remember) so the remember() below is a hit
+        // and must never reach for the lock.
+        $seed = CacheItem::miss('hit-key');
+        $seed->set('seeded');
+        $pool->save($seed);
+
+        self::assertSame('seeded', $pool->remember('hit-key', static fn(): string => 'should-not-run'));
+    }
+
+    #[Test]
+    public function rememberFallsBackToDirectComputeWhenLockAcquisitionFails(): void
+    {
+        $lock = $this->createStub(LockInterface::class);
+        $lock->method('acquire')->willThrowException(new LockAcquisitionException('locked'));
+
+        $pool = new CachePool(
+            poolName: 'test',
+            driver: new ArrayDriver(),
+            serializer: new JsonCacheSerializer(),
+            eventEmitter: new CacheEventEmitter(),
+            stampedeLock: $lock,
+        );
+
+        // Lock unavailable: the request must still resolve by computing directly.
+        self::assertSame('computed', $pool->remember('busy-key', static fn(): string => 'computed'));
+    }
+
+    #[Test]
+    public function rememberReadsTheWinnersValueWhenTheDoubleCheckHits(): void
+    {
+        $driver = new ArrayDriver();
+        $serializer = new JsonCacheSerializer();
+
+        // A lock whose acquire simulates a concurrent winner having written the
+        // value while we waited: remember() must return that value and skip our
+        // callback entirely.
+        $lock = new class ($driver, $serializer) implements LockInterface {
+            public function __construct(
+                private readonly ArrayDriver $driver,
+                private readonly JsonCacheSerializer $serializer,
+            ) {}
+
+            public function acquire(string $resource, int $ttlSeconds = 30, int $timeoutMs = 0): LockHandle
+            {
+                $key = substr($resource, strlen('_stampede:'));
+                $this->driver->set($key, $this->serializer->serialize('winner'), null);
+
+                return new LockHandle($resource, 'token', 0.0, $ttlSeconds);
+            }
+
+            public function release(LockHandle $handle): bool
+            {
+                return true;
+            }
+
+            public function refresh(LockHandle $handle, int $ttlSeconds = 30): bool
+            {
+                return true;
+            }
+        };
+
+        $pool = new CachePool(
+            poolName: 'test',
+            driver: $driver,
+            serializer: $serializer,
+            eventEmitter: new CacheEventEmitter(),
+            stampedeLock: $lock,
+        );
+
+        $called = false;
+        $value = $pool->remember('dc-key', static function () use (&$called): string {
+            $called = true;
+
+            return 'loser';
+        });
+
+        self::assertSame('winner', $value);
+        self::assertFalse($called, 'The double-check hit must short-circuit before the callback runs');
     }
 
     #[Test]
