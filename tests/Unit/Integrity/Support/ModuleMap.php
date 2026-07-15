@@ -47,6 +47,7 @@ final class ModuleMap
         'Pulsar\Core\Wiring\QueueWiring',
         'Pulsar\Core\Wiring\RequestContextWiring',
         'Pulsar\Core\Wiring\ResilienceWiring',
+        'Pulsar\Core\Wiring\RoutingWiring',
         'Pulsar\Core\Wiring\RuntimeWiring',
         'Pulsar\Core\Wiring\SagaWiring',
         'Pulsar\Core\Wiring\SchedulerWiring',

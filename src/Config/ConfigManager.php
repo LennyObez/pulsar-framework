@@ -234,6 +234,13 @@ final class ConfigManager implements ConfigManagerInterface
             $this->repository->set($queueConfig);
         }
 
+        // Load routing config (optional; only if config/routing.php exists)
+        if ($this->configPath !== null && is_file($this->configPath . DIRECTORY_SEPARATOR . 'routing.php')) {
+            $routingData = $this->loadConfigFile('routing');
+            $routingConfig = RoutingConfig::fromArray($routingData, $this->environment);
+            $this->repository->set($routingConfig);
+        }
+
         // Load storage config (optional; only if config/storage.php exists)
         if ($this->configPath !== null && is_file($this->configPath . DIRECTORY_SEPARATOR . 'storage.php')) {
             $storageData = $this->loadConfigFile('storage');
