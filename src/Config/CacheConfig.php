@@ -88,6 +88,7 @@ final readonly class CacheConfig
      *     port?: int|null,
      *     path?: string|null,
      *     allowed_classes?: mixed,
+     *     stampede_protection?: bool,
      * } $data
      */
     private static function buildPoolConfig(string $name, array $data): CachePoolConfig
@@ -106,6 +107,7 @@ final readonly class CacheConfig
             port: $data['port'] ?? null,
             path: $data['path'] ?? null,
             allowedClasses: self::parseAllowedClasses($data['allowed_classes'] ?? null),
+            stampedeProtection: $data['stampede_protection'] ?? true,
         );
     }
 

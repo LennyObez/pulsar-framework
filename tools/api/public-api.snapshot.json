@@ -5404,7 +5404,12 @@
                         "Pulsar\\Cache\\Application\\Serializer\\CacheSerializerInterface $serializer",
                         "Pulsar\\Cache\\Application\\Event\\CacheEventEmitter $eventEmitter",
                         "?int $defaultTtlSeconds",
-                        "bool $critical"
+                        "bool $critical",
+                        "?Pulsar\\Cache\\Application\\Lock\\LockInterface $stampedeLock",
+                        "int $stampedeLockTtlSeconds",
+                        "int $stampedeLockTimeoutMs",
+                        "float $stampedeJitterFactor",
+                        "?Random\\Randomizer $randomizer"
                     ],
                     "return": null,
                     "static": false
@@ -8737,7 +8742,8 @@
                         "?string $host",
                         "?int $port",
                         "?string $path",
-                        "?array $allowedClasses"
+                        "?array $allowedClasses",
+                        "bool $stampedeProtection"
                     ],
                     "return": null,
                     "static": false
@@ -56096,7 +56102,6 @@
         "Pulsar\\Cache\\Application\\Lock\\RedisLock",
         "Pulsar\\Cache\\Application\\Serializer\\JsonCacheSerializer",
         "Pulsar\\Cache\\Application\\Serializer\\PhpCacheSerializer",
-        "Pulsar\\Cache\\Application\\Stampede\\StampedeGuard",
         "Pulsar\\Cache\\Application\\Tag\\BestEffortTagStrategy",
         "Pulsar\\Cache\\Application\\Tag\\StrictTagStrategy",
         "Pulsar\\Cache\\CacheAllowedClasses",

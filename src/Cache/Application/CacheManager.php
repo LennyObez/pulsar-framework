@@ -101,6 +101,11 @@ final class CacheManager implements CacheManagerInterface
             $driver = $this->driver($name);
             $serializer = $this->resolveSerializer($poolConfig);
 
+            // Stampede protection reuses the pool's own lock backend (ADR-0018).
+            // Disabled per pool via stampede_protection => false, in which case
+            // remember() stays a plain get-or-compute.
+            $stampedeLock = $poolConfig->stampedeProtection ? $this->lock($name) : null;
+
             $this->pools[$name] = new CachePool(
                 poolName: $name,
                 driver: $driver,
@@ -108,6 +113,7 @@ final class CacheManager implements CacheManagerInterface
                 eventEmitter: $this->eventEmitter,
                 defaultTtlSeconds: $poolConfig->defaultTtlSeconds,
                 critical: $poolConfig->critical,
+                stampedeLock: $stampedeLock,
             );
         }
 
