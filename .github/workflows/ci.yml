@@ -123,6 +123,20 @@ jobs:
           - 5432:5432
         options: --health-cmd=pg_isready --health-interval=10s --health-timeout=5s --health-retries=3
 
+      # Real backends for the cache/lock driver contract tests: without these
+      # servers the Redis/Memcached driver tests self-skip and the drivers are
+      # never exercised against a real integration anywhere.
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: --health-cmd="redis-cli ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+      memcached:
+        image: memcached:1.6-alpine
+        ports:
+          - 11211:11211
+
     env:
       DB_HOST: 127.0.0.1
       DB_USERNAME: root
@@ -135,7 +149,12 @@ jobs:
       - uses: shivammathur/setup-php@accd6127cb78bee3e8082180cb391013d204ef9f # v2
         with:
           php-version: '8.5'
-          extensions: pdo_mysql, pdo_pgsql, pdo_sqlite
+          # redis/memcached/apcu/igbinary/zstd load the REAL extensions so the
+          # driver contract tests, the igbinary serializer, and the zstd
+          # compression path run against real integrations instead of
+          # self-skipping (ext-lz4 is not on PECL, so its arm stays skipped).
+          extensions: pdo_mysql, pdo_pgsql, pdo_sqlite, redis, memcached, apcu, igbinary, zstd
+          ini-values: apc.enable_cli=1
           # Xdebug 3.x required for branch + path coverage (PCOV only measures
           # lines). The mandate targets 100 % line + branch + condition coverage
           # so Xdebug is the only production-capable choice today.
