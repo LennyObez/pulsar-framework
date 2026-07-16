@@ -93,11 +93,37 @@ invalidates existing entries. Values below the threshold or that do not shrink
 are stored raw. Counters bypass compression entirely — `increment()`/
 `decrement()` delegate untransformed.
 
+### Key prefixing (opt-in)
+
+`PrefixedCacheDecorator` namespaces every data key under the pool `prefix`
+(charset `[A-Za-z0-9_.:-]`, max 64 — no glob metacharacters, so Redis `SCAN
+MATCH` patterns stay literal). Redis and Memcached store keys raw and memoize
+connections per host:port, so without a prefix all pools — and all applications
+— on one backend share a single keyspace, and `clear()` (`FLUSHDB` / `flush`)
+wipes everything. With a prefix, `clear()` becomes an exact prefix-scoped
+deletion on drivers that can enumerate keys (`PrefixClearableInterface`: Redis
+cursor-based SCAN+UNLINK, APCu iterator, the in-memory array driver) and FAILS
+LOUDLY on drivers that cannot (Memcached has no enumeration primitive) rather
+than silently flushing beyond its scope. The boot wiring warns when a
+Redis/Memcached pool has no prefix.
+
+Deliberate non-coverage: lock resources (`CacheManager::lock()`, the stampede
+lock) resolve from raw connections below the decorators and are NOT prefixed —
+prefix isolation applies to data keys only. Shared-backend deployments must not
+rely on the prefix to isolate lock contention. On Memcached the prefix also
+shrinks the effective key budget (250-byte server limit minus the prefix
+length).
+
 Decorator stacking order in `CacheManager::driver()` is load-bearing:
 
 ```
-caller → Compression → Encryption → concrete driver
+caller → Prefix → Compression → Encryption → concrete driver
 ```
+
+The prefix sits OUTERMOST so the encryption decorator binds the FINAL
+(prefixed) storage key into its AAD: a ciphertext written under one prefix
+cannot be transplanted to the same logical key under another prefix sharing a
+backend and master key.
 
 Compression sits ABOVE encryption because ciphertext is incompressible
 (compress-then-encrypt). That combination leaks plaintext structure through

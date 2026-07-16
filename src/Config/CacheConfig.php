@@ -18,6 +18,7 @@ use function implode;
 use function in_array;
 use function is_array;
 use function is_string;
+use function preg_match;
 use function sprintf;
 
 /**
@@ -44,6 +45,7 @@ final readonly class CacheConfig
         'tags_strategy', 'host', 'port', 'path', 'allowed_classes',
         'stampede_protection', 'gc_divisor', 'compression',
         'compression_threshold_bytes', 'compression_length_oracle_acknowledged',
+        'prefix',
     ];
 
     /**
@@ -131,6 +133,7 @@ final readonly class CacheConfig
      *     compression?: string|false|null,
      *     compression_threshold_bytes?: int,
      *     compression_length_oracle_acknowledged?: bool,
+     *     prefix?: string,
      * } $data
      */
     private static function buildPoolConfig(string $name, array $data): CachePoolConfig
@@ -160,7 +163,35 @@ final readonly class CacheConfig
             ),
             compressionThresholdBytes: $data['compression_threshold_bytes'] ?? 4096,
             compressionLengthOracleAcknowledged: (bool) ($data['compression_length_oracle_acknowledged'] ?? false),
+            prefix: self::resolvePrefix($name, $data['prefix'] ?? ''),
         );
+    }
+
+    /**
+     * Validate a pool's key prefix: a conservative charset (no PSR-6 reserved
+     * characters beyond ':' and no Redis glob metacharacters, so SCAN MATCH
+     * patterns stay literal) and a length cap that preserves key budget on
+     * backends with hard limits (Memcached caps keys at 250 bytes; the
+     * validator caps logical keys at 250, so the prefix shrinks the effective
+     * budget by its length).
+     *
+     * @throws ConfigException If the prefix contains unsupported characters or
+     *     is longer than 64 characters
+     */
+    private static function resolvePrefix(string $poolName, mixed $prefix): string
+    {
+        if ($prefix === '' || $prefix === null) {
+            return '';
+        }
+
+        if (!is_string($prefix) || preg_match('/^[A-Za-z0-9_.:-]{1,64}$/', $prefix) !== 1) {
+            throw ConfigException::invalidValue(
+                "cache.pools.{$poolName}.prefix",
+                'prefix must match [A-Za-z0-9_.:-]{1,64} (no glob metacharacters, max 64 chars)',
+            );
+        }
+
+        return $prefix;
     }
 
     /**

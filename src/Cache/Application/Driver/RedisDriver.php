@@ -20,7 +20,7 @@ use function is_string;
  * TTL support, pipelining for batch operations, and atomic counters.
  */
 #[Internal]
-final class RedisDriver extends AbstractCacheDriver
+final class RedisDriver extends AbstractCacheDriver implements PrefixClearableInterface
 {
     public function __construct(
         private readonly Redis $redis,
@@ -153,6 +153,27 @@ final class RedisDriver extends AbstractCacheDriver
     public function clear(): bool
     {
         return $this->redis->flushDB();
+    }
+
+    /**
+     * Delete exactly the keys under a prefix via cursor-based SCAN + UNLINK —
+     * never KEYS (which blocks the server) and never FLUSHDB (which wipes
+     * every pool and application sharing the database). The configured prefix
+     * charset excludes glob metacharacters, so the MATCH pattern is literal.
+     */
+    public function clearByPrefix(string $prefix): bool
+    {
+        $iterator = null;
+
+        do {
+            $keys = $this->redis->scan($iterator, $prefix . '*', 1000);
+
+            if (is_array($keys) && $keys !== []) {
+                $this->redis->unlink(...$keys);
+            }
+        } while ($iterator !== 0 && $iterator !== null && $iterator !== '0');
+
+        return true;
     }
 
     public function increment(string $key, int $step = 1): int|false

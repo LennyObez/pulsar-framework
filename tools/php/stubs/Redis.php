@@ -57,6 +57,21 @@ class Redis
     public function del(string ...$keys): int {}
 
     /**
+     * @param null|int|string $iterator
+     * @param string|null $pattern
+     * @param int $count
+     * @param string|null $type
+     * @return array<int, string>|false
+     */
+    public function scan(null|int|string &$iterator, ?string $pattern = null, int $count = 0, ?string $type = null): array|false {}
+
+    /**
+     * @param string ...$keys
+     * @return int
+     */
+    public function unlink(string ...$keys): int {}
+
+    /**
      * @param string $key
      * @return int
      */

@@ -76,6 +76,7 @@
         <file name="stubs/Compression.php"/>
         <file name="stubs/FrankenPhp.php"/>
         <file name="stubs/Igbinary.php"/>
+        <file name="stubs/Apcu.php"/>
     </stubs>
 
     <plugins>

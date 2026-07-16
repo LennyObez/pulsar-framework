@@ -29,6 +29,7 @@ use Pulsar\Cache\Application\Lock\FilesystemLock;
 use Pulsar\Cache\Application\Lock\LockInterface;
 use Pulsar\Cache\Application\Lock\MemcachedLock;
 use Pulsar\Cache\Application\Lock\RedisLock;
+use Pulsar\Cache\Application\Prefix\PrefixedCacheDecorator;
 use Pulsar\Cache\Application\Serializer\CacheSerializerInterface;
 use Pulsar\Cache\Application\Serializer\IgbinaryCacheSerializer;
 use Pulsar\Cache\Application\Serializer\JsonCacheSerializer;
@@ -231,6 +232,18 @@ final class CacheManager implements CacheManagerInterface, ResettableInterface
                     inner: $driver,
                     algorithm: $this->negotiateCompressionAlgorithm($poolConfig->compression),
                     thresholdBytes: $poolConfig->compressionThresholdBytes,
+                );
+            }
+
+            // Prefix is OUTERMOST — load-bearing: the encryption decorator
+            // binds the key it receives into the AAD, so with the prefix
+            // applied first the ciphertext is bound to the FINAL storage key
+            // and cannot be transplanted between prefixes sharing a backend
+            // and master key.
+            if ($poolConfig->prefix !== '') {
+                $driver = new PrefixedCacheDecorator(
+                    inner: $driver,
+                    prefix: $poolConfig->prefix,
                 );
             }
 

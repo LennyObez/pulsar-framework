@@ -14,6 +14,7 @@ use Pulsar\Cache\Application\Exception\CacheException;
 use Pulsar\Cache\Application\Exception\UnsupportedCapabilityException;
 use Pulsar\Cache\Application\TaggedCacheInterface;
 use Pulsar\Config\CacheConfig;
+use Pulsar\Config\CacheDriverType;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Core\Wiring\Contract\DescribesWiring;
@@ -26,6 +27,7 @@ use Pulsar\Routing\Router;
 use Pulsar\Security\Crypto\MasterKey;
 
 use function implode;
+use function sprintf;
 
 #[Internal]
 final readonly class CacheWiring implements ServiceWiringInterface, DescribesWiring
@@ -98,6 +100,27 @@ final readonly class CacheWiring implements ServiceWiringInterface, DescribesWir
                 'Unknown cache configuration keys were ignored: ' . implode(', ', $cacheConfig->unknownKeys),
                 ['keys' => $cacheConfig->unknownKeys],
             );
+        }
+
+        // Redis and Memcached store keys raw and pools share connections per
+        // host:port, so without a prefix a pool's clear() is FLUSHDB / flush —
+        // it wipes every pool AND every co-hosted application on that backend.
+        if ($logger !== null) {
+            foreach ($cacheConfig->pools as $poolName => $poolConfig) {
+                $shared = $poolConfig->driver === CacheDriverType::Redis
+                    || $poolConfig->driver === CacheDriverType::Memcached;
+
+                if ($shared && $poolConfig->prefix === '') {
+                    $logger->warning(sprintf(
+                        'Cache pool "%s" uses the shared %s backend without a key prefix: '
+                        . 'clear() will flush the ENTIRE database/server, including other pools '
+                        . 'and applications. Set pools.%s.prefix to scope it.',
+                        $poolName,
+                        $poolConfig->driver->value,
+                        $poolName,
+                    ));
+                }
+            }
         }
 
         $cacheManager = new CacheManager($cacheConfig, $connection, $masterKey, $metrics, $logger);
