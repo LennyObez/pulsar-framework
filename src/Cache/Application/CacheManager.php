@@ -29,6 +29,7 @@ use Pulsar\Cache\Application\Lock\LockInterface;
 use Pulsar\Cache\Application\Lock\MemcachedLock;
 use Pulsar\Cache\Application\Lock\RedisLock;
 use Pulsar\Cache\Application\Serializer\CacheSerializerInterface;
+use Pulsar\Cache\Application\Serializer\IgbinaryCacheSerializer;
 use Pulsar\Cache\Application\Serializer\JsonCacheSerializer;
 use Pulsar\Cache\Application\Serializer\PhpCacheSerializer;
 use Pulsar\Cache\Application\Tag\BestEffortTagStrategy;
@@ -297,8 +298,11 @@ final class CacheManager implements CacheManagerInterface, ResettableInterface
 
     private function resolveSerializer(CachePoolConfig $poolConfig): CacheSerializerInterface
     {
+        // CacheConfig::fromArray validates the value (json|php|igbinary) and
+        // the igbinary extension at boot, so no fallback arm hides a typo.
         return match ($poolConfig->serializer) {
             'php' => new PhpCacheSerializer($poolConfig->allowedClasses ?? []),
+            'igbinary' => new IgbinaryCacheSerializer(),
             default => new JsonCacheSerializer(),
         };
     }

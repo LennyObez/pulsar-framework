@@ -49,6 +49,7 @@
   "suggest": {
     "ext-apcu": "Required for APCu cache driver",
     "ext-iconv": "Required for optimized slug generation",
+    "ext-igbinary": "Required for the igbinary cache serializer (compact binary, data-only)",
     "ext-intl": "Required for ICU MessageFormat, number/date/currency formatting",
     "ext-memcached": "Required for Memcached cache driver",
     "ext-pcntl": "Required for queue worker signal handling (Unix only)",

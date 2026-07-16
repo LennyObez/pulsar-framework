@@ -147,10 +147,11 @@ The variable naming convention is `DEPLOY_CHECK_{NAME}_SEVERITY` where `{NAME}` 
 
 ## Application cache serializers
 
-The application cache layer (PSR-6/PSR-16 pools, [ADR-0018](adr/0018-application-cache-layer.md)) serializes every stored value. Each pool picks a serializer with `serializer:`:
+The application cache layer (PSR-6/PSR-16 pools, [ADR-0018](adr/0018-application-cache-layer.md)) serializes every stored value. Each pool picks a serializer with `serializer:` — an unknown value or a serializer whose extension is missing fails at boot with a `ConfigException` rather than silently falling back to JSON:
 
-- **`json`** (default) — encodes scalars and arrays only. It **rejects objects** with a `CacheException` rather than silently degrading. JSON has no code-execution surface on decode, so it is the safe default.
+- **`json`** (default) — encodes scalars and arrays only. It **rejects objects** with a `CacheException` rather than silently degrading. JSON has no code-execution surface on decode, so it is the safe default. Caveat: integer array keys come back as strings and float fidelity depends on the encoder flags.
 - **`php`** — uses PHP `serialize()`/`unserialize()` and can round-trip objects. Because unrestricted `unserialize()` is an object-injection vector, the `php` serializer is **fail-closed**: it only reconstructs classes listed in the pool's `allowed_classes`. An empty or absent allowlist permits **no** objects, and any class name in the allowlist that does not actually exist is dropped, so the allowlist can never widen deserialization to an unexpected type.
+- **`igbinary`** (requires `ext-igbinary`) — compact binary encoding, markedly faster than JSON on large arrays, with exact integer-key and float fidelity. It is **data-only, enforced at runtime on both write and read**: `igbinary_unserialize()` has no `allowed_classes` equivalent, so it cannot match the `php` serializer's fail-closed allowlist — objects are refused outright, including nested inside arrays. To cache objects, use `php` with an allowlist.
 
 ```php
 // config/cache.php
