@@ -234,6 +234,7 @@ final class CacheManager implements CacheManagerInterface
             CacheDriverType::Array => new ArrayDriver(),
             CacheDriverType::Filesystem => new FilesystemDriver(
                 $this->filesystemCachePath($poolConfig),
+                $poolConfig->gcDivisor,
             ),
             CacheDriverType::Database => $this->connection !== null
                 ? new DatabaseDriver($this->connection, $poolConfig->name)

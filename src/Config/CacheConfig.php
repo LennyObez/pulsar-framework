@@ -96,6 +96,7 @@ final readonly class CacheConfig
      *     path?: string|null,
      *     allowed_classes?: mixed,
      *     stampede_protection?: bool,
+     *     gc_divisor?: int,
      * } $data
      */
     private static function buildPoolConfig(string $name, array $data): CachePoolConfig
@@ -115,6 +116,7 @@ final readonly class CacheConfig
             path: $data['path'] ?? null,
             allowedClasses: self::parseAllowedClasses($data['allowed_classes'] ?? null),
             stampedeProtection: $data['stampede_protection'] ?? true,
+            gcDivisor: $data['gc_divisor'] ?? 100,
         );
     }
 

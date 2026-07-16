@@ -8743,7 +8743,8 @@
                         "?int $port",
                         "?string $path",
                         "?array $allowedClasses",
-                        "bool $stampedeProtection"
+                        "bool $stampedeProtection",
+                        "int $gcDivisor"
                     ],
                     "return": null,
                     "static": false
