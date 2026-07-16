@@ -6,6 +6,7 @@ namespace Pulsar\Extension\Cms\Internal\Studio;
 
 use Pulsar\Api\Internal;
 use Pulsar\Cache\Application\TaggedCacheInterface;
+use Pulsar\Extension\Cms\Internal\Cache\CmsCacheKeys;
 use Pulsar\Extension\Cms\Internal\Studio\Dto\CacheInspectorEntry;
 use Pulsar\Extension\Cms\Internal\Studio\Dto\CacheInspectorReport;
 use Pulsar\Observability\Metrics\MetricRegistry;
@@ -13,7 +14,7 @@ use Pulsar\Observability\Metrics\MetricRegistry;
 /**
  * Studio panel data provider for content cache inspection.
  *
- * Allows viewing cached pages (keys matching "cms_page:*"),
+ * Allows viewing cached pages (keys matching "cms_page.*"),
  * displays cache hit rates from metrics, and provides manual
  * invalidation by content ID, by tag, or full flush.
  *
@@ -24,7 +25,6 @@ use Pulsar\Observability\Metrics\MetricRegistry;
 final readonly class ContentCacheInspectorPanel
 {
     /** Cache key prefix for CMS page cache entries. */
-    private const string CACHE_KEY_PREFIX = 'cms_page:';
 
     /** Metric name for cache hits. */
     private const string METRIC_CACHE_HITS = 'cms_page_cache_hits_total';
@@ -52,7 +52,7 @@ final readonly class ContentCacheInspectorPanel
         $misses = 0;
 
         foreach ($contentIds as $contentId) {
-            $cacheKey = self::CACHE_KEY_PREFIX . $contentId;
+            $cacheKey = CmsCacheKeys::PAGE_KEY_PREFIX . $contentId;
             $isHit = $this->taggedCache->get($cacheKey) !== null;
 
             $entries[] = new CacheInspectorEntry(
@@ -107,7 +107,7 @@ final readonly class ContentCacheInspectorPanel
      */
     public function invalidateByContentId(string $contentId): void
     {
-        $this->taggedCache->delete(self::CACHE_KEY_PREFIX . $contentId);
+        $this->taggedCache->delete(CmsCacheKeys::PAGE_KEY_PREFIX . $contentId);
     }
 
     /**

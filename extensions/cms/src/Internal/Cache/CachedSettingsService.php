@@ -9,8 +9,6 @@ use Pulsar\Api\Internal;
 use Pulsar\Cache\Application\TaggedCacheInterface;
 use Pulsar\Extension\Cms\Settings\SettingsServiceInterface;
 
-use function sprintf;
-
 /**
  * @psalm-api Caching decorator wrapping the underlying SettingsServiceInterface
  *            implementation; bound by the CMS service provider, not instantiated by name.
@@ -19,7 +17,6 @@ use function sprintf;
 final readonly class CachedSettingsService implements SettingsServiceInterface
 {
     private const int TTL = 300;
-    private const string TAG = 'cms_settings';
 
     public function __construct(
         private SettingsServiceInterface $inner,
@@ -29,7 +26,7 @@ final readonly class CachedSettingsService implements SettingsServiceInterface
     #[Override]
     public function get(string $group, string $key, ?string $locale = null): mixed
     {
-        $cacheKey = sprintf('cms_settings:%s:%s:%s', $group, $key, $locale ?? '_');
+        $cacheKey = CmsCacheKeys::setting($group, $key, $locale);
         /** @var mixed $cached */
         $cached = $this->cache->get($cacheKey);
 
@@ -39,7 +36,7 @@ final readonly class CachedSettingsService implements SettingsServiceInterface
 
         /** @var mixed $value */
         $value = $this->inner->get($group, $key, $locale);
-        $this->cache->set($cacheKey, $value, [self::TAG], self::TTL);
+        $this->cache->set($cacheKey, $value, [CmsCacheKeys::TAG_SETTINGS], self::TTL);
 
         return $value;
     }
@@ -53,13 +50,13 @@ final readonly class CachedSettingsService implements SettingsServiceInterface
         ?string $reason = null,
     ): void {
         $this->inner->set($group, $key, $value, $locale, $reason);
-        $this->cache->invalidateTag(self::TAG);
+        $this->cache->invalidateTag(CmsCacheKeys::TAG_SETTINGS);
     }
 
     #[Override]
     public function getGroup(string $group, ?string $locale = null): array
     {
-        $cacheKey = sprintf('cms_settings_group:%s:%s', $group, $locale ?? '_');
+        $cacheKey = CmsCacheKeys::settingsGroup($group, $locale);
         $cached = $this->cache->get($cacheKey);
 
         if ($cached !== null) {
@@ -68,7 +65,7 @@ final readonly class CachedSettingsService implements SettingsServiceInterface
         }
 
         $result = $this->inner->getGroup($group, $locale);
-        $this->cache->set($cacheKey, $result, [self::TAG], self::TTL);
+        $this->cache->set($cacheKey, $result, [CmsCacheKeys::TAG_SETTINGS], self::TTL);
 
         return $result;
     }
@@ -76,7 +73,7 @@ final readonly class CachedSettingsService implements SettingsServiceInterface
     #[Override]
     public function getAll(?string $locale = null): array
     {
-        $cacheKey = sprintf('cms_settings_all:%s', $locale ?? '_');
+        $cacheKey = CmsCacheKeys::settingsAll($locale);
         $cached = $this->cache->get($cacheKey);
 
         if ($cached !== null) {
@@ -85,7 +82,7 @@ final readonly class CachedSettingsService implements SettingsServiceInterface
         }
 
         $result = $this->inner->getAll($locale);
-        $this->cache->set($cacheKey, $result, [self::TAG], self::TTL);
+        $this->cache->set($cacheKey, $result, [CmsCacheKeys::TAG_SETTINGS], self::TTL);
 
         return $result;
     }

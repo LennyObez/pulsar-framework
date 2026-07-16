@@ -20,21 +20,21 @@ final readonly class CmsCacheInvalidator
 
     public function invalidateContent(string $contentId): void
     {
-        $this->cache->invalidateTag('cms_content:' . $contentId);
+        $this->cache->invalidateTag(CmsCacheKeys::contentTag($contentId));
     }
 
     public function invalidateMenu(string $location): void
     {
-        $this->cache->invalidateTag('cms_menu:' . $location);
+        $this->cache->invalidateTag(CmsCacheKeys::menuTag($location));
     }
 
     public function invalidateSettings(): void
     {
-        $this->cache->invalidateTag('cms_settings');
+        $this->cache->invalidateTag(CmsCacheKeys::TAG_SETTINGS);
     }
 
     public function invalidateAll(): void
     {
-        $this->cache->invalidateTags(['cms_settings', 'cms_menu', 'cms_content']);
+        $this->cache->invalidateTags([CmsCacheKeys::TAG_SETTINGS, CmsCacheKeys::TAG_ALL_MENUS, CmsCacheKeys::TAG_ALL_CONTENT]);
     }
 }

@@ -49,6 +49,6 @@ final readonly class QueryCacheKey
             'schema' => $schemaVersion,
         ], JSON_THROW_ON_ERROR);
 
-        return sprintf('qc:%s', hash('xxh128', $payload));
+        return sprintf('qc.%s', hash('xxh128', $payload));
     }
 }

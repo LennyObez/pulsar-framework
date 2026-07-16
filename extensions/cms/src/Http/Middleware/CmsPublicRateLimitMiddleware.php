@@ -11,6 +11,7 @@ use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Cache\Application\TaggedCacheInterface;
 use Pulsar\Extension\Cms\Config\CmsConfig;
+use Pulsar\Extension\Cms\Internal\Cache\CmsCacheKeys;
 use Pulsar\Http\Message\Response;
 use Pulsar\Http\Middleware\MiddlewareInterface;
 use Pulsar\Http\ResponseStatus;
@@ -20,7 +21,6 @@ use function is_int;
 use function is_numeric;
 use function is_string;
 use function max;
-use function sprintf;
 use function str_starts_with;
 use function time;
 
@@ -53,7 +53,7 @@ final readonly class CmsPublicRateLimitMiddleware implements MiddlewareInterface
         $group = $this->resolveGroup($request->getUri()->getPath());
         $limit = $this->getLimitForGroup($group);
 
-        $key = sprintf('cms_public_rate:%s:%s:%d', $group, $ipHash, (int) ($now / self::WINDOW_SECONDS));
+        $key = CmsCacheKeys::publicRate($group, $ipHash, (int) ($now / self::WINDOW_SECONDS));
         $count = $this->incrementCounter($key);
 
         if ($count > $limit) {
@@ -116,7 +116,7 @@ final readonly class CmsPublicRateLimitMiddleware implements MiddlewareInterface
             ? ((int) $current + 1)
             : 1;
 
-        $this->cache->set($key, (string) $count, ['cms_public_rate'], self::WINDOW_SECONDS);
+        $this->cache->set($key, (string) $count, [CmsCacheKeys::TAG_PUBLIC_RATE], self::WINDOW_SECONDS);
 
         return $count;
     }

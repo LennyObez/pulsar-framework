@@ -11,8 +11,6 @@ use Pulsar\Extension\Cms\Navigation\Menu;
 use Pulsar\Extension\Cms\Navigation\MenuItem;
 use Pulsar\Extension\Cms\Navigation\MenuRepositoryInterface;
 
-use function sprintf;
-
 /**
  * @psalm-api Caching decorator wrapping the underlying MenuRepositoryInterface
  *            implementation; bound by the CMS service provider, not instantiated by name.
@@ -42,8 +40,8 @@ final readonly class CachedMenuRepository implements MenuRepositoryInterface
     #[Override]
     public function findByLocation(string $location, string $locale, ?string $tenantId = null): ?Menu
     {
-        $cacheKey = sprintf('cms_menu:%s:%s:%s', $location, $locale, $tenantId ?? '_');
-        $tag = 'cms_menu:' . $location;
+        $cacheKey = CmsCacheKeys::menu($location, $locale, $tenantId);
+        $tag = CmsCacheKeys::menuTag($location);
         $cached = $this->cache->get($cacheKey);
 
         if ($cached !== null) {
@@ -54,7 +52,7 @@ final readonly class CachedMenuRepository implements MenuRepositoryInterface
         $menu = $this->inner->findByLocation($location, $locale, $tenantId);
 
         if ($menu !== null) {
-            $this->cache->set($cacheKey, $menu, [$tag, 'cms_menu'], self::TTL);
+            $this->cache->set($cacheKey, $menu, [$tag, CmsCacheKeys::TAG_ALL_MENUS], self::TTL);
         }
 
         return $menu;
@@ -63,7 +61,7 @@ final readonly class CachedMenuRepository implements MenuRepositoryInterface
     #[Override]
     public function findItemsByMenu(string $menuId, string $locale): array
     {
-        $cacheKey = sprintf('cms_menu_items:%s:%s', $menuId, $locale);
+        $cacheKey = CmsCacheKeys::menuItems($menuId, $locale);
         $cached = $this->cache->get($cacheKey);
 
         if ($cached !== null) {
@@ -74,7 +72,7 @@ final readonly class CachedMenuRepository implements MenuRepositoryInterface
         $items = $this->inner->findItemsByMenu($menuId, $locale);
 
         if ($items !== []) {
-            $this->cache->set($cacheKey, $items, ['cms_menu', 'cms_menu_items'], self::TTL);
+            $this->cache->set($cacheKey, $items, [CmsCacheKeys::TAG_ALL_MENUS, CmsCacheKeys::TAG_MENU_ITEMS], self::TTL);
         }
 
         return $items;
@@ -84,7 +82,7 @@ final readonly class CachedMenuRepository implements MenuRepositoryInterface
     public function save(Menu $menu, array $translations): void
     {
         $this->inner->save($menu, $translations);
-        $this->cache->invalidateTag('cms_menu:' . $menu->location);
+        $this->cache->invalidateTag(CmsCacheKeys::menuTag($menu->location));
     }
 
     #[Override]
@@ -92,6 +90,6 @@ final readonly class CachedMenuRepository implements MenuRepositoryInterface
     {
         $this->inner->saveItem($item, $translations);
         // Invalidate all menus since items can affect any menu
-        $this->cache->invalidateTag('cms_menu');
+        $this->cache->invalidateTag(CmsCacheKeys::TAG_ALL_MENUS);
     }
 }

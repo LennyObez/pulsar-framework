@@ -69,7 +69,7 @@ final readonly class ForumRateLimitMiddleware implements MiddlewareInterface
         $limit = $this->getLimitForGroup($group);
 
         $windowId = (int) ($now / self::WINDOW_SECONDS);
-        $key = sprintf('forum_rate:%s:%s:%d', $group, $ipHash, $windowId);
+        $key = sprintf('forum_rate.%s.%s.%d', $group, $ipHash, $windowId);
         $count = $this->incrementCounter($key);
 
         if ($count > $limit) {

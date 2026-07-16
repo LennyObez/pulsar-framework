@@ -34,7 +34,7 @@ use function is_int;
 #[Api(since: '1.0.0')]
 final readonly class QueryCache implements QueryCacheInterface
 {
-    private const string TAG_VERSION_PREFIX = 'qc_tagver:';
+    private const string TAG_VERSION_PREFIX = 'qc_tagver.';
 
     public function __construct(
         private CacheInterface $cache,
