@@ -75,7 +75,7 @@ final readonly class ConsentBannerRenderer
         );
 
         $cookieName = htmlspecialchars($this->config->cookieName, ENT_QUOTES, 'UTF-8');
-        $cookieTtlDays = (int) $this->config->cookieTtlDays;
+        $cookieTtlDays = $this->config->cookieTtlDays;
         $granular = $this->config->granularOptIn ? '1' : '0';
         $position = htmlspecialchars($this->config->position, ENT_QUOTES, 'UTF-8');
         $privacyUrl = htmlspecialchars($this->config->privacyPolicyUrl, ENT_QUOTES, 'UTF-8');
