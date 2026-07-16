@@ -5506,6 +5506,15 @@
             "since": "1.0.0",
             "methods": [],
             "signatures": {
+                "add": {
+                    "params": [
+                        "string $key",
+                        "string $value",
+                        "?int $ttlSeconds"
+                    ],
+                    "return": "bool",
+                    "static": false
+                },
                 "capabilities": {
                     "params": [],
                     "return": "Pulsar\\Cache\\Application\\Driver\\CacheDriverCapabilities",
@@ -52051,6 +52060,15 @@
             "since": "1.0.0",
             "methods": [],
             "signatures": {
+                "add": {
+                    "params": [
+                        "string $key",
+                        "string $value",
+                        "?int $ttlSeconds"
+                    ],
+                    "return": "bool",
+                    "static": false
+                },
                 "all": {
                     "params": [],
                     "return": "array",

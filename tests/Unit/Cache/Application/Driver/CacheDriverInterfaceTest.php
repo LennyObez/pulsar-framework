@@ -41,6 +41,17 @@ final class CacheDriverInterfaceTest extends TestCase
                 return true;
             }
 
+            public function add(string $key, string $value, ?int $ttlSeconds): bool
+            {
+                if (isset($this->store[$key])) {
+                    return false;
+                }
+
+                $this->store[$key] = $value;
+
+                return true;
+            }
+
             public function setMultiple(array $values, ?int $ttlSeconds): bool
             {
                 foreach ($values as $key => $value) {

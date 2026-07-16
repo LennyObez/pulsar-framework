@@ -77,6 +77,25 @@ final class RedisDriver extends AbstractCacheDriver
         return $this->redis->set($key, $value);
     }
 
+    public function add(string $key, string $value, ?int $ttlSeconds): bool
+    {
+        $ttl = $this->normalizeTtl($ttlSeconds);
+
+        if ($this->isExpiredTtl($ttl)) {
+            return !$this->has($key);
+        }
+
+        // SET key value NX [EX ttl]: stores only when the key is absent and
+        // returns false when the NX condition fails — atomic in one round-trip.
+        $options = $ttl !== null ? ['nx', 'ex' => $ttl] : ['nx'];
+
+        try {
+            return $this->redis->set($key, $value, $options) !== false;
+        } catch (Throwable) {
+            return false;
+        }
+    }
+
     public function setMultiple(array $values, ?int $ttlSeconds): bool
     {
         if ($values === []) {

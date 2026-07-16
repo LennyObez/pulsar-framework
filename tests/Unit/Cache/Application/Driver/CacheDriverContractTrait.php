@@ -56,6 +56,21 @@ trait CacheDriverContractTrait
     }
 
     #[Test]
+    public function addStoresTheValueWhenTheKeyIsAbsent(): void
+    {
+        self::assertTrue($this->driver->add('add-key', 'first', 3600));
+        self::assertSame('first', $this->driver->get('add-key'));
+    }
+
+    #[Test]
+    public function addDoesNotOverwriteAnExistingKey(): void
+    {
+        self::assertTrue($this->driver->add('add-key', 'first', 3600));
+        self::assertFalse($this->driver->add('add-key', 'second', 3600));
+        self::assertSame('first', $this->driver->get('add-key'));
+    }
+
+    #[Test]
     public function deleteRemovesExistingKey(): void
     {
         $this->driver->set('key', 'value', 3600);

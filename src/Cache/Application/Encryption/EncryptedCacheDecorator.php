@@ -95,6 +95,16 @@ final readonly class EncryptedCacheDecorator implements CacheDriverInterface
         return $this->inner->set($key, $payload, $ttlSeconds);
     }
 
+    public function add(string $key, string $value, ?int $ttlSeconds): bool
+    {
+        // Encrypt then delegate to the inner add, preserving its atomicity: the
+        // conditional store still happens once, on the encrypted payload.
+        $expiresAt = $ttlSeconds !== null ? time() + $ttlSeconds : null;
+        $payload = $this->encryptValue($key, $value, $expiresAt);
+
+        return $this->inner->add($key, $payload, $ttlSeconds);
+    }
+
     /**
      * @param array<string, string> $values
      */
