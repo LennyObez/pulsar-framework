@@ -68,6 +68,15 @@ final class CacheFake implements CacheDriverInterface
         return true;
     }
 
+    public function add(string $key, string $value, ?int $ttlSeconds): bool
+    {
+        if ($this->has($key)) {
+            return false;
+        }
+
+        return $this->set($key, $value, $ttlSeconds);
+    }
+
     public function setMultiple(array $values, ?int $ttlSeconds): bool
     {
         foreach ($values as $key => $value) {

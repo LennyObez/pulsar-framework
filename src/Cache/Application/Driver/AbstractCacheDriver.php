@@ -40,6 +40,19 @@ abstract class AbstractCacheDriver implements CacheDriverInterface
         return $ttlSeconds !== null && $ttlSeconds <= 0;
     }
 
+    public function add(string $key, string $value, ?int $ttlSeconds): bool
+    {
+        // Best-effort default for drivers with no native conditional store:
+        // check, then set. Not atomic across concurrent processes — drivers on a
+        // backend that offers "set if not exists" override this with the atomic
+        // primitive. Single-process drivers (array) are effectively atomic here.
+        if ($this->has($key)) {
+            return false;
+        }
+
+        return $this->set($key, $value, $ttlSeconds);
+    }
+
     public function getMultiple(array $keys): array
     {
         $result = [];

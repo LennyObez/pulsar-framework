@@ -79,6 +79,20 @@ final class MemcachedDriver extends AbstractCacheDriver
         return $this->memcached->set($key, $value, $expiration);
     }
 
+    public function add(string $key, string $value, ?int $ttlSeconds): bool
+    {
+        $ttl = $this->normalizeTtl($ttlSeconds);
+
+        if ($this->isExpiredTtl($ttl)) {
+            return !$this->has($key);
+        }
+
+        // Memcached::add stores only if the key is absent — atomic server-side.
+        $expiration = $ttl !== null ? time() + $ttl : 0;
+
+        return $this->memcached->add($key, $value, $expiration);
+    }
+
     public function setMultiple(array $values, ?int $ttlSeconds): bool
     {
         if ($values === []) {

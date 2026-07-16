@@ -7,6 +7,7 @@ namespace Pulsar\Cache\Application\Driver;
 use Pulsar\Api\Internal;
 use Throwable;
 
+use function apcu_add;
 use function apcu_clear_cache;
 use function apcu_dec;
 use function apcu_delete;
@@ -52,6 +53,18 @@ final class ApcuDriver extends AbstractCacheDriver
         }
 
         return apcu_store($key, $value, $ttl ?? 0);
+    }
+
+    public function add(string $key, string $value, ?int $ttlSeconds): bool
+    {
+        $ttl = $this->normalizeTtl($ttlSeconds);
+
+        if ($this->isExpiredTtl($ttl)) {
+            return !apcu_exists($key);
+        }
+
+        // apcu_add stores only if the key is absent — atomic in shared memory.
+        return apcu_add($key, $value, $ttl ?? 0);
     }
 
     public function delete(string $key): bool
