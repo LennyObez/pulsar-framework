@@ -31,5 +31,6 @@ final readonly class CachePoolConfig
         public ?string $path = null,
         public ?array $allowedClasses = null,
         public bool $stampedeProtection = true,
+        public int $gcDivisor = 100,
     ) {}
 }

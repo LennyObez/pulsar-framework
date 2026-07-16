@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace Pulsar\Cache\Application\Driver;
 
 use Pulsar\Api\Internal;
+use Random\Engine\Secure;
+use Random\Randomizer;
 
 use function dirname;
 use function file_get_contents;
 use function file_put_contents;
+use function filemtime;
 use function getmypid;
 use function glob;
 use function hash;
@@ -40,9 +43,30 @@ use const LOCK_EX;
 #[Internal]
 final class FilesystemDriver extends AbstractCacheDriver
 {
+    /**
+     * Age (seconds) past which an orphaned atomic-write temp file is assumed to
+     * be from an interrupted write and is swept by {@see gc()}.
+     */
+    private const int STALE_TEMP_FILE_AGE_SECONDS = 3600;
+
+    private readonly Randomizer $randomizer;
+
+    /**
+     * @param string $directory Root cache directory.
+     * @param int $gcDivisor Garbage-collection lottery: on each write there is a
+     *     1-in-$gcDivisor chance of sweeping expired entries (like PHP's
+     *     `session.gc_divisor`). Expired entries are otherwise only reclaimed
+     *     lazily on read, so a key written once and never read again would leak
+     *     on disk forever. Set to 0 to disable the lottery — e.g. when a
+     *     scheduled job calls {@see gc()} instead.
+     */
     public function __construct(
         private readonly string $directory,
-    ) {}
+        private readonly int $gcDivisor = 100,
+        ?Randomizer $randomizer = null,
+    ) {
+        $this->randomizer = $randomizer ?? new Randomizer(new Secure());
+    }
 
     public function get(string $key): ?string
     {
@@ -91,7 +115,100 @@ final class FilesystemDriver extends AbstractCacheDriver
 
         $path = $this->path($key);
 
-        return $this->atomicWrite($path, $entry);
+        $written = $this->atomicWrite($path, $entry);
+
+        // Garbage-collection lottery: occasionally reclaim expired entries that
+        // no read will ever touch, so the cache directory does not grow without
+        // bound. Kept rare so the sweep cost is amortized across many writes.
+        if ($written && $this->gcDivisor > 0 && $this->randomizer->getInt(1, $this->gcDivisor) === 1) {
+            $this->gc();
+        }
+
+        return $written;
+    }
+
+    /**
+     * Reclaim expired cache entries and orphaned temp files across every shard.
+     *
+     * Expired entries are normally only removed lazily when they are next read;
+     * this sweep reclaims write-only-then-expired keys that are never read
+     * again. Safe to call from a scheduled job or the write-time lottery.
+     *
+     * @param ?int $now Reference timestamp (defaults to the current time);
+     *     exposed for deterministic testing.
+     *
+     * @return int Number of files removed.
+     */
+    public function gc(?int $now = null): int
+    {
+        $now ??= time();
+
+        $shardDirs = glob($this->directory . DIRECTORY_SEPARATOR . '*', GLOB_NOSORT);
+
+        if ($shardDirs === false) {
+            return 0;
+        }
+
+        $removed = 0;
+
+        foreach ($shardDirs as $shardDir) {
+            if (!is_dir($shardDir)) {
+                continue;
+            }
+
+            $files = @glob($shardDir . DIRECTORY_SEPARATOR . '*', GLOB_NOSORT);
+
+            if ($files !== false) {
+                foreach ($files as $file) {
+                    if ($this->isExpiredEntryFile($file, $now) && @unlink($file)) {
+                        $removed++;
+                    }
+                }
+            }
+
+            // Orphaned atomic-write temp files (.tmp.<pid>.<hrtime>) from an
+            // interrupted set() are not matched by glob('*') on Unix; sweep the
+            // ones old enough to be from a crashed write rather than an in-flight
+            // one.
+            $tmpFiles = @glob($shardDir . DIRECTORY_SEPARATOR . '.tmp.*', GLOB_NOSORT);
+
+            if ($tmpFiles !== false) {
+                foreach ($tmpFiles as $tmpFile) {
+                    $mtime = @filemtime($tmpFile);
+
+                    if ($mtime !== false && $mtime <= $now - self::STALE_TEMP_FILE_AGE_SECONDS && @unlink($tmpFile)) {
+                        $removed++;
+                    }
+                }
+            }
+        }
+
+        return $removed;
+    }
+
+    /**
+     * Whether the given path holds a cache entry whose expiry is at or before
+     * the reference time. Unreadable or unparseable files are left untouched.
+     */
+    private function isExpiredEntryFile(string $file, int $now): bool
+    {
+        if (!is_file($file)) {
+            return false;
+        }
+
+        $raw = @file_get_contents($file);
+
+        if ($raw === false) {
+            return false;
+        }
+
+        $entry = @unserialize($raw, ['allowed_classes' => false]);
+
+        if (!is_array($entry)) {
+            return false;
+        }
+
+        return ($entry['expiresAt'] ?? null) !== null && $entry['expiresAt'] <= $now;
     }
 
     public function delete(string $key): bool

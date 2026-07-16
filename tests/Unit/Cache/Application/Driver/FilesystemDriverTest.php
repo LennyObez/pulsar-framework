@@ -17,6 +17,7 @@ use function is_dir;
 use function is_file;
 use function substr;
 use function sys_get_temp_dir;
+use function time;
 use function uniqid;
 
 use const DIRECTORY_SEPARATOR;
@@ -55,6 +56,32 @@ final class FilesystemDriverTest extends TestCase
 
         self::assertTrue(is_dir($this->directory . DIRECTORY_SEPARATOR . $shard));
         self::assertTrue(is_file($expectedPath));
+    }
+
+    #[Test]
+    public function gcReclaimsExpiredEntriesThatNoReadWouldTouch(): void
+    {
+        // gcDivisor: 0 disables the write-time lottery so this test is deterministic.
+        $driver = new FilesystemDriver($this->directory, gcDivisor: 0);
+        $driver->set('fresh', 'keep', 3600);
+        $driver->set('stale', 'drop', 10);
+
+        // Sweep as if 20s elapsed: the ttl-10 entry has expired, the ttl-3600 has not.
+        $removed = $driver->gc(now: time() + 20);
+
+        self::assertSame(1, $removed);
+        self::assertNull($driver->get('stale'));
+        self::assertSame('keep', $driver->get('fresh'));
+    }
+
+    #[Test]
+    public function gcLeavesEntriesWithoutAnExpiryUntouched(): void
+    {
+        $driver = new FilesystemDriver($this->directory, gcDivisor: 0);
+        $driver->set('eternal', 'v', null);
+
+        self::assertSame(0, $driver->gc(now: time() + 100_000));
+        self::assertSame('v', $driver->get('eternal'));
     }
 
     #[Test]
