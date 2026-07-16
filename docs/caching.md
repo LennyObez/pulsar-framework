@@ -172,6 +172,10 @@ Pools can transparently compress stored values (`compression: 'auto'` negotiates
 
 Combining `compression` with `encrypted: true` on one pool fails at boot unless `compression_length_oracle_acknowledged: true` is set: compress-then-encrypt leaks plaintext structure through ciphertext length (a CRIME-class oracle). See [ADR-0018](adr/0018-application-cache-layer.md) for the decorator stacking order and the full rationale.
 
+## Shared backends and key prefixes
+
+Redis and Memcached store keys raw, so every pool — and every application — on one backend shares a single keyspace, and `clear()` (`FLUSHDB`/`flush`) wipes all of it, including co-hosted session stores and queues. Set a per-pool `prefix` (charset `[A-Za-z0-9_.:-]`, max 64) to namespace the pool: `clear()` then deletes exactly that prefix on drivers that can enumerate keys (Redis via cursor-based SCAN+UNLINK, APCu), and fails loudly on Memcached (no enumeration primitive) instead of silently flushing the server. The boot log warns for any Redis/Memcached pool left unprefixed. Lock resources are deliberately not prefixed — see ADR-0018.
+
 ## See also
 
 - [`deployment.md`](deployment.md) - Full deployment guide

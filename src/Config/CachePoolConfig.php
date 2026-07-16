@@ -28,6 +28,12 @@ final readonly class CachePoolConfig
      *        payload with secrets). Combining `compression` with `encrypted`
      *        on one pool therefore fails at boot unless this flag records an
      *        explicit, informed acceptance of that trade-off.
+     * @param string $prefix Per-pool key namespace on shared backends
+     *        (Redis/Memcached store keys raw, so pools and applications on one
+     *        server share a keyspace). Empty (default) keeps current
+     *        behaviour. With a prefix, clear() becomes an exact prefix-scoped
+     *        deletion on drivers that can enumerate keys, and fails loudly on
+     *        drivers that cannot — never a silent server-wide flush.
      */
     public function __construct(
         public string $name,
@@ -46,5 +52,6 @@ final readonly class CachePoolConfig
         public ?string $compression = null,
         public int $compressionThresholdBytes = 4096,
         public bool $compressionLengthOracleAcknowledged = false,
+        public string $prefix = '',
     ) {}
 }

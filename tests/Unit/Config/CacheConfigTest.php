@@ -286,6 +286,31 @@ final class CacheConfigTest extends TestCase
     }
 
     #[Test]
+    public function aPrefixWithGlobMetacharactersOrExcessLengthThrows(): void
+    {
+        $this->expectException(ConfigException::class);
+        $this->expectExceptionMessage('prefix must match');
+
+        (void) CacheConfig::fromArray([
+            'pools' => ['shared' => ['prefix' => 'app*']],
+        ], $this->environment);
+    }
+
+    #[Test]
+    public function aValidPrefixIsAcceptedAndDefaultsToEmpty(): void
+    {
+        $config = CacheConfig::fromArray([
+            'pools' => [
+                'shared' => ['prefix' => 'app_a.cache:'],
+                'plain' => [],
+            ],
+        ], $this->environment);
+
+        self::assertSame('app_a.cache:', $config->pools['shared']->prefix);
+        self::assertSame('', $config->pools['plain']->prefix);
+    }
+
+    #[Test]
     public function anAbsentDriverStillDefaultsToFilesystem(): void
     {
         $config = CacheConfig::fromArray([

@@ -42,4 +42,15 @@ final class UnsupportedCapabilityException extends RuntimeException implements
     {
         return new self('Atomic increment/decrement is not supported on encrypted cache pools');
     }
+
+    #[NoDiscard]
+    public static function prefixScopedClearUnsupported(string $driver): self
+    {
+        return new self(sprintf(
+            'Driver "%s" cannot enumerate keys, so clear() on a prefixed pool cannot be scoped to the prefix. '
+            . 'Refusing to flush the whole shared backend: use a dedicated backend for this pool, '
+            . 'a driver with key enumeration (Redis, APCu), or invalidate via tags instead.',
+            $driver,
+        ));
+    }
 }

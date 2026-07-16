@@ -5866,6 +5866,13 @@
                     "return": "Pulsar\\Cache\\Application\\Exception\\UnsupportedCapabilityException",
                     "static": true
                 },
+                "prefixScopedClearUnsupported": {
+                    "params": [
+                        "string $driver"
+                    ],
+                    "return": "Pulsar\\Cache\\Application\\Exception\\UnsupportedCapabilityException",
+                    "static": true
+                },
                 "strictTagsUnsupported": {
                     "params": [
                         "string $driver"
@@ -8762,7 +8769,8 @@
                         "int $gcDivisor",
                         "?string $compression",
                         "int $compressionThresholdBytes",
-                        "bool $compressionLengthOracleAcknowledged"
+                        "bool $compressionLengthOracleAcknowledged",
+                        "string $prefix"
                     ],
                     "return": null,
                     "static": false
@@ -56119,6 +56127,7 @@
         "Pulsar\\Cache\\Application\\Driver\\DatabaseDriver",
         "Pulsar\\Cache\\Application\\Driver\\FilesystemDriver",
         "Pulsar\\Cache\\Application\\Driver\\MemcachedDriver",
+        "Pulsar\\Cache\\Application\\Driver\\PrefixClearableInterface",
         "Pulsar\\Cache\\Application\\Driver\\RedisDriver",
         "Pulsar\\Cache\\Application\\Encryption\\CacheEncryptionPayload",
         "Pulsar\\Cache\\Application\\Encryption\\EncryptedCacheDecorator",
@@ -56129,6 +56138,7 @@
         "Pulsar\\Cache\\Application\\Lock\\FilesystemLock",
         "Pulsar\\Cache\\Application\\Lock\\MemcachedLock",
         "Pulsar\\Cache\\Application\\Lock\\RedisLock",
+        "Pulsar\\Cache\\Application\\Prefix\\PrefixedCacheDecorator",
         "Pulsar\\Cache\\Application\\Serializer\\IgbinaryCacheSerializer",
         "Pulsar\\Cache\\Application\\Serializer\\JsonCacheSerializer",
         "Pulsar\\Cache\\Application\\Serializer\\PhpCacheSerializer",
