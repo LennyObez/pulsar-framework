@@ -75,6 +75,7 @@
         <file name="stubs/Imagick.php"/>
         <file name="stubs/Compression.php"/>
         <file name="stubs/FrankenPhp.php"/>
+        <file name="stubs/Igbinary.php"/>
     </stubs>
 
     <plugins>

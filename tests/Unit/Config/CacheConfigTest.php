@@ -13,6 +13,8 @@ use Pulsar\Config\CachePoolConfig;
 use Pulsar\Config\Environment;
 use Pulsar\Config\Exception\ConfigException;
 
+use function extension_loaded;
+
 #[CoversClass(CacheConfig::class)]
 final class CacheConfigTest extends TestCase
 {
@@ -190,6 +192,40 @@ final class CacheConfigTest extends TestCase
         ], $this->environment);
 
         self::assertSame([], $config->unknownKeys);
+    }
+
+    #[Test]
+    public function anUnknownSerializerThrowsInsteadOfSilentlyBecomingJson(): void
+    {
+        $this->expectException(ConfigException::class);
+        $this->expectExceptionMessage('unknown cache serializer "igbinry"');
+
+        (void) CacheConfig::fromArray([
+            'pools' => [
+                'objects' => ['serializer' => 'igbinry'],
+            ],
+        ], $this->environment);
+    }
+
+    #[Test]
+    public function theIgbinarySerializerRequiresTheExtensionAtBoot(): void
+    {
+        if (extension_loaded('igbinary')) {
+            $config = CacheConfig::fromArray([
+                'pools' => ['fast' => ['serializer' => 'igbinary']],
+            ], $this->environment);
+
+            self::assertSame('igbinary', $config->pools['fast']->serializer);
+
+            return;
+        }
+
+        $this->expectException(ConfigException::class);
+        $this->expectExceptionMessage('requires ext-igbinary');
+
+        (void) CacheConfig::fromArray([
+            'pools' => ['fast' => ['serializer' => 'igbinary']],
+        ], $this->environment);
     }
 
     #[Test]

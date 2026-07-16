@@ -11,6 +11,7 @@ use Pulsar\Config\Exception\ConfigException;
 use function array_keys;
 use function array_map;
 use function class_exists;
+use function extension_loaded;
 use function get_debug_type;
 use function implode;
 use function in_array;
@@ -134,7 +135,7 @@ final readonly class CacheConfig
         return new CachePoolConfig(
             name: $name,
             driver: $driver,
-            serializer: $data['serializer'] ?? 'json',
+            serializer: self::resolveSerializer($name, $data['serializer'] ?? 'json'),
             defaultTtlSeconds: $data['default_ttl_seconds'] ?? null,
             critical: $data['critical'] ?? false,
             encrypted: $data['encrypted'] ?? false,
@@ -146,6 +147,39 @@ final readonly class CacheConfig
             stampedeProtection: $data['stampede_protection'] ?? true,
             gcDivisor: $data['gc_divisor'] ?? 100,
         );
+    }
+
+    /**
+     * Validate a pool's serializer name, failing loudly on an unknown value or
+     * a missing extension instead of silently substituting JSON. Before this
+     * check, `serializer: 'igbinary'` (or any typo) quietly became the JSON
+     * default: objects a pool was configured to round-trip came back as
+     * arrays — the same config-says-one-thing-runtime-does-another hazard as
+     * an unknown driver.
+     *
+     * @throws ConfigException If the serializer is unknown, or igbinary is
+     *     configured but ext-igbinary is not loaded
+     */
+    private static function resolveSerializer(string $poolName, mixed $serializer): string
+    {
+        if (!is_string($serializer) || !in_array($serializer, ['json', 'php', 'igbinary'], true)) {
+            throw ConfigException::invalidValue(
+                "cache.pools.{$poolName}.serializer",
+                sprintf(
+                    'unknown cache serializer "%s"; valid serializers are: json, php, igbinary',
+                    is_string($serializer) ? $serializer : get_debug_type($serializer),
+                ),
+            );
+        }
+
+        if ($serializer === 'igbinary' && !extension_loaded('igbinary')) {
+            throw ConfigException::invalidValue(
+                "cache.pools.{$poolName}.serializer",
+                'the igbinary serializer requires ext-igbinary, which is not loaded',
+            );
+        }
+
+        return $serializer;
     }
 
     /**

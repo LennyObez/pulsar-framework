@@ -51,6 +51,7 @@ parameters:
         - stubs/GooglePubSub.php
         - stubs/Grpc.php
         - stubs/RoadRunner.php
+        - stubs/Igbinary.php
     # F1.10: at level=max, `treatPhpDocTypesAsCertain: false`
     # tells PHPStan to treat PHPDoc type declarations as
     # advisory rather than authoritative. We intentionally
