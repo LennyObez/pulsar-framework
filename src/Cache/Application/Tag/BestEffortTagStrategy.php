@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Pulsar\Cache\Application\Tag;
 
+use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Cache\Application\Driver\CacheDriverInterface;
+use Pulsar\Runtime\ResettableInterface;
 use Random\Engine\Secure;
 use Random\Randomizer;
 
@@ -22,14 +24,19 @@ use function bin2hex;
  * observe a stale value exactly once. Tag version key eviction is
  * treated as full invalidation (conservative miss).
  *
- * Tag versions are memoized for the lifetime of the instance (one request),
- * so a tag consulted by several tagged reads costs a single driver round-trip
- * rather than one per read — the amortization ADR-0018 promises. The memo is
- * kept coherent on invalidation (the fresh version is stored), and the
- * per-request scope is exactly the documented "briefly stale" window.
+ * Tag versions are memoized per REQUEST, so a tag consulted by several tagged
+ * reads costs a single driver round-trip rather than one per read — the
+ * amortization ADR-0018 promises. The memo is kept coherent on local
+ * invalidation (the fresh version is stored). On persistent runtimes the
+ * instance outlives the request (CacheManager memoizes TaggedCache singletons),
+ * so the memo MUST be cleared between requests via {@see resetRequestState()}
+ * — otherwise another worker's invalidation is never observed and this worker
+ * keeps serving (and re-tagging writes with) a dead version for the worker's
+ * whole lifetime. CacheManager propagates the reset through the
+ * RequestResetRegistry.
  */
 #[Internal]
-final class BestEffortTagStrategy implements TagStrategyInterface
+final class BestEffortTagStrategy implements TagStrategyInterface, ResettableInterface
 {
     private const string TAG_KEY_PREFIX = '_tag:';
     private const string TAG_KEY_SUFFIX = ':ver';
@@ -100,6 +107,17 @@ final class BestEffortTagStrategy implements TagStrategyInterface
         foreach ($tags as $tag) {
             $this->invalidateTag($tag);
         }
+    }
+
+    /**
+     * Clear the per-request tag-version memo so the next request re-reads
+     * versions from the driver and observes invalidations made by other
+     * workers. Called between requests on persistent runtimes.
+     */
+    #[Override]
+    public function resetRequestState(): void
+    {
+        $this->versionMemo = [];
     }
 
     private function generateVersion(): string

@@ -8,6 +8,7 @@ use Psr\Log\LoggerInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Auth\AuthManagerInterface;
 use Pulsar\Auth\SecurityContext;
+use Pulsar\Cache\Application\CacheManager;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\Environment;
 use Pulsar\Config\RuntimeConfig;
@@ -68,6 +69,13 @@ final readonly class RuntimeWiring implements ServiceWiringInterface
 
         if ($container->has(AuthManagerInterface::class)) {
             $registry->registerResettable(AuthManagerInterface::class);
+        }
+
+        // The cache manager's best-effort tag strategies memoize tag versions
+        // per request; without this reset a persistent worker would never
+        // observe tag invalidations made by other workers.
+        if ($container->has(CacheManager::class)) {
+            $registry->registerResettable(CacheManager::class);
         }
 
         $container->instance(RequestResetRegistry::class, $registry);

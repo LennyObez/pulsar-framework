@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Cache\Application;
 
 use Memcached;
+use Override;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Log\LoggerInterface;
 use Psr\SimpleCache\CacheInterface;
@@ -38,6 +39,7 @@ use Pulsar\Config\CacheDriverType;
 use Pulsar\Config\CachePoolConfig;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Observability\Metrics\MetricRegistry;
+use Pulsar\Runtime\ResettableInterface;
 use Pulsar\Security\Crypto\Hmac;
 use Pulsar\Security\Crypto\MasterKey;
 use Redis;
@@ -47,7 +49,7 @@ use Redis;
  * @api
  */
 #[Api(since: '1.0.0')]
-final class CacheManager implements CacheManagerInterface
+final class CacheManager implements CacheManagerInterface, ResettableInterface
 {
     /** @var array<string, CacheDriverInterface> */
     private array $drivers = [];
@@ -63,6 +65,9 @@ final class CacheManager implements CacheManagerInterface
 
     /** @var array<string, LockInterface> */
     private array $locks = [];
+
+    /** @var list<TagStrategyInterface> Strategies created so far, for per-request reset. */
+    private array $tagStrategies = [];
 
     /** @var array<string, Redis|Memcached> */
     private array $connections = [];
@@ -308,10 +313,31 @@ final class CacheManager implements CacheManagerInterface
                 throw UnsupportedCapabilityException::strictTagsUnsupported($driver->name());
             }
 
-            return new StrictTagStrategy($driver);
+            return $this->tagStrategies[] = new StrictTagStrategy($driver);
         }
 
-        return new BestEffortTagStrategy($driver);
+        return $this->tagStrategies[] = new BestEffortTagStrategy($driver);
+    }
+
+    /**
+     * Reset per-request state held by lazily created collaborators.
+     *
+     * BestEffortTagStrategy memoizes tag versions for one request; on
+     * persistent runtimes this manager (and the TaggedCache singletons holding
+     * the strategies) outlive the request, so without this reset a worker would
+     * never observe tag invalidations made by other workers — it would keep
+     * serving, and re-tagging writes with, a dead version for its whole
+     * lifetime. RuntimeWiring registers this manager with the
+     * RequestResetRegistry so the persistent runtime calls it between requests.
+     */
+    #[Override]
+    public function resetRequestState(): void
+    {
+        foreach ($this->tagStrategies as $strategy) {
+            if ($strategy instanceof ResettableInterface) {
+                $strategy->resetRequestState();
+            }
+        }
     }
 
     private function resolveLock(CachePoolConfig $poolConfig): LockInterface
