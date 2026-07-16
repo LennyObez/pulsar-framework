@@ -166,6 +166,12 @@ The application cache layer (PSR-6/PSR-16 pools, [ADR-0018](adr/0018-application
 
 Only enable the `php` serializer for pools whose contents are entirely under your control, and keep `allowed_classes` as narrow as possible.
 
+## Application cache compression
+
+Pools can transparently compress stored values (`compression: 'auto'` negotiates zstd > lz4 > zlib by loaded extension; an explicit algorithm fails at boot if its extension is missing; default off). Values below `compression_threshold_bytes` (default 4096) or that would not shrink are stored raw. The stored form is self-describing, so enabling, disabling, or switching algorithms never invalidates existing entries, and counters (`increment`/`decrement`) bypass compression entirely.
+
+Combining `compression` with `encrypted: true` on one pool fails at boot unless `compression_length_oracle_acknowledged: true` is set: compress-then-encrypt leaks plaintext structure through ciphertext length (a CRIME-class oracle). See [ADR-0018](adr/0018-application-cache-layer.md) for the decorator stacking order and the full rationale.
+
 ## See also
 
 - [`deployment.md`](deployment.md) - Full deployment guide

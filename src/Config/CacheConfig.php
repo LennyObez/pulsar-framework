@@ -12,6 +12,7 @@ use function array_keys;
 use function array_map;
 use function class_exists;
 use function extension_loaded;
+use function function_exists;
 use function get_debug_type;
 use function implode;
 use function in_array;
@@ -41,7 +42,8 @@ final readonly class CacheConfig
     private const array KNOWN_POOL_KEYS = [
         'driver', 'serializer', 'default_ttl_seconds', 'critical', 'encrypted',
         'tags_strategy', 'host', 'port', 'path', 'allowed_classes',
-        'stampede_protection', 'gc_divisor',
+        'stampede_protection', 'gc_divisor', 'compression',
+        'compression_threshold_bytes', 'compression_length_oracle_acknowledged',
     ];
 
     /**
@@ -126,11 +128,15 @@ final readonly class CacheConfig
      *     allowed_classes?: mixed,
      *     stampede_protection?: bool,
      *     gc_divisor?: int,
+     *     compression?: string|false|null,
+     *     compression_threshold_bytes?: int,
+     *     compression_length_oracle_acknowledged?: bool,
      * } $data
      */
     private static function buildPoolConfig(string $name, array $data): CachePoolConfig
     {
         $driver = self::resolveDriver($name, $data['driver'] ?? 'filesystem');
+        $encrypted = $data['encrypted'] ?? false;
 
         return new CachePoolConfig(
             name: $name,
@@ -138,7 +144,7 @@ final readonly class CacheConfig
             serializer: self::resolveSerializer($name, $data['serializer'] ?? 'json'),
             defaultTtlSeconds: $data['default_ttl_seconds'] ?? null,
             critical: $data['critical'] ?? false,
-            encrypted: $data['encrypted'] ?? false,
+            encrypted: $encrypted,
             tagsStrategy: $data['tags_strategy'] ?? 'auto',
             host: $data['host'] ?? null,
             port: $data['port'] ?? null,
@@ -146,7 +152,73 @@ final readonly class CacheConfig
             allowedClasses: self::parseAllowedClasses($data['allowed_classes'] ?? null),
             stampedeProtection: $data['stampede_protection'] ?? true,
             gcDivisor: $data['gc_divisor'] ?? 100,
+            compression: self::resolveCompression(
+                $name,
+                $data['compression'] ?? null,
+                $encrypted,
+                (bool) ($data['compression_length_oracle_acknowledged'] ?? false),
+            ),
+            compressionThresholdBytes: $data['compression_threshold_bytes'] ?? 4096,
+            compressionLengthOracleAcknowledged: (bool) ($data['compression_length_oracle_acknowledged'] ?? false),
         );
+    }
+
+    /**
+     * Validate a pool's compression setting: the algorithm must be known, its
+     * extension loaded (fail-fast, like drivers and serializers), and the
+     * compression+encryption combination must be an explicit, informed choice —
+     * compress-then-encrypt leaks plaintext structure through ciphertext
+     * length (CRIME-class oracle), which a regulated deployment must not
+     * enable by accident.
+     *
+     * @throws ConfigException On an unknown algorithm, a missing extension, or
+     *     unacknowledged compression of an encrypted pool
+     */
+    private static function resolveCompression(
+        string $poolName,
+        mixed $compression,
+        bool $encrypted,
+        bool $oracleAcknowledged,
+    ): ?string {
+        if ($compression === null || $compression === false) {
+            return null;
+        }
+
+        if (!is_string($compression) || !in_array($compression, ['auto', 'zstd', 'lz4', 'zlib'], true)) {
+            throw ConfigException::invalidValue(
+                "cache.pools.{$poolName}.compression",
+                sprintf(
+                    'unknown compression "%s"; valid values are: auto, zstd, lz4, zlib (or false)',
+                    is_string($compression) ? $compression : get_debug_type($compression),
+                ),
+            );
+        }
+
+        $requiredFunction = match ($compression) {
+            'zstd' => 'zstd_compress',
+            'lz4' => 'lz4_compress',
+            'zlib' => 'gzcompress',
+            default => null,
+        };
+
+        if ($requiredFunction !== null && !function_exists($requiredFunction)) {
+            throw ConfigException::invalidValue(
+                "cache.pools.{$poolName}.compression",
+                sprintf('compression "%s" requires ext-%s, which is not loaded', $compression, $compression),
+            );
+        }
+
+        if ($encrypted && !$oracleAcknowledged) {
+            throw ConfigException::invalidValue(
+                "cache.pools.{$poolName}.compression",
+                'compressing an encrypted pool leaks plaintext structure through '
+                . 'ciphertext length (CRIME-class oracle); set '
+                . 'compression_length_oracle_acknowledged: true to accept that '
+                . 'trade-off explicitly, or disable one of the two',
+            );
+        }
+
+        return $compression;
     }
 
     /**
