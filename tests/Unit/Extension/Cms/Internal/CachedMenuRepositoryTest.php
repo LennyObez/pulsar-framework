@@ -78,7 +78,7 @@ final class CachedMenuRepositoryTest extends TestCase
         $cache = $this->createMock(TaggedCacheInterface::class);
         $cache->expects(self::once())
             ->method('invalidateTag')
-            ->with('cms_menu:footer');
+            ->with('cms_menu.footer');
 
         $inner = $this->createMock(MenuRepositoryInterface::class);
         $inner->expects(self::once())->method('save');

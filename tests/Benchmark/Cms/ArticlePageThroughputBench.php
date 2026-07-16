@@ -53,7 +53,7 @@ final class ArticlePageThroughputBench
             . '</article></body></html>';
 
         $pathHash = hash('xxh3', 'blog/benchmark-article');
-        $cacheKey = sprintf('cms_page:%s:%s:%s', 'default', 'en', $pathHash);
+        $cacheKey = sprintf('cms_page.%s.%s.%s', 'default', 'en', $pathHash);
 
         $cachedPayload = json_encode([
             'body' => $articleBody,
@@ -64,7 +64,7 @@ final class ArticlePageThroughputBench
             ],
         ], JSON_THROW_ON_ERROR);
 
-        $cache->seed($cacheKey, $cachedPayload, ['cms_pages', 'cms_content:art-1', 'cms_type:article', 'cms_settings']);
+        $cache->seed($cacheKey, $cachedPayload, ['cms_pages', 'cms_content.art-1', 'cms_type.article', 'cms_settings']);
 
         $this->request = new ServerRequest(method: 'GET', uri: '/blog/benchmark-article');
         $this->handler = new class implements RequestHandlerInterface {

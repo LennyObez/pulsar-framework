@@ -12,6 +12,7 @@ use Pulsar\Api\Internal;
 use Pulsar\Auth\Identity\IdentityInterface;
 use Pulsar\Cache\Application\TaggedCacheInterface;
 use Pulsar\Extension\Cms\Config\CmsCacheConfig;
+use Pulsar\Extension\Cms\Internal\Cache\CmsCacheKeys;
 use Pulsar\Http\Message\Response;
 use Pulsar\Http\Middleware\MiddlewareInterface;
 
@@ -25,7 +26,6 @@ use function is_string;
 use function json_decode;
 use function json_encode;
 use function ksort;
-use function sprintf;
 use function str_starts_with;
 use function strtoupper;
 
@@ -138,7 +138,7 @@ final readonly class CmsPageCacheMiddleware implements MiddlewareInterface
         ksort($filtered);
         $queryHash = $filtered !== [] ? '?' . http_build_query($filtered) : '';
 
-        return sprintf('cms_page:%s:%s:%s', $tenantId, $locale, hash('xxh3', $path . $queryHash));
+        return CmsCacheKeys::page($tenantId, $locale, hash('xxh3', $path . $queryHash));
     }
 
     /**
@@ -215,20 +215,20 @@ final readonly class CmsPageCacheMiddleware implements MiddlewareInterface
      */
     private function computeTags(ServerRequestInterface $request): array
     {
-        $tags = ['cms_pages'];
+        $tags = [CmsCacheKeys::TAG_ALL_PAGES];
 
         /** @var string|null $contentId */
         $contentId = $request->getAttribute('cms_content_id');
 
         if ($contentId !== null) {
-            $tags[] = "cms_content:$contentId";
+            $tags[] = CmsCacheKeys::contentTag($contentId);
         }
 
         /** @var string|null $contentType */
         $contentType = $request->getAttribute('cms_content_type');
 
         if ($contentType !== null) {
-            $tags[] = "cms_type:$contentType";
+            $tags[] = CmsCacheKeys::typeTag($contentType);
         }
 
         /** @var list<string>|null $menuIds */
@@ -236,11 +236,11 @@ final readonly class CmsPageCacheMiddleware implements MiddlewareInterface
 
         if ($menuIds !== null) {
             foreach ($menuIds as $menuId) {
-                $tags[] = "cms_menu:$menuId";
+                $tags[] = CmsCacheKeys::menuTag($menuId);
             }
         }
 
-        $tags[] = 'cms_settings';
+        $tags[] = CmsCacheKeys::TAG_SETTINGS;
 
         return array_values(array_unique($tags));
     }

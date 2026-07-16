@@ -99,7 +99,7 @@ final class CmsRateLimiterTest extends TestCase
         $lock->expects(self::once())
             ->method('acquire')
             ->with(
-                self::stringStartsWith('cms_rate_lock:'),
+                self::stringStartsWith('cms_rate_lock.'),
                 60,
                 1000,
             )
@@ -127,7 +127,7 @@ final class CmsRateLimiterTest extends TestCase
         $cache->expects(self::once())
             ->method('set')
             ->with(
-                self::stringStartsWith('cms_rate:'),
+                self::stringStartsWith('cms_rate.'),
                 '3',
                 ['cms_rate_limit'],
                 60,
@@ -149,7 +149,7 @@ final class CmsRateLimiterTest extends TestCase
         $cache->expects(self::once())
             ->method('set')
             ->with(
-                self::stringStartsWith('cms_rate:'),
+                self::stringStartsWith('cms_rate.'),
                 '6',
                 ['cms_rate_limit'],
                 60,

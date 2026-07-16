@@ -57,7 +57,7 @@ final class CachedSettingsServiceTest extends TestCase
         $cache->method('get')->willReturn(null);
         $cache->expects(self::once())
             ->method('set')
-            ->with('cms_settings:site:title:_', 'fresh-value', ['cms_settings'], 300);
+            ->with('cms_settings.site.title._', 'fresh-value', ['cms_settings'], 300);
 
         $sut = new CachedSettingsService($this->inner, $cache);
         $sut->get('site', 'title');
@@ -140,7 +140,7 @@ final class CachedSettingsServiceTest extends TestCase
         $cache->method('get')->willReturn(null);
         $cache->expects(self::once())
             ->method('set')
-            ->with('cms_settings:site:title:fr', 'Titre', ['cms_settings'], 300);
+            ->with('cms_settings.site.title.fr', 'Titre', ['cms_settings'], 300);
 
         $this->inner->method('get')->willReturn('Titre');
 

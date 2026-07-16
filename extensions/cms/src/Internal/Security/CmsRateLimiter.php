@@ -7,11 +7,11 @@ namespace Pulsar\Extension\Cms\Internal\Security;
 use Pulsar\Api\Internal;
 use Pulsar\Cache\Application\Lock\LockInterface;
 use Pulsar\Cache\Application\TaggedCacheInterface;
+use Pulsar\Extension\Cms\Internal\Cache\CmsCacheKeys;
 
 use function is_int;
 use function is_numeric;
 use function is_string;
-use function sprintf;
 use function time;
 
 /**
@@ -51,8 +51,8 @@ readonly class CmsRateLimiter
     public function attempt(string $key, int $maxAttempts, int $windowSeconds = 60): bool
     {
         $window = (int) (time() / $windowSeconds);
-        $cacheKey = sprintf('cms_rate:%s:%d', $key, $window);
-        $lockResource = sprintf('cms_rate_lock:%s:%d', $key, $window);
+        $cacheKey = CmsCacheKeys::rate($key, $window);
+        $lockResource = CmsCacheKeys::rateLock($key, $window);
 
         $handle = $this->lock->acquire($lockResource, ttlSeconds: $windowSeconds, timeoutMs: 1000);
 
@@ -63,7 +63,7 @@ readonly class CmsRateLimiter
                 ? ((int) $current + 1)
                 : 1;
 
-            $this->cache->set($cacheKey, (string) $attempts, ['cms_rate_limit'], $windowSeconds);
+            $this->cache->set($cacheKey, (string) $attempts, [CmsCacheKeys::TAG_RATE_LIMIT], $windowSeconds);
 
             return $attempts <= $maxAttempts;
         } finally {

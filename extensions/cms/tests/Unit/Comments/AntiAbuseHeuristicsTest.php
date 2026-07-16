@@ -47,7 +47,7 @@ final class AntiAbuseHeuristicsTest extends TestCase
         $cache->expects(self::once())
             ->method('set')
             ->with(
-                self::stringContains('cms_comment_dedup:'),
+                self::stringContains('cms_comment_dedup.'),
                 '1',
                 ['cms_comment_dedup'],
                 300,

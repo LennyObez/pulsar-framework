@@ -74,7 +74,7 @@ final class PageCacheTest extends TestCase
         $this->middleware->process($request, $handler);
 
         // Simulate content update by invalidating the tag
-        $this->cache->invalidateTag('cms_content:content-001');
+        $this->cache->invalidateTag('cms_content.content-001');
 
         // Next request should be a MISS (cache invalidated)
         $updatedHandler = $this->createHandlerReturning(new Response(
@@ -108,7 +108,7 @@ final class PageCacheTest extends TestCase
         self::assertSame('HIT', $cachedResponse->getHeaderLine('X-CMS-Cache'));
 
         // Invalidate
-        $this->cache->invalidateTag('cms_content:content-002');
+        $this->cache->invalidateTag('cms_content.content-002');
 
         // Fresh response
         $freshResponse = $this->middleware->process($request, $this->createHandlerReturning(new Response(
@@ -164,7 +164,7 @@ final class PageCacheTest extends TestCase
         self::assertSame('HIT', $cached->getHeaderLine('X-CMS-Cache'));
 
         // Invalidate the menu tag
-        $this->cache->invalidateTag('cms_menu:menu-primary');
+        $this->cache->invalidateTag('cms_menu.menu-primary');
 
         // Page should be re-fetched
         $fresh = $this->middleware->process($request, $this->createHandlerReturning(new Response(

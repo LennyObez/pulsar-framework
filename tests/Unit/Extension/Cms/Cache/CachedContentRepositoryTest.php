@@ -61,7 +61,7 @@ final class CachedContentRepositoryTest extends TestCase
         $cache->method('get')->willReturn(null);
         $cache->expects(self::once())
             ->method('set')
-            ->with('cms_content_id:abc-123', $content, ['cms_content:abc-123', 'cms_content'], 60);
+            ->with('cms_content_id.abc-123', $content, ['cms_content.abc-123', 'cms_content'], 60);
 
         $this->inner->method('findById')->willReturn($content);
 
@@ -115,7 +115,7 @@ final class CachedContentRepositoryTest extends TestCase
         $cache = $this->createMock(TaggedCacheInterface::class);
         $cache->expects(self::once())
             ->method('invalidateTag')
-            ->with('cms_content:abc-123');
+            ->with('cms_content.abc-123');
 
         $sut = new CachedContentRepository($this->inner, $cache);
         $sut->save($content);
@@ -129,7 +129,7 @@ final class CachedContentRepositoryTest extends TestCase
         $cache = $this->createMock(TaggedCacheInterface::class);
         $cache->expects(self::once())
             ->method('invalidateTag')
-            ->with('cms_content:abc-123');
+            ->with('cms_content.abc-123');
 
         $sut = new CachedContentRepository($this->inner, $cache);
         $sut->delete($content);

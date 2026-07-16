@@ -49,7 +49,7 @@ final class CachedPageThroughputBench
 
         // Pre-warm cache with a serialized response for the homepage path
         $pathHash = hash('xxh3', '');
-        $cacheKey = sprintf('cms_page:%s:%s:%s', 'default', 'en', $pathHash);
+        $cacheKey = sprintf('cms_page.%s.%s.%s', 'default', 'en', $pathHash);
 
         $cachedPayload = json_encode([
             'body' => '<html><body><h1>Home</h1><p>Cached homepage content.</p></body></html>',

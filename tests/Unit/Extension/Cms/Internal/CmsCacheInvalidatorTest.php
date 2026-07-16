@@ -19,7 +19,7 @@ final class CmsCacheInvalidatorTest extends TestCase
         $cache = $this->createMock(TaggedCacheInterface::class);
         $cache->expects(self::once())
             ->method('invalidateTag')
-            ->with('cms_content:post-123');
+            ->with('cms_content.post-123');
 
         $invalidator = new CmsCacheInvalidator($cache);
         $invalidator->invalidateContent('post-123');
@@ -31,7 +31,7 @@ final class CmsCacheInvalidatorTest extends TestCase
         $cache = $this->createMock(TaggedCacheInterface::class);
         $cache->expects(self::once())
             ->method('invalidateTag')
-            ->with('cms_menu:header');
+            ->with('cms_menu.header');
 
         $invalidator = new CmsCacheInvalidator($cache);
         $invalidator->invalidateMenu('header');

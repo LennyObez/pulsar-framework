@@ -10,6 +10,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Cache\Application\TaggedCacheInterface;
+use Pulsar\Extension\Cms\Internal\Cache\CmsCacheKeys;
 use Pulsar\Http\Message\Response;
 use Pulsar\Http\Middleware\MiddlewareInterface;
 use Pulsar\Http\ResponseStatus;
@@ -19,7 +20,6 @@ use function is_int;
 use function is_numeric;
 use function is_string;
 use function max;
-use function sprintf;
 use function time;
 
 /**
@@ -53,7 +53,7 @@ final readonly class CommentRateLimitMiddleware implements MiddlewareInterface
         $now = time();
 
         // Check per-minute limit
-        $minuteKey = sprintf('cms_comment_rate:%s:min:%d', $ipHash, (int) ($now / 60));
+        $minuteKey = CmsCacheKeys::commentRateMinute($ipHash, (int) ($now / 60));
         $minuteCount = $this->incrementCounter($minuteKey, 60);
 
         if ($minuteCount > $this->rateLimitPerMinute) {
@@ -69,7 +69,7 @@ final readonly class CommentRateLimitMiddleware implements MiddlewareInterface
         }
 
         // Check per-hour limit
-        $hourKey = sprintf('cms_comment_rate:%s:hour:%d', $ipHash, (int) ($now / 3600));
+        $hourKey = CmsCacheKeys::commentRateHour($ipHash, (int) ($now / 3600));
         $hourCount = $this->incrementCounter($hourKey, 3600);
 
         if ($hourCount > $this->rateLimitPerHour) {
@@ -119,7 +119,7 @@ final readonly class CommentRateLimitMiddleware implements MiddlewareInterface
             ? ((int) $current + 1)
             : 1;
 
-        $this->cache->set($key, (string) $count, ['cms_comment_rate'], $ttlSeconds);
+        $this->cache->set($key, (string) $count, [CmsCacheKeys::TAG_COMMENT_RATE], $ttlSeconds);
 
         return $count;
     }
