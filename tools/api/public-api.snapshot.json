@@ -5334,6 +5334,11 @@
                     "return": "Psr\\Cache\\CacheItemPoolInterface",
                     "static": false
                 },
+                "resetRequestState": {
+                    "params": [],
+                    "return": "void",
+                    "static": false
+                },
                 "simple": {
                     "params": [
                         "?string $name"

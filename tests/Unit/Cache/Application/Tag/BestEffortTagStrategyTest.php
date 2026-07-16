@@ -61,6 +61,27 @@ final class BestEffortTagStrategyTest extends TestCase
     }
 
     #[Test]
+    public function resetRequestStateClearsTheMemoSoCrossWorkerInvalidationsAreObserved(): void
+    {
+        // Simulate two workers sharing one driver: worker A memoizes v1, worker
+        // B invalidates the tag on the shared backend. Without the reset, A's
+        // memo would keep answering v1 forever (persistent-runtime staleness);
+        // after resetRequestState() A must re-read the driver and see v2.
+        $sharedDriver = new ArrayDriver();
+        $workerA = new BestEffortTagStrategy($sharedDriver);
+        $workerB = new BestEffortTagStrategy($sharedDriver);
+
+        $before = $workerA->getTagVersions(['tag-a']);
+        $workerB->invalidateTag('tag-a');
+
+        self::assertSame($before, $workerA->getTagVersions(['tag-a']), 'Within one request the memo answers');
+
+        $workerA->resetRequestState();
+
+        self::assertNotSame($before['tag-a'], $workerA->getTagVersions(['tag-a'])['tag-a'], 'After the per-request reset the invalidation must be visible');
+    }
+
+    #[Test]
     public function invalidateTagChangesVersion(): void
     {
         $before = $this->strategy->getTagVersions(['tag-a']);

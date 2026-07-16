@@ -65,6 +65,43 @@ final class CacheManagerTest extends TestCase
     }
 
     #[Test]
+    public function resetRequestStateClearsTagVersionMemosOfCreatedStrategies(): void
+    {
+        // BestEffortTagStrategy memoizes tag versions per request (forced here:
+        // 'auto' on the array driver would pick the memo-less strict strategy).
+        // On persistent runtimes the manager is a long-lived singleton, so its
+        // reset must propagate to strategies or a worker would never see other
+        // workers' tag invalidations.
+        $manager = new CacheManager(new CacheConfig(
+            enabled: true,
+            defaultPool: 'default',
+            path: sys_get_temp_dir() . '/pulsar_cache_test',
+            pools: [
+                'default' => new CachePoolConfig(
+                    name: 'default',
+                    driver: CacheDriverType::Array,
+                    tagsStrategy: 'best_effort',
+                ),
+            ],
+        ));
+
+        $tagged = $manager->tagged('default');
+        $tagged->set('key-1', 'v', ['tag-x'], 60);
+
+        self::assertSame('v', $tagged->get('key-1'));
+
+        // Bump the tag version behind the memo's back, as another worker would
+        // (tag-version keys live below the validator, directly on the driver).
+        $manager->driver('default')->set('_tag:tag-x:ver', 'other-worker-version', null);
+
+        self::assertSame('v', $tagged->get('key-1'), 'Memoized version still answers within the request');
+
+        $manager->resetRequestState();
+
+        self::assertNull($tagged->get('key-1'), 'After reset the foreign invalidation must be observed');
+    }
+
+    #[Test]
     public function addEventListenerReceivesHitAndMissEvents(): void
     {
         /** @var list<CacheEvent> $events */
