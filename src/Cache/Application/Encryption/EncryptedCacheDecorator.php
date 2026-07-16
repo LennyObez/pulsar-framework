@@ -156,7 +156,23 @@ final readonly class EncryptedCacheDecorator implements CacheDriverInterface
 
     public function capabilities(): CacheDriverCapabilities
     {
-        return $this->inner->capabilities();
+        $inner = $this->inner->capabilities();
+
+        // Authenticated encryption is incompatible with server-side atomic
+        // arithmetic (the backend cannot increment ciphertext), so this
+        // decorator's increment()/decrement() throw. Forwarding the inner
+        // driver's counter support would make tags_strategy 'auto' pick
+        // StrictTagStrategy, whose tag-version bumps call increment() — an
+        // exception on the first invalidation of an encrypted tagged pool.
+        // Mask both counter-dependent capabilities so 'auto' degrades to the
+        // best-effort strategy and explicit 'strict' fails loudly at build
+        // time instead.
+        return new CacheDriverCapabilities(
+            supportsTagsStrict: false,
+            supportsLocksFencing: $inner->supportsLocksFencing,
+            supportsBinary: $inner->supportsBinary,
+            supportsAtomicIncrement: false,
+        );
     }
 
     public function name(): string

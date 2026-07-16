@@ -17,7 +17,9 @@ use function substr;
  * Canonical key validation for all cache subsystems.
  *
  * Enforces PSR-6 key rules and a max-length constraint.
- * Used by CachePool, SimpleCache, TaggedCache, lock resource keys, and tag keys.
+ * Used by CachePool, TaggedCache (keys and tags), and transitively by
+ * SimpleCache. Lock resource names deliberately bypass validation: they never
+ * reach a PSR-6 surface, and internal lock prefixes live below this layer.
  */
 #[Internal]
 final class CacheKeyValidator

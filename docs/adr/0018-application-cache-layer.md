@@ -56,7 +56,7 @@ Two tag strategies are provided:
 `CachePool::remember()` implements a lock-based get-or-compute pattern, reusing
 the pool's own `LockInterface` backend so no separate lock topology is needed:
 
-1. On cache miss, acquire a per-key lock (`_stampede:<key>`)
+1. On cache miss, acquire a per-key lock (`_stampede.<key>`)
 2. Double-check the cache (another process may have regenerated)
 3. Invoke the computation callback
 4. Store the result with TTL jitter (randomized, up to `stampede_jitter_factor`
