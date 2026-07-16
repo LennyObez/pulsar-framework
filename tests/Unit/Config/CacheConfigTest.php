@@ -229,6 +229,63 @@ final class CacheConfigTest extends TestCase
     }
 
     #[Test]
+    public function anUnknownCompressionValueThrows(): void
+    {
+        $this->expectException(ConfigException::class);
+        $this->expectExceptionMessage('unknown compression "gzip"');
+
+        (void) CacheConfig::fromArray([
+            'pools' => ['pages' => ['compression' => 'gzip']],
+        ], $this->environment);
+    }
+
+    #[Test]
+    public function compressionFalseAndAutoAreAccepted(): void
+    {
+        $config = CacheConfig::fromArray([
+            'pools' => [
+                'off' => ['compression' => false],
+                'nego' => ['compression' => 'auto'],
+                'zlib' => ['compression' => 'zlib'],
+            ],
+        ], $this->environment);
+
+        self::assertNull($config->pools['off']->compression);
+        self::assertSame('auto', $config->pools['nego']->compression);
+        self::assertSame('zlib', $config->pools['zlib']->compression);
+    }
+
+    #[Test]
+    public function compressingAnEncryptedPoolRequiresExplicitOracleAcknowledgement(): void
+    {
+        $this->expectException(ConfigException::class);
+        $this->expectExceptionMessage('CRIME-class oracle');
+
+        (void) CacheConfig::fromArray([
+            'pools' => [
+                'secure' => ['encrypted' => true, 'compression' => 'zlib'],
+            ],
+        ], $this->environment);
+    }
+
+    #[Test]
+    public function acknowledgedCompressionOnAnEncryptedPoolIsAccepted(): void
+    {
+        $config = CacheConfig::fromArray([
+            'pools' => [
+                'secure' => [
+                    'encrypted' => true,
+                    'compression' => 'zlib',
+                    'compression_length_oracle_acknowledged' => true,
+                ],
+            ],
+        ], $this->environment);
+
+        self::assertSame('zlib', $config->pools['secure']->compression);
+        self::assertTrue($config->pools['secure']->compressionLengthOracleAcknowledged);
+    }
+
+    #[Test]
     public function anAbsentDriverStillDefaultsToFilesystem(): void
     {
         $config = CacheConfig::fromArray([

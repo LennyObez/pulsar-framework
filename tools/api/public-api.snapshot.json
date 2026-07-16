@@ -8759,7 +8759,10 @@
                         "?string $path",
                         "?array $allowedClasses",
                         "bool $stampedeProtection",
-                        "int $gcDivisor"
+                        "int $gcDivisor",
+                        "?string $compression",
+                        "int $compressionThresholdBytes",
+                        "bool $compressionLengthOracleAcknowledged"
                     ],
                     "return": null,
                     "static": false
@@ -56109,6 +56112,7 @@
         "Pulsar\\Build\\BuildArtifactLoader",
         "Pulsar\\Build\\PreloadGenerator",
         "Pulsar\\Cache\\Application\\CacheKeyValidator",
+        "Pulsar\\Cache\\Application\\Compression\\CompressingCacheDecorator",
         "Pulsar\\Cache\\Application\\Driver\\AbstractCacheDriver",
         "Pulsar\\Cache\\Application\\Driver\\ApcuDriver",
         "Pulsar\\Cache\\Application\\Driver\\ArrayDriver",
@@ -56125,6 +56129,7 @@
         "Pulsar\\Cache\\Application\\Lock\\FilesystemLock",
         "Pulsar\\Cache\\Application\\Lock\\MemcachedLock",
         "Pulsar\\Cache\\Application\\Lock\\RedisLock",
+        "Pulsar\\Cache\\Application\\Serializer\\IgbinaryCacheSerializer",
         "Pulsar\\Cache\\Application\\Serializer\\JsonCacheSerializer",
         "Pulsar\\Cache\\Application\\Serializer\\PhpCacheSerializer",
         "Pulsar\\Cache\\Application\\Tag\\BestEffortTagStrategy",

@@ -82,6 +82,33 @@ never stampedes itself).
 - Transparent key rotation: values encrypted under the previous master key are decrypted and re-encrypted on read
 - Atomic increment/decrement is explicitly unsupported on encrypted pools (throws `UnsupportedCapabilityException`)
 
+### Value compression (opt-in)
+
+`CompressingCacheDecorator` wraps any `CacheDriverInterface` with transparent
+value compression (`compression: 'auto' | 'zstd' | 'lz4' | 'zlib'`, default
+off; `compression_threshold_bytes`, default 4096). The stored form is
+self-describing (a four-byte magic plus an algorithm byte), so compressed and
+raw entries coexist: enabling, disabling, or switching algorithms never
+invalidates existing entries. Values below the threshold or that do not shrink
+are stored raw. Counters bypass compression entirely — `increment()`/
+`decrement()` delegate untransformed.
+
+Decorator stacking order in `CacheManager::driver()` is load-bearing:
+
+```
+caller → Compression → Encryption → concrete driver
+```
+
+Compression sits ABOVE encryption because ciphertext is incompressible
+(compress-then-encrypt). That combination leaks plaintext structure through
+ciphertext length (a CRIME-class oracle when attacker-influenced data shares a
+payload with secrets), so configuring `compression` together with
+`encrypted: true` fails at boot unless
+`compression_length_oracle_acknowledged: true` records an explicit, informed
+acceptance. Note this addresses only the at-rest oracle; wire-level compression
+(the HTTP `CompressionMiddleware`) is a separate BREACH surface with its own
+controls.
+
 ### Distributed locking
 
 Lock implementations parallel the driver layer: `ApcuLock`, `MemcachedLock`, `RedisLock`, `FilesystemLock`, `DatabaseLock`, `ArrayLock`. All implement `LockInterface` with acquire/release semantics and configurable TTL. `FencedExecutor` provides fenced token support for safe lock extension in long-running operations.

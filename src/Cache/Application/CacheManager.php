@@ -10,6 +10,7 @@ use Psr\Cache\CacheItemPoolInterface;
 use Psr\Log\LoggerInterface;
 use Psr\SimpleCache\CacheInterface;
 use Pulsar\Api\Api;
+use Pulsar\Cache\Application\Compression\CompressingCacheDecorator;
 use Pulsar\Cache\Application\Driver\ApcuDriver;
 use Pulsar\Cache\Application\Driver\ArrayDriver;
 use Pulsar\Cache\Application\Driver\CacheDriverInterface;
@@ -44,6 +45,8 @@ use Pulsar\Runtime\ResettableInterface;
 use Pulsar\Security\Crypto\Hmac;
 use Pulsar\Security\Crypto\MasterKey;
 use Redis;
+
+use function function_exists;
 
 /**
  * Application cache manager with lazy pool/driver resolution.
@@ -219,10 +222,43 @@ final class CacheManager implements CacheManagerInterface, ResettableInterface
                 );
             }
 
+            // Compression wraps encryption (compress-then-encrypt): plaintext
+            // compresses, ciphertext does not. The config layer has already
+            // gated this combination behind the explicit length-oracle
+            // acknowledgement.
+            if ($poolConfig->compression !== null) {
+                $driver = new CompressingCacheDecorator(
+                    inner: $driver,
+                    algorithm: $this->negotiateCompressionAlgorithm($poolConfig->compression),
+                    thresholdBytes: $poolConfig->compressionThresholdBytes,
+                );
+            }
+
             $this->drivers[$name] = $driver;
         }
 
         return $this->drivers[$name];
+    }
+
+    /**
+     * Resolve 'auto' to the best available codec (zstd > lz4 > zlib) on this
+     * host; explicit algorithms were already extension-checked at config time.
+     */
+    private function negotiateCompressionAlgorithm(string $configured): string
+    {
+        if ($configured !== 'auto') {
+            return $configured;
+        }
+
+        if (function_exists('zstd_compress')) {
+            return 'zstd';
+        }
+
+        if (function_exists('lz4_compress')) {
+            return 'lz4';
+        }
+
+        return 'zlib';
     }
 
     private function resolvePoolConfig(string $name): CachePoolConfig
