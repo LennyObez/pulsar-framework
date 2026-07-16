@@ -155,6 +155,44 @@ final class CacheConfigTest extends TestCase
     }
 
     #[Test]
+    public function unknownTopLevelAndPoolKeysAreCollectedForWarning(): void
+    {
+        $config = CacheConfig::fromArray([
+            'enabled' => true,
+            'typo_top' => 'x',
+            'pools' => [
+                'sessions' => [
+                    'driver' => 'filesystem',
+                    'tlt' => 3600,
+                ],
+            ],
+        ], $this->environment);
+
+        self::assertContains('cache.typo_top', $config->unknownKeys);
+        self::assertContains('cache.pools.sessions.tlt', $config->unknownKeys);
+    }
+
+    #[Test]
+    public function aFullyKnownConfigurationHasNoUnknownKeys(): void
+    {
+        $config = CacheConfig::fromArray([
+            'enabled' => true,
+            'default_pool' => 'main',
+            'path' => 'var/cache',
+            'pools' => [
+                'main' => [
+                    'driver' => 'filesystem',
+                    'default_ttl_seconds' => 60,
+                    'stampede_protection' => false,
+                    'gc_divisor' => 0,
+                ],
+            ],
+        ], $this->environment);
+
+        self::assertSame([], $config->unknownKeys);
+    }
+
+    #[Test]
     public function anAbsentDriverStillDefaultsToFilesystem(): void
     {
         $config = CacheConfig::fromArray([

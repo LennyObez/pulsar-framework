@@ -8,10 +8,12 @@ use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Config\Exception\ConfigException;
 
+use function array_keys;
 use function array_map;
 use function class_exists;
 use function get_debug_type;
 use function implode;
+use function in_array;
 use function is_array;
 use function is_string;
 use function sprintf;
@@ -24,15 +26,38 @@ use function sprintf;
 final readonly class CacheConfig
 {
     /**
+     * Top-level keys recognised in config/cache.php.
+     *
+     * @var list<string>
+     */
+    private const array KNOWN_KEYS = ['enabled', 'default_pool', 'path', 'pools'];
+
+    /**
+     * Per-pool keys recognised under `pools.<name>`.
+     *
+     * @var list<string>
+     */
+    private const array KNOWN_POOL_KEYS = [
+        'driver', 'serializer', 'default_ttl_seconds', 'critical', 'encrypted',
+        'tags_strategy', 'host', 'port', 'path', 'allowed_classes',
+        'stampede_protection', 'gc_divisor',
+    ];
+
+    /**
      * @param string $defaultPool Default pool name
      * @param string $path Default filesystem cache path
      * @param array<string, CachePoolConfig> $pools Named pool configurations
+     * @param list<string> $unknownKeys Configuration keys that were present but
+     *        not recognised (dotted paths, e.g. `cache.pools.default.tlt`). A
+     *        typo silently ignored is a config that does not do what it says, so
+     *        the wiring logs these at boot rather than letting them vanish.
      */
     public function __construct(
         public bool $enabled = false,
         public string $defaultPool = 'default',
         public string $path = 'var/cache',
         public array $pools = [],
+        public array $unknownKeys = [],
     ) {}
 
     /**
@@ -58,6 +83,8 @@ final readonly class CacheConfig
 
         $poolsData = $data['pools'] ?? [];
 
+        $unknownKeys = self::collectUnknownKeys($data, $poolsData);
+
         /** @var array<string, CachePoolConfig> $pools */
         $pools = [];
 
@@ -76,6 +103,7 @@ final readonly class CacheConfig
         }
 
         return new self(
+            unknownKeys: $unknownKeys,
             enabled: $enabled,
             defaultPool: $defaultPool,
             path: $path,
@@ -118,6 +146,45 @@ final readonly class CacheConfig
             stampedeProtection: $data['stampede_protection'] ?? true,
             gcDivisor: $data['gc_divisor'] ?? 100,
         );
+    }
+
+    /**
+     * Collect configuration keys that are present but not recognised, as dotted
+     * paths, so the wiring can warn about them at boot. A silently-ignored typo
+     * (`tlt` for `ttl`, `page_cach_ttl`) is a config that does not behave as the
+     * operator intended — for a compliance-sensitive cache that must surface.
+     *
+     * @param array<string, mixed> $data
+     * @param mixed $poolsData The raw `pools` value (validated per entry).
+     *
+     * @return list<string>
+     */
+    private static function collectUnknownKeys(array $data, mixed $poolsData): array
+    {
+        $unknown = [];
+
+        foreach (array_keys($data) as $key) {
+            if (!in_array($key, self::KNOWN_KEYS, true)) {
+                $unknown[] = 'cache.' . $key;
+            }
+        }
+
+        if (is_array($poolsData)) {
+            /** @var mixed $poolData */
+            foreach ($poolsData as $poolName => $poolData) {
+                if (!is_array($poolData)) {
+                    continue;
+                }
+
+                foreach (array_keys($poolData) as $poolKey) {
+                    if (!in_array($poolKey, self::KNOWN_POOL_KEYS, true)) {
+                        $unknown[] = "cache.pools.{$poolName}.{$poolKey}";
+                    }
+                }
+            }
+        }
+
+        return $unknown;
     }
 
     /**

@@ -8693,7 +8693,8 @@
                         "bool $enabled",
                         "string $defaultPool",
                         "string $path",
-                        "array $pools"
+                        "array $pools",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
