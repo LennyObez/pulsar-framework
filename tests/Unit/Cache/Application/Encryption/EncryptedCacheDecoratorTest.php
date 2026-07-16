@@ -42,6 +42,26 @@ final class EncryptedCacheDecoratorTest extends TestCase
     }
 
     #[Test]
+    public function capabilitiesMaskCounterSupportBecauseIncrementThrows(): void
+    {
+        // The inner array driver advertises atomic increment, but the
+        // decorator's increment()/decrement() throw (ciphertext cannot be
+        // incremented server-side). Forwarding the inner flags made
+        // tags_strategy 'auto' pick StrictTagStrategy on encrypted pools,
+        // whose version bumps call increment() — an exception on the first
+        // tag invalidation. The decorator must therefore mask everything
+        // counter-dependent while passing the rest through.
+        self::assertTrue($this->inner->capabilities()->supportsAtomicIncrement);
+
+        $capabilities = $this->decorator->capabilities();
+
+        self::assertFalse($capabilities->supportsAtomicIncrement);
+        self::assertFalse($capabilities->supportsTagsStrict);
+        self::assertSame($this->inner->capabilities()->supportsBinary, $capabilities->supportsBinary);
+        self::assertSame($this->inner->capabilities()->supportsLocksFencing, $capabilities->supportsLocksFencing);
+    }
+
+    #[Test]
     public function getReturnsNullForMissingKey(): void
     {
         $result = $this->decorator->get('nonexistent');

@@ -152,10 +152,16 @@ final class MemcachedDriver extends AbstractCacheDriver
             $result = $this->memcached->increment($key, $step);
 
             if ($result === false && $this->memcached->getResultCode() === Memcached::RES_NOTFOUND) {
-                // Initialize key to the step value
-                $this->memcached->set($key, (string) $step, 0);
+                // Initialize atomically: add() stores only if the key is still
+                // absent, so a concurrent initializer cannot be clobbered (the
+                // previous set() overwrote whatever a racing process had
+                // already counted). If we lose the init race, the key now
+                // exists — increment it like any other hit.
+                if ($this->memcached->add($key, (string) $step, 0)) {
+                    return $step;
+                }
 
-                return $step;
+                return $this->memcached->increment($key, $step);
             }
 
             return $result;

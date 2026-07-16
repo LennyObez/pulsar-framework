@@ -29,9 +29,11 @@ final class CachePool implements CacheItemPoolInterface
 {
     /**
      * Prefix for the per-key stampede lock resource, kept distinct from the
-     * cached key so the lock never collides with a real cache entry.
+     * cached key so the lock never collides with a real cache entry. Lock
+     * resources bypass CacheKeyValidator, but the dot separator keeps every
+     * cache-layer identifier within the same PSR-6-safe grammar.
      */
-    private const string STAMPEDE_LOCK_PREFIX = '_stampede:';
+    private const string STAMPEDE_LOCK_PREFIX = '_stampede.';
 
     /** @var array<string, CacheItem> */
     private array $deferred = [];

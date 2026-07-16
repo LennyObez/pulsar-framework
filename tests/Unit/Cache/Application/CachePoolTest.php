@@ -676,7 +676,7 @@ final class CachePoolTest extends TestCase
 
             public function acquire(string $resource, int $ttlSeconds = 30, int $timeoutMs = 0): LockHandle
             {
-                $key = substr($resource, strlen('_stampede:'));
+                $key = substr($resource, strlen('_stampede.'));
                 $this->driver->set($key, $this->serializer->serialize('winner'), null);
 
                 return new LockHandle($resource, 'token', 0.0, $ttlSeconds);
