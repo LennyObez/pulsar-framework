@@ -125,6 +125,7 @@ final readonly class MsgpackSerializer implements SerializerInterface
         }
 
         if (is_array($value)) {
+            /** @var mixed $item */
             foreach ($value as $item) {
                 self::assertObjectFree($item, $type);
             }
