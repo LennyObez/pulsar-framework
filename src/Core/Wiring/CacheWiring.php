@@ -25,6 +25,8 @@ use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Routing\Router;
 use Pulsar\Security\Crypto\MasterKey;
 
+use function implode;
+
 #[Internal]
 final readonly class CacheWiring implements ServiceWiringInterface, DescribesWiring
 {
@@ -87,6 +89,17 @@ final readonly class CacheWiring implements ServiceWiringInterface, DescribesWir
             : null;
 
         /** @var LoggerInterface|null $logger */
+
+        // Surface silently-ignored configuration typos at boot: a misspelled key
+        // (e.g. `tlt` for `ttl`) is parsed away and the pool quietly runs on a
+        // default, which for a compliance-sensitive cache is a real hazard.
+        if ($cacheConfig->unknownKeys !== [] && $logger !== null) {
+            $logger->warning(
+                'Unknown cache configuration keys were ignored: ' . implode(', ', $cacheConfig->unknownKeys),
+                ['keys' => $cacheConfig->unknownKeys],
+            );
+        }
+
         $cacheManager = new CacheManager($cacheConfig, $connection, $masterKey, $metrics, $logger);
         $container->instance(CacheManager::class, $cacheManager);
         $container->instance(CacheManagerInterface::class, $cacheManager);
