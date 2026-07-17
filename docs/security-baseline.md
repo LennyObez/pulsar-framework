@@ -128,7 +128,33 @@ $valid = $manager->validate($token);  // true
 $manager->rotate();                   // Invalidate old, generate new
 ```
 
-### StatelessCsrfManager and BREACH resistance
+### CSRF tokens and BREACH resistance
+
+BREACH extracts a secret from a compressed HTTP response by varying
+attacker-reflected content and watching the response length. Every CSRF token is
+a secret emitted in a compressed response, so **no manager may transmit its
+token verbatim**. All three implementations satisfy this, by different means:
+
+| Manager                | Emitted value                            | Why it is not an oracle target                                                |
+| ---------------------- | ---------------------------------------- | ----------------------------------------------------------------------------- |
+| `CsrfTokenManager`     | `hex(pad \|\| inner XOR pad)`, fresh pad | Session token is stable, so it is masked per response                         |
+| `StatelessCsrfManager` | `hex(pad \|\| inner XOR pad)`, fresh pad | Inner token is deterministic per second+action, so it is masked               |
+| `EncryptedCsrfManager` | Fresh ciphertext                         | Encrypts a payload carrying a random nonce, so every emission already differs |
+
+`CsrfTokenManager` is the default wired by `SecurityWiring`, and it is the case
+masking exists for: the synchronizer token is stored once and lives for the
+whole session, so without masking the exact same secret bytes appear in every
+page. Rails (`masked_authenticity_token`) and Django (`_mask_cipher_secret`)
+mask their session-backed tokens for precisely this reason. Its stored form is
+unchanged (existing sessions keep working) and `validate()` still accepts the
+legacy verbatim form, so tokens already rendered into open pages survive a
+deploy.
+
+Do not rely on "our forms do not reflect input" as the defence. That is a
+property of current content, not a designed control: one reflected search field
+re-rendered into a compressed page reinstates the oracle, silently.
+
+#### StatelessCsrfManager specifics
 
 `StatelessCsrfManager` provides CSRF protection with no server-side state
 (CDN/Varnish and stateless-API friendly): the inner token is
