@@ -80,7 +80,7 @@ final class ConfigDtosTest extends TestCase
 
         self::assertSame(3600, $config->pageCacheTtlSeconds);
         self::assertTrue($config->stampedeProtection);
-        self::assertSame(10, $config->earlyRecomputeBeta);
+        self::assertSame(1.0, $config->earlyRecomputeBeta);
         self::assertSame(300, $config->staleGracePeriodSeconds);
         self::assertSame(5, $config->lockTimeoutSeconds);
     }
@@ -91,14 +91,14 @@ final class ConfigDtosTest extends TestCase
         $config = CmsCacheConfig::fromArray([
             'page_cache_ttl_seconds' => 7200,
             'stampede_protection' => false,
-            'early_recompute_beta' => 20,
+            'early_recompute_beta' => 2.5,
             'stale_grace_period_seconds' => 600,
             'lock_timeout_seconds' => 10,
         ]);
 
         self::assertSame(7200, $config->pageCacheTtlSeconds);
         self::assertFalse($config->stampedeProtection);
-        self::assertSame(20, $config->earlyRecomputeBeta);
+        self::assertSame(2.5, $config->earlyRecomputeBeta);
         self::assertSame(600, $config->staleGracePeriodSeconds);
         self::assertSame(10, $config->lockTimeoutSeconds);
     }

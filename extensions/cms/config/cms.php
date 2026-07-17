@@ -38,12 +38,28 @@ return [
     // Set this to a specific content UUID to designate a homepage explicitly.
     'homepage_content_id' => null,
 
-    // Caching configuration
+    // Full-page cache for public content routes. Active only when the
+    // application cache is enabled (config/cache.php). Anonymous GET/HEAD
+    // pages are cached per tenant + locale + host + path + canonical query;
+    // authenticated users, session-cookie visitors, and responses carrying
+    // per-user material (Set-Cookie, CSRF tokens, CSP nonces, private/no-store)
+    // are never cached.
     'cache' => [
+        // Logical freshness lifetime of a cached page.
         'page_cache_ttl_seconds' => 3600,
+        // Lock-based single-flight + XFetch early recomputation + serving the
+        // stale copy while one request regenerates. Disable to fall back to a
+        // plain get-or-render (a hot page then expires for everyone at once).
         'stampede_protection' => true,
-        'early_recompute_beta' => 10,
+        // XFetch aggressiveness: 1.0 is the canonical optimum; higher values
+        // start regenerating earlier before expiry (more freshness, more
+        // renders).
+        'early_recompute_beta' => 1.0,
+        // How long an expired page may still be served while one request
+        // regenerates it (stale-while-revalidate window).
         'stale_grace_period_seconds' => 300,
+        // How long a cold-miss request waits for the single-flight lock before
+        // rendering without it.
         'lock_timeout_seconds' => 5,
     ],
 

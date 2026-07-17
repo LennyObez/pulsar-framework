@@ -17,7 +17,9 @@ use Pulsar\Extension\Cms\Content\ContentTranslationRepositoryInterface;
 use Pulsar\Extension\Cms\Content\RedirectRepositoryInterface;
 use Pulsar\Extension\Cms\Content\SafeHtmlPolicy;
 use Pulsar\Extension\Cms\FieldRegistry\FieldRegistryRepositoryInterface;
+use Pulsar\Extension\Cms\Http\Middleware\CmsPageCacheMiddleware;
 use Pulsar\Extension\Cms\I18n\HreflangGenerator;
+use Pulsar\Extension\Cms\Internal\Cache\CmsCacheKeys;
 use Pulsar\Extension\Cms\Internal\Security\CmsKeyManager;
 use Pulsar\Extension\Cms\Navigation\BreadcrumbGeneratorInterface;
 use Pulsar\Extension\Cms\Navigation\MenuRepositoryInterface;
@@ -281,7 +283,14 @@ final readonly class ContentController
             $cspNonce = $request->getAttribute('csp_nonce');
             $responseData['_csp_nonce'] = is_string($cspNonce) ? $cspNonce : null;
             $responseBody = $this->renderHtml($responseData, $template, $content, $translation, $baseUrl);
-            $response = Response::html($responseBody);
+            // Declare this page's fine-grained cache tags for the page-cache
+            // middleware (internal header, stripped before the response leaves
+            // the server) so publishing this content or its type invalidates
+            // exactly the pages that rendered it.
+            $response = Response::html($responseBody)->withHeader(
+                CmsPageCacheMiddleware::TAGS_HEADER,
+                CmsCacheKeys::contentTag($content->id) . ',' . CmsCacheKeys::typeTag($content->contentType->value),
+            );
         }
 
         return $this->applyCacheHeaders($request, $response, $responseBody, $content, $previewToken);

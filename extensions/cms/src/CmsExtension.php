@@ -87,6 +87,7 @@ use Pulsar\Extension\Cms\Http\Controller\SeoController;
 use Pulsar\Extension\Cms\Http\Controller\SitemapController;
 use Pulsar\Extension\Cms\Http\Controller\WebhookController;
 use Pulsar\Extension\Cms\Http\Middleware\CmsLocaleMiddleware;
+use Pulsar\Extension\Cms\Http\Middleware\CmsPageCacheMiddleware;
 use Pulsar\Extension\Cms\ImportExport\CmsImportExportProvider;
 use Pulsar\Extension\Cms\Internal\Notification\CmsNotificationDispatcher;
 use Pulsar\Extension\Cms\Internal\Scheduler\BackupRetentionJob;
@@ -260,7 +261,7 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
 
         $this->registerCoreBlockTypes($container);
         $this->registerApiRoutes($router, $config);
-        $this->registerPublicRoutes($router, $config);
+        $this->registerPublicRoutes($router, $config, $container->has(CmsPageCacheMiddleware::class));
         $this->registerAdminRoutes($router, $container);
     }
 
@@ -499,7 +500,7 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
         $router->get("$prefix/docs/{docPageId}/feedback", [DocFeedbackController::class, 'summary'], 'cms.api.docs.feedback.summary');
     }
 
-    private function registerPublicRoutes(RouterInterface $router, CmsConfig $config): void
+    private function registerPublicRoutes(RouterInterface $router, CmsConfig $config, bool $pageCacheAvailable = false): void
     {
         // Customer account (front-office)
         $router->get('/account', [AccountController::class, 'dashboard'], 'cms.account.dashboard');
@@ -577,7 +578,15 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
 
         // Public content rendering: catch-all route for locale-prefixed and default paths
         // Locale-aware routing: /{locale}/{path} or /{path} for default locale
-        $localeMiddleware = [CmsLocaleMiddleware::class];
+        //
+        // The page cache middleware runs AFTER CmsLocaleMiddleware (it keys on
+        // the cms_locale attribute the latter sets) and is attached only when
+        // the provider actually built it (application cache enabled): a bare
+        // class-string here would make the pipeline instantiate it without its
+        // required dependencies.
+        $localeMiddleware = $pageCacheAvailable
+            ? [CmsLocaleMiddleware::class, CmsPageCacheMiddleware::class]
+            : [CmsLocaleMiddleware::class];
 
         // Register locale-prefixed routes FIRST so they take priority over the
         // default locale's catch-all /{path}. The radix tree router checks pattern
