@@ -21,6 +21,7 @@
     "ext-simplexml": "*",
     "ext-sodium": "*",
     "ext-zip": "*",
+    "ext-zlib": "*",
     "league/commonmark": "^2.8.2",
     "psr/cache": "^3.0",
     "psr/container": "^2.0",
