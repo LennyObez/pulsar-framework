@@ -19,6 +19,7 @@ use Throwable;
 use function array_values;
 use function hrtime;
 use function time;
+use function usleep;
 
 /**
  * PSR-6 CacheItemPoolInterface implementation.
@@ -34,6 +35,19 @@ final class CachePool implements CacheItemPoolInterface
      * cache-layer identifier within the same PSR-6-safe grammar.
      */
     private const string STAMPEDE_LOCK_PREFIX = '_stampede.';
+
+    /**
+     * After a stampede lock wait times out, poll the cache for the winner's
+     * write for up to this long (in ms) before falling back to an unlocked
+     * compute. Without this window every loser that times out at the same
+     * instant would recompute at once — the very herd the lock prevents — when
+     * regeneration outlasts the lock timeout. Bounded so a request never hangs
+     * on a dead winner; the primary tuning lever is the per-pool lock timeout.
+     */
+    private const int LOSER_POLL_WINDOW_MS = 250;
+
+    /** Interval between winner-write polls during {@see LOSER_POLL_WINDOW_MS}. */
+    private const int LOSER_POLL_INTERVAL_MS = 25;
 
     /** @var array<string, CacheItem> */
     private array $deferred = [];
@@ -343,18 +357,12 @@ final class CachePool implements CacheItemPoolInterface
                 $this->stampedeLockTimeoutMs,
             );
         } catch (Throwable) {
-            // Lock unavailable or timed out: another caller is likely already
-            // regenerating, so re-check once; otherwise compute without the lock
-            // rather than fail the request.
-            $retry = $this->getItem($key);
-
-            if ($retry->isHit()) {
-                /** @var T */
-                return $retry->get();
-            }
-
+            // Lock unavailable or timed out: a winner is likely still
+            // regenerating. Poll briefly for its write before falling back to
+            // an unlocked compute, so N losers timing out together do not all
+            // stampede the backend the instant the lock times out.
             /** @var T */
-            return $this->computeAndSave($key, $callback, $ttlSeconds ?? $this->defaultTtlSeconds);
+            return $this->awaitWinnerOrCompute($key, $callback, $ttlSeconds ?? $this->defaultTtlSeconds);
         }
 
         try {
@@ -403,6 +411,48 @@ final class CachePool implements CacheItemPoolInterface
         $this->save($cacheItem);
 
         return $value;
+    }
+
+    /**
+     * Poll for the stampede winner's write within a bounded window, then
+     * fail-open by computing directly. Splits a herd of losers that all time
+     * out at once: most pick up the winner's value during the poll; only a
+     * dead or extremely slow winner forces a fallback compute.
+     *
+     * @template T
+     * @param callable(): T $callback
+     * @return T
+     *
+     * @throws CacheException On driver failure in critical mode
+     */
+    private function awaitWinnerOrCompute(string $key, callable $callback, ?int $resolvedTtlSeconds): mixed
+    {
+        $deadlineNs = hrtime(true) + self::LOSER_POLL_WINDOW_MS * 1_000_000;
+
+        do {
+            $retry = $this->getItem($key);
+
+            if ($retry->isHit()) {
+                /** @var T */
+                return $retry->get();
+            }
+
+            $this->cooperativeSleepMs(self::LOSER_POLL_INTERVAL_MS);
+        } while (hrtime(true) < $deadlineNs);
+
+        /** @var T */
+        return $this->computeAndSave($key, $callback, $resolvedTtlSeconds);
+    }
+
+    /**
+     * Sleep for the given milliseconds. Currently a plain usleep; on the
+     * persistent runtime this blocks the worker, which issue #418 replaces
+     * with a fiber-aware yield. Kept as the single sleep site so that change
+     * lands in one place.
+     */
+    private function cooperativeSleepMs(int $milliseconds): void
+    {
+        usleep($milliseconds * 1000);
     }
 
     /**

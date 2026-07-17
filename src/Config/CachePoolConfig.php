@@ -28,6 +28,15 @@ final readonly class CachePoolConfig
      *        payload with secrets). Combining `compression` with `encrypted`
      *        on one pool therefore fails at boot unless this flag records an
      *        explicit, informed acceptance of that trade-off.
+     * @param int $stampedeLockTtlSeconds Auto-expiry of the per-key stampede
+     *        regeneration lock — an upper bound on how long a crashed winner can
+     *        block regeneration. Must exceed the worst-case render time.
+     * @param int $stampedeLockTimeoutMs How long a losing caller waits for the
+     *        stampede lock before falling back. The invariant is
+     *        `stampede_lock_timeout_ms > p99 regeneration time` (so a loser
+     *        picks up the winner's write rather than recomputing) and
+     *        `stampede_lock_ttl_seconds > timeout + p99` (so the lock outlives a
+     *        legitimate render).
      * @param string $prefix Per-pool key namespace on shared backends
      *        (Redis/Memcached store keys raw, so pools and applications on one
      *        server share a keyspace). Empty (default) keeps current
@@ -53,5 +62,7 @@ final readonly class CachePoolConfig
         public int $compressionThresholdBytes = 4096,
         public bool $compressionLengthOracleAcknowledged = false,
         public string $prefix = '',
+        public int $stampedeLockTtlSeconds = 30,
+        public int $stampedeLockTimeoutMs = 5000,
     ) {}
 }

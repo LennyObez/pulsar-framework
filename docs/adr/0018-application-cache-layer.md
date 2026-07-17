@@ -63,9 +63,17 @@ the pool's own `LockInterface` backend so no separate lock topology is needed:
    of the TTL, to prevent synchronized expiration)
 5. Release the lock
 
-On lock timeout, `remember()` retries the cache read (optimistic path) and falls
-back to direct callback invocation (degraded path) rather than failing the
-request. All reads and writes flow through the pool's `getItem()`/`save()`, so
+On lock timeout, `remember()` polls the cache for the winner's write for a
+bounded window (`LOSER_POLL_WINDOW_MS`) before falling back to a direct,
+unlocked compute — otherwise every loser that times out at the same instant
+would recompute at once, the exact herd the lock prevents, whenever a
+regeneration outlasts the lock timeout. The poll is bounded so a request never
+hangs on a dead winner. The primary tuning lever is the per-pool
+`stampede_lock_timeout_ms` (default 5000) and `stampede_lock_ttl_seconds`
+(default 30): the invariant is `stampede_lock_timeout_ms > p99 regeneration`
+(so a loser reads the winner's write rather than recomputing) and
+`stampede_lock_ttl_seconds > timeout + p99` (so the lock outlives a legitimate
+render). All reads and writes flow through the pool's `getItem()`/`save()`, so
 stampede-protected regeneration still emits the normal hit/miss/write/error
 events and honours critical mode.
 
