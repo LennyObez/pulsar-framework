@@ -45,7 +45,7 @@ final readonly class CacheConfig
         'tags_strategy', 'host', 'port', 'path', 'allowed_classes',
         'stampede_protection', 'gc_divisor', 'compression',
         'compression_threshold_bytes', 'compression_length_oracle_acknowledged',
-        'prefix',
+        'prefix', 'stampede_lock_ttl_seconds', 'stampede_lock_timeout_ms',
     ];
 
     /**
@@ -134,6 +134,8 @@ final readonly class CacheConfig
      *     compression_threshold_bytes?: int,
      *     compression_length_oracle_acknowledged?: bool,
      *     prefix?: string,
+     *     stampede_lock_ttl_seconds?: int,
+     *     stampede_lock_timeout_ms?: int,
      * } $data
      */
     private static function buildPoolConfig(string $name, array $data): CachePoolConfig
@@ -164,6 +166,8 @@ final readonly class CacheConfig
             compressionThresholdBytes: $data['compression_threshold_bytes'] ?? 4096,
             compressionLengthOracleAcknowledged: (bool) ($data['compression_length_oracle_acknowledged'] ?? false),
             prefix: self::resolvePrefix($name, $data['prefix'] ?? ''),
+            stampedeLockTtlSeconds: $data['stampede_lock_ttl_seconds'] ?? 30,
+            stampedeLockTimeoutMs: $data['stampede_lock_timeout_ms'] ?? 5000,
         );
     }
 

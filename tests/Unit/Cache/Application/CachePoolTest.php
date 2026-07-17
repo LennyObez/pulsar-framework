@@ -660,6 +660,90 @@ final class CachePoolTest extends TestCase
     }
 
     #[Test]
+    public function rememberPollsForTheWinnersWriteAfterALockTimeoutInsteadOfRecomputing(): void
+    {
+        // A loser whose lock wait times out must not immediately recompute (the
+        // herd): it polls, and picks up the value the winner writes during the
+        // poll window without invoking its own callback.
+        $lock = $this->createStub(LockInterface::class);
+        $lock->method('acquire')->willThrowException(new LockAcquisitionException('timed out'));
+
+        // The winner's write "appears" on the poll: get() returns null for the
+        // initial miss, then the winner's value on the next read.
+        $driver = new class extends \Pulsar\Cache\Application\Driver\AbstractCacheDriver {
+            private int $reads = 0;
+
+            /** @var array<string, string> */
+            private array $store = [];
+
+            public function get(string $key): ?string
+            {
+                $this->reads++;
+
+                if ($this->reads >= 2 && !isset($this->store[$key])) {
+                    $this->store[$key] = json_encode('winner');
+                }
+
+                return $this->store[$key] ?? null;
+            }
+
+            public function set(string $key, string $value, ?int $ttlSeconds): bool
+            {
+                $this->store[$key] = $value;
+
+                return true;
+            }
+
+            public function delete(string $key): bool
+            {
+                unset($this->store[$key]);
+
+                return true;
+            }
+
+            public function has(string $key): bool
+            {
+                return isset($this->store[$key]);
+            }
+
+            public function clear(): bool
+            {
+                $this->store = [];
+
+                return true;
+            }
+
+            public function capabilities(): \Pulsar\Cache\Application\Driver\CacheDriverCapabilities
+            {
+                return new \Pulsar\Cache\Application\Driver\CacheDriverCapabilities();
+            }
+
+            public function name(): string
+            {
+                return 'appearing';
+            }
+        };
+
+        $pool = new CachePool(
+            poolName: 'test',
+            driver: $driver,
+            serializer: new JsonCacheSerializer(),
+            eventEmitter: new CacheEventEmitter(),
+            stampedeLock: $lock,
+        );
+
+        $called = false;
+        $value = $pool->remember('herd-key', static function () use (&$called): string {
+            $called = true;
+
+            return 'loser';
+        });
+
+        self::assertSame('winner', $value);
+        self::assertFalse($called, 'The loser must serve the winner\'s write, not recompute');
+    }
+
+    #[Test]
     public function rememberReadsTheWinnersValueWhenTheDoubleCheckHits(): void
     {
         $driver = new ArrayDriver();

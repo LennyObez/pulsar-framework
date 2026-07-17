@@ -8770,7 +8770,9 @@
                         "?string $compression",
                         "int $compressionThresholdBytes",
                         "bool $compressionLengthOracleAcknowledged",
-                        "string $prefix"
+                        "string $prefix",
+                        "int $stampedeLockTtlSeconds",
+                        "int $stampedeLockTimeoutMs"
                     ],
                     "return": null,
                     "static": false

@@ -124,6 +124,8 @@ final class CacheManager implements CacheManagerInterface, ResettableInterface
                 defaultTtlSeconds: $poolConfig->defaultTtlSeconds,
                 critical: $poolConfig->critical,
                 stampedeLock: $stampedeLock,
+                stampedeLockTtlSeconds: $poolConfig->stampedeLockTtlSeconds,
+                stampedeLockTimeoutMs: $poolConfig->stampedeLockTimeoutMs,
             );
         }
 
