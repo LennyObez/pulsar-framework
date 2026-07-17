@@ -16,12 +16,21 @@ use Pulsar\Routing\Router;
 /**
  * Wires request-URL canonicalization.
  *
- * Runs early in the boot order (right after ConfigWiring, before I18nWiring) so
- * the canonicalization middleware is piped OUTERMOST — it observes the full
- * request path, including any locale prefix, before LocalePrefixMiddleware
- * rewrites it. That lets `/nl//coaching` redirect to `/nl/coaching` (prefix
- * kept, double slash collapsed) instead of leaking a `//coaching` spelling
- * downstream.
+ * The canonicalization middleware MUST run OUTERMOST — before locale-prefix
+ * stripping. It redirects on `$request->getUri()->getPath()`, and
+ * {@see \Pulsar\I18n\Locale\LocalePrefixMiddleware} rewrites that path to drop
+ * the locale prefix; if canonicalization ran after that strip, `/nl/coaching/`
+ * would be seen as the already-stripped `/coaching/` and permanently redirect
+ * to `/coaching` — silently losing the locale prefix on every non-canonical
+ * URL, cached by browsers and crawlers as a 301. This ordering is therefore a
+ * correctness constraint, not a description.
+ *
+ * It is enforced structurally: the middleware is {@see MiddlewarePipeline::prepend()}ed,
+ * so it lands at the front of the pipeline regardless of where this wiring sits
+ * in {@see WiringList} relative to the one that pipes LocalePrefixMiddleware.
+ * Reordering the boot list cannot break the invariant; only removing the
+ * prepend can. (`pipe()` would leave the guarantee resting on WiringList line
+ * order — RoutingWiring happening to precede I18nWiring — which nothing checks.)
  *
  * When no `config/routing.php` is present the repository has no RoutingConfig,
  * so the default (canonicalization OFF) applies and nothing is piped — the
@@ -48,7 +57,10 @@ final readonly class RoutingWiring implements ServiceWiringInterface
         $container->instance(RoutingConfig::class, $config);
 
         if ($config->redirectToCanonicalPath) {
-            $middleware->pipe(new CanonicalPathMiddleware());
+            // prepend(), not pipe(): this must be OUTERMOST — ahead of the
+            // locale-prefix strip — no matter the boot order. See the class
+            // docblock for why an inner position silently drops locale prefixes.
+            $middleware->prepend(new CanonicalPathMiddleware());
         }
     }
 }
