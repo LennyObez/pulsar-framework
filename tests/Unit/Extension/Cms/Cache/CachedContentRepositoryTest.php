@@ -14,6 +14,8 @@ use Pulsar\Extension\Cms\Content\Content;
 use Pulsar\Extension\Cms\Content\ContentRepositoryInterface;
 use Pulsar\Extension\Cms\Content\ContentType;
 use Pulsar\Extension\Cms\Internal\Cache\CachedContentRepository;
+use Pulsar\Extension\Cms\Internal\Cache\CmsCacheInvalidator;
+use Pulsar\Extension\Cms\Internal\Cache\CmsCacheKeys;
 
 #[CoversClass(CachedContentRepository::class)]
 final class CachedContentRepositoryTest extends TestCase
@@ -26,7 +28,7 @@ final class CachedContentRepositoryTest extends TestCase
     {
         $this->inner = $this->createStub(ContentRepositoryInterface::class);
         $this->cache = $this->createStub(TaggedCacheInterface::class);
-        $this->sut = new CachedContentRepository($this->inner, $this->cache);
+        $this->sut = new CachedContentRepository($this->inner, $this->cache, new CmsCacheInvalidator($this->cache));
     }
 
     #[Test]
@@ -65,7 +67,7 @@ final class CachedContentRepositoryTest extends TestCase
 
         $this->inner->method('findById')->willReturn($content);
 
-        $sut = new CachedContentRepository($this->inner, $cache);
+        $sut = new CachedContentRepository($this->inner, $cache, new CmsCacheInvalidator($cache));
         $sut->findById('abc-123');
     }
 
@@ -78,7 +80,7 @@ final class CachedContentRepositoryTest extends TestCase
 
         $this->inner->method('findById')->willReturn(null);
 
-        $sut = new CachedContentRepository($this->inner, $cache);
+        $sut = new CachedContentRepository($this->inner, $cache, new CmsCacheInvalidator($cache));
         $result = $sut->findById('missing');
 
         self::assertNull($result);
@@ -114,10 +116,10 @@ final class CachedContentRepositoryTest extends TestCase
 
         $cache = $this->createMock(TaggedCacheInterface::class);
         $cache->expects(self::once())
-            ->method('invalidateTag')
-            ->with('cms_content.abc-123');
+            ->method('invalidateTags')
+            ->with(['cms_content.abc-123', 'cms_pages']);
 
-        $sut = new CachedContentRepository($this->inner, $cache);
+        $sut = new CachedContentRepository($this->inner, $cache, new CmsCacheInvalidator($cache));
         $sut->save($content);
     }
 
@@ -128,11 +130,27 @@ final class CachedContentRepositoryTest extends TestCase
 
         $cache = $this->createMock(TaggedCacheInterface::class);
         $cache->expects(self::once())
-            ->method('invalidateTag')
-            ->with('cms_content.abc-123');
+            ->method('invalidateTags')
+            ->with(['cms_content.abc-123', 'cms_pages']);
 
-        $sut = new CachedContentRepository($this->inner, $cache);
+        $sut = new CachedContentRepository($this->inner, $cache, new CmsCacheInvalidator($cache));
         $sut->delete($content);
+    }
+
+    #[Test]
+    public function save_bumps_the_page_cache_invalidation_epoch(): void
+    {
+        // The repository-path save must bump the epoch (not just the tag), so a
+        // page render in flight abandons a write that would pin stale content.
+        $content = $this->makeContent('abc-123');
+
+        $cache = $this->createMock(TaggedCacheInterface::class);
+        $cache->expects(self::once())
+            ->method('set')
+            ->with(CmsCacheKeys::INVALIDATION_EPOCH_KEY, self::isString(), [], null);
+
+        $sut = new CachedContentRepository($this->inner, $cache, new CmsCacheInvalidator($cache));
+        $sut->save($content);
     }
 
     #[Test]

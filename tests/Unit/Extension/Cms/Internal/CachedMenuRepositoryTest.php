@@ -10,6 +10,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Cache\Application\TaggedCacheInterface;
 use Pulsar\Extension\Cms\Internal\Cache\CachedMenuRepository;
+use Pulsar\Extension\Cms\Internal\Cache\CmsCacheInvalidator;
 use Pulsar\Extension\Cms\Navigation\LinkTarget;
 use Pulsar\Extension\Cms\Navigation\Menu;
 use Pulsar\Extension\Cms\Navigation\MenuItem;
@@ -30,7 +31,7 @@ final class CachedMenuRepositoryTest extends TestCase
         // Inner should NOT be called when cache hits
         $inner->method('findByLocation')->willReturn(null);
 
-        $repo = new CachedMenuRepository($inner, $cache);
+        $repo = new CachedMenuRepository($inner, $cache, new CmsCacheInvalidator($cache));
         $result = $repo->findByLocation('header', 'en');
 
         self::assertSame($menu, $result);
@@ -48,7 +49,7 @@ final class CachedMenuRepositoryTest extends TestCase
         $inner = $this->createStub(MenuRepositoryInterface::class);
         $inner->method('findByLocation')->willReturn($menu);
 
-        $repo = new CachedMenuRepository($inner, $cache);
+        $repo = new CachedMenuRepository($inner, $cache, new CmsCacheInvalidator($cache));
         $result = $repo->findByLocation('header', 'en');
 
         self::assertSame($menu, $result);
@@ -64,7 +65,7 @@ final class CachedMenuRepositoryTest extends TestCase
         $inner = $this->createStub(MenuRepositoryInterface::class);
         $inner->method('findByLocation')->willReturn(null);
 
-        $repo = new CachedMenuRepository($inner, $cache);
+        $repo = new CachedMenuRepository($inner, $cache, new CmsCacheInvalidator($cache));
         $result = $repo->findByLocation('header', 'en');
 
         self::assertNull($result);
@@ -77,13 +78,13 @@ final class CachedMenuRepositoryTest extends TestCase
 
         $cache = $this->createMock(TaggedCacheInterface::class);
         $cache->expects(self::once())
-            ->method('invalidateTag')
-            ->with('cms_menu.footer');
+            ->method('invalidateTags')
+            ->with(['cms_menu.footer', 'cms_pages']);
 
         $inner = $this->createMock(MenuRepositoryInterface::class);
         $inner->expects(self::once())->method('save');
 
-        $repo = new CachedMenuRepository($inner, $cache);
+        $repo = new CachedMenuRepository($inner, $cache, new CmsCacheInvalidator($cache));
         $repo->save($menu, []);
     }
 
@@ -94,13 +95,13 @@ final class CachedMenuRepositoryTest extends TestCase
 
         $cache = $this->createMock(TaggedCacheInterface::class);
         $cache->expects(self::once())
-            ->method('invalidateTag')
-            ->with('cms_menu');
+            ->method('invalidateTags')
+            ->with(['cms_menu', 'cms_pages']);
 
         $inner = $this->createMock(MenuRepositoryInterface::class);
         $inner->expects(self::once())->method('saveItem');
 
-        $repo = new CachedMenuRepository($inner, $cache);
+        $repo = new CachedMenuRepository($inner, $cache, new CmsCacheInvalidator($cache));
         $repo->saveItem($item, []);
     }
 }

@@ -10,6 +10,7 @@ use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Cache\Application\TaggedCacheInterface;
 use Pulsar\Extension\Cms\Internal\Cache\CachedSettingsService;
+use Pulsar\Extension\Cms\Internal\Cache\CmsCacheInvalidator;
 use Pulsar\Extension\Cms\Settings\SettingsServiceInterface;
 
 #[CoversClass(CachedSettingsService::class)]
@@ -23,7 +24,7 @@ final class CachedSettingsServiceTest extends TestCase
     {
         $this->inner = $this->createStub(SettingsServiceInterface::class);
         $this->cache = $this->createStub(TaggedCacheInterface::class);
-        $this->sut = new CachedSettingsService($this->inner, $this->cache);
+        $this->sut = new CachedSettingsService($this->inner, $this->cache, new CmsCacheInvalidator($this->cache));
     }
 
     #[Test]
@@ -59,7 +60,7 @@ final class CachedSettingsServiceTest extends TestCase
             ->method('set')
             ->with('cms_settings.site.title._', 'fresh-value', ['cms_settings'], 300);
 
-        $sut = new CachedSettingsService($this->inner, $cache);
+        $sut = new CachedSettingsService($this->inner, $cache, new CmsCacheInvalidator($cache));
         $sut->get('site', 'title');
     }
 
@@ -71,7 +72,7 @@ final class CachedSettingsServiceTest extends TestCase
             ->method('invalidateTag')
             ->with('cms_settings');
 
-        $sut = new CachedSettingsService($this->inner, $cache);
+        $sut = new CachedSettingsService($this->inner, $cache, new CmsCacheInvalidator($cache));
         $sut->set('site', 'title', 'New Title');
     }
 
@@ -83,7 +84,7 @@ final class CachedSettingsServiceTest extends TestCase
             ->method('set')
             ->with('site', 'title', 'New Title', 'en', 'Updated');
 
-        $sut = new CachedSettingsService($inner, $this->cache);
+        $sut = new CachedSettingsService($inner, $this->cache, new CmsCacheInvalidator($this->cache));
         $sut->set('site', 'title', 'New Title', 'en', 'Updated');
     }
 
@@ -144,7 +145,7 @@ final class CachedSettingsServiceTest extends TestCase
 
         $this->inner->method('get')->willReturn('Titre');
 
-        $sut = new CachedSettingsService($this->inner, $cache);
+        $sut = new CachedSettingsService($this->inner, $cache, new CmsCacheInvalidator($cache));
         $sut->get('site', 'title', 'fr');
     }
 }

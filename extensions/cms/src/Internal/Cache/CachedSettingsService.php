@@ -21,6 +21,7 @@ final readonly class CachedSettingsService implements SettingsServiceInterface
     public function __construct(
         private SettingsServiceInterface $inner,
         private TaggedCacheInterface $cache,
+        private CmsCacheInvalidator $invalidator,
     ) {}
 
     #[Override]
@@ -50,7 +51,7 @@ final readonly class CachedSettingsService implements SettingsServiceInterface
         ?string $reason = null,
     ): void {
         $this->inner->set($group, $key, $value, $locale, $reason);
-        $this->cache->invalidateTag(CmsCacheKeys::TAG_SETTINGS);
+        $this->invalidator->invalidateSettings();
     }
 
     #[Override]
