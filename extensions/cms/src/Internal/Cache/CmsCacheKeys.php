@@ -57,6 +57,14 @@ final readonly class CmsCacheKeys
     /** Tag on comment rate-limit counters. */
     public const string TAG_COMMENT_RATE = 'cms_comment_rate';
 
+    /**
+     * Data key holding an opaque value bumped by CmsCacheInvalidator on every
+     * invalidation. The page cache reads it before and after rendering and
+     * abandons the write when it changed, so a publish landing mid-render can
+     * never be pinned over by a stale body for a full TTL.
+     */
+    public const string INVALIDATION_EPOCH_KEY = 'cms_invalidation_epoch';
+
     /** Key prefix shared by every cached page entry (Studio inspector filter). */
     public const string PAGE_KEY_PREFIX = 'cms_page.';
 

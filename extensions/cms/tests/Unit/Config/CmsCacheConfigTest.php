@@ -19,7 +19,7 @@ final class CmsCacheConfigTest extends TestCase
 
         self::assertSame(3600, $config->pageCacheTtlSeconds);
         self::assertTrue($config->stampedeProtection);
-        self::assertSame(10, $config->earlyRecomputeBeta);
+        self::assertSame(1.0, $config->earlyRecomputeBeta);
         self::assertSame(300, $config->staleGracePeriodSeconds);
         self::assertSame(5, $config->lockTimeoutSeconds);
     }
@@ -30,14 +30,14 @@ final class CmsCacheConfigTest extends TestCase
         $config = CmsCacheConfig::fromArray([
             'page_cache_ttl_seconds' => 7200,
             'stampede_protection' => false,
-            'early_recompute_beta' => 20,
+            'early_recompute_beta' => 2.5,
             'stale_grace_period_seconds' => 600,
             'lock_timeout_seconds' => 10,
         ]);
 
         self::assertSame(7200, $config->pageCacheTtlSeconds);
         self::assertFalse($config->stampedeProtection);
-        self::assertSame(20, $config->earlyRecomputeBeta);
+        self::assertSame(2.5, $config->earlyRecomputeBeta);
         self::assertSame(600, $config->staleGracePeriodSeconds);
         self::assertSame(10, $config->lockTimeoutSeconds);
     }
@@ -49,7 +49,7 @@ final class CmsCacheConfigTest extends TestCase
 
         self::assertSame(3600, $config->pageCacheTtlSeconds);
         self::assertTrue($config->stampedeProtection);
-        self::assertSame(10, $config->earlyRecomputeBeta);
+        self::assertSame(1.0, $config->earlyRecomputeBeta);
     }
 
     #[Test]
@@ -58,15 +58,15 @@ final class CmsCacheConfigTest extends TestCase
         $config = CmsCacheConfig::fromArray([
             'page_cache_ttl_seconds' => 'fast',
             'stampede_protection' => 'yes',
-            'early_recompute_beta' => 10.5,
+            'early_recompute_beta' => 'aggressive',
         ]);
 
         // Non-int for page_cache_ttl_seconds → default 3600
         self::assertSame(3600, $config->pageCacheTtlSeconds);
         // Non-bool for stampede_protection → default true
         self::assertTrue($config->stampedeProtection);
-        // Non-int for early_recompute_beta → default 10
-        self::assertSame(10, $config->earlyRecomputeBeta);
+        // Non-numeric for early_recompute_beta → default 1.0
+        self::assertSame(1.0, $config->earlyRecomputeBeta);
     }
 
     #[Test]
@@ -75,14 +75,14 @@ final class CmsCacheConfigTest extends TestCase
         $config = new CmsCacheConfig(
             pageCacheTtlSeconds: 0,
             stampedeProtection: false,
-            earlyRecomputeBeta: 1,
+            earlyRecomputeBeta: 1.5,
             staleGracePeriodSeconds: 0,
             lockTimeoutSeconds: 1,
         );
 
         self::assertSame(0, $config->pageCacheTtlSeconds);
         self::assertFalse($config->stampedeProtection);
-        self::assertSame(1, $config->earlyRecomputeBeta);
+        self::assertSame(1.5, $config->earlyRecomputeBeta);
         self::assertSame(0, $config->staleGracePeriodSeconds);
         self::assertSame(1, $config->lockTimeoutSeconds);
     }

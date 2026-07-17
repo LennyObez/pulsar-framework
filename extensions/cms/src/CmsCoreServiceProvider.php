@@ -14,6 +14,7 @@ use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Audit\NullAuditLogger;
 use Pulsar\Cache\Application\CacheManagerInterface;
 use Pulsar\Cache\Application\TaggedCacheInterface;
+use Pulsar\Config\SessionConfig;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Event\EventDispatcherInterface;
@@ -694,6 +695,27 @@ final readonly class CmsCoreServiceProvider
             $container->instance(
                 Http\Middleware\CmsPublicRateLimitMiddleware::class,
                 new Http\Middleware\CmsPublicRateLimitMiddleware($taggedCache, $config),
+            );
+
+            // Full-page cache for public content routes. The stampede lock
+            // reuses the default pool's lock backend; the session cookie name
+            // lets the middleware bypass visitors with server-side state.
+            $pageCacheLock = $container->has(CacheManagerInterface::class)
+                ? $container->get(CacheManagerInterface::class)->lock()
+                : null;
+
+            $sessionCookieName = $container->has(SessionConfig::class)
+                ? $container->get(SessionConfig::class)->effectiveCookieName()
+                : null;
+
+            $container->instance(
+                Http\Middleware\CmsPageCacheMiddleware::class,
+                new Http\Middleware\CmsPageCacheMiddleware(
+                    cache: $taggedCache,
+                    cacheConfig: $config->cache,
+                    lock: $pageCacheLock,
+                    sessionCookieName: $sessionCookieName,
+                ),
             );
         }
 

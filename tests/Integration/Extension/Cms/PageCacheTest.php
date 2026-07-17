@@ -15,170 +15,144 @@ use Pulsar\Auth\Identity\TwoFactorStatus;
 use Pulsar\Cache\Application\TaggedCacheInterface;
 use Pulsar\Extension\Cms\Config\CmsCacheConfig;
 use Pulsar\Extension\Cms\Http\Middleware\CmsPageCacheMiddleware;
+use Pulsar\Extension\Cms\Internal\Cache\CmsCacheInvalidator;
+use Pulsar\Extension\Cms\Internal\Cache\CmsCacheKeys;
 use Pulsar\Http\Message\Response;
 use Pulsar\Http\Message\ServerRequest;
 
 use function in_array;
-use function is_string;
-use function json_encode;
 
+/**
+ * End-to-end flows of the CMS page cache against an in-memory tagged cache:
+ * warm/hit, tag-driven invalidation through CmsCacheInvalidator (the real
+ * invalidation entry point), and the bypass rules.
+ */
 #[CoversClass(CmsPageCacheMiddleware::class)]
+#[CoversClass(CmsCacheInvalidator::class)]
 final class PageCacheTest extends TestCase
 {
     private InMemoryTaggedCache $cache;
     private CmsPageCacheMiddleware $middleware;
+    private CmsCacheInvalidator $invalidator;
 
     protected function setUp(): void
     {
         $this->cache = new InMemoryTaggedCache();
         $config = new CmsCacheConfig(pageCacheTtlSeconds: 3600);
         $this->middleware = new CmsPageCacheMiddleware($this->cache, $config);
+        $this->invalidator = new CmsCacheInvalidator($this->cache);
     }
 
     #[Test]
     public function requestPublishedPageIsCached(): void
     {
-        $request = new ServerRequest(method: 'GET', uri: '/blog/hello-world', headers: []);
+        $request = new ServerRequest(method: 'GET', uri: '/blog/hello-world');
 
-        $handler = $this->createHandlerReturning(new Response(
-            statusCode: 200,
-            headers: ['Content-Type' => 'text/html'],
-            body: '<h1>Hello World</h1>',
-        ));
+        $handler = $this->createHandlerReturning(Response::html('<h1>Hello World</h1>'));
 
         // First request: MISS
         $response1 = $this->middleware->process($request, $handler);
         self::assertSame(200, $response1->getStatusCode());
         self::assertSame('MISS', $response1->getHeaderLine('X-CMS-Cache'));
 
-        // Second request: HIT (served from cache)
+        // Second request: HIT (served from cache), with an RFC 9111 Age header
         $response2 = $this->middleware->process($request, $handler);
         self::assertSame(200, $response2->getStatusCode());
         self::assertSame('HIT', $response2->getHeaderLine('X-CMS-Cache'));
+        self::assertSame('0', $response2->getHeaderLine('Age'));
         self::assertStringContainsString('Hello World', (string) $response2->getBody());
     }
 
     #[Test]
-    public function cacheInvalidatedOnContentUpdate(): void
+    public function publishingContentInvalidatesThePagesThatRenderedIt(): void
     {
-        $request = new ServerRequest(method: 'GET', uri: '/blog/hello-world', headers: []);
-        $request = $request->withAttribute('cms_content_id', 'content-001');
+        $request = new ServerRequest(method: 'GET', uri: '/blog/hello-world');
 
-        $handler = $this->createHandlerReturning(new Response(
-            statusCode: 200,
-            headers: ['Content-Type' => 'text/html'],
-            body: '<h1>Original</h1>',
+        // The content pipeline declares the page's tags via the internal
+        // response header, exactly as ContentController does.
+        $this->middleware->process($request, $this->createHandlerReturning(
+            Response::html('<h1>Original</h1>')
+                ->withHeader(CmsPageCacheMiddleware::TAGS_HEADER, CmsCacheKeys::contentTag('content-001')),
         ));
 
-        // Warm the cache
-        $this->middleware->process($request, $handler);
+        // An editor publishes: the REAL invalidation path.
+        $this->invalidator->invalidateContent('content-001');
 
-        // Simulate content update by invalidating the tag
-        $this->cache->invalidateTag('cms_content.content-001');
-
-        // Next request should be a MISS (cache invalidated)
-        $updatedHandler = $this->createHandlerReturning(new Response(
-            statusCode: 200,
-            headers: ['Content-Type' => 'text/html'],
-            body: '<h1>Updated</h1>',
+        $response = $this->middleware->process($request, $this->createHandlerReturning(
+            Response::html('<h1>Updated</h1>'),
         ));
 
-        $response = $this->middleware->process($request, $updatedHandler);
         self::assertSame('MISS', $response->getHeaderLine('X-CMS-Cache'));
         self::assertStringContainsString('Updated', (string) $response->getBody());
     }
 
     #[Test]
-    public function freshContentServedAfterInvalidation(): void
+    public function menuChangesInvalidateEveryCachedPage(): void
     {
-        $request = new ServerRequest(method: 'GET', uri: '/blog/article', headers: []);
-        $request = $request->withAttribute('cms_content_id', 'content-002');
+        $request = new ServerRequest(method: 'GET', uri: '/about');
 
-        // Warm cache with "Version 1"
-        $this->middleware->process($request, $this->createHandlerReturning(new Response(
-            statusCode: 200,
-            body: 'Version 1',
-        )));
-
-        // Verify cached
-        $cachedResponse = $this->middleware->process($request, $this->createHandlerReturning(new Response(
-            statusCode: 200,
-            body: 'Should not see this',
-        )));
-        self::assertSame('HIT', $cachedResponse->getHeaderLine('X-CMS-Cache'));
-
-        // Invalidate
-        $this->cache->invalidateTag('cms_content.content-002');
-
-        // Fresh response
-        $freshResponse = $this->middleware->process($request, $this->createHandlerReturning(new Response(
-            statusCode: 200,
-            body: 'Version 2',
-        )));
-        self::assertSame('MISS', $freshResponse->getHeaderLine('X-CMS-Cache'));
-        self::assertSame('Version 2', (string) $freshResponse->getBody());
-    }
-
-    #[Test]
-    public function adminUsersBypassCache(): void
-    {
-        $identity = new TestIdentity(
-            id: 'admin-001',
-            displayName: 'Admin',
-            roles: ['cms.admin'],
-            authenticated: true,
-        );
-
-        $request = new ServerRequest(method: 'GET', uri: '/blog/hello-world', headers: []);
-        $request = $request->withAttribute('identity', $identity);
-
-        $handler = $this->createHandlerReturning(new Response(
-            statusCode: 200,
-            body: 'Admin sees fresh content',
+        $this->middleware->process($request, $this->createHandlerReturning(
+            Response::html('<nav>Old Menu</nav><main>Content</main>'),
         ));
 
-        // Admin request bypasses cache entirely (no X-CMS-Cache header)
-        $response = $this->middleware->process($request, $handler);
-        self::assertSame(200, $response->getStatusCode());
-        self::assertSame('', $response->getHeaderLine('X-CMS-Cache'));
-        self::assertSame('Admin sees fresh content', (string) $response->getBody());
-    }
+        self::assertSame(
+            'HIT',
+            $this->middleware->process($request, $this->createHandlerReturning(Response::html('x')))
+                ->getHeaderLine('X-CMS-Cache'),
+        );
 
-    #[Test]
-    public function tagBasedInvalidationOnMenuChange(): void
-    {
-        $request = new ServerRequest(method: 'GET', uri: '/about', headers: []);
-        $request = $request->withAttribute('cms_menu_ids', ['menu-primary']);
+        // Pages cannot know which menus they rendered, so a menu change
+        // invalidates the coarse page tag through the invalidator.
+        $this->invalidator->invalidateMenu('menu-primary');
 
-        // Warm the cache
-        $this->middleware->process($request, $this->createHandlerReturning(new Response(
-            statusCode: 200,
-            body: '<nav>Old Menu</nav><main>Content</main>',
-        )));
+        $fresh = $this->middleware->process($request, $this->createHandlerReturning(
+            Response::html('<nav>New Menu</nav><main>Content</main>'),
+        ));
 
-        // Verify cached
-        $cached = $this->middleware->process($request, $this->createHandlerReturning(new Response(
-            statusCode: 200,
-            body: 'Should not see this',
-        )));
-        self::assertSame('HIT', $cached->getHeaderLine('X-CMS-Cache'));
-
-        // Invalidate the menu tag
-        $this->cache->invalidateTag('cms_menu.menu-primary');
-
-        // Page should be re-fetched
-        $fresh = $this->middleware->process($request, $this->createHandlerReturning(new Response(
-            statusCode: 200,
-            body: '<nav>New Menu</nav><main>Content</main>',
-        )));
         self::assertSame('MISS', $fresh->getHeaderLine('X-CMS-Cache'));
         self::assertStringContainsString('New Menu', (string) $fresh->getBody());
     }
 
     #[Test]
+    public function settingsChangesInvalidateEveryCachedPage(): void
+    {
+        $request = new ServerRequest(method: 'GET', uri: '/');
+
+        $this->middleware->process($request, $this->createHandlerReturning(Response::html('<h1>v1</h1>')));
+        $this->invalidator->invalidateSettings();
+
+        $fresh = $this->middleware->process($request, $this->createHandlerReturning(Response::html('<h1>v2</h1>')));
+
+        self::assertSame('MISS', $fresh->getHeaderLine('X-CMS-Cache'));
+    }
+
+    #[Test]
+    public function authenticatedUsersBypassCacheEntirely(): void
+    {
+        $identity = new TestIdentity(
+            id: 'user-001',
+            displayName: 'Any User',
+            roles: ['customer'],
+            authenticated: true,
+        );
+
+        $request = new ServerRequest(method: 'GET', uri: '/blog/hello-world')
+            ->withAttribute('identity', $identity);
+
+        $response = $this->middleware->process(
+            $request,
+            $this->createHandlerReturning(Response::html('Fresh personalised content')),
+        );
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame('', $response->getHeaderLine('X-CMS-Cache'));
+        self::assertStringContainsString('Fresh', (string) $response->getBody());
+    }
+
+    #[Test]
     public function nonGetRequestsBypassCache(): void
     {
-        $request = new ServerRequest(method: 'POST', uri: '/blog/hello-world', headers: []);
+        $request = new ServerRequest(method: 'POST', uri: '/blog/hello-world');
 
         $handler = $this->createHandlerReturning(new Response(statusCode: 302, body: ''));
 
@@ -188,15 +162,18 @@ final class PageCacheTest extends TestCase
     }
 
     #[Test]
-    public function nocacheQueryParamBypassesCache(): void
+    public function anonymousNocacheGoesThroughTheCache(): void
     {
-        $request = new ServerRequest(method: 'GET', uri: '/blog/hello-world?_nocache=1', headers: [], queryParams: ['_nocache' => '1']);
+        // _nocache was a free public cache-busting lever; anonymous requests
+        // now hit the cache and the parameter does not mint a variant either.
+        $plain = new ServerRequest(method: 'GET', uri: '/blog/hello-world');
+        $busted = new ServerRequest(method: 'GET', uri: '/blog/hello-world?_nocache=1')
+            ->withQueryParams(['_nocache' => '1']);
 
-        $handler = $this->createHandlerReturning(new Response(statusCode: 200, body: 'Fresh'));
+        $handler = $this->createHandlerReturning(Response::html('Cached once'));
 
-        $response = $this->middleware->process($request, $handler);
-        self::assertSame(200, $response->getStatusCode());
-        self::assertSame('', $response->getHeaderLine('X-CMS-Cache'));
+        self::assertSame('MISS', $this->middleware->process($plain, $handler)->getHeaderLine('X-CMS-Cache'));
+        self::assertSame('HIT', $this->middleware->process($busted, $handler)->getHeaderLine('X-CMS-Cache'));
     }
 
     private function createHandlerReturning(ResponseInterface $response): RequestHandlerInterface
@@ -212,43 +189,26 @@ final class PageCacheTest extends TestCase
     }
 }
 
+/**
+ * Values are stored UNMODIFIED (the real TaggedCache round-trips arrays), and
+ * tag invalidation drops every key carrying the tag.
+ */
 final class InMemoryTaggedCache implements TaggedCacheInterface
 {
-    /** @var array<string, string> */
+    /** @var array<string, mixed> */
     private array $data = [];
 
     /** @var array<string, list<string>> key => tags */
     private array $keyTags = [];
 
-    /** @var array<string, true> invalidated tags */
-    private array $invalidatedTags = [];
-
     public function get(string $key): mixed
     {
-        if (!isset($this->data[$key])) {
-            return null;
-        }
-
-        // Check if any tag for this key has been invalidated
-        foreach ($this->keyTags[$key] ?? [] as $tag) {
-            if (isset($this->invalidatedTags[$tag])) {
-                unset($this->data[$key], $this->keyTags[$key]);
-
-                return null;
-            }
-        }
-
-        return $this->data[$key];
+        return $this->data[$key] ?? null;
     }
 
     public function set(string $key, mixed $value, array $tags, ?int $ttlSeconds = null): bool
     {
-        // Clear invalidated tags for freshly stored entries
-        foreach ($tags as $tag) {
-            unset($this->invalidatedTags[$tag]);
-        }
-
-        $this->data[$key] = is_string($value) ? $value : (string) json_encode($value);
+        $this->data[$key] = $value;
         $this->keyTags[$key] = $tags;
 
         return true;
@@ -263,7 +223,11 @@ final class InMemoryTaggedCache implements TaggedCacheInterface
 
     public function invalidateTag(string $tag): void
     {
-        $this->invalidatedTags[$tag] = true;
+        foreach ($this->keyTags as $key => $tags) {
+            if (in_array($tag, $tags, true)) {
+                unset($this->data[$key], $this->keyTags[$key]);
+            }
+        }
     }
 
     public function invalidateTags(array $tags): void

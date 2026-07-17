@@ -20,14 +20,14 @@ final readonly class CmsCacheConfig
     /**
      * @param int $pageCacheTtlSeconds Full-page cache TTL (default: 1 hour)
      * @param bool $stampedeProtection Enable probabilistic early recomputation + lock-based single-flight
-     * @param int $earlyRecomputeBeta XFetch aggressiveness parameter (higher = more aggressive)
+     * @param float $earlyRecomputeBeta XFetch aggressiveness (1.0 is the paper's optimum; higher recomputes earlier)
      * @param int $staleGracePeriodSeconds How long expired entries are retained for stale serving
      * @param int $lockTimeoutSeconds Max wait time for single-flight lock
      */
     public function __construct(
         public int $pageCacheTtlSeconds = 3600,
         public bool $stampedeProtection = true,
-        public int $earlyRecomputeBeta = 10,
+        public float $earlyRecomputeBeta = 1.0,
         public int $staleGracePeriodSeconds = 300,
         public int $lockTimeoutSeconds = 5,
     ) {}
@@ -46,7 +46,7 @@ final readonly class CmsCacheConfig
         return new self(
             pageCacheTtlSeconds: Coerce::int($data['page_cache_ttl_seconds'] ?? null, 3600),
             stampedeProtection: Coerce::strictBool($data['stampede_protection'] ?? null, true),
-            earlyRecomputeBeta: Coerce::int($data['early_recompute_beta'] ?? null, 10),
+            earlyRecomputeBeta: Coerce::float($data['early_recompute_beta'] ?? null, 1.0),
             staleGracePeriodSeconds: Coerce::int($data['stale_grace_period_seconds'] ?? null, 300),
             lockTimeoutSeconds: Coerce::int($data['lock_timeout_seconds'] ?? null, 5),
         );
