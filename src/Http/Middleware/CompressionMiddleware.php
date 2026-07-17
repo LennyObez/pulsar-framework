@@ -36,6 +36,30 @@ final readonly class CompressionMiddleware implements MiddlewareInterface
     private const int MIN_COMPRESS_BYTES = 256;
 
     /**
+     * Brotli quality for on-the-fly response compression.
+     *
+     * Deliberately NOT the extension's own default (11). Quality 11 targets
+     * build-time pre-compression of static assets — compress once, serve a
+     * million times — and is unusable for dynamic responses: measured on
+     * PHP 8.5 with libbrotli, q11 costs 105ms of CPU on a 51KB page and 21ms on
+     * a 9KB page, roughly 86x gzip-5, to save 16-20% of bytes. Calling
+     * brotli_compress() without this argument silently opts every dynamic
+     * response into that.
+     *
+     * q5 is the measured optimum for dynamic text: it beats gzip-5 on ratio
+     * (-7.8% on a 9KB page) at comparable cost, and dominates its neighbours —
+     * q4 is both slower and larger, q6 is 1.8x slower for 0.2% fewer bytes.
+     */
+    private const int BROTLI_DYNAMIC_QUALITY = 5;
+
+    /**
+     * Zstd level for on-the-fly response compression; the extension's own
+     * default, restated here so the level is explicit and tunable rather than
+     * inherited invisibly.
+     */
+    private const int ZSTD_DYNAMIC_LEVEL = 3;
+
+    /**
      * Content types that should never be compressed (already compressed or binary).
      *
      * @var list<string>
@@ -58,6 +82,8 @@ final readonly class CompressionMiddleware implements MiddlewareInterface
     public function __construct(
         private int $minimumBytes = self::MIN_COMPRESS_BYTES,
         private int $gzipLevel = 5,
+        private int $brotliQuality = self::BROTLI_DYNAMIC_QUALITY,
+        private int $zstdLevel = self::ZSTD_DYNAMIC_LEVEL,
     ) {}
 
     #[Override]
@@ -190,7 +216,7 @@ final readonly class CompressionMiddleware implements MiddlewareInterface
         }
 
         /** @var string|false $result */
-        $result = brotli_compress($data);
+        $result = brotli_compress($data, $this->brotliQuality);
 
         return is_string($result) ? $result : null;
     }
@@ -202,7 +228,7 @@ final readonly class CompressionMiddleware implements MiddlewareInterface
         }
 
         /** @var string|false $result */
-        $result = zstd_compress($data);
+        $result = zstd_compress($data, $this->zstdLevel);
 
         return is_string($result) ? $result : null;
     }

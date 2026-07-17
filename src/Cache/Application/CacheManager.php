@@ -266,8 +266,10 @@ final class CacheManager implements CacheManagerInterface, ResettableInterface
     }
 
     /**
-     * Resolve 'auto' to the best available codec (zstd > lz4 > zlib) on this
-     * host; explicit algorithms were already extension-checked at config time.
+     * Resolve 'auto' to the best available codec (zstd > zlib) on this host;
+     * explicit algorithms were already extension-checked at config time. zlib
+     * is the floor because ext-zlib is a hard requirement, so 'auto' always
+     * resolves to something loadable.
      */
     private function negotiateCompressionAlgorithm(string $configured): string
     {
@@ -275,15 +277,7 @@ final class CacheManager implements CacheManagerInterface, ResettableInterface
             return $configured;
         }
 
-        if (function_exists('zstd_compress')) {
-            return 'zstd';
-        }
-
-        if (function_exists('lz4_compress')) {
-            return 'lz4';
-        }
-
-        return 'zlib';
+        return function_exists('zstd_compress') ? 'zstd' : 'zlib';
     }
 
     private function resolvePoolConfig(string $name): CachePoolConfig

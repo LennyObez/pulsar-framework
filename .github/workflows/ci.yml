@@ -149,16 +149,35 @@ jobs:
       - uses: shivammathur/setup-php@accd6127cb78bee3e8082180cb391013d204ef9f # v2
         with:
           php-version: '8.5'
-          # redis/memcached/apcu/igbinary/zstd load the REAL extensions so the
-          # driver contract tests, the igbinary serializer, and the zstd
-          # compression path run against real integrations instead of
-          # self-skipping (ext-lz4 is not on PECL, so its arm stays skipped).
+          # Load the REAL optional extensions so the driver contract tests, the
+          # igbinary serializer, and the zstd compression path run against real
+          # integrations instead of self-skipping. Every symbol in
+          # tools/php/stubs/ must have a real counterpart here — the contract is
+          # asserted below, not assumed. (ext-brotli is built separately: it is
+          # in neither Ondřej's PPA nor PECL, so setup-php cannot resolve it.)
           extensions: pdo_mysql, pdo_pgsql, pdo_sqlite, redis, memcached, apcu, igbinary, zstd
           ini-values: apc.enable_cli=1
           # Xdebug 3.x required for branch + path coverage (PCOV only measures
           # lines). The mandate targets 100 % line + branch + condition coverage
           # so Xdebug is the only production-capable choice today.
           coverage: xdebug
+
+      # ext-brotli ships in neither Ondřej's PPA nor PECL, so setup-php cannot
+      # install it — it has to be built. It is worth the ~1 min: 'br' leads
+      # server preference in CompressionMiddleware and every browser requests
+      # it, so without this the single most-used compression path in the
+      # framework would never execute in CI even once.
+      - name: Build and install ext-brotli
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libbrotli-dev
+          git clone --depth=1 https://github.com/kjdev/php-ext-brotli.git /tmp/php-ext-brotli
+          cd /tmp/php-ext-brotli
+          phpize
+          ./configure --with-libbrotli
+          make -j"$(nproc)"
+          sudo make install
+          echo 'extension=brotli.so' | sudo tee "$(php -r 'echo PHP_CONFIG_FILE_SCAN_DIR;')/99-brotli.ini"
 
       - name: Cache Composer dependencies
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
@@ -168,6 +187,12 @@ jobs:
           restore-keys: composer-
 
       - run: composer install --no-interaction --no-progress
+
+      # Guards against green-by-abstention: if an optional extension silently
+      # fails to install, every test behind its function_exists() guard skips
+      # and the job still passes. Fail loudly instead.
+      - name: Assert the optional-extension contract
+        run: php tools/ci/assert-extensions.php redis memcached apcu igbinary zstd brotli
 
       - name: Run all tests with line + branch + path coverage
         env:

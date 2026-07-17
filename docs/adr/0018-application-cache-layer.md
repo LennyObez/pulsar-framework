@@ -93,8 +93,15 @@ never stampedes itself).
 ### Value compression (opt-in)
 
 `CompressingCacheDecorator` wraps any `CacheDriverInterface` with transparent
-value compression (`compression: 'auto' | 'zstd' | 'lz4' | 'zlib'`, default
-off; `compression_threshold_bytes`, default 4096). The stored form is
+value compression (`compression: 'auto' | 'zstd' | 'zlib'`, default off;
+`compression_threshold_bytes`, default 4096). `auto` negotiates zstd > zlib;
+zlib is the floor because ext-zlib is a hard requirement, so `auto` always
+resolves to a loadable codec. lz4 was offered here and has been withdrawn: it
+trades ratio for throughput at a scale this layer never reaches (a cache value
+sits behind a driver round-trip that dwarfs the codec by two orders of
+magnitude), so zstd dominates it end-to-end — its worse ratio actively costs
+more bytes on the wire than its speed saves. Its envelope byte (`0x03`) stays
+permanently reserved so the algorithm space remains append-only. The stored form is
 self-describing (a four-byte magic plus an algorithm byte), so compressed and
 raw entries coexist: enabling, disabling, or switching algorithms never
 invalidates existing entries. Values below the threshold or that do not shrink

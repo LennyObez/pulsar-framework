@@ -219,11 +219,11 @@ final readonly class CacheConfig
             return null;
         }
 
-        if (!is_string($compression) || !in_array($compression, ['auto', 'zstd', 'lz4', 'zlib'], true)) {
+        if (!is_string($compression) || !in_array($compression, ['auto', 'zstd', 'zlib'], true)) {
             throw ConfigException::invalidValue(
                 "cache.pools.{$poolName}.compression",
                 sprintf(
-                    'unknown compression "%s"; valid values are: auto, zstd, lz4, zlib (or false)',
+                    'unknown compression "%s"; valid values are: auto, zstd, zlib (or false)',
                     is_string($compression) ? $compression : get_debug_type($compression),
                 ),
             );
@@ -231,7 +231,6 @@ final readonly class CacheConfig
 
         $requiredFunction = match ($compression) {
             'zstd' => 'zstd_compress',
-            'lz4' => 'lz4_compress',
             'zlib' => 'gzcompress',
             default => null,
         };

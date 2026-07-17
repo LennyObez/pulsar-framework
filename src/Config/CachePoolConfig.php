@@ -18,8 +18,8 @@ final readonly class CachePoolConfig
      *        deserializing with the 'php' serializer. Null or empty allows no
      *        objects (fail-closed); the 'json' serializer ignores this.
      * @param ?string $compression Value compression: null (off), 'auto'
-     *        (negotiates zstd > lz4 > zlib by loaded extension), or an explicit
-     *        'zstd' | 'lz4' | 'zlib'.
+     *        (negotiates zstd > zlib by loaded extension), or an explicit
+     *        'zstd' | 'zlib'.
      * @param int $compressionThresholdBytes Values shorter than this are
      *        stored uncompressed.
      * @param bool $compressionLengthOracleAcknowledged Compressing plaintext

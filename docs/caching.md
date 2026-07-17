@@ -168,7 +168,7 @@ Only enable the `php` serializer for pools whose contents are entirely under you
 
 ## Application cache compression
 
-Pools can transparently compress stored values (`compression: 'auto'` negotiates zstd > lz4 > zlib by loaded extension; an explicit algorithm fails at boot if its extension is missing; default off). Values below `compression_threshold_bytes` (default 4096) or that would not shrink are stored raw. The stored form is self-describing, so enabling, disabling, or switching algorithms never invalidates existing entries, and counters (`increment`/`decrement`) bypass compression entirely.
+Pools can transparently compress stored values (`compression: 'auto'` negotiates zstd > zlib by loaded extension; an explicit algorithm fails at boot if its extension is missing; default off). zstd is the codec of choice at rest: both ends are ours, so there is no browser-support constraint, and it holds a better speed/ratio frontier than zlib on cache-sized values. (Brotli's advantage is its built-in web dictionary on small text over the wire — that is `CompressionMiddleware`'s job, not this layer's.) Values below `compression_threshold_bytes` (default 4096) or that would not shrink are stored raw. The stored form is self-describing, so enabling, disabling, or switching algorithms never invalidates existing entries, and counters (`increment`/`decrement`) bypass compression entirely.
 
 Combining `compression` with `encrypted: true` on one pool fails at boot unless `compression_length_oracle_acknowledged: true` is set: compress-then-encrypt leaks plaintext structure through ciphertext length (a CRIME-class oracle). See [ADR-0018](adr/0018-application-cache-layer.md) for the decorator stacking order and the full rationale.
 

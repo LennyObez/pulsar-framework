@@ -79,6 +79,35 @@ $request->isAjax();               // X-Requested-With: XMLHttpRequest
 $request->isSecure();             // Request over HTTPS
 ```
 
+### Response compression
+
+`CompressionMiddleware` negotiates `Accept-Encoding` (honouring q-values, and `q=0` as an RFC 9110 refusal) and offers only codecs it can actually produce: `br` and `zstd` appear when their extensions are loaded, `gzip`/`deflate` always. Responses under 256 bytes, already-encoded responses, and already-compressed content types (images, video, fonts, archives) are passed through untouched, as is any result that failed to shrink.
+
+Server preference is `br > zstd > gzip > deflate`. Brotli leads because it carries a built-in dictionary of common web strings, which is worth the most on exactly what a dynamic response is — small text — and because every browser supports it, while zstd is absent from Safari.
+
+The codec levels are the load-bearing part, and the defaults are deliberate:
+
+| Setting         | Default | Why                                                                        |
+| --------------- | ------- | -------------------------------------------------------------------------- |
+| `gzipLevel`     | 5       | Level 9 costs ~2x the CPU for ~1% fewer bytes.                             |
+| `brotliQuality` | 5       | **Not** the extension's default of 11. See below.                          |
+| `zstdLevel`     | 3       | The extension's default, restated explicitly so it is visible and tunable. |
+
+`brotli_compress()` defaults to quality 11, which exists to compress a static asset once at build time and serve it a million times. On a request path it is unusable: measured on PHP 8.5 with libbrotli, q11 costs **105 ms of CPU on a 51 KB page** and 21 ms on a 9 KB page — roughly 86x gzip-5 — to save 16-20% of bytes. Since `br` leads server preference and every browser offers it, omitting the quality argument silently opts every dynamic response into that.
+
+Quality 5 is the measured optimum for dynamic text: better ratio than gzip-5 (-7.8% on a 9 KB page) at comparable cost, and it dominates its neighbours — q4 is both slower and larger, q6 is 1.8x slower for 0.2% fewer bytes. Raise `brotliQuality` only for pre-compressed static assets served from disk, never for rendered responses.
+
+```php
+$middleware = new CompressionMiddleware(
+    minimumBytes: 256,
+    gzipLevel: 5,
+    brotliQuality: 5,
+    zstdLevel: 3,
+);
+```
+
+Both optional codecs are installed and asserted in CI (`tools/ci/assert-extensions.php`), so these paths are exercised against real extensions rather than self-skipping into a false green.
+
 ### Immutability
 
 Requests are readonly. Use `with*` methods to derive new instances:
