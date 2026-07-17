@@ -49,6 +49,7 @@
   },
   "suggest": {
     "ext-apcu": "Required for APCu cache driver",
+    "ext-brotli": "Required for Content-Encoding: br — the best ratio for dynamic text responses and the only modern codec every browser supports",
     "ext-iconv": "Required for optimized slug generation",
     "ext-igbinary": "Required for the igbinary cache serializer (compact binary, data-only)",
     "ext-intl": "Required for ICU MessageFormat, number/date/currency formatting",
@@ -57,6 +58,7 @@
     "ext-amqp": "Required for AMQP queue driver (RabbitMQ)",
     "ext-redis": "Required for Redis cache and queue drivers",
     "ext-sockets": "Required for persistent HTTP runtime (optional, guarded by runtime check)",
+    "ext-zstd": "Required for Content-Encoding: zstd and the zstd cache-value compression codec",
     "aws/aws-sdk-php": "Optional, only when wiring an opt-in extension that uses Amazon SQS — never imported by core (ADR-0006 isolation, ARCHITECTURE_RULES.md vendor allowlist)",
     "google/cloud-pubsub": "Optional, only when wiring an opt-in extension that uses Google Cloud Pub/Sub — never imported by core (ADR-0006 isolation, ARCHITECTURE_RULES.md vendor allowlist)",
     "nyholm/psr7": "Required for differential testing against PSR-7 reference implementation",

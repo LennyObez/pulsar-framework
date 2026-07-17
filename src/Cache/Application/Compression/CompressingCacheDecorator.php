@@ -12,8 +12,6 @@ use Pulsar\Cache\Application\Exception\CacheException;
 use function function_exists;
 use function gzcompress;
 use function gzuncompress;
-use function lz4_compress;
-use function lz4_uncompress;
 use function str_starts_with;
 use function strlen;
 use function substr;
@@ -58,13 +56,14 @@ final readonly class CompressingCacheDecorator implements CacheDriverInterface
     /** Algorithm byte: zstd. */
     private const string ALGO_ZSTD = "\x02";
 
-    /** Algorithm byte: lz4. */
-    private const string ALGO_LZ4 = "\x03";
+    // 0x03 is retired: it denoted lz4, which no PECL extension provides, so no
+    // entry was ever written with it. Never reuse the byte for another codec —
+    // reserving it keeps the envelope's algorithm space append-only.
 
     /**
      * @param CacheDriverInterface $inner Next driver in the stack
-     * @param string $algorithm 'zstd', 'lz4', or 'zlib' — already negotiated
-     *     and extension-checked by configuration ('auto' resolves before this
+     * @param string $algorithm 'zstd' or 'zlib' — already negotiated and
+     *     extension-checked by configuration ('auto' resolves before this
      *     class is built)
      * @param int $thresholdBytes Values shorter than this are stored raw
      */
@@ -201,7 +200,6 @@ final readonly class CompressingCacheDecorator implements CacheDriverInterface
             self::ALGO_NONE => $payload,
             self::ALGO_ZLIB => function_exists('gzuncompress') ? gzuncompress($payload) : false,
             self::ALGO_ZSTD => function_exists('zstd_uncompress') ? zstd_uncompress($payload) : false,
-            self::ALGO_LZ4 => function_exists('lz4_uncompress') ? lz4_uncompress($payload) : false,
             default => false,
         };
 
@@ -232,7 +230,6 @@ final readonly class CompressingCacheDecorator implements CacheDriverInterface
     {
         return match ($this->algorithm) {
             'zstd' => function_exists('zstd_compress') ? zstd_compress($value) : false,
-            'lz4' => function_exists('lz4_compress') ? lz4_compress($value) : false,
             default => gzcompress($value),
         };
     }
@@ -241,7 +238,6 @@ final readonly class CompressingCacheDecorator implements CacheDriverInterface
     {
         return match ($this->algorithm) {
             'zstd' => self::ALGO_ZSTD,
-            'lz4' => self::ALGO_LZ4,
             default => self::ALGO_ZLIB,
         };
     }

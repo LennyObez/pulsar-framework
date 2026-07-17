@@ -6,6 +6,7 @@ namespace Pulsar\Tests\Unit\Http\Middleware;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
@@ -15,11 +16,15 @@ use Pulsar\Http\Message\Response;
 use Pulsar\Http\Middleware\CompressionMiddleware;
 use ReflectionMethod;
 
+use function brotli_compress;
+use function brotli_uncompress;
 use function gzdecode;
 use function gzuncompress;
 use function sprintf;
 use function str_repeat;
 use function strlen;
+use function zstd_compress;
+use function zstd_uncompress;
 
 #[CoversClass(CompressionMiddleware::class)]
 final class CompressionMiddlewareTest extends TestCase
@@ -40,6 +45,69 @@ final class CompressionMiddlewareTest extends TestCase
 
         $decoded = gzdecode((string) $response->getBody());
         self::assertSame($body, $decoded);
+    }
+
+    #[Test]
+    #[RequiresPhpExtension('brotli')]
+    public function compressesBrotliAtTheDynamicQualityNotTheExtensionDefault(): void
+    {
+        // Regression guard. brotli_compress() defaults to quality 11, which is
+        // built for compressing a static asset once at build time: measured, it
+        // costs ~105ms of CPU on a 51KB page (~86x gzip-5) to save ~16% of
+        // bytes. Because 'br' is first in server preference and every browser
+        // offers it, dropping the quality argument silently opts EVERY dynamic
+        // response into that. Pin the quality so it cannot regress.
+        $middleware = new CompressionMiddleware(minimumBytes: 10);
+        $body = str_repeat('Hello, world! This is compressible content. ', 200);
+
+        $request = $this->createRequest(['Accept-Encoding' => 'br']);
+        $handler = $this->createHandler(new Response(body: $body));
+
+        $response = $middleware->process($request, $handler);
+        $encoded = (string) $response->getBody();
+
+        self::assertSame('br', $response->getHeaderLine('Content-Encoding'));
+        self::assertSame($body, brotli_uncompress($encoded), 'round-trip must survive');
+        self::assertSame(brotli_compress($body, 5), $encoded, 'must compress at quality 5');
+        self::assertNotSame(
+            brotli_compress($body),
+            $encoded,
+            'must NOT use the extension default quality (11) on dynamic responses',
+        );
+    }
+
+    #[Test]
+    #[RequiresPhpExtension('brotli')]
+    public function brotliQualityIsTunable(): void
+    {
+        $body = str_repeat('Hello, world! This is compressible content. ', 200);
+
+        $middleware = new CompressionMiddleware(minimumBytes: 10, brotliQuality: 2);
+        $response = $middleware->process(
+            $this->createRequest(['Accept-Encoding' => 'br']),
+            $this->createHandler(new Response(body: $body)),
+        );
+
+        self::assertSame(brotli_compress($body, 2), (string) $response->getBody());
+    }
+
+    #[Test]
+    #[RequiresPhpExtension('zstd')]
+    public function compressesZstdAtTheConfiguredLevel(): void
+    {
+        $body = str_repeat('Hello, world! This is compressible content. ', 200);
+
+        $middleware = new CompressionMiddleware(minimumBytes: 10, zstdLevel: 1);
+        $response = $middleware->process(
+            $this->createRequest(['Accept-Encoding' => 'zstd']),
+            $this->createHandler(new Response(body: $body)),
+        );
+
+        $encoded = (string) $response->getBody();
+
+        self::assertSame('zstd', $response->getHeaderLine('Content-Encoding'));
+        self::assertSame($body, zstd_uncompress($encoded), 'round-trip must survive');
+        self::assertSame(zstd_compress($body, 1), $encoded, 'must compress at the configured level');
     }
 
     #[Test]
