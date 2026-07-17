@@ -19,12 +19,7 @@ use Pulsar\Http\Message\Response;
 use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Tests\Benchmark\Cms\Support\InMemoryTaggedCache;
 
-use function hash;
-use function json_encode;
-use function sprintf;
 use function str_repeat;
-
-use const JSON_THROW_ON_ERROR;
 
 /**
  * Article page throughput benchmark.
@@ -52,21 +47,26 @@ final class ArticlePageThroughputBench
             . str_repeat('<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>', 30)
             . '</article></body></html>';
 
-        $pathHash = hash('xxh3', 'blog/benchmark-article');
-        $cacheKey = sprintf('cms_page.%s.%s.%s', 'default', 'en', $pathHash);
-
-        $cachedPayload = json_encode([
-            'body' => $articleBody,
-            'status' => 200,
-            'headers' => [
-                'Content-Type' => 'text/html; charset=utf-8',
-                'Content-Language' => 'en',
-            ],
-        ], JSON_THROW_ON_ERROR);
-
-        $cache->seed($cacheKey, $cachedPayload, ['cms_pages', 'cms_content.art-1', 'cms_type.article', 'cms_settings']);
-
         $this->request = new ServerRequest(method: 'GET', uri: '/blog/benchmark-article');
+
+        // Warm through the middleware itself (real key format, v2 envelope,
+        // tags via the internal header) so the benchmark measures the actual
+        // hit path instead of a hand-seeded layout that drifts from reality.
+        $warmHandler = new class ($articleBody) implements RequestHandlerInterface {
+            public function __construct(private readonly string $body) {}
+
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                return Response::html($this->body)
+                    ->withHeader('Content-Language', 'en')
+                    ->withHeader(
+                        CmsPageCacheMiddleware::TAGS_HEADER,
+                        'cms_content.art-1,cms_type.article',
+                    );
+            }
+        };
+        $this->middleware->process($this->request, $warmHandler);
+
         $this->handler = new class implements RequestHandlerInterface {
             public function handle(ServerRequestInterface $request): ResponseInterface
             {
