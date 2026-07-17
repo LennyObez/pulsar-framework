@@ -34,8 +34,9 @@ final class CsrfTokenManagerTest extends TestCase
         $manager = new CsrfTokenManager($session, $csrfConfig);
         $token = $manager->generate();
 
-        // 32 random bytes = 64 hex chars
-        self::assertSame(64, strlen($token));
+        // 32 random bytes = 64 hex chars stored, emitted masked as
+        // hex(pad || inner XOR pad) = twice that.
+        self::assertSame(128, strlen($token));
         self::assertMatchesRegularExpression('/^[0-9a-f]+$/', $token);
     }
 
@@ -53,24 +54,90 @@ final class CsrfTokenManagerTest extends TestCase
         $manager = new CsrfTokenManager($session, $csrfConfig);
         $token = $manager->getToken();
 
-        self::assertSame(64, strlen($token));
+        self::assertSame(128, strlen($token));
     }
 
     #[Test]
-    public function getTokenReturnsExistingToken(): void
+    public function getTokenMasksTheExistingTokenRatherThanEmittingItVerbatim(): void
     {
         $existingToken = bin2hex(random_bytes(32));
         $session = $this->createSessionMock($existingToken);
-        $csrfConfig = new CsrfConfig(
+        $manager = new CsrfTokenManager($session, $this->csrfConfig());
+
+        $emitted = $manager->getToken();
+
+        // The stored secret must never appear on the wire as-is.
+        self::assertNotSame($existingToken, $emitted);
+        self::assertStringNotContainsString($existingToken, $emitted);
+        // ...but it must still be the token being carried.
+        self::assertTrue($manager->validate($emitted));
+    }
+
+    /**
+     * The BREACH regression, stated as the reporter observed it: the token was
+     * byte-identical across three responses of one session. With the page
+     * served Content-Encoding: br, a stable secret in every response is exactly
+     * the oracle target — an attacker who can influence any reflected byte
+     * recovers it by watching compressed response sizes. Each render must now
+     * emit different bytes for the same underlying token.
+     */
+    #[Test]
+    public function getTokenEmitsDifferentBytesOnEveryRenderOfOneSession(): void
+    {
+        $session = $this->createSessionMock(bin2hex(random_bytes(32)));
+        $manager = new CsrfTokenManager($session, $this->csrfConfig());
+
+        $first = $manager->getToken();
+        $second = $manager->getToken();
+        $third = $manager->getToken();
+
+        self::assertCount(3, array_unique([$first, $second, $third]), 'Each render must be a fresh mask');
+
+        // All three must nonetheless validate: they carry the same secret.
+        self::assertTrue($manager->validate($first));
+        self::assertTrue($manager->validate($second));
+        self::assertTrue($manager->validate($third));
+    }
+
+    /**
+     * A token rendered into a page before this deploy is still in flight when
+     * the new code starts validating. Rejecting it would log every open tab out
+     * of its form on deploy.
+     */
+    #[Test]
+    public function validateAcceptsTheLegacyVerbatimTokenDuringRollover(): void
+    {
+        $legacy = bin2hex(random_bytes(32));
+        $session = $this->createSessionMock($legacy);
+        $manager = new CsrfTokenManager($session, $this->csrfConfig());
+
+        self::assertTrue($manager->validate($legacy));
+    }
+
+    #[Test]
+    public function validateRejectsAMaskedTokenCarryingTheWrongSecret(): void
+    {
+        $session = $this->createSessionMock(bin2hex(random_bytes(32)));
+        $manager = new CsrfTokenManager($session, $this->csrfConfig());
+
+        // A well-formed mask of a DIFFERENT secret must not pass: masking is
+        // an encoding, not an authenticator.
+        $otherSecret = random_bytes(32);
+        $pad = random_bytes(32);
+        $forged = bin2hex($pad . ($otherSecret ^ $pad));
+
+        self::assertSame(128, strlen($forged), 'guard: the forgery must be well-formed');
+        self::assertFalse($manager->validate($forged));
+    }
+
+    private function csrfConfig(): CsrfConfig
+    {
+        return new CsrfConfig(
             enabled: true,
             tokenLength: 32,
             headerName: 'X-CSRF-Token',
             formFieldName: '_csrf_token',
         );
-
-        $manager = new CsrfTokenManager($session, $csrfConfig);
-
-        self::assertSame($existingToken, $manager->getToken());
     }
 
     #[Test]
@@ -138,7 +205,7 @@ final class CsrfTokenManagerTest extends TestCase
         $manager = new CsrfTokenManager($session, $csrfConfig);
         $newToken = $manager->rotate();
 
-        self::assertSame(64, strlen($newToken));
+        self::assertSame(128, strlen($newToken), 'rotate() emits a masked token like generate()');
         // The new token should differ from the old (statistically guaranteed)
         self::assertNotSame($oldToken, $newToken);
     }
