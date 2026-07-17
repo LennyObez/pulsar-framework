@@ -100,6 +100,7 @@ final class SharedMemoryConfigStore
         \Pulsar\Database\Cache\QueryCacheConfig::class,
         \Pulsar\Database\Monitor\MonitorConfig::class,
         \Pulsar\Config\ResilienceConfig::class,
+        \Pulsar\Config\RoutingConfig::class,
         \Pulsar\Config\RetryConfig::class,
         \Pulsar\Config\CircuitBreakerConfig::class,
         \Pulsar\Config\HealthCheckConfig::class,
