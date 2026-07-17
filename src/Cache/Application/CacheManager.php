@@ -28,6 +28,7 @@ use Pulsar\Cache\Application\Lock\DatabaseLock;
 use Pulsar\Cache\Application\Lock\FilesystemLock;
 use Pulsar\Cache\Application\Lock\LockInterface;
 use Pulsar\Cache\Application\Lock\MemcachedLock;
+use Pulsar\Cache\Application\Lock\PrefixedLock;
 use Pulsar\Cache\Application\Lock\RedisLock;
 use Pulsar\Cache\Application\Prefix\PrefixedCacheDecorator;
 use Pulsar\Cache\Application\Serializer\CacheSerializerInterface;
@@ -196,7 +197,16 @@ final class CacheManager implements CacheManagerInterface, ResettableInterface
 
         if (!isset($this->locks[$name])) {
             $poolConfig = $this->resolvePoolConfig($name);
-            $this->locks[$name] = $this->resolveLock($poolConfig);
+            $lock = $this->resolveLock($poolConfig);
+
+            // Namespace lock resources by the pool prefix, so shared-backend
+            // deployments do not contend on the same logical lock across pools
+            // or applications (the data keys are already prefix-isolated).
+            if ($poolConfig->prefix !== '') {
+                $lock = new PrefixedLock($lock, $poolConfig->prefix);
+            }
+
+            $this->locks[$name] = $lock;
         }
 
         return $this->locks[$name];
