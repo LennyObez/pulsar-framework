@@ -56139,6 +56139,7 @@
         "Pulsar\\Cache\\Application\\Lock\\DatabaseLock",
         "Pulsar\\Cache\\Application\\Lock\\FilesystemLock",
         "Pulsar\\Cache\\Application\\Lock\\MemcachedLock",
+        "Pulsar\\Cache\\Application\\Lock\\PrefixedLock",
         "Pulsar\\Cache\\Application\\Lock\\RedisLock",
         "Pulsar\\Cache\\Application\\Prefix\\PrefixedCacheDecorator",
         "Pulsar\\Cache\\Application\\Serializer\\IgbinaryCacheSerializer",

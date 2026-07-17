@@ -115,12 +115,13 @@ LOUDLY on drivers that cannot (Memcached has no enumeration primitive) rather
 than silently flushing beyond its scope. The boot wiring warns when a
 Redis/Memcached pool has no prefix.
 
-Deliberate non-coverage: lock resources (`CacheManager::lock()`, the stampede
-lock) resolve from raw connections below the decorators and are NOT prefixed —
-prefix isolation applies to data keys only. Shared-backend deployments must not
-rely on the prefix to isolate lock contention. On Memcached the prefix also
-shrinks the effective key budget (250-byte server limit minus the prefix
-length).
+Lock resources are prefixed too: `CacheManager::lock()` wraps the resolved lock
+in a `PrefixedLock` when the pool has a prefix, so `CachePool`'s stampede lock
+and any consumer of `CacheManager::lock()` (the CMS page single-flight) namespace
+their resources the same way the data keys do — two pools or applications
+sharing one backend no longer contend on the same logical lock. On Memcached the
+prefix also shrinks the effective key budget (250-byte server limit minus the
+prefix length).
 
 Decorator stacking order in `CacheManager::driver()` is load-bearing:
 
