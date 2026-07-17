@@ -11,6 +11,7 @@ use RuntimeException;
 
 use function bin2hex;
 use function pack;
+use function sodium_crypto_auth;
 use function sodium_crypto_auth_keygen;
 use function strlen;
 use function time;
@@ -32,9 +33,34 @@ final class StatelessCsrfManagerTest extends TestCase
         $token = $this->manager->generate();
 
         self::assertNotEmpty($token);
-        // Should be hex-encoded: timestamp (8 bytes) + MAC (32 bytes) = 40 bytes = 80 hex chars
-        self::assertSame(80, strlen($token));
+        // Masked, hex-encoded: pad (40 bytes) + (inner XOR pad) (40 bytes) =
+        // 80 bytes = 160 hex chars. The inner token is timestamp (8) + MAC (32).
+        self::assertSame(160, strlen($token));
         self::assertMatchesRegularExpression('/^[0-9a-f]+$/', $token);
+    }
+
+    public function testEachGeneratedTokenIsDistinctSoItIsNotAStableBreachTarget(): void
+    {
+        // Same second, same action, yet the transmitted values differ because
+        // of the per-response one-time-pad mask — no stable compression oracle.
+        $a = $this->manager->generate();
+        $b = $this->manager->generate();
+
+        self::assertNotSame($a, $b);
+        self::assertTrue($this->manager->validate($a));
+        self::assertTrue($this->manager->validate($b));
+    }
+
+    public function testValidateAcceptsTheLegacyUnmaskedTokenFormatDuringRollover(): void
+    {
+        // A token minted by the pre-masking version (inner token, hex, 80
+        // chars) must still validate so an in-flight form survives a deploy.
+        $timestampBytes = pack('J', time());
+        $mac = sodium_crypto_auth($timestampBytes . '_default', $this->key);
+        $legacy = bin2hex($timestampBytes . $mac);
+
+        self::assertSame(80, strlen($legacy));
+        self::assertTrue($this->manager->validate($legacy));
     }
 
     public function testValidateAcceptsValidToken(): void

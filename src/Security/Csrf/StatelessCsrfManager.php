@@ -14,6 +14,7 @@ use SodiumException;
 use function bin2hex;
 use function hex2bin;
 use function pack;
+use function random_bytes;
 use function sodium_crypto_auth;
 use function sodium_crypto_auth_verify;
 use function strlen;
@@ -24,20 +25,34 @@ use function unpack;
 /**
  * Stateless CSRF protection using libsodium HMAC.
  *
- * Token = hex(timestamp_bytes || hmac(timestamp || action, secret_key))
+ * Inner token = timestamp_bytes || hmac(timestamp || action, secret_key).
+ * Transmitted token = hex(pad || (inner XOR pad)) with a fresh random `pad`
+ * per call.
  *
- * No server-side state required; compatible with CDN/Varnish caching
- * and stateless API architectures. Each token is action-bound: a token
- * generated for "create_post" cannot be replayed against "delete_post".
+ * The inner token is deterministic for a given (second, action), which makes
+ * an unmasked value a stable BREACH compression-oracle target when it is
+ * emitted in a compressed HTTP response beside attacker-reflected input. The
+ * per-response one-time-pad mask (as in Django/Rails) makes the TRANSMITTED
+ * value differ every time while the verifiable inner token is unchanged, so
+ * there is no stable secret for a length oracle to extract. Validation accepts
+ * both the masked form and the legacy unmasked form, so a deploy does not
+ * invalidate tokens already in flight.
  *
- * Uses sodium_crypto_auth (HMAC-SHA-512/256) instead of hash_hmac
- * for constant-time verification and libsodium key management.
+ * No server-side state required; compatible with CDN/Varnish caching and
+ * stateless API architectures. Each token is action-bound: a token generated
+ * for "create_post" cannot be replayed against "delete_post".
+ *
+ * Uses sodium_crypto_auth (HMAC-SHA-512/256) instead of hash_hmac for
+ * constant-time verification and libsodium key management.
  * @api
  */
 #[Api(since: '1.0.0')]
 final class StatelessCsrfManager implements CsrfTokenManagerInterface
 {
     private const int TIMESTAMP_BYTES = 8;
+
+    /** Length of the inner (unmasked) token: timestamp + HMAC. */
+    private const int INNER_TOKEN_BYTES = self::TIMESTAMP_BYTES + SODIUM_CRYPTO_AUTH_BYTES;
 
     public function __construct(
         #[SensitiveParameter]
@@ -103,8 +118,15 @@ final class StatelessCsrfManager implements CsrfTokenManagerInterface
         $message = $timestampBytes . $action;
 
         $mac = sodium_crypto_auth($message, $this->secretKey);
+        $inner = $timestampBytes . $mac;
 
-        return bin2hex($timestampBytes . $mac);
+        // One-time-pad mask per response: the transmitted value is randomised
+        // so it is not a stable BREACH target, while the inner token is
+        // unchanged. Same-length XOR (`$inner ^ $pad`) recovers to the inner
+        // token on validation.
+        $pad = random_bytes(self::INNER_TOKEN_BYTES);
+
+        return bin2hex($pad . ($inner ^ $pad));
     }
 
     /**
@@ -122,14 +144,14 @@ final class StatelessCsrfManager implements CsrfTokenManagerInterface
             return false;
         }
 
-        $expectedLength = self::TIMESTAMP_BYTES + SODIUM_CRYPTO_AUTH_BYTES;
+        $inner = $this->unmask($raw);
 
-        if (strlen($raw) !== $expectedLength) {
+        if ($inner === null) {
             return false;
         }
 
-        $timestampBytes = substr($raw, 0, self::TIMESTAMP_BYTES);
-        $mac = substr($raw, self::TIMESTAMP_BYTES);
+        $timestampBytes = substr($inner, 0, self::TIMESTAMP_BYTES);
+        $mac = substr($inner, self::TIMESTAMP_BYTES);
 
         // Verify HMAC first (constant-time)
         $message = $timestampBytes . $action;
@@ -145,6 +167,28 @@ final class StatelessCsrfManager implements CsrfTokenManagerInterface
         $now = time();
 
         return ($now - $tokenTime) <= $this->windowSeconds && $tokenTime <= $now;
+    }
+
+    /**
+     * Recover the inner token from a submitted value, accepting both the masked
+     * form (`pad || inner XOR pad`, 2x length) and the legacy unmasked form
+     * (inner, 1x length) so a deploy does not reject tokens already in flight.
+     * Returns null for any other length.
+     */
+    private function unmask(string $raw): ?string
+    {
+        if (strlen($raw) === self::INNER_TOKEN_BYTES) {
+            return $raw;
+        }
+
+        if (strlen($raw) === 2 * self::INNER_TOKEN_BYTES) {
+            $pad = substr($raw, 0, self::INNER_TOKEN_BYTES);
+            $masked = substr($raw, self::INNER_TOKEN_BYTES);
+
+            return $masked ^ $pad;
+        }
+
+        return null;
     }
 
     public function __debugInfo(): array

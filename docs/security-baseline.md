@@ -128,6 +128,23 @@ $valid = $manager->validate($token);  // true
 $manager->rotate();                   // Invalidate old, generate new
 ```
 
+### StatelessCsrfManager and BREACH resistance
+
+`StatelessCsrfManager` provides CSRF protection with no server-side state
+(CDN/Varnish and stateless-API friendly): the inner token is
+`timestamp || HMAC(timestamp || action)`, action-bound and time-windowed. That
+inner token is deterministic for a given second and action — an unmasked,
+stable secret is a BREACH compression-oracle target when it is emitted in a
+compressed HTTP response next to attacker-reflected input (the attacker varies
+reflected content and observes response length to extract the token).
+
+To close that oracle, every emitted token is masked with a fresh per-response
+one-time pad (`transmitted = pad || (inner XOR pad)`, as in Django and Rails),
+so the transmitted value is random every time while the verifiable inner token
+is unchanged; validation un-masks and also accepts the legacy unmasked form so a
+deploy does not invalidate tokens already in flight. Never emit a raw,
+unmasked secret in a compressible response beside attacker-controlled input.
+
 ### CsrfMiddleware
 
 Automatically validates CSRF tokens on state-changing HTTP methods.
