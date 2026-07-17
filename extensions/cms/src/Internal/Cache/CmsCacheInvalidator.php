@@ -42,6 +42,18 @@ final readonly class CmsCacheInvalidator
         $this->bumpEpoch();
     }
 
+    public function invalidateAllContent(): void
+    {
+        $this->cache->invalidateTags([CmsCacheKeys::TAG_ALL_CONTENT, CmsCacheKeys::TAG_ALL_PAGES]);
+        $this->bumpEpoch();
+    }
+
+    public function invalidateAllMenus(): void
+    {
+        $this->cache->invalidateTags([CmsCacheKeys::TAG_ALL_MENUS, CmsCacheKeys::TAG_ALL_PAGES]);
+        $this->bumpEpoch();
+    }
+
     public function invalidateAll(): void
     {
         $this->cache->invalidateTags([CmsCacheKeys::TAG_SETTINGS, CmsCacheKeys::TAG_ALL_MENUS, CmsCacheKeys::TAG_ALL_CONTENT, CmsCacheKeys::TAG_ALL_PAGES]);

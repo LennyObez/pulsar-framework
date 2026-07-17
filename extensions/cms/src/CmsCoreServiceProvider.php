@@ -761,13 +761,21 @@ final readonly class CmsCoreServiceProvider
         /** @var TaggedCacheInterface $taggedCache */
         $taggedCache = $container->get(TaggedCacheInterface::class);
 
+        // The cache invalidator is the single invalidation entry point: the
+        // cached repositories below route their write-time invalidation through
+        // it, so every content/menu/settings mutation also invalidates the
+        // coarse page tag and bumps the page-cache invalidation epoch (a page
+        // render in flight then abandons a write that would pin stale content).
+        $invalidator = new CmsCacheInvalidator($taggedCache);
+        $container->instance(CmsCacheInvalidator::class, $invalidator);
+
         // Cached settings
         if ($container->has(SettingsServiceInterface::class)) {
             /** @var SettingsServiceInterface $innerSettings */
             $innerSettings = $container->get(SettingsServiceInterface::class);
             $container->instance(
                 SettingsServiceInterface::class,
-                new CachedSettingsService($innerSettings, $taggedCache),
+                new CachedSettingsService($innerSettings, $taggedCache, $invalidator),
             );
         }
 
@@ -777,7 +785,7 @@ final readonly class CmsCoreServiceProvider
             $innerContent = $container->get(ContentRepositoryInterface::class);
             $container->instance(
                 ContentRepositoryInterface::class,
-                new CachedContentRepository($innerContent, $taggedCache),
+                new CachedContentRepository($innerContent, $taggedCache, $invalidator),
             );
         }
 
@@ -787,15 +795,9 @@ final readonly class CmsCoreServiceProvider
             $innerMenu = $container->get(MenuRepositoryInterface::class);
             $container->instance(
                 MenuRepositoryInterface::class,
-                new CachedMenuRepository($innerMenu, $taggedCache),
+                new CachedMenuRepository($innerMenu, $taggedCache, $invalidator),
             );
         }
-
-        // Cache invalidator
-        $container->instance(
-            CmsCacheInvalidator::class,
-            new CmsCacheInvalidator($taggedCache),
-        );
     }
 
     private function bindAiServices(ContainerInterface $container, CmsConfig $config): void

@@ -25,6 +25,7 @@ final readonly class CachedContentRepository implements ContentRepositoryInterfa
     public function __construct(
         private ContentRepositoryInterface $inner,
         private TaggedCacheInterface $cache,
+        private CmsCacheInvalidator $invalidator,
     ) {}
 
     #[Override]
@@ -102,14 +103,14 @@ final readonly class CachedContentRepository implements ContentRepositoryInterfa
     public function save(Content $content): void
     {
         $this->inner->save($content);
-        $this->cache->invalidateTag(CmsCacheKeys::contentTag($content->id));
+        $this->invalidator->invalidateContent($content->id);
     }
 
     #[Override]
     public function delete(Content $content): void
     {
         $this->inner->delete($content);
-        $this->cache->invalidateTag(CmsCacheKeys::contentTag($content->id));
+        $this->invalidator->invalidateContent($content->id);
     }
 
     #[Override]
@@ -134,7 +135,7 @@ final readonly class CachedContentRepository implements ContentRepositoryInterfa
     public function bulkUpdateStatus(array $ids, PublishingStatus $status, ?string $tenantId = null): int
     {
         $affected = $this->inner->bulkUpdateStatus($ids, $status, $tenantId);
-        $this->cache->invalidateTag(CmsCacheKeys::TAG_ALL_CONTENT);
+        $this->invalidator->invalidateAllContent();
 
         return $affected;
     }
@@ -143,7 +144,7 @@ final readonly class CachedContentRepository implements ContentRepositoryInterfa
     public function bulkDelete(array $ids, ?string $tenantId = null): int
     {
         $affected = $this->inner->bulkDelete($ids, $tenantId);
-        $this->cache->invalidateTag(CmsCacheKeys::TAG_ALL_CONTENT);
+        $this->invalidator->invalidateAllContent();
 
         return $affected;
     }

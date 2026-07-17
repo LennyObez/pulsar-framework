@@ -23,6 +23,7 @@ final readonly class CachedMenuRepository implements MenuRepositoryInterface
     public function __construct(
         private MenuRepositoryInterface $inner,
         private TaggedCacheInterface $cache,
+        private CmsCacheInvalidator $invalidator,
     ) {}
 
     #[Override]
@@ -82,7 +83,7 @@ final readonly class CachedMenuRepository implements MenuRepositoryInterface
     public function save(Menu $menu, array $translations): void
     {
         $this->inner->save($menu, $translations);
-        $this->cache->invalidateTag(CmsCacheKeys::menuTag($menu->location));
+        $this->invalidator->invalidateMenu($menu->location);
     }
 
     #[Override]
@@ -90,6 +91,6 @@ final readonly class CachedMenuRepository implements MenuRepositoryInterface
     {
         $this->inner->saveItem($item, $translations);
         // Invalidate all menus since items can affect any menu
-        $this->cache->invalidateTag(CmsCacheKeys::TAG_ALL_MENUS);
+        $this->invalidator->invalidateAllMenus();
     }
 }
