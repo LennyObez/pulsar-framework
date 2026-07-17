@@ -17,6 +17,7 @@ use function get_debug_type;
 use function implode;
 use function in_array;
 use function is_array;
+use function is_int;
 use function is_string;
 use function preg_match;
 use function sprintf;
@@ -43,7 +44,7 @@ final readonly class CacheConfig
     private const array KNOWN_POOL_KEYS = [
         'driver', 'serializer', 'default_ttl_seconds', 'critical', 'encrypted',
         'tags_strategy', 'host', 'port', 'path', 'allowed_classes',
-        'stampede_protection', 'gc_divisor', 'compression',
+        'stampede_protection', 'gc_divisor', 'compression', 'compression_level',
         'compression_threshold_bytes', 'compression_length_oracle_acknowledged',
         'prefix', 'stampede_lock_ttl_seconds', 'stampede_lock_timeout_ms',
     ];
@@ -131,6 +132,7 @@ final readonly class CacheConfig
      *     stampede_protection?: bool,
      *     gc_divisor?: int,
      *     compression?: string|false|null,
+     *     compression_level?: int,
      *     compression_threshold_bytes?: int,
      *     compression_length_oracle_acknowledged?: bool,
      *     prefix?: string,
@@ -142,6 +144,12 @@ final readonly class CacheConfig
     {
         $driver = self::resolveDriver($name, $data['driver'] ?? 'filesystem');
         $encrypted = $data['encrypted'] ?? false;
+        $compression = self::resolveCompression(
+            $name,
+            $data['compression'] ?? null,
+            $encrypted,
+            (bool) ($data['compression_length_oracle_acknowledged'] ?? false),
+        );
 
         return new CachePoolConfig(
             name: $name,
@@ -157,12 +165,8 @@ final readonly class CacheConfig
             allowedClasses: self::parseAllowedClasses($data['allowed_classes'] ?? null),
             stampedeProtection: $data['stampede_protection'] ?? true,
             gcDivisor: $data['gc_divisor'] ?? 100,
-            compression: self::resolveCompression(
-                $name,
-                $data['compression'] ?? null,
-                $encrypted,
-                (bool) ($data['compression_length_oracle_acknowledged'] ?? false),
-            ),
+            compression: $compression,
+            compressionLevel: self::resolveCompressionLevel($name, $data['compression_level'] ?? null, $compression),
             compressionThresholdBytes: $data['compression_threshold_bytes'] ?? 4096,
             compressionLengthOracleAcknowledged: (bool) ($data['compression_length_oracle_acknowledged'] ?? false),
             prefix: self::resolvePrefix($name, $data['prefix'] ?? ''),
@@ -253,6 +257,57 @@ final readonly class CacheConfig
         }
 
         return $compression;
+    }
+
+    /**
+     * Validate a pool's compression level against the codec's own accepted
+     * range, failing at boot rather than letting the codec reject (or silently
+     * clamp) it on the first write.
+     *
+     * 'auto' is validated against zstd's range: it is the only codec 'auto' can
+     * resolve to besides zlib, and zlib's range is a subset of it.
+     */
+    private static function resolveCompressionLevel(
+        string $poolName,
+        mixed $level,
+        ?string $compression,
+    ): ?int {
+        if ($level === null) {
+            return null;
+        }
+
+        if ($compression === null) {
+            throw ConfigException::invalidValue(
+                "cache.pools.{$poolName}.compression_level",
+                'compression_level was set but compression is disabled; enable '
+                . 'compression or drop the level',
+            );
+        }
+
+        if (!is_int($level)) {
+            throw ConfigException::invalidValue(
+                "cache.pools.{$poolName}.compression_level",
+                sprintf('compression_level must be an int, got %s', get_debug_type($level)),
+            );
+        }
+
+        // zstd accepts 1-22; zlib accepts 0-9.
+        [$min, $max] = $compression === 'zlib' ? [0, 9] : [1, 22];
+
+        if ($level < $min || $level > $max) {
+            throw ConfigException::invalidValue(
+                "cache.pools.{$poolName}.compression_level",
+                sprintf(
+                    'compression_level %d is out of range for "%s"; valid levels are %d-%d',
+                    $level,
+                    $compression,
+                    $min,
+                    $max,
+                ),
+            );
+        }
+
+        return $level;
     }
 
     /**

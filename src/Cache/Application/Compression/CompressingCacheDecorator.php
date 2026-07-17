@@ -56,9 +56,27 @@ final readonly class CompressingCacheDecorator implements CacheDriverInterface
     /** Algorithm byte: zstd. */
     private const string ALGO_ZSTD = "\x02";
 
-    // 0x03 is retired: it denoted lz4, which no PECL extension provides, so no
-    // entry was ever written with it. Never reuse the byte for another codec —
-    // reserving it keeps the envelope's algorithm space append-only.
+    // 0x03 is retired: it denoted lz4, withdrawn on merit (it emits ~3x the
+    // bytes to save CPU this layer never spends — see ADR-0018). Never reuse
+    // the byte for another codec; reserving it keeps the algorithm space
+    // append-only.
+
+    /**
+     * zstd's own documented balance point, restated so the level is explicit
+     * rather than inherited from the extension's signature.
+     *
+     * Deliberately not tuned past the reference default: zstd's ratio is NOT
+     * monotonic in the level — on regular, highly periodic input, level 1 can
+     * beat level 3 and even level 19 (verified against the zstd 1.5.5 CLI,
+     * which reproduces it exactly). That non-monotonicity is real but strongly
+     * payload-dependent, so the right level is a property of what a pool
+     * stores, not of the framework. Tune `compression_level` per pool against
+     * real data; do not infer it from synthetic fixtures.
+     */
+    private const int ZSTD_DEFAULT_LEVEL = 3;
+
+    /** zlib's own default (gzcompress's -1 sentinel resolves to this). */
+    private const int ZLIB_DEFAULT_LEVEL = 6;
 
     /**
      * @param CacheDriverInterface $inner Next driver in the stack
@@ -66,11 +84,14 @@ final readonly class CompressingCacheDecorator implements CacheDriverInterface
      *     extension-checked by configuration ('auto' resolves before this
      *     class is built)
      * @param int $thresholdBytes Values shorter than this are stored raw
+     * @param ?int $level Codec compression level; null uses the codec's
+     *     documented default. Already range-checked by configuration.
      */
     public function __construct(
         private CacheDriverInterface $inner,
         private string $algorithm,
         private int $thresholdBytes = 4096,
+        private ?int $level = null,
     ) {}
 
     public function get(string $key): ?string
@@ -229,8 +250,10 @@ final readonly class CompressingCacheDecorator implements CacheDriverInterface
     private function compress(string $value): string|false
     {
         return match ($this->algorithm) {
-            'zstd' => function_exists('zstd_compress') ? zstd_compress($value) : false,
-            default => gzcompress($value),
+            'zstd' => function_exists('zstd_compress')
+                ? zstd_compress($value, $this->level ?? self::ZSTD_DEFAULT_LEVEL)
+                : false,
+            default => gzcompress($value, $this->level ?? self::ZLIB_DEFAULT_LEVEL),
         };
     }
 

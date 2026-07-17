@@ -20,6 +20,11 @@ final readonly class CachePoolConfig
      * @param ?string $compression Value compression: null (off), 'auto'
      *        (negotiates zstd > zlib by loaded extension), or an explicit
      *        'zstd' | 'zlib'.
+     * @param ?int $compressionLevel Codec level; null uses the codec's own
+     *        default (zstd 3, zlib 6). Range-checked per codec at boot (zstd
+     *        1-22, zlib 0-9). Worth tuning per pool: a codec's ratio is not
+     *        monotonic in its level, and the optimum depends on what the pool
+     *        actually stores — measure against real payloads, not fixtures.
      * @param int $compressionThresholdBytes Values shorter than this are
      *        stored uncompressed.
      * @param bool $compressionLengthOracleAcknowledged Compressing plaintext
@@ -59,6 +64,7 @@ final readonly class CachePoolConfig
         public bool $stampedeProtection = true,
         public int $gcDivisor = 100,
         public ?string $compression = null,
+        public ?int $compressionLevel = null,
         public int $compressionThresholdBytes = 4096,
         public bool $compressionLengthOracleAcknowledged = false,
         public string $prefix = '',

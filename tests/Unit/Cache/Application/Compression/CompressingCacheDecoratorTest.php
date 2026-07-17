@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Cache\Application\Compression\CompressingCacheDecorator;
 use Pulsar\Cache\Application\Driver\ArrayDriver;
 
+use function gzcompress;
 use function str_repeat;
 use function str_starts_with;
 use function strlen;
@@ -47,6 +48,46 @@ final class CompressingCacheDecoratorTest extends TestCase
         self::assertLessThan(strlen($value), strlen($stored), 'Stored form must actually be smaller');
 
         self::assertSame($value, $this->decorator->get('big'));
+    }
+
+    #[Test]
+    public function theConfiguredLevelReachesTheCodec(): void
+    {
+        // The defect this pins is an INVISIBLE default: compress() used to call
+        // the codec with no level, silently inheriting whatever the extension
+        // chose. Prove the level is both honoured and observable by checking
+        // that two levels produce different stored bytes, and that each matches
+        // the codec called directly at that level.
+        $value = str_repeat('pulsar cache layer ', 200);
+
+        $fast = new CompressingCacheDecorator($cheap = new ArrayDriver(), 'zlib', 64, level: 1);
+        $best = new CompressingCacheDecorator($dear = new ArrayDriver(), 'zlib', 64, level: 9);
+
+        $fast->set('k', $value, null);
+        $best->set('k', $value, null);
+
+        $fastStored = (string) $cheap->get('k');
+        $bestStored = (string) $dear->get('k');
+
+        self::assertNotSame($fastStored, $bestStored, 'Different levels must produce different bytes');
+        self::assertSame(self::MAGIC . "\x01" . gzcompress($value, 1), $fastStored);
+        self::assertSame(self::MAGIC . "\x01" . gzcompress($value, 9), $bestStored);
+
+        // Both must still decode: the level is a write-side choice only.
+        self::assertSame($value, $fast->get('k'));
+        self::assertSame($value, $best->get('k'));
+    }
+
+    #[Test]
+    public function anAbsentLevelUsesTheCodecDocumentedDefaultNotAnInheritedOne(): void
+    {
+        $value = str_repeat('pulsar cache layer ', 200);
+
+        $this->decorator->set('k', $value, null);
+
+        // zlib's documented default is 6; assert it explicitly rather than
+        // trusting gzcompress()'s -1 sentinel to keep resolving there.
+        self::assertSame(self::MAGIC . "\x01" . gzcompress($value, 6), (string) $this->inner->get('k'));
     }
 
     #[Test]

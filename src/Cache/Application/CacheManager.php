@@ -244,6 +244,7 @@ final class CacheManager implements CacheManagerInterface, ResettableInterface
                     inner: $driver,
                     algorithm: $this->negotiateCompressionAlgorithm($poolConfig->compression),
                     thresholdBytes: $poolConfig->compressionThresholdBytes,
+                    level: $poolConfig->compressionLevel,
                 );
             }
 
