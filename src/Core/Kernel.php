@@ -13,6 +13,7 @@ use Psr\Http\Server\MiddlewareInterface as PsrMiddlewareInterface;
 use Psr\Log\LoggerInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Cache\FrameworkCache;
+use Pulsar\Cache\FrameworkCacheInterface;
 use Pulsar\Config\AppConfig;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\ConfigManagerInterface;
@@ -59,6 +60,9 @@ use Pulsar\Routing\RouteCollisionReporter;
 use Pulsar\Routing\Router;
 use Pulsar\Routing\RouterInterface;
 use Pulsar\Routing\RoutingException;
+use Pulsar\Security\Crypto\Encryptor;
+use Pulsar\Security\Crypto\HmacService;
+use Pulsar\Security\Crypto\MasterKey;
 use Random\Engine\Secure;
 use Random\Randomizer;
 use ReflectionException;
@@ -67,6 +71,8 @@ use ReflectionNamedType;
 use SodiumException;
 use Throwable;
 
+use function dirname;
+use function getenv;
 use function is_array;
 use function is_callable;
 use function is_string;
@@ -218,6 +224,15 @@ final class Kernel implements KernelInterface
         $strictRouteCache = false;
 
         $cacheStart = hrtime(true);
+
+        // Bind FrameworkCache BEFORE the gate below. It is otherwise bound by
+        // SecurityWiring, which runs ~60 lines later with the rest of the
+        // wirings — so on a cold boot the gate's has() check was always false,
+        // the cache was never loaded, and config/routes/container were rebuilt
+        // on every request no matter what `optimize` wrote. This is the single
+        // pre-boot construction for every entry point (the dev server no longer
+        // does its own).
+        $this->preBindFrameworkCache();
 
         if ($this->configManager !== null && $this->container->has(FrameworkCache::class)) {
             /** @var FrameworkCache $frameworkCache */
@@ -395,6 +410,69 @@ final class Kernel implements KernelInterface
             'pulsar_boot_duration_us',
             'Total kernel boot duration in microseconds',
         )->set((float) $totalUs);
+    }
+
+    /**
+     * Construct and bind {@see FrameworkCache} early enough for the cache-load
+     * gate in boot() to see it — before the wirings that consume config run.
+     *
+     * Uses only what is available this early: the config path, PULSAR_MASTER_KEY
+     * (and its optional previous key) from the process environment, and the
+     * CACHE_ENCRYPT flag. Binds both the class and the interface so downstream
+     * consumers (e.g. the optimize command's FrameworkCacheInterface injection)
+     * still resolve. Degrades to no cache — never a fatal — when the key is
+     * absent or invalid: caching is an optimization, not a boot requirement.
+     *
+     * Respects an existing binding, so a caller that pre-registered its own
+     * cache (or a test) is not overridden. The base path matches SecurityWiring
+     * (`dirname($configPath)` = the project root), so both resolve to the same
+     * `var/cache/framework` directory, and SecurityWiring's later bind is a
+     * harmless no-op once this has run.
+     */
+    private function preBindFrameworkCache(): void
+    {
+        if ($this->configManager === null || $this->container->has(FrameworkCache::class)) {
+            return;
+        }
+
+        $masterKeyHex = getenv('PULSAR_MASTER_KEY');
+
+        if ($masterKeyHex === false || $masterKeyHex === '') {
+            return;
+        }
+
+        $configPath = $this->configManager->configPath();
+
+        if ($configPath === null) {
+            return;
+        }
+
+        try {
+            $previousKeyHex = getenv('PULSAR_MASTER_KEY_PREVIOUS');
+            $masterKey = MasterKey::fromHex(
+                $masterKeyHex,
+                ($previousKeyHex !== false && $previousKeyHex !== '') ? $previousKeyHex : null,
+            );
+
+            $encrypt = getenv('CACHE_ENCRYPT') === 'true' || getenv('CACHE_ENCRYPT') === '1';
+            // A default-suite encryptor suffices: the encryption key is derived
+            // from the master key (suite-independent) and decrypt auto-detects
+            // the stored suite, so this loads a cache written under any suite.
+            $encryptor = $encrypt ? Encryptor::fromMasterKey($masterKey) : null;
+
+            $frameworkCache = new FrameworkCache(
+                dirname($configPath),
+                $masterKey,
+                new HmacService(),
+                $encrypt,
+                $encryptor,
+            );
+
+            $this->container->instance(FrameworkCache::class, $frameworkCache);
+            $this->container->instance(FrameworkCacheInterface::class, $frameworkCache);
+        } catch (Throwable) {
+            // Invalid key or a sodium failure: skip the cache, boot normally.
+        }
     }
 
     /**

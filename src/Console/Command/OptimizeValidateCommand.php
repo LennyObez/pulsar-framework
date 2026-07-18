@@ -27,6 +27,12 @@ use function sprintf;
  * 4. Clear cache (cleanup)
  * 5. Exit 0 on success, 1 on failure
  *
+ * That a real boot actually HITS the cache — the failure mode where load()
+ * passes in isolation but the boot path ignores the cache — is guarded by
+ * {@see \Pulsar\Tests\Integration\Cache\CachedBootTest}, which controls the
+ * environment; asserting it here would couple this command to production-mode
+ * build-artifact verification and a full double-boot, risking CI false failures.
+ *
  * Usage: optimize:validate [--strict] [--encrypt]
  */
 #[Internal]

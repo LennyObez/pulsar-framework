@@ -14,10 +14,15 @@ use Pulsar\Config\ConfigRepository;
 use Pulsar\Config\Environment;
 use Pulsar\Config\EnvironmentMode;
 use Pulsar\Core\Kernel;
+use Pulsar\Security\Crypto\HmacService;
+use Pulsar\Security\Crypto\MasterKey;
 
+use function array_key_exists;
 use function bin2hex;
+use function getenv;
 use function is_dir;
 use function mkdir;
+use function putenv;
 use function random_bytes;
 use function scandir;
 
@@ -27,15 +32,46 @@ final class CachedBootTest extends TestCase
 {
     private string $basePath;
 
+    /** @var array<string, string|false> Original env values to restore. */
+    private array $savedEnv = [];
+
     protected function setUp(): void
     {
         $this->basePath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'pulsar_cached_boot_test_' . bin2hex(random_bytes(8));
         mkdir($this->basePath . DIRECTORY_SEPARATOR . 'config', 0o750, true);
+        // FrameworkCache::warm() scans <base>/src to compute allowed classes.
+        mkdir($this->basePath . DIRECTORY_SEPARATOR . 'src', 0o750, true);
     }
 
     protected function tearDown(): void
     {
+        foreach ($this->savedEnv as $key => $original) {
+            if ($original === false) {
+                putenv($key);
+            } else {
+                putenv($key . '=' . $original);
+            }
+        }
+        $this->savedEnv = [];
+
         $this->removeDirectory($this->basePath);
+    }
+
+    /**
+     * Set (or, with null, unset) a process env var for one test, remembering the
+     * original so tearDown restores it — env is process-global.
+     */
+    private function withEnv(string $key, ?string $value): void
+    {
+        if (!array_key_exists($key, $this->savedEnv)) {
+            $this->savedEnv[$key] = getenv($key);
+        }
+
+        if ($value === null) {
+            putenv($key);
+        } else {
+            putenv($key . '=' . $value);
+        }
     }
 
     #[Test]
@@ -116,6 +152,83 @@ final class CachedBootTest extends TestCase
         // Environment should be loaded even from cache path
         $env = $configManager->environment();
         self::assertInstanceOf(Environment::class, $env);
+    }
+
+    #[Test]
+    public function productionBootHitsTheCacheAfterWarm(): void
+    {
+        // The regression guard for the bug where FrameworkCache was bound (by
+        // SecurityWiring) only AFTER the cache-load gate, so a cold boot never
+        // hit the cache no matter what `optimize` wrote. A unit test of
+        // FrameworkCache::load() in isolation kept passing while this was live;
+        // only a real boot exposes it.
+        $configPath = $this->basePath . DIRECTORY_SEPARATOR . 'config';
+        $this->writeMinimalConfigs($configPath);
+
+        $key = bin2hex(random_bytes(32));
+        $this->withEnv('PULSAR_MASTER_KEY', $key);
+        $this->withEnv('CACHE_ENCRYPT', null);
+        // Keep the boot out of production mode so it does not demand build
+        // artifacts — this test exercises the cache-hit path, not `pulsar build`.
+        $this->withEnv('APP_ENV', 'local');
+
+        // Warm the cache from a COMPLETE repository (as `optimize` does), but
+        // override the app name so a cache HIT is provable: the booted config
+        // must carry the cached name, which only the cache (not the files) could
+        // supply.
+        $sourceManager = new ConfigManager(configPath: $configPath);
+        $sourceManager->load();
+        $fullRepo = $sourceManager->repository();
+        $fullRepo->set(new AppConfig(
+            name: 'WarmedFromCache',
+            mode: EnvironmentMode::Local,
+            debug: true,
+            timezone: 'UTC',
+            locale: 'en',
+        ));
+
+        $warmCache = new FrameworkCache(
+            $this->basePath,
+            MasterKey::fromHex($key),
+            new HmacService(),
+        );
+        $warmCache->warm($fullRepo, [], [], 'local', false);
+
+        // Boot the production path: a fresh Kernel with only a ConfigManager —
+        // it must pre-bind FrameworkCache from the environment and hit the cache.
+        $configManager = new ConfigManager(configPath: $configPath);
+        $kernel = new Kernel(configManager: $configManager);
+        $kernel->boot();
+
+        $profile = $kernel->bootProfile();
+        self::assertNotNull($profile);
+        self::assertTrue($profile->cacheHit, 'the cache must be loaded on a cold production boot');
+        self::assertSame(
+            'WarmedFromCache',
+            $configManager->repository()->get(AppConfig::class)->name,
+            'the cached config, not the on-disk file, must be the source',
+        );
+    }
+
+    #[Test]
+    public function bootDegradesToNoCacheWithoutAMasterKey(): void
+    {
+        $configPath = $this->basePath . DIRECTORY_SEPARATOR . 'config';
+        $this->writeMinimalConfigs($configPath);
+
+        $this->withEnv('PULSAR_MASTER_KEY', null);
+
+        $configManager = new ConfigManager(configPath: $configPath);
+        $kernel = new Kernel(configManager: $configManager);
+
+        // No key → no pre-bound cache, but boot must still succeed (caching is an
+        // optimization, never a boot requirement).
+        $kernel->boot();
+
+        self::assertTrue($kernel->booted);
+        $profile = $kernel->bootProfile();
+        self::assertNotNull($profile);
+        self::assertFalse($profile->cacheHit);
     }
 
     private function writeMinimalConfigs(string $configPath): void
