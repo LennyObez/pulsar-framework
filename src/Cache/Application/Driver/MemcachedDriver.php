@@ -18,9 +18,14 @@ use function time;
  *
  * Uses ext-memcached for distributed in-memory caching with native
  * TTL support and atomic counter operations.
+ *
+ * Declares {@see GenerationClearableInterface}: Memcached cannot enumerate keys,
+ * so a prefixed pool clears by bumping a generation counter, and Memcached's LRU
+ * eviction reclaims the orphaned previous generation — safe here, unsafe on a
+ * store without eviction.
  */
 #[Internal]
-final class MemcachedDriver extends AbstractCacheDriver
+final class MemcachedDriver extends AbstractCacheDriver implements GenerationClearableInterface
 {
     public function __construct(
         private readonly Memcached $memcached,
