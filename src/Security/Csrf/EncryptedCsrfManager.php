@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Security\Csrf;
 
+use Closure;
 use JsonException;
+use LogicException;
 use NoDiscard;
 use Override;
 use Pulsar\Api\Api;
 use Pulsar\Security\Crypto\Encryptor;
+use Pulsar\Security\Session\SessionInterface;
 use Random\Engine\Secure;
 use Random\Randomizer;
 use RuntimeException;
@@ -16,6 +19,7 @@ use SodiumException;
 use Throwable;
 
 use function hash_equals;
+use function is_string;
 use function json_decode;
 use function json_encode;
 use function time;
@@ -23,15 +27,28 @@ use function time;
 use const JSON_THROW_ON_ERROR;
 
 /**
- * AEAD-encrypted CSRF protection with request binding.
+ * AEAD-encrypted CSRF protection bound to the session, action, and time window.
  *
- * Token = encrypt(JSON{timestamp, session_id, action, nonce}, master_key)
+ * Token = encrypt(JSON{timestamp, session_id, action, nonce}, master_key).
  *
- * Unique to Pulsar: tokens cannot be forged, replayed, or transferred
- * between sessions. Self-contained: no server-side lookup needed.
+ * The token authenticity is guaranteed by the libsodium secretbox AEAD, and it
+ * is bound to the current session id and a form action, so it cannot be forged
+ * or transferred to another session or form. It carries no server-side state,
+ * which is its appeal (CDN/stateless-friendly) but also its limit: a token
+ * remains valid for its whole window, so one captured through a side channel
+ * (logs, Referer, a shared proxy) CAN be replayed until it expires. Wire a
+ * {@see CsrfReplayGuardInterface} to make it single-use; without one, the short
+ * window is the only bound on a captured token. (The default session-backed
+ * {@see CsrfTokenManager} does not have this limitation.)
  *
- * Uses the existing Encryptor (libsodium secretbox) for authenticated
- * encryption with built-in nonce management and key rotation support.
+ * The session id is read fresh on every operation, never captured at
+ * construction: a manager built at boot would otherwise freeze the empty
+ * pre-session id and validate every anonymous client's tokens against each
+ * other (hash_equals('', '') is true) — session binding would silently vanish.
+ * Operations fail closed if no session is active.
+ *
+ * Requires PULSAR_MASTER_KEY (the Encryptor). Opt-in: not wired by default. See
+ * ADR-0035 for why the session synchronizer remains the default manager.
  * @api
  */
 #[Api(since: '1.0.0')]
@@ -39,14 +56,50 @@ final class EncryptedCsrfManager implements CsrfTokenManagerInterface
 {
     private readonly Randomizer $randomizer;
 
+    /** @var Closure(): int */
+    private readonly Closure $clock;
+
+    /**
+     * @param Encryptor $encryptor Holds the master key (libsodium secretbox).
+     * @param SessionInterface $session Read for its CURRENT id per operation, so
+     *     a post-login regenerate() rebinds automatically and pre-login tokens
+     *     stop validating.
+     * @param (Closure(): int)|null $clock Unix-seconds source; defaults to time().
+     *     Injectable so the expiry window is testable.
+     * @param CsrfReplayGuardInterface|null $replayGuard When set, each token is
+     *     single-use: its nonce is consumed on first acceptance and refused on
+     *     replay. When null, tokens are replayable within their window.
+     */
     public function __construct(
         private readonly Encryptor $encryptor,
-        private readonly string $sessionId,
+        private readonly SessionInterface $session,
         private readonly int $windowSeconds = 3600,
         private readonly string $defaultAction = '_default',
         ?Randomizer $randomizer = null,
+        ?Closure $clock = null,
+        private readonly ?CsrfReplayGuardInterface $replayGuard = null,
     ) {
         $this->randomizer = $randomizer ?? new Randomizer(new Secure());
+        $this->clock = $clock ?? static fn(): int => time();
+    }
+
+    /**
+     * The current session id, or fail closed.
+     *
+     * Never returns '': binding a token to an empty id, then validating another
+     * empty-id token against it, would make every anonymous client interchangeable.
+     */
+    private function sessionId(): string
+    {
+        $id = $this->session->id();
+
+        if ($id === '') {
+            throw new LogicException(
+                'EncryptedCsrfManager needs an active session to bind the token; none is started.',
+            );
+        }
+
+        return $id;
     }
 
     /**
@@ -83,24 +136,31 @@ final class EncryptedCsrfManager implements CsrfTokenManagerInterface
     }
 
     /**
-     * Rotate is a no-op; each call to generate() produces a unique token.
+     * Rotate the session id (anti-fixation) then issue a fresh token bound to it.
+     *
+     * Because the session id is read fresh, regenerating it here also
+     * invalidates every previously-issued token: they were bound to the old id
+     * and now fail the session check. This is real rotation, not a reissue.
      *
      * @throws SodiumException
      */
     #[Override]
     public function rotate(): string
     {
+        $this->session->regenerate(true);
+
         return $this->generate();
     }
 
     /**
      * Generate an encrypted token bound to a specific action and the current session.
      *
-     * The token payload contains:
-     * - timestamp: when the token was generated
-     * - sid: session identifier (prevents cross-session usage)
-     * - action: form action binding (prevents cross-form usage)
-     * - nonce: random bytes (ensures uniqueness even for same action/time)
+     * The encrypted payload contains:
+     * - t: generation time (window enforcement)
+     * - s: current session id (prevents cross-session transfer)
+     * - a: action binding (prevents cross-form use)
+     * - n: 16 random bytes — uniqueness, and the single-use key when a replay
+     *      guard is wired
      *
      * @throws SodiumException
      */
@@ -108,10 +168,10 @@ final class EncryptedCsrfManager implements CsrfTokenManagerInterface
     public function generateForAction(string $action): string
     {
         $payload = json_encode([
-            't' => time(),
-            's' => $this->sessionId,
+            't' => ($this->clock)(),
+            's' => $this->sessionId(),
             'a' => $action,
-            'n' => bin2hex($this->randomizer->getBytes(8)),
+            'n' => bin2hex($this->randomizer->getBytes(16)),
         ], JSON_THROW_ON_ERROR);
 
         return $this->encryptor->encrypt($payload);
@@ -120,11 +180,13 @@ final class EncryptedCsrfManager implements CsrfTokenManagerInterface
     /**
      * Validate a token against a specific action.
      *
-     * Checks:
-     * 1. Decryption succeeds (proves authenticity; not tampered)
-     * 2. Session ID matches (prevents cross-session transfer)
-     * 3. Action matches (prevents cross-form replay)
-     * 4. Timestamp within window (prevents old token reuse)
+     * Checks, in order (cheapest and most-discriminating first, replay last so a
+     * forged token can never burn a legitimate nonce):
+     * 1. Decryption succeeds (AEAD authenticity — not forged or tampered)
+     * 2. Session id matches the CURRENT session (no cross-session transfer)
+     * 3. Action matches (no cross-form use)
+     * 4. Timestamp within the window (no stale reuse)
+     * 5. Nonce not already consumed, when a replay guard is wired (single-use)
      *
      * @throws SodiumException
      */
@@ -143,8 +205,8 @@ final class EncryptedCsrfManager implements CsrfTokenManagerInterface
             return false;
         }
 
-        // Verify session binding
-        if (!isset($payload['s']) || !hash_equals($this->sessionId, $payload['s'])) {
+        // Verify session binding against the CURRENT session id.
+        if (!isset($payload['s']) || !hash_equals($this->sessionId(), $payload['s'])) {
             return false;
         }
 
@@ -159,9 +221,23 @@ final class EncryptedCsrfManager implements CsrfTokenManagerInterface
         }
 
         $tokenTime = $payload['t'];
-        $now = time();
+        $now = ($this->clock)();
 
-        return ($now - $tokenTime) <= $this->windowSeconds && $tokenTime <= $now;
+        if (($now - $tokenTime) > $this->windowSeconds || $tokenTime > $now) {
+            return false;
+        }
+
+        // Single-use enforcement, last: only an otherwise-valid token consumes a
+        // nonce, so an attacker cannot exhaust the guard with forged tokens.
+        if ($this->replayGuard !== null) {
+            $nonce = $payload['n'] ?? null;
+
+            if (!is_string($nonce) || $nonce === '' || !$this->replayGuard->consume($nonce, $this->windowSeconds)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public function __debugInfo(): array

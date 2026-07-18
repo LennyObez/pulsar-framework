@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Security\Csrf;
 
+use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Security\Crypto\Encryptor;
 use Pulsar\Security\Crypto\MasterKey;
+use Pulsar\Security\Csrf\CsrfReplayGuardInterface;
 use Pulsar\Security\Csrf\EncryptedCsrfManager;
+use Pulsar\Security\Session\SessionInterface;
 use RuntimeException;
 
 use function bin2hex;
@@ -27,15 +31,25 @@ final class EncryptedCsrfManagerTest extends TestCase
         $this->encryptor = Encryptor::fromMasterKey($masterKey);
         $this->manager = new EncryptedCsrfManager(
             $this->encryptor,
-            'session_abc123',
+            $this->session('session_abc123'),
         );
+    }
+
+    /**
+     * A session stub with a fixed id (mutable so regenerate scenarios can be
+     * modelled), standing in for the real SessionManager.
+     */
+    private function session(string $id): SessionInterface
+    {
+        $session = $this->createStub(SessionInterface::class);
+        $session->method('id')->willReturn($id);
+
+        return $session;
     }
 
     public function testGenerateProducesNonEmptyToken(): void
     {
-        $token = $this->manager->generate();
-
-        self::assertNotEmpty($token);
+        self::assertNotEmpty($this->manager->generate());
     }
 
     public function testValidateAcceptsValidToken(): void
@@ -48,9 +62,8 @@ final class EncryptedCsrfManagerTest extends TestCase
     public function testValidateRejectsTamperedToken(): void
     {
         $token = $this->manager->generate();
-        $tampered = $token . 'x';
 
-        self::assertFalse($this->manager->validate($tampered));
+        self::assertFalse($this->manager->validate($token . 'x'));
     }
 
     public function testValidateRejectsEmptyString(): void
@@ -67,16 +80,40 @@ final class EncryptedCsrfManagerTest extends TestCase
     {
         $token = $this->manager->generate();
 
-        // Same session should work
         self::assertTrue($this->manager->validate($token));
 
-        // Different session should fail
-        $otherManager = new EncryptedCsrfManager(
-            $this->encryptor,
-            'different_session',
-        );
+        $otherManager = new EncryptedCsrfManager($this->encryptor, $this->session('different_session'));
 
         self::assertFalse($otherManager->validate($token));
+    }
+
+    #[Test]
+    public function theSessionIdIsReadFreshSoRegenerationInvalidatesOldTokens(): void
+    {
+        // The trap this pins: a manager that froze the session id at construction
+        // would keep validating tokens against the pre-regeneration id. Read
+        // fresh, a token minted under the old id must fail once the id changes.
+        $session = $this->createStub(SessionInterface::class);
+        $session->method('id')->willReturnOnConsecutiveCalls(
+            'old_session', // generate() binds to this
+            'new_session', // validate() reads this — the session regenerated
+        );
+
+        $manager = new EncryptedCsrfManager($this->encryptor, $session);
+
+        $token = $manager->generate();
+
+        self::assertFalse($manager->validate($token), 'A token bound to the old session id must not validate under the new one');
+    }
+
+    #[Test]
+    public function operationsFailClosedWhenNoSessionIsActive(): void
+    {
+        $manager = new EncryptedCsrfManager($this->encryptor, $this->session(''));
+
+        $this->expectException(LogicException::class);
+
+        $manager->generate();
     }
 
     public function testActionBindingPreventsReuse(): void
@@ -89,41 +126,88 @@ final class EncryptedCsrfManagerTest extends TestCase
 
     public function testEachTokenIsUnique(): void
     {
-        $token1 = $this->manager->generate();
-        $token2 = $this->manager->generate();
-
-        self::assertNotSame($token1, $token2);
+        self::assertNotSame($this->manager->generate(), $this->manager->generate());
     }
 
-    public function testExpiredTokenIsRejected(): void
+    #[Test]
+    public function theWindowIsEnforcedAgainstAnInjectedClock(): void
     {
+        // Real expiry coverage, which the old test could not provide: mint at
+        // t=1000 with a 60s window, validate at t=1061 — one second past.
+        $now = 1000;
         $manager = new EncryptedCsrfManager(
             $this->encryptor,
-            'session_abc123',
-            windowSeconds: 0,
+            $this->session('session_abc123'),
+            windowSeconds: 60,
+            clock: static function () use (&$now): int {
+                return $now;
+            },
         );
 
-        // We can't easily create a pre-dated token, but window=0 means
-        // only tokens from exactly the current second are valid.
-        // In practice, a previously generated token will expire immediately.
-        // The generate+validate in same process tick might still pass,
-        // so we test the concept via action binding instead.
-        $token = $manager->generateForAction('test');
-        // Token at time() with window 0: (now - tokenTime) <= 0
-        // Since we just generated it, tokenTime == now, so 0 <= 0 is true.
-        // This validates the boundary correctly.
-        self::assertTrue($manager->validateForAction($token, 'test'));
+        $token = $manager->generate();
+
+        $now = 1060; // exactly at the edge — still valid
+        self::assertTrue($manager->validate($token));
+
+        $now = 1061; // one second past the window
+        self::assertFalse($manager->validate($token));
+    }
+
+    #[Test]
+    public function aFutureDatedTokenIsRejected(): void
+    {
+        $now = 2000;
+        $clock = static function () use (&$now): int {
+            return $now;
+        };
+        $manager = new EncryptedCsrfManager($this->encryptor, $this->session('s'), clock: $clock);
+
+        $token = $manager->generate();
+
+        $now = 1000; // clock went backwards — token is "from the future"
+        self::assertFalse($manager->validate($token));
+    }
+
+    #[Test]
+    public function aWiredReplayGuardMakesTokensSingleUse(): void
+    {
+        $guard = new class implements CsrfReplayGuardInterface {
+            /** @var array<string, true> */
+            private array $seen = [];
+
+            public function consume(string $nonce, int $ttlSeconds): bool
+            {
+                if (isset($this->seen[$nonce])) {
+                    return false;
+                }
+                $this->seen[$nonce] = true;
+
+                return true;
+            }
+        };
+
+        $manager = new EncryptedCsrfManager($this->encryptor, $this->session('s'), replayGuard: $guard);
+
+        $token = $manager->generate();
+
+        self::assertTrue($manager->validate($token), 'first use accepted');
+        self::assertFalse($manager->validate($token), 'replay rejected');
+    }
+
+    #[Test]
+    public function withoutAReplayGuardTokensAreReplayableWithinTheWindow(): void
+    {
+        $token = $this->manager->generate();
+
+        self::assertTrue($this->manager->validate($token));
+        self::assertTrue($this->manager->validate($token), 'stateless tokens replay within their window by design');
     }
 
     public function testDifferentKeysCannotDecrypt(): void
     {
         $otherHex = bin2hex(sodium_crypto_kdf_keygen());
-        $otherMasterKey = MasterKey::fromHex($otherHex);
-        $otherEncryptor = Encryptor::fromMasterKey($otherMasterKey);
-        $otherManager = new EncryptedCsrfManager(
-            $otherEncryptor,
-            'session_abc123',
-        );
+        $otherEncryptor = Encryptor::fromMasterKey(MasterKey::fromHex($otherHex));
+        $otherManager = new EncryptedCsrfManager($otherEncryptor, $this->session('session_abc123'));
 
         $token = $this->manager->generate();
 
@@ -138,12 +222,19 @@ final class EncryptedCsrfManagerTest extends TestCase
         self::assertTrue($this->manager->validate($token));
     }
 
-    public function testRotateGeneratesNew(): void
+    #[Test]
+    public function rotateRegeneratesTheSessionAndIssuesAFreshToken(): void
     {
-        $token = $this->manager->rotate();
+        $session = $this->createMock(SessionInterface::class);
+        $session->method('id')->willReturn('session_abc123');
+        $session->expects(self::once())->method('regenerate')->with(self::isTrue());
+
+        $manager = new EncryptedCsrfManager($this->encryptor, $session);
+
+        $token = $manager->rotate();
 
         self::assertNotEmpty($token);
-        self::assertTrue($this->manager->validate($token));
+        self::assertTrue($manager->validate($token));
     }
 
     public function testDebugInfoRedactsSensitiveData(): void
@@ -173,14 +264,13 @@ final class EncryptedCsrfManagerTest extends TestCase
     {
         $manager = new EncryptedCsrfManager(
             $this->encryptor,
-            'session_abc123',
+            $this->session('session_abc123'),
             windowSeconds: 7200,
             defaultAction: 'my_form',
         );
 
         $token = $manager->generate();
 
-        // Default action is 'my_form'
         self::assertTrue($manager->validateForAction($token, 'my_form'));
         self::assertFalse($manager->validateForAction($token, '_default'));
     }
