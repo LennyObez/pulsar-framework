@@ -14,6 +14,14 @@ declare(strict_types=1);
 
 require __DIR__ . '/../../vendor/autoload.php';
 
+// Anchor path helpers to the repository root for the whole suite, so tests get
+// a consistent base_path() and — crucially — Kernel::boot()'s only-when-unset
+// PULSAR_BASE_PATH anchoring becomes a no-op, preventing one test's temp-dir
+// config root from leaking into every later test via the process env.
+if (getenv('PULSAR_BASE_PATH') === false || getenv('PULSAR_BASE_PATH') === '') {
+    putenv('PULSAR_BASE_PATH=' . dirname(__DIR__, 2));
+}
+
 Pulsar\Extensibility\ExtensionAutoloader::registerForPaths([
     __DIR__ . '/../../extensions',
 ]);

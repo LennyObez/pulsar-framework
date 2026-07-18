@@ -104,6 +104,13 @@ final class DevServerBootstrap
      */
     public static function run(string $projectRoot, DevServerConfig $config): void
     {
+        // Export the walked-up project root so path helpers resolve against it
+        // rather than getcwd() (the php -S document root, which may be a
+        // subdirectory). Only when unset — an operator override wins.
+        if (getenv('PULSAR_BASE_PATH') === false || getenv('PULSAR_BASE_PATH') === '') {
+            putenv('PULSAR_BASE_PATH=' . $projectRoot);
+        }
+
         $rawRequestUri = $_SERVER['REQUEST_URI'] ?? null;
         $requestUri = is_string($rawRequestUri) ? $rawRequestUri : '/';
         $path = parse_url($requestUri, PHP_URL_PATH) ?: '/';

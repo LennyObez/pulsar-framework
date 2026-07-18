@@ -254,6 +254,16 @@ if (!is_dir($configPath)) {
   // Otherwise: no config dir found; ConfigManager will handle the error
 }
 
+// Anchor path helpers to the project root (parent of config/) when the operator
+// has not set PULSAR_BASE_PATH. Without this, base_path()/var_path() fall back to
+// getcwd(), so a `pulsar` command run from a subdirectory — or a built-in-server
+// child this script proc_open's with a subdirectory docroot — would resolve
+// var/cache and var/logs against the wrong root. putenv() mutates the process
+// environment child processes inherit, so this fixes the served children too.
+if (getenv('PULSAR_BASE_PATH') === false || getenv('PULSAR_BASE_PATH') === '') {
+  putenv('PULSAR_BASE_PATH=' . dirname($configPath));
+}
+
 // Read extensions.enabled from app config (if present) to filter extension loading
 $enabledExtensions = null;
 $appConfigFile = $configPath . DIRECTORY_SEPARATOR . 'app.php';
