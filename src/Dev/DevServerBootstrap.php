@@ -8,7 +8,6 @@ use Pulsar\Api\Internal;
 use Pulsar\Auth\Authorization\GateInterface;
 use Pulsar\Auth\Identity\Identity;
 use Pulsar\Auth\Identity\TwoFactorStatus;
-use Pulsar\Cache\FrameworkCache;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\I18nConfig;
 use Pulsar\Core\Kernel;
@@ -22,8 +21,6 @@ use Pulsar\I18n\Format\FallbackMessageFormatter;
 use Pulsar\I18n\Format\IcuMessageFormatter;
 use Pulsar\I18n\Translator;
 use Pulsar\I18n\TranslatorInterface;
-use Pulsar\Security\Crypto\HmacService;
-use Pulsar\Security\Crypto\MasterKey;
 use Pulsar\View\ViewConfig;
 use Throwable;
 
@@ -307,23 +304,13 @@ final class DevServerBootstrap
             configManager: $configManager,
         );
 
-        // Ensure master key is in process environment (for early FrameworkCache)
+        // Ensure a master key is in the process environment so the kernel's
+        // pre-boot FrameworkCache (Kernel::preBindFrameworkCache) has one to work
+        // with under `pulsar serve`. The kernel now performs the single pre-boot
+        // cache construction for every entry point, so no dev-only variant lives
+        // here anymore.
         if (getenv('PULSAR_MASTER_KEY') === false || getenv('PULSAR_MASTER_KEY') === '') {
             putenv('PULSAR_MASTER_KEY=' . bin2hex(random_bytes(32)));
-        }
-
-        // Pre-boot FrameworkCache
-        $masterKeyHex = getenv('PULSAR_MASTER_KEY');
-
-        if ($masterKeyHex !== false && $masterKeyHex !== '' && $configManager !== null) {
-            try {
-                $earlyMasterKey = MasterKey::fromHex($masterKeyHex);
-                $encrypt = getenv('CACHE_ENCRYPT') === 'true' || getenv('CACHE_ENCRYPT') === '1';
-                $earlyCache = new FrameworkCache($projectRoot, $earlyMasterKey, new HmacService(), $encrypt);
-                $kernel->container()->instance(FrameworkCache::class, $earlyCache);
-            } catch (Throwable) {
-                // Invalid key or sodium failure: skip pre-boot cache
-            }
         }
 
         // Apply container pre-registrations from config
