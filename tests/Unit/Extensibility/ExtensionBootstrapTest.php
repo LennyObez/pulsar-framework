@@ -660,6 +660,51 @@ final class ExtensionBootstrapTest extends TestCase
     }
 
     #[Test]
+    public function setEnabledFilterRecordsDisabledExtensionsAsWarnings(): void
+    {
+        // Two extensions on disk; only one is enabled by the filter. The
+        // excluded one must surface as a load warning so an operator can tell
+        // "disabled by config" apart from "missing" or "failed to load".
+        $tempDir = sys_get_temp_dir() . '/pulsar_test_disabled_' . bin2hex(random_bytes(4));
+        mkdir($tempDir . '/keep', 0o755, true);
+        mkdir($tempDir . '/drop', 0o755, true);
+
+        file_put_contents($tempDir . '/keep/pulsar.json', json_encode([
+            'name' => 'test/keep',
+            'version' => '1.0.0',
+            'extension_class' => 'Pulsar\\NonExistent\\KeepExtension',
+            'pulsar' => ['min_version' => '0.1.0'],
+        ]));
+        file_put_contents($tempDir . '/drop/pulsar.json', json_encode([
+            'name' => 'test/drop',
+            'version' => '1.0.0',
+            'extension_class' => 'Pulsar\\NonExistent\\DropExtension',
+            'pulsar' => ['min_version' => '0.1.0'],
+        ]));
+
+        try {
+            $this->bootstrap->setEnabledFilter(['test/keep']);
+            $this->bootstrap->loadFromPaths([$tempDir]);
+
+            $warnings = $this->bootstrap->getLoadWarnings();
+            $disabled = array_filter(
+                $warnings,
+                static fn(string $w): bool => str_contains($w, 'disabled by config'),
+            );
+
+            self::assertCount(1, $disabled, 'expected exactly one disabled-by-config warning');
+            self::assertStringContainsString('test/drop', (string) array_values($disabled)[0]);
+            self::assertStringNotContainsString('test/keep', (string) array_values($disabled)[0]);
+        } finally {
+            @unlink($tempDir . '/keep/pulsar.json');
+            @unlink($tempDir . '/drop/pulsar.json');
+            @rmdir($tempDir . '/keep');
+            @rmdir($tempDir . '/drop');
+            @rmdir($tempDir);
+        }
+    }
+
+    #[Test]
     public function setEnabledFilterWithEmptyListLoadsNone(): void
     {
         // Create temp directory with a valid-looking extension
