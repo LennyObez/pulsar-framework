@@ -79,14 +79,26 @@ final readonly class CsrfMiddleware implements MiddlewareInterface
             return $handler->handle($request);
         }
 
-        // Layer 1: Origin/Referer validation
-        if ($this->config->originValidation !== 'off' && $this->config->trustedOrigins !== []) {
-            $originResult = $this->validateOrigin($request);
-            if ($originResult === false) {
+        // Layer 1: cross-origin rejection (defense in depth). On by default —
+        // it runs whenever origin_validation is not 'off', with NO dependency on
+        // a configured allowlist: the expected origin is derived from the
+        // request's own scheme+host (union any configured trusted_origins), so a
+        // single-domain app is protected with zero configuration. An empty
+        // trusted_origins therefore means "same-origin only", not "disabled".
+        if ($this->config->originValidation !== 'off') {
+            $verdict = $this->crossOriginVerdict($request);
+
+            if ($verdict === self::ORIGIN_CROSS) {
                 return $this->forbiddenResponse($request, 'Cross-origin request rejected');
             }
-            if ($originResult === null && $this->config->originValidation === 'required') {
-                return $this->forbiddenResponse($request, 'Origin header required for unsafe methods');
+
+            // No verifiable browser signal at all (no Origin, no Sec-Fetch-Site,
+            // no usable Referer). Modern browsers always send at least one on an
+            // unsafe request, so this is reachable only by non-browser clients —
+            // which carry no ambient cookies and so cannot mount CSRF. 'optional'
+            // lets them through to the token check; 'required' refuses them.
+            if ($verdict === self::ORIGIN_ABSENT && $this->config->originValidation === 'required') {
+                return $this->forbiddenResponse($request, 'Origin could not be verified for an unsafe request');
             }
         }
 
@@ -202,46 +214,128 @@ final readonly class CsrfMiddleware implements MiddlewareInterface
         return is_string($field) && $field !== '' ? $field : null;
     }
 
+    /** The request's origin matches an expected one (same-origin or trusted). */
+    private const int ORIGIN_SAME = 0;
+
+    /** A browser signal proves the request is cross-origin — reject. */
+    private const int ORIGIN_CROSS = 1;
+
+    /** No verifiable origin signal at all (non-browser client). */
+    private const int ORIGIN_ABSENT = 2;
+
     /**
-     * Validate Origin (or Referer fallback) against configured trusted origins.
+     * Classify a request's origin against the set the server accepts.
      *
-     * @return bool|null true = matched, false = rejected, null = no header present
+     * Precedence follows signal reliability: an explicit Origin is authoritative;
+     * `Sec-Fetch-Site` (sent by every evergreen browser) catches the case where
+     * Origin is suppressed; a Referer-derived origin is the last positive signal.
+     * `Origin: null` — which sandboxed iframes, `data:` navigations and some
+     * redirect-laundering emit — is treated as CROSS, never as absent, because a
+     * legitimate first-party request never sends it.
      */
-    private function validateOrigin(ServerRequestInterface $request): ?bool
+    private function crossOriginVerdict(ServerRequestInterface $request): int
     {
-        $origin = $request->getHeaderLine('Origin');
-        if ($origin !== '' && $origin !== 'null') {
-            return $this->originMatchesTrusted($origin);
+        $expected = $this->expectedOrigins($request);
+
+        $origin = trim($request->getHeaderLine('Origin'));
+        if ($origin !== '') {
+            if (strtolower($origin) === 'null') {
+                return self::ORIGIN_CROSS;
+            }
+
+            return $this->originIsExpected($origin, $expected) ? self::ORIGIN_SAME : self::ORIGIN_CROSS;
         }
 
-        $referer = $request->getHeaderLine('Referer');
+        // Origin suppressed (e.g. a top-level form POST): Sec-Fetch-Site still
+        // proves cross-site intent on every current browser.
+        $fetchSite = strtolower(trim($request->getHeaderLine('Sec-Fetch-Site')));
+        if ($fetchSite === 'cross-site' || $fetchSite === 'cross-origin') {
+            return self::ORIGIN_CROSS;
+        }
+        if ($fetchSite === 'same-origin' || $fetchSite === 'same-site') {
+            return self::ORIGIN_SAME;
+        }
+
+        $referer = trim($request->getHeaderLine('Referer'));
         if ($referer !== '') {
             $refererOrigin = $this->extractOriginFromUrl($referer);
             if ($refererOrigin !== null) {
-                return $this->originMatchesTrusted($refererOrigin);
+                return $this->originIsExpected($refererOrigin, $expected) ? self::ORIGIN_SAME : self::ORIGIN_CROSS;
             }
         }
 
-        return null;
+        return self::ORIGIN_ABSENT;
     }
 
-    private function originMatchesTrusted(string $origin): bool
+    /**
+     * The origins the server accepts: its own (derived from the request's
+     * scheme+host, so no configuration is required for a single-domain app)
+     * unioned with any explicitly configured trusted origins.
+     *
+     * @return list<string> normalized origins
+     */
+    private function expectedOrigins(ServerRequestInterface $request): array
+    {
+        $expected = [];
+
+        $self = $this->selfOrigin($request);
+        if ($self !== null) {
+            $expected[] = $self;
+        }
+
+        foreach ($this->config->trustedOrigins as $trusted) {
+            $expected[] = $this->normalizeOrigin($trusted);
+        }
+
+        return $expected;
+    }
+
+    /**
+     * The request's own origin (scheme://host[:non-default-port]). Behind a TLS
+     * terminator that does not rewrite the request scheme, this can derive `http`
+     * where the public origin is `https`; a configured `trusted_origins` entry is
+     * the escape hatch for such deployments (documented in security-baseline.md).
+     */
+    private function selfOrigin(ServerRequestInterface $request): ?string
+    {
+        $uri = $request->getUri();
+        $scheme = strtolower($uri->getScheme());
+        $host = strtolower($uri->getHost());
+
+        if ($scheme === '' || $host === '') {
+            return null;
+        }
+
+        $origin = $scheme . '://' . $host;
+        $port = $uri->getPort();
+        if ($port !== null && !self::isDefaultPort($scheme, $port)) {
+            $origin .= ':' . $port;
+        }
+
+        return $origin;
+    }
+
+    /**
+     * @param list<string> $expected
+     */
+    private function originIsExpected(string $origin, array $expected): bool
+    {
+        $origin = $this->normalizeOrigin($origin);
+
+        return in_array($origin, $expected, true);
+    }
+
+    private function normalizeOrigin(string $origin): string
     {
         $origin = strtolower(rtrim(trim($origin), '/'));
+        $origin = preg_replace('#^(https://[^/:]+):443$#', '$1', $origin) ?? $origin;
 
-        return array_any($this->config->trustedOrigins, function (string $trusted) use ($origin): bool {
-            $trusted = strtolower(rtrim($trusted, '/'));
-
-            return $origin === $trusted
-                || $this->normalizePort($origin) === $this->normalizePort($trusted);
-        });
+        return preg_replace('#^(http://[^/:]+):80$#', '$1', $origin) ?? $origin;
     }
 
-    private function normalizePort(string $origin): string
+    private static function isDefaultPort(string $scheme, int $port): bool
     {
-        $origin = strtolower(trim($origin));
-        $origin = preg_replace('#^https://([^/]+):443$#', 'https://$1', $origin) ?? $origin;
-        return preg_replace('#^http://([^/]+):80$#', 'http://$1', $origin) ?? $origin;
+        return ($scheme === 'https' && $port === 443) || ($scheme === 'http' && $port === 80);
     }
 
     private function extractOriginFromUrl(string $url): ?string
