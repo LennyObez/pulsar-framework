@@ -206,6 +206,15 @@
             </errorLevel>
         </TypeDoesNotContainType>
 
+        <!-- (C) Psalm's Fiber stub declares no template parameters; phpstan requires
+             all four, so the code annotates Fiber<Socket, void, void, void>. A stub
+             disagreement between the two analysers, not a real type error. -->
+        <TooManyTemplateParams>
+            <errorLevel type="suppress">
+                <file name="../../src/Runtime/Fiber/FiberScheduler.php"/>
+            </errorLevel>
+        </TooManyTemplateParams>
+
         <!-- (C) Optional-extension symbols (ext-imagick, ext-brotli, ext-zstd,
              FrankenPHP) are declared in tools/php/stubs/ so analysis is identical
              whether or not the extension is loaded. That removes the previously

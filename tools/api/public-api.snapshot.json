@@ -37131,6 +37131,20 @@
             },
             "constants": []
         },
+        "Pulsar\\Runtime\\Fiber\\CooperativeSleep": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "forMilliseconds": {
+                    "params": [
+                        "int $milliseconds"
+                    ],
+                    "return": "void",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\Runtime\\FpmRuntime": {
             "since": "1.0.0",
             "methods": [],
@@ -56583,6 +56597,7 @@
         "Pulsar\\Routing\\RouteCollisionReporter",
         "Pulsar\\Routing\\RouteUrlGenerator",
         "Pulsar\\Runtime\\Bridge\\PsrBridge",
+        "Pulsar\\Runtime\\Fiber\\FiberDelay",
         "Pulsar\\Runtime\\Fiber\\FiberScheduler",
         "Pulsar\\Runtime\\FrankenPhpRuntime",
         "Pulsar\\Runtime\\Http\\ConnectionContext",

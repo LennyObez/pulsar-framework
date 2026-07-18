@@ -12,6 +12,7 @@ use Pulsar\Cache\Application\Event\CacheEventEmitter;
 use Pulsar\Cache\Application\Exception\CacheException;
 use Pulsar\Cache\Application\Lock\LockInterface;
 use Pulsar\Cache\Application\Serializer\CacheSerializerInterface;
+use Pulsar\Runtime\Fiber\CooperativeSleep;
 use Random\Engine\Secure;
 use Random\Randomizer;
 use Throwable;
@@ -19,7 +20,6 @@ use Throwable;
 use function array_values;
 use function hrtime;
 use function time;
-use function usleep;
 
 /**
  * PSR-6 CacheItemPoolInterface implementation.
@@ -445,14 +445,14 @@ final class CachePool implements CacheItemPoolInterface
     }
 
     /**
-     * Sleep for the given milliseconds. Currently a plain usleep; on the
-     * persistent runtime this blocks the worker, which issue #418 replaces
-     * with a fiber-aware yield. Kept as the single sleep site so that change
-     * lands in one place.
+     * Sleep for the given milliseconds while the stampede loser polls for the
+     * winner's write. On the persistent fiber runtime this yields the worker to
+     * other connections instead of freezing it; on the classic one-request path
+     * it is a plain usleep. The single sleep site keeps that policy in one place.
      */
     private function cooperativeSleepMs(int $milliseconds): void
     {
-        usleep($milliseconds * 1000);
+        CooperativeSleep::forMilliseconds($milliseconds);
     }
 
     /**
