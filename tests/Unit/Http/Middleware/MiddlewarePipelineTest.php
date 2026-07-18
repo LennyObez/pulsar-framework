@@ -134,13 +134,15 @@ final class MiddlewarePipelineTest extends TestCase
             }
         };
 
-        $observed = null;
+        /** @var ArrayObject<string, string> $observed */
+        $observed = new ArrayObject();
         $project = new class ($observed) implements MiddlewareInterface {
-            public function __construct(private mixed &$observed) {}
+            /** @param ArrayObject<string, string> $observed */
+            public function __construct(private readonly ArrayObject $observed) {}
 
             public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
             {
-                $this->observed = $request->getUri()->getPath();
+                $this->observed['path'] = $request->getUri()->getPath();
 
                 return $handler->handle($request);
             }
@@ -152,7 +154,7 @@ final class MiddlewarePipelineTest extends TestCase
         $request = new ServerRequest(method: 'GET', uri: '/nl/coaching');
         $pipeline->dispatch($request, fn() => Response::text('ok'));
 
-        self::assertSame('/nl/coaching', $observed, 'The prepended middleware must see the pre-rewrite path');
+        self::assertSame('/nl/coaching', $observed['path'] ?? null, 'The prepended middleware must see the pre-rewrite path');
     }
 
     #[Test]

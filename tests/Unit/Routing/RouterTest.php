@@ -177,8 +177,11 @@ final class RouterTest extends TestCase
         $router->get('/sugar', fn() => null);
         $router->add(new Route(methods: [Method::GET], path: '/explicit', handler: fn() => null, middleware: ['web']));
 
-        self::assertNotNull($router->match(Method::HEAD, '/sugar'));
-        self::assertNotNull($router->match(Method::HEAD, '/explicit'));
+        // match() throws a 405 RoutingException when a method is not served, so
+        // reaching a matched route at all proves HEAD is accepted; assert the
+        // right route matched.
+        self::assertSame('/sugar', $router->match(Method::HEAD, '/sugar')->route->path);
+        self::assertSame('/explicit', $router->match(Method::HEAD, '/explicit')->route->path);
     }
 
     #[Test]

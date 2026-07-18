@@ -22,6 +22,8 @@ final class CanonicalPathMiddlewareTest extends TestCase
      * A request handler that records whether it ran, standing in for everything
      * downstream (the router and every inner middleware, including the
      * locale-prefix strip). A short-circuiting redirect must leave it untouched.
+     *
+     * @return RequestHandlerInterface&object{called: bool}
      */
     private function spyHandler(): RequestHandlerInterface
     {

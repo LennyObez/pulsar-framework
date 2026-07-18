@@ -31,6 +31,7 @@ final class SecurityPostureCheckTest extends TestCase
     /**
      * @param array<string, mixed> $session
      * @param array<string, mixed> $csrf
+     * @param array<string, mixed> $hsts
      */
     private function config(array $session = [], array $csrf = ['enabled' => true], array $hsts = ['enabled' => true, 'max_age' => 63_072_000]): SecurityConfig
     {
