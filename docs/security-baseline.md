@@ -187,6 +187,20 @@ Automatically validates CSRF tokens on state-changing HTTP methods.
 
 1. Request header (`X-CSRF-Token` by default)
 2. POST form field (`_csrf_token` by default)
+3. JSON body field for `application/json` SPAs (`_csrf_token` by default)
+
+**Layer 1 — cross-origin rejection (on by default).** Before the token check, an unsafe request is classified against the origins the server accepts. This runs whenever `origin_validation` is not `off`, with **no dependency on a configured allowlist**: the expected origin is derived from the request's own scheme+host, so a single-domain app is protected with zero configuration. `trusted_origins` only _adds_ origins (e.g. a separate admin domain) — an empty list means "same-origin only", not "disabled".
+
+Classification, by signal reliability:
+
+- **`Origin` present** → accepted iff it equals the request's own origin or a `trusted_origins` entry; otherwise 403. `Origin: null` (sandboxed iframes, `data:` navigations, redirect laundering) is always treated as cross-origin — a first-party request never sends it.
+- **`Origin` absent, `Sec-Fetch-Site` present** → `cross-site`/`cross-origin` is 403; `same-origin`/`same-site` passes. Every evergreen browser sends this header on unsafe requests.
+- **`Referer` present** → its origin is matched the same way.
+- **No signal at all** → only reachable by non-browser clients, which carry no ambient cookies and so cannot mount CSRF. `optional` (default) lets them through to the token check; `required` rejects them.
+
+`origin_validation` modes: `optional` (default, above), `required` (also rejects the no-signal case), `off` (skip Layer 1 — not recommended; the token then stands alone).
+
+> Behind a TLS terminator that does not rewrite the request scheme, same-origin derivation can compute `http://…` where the public origin is `https://…`, causing false 403s. Add the public origin to `trusted_origins` as the escape hatch.
 
 **On failure**, the middleware returns a 403 JSON response:
 

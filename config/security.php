@@ -94,6 +94,20 @@ return [
         'token_length' => 32,
         'header_name' => 'X-CSRF-Token',
         'form_field_name' => '_csrf_token',
+
+        // Cross-origin rejection (Layer 1, defense in depth on top of the token).
+        // 'optional' (default): reject a request whose Origin/Sec-Fetch-Site/Referer
+        // proves it is cross-origin; let a signal-less non-browser client through to
+        // the token check. 'required': also reject the signal-less case. 'off':
+        // disable Layer 1 (not recommended).
+        'origin_validation' => 'optional',
+
+        // The expected origin is derived from the request's own scheme+host, so a
+        // single-domain app needs NOTHING here. Add origins only to accept extra
+        // ones (a separate admin domain), or the public origin when a TLS
+        // terminator hides the real scheme from the app. E.g.:
+        // 'trusted_origins' => ['https://admin.example.com'],
+        'trusted_origins' => [],
     ],
 
     /*
