@@ -22,7 +22,9 @@ use Throwable;
 
 use function array_filter;
 use function array_keys;
+use function array_map;
 use function array_values;
+use function implode;
 use function in_array;
 use function sprintf;
 
@@ -119,13 +121,31 @@ final class ExtensionBootstrap
             $manifests = $this->discoverWithFallback($paths);
         }
 
-        // Apply enabled filter: skip extensions not in the allowed list
+        // Apply enabled filter: skip extensions not in the allowed list. An
+        // extension present on disk but absent from extensions.enabled is a
+        // deliberate operator decision, but a silent one is a foot-gun: it
+        // reads identically to a missing extension. Record the exclusions as
+        // warnings so `getLoadWarnings()` and the log show which extensions
+        // were disabled by config versus skipped due to load errors.
         if ($this->enabledFilter !== null) {
             $enabledFilter = $this->enabledFilter;
+            $excluded = array_values(array_filter(
+                array_map(static fn(ExtensionManifest $m): string => $m->name, $manifests),
+                static fn(string $name): bool => !in_array($name, $enabledFilter, true),
+            ));
             $manifests = array_values(array_filter(
                 $manifests,
                 static fn(ExtensionManifest $m): bool => in_array($m->name, $enabledFilter, true),
             ));
+
+            if ($excluded !== []) {
+                $warning = sprintf(
+                    'Extensions present on disk but disabled by config (extensions.enabled): %s',
+                    implode(', ', $excluded),
+                );
+                $this->loadWarnings[] = $warning;
+                $this->logger->info($warning);
+            }
         }
 
         // Register PSR-4 autoloading for the discovered extensions before any of
