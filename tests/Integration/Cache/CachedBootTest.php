@@ -101,6 +101,41 @@ final class CachedBootTest extends TestCase
     }
 
     #[Test]
+    public function bootAnchorsBasePathToTheConfigParentWhenUnset(): void
+    {
+        // The storage-path security fix: with PULSAR_BASE_PATH unset, boot() must
+        // export it from the config directory's parent (the project root) so path
+        // helpers do not fall back to getcwd() — which under PHP-FPM is public/,
+        // putting var/cache and var/logs inside the webroot.
+        $configPath = $this->basePath . DIRECTORY_SEPARATOR . 'config';
+        $this->writeMinimalConfigs($configPath);
+
+        $this->withEnv('PULSAR_BASE_PATH', null);
+        $this->withEnv('APP_ENV', 'local');
+
+        $kernel = new Kernel(configManager: new ConfigManager(configPath: $configPath));
+        $kernel->boot();
+
+        self::assertSame($this->basePath, getenv('PULSAR_BASE_PATH'));
+    }
+
+    #[Test]
+    public function bootDoesNotOverrideAnExplicitBasePath(): void
+    {
+        $configPath = $this->basePath . DIRECTORY_SEPARATOR . 'config';
+        $this->writeMinimalConfigs($configPath);
+
+        // An operator override (FPM pool env / systemd) must win.
+        $this->withEnv('PULSAR_BASE_PATH', '/explicit/operator/root');
+        $this->withEnv('APP_ENV', 'local');
+
+        $kernel = new Kernel(configManager: new ConfigManager(configPath: $configPath));
+        $kernel->boot();
+
+        self::assertSame('/explicit/operator/root', getenv('PULSAR_BASE_PATH'));
+    }
+
+    #[Test]
     public function it_rejects_cache_without_app_config(): void
     {
         $emptyRepo = new ConfigRepository();

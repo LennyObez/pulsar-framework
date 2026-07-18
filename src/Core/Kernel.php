@@ -205,6 +205,12 @@ final class Kernel implements KernelInterface
             return;
         }
 
+        // Anchor path helpers to the real project root before ANY config file or
+        // wiring can call var_path()/base_path(). base_path() otherwise falls
+        // back to getcwd(), which under PHP-FPM is the public/ document root — so
+        // a relative default like 'var/cache' would resolve INTO the webroot.
+        $this->anchorBasePath();
+
         // Capture the pre-boot router/middleware baseline so shutdown() can
         // restore it. A re-boot (handle() after shutdown()) re-runs the wirings,
         // route loading, and extension boot, which would otherwise stack
@@ -410,6 +416,33 @@ final class Kernel implements KernelInterface
             'pulsar_boot_duration_us',
             'Total kernel boot duration in microseconds',
         )->set((float) $totalUs);
+    }
+
+    /**
+     * Export PULSAR_BASE_PATH from the config directory's parent (the project
+     * root) when it is not already set, so every path helper resolves against
+     * the real root regardless of the process CWD.
+     *
+     * `dirname($configPath)` is the same CWD-independent root the framework
+     * already trusts for the framework cache, the secrets vault, the database
+     * path and extension discovery. Set-once and only-when-unset: an explicit
+     * PULSAR_BASE_PATH from an FPM pool, a systemd unit, or the scaffolded front
+     * controller always wins, and this only repairs the entry points that never
+     * exported it (a non-scaffolded FPM deployment, the CLI, the dev server).
+     */
+    private function anchorBasePath(): void
+    {
+        $existing = getenv('PULSAR_BASE_PATH');
+
+        if ($existing !== false && $existing !== '') {
+            return;
+        }
+
+        $configPath = $this->configManager?->configPath();
+
+        if ($configPath !== null) {
+            putenv('PULSAR_BASE_PATH=' . dirname($configPath));
+        }
     }
 
     /**

@@ -28,7 +28,12 @@ declare(strict_types=1);
 */
 
 $basePath = dirname(__DIR__);
-putenv('PULSAR_BASE_PATH=' . $basePath);
+
+// Only when unset, so an FPM pool env / systemd Environment= / container env
+// can override the project root without editing this file.
+if (getenv('PULSAR_BASE_PATH') === false || getenv('PULSAR_BASE_PATH') === '') {
+    putenv('PULSAR_BASE_PATH=' . $basePath);
+}
 
 require $basePath . '/vendor/autoload.php';
 
