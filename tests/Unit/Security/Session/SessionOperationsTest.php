@@ -9,7 +9,6 @@ use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Security\Session\Session;
 use Pulsar\Security\Session\SessionInterface;
 
 use function array_key_exists;
@@ -24,7 +23,7 @@ use function is_string;
  * without requiring PHP's native session infrastructure (which cannot run
  * in PHPUnit without headers being sent).
  */
-#[CoversClass(Session::class)]
+#[CoversClass(SessionInterface::class)]
 final class SessionOperationsTest extends TestCase
 {
     /** @psalm-suppress PropertyNotSetInConstructor -- initialized in setUp() */

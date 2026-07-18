@@ -77,7 +77,7 @@ final class FileHandlerTest extends TestCase
         self::assertTrue($handler->open('', 'TEST_SESSION'));
         self::assertTrue(is_dir($configuredDir), 'The configured session directory should be created and used.');
 
-        $handler->close();
+        self::assertTrue($handler->close());
         rmdir($configuredDir);
     }
 

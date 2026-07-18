@@ -681,7 +681,7 @@ final class CachePoolTest extends TestCase
                 $this->reads++;
 
                 if ($this->reads >= 2 && !isset($this->store[$key])) {
-                    $this->store[$key] = json_encode('winner');
+                    $this->store[$key] = (string) json_encode('winner');
                 }
 
                 return $this->store[$key] ?? null;
