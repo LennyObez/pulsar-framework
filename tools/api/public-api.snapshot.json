@@ -20087,6 +20087,14 @@
                     "return": "?Pulsar\\Filesystem\\SafePath",
                     "static": false
                 },
+                "isWithin": {
+                    "params": [
+                        "string $candidate",
+                        "string $boundaryDir"
+                    ],
+                    "return": "bool",
+                    "static": true
+                },
                 "resolveUnder": {
                     "params": [
                         "string $relativePath",
@@ -20100,6 +20108,21 @@
                         "string $relativePath"
                     ],
                     "return": "?Pulsar\\Filesystem\\SafePath",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Filesystem\\WritablePathGuard": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "resolveState": {
+                    "params": [
+                        "string $configured",
+                        "string $configKey"
+                    ],
+                    "return": "string",
                     "static": true
                 }
             },

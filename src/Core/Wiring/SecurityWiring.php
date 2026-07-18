@@ -29,6 +29,7 @@ use Pulsar\DataProtection\InMemoryConsentManager;
 use Pulsar\DataProtection\RetentionPolicyInterface;
 use Pulsar\DataProtection\SessionPurge;
 use Pulsar\ErrorHandling\ExceptionRendererInterface;
+use Pulsar\Filesystem\WritablePathGuard;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Http\TrustedProxy;
@@ -504,7 +505,7 @@ final readonly class SecurityWiring implements ServiceWiringInterface
         // PHP-FPM and long-running SAPIs. Empty config lets FileHandler fall back
         // to its built-in `var/sessions` default.
         $fileSavePath = $sessionConfig->savePath !== ''
-            ? resolve_path($sessionConfig->savePath)
+            ? WritablePathGuard::resolveState($sessionConfig->savePath, 'security.session.save_path')
             : '';
 
         return match ($sessionConfig->handler) {

@@ -18,6 +18,7 @@ use Pulsar\FeatureFlag\FlagStorageDriver;
 use Pulsar\FeatureFlag\FlagStorageInterface;
 use Pulsar\FeatureFlag\Storage\FileFlagStorage;
 use Pulsar\FeatureFlag\Storage\InMemoryFlagStorage;
+use Pulsar\Filesystem\WritablePathGuard;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Routing\Router;
@@ -49,7 +50,7 @@ final readonly class FeatureFlagWiring implements ServiceWiringInterface
         // Storage
         $storage = match ($flagConfig->storage) {
             FlagStorageDriver::Memory => new InMemoryFlagStorage(),
-            FlagStorageDriver::File => new FileFlagStorage(resolve_path($flagConfig->filePath)),
+            FlagStorageDriver::File => new FileFlagStorage(WritablePathGuard::resolveState($flagConfig->filePath, 'feature_flags.file_path')),
         };
 
         // Load pre-configured flags

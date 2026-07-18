@@ -45,6 +45,7 @@ use Pulsar\Config\CacheConfig;
 use Pulsar\Config\CacheDriverType;
 use Pulsar\Config\CachePoolConfig;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Filesystem\WritablePathGuard;
 use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Runtime\ResettableInterface;
 use Pulsar\Security\Crypto\Hmac;
@@ -331,11 +332,14 @@ final class CacheManager implements CacheManagerInterface, ResettableInterface
      * Resolve the configured filesystem cache directory to an absolute path so
      * the pool driver and its lock share one stable location regardless of the
      * process CWD (a relative default like `var/cache` would otherwise land
-     * wherever the worker happened to be started).
+     * wherever the worker happened to be started) — and refuse it if it lands
+     * inside the document root, where the serialized pool data (and the
+     * `optimize` config/container caches, which can carry credentials) would be
+     * web-readable.
      */
     private function filesystemCachePath(CachePoolConfig $poolConfig): string
     {
-        return resolve_path($poolConfig->path ?? $this->config->path);
+        return WritablePathGuard::resolveState($poolConfig->path ?? $this->config->path, 'cache.path');
     }
 
     private function resolveRedisConnection(CachePoolConfig $poolConfig): Redis
