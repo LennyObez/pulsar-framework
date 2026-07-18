@@ -8768,6 +8768,7 @@
                         "bool $stampedeProtection",
                         "int $gcDivisor",
                         "?string $compression",
+                        "?int $compressionLevel",
                         "int $compressionThresholdBytes",
                         "bool $compressionLengthOracleAcknowledged",
                         "string $prefix",
@@ -22892,7 +22893,9 @@
                 "__construct": {
                     "params": [
                         "int $minimumBytes",
-                        "int $gzipLevel"
+                        "int $gzipLevel",
+                        "int $brotliQuality",
+                        "int $zstdLevel"
                     ],
                     "return": null,
                     "static": false
@@ -43814,6 +43817,21 @@
             },
             "constants": []
         },
+        "Pulsar\\Security\\Csrf\\CsrfReplayGuardInterface": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "consume": {
+                    "params": [
+                        "string $nonce",
+                        "int $ttlSeconds"
+                    ],
+                    "return": "bool",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\Security\\Csrf\\CsrfTokenManagerInterface": {
             "since": "1.0.0",
             "methods": [],
@@ -43850,10 +43868,12 @@
                 "__construct": {
                     "params": [
                         "Pulsar\\Security\\Crypto\\Encryptor $encryptor",
-                        "string $sessionId",
+                        "Pulsar\\Security\\Session\\SessionInterface $session",
                         "int $windowSeconds",
                         "string $defaultAction",
-                        "?Random\\Randomizer $randomizer"
+                        "?Random\\Randomizer $randomizer",
+                        "?Closure $clock",
+                        "?Pulsar\\Security\\Csrf\\CsrfReplayGuardInterface $replayGuard"
                     ],
                     "return": null,
                     "static": false
