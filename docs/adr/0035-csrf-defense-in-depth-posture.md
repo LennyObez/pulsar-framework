@@ -81,9 +81,15 @@ The no-compromise posture is the **three layers**, all on by default:
   rebind automatically), fails closed when no session is active, has a real
   `rotate()` (regenerate + reissue), an injectable clock (testable window), an
   honest docblock, and an optional `CsrfReplayGuardInterface` for single-use.
-- `StatelessCsrfManager` (issue #425) gains a browser binding (signed
-  double-submit cookie) so a minted token cannot be paired without the victim's
-  `__Host-` cookie; tracked separately.
+- `StatelessCsrfManager` (issue #425) now binds a per-browser secret into its
+  MAC — the `__Host-pulsar-csrf` cookie established by
+  `CsrfBindingCookieMiddleware` and published request-scoped via
+  `CsrfBindingContext`. A token an attacker mints in their own browser cannot be
+  paired with the victim's binding, closing the "any visitor can mint a valid
+  token" hole. The manager requires a binding provider and a correct-length key
+  at construction (fail closed), the action is length-prefixed in the MAC, and
+  the legacy verbatim-token acceptance is removed (no in-flight tokens could
+  carry a binding). Deploy behind Origin validation for defense in depth.
 
 ### Replay tracking
 

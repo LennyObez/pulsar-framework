@@ -157,19 +157,29 @@ re-rendered into a compressed page reinstates the oracle, silently.
 #### StatelessCsrfManager specifics
 
 `StatelessCsrfManager` provides CSRF protection with no server-side state
-(CDN/Varnish and stateless-API friendly): the inner token is
-`timestamp || HMAC(timestamp || action)`, action-bound and time-windowed. That
-inner token is deterministic for a given second and action — an unmasked,
-stable secret is a BREACH compression-oracle target when it is emitted in a
-compressed HTTP response next to attacker-reflected input (the attacker varies
-reflected content and observes response length to extract the token).
+(CDN/Varnish and stateless-API friendly). Its MAC binds
+`timestamp || len(action) || action || binding`, where `binding` is a
+**per-browser secret** — the `__Host-pulsar-csrf` cookie. Without that binding
+the MAC would cover only server-side values (timestamp, action) that any
+visitor, including an attacker, can reproduce, so anyone could mint a token
+valid for every victim (issue #425). The binding is a signed double-submit
+cookie: the attacker's cross-site page can neither read it (`HttpOnly`,
+cross-origin) nor set it (`__Host-` prefix), so a forged token cannot be paired
+with the victim's cookie.
 
-To close that oracle, every emitted token is masked with a fresh per-response
-one-time pad (`transmitted = pad || (inner XOR pad)`, as in Django and Rails),
-so the transmitted value is random every time while the verifiable inner token
-is unchanged; validation un-masks and also accepts the legacy unmasked form so a
-deploy does not invalidate tokens already in flight. Never emit a raw,
-unmasked secret in a compressible response beside attacker-controlled input.
+Wiring: put `CsrfBindingCookieMiddleware` ahead of CSRF validation — it
+establishes the `__Host-pulsar-csrf` cookie (Secure, HttpOnly, Path=/,
+SameSite=Strict) and publishes its value into `CsrfBindingContext`, which the
+manager's binding provider reads. The manager fails closed (throws) when no
+binding is present and rejects a key that is not `SODIUM_CRYPTO_AUTH_KEYBYTES`
+long at construction.
+
+The inner token is deterministic for a given `(second, action, binding)`, which
+would be a stable BREACH compression-oracle target if emitted verbatim beside
+attacker-reflected input. Every emitted token is therefore masked with a fresh
+per-response one-time pad (`transmitted = pad || (inner XOR pad)`, as in Django
+and Rails); only the masked form is accepted. Never emit a raw, unmasked secret
+in a compressible response beside attacker-controlled input.
 
 ### CsrfMiddleware
 
