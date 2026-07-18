@@ -16,7 +16,9 @@ use Pulsar\Cache\Application\Driver\ArrayDriver;
 use Pulsar\Cache\Application\Driver\CacheDriverInterface;
 use Pulsar\Cache\Application\Driver\DatabaseDriver;
 use Pulsar\Cache\Application\Driver\FilesystemDriver;
+use Pulsar\Cache\Application\Driver\GenerationClearableInterface;
 use Pulsar\Cache\Application\Driver\MemcachedDriver;
+use Pulsar\Cache\Application\Driver\PrefixClearableInterface;
 use Pulsar\Cache\Application\Driver\RedisDriver;
 use Pulsar\Cache\Application\Encryption\EncryptedCacheDecorator;
 use Pulsar\Cache\Application\Event\CacheEventEmitter;
@@ -30,6 +32,7 @@ use Pulsar\Cache\Application\Lock\LockInterface;
 use Pulsar\Cache\Application\Lock\MemcachedLock;
 use Pulsar\Cache\Application\Lock\PrefixedLock;
 use Pulsar\Cache\Application\Lock\RedisLock;
+use Pulsar\Cache\Application\Prefix\GenerationScopedCacheDecorator;
 use Pulsar\Cache\Application\Prefix\PrefixedCacheDecorator;
 use Pulsar\Cache\Application\Serializer\CacheSerializerInterface;
 use Pulsar\Cache\Application\Serializer\IgbinaryCacheSerializer;
@@ -221,7 +224,8 @@ final class CacheManager implements CacheManagerInterface, ResettableInterface
 
         if (!isset($this->drivers[$name])) {
             $poolConfig = $this->resolvePoolConfig($name);
-            $driver = $this->resolveDriver($poolConfig);
+            $rawDriver = $this->resolveDriver($poolConfig);
+            $driver = $rawDriver;
 
             if ($poolConfig->encrypted) {
                 if ($this->masterKey === null) {
@@ -254,10 +258,26 @@ final class CacheManager implements CacheManagerInterface, ResettableInterface
             // and cannot be transplanted between prefixes sharing a backend
             // and master key.
             if ($poolConfig->prefix !== '') {
-                $driver = new PrefixedCacheDecorator(
-                    inner: $driver,
-                    prefix: $poolConfig->prefix,
-                );
+                // Enumerable backends (Redis SCAN, APCu iterator, array) get an
+                // exact prefix-scoped delete. A backend that cannot enumerate but
+                // reclaims orphans by eviction (Memcached) clears by bumping a
+                // generation counter instead of throwing — its counter rides the
+                // RAW driver so it stays atomic and unencrypted. Everything else
+                // keeps the fail-loud clear.
+                if (!($rawDriver instanceof PrefixClearableInterface)
+                    && $rawDriver instanceof GenerationClearableInterface
+                ) {
+                    $driver = new GenerationScopedCacheDecorator(
+                        inner: $driver,
+                        counter: $rawDriver,
+                        prefix: $poolConfig->prefix,
+                    );
+                } else {
+                    $driver = new PrefixedCacheDecorator(
+                        inner: $driver,
+                        prefix: $poolConfig->prefix,
+                    );
+                }
             }
 
             $this->drivers[$name] = $driver;
@@ -396,6 +416,15 @@ final class CacheManager implements CacheManagerInterface, ResettableInterface
         foreach ($this->tagStrategies as $strategy) {
             if ($strategy instanceof ResettableInterface) {
                 $strategy->resetRequestState();
+            }
+        }
+
+        // Drivers may memoize per-request state too (the generation-scoped
+        // decorator caches its generation number), so a persistent worker must
+        // re-read it after another worker's clear().
+        foreach ($this->drivers as $driver) {
+            if ($driver instanceof ResettableInterface) {
+                $driver->resetRequestState();
             }
         }
     }

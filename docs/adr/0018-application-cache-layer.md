@@ -117,10 +117,24 @@ connections per host:port, so without a prefix all pools — and all application
 — on one backend share a single keyspace, and `clear()` (`FLUSHDB` / `flush`)
 wipes everything. With a prefix, `clear()` becomes an exact prefix-scoped
 deletion on drivers that can enumerate keys (`PrefixClearableInterface`: Redis
-cursor-based SCAN+UNLINK, APCu iterator, the in-memory array driver) and FAILS
-LOUDLY on drivers that cannot (Memcached has no enumeration primitive) rather
-than silently flushing beyond its scope. The boot wiring warns when a
-Redis/Memcached pool has no prefix.
+cursor-based SCAN+UNLINK, APCu iterator, the in-memory array driver).
+
+Memcached cannot enumerate keys, so it clears by GENERATION instead
+(`GenerationScopedCacheDecorator`): every data key is stored as
+`{prefix}g{generation}.{key}`, and `clear()` atomically increments the
+`{prefix}gen` counter, so every live key instantly maps to a fresh, unwritten
+generation. Nothing is deleted or scanned; the previous generation's keys are
+never addressed again and are reclaimed by Memcached's LRU eviction. This is
+gated on `GenerationClearableInterface`, a structural promise that the backend
+reclaims orphans — a persistent store with no eviction (filesystem, database)
+must NOT use it, or orphaned generations would accumulate forever, and it keeps
+the fail-loud clear. The generation counter rides the RAW driver, below the data
+stack, so it stays atomic and unencrypted: `clear()` therefore works on an
+encrypted Memcached pool, where an increment on the data stack would be refused.
+The generation is memoized per request and reset between requests on persistent
+runtimes, the same briefly-stale window the best-effort tag strategy documents.
+
+The boot wiring warns when a Redis/Memcached pool has no prefix.
 
 Lock resources are prefixed too: `CacheManager::lock()` wraps the resolved lock
 in a `PrefixedLock` when the pool has a prefix, so `CachePool`'s stampede lock
