@@ -43793,6 +43793,28 @@
             },
             "constants": []
         },
+        "Pulsar\\Security\\Csrf\\CsrfBindingCookieMiddleware": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "Pulsar\\Security\\Csrf\\CsrfBindingContext $context"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "process": {
+                    "params": [
+                        "Psr\\Http\\Message\\ServerRequestInterface $request",
+                        "Psr\\Http\\Server\\RequestHandlerInterface $handler"
+                    ],
+                    "return": "Psr\\Http\\Message\\ResponseInterface",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\Security\\Csrf\\CsrfMiddleware": {
             "since": "1.0.0",
             "methods": [],
@@ -43942,6 +43964,7 @@
                 "__construct": {
                     "params": [
                         "string $secretKey",
+                        "Closure $bindingProvider",
                         "int $windowSeconds",
                         "string $defaultAction"
                     ],
@@ -56635,6 +56658,7 @@
         "Pulsar\\Security\\Compliance\\Retention\\RetentionManager",
         "Pulsar\\Security\\Crypto\\EnvKeyRing",
         "Pulsar\\Security\\Crypto\\HmacService",
+        "Pulsar\\Security\\Csrf\\CsrfBindingContext",
         "Pulsar\\Security\\Session\\Handler\\ArrayHandler",
         "Pulsar\\Security\\Session\\Handler\\CookieHandler",
         "Pulsar\\Security\\Session\\Handler\\CookieSessionHandlerInterface",

@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Security\Csrf;
 
+use InvalidArgumentException;
+use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Security\Csrf\StatelessCsrfManager;
 use RuntimeException;
@@ -13,19 +16,41 @@ use function bin2hex;
 use function pack;
 use function sodium_crypto_auth;
 use function sodium_crypto_auth_keygen;
+use function str_repeat;
 use function strlen;
 use function time;
 
 #[CoversClass(StatelessCsrfManager::class)]
 final class StatelessCsrfManagerTest extends TestCase
 {
+    private const string BINDING = 'browser-binding-secret-value';
+
     private string $key;
     private StatelessCsrfManager $manager;
 
     protected function setUp(): void
     {
         $this->key = sodium_crypto_auth_keygen();
-        $this->manager = new StatelessCsrfManager($this->key);
+        $this->manager = $this->managerWithBinding(self::BINDING);
+    }
+
+    private function managerWithBinding(string $binding, ?string $key = null): StatelessCsrfManager
+    {
+        return new StatelessCsrfManager($key ?? $this->key, static fn(): string => $binding);
+    }
+
+    /**
+     * Hand-craft an inner token (unmasked, hex) for the given action/binding —
+     * mirrors the manager's MAC message: timestamp || len(action) || action ||
+     * binding.
+     */
+    private function craftLegacyStyleToken(int $timestamp, string $action, string $binding): string
+    {
+        $timestampBytes = pack('J', $timestamp);
+        $message = $timestampBytes . pack('J', strlen($action)) . $action . $binding;
+        $mac = sodium_crypto_auth($message, $this->key);
+
+        return bin2hex($timestampBytes . $mac);
     }
 
     public function testGenerateProducesHexToken(): void
@@ -33,16 +58,14 @@ final class StatelessCsrfManagerTest extends TestCase
         $token = $this->manager->generate();
 
         self::assertNotEmpty($token);
-        // Masked, hex-encoded: pad (40 bytes) + (inner XOR pad) (40 bytes) =
-        // 80 bytes = 160 hex chars. The inner token is timestamp (8) + MAC (32).
+        // Masked, hex: pad (40 bytes) + (inner XOR pad) (40 bytes) = 80 bytes =
+        // 160 hex chars. Inner = timestamp (8) + MAC (32).
         self::assertSame(160, strlen($token));
         self::assertMatchesRegularExpression('/^[0-9a-f]+$/', $token);
     }
 
     public function testEachGeneratedTokenIsDistinctSoItIsNotAStableBreachTarget(): void
     {
-        // Same second, same action, yet the transmitted values differ because
-        // of the per-response one-time-pad mask — no stable compression oracle.
         $a = $this->manager->generate();
         $b = $this->manager->generate();
 
@@ -51,32 +74,61 @@ final class StatelessCsrfManagerTest extends TestCase
         self::assertTrue($this->manager->validate($b));
     }
 
-    public function testValidateAcceptsTheLegacyUnmaskedTokenFormatDuringRollover(): void
+    #[Test]
+    public function aTokenBoundToOneBrowserIsRejectedForAnother(): void
     {
-        // A token minted by the pre-masking version (inner token, hex, 80
-        // chars) must still validate so an in-flight form survives a deploy.
-        $timestampBytes = pack('J', time());
-        $mac = sodium_crypto_auth($timestampBytes . '_default', $this->key);
-        $legacy = bin2hex($timestampBytes . $mac);
+        // The #425 fix: the MAC binds a per-browser secret, so a token an
+        // attacker mints in their own browser (their binding) is worthless when
+        // submitted from the victim's browser (a different binding).
+        $attacker = $this->managerWithBinding('attacker-cookie-value');
+        $victim = $this->managerWithBinding('victim-cookie-value');
 
-        self::assertSame(80, strlen($legacy));
-        self::assertTrue($this->manager->validate($legacy));
+        $attackerToken = $attacker->generate();
+
+        self::assertTrue($attacker->validate($attackerToken), 'valid in its own browser');
+        self::assertFalse($victim->validate($attackerToken), 'worthless in the victim browser');
+    }
+
+    #[Test]
+    public function generateFailsClosedWhenNoBindingIsPresent(): void
+    {
+        $manager = $this->managerWithBinding('');
+
+        $this->expectException(LogicException::class);
+
+        $manager->generate();
+    }
+
+    #[Test]
+    public function validateFailsClosedWhenNoBindingIsPresent(): void
+    {
+        $token = $this->manager->generate();
+        $unbound = $this->managerWithBinding('');
+
+        $this->expectException(LogicException::class);
+
+        $unbound->validate($token);
+    }
+
+    #[Test]
+    public function aSecretKeyOfTheWrongLengthIsRejectedAtConstruction(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        new StatelessCsrfManager('too-short', static fn(): string => self::BINDING);
     }
 
     public function testValidateAcceptsValidToken(): void
     {
-        $token = $this->manager->generate();
-
-        self::assertTrue($this->manager->validate($token));
+        self::assertTrue($this->manager->validate($this->manager->generate()));
     }
 
     public function testValidateRejectsTamperedToken(): void
     {
         $token = $this->manager->generate();
-        $tampered = $token;
-        $tampered[10] = $tampered[10] === 'a' ? 'b' : 'a';
+        $token[10] = $token[10] === 'a' ? 'b' : 'a';
 
-        self::assertFalse($this->manager->validate($tampered));
+        self::assertFalse($this->manager->validate($token));
     }
 
     public function testValidateRejectsEmptyString(): void
@@ -94,24 +146,38 @@ final class StatelessCsrfManagerTest extends TestCase
         self::assertFalse($this->manager->validate('abcdef'));
     }
 
+    #[Test]
+    public function theLegacyVerbatimTokenFormatIsNoLongerAccepted(): void
+    {
+        // Only the masked (2x) form is valid now; the pre-masking 1x-length
+        // layout could not carry a binding, so there are no in-flight tokens of
+        // it to honor.
+        $legacyOneX = $this->craftLegacyStyleToken(time(), '_default', self::BINDING);
+
+        self::assertSame(80, strlen($legacyOneX));
+        self::assertFalse($this->manager->validate($legacyOneX));
+    }
+
     public function testValidateRejectsExpiredToken(): void
     {
-        // Create a manager with 1-second window
-        $manager = new StatelessCsrfManager($this->key, windowSeconds: 0);
+        $manager = new StatelessCsrfManager($this->key, static fn(): string => self::BINDING, windowSeconds: 0);
+        $expired = $this->craftMaskedToken(time() - 10, '_default', self::BINDING);
 
-        $token = $manager->generate();
+        self::assertFalse($manager->validate($expired));
+    }
 
-        // The token was just generated at time(), window is 0 seconds
-        // So it should be valid now but let's test the boundary
-        // Token at time() with window 0 means (now - tokenTime) <= 0
-        // Since tokenTime == now, (now - now) = 0 <= 0, still valid.
-        // We need an actually expired token — manually craft one
-        $oldTimestamp = time() - 10;
-        $timestampBytes = pack('J', $oldTimestamp);
-        $mac = sodium_crypto_auth($timestampBytes . '_default', $this->key);
-        $expiredToken = bin2hex($timestampBytes . $mac);
+    /**
+     * Craft a masked token (the transmitted 2x-length form) for expiry tests.
+     */
+    private function craftMaskedToken(int $timestamp, string $action, string $binding): string
+    {
+        $timestampBytes = pack('J', $timestamp);
+        $message = $timestampBytes . pack('J', strlen($action)) . $action . $binding;
+        $mac = sodium_crypto_auth($message, $this->key);
+        $inner = $timestampBytes . $mac;
+        $pad = str_repeat("\0", strlen($inner)); // zero pad → masked == inner, still 2x length
 
-        self::assertFalse($manager->validate($expiredToken));
+        return bin2hex($pad . ($inner ^ $pad));
     }
 
     public function testActionBindingPreventsReuse(): void
@@ -124,20 +190,17 @@ final class StatelessCsrfManagerTest extends TestCase
 
     public function testDifferentActionsProduceDifferentTokens(): void
     {
-        $token1 = $this->manager->generateForAction('action_a');
-        $token2 = $this->manager->generateForAction('action_b');
-
-        self::assertNotSame($token1, $token2);
+        self::assertNotSame(
+            $this->manager->generateForAction('action_a'),
+            $this->manager->generateForAction('action_b'),
+        );
     }
 
     public function testDifferentKeysRejectEachOther(): void
     {
-        $otherKey = sodium_crypto_auth_keygen();
-        $otherManager = new StatelessCsrfManager($otherKey);
+        $otherManager = $this->managerWithBinding(self::BINDING, sodium_crypto_auth_keygen());
 
-        $token = $this->manager->generate();
-
-        self::assertFalse($otherManager->validate($token));
+        self::assertFalse($otherManager->validate($this->manager->generate()));
     }
 
     public function testGetTokenGeneratesNew(): void
@@ -158,12 +221,9 @@ final class StatelessCsrfManagerTest extends TestCase
 
     public function testValidateRejectsFutureTimestamp(): void
     {
-        $futureTimestamp = time() + 3600;
-        $timestampBytes = pack('J', $futureTimestamp);
-        $mac = sodium_crypto_auth($timestampBytes . '_default', $this->key);
-        $futureToken = bin2hex($timestampBytes . $mac);
+        $future = $this->craftMaskedToken(time() + 3600, '_default', self::BINDING);
 
-        self::assertFalse($this->manager->validate($futureToken));
+        self::assertFalse($this->manager->validate($future));
     }
 
     public function testDebugInfoRedactsKey(): void
@@ -190,53 +250,36 @@ final class StatelessCsrfManagerTest extends TestCase
 
     public function testCustomWindowSeconds(): void
     {
-        $manager = new StatelessCsrfManager($this->key, windowSeconds: 7200);
-        $token = $manager->generate();
+        $manager = new StatelessCsrfManager($this->key, static fn(): string => self::BINDING, windowSeconds: 7200);
 
-        self::assertTrue($manager->validate($token));
+        self::assertTrue($manager->validate($manager->generate()));
     }
 
     public function testCustomDefaultAction(): void
     {
-        $manager = new StatelessCsrfManager($this->key, defaultAction: 'my_form');
+        $manager = new StatelessCsrfManager($this->key, static fn(): string => self::BINDING, defaultAction: 'my_form');
         $token = $manager->generate();
 
-        // Should validate as 'my_form' action
         self::assertTrue($manager->validateForAction($token, 'my_form'));
-        // Should NOT validate as default '_default' action
         self::assertFalse($manager->validateForAction($token, '_default'));
     }
 
     public function testDefaultWindowIs600Seconds(): void
     {
-        // The default window should be 600s (10 minutes), not 3600s (1 hour)
-        $manager = new StatelessCsrfManager($this->key);
-        $debug = $manager->__debugInfo();
-
-        self::assertSame(600, $debug['windowSeconds']);
+        self::assertSame(600, $this->manager->__debugInfo()['windowSeconds']);
     }
 
     public function testTokenExpiredAfter600SecondsDefault(): void
     {
-        // Create a token with timestamp 601 seconds in the past
-        $oldTimestamp = time() - 601;
-        $timestampBytes = pack('J', $oldTimestamp);
-        $mac = sodium_crypto_auth($timestampBytes . '_default', $this->key);
-        $expiredToken = bin2hex($timestampBytes . $mac);
+        $expired = $this->craftMaskedToken(time() - 601, '_default', self::BINDING);
 
-        // Default window is 600s, so 601s-old token must be rejected
-        self::assertFalse($this->manager->validate($expiredToken));
+        self::assertFalse($this->manager->validate($expired));
     }
 
     public function testTokenValidWithin600SecondsDefault(): void
     {
-        // Create a token with timestamp 599 seconds in the past
-        $recentTimestamp = time() - 599;
-        $timestampBytes = pack('J', $recentTimestamp);
-        $mac = sodium_crypto_auth($timestampBytes . '_default', $this->key);
-        $recentToken = bin2hex($timestampBytes . $mac);
+        $recent = $this->craftMaskedToken(time() - 599, '_default', self::BINDING);
 
-        // Default window is 600s, so 599s-old token must be accepted
-        self::assertTrue($this->manager->validate($recentToken));
+        self::assertTrue($this->manager->validate($recent));
     }
 }
