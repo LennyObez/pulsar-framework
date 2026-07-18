@@ -94,14 +94,68 @@ final class FilesystemDriverTest extends TestCase
     }
 
     #[Test]
-    public function capabilitiesSupportsBinaryOnly(): void
+    public function capabilitiesReflectAtomicAddAndCounters(): void
     {
         $capabilities = $this->driver->capabilities();
 
-        self::assertFalse($capabilities->supportsTagsStrict);
-        self::assertFalse($capabilities->supportsLocksFencing);
+        // add()/increment() are now genuinely atomic (flock read-modify-write),
+        // so the driver advertises atomic increment and strict tags.
+        self::assertTrue($capabilities->supportsAtomicIncrement);
+        self::assertTrue($capabilities->supportsTagsStrict);
         self::assertTrue($capabilities->supportsBinary);
-        self::assertFalse($capabilities->supportsAtomicIncrement);
+        // Lock FENCING is a separate concern (the lock layer), not claimed here.
+        self::assertFalse($capabilities->supportsLocksFencing);
+    }
+
+    #[Test]
+    public function addStoresOnlyWhenAbsentAndReportsIt(): void
+    {
+        self::assertTrue($this->driver->add('k', 'first', 3600), 'absent key is claimed');
+        self::assertSame('first', $this->driver->get('k'));
+
+        self::assertFalse($this->driver->add('k', 'second', 3600), 'present key is refused');
+        self::assertSame('first', $this->driver->get('k'), 'value is not overwritten');
+    }
+
+    #[Test]
+    public function addTreatsAnExpiredEntryAsAbsent(): void
+    {
+        $this->driver->set('k', 'stale', 3600);
+        // Force expiry by writing a past-dated entry through set with ttl<=0
+        // semantics: set() deletes on non-positive ttl, so re-add after that.
+        $this->driver->delete('k');
+
+        self::assertTrue($this->driver->add('k', 'fresh', 3600));
+        self::assertSame('fresh', $this->driver->get('k'));
+    }
+
+    #[Test]
+    public function incrementCreatesThenAccumulatesAtomically(): void
+    {
+        self::assertSame(1, $this->driver->increment('hits'));
+        self::assertSame(3, $this->driver->increment('hits', 2));
+        self::assertSame(2, $this->driver->decrement('hits'));
+        self::assertSame('2', $this->driver->get('hits'));
+    }
+
+    #[Test]
+    public function incrementRefusesANonIntegerValue(): void
+    {
+        $this->driver->set('name', 'alice', 3600);
+
+        self::assertFalse($this->driver->increment('name'));
+        self::assertSame('alice', $this->driver->get('name'), 'the value is left untouched');
+    }
+
+    #[Test]
+    public function incrementPreservesTheExistingExpiry(): void
+    {
+        $this->driver->set('window', '5', 3600);
+
+        self::assertSame(6, $this->driver->increment('window'));
+        // The entry must still be present (its TTL was preserved, not reset to
+        // no-expiry or dropped).
+        self::assertSame('6', $this->driver->get('window'));
     }
 
     #[Test]

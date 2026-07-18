@@ -31,14 +31,14 @@ Implement `src/Cache/Application/` as the application cache module with the foll
 
 All drivers implement `CacheDriverInterface` - a raw string storage contract. Serialization happens in the pool layer, keeping drivers simple and testable.
 
-| Driver             | Use Case                         | Capabilities                    |
-| ------------------ | -------------------------------- | ------------------------------- |
-| `ArrayDriver`      | Testing, short-lived processes   | Full (in-memory)                |
-| `FilesystemDriver` | Local development, single-server | Persistent, no atomic increment |
-| `ApcuDriver`       | Single-server, shared-nothing    | Fast, atomic increment          |
-| `MemcachedDriver`  | Distributed, multi-server        | Distributed, atomic increment   |
-| `RedisDriver`      | Distributed, feature-rich        | Distributed, atomic increment   |
-| `DatabaseDriver`   | Persistent, no external service  | SQL-backed, no atomic increment |
+| Driver             | Use Case                         | Capabilities                         |
+| ------------------ | -------------------------------- | ------------------------------------ |
+| `ArrayDriver`      | Testing, short-lived processes   | Full (in-memory)                     |
+| `FilesystemDriver` | Local development, single-server | Persistent, atomic increment (flock) |
+| `ApcuDriver`       | Single-server, shared-nothing    | Fast, atomic increment               |
+| `MemcachedDriver`  | Distributed, multi-server        | Distributed, atomic increment        |
+| `RedisDriver`      | Distributed, feature-rich        | Distributed, atomic increment        |
+| `DatabaseDriver`   | Persistent, no external service  | SQL-backed, no atomic increment      |
 
 Drivers declare capabilities via `CacheDriverCapabilities` - a value object indicating support for atomic increment, distributed locking, and TTL precision. Upper layers query capabilities before attempting unsupported operations.
 
