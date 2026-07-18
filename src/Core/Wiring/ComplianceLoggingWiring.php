@@ -10,6 +10,7 @@ use Pulsar\Config\ConfigManager;
 use Pulsar\Config\Exception\ConfigException;
 use Pulsar\Config\ObservabilityConfig;
 use Pulsar\Container\ContainerInterface;
+use Pulsar\Filesystem\WritablePathGuard;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Observability\Log\Compliance\ComplianceLogFormatter;
@@ -100,7 +101,7 @@ final readonly class ComplianceLoggingWiring implements ServiceWiringInterface
         /** @var EncryptorInterface|null $encryptor */
 
         $sink = new ComplianceLogSink(
-            new FileSink(resolve_path($config->path)),
+            new FileSink(WritablePathGuard::resolveState($config->path, 'compliance_logging.path')),
             $encryptor,
             ...$formatters,
         );

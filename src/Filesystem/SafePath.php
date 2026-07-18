@@ -153,6 +153,28 @@ final readonly class SafePath
     }
 
     /**
+     * Whether $candidate lies within (or is) $boundaryDir.
+     *
+     * Uses realpath + the nearest-existing-ancestor walk, so it defeats symlink
+     * escapes and works for a path that does not exist yet (e.g. a var/cache
+     * about to be created). Returns false when the boundary itself does not
+     * exist. This is the correct primitive for a "is this path inside the
+     * document root?" check — unlike str_starts_with on raw strings, it is not
+     * bypassable via `..`/symlinks and does not false-match a sibling like
+     * `public_html` against `public`.
+     */
+    public static function isWithin(string $candidate, string $boundaryDir): bool
+    {
+        $boundaryReal = realpath($boundaryDir);
+
+        if ($boundaryReal === false) {
+            return false;
+        }
+
+        return self::verifyUnderBoundary($candidate, $boundaryReal) !== null;
+    }
+
+    /**
      * Verify $candidate resolves under $boundaryReal. Walks up to the
      * nearest existing ancestor (so paths-to-create can still be
      * validated) and uses realpath to defeat symlink escapes.
