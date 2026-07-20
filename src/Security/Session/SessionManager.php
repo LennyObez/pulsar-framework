@@ -11,6 +11,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Api;
 use Pulsar\Config\SessionConfig;
 use Pulsar\Http\TrustedProxy;
+use Pulsar\Runtime\ResettableInterface;
 use Pulsar\Security\Exception\SecurityException;
 use Pulsar\Security\Session\Handler\CookieSessionHandlerInterface;
 use Pulsar\Security\Session\Handler\SessionHandlerInterface;
@@ -45,7 +46,7 @@ use const JSON_UNESCAPED_UNICODE;
  * @api
  */
 #[Api(since: '1.0.0')]
-final class SessionManager implements SessionInterface
+final class SessionManager implements SessionInterface, ResettableInterface
 {
     private const string METADATA_KEY = '_pulsar_meta';
 
@@ -101,6 +102,28 @@ final class SessionManager implements SessionInterface
         $this->encryption = $encryption;
         $this->trustedProxy = $trustedProxy;
         $this->randomizer = new Randomizer(new Secure());
+    }
+
+    /**
+     * Clear every per-request field back to its constructed state.
+     *
+     * On a persistent worker (RoadRunner, FrankenPHP, PersistentRuntime) the
+     * SessionManager is a singleton that outlives the request. Without this reset
+     * the previous user's loaded session id, data, and metadata survive into the
+     * next request — a full account takeover. Only per-request state is cleared;
+     * the readonly collaborators (handler, config, validators, encryption,
+     * trusted proxy, randomizer) are request-independent and kept.
+     */
+    #[Override]
+    public function resetRequestState(): void
+    {
+        $this->started = false;
+        $this->sessionId = '';
+        $this->idIsNew = false;
+        $this->cookieCleared = false;
+        $this->recoveredFromExpiry = false;
+        $this->data = [];
+        $this->metadata = null;
     }
 
     #[Override]

@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\RuntimeConfig;
+use Pulsar\Config\SessionConfig;
 use Pulsar\Container\Container;
 use Pulsar\Core\Wiring\RuntimeWiring;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
@@ -19,6 +20,8 @@ use Pulsar\Runtime\RequestResetRegistry;
 use Pulsar\Runtime\RequestSandbox;
 use Pulsar\Runtime\RuntimeFactory;
 use Pulsar\Runtime\RuntimeResolver;
+use Pulsar\Security\Session\Handler\ArrayHandler;
+use Pulsar\Security\Session\SessionManager;
 
 use function bin2hex;
 use function file_put_contents;
@@ -48,6 +51,41 @@ final class RuntimeWiringTest extends TestCase
         self::assertTrue($container->has(RequestSandbox::class));
         self::assertTrue($container->has(RuntimeResolver::class));
         self::assertTrue($container->has(RuntimeFactory::class));
+    }
+
+    #[Test]
+    public function wireRegistersTheSessionManagerAsResettable(): void
+    {
+        // RC-1 reachability: a SessionManager bound by SecurityWiring (which runs
+        // earlier) must be registered for per-request reset, or its singleton
+        // bleeds sessions across users on persistent workers.
+        $container = new Container();
+        $container->instance(SessionManager::class, new SessionManager(
+            new ArrayHandler(),
+            new SessionConfig(
+                cookieName: 'TEST',
+                lifetime: 3600,
+                cookieHttpOnly: true,
+                cookieSecure: true,
+                cookieSameSite: 'Strict',
+                regenerateOnPrivilegeChange: true,
+            ),
+        ));
+
+        $configManager = $this->createConfigManager();
+        $configManager->load();
+
+        new RuntimeWiring()->wire(
+            $container,
+            $configManager,
+            new MiddlewarePipeline($container),
+            new MiddlewareRegistry(),
+            new Router(),
+        );
+
+        /** @var RequestResetRegistry $registry */
+        $registry = $container->get(RequestResetRegistry::class);
+        self::assertContains(SessionManager::class, $registry->resettableIds);
     }
 
     #[Test]
