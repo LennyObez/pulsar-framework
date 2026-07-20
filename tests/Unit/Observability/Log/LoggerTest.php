@@ -11,6 +11,7 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Config\AuditConfig;
 use Pulsar\Config\LoggingChannelConfig;
 use Pulsar\Config\ObservabilityConfig;
+use Pulsar\Filesystem\Exception\UnsafeWritablePathException;
 use Pulsar\Observability\Log\LogEntry;
 use Pulsar\Observability\Log\Logger;
 use Pulsar\Observability\Log\LogLevel;
@@ -176,6 +177,44 @@ final class LoggerTest extends TestCase
 
         // Should create without error
         self::assertInstanceOf(Logger::class, $logger);
+    }
+
+    #[Test]
+    public function fromConfigRefusesAFileChannelPathInsideTheDocumentRoot(): void
+    {
+        // A file log channel whose path resolves under public/ would put
+        // PII/PHI-bearing logs one guessed URL away. The channel must fail
+        // closed at construction, exactly like the cache/session/audit sinks.
+        $base = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'pulsar_logguard_' . bin2hex(random_bytes(8));
+        mkdir($base . DIRECTORY_SEPARATOR . 'public', 0o750, true);
+        $previous = getenv('PULSAR_BASE_PATH');
+        putenv('PULSAR_BASE_PATH=' . $base);
+
+        $config = new ObservabilityConfig(
+            defaultLoggingChannel: 'file',
+            loggingLevel: 'warning',
+            loggingChannels: [
+                new LoggingChannelConfig(
+                    name: 'file',
+                    driver: 'file',
+                    path: 'public/logs/app.log',
+                ),
+            ],
+            audit: new AuditConfig(enabled: false, logPath: 'var/logs/audit.jsonl', events: []),
+        );
+
+        try {
+            $this->expectException(UnsafeWritablePathException::class);
+            (void) Logger::fromConfig($config);
+        } finally {
+            if ($previous === false) {
+                putenv('PULSAR_BASE_PATH');
+            } else {
+                putenv('PULSAR_BASE_PATH=' . $previous);
+            }
+            @rmdir($base . DIRECTORY_SEPARATOR . 'public');
+            @rmdir($base);
+        }
     }
 
     #[Test]

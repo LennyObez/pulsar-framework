@@ -192,7 +192,7 @@ final readonly class SecurityWiring implements ServiceWiringInterface
 
                     /** @var LoggerInterface|null $auditSinkLogger */
                     $auditSink = new AuditFileSink(
-                        $obsConfig->audit->logPath,
+                        WritablePathGuard::resolveState($obsConfig->audit->logPath, 'observability.audit.log_path'),
                         false,
                         $auditSinkLogger,
                     );
@@ -420,7 +420,10 @@ final readonly class SecurityWiring implements ServiceWiringInterface
                 $obsConfigForPurge = $repository->get(ObservabilityConfig::class);
 
                 if ($obsConfigForPurge->audit->enabled) {
-                    $purgers['audit_logs'] = new AuditLogPurge($obsConfigForPurge->audit->logPath, $purgeLogger);
+                    $purgers['audit_logs'] = new AuditLogPurge(
+                        WritablePathGuard::resolveState($obsConfigForPurge->audit->logPath, 'observability.audit.log_path'),
+                        $purgeLogger,
+                    );
                 }
             }
 

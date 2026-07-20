@@ -13,8 +13,9 @@
 #   sudo logrotate --debug /etc/logrotate.d/pulsar
 #
 # Point this at your project's writable log directory. Pulsar resolves
-# `logging.channels.*.path` (default var/logs/*.log) under the project root,
-# NOT the document root — keep logs outside the webroot.
+# `logging.channels.*.path` (default var/logs/*.log) under the project root and
+# refuses to boot if it resolves inside the document root (WritablePathGuard),
+# so logs stay out of the webroot by construction.
 /srv/pulsar/var/logs/*.log {
     # Rotate once a day; a size floor avoids rotating near-empty files.
     daily

@@ -10,6 +10,8 @@ use Psr\Log\LoggerInterface;
 use Pulsar\Api\Api;
 use Pulsar\Config\LoggingChannelConfig;
 use Pulsar\Config\ObservabilityConfig;
+use Pulsar\Filesystem\Exception\UnsafeWritablePathException;
+use Pulsar\Filesystem\WritablePathGuard;
 use Pulsar\Observability\Log\Sink\FileSink;
 use Pulsar\Observability\Log\Sink\StreamSink;
 use Stringable;
@@ -212,10 +214,19 @@ final readonly class Logger implements LoggerInterface
     {
         try {
             return match ($config->driver) {
-                'file' => new FileSink($config->path ?? 'var/logs/pulsar.log'),
+                'file' => new FileSink(
+                    WritablePathGuard::resolveState($config->path ?? 'var/logs/pulsar.log', 'logging.channels.path'),
+                ),
                 'stream' => new StreamSink($config->stream ?? 'php://stderr'),
                 default => null,
             };
+        } catch (UnsafeWritablePathException $unsafe) {
+            // A log path resolving inside the document root is a hard
+            // misconfiguration, not a droppable-sink failure: logs carry
+            // incidental PII/PHI and must never be web-reachable. Fail closed
+            // at boot exactly like the cache/session/audit sinks, rather than
+            // silently degrade to no logging.
+            throw $unsafe;
         } catch (Throwable $e) {
             // F4.3: a sink that fails to construct is dropped from
             // the channel list, but operators must know — otherwise
