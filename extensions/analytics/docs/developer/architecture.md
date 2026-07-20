@@ -114,7 +114,7 @@ Every sub-config uses the same pattern: a `readonly` class with a `fromArray()` 
     2. Bot detection (UA + header heuristics)
     3. DNT check (if enabled)
     4. Client IP extraction (trusted proxy validation)
-    5. Visitor ID generation (HMAC with daily key rotation)
+    5. Visitor ID generation (HMAC keyed by the disposable per-day salt)
     6. Session resolution (30-min inactivity window + midnight grace)
     7. Referrer parsing
     8. User-agent parsing (browser, OS, device type)
@@ -124,18 +124,20 @@ Every sub-config uses the same pattern: a `readonly` class with a `fromArray()` 
 
 ## Visitor identification
 
-Visitors are identified without cookies using a privacy-preserving HMAC:
+Visitors are identified without cookies using a forward-secure HMAC keyed by a **disposable per-day salt** (not a key derived from the master key):
 
 ```
+salt_day   = 32 random bytes, generated once per UTC day, stored in
+             analytics_visitor_salts, deleted after retention by VisitorSaltPurgeJob
 visitor_id = keyed BLAKE2b(
-    key: KDF(master_key, subkey_id=20, context="anal_vis"),
-    data: ip + "|" + user_agent + "|" + utc_day_number
-)
+                 key:  salt_day,
+                 data: ip + "|" + user_agent + "|" + utc_day_number
+             )
 ```
 
-- **Daily rotation**: The UTC day number (`timestamp / 86400`) is included in the HMAC input, so visitor IDs change daily
-- **Single subkey**: Subkey ID 20 with 8-byte context `"anal_vis"`, derived via `sodium_crypto_kdf_derive_from_key()`
-- **No persistence**: Nothing is stored on the client (no cookies, no localStorage)
+- **Disposable daily salt**: each UTC day gets a fresh random salt, minted atomically on first use and destroyed after `privacy.visitor_salt_retention_days` (default 2). Once a day's salt is purged, its hashes are unrecomputable even with the master key — forward secrecy. See [privacy model](../security/privacy-model.md).
+- **Consent hash is separate**: the only stable master-key-derived key (subkey 20, context `"anal_vis"`) now backs the consent hash, which must persist across days; visitor tracking does not use it.
+- **No persistence on the client**: nothing is stored on the visitor's device (no cookies, no localStorage)
 
 ### Midnight grace period
 
