@@ -6,6 +6,7 @@ namespace Pulsar\Extension\Analytics\Server\Controller;
 
 use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
+use Pulsar\Extension\Analytics\Contracts\VisitorSaltStoreInterface;
 use Pulsar\Extension\Analytics\Domain\VisitorId;
 use Pulsar\Extension\Analytics\Dsar\AnalyticsDsarCollector;
 use Pulsar\Extension\Analytics\Dsar\AnalyticsDsarEraser;
@@ -33,6 +34,7 @@ final readonly class DsarController
         private AnalyticsDsarCollector $collector,
         private AnalyticsDsarEraser $eraser,
         private AnalyticsKeyManager $keyManager,
+        private VisitorSaltStoreInterface $saltStore,
     ) {}
 
     /**
@@ -80,10 +82,14 @@ final readonly class DsarController
     /**
      * Compute the visitor ID hash for the authenticated user.
      *
-     * Uses the same VisitorId generation as the analytics tracker to ensure
-     * we match the correct records. The day number is set to the current
-     * UTC day to find today's records; historical data uses the same visitor
-     * hash since the key is stable (daily rotation is in the hash input).
+     * Uses the same VisitorId generation as the tracker so the correct records
+     * match, keyed by today's disposable salt. This resolves TODAY's identity.
+     *
+     * By design it cannot reach further back: once a past day's salt has been
+     * purged (forward secrecy), that day's hashes are unrecomputable, so the
+     * data is irreversibly anonymized and out of DSAR scope under GDPR Recital
+     * 26. Requests within the salt-retention window are covered; older data no
+     * longer identifies anyone and therefore carries no access/erasure duty.
      */
     private function resolveVisitorId(ServerRequestInterface $request): string
     {
@@ -91,10 +97,10 @@ final readonly class DsarController
         $rawIp = $request->getServerParams()['REMOTE_ADDR'] ?? '0.0.0.0';
         $ip = is_string($rawIp) ? $rawIp : '0.0.0.0';
         $userAgent = $request->getHeaderLine('User-Agent');
-        $key = $this->keyManager->visitorKey();
         $dayNumber = $this->keyManager->utcDayNumber();
+        $salt = $this->saltStore->saltForDay($dayNumber);
 
-        $visitorId = VisitorId::generate($ip, $userAgent, $key, $dayNumber);
+        $visitorId = VisitorId::generate($ip, $userAgent, $salt, $dayNumber);
 
         return $visitorId->toString();
     }

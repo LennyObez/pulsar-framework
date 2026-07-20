@@ -15,6 +15,7 @@ use Pulsar\Extension\Analytics\Contracts\GoalServiceInterface;
 use Pulsar\Extension\Analytics\Contracts\PageViewRepositoryInterface;
 use Pulsar\Extension\Analytics\Contracts\SessionRepositoryInterface;
 use Pulsar\Extension\Analytics\Contracts\SiteRepositoryInterface;
+use Pulsar\Extension\Analytics\Contracts\VisitorSaltStoreInterface;
 use Pulsar\Extension\Analytics\Domain\CustomEvent;
 use Pulsar\Extension\Analytics\Domain\PageView;
 use Pulsar\Extension\Analytics\Domain\Site;
@@ -36,6 +37,7 @@ use Pulsar\Security\ZeroTrust\Signal\GeoLocationResolverInterface;
 final class TrackingServiceGoalConversionTest extends TestCase
 {
     private AnalyticsKeyManager $keyManager;
+    private VisitorSaltStoreInterface&Stub $saltStore;
     private BotDetector $botDetector;
     private ReferrerParser $referrerParser;
     private UserAgentParser $userAgentParser;
@@ -49,6 +51,11 @@ final class TrackingServiceGoalConversionTest extends TestCase
         $masterKey->method('deriveSubKey')->willReturn(str_repeat('k', 32));
 
         $this->keyManager = new AnalyticsKeyManager($masterKey);
+
+        $this->saltStore = $this->createStub(VisitorSaltStoreInterface::class);
+        $this->saltStore->method('saltForDay')->willReturn(str_repeat('s', 64));
+        $this->saltStore->method('existingSaltForDay')->willReturn(null);
+
         $this->botDetector = new BotDetector();
         $this->referrerParser = new ReferrerParser();
         $this->userAgentParser = new UserAgentParser();
@@ -70,6 +77,7 @@ final class TrackingServiceGoalConversionTest extends TestCase
     ): TrackingService {
         return new TrackingService(
             keyManager: $this->keyManager,
+            saltStore: $this->saltStore,
             botDetector: $this->botDetector,
             referrerParser: $this->referrerParser,
             userAgentParser: $this->userAgentParser,

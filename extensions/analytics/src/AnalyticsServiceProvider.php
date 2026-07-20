@@ -33,6 +33,7 @@ use Pulsar\Extension\Analytics\Contracts\SiteRepositoryInterface;
 use Pulsar\Extension\Analytics\Contracts\SiteServiceInterface;
 use Pulsar\Extension\Analytics\Contracts\StatsServiceInterface;
 use Pulsar\Extension\Analytics\Contracts\TrackingServiceInterface;
+use Pulsar\Extension\Analytics\Contracts\VisitorSaltStoreInterface;
 use Pulsar\Extension\Analytics\Dsar\AnalyticsDsarCollector;
 use Pulsar\Extension\Analytics\Dsar\AnalyticsDsarEraser;
 use Pulsar\Extension\Analytics\Internal\Bot\BotDetector;
@@ -50,6 +51,7 @@ use Pulsar\Extension\Analytics\Internal\Repository\DbPageViewRepository;
 use Pulsar\Extension\Analytics\Internal\Repository\DbSessionRepository;
 use Pulsar\Extension\Analytics\Internal\Repository\DbSiteRepository;
 use Pulsar\Extension\Analytics\Internal\Security\AnalyticsKeyManager;
+use Pulsar\Extension\Analytics\Internal\Security\DbVisitorSaltStore;
 use Pulsar\Extension\Analytics\Internal\Service\AggregationService;
 use Pulsar\Extension\Analytics\Internal\Service\AttributionService;
 use Pulsar\Extension\Analytics\Internal\Service\CustomEventService;
@@ -158,6 +160,10 @@ final class AnalyticsServiceProvider implements ServiceProviderInterface
 
     private function registerRepositories(ContainerInterface $container): void
     {
+        $container->bind(VisitorSaltStoreInterface::class, static fn() => new DbVisitorSaltStore(
+            $container->get(ConnectionInterface::class),
+        ));
+
         $container->bind(SiteRepositoryInterface::class, static fn() => new DbSiteRepository(
             $container->get(ConnectionInterface::class),
         ));
@@ -207,6 +213,7 @@ final class AnalyticsServiceProvider implements ServiceProviderInterface
 
         $container->bind(TrackingServiceInterface::class, static fn() => new TrackingService(
             keyManager: $container->get(AnalyticsKeyManager::class),
+            saltStore: $container->get(VisitorSaltStoreInterface::class),
             botDetector: $container->get(BotDetector::class),
             referrerParser: $container->get(ReferrerParser::class),
             userAgentParser: $container->get(UserAgentParser::class),
@@ -405,11 +412,13 @@ final class AnalyticsServiceProvider implements ServiceProviderInterface
         if ($container->has(AnalyticsDsarCollector::class)
             && $container->has(AnalyticsDsarEraser::class)
             && $container->has(AnalyticsKeyManager::class)
+            && $container->has(VisitorSaltStoreInterface::class)
         ) {
             $container->bind(DsarController::class, static fn() => new DsarController(
                 $container->get(AnalyticsDsarCollector::class),
                 $container->get(AnalyticsDsarEraser::class),
                 $container->get(AnalyticsKeyManager::class),
+                $container->get(VisitorSaltStoreInterface::class),
             ));
         }
     }

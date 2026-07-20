@@ -20,6 +20,7 @@ use Pulsar\Extension\Analytics\ImportExport\AnalyticsImportExportProvider;
 use Pulsar\Extension\Analytics\Internal\Scheduler\AggregationJob;
 use Pulsar\Extension\Analytics\Internal\Scheduler\PartitionMaintenanceJob;
 use Pulsar\Extension\Analytics\Internal\Scheduler\RetentionCleanupJob;
+use Pulsar\Extension\Analytics\Internal\Scheduler\VisitorSaltPurgeJob;
 use Pulsar\ImportExport\ImportExportRegistry;
 use Pulsar\Routing\RouterInterface;
 use Pulsar\Scheduler\JobRegistryInterface;
@@ -154,6 +155,14 @@ final readonly class AnalyticsExtension implements
         $registry->register(
             RetentionCleanupJob::class,
             Schedule::dailyAt('02:00'),
+        );
+
+        // Destroy expired visitor salts after the retention window. Runs after
+        // the midnight session-grace window (and the retention cleanup) so the
+        // day/day-1 salts it must keep are never in flight when it fires.
+        $registry->register(
+            VisitorSaltPurgeJob::class,
+            Schedule::dailyAt('03:00'),
         );
 
         $registry->register(
