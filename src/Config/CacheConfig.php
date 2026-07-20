@@ -27,7 +27,7 @@ use function sprintf;
  * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class CacheConfig
+final readonly class CacheConfig implements ReportsUnknownKeys
 {
     /**
      * Top-level keys recognised in config/cache.php.
@@ -360,7 +360,7 @@ final readonly class CacheConfig
 
         foreach (array_keys($data) as $key) {
             if (!in_array($key, self::KNOWN_KEYS, true)) {
-                $unknown[] = 'cache.' . $key;
+                $unknown[] = $key;
             }
         }
 
@@ -373,13 +373,21 @@ final readonly class CacheConfig
 
                 foreach (array_keys($poolData) as $poolKey) {
                     if (!in_array($poolKey, self::KNOWN_POOL_KEYS, true)) {
-                        $unknown[] = "cache.pools.{$poolName}.{$poolKey}";
+                        $unknown[] = "pools.{$poolName}.{$poolKey}";
                     }
                 }
             }
         }
 
         return $unknown;
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
     }
 
     /**

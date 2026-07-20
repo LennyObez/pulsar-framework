@@ -87,4 +87,18 @@ return [
     |
     */
     // 'extensions' => ['enabled' => null],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Strict configuration keys
+    |--------------------------------------------------------------------------
+    |
+    | When an unrecognized key is found in a config file (a typo like
+    | `handler` written as `driver`), Pulsar warns at boot by default. Set
+    | `config.strict_keys` to true — or PULSAR_CONFIG_STRICT=true, ideally
+    | scoped to production — to fail the boot instead, so a misconfiguration
+    | can never silently reach a running system. See ADR-0036.
+    |
+    */
+    // 'config' => ['strict_keys' => false],
 ];

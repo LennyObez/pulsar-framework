@@ -36,7 +36,18 @@ final class ConfigDiagnosticsReporter
         ?ExtensionBootstrap $bootstrap,
         ?LoggerInterface $logger,
     ): void {
-        if ($logger === null || $bootstrap === null) {
+        if ($logger === null) {
+            return;
+        }
+
+        // Unrecognized config keys detected at load time (non-strict mode; strict
+        // mode aborts the boot before we get here). Names the section and key so
+        // a typo is no longer silently dropped to a default.
+        foreach ($configManager?->unknownConfigKeyWarnings() ?? [] as $warning) {
+            $logger->warning($warning);
+        }
+
+        if ($bootstrap === null) {
             return;
         }
 

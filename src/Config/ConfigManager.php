@@ -12,10 +12,12 @@ use Pulsar\Config\Exception\MissingConfigException;
 use Pulsar\View\ViewConfig;
 
 use function array_filter;
+use function array_key_exists;
 use function array_values;
 use function dirname;
 use function is_array;
 use function is_file;
+use function sprintf;
 
 /**
  * Configuration orchestrator.
@@ -43,6 +45,21 @@ final class ConfigManager implements ConfigManagerInterface
 
     private ?Environment $environment = null;
     private ?ConfigRepository $repository = null;
+
+    /**
+     * Whether an unrecognized config key fails the boot (strict) or is only
+     * warned about. Resolved from PULSAR_CONFIG_STRICT / config.strict_keys,
+     * defaulting to warn (see {@see resolveStrictKeys()}). Set during load().
+     */
+    private bool $strictKeys = false;
+
+    /**
+     * Human-readable descriptions of unrecognized config keys found during the
+     * last load(), for a boot-time reporter to log when not in strict mode.
+     *
+     * @var list<string>
+     */
+    private array $unknownKeyWarnings = [];
 
     /**
      * F4.10: extension-registered config loaders. Each entry is
@@ -165,6 +182,9 @@ final class ConfigManager implements ConfigManagerInterface
         $appData = $this->loadConfigFile('app');
         $appConfig = AppConfig::fromArray($appData, $this->environment);
         $this->repository->set($appConfig);
+
+        // Resolve strict-key checking now that app config + environment exist.
+        $this->strictKeys = $this->resolveStrictKeys($appData);
 
         // Load observability config
         $observabilityData = $this->loadConfigFile('observability');
@@ -358,6 +378,11 @@ final class ConfigManager implements ConfigManagerInterface
             $config = $loader->load($data, $this->environment);
             $this->repository->set($config);
         }
+
+        // One chokepoint for unknown-key detection across every loaded section
+        // (framework + extensions): fail closed in strict mode, else stash the
+        // findings for the boot reporter to log once the real logger exists.
+        $this->auditUnknownConfigKeys();
     }
 
     /**
@@ -389,6 +414,103 @@ final class ConfigManager implements ConfigManagerInterface
     public function repository(): ConfigRepository
     {
         return $this->repository ?? throw ConfigException::missingRequired('repository', 'ConfigManager (call load() first)');
+    }
+
+    /**
+     * Descriptions of unrecognized config keys found during the last load(),
+     * empty in strict mode (there they abort the boot instead). A boot-time
+     * reporter logs these once the real logger is available.
+     *
+     * @return list<string>
+     */
+    public function unknownConfigKeyWarnings(): array
+    {
+        return $this->unknownKeyWarnings;
+    }
+
+    /**
+     * Resolve whether unknown config keys fail the boot.
+     *
+     * Precedence: explicit env `PULSAR_CONFIG_STRICT`, then `config.strict_keys`
+     * in config/app.php, then the default — **warn**, not throw.
+     *
+     * Default warn is deliberate for a newly introduced check: shipping strict
+     * on a freshly hand-enumerated key list would turn any missed-but-valid key
+     * (or a legacy extra key in an existing deployment) into a production boot
+     * failure on upgrade. Operators opt into fail-closed — `strict_keys: true`
+     * or `PULSAR_CONFIG_STRICT=true`, ideally scoped to production — once they
+     * trust their config. The default can flip to strict-in-production after the
+     * enumeration has proven itself across a release.
+     *
+     * @param array<string, mixed> $appData
+     */
+    private function resolveStrictKeys(array $appData): bool
+    {
+        $envFlag = $this->environment?->get('PULSAR_CONFIG_STRICT');
+        if ($envFlag !== null && $envFlag !== '') {
+            return $envFlag === 'true' || $envFlag === '1';
+        }
+
+        $section = $appData['config'] ?? null;
+        if (is_array($section) && array_key_exists('strict_keys', $section)) {
+            return (bool) $section['strict_keys'];
+        }
+
+        return false;
+    }
+
+    /**
+     * Sweep every loaded config DTO for unrecognized keys. In strict mode the
+     * aggregated set aborts the boot; otherwise it is stashed for logging.
+     */
+    private function auditUnknownConfigKeys(): void
+    {
+        $this->unknownKeyWarnings = [];
+
+        if ($this->repository === null) {
+            return;
+        }
+
+        $descriptions = [];
+
+        foreach ($this->repository->all() as $config) {
+            if (!$config instanceof ReportsUnknownKeys) {
+                continue;
+            }
+
+            $section = self::sectionLabel($config::class);
+
+            foreach ($config->unknownConfigKeys() as $key) {
+                $descriptions[] = sprintf('config section "%s": unrecognized key "%s" (ignored)', $section, $key);
+            }
+        }
+
+        if ($descriptions === []) {
+            return;
+        }
+
+        if ($this->strictKeys) {
+            throw ConfigException::unknownKeys($descriptions);
+        }
+
+        $this->unknownKeyWarnings = $descriptions;
+    }
+
+    /**
+     * Short, operator-facing label for a config DTO class, e.g.
+     * `Pulsar\Config\SessionConfig` becomes `session`.
+     *
+     * @param class-string $class
+     */
+    private static function sectionLabel(string $class): string
+    {
+        $short = ($pos = strrpos($class, '\\')) === false ? $class : substr($class, $pos + 1);
+
+        if (str_ends_with($short, 'Config')) {
+            $short = substr($short, 0, -6);
+        }
+
+        return strtolower($short);
     }
 
     /**

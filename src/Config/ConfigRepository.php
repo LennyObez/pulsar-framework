@@ -8,6 +8,8 @@ use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Config\Exception\ConfigException;
 
+use function array_values;
+
 /**
  * Typed configuration store.
  *
@@ -60,5 +62,20 @@ final class ConfigRepository
     public function has(string $class): bool
     {
         return isset($this->configs[$class]);
+    }
+
+    /**
+     * Every registered config DTO, in registration order.
+     *
+     * Used by {@see ConfigManager} to sweep for {@see ReportsUnknownKeys}
+     * implementors after loading, so unknown-key detection has one chokepoint
+     * that covers framework and extension config alike.
+     *
+     * @return list<object>
+     */
+    #[NoDiscard]
+    public function all(): array
+    {
+        return array_values($this->configs);
     }
 }
