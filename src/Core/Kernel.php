@@ -28,6 +28,7 @@ use Pulsar\Container\Exception\ContainerException;
 use Pulsar\Container\Exception\NotFoundException;
 use Pulsar\Core\Boot\BuildArtifactVerifier;
 use Pulsar\Core\Boot\CachedRouteReconstructor;
+use Pulsar\Core\Boot\ConfigDiagnosticsReporter;
 use Pulsar\Core\Boot\ExtensionDiscovery;
 use Pulsar\Core\Boot\ExtensionViewPathRegistrar;
 use Pulsar\Core\Boot\ProjectRouteLoader;
@@ -388,6 +389,11 @@ final class Kernel implements KernelInterface
             ? $this->container->get(LoggerInterface::class)
             : null;
         RouteCollisionReporter::report($this->router, $collisionLogger, $debug);
+
+        // Surface config diagnostics (extension load warnings that went to a
+        // NullLogger, and config files for extensions disabled via
+        // extensions.enabled) now that the real logger is wired.
+        ConfigDiagnosticsReporter::report($this->configManager, $this->extensionBootstrap, $collisionLogger);
 
         $this->booted = true;
 
