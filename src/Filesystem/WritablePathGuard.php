@@ -23,13 +23,16 @@ use function resolve_path;
  * sensitive. Rather than write there silently, boot fails loud with an
  * actionable message.
  *
- * Scope: framework STATE only (cache, logs, audit, sessions, feature flags,
- * view cache, the OpenAPI artifact). Public storage disks, CMS media and form
- * uploads are deliberately NOT guarded — serving media from under public/ is a
- * legitimate, documented pattern; those surface through the security-posture
- * check instead. An absolute path outside the project tree (e.g. /mnt/state)
- * passes untouched: the guard rejects containment in the webroot, not mere
- * absoluteness.
+ * Scope: framework STATE written at boot or per request (cache, logs, audit,
+ * sessions, feature flags, the compiled view cache). Public storage disks, CMS
+ * media and form uploads are deliberately NOT guarded — serving those from
+ * under public/ is a legitimate, documented pattern; they surface through the
+ * security-posture check instead. Operator-directed build artifacts produced by
+ * CLI commands (the OpenAPI spec, the integrity manifest) are likewise out of
+ * scope: those are generated on demand to a location the operator chooses, and
+ * an OpenAPI spec is often meant to be served. An absolute path outside the
+ * project tree (e.g. /mnt/state) passes untouched: the guard rejects
+ * containment in the webroot, not mere absoluteness.
  * @api
  */
 #[Api(since: '1.0.0')]

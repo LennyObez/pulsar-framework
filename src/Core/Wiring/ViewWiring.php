@@ -8,6 +8,7 @@ use Pulsar\Api\Internal;
 use Pulsar\Config\AppConfig;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Container\ContainerInterface;
+use Pulsar\Filesystem\WritablePathGuard;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Routing\Router;
@@ -59,8 +60,11 @@ final readonly class ViewWiring implements ServiceWiringInterface
         $config = $repository->get(ViewConfig::class);
         $container->instance(ViewConfig::class, $config);
 
-        // Template cache
-        $cache = new TemplateCache($config->cachePath);
+        // Template cache. The compiled templates are executable PHP written at
+        // runtime, so the path is anchored to the project root and refused if it
+        // resolves inside the document root — the default `var/cache/views` is
+        // relative and would otherwise land compiled code in public/ under FPM.
+        $cache = new TemplateCache(WritablePathGuard::resolveState($config->cachePath, 'view.cache_path'));
         $container->instance(TemplateCache::class, $cache);
 
         // Template compiler
