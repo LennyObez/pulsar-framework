@@ -18,8 +18,11 @@ use function in_array;
  * @api
  */
 #[Api(since: '1.0.0-rc.11')]
-final readonly class RoutingConfig
+final readonly class RoutingConfig implements ReportsUnknownKeys
 {
+    /** Keys recognised in config/routing.php. */
+    private const array KNOWN_KEYS = ['redirect_to_canonical_path'];
+
     /**
      * @param bool $redirectToCanonicalPath When true, a request whose path is
      *     not already the canonical registered form (repeated slashes collapsed,
@@ -30,7 +33,17 @@ final readonly class RoutingConfig
      */
     public function __construct(
         public bool $redirectToCanonicalPath = false,
+        /** @var list<string> */
+        public array $unknownKeys = [],
     ) {}
+
+    /**
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
+    }
 
     /**
      * @param array{
@@ -48,6 +61,7 @@ final readonly class RoutingConfig
 
         return new self(
             redirectToCanonicalPath: $redirect,
+            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
         );
     }
 }

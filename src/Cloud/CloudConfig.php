@@ -6,6 +6,8 @@ namespace Pulsar\Cloud;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Config\ReportsUnknownKeys;
+use Pulsar\Config\UnknownKeys;
 use Pulsar\Support\Coerce;
 
 use function is_array;
@@ -15,8 +17,13 @@ use function is_array;
  * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class CloudConfig
+final readonly class CloudConfig implements ReportsUnknownKeys
 {
+    /** Keys recognised in config/cloud.php. */
+    private const array KNOWN_KEYS = [
+        'default_provider', 'aws', 'azure', 'gcp', 'http_timeout', 'retry_attempts', 'retry_delay',
+    ];
+
     /**
      * @param string                $defaultProvider The default cloud provider ("aws", "gcp", "azure")
      * @param array<string, mixed>  $aws             AWS-specific config
@@ -34,7 +41,17 @@ final readonly class CloudConfig
         public int $httpTimeout = 30,
         public int $retryAttempts = 3,
         public float $retryDelay = 0.5,
+        /** @var list<string> */
+        public array $unknownKeys = [],
     ) {}
+
+    /**
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
+    }
 
     /**
      * @param array{
@@ -62,6 +79,7 @@ final readonly class CloudConfig
             httpTimeout: Coerce::int($data['http_timeout'] ?? null, 30),
             retryAttempts: Coerce::int($data['retry_attempts'] ?? null, 3),
             retryDelay: Coerce::float($data['retry_delay'] ?? null, 0.5),
+            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
         );
     }
 }

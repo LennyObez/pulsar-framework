@@ -12,15 +12,28 @@ use Pulsar\Api\Api;
  * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class SchedulerConfig
+final readonly class SchedulerConfig implements ReportsUnknownKeys
 {
+    /** Keys recognised in config/scheduler.php. */
+    private const array KNOWN_KEYS = ['enabled', 'timezone', 'max_execution_time', 'lock_timeout', 'log_output'];
+
     public function __construct(
         public bool $enabled = false,
         public string $timezone = 'UTC',
         public int $maxExecutionTime = 3600,
         public int $lockTimeout = 300,
         public bool $logOutput = true,
+        /** @var list<string> */
+        public array $unknownKeys = [],
     ) {}
+
+    /**
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
+    }
 
     /**
      * @param array{
@@ -44,6 +57,7 @@ final readonly class SchedulerConfig
             maxExecutionTime: $data['max_execution_time'] ?? 3600,
             lockTimeout: $data['lock_timeout'] ?? 300,
             logOutput: (bool) ($data['log_output'] ?? true),
+            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
         );
     }
 }

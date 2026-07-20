@@ -19,8 +19,16 @@ use function is_string;
  * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class I18nConfig
+final readonly class I18nConfig implements ReportsUnknownKeys
 {
+    /** Keys recognised in config/i18n.php. */
+    private const array KNOWN_KEYS = [
+        'default_locale', 'supported_locales', 'fallback_locales', 'url_strategy', 'catalog_path',
+        'strict_mode', 'regulated', 'localized_slugs', 'default_locale_in_url', 'canonical_redirect',
+        'courtesy_redirect', 'courtesy_fallback_locale', 'negotiate_unprefixed_locale',
+        'max_supported_locales', 'locale_cookie_enabled', 'locale_cookie_name',
+    ];
+
     /**
      * @param list<string> $supportedLocales
      * @param list<string> $fallbackLocales
@@ -58,7 +66,17 @@ final readonly class I18nConfig
         public string $courtesyFallbackLocale = '',
         public bool $localeCookieEnabled = false,
         public string $localeCookieName = 'pulsar_locale',
+        /** @var list<string> */
+        public array $unknownKeys = [],
     ) {}
+
+    /**
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
+    }
 
     /**
      * Build an I18nConfig from a raw config array and environment.
@@ -122,6 +140,7 @@ final readonly class I18nConfig
             courtesyFallbackLocale: Coerce::string($data['courtesy_fallback_locale'] ?? null),
             localeCookieEnabled: (bool) ($data['locale_cookie_enabled'] ?? false),
             localeCookieName: Coerce::string($data['locale_cookie_name'] ?? null, 'pulsar_locale'),
+            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
         );
     }
 

@@ -16,8 +16,14 @@ use function is_array;
  * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class MailConfig
+final readonly class MailConfig implements ReportsUnknownKeys
 {
+    /** Keys recognised in config/mail.php. */
+    private const array KNOWN_KEYS = [
+        'enabled', 'default_driver', 'default_from_address', 'default_from_name', 'default_reply_to',
+        'driver_options', 'encryption_policy', 'hipaa_mode', 'audit_hash_enabled', 'webhooks',
+    ];
+
     /**
      * @param array<string, mixed> $driverOptions Driver-specific configuration (host, port, credentials, etc.)
      */
@@ -32,7 +38,17 @@ final readonly class MailConfig
         public bool $auditHashEnabled = false,
         public array $driverOptions = [],
         public MailWebhookConfig $webhooks = new MailWebhookConfig(),
+        /** @var list<string> */
+        public array $unknownKeys = [],
     ) {}
+
+    /**
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
+    }
 
     /**
      * @param array{
@@ -88,6 +104,7 @@ final readonly class MailConfig
             auditHashEnabled: $auditHashEnabled,
             driverOptions: is_array($driverOptions) ? $driverOptions : [],
             webhooks: MailWebhookConfig::fromArray(is_array($webhooks) ? $webhooks : []),
+            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
         );
     }
 }

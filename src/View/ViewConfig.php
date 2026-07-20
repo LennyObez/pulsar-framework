@@ -6,6 +6,8 @@ namespace Pulsar\View;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Config\ReportsUnknownKeys;
+use Pulsar\Config\UnknownKeys;
 use Pulsar\Support\Coerce;
 
 use function is_array;
@@ -19,8 +21,15 @@ use function is_string;
  * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class ViewConfig
+final readonly class ViewConfig implements ReportsUnknownKeys
 {
+    /** Keys recognised in config/view.php. */
+    private const array KNOWN_KEYS = [
+        'template_paths', 'cache_path', 'auto_escape', 'active_theme', 'php_directive_allowed',
+        'sandbox_mode', 'sandbox_step_limit', 'sandbox_loop_limit', 'sandbox_output_size_limit',
+        'sandbox_wall_clock_check_interval',
+    ];
+
     /**
      * @param list<string> $templatePaths Ordered list of template search directories
      * @param string $cachePath Directory for compiled template cache
@@ -44,7 +53,17 @@ final readonly class ViewConfig
         public int $sandboxLoopLimit = 1_000,
         public int $sandboxOutputSizeLimit = 1_048_576,
         public int $sandboxWallClockCheckInterval = 500,
+        /** @var list<string> */
+        public array $unknownKeys = [],
     ) {}
+
+    /**
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
+    }
 
     /**
      * Build a ViewConfig from a raw config array.
@@ -81,6 +100,7 @@ final readonly class ViewConfig
             sandboxLoopLimit: $loopLimit > 0 ? $loopLimit : 1_000,
             sandboxOutputSizeLimit: $outputLimit > 0 ? $outputLimit : 1_048_576,
             sandboxWallClockCheckInterval: $wallClockInterval > 0 ? $wallClockInterval : 500,
+            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
         );
     }
 

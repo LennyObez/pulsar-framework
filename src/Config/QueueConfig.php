@@ -12,8 +12,14 @@ use Pulsar\Api\Api;
  * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class QueueConfig
+final readonly class QueueConfig implements ReportsUnknownKeys
 {
+    /** Keys recognised in config/queue.php. */
+    private const array KNOWN_KEYS = [
+        'enabled', 'default_queue', 'driver', 'driver_options', 'worker', 'retry',
+        'dead_letter', 'middleware', 'rate_limit',
+    ];
+
     /**
      * @param array<string, mixed> $driverOptions Driver-specific configuration (host, port, credentials, etc.)
      */
@@ -40,7 +46,17 @@ final readonly class QueueConfig
         public bool $rateLimitEnabled = false,
         public int $rateLimitTtlSeconds = 1,
         public int $rateLimitTimeoutMs = 0,
+        /** @var list<string> */
+        public array $unknownKeys = [],
     ) {}
+
+    /**
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
+    }
 
     /**
      * @param array{
@@ -113,6 +129,7 @@ final readonly class QueueConfig
             rateLimitEnabled: (bool) ($rateData['enabled'] ?? false),
             rateLimitTtlSeconds: $rateData['ttl_seconds'] ?? 1,
             rateLimitTimeoutMs: $rateData['timeout_ms'] ?? 0,
+            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
         );
     }
 }

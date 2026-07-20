@@ -12,8 +12,16 @@ use Pulsar\Api\Api;
  * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class RuntimeConfig
+final readonly class RuntimeConfig implements ReportsUnknownKeys
 {
+    /** Keys recognised in config/runtime.php. */
+    private const array KNOWN_KEYS = [
+        'driver', 'host', 'port', 'fiber_concurrency', 'max_requests', 'memory_threshold_mb',
+        'time_limit_seconds', 'max_body_size', 'max_header_size', 'header_timeout_seconds',
+        'body_timeout_seconds', 'keep_alive', 'keep_alive_timeout', 'drain_timeout_seconds',
+        'add_date_header', 'health_endpoint',
+    ];
+
     public function __construct(
         public string $host = '127.0.0.1',
         public int $port = 8080,
@@ -31,7 +39,17 @@ final readonly class RuntimeConfig
         public string $driver = 'auto',
         public int $drainTimeoutSeconds = 30,
         public bool $healthEndpoint = true,
+        /** @var list<string> */
+        public array $unknownKeys = [],
     ) {}
+
+    /**
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
+    }
 
     /**
      * @param array{
@@ -73,6 +91,7 @@ final readonly class RuntimeConfig
             driver: $environment->get('RUNTIME_DRIVER') ?? $data['driver'] ?? 'auto',
             drainTimeoutSeconds: self::envInt($environment, 'RUNTIME_DRAIN_TIMEOUT_SECONDS') ?? $data['drain_timeout_seconds'] ?? 30,
             healthEndpoint: $data['health_endpoint'] ?? true,
+            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
         );
     }
 

@@ -6313,7 +6313,8 @@
                         "array $azure",
                         "int $httpTimeout",
                         "int $retryAttempts",
-                        "float $retryDelay"
+                        "float $retryDelay",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -6324,6 +6325,11 @@
                     ],
                     "return": "Pulsar\\Cloud\\CloudConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -8455,7 +8461,8 @@
                         "int $paginationMaxSize",
                         "string $versioningStrategy",
                         "Pulsar\\Api\\Resource\\ComplexityLimits $complexityLimits",
-                        "bool $entitySerializationBanEnabled"
+                        "bool $entitySerializationBanEnabled",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -8466,6 +8473,11 @@
                     ],
                     "return": "Pulsar\\Config\\ApiConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -8481,7 +8493,8 @@
                         "bool $debug",
                         "string $timezone",
                         "string $locale",
-                        "Pulsar\\Config\\AppSignature $signature"
+                        "Pulsar\\Config\\AppSignature $signature",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -8493,6 +8506,11 @@
                     ],
                     "return": "Pulsar\\Config\\AppConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -8643,7 +8661,8 @@
                         "?string $bankName",
                         "?string $logoPath",
                         "?string $peppolId",
-                        "?string $peppolScheme"
+                        "?string $peppolScheme",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -8672,6 +8691,11 @@
                     "static": false
                 },
                 "sellerParty": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
+                },
+                "unknownConfigKeys": {
                     "params": [],
                     "return": "array",
                     "static": false
@@ -9086,7 +9110,8 @@
                         "Pulsar\\Database\\Routing\\ReadWriteConfig $readWrite",
                         "Pulsar\\Database\\Failover\\FailoverConfig $failover",
                         "Pulsar\\Database\\Cache\\QueryCacheConfig $queryCache",
-                        "Pulsar\\Database\\Monitor\\MonitorConfig $monitor"
+                        "Pulsar\\Database\\Monitor\\MonitorConfig $monitor",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -9106,6 +9131,11 @@
                     ],
                     "return": "Pulsar\\Config\\DatabaseConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -9121,7 +9151,8 @@
                         "int $maxUploadSizeMb",
                         "bool $http3Enabled",
                         "int $http3AltSvcMaxAge",
-                        "array $checks"
+                        "array $checks",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -9146,6 +9177,11 @@
                         "string $name"
                     ],
                     "return": "bool",
+                    "static": false
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
                     "static": false
                 }
             },
@@ -9368,7 +9404,8 @@
                 "__construct": {
                     "params": [
                         "bool $enabled",
-                        "Pulsar\\Config\\StormProtectionConfig $stormProtection"
+                        "Pulsar\\Config\\StormProtectionConfig $stormProtection",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -9380,6 +9417,11 @@
                     ],
                     "return": "Pulsar\\Config\\EventConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -9453,7 +9495,8 @@
                         "string $filePath",
                         "bool $auditEvaluations",
                         "bool $defaultState",
-                        "array $flags"
+                        "array $flags",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -9465,6 +9508,11 @@
                     ],
                     "return": "Pulsar\\Config\\FeatureFlagConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -9548,7 +9596,8 @@
                         "bool $courtesyRedirect",
                         "string $courtesyFallbackLocale",
                         "bool $localeCookieEnabled",
-                        "string $localeCookieName"
+                        "string $localeCookieName",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -9560,6 +9609,11 @@
                     ],
                     "return": "Pulsar\\Config\\I18nConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -9574,7 +9628,8 @@
                         "string $manifestPath",
                         "Pulsar\\Config\\IntegrityPolicyMode $mode",
                         "array $include",
-                        "array $exclude"
+                        "array $exclude",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -9586,6 +9641,11 @@
                     ],
                     "return": "Pulsar\\Config\\IntegrityConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -9648,7 +9708,8 @@
                         "bool $hipaaMode",
                         "bool $auditHashEnabled",
                         "array $driverOptions",
-                        "Pulsar\\Mail\\Webhook\\MailWebhookConfig $webhooks"
+                        "Pulsar\\Mail\\Webhook\\MailWebhookConfig $webhooks",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -9660,6 +9721,11 @@
                     ],
                     "return": "Pulsar\\Config\\MailConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -9817,7 +9883,8 @@
                         "?string $unsubscribeUrlPattern",
                         "?string $fcmServerKey",
                         "?string $fcmProjectId",
-                        "?string $fcmOAuthToken"
+                        "?string $fcmOAuthToken",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -9829,6 +9896,11 @@
                     ],
                     "return": "Pulsar\\Config\\NotificationConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -9846,7 +9918,8 @@
                         "Pulsar\\Config\\TracingConfig $tracing",
                         "Pulsar\\Config\\ErrorTrackingConfig $errorTracking",
                         "Pulsar\\Config\\AuditConfig $audit",
-                        "Pulsar\\Config\\ComplianceLoggingConfig $complianceLogging"
+                        "Pulsar\\Config\\ComplianceLoggingConfig $complianceLogging",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -9858,6 +9931,11 @@
                     ],
                     "return": "Pulsar\\Config\\ObservabilityConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -9926,7 +10004,8 @@
                         "int $preventDuplicatesTtlSeconds",
                         "bool $rateLimitEnabled",
                         "int $rateLimitTtlSeconds",
-                        "int $rateLimitTimeoutMs"
+                        "int $rateLimitTimeoutMs",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -9938,6 +10017,11 @@
                     ],
                     "return": "Pulsar\\Config\\QueueConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -10038,7 +10122,8 @@
                         "bool $enabled",
                         "Pulsar\\Config\\RetryConfig $retry",
                         "Pulsar\\Config\\CircuitBreakerConfig $circuitBreaker",
-                        "Pulsar\\Config\\HealthCheckConfig $healthCheck"
+                        "Pulsar\\Config\\HealthCheckConfig $healthCheck",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -10050,6 +10135,11 @@
                     ],
                     "return": "Pulsar\\Config\\ResilienceConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -10085,7 +10175,8 @@
             "signatures": {
                 "__construct": {
                     "params": [
-                        "bool $redirectToCanonicalPath"
+                        "bool $redirectToCanonicalPath",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -10097,6 +10188,11 @@
                     ],
                     "return": "Pulsar\\Config\\RoutingConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -10122,7 +10218,8 @@
                         "bool $addDateHeader",
                         "string $driver",
                         "int $drainTimeoutSeconds",
-                        "bool $healthEndpoint"
+                        "bool $healthEndpoint",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -10134,6 +10231,11 @@
                     ],
                     "return": "Pulsar\\Config\\RuntimeConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -10148,7 +10250,8 @@
                         "string $timezone",
                         "int $maxExecutionTime",
                         "int $lockTimeout",
-                        "bool $logOutput"
+                        "bool $logOutput",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -10160,6 +10263,11 @@
                     ],
                     "return": "Pulsar\\Config\\SchedulerConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -10343,7 +10451,8 @@
                 "__construct": {
                     "params": [
                         "string $default",
-                        "array $disks"
+                        "array $disks",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -10355,6 +10464,11 @@
                     ],
                     "return": "Pulsar\\Config\\StorageConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -10421,7 +10535,8 @@
                         "int $recycleTimeLimitSeconds",
                         "int $stuckJobTimeoutSeconds",
                         "int $stuckJobCheckIntervalSeconds",
-                        "bool $stuckJobMoveToDeadLetter"
+                        "bool $stuckJobMoveToDeadLetter",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -10433,6 +10548,11 @@
                     ],
                     "return": "Pulsar\\Config\\SupervisorConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -10450,7 +10570,8 @@
                         "string $pathPrefix",
                         "?string $defaultTenant",
                         "Pulsar\\Config\\TenantDatabaseConfig $database",
-                        "array $tenants"
+                        "array $tenants",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -10462,6 +10583,11 @@
                     ],
                     "return": "Pulsar\\Config\\TenancyConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -53978,7 +54104,8 @@
                         "int $sandboxStepLimit",
                         "int $sandboxLoopLimit",
                         "int $sandboxOutputSizeLimit",
-                        "int $sandboxWallClockCheckInterval"
+                        "int $sandboxWallClockCheckInterval",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -53989,6 +54116,11 @@
                     ],
                     "return": "Pulsar\\View\\ViewConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []

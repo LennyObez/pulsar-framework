@@ -16,8 +16,14 @@ use function is_string;
  * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class NotificationConfig
+final readonly class NotificationConfig implements ReportsUnknownKeys
 {
+    /** Keys recognised in config/notification.php. */
+    private const array KNOWN_KEYS = [
+        'enabled', 'default_channels', 'regulated', 'audit_hash_enabled', 'rate_limit_per_minute',
+        'unsubscribe_url_pattern', 'fcm_project_id', 'fcm_server_key', 'fcm_oauth_token',
+    ];
+
     /**
      * @param list<NotificationChannelType> $defaultChannels Default channels when notification does not specify via()
      * @param string|null $unsubscribeUrlPattern URL pattern with {notifiable_id} and {channel} placeholders for RFC 8058 headers
@@ -35,7 +41,17 @@ final readonly class NotificationConfig
         public ?string $fcmServerKey = null,
         public ?string $fcmProjectId = null,
         public ?string $fcmOAuthToken = null,
+        /** @var list<string> */
+        public array $unknownKeys = [],
     ) {}
+
+    /**
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
+    }
 
     /**
      * @param array{
@@ -99,6 +115,7 @@ final readonly class NotificationConfig
             fcmServerKey: $fcmKeyEnv ?? Coerce::nullableString($data['fcm_server_key'] ?? null),
             fcmProjectId: $fcmProjectEnv ?? Coerce::nullableString($data['fcm_project_id'] ?? null),
             fcmOAuthToken: $fcmTokenEnv ?? Coerce::nullableString($data['fcm_oauth_token'] ?? null),
+            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
         );
     }
 }

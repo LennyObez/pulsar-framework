@@ -14,14 +14,27 @@ use Pulsar\Api\Api;
  * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class ResilienceConfig
+final readonly class ResilienceConfig implements ReportsUnknownKeys
 {
+    /** Keys recognised in config/resilience.php. */
+    private const array KNOWN_KEYS = ['enabled', 'circuit_breaker', 'retry', 'health_check'];
+
     public function __construct(
         public bool $enabled = false,
         public RetryConfig $retry = new RetryConfig(),
         public CircuitBreakerConfig $circuitBreaker = new CircuitBreakerConfig(),
         public HealthCheckConfig $healthCheck = new HealthCheckConfig(),
+        /** @var list<string> */
+        public array $unknownKeys = [],
     ) {}
+
+    /**
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
+    }
 
     /**
      * @param array{
@@ -43,6 +56,7 @@ final readonly class ResilienceConfig
             retry: RetryConfig::fromArray($data['retry'] ?? []),
             circuitBreaker: CircuitBreakerConfig::fromArray($data['circuit_breaker'] ?? []),
             healthCheck: HealthCheckConfig::fromArray($data['health_check'] ?? []),
+            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
         );
     }
 }
