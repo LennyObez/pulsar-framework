@@ -55,6 +55,16 @@ final class ExtensionBootstrap
     private array $loadWarnings = [];
 
     /**
+     * Names of extensions found on disk but excluded by the enabled filter,
+     * from the last loadFromPaths() call. Distinct from a load failure: these
+     * were deliberately turned off via extensions.enabled. Surfaced so boot
+     * diagnostics can relate a lingering config/<ext>.php to its off switch.
+     *
+     * @var list<string>
+     */
+    private array $disabledByFilter = [];
+
+    /**
      * When non-null, only extensions whose names appear in this list are loaded.
      * When null (default), all discovered extensions are loaded.
      *
@@ -109,6 +119,7 @@ final class ExtensionBootstrap
     public function loadFromPaths(array $paths): void
     {
         $this->loadWarnings = [];
+        $this->disabledByFilter = [];
 
         try {
             $manifests = $this->loader->discover($paths);
@@ -137,6 +148,8 @@ final class ExtensionBootstrap
                 $manifests,
                 static fn(ExtensionManifest $m): bool => in_array($m->name, $enabledFilter, true),
             ));
+
+            $this->disabledByFilter = $excluded;
 
             if ($excluded !== []) {
                 $warning = sprintf(
@@ -246,6 +259,17 @@ final class ExtensionBootstrap
     public function getLoadWarnings(): array
     {
         return $this->loadWarnings;
+    }
+
+    /**
+     * Names of extensions found on disk but turned off via extensions.enabled
+     * during the last loadFromPaths() call.
+     *
+     * @return list<string>
+     */
+    public function disabledByConfig(): array
+    {
+        return $this->disabledByFilter;
     }
 
     /**
