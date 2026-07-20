@@ -71,11 +71,15 @@ Sinks are output destinations implementing `LogSinkInterface`:
 
 ### FileSink
 
-Appends JSON lines to a file. Creates the directory if missing. Uses `LOCK_EX` for concurrent safety.
+Appends JSON lines to a file. Creates the directory if missing (mode `0o750`, files `0o640` — logs routinely carry incidental PII/PHI). Uses `LOCK_EX` for concurrent safety.
 
 ```php
 $sink = new FileSink('/var/logs/app.log');
 ```
+
+`FileSink` **appends only — it never rotates, truncates, or compresses**. Left unmanaged, the target file grows without bound and eventually exhausts the volume. Rotation is an operating-system concern by design: it lets the platform's own tooling own retention, compression, and post-rotate signalling rather than baking a second-rate rotator into the framework's hot path. Use `logrotate` (or your platform equivalent — `newsyslog`, journald, a sidecar) in production.
+
+A ready-to-use sample ships at [`resources/deploy/logrotate/pulsar`](../resources/deploy/logrotate/pulsar): copy it to `/etc/logrotate.d/pulsar`, adjust the path glob and `su` owner to match your deployment, and it rotates daily with 14 compressed generations. Because `FileSink` reopens the path on every write (it holds no long-lived handle), plain `copytruncate` is unnecessary — a rotated-away file is recreated on the next log line.
 
 ### StreamSink
 

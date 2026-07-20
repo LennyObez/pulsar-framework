@@ -1,0 +1,42 @@
+# Pulsar log rotation — sample logrotate(8) profile.
+#
+# Pulsar's FileSink appends JSON lines and never rotates on its own (see
+# docs/logging.md). This profile hands retention to the OS. Install it as:
+#
+#   sudo cp resources/deploy/logrotate/pulsar /etc/logrotate.d/pulsar
+#   sudo chown root:root /etc/logrotate.d/pulsar
+#   sudo chmod 0644 /etc/logrotate.d/pulsar
+#
+# Then adjust the path glob and the `su` line to match your deployment
+# (the user/group that owns var/logs). Test without applying via:
+#
+#   sudo logrotate --debug /etc/logrotate.d/pulsar
+#
+# Point this at your project's writable log directory. Pulsar resolves
+# `logging.channels.*.path` (default var/logs/*.log) under the project root,
+# NOT the document root — keep logs outside the webroot.
+/srv/pulsar/var/logs/*.log {
+    # Rotate once a day; a size floor avoids rotating near-empty files.
+    daily
+    minsize 1M
+
+    # Keep 14 rotated generations, compressed. gzip is used by default;
+    # switch to `compresscmd /usr/bin/zstd` + `compressext .zst` if zstd is
+    # available and you want faster, smaller archives.
+    rotate 14
+    compress
+    delaycompress
+
+    # FileSink recreates the log on the next write (it opens the path per
+    # write and holds no long-lived handle), so we neither need copytruncate
+    # nor a post-rotate signal. missingok tolerates a not-yet-created log;
+    # notifempty skips rotation when nothing was logged.
+    missingok
+    notifempty
+
+    # Recreate the rotated-away file with the same restrictive mode FileSink
+    # applies (owner rw, group r, world none). Set su to the account that
+    # runs PHP-FPM / the worker so the recreated file stays writable by it.
+    create 0640 www-data www-data
+    su www-data www-data
+}
