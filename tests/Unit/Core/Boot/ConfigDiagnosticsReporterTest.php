@@ -13,9 +13,13 @@ use Pulsar\Core\Boot\ConfigDiagnosticsReporter;
 use Pulsar\Extensibility\ExtensionBootstrap;
 use Stringable;
 
+use function basename;
 use function bin2hex;
+use function dirname;
 use function file_put_contents;
+use function glob;
 use function implode;
+use function in_array;
 use function json_encode;
 use function mkdir;
 use function random_bytes;
@@ -107,6 +111,67 @@ final class ConfigDiagnosticsReporterTest extends TestCase
         ConfigDiagnosticsReporter::report($this->configManager(), $this->bootstrapWithCmsDisabled(), null);
 
         self::assertSame([], $this->warnings);
+    }
+
+    #[Test]
+    public function warnsAboutAConfigFileWithNoConsumer(): void
+    {
+        // A basename that is neither a shipped section nor any extension: stale
+        // file, or config for an extension that was never installed.
+        file_put_contents($this->projectRoot . '/config/zqwidgets.php', "<?php return [];\n");
+
+        ConfigDiagnosticsReporter::report(
+            $this->configManager(),
+            $this->bootstrapWithCmsDisabled(),
+            $this->collectingLogger(),
+        );
+
+        $hit = false;
+        foreach ($this->warnings as $w) {
+            if (str_contains($w, 'config/zqwidgets.php') && str_contains($w, 'not read by any')) {
+                $hit = true;
+            }
+        }
+
+        self::assertTrue($hit, 'expected an orphan warning for config/zqwidgets.php. Got: ' . implode(' | ', $this->warnings));
+        @unlink($this->projectRoot . '/config/zqwidgets.php');
+    }
+
+    #[Test]
+    public function doesNotFlagAKnownFrameworkConfigAsOrphaned(): void
+    {
+        file_put_contents($this->projectRoot . '/config/app.php', "<?php return [];\n");
+
+        ConfigDiagnosticsReporter::report(
+            $this->configManager(),
+            $this->bootstrapWithCmsDisabled(),
+            $this->collectingLogger(),
+        );
+
+        foreach ($this->warnings as $w) {
+            self::assertStringNotContainsString('config/app.php', $w);
+        }
+        @unlink($this->projectRoot . '/config/app.php');
+    }
+
+    #[Test]
+    public function everyShippedConfigFileIsAKnownSection(): void
+    {
+        // Drift guard: keeps KNOWN_CONFIG_SECTIONS complete so a newly shipped
+        // config never falsely trips (nor silently escapes) the orphan check.
+        $known = ConfigDiagnosticsReporter::knownConfigSections();
+        $repoConfig = dirname(__DIR__, 4) . '/config';
+        self::assertDirectoryExists($repoConfig);
+
+        $missing = [];
+        foreach (glob($repoConfig . '/*.php') ?: [] as $file) {
+            $basename = basename($file, '.php');
+            if (!in_array($basename, $known, true)) {
+                $missing[] = $basename;
+            }
+        }
+
+        self::assertSame([], $missing, 'Shipped config files not in KNOWN_CONFIG_SECTIONS: ' . implode(', ', $missing));
     }
 
     private function configManager(): ConfigManager
