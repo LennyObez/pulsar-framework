@@ -17,6 +17,11 @@ final readonly class PrivacyConfig
      * @param bool $respectDnt When true, skip tracking for visitors with DNT header set
      * @param bool $anonymizeReferrer When true, strip query strings from referrer URLs
      * @param bool $requireConsent When true, check ConsentManagerInterface before tracking
+     * @param int $visitorSaltRetentionDays How many days of per-day visitor salts to keep
+     *                                       before {@see \Pulsar\Extension\Analytics\Internal\Scheduler\VisitorSaltPurgeJob}
+     *                                       destroys them. Floored at 2 by the job (today + yesterday
+     *                                       for midnight session grace). Smaller = stronger forward
+     *                                       secrecy; each purged day's hashes become irreversible.
      *
      * GDPR-DEFAULT (external audit): `requireConsent` defaults to true. The
      * extension advertises GDPR / ePrivacy compliance, and a default of
@@ -30,6 +35,7 @@ final readonly class PrivacyConfig
         public bool $respectDnt = true,
         public bool $anonymizeReferrer = true,
         public bool $requireConsent = true,
+        public int $visitorSaltRetentionDays = 2,
     ) {}
 
     /**
@@ -37,6 +43,7 @@ final readonly class PrivacyConfig
      *     respect_dnt?: bool|int|string,
      *     anonymize_referrer?: bool|int|string,
      *     require_consent?: bool|int|string,
+     *     visitor_salt_retention_days?: int|string,
      * } $data
      */
     public static function fromArray(array $data): self
@@ -45,6 +52,7 @@ final readonly class PrivacyConfig
             respectDnt: (bool) ($data['respect_dnt'] ?? true),
             anonymizeReferrer: (bool) ($data['anonymize_referrer'] ?? true),
             requireConsent: (bool) ($data['require_consent'] ?? true),
+            visitorSaltRetentionDays: (int) ($data['visitor_salt_retention_days'] ?? 2),
         );
     }
 }

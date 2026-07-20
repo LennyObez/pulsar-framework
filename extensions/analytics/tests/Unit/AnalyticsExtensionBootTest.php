@@ -11,6 +11,7 @@ use Pulsar\Container\ContainerInterface;
 use Pulsar\Extension\Analytics\AnalyticsExtension;
 use Pulsar\Extension\Analytics\AnalyticsServiceProvider;
 use Pulsar\Extension\Analytics\Config\AnalyticsConfig;
+use Pulsar\Extension\Analytics\Internal\Scheduler\VisitorSaltPurgeJob;
 use Pulsar\Routing\RouterInterface;
 use Pulsar\Scheduler\JobRegistryInterface;
 
@@ -192,7 +193,8 @@ final class AnalyticsExtensionBootTest extends TestCase
 
         $this->ext->postBoot($container);
 
-        self::assertCount(3, $registered);
+        self::assertCount(4, $registered);
+        self::assertContains(VisitorSaltPurgeJob::class, $registered);
     }
 
     #[Test]

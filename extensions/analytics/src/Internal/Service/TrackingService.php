@@ -15,6 +15,7 @@ use Pulsar\Extension\Analytics\Contracts\GoalServiceInterface;
 use Pulsar\Extension\Analytics\Contracts\PageViewRepositoryInterface;
 use Pulsar\Extension\Analytics\Contracts\SiteRepositoryInterface;
 use Pulsar\Extension\Analytics\Contracts\TrackingServiceInterface;
+use Pulsar\Extension\Analytics\Contracts\VisitorSaltStoreInterface;
 use Pulsar\Extension\Analytics\Domain\CustomEvent;
 use Pulsar\Extension\Analytics\Domain\GeoInfo;
 use Pulsar\Extension\Analytics\Domain\PageView;
@@ -53,6 +54,7 @@ final readonly class TrackingService implements TrackingServiceInterface
 
     public function __construct(
         private AnalyticsKeyManager $keyManager,
+        private VisitorSaltStoreInterface $saltStore,
         private BotDetector $botDetector,
         private ReferrerParser $referrerParser,
         private UserAgentParser $userAgentParser,
@@ -66,6 +68,32 @@ final readonly class TrackingService implements TrackingServiceInterface
         private ?ConsentManagerInterface $consentManager = null,
         private ?QueueManager $queueManager = null,
     ) {}
+
+    /**
+     * Resolve today's visitor id, yesterday's (only if its salt still exists),
+     * and today's salt — all keyed by disposable per-day salts rather than a
+     * stable master-derived key, so a purged day's hashes cannot be recomputed.
+     *
+     * Yesterday is null once its salt has been purged: the midnight session
+     * grace then simply does not apply. It never fabricates a salt for a day
+     * whose salt was deliberately destroyed.
+     *
+     * @return array{VisitorId, ?VisitorId, string} [today, yesterdayOrNull, todaySalt]
+     */
+    private function resolveVisitorIds(string $ip, string $userAgent): array
+    {
+        $todayDay = $this->keyManager->utcDayNumber();
+        $todaySalt = $this->saltStore->saltForDay($todayDay);
+        $visitorId = VisitorId::generate($ip, $userAgent, $todaySalt, $todayDay);
+
+        $yesterdayDay = $this->keyManager->utcDayNumber(1);
+        $yesterdaySalt = $this->saltStore->existingSaltForDay($yesterdayDay);
+        $yesterdayVisitorId = $yesterdaySalt !== null
+            ? VisitorId::generate($ip, $userAgent, $yesterdaySalt, $yesterdayDay)
+            : null;
+
+        return [$visitorId, $yesterdayVisitorId, $todaySalt];
+    }
 
     #[Override]
     public function trackPageView(ServerRequestInterface $request, array $payload): void
@@ -101,19 +129,14 @@ final readonly class TrackingService implements TrackingServiceInterface
 
         $now = new DateTimeImmutable();
 
-        $key = $this->keyManager->visitorKey();
-        $todayDay = $this->keyManager->utcDayNumber();
-        $visitorId = VisitorId::generate($ip, $userAgent, $key, $todayDay);
-
-        $yesterdayDay = $this->keyManager->utcDayNumber(1);
-        $yesterdayVisitorId = VisitorId::generate($ip, $userAgent, $key, $yesterdayDay);
+        [$visitorId, $yesterdayVisitorId, $todaySalt] = $this->resolveVisitorIds($ip, $userAgent);
 
         $session = $this->sessionResolver->resolve(
             $visitorId,
             $now,
             $this->extractPathname($url),
             $site->id,
-            $key,
+            $todaySalt,
             $yesterdayVisitorId,
         );
 
@@ -210,20 +233,15 @@ final readonly class TrackingService implements TrackingServiceInterface
 
         $now = new DateTimeImmutable();
 
-        $key = $this->keyManager->visitorKey();
-        $todayDay = $this->keyManager->utcDayNumber();
-        $visitorId = VisitorId::generate($ip, $userAgent, $key, $todayDay);
+        [$visitorId, $yesterdayVisitorId, $todaySalt] = $this->resolveVisitorIds($ip, $userAgent);
         $url = self::str($payload, 'url');
-
-        $yesterdayDay = $this->keyManager->utcDayNumber(1);
-        $yesterdayVisitorId = VisitorId::generate($ip, $userAgent, $key, $yesterdayDay);
 
         $session = $this->sessionResolver->resolve(
             $visitorId,
             $now,
             $this->extractPathname($url),
             $site->id,
-            $key,
+            $todaySalt,
             $yesterdayVisitorId,
         );
 

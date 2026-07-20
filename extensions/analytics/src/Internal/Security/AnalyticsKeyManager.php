@@ -12,9 +12,14 @@ use Pulsar\Security\Crypto\KeyProviderInterface;
 /**
  * Analytics-specific key derivation manager.
  *
- * Derives a single stable visitor hashing key from the application MasterKey.
- * Daily uniqueness is achieved by including the UTC day number in the hash
- * input (see VisitorId::generate), not by rotating subkeys.
+ * Provides the STABLE consent-persistence key and the UTC day numbers.
+ *
+ * Visitor TRACKING no longer uses this stable key: it is keyed by disposable
+ * per-day salts (see VisitorSaltStoreInterface / DbVisitorSaltStore) so that a
+ * purged day's hashes become irreversible (forward secrecy). The stable key
+ * derived here backs only the consent hash, which must persist across days —
+ * a visitor's recorded consent choice has to remain re-identifiable to be
+ * honored, so it deliberately does not rotate.
  *
  * SubkeyID: 20, Context: 'anal_vis' (8 bytes per libsodium KDF requirement).
  */
@@ -29,12 +34,12 @@ final readonly class AnalyticsKeyManager
     ) {}
 
     /**
-     * Derive the visitor hashing key.
+     * Derive the stable consent-persistence key.
      *
-     * A single deterministic key is used for all days. Daily rotation is
-     * handled by including the UTC day number in the HMAC input, ensuring
-     * visitor hashes never repeat across days while keeping the key stable
-     * for midnight grace-period lookups.
+     * A single deterministic key, stable across days on purpose: it backs the
+     * consent hash, and a visitor's consent choice must stay re-identifiable to
+     * be honored. Visitor tracking does NOT use this — it uses disposable
+     * per-day salts for forward secrecy (see VisitorSaltStoreInterface).
      */
     public function visitorKey(): string
     {
