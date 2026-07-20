@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Container\Container;
 use Pulsar\Core\Wiring\ViewWiring;
+use Pulsar\Filesystem\Exception\UnsafeWritablePathException;
 use Pulsar\Http\Message\Response;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
@@ -91,6 +92,43 @@ final class ViewWiringTest extends TestCase
         // CLI commands
         self::assertTrue($container->has(ViewCompileCommand::class));
         self::assertTrue($container->has(PlaygroundServeCommand::class));
+    }
+
+    #[Test]
+    public function wireRefusesAViewCachePathInsideTheDocumentRoot(): void
+    {
+        // Compiled templates are executable PHP; a cache_path resolving under
+        // public/ must fail closed at boot, not silently write code to the webroot.
+        $base = sys_get_temp_dir() . '/pulsar_viewguard_' . bin2hex(random_bytes(8));
+        @mkdir($base . '/public', 0o750, true);
+        @mkdir($base . '/config', 0o750, true);
+        $previous = getenv('PULSAR_BASE_PATH');
+        putenv('PULSAR_BASE_PATH=' . $base);
+
+        file_put_contents($base . '/config/app.php', '<?php return ["name" => "Test", "env" => "testing"];');
+        file_put_contents($base . '/config/observability.php', '<?php return ["logging" => ["default_channel" => "file", "level" => "debug", "channels" => []]];');
+        file_put_contents($base . '/config/security.php', '<?php return ["session" => [], "csrf" => [], "headers" => [], "rate_limit" => []];');
+        file_put_contents($base . '/config/view.php', '<?php return ["template_paths" => [], "cache_path" => "public/compiled"];');
+
+        $configManager = new ConfigManager($base . '/config');
+        $configManager->load();
+
+        try {
+            $this->expectException(UnsafeWritablePathException::class);
+            new ViewWiring()->wire(
+                new Container(),
+                $configManager,
+                new MiddlewarePipeline(new Container()),
+                new MiddlewareRegistry(),
+                new Router(),
+            );
+        } finally {
+            if ($previous === false) {
+                putenv('PULSAR_BASE_PATH');
+            } else {
+                putenv('PULSAR_BASE_PATH=' . $previous);
+            }
+        }
     }
 
     #[Test]
