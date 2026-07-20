@@ -18,8 +18,13 @@ use function is_array;
  * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class ApiConfig
+final readonly class ApiConfig implements ReportsUnknownKeys
 {
+    /** Keys recognised in config/api.php. */
+    private const array KNOWN_KEYS = [
+        'default_format', 'pagination', 'versioning_strategy', 'complexity_limits', 'entity_serialization_ban',
+    ];
+
     public function __construct(
         public string $defaultFormat,
         public string $paginationType,
@@ -28,7 +33,17 @@ final readonly class ApiConfig
         public string $versioningStrategy,
         public ComplexityLimits $complexityLimits,
         public bool $entitySerializationBanEnabled,
+        /** @var list<string> */
+        public array $unknownKeys = [],
     ) {}
+
+    /**
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
+    }
 
     /**
      * Build from the raw API config array.
@@ -65,6 +80,7 @@ final readonly class ApiConfig
             versioningStrategy: Coerce::string($data['versioning_strategy'] ?? null, 'url'),
             complexityLimits: ComplexityLimits::fromArray($complexityLimitsData),
             entitySerializationBanEnabled: (bool) ($data['entity_serialization_ban'] ?? true),
+            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
         );
     }
 }

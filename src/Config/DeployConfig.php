@@ -16,8 +16,11 @@ use function is_string;
  * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class DeployConfig
+final readonly class DeployConfig implements ReportsUnknownKeys
 {
+    /** Keys recognised in config/deploy.php. */
+    private const array KNOWN_KEYS = ['trusted_proxies', 'request_limits', 'http3', 'checks'];
+
     /** Default check configuration used when no explicit config is provided. */
     private const array DEFAULT_CHECKS = [
         'debug-mode' => ['enabled' => true, 'severity' => 'fail'],
@@ -47,7 +50,17 @@ final readonly class DeployConfig
         public bool $http3Enabled = false,
         public int $http3AltSvcMaxAge = 86400,
         public array $checks = self::DEFAULT_CHECKS,
+        /** @var list<string> */
+        public array $unknownKeys = [],
     ) {}
+
+    /**
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
+    }
 
     /**
      * Get the configuration for a specific check.
@@ -97,6 +110,7 @@ final readonly class DeployConfig
             http3Enabled: (bool) ($http3['enabled'] ?? false),
             http3AltSvcMaxAge: $http3['alt_svc_max_age'] ?? 86400,
             checks: self::parseChecks($data['checks'] ?? [], $environment),
+            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
         );
     }
 

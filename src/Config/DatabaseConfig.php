@@ -25,8 +25,13 @@ use function sprintf;
  * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class DatabaseConfig
+final readonly class DatabaseConfig implements ReportsUnknownKeys
 {
+    /** Keys recognised in config/database.php. */
+    private const array KNOWN_KEYS = [
+        'default', 'connections', 'read_write', 'pool', 'query_cache', 'migrations', 'failover', 'monitor',
+    ];
+
     /**
      * @param array<string, ConnectionConfig> $connections Keyed by connection name
      */
@@ -40,7 +45,17 @@ final readonly class DatabaseConfig
         public FailoverConfig $failover = new FailoverConfig(),
         public QueryCacheConfig $queryCache = new QueryCacheConfig(),
         public MonitorConfig $monitor = new MonitorConfig(),
+        /** @var list<string> */
+        public array $unknownKeys = [],
     ) {}
+
+    /**
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
+    }
 
     /**
      * Build from the raw database config array and environment.
@@ -101,6 +116,7 @@ final readonly class DatabaseConfig
             failover: $failoverData !== [] ? FailoverConfig::fromArray($failoverData) : new FailoverConfig(),
             queryCache: $queryCacheData !== [] ? QueryCacheConfig::fromArray($queryCacheData) : new QueryCacheConfig(),
             monitor: $monitorData !== [] ? MonitorConfig::fromArray($monitorData) : new MonitorConfig(),
+            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
         );
     }
 

@@ -12,8 +12,11 @@ use Pulsar\Api\Api;
  * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class IntegrityConfig
+final readonly class IntegrityConfig implements ReportsUnknownKeys
 {
+    /** Keys recognised in config/integrity.php. */
+    private const array KNOWN_KEYS = ['enabled', 'manifest_path', 'mode', 'include', 'exclude'];
+
     /**
      * @param list<string> $include Glob patterns for files to include
      * @param list<string> $exclude Glob patterns for files to exclude
@@ -24,7 +27,17 @@ final readonly class IntegrityConfig
         public IntegrityPolicyMode $mode = IntegrityPolicyMode::Warn,
         public array $include = ['src/**/*.php', 'config/**/*.php', 'bin/*'],
         public array $exclude = ['vendor/**', 'var/**', 'node_modules/**', '.git/**'],
+        /** @var list<string> */
+        public array $unknownKeys = [],
     ) {}
+
+    /**
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
+    }
 
     /**
      * @param array{
@@ -48,6 +61,7 @@ final readonly class IntegrityConfig
             mode: IntegrityPolicyMode::from($data['mode'] ?? 'warn'),
             include: $data['include'] ?? ['src/**/*.php', 'config/**/*.php', 'bin/*'],
             exclude: $data['exclude'] ?? ['vendor/**', 'var/**', 'node_modules/**', '.git/**'],
+            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
         );
     }
 }

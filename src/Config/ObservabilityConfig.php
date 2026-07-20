@@ -16,8 +16,11 @@ use function is_string;
  * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class ObservabilityConfig
+final readonly class ObservabilityConfig implements ReportsUnknownKeys
 {
+    /** Keys recognised in config/observability.php. */
+    private const array KNOWN_KEYS = ['logging', 'metrics', 'tracing', 'audit', 'error_tracking'];
+
     /**
      * @param list<LoggingChannelConfig> $loggingChannels
      */
@@ -30,7 +33,17 @@ final readonly class ObservabilityConfig
         public ErrorTrackingConfig $errorTracking = new ErrorTrackingConfig(),
         public AuditConfig $audit = new AuditConfig(),
         public ComplianceLoggingConfig $complianceLogging = new ComplianceLoggingConfig(),
+        /** @var list<string> */
+        public array $unknownKeys = [],
     ) {}
+
+    /**
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
+    }
 
     /**
      * Build from the raw observability config array and environment.
@@ -107,6 +120,7 @@ final readonly class ObservabilityConfig
             errorTracking: ErrorTrackingConfig::fromArray($data['error_tracking'] ?? []),
             audit: AuditConfig::fromArray($auditData, $environment),
             complianceLogging: ComplianceLoggingConfig::fromArray($logging['compliance'] ?? []),
+            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
         );
     }
 }

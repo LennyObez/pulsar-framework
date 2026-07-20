@@ -12,12 +12,25 @@ use Pulsar\Api\Api;
  * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class EventConfig
+final readonly class EventConfig implements ReportsUnknownKeys
 {
+    /** Keys recognised in config/event.php. */
+    private const array KNOWN_KEYS = ['enabled', 'storm_protection'];
+
     public function __construct(
         public bool $enabled = true,
         public StormProtectionConfig $stormProtection = new StormProtectionConfig(),
+        /** @var list<string> */
+        public array $unknownKeys = [],
     ) {}
+
+    /**
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
+    }
 
     /**
      * @param array{
@@ -39,6 +52,7 @@ final readonly class EventConfig
         return new self(
             enabled: $enabled,
             stormProtection: StormProtectionConfig::fromArray($data['storm_protection'] ?? [], $environment),
+            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
         );
     }
 }

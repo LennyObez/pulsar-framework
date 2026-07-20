@@ -16,8 +16,15 @@ use function is_array;
  * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class AppConfig
+final readonly class AppConfig implements ReportsUnknownKeys
 {
+    /**
+     * Keys recognised in config/app.php. `config` and `extensions` are read by
+     * ConfigManager and the entry point rather than by this DTO, but they are
+     * legitimate app-config keys and so belong here (see ADR-0036).
+     */
+    private const array KNOWN_KEYS = ['name', 'env', 'debug', 'timezone', 'locale', 'signature', 'config', 'extensions'];
+
     public function __construct(
         public string $name,
         public EnvironmentMode $mode,
@@ -25,7 +32,17 @@ final readonly class AppConfig
         public string $timezone,
         public string $locale,
         public AppSignature $signature = new AppSignature(),
+        /** @var list<string> */
+        public array $unknownKeys = [],
     ) {}
+
+    /**
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
+    }
 
     /**
      * Build an AppConfig from a raw config array and environment.
@@ -69,6 +86,7 @@ final readonly class AppConfig
             timezone: $data['timezone'] ?? 'UTC',
             locale: $data['locale'] ?? 'en',
             signature: AppSignature::fromArray($signatureData),
+            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
         );
     }
 

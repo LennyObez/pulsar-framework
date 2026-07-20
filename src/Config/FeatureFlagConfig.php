@@ -13,8 +13,11 @@ use Pulsar\FeatureFlag\FlagStorageDriver;
  * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class FeatureFlagConfig
+final readonly class FeatureFlagConfig implements ReportsUnknownKeys
 {
+    /** Keys recognised in config/features.php. */
+    private const array KNOWN_KEYS = ['enabled', 'storage', 'file_path', 'audit_evaluations', 'default_state', 'flags'];
+
     /**
      * @param array<string, array<string, mixed>> $flags Pre-configured flag definitions
      */
@@ -25,7 +28,17 @@ final readonly class FeatureFlagConfig
         public bool $auditEvaluations = false,
         public bool $defaultState = false,
         public array $flags = [],
+        /** @var list<string> */
+        public array $unknownKeys = [],
     ) {}
+
+    /**
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
+    }
 
     /**
      * @param array{
@@ -51,6 +64,7 @@ final readonly class FeatureFlagConfig
             auditEvaluations: (bool) ($data['audit_evaluations'] ?? false),
             defaultState: (bool) ($data['default_state'] ?? false),
             flags: $data['flags'] ?? [],
+            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
         );
     }
 }

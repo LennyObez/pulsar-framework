@@ -12,15 +12,28 @@ use Pulsar\Api\Api;
  * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class StorageConfig
+final readonly class StorageConfig implements ReportsUnknownKeys
 {
+    /** Keys recognised in config/storage.php. */
+    private const array KNOWN_KEYS = ['default', 'disks'];
+
     /**
      * @param array<string, DiskConfig> $disks Disk configurations keyed by name
      */
     public function __construct(
         public string $default = 'local',
         public array $disks = [],
+        /** @var list<string> */
+        public array $unknownKeys = [],
     ) {}
+
+    /**
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
+    }
 
     /**
      * @param array{
@@ -39,6 +52,7 @@ final readonly class StorageConfig
         return new self(
             default: $environment->get('STORAGE_DISK') ?? $data['default'] ?? 'local',
             disks: $disks,
+            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
         );
     }
 }

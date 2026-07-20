@@ -20,8 +20,15 @@ use function is_string;
  * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class BusinessProfileConfig
+final readonly class BusinessProfileConfig implements ReportsUnknownKeys
 {
+    /** Keys recognised in config/business.php. */
+    private const array KNOWN_KEYS = [
+        'company_name', 'trading_name', 'legal_form', 'registration_number', 'vat_number', 'tax_id',
+        'address_line1', 'address_line2', 'city', 'postal_code', 'region', 'country',
+        'phone', 'email', 'website', 'iban', 'bic', 'bank_name', 'logo_path', 'peppol_id', 'peppol_scheme',
+    ];
+
     /**
      * @param string $companyName Legal company name
      * @param string|null $tradingName "Doing business as" name (if different from legal name)
@@ -67,7 +74,17 @@ final readonly class BusinessProfileConfig
         public ?string $logoPath = null,
         public ?string $peppolId = null,
         public ?string $peppolScheme = null,
+        /** @var list<string> */
+        public array $unknownKeys = [],
     ) {}
+
+    /**
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
+    }
 
     /**
      * Build from a raw config array with environment variable overrides.
@@ -99,6 +116,7 @@ final readonly class BusinessProfileConfig
             logoPath: self::resolveNullableString($data, 'logo_path', $environment, 'BUSINESS_LOGO_PATH'),
             peppolId: self::resolveNullableString($data, 'peppol_id', $environment, 'BUSINESS_PEPPOL_ID'),
             peppolScheme: self::resolveNullableString($data, 'peppol_scheme', $environment, 'BUSINESS_PEPPOL_SCHEME'),
+            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
         );
     }
 

@@ -16,8 +16,14 @@ use function sprintf;
  * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class TenancyConfig
+final readonly class TenancyConfig implements ReportsUnknownKeys
 {
+    /** Keys recognised in config/tenancy.php. */
+    private const array KNOWN_KEYS = [
+        'enabled', 'resolver', 'header_name', 'subdomain_suffix', 'path_prefix',
+        'default_tenant', 'database', 'tenants',
+    ];
+
     /**
      * @param array<string, array<string, mixed>> $tenants Map of tenant ID → tenant data
      */
@@ -30,7 +36,17 @@ final readonly class TenancyConfig
         public ?string $defaultTenant = null,
         public TenantDatabaseConfig $database = new TenantDatabaseConfig(),
         public array $tenants = [],
+        /** @var list<string> */
+        public array $unknownKeys = [],
     ) {}
+
+    /**
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
+    }
 
     /**
      * @param array{
@@ -67,6 +83,7 @@ final readonly class TenancyConfig
             defaultTenant: $data['default_tenant'] ?? null,
             database: TenantDatabaseConfig::fromArray($data['database'] ?? []),
             tenants: $data['tenants'] ?? [],
+            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
         );
     }
 }
