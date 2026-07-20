@@ -170,8 +170,9 @@ final class CacheConfigTest extends TestCase
             ],
         ], $this->environment);
 
-        self::assertContains('cache.typo_top', $config->unknownKeys);
-        self::assertContains('cache.pools.sessions.tlt', $config->unknownKeys);
+        // Section-relative now (ConfigManager prefixes the "cache" section label).
+        self::assertContains('typo_top', $config->unknownKeys);
+        self::assertContains('pools.sessions.tlt', $config->unknownKeys);
     }
 
     #[Test]

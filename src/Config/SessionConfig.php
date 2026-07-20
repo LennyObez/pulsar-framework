@@ -15,8 +15,17 @@ use Pulsar\Config\Exception\ConfigException;
  * @api
  */
 #[Api(since: '1.0.0')]
-readonly class SessionConfig
+readonly class SessionConfig implements ReportsUnknownKeys
 {
+    /** Keys read from the `session` sub-array of config/security.php. */
+    private const array KNOWN_KEYS = [
+        'cookie_name', 'lifetime', 'cookie_httponly', 'cookie_secure', 'cookie_samesite',
+        'regenerate_on_privilege_change', 'handler', 'encryption', 'validators',
+        'max_concurrent_sessions', 'cookie_path', 'cookie_domain', 'gc_probability',
+        'gc_divisor', 'save_path', 'cookie_max_payload_size', 'cookie_replay_window',
+        'idle_timeout', 'cookie_host_prefix', 'authenticated_marker_keys',
+    ];
+
     /**
      * @param array{
      *     user_agent?: array{enabled?: bool, mode?: string},
@@ -28,6 +37,8 @@ readonly class SessionConfig
      *     re-authentication on idle-timeout/validator failure (PCI-DSS 8.2.8) instead of
      *     silently regenerating. Defaults to the framework guard's `_pulsar_identity`
      *     (mirrors `Pulsar\Auth\Guard\SessionGuard`); custom guards should add their key.
+     * @param list<string> $unknownKeys Keys present in the raw `session` array that are
+     *     not recognized (typos); surfaced by ConfigManager. See {@see ReportsUnknownKeys}.
      */
     public function __construct(
         public string $cookieName,
@@ -50,7 +61,16 @@ readonly class SessionConfig
         public int $idleTimeout = 900,
         public bool $cookieHostPrefix = false,
         public array $authenticatedMarkerKeys = ['_pulsar_identity'],
+        public array $unknownKeys = [],
     ) {}
+
+    /**
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
+    }
 
     /**
      * Get the effective cookie name, applying the `__Host-` prefix when enabled.
@@ -138,6 +158,7 @@ readonly class SessionConfig
             idleTimeout: $data['idle_timeout'] ?? 900,
             cookieHostPrefix: (bool) ($data['cookie_host_prefix'] ?? false),
             authenticatedMarkerKeys: $data['authenticated_marker_keys'] ?? ['_pulsar_identity'],
+            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
         );
 
         // The `__Host-` cookie prefix is only honoured by browsers when the cookie

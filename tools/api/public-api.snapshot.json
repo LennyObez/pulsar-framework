@@ -8718,6 +8718,11 @@
                     ],
                     "return": "Pulsar\\Config\\CacheConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -8874,6 +8879,11 @@
             "since": "1.0.0",
             "methods": [],
             "signatures": {
+                "all": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
+                },
                 "get": {
                     "params": [
                         "string $class"
@@ -9397,6 +9407,13 @@
                     "params": [
                         "string $key",
                         "string $context"
+                    ],
+                    "return": "Pulsar\\Config\\Exception\\ConfigException",
+                    "static": true
+                },
+                "unknownKeys": {
+                    "params": [
+                        "array $descriptions"
                     ],
                     "return": "Pulsar\\Config\\Exception\\ConfigException",
                     "static": true
@@ -10000,6 +10017,18 @@
             },
             "constants": []
         },
+        "Pulsar\\Config\\ReportsUnknownKeys": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\Config\\ResilienceConfig": {
             "since": "1.0.0",
             "methods": [],
@@ -10146,7 +10175,8 @@
                         "Pulsar\\Config\\SecurityHeadersConfig $headers",
                         "Pulsar\\Config\\RateLimitConfig $rateLimit",
                         "?Pulsar\\Config\\AuthConfig $auth",
-                        "string $cipherSuite"
+                        "string $cipherSuite",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -10158,6 +10188,11 @@
                     ],
                     "return": "Pulsar\\Config\\SecurityConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -10236,7 +10271,8 @@
                         "int $cookieReplayWindow",
                         "int $idleTimeout",
                         "bool $cookieHostPrefix",
-                        "array $authenticatedMarkerKeys"
+                        "array $authenticatedMarkerKeys",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -10253,6 +10289,11 @@
                     ],
                     "return": "Pulsar\\Config\\SessionConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -10530,6 +10571,21 @@
                         "array $data"
                     ],
                     "return": "Pulsar\\Config\\TwoFactorConfig",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Config\\UnknownKeys": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "collect": {
+                    "params": [
+                        "array $data",
+                        "array $known"
+                    ],
+                    "return": "array",
                     "static": true
                 }
             },
@@ -19208,6 +19264,11 @@
                     "params": [],
                     "return": "Pulsar\\Extensibility\\ExtensionBootstrap",
                     "static": true
+                },
+                "disabledByConfig": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 },
                 "getCommands": {
                     "params": [],
@@ -56353,6 +56414,7 @@
         "Pulsar\\Core\\BootProfile",
         "Pulsar\\Core\\Boot\\BuildArtifactVerifier",
         "Pulsar\\Core\\Boot\\CachedRouteReconstructor",
+        "Pulsar\\Core\\Boot\\ConfigDiagnosticsReporter",
         "Pulsar\\Core\\Boot\\ExtensionDiscovery",
         "Pulsar\\Core\\Boot\\ExtensionViewPathRegistrar",
         "Pulsar\\Core\\Boot\\ProjectRouteLoader",

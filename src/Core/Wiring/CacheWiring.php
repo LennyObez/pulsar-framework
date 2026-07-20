@@ -26,7 +26,6 @@ use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Routing\Router;
 use Pulsar\Security\Crypto\MasterKey;
 
-use function implode;
 use function sprintf;
 
 #[Internal]
@@ -92,15 +91,10 @@ final readonly class CacheWiring implements ServiceWiringInterface, DescribesWir
 
         /** @var LoggerInterface|null $logger */
 
-        // Surface silently-ignored configuration typos at boot: a misspelled key
-        // (e.g. `tlt` for `ttl`) is parsed away and the pool quietly runs on a
-        // default, which for a compliance-sensitive cache is a real hazard.
-        if ($cacheConfig->unknownKeys !== [] && $logger !== null) {
-            $logger->warning(
-                'Unknown cache configuration keys were ignored: ' . implode(', ', $cacheConfig->unknownKeys),
-                ['keys' => $cacheConfig->unknownKeys],
-            );
-        }
+        // Unknown cache-config keys are now surfaced centrally at boot by
+        // ConfigManager's unknown-key audit (CacheConfig implements
+        // ReportsUnknownKeys), so the per-wiring warning that used to live here
+        // was removed to avoid double-reporting.
 
         // Redis and Memcached store keys raw and pools share connections per
         // host:port, so without a prefix a pool's clear() is FLUSHDB / flush —

@@ -8,6 +8,7 @@ use NoDiscard;
 use Pulsar\Api\Api;
 use RuntimeException;
 
+use function implode;
 use function sprintf;
 
 /**
@@ -42,5 +43,24 @@ final class ConfigException extends RuntimeException
     public static function missingRequired(string $key, string $context): self
     {
         return new self(sprintf('Missing required configuration key "%s" in %s', $key, $context));
+    }
+
+    /**
+     * One or more config files carry keys the framework does not recognize,
+     * and strict key checking is enabled. Aggregated so the operator sees every
+     * typo at once rather than one boot failure at a time.
+     *
+     * @param list<string> $descriptions Per-section lines already rendered with
+     *                                   any "did you mean" suggestions.
+     */
+    #[NoDiscard]
+    public static function unknownKeys(array $descriptions): self
+    {
+        return new self(sprintf(
+            "Unknown configuration key(s) detected with strict key checking enabled:\n  - %s\n"
+            . 'Fix the key names, or set config.strict_keys = false (or PULSAR_CONFIG_STRICT=false) '
+            . 'to downgrade this to a warning.',
+            implode("\n  - ", $descriptions),
+        ));
     }
 }
