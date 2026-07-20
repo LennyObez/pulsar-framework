@@ -99,11 +99,13 @@ final readonly class MediaService implements MediaServiceInterface
         file_put_contents($tempPath, $contents);
 
         try {
-            // Validate through the security pipeline
-            $this->fileValidator->validate($tempPath, $originalFilename, $declaredMime, $fileSize);
-
-            // Format-specific validation
-            $detectedMime = $declaredMime;
+            // Validate through the security pipeline and dispatch format-specific
+            // handling on the CANONICAL magic-byte-detected MIME it returns — never
+            // the attacker-controlled declared type. A declared `Image/SVG+XML`
+            // passes the case-insensitive consistency check but would miss a
+            // case-sensitive `=== 'image/svg+xml'` dispatch, skipping sanitization
+            // and storing a scriptable SVG (stored XSS).
+            $detectedMime = $this->fileValidator->validate($tempPath, $originalFilename, $declaredMime, $fileSize);
 
             if ($detectedMime === 'image/svg+xml') {
                 $contents = $this->svgSanitizer->sanitize($contents);

@@ -66,6 +66,12 @@ final readonly class FileValidator
      * @param string $declaredMimeType Content-Type header from the upload
      * @param int $fileSize File size in bytes
      *
+     * @return string The canonical, magic-byte-detected MIME type (lowercase).
+     *   Callers must branch security-sensitive handling — SVG sanitization, PDF
+     *   validation — on THIS value, never on the attacker-controlled declared
+     *   type, whose case a bypass could vary to skip a `=== 'image/svg+xml'`
+     *   dispatch while still passing the case-insensitive consistency check.
+     *
      * @throws CmsException If any validation step fails
      */
     public function validate(
@@ -73,7 +79,7 @@ final readonly class FileValidator
         string $originalFilename,
         string $declaredMimeType,
         int $fileSize,
-    ): void {
+    ): string {
         // Step 0: Size check
         if ($fileSize > $this->config->maxUploadSize) {
             throw CmsException::fileTooLarge($fileSize, $this->config->maxUploadSize);
@@ -93,6 +99,8 @@ final readonly class FileValidator
         if (str_starts_with($detectedMime, 'image/') && $detectedMime !== 'image/svg+xml') {
             $this->validateImage($filePath, $detectedMime);
         }
+
+        return $detectedMime;
     }
 
     /**
