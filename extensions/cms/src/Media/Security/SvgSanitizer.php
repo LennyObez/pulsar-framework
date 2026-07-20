@@ -219,6 +219,14 @@ final readonly class SvgSanitizer
         // Walk the tree depth-first, collecting nodes to remove
         $this->walkTree($dom->documentElement);
 
+        // walkTree only filters the attributes of descendants, never the root
+        // element itself — so an `<svg onload="...">` handler on the root
+        // survived and executed (stored XSS). Filter the root's own attributes
+        // and hrefs too. The root is the SVG element; its children were already
+        // validated against the element allowlist during the walk.
+        $this->filterAttributes($dom->documentElement);
+        $this->validateHrefAttributes($dom->documentElement, $dom->documentElement);
+
         // Remove processing instructions at root level (e.g., xml-stylesheet PIs)
         /** @var mixed $child */
         foreach (iterator_to_array($dom->childNodes) as $child) {

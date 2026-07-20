@@ -116,6 +116,22 @@ final class FileValidatorTest extends TestCase
         $this->validator->validate($path, 'icon.svg', 'image/svg+xml', strlen($content));
     }
 
+    #[Test]
+    public function validateReturnsTheCanonicalMimeRegardlessOfDeclaredCase(): void
+    {
+        // C5: a mixed-case declared Content-Type passes the case-insensitive
+        // consistency check, but downstream dispatch must branch on the
+        // canonical (lowercase, magic-byte-detected) MIME this returns — not the
+        // declared one — or a `=== 'image/svg+xml'` check is bypassed and the
+        // SVG is stored unsanitized (stored XSS).
+        $content = '<svg xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="40"/></svg>';
+        $path = $this->createTempFileWithContent($content);
+
+        $detected = $this->validator->validate($path, 'icon.svg', 'Image/SVG+XML', strlen($content));
+
+        self::assertSame('image/svg+xml', $detected);
+    }
+
     // -- MIME mismatch: JPEG bytes but PNG Content-Type --------------------
 
     #[Test]

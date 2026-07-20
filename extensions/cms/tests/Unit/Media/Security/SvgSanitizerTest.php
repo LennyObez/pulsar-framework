@@ -53,6 +53,26 @@ final class SvgSanitizerTest extends TestCase
     }
 
     #[Test]
+    public function sanitize_removes_event_handlers_and_style_from_the_root_svg_element(): void
+    {
+        // RC-5: the tree walk filtered descendants' attributes but never the
+        // root element's, so an onload on the root <svg> survived and executed
+        // — a live stored XSS on any CMS with SVG uploads.
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10" '
+            . 'onload="alert(document.cookie)" style="x:expression(alert(1))">'
+            . '<rect width="10" height="10"/></svg>';
+
+        $result = $this->sanitizer->sanitize($svg);
+
+        self::assertStringNotContainsString('onload', $result);
+        self::assertStringNotContainsString('alert', $result);
+        self::assertStringNotContainsString('expression', $result);
+        // Legitimate root attributes survive.
+        self::assertStringContainsString('viewBox', $result);
+        self::assertStringContainsString('<rect', $result);
+    }
+
+    #[Test]
     public function sanitize_removes_style_attributes(): void
     {
         $svg = '<svg xmlns="http://www.w3.org/2000/svg"><rect width="10" height="10" style="background:url(evil)"/></svg>';
