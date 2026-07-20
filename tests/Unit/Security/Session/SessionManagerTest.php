@@ -10,6 +10,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Config\SessionConfig;
 use Pulsar\Http\Message\ServerRequest;
+use Pulsar\Runtime\ResettableInterface;
 use Pulsar\Security\Exception\SecurityException;
 use Pulsar\Security\Session\Handler\ArrayHandler;
 use Pulsar\Security\Session\Handler\DatabaseHandler;
@@ -37,6 +38,33 @@ final class SessionManagerTest extends TestCase
             handler: 'array',
             encryption: false,
         );
+    }
+
+    #[Test]
+    public function resetRequestStateClearsStateSoSessionsDoNotBleedOnPersistentWorkers(): void
+    {
+        $manager = new SessionManager($this->handler, $this->config);
+        self::assertInstanceOf(ResettableInterface::class, $manager);
+
+        $manager->start();
+        $manager->set('user_id', 42);
+        $originalId = $manager->id();
+
+        self::assertTrue($manager->isStarted());
+        self::assertTrue($manager->has('user_id'));
+
+        // The persistent-worker request boundary: the singleton is reused, so
+        // its state must be wiped or the next user inherits this session.
+        $manager->resetRequestState();
+
+        self::assertFalse($manager->isStarted(), 'the session must no longer be started after reset');
+
+        // A fresh start (as the next request would do) must yield an empty
+        // session with a new id — the previous user's data must not survive.
+        $manager->start();
+        self::assertNotSame($originalId, $manager->id(), 'the new request must not reuse the prior id');
+        self::assertFalse($manager->has('user_id'), "the previous user's data must not survive");
+        self::assertSame([], $manager->all());
     }
 
     #[Test]

@@ -26,6 +26,7 @@ use Pulsar\Runtime\RequestResetRegistry;
 use Pulsar\Runtime\RequestSandbox;
 use Pulsar\Runtime\RuntimeFactory;
 use Pulsar\Runtime\RuntimeResolver;
+use Pulsar\Security\Session\SessionManager;
 use Pulsar\Tenancy\TenantContext;
 
 #[Internal]
@@ -69,6 +70,14 @@ final readonly class RuntimeWiring implements ServiceWiringInterface
 
         if ($container->has(AuthManagerInterface::class)) {
             $registry->registerResettable(AuthManagerInterface::class);
+        }
+
+        // The session manager is a singleton, so on a persistent worker its
+        // loaded id/data/metadata would otherwise survive into the next
+        // request and hand one user another's session (RC-1: account takeover).
+        // SecurityWiring runs before this, so the binding already exists.
+        if ($container->has(SessionManager::class)) {
+            $registry->registerResettable(SessionManager::class);
         }
 
         // The cache manager's best-effort tag strategies memoize tag versions

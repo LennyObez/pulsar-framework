@@ -47617,6 +47617,11 @@
                     "return": "void",
                     "static": false
                 },
+                "resetRequestState": {
+                    "params": [],
+                    "return": "void",
+                    "static": false
+                },
                 "save": {
                     "params": [],
                     "return": "void",
