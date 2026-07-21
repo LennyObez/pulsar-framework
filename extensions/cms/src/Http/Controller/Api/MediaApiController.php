@@ -7,6 +7,7 @@ namespace Pulsar\Extension\Cms\Http\Controller\Api;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UploadedFileInterface;
 use Pulsar\Api\Internal;
+use Pulsar\Extension\Cms\Commerce\ApiKey;
 use Pulsar\Extension\Cms\Exception\CmsException;
 use Pulsar\Extension\Cms\Media\MediaAsset;
 use Pulsar\Extension\Cms\Media\MediaRepositoryInterface;
@@ -19,6 +20,7 @@ use function is_int;
 use function is_string;
 use function max;
 use function min;
+use function sprintf;
 
 /**
  * Public REST API controller for CMS media assets.
@@ -167,17 +169,31 @@ final readonly class MediaApiController
 
     /**
      * DELETE /api/v1/media/{id}: Delete a media asset.
+     *
+     * Requires an authenticated API key (CmsApiKeyMiddleware) and deletes the
+     * asset only when it belongs to the caller's tenant. Without this an
+     * anonymous caller who guesses an asset id could permanently destroy another
+     * tenant's media; the deletion audit records the real acting key, not a
+     * generic "REST API" actor.
      */
-    public function delete(string $id): Response
+    public function delete(ServerRequestInterface $request, string $id): Response
     {
+        /** @var mixed $apiKey */
+        $apiKey = $request->getAttribute('cms_api_key');
+        if (!$apiKey instanceof ApiKey) {
+            return Response::json(['error' => 'Authentication required', 'status' => 401], 401);
+        }
+
         $asset = $this->mediaRepository->findById($id);
 
-        if ($asset === null) {
+        // Fail closed: an asset from another tenant (or none) is reported as 404,
+        // so ids cannot be probed and no cross-tenant delete can occur.
+        if ($asset === null || $asset->tenantId !== $apiKey->tenantId) {
             return Response::json(['error' => 'Media asset not found', 'status' => 404], 404);
         }
 
         try {
-            $this->mediaService->delete($id, 'Deleted via REST API');
+            $this->mediaService->delete($id, sprintf('Deleted via REST API by api-key %s', $apiKey->id));
 
             return Response::json([
                 'data' => ['id' => $id, 'status' => 'deleted'],

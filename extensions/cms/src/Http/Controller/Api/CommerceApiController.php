@@ -6,6 +6,7 @@ namespace Pulsar\Extension\Cms\Http\Controller\Api;
 
 use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
+use Pulsar\Extension\Cms\Commerce\ApiKey;
 use Pulsar\Extension\Cms\Commerce\Order;
 use Pulsar\Extension\Cms\Commerce\OrderRepositoryInterface;
 use Pulsar\Extension\Cms\Commerce\Product;
@@ -126,6 +127,12 @@ final readonly class CommerceApiController
             return Response::json(['error' => 'Commerce is not enabled', 'status' => 404], 404);
         }
 
+        /** @var mixed $apiKey */
+        $apiKey = $request->getAttribute('cms_api_key');
+        if (!$apiKey instanceof ApiKey) {
+            return Response::json(['error' => 'Authentication required', 'status' => 401], 401);
+        }
+
         $params = $request->getQueryParams();
         /** @var mixed $rawPage */
         $rawPage = $params['page'] ?? null;
@@ -149,11 +156,11 @@ final readonly class CommerceApiController
             $filters['customerId'] = $rawCustomerId;
         }
 
-        /** @var string|null $tenantId */
-        $tenantId = $request->getAttribute('tenant_id');
-
-        if ($tenantId !== null) {
-            $filters['tenantId'] = $tenantId;
+        // Scope the listing to the authenticated key's tenant. A null tenant is a
+        // single-tenant deployment; a non-null one constrains the query so one
+        // tenant's key can never enumerate another tenant's orders.
+        if ($apiKey->tenantId !== null) {
+            $filters['tenantId'] = $apiKey->tenantId;
         }
 
         $orders = $this->orderRepository->listOrders($filters, $page, $perPage);
@@ -177,16 +184,29 @@ final readonly class CommerceApiController
 
     /**
      * GET /api/v1/orders/{id}: Show a single order.
+     *
+     * Requires an authenticated API key (CmsApiKeyMiddleware) and returns the
+     * order only when it belongs to the caller's tenant. Order ids are otherwise
+     * the only secret guarding customer PII (email, billing/shipping address,
+     * notes) — an unauthenticated or cross-tenant caller must never receive it.
      */
-    public function showOrder(string $id): Response
+    public function showOrder(ServerRequestInterface $request, string $id): Response
     {
         if ($this->config->commerce === null) {
             return Response::json(['error' => 'Commerce is not enabled', 'status' => 404], 404);
         }
 
+        /** @var mixed $apiKey */
+        $apiKey = $request->getAttribute('cms_api_key');
+        if (!$apiKey instanceof ApiKey) {
+            return Response::json(['error' => 'Authentication required', 'status' => 401], 401);
+        }
+
         $order = $this->orderRepository->findById($id);
 
-        if ($order === null) {
+        // Fail closed: an order from another tenant (or none) is reported as 404,
+        // never 403, so ids cannot be probed for existence across tenants.
+        if ($order === null || $order->tenantId !== $apiKey->tenantId) {
             return Response::json(['error' => 'Order not found', 'status' => 404], 404);
         }
 

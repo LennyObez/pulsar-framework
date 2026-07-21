@@ -10,6 +10,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Api\Pagination\PaginationResult;
+use Pulsar\Extension\Cms\Commerce\ApiKey;
 use Pulsar\Extension\Cms\Content\DataClassification;
 use Pulsar\Extension\Cms\Http\Controller\Api\MediaApiController;
 use Pulsar\Extension\Cms\Media\MediaAsset;
@@ -146,14 +147,99 @@ final class MediaApiControllerTest extends TestCase
     }
 
     #[Test]
+    public function delete_returns_401_without_api_key(): void
+    {
+        // Never look up (or delete) the asset for an unauthenticated caller.
+        $this->mediaRepository->method('findById')->willReturn($this->asset('tenant-a'));
+
+        $request = new ServerRequest(method: 'DELETE', uri: '/api/v1/media/media-1');
+
+        $response = $this->controller->delete($request, 'media-1');
+
+        self::assertSame(401, $response->getStatusCode());
+    }
+
+    #[Test]
     public function delete_returns_404_for_missing_asset(): void
     {
         $this->mediaRepository->method('findById')->willReturn(null);
 
-        $request = new ServerRequest(method: 'DELETE', uri: '/api/v1/media/nonexistent');
+        $request = new ServerRequest(method: 'DELETE', uri: '/api/v1/media/nonexistent')
+            ->withAttribute('cms_api_key', $this->apiKey('tenant-a'));
 
-        $response = $this->controller->delete('nonexistent');
+        $response = $this->controller->delete($request, 'nonexistent');
 
         self::assertSame(404, $response->getStatusCode());
+    }
+
+    #[Test]
+    public function delete_returns_404_for_a_foreign_tenant_asset(): void
+    {
+        // The asset belongs to tenant-b; a tenant-a key must not delete it.
+        $this->mediaRepository->method('findById')->willReturn($this->asset('tenant-b'));
+
+        $request = new ServerRequest(method: 'DELETE', uri: '/api/v1/media/media-1')
+            ->withAttribute('cms_api_key', $this->apiKey('tenant-a'));
+
+        $response = $this->controller->delete($request, 'media-1');
+
+        self::assertSame(404, $response->getStatusCode());
+    }
+
+    #[Test]
+    public function delete_succeeds_for_matching_tenant(): void
+    {
+        $this->mediaRepository->method('findById')->willReturn($this->asset('tenant-a'));
+
+        $request = new ServerRequest(method: 'DELETE', uri: '/api/v1/media/media-1')
+            ->withAttribute('cms_api_key', $this->apiKey('tenant-a'));
+
+        $response = $this->controller->delete($request, 'media-1');
+
+        self::assertSame(200, $response->getStatusCode());
+
+        /** @var array{data: array{id: string, status: string}} $body */
+        $body = json_decode((string) $response->getBody(), true);
+        self::assertSame('deleted', $body['data']['status']);
+    }
+
+    private function apiKey(?string $tenantId): ApiKey
+    {
+        return new ApiKey(
+            id: 'key-1',
+            tenantId: $tenantId,
+            name: 'test',
+            keyHash: 'hash',
+            lastUsedAt: null,
+            isActive: true,
+            createdAt: new DateTimeImmutable(),
+            expiresAt: null,
+        );
+    }
+
+    private function asset(?string $tenantId): MediaAsset
+    {
+        $now = new DateTimeImmutable();
+
+        return new MediaAsset(
+            id: 'media-1',
+            tenantId: $tenantId,
+            uploaderId: 'user-1',
+            filename: 'photo.jpg',
+            storagePath: 'default/2026/02/ab/photo.jpg',
+            disk: 'local',
+            mimeType: 'image/jpeg',
+            fileSize: 102400,
+            fileHash: 'abc123',
+            width: 1920,
+            height: 1080,
+            exifData: null,
+            altTextDefault: null,
+            visibility: MediaVisibility::Public,
+            dataClassification: DataClassification::Public,
+            createdAt: $now,
+            updatedAt: $now,
+            deletedAt: null,
+        );
     }
 }

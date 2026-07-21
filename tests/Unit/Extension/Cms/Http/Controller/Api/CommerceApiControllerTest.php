@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Extension\Cms\Commerce\ApiKey;
 use Pulsar\Extension\Cms\Commerce\CommerceConfig;
 use Pulsar\Extension\Cms\Commerce\Order;
 use Pulsar\Extension\Cms\Commerce\OrderRepositoryInterface;
@@ -120,15 +121,120 @@ final class CommerceApiControllerTest extends TestCase
     }
 
     #[Test]
-    public function show_order_returns_order_details(): void
+    public function show_order_returns_order_details_for_matching_tenant(): void
+    {
+        $controller = $this->controller();
+        $this->orderRepository->method('findById')->willReturn($this->order('tenant-a'));
+
+        $request = new ServerRequest(method: 'GET', uri: '/api/v1/orders/order-1')
+            ->withAttribute('cms_api_key', $this->apiKey('tenant-a'));
+
+        $response = $controller->showOrder($request, 'order-1');
+
+        self::assertSame(200, $response->getStatusCode());
+
+        /** @var array{data: array{id: string, order_number: string, customer_email: string}} $body */
+        $body = json_decode((string) $response->getBody(), true);
+        self::assertSame('order-1', $body['data']['id']);
+        self::assertSame('ORD-0001', $body['data']['order_number']);
+        self::assertSame('test@example.com', $body['data']['customer_email']);
+    }
+
+    #[Test]
+    public function show_order_returns_401_without_api_key(): void
+    {
+        $controller = $this->controller();
+        // The controller must not even look up the order without authentication.
+        $this->orderRepository->method('findById')->willReturn($this->order('tenant-a'));
+
+        $request = new ServerRequest(method: 'GET', uri: '/api/v1/orders/order-1');
+
+        $response = $controller->showOrder($request, 'order-1');
+
+        self::assertSame(401, $response->getStatusCode());
+    }
+
+    #[Test]
+    public function show_order_returns_404_for_a_foreign_tenant_order(): void
+    {
+        // The order belongs to tenant-b; a tenant-a key must not receive its PII,
+        // and the mismatch is a 404 (not 403) so ids cannot be probed.
+        $controller = $this->controller();
+        $this->orderRepository->method('findById')->willReturn($this->order('tenant-b'));
+
+        $request = new ServerRequest(method: 'GET', uri: '/api/v1/orders/order-1')
+            ->withAttribute('cms_api_key', $this->apiKey('tenant-a'));
+
+        $response = $controller->showOrder($request, 'order-1');
+
+        self::assertSame(404, $response->getStatusCode());
+        self::assertStringNotContainsString('test@example.com', (string) $response->getBody());
+    }
+
+    #[Test]
+    public function list_orders_returns_401_without_api_key(): void
+    {
+        $controller = $this->controller();
+
+        $request = new ServerRequest(method: 'GET', uri: '/api/v1/orders');
+
+        $response = $controller->listOrders($request);
+
+        self::assertSame(401, $response->getStatusCode());
+    }
+
+    #[Test]
+    public function list_orders_scopes_to_the_key_tenant(): void
+    {
+        $controller = $this->controller();
+
+        $captured = null;
+        $this->orderRepository->method('listOrders')->willReturnCallback(
+            function (array $filters) use (&$captured): array {
+                $captured = $filters;
+
+                return [];
+            },
+        );
+
+        $request = new ServerRequest(method: 'GET', uri: '/api/v1/orders')
+            ->withAttribute('cms_api_key', $this->apiKey('tenant-a'));
+
+        $response = $controller->listOrders($request);
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertIsArray($captured);
+        self::assertSame('tenant-a', $captured['tenantId'] ?? null);
+    }
+
+    private function controller(): CommerceApiController
     {
         $config = new CmsConfig(commerce: CommerceConfig::fromArray(['currency' => 'USD']));
-        $controller = new CommerceApiController($this->productRepository, $this->orderRepository, $config);
 
+        return new CommerceApiController($this->productRepository, $this->orderRepository, $config);
+    }
+
+    private function apiKey(?string $tenantId): ApiKey
+    {
+        return new ApiKey(
+            id: 'key-1',
+            tenantId: $tenantId,
+            name: 'test',
+            keyHash: 'hash',
+            lastUsedAt: null,
+            isActive: true,
+            createdAt: new DateTimeImmutable(),
+            expiresAt: null,
+        );
+    }
+
+    private function order(?string $tenantId): Order
+    {
         $now = new DateTimeImmutable();
-        $order = new Order(
+
+        return new Order(
             id: 'order-1',
-            tenantId: null,
+            tenantId: $tenantId,
             orderNumber: 'ORD-0001',
             customerId: 'cust-1',
             customerEmail: 'test@example.com',
@@ -150,18 +256,5 @@ final class CommerceApiControllerTest extends TestCase
             createdAt: $now,
             updatedAt: $now,
         );
-
-        $this->orderRepository->method('findById')->willReturn($order);
-
-        $request = new ServerRequest(method: 'GET', uri: '/api/v1/orders/order-1');
-
-        $response = $controller->showOrder('order-1');
-
-        self::assertSame(200, $response->getStatusCode());
-
-        /** @var array{data: array{id: string, order_number: string}} $body */
-        $body = json_decode((string) $response->getBody(), true);
-        self::assertSame('order-1', $body['data']['id']);
-        self::assertSame('ORD-0001', $body['data']['order_number']);
     }
 }
