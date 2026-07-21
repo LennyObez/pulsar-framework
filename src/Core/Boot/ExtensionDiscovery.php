@@ -100,13 +100,9 @@ final class ExtensionDiscovery
             return null;
         }
 
-        $names = [];
-        foreach ($enabled as $name) {
-            if (is_string($name)) {
-                $names[] = $name;
-            }
-        }
-
-        return $names;
+        // Keep only the string entries; a malformed enabled list (non-strings)
+        // is filtered rather than trusted. array_filter with is_string narrows
+        // the value type, so no mixed value is ever bound.
+        return array_values(array_filter($enabled, 'is_string'));
     }
 }

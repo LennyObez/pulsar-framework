@@ -451,9 +451,12 @@ final class ConfigManager implements ConfigManagerInterface
             return $envFlag === 'true' || $envFlag === '1';
         }
 
-        $section = $appData['config'] ?? null;
-        if (is_array($section) && array_key_exists('strict_keys', $section)) {
-            return (bool) $section['strict_keys'];
+        if (
+            isset($appData['config'])
+            && is_array($appData['config'])
+            && array_key_exists('strict_keys', $appData['config'])
+        ) {
+            return (bool) $appData['config']['strict_keys'];
         }
 
         return false;
