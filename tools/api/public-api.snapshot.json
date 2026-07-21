@@ -56467,6 +56467,7 @@
         "Pulsar\\Cloud\\Azure\\KeyVaultProvider",
         "Pulsar\\Cloud\\Azure\\ServiceBusQueueDriver",
         "Pulsar\\Cloud\\CloudHttpClient",
+        "Pulsar\\Cloud\\CloudHttpClientInterface",
         "Pulsar\\Cloud\\CloudHttpResponse",
         "Pulsar\\Cloud\\Gcp\\Config\\GcpConfig",
         "Pulsar\\Cloud\\Gcp\\FirestoreSessionHandler",
