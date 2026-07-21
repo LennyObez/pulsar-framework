@@ -244,4 +244,30 @@ final class HttpClientTest extends TestCase
 
         $client->get('http://[::0]/internal');
     }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function disallowedSchemeProvider(): iterable
+    {
+        yield 'file' => ['file:///etc/passwd'];
+        yield 'gopher' => ['gopher://127.0.0.1:11211/_stats'];
+        yield 'dict' => ['dict://localhost:11211/stats'];
+        yield 'php filter' => ['php://filter/read=convert.base64-encode/resource=/etc/passwd'];
+    }
+
+    #[Test]
+    #[DataProvider('disallowedSchemeProvider')]
+    public function ssrfBlocksNonHttpSchemes(string $url): void
+    {
+        // A redirect Location (or caller) of file://, gopher://, dict://, php://
+        // parses with no host and would otherwise slip past the IP checks and be
+        // fetched locally. The scheme guard rejects it before any I/O.
+        $client = new HttpClient(new HttpClientConfig(ssrfProtection: true));
+
+        $this->expectException(HttpClientException::class);
+        $this->expectExceptionMessageMatches('/disallowed scheme/');
+
+        $client->get($url);
+    }
 }

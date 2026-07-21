@@ -20647,6 +20647,14 @@
                     "return": "Pulsar\\Http\\Client\\HttpClientException",
                     "static": true
                 },
+                "disallowedScheme": {
+                    "params": [
+                        "string $url",
+                        "string $scheme"
+                    ],
+                    "return": "Pulsar\\Http\\Client\\HttpClientException",
+                    "static": true
+                },
                 "invalidJson": {
                     "params": [
                         "JsonException $previous"
@@ -56678,6 +56686,7 @@
         "Pulsar\\Extensibility\\Internal\\ExtensionBehaviorMonitor",
         "Pulsar\\Extensibility\\Internal\\ExtensionBehaviorRecord",
         "Pulsar\\Extension\\Compiler\\ExtensionGraphCompiler",
+        "Pulsar\\Http\\Client\\RedirectResolver",
         "Pulsar\\Http\\Controller\\Api\\I18nController",
         "Pulsar\\Http\\Controller\\Api\\RegionApiController",
         "Pulsar\\Http\\Controller\\AssetController",
