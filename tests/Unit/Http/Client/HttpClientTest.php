@@ -270,4 +270,43 @@ final class HttpClientTest extends TestCase
 
         $client->get($url);
     }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function ipv4EmbeddingIpv6Provider(): iterable
+    {
+        // Each embeds an IPv4 that routes to a private/reserved address; the
+        // reserved-range filter alone misses NAT64 and 6to4.
+        yield 'NAT64 -> 127.0.0.1' => ['http://[64:ff9b::7f00:1]/'];
+        yield 'NAT64 -> 169.254.169.254 (metadata)' => ['http://[64:ff9b::a9fe:a9fe]/latest/meta-data/'];
+        yield 'IPv4-mapped -> 169.254.169.254' => ['http://[::ffff:169.254.169.254]/'];
+        yield '6to4 -> 127.0.0.1' => ['http://[2002:7f00:1::]/'];
+    }
+
+    #[Test]
+    #[DataProvider('ipv4EmbeddingIpv6Provider')]
+    public function ssrfBlocksIpv4EmbeddingIpv6(string $url): void
+    {
+        $client = new HttpClient(new HttpClientConfig(ssrfProtection: true));
+
+        $this->expectException(HttpClientException::class);
+        $this->expectExceptionMessageMatches('/SSRF/');
+
+        $client->get($url);
+    }
+
+    #[Test]
+    public function ssrfFailsClosedWhenTheHostCannotBeResolved(): void
+    {
+        // .invalid never resolves (RFC 6761). A guard must refuse rather than
+        // connect to a name it could not validate — a rebinding attacker can
+        // return SERVFAIL at validation and a private A at connect time.
+        $client = new HttpClient(new HttpClientConfig(ssrfProtection: true));
+
+        $this->expectException(HttpClientException::class);
+        $this->expectExceptionMessageMatches('/could not be resolved/');
+
+        $client->get('http://pulsar-nonexistent-host.invalid/');
+    }
 }

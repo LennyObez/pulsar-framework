@@ -20707,6 +20707,13 @@
                     ],
                     "return": "Pulsar\\Http\\Client\\HttpClientException",
                     "static": true
+                },
+                "unresolvableHost": {
+                    "params": [
+                        "string $host"
+                    ],
+                    "return": "Pulsar\\Http\\Client\\HttpClientException",
+                    "static": true
                 }
             },
             "constants": []
@@ -56686,6 +56693,7 @@
         "Pulsar\\Extensibility\\Internal\\ExtensionBehaviorMonitor",
         "Pulsar\\Extensibility\\Internal\\ExtensionBehaviorRecord",
         "Pulsar\\Extension\\Compiler\\ExtensionGraphCompiler",
+        "Pulsar\\Http\\Client\\PinnedUrl",
         "Pulsar\\Http\\Client\\RedirectResolver",
         "Pulsar\\Http\\Controller\\Api\\I18nController",
         "Pulsar\\Http\\Controller\\Api\\RegionApiController",

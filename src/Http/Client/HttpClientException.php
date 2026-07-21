@@ -73,6 +73,22 @@ final class HttpClientException extends RuntimeException
     }
 
     /**
+     * SSRF protection refused a host it could not resolve to an IP.
+     *
+     * Fail-closed: an unresolvable host cannot be validated against the
+     * private/reserved ranges, and a DNS-rebinding attacker could return a
+     * private address at connect time. Refusing is safer than connecting to an
+     * unvalidated, re-resolvable name.
+     */
+    #[NoDiscard]
+    public static function unresolvableHost(string $host): self
+    {
+        return new self(
+            sprintf('SSRF protection blocked request to "%s" (host could not be resolved to a verifiable IP)', $host),
+        );
+    }
+
+    /**
      * SSRF protection blocked a non-HTTP(S) URL scheme.
      *
      * Guards against a redirect (or caller) steering the client onto file://,

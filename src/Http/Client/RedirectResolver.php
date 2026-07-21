@@ -55,8 +55,8 @@ final class RedirectResolver
         }
 
         $parsedBase = parse_url($base);
-        $scheme = is_array($parsedBase) && isset($parsedBase['scheme']) ? (string) $parsedBase['scheme'] : 'https';
-        $host = is_array($parsedBase) && isset($parsedBase['host']) ? (string) $parsedBase['host'] : '';
+        $scheme = is_array($parsedBase) && isset($parsedBase['scheme']) ? $parsedBase['scheme'] : 'https';
+        $host = is_array($parsedBase) && isset($parsedBase['host']) ? $parsedBase['host'] : '';
         $port = is_array($parsedBase) && isset($parsedBase['port']) ? ':' . $parsedBase['port'] : '';
         $authority = $scheme . '://' . $host . $port;
 
@@ -71,7 +71,7 @@ final class RedirectResolver
         }
 
         // Relative path: resolve against the base path's directory.
-        $basePath = is_array($parsedBase) && isset($parsedBase['path']) ? (string) $parsedBase['path'] : '/';
+        $basePath = is_array($parsedBase) && isset($parsedBase['path']) ? $parsedBase['path'] : '/';
         $slash = strrpos($basePath, '/');
         $dir = $slash === false ? '/' : substr($basePath, 0, $slash + 1);
 
