@@ -17,6 +17,7 @@ use Pulsar\Extension\Orm\Features\Persistence\AuditingPersister;
 use Pulsar\Extension\Orm\Features\Persistence\GenericRepository;
 use Pulsar\Extension\Orm\Features\Query\SelectBuilder;
 use Pulsar\Extension\Orm\Features\Schema\SchemaBuilder;
+use Pulsar\Extension\Orm\Features\Tenancy\TenantScopeApplier;
 
 use function assert;
 
@@ -42,6 +43,9 @@ final class EntityManager
         private readonly EntityHydratorInterface $hydrator,
         private readonly AuditingPersister $persister,
         private readonly TransactionManagerInterface $transactionManager,
+        // Wired only in multi-tenant apps (a TenantScope is bound); passed to
+        // every repository so reads are tenant-scoped. Null = single-tenant.
+        private readonly ?TenantScopeApplier $tenantScopeApplier = null,
     ) {
         $this->identityMap = new IdentityMap();
     }
@@ -62,6 +66,7 @@ final class EntityManager
                 $this->hydrator,
                 $this->persister,
                 $entityClass,
+                $this->tenantScopeApplier,
             );
         }
 

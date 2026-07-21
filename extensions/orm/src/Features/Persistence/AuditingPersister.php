@@ -12,6 +12,7 @@ use Pulsar\Extension\Orm\Contracts\MetadataRegistryInterface;
 use Pulsar\Extension\Orm\Domain\ColumnType;
 use Pulsar\Extension\Orm\Domain\EntityMetadata;
 use Pulsar\Extension\Orm\Exception\OptimisticLockException;
+use Pulsar\Extension\Orm\Exception\TenantIsolationException;
 use Pulsar\Extension\Orm\Features\Hydration\EntityDehydrator;
 use Pulsar\Extension\Orm\Features\Query\DeleteBuilder;
 use Pulsar\Extension\Orm\Features\Query\InsertBuilder;
@@ -93,9 +94,28 @@ final readonly class AuditingPersister
     }
 
     /**
+     * Constrain a write to the active tenant. Returns true when a tenant
+     * predicate was applied, so a caller can treat affected-rows==0 as a
+     * cross-tenant isolation failure rather than a silent no-op.
+     */
+    private function applyTenantScope(UpdateBuilder|DeleteBuilder $builder, EntityMetadata $metadata): bool
+    {
+        $predicate = $this->tenantEnricher?->activeTenantColumn($metadata);
+
+        if ($predicate === null) {
+            return false;
+        }
+
+        $builder->where($predicate[0], $predicate[1]);
+
+        return true;
+    }
+
+    /**
      * Update an existing entity.
      *
      * @throws OptimisticLockException
+     * @throws TenantIsolationException
      */
     public function update(object $entity, MutationContext $context): void
     {
@@ -126,6 +146,10 @@ final readonly class AuditingPersister
             // the wrong (or no) table — the UPDATE then affects 0 rows and is
             // misreported as a stale-entity optimistic-lock conflict.
             $versionedBuilder = new UpdateBuilder($this->connection, $metadata->qualifiedTableName());
+            // Tenant predicate: a cross-tenant update matches no row and is
+            // blocked (reported here as a stale-entity conflict — the write is
+            // rejected either way, which is what matters for isolation).
+            $this->applyTenantScope($versionedBuilder, $metadata);
             $affected = $versionedBuilder
                 ->set($allValues)
                 ->where($metadata->primaryKey->columnName, $id)
@@ -142,10 +166,15 @@ final readonly class AuditingPersister
             $prop->setValue($entity, $newVersion);
         } else {
             $updateBuilder = new UpdateBuilder($this->connection, $metadata->qualifiedTableName());
-            $updateBuilder
+            $tenantScoped = $this->applyTenantScope($updateBuilder, $metadata);
+            $affected = $updateBuilder
                 ->set($values)
                 ->where($metadata->primaryKey->columnName, $id)
                 ->execute();
+
+            if ($tenantScoped && $affected === 0) {
+                throw TenantIsolationException::writeMatchedNoTenantRow($entity::class, 'update', $id);
+            }
         }
 
         $this->logAudit($metadata, $context, 'update', $id);
@@ -153,6 +182,8 @@ final readonly class AuditingPersister
 
     /**
      * Delete an entity (or soft-delete if configured).
+     *
+     * @throws TenantIsolationException
      */
     public function delete(object $entity, MutationContext $context): void
     {
@@ -162,14 +193,24 @@ final readonly class AuditingPersister
         if ($metadata->hasSoftDelete && $metadata->softDeleteColumn !== null) {
             // Soft delete: set the deleted_at column
             $updateBuilder = new UpdateBuilder($this->connection, $metadata->qualifiedTableName());
-            $updateBuilder
+            $tenantScoped = $this->applyTenantScope($updateBuilder, $metadata);
+            $affected = $updateBuilder
                 ->set([$metadata->softDeleteColumn => date('Y-m-d H:i:s')])
                 ->where($metadata->primaryKey->columnName, $id)
                 ->execute();
+
+            if ($tenantScoped && $affected === 0) {
+                throw TenantIsolationException::writeMatchedNoTenantRow($entity::class, 'delete', $id);
+            }
         } else {
             // Hard delete
             $deleteBuilder = new DeleteBuilder($this->connection, $metadata->qualifiedTableName());
-            $deleteBuilder->where($metadata->primaryKey->columnName, $id)->execute();
+            $tenantScoped = $this->applyTenantScope($deleteBuilder, $metadata);
+            $affected = $deleteBuilder->where($metadata->primaryKey->columnName, $id)->execute();
+
+            if ($tenantScoped && $affected === 0) {
+                throw TenantIsolationException::writeMatchedNoTenantRow($entity::class, 'delete', $id);
+            }
         }
 
         $this->logAudit($metadata, $context, 'delete', $id);
