@@ -17,6 +17,8 @@ use function gethostbyname;
 use function http_build_query;
 use function implode;
 use function in_array;
+use function inet_ntop;
+use function inet_pton;
 use function is_string;
 use function parse_url;
 use function sprintf;
@@ -350,16 +352,18 @@ final class HttpClient implements HttpClientInterface
     /**
      * Guard against Server-Side Request Forgery (SSRF) with DNS pinning.
      *
-     * Resolves the hostname to an IP, validates it against private/reserved ranges,
-     * then replaces the hostname in the URL with the resolved IP to prevent DNS
-     * rebinding TOCTOU attacks. The original Host header is preserved via the
-     * returned URL mutation.
+     * Resolves the hostname to an IP, validates it against private/reserved
+     * ranges (including IPv4-embedding IPv6 such as the NAT64 64:ff9b::/96
+     * prefix), then pins the connection to that exact IP so the wrapper cannot
+     * re-resolve the name to a different (private) address at connect time —
+     * the DNS-rebinding TOCTOU. Fails closed when the host cannot be resolved.
      *
      * Supports both IPv4 (gethostbyname) and IPv6 (dns_get_record AAAA).
      *
-     * @return string The URL with the hostname replaced by the pinned IP
+     * @return string The URL with the authority host replaced by the pinned IP
      *
-     * @throws HttpClientException If the resolved IP is in a blocked range
+     * @throws HttpClientException If the resolved IP is in a blocked range or the
+     *                             host cannot be resolved
      */
     private function guardAgainstSsrf(string $url): string
     {
@@ -368,7 +372,7 @@ final class HttpClient implements HttpClientInterface
         // Enforce http(s) before anything else: a redirect Location of
         // file:///etc/passwd or gopher://… parses with no host and would
         // otherwise slip past the IP checks below and be fetched locally.
-        $scheme = isset($parsed['scheme']) ? strtolower((string) $parsed['scheme']) : '';
+        $scheme = isset($parsed['scheme']) ? strtolower($parsed['scheme']) : '';
         if ($scheme !== '' && $scheme !== 'http' && $scheme !== 'https') {
             throw HttpClientException::disallowedScheme($url, $scheme);
         }
@@ -410,18 +414,21 @@ final class HttpClient implements HttpClientInterface
         $resolvedIp = $this->resolveDns($host);
 
         if ($resolvedIp === null) {
-            // DNS resolution failed: allow through (DNS may not be available)
-            return $url;
+            // Fail closed: an unresolvable host cannot be validated, and a
+            // rebinding attacker can return SERVFAIL now and a private A at
+            // connect time. Refuse rather than connect to a re-resolvable name.
+            throw HttpClientException::unresolvableHost($host);
         }
 
         if ($this->isPrivateIp($resolvedIp)) {
             throw HttpClientException::ssrfBlocked($host, $resolvedIp);
         }
 
-        // Pin the connection: replace hostname with resolved IP in the URL
-        // to ensure file_get_contents() connects to the validated IP, not a
-        // potentially re-resolved DNS name (TOCTOU mitigation).
-        return $this->pinHostToIp($url, $host, $resolvedIp);
+        // Pin the connection to the validated IP. Rebuild the URL from parsed
+        // components (PinnedUrl) so ONLY the authority host is replaced — a
+        // string replace would mis-pin a URL whose userinfo repeats the host
+        // (http://h@h/), leaving the connect host unpinned and rebindable.
+        return PinnedUrl::withHost($url, $resolvedIp);
     }
 
     /**
@@ -450,54 +457,59 @@ final class HttpClient implements HttpClientInterface
     }
 
     /**
-     * Replace the hostname in a URL with a resolved IP for DNS pinning.
-     *
-     * For IPv6 addresses, wraps the IP in brackets as required by URL syntax.
-     */
-    private function pinHostToIp(string $url, string $originalHost, string $resolvedIp): string
-    {
-        // IPv6 addresses must be bracketed in URLs
-        $replacement = filter_var($resolvedIp, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)
-            ? '[' . $resolvedIp . ']'
-            : $resolvedIp;
-
-        // Replace only the host portion (preserving port, path, etc.)
-        // The host appears after :// and before the next / or :
-        $hostInUrl = $originalHost;
-        $parsed = parse_url($url);
-        if (isset($parsed['port'])) {
-            $hostInUrl .= ':' . $parsed['port'];
-            $replacement .= ':' . $parsed['port'];
-        }
-
-        // Replace the first occurrence of host in the URL (after the scheme)
-        $schemeEnd = strpos($url, '://');
-        if ($schemeEnd === false) {
-            return $url;
-        }
-
-        $prefix = substr($url, 0, $schemeEnd + 3);
-        $rest = substr($url, $schemeEnd + 3);
-        $hostPos = strpos($rest, $hostInUrl);
-
-        if ($hostPos === false) {
-            return $url;
-        }
-
-        return $prefix . substr($rest, 0, $hostPos) . $replacement . substr($rest, $hostPos + strlen($hostInUrl));
-    }
-
-    /**
      * Check if an IP address is private, loopback, or reserved.
      */
     private function isPrivateIp(string $ip): bool
     {
-        // Use PHP's built-in filter for private/reserved ranges
-        return filter_var(
-            $ip,
-            FILTER_VALIDATE_IP,
-            FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE,
-        ) === false;
+        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
+            return true;
+        }
+
+        // IPv6 addresses that embed an IPv4 address route to that IPv4, but the
+        // reserved-range filter does not catch the NAT64 prefix (64:ff9b::/96),
+        // so 64:ff9b::7f00:1 (== 127.0.0.1) or ::… metadata would pass. Extract
+        // any embedded IPv4 and validate it too.
+        $embedded = $this->embeddedIpv4($ip);
+
+        return $embedded !== null && $this->isPrivateIp($embedded);
+    }
+
+    /**
+     * Extract the IPv4 address embedded in an IPv6 address, if any.
+     *
+     * Covers IPv4-mapped (::ffff:0:0/96), NAT64 (64:ff9b::/96), and 6to4
+     * (2002::/16). Returns the dotted-quad string, or null when the address is
+     * not IPv6 or embeds no IPv4.
+     */
+    private function embeddedIpv4(string $ip): ?string
+    {
+        $bytes = @inet_pton($ip);
+
+        if ($bytes === false || strlen($bytes) !== 16) {
+            return null;
+        }
+
+        $prefix = substr($bytes, 0, 12);
+
+        // IPv4-mapped ::ffff:0:0/96 and NAT64 64:ff9b::/96 carry the IPv4 in the
+        // low 32 bits.
+        if (
+            $prefix === "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff"
+            || $prefix === "\x00\x64\xff\x9b\x00\x00\x00\x00\x00\x00\x00\x00"
+        ) {
+            $v4 = @inet_ntop(substr($bytes, 12, 4));
+
+            return $v4 === false ? null : $v4;
+        }
+
+        // 6to4 2002::/16 carries the IPv4 in bytes 2..5.
+        if (substr($bytes, 0, 2) === "\x20\x02") {
+            $v4 = @inet_ntop(substr($bytes, 2, 4));
+
+            return $v4 === false ? null : $v4;
+        }
+
+        return null;
     }
 
     /**
