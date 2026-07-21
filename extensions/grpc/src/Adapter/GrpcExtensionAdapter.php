@@ -142,22 +142,18 @@ final class GrpcExtensionAdapter implements GrpcTransportAdapterInterface
             }
         }
 
-        // Peer identity comes from the TLS handshake via $call->getPeer(),
-        // not from client-controlled headers. The grpc PECL extension does not
-        // expose client certificates directly, so peer identity is null unless
-        // the transport provides it through a verified mechanism.
-        $peerIdentity = null;
-
-        if ($call !== null && method_exists($call, 'getPeer')) {
-            /** @var string|false $peer */
-            $peer = $call->getPeer();
-
-            if ($peer !== false && $peer !== '') {
-                $peerIdentity = $peer;
-            }
-        }
-
-        $result = $handler->handle($method, $payload, $metadata, $peerIdentity);
+        // mTLS peer identity is intentionally null for this transport (C9).
+        //
+        // The grpc PECL extension's $call->getPeer() returns the TRANSPORT
+        // endpoint (e.g. "ipv4:203.0.113.7:54321"), NOT the verified client
+        // certificate SAN, and it is populated for every call regardless of
+        // whether mTLS was negotiated. Passing it as $peerIdentity let any
+        // tokenless request authenticate as its own source address, defeating
+        // the AuthInterceptor's UNAUTHENTICATED gate. PECL exposes no client
+        // certificate to extract a verified identity from, so there is nothing
+        // trustworthy to supply here: pass null so the auth pipeline requires a
+        // bearer token.
+        $result = $handler->handle($method, $payload, $metadata, null);
 
         if ($call !== null && method_exists($call, 'startBatch')) {
             $call->startBatch([
