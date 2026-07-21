@@ -2,6 +2,7 @@
   "name": "pulsar/releases",
   "version": "1.0.0",
   "description": "Release management and beta signup system",
+  "trust_tier": "core",
   "type": "extension_class",
   "namespace": "Pulsar\\Extension\\Releases",
   "pulsar": {
