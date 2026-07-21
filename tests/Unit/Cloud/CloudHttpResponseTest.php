@@ -20,6 +20,19 @@ final class CloudHttpResponseTest extends TestCase
 
         self::assertSame(200, $response->statusCode);
         self::assertSame('{"ok":true}', $response->body);
+        self::assertSame([], $response->headers);
+    }
+
+    #[Test]
+    public function headerLookupIsCaseInsensitive(): void
+    {
+        $response = new CloudHttpResponse(200, '', ['etag' => '"abc123"', 'content-type' => 'application/xml']);
+
+        // Headers are stored lowercased; lookup lowercases the query.
+        self::assertSame('"abc123"', $response->header('ETag'));
+        self::assertSame('"abc123"', $response->header('etag'));
+        self::assertSame('application/xml', $response->header('Content-Type'));
+        self::assertNull($response->header('X-Absent'));
     }
 
     #[Test]

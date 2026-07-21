@@ -10,6 +10,7 @@ use Pulsar\Api\Internal;
 use Pulsar\Cloud\Aws\Config\AwsConfig;
 use Pulsar\Cloud\CloudException;
 use Pulsar\Cloud\CloudHttpClient;
+use Pulsar\Cloud\CloudHttpClientInterface;
 use Pulsar\Storage\StorageAdapterInterface;
 use Pulsar\Storage\StorageException;
 use Pulsar\Storage\StorageMetadata;
@@ -17,6 +18,7 @@ use Pulsar\Storage\StorageObject;
 use Throwable;
 
 use function hash;
+use function htmlspecialchars;
 use function intval;
 use function libxml_use_internal_errors;
 use function ltrim;
@@ -30,6 +32,8 @@ use function strtotime;
 use function substr;
 use function trim;
 
+use const ENT_NOQUOTES;
+use const ENT_XML1;
 use const LIBXML_NONET;
 
 /**
@@ -51,7 +55,7 @@ final class S3StorageAdapter implements StorageAdapterInterface
         private readonly string $bucket,
         private readonly string $prefix = '',
         private readonly bool $usePathStyle = false,
-        private readonly CloudHttpClient $httpClient = new CloudHttpClient(),
+        private readonly CloudHttpClientInterface $httpClient = new CloudHttpClient(),
     ) {}
 
     #[Override]
@@ -304,9 +308,17 @@ final class S3StorageAdapter implements StorageAdapterInterface
             throw StorageException::writeFailed($key, sprintf('Part %d returned HTTP %d', $partNumber, $response->statusCode));
         }
 
-        // ETag is returned in the response body for some implementations,
-        // but conventionally available as part of the XML response
-        return trim($key . '-part-' . $partNumber);
+        // S3 returns each part's ETag in the response ETag header (never the
+        // body). CompleteMultipartUpload validates these ETags, so a fabricated
+        // value fails the whole upload with 400 InvalidPart. Fail closed when it
+        // is absent rather than invent one.
+        $etag = $response->header('ETag');
+
+        if ($etag === null || $etag === '') {
+            throw StorageException::writeFailed($key, sprintf('Part %d response carried no ETag', $partNumber));
+        }
+
+        return $etag;
     }
 
     /**
@@ -320,7 +332,9 @@ final class S3StorageAdapter implements StorageAdapterInterface
             $body .= sprintf(
                 '<Part><PartNumber>%d</PartNumber><ETag>%s</ETag></Part>',
                 $part['PartNumber'],
-                $part['ETag'],
+                // XML-escape the &, <, > that would otherwise break the document;
+                // ENT_NOQUOTES preserves the literal quotes S3 wraps ETags in.
+                htmlspecialchars($part['ETag'], ENT_NOQUOTES | ENT_XML1, 'UTF-8'),
             );
         }
         $body .= '</CompleteMultipartUpload>';

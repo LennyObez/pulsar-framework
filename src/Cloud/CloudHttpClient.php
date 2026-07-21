@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Cloud;
 
+use CurlHandle;
 use Pulsar\Api\Internal;
 
 use function curl_close;
@@ -14,9 +15,15 @@ use function curl_getinfo;
 use function curl_init;
 use function curl_setopt_array;
 use function is_string;
+use function strlen;
+use function strpos;
+use function strtolower;
+use function substr;
+use function trim;
 
 use const CURLINFO_HTTP_CODE;
 use const CURLOPT_CUSTOMREQUEST;
+use const CURLOPT_HEADERFUNCTION;
 use const CURLOPT_HTTPHEADER;
 use const CURLOPT_NOBODY;
 use const CURLOPT_POSTFIELDS;
@@ -31,7 +38,7 @@ use const CURLOPT_URL;
  * headers/payload and processes responses.
  */
 #[Internal]
-final readonly class CloudHttpClient
+final readonly class CloudHttpClient implements CloudHttpClientInterface
 {
     public function __construct(
         private int $timeout = 30,
@@ -64,12 +71,30 @@ final readonly class CloudHttpClient
             $curlHeaders[] = $name . ': ' . $value;
         }
 
+        // Capture response headers (lowercased name => value) so callers can
+        // read provider metadata such as the S3 UploadPart ETag, which is only
+        // available in the response header — never the body.
+        /** @var array<string, string> $responseHeaders */
+        $responseHeaders = [];
+        $headerCallback = static function (CurlHandle $handle, string $headerLine) use (&$responseHeaders): int {
+            $colon = strpos($headerLine, ':');
+            if ($colon !== false) {
+                $name = strtolower(trim(substr($headerLine, 0, $colon)));
+                if ($name !== '') {
+                    $responseHeaders[$name] = trim(substr($headerLine, $colon + 1));
+                }
+            }
+
+            return strlen($headerLine);
+        };
+
         $options = [
             CURLOPT_URL => $url,
             CURLOPT_CUSTOMREQUEST => $method,
             CURLOPT_HTTPHEADER => $curlHeaders,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT => $this->timeout,
+            CURLOPT_HEADERFUNCTION => $headerCallback,
         ];
 
         if ($method === 'HEAD') {
@@ -80,7 +105,6 @@ final readonly class CloudHttpClient
             $options[CURLOPT_POSTFIELDS] = $body;
         }
 
-        /** @phpstan-ignore argument.type (cURL option array types are overly strict in PHPStan stubs) */
         curl_setopt_array($ch, $options);
         $responseBody = curl_exec($ch);
 
@@ -97,6 +121,7 @@ final readonly class CloudHttpClient
         return new CloudHttpResponse(
             statusCode: $statusCode,
             body: is_string($responseBody) ? $responseBody : '',
+            headers: $responseHeaders,
         );
     }
 }
