@@ -14,6 +14,8 @@ use Pulsar\Http\Client\HttpClientInterface;
 
 use function base64_encode;
 use function json_encode;
+use function rtrim;
+use function strtr;
 use function time;
 
 use const JSON_THROW_ON_ERROR;
@@ -180,8 +182,13 @@ final readonly class GoogleCalendarSync implements GoogleCalendarSyncInterface
         $keyData = json_decode($keyFileContents, true, 512, JSON_THROW_ON_ERROR);
 
         $now = time();
-        $header = base64_encode(json_encode(['alg' => 'RS256', 'typ' => 'JWT'], JSON_THROW_ON_ERROR));
-        $claims = base64_encode(json_encode([
+        // JWS (RFC 7515) requires base64url — not standard base64 — for every
+        // segment. The signature is computed over the base64url-encoded
+        // "header.claims" input, so the encoding must be applied before signing;
+        // standard base64 ('+', '/', '=') makes Google reject the assertion with
+        // invalid_grant on every call.
+        $header = self::base64UrlEncode(json_encode(['alg' => 'RS256', 'typ' => 'JWT'], JSON_THROW_ON_ERROR));
+        $claims = self::base64UrlEncode(json_encode([
             'iss' => $keyData['client_email'],
             'scope' => 'https://www.googleapis.com/auth/calendar',
             'aud' => self::TOKEN_URL,
@@ -199,7 +206,7 @@ final readonly class GoogleCalendarSync implements GoogleCalendarSyncInterface
 
         openssl_sign($signatureInput, $signature, $privateKey, OPENSSL_ALGO_SHA256);
 
-        $jwt = "{$signatureInput}." . base64_encode($signature);
+        $jwt = "{$signatureInput}." . self::base64UrlEncode($signature);
 
         try {
             $response = $this->httpClient->post(self::TOKEN_URL, [
@@ -219,5 +226,13 @@ final readonly class GoogleCalendarSync implements GoogleCalendarSyncInterface
         } catch (HttpClientException $e) {
             throw BookingException::calendarSyncFailed("Token exchange failed: {$e->getMessage()}");
         }
+    }
+
+    /**
+     * Encode bytes as base64url (RFC 7515 §2): URL-safe alphabet, no padding.
+     */
+    private static function base64UrlEncode(string $bytes): string
+    {
+        return rtrim(strtr(base64_encode($bytes), '+/', '-_'), '=');
     }
 }
