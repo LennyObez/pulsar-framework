@@ -74,6 +74,35 @@ final class WiringContractGraphTest extends TestCase
         }
     }
 
+    #[Test]
+    public function securityWiringBindsEveryControlItDeclares(): void
+    {
+        // M0, the wiring-contract gate: a security control that SecurityWiring
+        // declares it provides but does not actually bind after a real boot is
+        // the audit's dominant "built, tested, documented, never wired" failure.
+        // Assert every declared security binding resolves — fail closed.
+        $kernel = new Kernel(configManager: new ConfigManager(configPath: $this->tempDir));
+        $kernel->boot();
+
+        $security = null;
+        foreach ($this->describedContracts() as $contract) {
+            if ($contract->component === 'security') {
+                $security = $contract;
+            }
+        }
+
+        self::assertNotNull($security, 'SecurityWiring must describe its wiring contract');
+
+        $unbound = [];
+        foreach ($security->provides as $binding) {
+            if (!$kernel->container()->has($binding)) {
+                $unbound[] = $binding;
+            }
+        }
+
+        self::assertSame([], $unbound, "Security control(s) declared but not bound after boot:\n" . implode("\n", $unbound));
+    }
+
     /**
      * @return list<WiringContract>
      */
