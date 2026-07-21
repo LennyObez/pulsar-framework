@@ -30,6 +30,7 @@ use Pulsar\Core\Boot\BuildArtifactVerifier;
 use Pulsar\Core\Boot\CachedRouteReconstructor;
 use Pulsar\Core\Boot\ConfigDiagnosticsReporter;
 use Pulsar\Core\Boot\ExtensionDiscovery;
+use Pulsar\Core\Boot\ExtensionSandbox;
 use Pulsar\Core\Boot\ExtensionViewPathRegistrar;
 use Pulsar\Core\Boot\ProjectRouteLoader;
 use Pulsar\Core\Controller\ControllerResolverInterface;
@@ -341,6 +342,16 @@ final class Kernel implements KernelInterface
                 $this->extensionBootstrap = $bootstrap;
                 $this->container->instance(ExtensionBootstrap::class, $bootstrap);
             }
+        }
+
+        // Engage the extension capability sandbox before any extension registers
+        // or boots. Without a policy the scoping proxies are bypassed and every
+        // extension runs with full host privileges (RC-4). Deny-by-default:
+        // extensions not listed in config/extensions.php are capped at Community
+        // regardless of the tier their manifest requests. A no-op when a policy
+        // was already configured explicitly.
+        if ($this->extensionBootstrap !== null) {
+            ExtensionSandbox::harden($this->extensionBootstrap, $this->configManager?->configPath());
         }
 
         // Extension register phase (all extensions)

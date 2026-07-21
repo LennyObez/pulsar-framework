@@ -56553,6 +56553,7 @@
         "Pulsar\\Core\\Boot\\CachedRouteReconstructor",
         "Pulsar\\Core\\Boot\\ConfigDiagnosticsReporter",
         "Pulsar\\Core\\Boot\\ExtensionDiscovery",
+        "Pulsar\\Core\\Boot\\ExtensionSandbox",
         "Pulsar\\Core\\Boot\\ExtensionViewPathRegistrar",
         "Pulsar\\Core\\Boot\\ProjectRouteLoader",
         "Pulsar\\Core\\Controller\\ReflectionControllerResolver",
