@@ -73,6 +73,21 @@ final class HttpClientException extends RuntimeException
     }
 
     /**
+     * SSRF protection blocked a non-HTTP(S) URL scheme.
+     *
+     * Guards against a redirect (or caller) steering the client onto file://,
+     * gopher://, dict:// and similar schemes that would read local resources or
+     * reach unintended services.
+     */
+    #[NoDiscard]
+    public static function disallowedScheme(string $url, string $scheme): self
+    {
+        return new self(
+            sprintf('SSRF protection blocked request to "%s" (disallowed scheme "%s"; only http/https allowed)', $url, $scheme),
+        );
+    }
+
+    /**
      * The response body could not be parsed as JSON.
      */
     #[NoDiscard]

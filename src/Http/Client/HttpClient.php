@@ -115,17 +115,12 @@ final class HttpClient implements HttpClientInterface
         /** @var float $retryDelay */
         $retryDelay = $options['retry_delay'] ?? $this->config->retryDelay;
 
-        // SSRF protection: validate the resolved host and pin DNS to prevent rebinding
-        if ($this->config->ssrfProtection) {
-            $resolvedUrl = $this->guardAgainstSsrf($resolvedUrl);
-        }
-
         $lastException = null;
         $attempts = $retries + 1;
 
         for ($attempt = 1; $attempt <= $attempts; $attempt++) {
             try {
-                return $this->doSend($method, $resolvedUrl, $options, $timeout);
+                return $this->sendFollowingRedirects($method, $resolvedUrl, $options, $timeout);
             } catch (HttpClientException $e) {
                 $lastException = $e;
 
@@ -138,6 +133,76 @@ final class HttpClient implements HttpClientInterface
         }
 
         throw $lastException ?? HttpClientException::connectionFailed($resolvedUrl, 'Unknown error');
+    }
+
+    /**
+     * Send a request, following redirects in PHP so every hop is SSRF-validated.
+     *
+     * The stream wrapper's own redirect following is disabled (see doSend); this
+     * loop re-runs guardAgainstSsrf() — scheme check, IP validation, and DNS
+     * pinning — on the initial URL and on every 3xx Location before connecting,
+     * closing the SSRF-via-redirect bypass. The hostname URL is what redirect
+     * targets resolve against; only the connection uses the pinned host→IP URL.
+     *
+     * @param array<string, mixed> $options
+     *
+     * @throws HttpClientException
+     */
+    private function sendFollowingRedirects(string $method, string $url, array $options, float $timeout): HttpResponse
+    {
+        $maxRedirects = $this->config->maxRedirects;
+        $currentUrl = $url;
+        $currentMethod = strtoupper($method);
+        $currentOptions = $options;
+
+        for ($hop = 0; ; $hop++) {
+            $target = $this->config->ssrfProtection
+                ? $this->guardAgainstSsrf($currentUrl)
+                : $currentUrl;
+
+            $response = $this->doSend($currentMethod, $target, $currentOptions, $timeout);
+
+            if ($maxRedirects <= 0 || !RedirectResolver::isRedirect($response->status())) {
+                return $response;
+            }
+
+            $location = $response->header('Location');
+            if ($location === null || trim($location) === '') {
+                return $response;
+            }
+
+            if ($hop >= $maxRedirects) {
+                throw HttpClientException::tooManyRedirects($maxRedirects);
+            }
+
+            $currentUrl = RedirectResolver::resolve($currentUrl, $location);
+            [$currentMethod, $currentOptions] = $this->rewriteForRedirect(
+                $response->status(),
+                $currentMethod,
+                $currentOptions,
+            );
+        }
+    }
+
+    /**
+     * Rewrite the method and body for the next redirect hop.
+     *
+     * 307/308 preserve the method and body; 301/302/303 downgrade a body-bearing
+     * method to GET and drop the body (the default curl/browser behaviour).
+     *
+     * @param array<string, mixed> $options
+     *
+     * @return array{0: string, 1: array<string, mixed>}
+     */
+    private function rewriteForRedirect(int $status, string $method, array $options): array
+    {
+        if ($status === 307 || $status === 308 || $method === 'GET' || $method === 'HEAD') {
+            return [$method, $options];
+        }
+
+        unset($options['body']);
+
+        return ['GET', $options];
     }
 
     /**
@@ -165,8 +230,13 @@ final class HttpClient implements HttpClientInterface
             'method' => strtoupper($method),
             'header' => implode("\r\n", $headerLines),
             'timeout' => $timeout,
-            'follow_location' => $this->config->maxRedirects > 0 ? 1 : 0,
-            'max_redirects' => $this->config->maxRedirects,
+            // Never let the stream wrapper follow redirects: it would re-resolve
+            // and connect to the 3xx target with no SSRF re-validation (cloud
+            // metadata / internal hosts). Redirects are followed explicitly in
+            // sendFollowingRedirects(), which re-runs guardAgainstSsrf() on every
+            // hop. max_redirects=1 means "no redirects" for the http wrapper.
+            'follow_location' => 0,
+            'max_redirects' => 1,
             'ignore_errors' => true,
             'protocol_version' => '1.1',
         ];
@@ -294,6 +364,15 @@ final class HttpClient implements HttpClientInterface
     private function guardAgainstSsrf(string $url): string
     {
         $parsed = parse_url($url);
+
+        // Enforce http(s) before anything else: a redirect Location of
+        // file:///etc/passwd or gopher://… parses with no host and would
+        // otherwise slip past the IP checks below and be fetched locally.
+        $scheme = isset($parsed['scheme']) ? strtolower((string) $parsed['scheme']) : '';
+        if ($scheme !== '' && $scheme !== 'http' && $scheme !== 'https') {
+            throw HttpClientException::disallowedScheme($url, $scheme);
+        }
+
         $host = $parsed['host'] ?? null;
 
         if ($host === null) {
