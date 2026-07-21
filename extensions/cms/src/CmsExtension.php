@@ -86,6 +86,7 @@ use Pulsar\Extension\Cms\Http\Controller\ResumePdfController;
 use Pulsar\Extension\Cms\Http\Controller\SeoController;
 use Pulsar\Extension\Cms\Http\Controller\SitemapController;
 use Pulsar\Extension\Cms\Http\Controller\WebhookController;
+use Pulsar\Extension\Cms\Http\Middleware\CmsApiKeyMiddleware;
 use Pulsar\Extension\Cms\Http\Middleware\CmsLocaleMiddleware;
 use Pulsar\Extension\Cms\Http\Middleware\CmsPageCacheMiddleware;
 use Pulsar\Extension\Cms\ImportExport\CmsImportExportProvider;
@@ -444,7 +445,15 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
         $router->get("$prefix/media", [MediaApiController::class, 'index'], 'cms.api.media.index');
         $router->post("$prefix/media", [MediaApiController::class, 'upload'], 'cms.api.media.upload');
         $router->get("$prefix/media/{id}", [MediaApiController::class, 'show'], 'cms.api.media.show');
-        $router->delete("$prefix/media/{id}", [MediaApiController::class, 'delete'], 'cms.api.media.delete');
+        // Destructive: require an authenticated API key so the controller can
+        // enforce tenant ownership before deleting (C4).
+        $router->add(new Route(
+            methods: [Method::DELETE],
+            path: "$prefix/media/{id}",
+            handler: [MediaApiController::class, 'delete'],
+            name: 'cms.api.media.delete',
+            middleware: [CmsApiKeyMiddleware::class],
+        ));
 
         // Collaboration API
         $router->get("$prefix/collaboration/{contentId}/state", [CollaborationApiController::class, 'getState'], 'cms.api.collaboration.state');
@@ -457,8 +466,23 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
         if ($config->commerce !== null) {
             $router->get("$prefix/products", [CommerceApiController::class, 'listProducts'], 'cms.api.products.index');
             $router->get("$prefix/products/{id}", [CommerceApiController::class, 'showProduct'], 'cms.api.products.show');
-            $router->get("$prefix/orders", [CommerceApiController::class, 'listOrders'], 'cms.api.orders.index');
-            $router->get("$prefix/orders/{id}", [CommerceApiController::class, 'showOrder'], 'cms.api.orders.show');
+            // Orders carry customer PII (email, addresses): require an
+            // authenticated API key so the controller scopes to the caller's
+            // tenant (C3). Products above stay public (catalog).
+            $router->add(new Route(
+                methods: [Method::GET],
+                path: "$prefix/orders",
+                handler: [CommerceApiController::class, 'listOrders'],
+                name: 'cms.api.orders.index',
+                middleware: [CmsApiKeyMiddleware::class],
+            ));
+            $router->add(new Route(
+                methods: [Method::GET],
+                path: "$prefix/orders/{id}",
+                handler: [CommerceApiController::class, 'showOrder'],
+                name: 'cms.api.orders.show',
+                middleware: [CmsApiKeyMiddleware::class],
+            ));
         }
 
         // AI content assistant API (conditional)
