@@ -9,6 +9,8 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Grpc\Adapter\GrpcExtensionAdapter;
 use Pulsar\Extension\Grpc\Adapter\GrpcRequestHandler;
+use Pulsar\Extension\Grpc\Interceptor\InterceptorResult;
+use ReflectionMethod;
 use RuntimeException;
 
 use function extension_loaded;
@@ -82,5 +84,52 @@ final class GrpcExtensionAdapterTest extends TestCase
         );
 
         self::assertSame('grpc_extension', $adapter->name());
+    }
+
+    #[Test]
+    public function dispatch_never_passes_the_transport_peer_address_as_identity(): void
+    {
+        // C9: PECL's $call->getPeer() returns the transport endpoint, not a
+        // verified client-cert SAN. Even when the call exposes one, the adapter
+        // must pass null so the auth pipeline requires a bearer token.
+        $handler = new class implements GrpcRequestHandler {
+            public ?string $captured = 'sentinel';
+
+            public function handle(
+                string $fullMethodName,
+                string $payload,
+                array $metadata = [],
+                ?string $peerIdentity = null,
+            ): InterceptorResult {
+                $this->captured = $peerIdentity;
+
+                return InterceptorResult::ok('');
+            }
+        };
+
+        // A fake grpc call that DOES expose a transport peer address, but omits
+        // startBatch() (which references Grpc\OP_* constants only defined when
+        // the extension is loaded), so dispatchEvent can run without the ext.
+        $call = new class {
+            public function getPeer(): string
+            {
+                return 'ipv4:203.0.113.7:54321';
+            }
+        };
+
+        $event = new class ($call) {
+            public function __construct(
+                public object $call,
+                public string $method = '/pkg.Service/Method',
+            ) {}
+        };
+
+        $adapter = new GrpcExtensionAdapter();
+        new ReflectionMethod($adapter, 'dispatchEvent')->invoke($adapter, $event, $handler);
+
+        self::assertNull(
+            $handler->captured,
+            'the transport peer address must not be passed as a verified identity',
+        );
     }
 }
