@@ -19,6 +19,8 @@ use Pulsar\Config\ObservabilityConfig;
 use Pulsar\Config\SecurityConfig;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Context\RequestContextHolder;
+use Pulsar\Core\Wiring\Contract\DescribesWiring;
+use Pulsar\Core\Wiring\Contract\WiringContract;
 use Pulsar\DataProtection\AuditLogPurge;
 use Pulsar\DataProtection\ConsentManagerInterface;
 use Pulsar\DataProtection\DataProtectionConfig;
@@ -95,8 +97,38 @@ use function sprintf;
 use const DIRECTORY_SEPARATOR;
 
 #[Internal]
-final readonly class SecurityWiring implements ServiceWiringInterface
+final readonly class SecurityWiring implements ServiceWiringInterface, DescribesWiring
 {
+    /**
+     * The security controls this wiring binds unconditionally on every boot.
+     * Declaring them puts them under the wiring-contract gate, which asserts
+     * each actually resolves from the booted container — so a control that is
+     * built and documented but silently loses its binding fails the build
+     * (the audit's dominant "built-but-never-wired" failure mode). Master-key-
+     * gated bindings (crypto, tokenization, audit chain) are deliberately not
+     * listed here: they are conditional on PULSAR_MASTER_KEY, not always-on.
+     */
+    public function describeWiring(): WiringContract
+    {
+        return new WiringContract(
+            component: 'security',
+            configClass: SecurityConfig::class,
+            configFile: 'security.php',
+            provides: [
+                HmacInterface::class,
+                SessionInterface::class,
+                SessionManager::class,
+                SessionHandlerInterface::class,
+                SessionMiddleware::class,
+                FlashBag::class,
+                CsrfTokenManager::class,
+                CsrfTokenManagerInterface::class,
+                CsrfMiddleware::class,
+                SecurityHeadersMiddleware::class,
+            ],
+        );
+    }
+
     public function wire(
         ContainerInterface $container,
         ConfigManager $configManager,
