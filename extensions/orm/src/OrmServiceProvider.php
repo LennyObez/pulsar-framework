@@ -25,6 +25,7 @@ use Pulsar\Extension\Orm\Features\Persistence\TransactionManager;
 use Pulsar\Extension\Orm\Features\Schema\SchemaBuilder;
 use Pulsar\Extension\Orm\Features\Tenancy\TenantColumnResolver;
 use Pulsar\Extension\Orm\Features\Tenancy\TenantInsertEnricher;
+use Pulsar\Extension\Orm\Features\Tenancy\TenantScopeApplier;
 use Pulsar\Extension\Orm\Gateway\EntityManager;
 use Pulsar\Security\Crypto\EncryptorInterface;
 use Pulsar\Security\Crypto\KeyProviderInterface;
@@ -146,6 +147,18 @@ final readonly class OrmServiceProvider implements ServiceProviderInterface
 
                 return new TenantInsertEnricher($tenantScope, $columnResolver);
             });
+
+            // Read-side tenant filter, wired into GenericRepository so find()/
+            // findBy()/count() cannot return another tenant's rows (RC-2/C12).
+            $container->bind(TenantScopeApplier::class, static function () use ($container): TenantScopeApplier {
+                /** @var Contracts\TenantScopeInterface $tenantScope */
+                $tenantScope = $container->get(Contracts\TenantScopeInterface::class);
+
+                /** @var TenantColumnResolver $columnResolver */
+                $columnResolver = $container->get(TenantColumnResolver::class);
+
+                return new TenantScopeApplier($tenantScope, $columnResolver);
+            });
         }
 
         // Encrypted column guard
@@ -213,7 +226,12 @@ final readonly class OrmServiceProvider implements ServiceProviderInterface
             /** @var TransactionManagerInterface $txManager */
             $txManager = $container->get(TransactionManagerInterface::class);
 
-            return new EntityManager($connection, $registry, $hydrator, $persister, $txManager);
+            /** @var TenantScopeApplier|null $tenantScopeApplier */
+            $tenantScopeApplier = $container->has(TenantScopeApplier::class)
+                ? $container->get(TenantScopeApplier::class)
+                : null;
+
+            return new EntityManager($connection, $registry, $hydrator, $persister, $txManager, $tenantScopeApplier);
         });
     }
 
