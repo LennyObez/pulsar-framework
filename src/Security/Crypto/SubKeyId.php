@@ -78,6 +78,13 @@ enum SubKeyId: int
 
     /** Reserved range for first-party extensions: 13–63. */
 
+    /**
+     * ORM blind-index keyed hashing (super-audit C10). Distinct from Orm=5 so
+     * the searchable-index key is never the encryption key, and derived from the
+     * master key rather than a public constant.
+     */
+    case OrmBlindIndex = 13;
+
     /** Reserved range for third-party extensions: 64–127. */
 
     /** Reserved for testing only — never use in production. */
