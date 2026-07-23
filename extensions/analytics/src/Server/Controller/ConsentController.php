@@ -7,11 +7,8 @@ namespace Pulsar\Extension\Analytics\Server\Controller;
 use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\DataProtection\ConsentManagerInterface;
-use Pulsar\Extension\Analytics\Internal\Security\AnalyticsKeyManager;
+use Pulsar\Extension\Analytics\Internal\Security\VisitorConsentIdentity;
 use Pulsar\Http\Message\Response;
-use Pulsar\Security\Crypto\Hmac;
-
-use function is_string;
 
 /**
  * Handles analytics consent grant and revocation requests.
@@ -27,7 +24,7 @@ final readonly class ConsentController
 
     public function __construct(
         private ConsentManagerInterface $consentManager,
-        private AnalyticsKeyManager $keyManager,
+        private VisitorConsentIdentity $consentIdentity,
     ) {}
 
     /**
@@ -59,20 +56,11 @@ final readonly class ConsentController
     }
 
     /**
-     * Generate a stable visitor hash for consent identification.
-     *
-     * Uses HMAC with a KDF-derived key, producing a hash that cannot be
-     * reversed to recover IP or user agent. The 'consent' salt ensures
-     * this hash is distinct from the daily-rotating analytics visitor ID.
+     * The consent subject for this request — the same identifier the banner
+     * middleware and the tracker derive, so a grant here is recognised there.
      */
     private function resolveVisitorHash(ServerRequestInterface $request): string
     {
-        /** @var mixed $rawIp */
-        $rawIp = $request->getServerParams()['REMOTE_ADDR'] ?? '0.0.0.0';
-        $ip = is_string($rawIp) ? $rawIp : '0.0.0.0';
-        $userAgent = $request->getHeaderLine('User-Agent');
-        $key = $this->keyManager->visitorKey();
-
-        return Hmac::computeHex($ip . '|' . $userAgent . '|consent', $key);
+        return $this->consentIdentity->forRequest($request);
     }
 }

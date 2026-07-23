@@ -24,20 +24,16 @@ use Pulsar\Extension\Analytics\Domain\VisitorId;
 use Pulsar\Extension\Analytics\Internal\Bot\BotDetector;
 use Pulsar\Extension\Analytics\Internal\Queue\ProcessPageViewJob;
 use Pulsar\Extension\Analytics\Internal\Security\AnalyticsKeyManager;
+use Pulsar\Extension\Analytics\Internal\Security\VisitorConsentIdentity;
 use Pulsar\Queue\QueueManager;
 use Pulsar\Security\ZeroTrust\Signal\GeoLocationResolverInterface;
 use Throwable;
 
-use function array_map;
-use function count;
-use function explode;
-use function in_array;
 use function is_array;
 use function is_float;
 use function is_int;
 use function is_string;
 use function json_encode;
-use function trim;
 
 use const JSON_THROW_ON_ERROR;
 
@@ -51,6 +47,15 @@ final readonly class TrackingService implements TrackingServiceInterface
      * The consent purpose identifier used when requireConsent is enabled.
      */
     private const string CONSENT_PURPOSE = 'analytics';
+
+    /**
+     * The consent subject derivation, shared with the grant endpoint and the
+     * banner middleware so all three agree on a visitor's identifier. Defaults
+     * to one built from this service's own key manager and config when not
+     * injected, so a caller that omits it still derives the *same* subject
+     * rather than silently diverging.
+     */
+    private readonly VisitorConsentIdentity $consentIdentity;
 
     public function __construct(
         private AnalyticsKeyManager $keyManager,
@@ -67,7 +72,10 @@ final readonly class TrackingService implements TrackingServiceInterface
         private ?GoalServiceInterface $goalService = null,
         private ?ConsentManagerInterface $consentManager = null,
         private ?QueueManager $queueManager = null,
-    ) {}
+        ?VisitorConsentIdentity $consentIdentity = null,
+    ) {
+        $this->consentIdentity = $consentIdentity ?? new VisitorConsentIdentity($keyManager, $config);
+    }
 
     /**
      * Resolve today's visitor id, yesterday's (only if its salt still exists),
@@ -123,7 +131,7 @@ final readonly class TrackingService implements TrackingServiceInterface
 
         $ip = $this->getClientIp($request);
 
-        if (!$this->hasConsentIfRequired($ip)) {
+        if (!$this->hasConsentIfRequired($request)) {
             return;
         }
 
@@ -227,7 +235,7 @@ final readonly class TrackingService implements TrackingServiceInterface
 
         $ip = $this->getClientIp($request);
 
-        if (!$this->hasConsentIfRequired($ip)) {
+        if (!$this->hasConsentIfRequired($request)) {
             return;
         }
 
@@ -304,40 +312,7 @@ final readonly class TrackingService implements TrackingServiceInterface
      */
     private function getClientIp(ServerRequestInterface $request): string
     {
-        $serverParams = $request->getServerParams();
-        /** @var mixed $raw */
-        $raw = $serverParams['REMOTE_ADDR'] ?? null;
-        $remoteAddr = is_string($raw) ? $raw : '127.0.0.1';
-
-        $forwardedFor = $request->getHeaderLine('X-Forwarded-For');
-
-        if ($forwardedFor !== '' && $this->isTrustedProxy($remoteAddr)) {
-            $ips = array_map(trim(...), explode(',', $forwardedFor));
-
-            // Walk right-to-left: rightmost IPs are closest to server (most trusted)
-            // Find the first IP that is NOT a trusted proxy
-            for ($i = count($ips) - 1; $i >= 0; $i--) {
-                if (!$this->isTrustedProxy($ips[$i])) {
-                    return $ips[$i];
-                }
-            }
-
-            // All IPs are trusted proxies: use the leftmost (original client)
-            if ($ips !== []) {
-                return $ips[0];
-            }
-        }
-
-        return $remoteAddr;
-    }
-
-    private function isTrustedProxy(string $remoteAddr): bool
-    {
-        if ($this->config->trustedProxies === []) {
-            return false;
-        }
-
-        return in_array($remoteAddr, $this->config->trustedProxies, true);
+        return $this->consentIdentity->clientIp($request);
     }
 
     /**
@@ -388,11 +363,12 @@ final readonly class TrackingService implements TrackingServiceInterface
     /**
      * Check whether consent is granted when requireConsent is enabled.
      *
-     * Uses the visitor's IP as the subject identifier for consent lookup,
-     * since analytics tracking is cookieless and IP is the only identifier
-     * available before visitor ID generation.
+     * The subject is the shared consent identifier — the same value the consent
+     * grant endpoint and the banner middleware record under — so a visitor who
+     * granted consent is actually recognised here. Keying this off anything else
+     * (e.g. the raw IP) would make every check miss and silently drop all hits.
      */
-    private function hasConsentIfRequired(string $ip): bool
+    private function hasConsentIfRequired(ServerRequestInterface $request): bool
     {
         if (!$this->config->privacy->requireConsent) {
             return true;
@@ -402,7 +378,10 @@ final readonly class TrackingService implements TrackingServiceInterface
             return false;
         }
 
-        return $this->consentManager->hasConsent($ip, self::CONSENT_PURPOSE);
+        return $this->consentManager->hasConsent(
+            $this->consentIdentity->forRequest($request),
+            self::CONSENT_PURPOSE,
+        );
     }
 
     private function extractPathname(string $url): string

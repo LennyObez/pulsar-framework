@@ -52,6 +52,7 @@ use Pulsar\Extension\Analytics\Internal\Repository\DbSessionRepository;
 use Pulsar\Extension\Analytics\Internal\Repository\DbSiteRepository;
 use Pulsar\Extension\Analytics\Internal\Security\AnalyticsKeyManager;
 use Pulsar\Extension\Analytics\Internal\Security\DbVisitorSaltStore;
+use Pulsar\Extension\Analytics\Internal\Security\VisitorConsentIdentity;
 use Pulsar\Extension\Analytics\Internal\Service\AggregationService;
 use Pulsar\Extension\Analytics\Internal\Service\AttributionService;
 use Pulsar\Extension\Analytics\Internal\Service\CustomEventService;
@@ -110,6 +111,13 @@ final class AnalyticsServiceProvider implements ServiceProviderInterface
         if ($container->has(MasterKey::class)) {
             $container->bind(AnalyticsKeyManager::class, static fn() => new AnalyticsKeyManager(
                 $container->get(MasterKey::class),
+            ));
+
+            // Single source of truth for the consent subject identifier, shared
+            // by the grant endpoint, the banner middleware and the tracker.
+            $container->bind(VisitorConsentIdentity::class, static fn() => new VisitorConsentIdentity(
+                $container->get(AnalyticsKeyManager::class),
+                $config,
             ));
         }
 
@@ -223,6 +231,7 @@ final class AnalyticsServiceProvider implements ServiceProviderInterface
             eventRepository: $container->get(EventRepositoryInterface::class),
             siteRepository: $container->get(SiteRepositoryInterface::class),
             config: $config,
+            consentIdentity: $container->get(VisitorConsentIdentity::class),
             goalService: $container->has(GoalServiceInterface::class)
                 ? $container->get(GoalServiceInterface::class)
                 : null,
@@ -326,7 +335,7 @@ final class AnalyticsServiceProvider implements ServiceProviderInterface
             $container->bind(AnalyticsConsentMiddleware::class, static fn() => new AnalyticsConsentMiddleware(
                 $config,
                 $container->get(ConsentManagerInterface::class),
-                $container->get(AnalyticsKeyManager::class),
+                $container->get(VisitorConsentIdentity::class),
                 $container->get(AnalyticsConsentBanner::class),
             ));
         }
@@ -404,7 +413,7 @@ final class AnalyticsServiceProvider implements ServiceProviderInterface
         if ($container->has(ConsentManagerInterface::class) && $container->has(AnalyticsKeyManager::class)) {
             $container->bind(ConsentController::class, static fn() => new ConsentController(
                 $container->get(ConsentManagerInterface::class),
-                $container->get(AnalyticsKeyManager::class),
+                $container->get(VisitorConsentIdentity::class),
             ));
         }
 

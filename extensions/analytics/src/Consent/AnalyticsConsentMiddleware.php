@@ -11,9 +11,8 @@ use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Api\Internal;
 use Pulsar\DataProtection\ConsentManagerInterface;
 use Pulsar\Extension\Analytics\Config\AnalyticsConfig;
-use Pulsar\Extension\Analytics\Internal\Security\AnalyticsKeyManager;
+use Pulsar\Extension\Analytics\Internal\Security\VisitorConsentIdentity;
 
-use function is_string;
 use function str_contains;
 use function str_replace;
 use function strtolower;
@@ -38,7 +37,7 @@ final readonly class AnalyticsConsentMiddleware implements MiddlewareInterface
     public function __construct(
         private AnalyticsConfig $config,
         private ConsentManagerInterface $consentManager,
-        private AnalyticsKeyManager $keyManager,
+        private VisitorConsentIdentity $consentIdentity,
         private AnalyticsConsentBanner $banner,
     ) {}
 
@@ -94,20 +93,13 @@ final readonly class AnalyticsConsentMiddleware implements MiddlewareInterface
     }
 
     /**
-     * Generate a stable visitor hash from the request IP and user agent.
-     *
-     * Uses the same hashing approach as the analytics visitor ID to maintain
-     * consistency, but without the daily rotation (consent must persist).
+     * The consent subject for this request — the same identifier the consent
+     * grant endpoint and the tracker derive, so consent granted by a visitor is
+     * recognised here (and, in turn, the tracker records the hit).
      */
     private function resolveVisitorHash(ServerRequestInterface $request): string
     {
-        /** @var mixed $rawIp */
-        $rawIp = $request->getServerParams()['REMOTE_ADDR'] ?? '0.0.0.0';
-        $ip = is_string($rawIp) ? $rawIp : '0.0.0.0';
-        $userAgent = $request->getHeaderLine('User-Agent');
-        $key = $this->keyManager->visitorKey();
-
-        return \Pulsar\Security\Crypto\Hmac::computeHex($ip . '|' . $userAgent . '|consent', $key);
+        return $this->consentIdentity->forRequest($request);
     }
 
     /**
