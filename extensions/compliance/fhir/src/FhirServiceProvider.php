@@ -51,8 +51,12 @@ final class FhirServiceProvider implements ServiceProviderInterface
         $this->registerResourceCapabilities($capabilityStatement);
         $container->instance(CapabilityStatementBuilder::class, $capabilityStatement);
 
+        // SMART scope enforcer — gates every PHI interaction in the controller.
+        $scopeEnforcer = new SmartScopeEnforcer();
+        $container->instance(SmartScopeEnforcer::class, $scopeEnforcer);
+
         // Controller
-        $controller = new FhirController($repository, $capabilityStatement);
+        $controller = new FhirController($repository, $capabilityStatement, $scopeEnforcer);
         $container->instance(FhirController::class, $controller);
 
         // Terminology
@@ -61,9 +65,6 @@ final class FhirServiceProvider implements ServiceProviderInterface
 
         $terminologyService = new TerminologyService($valueSetValidator);
         $container->instance(TerminologyServiceInterface::class, $terminologyService);
-
-        // SMART scope enforcer
-        $container->instance(SmartScopeEnforcer::class, new SmartScopeEnforcer());
 
         // Audit event mapper
         $container->instance(FhirAuditEventMapper::class, new FhirAuditEventMapper());

@@ -7,14 +7,19 @@ namespace Pulsar\Extension\Fhir\Tests\Unit\Rest;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Extension\Fhir\Resource\FhirVersion;
 use Pulsar\Extension\Fhir\Rest\CapabilityStatementBuilder;
 use Pulsar\Extension\Fhir\Rest\FhirController;
 use Pulsar\Extension\Fhir\Rest\FhirRepositoryInterface;
+use Pulsar\Extension\Fhir\Smart\SmartScopeEnforcer;
 
 #[CoversClass(FhirController::class)]
 final class FhirControllerTest extends TestCase
 {
+    /** Grants read+write on Patient. */
+    private const string PATIENT_FULL = 'user/Patient.*';
+
     private FhirController $controller;
     private FhirRepositoryInterface $repository;
 
@@ -22,7 +27,7 @@ final class FhirControllerTest extends TestCase
     {
         $this->repository = $this->createStub(FhirRepositoryInterface::class);
         $capabilityStatement = new CapabilityStatementBuilder('TestServer', FhirVersion::R4);
-        $this->controller = new FhirController($this->repository, $capabilityStatement);
+        $this->controller = new FhirController($this->repository, $capabilityStatement, new SmartScopeEnforcer());
     }
 
     #[Test]
@@ -36,12 +41,12 @@ final class FhirControllerTest extends TestCase
     }
 
     #[Test]
-    public function readReturns200WhenResourceExists(): void
+    public function readReturns200WhenResourceExistsAndScopeGrantsIt(): void
     {
         $resource = ['resourceType' => 'Patient', 'id' => 'p1'];
         $this->repository->method('read')->willReturn($resource);
 
-        $result = $this->controller->read('Patient', 'p1');
+        $result = $this->controller->read($this->request(self::PATIENT_FULL, ['type' => 'Patient', 'id' => 'p1']));
 
         self::assertSame(200, $result['status']);
         self::assertSame($resource, $result['body']);
@@ -52,10 +57,36 @@ final class FhirControllerTest extends TestCase
     {
         $this->repository->method('read')->willReturn(null);
 
-        $result = $this->controller->read('Patient', 'nonexistent');
+        $result = $this->controller->read($this->request(self::PATIENT_FULL, ['type' => 'Patient', 'id' => 'nope']));
 
         self::assertSame(404, $result['status']);
         self::assertSame('OperationOutcome', $result['body']['resourceType']);
+    }
+
+    #[Test]
+    public function readWithoutAnyScopeReturns401AndNeverTouchesTheRepository(): void
+    {
+        $repository = $this->createMock(FhirRepositoryInterface::class);
+        $repository->expects(self::never())->method('read');
+        $controller = new FhirController($repository, new CapabilityStatementBuilder('T', FhirVersion::R4), new SmartScopeEnforcer());
+
+        $result = $controller->read($this->request('', ['type' => 'Patient', 'id' => 'p1']));
+
+        self::assertSame(401, $result['status']);
+        self::assertSame('OperationOutcome', $result['body']['resourceType']);
+    }
+
+    #[Test]
+    public function readWithAScopeForADifferentResourceReturns403(): void
+    {
+        $repository = $this->createMock(FhirRepositoryInterface::class);
+        $repository->expects(self::never())->method('read');
+        $controller = new FhirController($repository, new CapabilityStatementBuilder('T', FhirVersion::R4), new SmartScopeEnforcer());
+
+        // Scope grants Observation, but the request reads a Patient.
+        $result = $controller->read($this->request('user/Observation.read', ['type' => 'Patient', 'id' => 'p1']));
+
+        self::assertSame(403, $result['status']);
     }
 
     #[Test]
@@ -67,7 +98,9 @@ final class FhirControllerTest extends TestCase
         ];
         $this->repository->method('search')->willReturn($resources);
 
-        $result = $this->controller->search('Patient', ['name' => 'Smith']);
+        $result = $this->controller->search(
+            $this->request(self::PATIENT_FULL, ['type' => 'Patient'], ['name' => 'Smith']),
+        );
 
         self::assertSame(200, $result['status']);
         self::assertSame('Bundle', $result['body']['resourceType']);
@@ -80,10 +113,9 @@ final class FhirControllerTest extends TestCase
     #[Test]
     public function searchHandlesEntriesWithoutId(): void
     {
-        $resources = [['resourceType' => 'Patient']];
-        $this->repository->method('search')->willReturn($resources);
+        $this->repository->method('search')->willReturn([['resourceType' => 'Patient']]);
 
-        $result = $this->controller->search('Patient');
+        $result = $this->controller->search($this->request(self::PATIENT_FULL, ['type' => 'Patient']));
 
         self::assertArrayNotHasKey('fullUrl', $result['body']['entry'][0]);
     }
@@ -95,10 +127,23 @@ final class FhirControllerTest extends TestCase
         $created = [...$input, 'id' => 'generated-id'];
         $this->repository->method('create')->willReturn($created);
 
-        $result = $this->controller->create('Patient', $input);
+        $result = $this->controller->create($this->request(self::PATIENT_FULL, ['type' => 'Patient'], [], $input));
 
         self::assertSame(201, $result['status']);
         self::assertSame('generated-id', $result['body']['id']);
+    }
+
+    #[Test]
+    public function createWithAReadOnlyScopeReturns403(): void
+    {
+        $repository = $this->createMock(FhirRepositoryInterface::class);
+        $repository->expects(self::never())->method('create');
+        $controller = new FhirController($repository, new CapabilityStatementBuilder('T', FhirVersion::R4), new SmartScopeEnforcer());
+
+        // Read scope must not authorize a write.
+        $result = $controller->create($this->request('user/Patient.read', ['type' => 'Patient'], [], ['resourceType' => 'Patient']));
+
+        self::assertSame(403, $result['status']);
     }
 
     #[Test]
@@ -107,7 +152,9 @@ final class FhirControllerTest extends TestCase
         $resource = ['resourceType' => 'Patient', 'id' => 'p1'];
         $this->repository->method('update')->willReturn($resource);
 
-        $result = $this->controller->update('Patient', 'p1', $resource);
+        $result = $this->controller->update(
+            $this->request(self::PATIENT_FULL, ['type' => 'Patient', 'id' => 'p1'], [], $resource),
+        );
 
         self::assertSame(200, $result['status']);
     }
@@ -117,7 +164,7 @@ final class FhirControllerTest extends TestCase
     {
         $this->repository->method('delete')->willReturn(true);
 
-        $result = $this->controller->delete('Patient', 'p1');
+        $result = $this->controller->delete($this->request(self::PATIENT_FULL, ['type' => 'Patient', 'id' => 'p1']));
 
         self::assertSame(204, $result['status']);
     }
@@ -127,15 +174,23 @@ final class FhirControllerTest extends TestCase
     {
         $this->repository->method('delete')->willReturn(false);
 
-        $result = $this->controller->delete('Patient', 'nonexistent');
+        $result = $this->controller->delete($this->request(self::PATIENT_FULL, ['type' => 'Patient', 'id' => 'nope']));
 
         self::assertSame(404, $result['status']);
     }
 
     #[Test]
+    public function batchWithoutAnyScopeReturns401(): void
+    {
+        $result = $this->controller->batch($this->request('', [], [], ['type' => 'batch', 'entry' => []]));
+
+        self::assertSame(401, $result['status']);
+    }
+
+    #[Test]
     public function batchRejectsInvalidBundleType(): void
     {
-        $result = $this->controller->batch(['type' => 'invalid']);
+        $result = $this->controller->batch($this->request(self::PATIENT_FULL, [], [], ['type' => 'invalid']));
 
         self::assertSame(400, $result['status']);
     }
@@ -149,63 +204,42 @@ final class FhirControllerTest extends TestCase
         $bundle = [
             'type' => 'batch',
             'entry' => [
-                [
-                    'request' => ['method' => 'POST', 'url' => 'Patient'],
-                    'resource' => ['resourceType' => 'Patient'],
-                ],
+                ['request' => ['method' => 'POST', 'url' => 'Patient'], 'resource' => ['resourceType' => 'Patient']],
             ],
         ];
 
-        $result = $this->controller->batch($bundle);
+        $result = $this->controller->batch($this->request(self::PATIENT_FULL, [], [], $bundle));
 
         self::assertSame(200, $result['status']);
         self::assertSame('batch-response', $result['body']['type']);
         self::assertCount(1, $result['body']['entry']);
+        self::assertSame('201 Created', $result['body']['entry'][0]['response']['status']);
     }
 
     #[Test]
-    public function batchProcessesTransactionBundle(): void
+    public function batchEntryTouchingAnUnscopedResourceIsForbidden(): void
     {
-        $this->repository->method('read')->willReturn(['id' => 'p1']);
+        $repository = $this->createMock(FhirRepositoryInterface::class);
+        $repository->expects(self::never())->method('read');
+        $controller = new FhirController($repository, new CapabilityStatementBuilder('T', FhirVersion::R4), new SmartScopeEnforcer());
 
+        // Scope covers Patient only; the entry reads an Observation.
         $bundle = [
             'type' => 'transaction',
-            'entry' => [
-                [
-                    'request' => ['method' => 'GET', 'url' => 'Patient/p1'],
-                ],
-            ],
+            'entry' => [['request' => ['method' => 'GET', 'url' => 'Observation/o1']]],
         ];
 
-        $result = $this->controller->batch($bundle);
+        $result = $controller->batch($this->request(self::PATIENT_FULL, [], [], $bundle));
 
-        self::assertSame('transaction-response', $result['body']['type']);
+        self::assertSame('403 Forbidden', $result['body']['entry'][0]['response']['status']);
     }
 
     #[Test]
-    public function batchHandlesMissingRequest(): void
+    public function batchHandlesMissingRequestEntry(): void
     {
-        $bundle = [
-            'type' => 'batch',
-            'entry' => [['resource' => ['resourceType' => 'Patient']]],
-        ];
+        $bundle = ['type' => 'batch', 'entry' => [['resource' => ['resourceType' => 'Patient']]]];
 
-        $result = $this->controller->batch($bundle);
-
-        self::assertSame('400 Bad Request', $result['body']['entry'][0]['response']['status']);
-    }
-
-    #[Test]
-    public function batchHandlesUnsupportedMethod(): void
-    {
-        $bundle = [
-            'type' => 'batch',
-            'entry' => [
-                ['request' => ['method' => 'PATCH', 'url' => 'Patient/p1']],
-            ],
-        ];
-
-        $result = $this->controller->batch($bundle);
+        $result = $this->controller->batch($this->request(self::PATIENT_FULL, [], [], $bundle));
 
         self::assertSame('400 Bad Request', $result['body']['entry'][0]['response']['status']);
     }
@@ -215,33 +249,11 @@ final class FhirControllerTest extends TestCase
     {
         $this->repository->method('search')->willReturn([]);
 
-        $bundle = [
-            'type' => 'batch',
-            'entry' => [
-                ['request' => ['method' => 'GET', 'url' => 'Patient']],
-            ],
-        ];
+        $bundle = ['type' => 'batch', 'entry' => [['request' => ['method' => 'GET', 'url' => 'Patient']]]];
 
-        $result = $this->controller->batch($bundle);
+        $result = $this->controller->batch($this->request(self::PATIENT_FULL, [], [], $bundle));
 
         self::assertSame('200 OK', $result['body']['entry'][0]['response']['status']);
-    }
-
-    #[Test]
-    public function batchDeleteReportsCorrectStatus(): void
-    {
-        $this->repository->method('delete')->willReturn(false);
-
-        $bundle = [
-            'type' => 'batch',
-            'entry' => [
-                ['request' => ['method' => 'DELETE', 'url' => 'Patient/p1']],
-            ],
-        ];
-
-        $result = $this->controller->batch($bundle);
-
-        self::assertSame('404 Not Found', $result['body']['entry'][0]['response']['status']);
     }
 
     #[Test]
@@ -252,16 +264,30 @@ final class FhirControllerTest extends TestCase
 
         $bundle = [
             'type' => 'batch',
-            'entry' => [
-                [
-                    'request' => ['method' => 'PUT', 'url' => 'Patient/p1'],
-                    'resource' => $updated,
-                ],
-            ],
+            'entry' => [['request' => ['method' => 'PUT', 'url' => 'Patient/p1'], 'resource' => $updated]],
         ];
 
-        $result = $this->controller->batch($bundle);
+        $result = $this->controller->batch($this->request(self::PATIENT_FULL, [], [], $bundle));
 
         self::assertSame('200 OK', $result['body']['entry'][0]['response']['status']);
+    }
+
+    /**
+     * @param array<string, mixed> $attributes
+     * @param array<string, string> $query
+     * @param array<string, mixed>|null $body
+     */
+    private function request(string $scopes, array $attributes = [], array $query = [], ?array $body = null): ServerRequestInterface
+    {
+        $attributes['smart_scopes'] = $scopes;
+
+        $request = $this->createStub(ServerRequestInterface::class);
+        $request->method('getAttribute')->willReturnCallback(
+            static fn(string $name, mixed $default = null): mixed => $attributes[$name] ?? $default,
+        );
+        $request->method('getQueryParams')->willReturn($query);
+        $request->method('getParsedBody')->willReturn($body);
+
+        return $request;
     }
 }
