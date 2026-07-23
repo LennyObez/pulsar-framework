@@ -12,10 +12,16 @@ use Pulsar\Extension\Psd2\Exception\Psd2Exception;
 use Pulsar\Extension\Psd2\Internal\Sca\InMemoryScaChallengeStore;
 use Pulsar\Extension\Psd2\Internal\Sca\ScaDynamicLinkingService;
 
+use function array_key_exists;
+use function hash;
+use function str_repeat;
 use function strlen;
+use function substr;
 
 final class ScaDynamicLinkingServiceTest extends TestCase
 {
+    private const string SECRET = 'a-32-byte-or-longer-server-secret!!';
+
     private InMemoryScaChallengeStore $store;
     private ScaDynamicLinkingService $service;
 
@@ -25,6 +31,7 @@ final class ScaDynamicLinkingServiceTest extends TestCase
         $this->service = new ScaDynamicLinkingService(
             $this->store,
             new ScaConfig(challengeTimeoutSeconds: 300, codeLength: 8),
+            self::SECRET,
         );
     }
 
@@ -133,6 +140,7 @@ final class ScaDynamicLinkingServiceTest extends TestCase
         $service = new ScaDynamicLinkingService(
             $this->store,
             new ScaConfig(challengeTimeoutSeconds: -1, codeLength: 8),
+            self::SECRET,
         );
 
         $challenge = $service->createChallenge(
@@ -234,5 +242,56 @@ final class ScaDynamicLinkingServiceTest extends TestCase
         // Codes should differ because transaction details differ
         self::assertNotSame($c1->authenticationCode, $c2->authenticationCode);
         self::assertNotSame($c1->authenticationCode, $c3->authenticationCode);
+    }
+
+    #[Test]
+    public function theOldOfflineComputableCodeIsRejected(): void
+    {
+        // C8 regression: previously the code was substr(sha256(challengeId|amount|
+        // currency|payeeId)) — every input public, so any caller could compute it
+        // offline. That value must no longer verify.
+        $challenge = $this->service->createChallenge('tx_001', 5000, 'EUR', 'payee_001', 'Acme Corp');
+
+        $forged = substr(hash('sha256', $challenge->challengeId . '|5000|EUR|payee_001'), 0, 8);
+
+        self::assertNotSame($challenge->authenticationCode, $forged, 'code must not be the unkeyed public hash');
+
+        $this->expectException(Psd2Exception::class);
+        $this->expectExceptionMessage('Invalid authentication code');
+
+        $this->service->verifyChallenge(
+            challengeId: $challenge->challengeId,
+            responseCode: $forged,
+            amountMinorUnits: 5000,
+            currency: 'EUR',
+            payeeId: 'payee_001',
+        );
+    }
+
+    #[Test]
+    public function theServerNonceIsNeverSerialised(): void
+    {
+        $challenge = $this->service->createChallenge('tx_001', 5000, 'EUR', 'payee_001', 'Acme Corp');
+
+        self::assertNotSame('', $challenge->nonce);
+        self::assertFalse(
+            array_key_exists('nonce', $challenge->toArray()),
+            'the server nonce must never be emitted to a client',
+        );
+    }
+
+    #[Test]
+    public function failsClosedWhenNoRealSecretIsConfigured(): void
+    {
+        $service = new ScaDynamicLinkingService(
+            new InMemoryScaChallengeStore(),
+            new ScaConfig(challengeTimeoutSeconds: 300, codeLength: 8),
+            str_repeat('x', 8), // too short to be a real key
+        );
+
+        $this->expectException(Psd2Exception::class);
+        $this->expectExceptionMessage('secret key');
+
+        $service->createChallenge('tx_001', 5000, 'EUR', 'payee_001', 'Acme Corp');
     }
 }

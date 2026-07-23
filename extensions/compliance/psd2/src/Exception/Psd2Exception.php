@@ -73,4 +73,13 @@ final class Psd2Exception extends RuntimeException
     {
         return new self(sprintf('SCA is required for transaction: %s', $transactionId));
     }
+
+    #[NoDiscard]
+    public static function scaSecretUnavailable(): self
+    {
+        return new self(
+            'SCA dynamic linking requires a per-deployment secret key (>= 32 bytes) '
+            . 'derived from the master key; configure PULSAR_MASTER_KEY.',
+        );
+    }
 }

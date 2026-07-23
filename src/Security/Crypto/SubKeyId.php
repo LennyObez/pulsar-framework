@@ -85,6 +85,13 @@ enum SubKeyId: int
      */
     case OrmBlindIndex = 13;
 
+    /**
+     * PSD2 SCA dynamic-linking authentication code (super-audit C8). Keys the
+     * HMAC that binds the code to the transaction, so the code cannot be
+     * recomputed offline from the public transaction details.
+     */
+    case Psd2ScaDynamicLinking = 14;
+
     /** Reserved range for third-party extensions: 64–127. */
 
     /** Reserved for testing only — never use in production. */
