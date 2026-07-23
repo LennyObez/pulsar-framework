@@ -57069,6 +57069,7 @@
         "Pulsar\\Security\\Session\\Validator\\RemoteAddressValidator",
         "Pulsar\\Security\\Session\\Validator\\UserAgentValidator",
         "Pulsar\\Security\\ZeroTrust\\ContinuousVerification\\Internal\\ContinuousVerificationManager",
+        "Pulsar\\Security\\ZeroTrust\\DeviceIdentity\\Internal\\CborDecoder",
         "Pulsar\\Security\\ZeroTrust\\DeviceIdentity\\Internal\\DeviceCookieManager",
         "Pulsar\\Security\\ZeroTrust\\DeviceIdentity\\Internal\\DeviceProofVerifier",
         "Pulsar\\Security\\ZeroTrust\\DeviceIdentity\\Internal\\FingerprintCollector",

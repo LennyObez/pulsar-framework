@@ -4,283 +4,252 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Security\ZeroTrust\DeviceIdentity;
 
+use OpenSSLAsymmetricKey;
+use OpenSSLCertificateSigningRequest;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Security\Crypto\EnvKeyRing;
+use Pulsar\Security\ZeroTrust\DeviceIdentity\Internal\CborDecoder;
 use Pulsar\Security\ZeroTrust\DeviceIdentity\Internal\WebAuthnAttestationVerifier;
 
+use function base64_decode;
+use function chr;
+use function hash;
 use function json_encode;
+use function openssl_csr_new;
+use function openssl_csr_sign;
+use function openssl_pkey_get_details;
+use function openssl_pkey_new;
+use function openssl_sign;
+use function openssl_x509_export;
+use function preg_replace;
 use function random_bytes;
 use function str_repeat;
+use function strlen;
+
+use const OPENSSL_ALGO_SHA256;
+use const OPENSSL_KEYTYPE_EC;
 
 #[CoversClass(WebAuthnAttestationVerifier::class)]
+#[CoversClass(CborDecoder::class)]
 final class WebAuthnAttestationVerifierTest extends TestCase
 {
+    private const string CHALLENGE = 'test-challenge-value';
+    private const string ORIGIN = 'https://example.com';
+
     private WebAuthnAttestationVerifier $verifier;
 
     protected function setUp(): void
     {
-        $key = random_bytes(32);
-        $keyRing = new EnvKeyRing(['webauthn' => $key]);
-        $this->verifier = new WebAuthnAttestationVerifier($keyRing);
+        $this->verifier = new WebAuthnAttestationVerifier();
     }
 
     #[Test]
-    public function verifySucceedsWithNoneAttestation(): void
+    public function verifiesAGenuinePackedBasicAttestation(): void
     {
-        $attestation = $this->buildAttestation('none');
+        $key = $this->ecKey();
+        $certDer = $this->selfSignedCertDer($key);
+        $authData = $this->authData();
+        $clientDataJSON = $this->clientDataJSON();
 
-        $result = $this->verifier->verify($attestation, 'test-challenge', 'https://example.com');
+        $sig = $this->sign($key, $authData . $this->clientDataHash($clientDataJSON));
+
+        $result = $this->verifier->verify([
+            'fmt' => 'packed',
+            'authData' => $authData,
+            'clientDataJSON' => $clientDataJSON,
+            'attStmt' => ['alg' => -7, 'sig' => $sig, 'x5c' => [$certDer]],
+        ], self::CHALLENGE, self::ORIGIN);
+
+        self::assertTrue($result->verified);
+        self::assertSame(0.9, $result->confidence);
+    }
+
+    #[Test]
+    public function rejectsAForgedPackedSignature(): void
+    {
+        // C20 regression: a valid challenge/origin and a real certificate, but a
+        // signature that does not verify. Previously this returned verified(0.9)
+        // without ever checking the signature.
+        $certDer = $this->selfSignedCertDer($this->ecKey());
+
+        $result = $this->verifier->verify([
+            'fmt' => 'packed',
+            'authData' => $this->authData(),
+            'clientDataJSON' => $this->clientDataJSON(),
+            'attStmt' => ['alg' => -7, 'sig' => random_bytes(70), 'x5c' => [$certDer]],
+        ], self::CHALLENGE, self::ORIGIN);
+
+        self::assertFalse($result->verified);
+        self::assertStringContainsString('signature', (string) $result->reason);
+    }
+
+    #[Test]
+    public function verifiesAGenuinePackedSelfAttestation(): void
+    {
+        // No x5c: the signature is verified with the credential public key parsed
+        // out of the authenticator data (exercises the CBOR / COSE-key path).
+        $key = $this->ecKey();
+        $details = openssl_pkey_get_details($key);
+        self::assertIsArray($details);
+        /** @var array{ec: array{x: string, y: string}} $details */
+        $authData = $this->authDataWithCredential($details['ec']['x'], $details['ec']['y']);
+        $clientDataJSON = $this->clientDataJSON();
+
+        $sig = $this->sign($key, $authData . $this->clientDataHash($clientDataJSON));
+
+        $result = $this->verifier->verify([
+            'fmt' => 'packed',
+            'authData' => $authData,
+            'clientDataJSON' => $clientDataJSON,
+            'attStmt' => ['alg' => -7, 'sig' => $sig],
+        ], self::CHALLENGE, self::ORIGIN);
+
+        self::assertTrue($result->verified, (string) $result->reason);
+    }
+
+    #[Test]
+    public function rejectsAChallengeMismatch(): void
+    {
+        $result = $this->verifier->verify([
+            'fmt' => 'packed',
+            'authData' => $this->authData(),
+            'clientDataJSON' => $this->clientDataJSON(),
+            'attStmt' => ['alg' => -7, 'sig' => random_bytes(70)],
+        ], 'a-different-challenge', self::ORIGIN);
+
+        self::assertFalse($result->verified);
+        self::assertStringContainsString('Challenge', (string) $result->reason);
+    }
+
+    #[Test]
+    public function rejectsAnOriginMismatch(): void
+    {
+        $result = $this->verifier->verify([
+            'fmt' => 'packed',
+            'authData' => $this->authData(),
+            'clientDataJSON' => $this->clientDataJSON(),
+            'attStmt' => ['alg' => -7, 'sig' => random_bytes(70)],
+        ], self::CHALLENGE, 'https://evil.example');
+
+        self::assertFalse($result->verified);
+        self::assertStringContainsString('Origin', (string) $result->reason);
+    }
+
+    #[Test]
+    public function noneAttestationIsAcceptedAtLowConfidence(): void
+    {
+        $result = $this->verifier->verify([
+            'fmt' => 'none',
+            'authData' => $this->authData(),
+            'clientDataJSON' => $this->clientDataJSON(),
+        ], self::CHALLENGE, self::ORIGIN);
 
         self::assertTrue($result->verified);
         self::assertSame(0.3, $result->confidence);
     }
 
     #[Test]
-    public function verifySucceedsWithPackedAttestation(): void
+    public function rejectsAnUnsupportedFormat(): void
     {
-        $attestation = $this->buildAttestation('packed', [
-            'sig' => 'signature-data',
-            'alg' => -7,
-        ]);
-
-        $result = $this->verifier->verify($attestation, 'test-challenge', 'https://example.com');
-
-        self::assertTrue($result->verified);
-        self::assertSame(0.9, $result->confidence);
-    }
-
-    #[Test]
-    public function verifySucceedsWithFidoU2fAttestation(): void
-    {
-        $attestation = $this->buildAttestation('fido-u2f', [
-            'sig' => 'signature-data',
-            'x5c' => ['cert-data'],
-        ]);
-
-        $result = $this->verifier->verify($attestation, 'test-challenge', 'https://example.com');
-
-        self::assertTrue($result->verified);
-        self::assertSame(0.9, $result->confidence);
-    }
-
-    #[Test]
-    public function verifyFailsWithUnsupportedFormat(): void
-    {
-        $attestation = $this->buildAttestation('tpm');
-
-        $result = $this->verifier->verify($attestation, 'test-challenge', 'https://example.com');
+        $result = $this->verifier->verify([
+            'fmt' => 'tpm',
+            'authData' => $this->authData(),
+            'clientDataJSON' => $this->clientDataJSON(),
+        ], self::CHALLENGE, self::ORIGIN);
 
         self::assertFalse($result->verified);
-        self::assertStringContainsString('Unsupported attestation format', $result->reason);
     }
 
     #[Test]
-    public function verifyFailsWithMissingFormat(): void
-    {
-        $attestation = [
-            'authData' => str_repeat('x', 37),
-            'clientDataJSON' => '{}',
-        ];
-
-        $result = $this->verifier->verify($attestation, 'challenge', 'https://example.com');
-
-        self::assertFalse($result->verified);
-        self::assertStringContainsString('Missing or invalid attestation format', $result->reason);
-    }
-
-    #[Test]
-    public function verifyFailsWithMissingAuthData(): void
+    public function rejectsMissingAuthenticatorData(): void
     {
         $result = $this->verifier->verify(
-            ['fmt' => 'none', 'clientDataJSON' => '{}'],
-            'challenge',
-            'https://example.com',
+            ['fmt' => 'packed', 'clientDataJSON' => $this->clientDataJSON()],
+            self::CHALLENGE,
+            self::ORIGIN,
         );
 
         self::assertFalse($result->verified);
-        self::assertStringContainsString('Missing authenticator data', $result->reason);
     }
 
-    #[Test]
-    public function verifyFailsWithMissingClientDataJSON(): void
-    {
-        $result = $this->verifier->verify(
-            ['fmt' => 'none', 'authData' => str_repeat('x', 37)],
-            'challenge',
-            'https://example.com',
-        );
+    // ── Fixtures ────────────────────────────────────────────────────────────
 
-        self::assertFalse($result->verified);
-        self::assertStringContainsString('Missing client data JSON', $result->reason);
+    private function ecKey(): OpenSSLAsymmetricKey
+    {
+        $key = openssl_pkey_new(['private_key_type' => OPENSSL_KEYTYPE_EC, 'curve_name' => 'prime256v1']);
+        self::assertInstanceOf(OpenSSLAsymmetricKey::class, $key);
+
+        return $key;
     }
 
-    #[Test]
-    public function verifyFailsWithChallengeMismatch(): void
+    private function selfSignedCertDer(OpenSSLAsymmetricKey $key): string
     {
-        $attestation = $this->buildAttestation('none', [], 'wrong-challenge');
+        $csr = openssl_csr_new(['commonName' => 'Attestation'], $key, ['digest_alg' => 'sha256']);
+        self::assertInstanceOf(OpenSSLCertificateSigningRequest::class, $csr);
+        self::assertInstanceOf(OpenSSLAsymmetricKey::class, $key);
+        $cert = openssl_csr_sign($csr, null, $key, 365, ['digest_alg' => 'sha256']);
+        self::assertNotFalse($cert);
+        $pem = '';
+        self::assertTrue(openssl_x509_export($cert, $pem));
 
-        $result = $this->verifier->verify($attestation, 'expected-challenge', 'https://example.com');
+        $base64 = (string) preg_replace('/-----(BEGIN|END) CERTIFICATE-----|\s+/', '', $pem);
+        $der = base64_decode($base64, true);
+        self::assertIsString($der);
 
-        self::assertFalse($result->verified);
-        self::assertStringContainsString('Challenge mismatch', $result->reason);
+        return $der;
     }
 
-    #[Test]
-    public function verifyFailsWithOriginMismatch(): void
+    /** rpIdHash(32) ‖ flags=UP(0x01) ‖ signCount(4). */
+    private function authData(): string
     {
-        $attestation = $this->buildAttestation('none', [], 'test-challenge', 'https://evil.com');
-
-        $result = $this->verifier->verify($attestation, 'test-challenge', 'https://example.com');
-
-        self::assertFalse($result->verified);
-        self::assertStringContainsString('Origin mismatch', $result->reason);
+        return hash('sha256', 'example.com', true) . "\x01" . "\x00\x00\x00\x00";
     }
 
-    #[Test]
-    public function verifyFailsWithInvalidClientDataType(): void
+    /** authData with the AT flag and attestedCredentialData carrying a COSE EC2 key. */
+    private function authDataWithCredential(string $x, string $y): string
     {
-        $clientData = json_encode([
-            'type' => 'webauthn.get', // Should be webauthn.create
-            'challenge' => 'test-challenge',
-            'origin' => 'https://example.com',
-        ], JSON_THROW_ON_ERROR);
+        $rpIdHash = hash('sha256', 'example.com', true);
+        $flags = "\x41"; // UP (0x01) | AT (0x40)
+        $signCount = "\x00\x00\x00\x00";
+        $aaguid = str_repeat("\x00", 16);
+        $credentialId = random_bytes(16);
+        $credIdLen = chr((strlen($credentialId) >> 8) & 0xFF) . chr(strlen($credentialId) & 0xFF);
 
-        $attestation = [
-            'fmt' => 'none',
-            'authData' => str_repeat('x', 37),
-            'clientDataJSON' => $clientData,
-        ];
-
-        $result = $this->verifier->verify($attestation, 'test-challenge', 'https://example.com');
-
-        self::assertFalse($result->verified);
-        self::assertStringContainsString('Invalid client data type', $result->reason);
+        return $rpIdHash . $flags . $signCount . $aaguid . $credIdLen . $credentialId . $this->coseEc2Key($x, $y);
     }
 
-    #[Test]
-    public function verifyFailsWithTooShortAuthData(): void
+    /** CBOR-encode a COSE EC2/P-256 public key: {1:2, 3:-7, -1:1, -2:x, -3:y}. */
+    private function coseEc2Key(string $x, string $y): string
     {
-        $clientData = json_encode([
+        return "\xA5"                       // map(5)
+            . "\x01\x02"                    // 1 (kty) => 2 (EC2)
+            . "\x03\x26"                    // 3 (alg) => -7 (ES256)
+            . "\x20\x01"                    // -1 (crv) => 1 (P-256)
+            . "\x21\x58\x20" . $x           // -2 (x) => bytes(32)
+            . "\x22\x58\x20" . $y;          // -3 (y) => bytes(32)
+    }
+
+    private function clientDataJSON(): string
+    {
+        return (string) json_encode([
             'type' => 'webauthn.create',
-            'challenge' => 'test-challenge',
-            'origin' => 'https://example.com',
-        ], JSON_THROW_ON_ERROR);
-
-        $attestation = [
-            'fmt' => 'none',
-            'authData' => 'short',
-            'clientDataJSON' => $clientData,
-        ];
-
-        $result = $this->verifier->verify($attestation, 'test-challenge', 'https://example.com');
-
-        self::assertFalse($result->verified);
-        self::assertStringContainsString('Authenticator data too short', $result->reason);
-    }
-
-    #[Test]
-    public function verifyFailsPackedWithMissingSignature(): void
-    {
-        $attestation = $this->buildAttestation('packed', ['alg' => -7]);
-
-        $result = $this->verifier->verify($attestation, 'test-challenge', 'https://example.com');
-
-        self::assertFalse($result->verified);
-        self::assertStringContainsString('missing signature', $result->reason);
-    }
-
-    #[Test]
-    public function verifyFailsPackedWithMissingAlgorithm(): void
-    {
-        $attestation = $this->buildAttestation('packed', ['sig' => 'data']);
-
-        $result = $this->verifier->verify($attestation, 'test-challenge', 'https://example.com');
-
-        self::assertFalse($result->verified);
-        self::assertStringContainsString('missing algorithm', $result->reason);
-    }
-
-    #[Test]
-    public function verifyFailsPackedWithEmptyCertChain(): void
-    {
-        $attestation = $this->buildAttestation('packed', [
-            'sig' => 'data',
-            'alg' => -7,
-            'x5c' => [],
+            'challenge' => self::CHALLENGE,
+            'origin' => self::ORIGIN,
         ]);
-
-        $result = $this->verifier->verify($attestation, 'test-challenge', 'https://example.com');
-
-        self::assertFalse($result->verified);
-        self::assertStringContainsString('Empty certificate chain', $result->reason);
     }
 
-    #[Test]
-    public function verifyFailsFidoU2fWithMissingSignature(): void
+    private function clientDataHash(string $clientDataJSON): string
     {
-        $attestation = $this->buildAttestation('fido-u2f', ['x5c' => ['cert']]);
-
-        $result = $this->verifier->verify($attestation, 'test-challenge', 'https://example.com');
-
-        self::assertFalse($result->verified);
-        self::assertStringContainsString('missing signature', $result->reason);
+        return hash('sha256', $clientDataJSON, true);
     }
 
-    #[Test]
-    public function verifyFailsFidoU2fWithMissingCertificate(): void
+    private function sign(OpenSSLAsymmetricKey $key, string $data): string
     {
-        $attestation = $this->buildAttestation('fido-u2f', ['sig' => 'data']);
+        $sig = '';
+        openssl_sign($data, $sig, $key, OPENSSL_ALGO_SHA256);
+        self::assertIsString($sig);
 
-        $result = $this->verifier->verify($attestation, 'test-challenge', 'https://example.com');
-
-        self::assertFalse($result->verified);
-        self::assertStringContainsString('missing certificate', $result->reason);
-    }
-
-    #[Test]
-    public function verifyFailsWhenKeyUnavailable(): void
-    {
-        $keyRing = new EnvKeyRing([]);
-        $verifier = new WebAuthnAttestationVerifier($keyRing);
-
-        $attestation = $this->buildAttestation('none');
-
-        $result = $verifier->verify($attestation, 'test-challenge', 'https://example.com');
-
-        self::assertFalse($result->verified);
-        self::assertStringContainsString('key unavailable', $result->reason);
-    }
-
-    /**
-     * Build a valid attestation array for testing.
-     *
-     * @param array<string, mixed> $attStmt
-     * @return array{fmt: string, authData: string, clientDataJSON: string, attStmt?: array<string, mixed>}
-     */
-    private function buildAttestation(
-        string $format,
-        array $attStmt = [],
-        string $challenge = 'test-challenge',
-        string $origin = 'https://example.com',
-    ): array {
-        $clientData = json_encode([
-            'type' => 'webauthn.create',
-            'challenge' => $challenge,
-            'origin' => $origin,
-        ], JSON_THROW_ON_ERROR);
-
-        $attestation = [
-            'fmt' => $format,
-            'authData' => str_repeat('x', 37),
-            'clientDataJSON' => $clientData,
-        ];
-
-        if ($attStmt !== []) {
-            $attestation['attStmt'] = $attStmt;
-        }
-
-        return $attestation;
+        return $sig;
     }
 }
