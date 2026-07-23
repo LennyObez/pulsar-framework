@@ -82,4 +82,22 @@ final class Psd2Exception extends RuntimeException
             . 'derived from the master key; configure PULSAR_MASTER_KEY.',
         );
     }
+
+    #[NoDiscard]
+    public static function trustAnchorsUnavailable(): self
+    {
+        return new self(
+            'PSD2 certificate validation requires a configured eIDAS trust list '
+            . '(psd2.certificate.trusted_ca_bundle_path); refusing to validate without one.',
+        );
+    }
+
+    #[NoDiscard]
+    public static function certificateChainUntrusted(string $serialNumber): self
+    {
+        return new self(sprintf(
+            'PSD2 certificate does not chain to the configured eIDAS trust list: %s',
+            $serialNumber,
+        ));
+    }
 }
