@@ -13,20 +13,23 @@ use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use SplFileInfo;
 
-use function array_key_exists;
+use function array_keys;
 use function bin2hex;
 use function chr;
 use function count;
 use function date;
 use function is_array;
+use function is_file;
 use function is_string;
 use function json_decode;
 use function ord;
 use function random_bytes;
 use function restore_error_handler;
+use function rtrim;
 use function set_error_handler;
 use function sprintf;
-use function str_contains;
+use function str_starts_with;
+use function strtolower;
 use function substr;
 use function trim;
 
@@ -35,9 +38,19 @@ use const JSON_THROW_ON_ERROR;
 /**
  * Generates VEX documents by analyzing composer audit output and source imports.
  *
- * Runs `composer audit --format=json` to discover known vulnerabilities,
- * then checks whether the vulnerable code path is reachable by scanning
- * the source directory for imports of the affected package's namespace.
+ * Runs `composer audit --format=json` to discover known vulnerabilities, then
+ * decides exploitability by mapping each vulnerable composer package to the
+ * PSR-4/PSR-0 namespace prefixes it actually registers (read from
+ * composer.lock) and checking whether any of those namespaces is imported in
+ * the scanned source.
+ *
+ * A source-only import scan can PROVE reachability (an explicit `use` of the
+ * package's namespace) but can never prove NON-reachability: transitive
+ * dependencies leave no first-party import, and dynamic dispatch leaves none
+ * either. Asserting `not_affected` from the absence of an import is therefore
+ * unsound and is exactly what produced false "vulnerable_code_not_in_execute_path"
+ * clearances. This generator never emits `not_affected` from the heuristic; when
+ * reachability cannot be positively established it emits `under_investigation`.
  *
  * Uses proc_open with array arguments to prevent shell injection (CWE-78).
  */
@@ -60,22 +73,31 @@ final readonly class VexGenerator
      *
      * @param string|null $composerAuditJson Pre-fetched JSON output from `composer audit --format=json`.
      *                                       When null, the generator runs the command itself.
-     * @param array<string, list<string>> $sourceImports Map of package name to list of imported
-     *                                                   namespaces found in source. When empty,
-     *                                                   the generator scans the source directory.
+     * @param list<string> $sourceImports Fully-qualified class names imported in the scanned source.
+     *                                    When empty, the generator scans the source directory.
+     * @param array<string, list<string>> $packageNamespaces Map of composer package name to the
+     *                                    PSR-4/PSR-0 namespace prefixes it registers. When empty,
+     *                                    the generator resolves it from composer.lock.
      */
     #[NoDiscard]
-    public function generate(?string $composerAuditJson = null, array $sourceImports = []): VexDocument
-    {
+    public function generate(
+        ?string $composerAuditJson = null,
+        array $sourceImports = [],
+        array $packageNamespaces = [],
+    ): VexDocument {
         $auditData = $composerAuditJson !== null
             ? $this->parseAuditJson($composerAuditJson)
             : $this->runComposerAudit();
 
-        $importMap = $sourceImports !== []
+        $imports = $sourceImports !== []
             ? $sourceImports
             : $this->scanSourceImports();
 
-        $statements = $this->buildStatements($auditData, $importMap);
+        $namespaceMap = $packageNamespaces !== []
+            ? $packageNamespaces
+            : $this->resolvePackageNamespaces();
+
+        $statements = $this->buildStatements($auditData, $imports, $namespaceMap);
 
         return new VexDocument(
             documentId: sprintf('urn:uuid:%s', self::generateUuidV4()),
@@ -163,9 +185,10 @@ final readonly class VexGenerator
     }
 
     /**
-     * Scan the source directory for use/import statements to build a package reachability map.
+     * Scan the source directory for use-imports, returning every fully-qualified
+     * class name imported anywhere in the source.
      *
-     * @return array<string, list<string>> Map of package name to found namespace prefixes
+     * @return list<string>
      */
     private function scanSourceImports(): array
     {
@@ -192,33 +215,128 @@ final readonly class VexGenerator
                 continue;
             }
 
-            // Extract use statements
-            if (preg_match_all('/^use\s+([A-Z][a-zA-Z0-9\\\\]+)/m', $contents, $matches) > 0) {
+            if (preg_match_all('/^use\s+(?:function\s+|const\s+)?([A-Z][a-zA-Z0-9\\\\]+)/m', $contents, $matches) > 0) {
                 foreach ($matches[1] as $fqcn) {
-                    $parts = explode('\\', $fqcn);
-                    // Build vendor/package style key from top-level namespace
-                    $vendorKey = strtolower($parts[0]);
-
-                    if (!array_key_exists($vendorKey, $imports)) {
-                        $imports[$vendorKey] = [];
-                    }
-
-                    $imports[$vendorKey][] = $fqcn;
+                    $imports[$fqcn] = true;
                 }
             }
         }
 
-        return $imports;
+        return array_keys($imports);
+    }
+
+    /**
+     * Map every installed composer package (direct AND transitive) to the PSR-4 /
+     * PSR-0 namespace prefixes it registers, read from composer.lock. This is the
+     * authoritative package -> namespace mapping; the composer *vendor* segment is
+     * NOT a namespace (e.g. `nikic/php-parser` registers `PhpParser\`, not `nikic`)
+     * and must never be used as one.
+     *
+     * @return array<string, list<string>>
+     */
+    private function resolvePackageNamespaces(): array
+    {
+        $lockPath = $this->projectRoot . '/composer.lock';
+        $raw = is_file($lockPath) ? file_get_contents($lockPath) : false;
+
+        if (!is_string($raw)) {
+            return [];
+        }
+
+        try {
+            /** @var mixed $lock */
+            $lock = json_decode($raw, true, 64, JSON_THROW_ON_ERROR);
+        } catch (JsonException) {
+            return [];
+        }
+
+        if (!is_array($lock)) {
+            return [];
+        }
+
+        $map = [];
+
+        foreach (['packages', 'packages-dev'] as $section) {
+            /** @var mixed $packages */
+            $packages = $lock[$section] ?? null;
+
+            if (!is_array($packages)) {
+                continue;
+            }
+
+            /** @var mixed $package */
+            foreach ($packages as $package) {
+                if (!is_array($package)) {
+                    continue;
+                }
+
+                /** @var mixed $name */
+                $name = $package['name'] ?? null;
+
+                if (!is_string($name) || $name === '') {
+                    continue;
+                }
+
+                /** @var array<string, mixed> $package */
+                $prefixes = $this->extractNamespacePrefixes($package);
+
+                if ($prefixes !== []) {
+                    $map[$name] = $prefixes;
+                }
+            }
+        }
+
+        return $map;
+    }
+
+    /**
+     * Collect the PSR-4/PSR-0 namespace prefixes a package registers. The empty
+     * (root) prefix is skipped: it maps to every class and cannot discriminate
+     * reachability.
+     *
+     * @param array<string, mixed> $package
+     * @return list<string>
+     */
+    private function extractNamespacePrefixes(array $package): array
+    {
+        /** @var mixed $autoload */
+        $autoload = $package['autoload'] ?? null;
+
+        if (!is_array($autoload)) {
+            return [];
+        }
+
+        $prefixes = [];
+
+        foreach (['psr-4', 'psr-0'] as $scheme) {
+            /** @var mixed $scheduled */
+            $scheduled = $autoload[$scheme] ?? null;
+
+            if (!is_array($scheduled)) {
+                continue;
+            }
+
+            foreach ($scheduled as $prefix => $ignored) {
+                if (!is_string($prefix) || $prefix === '') {
+                    continue;
+                }
+
+                $prefixes[$prefix] = true;
+            }
+        }
+
+        return array_keys($prefixes);
     }
 
     /**
      * Build VEX statements from audit data and source import analysis.
      *
      * @param array<string, mixed> $auditData
-     * @param array<string, list<string>> $importMap
+     * @param list<string> $sourceImports
+     * @param array<string, list<string>> $packageNamespaces
      * @return list<VexStatement>
      */
-    private function buildStatements(array $auditData, array $importMap): array
+    private function buildStatements(array $auditData, array $sourceImports, array $packageNamespaces): array
     {
         $statements = [];
 
@@ -251,8 +369,13 @@ final readonly class VexGenerator
                     $cve = is_string($rawAdvisoryId) ? $rawAdvisoryId : 'UNKNOWN';
                 }
 
-                $statement = $this->assessVulnerability($packageName, $cve, $advisory, $importMap);
-                $statements[] = $statement;
+                $statements[] = $this->assessVulnerability(
+                    (string) $packageName,
+                    $cve,
+                    $advisory,
+                    $sourceImports,
+                    $packageNamespaces,
+                );
             }
         }
 
@@ -268,60 +391,80 @@ final readonly class VexGenerator
      * Assess a single vulnerability and produce a VEX statement.
      *
      * @param array<string, mixed> $advisory
-     * @param array<string, list<string>> $importMap
+     * @param list<string> $sourceImports
+     * @param array<string, list<string>> $packageNamespaces
      */
     private function assessVulnerability(
         string $packageName,
         string $cve,
         array $advisory,
-        array $importMap,
+        array $sourceImports,
+        array $packageNamespaces,
     ): VexStatement {
-        // Check if the package namespace is imported anywhere in source
-        $vendorParts = explode('/', $packageName);
-        $vendorKey = strtolower($vendorParts[0]);
-
-        $isReachable = array_key_exists($vendorKey, $importMap);
-
-        // Additional check: look for the specific package namespace
-        if ($isReachable && count($vendorParts) > 1) {
-            $packageNamespace = ucfirst($vendorParts[1]);
-            $found = false;
-
-            foreach ($importMap[$vendorKey] as $import) {
-                if (str_contains($import, $packageNamespace)) {
-                    $found = true;
-
-                    break;
-                }
-            }
-
-            $isReachable = $found;
-        }
-
         /** @var mixed $rawTitle */
         $rawTitle = $advisory['title'] ?? null;
         $title = is_string($rawTitle) ? $rawTitle : '';
 
-        if ($isReachable) {
+        $prefixes = $packageNamespaces[$packageName] ?? [];
+
+        if ($this->isReachable($sourceImports, $prefixes)) {
             return new VexStatement(
                 vulnerability: $cve,
                 status: VexStatus::Affected,
-                actionStatement: sprintf('Vulnerable code in %s is reachable. %s', $packageName, $title),
+                actionStatement: trim(sprintf(
+                    'Vulnerable package %s is imported in source, so its code is reachable. %s',
+                    $packageName,
+                    $title,
+                )),
                 product: $packageName,
             );
         }
 
-        return new VexStatement(
-            vulnerability: $cve,
-            status: VexStatus::NotAffected,
-            justification: VexJustification::VulnerableCodeNotInExecutePath,
-            actionStatement: sprintf(
-                'Package %s is installed but the vulnerable code path is not reachable from source. %s',
+        // Absence of an import does NOT prove non-reachability (transitive
+        // dependencies and dynamic dispatch leave no `use`), so we never assert
+        // not_affected here — we flag it for investigation instead.
+        $reason = $prefixes === []
+            ? sprintf(
+                'Package %s could not be mapped to an autoloaded namespace (transitive dependency, or classmap/files autoload), so reachability is undetermined and must be reviewed. %s',
                 $packageName,
                 $title,
-            ),
+            )
+            : sprintf(
+                'Package %s is installed but no source import of its namespace was found; a source-only scan cannot rule out transitive or dynamic use, so reachability must be reviewed. %s',
+                $packageName,
+                $title,
+            );
+
+        return new VexStatement(
+            vulnerability: $cve,
+            status: VexStatus::UnderInvestigation,
+            actionStatement: trim($reason),
             product: $packageName,
         );
+    }
+
+    /**
+     * A package is reachable when the source imports any class under one of the
+     * namespace prefixes it registers. Matching is case-insensitive (PHP
+     * namespaces are) and anchored on a namespace boundary so `Vendor\Pkg\` does
+     * not match `Vendor\PkgExtra\`.
+     *
+     * @param list<string> $sourceImports
+     * @param list<string> $prefixes
+     */
+    private function isReachable(array $sourceImports, array $prefixes): bool
+    {
+        foreach ($prefixes as $prefix) {
+            $needle = strtolower(rtrim($prefix, '\\')) . '\\';
+
+            foreach ($sourceImports as $import) {
+                if (str_starts_with(strtolower($import) . '\\', $needle)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     private static function generateUuidV4(): string
