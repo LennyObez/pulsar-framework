@@ -39713,9 +39713,15 @@
                         "?string $captchaToken",
                         "int $submissionTimestamp",
                         "string $formId",
-                        "?string $ip"
+                        "?string $ip",
+                        "?string $email"
                     ],
                     "return": null,
+                    "static": false
+                },
+                "email": {
+                    "params": [],
+                    "return": "?string",
                     "static": false
                 },
                 "isAnonymous": {
@@ -39899,6 +39905,73 @@
             "since": "1.0.0",
             "methods": [],
             "signatures": [],
+            "constants": []
+        },
+        "Pulsar\\Security\\AntiSpam\\EmailDomainCheckConfig": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "bool $enabled",
+                        "Pulsar\\Security\\AntiSpam\\EmailDomainSignalMode $disposableBlock",
+                        "?string $disposableListPath",
+                        "array $disposableListInline",
+                        "bool $mxCheckEnabled",
+                        "Pulsar\\Security\\AntiSpam\\EmailDomainSignalMode $mxBlock",
+                        "bool $mxFailOpen",
+                        "int $mxCacheTtlSeconds"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "fromArray": {
+                    "params": [
+                        "array $data"
+                    ],
+                    "return": "Pulsar\\Security\\AntiSpam\\EmailDomainCheckConfig",
+                    "static": true
+                },
+                "hasActiveSignal": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Security\\AntiSpam\\EmailDomainSignalMode": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "cases": {
+                    "params": [],
+                    "return": "array",
+                    "static": true
+                },
+                "from": {
+                    "params": [
+                        "string|int $value"
+                    ],
+                    "return": "static",
+                    "static": true
+                },
+                "fromValue": {
+                    "params": [
+                        "mixed $value",
+                        "Pulsar\\Security\\AntiSpam\\EmailDomainSignalMode $default"
+                    ],
+                    "return": "Pulsar\\Security\\AntiSpam\\EmailDomainSignalMode",
+                    "static": true
+                },
+                "tryFrom": {
+                    "params": [
+                        "string|int $value"
+                    ],
+                    "return": "?static",
+                    "static": true
+                }
+            },
             "constants": []
         },
         "Pulsar\\Security\\AntiSpam\\HoneypotDetectorInterface": {
@@ -56944,15 +57017,19 @@
         "Pulsar\\Security\\AntiSpam\\Behavior\\HeuristicScorer",
         "Pulsar\\Security\\AntiSpam\\Behavior\\NullBehaviorFeatureSink",
         "Pulsar\\Security\\AntiSpam\\ContentQualityGate",
+        "Pulsar\\Security\\AntiSpam\\DisposableEmailDomains",
         "Pulsar\\Security\\AntiSpam\\DuplicateDetector",
+        "Pulsar\\Security\\AntiSpam\\EmailDomainCheck",
         "Pulsar\\Security\\AntiSpam\\HCaptchaVerifier",
         "Pulsar\\Security\\AntiSpam\\HoneypotDetector",
+        "Pulsar\\Security\\AntiSpam\\Internal\\SystemMxDeliverabilityResolver",
         "Pulsar\\Security\\AntiSpam\\LinkDensityChecker",
         "Pulsar\\Security\\AntiSpam\\ManagedChallenge\\ManagedChallenge",
         "Pulsar\\Security\\AntiSpam\\ManagedChallenge\\ManagedChallengeAssetController",
         "Pulsar\\Security\\AntiSpam\\ManagedChallenge\\ManagedChallengeRefreshController",
         "Pulsar\\Security\\AntiSpam\\ManagedChallenge\\ManagedChallengeService",
         "Pulsar\\Security\\AntiSpam\\ManagedChallenge\\ManagedChallengeVerifier",
+        "Pulsar\\Security\\AntiSpam\\MxDeliverabilityResolverInterface",
         "Pulsar\\Security\\AntiSpam\\PrivacyPass\\Internal\\IssuerPublicKey",
         "Pulsar\\Security\\AntiSpam\\PrivacyPass\\Internal\\PrivacyPassDirectory",
         "Pulsar\\Security\\AntiSpam\\PrivacyPass\\Internal\\PrivacyPassDirectoryClient",

@@ -49,6 +49,27 @@ return [
     // Short-circuit: stop on first failure instead of running all checks
     'short_circuit' => false,
 
+    // E-mail domain check: inspect the SENDER'S DOMAIN, closing the gap the
+    // body-only checks leave (a no-JS bot that skips the honeypot and respects
+    // the time-trap otherwise reaches only the non-blocking content scorers).
+    // Two independent signals, each 'hard' (fail the check), 'score' (add to the
+    // spam score, controller decides), or 'off'. Keep both 'score' for a
+    // "zero lost lead" posture; use 'hard' for strict blocking.
+    'email_domain_check_enabled' => true,
+    // Disposable / throwaway mailbox domains (e.g. mailinator.com). The bundled
+    // list is extended — never replaced — by 'disposable_list', which may be a
+    // path to a newline-delimited file and/or an inline array of domains.
+    'disposable_block' => 'hard',   // 'hard' | 'score' | 'off'
+    'disposable_list' => null,      // string path, array of domains, or null
+    // Deliverability: the domain publishes no MX and no A/AAAA fallback
+    // (RFC 5321 §5.1 implicit MX), so it cannot receive mail. Results are cached
+    // in the tagged cache; a lookup fails OPEN when the resolver is unreachable
+    // (offline dev, DNS outage) so it never blocks everyone.
+    'mx_check_enabled' => true,
+    'mx_block' => 'hard',           // 'hard' | 'score' | 'off'
+    'mx_fail_open' => true,
+    'mx_cache_ttl' => 86400,
+
     // AI-scraper / LLM-crawler defense: identify declared AI crawlers by
     // User-Agent and act per category. Opt-in; when enabled a global
     // middleware emits an X-Robots-Tag: noai, noimageai signal and applies

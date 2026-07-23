@@ -1,8 +1,46 @@
 # Anti-Spam
 
-Pulsar ships a composable anti-spam pipeline (`Pulsar\Security\AntiSpam`) of independent checks — honeypot, duplicate detection, link density, content quality, proof-of-work, account-age gate, reputation cooldown, CAPTCHA, and the no-JavaScript time-trap — each implementing `AntiSpamCheckInterface` and run by `AntiSpamPipeline`. Checks are enabled and tuned through `config/anti-spam.php`.
+Pulsar ships a composable anti-spam pipeline (`Pulsar\Security\AntiSpam`) of independent checks — honeypot, duplicate detection, link density, content quality, the e-mail domain check (disposable list + MX deliverability), proof-of-work, account-age gate, reputation cooldown, CAPTCHA, and the no-JavaScript time-trap — each implementing `AntiSpamCheckInterface` and run by `AntiSpamPipeline`. Checks are enabled and tuned through `config/anti-spam.php`.
 
-This document covers the self-hosted, privacy-preserving bot defences layered on top of that pipeline: the **Managed Challenge** (CAPTCHA), the **Time-Trap**, **Behavioural Signals**, **AI-Scraper Defense**, the **Adaptive Risk Engine** (with the JA4 signal), and **Private Access Tokens**.
+This document covers the self-hosted, privacy-preserving bot defences layered on top of that pipeline: the **E-mail Domain Check**, the **Managed Challenge** (CAPTCHA), the **Time-Trap**, **Behavioural Signals**, **AI-Scraper Defense**, the **Adaptive Risk Engine** (with the JA4 signal), and **Private Access Tokens**.
+
+## E-mail Domain Check (disposable list + MX deliverability)
+
+Body-only checks leave a real gap: a bot that runs no JavaScript (so it sends no managed-challenge token), respects the time-trap, and skips the honeypot reaches only the content scorers — which score but never block. Inspecting the **sender's e-mail domain** closes that gap on every path, JS or not.
+
+`EmailDomainCheck` composes two independent signals, each of which independently **hard-gates**, **scores**, or is **off**:
+
+- **Disposable / throwaway domain.** The sender's domain, or a registrable parent of it (so `inbox.mailinator.com` is caught by `mailinator.com`), is on a known temporary-mailbox list. The framework ships a bundled, maintainable list (`resources/security/anti-spam/disposable-email-domains.txt`); a project **extends** it — never replaces it — via config.
+- **Deliverability (MX).** The domain publishes no MX record and no A/AAAA fallback (RFC 5321 §5.1 implicit MX), so it cannot receive mail. Results are **cached** in the tagged cache; a lookup **fails open** when the resolver itself is unreachable (offline dev, DNS outage) so it never blocks everyone.
+
+### Configuration
+
+```php
+// config/anti-spam.php
+'email_domain_check_enabled' => true,
+'disposable_block' => 'hard',   // 'hard' | 'score' | 'off'
+'disposable_list'  => null,     // string path and/or inline array — extends the bundled list
+'mx_check_enabled' => true,
+'mx_block'         => 'hard',   // 'hard' | 'score' | 'off'
+'mx_fail_open'     => true,
+'mx_cache_ttl'     => 86400,
+```
+
+Each signal is independent, so a **"zero lost lead"** deployment keeps both on `'score'` (the domain contributes to the aggregate spam score, and your controller's threshold decides) while a stricter one uses `'hard'` (a positive signal fails the check outright). MX result caching uses the same `TaggedCacheInterface` as duplicate detection; if it is enabled without a cache bound, the wiring emits the same loud "…is inert" warning — the check still runs, just uncached.
+
+### Reading the address
+
+The check reads the address from `AntiSpamContext::email()`: set it explicitly (`new AntiSpamContext(..., email: $address)`) or just include a conventional `email` form field. Address **format** validation stays the caller's `Email` validation rule — an absent or unparseable address is simply "OK" here, and the check never throws.
+
+### Security properties
+
+- Covers **all** forms (contact, quote, booking) uniformly, on every path — no JavaScript required.
+- The disposable list is **centrally maintained** with the framework, beating N stale per-project copies.
+- MX deliverability is **fail-open by design**: a DNS outage degrades to "allow", never to "block everyone".
+
+### Honest limitation
+
+The bundled disposable list is a maintained **seed**, not an exhaustive index; keep it current and extend it per deployment via `disposable_list`. MX deliverability proves a domain _can_ receive mail, not that the _sender_ is legitimate — it only rejects domains that cannot receive mail at all.
 
 ## Managed Challenge (self-hosted CAPTCHA)
 

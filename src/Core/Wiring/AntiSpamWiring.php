@@ -39,9 +39,14 @@ use Pulsar\Security\AntiSpam\Behavior\HeuristicScorer;
 use Pulsar\Security\AntiSpam\Behavior\NullBehaviorFeatureSink;
 use Pulsar\Security\AntiSpam\CaptchaVerifierInterface;
 use Pulsar\Security\AntiSpam\ContentQualityGate;
+use Pulsar\Security\AntiSpam\DisposableEmailDomains;
 use Pulsar\Security\AntiSpam\DuplicateDetector;
+use Pulsar\Security\AntiSpam\EmailDomainCheck;
+use Pulsar\Security\AntiSpam\EmailDomainCheckConfig;
+use Pulsar\Security\AntiSpam\EmailDomainSignalMode;
 use Pulsar\Security\AntiSpam\HCaptchaVerifier;
 use Pulsar\Security\AntiSpam\HoneypotDetector;
+use Pulsar\Security\AntiSpam\Internal\SystemMxDeliverabilityResolver;
 use Pulsar\Security\AntiSpam\LinkDensityChecker;
 use Pulsar\Security\AntiSpam\ManagedChallenge\ManagedChallengeAssetController;
 use Pulsar\Security\AntiSpam\ManagedChallenge\ManagedChallengeRefreshController;
@@ -78,6 +83,7 @@ use Throwable;
 
 use function array_unique;
 use function array_values;
+use function dirname;
 use function is_array;
 use function is_file;
 use function sprintf;
@@ -104,6 +110,7 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
                 AntiSpamConfig::class,
                 AntiSpamPipeline::class,
                 AntiSpamPipelineInterface::class,
+                EmailDomainCheckConfig::class,
                 AiCrawlerConfig::class,
                 AiCrawlerVerificationConfig::class,
                 AdaptiveRiskConfig::class,
@@ -152,6 +159,27 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
         // 1. Honeypot detector
         if ($config->honeypotEnabled) {
             $checks[] = new HoneypotDetector($config->honeypotFieldName);
+        }
+
+        // 1b. E-mail domain check (disposable list + MX deliverability). Runs on
+        // every path, JS or not, closing the gap the body-only checks leave.
+        $emailDomainConfig = $this->loadEmailDomainCheckConfig($configManager);
+        $container->instance(EmailDomainCheckConfig::class, $emailDomainConfig);
+
+        if ($emailDomainConfig->hasActiveSignal()) {
+            $mxCache = null;
+
+            if ($emailDomainConfig->mxCheckEnabled && $emailDomainConfig->mxBlock !== EmailDomainSignalMode::Off) {
+                // Optional: the check still runs uncached, but warn loudly so an
+                // enabled cache does not silently go missing.
+                $mxCache = $this->requireTaggedCache($container, $logger, 'Anti-spam MX deliverability caching');
+            }
+
+            $checks[] = new EmailDomainCheck(
+                $this->loadDisposableEmailDomains($emailDomainConfig),
+                new SystemMxDeliverabilityResolver($mxCache, $emailDomainConfig->mxCacheTtlSeconds),
+                $emailDomainConfig,
+            );
         }
 
         // 2. Duplicate detector (requires cache)
@@ -871,5 +899,45 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
         }
 
         return new AntiSpamConfig();
+    }
+
+    private function loadEmailDomainCheckConfig(ConfigManager $configManager): EmailDomainCheckConfig
+    {
+        $configPath = $configManager->configPath();
+
+        if ($configPath !== null && is_file($configPath . DIRECTORY_SEPARATOR . 'anti-spam.php')) {
+            /**
+             * @psalm-suppress UnresolvableInclude
+             * @var mixed $data
+             */
+            $data = require $configPath . DIRECTORY_SEPARATOR . 'anti-spam.php';
+
+            if (is_array($data)) {
+                /** @var array<string, mixed> $data */
+                return EmailDomainCheckConfig::fromArray($data);
+            }
+        }
+
+        return new EmailDomainCheckConfig();
+    }
+
+    /**
+     * The bundled disposable list is the base; the configured file path and/or
+     * inline entries EXTEND it (they never replace the bundled protection).
+     */
+    private function loadDisposableEmailDomains(EmailDomainCheckConfig $config): DisposableEmailDomains
+    {
+        $bundled = dirname(__DIR__, 3) . '/resources/security/anti-spam/disposable-email-domains.txt';
+        $domains = DisposableEmailDomains::parseListFile($bundled);
+
+        if ($config->disposableListPath !== null) {
+            $domains = [...$domains, ...DisposableEmailDomains::parseListFile($config->disposableListPath)];
+        }
+
+        if ($config->disposableListInline !== []) {
+            $domains = [...$domains, ...$config->disposableListInline];
+        }
+
+        return new DisposableEmailDomains($domains);
     }
 }
