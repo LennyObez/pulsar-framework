@@ -60,7 +60,14 @@ final readonly class AppConfig implements ReportsUnknownKeys
     public static function fromArray(array $data, Environment $environment): self
     {
         $modeString = $environment->get('APP_ENV') ?? $data['env'] ?? 'local';
-        $mode = EnvironmentMode::tryFrom($modeString) ?? EnvironmentMode::Local;
+        $mode = EnvironmentMode::tryFrom($modeString);
+
+        if ($mode === null) {
+            // Fail secure: an explicitly-set but unrecognized APP_ENV (a typo, or
+            // an unexpected value) must NOT silently become Local and disclose
+            // stack traces / source. Treat anything unrecognized as Production.
+            $mode = EnvironmentMode::Production;
+        }
 
         $name = $environment->get('APP_NAME') ?? $data['name'] ?? 'Pulsar';
 

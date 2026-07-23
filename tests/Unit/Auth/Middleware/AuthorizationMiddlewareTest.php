@@ -340,7 +340,7 @@ final class AuthorizationMiddlewareTest extends TestCase
     }
 
     #[Test]
-    public function passesWhenAuthenticatedWithNoRoutePermissions(): void
+    public function deniesWhenAuthenticatedWithoutRouteContext(): void
     {
         $identity = new Identity(
             id: 'user-no-perms',
@@ -350,16 +350,19 @@ final class AuthorizationMiddlewareTest extends TestCase
         );
 
         $gate = $this->createStub(GateInterface::class);
+        $gate->method('denies')->willReturn(false);
         $middleware = new AuthorizationMiddleware($gate);
 
         $request = $this->createHtmlRequest('/public/page');
         $securityContext = $this->createSecurityContext($identity, $request);
         $request = $request->withAttribute('_security_context', $securityContext);
-        // No _route attribute -- no permissions to check
+        // No _route attribute: without route context the required permissions are
+        // unknown, so the request must fail closed (denied), not fall through to
+        // the handler unchecked — even though the gate here would allow.
 
         $response = $middleware->process($request, $this->passHandler());
 
-        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
     }
 
     #[Test]

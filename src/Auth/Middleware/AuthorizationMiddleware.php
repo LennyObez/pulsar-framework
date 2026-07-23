@@ -122,6 +122,16 @@ final readonly class AuthorizationMiddleware implements MiddlewareInterface
                     return $this->forbiddenResponse($request);
                 }
             }
+        } else {
+            // Fail closed: without route context the required permissions are
+            // unknown, so an authenticated request must not pass unchecked.
+            try {
+                $this->auditAuthzDenied($request, $identity->id(), 'no_route_context');
+            } catch (RandomException | JsonException | SodiumException) {
+                // Audit logging failure must not disrupt authorization flow
+            }
+
+            return $this->forbiddenResponse($request);
         }
 
         return $handler->handle($request);
