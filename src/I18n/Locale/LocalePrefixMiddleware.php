@@ -12,6 +12,7 @@ use Pulsar\Api\Internal;
 use Pulsar\Config\I18nConfig;
 use Pulsar\Http\Message\Response;
 use Pulsar\Http\Middleware\MiddlewareInterface;
+use Pulsar\Http\VaryHeader;
 use Pulsar\I18n\LocaleNegotiatorInterface;
 use Pulsar\I18n\TranslatorInterface;
 
@@ -86,12 +87,20 @@ final readonly class LocalePrefixMiddleware implements MiddlewareInterface
         ServerRequestInterface $request,
         RequestHandlerInterface $handler,
     ): ResponseInterface {
+        $variesOnAcceptLanguage = false;
+
         if ($this->config->courtesyRedirect && in_array($request->getMethod(), ['GET', 'HEAD'], true)) {
             $redirect = $this->courtesyRedirect($request);
 
             if ($redirect !== null) {
                 return $redirect;
             }
+
+            // The courtesy redirect read Accept-Language and chose NOT to
+            // redirect this visitor. Whether the bare URL returns a redirect or
+            // this response therefore depends on the header, so the response must
+            // vary on it — even though it serves the default (unprefixed) locale.
+            $variesOnAcceptLanguage = true;
         }
 
         $negotiated = $this->negotiator->negotiate(
@@ -108,6 +117,13 @@ final readonly class LocalePrefixMiddleware implements MiddlewareInterface
         // separately so an application can still offer a courtesy redirect at /.
         $locale = $this->config->negotiateUnprefixedLocale ? $negotiated : $this->config->defaultLocale;
 
+        // When the served locale is itself negotiated, the body depends on
+        // Accept-Language (and on the cookie once the cookie-aware negotiator is
+        // wired) too.
+        if ($this->config->negotiateUnprefixedLocale) {
+            $variesOnAcceptLanguage = true;
+        }
+
         $this->translator->locale = $locale;
 
         $request = $request
@@ -116,16 +132,21 @@ final readonly class LocalePrefixMiddleware implements MiddlewareInterface
 
         $response = $handler->handle($request);
 
-        // When the served locale is negotiated, the body depends on the request's
-        // Accept-Language (and on the cookie/session once the cookie-aware
-        // negotiator is wired), so a shared cache must key on them — otherwise it
-        // could serve one visitor's locale to another.
-        if ($this->config->negotiateUnprefixedLocale) {
-            $vary = $this->config->localeCookieEnabled ? 'Accept-Language, Cookie' : 'Accept-Language';
-            $response = $response->withAddedHeader('Vary', $vary);
-        }
+        return $variesOnAcceptLanguage ? $this->applyLocaleVary($response) : $response;
+    }
 
-        return $response;
+    /**
+     * Merge the locale-negotiation Vary field-names into a response without
+     * clobbering any existing Vary value. Cookie is included only when the
+     * locale cookie is enabled (the cookie-aware negotiator reads it).
+     */
+    private function applyLocaleVary(ResponseInterface $response): ResponseInterface
+    {
+        $fields = $this->config->localeCookieEnabled
+            ? ['Accept-Language', 'Cookie']
+            : ['Accept-Language'];
+
+        return $response->withHeader('Vary', VaryHeader::merge($response->getHeaderLine('Vary'), ...$fields));
     }
 
     private function shouldCanonicalRedirect(ServerRequestInterface $request, string $locale): bool
@@ -162,7 +183,9 @@ final readonly class LocalePrefixMiddleware implements MiddlewareInterface
         $query = $request->getUri()->getQuery();
         $url = $query !== '' ? $targetPath . '?' . $query : $targetPath;
 
-        return Response::redirect($url, 302)->withHeader('Vary', 'Accept-Language, Cookie');
+        // This redirect target was chosen from Accept-Language (and the cookie
+        // when cookie-aware), so it must vary on them.
+        return $this->applyLocaleVary(Response::redirect($url, 302));
     }
 
     /**
