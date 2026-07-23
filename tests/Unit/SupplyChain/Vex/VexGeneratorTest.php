@@ -9,10 +9,16 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\SupplyChain\Vex\VexDocument;
 use Pulsar\SupplyChain\Vex\VexGenerator;
-use Pulsar\SupplyChain\Vex\VexJustification;
 use Pulsar\SupplyChain\Vex\VexStatus;
 
+use function bin2hex;
+use function file_put_contents;
 use function json_encode;
+use function mkdir;
+use function random_bytes;
+use function rmdir;
+use function sys_get_temp_dir;
+use function unlink;
 
 use const JSON_THROW_ON_ERROR;
 
@@ -54,12 +60,11 @@ final class VexGeneratorTest extends TestCase
             ],
         ], JSON_THROW_ON_ERROR);
 
-        // Simulate that we import from the "vendor" namespace, specifically "Dangerous"
-        $sourceImports = [
-            'vendor' => ['Vendor\\Dangerous\\SomeClass', 'Vendor\\Other\\Helper'],
-        ];
+        // The package's real PSR-4 namespace (from composer.lock) is imported in source.
+        $sourceImports = ['Vendor\\Dangerous\\SomeClass', 'Vendor\\Other\\Helper'];
+        $packageNamespaces = ['vendor/dangerous' => ['Vendor\\Dangerous\\']];
 
-        $doc = $this->generator->generate($auditJson, $sourceImports);
+        $doc = $this->generator->generate($auditJson, $sourceImports, $packageNamespaces);
 
         self::assertCount(1, $doc->statements);
         $stmt = $doc->statements[0];
@@ -71,8 +76,11 @@ final class VexGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function generateDetectsNotAffectedWhenCodeIsNotReachable(): void
+    public function underInvestigationWhenTheNamespaceIsNotImported(): void
     {
+        // C21 regression: absence of an import must NOT be reported as not_affected.
+        // A source-only scan cannot prove non-reachability (transitive / dynamic use),
+        // so the honest status is under_investigation, never a false clearance.
         $auditJson = json_encode([
             'advisories' => [
                 'vendor/vulnerable' => [
@@ -84,20 +92,41 @@ final class VexGeneratorTest extends TestCase
             ],
         ], JSON_THROW_ON_ERROR);
 
-        // Source imports nothing from the "vendor" namespace
-        $sourceImports = [
-            'other' => ['Other\\SomeClass'],
-        ];
+        $sourceImports = ['Other\\SomeClass'];
+        $packageNamespaces = ['vendor/vulnerable' => ['Vendor\\Vulnerable\\']];
 
-        $doc = $this->generator->generate($auditJson, $sourceImports);
+        $doc = $this->generator->generate($auditJson, $sourceImports, $packageNamespaces);
 
         self::assertCount(1, $doc->statements);
         $stmt = $doc->statements[0];
         self::assertSame('CVE-2024-77777', $stmt->vulnerability);
-        self::assertSame(VexStatus::NotAffected, $stmt->status);
-        self::assertSame(VexJustification::VulnerableCodeNotInExecutePath, $stmt->justification);
+        self::assertSame(VexStatus::UnderInvestigation, $stmt->status);
+        self::assertNull($stmt->justification);
         self::assertSame('vendor/vulnerable', $stmt->product);
-        self::assertStringContainsString('not reachable', $stmt->actionStatement);
+        self::assertStringContainsString('reviewed', $stmt->actionStatement);
+    }
+
+    #[Test]
+    public function underInvestigationWhenPackageHasNoMappableNamespace(): void
+    {
+        // Transitive dependencies never appear in a first-party import scan and have
+        // no namespace entry to map, so they must default to under_investigation —
+        // the old heuristic silently cleared every one of them as not_affected.
+        $auditJson = json_encode([
+            'advisories' => [
+                'transitive/dep' => [
+                    ['cve' => 'CVE-2024-33333', 'title' => 'Deserialization flaw'],
+                ],
+            ],
+        ], JSON_THROW_ON_ERROR);
+
+        // Package is not present in the namespace map (unresolved / transitive).
+        $doc = $this->generator->generate($auditJson, ['App\\Kernel'], []);
+
+        self::assertCount(1, $doc->statements);
+        $stmt = $doc->statements[0];
+        self::assertSame(VexStatus::UnderInvestigation, $stmt->status);
+        self::assertStringContainsString('undetermined', $stmt->actionStatement);
     }
 
     #[Test]
@@ -238,8 +267,10 @@ final class VexGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function notAffectedWhenVendorMatchesButPackageNamespaceDoesNot(): void
+    public function neverEmitsNotAffectedFromTheReachabilityHeuristic(): void
     {
+        // The whole point of the fix: this generator must never assert not_affected
+        // from a source scan, regardless of imports, because that claim is unsound.
         $auditJson = json_encode([
             'advisories' => [
                 'vendor/specific-lib' => [
@@ -248,14 +279,50 @@ final class VexGeneratorTest extends TestCase
             ],
         ], JSON_THROW_ON_ERROR);
 
-        // We import from vendor, but a different package (not "Specific-lib")
-        $sourceImports = [
-            'vendor' => ['Vendor\\OtherPackage\\Something'],
-        ];
+        // We import a different package under the same vendor.
+        $sourceImports = ['Vendor\\OtherPackage\\Something'];
+        $packageNamespaces = ['vendor/specific-lib' => ['Vendor\\SpecificLib\\']];
 
-        $doc = $this->generator->generate($auditJson, $sourceImports);
+        $doc = $this->generator->generate($auditJson, $sourceImports, $packageNamespaces);
 
         self::assertCount(1, $doc->statements);
-        self::assertSame(VexStatus::NotAffected, $doc->statements[0]->status);
+        self::assertNotSame(VexStatus::NotAffected, $doc->statements[0]->status);
+        self::assertSame(VexStatus::UnderInvestigation, $doc->statements[0]->status);
+    }
+
+    #[Test]
+    public function mapsPackagesToNamespacesFromComposerLockNotTheVendorSegment(): void
+    {
+        // End-to-end proof of the fix: the composer *vendor* is not a namespace.
+        // `nikic/php-parser` registers `PhpParser\`; the old heuristic keyed on the
+        // vendor segment `nikic` and so never matched a `use PhpParser\...`, falsely
+        // clearing it. With composer.lock parsing the import is correctly reachable.
+        $dir = sys_get_temp_dir() . '/vexgen_' . bin2hex(random_bytes(6));
+        mkdir($dir . '/src', 0o777, true);
+
+        file_put_contents($dir . '/composer.lock', (string) json_encode([
+            'packages' => [
+                ['name' => 'nikic/php-parser', 'autoload' => ['psr-4' => ['PhpParser\\' => 'lib/']]],
+            ],
+            'packages-dev' => [],
+        ], JSON_THROW_ON_ERROR));
+        file_put_contents($dir . '/src/Uses.php', "<?php\n\ndeclare(strict_types=1);\n\nuse PhpParser\\Parser;\n");
+
+        $audit = (string) json_encode([
+            'advisories' => [
+                'nikic/php-parser' => [['cve' => 'CVE-2024-12345', 'title' => 'Parser flaw']],
+            ],
+        ], JSON_THROW_ON_ERROR);
+
+        $doc = new VexGenerator($dir)->generate($audit);
+
+        unlink($dir . '/src/Uses.php');
+        unlink($dir . '/composer.lock');
+        rmdir($dir . '/src');
+        rmdir($dir);
+
+        self::assertCount(1, $doc->statements);
+        self::assertSame(VexStatus::Affected, $doc->statements[0]->status);
+        self::assertStringContainsString('reachable', $doc->statements[0]->actionStatement);
     }
 }
