@@ -10,19 +10,18 @@ use Pulsar\Extension\Subscriptions\Internal\SubscriptionService;
 use Pulsar\Extension\Subscriptions\Store;
 use Pulsar\Extension\Subscriptions\SubscriptionStatus;
 use Pulsar\Http\Message\Response;
+use Pulsar\Security\Jws\JwsVerificationException;
+use Pulsar\Security\Jws\JwsVerifierInterface;
 use Throwable;
 
 use function base64_decode;
 use function base64_encode;
-use function count;
-use function explode;
 use function is_array;
 use function is_int;
 use function is_string;
 use function json_decode;
 use function random_bytes;
 use function sodium_crypto_secretbox;
-use function strtr;
 
 use const JSON_THROW_ON_ERROR;
 use const SODIUM_CRYPTO_SECRETBOX_NONCEBYTES;
@@ -41,6 +40,7 @@ final readonly class WebhookController
 {
     public function __construct(
         private SubscriptionService $subscriptionService,
+        private JwsVerifierInterface $appleJwsVerifier,
         private string $webhookEncryptionKey,
     ) {}
 
@@ -146,10 +146,14 @@ final readonly class WebhookController
             return Response::json(['error' => 'Missing signedPayload'], 400);
         }
 
-        $decodedPayload = $this->decodeAppleJws($signedPayload);
-
-        if ($decodedPayload === null) {
-            return Response::json(['error' => 'Invalid JWS payload'], 400);
+        // Cryptographically verify the outer notification JWS against Apple's
+        // pinned Root CA G3 (C15/C16). decodeAppleJws() previously only
+        // base64-decoded the claims, so any attacker could POST a self-crafted
+        // signedPayload and flip any user's subscription state.
+        try {
+            $decodedPayload = $this->appleJwsVerifier->verifyAndDecode($signedPayload);
+        } catch (JwsVerificationException) {
+            return Response::json(['error' => 'Invalid or unverified JWS signature'], 400);
         }
 
         /** @var mixed $rawNotificationType */
@@ -166,15 +170,21 @@ final readonly class WebhookController
         $rawSignedTransactionInfo = $transactionData['signedTransactionInfo'] ?? null;
         $signedTransactionInfo = is_string($rawSignedTransactionInfo) ? $rawSignedTransactionInfo : '';
 
-        $transactionInfo = $signedTransactionInfo !== ''
-            ? $this->decodeAppleJws($signedTransactionInfo)
-            : null;
+        if ($signedTransactionInfo === '') {
+            return Response::json(['error' => 'Missing signed transaction info'], 400);
+        }
+
+        // The inner transaction JWS is independently signed; verify it too so the
+        // originalTransactionId cannot be forged inside an otherwise-valid envelope.
+        try {
+            $transactionInfo = $this->appleJwsVerifier->verifyAndDecode($signedTransactionInfo);
+        } catch (JwsVerificationException) {
+            return Response::json(['error' => 'Invalid or unverified transaction JWS'], 400);
+        }
 
         /** @var mixed $rawOriginalTransactionId */
         $rawOriginalTransactionId = $transactionInfo['originalTransactionId'] ?? null;
-        $originalTransactionId = $transactionInfo !== null && is_string($rawOriginalTransactionId)
-            ? $rawOriginalTransactionId
-            : '';
+        $originalTransactionId = is_string($rawOriginalTransactionId) ? $rawOriginalTransactionId : '';
 
         if ($originalTransactionId === '') {
             return Response::json(['error' => 'Missing original transaction ID'], 400);
@@ -190,7 +200,9 @@ final readonly class WebhookController
                 originalTransactionId: $originalTransactionId,
                 newStatus: $newStatus,
                 encryptedPayload: $encryptedPayload,
-                signatureVerified: true, // JWS signature validated by Apple
+                // Truthful: both the outer notification and the inner transaction
+                // JWS were cryptographically verified above.
+                signatureVerified: true,
             );
 
             return Response::json(['status' => 'ok']);
@@ -256,35 +268,6 @@ final readonly class WebhookController
             // DID_RENEW, SUBSCRIBED, OFFER_REDEEMED and any unknown type default to Active
             default => SubscriptionStatus::Active,
         };
-    }
-
-    /**
-     * Decrypt a JWS payload from Apple (extract claims without full chain verification).
-     *
-     * @return array<string, mixed>|null
-     */
-    private function decodeAppleJws(string $jws): ?array
-    {
-        $parts = explode('.', $jws);
-
-        if (count($parts) !== 3) {
-            return null;
-        }
-
-        $payloadJson = base64_decode(strtr($parts[1], '-_', '+/'), true);
-
-        if ($payloadJson === false) {
-            return null;
-        }
-
-        try {
-            /** @var array<string, mixed>|null $decoded */
-            $decoded = json_decode($payloadJson, true, 64, JSON_THROW_ON_ERROR);
-
-            return is_array($decoded) ? $decoded : null;
-        } catch (Throwable) {
-            return null;
-        }
     }
 
     /**
