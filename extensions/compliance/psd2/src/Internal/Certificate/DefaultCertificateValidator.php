@@ -20,8 +20,11 @@ use function array_key_exists;
 use function array_values;
 use function is_array;
 use function is_string;
+use function openssl_x509_checkpurpose;
 use function openssl_x509_parse;
 use function str_contains;
+
+use const X509_PURPOSE_ANY;
 
 /**
  * Default certificate validator using OpenSSL.
@@ -95,6 +98,12 @@ final readonly class DefaultCertificateValidator implements CertificateValidator
             throw Psd2Exception::certificateExpired($serialNumber);
         }
 
+        // Trust must come from the eIDAS chain, not from self-declared string
+        // fields: verify the certificate chains to the configured trust list
+        // BEFORE any of its fields (type, roles, NCA, authorization number) are
+        // read, and fail closed when no trust list is configured.
+        $this->assertTrustedChain($pemCertificate, $serialNumber);
+
         // Extract PSD2-specific fields from extensions
         /** @var mixed $rawExtensions */
         $rawExtensions = $parsed['extensions'] ?? [];
@@ -157,6 +166,50 @@ final readonly class DefaultCertificateValidator implements CertificateValidator
     public function isAuthorized(string $authorizationNumber): bool
     {
         return array_key_exists($authorizationNumber, $this->authorizedProviders);
+    }
+
+    /**
+     * Fail closed unless the certificate cryptographically chains to the
+     * configured eIDAS trust list. Without this, the validator would derive
+     * trust from self-declared, attacker-suppliable string fields, so a
+     * self-signed certificate carrying the right strings would be "authorized".
+     *
+     * NOTE: this establishes chain trust and validity. Full eIDAS conformance —
+     * OCSP/CRL revocation checking and ASN.1 parsing of the ETSI TS 119 495
+     * QcStatements for precise PSD2 roles/NCA data (rather than the string hints
+     * below) — remains to be layered on; until then a deployment MUST treat the
+     * derived roles as advisory and pair them with its own allowlist.
+     */
+    private function assertTrustedChain(string $pemCertificate, string $serialNumber): void
+    {
+        $bundle = $this->config->trustedCaBundlePath;
+
+        if ($bundle === null || $bundle === '') {
+            $this->auditLogger?->log(
+                AuditEvent::SecurityEvent,
+                AuditOutcome::Failure,
+                null,
+                'psd2_certificate_trust_list_missing',
+                metadata: ['serial_number' => $serialNumber],
+            );
+
+            throw Psd2Exception::trustAnchorsUnavailable();
+        }
+
+        // openssl_x509_checkpurpose builds and verifies the chain against the CA
+        // bundle (and enforces validity); true only when the certificate anchors
+        // to a trusted CA in the bundle.
+        if (openssl_x509_checkpurpose($pemCertificate, X509_PURPOSE_ANY, [$bundle]) !== true) {
+            $this->auditLogger?->log(
+                AuditEvent::SecurityEvent,
+                AuditOutcome::Denied,
+                null,
+                'psd2_certificate_untrusted_chain',
+                metadata: ['serial_number' => $serialNumber],
+            );
+
+            throw Psd2Exception::certificateChainUntrusted($serialNumber);
+        }
     }
 
     /**
