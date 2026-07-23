@@ -21,6 +21,7 @@ use Pulsar\Extension\Analytics\Domain\PageView;
 use Pulsar\Extension\Analytics\Domain\Site;
 use Pulsar\Extension\Analytics\Internal\Bot\BotDetector;
 use Pulsar\Extension\Analytics\Internal\Security\AnalyticsKeyManager;
+use Pulsar\Extension\Analytics\Internal\Security\VisitorConsentIdentity;
 use Pulsar\Extension\Analytics\Internal\Service\ReferrerParser;
 use Pulsar\Extension\Analytics\Internal\Service\SessionResolver;
 use Pulsar\Extension\Analytics\Internal\Service\TrackingService;
@@ -311,6 +312,55 @@ final class TrackingServiceTest extends TestCase
         $request = $this->createRequest(
             attributes: ['analytics.site' => $this->createSite()],
             headers: ['User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 'accept-language' => 'en-US'],
+        );
+
+        $svc->trackPageView($request, ['url' => 'https://example.com/page']);
+    }
+
+    #[Test]
+    public function trackPageViewRecognisesConsentRecordedUnderTheSharedSubject(): void
+    {
+        // C1 regression: the tracker must look consent up under the SAME subject
+        // the grant endpoint and banner middleware record — the keyed hash, not
+        // the raw IP. The original bug looked up the raw, un-hashed IP, so this
+        // record was never found and every hit was silently dropped whenever
+        // requireConsent (the GDPR default) was enabled.
+        $config = new AnalyticsConfig(privacy: new PrivacyConfig(requireConsent: true));
+        $identity = new VisitorConsentIdentity($this->keyManager, $config);
+
+        $request = $this->createRequest(
+            attributes: ['analytics.site' => $this->createSite()],
+            headers: ['User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 'accept-language' => 'en-US'],
+        );
+
+        $subject = $identity->forRequest($request);
+        self::assertNotSame('203.0.113.1', $subject, 'consent subject must be a keyed hash, never the raw IP');
+
+        // Consent is recorded ONLY under the shared subject: if the tracker asks
+        // for anything else (e.g. the raw IP) this returns false and insert never
+        // fires, failing the test.
+        $consentManager = $this->createStub(ConsentManagerInterface::class);
+        $consentManager->method('hasConsent')->willReturnCallback(
+            fn(string $visitor, string $purpose): bool => $visitor === $subject && $purpose === 'analytics',
+        );
+
+        $pageViewRepo = $this->createMock(PageViewRepositoryInterface::class);
+        $pageViewRepo->expects(self::once())->method('insert');
+
+        $svc = new TrackingService(
+            keyManager: $this->keyManager,
+            saltStore: $this->saltStore,
+            botDetector: $this->botDetector,
+            referrerParser: $this->referrerParser,
+            userAgentParser: $this->userAgentParser,
+            sessionResolver: $this->sessionResolver,
+            geoResolver: $this->geoResolver,
+            pageViewRepository: $pageViewRepo,
+            eventRepository: $this->eventRepo,
+            siteRepository: $this->siteRepo,
+            config: $config,
+            consentManager: $consentManager,
+            consentIdentity: $identity,
         );
 
         $svc->trackPageView($request, ['url' => 'https://example.com/page']);
