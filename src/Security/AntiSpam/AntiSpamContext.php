@@ -7,6 +7,8 @@ namespace Pulsar\Security\AntiSpam;
 use NoDiscard;
 use Pulsar\Api\Api;
 
+use function is_string;
+
 /**
  * Immutable context passed through the anti-spam pipeline.
  *
@@ -38,6 +40,9 @@ final readonly class AntiSpamContext
      *        verifiers (hCaptcha/Turnstile) that require the genuine client IP for
      *        their server-side risk scoring; a hash would defeat that. Null when
      *        unavailable. Internal checks use $ipHash, not this.
+     * @param string|null $email The sender's e-mail address, for the e-mail-domain
+     *        check. Set it explicitly, or leave null to let {@see self::email()}
+     *        fall back to the conventional 'email' form field.
      */
     public function __construct(
         public string $body,
@@ -51,11 +56,30 @@ final readonly class AntiSpamContext
         public int $submissionTimestamp = 0,
         public string $formId = '',
         public ?string $ip = null,
+        public ?string $email = null,
     ) {}
 
     #[NoDiscard]
     public function isAnonymous(): bool
     {
         return $this->userId === null;
+    }
+
+    /**
+     * The sender's e-mail address for domain-level checks: the explicitly-set
+     * $email, or the conventional 'email' form field when that is unset. Null
+     * when neither is present.
+     */
+    #[NoDiscard]
+    public function email(): ?string
+    {
+        if ($this->email !== null && $this->email !== '') {
+            return $this->email;
+        }
+
+        /** @var mixed $field */
+        $field = $this->formFields['email'] ?? null;
+
+        return is_string($field) && $field !== '' ? $field : null;
     }
 }
