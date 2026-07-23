@@ -121,6 +121,19 @@ final class AppConfigTest extends TestCase
     }
 
     #[Test]
+    public function unrecognizedEnvironmentFailsSecureToProduction(): void
+    {
+        $env = Environment::load();
+
+        // A typo'd / unexpected APP_ENV must NOT silently become Local (debug on,
+        // stack-trace/source disclosure); it fails secure to production.
+        $config = AppConfig::fromArray(['env' => 'prod'], $env);
+
+        self::assertSame(EnvironmentMode::Production, $config->mode);
+        self::assertFalse($config->debug);
+    }
+
+    #[Test]
     public function envVarOverridesDebug(): void
     {
         putenv('APP_DEBUG=true');
