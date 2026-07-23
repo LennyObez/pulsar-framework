@@ -7,15 +7,19 @@ namespace Pulsar\Extension\Payments\Internal\Webhook;
 use Psr\Log\LoggerInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Payments\Config\PayPalConfig;
+use Pulsar\Extension\Payments\Contracts\PayPalCertificateProviderInterface;
 use Pulsar\Extension\Payments\Contracts\SubscriptionRepositoryInterface;
 use Pulsar\Extension\Payments\Domain\SubscriptionStatus;
 
-use function hash_equals;
-use function hash_hmac;
+use function base64_decode;
+use function crc32;
 use function is_array;
 use function is_string;
+use function openssl_pkey_get_public;
+use function openssl_verify;
 use function sprintf;
-use function strtoupper;
+
+use const OPENSSL_ALGO_SHA256;
 
 /**
  * Handles PayPal webhook events.
@@ -30,6 +34,7 @@ final readonly class PayPalWebhookHandler
         private SubscriptionRepositoryInterface $subscriptionRepository,
         private PayPalConfig $config,
         private LoggerInterface $logger,
+        private PayPalCertificateProviderInterface $certificateProvider,
     ) {}
 
     /**
@@ -126,10 +131,19 @@ final readonly class PayPalWebhookHandler
     }
 
     /**
-     * Verify PayPal webhook transmission signature.
+     * Verify a PayPal webhook transmission signature.
      *
-     * PayPal signs webhooks with a transmission signature computed over:
-     * transmissionId|transmissionTime|webhookId|crc32(rawBody)
+     * PayPal signs webhooks with RSA-SHA256. The signature in
+     * PAYPAL-TRANSMISSION-SIG (base64) must be verified with openssl_verify
+     * against the PUBLIC KEY of the signing certificate served at
+     * PAYPAL-CERT-URL, over the message
+     * transmissionId|transmissionTime|webhookId|crc32(rawBody).
+     *
+     * The previous implementation computed an HMAC keyed by the webhookId and
+     * compared it to the signature. The webhookId is a PUBLIC identifier (shown
+     * in the dashboard / returned by the API), so any party that knew it could
+     * forge a passing signature and inject arbitrary subscription/payment
+     * events (super-audit C14).
      *
      * @param string $rawBody Raw JSON body
      * @param array<string, string> $headers PayPal transmission headers
@@ -151,52 +165,32 @@ final readonly class PayPalWebhookHandler
             return false;
         }
 
-        // Validate cert URL is from PayPal's domain (prevent SSRF)
-        $parsedUrl = parse_url($certUrl);
-        $host = $parsedUrl['host'] ?? '';
-        $scheme = $parsedUrl['scheme'] ?? '';
-
-        if ($scheme !== 'https' || !$this->isPayPalCertHost($host)) {
+        // Resolve the signing certificate's public key. The provider allow-lists
+        // the (attacker-supplied) cert URL to PayPal hosts and returns null on
+        // any failure — treat that as "reject".
+        $publicKeyPem = $this->certificateProvider->publicKeyPemFor($certUrl);
+        if ($publicKeyPem === null) {
             return false;
         }
 
-        // Build the expected signature input per PayPal's spec:
-        // transmissionId|transmissionTime|webhookId|crc32(rawBody)
-        $crc = crc32($rawBody);
-        $expectedSignatureInput = sprintf(
+        $publicKey = openssl_pkey_get_public($publicKeyPem);
+        if ($publicKey === false) {
+            return false;
+        }
+
+        $message = sprintf(
             '%s|%s|%s|%u',
             $transmissionId,
             $transmissionTime,
             $this->config->webhookId,
-            $crc,
+            crc32($rawBody),
         );
 
-        // Compute HMAC-SHA256 using webhookId as the key for local verification
-        $expectedSignature = hash_hmac('sha256', $expectedSignatureInput, $this->config->webhookId);
-
-        return hash_equals($expectedSignature, $transmissionSig);
-    }
-
-    /**
-     * Check if the host is a valid PayPal certificate host.
-     */
-    private function isPayPalCertHost(string $host): bool
-    {
-        $allowedSuffixes = [
-            '.paypal.com',
-            '.symantec.com',
-            '.verisign.com',
-            '.paypal.com.',
-        ];
-
-        $host = strtoupper($host);
-
-        foreach ($allowedSuffixes as $suffix) {
-            if (str_ends_with($host, strtoupper($suffix))) {
-                return true;
-            }
+        $signature = base64_decode($transmissionSig, true);
+        if ($signature === false) {
+            return false;
         }
 
-        return false;
+        return openssl_verify($message, $signature, $publicKey, OPENSSL_ALGO_SHA256) === 1;
     }
 }
