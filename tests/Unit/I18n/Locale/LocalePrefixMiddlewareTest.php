@@ -508,7 +508,76 @@ final class LocalePrefixMiddlewareTest extends TestCase
 
         self::assertSame(302, $response->getStatusCode());
         self::assertSame('/fr/about', $response->getHeaderLine('Location'));
+        // Cookie disabled: the redirect target depends only on Accept-Language,
+        // so it must not needlessly fragment caches on Cookie.
+        self::assertSame('Accept-Language', $response->getHeaderLine('Vary'));
+    }
+
+    #[Test]
+    public function courtesyRedirectVariesOnCookieWhenTheLocaleCookieIsEnabled(): void
+    {
+        $middleware = $this->makeMiddleware(
+            $this->makeConfig(defaultLocale: 'en', courtesyRedirect: true, localeCookieEnabled: true),
+            $this->makeNegotiator('fr'),
+        );
+        $request = new ServerRequest(method: 'GET', uri: '/about');
+
+        $response = $middleware->process($request, $this->createStub(RequestHandlerInterface::class));
+
+        self::assertSame(302, $response->getStatusCode());
         self::assertSame('Accept-Language, Cookie', $response->getHeaderLine('Vary'));
+    }
+
+    #[Test]
+    public function defaultLocaleRootVariesWhenCourtesyRedirectCouldHaveFired(): void
+    {
+        // Bare URL, courtesy redirect enabled, this visitor negotiates to the
+        // default locale so NO redirect fires — but whether they got a redirect
+        // or this 200 depended on Accept-Language, so the 200 must Vary on it.
+        $middleware = $this->makeMiddleware(
+            $this->makeConfig(defaultLocale: 'en', negotiateUnprefixedLocale: false, courtesyRedirect: true),
+            $this->makeNegotiator('en'),
+        );
+        $request = new ServerRequest(method: 'GET', uri: '/');
+
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(Response::text('home'));
+
+        $response = $middleware->process($request, $handler);
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertSame('Accept-Language', $response->getHeaderLine('Vary'));
+    }
+
+    #[Test]
+    public function prefixedDeterministicUrlDoesNotVary(): void
+    {
+        // /fr/docs is locale-authoritative from the URL: the response is the same
+        // regardless of Accept-Language, so it must NOT carry Vary.
+        $middleware = $this->makeMiddleware($this->makeConfig());
+        $request = new ServerRequest(method: 'GET', uri: '/fr/docs');
+
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(Response::text('OK'));
+
+        $response = $middleware->process($request, $handler);
+
+        self::assertSame('', $response->getHeaderLine('Vary'));
+    }
+
+    #[Test]
+    public function negotiatedResponsePreservesAnExistingVaryValue(): void
+    {
+        // A downstream Vary: Cookie must survive; Accept-Language is appended.
+        $middleware = $this->makeMiddleware($this->makeConfig(), $this->makeNegotiator('fr'));
+        $request = new ServerRequest(method: 'GET', uri: '/docs');
+
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(Response::text('OK')->withHeader('Vary', 'Cookie'));
+
+        $response = $middleware->process($request, $handler);
+
+        self::assertSame('Cookie, Accept-Language', $response->getHeaderLine('Vary'));
     }
 
     #[Test]

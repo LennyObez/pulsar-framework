@@ -22212,6 +22212,13 @@
                     "return": "Pulsar\\Http\\Message\\Response",
                     "static": true
                 },
+                "varyOn": {
+                    "params": [
+                        "string $fieldNames"
+                    ],
+                    "return": "static",
+                    "static": false
+                },
                 "view": {
                     "params": [
                         "Pulsar\\View\\Engine\\TemplateEngineInterface|string $engineOrTemplate",
@@ -27511,6 +27518,21 @@
                     "params": [],
                     "return": "array",
                     "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Http\\VaryHeader": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "merge": {
+                    "params": [
+                        "string $existing",
+                        "string $fieldNames"
+                    ],
+                    "return": "string",
+                    "static": true
                 }
             },
             "constants": []

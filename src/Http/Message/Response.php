@@ -12,6 +12,7 @@ use Psr\Http\Message\StreamInterface;
 use Pulsar\Api\Api;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Http\SafeRedirect;
+use Pulsar\Http\VaryHeader;
 use Pulsar\View\Engine\TemplateEngineInterface;
 use RuntimeException;
 
@@ -479,6 +480,31 @@ class Response implements ResponseInterface
             'headerNames' => [...$this->headerNames, $lowered => $name],
             'headers' => [...$this->headers, $lowered => $values],
         ]);
+    }
+
+    /**
+     * Ensure the response varies on the given request header field-names.
+     *
+     * Field-names are merged into any existing `Vary` header — de-duplicated
+     * case-insensitively, order preserved — so an existing `Vary: Cookie` is
+     * kept rather than overwritten. When Vary is (or becomes) `*`, that wins.
+     *
+     * Call this on any response whose selection depended on a request header,
+     * e.g. content or a redirect chosen from `Accept-Language`. Without it a
+     * shared cache keyed on the URL alone can hand one visitor's negotiated
+     * variant (or redirect) to another.
+     */
+    #[NoDiscard]
+    public function varyOn(string ...$fieldNames): static
+    {
+        $existing = $this->getHeaderLine('Vary');
+        $merged = VaryHeader::merge($existing, ...$fieldNames);
+
+        if ($merged === '' || $merged === $existing) {
+            return $this;
+        }
+
+        return $this->withHeader('Vary', $merged);
     }
 
     #[NoDiscard]
