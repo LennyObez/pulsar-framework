@@ -15,6 +15,7 @@ use Pulsar\Extension\Psd2\Contracts\ScaChallengeStoreInterface;
 use Pulsar\Extension\Psd2\Contracts\ScaDynamicLinkingServiceInterface;
 use Pulsar\Extension\Psd2\Contracts\TransactionRiskAnalyzerInterface;
 use Pulsar\Extension\Psd2\Contracts\VelocityTrackerInterface;
+use Pulsar\Extension\Psd2\Exception\Psd2Exception;
 use Pulsar\Extension\Psd2\Internal\Certificate\DefaultCertificateValidator;
 use Pulsar\Extension\Psd2\Internal\Monitoring\InMemoryVelocityTracker;
 use Pulsar\Extension\Psd2\Internal\Monitoring\TransactionRiskAnalyzer;
@@ -22,6 +23,8 @@ use Pulsar\Extension\Psd2\Internal\Sca\InMemoryScaChallengeStore;
 use Pulsar\Extension\Psd2\Internal\Sca\ScaDynamicLinkingService;
 use Pulsar\Extension\Psd2\Middleware\CertificateAuthenticationMiddleware;
 use Pulsar\Extension\Psd2\Middleware\ScaRequiredMiddleware;
+use Pulsar\Security\Crypto\MasterKey;
+use Pulsar\Security\Crypto\SubKeyId;
 
 /**
  * Service provider for the PSD2 extension.
@@ -92,7 +95,20 @@ final class Psd2ServiceProvider implements ServiceProviderInterface
 
             /** @var AuditLoggerInterface|null $auditLogger */
 
-            return new ScaDynamicLinkingService($store, $config->sca, $auditLogger);
+            // Fail closed: the dynamic-linking code is a keyed MAC, so without a
+            // master key to derive the secret from there is no secure code to mint.
+            if (!$container->has(MasterKey::class)) {
+                throw Psd2Exception::scaSecretUnavailable();
+            }
+
+            /** @var MasterKey $masterKey */
+            $masterKey = $container->get(MasterKey::class);
+            $secretKey = $masterKey->deriveSubKey(
+                SubKeyId::Psd2ScaDynamicLinking->value,
+                'psd2-sca-dynamic-linking',
+            );
+
+            return new ScaDynamicLinkingService($store, $config->sca, $secretKey, $auditLogger);
         });
 
         // Transaction Risk Analyzer

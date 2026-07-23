@@ -18,24 +18,38 @@ use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditOutcome;
 
 use function bin2hex;
-use function hash;
+use function hash_hmac;
 use function random_bytes;
 use function sprintf;
+use function strlen;
 use function substr;
 
 /**
  * Default SCA dynamic linking implementation per PSD2 Art. 97(2).
  *
- * Generates authentication codes that are cryptographically bound to
- * the transaction amount and payee via HMAC, ensuring any modification
- * to the transaction details invalidates the challenge.
+ * The authentication code is a keyed MAC — HMAC-SHA-256 under a per-deployment
+ * server secret (a master-key-derived sub-key), over the transaction details
+ * plus a server-generated per-challenge nonce that is never returned to the
+ * client. Because the key and nonce are secret, the code cannot be recomputed
+ * offline from the (public) transaction details, and any change to the amount,
+ * currency, or payee invalidates it (dynamic linking).
+ *
+ * The code is a possession factor: an integrator MUST deliver it to the user
+ * out of band (authenticator app, SMS, hardware token), never echo it back to
+ * the party initiating the payment. {@see ScaChallenge::toArray()} deliberately
+ * omits the nonce.
  */
 #[Internal(reason: 'Use ScaDynamicLinkingServiceInterface')]
 final readonly class ScaDynamicLinkingService implements ScaDynamicLinkingServiceInterface
 {
+    /**
+     * @param string $secretKey Per-deployment secret (>= 32 bytes) keying the
+     *        dynamic-linking HMAC. Derive it from the master key, never a constant.
+     */
     public function __construct(
         private ScaChallengeStoreInterface $store,
         private ScaConfig $config,
+        private string $secretKey,
         private ?AuditLoggerInterface $auditLogger = null,
     ) {}
 
@@ -49,6 +63,7 @@ final readonly class ScaDynamicLinkingService implements ScaDynamicLinkingServic
         ScaChallengeType $type = ScaChallengeType::Totp,
     ): ScaChallenge {
         $challengeId = bin2hex(random_bytes(16));
+        $nonce = bin2hex(random_bytes(32));
         $now = new DateTimeImmutable();
         $expiresAt = $now->modify(sprintf('+%d seconds', $this->config->challengeTimeoutSeconds));
 
@@ -57,6 +72,7 @@ final readonly class ScaDynamicLinkingService implements ScaDynamicLinkingServic
             $amountMinorUnits,
             $currency,
             $payeeId,
+            $nonce,
         );
 
         $challenge = new ScaChallenge(
@@ -70,6 +86,7 @@ final readonly class ScaDynamicLinkingService implements ScaDynamicLinkingServic
             challengeType: $type,
             createdAt: $now,
             expiresAt: $expiresAt,
+            nonce: $nonce,
         );
 
         $this->store->store($challenge);
@@ -150,6 +167,7 @@ final readonly class ScaDynamicLinkingService implements ScaDynamicLinkingServic
             $amountMinorUnits,
             $currency,
             $payeeId,
+            $challenge->nonce,
         );
 
         if (!hash_equals($expectedCode, $responseCode)) {
@@ -185,28 +203,34 @@ final readonly class ScaDynamicLinkingService implements ScaDynamicLinkingServic
     }
 
     /**
-     * Generate a dynamic-linked authentication code.
-     *
-     * The code is derived from the challenge ID combined with the transaction
-     * details (amount, currency, payee), ensuring modification of any detail
-     * produces a different code.
+     * Generate a dynamic-linked authentication code: HMAC-SHA-256 under the
+     * per-deployment secret over the transaction details and the per-challenge
+     * nonce. The secret and nonce are what make it unforgeable — modifying any
+     * transaction detail (or not knowing the key/nonce) yields a different code.
      */
     private function generateDynamicLinkedCode(
         string $challengeId,
         int $amountMinorUnits,
         string $currency,
         string $payeeId,
+        string $nonce,
     ): string {
+        if (strlen($this->secretKey) < 32) {
+            // Fail closed: without a real key the code would be forgeable.
+            throw Psd2Exception::scaSecretUnavailable();
+        }
+
         $data = sprintf(
-            '%s|%d|%s|%s',
+            '%s|%d|%s|%s|%s',
             $challengeId,
             $amountMinorUnits,
             $currency,
             $payeeId,
+            $nonce,
         );
 
-        $hash = hash('sha256', $data);
+        $mac = hash_hmac('sha256', $data, $this->secretKey);
 
-        return substr($hash, 0, $this->config->codeLength);
+        return substr($mac, 0, $this->config->codeLength);
     }
 }

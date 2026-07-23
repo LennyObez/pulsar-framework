@@ -31,6 +31,11 @@ final readonly class ScaChallenge
         public DateTimeImmutable $createdAt,
         public DateTimeImmutable $expiresAt,
         public bool $verified = false,
+        // Server-only, high-entropy salt for the dynamic-linking HMAC. Kept
+        // server-side (persisted with the challenge, never emitted by toArray())
+        // so the authentication code cannot be recomputed off the public
+        // transaction details.
+        public string $nonce = '',
     ) {}
 
     /**
