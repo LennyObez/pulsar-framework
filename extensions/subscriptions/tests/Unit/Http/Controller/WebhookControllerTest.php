@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Subscriptions\Tests\Unit\Http\Controller;
 
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -15,13 +16,22 @@ use Pulsar\Extension\Subscriptions\SubscriptionRepositoryInterface;
 use Pulsar\Extension\Subscriptions\SubscriptionVerifierInterface;
 use Pulsar\Extension\Subscriptions\WebhookEventRepositoryInterface;
 use Pulsar\Http\Message\ServerRequest;
+use Pulsar\Security\Jws\JwsVerificationException;
+use Pulsar\Security\Jws\JwsVerifierInterface;
 use RuntimeException;
 use Stringable;
 
+use function base64_decode;
 use function base64_encode;
+use function count;
+use function explode;
+use function is_array;
 use function json_decode;
 use function json_encode;
 use function sodium_crypto_secretbox_keygen;
+use function str_repeat;
+use function strlen;
+use function strtr;
 
 use const JSON_THROW_ON_ERROR;
 
@@ -147,7 +157,7 @@ final class WebhookControllerTest extends TestCase
     public function googlePlayReturnsOkForValidSubscriptionNotification(): void
     {
         $service = $this->makeService();
-        $controller = new WebhookController($service, $this->encryptionKey);
+        $controller = new WebhookController($service, $this->passthroughVerifier(), $this->encryptionKey);
 
         $payload = json_encode([
             'subscriptionNotification' => [
@@ -185,7 +195,7 @@ final class WebhookControllerTest extends TestCase
             new NullLogger(),
         );
 
-        $controller = new WebhookController($service, $this->encryptionKey);
+        $controller = new WebhookController($service, $this->passthroughVerifier(), $this->encryptionKey);
 
         $payload = json_encode([
             'subscriptionNotification' => [
@@ -256,7 +266,7 @@ final class WebhookControllerTest extends TestCase
             $captureLogger,
         );
 
-        $controller = new WebhookController($service, $this->encryptionKey);
+        $controller = new WebhookController($service, $this->passthroughVerifier(), $this->encryptionKey);
 
         $payload = json_encode([
             'subscriptionNotification' => [
@@ -335,14 +345,39 @@ final class WebhookControllerTest extends TestCase
 
         self::assertSame(400, $response->getStatusCode());
         $body = json_decode((string) $response->getBody(), true);
-        self::assertStringContainsString('transaction ID', $body['error']);
+        self::assertStringContainsString('transaction', $body['error']);
+    }
+
+    #[Test]
+    public function appleSnsReturns400WhenSignatureIsNotVerified(): void
+    {
+        // C15/C16: an unverified/forged JWS must be rejected, not processed as
+        // signatureVerified:true. The verifier throws; the controller returns 400.
+        $controller = new WebhookController($this->makeService(), $this->rejectingVerifier(), $this->encryptionKey);
+
+        $forged = $this->fakeJws(json_encode([
+            'notificationType' => 'REVOKE',
+            'data' => ['signedTransactionInfo' => $this->fakeJws(json_encode(['originalTransactionId' => 'victim'], JSON_THROW_ON_ERROR))],
+        ], JSON_THROW_ON_ERROR));
+
+        $request = new ServerRequest(
+            method: 'POST',
+            uri: '/api/v1/webhooks/apple-sns',
+            parsedBody: ['signedPayload' => $forged],
+        );
+
+        $response = $controller->appleSns($request);
+
+        self::assertSame(400, $response->getStatusCode());
+        $body = json_decode((string) $response->getBody(), true);
+        self::assertStringContainsString('unverified', $body['error']);
     }
 
     #[Test]
     public function appleSnsReturnsOkForValidNotification(): void
     {
         $service = $this->makeService();
-        $controller = new WebhookController($service, $this->encryptionKey);
+        $controller = new WebhookController($service, $this->passthroughVerifier(), $this->encryptionKey);
 
         $transactionInfo = json_encode([
             'originalTransactionId' => 'txn-original-123',
@@ -386,7 +421,7 @@ final class WebhookControllerTest extends TestCase
             new NullLogger(),
         );
 
-        $controller = new WebhookController($service, $this->encryptionKey);
+        $controller = new WebhookController($service, $this->passthroughVerifier(), $this->encryptionKey);
 
         $transactionInfo = json_encode([
             'originalTransactionId' => 'txn-123',
@@ -431,7 +466,7 @@ final class WebhookControllerTest extends TestCase
 
     private function makeController(): WebhookController
     {
-        return new WebhookController($this->makeService(), $this->encryptionKey);
+        return new WebhookController($this->makeService(), $this->passthroughVerifier(), $this->encryptionKey);
     }
 
     private function makeService(): SubscriptionService
@@ -442,5 +477,54 @@ final class WebhookControllerTest extends TestCase
             $this->createStub(WebhookEventRepositoryInterface::class),
             new NullLogger(),
         );
+    }
+
+    /**
+     * A test double standing in for the real ES256 x5c verifier: it returns the
+     * JWS claims (without crypto) so the controller's extraction/dispatch logic
+     * can be exercised. The actual signature verification is covered by
+     * {@see \Pulsar\Tests\Unit\Security\Jws\X5cChainJwsVerifierTest}.
+     */
+    private function passthroughVerifier(): JwsVerifierInterface
+    {
+        return new class implements JwsVerifierInterface {
+            public function verifyAndDecode(string $jws, ?DateTimeImmutable $now = null): array
+            {
+                $parts = explode('.', $jws);
+
+                if (count($parts) !== 3) {
+                    throw JwsVerificationException::fromReason('malformed JWS');
+                }
+
+                $b64 = strtr($parts[1], '-_', '+/');
+                $remainder = strlen($b64) % 4;
+                if ($remainder !== 0) {
+                    $b64 .= str_repeat('=', 4 - $remainder);
+                }
+
+                $json = base64_decode($b64, true);
+                if ($json === false) {
+                    throw JwsVerificationException::fromReason('bad base64');
+                }
+
+                $decoded = json_decode($json, true);
+                if (!is_array($decoded)) {
+                    throw JwsVerificationException::fromReason('bad json');
+                }
+
+                /** @var array<string, mixed> */
+                return $decoded;
+            }
+        };
+    }
+
+    private function rejectingVerifier(): JwsVerifierInterface
+    {
+        return new class implements JwsVerifierInterface {
+            public function verifyAndDecode(string $jws, ?DateTimeImmutable $now = null): array
+            {
+                throw JwsVerificationException::fromReason('signature not verified');
+            }
+        };
     }
 }

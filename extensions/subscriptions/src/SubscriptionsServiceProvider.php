@@ -20,6 +20,7 @@ use Pulsar\Extension\Subscriptions\Internal\GooglePlayVerifier;
 use Pulsar\Extension\Subscriptions\Internal\Persistence\DbSubscriptionRepository;
 use Pulsar\Extension\Subscriptions\Internal\Persistence\DbWebhookEventRepository;
 use Pulsar\Extension\Subscriptions\Internal\SubscriptionService;
+use Pulsar\Security\Jws\AppleJwsVerifierFactory;
 
 use function is_string;
 use function sodium_crypto_secretbox_keygen;
@@ -90,7 +91,7 @@ final class SubscriptionsServiceProvider implements ServiceProviderInterface
 
         $container->instance(
             WebhookController::class,
-            new WebhookController($subscriptionService, $encryptionKey),
+            new WebhookController($subscriptionService, AppleJwsVerifierFactory::create(), $encryptionKey),
         );
 
         // Token guard middleware (uses empty key by default; override in app)

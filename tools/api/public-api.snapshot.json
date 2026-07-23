@@ -46136,6 +46136,47 @@
             },
             "constants": []
         },
+        "Pulsar\\Security\\Jws\\AppleJwsVerifierFactory": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "create": {
+                    "params": [],
+                    "return": "Pulsar\\Security\\Jws\\JwsVerifierInterface",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Security\\Jws\\JwsVerificationException": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "fromReason": {
+                    "params": [
+                        "string $reason"
+                    ],
+                    "return": "Pulsar\\Security\\Jws\\JwsVerificationException",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Security\\Jws\\JwsVerifierInterface": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "verifyAndDecode": {
+                    "params": [
+                        "string $jws",
+                        "?DateTimeImmutable $now"
+                    ],
+                    "return": "array",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\Security\\KeyLifecycle\\CertificateExpiryWarning": {
             "since": "1.0.0",
             "methods": [],
@@ -56939,6 +56980,7 @@
         "Pulsar\\Security\\Crypto\\EnvKeyRing",
         "Pulsar\\Security\\Crypto\\HmacService",
         "Pulsar\\Security\\Csrf\\CsrfBindingContext",
+        "Pulsar\\Security\\Jws\\X5cChainJwsVerifier",
         "Pulsar\\Security\\Session\\Handler\\ArrayHandler",
         "Pulsar\\Security\\Session\\Handler\\CookieHandler",
         "Pulsar\\Security\\Session\\Handler\\CookieSessionHandlerInterface",
