@@ -11,6 +11,7 @@ use Pulsar\Extension\Payments\Config\PaymentsConfig;
 use Pulsar\Extension\Payments\Contracts\ClockInterface;
 use Pulsar\Extension\Payments\Contracts\PaymentGatewayInterface;
 use Pulsar\Extension\Payments\Contracts\PaymentProviderInterface;
+use Pulsar\Extension\Payments\Contracts\PayPalCertificateProviderInterface;
 use Pulsar\Extension\Payments\Contracts\WebhookProcessorInterface;
 use Pulsar\Extension\Payments\Features\CancelPaymentIntent\CancelPaymentIntentHandler;
 use Pulsar\Extension\Payments\Features\CapturePaymentIntent\CapturePaymentIntentHandler;
@@ -23,6 +24,7 @@ use Pulsar\Extension\Payments\Internal\Infrastructure\Clock\SystemClock;
 use Pulsar\Extension\Payments\Internal\Infrastructure\Provider\NullProvider;
 use Pulsar\Extension\Payments\Internal\Infrastructure\Provider\SimulatorProvider;
 use Pulsar\Extension\Payments\Internal\Infrastructure\Webhook\HmacWebhookVerifier;
+use Pulsar\Extension\Payments\Internal\Webhook\PayPalCertificateProvider;
 use Pulsar\Extension\Payments\Tax\DefaultTaxProvider;
 use Pulsar\Extension\Payments\Tax\TaxProviderInterface;
 use Pulsar\Extension\Payments\Webhook\WebhookProcessor;
@@ -148,6 +150,11 @@ final class PaymentsServiceProvider implements ServiceProviderInterface
 
         // Webhook verifier
         $container->bind(WebhookVerifierInterface::class, HmacWebhookVerifier::class);
+
+        // PayPal webhook signing certificate provider (C14): supplies the RSA
+        // public key that PayPalWebhookHandler verifies transmission signatures
+        // against, replacing the forgeable HMAC scheme.
+        $container->bind(PayPalCertificateProviderInterface::class, PayPalCertificateProvider::class);
 
         // Feature handlers (F22.1: each mutating operation has its own slice)
         $container->bind(CreatePaymentIntentHandler::class, CreatePaymentIntentHandler::class);
