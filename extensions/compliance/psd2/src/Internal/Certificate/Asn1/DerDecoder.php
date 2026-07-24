@@ -56,6 +56,8 @@ final class DerDecoder
             throw new RuntimeException('DER: maximum nesting depth exceeded');
         }
 
+        $start = $this->offset;
+
         $identifier = $this->readByte();
         $tagClass = ($identifier >> 6) & 0x03;
         $constructed = ($identifier & 0x20) !== 0;
@@ -67,14 +69,15 @@ final class DerDecoder
 
         $length = $this->readLength();
         $content = $this->readBytes($length);
+        $raw = substr($this->data, $start, $this->offset - $start);
 
         if (!$constructed) {
-            return new DerNode($tagClass, false, $tagNumber, $content);
+            return new DerNode($tagClass, false, $tagNumber, $content, [], $raw);
         }
 
         $children = self::decodeChildren($content, $depth + 1);
 
-        return new DerNode($tagClass, true, $tagNumber, $content, $children);
+        return new DerNode($tagClass, true, $tagNumber, $content, $children, $raw);
     }
 
     /**
