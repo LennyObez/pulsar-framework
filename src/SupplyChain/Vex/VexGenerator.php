@@ -316,7 +316,7 @@ final readonly class VexGenerator
                 continue;
             }
 
-            foreach ($scheduled as $prefix => $ignored) {
+            foreach (array_keys($scheduled) as $prefix) {
                 if (!is_string($prefix) || $prefix === '') {
                     continue;
                 }
