@@ -7,6 +7,7 @@ namespace Pulsar\Core\Wiring;
 use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Config\ConfigManager;
+use Pulsar\Config\Environment;
 use Pulsar\Config\ObservabilityConfig;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Http\Message\Response;
@@ -19,9 +20,6 @@ use Pulsar\Observability\Diagnostics\DiagnosticsAuthGuard;
 use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Observability\Metrics\OpenMetricsExporter;
 use Pulsar\Routing\Router;
-
-use function getenv;
-use function is_string;
 
 #[Internal]
 final readonly class MetricsWiring implements ServiceWiringInterface
@@ -71,7 +69,7 @@ final readonly class MetricsWiring implements ServiceWiringInterface
             // operator endpoints.
             $guard = $container->has(DiagnosticsAuthGuard::class)
                 ? $container->get(DiagnosticsAuthGuard::class)
-                : new DiagnosticsAuthGuard(self::resolveOperatorToken());
+                : new DiagnosticsAuthGuard(self::resolveOperatorToken($configManager->environment()));
             $container->instance(DiagnosticsAuthGuard::class, $guard);
 
             $router->get($endpoint, static function (ServerRequestInterface $request) use ($registry, $guard): Response {
@@ -92,10 +90,11 @@ final readonly class MetricsWiring implements ServiceWiringInterface
         }
     }
 
-    private static function resolveOperatorToken(): ?string
+    private static function resolveOperatorToken(Environment $environment): ?string
     {
-        $raw = getenv('PULSAR_DIAGNOSTICS_TOKEN');
+        // Resolved through the Environment so a token set in .env is honoured.
+        $raw = $environment->get('PULSAR_DIAGNOSTICS_TOKEN');
 
-        return is_string($raw) && $raw !== '' ? $raw : null;
+        return $raw !== null && $raw !== '' ? $raw : null;
     }
 }

@@ -20,7 +20,6 @@ use Pulsar\Observability\Tracing\InMemorySpanCollector;
 use Pulsar\Routing\Router;
 
 use function getenv;
-use function is_string;
 
 #[Internal]
 final readonly class DiagnosticsWiring implements ServiceWiringInterface
@@ -47,8 +46,10 @@ final readonly class DiagnosticsWiring implements ServiceWiringInterface
         // Without a configured `PULSAR_DIAGNOSTICS_TOKEN`, the guard refuses
         // every request — diagnostics are off-by-default unless an operator
         // sets the token explicitly. Token comparison is constant-time.
-        $rawToken = getenv('PULSAR_DIAGNOSTICS_TOKEN');
-        $expectedToken = is_string($rawToken) && $rawToken !== '' ? $rawToken : null;
+        // Resolved through the Environment so a token set in .env is honoured
+        // (a bare getenv() would miss .env-only values).
+        $rawToken = $configManager->environment()->get('PULSAR_DIAGNOSTICS_TOKEN');
+        $expectedToken = $rawToken !== null && $rawToken !== '' ? $rawToken : null;
         $guard = new DiagnosticsAuthGuard($expectedToken);
         $container->instance(DiagnosticsAuthGuard::class, $guard);
 

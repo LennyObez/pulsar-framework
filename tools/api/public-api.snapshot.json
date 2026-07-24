@@ -56772,6 +56772,7 @@
         "Pulsar\\Deploy\\Check\\CacheSettingsCheck",
         "Pulsar\\Deploy\\Check\\DebugModeCheck",
         "Pulsar\\Deploy\\Check\\DependencyIntegrityCheck",
+        "Pulsar\\Deploy\\Check\\EnvironmentValidationCheck",
         "Pulsar\\Deploy\\Check\\FilesystemScanCheck",
         "Pulsar\\Deploy\\Check\\HealthEndpointCheck",
         "Pulsar\\Deploy\\Check\\Http3ReadinessCheck",
