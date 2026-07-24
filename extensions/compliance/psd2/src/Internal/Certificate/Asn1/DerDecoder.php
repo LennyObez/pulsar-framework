@@ -7,7 +7,6 @@ namespace Pulsar\Extension\Psd2\Internal\Certificate\Asn1;
 use Pulsar\Api\Internal;
 use RuntimeException;
 
-use function count;
 use function implode;
 use function intdiv;
 use function ord;
@@ -169,19 +168,16 @@ final class DerDecoder
             throw new RuntimeException('DER: empty OID');
         }
 
-        $bytes = [];
-        for ($i = 0, $n = strlen($content); $i < $n; $i++) {
-            $bytes[] = ord($content[$i]);
-        }
-
-        $first = $bytes[0];
+        // The first octet encodes the first two arcs: first = 40*x + y.
+        $first = ord($content[0]);
         $parts = [(string) intdiv($first, 40), (string) ($first % 40)];
 
         $value = 0;
-        for ($i = 1, $n = count($bytes); $i < $n; $i++) {
-            $value = ($value << 7) | ($bytes[$i] & 0x7F);
+        for ($i = 1, $n = strlen($content); $i < $n; $i++) {
+            $byte = ord($content[$i]);
+            $value = ($value << 7) | ($byte & 0x7F);
 
-            if (($bytes[$i] & 0x80) === 0) {
+            if (($byte & 0x80) === 0) {
                 $parts[] = (string) $value;
                 $value = 0;
             }

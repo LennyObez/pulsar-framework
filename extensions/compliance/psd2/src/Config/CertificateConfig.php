@@ -8,8 +8,6 @@ use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Support\Coerce;
 
-use function is_string;
-
 /**
  * PSD2 certificate validation configuration.
  * @api
@@ -23,6 +21,12 @@ final readonly class CertificateConfig
      *        CA certificates. Chain verification anchors to this; when null the default
      *        validator FAILS CLOSED (it refuses to trust any certificate) rather than
      *        deriving authorization from unverified, attacker-suppliable string fields.
+     * @param bool $revocationSoftFail Policy for an *inconclusive* revocation check
+     *        (responder unreachable, no OCSP/CRL pointer, unparseable answer). When false
+     *        (the default, fail-closed) the certificate is REJECTED unless revocation is
+     *        positively confirmed Good; a confirmed Revoked always rejects regardless.
+     *        Set true only when availability must be preferred over strict revocation
+     *        freshness — an inconclusive result is then allowed through with an audit log.
      */
     public function __construct(
         public bool $requireQualified = true,
@@ -30,6 +34,7 @@ final readonly class CertificateConfig
         public array $trustedIssuers = [],
         public string $validator = 'default',
         public ?string $trustedCaBundlePath = null,
+        public bool $revocationSoftFail = false,
     ) {}
 
     /**
@@ -38,14 +43,15 @@ final readonly class CertificateConfig
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $bundle = $data['trusted_ca_bundle_path'] ?? null;
+        $bundle = Coerce::string($data['trusted_ca_bundle_path'] ?? null, '');
 
         return new self(
             requireQualified: Coerce::strictBool($data['require_qualified'] ?? null, true),
             checkRevocation: Coerce::strictBool($data['check_revocation'] ?? null, true),
             trustedIssuers: Coerce::listOfString($data['trusted_issuers'] ?? null),
             validator: Coerce::string($data['validator'] ?? null, 'default'),
-            trustedCaBundlePath: is_string($bundle) && $bundle !== '' ? $bundle : null,
+            trustedCaBundlePath: $bundle !== '' ? $bundle : null,
+            revocationSoftFail: Coerce::strictBool($data['revocation_soft_fail'] ?? null, false),
         );
     }
 }

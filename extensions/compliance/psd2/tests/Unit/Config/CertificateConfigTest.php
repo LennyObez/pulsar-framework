@@ -21,6 +21,8 @@ final class CertificateConfigTest extends TestCase
         self::assertTrue($config->checkRevocation);
         self::assertSame([], $config->trustedIssuers);
         self::assertSame('default', $config->validator);
+        // Revocation fails closed by default: an inconclusive check rejects.
+        self::assertFalse($config->revocationSoftFail);
     }
 
     #[Test]
@@ -31,12 +33,14 @@ final class CertificateConfigTest extends TestCase
             'check_revocation' => false,
             'trusted_issuers' => ['CN=DigiCert', 'CN=Entrust'],
             'validator' => 'custom',
+            'revocation_soft_fail' => true,
         ]);
 
         self::assertFalse($config->requireQualified);
         self::assertFalse($config->checkRevocation);
         self::assertSame(['CN=DigiCert', 'CN=Entrust'], $config->trustedIssuers);
         self::assertSame('custom', $config->validator);
+        self::assertTrue($config->revocationSoftFail);
     }
 
     #[Test]
