@@ -53928,6 +53928,30 @@
             },
             "constants": []
         },
+        "Pulsar\\View\\ContactCloak": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "mail": {
+                    "params": [
+                        "string $user",
+                        "string $domain",
+                        "array $attrs"
+                    ],
+                    "return": "string",
+                    "static": true
+                },
+                "tel": {
+                    "params": [
+                        "string $number",
+                        "array $attrs"
+                    ],
+                    "return": "string",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\View\\Directive\\DirectiveInterface": {
             "since": "1.0.0",
             "methods": [],
@@ -57146,6 +57170,8 @@
         "Pulsar\\View\\Directive\\CanDirective",
         "Pulsar\\View\\Directive\\CaseDirective",
         "Pulsar\\View\\Directive\\CatchDirective",
+        "Pulsar\\View\\Directive\\CloakMailDirective",
+        "Pulsar\\View\\Directive\\CloakTelDirective",
         "Pulsar\\View\\Directive\\ComponentDirective",
         "Pulsar\\View\\Directive\\ControlFlowDirective",
         "Pulsar\\View\\Directive\\CspNonceDirective",
