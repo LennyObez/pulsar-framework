@@ -67,6 +67,7 @@ final readonly class SystemMxDeliverabilityResolver implements MxDeliverabilityR
         $key = sprintf('antispam_mx.%s', bin2hex(sodium_crypto_generichash($normalized)));
 
         if ($this->cache !== null) {
+            /** @var mixed $cached */
             $cached = $this->cache->get($key);
 
             if ($cached === 'yes') {

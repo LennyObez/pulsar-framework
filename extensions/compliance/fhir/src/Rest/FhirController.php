@@ -107,6 +107,8 @@ final readonly class FhirController
         }
 
         $parameters = [];
+
+        /** @var mixed $value */
         foreach ($request->getQueryParams() as $key => $value) {
             if (is_string($key) && is_string($value)) {
                 $parameters[$key] = $value;

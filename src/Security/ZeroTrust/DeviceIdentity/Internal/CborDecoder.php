@@ -37,7 +37,7 @@ final class CborDecoder
         return new self($data)->decodeItem();
     }
 
-    private function decodeItem(): mixed
+    private function decodeItem(): int|string|bool|array|null
     {
         if ($this->offset >= strlen($this->data)) {
             throw new RuntimeException('CBOR: unexpected end of data');
