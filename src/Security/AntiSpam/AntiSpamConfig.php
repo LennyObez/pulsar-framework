@@ -44,8 +44,8 @@ final readonly class AntiSpamConfig
      * @param int $managedChallengeTtlSeconds Lifetime of an issued managed challenge
      * @param string $managedChallengeFieldName Form field name the managed-challenge widget writes its solved token into
      * @param bool $timeTrapEnabled Enable the no-JS form-fill-timing check (opt-in)
-     * @param int $timeTrapMinSeconds Minimum plausible human fill time in seconds (faster ⇒ flagged)
-     * @param int $timeTrapMaxSeconds Maximum stamp age in seconds before a page is treated as stale
+     * @param int $timeTrapMinSeconds Minimum plausible human fill time in seconds; a validly-signed
+     *     stamp submitted faster is the only case the check blocks (everything else fails open)
      * @param string $timeTrapFieldName Hidden field name carrying the signed render timestamp
      * @param bool $behaviorEnabled Enable the self-hosted behavioural-signals score-only check (opt-in)
      * @param string $behaviorFieldName Hidden field name carrying the client behavioural blob
@@ -77,7 +77,6 @@ final readonly class AntiSpamConfig
         public string $managedChallengeFieldName = 'pulsar-challenge-response',
         public bool $timeTrapEnabled = false,
         public int $timeTrapMinSeconds = 3,
-        public int $timeTrapMaxSeconds = 3600,
         public string $timeTrapFieldName = 'pulsar-form-ts',
         public bool $behaviorEnabled = false,
         public string $behaviorFieldName = 'pulsar-bx',
@@ -111,7 +110,6 @@ final readonly class AntiSpamConfig
      *     managed_challenge_field_name?: string,
      *     time_trap_enabled?: bool,
      *     time_trap_min_seconds?: int,
-     *     time_trap_max_seconds?: int,
      *     time_trap_field_name?: string,
      *     behavior_enabled?: bool,
      *     behavior_field_name?: string,
@@ -150,7 +148,6 @@ final readonly class AntiSpamConfig
             managedChallengeFieldName: Coerce::string($data['managed_challenge_field_name'] ?? null, 'pulsar-challenge-response'),
             timeTrapEnabled: Coerce::strictBool($data['time_trap_enabled'] ?? null),
             timeTrapMinSeconds: Coerce::int($data['time_trap_min_seconds'] ?? null, 3),
-            timeTrapMaxSeconds: Coerce::int($data['time_trap_max_seconds'] ?? null, 3600),
             timeTrapFieldName: Coerce::string($data['time_trap_field_name'] ?? null, 'pulsar-form-ts'),
             behaviorEnabled: Coerce::strictBool($data['behavior_enabled'] ?? null),
             behaviorFieldName: Coerce::string($data['behavior_field_name'] ?? null, 'pulsar-bx'),

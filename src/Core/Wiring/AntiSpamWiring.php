@@ -808,7 +808,6 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
             $service,
             $config->timeTrapFieldName,
             $config->timeTrapMinSeconds,
-            $config->timeTrapMaxSeconds,
         );
     }
 
