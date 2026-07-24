@@ -12,6 +12,8 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Psd2\Config\CertificateConfig;
 use Pulsar\Extension\Psd2\Exception\Psd2Exception;
 use Pulsar\Extension\Psd2\Internal\Certificate\DefaultCertificateValidator;
+use Pulsar\Extension\Psd2\Internal\Certificate\Revocation\RevocationCheckerInterface;
+use Pulsar\Extension\Psd2\Internal\Certificate\Revocation\RevocationStatus;
 
 use function bin2hex;
 use function file_put_contents;
@@ -22,6 +24,7 @@ use function openssl_pkey_new;
 use function openssl_x509_export;
 use function random_bytes;
 use function sys_get_temp_dir;
+use function tempnam;
 use function unlink;
 
 use const OPENSSL_KEYTYPE_EC;
@@ -81,6 +84,115 @@ final class DefaultCertificateValidatorTest extends TestCase
         $info = $validator->validate($pem);
 
         self::assertSame('Trusted eIDAS Root', $info->subject);
+    }
+
+    #[Test]
+    public function rejectsARevokedCertificate(): void
+    {
+        [$leafPem, $bundle] = $this->caIssuedLeaf();
+        $validator = new DefaultCertificateValidator(
+            new CertificateConfig(requireQualified: false, trustedCaBundlePath: $bundle),
+            revocationChecker: $this->revocation(RevocationStatus::Revoked),
+        );
+
+        $this->expectException(Psd2Exception::class);
+        $this->expectExceptionMessage('has been revoked');
+
+        $validator->validate($leafPem);
+    }
+
+    #[Test]
+    public function acceptsACertificateConfirmedGoodByRevocation(): void
+    {
+        [$leafPem, $bundle] = $this->caIssuedLeaf();
+        $validator = new DefaultCertificateValidator(
+            new CertificateConfig(requireQualified: false, trustedCaBundlePath: $bundle),
+            revocationChecker: $this->revocation(RevocationStatus::Good),
+        );
+
+        self::assertSame('Leaf', $validator->validate($leafPem)->subject);
+    }
+
+    #[Test]
+    public function failsClosedWhenRevocationIsInconclusive(): void
+    {
+        [$leafPem, $bundle] = $this->caIssuedLeaf();
+        $validator = new DefaultCertificateValidator(
+            new CertificateConfig(requireQualified: false, trustedCaBundlePath: $bundle),
+            revocationChecker: $this->revocation(RevocationStatus::Unknown),
+        );
+
+        $this->expectException(Psd2Exception::class);
+        $this->expectExceptionMessage('could not be verified');
+
+        $validator->validate($leafPem);
+    }
+
+    #[Test]
+    public function toleratesInconclusiveRevocationWhenSoftFailIsEnabled(): void
+    {
+        [$leafPem, $bundle] = $this->caIssuedLeaf();
+        $validator = new DefaultCertificateValidator(
+            new CertificateConfig(requireQualified: false, trustedCaBundlePath: $bundle, revocationSoftFail: true),
+            revocationChecker: $this->revocation(RevocationStatus::Unknown),
+        );
+
+        self::assertSame('Leaf', $validator->validate($leafPem)->subject);
+    }
+
+    #[Test]
+    public function skipsRevocationForASelfSignedTrustAnchor(): void
+    {
+        // A self-signed root has no separate issuer to check against; revocation
+        // is skipped (audited) even with a checker wired, and validation succeeds.
+        $pem = $this->selfSigned('Trusted eIDAS Root');
+        $validator = new DefaultCertificateValidator(
+            new CertificateConfig(requireQualified: false, trustedCaBundlePath: $this->bundle($pem)),
+            revocationChecker: $this->revocation(RevocationStatus::Revoked),
+        );
+
+        self::assertSame('Trusted eIDAS Root', $validator->validate($pem)->subject);
+    }
+
+    private function revocation(RevocationStatus $status): RevocationCheckerInterface
+    {
+        $checker = $this->createStub(RevocationCheckerInterface::class);
+        $checker->method('check')->willReturn($status);
+
+        return $checker;
+    }
+
+    /**
+     * @return array{0: string, 1: string} [leaf PEM, CA bundle path]
+     */
+    private function caIssuedLeaf(): array
+    {
+        $cnf = "[req]\ndistinguished_name = dn\nprompt = no\n[dn]\nCN = fixture\n"
+            . "[ca_ext]\nbasicConstraints = critical,CA:TRUE\nkeyUsage = critical,keyCertSign,cRLSign\n"
+            . "[leaf_ext]\nbasicConstraints = CA:FALSE\n";
+        $cnfPath = tempnam(sys_get_temp_dir(), 'psd2cnf') . '.cnf';
+        file_put_contents($cnfPath, $cnf);
+        $this->tempFiles[] = $cnfPath;
+        $opts = ['config' => $cnfPath, 'digest_alg' => 'sha256'];
+
+        $caKey = $this->ecKey();
+        $caCsr = openssl_csr_new(['commonName' => 'Issuing CA'], $caKey, $opts);
+        self::assertNotFalse($caCsr);
+        $caCert = openssl_csr_sign($caCsr, null, $caKey, 3650, $opts + ['x509_extensions' => 'ca_ext'], 100);
+        self::assertNotFalse($caCert);
+
+        $leafKey = $this->ecKey();
+        $leafCsr = openssl_csr_new(['commonName' => 'Leaf'], $leafKey, $opts);
+        self::assertNotFalse($leafCsr);
+        $leafCert = openssl_csr_sign($leafCsr, $caCert, $caKey, 365, $opts + ['x509_extensions' => 'leaf_ext'], 200);
+        self::assertNotFalse($leafCert);
+
+        $caPem = '';
+        self::assertTrue(openssl_x509_export($caCert, $caPem));
+        $leafPem = '';
+        self::assertTrue(openssl_x509_export($leafCert, $leafPem));
+
+        return [$leafPem, $this->bundle($caPem)];
     }
 
     private function selfSigned(string $cn): string

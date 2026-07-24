@@ -100,4 +100,17 @@ final class Psd2Exception extends RuntimeException
             $serialNumber,
         ));
     }
+
+    public static function certificateRevoked(string $serialNumber): self
+    {
+        return new self(sprintf('PSD2 certificate has been revoked: %s', $serialNumber));
+    }
+
+    public static function revocationUnverified(string $serialNumber): self
+    {
+        return new self(sprintf(
+            'PSD2 certificate revocation status could not be verified: %s',
+            $serialNumber,
+        ));
+    }
 }

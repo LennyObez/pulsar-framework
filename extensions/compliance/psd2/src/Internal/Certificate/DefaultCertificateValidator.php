@@ -13,6 +13,9 @@ use Pulsar\Extension\Psd2\Contracts\CertificateValidatorInterface;
 use Pulsar\Extension\Psd2\Domain\CertificateInfo;
 use Pulsar\Extension\Psd2\Domain\CertificateType;
 use Pulsar\Extension\Psd2\Exception\Psd2Exception;
+use Pulsar\Extension\Psd2\Internal\Certificate\Revocation\IssuerResolver;
+use Pulsar\Extension\Psd2\Internal\Certificate\Revocation\RevocationCheckerInterface;
+use Pulsar\Extension\Psd2\Internal\Certificate\Revocation\RevocationStatus;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditOutcome;
 
@@ -37,16 +40,20 @@ final readonly class DefaultCertificateValidator implements CertificateValidator
     /** @var array<string, bool> */
     private array $authorizedProviders;
 
+    private Psd2QcStatementsParser $qcStatementsParser;
+
+    private IssuerResolver $issuerResolver;
+
     /**
      * @param list<string> $authorizedProviders Known authorization numbers
      */
-    private Psd2QcStatementsParser $qcStatementsParser;
-
     public function __construct(
         private CertificateConfig $config,
         array $authorizedProviders = [],
         private ?AuditLoggerInterface $auditLogger = null,
         ?Psd2QcStatementsParser $qcStatementsParser = null,
+        private ?RevocationCheckerInterface $revocationChecker = null,
+        ?IssuerResolver $issuerResolver = null,
     ) {
         $mapped = [];
 
@@ -56,6 +63,7 @@ final readonly class DefaultCertificateValidator implements CertificateValidator
 
         $this->authorizedProviders = $mapped;
         $this->qcStatementsParser = $qcStatementsParser ?? new Psd2QcStatementsParser();
+        $this->issuerResolver = $issuerResolver ?? new IssuerResolver();
     }
 
     #[Override]
@@ -106,6 +114,11 @@ final readonly class DefaultCertificateValidator implements CertificateValidator
         // BEFORE any of its fields (type, roles, NCA, authorization number) are
         // read, and fail closed when no trust list is configured.
         $this->assertTrustedChain($pemCertificate, $serialNumber);
+
+        // A certificate can chain to a trusted CA yet have been revoked since
+        // issuance; confirm it is not, via OCSP (with the configured policy for
+        // an inconclusive answer), before trusting its contents.
+        $this->assertNotRevoked($pemCertificate, $serialNumber);
 
         // Extract PSD2-specific fields from extensions
         /** @var mixed $rawExtensions */
@@ -182,9 +195,9 @@ final readonly class DefaultCertificateValidator implements CertificateValidator
      * self-signed certificate carrying the right strings would be "authorized".
      *
      * NOTE: this establishes chain trust and validity. PSD2 roles/NCA data are
-     * now parsed from the ASN.1 qcStatements extension (see
-     * {@see Psd2QcStatementsParser}). OCSP/CRL revocation checking remains to be
-     * layered on for full eIDAS conformance.
+     * parsed from the ASN.1 qcStatements extension (see
+     * {@see Psd2QcStatementsParser}); revocation is confirmed separately by
+     * {@see assertNotRevoked()}.
      */
     private function assertTrustedChain(string $pemCertificate, string $serialNumber): void
     {
@@ -215,6 +228,83 @@ final readonly class DefaultCertificateValidator implements CertificateValidator
             );
 
             throw Psd2Exception::certificateChainUntrusted($serialNumber);
+        }
+    }
+
+    /**
+     * Confirm the certificate has not been revoked.
+     *
+     * Revocation needs the issuing CA certificate (to build the OCSP CertID and
+     * verify the responder signature), resolved from the trust bundle. When no
+     * revocation checker is wired, revocation is disabled by config, or the
+     * issuer cannot be resolved (a trust anchor, or an issuing CA absent from
+     * the bundle), the check is skipped and audited — it never fabricates a
+     * "good" verdict. A confirmed revocation always rejects; an *inconclusive*
+     * result rejects unless {@see CertificateConfig::$revocationSoftFail} allows
+     * it through.
+     */
+    private function assertNotRevoked(string $pemCertificate, string $serialNumber): void
+    {
+        if (!$this->config->checkRevocation || $this->revocationChecker === null) {
+            return;
+        }
+
+        $bundle = $this->config->trustedCaBundlePath;
+
+        if ($bundle === null || $bundle === '') {
+            return;
+        }
+
+        $issuerPem = $this->issuerResolver->resolve($pemCertificate, $bundle);
+
+        if ($issuerPem === null) {
+            $this->auditLogger?->log(
+                AuditEvent::SecurityEvent,
+                AuditOutcome::Failure,
+                null,
+                'psd2_certificate_revocation_skipped',
+                metadata: ['serial_number' => $serialNumber],
+            );
+
+            return;
+        }
+
+        $status = $this->revocationChecker->check($pemCertificate, $issuerPem);
+
+        if ($status === RevocationStatus::Revoked) {
+            $this->auditLogger?->log(
+                AuditEvent::SecurityEvent,
+                AuditOutcome::Denied,
+                null,
+                'psd2_certificate_revoked',
+                metadata: ['serial_number' => $serialNumber],
+            );
+
+            throw Psd2Exception::certificateRevoked($serialNumber);
+        }
+
+        if ($status === RevocationStatus::Unknown) {
+            if ($this->config->revocationSoftFail) {
+                $this->auditLogger?->log(
+                    AuditEvent::SecurityEvent,
+                    AuditOutcome::Failure,
+                    null,
+                    'psd2_certificate_revocation_soft_failed',
+                    metadata: ['serial_number' => $serialNumber],
+                );
+
+                return;
+            }
+
+            $this->auditLogger?->log(
+                AuditEvent::SecurityEvent,
+                AuditOutcome::Denied,
+                null,
+                'psd2_certificate_revocation_unverified',
+                metadata: ['serial_number' => $serialNumber],
+            );
+
+            throw Psd2Exception::revocationUnverified($serialNumber);
         }
     }
 

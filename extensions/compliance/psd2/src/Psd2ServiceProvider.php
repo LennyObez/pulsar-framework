@@ -17,12 +17,16 @@ use Pulsar\Extension\Psd2\Contracts\TransactionRiskAnalyzerInterface;
 use Pulsar\Extension\Psd2\Contracts\VelocityTrackerInterface;
 use Pulsar\Extension\Psd2\Exception\Psd2Exception;
 use Pulsar\Extension\Psd2\Internal\Certificate\DefaultCertificateValidator;
+use Pulsar\Extension\Psd2\Internal\Certificate\Revocation\OcspRevocationChecker;
+use Pulsar\Extension\Psd2\Internal\Certificate\Revocation\RevocationCheckerInterface;
 use Pulsar\Extension\Psd2\Internal\Monitoring\InMemoryVelocityTracker;
 use Pulsar\Extension\Psd2\Internal\Monitoring\TransactionRiskAnalyzer;
 use Pulsar\Extension\Psd2\Internal\Sca\InMemoryScaChallengeStore;
 use Pulsar\Extension\Psd2\Internal\Sca\ScaDynamicLinkingService;
 use Pulsar\Extension\Psd2\Middleware\CertificateAuthenticationMiddleware;
 use Pulsar\Extension\Psd2\Middleware\ScaRequiredMiddleware;
+use Pulsar\Http\Client\HttpClient;
+use Pulsar\Http\Client\HttpClientInterface;
 use Pulsar\Security\Crypto\MasterKey;
 use Pulsar\Security\Crypto\SubKeyId;
 
@@ -139,7 +143,29 @@ final class Psd2ServiceProvider implements ServiceProviderInterface
 
             /** @var AuditLoggerInterface|null $auditLogger */
 
-            return new DefaultCertificateValidator($config->certificate, auditLogger: $auditLogger);
+            // OCSP revocation needs an HTTP client to reach the responder.
+            // Certificate revocation is a security control that must actually
+            // run, so when the container has no HttpClientInterface bound (the
+            // default), fall back to the framework's own SSRF-protected client
+            // rather than silently skipping the check.
+            $revocationChecker = null;
+
+            if ($config->certificate->checkRevocation) {
+                $httpClient = $container->has(HttpClientInterface::class)
+                    ? $container->get(HttpClientInterface::class)
+                    : new HttpClient();
+
+                /** @var HttpClientInterface $httpClient */
+                $revocationChecker = new OcspRevocationChecker($httpClient);
+            }
+
+            /** @var RevocationCheckerInterface|null $revocationChecker */
+
+            return new DefaultCertificateValidator(
+                $config->certificate,
+                auditLogger: $auditLogger,
+                revocationChecker: $revocationChecker,
+            );
         });
 
         // Middleware
