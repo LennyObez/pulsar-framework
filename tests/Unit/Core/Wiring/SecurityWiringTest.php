@@ -244,6 +244,60 @@ final class SecurityWiringTest extends TestCase
     }
 
     #[Test]
+    public function wireDoesNotFloodShadowedHeaderWarningInProduction(): void
+    {
+        // The shadowed-header warning is a CONFIG invariant: under PHP-FPM
+        // (boot==request) an unconditional boot log would repeat on every
+        // request. In production (logAtBoot off by default) it must be silent —
+        // the override is surfaced during development instead.
+        $originalEnv = getenv('APP_ENV');
+        putenv('APP_ENV=production');
+
+        try {
+            $container = new Container();
+            $container->instance(Randomizer::class, new Randomizer());
+
+            $logger = new class extends AbstractLogger {
+                /** @var list<string> */
+                public array $warnings = [];
+
+                public function log(mixed $level, string|Stringable $message, array $context = []): void
+                {
+                    if ($level === LogLevel::WARNING) {
+                        $this->warnings[] = (string) $message;
+                    }
+                }
+            };
+            $container->instance(LoggerInterface::class, $logger);
+
+            $router = new Router();
+            $middleware = new MiddlewarePipeline($container);
+            $middlewareRegistry = new MiddlewareRegistry();
+
+            $configManager = $this->createConfigManager(
+                masterKeyHex: str_repeat('ab', 32),
+                headersBody: '"Strict-Transport-Security" => "max-age=63072000; includeSubDomains; preload", "hsts" => ["enabled" => true, "preload" => false]',
+            );
+            $configManager->load();
+
+            $wiring = new SecurityWiring();
+            $wiring->wire($container, $configManager, $middleware, $middlewareRegistry, $router);
+
+            self::assertStringNotContainsString(
+                'overrides the structured',
+                implode("\n", $logger->warnings),
+                'The shadowed-header warning must not flood the log on every production boot',
+            );
+        } finally {
+            if ($originalEnv === false) {
+                putenv('APP_ENV');
+            } else {
+                putenv('APP_ENV=' . $originalEnv);
+            }
+        }
+    }
+
+    #[Test]
     public function wireDoesNotWarnForDefaultHeaders(): void
     {
         $container = new Container();
