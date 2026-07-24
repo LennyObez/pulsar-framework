@@ -16,17 +16,19 @@ use function sprintf;
 use function time;
 
 /**
- * Rejects submissions whose form-fill timing is implausible for a human.
+ * Flags submissions filled implausibly fast for a human — and ONLY those.
  *
  * Reads the server-signed render stamp the {@see TimeTrapRenderer} embedded as a
- * hidden field and computes how long the form took to submit. A submission sent
- * faster than `minSeconds` (a bot posting on page load) or later than
- * `maxSeconds` (a stale, likely-replayed page) is flagged. The stamp is
- * tamper-proof: its timestamp and form binding are HMAC-signed, so a client can
- * neither backdate it nor replay it against another form.
+ * hidden field. When the stamp is validly signed, bound to this form, and dated
+ * less than `minSeconds` before submission (a bot posting on page load), the
+ * check fails — the single unambiguous bot signal.
  *
- * Unlike the managed challenge this needs NO JavaScript — the stamp is rendered
- * server-side — so it closes the form-timing gap for no-JS clients.
+ * Everything else FAILS OPEN and passes: a missing, malformed, tampered,
+ * wrong-form, future-dated, or stale stamp never blocks. Those cases are covered
+ * by the honeypot, managed challenge and rate limiter, and a slow human with a
+ * stale tab must never lose their submission ("zero lost lead"). No JavaScript is
+ * required — the stamp is rendered server-side — so this closes the form-timing
+ * gap for no-JS clients.
  */
 #[Internal(reason: 'Use AntiSpamCheckInterface')]
 final readonly class TimeTrapCheck implements AntiSpamCheckInterface
@@ -41,7 +43,6 @@ final readonly class TimeTrapCheck implements AntiSpamCheckInterface
         private TimeTrapService $service,
         private string $fieldName = 'pulsar-form-ts',
         private int $minSeconds = 3,
-        private int $maxSeconds = 3600,
     ) {}
 
     #[Override]
@@ -56,48 +57,28 @@ final readonly class TimeTrapCheck implements AntiSpamCheckInterface
         /** @var mixed $value */
         $value = $context->formFields[$this->fieldName] ?? null;
 
+        // Missing stamp: no evidence either way — fail open.
         if (!is_string($value) || $value === '') {
-            return AntiSpamCheckResult::fail(
-                $this->name(),
-                self::FAIL_SCORE,
-                'Time-trap stamp is missing: likely automated submission',
-            );
+            return AntiSpamCheckResult::pass($this->name());
         }
 
         $token = $this->service->parse($value);
 
-        if ($token === null) {
-            return AntiSpamCheckResult::fail(
-                $this->name(),
-                self::FAIL_SCORE,
-                'Time-trap stamp signature is invalid: forged or corrupted stamp',
-            );
-        }
-
-        // The stamp must have been minted for this exact form/route. Constant-time
-        // compare so a mismatch cannot be probed via timing.
-        if (!hash_equals($token->formId, $context->formId)) {
-            return AntiSpamCheckResult::fail(
-                $this->name(),
-                self::FAIL_SCORE,
-                'Time-trap stamp is bound to a different form: replayed stamp',
-            );
+        // Invalid signature, malformed, or minted for a different form: a client
+        // cannot forge positive "too fast" evidence, so treat these as no signal
+        // and fail open rather than risk blocking a legitimate submission.
+        if ($token === null || !hash_equals($token->formId, $context->formId)) {
+            return AntiSpamCheckResult::pass($this->name());
         }
 
         $now = $context->submissionTimestamp > 0 ? $context->submissionTimestamp : time();
         $age = $now - $token->issuedAt;
 
-        // A stamp dated in the future beyond the skew tolerance signals a forged
-        // or replayed timestamp.
-        if ($age < -self::SKEW_TOLERANCE_SECONDS) {
-            return AntiSpamCheckResult::fail(
-                $this->name(),
-                self::FAIL_SCORE,
-                'Time-trap stamp is dated in the future: forged timestamp',
-            );
-        }
-
-        if ($age < $this->minSeconds) {
+        // The only blocking case: a genuine (non-future) submission faster than a
+        // human could plausibly fill the form. A stamp dated further in the future
+        // than the skew tolerance is a clock anomaly, not evidence — fail open. A
+        // stale stamp (age >= minSeconds, however old) is a slow human — fail open.
+        if ($age >= -self::SKEW_TOLERANCE_SECONDS && $age < $this->minSeconds) {
             return AntiSpamCheckResult::fail(
                 $this->name(),
                 self::FAIL_SCORE,
@@ -105,18 +86,6 @@ final readonly class TimeTrapCheck implements AntiSpamCheckInterface
                     'Form submitted implausibly fast (%ds < %ds minimum): likely automated',
                     $age,
                     $this->minSeconds,
-                ),
-            );
-        }
-
-        if ($age > $this->maxSeconds) {
-            return AntiSpamCheckResult::fail(
-                $this->name(),
-                self::FAIL_SCORE,
-                sprintf(
-                    'Form submitted after a stale delay (%ds > %ds maximum): likely replayed page',
-                    $age,
-                    $this->maxSeconds,
                 ),
             );
         }

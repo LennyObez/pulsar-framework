@@ -38,7 +38,6 @@ final class AntiSpamConfigTest extends TestCase
         // Time-trap is opt-in: defaults must preserve existing behaviour.
         self::assertFalse($config->timeTrapEnabled);
         self::assertSame(3, $config->timeTrapMinSeconds);
-        self::assertSame(3600, $config->timeTrapMaxSeconds);
         self::assertSame('pulsar-form-ts', $config->timeTrapFieldName);
     }
 
@@ -48,13 +47,11 @@ final class AntiSpamConfigTest extends TestCase
         $config = AntiSpamConfig::fromArray([
             'time_trap_enabled' => true,
             'time_trap_min_seconds' => 5,
-            'time_trap_max_seconds' => 1800,
             'time_trap_field_name' => 'ts',
         ]);
 
         self::assertTrue($config->timeTrapEnabled);
         self::assertSame(5, $config->timeTrapMinSeconds);
-        self::assertSame(1800, $config->timeTrapMaxSeconds);
         self::assertSame('ts', $config->timeTrapFieldName);
     }
 

@@ -158,12 +158,16 @@ The Managed Challenge trades Turnstile's server-side ML/behavioural risk scoring
 
 ## Time-Trap (no-JavaScript form-fill timing)
 
-The time-trap rejects submissions whose form-fill timing is implausible for a human: posted faster than a person could read and complete the form (a bot submitting on page load), or after a stale delay (a long-cached or replayed page). Crucially it needs **no JavaScript** — the render stamp is a server-rendered hidden field — so it closes the form-timing gap the (JS-only) Managed Challenge leaves open for scripting-disabled clients.
+The time-trap flags one thing, precisely: a submission posted faster than a person could read and complete the form (a bot submitting on page load), evidenced by a validly-signed render stamp. Crucially it needs **no JavaScript** — the render stamp is a server-rendered hidden field — so it closes the form-timing gap the (JS-only) Managed Challenge leaves open for scripting-disabled clients.
+
+### Fail-open by design ("zero lost lead")
+
+The time-trap blocks **only on positive bot evidence**: a validly-signed stamp, bound to this form, submitted in less than `time_trap_min_seconds`. Every other case **fails open and passes** — a missing, malformed, tampered, wrong-form, future-dated, or *stale* stamp never blocks. Those cases are covered by the honeypot, Managed Challenge and rate limiter, and a slow human who left a tab open for hours must never lose their submission. This is deliberate: the time-trap is a high-precision signal, not a catch-all.
 
 ### How it works
 
-1. The `@timetrap` directive (or `@shield`, which emits it alongside the Managed Challenge) mints a stamp `{issuedAt, formId}`, signs it with `sodium_crypto_auth` (HMAC-SHA-512/256) keyed by a derived master sub-key, and embeds it as a single hidden `<input>` — no script, no inline code.
-2. On submission, `TimeTrapCheck` reads the field, verifies the signature in constant time, confirms the stamp was minted for this form (`formId`), and computes the fill duration. A duration below `time_trap_min_seconds` or above `time_trap_max_seconds` is flagged (advisory score 30, like the honeypot); a small negative clock skew (−5s) is tolerated.
+1. The `@timetrap` directive (or `@shield`, which emits it alongside the Managed Challenge) mints a stamp `{issuedAt, formId}`, signs it with `sodium_crypto_auth` (HMAC-SHA-512/256) keyed by a derived master sub-key (distinct from the Managed Challenge's), and embeds it as a single hidden `<input>` — no script, no inline code.
+2. On submission, `TimeTrapCheck` reads the field, verifies the signature in constant time, confirms the stamp was minted for this form (`formId`), and computes the fill duration. Only a genuine (non-future, within a −5s clock-skew tolerance) duration below `time_trap_min_seconds` is flagged (advisory score 30, like the honeypot). Anything else passes.
 
 ### Configuration
 
@@ -172,16 +176,15 @@ The time-trap rejects submissions whose form-fill timing is implausible for a hu
 return [
     // Opt-in: defaults preserve existing behaviour (disabled).
     'time_trap_enabled' => true,
-    // Minimum plausible human fill time; faster ⇒ flagged.
+    // Minimum plausible human fill time; a signed stamp submitted faster is the
+    // only case the check blocks.
     'time_trap_min_seconds' => 3,
-    // Maximum stamp age before the page is treated as stale.
-    'time_trap_max_seconds' => 3600,
     // Hidden field name carrying the signed render timestamp.
     'time_trap_field_name' => 'pulsar-form-ts',
 ];
 ```
 
-The check requires a configured `PULSAR_MASTER_KEY`; without one it disables itself (logged) rather than failing boot.
+The check requires a configured `PULSAR_MASTER_KEY`; without one it disables itself (logged) rather than failing boot — another fail-open path, so a missing key never blocks a submission.
 
 ### Rendering and verifying
 

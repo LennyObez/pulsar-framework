@@ -30,7 +30,7 @@ final class TimeTrapCheckTest extends TestCase
 
     private function check(TimeTrapService $service): TimeTrapCheck
     {
-        return new TimeTrapCheck($service, self::FIELD, minSeconds: 3, maxSeconds: 3600);
+        return new TimeTrapCheck($service, self::FIELD, minSeconds: 3);
     }
 
     /**
@@ -66,6 +66,8 @@ final class TimeTrapCheckTest extends TestCase
     #[Test]
     public function tooFastSubmissionIsFlagged(): void
     {
+        // The ONE blocking case: a validly-signed stamp submitted faster than a
+        // human could plausibly fill the form.
         $service = $this->service();
         $result = $this->check($service)->check($this->contextForAge($this->stamp(), age: 1));
 
@@ -74,67 +76,69 @@ final class TimeTrapCheckTest extends TestCase
     }
 
     #[Test]
-    public function tooStaleSubmissionIsFlagged(): void
+    public function staleSubmissionFailsOpen(): void
     {
+        // A slow human with a stale tab must never lose their submission.
         $service = $this->service();
         $result = $this->check($service)->check($this->contextForAge($this->stamp(), age: 7200));
 
-        self::assertFalse($result->passed);
-        self::assertSame(30, $result->score);
+        self::assertTrue($result->passed);
     }
 
     #[Test]
-    public function futureStampBeyondSkewIsFlagged(): void
+    public function futureStampBeyondSkewFailsOpen(): void
     {
+        // A stamp dated in the future is a clock anomaly, not "too fast" evidence.
         $service = $this->service();
         $result = $this->check($service)->check($this->contextForAge($this->stamp(), age: -60));
 
-        self::assertFalse($result->passed);
+        self::assertTrue($result->passed);
     }
 
     #[Test]
-    public function tamperedStampIsFlagged(): void
+    public function tamperedStampFailsOpen(): void
     {
+        // A forged stamp cannot be positive bot evidence — never block on it.
         $service = $this->service();
         $valid = $this->stamp();
         $lastChar = substr($valid, -1) === 'A' ? 'B' : 'A';
         $tampered = substr($valid, 0, -1) . $lastChar;
 
-        $result = $this->check($service)->check($this->contextForAge($tampered, age: 10));
+        $result = $this->check($service)->check($this->contextForAge($tampered, age: 1));
 
-        self::assertFalse($result->passed);
+        self::assertTrue($result->passed);
     }
 
     #[Test]
-    public function stampMintedForAnotherFormIsFlaggedAsReplay(): void
+    public function stampMintedForAnotherFormFailsOpen(): void
     {
+        // A stamp bound to another form is not evidence this form was auto-filled.
         $service = $this->service();
-        // Stamp bound to 'newsletter', submitted to the 'contact' form.
         $foreignStamp = $this->stamp('newsletter');
 
         $result = $this->check($service)->check(
-            $this->contextForAge($foreignStamp, age: 10, formId: 'contact'),
+            $this->contextForAge($foreignStamp, age: 1, formId: 'contact'),
         );
 
-        self::assertFalse($result->passed);
+        self::assertTrue($result->passed);
     }
 
     #[Test]
-    public function missingFieldIsFlagged(): void
+    public function missingStampFailsOpen(): void
     {
+        // No stamp ⇒ no timing evidence ⇒ honeypot/captcha/rate-limit cover it.
         $service = $this->service();
         $context = new AntiSpamContext(
             body: 'hello world',
             ipHash: 'iphash',
             formFields: [],
-            submissionTimestamp: self::ISSUED_AT + 10,
+            submissionTimestamp: self::ISSUED_AT + 1,
             formId: 'contact',
         );
 
         $result = $this->check($service)->check($context);
 
-        self::assertFalse($result->passed);
-        self::assertSame(30, $result->score);
+        self::assertTrue($result->passed);
     }
 
     #[Test]

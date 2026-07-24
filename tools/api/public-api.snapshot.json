@@ -39678,7 +39678,6 @@
                         "string $managedChallengeFieldName",
                         "bool $timeTrapEnabled",
                         "int $timeTrapMinSeconds",
-                        "int $timeTrapMaxSeconds",
                         "string $timeTrapFieldName",
                         "bool $behaviorEnabled",
                         "string $behaviorFieldName",
