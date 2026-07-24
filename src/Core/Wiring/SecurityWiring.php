@@ -387,14 +387,21 @@ final readonly class SecurityWiring implements ServiceWiringInterface, Describes
         $headersMiddleware = new SecurityHeadersMiddleware($securityConfig->headers, $trustedProxies);
         $container->instance(SecurityHeadersMiddleware::class, $headersMiddleware);
 
-        // Warn once at boot when a literal header in `headers` shadows an active
+        // Warn at boot when a literal header in `headers` shadows an active
         // structured sub-config with a different value (e.g. a literal
         // Strict-Transport-Security overriding the typed `hsts` block, or a
         // literal Permissions-Policy overriding `permissions_policy`). The literal
         // is authoritative ("what you write is what's emitted"); surfacing the
         // override keeps it from being silent in either direction.
+        //
+        // Like the posture advisory above, this is a CONFIG invariant — it cannot
+        // change between requests — so under a per-request SAPI (PHP-FPM:
+        // boot==request) an unconditional warning would flood the log with an
+        // unchanging state. Gate it behind the same logAtBoot flag (on outside
+        // production, off in production) so the override is surfaced during
+        // development without repeating on every production request.
         $shadowedHeaders = $securityConfig->headers->shadowedStructuredHeaders();
-        if ($shadowedHeaders !== []) {
+        if ($shadowedHeaders !== [] && SecurityPostureConfig::fromEnvironment($environment)->logAtBoot) {
             /** @var LoggerInterface|null $headersLogger */
             $headersLogger = $container->has(LoggerInterface::class)
                 ? $container->get(LoggerInterface::class)
