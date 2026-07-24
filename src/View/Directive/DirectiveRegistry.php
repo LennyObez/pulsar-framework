@@ -131,6 +131,10 @@ final class DirectiveRegistry
         $this->register(new ShieldDirective());
         $this->register(new TimeTrapDirective());
 
+        // Anti-scraping contact links
+        $this->register(new CloakMailDirective());
+        $this->register(new CloakTelDirective());
+
         // i18n
         $this->register(new I18nDirective());
         $this->register(new TranslateDirective());

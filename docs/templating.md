@@ -335,6 +335,39 @@ Outputs a hidden input for HTTP method spoofing:
 
 Renders: `<input type="hidden" name="_method" value="DELETE">`.
 
+### Contact directives (anti-scraping)
+
+#### @cloakmail / @cloaktel
+
+Render contact links whose address never appears literally in the served HTML,
+so scrapers reading the markup find nothing to lift:
+
+```html
+<p>@cloakmail('jane', 'example.com')</p>
+<p>@cloaktel('32495733136', ['text' => 'Call us', 'class' => 'btn'])</p>
+```
+
+`@cloakmail('jane', 'example.com')` renders roughly:
+
+```html
+<a class="pulsar-cloak-mail" data-u="amFuZQ==" data-d="ZXhhbXBsZS5jb20=">email</a>
+```
+
+The user and domain (or the phone number) travel as base64-encoded `data-*`
+attributes — never a literal `jane@example.com`. The bundled
+`resources/ui/js/contact-cloak.js` (CSP `script-src 'self'` clean, no
+dependencies) reassembles the `mailto:`/`tel:` href and visible text on load.
+Include it once:
+
+```html
+<script src="/assets/contact-cloak.js"></script>
+```
+
+With JavaScript disabled the element stays readable fallback text (`email` /
+`call`, or a caller-supplied `text` attribute) with no href — nothing breaks,
+there is simply no clickable link. A caller-supplied `href` attribute is ignored;
+the script owns it.
+
 ### Internationalization
 
 #### @t (preferred) / @i18n
