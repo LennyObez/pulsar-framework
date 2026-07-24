@@ -17,6 +17,7 @@ use Pulsar\Deploy\Check\AuditLoggerReadinessCheck;
 use Pulsar\Deploy\Check\CacheSettingsCheck;
 use Pulsar\Deploy\Check\DebugModeCheck;
 use Pulsar\Deploy\Check\DependencyIntegrityCheck;
+use Pulsar\Deploy\Check\EnvironmentValidationCheck;
 use Pulsar\Deploy\Check\FilesystemScanCheck;
 use Pulsar\Deploy\Check\HealthEndpointCheck;
 use Pulsar\Deploy\Check\Http3ReadinessCheck;
@@ -99,9 +100,13 @@ final readonly class DeployWiring implements ServiceWiringInterface
         /** @var SecurityConfig $securityConfig */
         $securityConfig = $repository->get(SecurityConfig::class);
 
+        $environment = $configManager->environment();
+
         $deployCheck = new DeployCheck();
 
         $this->registerCheckOrSkip($deployCheck, 'debug-mode', $deployConfig, static fn(): DeployCheckInterface => new DebugModeCheck($appConfig));
+
+        $this->registerCheckOrSkip($deployCheck, 'environment-values', $deployConfig, static fn(): DeployCheckInterface => new EnvironmentValidationCheck($environment));
 
         $this->registerCheckOrSkip($deployCheck, 'opcache', $deployConfig, static fn(): DeployCheckInterface => new OpcacheCheck($phpRuntime, new FilesystemReader()));
 
