@@ -17,10 +17,17 @@ use Pulsar\Support\Coerce;
 #[Api(since: '1.0.0')]
 final readonly class RateLimitConfig
 {
+    /**
+     * @param string $keyStrategy Bucket key strategy: 'ip' (per client), 'route'
+     *     (per endpoint, shared across clients), or 'ip_route' (per client per
+     *     endpoint). Resolved to a {@see \Pulsar\Http\RateLimit\RateLimitKeyStrategy}
+     *     at wiring time so this DTO stays free of an Http dependency.
+     */
     public function __construct(
         public bool $enabled,
         public int $defaultLimit,
         public int $defaultWindow,
+        public string $keyStrategy = 'ip',
     ) {}
 
     /**
@@ -35,6 +42,7 @@ final readonly class RateLimitConfig
             enabled: (bool) ($data['enabled'] ?? true),
             defaultLimit: Coerce::int($data['default_limit'] ?? null, 60),
             defaultWindow: Coerce::int($data['default_window'] ?? null, 60),
+            keyStrategy: Coerce::string($data['key_strategy'] ?? null, 'ip'),
         );
     }
 }

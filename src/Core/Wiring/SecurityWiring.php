@@ -8,6 +8,7 @@ use PDO;
 use Psr\Log\LoggerInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Audit\AuditLoggerInterface;
+use Pulsar\Cache\Application\CacheManagerInterface;
 use Pulsar\Cache\FrameworkCache;
 use Pulsar\Cache\FrameworkCacheInterface;
 use Pulsar\Config\AppConfig;
@@ -16,6 +17,7 @@ use Pulsar\Config\DeployConfig;
 use Pulsar\Config\DomainConfig;
 use Pulsar\Config\Environment;
 use Pulsar\Config\ObservabilityConfig;
+use Pulsar\Config\RateLimitConfig;
 use Pulsar\Config\SecurityConfig;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Context\RequestContextHolder;
@@ -34,6 +36,11 @@ use Pulsar\ErrorHandling\ExceptionRendererInterface;
 use Pulsar\Filesystem\WritablePathGuard;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
+use Pulsar\Http\Middleware\RateLimitMiddleware;
+use Pulsar\Http\RateLimit\CacheRateLimiter;
+use Pulsar\Http\RateLimit\RateLimiter;
+use Pulsar\Http\RateLimit\RateLimiterInterface;
+use Pulsar\Http\RateLimit\RateLimitKeyStrategy;
 use Pulsar\Http\TrustedProxy;
 use Pulsar\Routing\DomainResolverInterface;
 use Pulsar\Routing\Internal\ConfigDomainResolver;
@@ -523,6 +530,24 @@ final readonly class SecurityWiring implements ServiceWiringInterface, Describes
         $middlewareRegistry->alias('headers', SecurityHeadersMiddleware::class);
         $middlewareRegistry->alias('subdomain', SubdomainRoutingMiddleware::class);
 
+        // HTTP rate limiting: bind a shared-store limiter (cache-backed when a
+        // cache is available, so counts persist across FPM workers; in-memory
+        // otherwise) and expose the middleware as a `throttle` alias routes and
+        // groups opt into. Not piped globally — throttling is per route/group by
+        // design. Only wired when enabled in config/security.php.
+        if ($securityConfig->rateLimit->enabled) {
+            $rateLimiter = $this->buildRateLimiter($container, $securityConfig->rateLimit);
+            $container->instance(RateLimiterInterface::class, $rateLimiter);
+
+            $rateLimitMiddleware = new RateLimitMiddleware(
+                $rateLimiter,
+                $trustedProxy,
+                RateLimitKeyStrategy::fromString($securityConfig->rateLimit->keyStrategy),
+            );
+            $container->instance(RateLimitMiddleware::class, $rateLimitMiddleware);
+            $middlewareRegistry->alias('throttle', RateLimitMiddleware::class);
+        }
+
         // Middleware groups: composable sets for common route profiles
         $middlewareRegistry->group('web', [
             SecurityHeadersMiddleware::class,
@@ -618,6 +643,26 @@ final readonly class SecurityWiring implements ServiceWiringInterface, Describes
             'aes-gcm' => new AesGcmCipherSuite(),
             default => new SodiumCipherSuite(),
         };
+    }
+
+    /**
+     * Prefer the PSR-16 cache-backed limiter so counts persist across FPM
+     * workers; fall back to the in-memory limiter when no cache is bound.
+     */
+    private function buildRateLimiter(ContainerInterface $container, RateLimitConfig $config): RateLimiterInterface
+    {
+        if ($container->has(CacheManagerInterface::class)) {
+            /** @var CacheManagerInterface $cacheManager */
+            $cacheManager = $container->get(CacheManagerInterface::class);
+
+            return new CacheRateLimiter(
+                $cacheManager->simple(),
+                $config->defaultLimit,
+                $config->defaultWindow,
+            );
+        }
+
+        return new RateLimiter($config->defaultLimit, $config->defaultWindow);
     }
 
     /**

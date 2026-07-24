@@ -10,6 +10,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Http\Message\Response;
 use Pulsar\Http\RateLimit\RateLimiterInterface;
+use Pulsar\Http\RateLimit\RateLimitKeyStrategy;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Http\TrustedProxy;
 
@@ -38,6 +39,7 @@ final readonly class RateLimitMiddleware implements MiddlewareInterface
     public function __construct(
         private RateLimiterInterface $limiter,
         private ?TrustedProxy $trustedProxy = null,
+        private RateLimitKeyStrategy $keyStrategy = RateLimitKeyStrategy::Ip,
     ) {}
 
     #[Override]
@@ -84,6 +86,20 @@ final readonly class RateLimitMiddleware implements MiddlewareInterface
      */
     private function resolveKey(ServerRequestInterface $request): string
     {
+        return match ($this->keyStrategy) {
+            RateLimitKeyStrategy::Route => 'rate_limit:route:' . $this->resolveRoute($request),
+            RateLimitKeyStrategy::IpAndRoute => 'rate_limit:' . $this->resolveClientIp($request)
+                . ':route:' . $this->resolveRoute($request),
+            RateLimitKeyStrategy::Ip => $this->resolveIpKey($request),
+        };
+    }
+
+    /**
+     * Per-client key: IP plus the authenticated user id when present, so a single
+     * user cannot exhaust the IP quota on a shared network (corporate NAT).
+     */
+    private function resolveIpKey(ServerRequestInterface $request): string
+    {
         $ip = $this->resolveClientIp($request);
         /** @var mixed $userId */
         $userId = $request->getAttribute('rate_limit.user_id');
@@ -93,6 +109,23 @@ final readonly class RateLimitMiddleware implements MiddlewareInterface
         }
 
         return 'rate_limit:' . $ip;
+    }
+
+    /**
+     * Identify the matched route for route-scoped strategies. Prefers the
+     * router-set `_route` attribute; falls back to method + path so an
+     * unmatched/ad-hoc request still buckets deterministically.
+     */
+    private function resolveRoute(ServerRequestInterface $request): string
+    {
+        /** @var mixed $route */
+        $route = $request->getAttribute('_route');
+
+        if (is_string($route) && $route !== '') {
+            return $route;
+        }
+
+        return $request->getMethod() . ' ' . $request->getUri()->getPath();
     }
 
     private function resolveClientIp(ServerRequestInterface $request): string

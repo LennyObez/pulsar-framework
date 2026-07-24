@@ -48,6 +48,15 @@ final class RateLimitConfigTest extends TestCase
         self::assertTrue($config->enabled);
         self::assertSame(60, $config->defaultLimit);
         self::assertSame(60, $config->defaultWindow);
+        self::assertSame('ip', $config->keyStrategy);
+    }
+
+    #[Test]
+    public function fromArrayReadsKeyStrategy(): void
+    {
+        $config = RateLimitConfig::fromArray(['key_strategy' => 'ip_route']);
+
+        self::assertSame('ip_route', $config->keyStrategy);
     }
 
     #[Test]

@@ -10060,7 +10060,8 @@
                     "params": [
                         "bool $enabled",
                         "int $defaultLimit",
-                        "int $defaultWindow"
+                        "int $defaultWindow",
+                        "string $keyStrategy"
                     ],
                     "return": null,
                     "static": false
@@ -23443,6 +23444,39 @@
                         "array $data"
                     ],
                     "return": "Pulsar\\Http\\RateLimit\\EndpointRateLimitPolicy",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Http\\RateLimit\\RateLimitKeyStrategy": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "cases": {
+                    "params": [],
+                    "return": "array",
+                    "static": true
+                },
+                "from": {
+                    "params": [
+                        "string|int $value"
+                    ],
+                    "return": "static",
+                    "static": true
+                },
+                "fromString": {
+                    "params": [
+                        "string $value"
+                    ],
+                    "return": "Pulsar\\Http\\RateLimit\\RateLimitKeyStrategy",
+                    "static": true
+                },
+                "tryFrom": {
+                    "params": [
+                        "string|int $value"
+                    ],
+                    "return": "?static",
                     "static": true
                 }
             },
@@ -56840,6 +56874,7 @@
         "Pulsar\\Http\\Middleware\\CanonicalPathMiddleware",
         "Pulsar\\Http\\Middleware\\MiddlewareHandler",
         "Pulsar\\Http\\Middleware\\MiddlewarePipeline",
+        "Pulsar\\Http\\RateLimit\\CacheRateLimiter",
         "Pulsar\\Http\\RateLimit\\RateLimiter",
         "Pulsar\\Http\\RateLimit\\SqliteRateLimiter",
         "Pulsar\\Http\\RouteContext",
