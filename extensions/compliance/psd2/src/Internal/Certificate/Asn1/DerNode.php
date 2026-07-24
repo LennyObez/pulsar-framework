@@ -39,6 +39,8 @@ final readonly class DerNode
      * @param int          $tagNumber     Tag number within the class
      * @param string       $content       Raw content bytes (primitive nodes)
      * @param list<DerNode> $children      Decoded children (constructed nodes)
+     * @param string       $raw           The full TLV encoding of this node (identifier+length+content),
+     *                                    so sub-structures (e.g. an issuer Name) can be re-hashed exactly.
      */
     public function __construct(
         public int $tagClass,
@@ -46,6 +48,7 @@ final readonly class DerNode
         public int $tagNumber,
         public string $content,
         public array $children = [],
+        public string $raw = '',
     ) {}
 
     public function isSequence(): bool
