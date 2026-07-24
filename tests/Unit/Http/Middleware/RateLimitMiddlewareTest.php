@@ -12,6 +12,7 @@ use Pulsar\Http\Message\Response;
 use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\Middleware\RateLimitMiddleware;
 use Pulsar\Http\RateLimit\RateLimiter;
+use Pulsar\Http\RateLimit\RateLimitKeyStrategy;
 use Pulsar\Http\RateLimit\RateLimitResult;
 use Pulsar\Http\ResponseStatus;
 
@@ -128,6 +129,45 @@ final class RateLimitMiddlewareTest extends TestCase
         // unaffected (proves the buckets do not collide).
         $aliceSecondResponse = $middleware->process($alice, $handler);
         self::assertSame(ResponseStatus::TooManyRequests->value, $aliceSecondResponse->getStatusCode());
+    }
+
+    #[Test]
+    public function routeStrategyBucketsAllClientsTogetherPerRoute(): void
+    {
+        // The Route strategy caps total load on an endpoint: distinct clients
+        // share one bucket per route.
+        $limiter = new RateLimiter(maxAttempts: 1, windowSeconds: 60);
+        $middleware = new RateLimitMiddleware($limiter, null, RateLimitKeyStrategy::Route);
+
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(Response::text('OK'));
+
+        $clientA = new ServerRequest(method: 'GET', uri: '/search', serverParams: ['REMOTE_ADDR' => '1.1.1.1']);
+        $clientB = new ServerRequest(method: 'GET', uri: '/search', serverParams: ['REMOTE_ADDR' => '2.2.2.2']);
+
+        self::assertSame(ResponseStatus::OK->value, $middleware->process($clientA, $handler)->getStatusCode());
+        // Different client, same route → shared bucket is already spent.
+        self::assertSame(ResponseStatus::TooManyRequests->value, $middleware->process($clientB, $handler)->getStatusCode());
+    }
+
+    #[Test]
+    public function ipAndRouteStrategyIsolatesPerClientPerRoute(): void
+    {
+        $limiter = new RateLimiter(maxAttempts: 1, windowSeconds: 60);
+        $middleware = new RateLimitMiddleware($limiter, null, RateLimitKeyStrategy::IpAndRoute);
+
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(Response::text('OK'));
+
+        $routeA = new ServerRequest(method: 'GET', uri: '/a', serverParams: ['REMOTE_ADDR' => '1.1.1.1']);
+        $routeB = new ServerRequest(method: 'GET', uri: '/b', serverParams: ['REMOTE_ADDR' => '1.1.1.1']);
+
+        // Same client, different routes → independent budgets.
+        self::assertSame(ResponseStatus::OK->value, $middleware->process($routeA, $handler)->getStatusCode());
+        self::assertSame(ResponseStatus::OK->value, $middleware->process($routeB, $handler)->getStatusCode());
+
+        // Same client, same route again → that route's budget is spent.
+        self::assertSame(ResponseStatus::TooManyRequests->value, $middleware->process($routeA, $handler)->getStatusCode());
     }
 
     #[Test]
