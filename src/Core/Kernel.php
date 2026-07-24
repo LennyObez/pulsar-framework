@@ -467,8 +467,10 @@ final class Kernel implements KernelInterface
      * gate in boot() to see it — before the wirings that consume config run.
      *
      * Uses only what is available this early: the config path, PULSAR_MASTER_KEY
-     * (and its optional previous key) from the process environment, and the
-     * CACHE_ENCRYPT flag. Binds both the class and the interface so downstream
+     * (and its optional previous key) and the CACHE_ENCRYPT flag, all resolved
+     * through the Environment so a value set only in .env is honoured here too —
+     * consistently with the runtime SecurityWiring, not a bare getenv() that
+     * would silently miss .env-only values. Binds both the class and the interface so downstream
      * consumers (e.g. the optimize command's FrameworkCacheInterface injection)
      * still resolve. Degrades to no cache — never a fatal — when the key is
      * absent or invalid: caching is an optimization, not a boot requirement.
@@ -485,9 +487,9 @@ final class Kernel implements KernelInterface
             return;
         }
 
-        $masterKeyHex = getenv('PULSAR_MASTER_KEY');
+        $masterKeyHex = $this->earlyEnv('PULSAR_MASTER_KEY');
 
-        if ($masterKeyHex === false || $masterKeyHex === '') {
+        if ($masterKeyHex === null) {
             return;
         }
 
@@ -498,13 +500,11 @@ final class Kernel implements KernelInterface
         }
 
         try {
-            $previousKeyHex = getenv('PULSAR_MASTER_KEY_PREVIOUS');
-            $masterKey = MasterKey::fromHex(
-                $masterKeyHex,
-                ($previousKeyHex !== false && $previousKeyHex !== '') ? $previousKeyHex : null,
-            );
+            $previousKeyHex = $this->earlyEnv('PULSAR_MASTER_KEY_PREVIOUS');
+            $masterKey = MasterKey::fromHex($masterKeyHex, $previousKeyHex);
 
-            $encrypt = getenv('CACHE_ENCRYPT') === 'true' || getenv('CACHE_ENCRYPT') === '1';
+            $encryptFlag = $this->earlyEnv('CACHE_ENCRYPT');
+            $encrypt = $encryptFlag === 'true' || $encryptFlag === '1';
             // A default-suite encryptor suffices: the encryption key is derived
             // from the master key (suite-independent) and decrypt auto-detects
             // the stored suite, so this loads a cache written under any suite.
@@ -523,6 +523,29 @@ final class Kernel implements KernelInterface
         } catch (Throwable) {
             // Invalid key or a sodium failure: skip the cache, boot normally.
         }
+    }
+
+    /**
+     * Resolve an env value this early in boot, preferring the {@see Environment}
+     * (which honours .env) once config has loaded, and falling back to the
+     * process environment when it has not — the cache pre-bind can run before
+     * config load. Returns null for absent or empty values.
+     */
+    private function earlyEnv(string $key): ?string
+    {
+        try {
+            $value = $this->configManager?->environment()->get($key);
+
+            if ($value !== null && $value !== '') {
+                return $value;
+            }
+        } catch (Throwable) {
+            // Environment not loaded this early; fall back to the process env.
+        }
+
+        $raw = getenv($key);
+
+        return ($raw === false || $raw === '') ? null : $raw;
     }
 
     /**
