@@ -17,7 +17,6 @@ use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditOutcome;
 
 use function array_key_exists;
-use function array_values;
 use function is_array;
 use function is_string;
 use function openssl_x509_checkpurpose;
@@ -41,10 +40,13 @@ final readonly class DefaultCertificateValidator implements CertificateValidator
     /**
      * @param list<string> $authorizedProviders Known authorization numbers
      */
+    private Psd2QcStatementsParser $qcStatementsParser;
+
     public function __construct(
         private CertificateConfig $config,
         array $authorizedProviders = [],
         private ?AuditLoggerInterface $auditLogger = null,
+        ?Psd2QcStatementsParser $qcStatementsParser = null,
     ) {
         $mapped = [];
 
@@ -53,6 +55,7 @@ final readonly class DefaultCertificateValidator implements CertificateValidator
         }
 
         $this->authorizedProviders = $mapped;
+        $this->qcStatementsParser = $qcStatementsParser ?? new Psd2QcStatementsParser();
     }
 
     #[Override]
@@ -109,17 +112,21 @@ final readonly class DefaultCertificateValidator implements CertificateValidator
         $rawExtensions = $parsed['extensions'] ?? [];
         $extensions = is_array($rawExtensions) ? $rawExtensions : [];
 
-        $psd2Roles = $this->extractPsd2Roles($extensions);
+        // PSD2 attributes come from the ASN.1 qcStatements extension (ETSI TS
+        // 119 495), decoded structurally rather than string-matched against the
+        // certificate text.
+        $psd2 = $this->qcStatementsParser->parseCertificate($pemCertificate);
+        $psd2Roles = $psd2?->roles ?? [];
+        $ncaName = $psd2?->ncaName ?? '';
+        $ncaId = $psd2?->ncaId ?? '';
+        $isQualified = $psd2?->qualified ?? false;
+
         $authorizationNumber = $this->extractAuthorizationNumber($extensions);
-        $ncaName = $this->extractNcaName($extensions);
-        $ncaId = $this->extractNcaId($extensions);
 
         // Determine certificate type from subject/extensions
         $type = str_contains($subject, 'QWAC') || str_contains($subject, 'Web Authentication')
             ? CertificateType::Qwac
             : CertificateType::Qseal;
-
-        $isQualified = $this->checkQualification($extensions);
 
         if ($this->config->requireQualified && !$isQualified) {
             $this->auditLogger?->log(
@@ -174,11 +181,10 @@ final readonly class DefaultCertificateValidator implements CertificateValidator
      * trust from self-declared, attacker-suppliable string fields, so a
      * self-signed certificate carrying the right strings would be "authorized".
      *
-     * NOTE: this establishes chain trust and validity. Full eIDAS conformance —
-     * OCSP/CRL revocation checking and ASN.1 parsing of the ETSI TS 119 495
-     * QcStatements for precise PSD2 roles/NCA data (rather than the string hints
-     * below) — remains to be layered on; until then a deployment MUST treat the
-     * derived roles as advisory and pair them with its own allowlist.
+     * NOTE: this establishes chain trust and validity. PSD2 roles/NCA data are
+     * now parsed from the ASN.1 qcStatements extension (see
+     * {@see Psd2QcStatementsParser}). OCSP/CRL revocation checking remains to be
+     * layered on for full eIDAS conformance.
      */
     private function assertTrustedChain(string $pemCertificate, string $serialNumber): void
     {
@@ -213,47 +219,6 @@ final readonly class DefaultCertificateValidator implements CertificateValidator
     }
 
     /**
-     * Extract PSD2 roles from certificate extensions.
-     *
-     * @param array<array-key, mixed> $extensions
-     *
-     * @return list<string>
-     */
-    private function extractPsd2Roles(array $extensions): array
-    {
-        // PSD2 roles are stored in QcStatements extension
-        // In practice, this requires ASN.1 parsing of the extension
-        // For the framework, we extract from subject/extensions hints
-        $roles = [];
-
-        /** @var mixed $value */
-        foreach ($extensions as $value) {
-            if (!is_string($value)) {
-                continue;
-            }
-
-            // Look for PSD2 role indicators
-            if (str_contains($value, 'PSP_AI')) {
-                $roles[] = 'PSP_AI';
-            }
-
-            if (str_contains($value, 'PSP_PI')) {
-                $roles[] = 'PSP_PI';
-            }
-
-            if (str_contains($value, 'PSP_AS')) {
-                $roles[] = 'PSP_AS';
-            }
-
-            if (str_contains($value, 'PSP_IC')) {
-                $roles[] = 'PSP_IC';
-            }
-        }
-
-        return array_values(array_unique($roles));
-    }
-
-    /**
      * Extract the NCA authorization number from certificate extensions.
      *
      * @param array<array-key, mixed> $extensions
@@ -275,62 +240,4 @@ final readonly class DefaultCertificateValidator implements CertificateValidator
         return '';
     }
 
-    /**
-     * @param array<array-key, mixed> $extensions
-     */
-    private function extractNcaName(array $extensions): string
-    {
-        /** @var mixed $value */
-        foreach ($extensions as $value) {
-            if (is_string($value) && str_contains($value, 'NCA')) {
-                return $value;
-            }
-        }
-
-        return '';
-    }
-
-    /**
-     * @param array<array-key, mixed> $extensions
-     */
-    private function extractNcaId(array $extensions): string
-    {
-        /** @var mixed $value */
-        foreach ($extensions as $oid => $value) {
-            if (is_string($value) && str_contains((string) $oid, 'NCAId')) {
-                return $value;
-            }
-        }
-
-        return '';
-    }
-
-    /**
-     * Check whether the certificate is a qualified eIDAS certificate.
-     *
-     * @param array<array-key, mixed> $extensions
-     */
-    private function checkQualification(array $extensions): bool
-    {
-        /** @var mixed $value */
-        foreach ($extensions as $oid => $value) {
-            if (!is_string($value)) {
-                continue;
-            }
-
-            $oidStr = (string) $oid;
-
-            // QcStatements OID: 1.3.6.1.5.5.7.1.3
-            if (str_contains($oidStr, '1.3.6.1.5.5.7.1.3')) {
-                return true;
-            }
-
-            // Look for qualified certificate indicators
-            if (str_contains($value, 'QcCompliance') || str_contains($value, 'qcStatements')) {
-                return true;
-            }
-        }
-
-        return false;
-    }
 }
