@@ -96,6 +96,7 @@ final class ContactCloak
             $parts[] = sprintf('%s="%s"', $name, self::escape($value));
         }
 
+        /** @var mixed $value */
         foreach ($attrs as $name => $value) {
             if (!is_scalar($value)) {
                 continue;
