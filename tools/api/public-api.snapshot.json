@@ -39807,6 +39807,59 @@
             },
             "constants": []
         },
+        "Pulsar\\Security\\AntiSpam\\AntiSpamVerdict": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "bool $hardFailed",
+                        "?string $hardCheck",
+                        "int $contentScore",
+                        "bool $flagged"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "from": {
+                    "params": [
+                        "Pulsar\\Security\\AntiSpam\\AntiSpamResult $result",
+                        "Pulsar\\Security\\AntiSpam\\AntiSpamVerdictPolicy $policy"
+                    ],
+                    "return": "Pulsar\\Security\\AntiSpam\\AntiSpamVerdict",
+                    "static": true
+                },
+                "shouldReject": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Security\\AntiSpam\\AntiSpamVerdictPolicy": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "array $hardGates",
+                        "array $contentScorers",
+                        "int $reviewScoreThreshold"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "default": {
+                    "params": [
+                        "bool $captchaTokenPresent"
+                    ],
+                    "return": "Pulsar\\Security\\AntiSpam\\AntiSpamVerdictPolicy",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\Security\\AntiSpam\\Behavior\\BehaviorCollectorRenderer": {
             "since": "1.0.0-rc.11",
             "methods": [],

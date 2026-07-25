@@ -162,7 +162,7 @@ The time-trap flags one thing, precisely: a submission posted faster than a pers
 
 ### Fail-open by design ("zero lost lead")
 
-The time-trap blocks **only on positive bot evidence**: a validly-signed stamp, bound to this form, submitted in less than `time_trap_min_seconds`. Every other case **fails open and passes** — a missing, malformed, tampered, wrong-form, future-dated, or *stale* stamp never blocks. Those cases are covered by the honeypot, Managed Challenge and rate limiter, and a slow human who left a tab open for hours must never lose their submission. This is deliberate: the time-trap is a high-precision signal, not a catch-all.
+The time-trap blocks **only on positive bot evidence**: a validly-signed stamp, bound to this form, submitted in less than `time_trap_min_seconds`. Every other case **fails open and passes** — a missing, malformed, tampered, wrong-form, future-dated, or _stale_ stamp never blocks. Those cases are covered by the honeypot, Managed Challenge and rate limiter, and a slow human who left a tab open for hours must never lose their submission. This is deliberate: the time-trap is a high-precision signal, not a catch-all.
 
 ### How it works
 
@@ -408,3 +408,32 @@ The issuer name and public key(s) are operator-supplied out of band. The verifie
 ### Honest limitation
 
 A token only proves the client passed _some_ issuer's attester; trust follows entirely from which issuer you configure. This release accepts the publicly verifiable Blind-RSA token type (0x0002) only — the VOPRF (privately verifiable) types require the Origin to share a secret with the issuer and are out of scope. Deploy Private Access Tokens as a fast lane for attested clients layered on top of the rest of the pipeline, not as the sole gate.
+
+## Acting on the result: the verdict distiller
+
+`AntiSpamPipeline::evaluate()` returns per-check results, but every controller then re-implements the same policy questions: which checks hard-reject vs only score, the "captcha is a hard gate only when a token was actually sent" nuance, and the "content signals never block, only flag" rule. Owning that logic per-form is how forms drift apart.
+
+`AntiSpamVerdict::from($result, $policy)` distills the pipeline result into one ready-to-act verdict so a controller reads it once:
+
+```php
+use Pulsar\Security\AntiSpam\AntiSpamVerdict;
+use Pulsar\Security\AntiSpam\AntiSpamVerdictPolicy;
+
+$policy  = AntiSpamVerdictPolicy::default(captchaTokenPresent: $request->has('pulsar-challenge-response'));
+$verdict = AntiSpamVerdict::from($pipeline->evaluate($context), $policy);
+
+if ($verdict->shouldReject()) {
+    // A hard gate failed ($verdict->hardCheck names it) — refuse the submission.
+}
+
+// Delivered either way; route flagged submissions to human review.
+$deliver($message, needsReview: $verdict->flagged);
+```
+
+The verdict exposes `{ hardFailed, hardCheck, contentScore, flagged }`:
+
+- **hardGates** (default: honeypot, time-trap, email_domain) hard-reject on failure.
+- **contentScorers** (default: content_quality, link_density, duplicate, reputation_cooldown, account_age) only accumulate `contentScore`; at/above `reviewScoreThreshold` (default 50) the submission is **flagged** but still delivered.
+- A check in neither set is **ignored** — which is exactly how the captcha nuance works: with `captchaTokenPresent: false` (a no-JavaScript client) the captcha result neither blocks nor scores, so a legitimate visitor is never penalised for a challenge they were never served.
+
+Pass a custom `AntiSpamVerdictPolicy` to tune the sets and threshold per deployment.
