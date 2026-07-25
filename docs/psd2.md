@@ -46,10 +46,10 @@ certificates in the trust bundle.
 
 ### Fail-closed vs. fail-open
 
-| Revocation result | Outcome |
-|---|---|
-| Confirmed **revoked** | Always rejected. |
-| Confirmed **good** | Accepted. |
+| Revocation result                                                                            | Outcome                                                                                                                        |
+| -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Confirmed **revoked**                                                                        | Always rejected.                                                                                                               |
+| Confirmed **good**                                                                           | Accepted.                                                                                                                      |
 | **Inconclusive** (responder unreachable, no OCSP pointer, unparseable, signature unverified) | Rejected by default. Set `revocation_soft_fail = true` to allow through with an audit log when availability must be preferred. |
 
 A confirmed revocation always rejects, regardless of `revocation_soft_fail`.
