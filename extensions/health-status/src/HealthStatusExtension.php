@@ -6,6 +6,7 @@ namespace Pulsar\Extension\HealthStatus;
 
 use Override;
 use Pulsar\Api\Api;
+use Pulsar\Cache\Application\CacheManagerInterface;
 use Pulsar\Config\ConfigManagerInterface;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Extensibility\ExtensionInterface;
@@ -79,6 +80,27 @@ final readonly class HealthStatusExtension implements ExtensionInterface, PostBo
             static fn(): ThresholdIncidentDetector => new ThresholdIncidentDetector(
                 threshold: $config->incidentThresholdConsecutiveFailures,
             ),
+        );
+
+        // Site-wide footer/header status pill: worst recorded status over a
+        // window, cached and fail-open to a neutral "unknown". Uses the PSR-16
+        // cache when one is bound so a footer on every page does not re-query.
+        $container->bind(
+            StatusPillProvider::class,
+            static function (ContainerInterface $c): StatusPillProvider {
+                $cache = null;
+
+                if ($c->has(CacheManagerInterface::class)) {
+                    /** @var CacheManagerInterface $cacheManager */
+                    $cacheManager = $c->get(CacheManagerInterface::class);
+                    $cache = $cacheManager->simple();
+                }
+
+                /** @var HealthHistoryStoreInterface $store */
+                $store = $c->get(HealthHistoryStoreInterface::class);
+
+                return new StatusPillProvider($store, $cache);
+            },
         );
 
         // Bind HealthCheckRunnerInterface to adapter wrapping core runner
