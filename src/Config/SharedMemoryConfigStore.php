@@ -114,6 +114,7 @@ final class SharedMemoryConfigStore
         \Pulsar\Config\DeployConfig::class,
         \Pulsar\Config\DiskConfig::class,
         \Pulsar\Config\EventConfig::class,
+        \Pulsar\Config\OutboxConfig::class,
         \Pulsar\Config\FeatureFlagConfig::class,
         \Pulsar\FeatureFlag\FlagStorageDriver::class,
         \Pulsar\Config\I18nConfig::class,
@@ -136,6 +137,16 @@ final class SharedMemoryConfigStore
         \Pulsar\Tenancy\TenantDatabaseStrategy::class,
         \Pulsar\Tenancy\TenantResolverStrategy::class,
         \Pulsar\View\ViewConfig::class,
+        // Zero-trust config graph (security.zero_trust). The enums and the
+        // policy-rule value objects are listed too, so a shared-memory worker can
+        // read a configured zero-trust policy set, not just the empty default.
+        \Pulsar\Config\ZeroTrustConfig::class,
+        \Pulsar\Security\ZeroTrust\StepUp\StepUpConfig::class,
+        \Pulsar\Security\ZeroTrust\Privacy\SignalRetentionPolicy::class,
+        \Pulsar\Security\ZeroTrust\Policy\PolicyRule::class,
+        \Pulsar\Security\ZeroTrust\Policy\ClaimRequirement::class,
+        \Pulsar\Security\ZeroTrust\Policy\PolicyDecision::class,
+        \Pulsar\Security\ZeroTrust\Claim\ClaimSource::class,
     ];
 
     private readonly int $shmKey;

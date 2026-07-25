@@ -10286,6 +10286,7 @@
                         "Pulsar\\Config\\RateLimitConfig $rateLimit",
                         "?Pulsar\\Config\\AuthConfig $auth",
                         "string $cipherSuite",
+                        "Pulsar\\Config\\ZeroTrustConfig $zeroTrust",
                         "array $unknownKeys"
                     ],
                     "return": null,
@@ -11009,7 +11010,8 @@
                         "Pulsar\\Security\\ZeroTrust\\StepUp\\StepUpConfig $stepUp",
                         "array $retentionPolicies",
                         "array $signalProviders",
-                        "float $trustScoreThreshold"
+                        "float $trustScoreThreshold",
+                        "array $rules"
                     ],
                     "return": null,
                     "static": false
@@ -18947,6 +18949,11 @@
                     "params": [
                         "Pulsar\\Context\\RequestContext $context"
                     ],
+                    "return": "Pulsar\\Event\\EventMetadata",
+                    "static": true
+                },
+                "generate": {
+                    "params": [],
                     "return": "Pulsar\\Event\\EventMetadata",
                     "static": true
                 },
@@ -49242,6 +49249,13 @@
                     ],
                     "return": null,
                     "static": false
+                },
+                "fromArray": {
+                    "params": [
+                        "array $data"
+                    ],
+                    "return": "Pulsar\\Security\\ZeroTrust\\Policy\\ClaimRequirement",
+                    "static": true
                 }
             },
             "constants": []
@@ -49338,6 +49352,13 @@
                     ],
                     "return": null,
                     "static": false
+                },
+                "fromArray": {
+                    "params": [
+                        "array $data"
+                    ],
+                    "return": "Pulsar\\Security\\ZeroTrust\\Policy\\PolicyRule",
+                    "static": true
                 }
             },
             "constants": []
@@ -56867,6 +56888,7 @@
         "Pulsar\\Core\\Wiring\\ViewWiring",
         "Pulsar\\Core\\Wiring\\WiringList",
         "Pulsar\\Core\\Wiring\\WorkflowWiring",
+        "Pulsar\\Core\\Wiring\\ZeroTrustWiring",
         "Pulsar\\DataProtection\\AuditLogPurge",
         "Pulsar\\DataProtection\\DefaultRetentionPolicy",
         "Pulsar\\DataProtection\\SessionPurge",

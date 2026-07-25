@@ -6,6 +6,7 @@ namespace Pulsar\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Security\ZeroTrust\Policy\PolicyRule;
 use Pulsar\Security\ZeroTrust\Privacy\SignalRetentionPolicy;
 use Pulsar\Security\ZeroTrust\StepUp\StepUpConfig;
 use Pulsar\Support\Coerce;
@@ -33,6 +34,8 @@ final readonly class ZeroTrustConfig
      * @param list<SignalRetentionPolicy> $retentionPolicies Per-signal retention policies
      * @param list<string> $signalProviders Registered signal provider class names
      * @param float $trustScoreThreshold Minimum trust score to allow access (0.0-1.0)
+     * @param list<PolicyRule> $rules Policy rules the engine evaluates (deny-by-default: with no rules,
+     *        an enabled zero-trust route denies every request)
      */
     public function __construct(
         public bool $enabled = false,
@@ -43,6 +46,7 @@ final readonly class ZeroTrustConfig
         public array $retentionPolicies = [],
         public array $signalProviders = [],
         public float $trustScoreThreshold = 0.6,
+        public array $rules = [],
     ) {}
 
     /**
@@ -57,6 +61,7 @@ final readonly class ZeroTrustConfig
      *     retention_policies?: list<array<string, mixed>>,
      *     signal_providers?: list<string>,
      *     trust_score_threshold?: float|int,
+     *     rules?: list<array<string, mixed>>,
      * } $data Raw `zero_trust` sub-array from config/security.php
      */
     #[NoDiscard]
@@ -72,6 +77,11 @@ final readonly class ZeroTrustConfig
             ? array_values(array_filter($rawRetention, is_array(...)))
             : [];
 
+        $rawRules = $data['rules'] ?? null;
+        $ruleArrays = is_array($rawRules)
+            ? array_values(array_filter($rawRules, is_array(...)))
+            : [];
+
         return new self(
             enabled: Coerce::strictBool($data['enabled'] ?? null),
             defaultMinConfidence: Coerce::float($data['default_min_confidence'] ?? null, 0.7),
@@ -84,6 +94,10 @@ final readonly class ZeroTrustConfig
             ),
             signalProviders: Coerce::listOfString($data['signal_providers'] ?? null),
             trustScoreThreshold: Coerce::float($data['trust_score_threshold'] ?? null, 0.6),
+            rules: array_map(
+                static fn(array $item): PolicyRule => PolicyRule::fromArray($item),
+                $ruleArrays,
+            ),
         );
     }
 }

@@ -11,6 +11,8 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Config\ZeroTrustConfig;
 use Pulsar\Security\ZeroTrust\Claim\ClaimSource;
+use Pulsar\Security\ZeroTrust\Policy\PolicyDecision;
+use Pulsar\Security\ZeroTrust\Policy\PolicyRule;
 use Pulsar\Security\ZeroTrust\Privacy\SignalRetentionPolicy;
 use Pulsar\Security\ZeroTrust\StepUp\StepUpConfig;
 
@@ -68,6 +70,55 @@ final class ZeroTrustConfigTest extends TestCase
         self::assertSame([], $config->retentionPolicies);
         self::assertSame([], $config->signalProviders);
         self::assertSame(0.6, $config->trustScoreThreshold);
+        self::assertSame([], $config->rules);
+    }
+
+    #[Test]
+    public function fromArrayParsesPolicyRules(): void
+    {
+        $config = ZeroTrustConfig::fromArray([
+            'rules' => [
+                [
+                    'name' => 'admin-area',
+                    'resource_pattern' => '/admin/*',
+                    'action' => '*',
+                    'priority' => 100,
+                    'on_match' => 'grant',
+                    'on_no_match' => 'step_up',
+                    'requirements' => [
+                        ['claim' => 'device.trusted', 'min_confidence' => 0.8, 'allowed_sources' => ['device_signal']],
+                    ],
+                ],
+                'not-an-array',
+            ],
+        ]);
+
+        self::assertCount(1, $config->rules);
+        $rule = $config->rules[0];
+        self::assertInstanceOf(PolicyRule::class, $rule);
+        self::assertSame('admin-area', $rule->name);
+        self::assertSame('/admin/*', $rule->resourcePattern);
+        self::assertSame('*', $rule->action);
+        self::assertSame(100, $rule->priority);
+        self::assertSame(PolicyDecision::Grant, $rule->onMatch);
+        self::assertSame(PolicyDecision::StepUp, $rule->onNoMatch);
+        self::assertCount(1, $rule->requirements);
+        self::assertSame('device.trusted', $rule->requirements[0]->claimName);
+        self::assertSame(0.8, $rule->requirements[0]->minConfidence);
+        self::assertSame([ClaimSource::DeviceSignal], $rule->requirements[0]->allowedSources);
+    }
+
+    #[Test]
+    public function fromArrayRuleDefaultsToDenyByDefault(): void
+    {
+        // A rule with no decision fields keeps the secure defaults.
+        $config = ZeroTrustConfig::fromArray([
+            'rules' => [['name' => 'r', 'resource_pattern' => '/x', 'action' => 'GET']],
+        ]);
+
+        self::assertSame(PolicyDecision::Grant, $config->rules[0]->onMatch);
+        self::assertSame(PolicyDecision::Deny, $config->rules[0]->onNoMatch);
+        self::assertSame([], $config->rules[0]->requirements);
     }
 
     #[Test]

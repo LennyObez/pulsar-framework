@@ -39,6 +39,7 @@ final readonly class WiringList
             new MetricsWiring(),
             new RequestContextWiring(),
             new EventWiring(),
+            new ZeroTrustWiring(),
             new ErrorTrackingWiring(),
             new ExceptionHandlerWiring(),
             new AuthWiring(),

@@ -27,7 +27,7 @@ final readonly class SecurityConfig implements ReportsUnknownKeys
      */
     private const array KNOWN_KEYS = [
         'session', 'csrf', 'headers', 'rate_limiting', 'auth', 'cipher_suite',
-        'key_overrides', 'tokenization', 'waf', 'threat_detection',
+        'key_overrides', 'tokenization', 'waf', 'threat_detection', 'zero_trust',
     ];
 
     /**
@@ -41,6 +41,7 @@ final readonly class SecurityConfig implements ReportsUnknownKeys
         public RateLimitConfig $rateLimit,
         public ?AuthConfig $auth = null,
         public string $cipherSuite = 'sodium',
+        public ZeroTrustConfig $zeroTrust = new ZeroTrustConfig(),
         public array $unknownKeys = [],
     ) {}
 
@@ -81,6 +82,7 @@ final readonly class SecurityConfig implements ReportsUnknownKeys
      *     rate_limiting?: array<string, mixed>,
      *     auth?: array<string, mixed>|null,
      *     cipher_suite?: string,
+     *     zero_trust?: array<string, mixed>,
      * } $data Raw array from config/security.php
      */
     #[NoDiscard]
@@ -100,6 +102,9 @@ final readonly class SecurityConfig implements ReportsUnknownKeys
         $headers = SecurityHeadersConfig::fromArray($headersData);
         $rateLimit = RateLimitConfig::fromArray($rateLimitData);
         $auth = $authData !== null ? AuthConfig::fromArray($authData) : null;
+        /** @var array<string, mixed> $zeroTrustData */
+        $zeroTrustData = $data['zero_trust'] ?? [];
+        $zeroTrust = ZeroTrustConfig::fromArray($zeroTrustData);
 
         $unknownKeys = [
             ...UnknownKeys::collect($data, self::KNOWN_KEYS),
@@ -117,6 +122,7 @@ final readonly class SecurityConfig implements ReportsUnknownKeys
             rateLimit: $rateLimit,
             auth: $auth,
             cipherSuite: $data['cipher_suite'] ?? 'sodium',
+            zeroTrust: $zeroTrust,
             unknownKeys: $unknownKeys,
         );
     }
