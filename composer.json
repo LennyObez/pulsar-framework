@@ -4,6 +4,13 @@
   "description": "Pulsar HMVC Framework (PHP 8.5)",
   "type": "library",
   "license": "Apache-2.0",
+  "authors": [
+    {
+      "name": "Lenny Obez",
+      "email": "github@lennyobez.com",
+      "role": "Creator"
+    }
+  ],
   "minimum-stability": "dev",
   "prefer-stable": true,
   "require": {
