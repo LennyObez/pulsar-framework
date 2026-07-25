@@ -15,11 +15,12 @@ use Pulsar\Api\Api;
 final readonly class EventConfig implements ReportsUnknownKeys
 {
     /** Keys recognised in config/event.php. */
-    private const array KNOWN_KEYS = ['enabled', 'storm_protection'];
+    private const array KNOWN_KEYS = ['enabled', 'storm_protection', 'outbox'];
 
     public function __construct(
         public bool $enabled = true,
         public StormProtectionConfig $stormProtection = new StormProtectionConfig(),
+        public OutboxConfig $outbox = new OutboxConfig(),
         /** @var list<string> */
         public array $unknownKeys = [],
     ) {}
@@ -40,6 +41,7 @@ final readonly class EventConfig implements ReportsUnknownKeys
      *         loop_detection?: bool,
      *         max_repeats_per_event?: int,
      *     },
+     *     outbox?: array{enabled?: bool|int|string, batch_size?: int|string, max_publish_attempts?: int|string},
      * } $data Raw array from config/event.php
      */
     #[NoDiscard]
@@ -52,6 +54,7 @@ final readonly class EventConfig implements ReportsUnknownKeys
         return new self(
             enabled: $enabled,
             stormProtection: StormProtectionConfig::fromArray($data['storm_protection'] ?? [], $environment),
+            outbox: OutboxConfig::fromArray($data['outbox'] ?? []),
             unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
         );
     }
