@@ -205,7 +205,7 @@ final readonly class OcspRevocationChecker implements RevocationCheckerInterface
             return RevocationStatus::Unknown;
         }
 
-        $algorithm = self::SIGNATURE_ALGORITHMS[DerDecoder::oidToString($signatureAlgorithm->child(0)?->content ?? '')] ?? null;
+        $algorithm = self::SIGNATURE_ALGORITHMS[DerDecoder::oidToString($signatureAlgorithm->child(0)->content ?? '')] ?? null;
 
         if ($algorithm === null) {
             return RevocationStatus::Unknown;
@@ -299,13 +299,13 @@ final readonly class OcspRevocationChecker implements RevocationCheckerInterface
     private function responderMatchesIssuer(DerNode $responderId, CertificateFields $issuer): bool
     {
         if ($responderId->isContextTag(2)) {
-            $keyHash = $responderId->child(0)?->content ?? '';
+            $keyHash = $responderId->child(0)->content ?? '';
 
             return $keyHash !== '' && hash_equals($issuer->subjectPublicKeyHash(), $keyHash);
         }
 
         if ($responderId->isContextTag(1)) {
-            $nameDer = $responderId->child(0)?->raw ?? '';
+            $nameDer = $responderId->child(0)->raw ?? '';
 
             return $nameDer !== '' && hash_equals($issuer->subjectNameDer(), $nameDer);
         }
@@ -316,11 +316,11 @@ final readonly class OcspRevocationChecker implements RevocationCheckerInterface
     private function certificateMatchesResponder(CertificateFields $fields, DerNode $responderId): bool
     {
         if ($responderId->isContextTag(2)) {
-            return hash_equals($fields->subjectPublicKeyHash(), $responderId->child(0)?->content ?? '');
+            return hash_equals($fields->subjectPublicKeyHash(), $responderId->child(0)->content ?? '');
         }
 
         if ($responderId->isContextTag(1)) {
-            return hash_equals($fields->subjectNameDer(), $responderId->child(0)?->raw ?? '');
+            return hash_equals($fields->subjectNameDer(), $responderId->child(0)->raw ?? '');
         }
 
         return false;
@@ -364,7 +364,7 @@ final readonly class OcspRevocationChecker implements RevocationCheckerInterface
                 continue;
             }
 
-            $extnValue = $extension->child($extension->childCount() - 1)?->content ?? '';
+            $extnValue = $extension->child($extension->childCount() - 1)->content ?? '';
 
             try {
                 $echoed = DerDecoder::decode($extnValue)->content;
@@ -398,9 +398,9 @@ final readonly class OcspRevocationChecker implements RevocationCheckerInterface
                 continue;
             }
 
-            if (!hash_equals($expectedNameHash, $certId->child(1)?->content ?? '')
-                || !hash_equals($expectedKeyHash, $certId->child(2)?->content ?? '')
-                || !hash_equals($expectedSerial, $certId->child(3)?->content ?? '')) {
+            if (!hash_equals($expectedNameHash, $certId->child(1)->content ?? '')
+                || !hash_equals($expectedKeyHash, $certId->child(2)->content ?? '')
+                || !hash_equals($expectedSerial, $certId->child(3)->content ?? '')) {
                 continue;
             }
 
@@ -436,7 +436,7 @@ final readonly class OcspRevocationChecker implements RevocationCheckerInterface
 
     private function isFresh(DerNode $single): bool
     {
-        $thisUpdate = $this->parseTime($single->child(2)?->content ?? '');
+        $thisUpdate = $this->parseTime($single->child(2)->content ?? '');
 
         if ($thisUpdate === null) {
             return false;
@@ -451,7 +451,7 @@ final readonly class OcspRevocationChecker implements RevocationCheckerInterface
         $nextUpdateNode = $single->child(3);
 
         if ($nextUpdateNode !== null && $nextUpdateNode->isContextTag(0)) {
-            $nextUpdate = $this->parseTime($nextUpdateNode->child(0)?->content ?? '');
+            $nextUpdate = $this->parseTime($nextUpdateNode->child(0)->content ?? '');
 
             if ($nextUpdate !== null && $now > $nextUpdate + $this->clockSkewSeconds) {
                 return false; // stale

@@ -9,7 +9,6 @@ use Pulsar\Extension\Psd2\Internal\Certificate\Asn1\DerDecoder;
 use Pulsar\Extension\Psd2\Internal\Certificate\Asn1\DerNode;
 use Throwable;
 
-use function array_values;
 use function base64_decode;
 use function in_array;
 use function is_string;
@@ -135,7 +134,7 @@ final readonly class Psd2QcStatementsParser
                 }
 
                 $roleOid = DerDecoder::oidToString($roleOidNode->content);
-                $code = self::ROLE_OIDS[$roleOid] ?? ($role->child(1)?->content ?? '');
+                $code = self::ROLE_OIDS[$roleOid] ?? ($role->child(1)->content ?? '');
 
                 if ($code !== '' && !in_array($code, $roles, true)) {
                     $roles[] = $code;
@@ -143,10 +142,10 @@ final readonly class Psd2QcStatementsParser
             }
         }
 
-        $ncaName = trim($info->child(1)?->content ?? '');
-        $ncaId = trim($info->child(2)?->content ?? '');
+        $ncaName = trim($info->child(1)->content ?? '');
+        $ncaId = trim($info->child(2)->content ?? '');
 
-        return [array_values($roles), $ncaName, $ncaId];
+        return [$roles, $ncaName, $ncaId];
     }
 
     /**

@@ -61,19 +61,19 @@ final readonly class CertificateFields
     /** The raw DER of the issuer Name (for OCSP issuerNameHash / CRL issuer matching). */
     public function issuerNameDer(): string
     {
-        return $this->field($this->baseOffset() + 2)?->raw ?? '';
+        return $this->field($this->baseOffset() + 2)->raw ?? '';
     }
 
     /** The raw DER of the subject Name (to match a candidate issuer certificate). */
     public function subjectNameDer(): string
     {
-        return $this->field($this->baseOffset() + 4)?->raw ?? '';
+        return $this->field($this->baseOffset() + 4)->raw ?? '';
     }
 
     /** The serial number's INTEGER value bytes (verbatim, for the OCSP CertID). */
     public function serialNumberBytes(): string
     {
-        return $this->field($this->baseOffset())?->content ?? '';
+        return $this->field($this->baseOffset())->content ?? '';
     }
 
     /**

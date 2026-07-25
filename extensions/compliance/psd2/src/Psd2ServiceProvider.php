@@ -20,7 +20,6 @@ use Pulsar\Extension\Psd2\Internal\Certificate\DefaultCertificateValidator;
 use Pulsar\Extension\Psd2\Internal\Certificate\Revocation\CompositeRevocationChecker;
 use Pulsar\Extension\Psd2\Internal\Certificate\Revocation\CrlRevocationChecker;
 use Pulsar\Extension\Psd2\Internal\Certificate\Revocation\OcspRevocationChecker;
-use Pulsar\Extension\Psd2\Internal\Certificate\Revocation\RevocationCheckerInterface;
 use Pulsar\Extension\Psd2\Internal\Monitoring\InMemoryVelocityTracker;
 use Pulsar\Extension\Psd2\Internal\Monitoring\TransactionRiskAnalyzer;
 use Pulsar\Extension\Psd2\Internal\Sca\InMemoryScaChallengeStore;
@@ -165,8 +164,6 @@ final class Psd2ServiceProvider implements ServiceProviderInterface
                     new CrlRevocationChecker($httpClient),
                 );
             }
-
-            /** @var RevocationCheckerInterface|null $revocationChecker */
 
             return new DefaultCertificateValidator(
                 $config->certificate,

@@ -37,6 +37,9 @@ final class CborDecoder
         return new self($data)->decodeItem();
     }
 
+    /**
+     * @return int|string|bool|array<int|string, mixed>|null
+     */
     private function decodeItem(): int|string|bool|array|null
     {
         if ($this->offset >= strlen($this->data)) {
@@ -98,7 +101,6 @@ final class CborDecoder
         $result = [];
 
         for ($i = 0; $i < $count; $i++) {
-            /** @var mixed $key */
             $key = $this->decodeItem();
 
             if (!is_int($key) && !is_string($key)) {

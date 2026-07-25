@@ -192,6 +192,7 @@ final class WebAuthnAttestationVerifierTest extends TestCase
         self::assertNotFalse($cert);
         $pem = '';
         self::assertTrue(openssl_x509_export($cert, $pem));
+        self::assertIsString($pem);
 
         $base64 = (string) preg_replace('/-----(BEGIN|END) CERTIFICATE-----|\s+/', '', $pem);
         $der = base64_decode($base64, true);

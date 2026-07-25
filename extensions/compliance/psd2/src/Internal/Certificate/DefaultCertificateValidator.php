@@ -129,10 +129,10 @@ final readonly class DefaultCertificateValidator implements CertificateValidator
         // 119 495), decoded structurally rather than string-matched against the
         // certificate text.
         $psd2 = $this->qcStatementsParser->parseCertificate($pemCertificate);
-        $psd2Roles = $psd2?->roles ?? [];
-        $ncaName = $psd2?->ncaName ?? '';
-        $ncaId = $psd2?->ncaId ?? '';
-        $isQualified = $psd2?->qualified ?? false;
+        $psd2Roles = $psd2->roles ?? [];
+        $ncaName = $psd2->ncaName ?? '';
+        $ncaId = $psd2->ncaId ?? '';
+        $isQualified = $psd2->qualified ?? false;
 
         $authorizationNumber = $this->extractAuthorizationNumber($extensions);
 
