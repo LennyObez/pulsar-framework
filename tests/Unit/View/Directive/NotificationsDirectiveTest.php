@@ -7,13 +7,28 @@ namespace Pulsar\Tests\Unit\View\Directive;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\View\Directive\DirectiveRegistry;
 use Pulsar\View\Directive\NotificationsDirective;
+use Pulsar\View\ViewConfig;
 
 use function str_contains;
+use function sys_get_temp_dir;
 
 #[CoversClass(NotificationsDirective::class)]
+#[CoversClass(DirectiveRegistry::class)]
 final class NotificationsDirectiveTest extends TestCase
 {
+    #[Test]
+    public function isRegisteredAsABuiltinDirective(): void
+    {
+        // Regression: @notifications was fully implemented but never registered
+        // in registerBuiltins(), so `@notifications` compiled to nothing.
+        $registry = new DirectiveRegistry(new ViewConfig(templatePaths: [], cachePath: sys_get_temp_dir()));
+        $registry->registerBuiltins();
+
+        self::assertTrue($registry->has('notifications'));
+    }
+
     #[Test]
     public function nameReturnsNotifications(): void
     {

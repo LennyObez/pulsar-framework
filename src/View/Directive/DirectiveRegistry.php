@@ -135,6 +135,9 @@ final class DirectiveRegistry
         $this->register(new CloakMailDirective());
         $this->register(new CloakTelDirective());
 
+        // Notifications bell (degrades to empty when no repository is shared)
+        $this->register(new NotificationsDirective());
+
         // i18n
         $this->register(new I18nDirective());
         $this->register(new TranslateDirective());
