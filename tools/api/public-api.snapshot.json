@@ -9405,6 +9405,7 @@
                     "params": [
                         "bool $enabled",
                         "Pulsar\\Config\\StormProtectionConfig $stormProtection",
+                        "Pulsar\\Config\\OutboxConfig $outbox",
                         "array $unknownKeys"
                     ],
                     "return": null,
@@ -56931,6 +56932,7 @@
         "Pulsar\\Event\\Internal\\ListenerProvider",
         "Pulsar\\Event\\Internal\\ModuleEventDispatcher",
         "Pulsar\\Event\\Internal\\Outbox\\DatabaseOutboxPort",
+        "Pulsar\\Event\\Internal\\Outbox\\DispatchingIntegrationEventBus",
         "Pulsar\\Event\\Internal\\Outbox\\OutboxRelay",
         "Pulsar\\Event\\Internal\\Outbox\\OutboxRelayTickResult",
         "Pulsar\\Event\\Internal\\Outbox\\PendingEnvelope",

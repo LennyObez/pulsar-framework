@@ -12,7 +12,7 @@
 - [Stoppable Events](#stoppable-events)
 - [Compiled Event Map](#compiled-event-map)
 - [Observability](#observability)
-- [Extension Ports (Interface-Only)](#extension-ports-interface-only)
+- [Extension Ports](#extension-ports)
 - [Architecture](#architecture)
 
 Pulsar provides a PSR-14 compatible event dispatcher with envelope-based dispatch, storm protection, module scope tracking, and a compiled event map for zero-reflection production performance.
@@ -286,15 +286,50 @@ The event dispatcher emits metrics when a `MetricRegistry` is available:
 
 See [OpenTelemetry Integration](opentelemetry.md) for distributed tracing of event flows.
 
-## Extension ports (interface-only)
+## Extension ports
 
-Three port interfaces define extension points for persistence and serialization adapters. These are interface-only contracts - no built-in implementations ship with the framework:
+These port interfaces define extension points for persistence and serialization adapters:
 
-| Port              | Pattern              | Methods                                         |
-| ----------------- | -------------------- | ----------------------------------------------- |
-| `OutboxPort`      | Transactional outbox | `store()`, `markPublished()`, `pendingEvents()` |
-| `EventStorePort`  | Event sourcing       | `append()`, `eventsFor()`                       |
-| `EventSerializer` | Serialization        | `serialize()`, `deserialize()`                  |
+| Port              | Pattern              | Methods                                         | Built-in implementation                  |
+| ----------------- | -------------------- | ----------------------------------------------- | ---------------------------------------- |
+| `OutboxPort`      | Transactional outbox | `store()`, `markPublished()`, `pendingEvents()` | `DatabaseOutboxPort` (opt-in, see below) |
+| `EventStorePort`  | Event sourcing       | `append()`, `eventsFor()`                       | interface-only                           |
+| `EventSerializer` | Serialization        | `serialize()`, `deserialize()`                  | interface-only                           |
+
+### Transactional outbox (ADR-0027)
+
+The outbox delivers cross-boundary integration events reliably (at-least-once):
+producers persist the event in the **same transaction** as their domain writes,
+and a relay publishes it **after commit**, so a crash between the write and the
+publish can never lose or double-fire the event beyond the idempotency the
+consumer already needs.
+
+It is **opt-in** — enable it in `config/event.php`; existing deployments keep
+synchronous delivery unchanged:
+
+```php
+// config/event.php
+'outbox' => [
+    'enabled' => true,       // default false
+    'batch_size' => 100,     // events drained per relay tick
+    'max_publish_attempts' => 5, // then the event is dead-lettered
+],
+```
+
+When enabled (and a database connection is bound), the wiring binds `OutboxPort`
+to `DatabaseOutboxPort` (schema auto-installed), an in-process
+`IntegrationEventBusPort`, and the `OutboxRelay`.
+
+- **Producer:** inject `OutboxPort` and call `store($envelope)` inside your
+  domain transaction.
+- **Relay:** the `OutboxRelay` is deliberately runtime-agnostic — resolve it from
+  the container and call `tick()` from a cron, CLI worker, queue consumer, or
+  supervisor. Each tick publishes a batch and marks it published; events that
+  exhaust `max_publish_attempts` are dead-lettered (surfaced via
+  `deadLetteredEvents()`, never auto-deleted).
+- **Bus:** the default `DispatchingIntegrationEventBus` re-dispatches published
+  events in-process to `EventEnvelope` listeners. Bind your own
+  `IntegrationEventBusPort` to federate across process boundaries.
 
 ## Architecture
 

@@ -11,15 +11,21 @@ use Pulsar\Api\Internal;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\EventConfig;
 use Pulsar\Container\ContainerInterface;
+use Pulsar\Database\ConnectionInterface;
+use Pulsar\Event\Contract\OutboxPort;
 use Pulsar\Event\EventDispatcherInterface;
 use Pulsar\Event\Internal\EventDispatcher;
 use Pulsar\Event\Internal\ListenerProvider;
+use Pulsar\Event\Internal\Outbox\DatabaseOutboxPort;
+use Pulsar\Event\Internal\Outbox\DispatchingIntegrationEventBus;
+use Pulsar\Event\Internal\Outbox\OutboxRelay;
 use Pulsar\Event\Internal\StormGuard;
 use Pulsar\Event\ListenerProviderInterface;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Routing\Router;
+use Pulsar\Saga\Port\IntegrationEventBusPort;
 
 #[Internal]
 final readonly class EventWiring implements ServiceWiringInterface
@@ -77,5 +83,30 @@ final readonly class EventWiring implements ServiceWiringInterface
         $container->instance(EventDispatcher::class, $dispatcher);
         $container->instance(EventDispatcherInterface::class, $dispatcher);
         $container->instance(PsrEventDispatcherInterface::class, $dispatcher);
+
+        // Transactional outbox (ADR-0027), opt-in and DB-backed. Producers store
+        // integration events via the OutboxPort inside their domain transaction;
+        // the OutboxRelay publishes them after commit through the integration
+        // event bus (in-process by default). Only wired when enabled and a
+        // database connection is available.
+        if ($eventConfig->outbox->enabled && $container->has(ConnectionInterface::class)) {
+            /** @var ConnectionInterface $connection */
+            $connection = $container->get(ConnectionInterface::class);
+
+            $outbox = new DatabaseOutboxPort($connection);
+            $outbox->installSchema();
+            $container->instance(DatabaseOutboxPort::class, $outbox);
+            $container->instance(OutboxPort::class, $outbox);
+
+            $bus = new DispatchingIntegrationEventBus($dispatcher);
+            $container->instance(IntegrationEventBusPort::class, $bus);
+
+            $container->instance(OutboxRelay::class, new OutboxRelay(
+                $outbox,
+                $bus,
+                $eventConfig->outbox->batchSize,
+                $eventConfig->outbox->maxPublishAttempts,
+            ));
+        }
     }
 }
