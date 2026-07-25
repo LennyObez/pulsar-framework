@@ -65,7 +65,15 @@ final readonly class DerNode
 
     public function child(int $index): ?self
     {
-        return $this->children[$index] ?? null;
+        // Explicit bound check (not `?? null` or array_key_exists, which static
+        // analysis treats as always-true on a list) so the return stays
+        // genuinely nullable: a defensive `child(n)?->...` on a malformed
+        // certificate with too few children is NOT redundant.
+        if ($index < 0 || $index >= count($this->children)) {
+            return null;
+        }
+
+        return $this->children[$index];
     }
 
     public function childCount(): int

@@ -41,6 +41,21 @@ final readonly class EventMetadata
     }
 
     /**
+     * Create metadata for a brand-new event chain, minting fresh correlation
+     * and causation ids. Use when an event originates outside any request
+     * context — e.g. the outbox relay re-dispatching a committed integration
+     * event, where no inbound RequestContext exists to inherit ids from.
+     */
+    #[NoDiscard]
+    public static function generate(): self
+    {
+        return new self(
+            correlationId: CorrelationId::generate(),
+            causationId: CausationId::generate(),
+        );
+    }
+
+    /**
      * Create event metadata from a request context.
      */
     #[NoDiscard]

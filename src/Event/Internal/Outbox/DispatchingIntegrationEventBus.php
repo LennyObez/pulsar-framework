@@ -6,8 +6,6 @@ namespace Pulsar\Event\Internal\Outbox;
 
 use Override;
 use Pulsar\Api\Internal;
-use Pulsar\Context\CausationId;
-use Pulsar\Context\CorrelationId;
 use Pulsar\Event\EventDispatcherInterface;
 use Pulsar\Event\EventEnvelope;
 use Pulsar\Event\EventMetadata;
@@ -42,10 +40,7 @@ final readonly class DispatchingIntegrationEventBus implements IntegrationEventB
             $eventType,
             self::SCHEMA_VERSION,
             $payload,
-            new EventMetadata(
-                correlationId: CorrelationId::generate(),
-                causationId: CausationId::generate(),
-            ),
+            EventMetadata::generate(),
         );
 
         $this->dispatcher->dispatchEnvelope($envelope);

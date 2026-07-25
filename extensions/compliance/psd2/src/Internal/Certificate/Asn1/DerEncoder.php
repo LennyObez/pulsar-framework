@@ -73,13 +73,13 @@ final class DerEncoder
 
     public static function tlv(int $tag, string $content): string
     {
-        return chr($tag) . self::length(strlen($content)) . $content;
+        return chr($tag & 0xFF) . self::length(strlen($content)) . $content;
     }
 
     private static function length(int $length): string
     {
         if ($length < 0x80) {
-            return chr($length);
+            return chr($length & 0xFF);
         }
 
         $bytes = '';
@@ -90,7 +90,7 @@ final class DerEncoder
             $value >>= 8;
         }
 
-        return chr(0x80 | strlen($bytes)) . $bytes;
+        return chr((0x80 | strlen($bytes)) & 0xFF) . $bytes;
     }
 
     private static function encodeOidContent(string $dotted): string
@@ -100,7 +100,7 @@ final class DerEncoder
             $arcs[] = (int) $arc;
         }
 
-        $bytes = chr(40 * $arcs[0] + $arcs[1]);
+        $bytes = chr((40 * $arcs[0] + $arcs[1]) & 0xFF);
         $count = count($arcs);
 
         for ($i = 2; $i < $count; $i++) {

@@ -114,6 +114,7 @@ final class CacheRateLimiterTest extends TestCase
                 return [];
             }
 
+            /** @param iterable<string, mixed> $values */
             public function setMultiple(iterable $values, DateInterval|int|null $ttl = null): bool
             {
                 return true;
@@ -181,6 +182,7 @@ final class CacheRateLimiterTest extends TestCase
                 return [];
             }
 
+            /** @param iterable<string, mixed> $values */
             public function setMultiple(iterable $values, DateInterval|int|null $ttl = null): bool
             {
                 return true;
@@ -226,6 +228,7 @@ final class CacheRateLimiterTest extends TestCase
                 throw new RuntimeException('cache down');
             }
 
+            /** @param iterable<string, mixed> $values */
             public function setMultiple(iterable $values, DateInterval|int|null $ttl = null): bool
             {
                 throw new RuntimeException('cache down');

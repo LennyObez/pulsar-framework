@@ -154,7 +154,7 @@ final readonly class CrlRevocationChecker implements RevocationCheckerInterface
             return RevocationStatus::Unknown;
         }
 
-        $algorithm = self::SIGNATURE_ALGORITHMS[DerDecoder::oidToString($signatureAlgorithm->child(0)?->content ?? '')] ?? null;
+        $algorithm = self::SIGNATURE_ALGORITHMS[DerDecoder::oidToString($signatureAlgorithm->child(0)->content ?? '')] ?? null;
 
         if ($algorithm === null || !$this->verifySignature($tbs->raw, substr($signatureBits->content, 1), $issuerPem, $algorithm)) {
             return RevocationStatus::Unknown;
@@ -179,7 +179,7 @@ final readonly class CrlRevocationChecker implements RevocationCheckerInterface
         $serial = $leaf->serialNumberBytes();
 
         foreach ($revoked->children as $entry) {
-            if (hash_equals($serial, $entry->child(0)?->content ?? '')) {
+            if (hash_equals($serial, $entry->child(0)->content ?? '')) {
                 return RevocationStatus::Revoked;
             }
         }
