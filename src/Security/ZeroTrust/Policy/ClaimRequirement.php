@@ -5,9 +5,13 @@ declare(strict_types=1);
 namespace Pulsar\Security\ZeroTrust\Policy;
 
 use InvalidArgumentException;
+use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Security\ZeroTrust\Claim\ClaimSource;
+use Pulsar\Support\Coerce;
 
+use function is_array;
+use function is_string;
 use function sprintf;
 
 /**
@@ -40,5 +44,39 @@ final readonly class ClaimRequirement
                 sprintf('Claim requirement minConfidence must be between 0.0 and 1.0, got %f', $this->minConfidence),
             );
         }
+    }
+
+    /**
+     * Build from a config array (see config/security.php `zero_trust.rules`).
+     * Reads the `claim`, `min_confidence`, and `allowed_sources` keys, narrowing
+     * each via {@see Coerce} / runtime checks at this validator boundary.
+     *
+     * @param array<string, mixed> $data
+     */
+    #[NoDiscard]
+    public static function fromArray(array $data): self
+    {
+        $allowedSources = [];
+        /** @var mixed $rawSources */
+        $rawSources = $data['allowed_sources'] ?? [];
+
+        if (is_array($rawSources)) {
+            /** @var mixed $rawSource */
+            foreach ($rawSources as $rawSource) {
+                if (is_string($rawSource)) {
+                    $source = ClaimSource::tryFrom($rawSource);
+
+                    if ($source !== null) {
+                        $allowedSources[] = $source;
+                    }
+                }
+            }
+        }
+
+        return new self(
+            claimName: Coerce::string($data['claim'] ?? null, ''),
+            minConfidence: Coerce::float($data['min_confidence'] ?? null, 0.0),
+            allowedSources: $allowedSources,
+        );
     }
 }
