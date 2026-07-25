@@ -32,6 +32,8 @@ final readonly class DerNode
     public const int TAG_SET = 0x11;
     public const int TAG_PRINTABLE_STRING = 0x13;
     public const int TAG_IA5_STRING = 0x16;
+    public const int TAG_UTC_TIME = 0x17;
+    public const int TAG_GENERALIZED_TIME = 0x18;
 
     /**
      * @param int          $tagClass      Identifier class (0 universal, 2 context-specific, …)

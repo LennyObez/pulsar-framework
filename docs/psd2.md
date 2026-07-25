@@ -22,11 +22,14 @@ throws `Psd2Exception` and no later gate runs:
    from the ASN.1 `qcStatements` extension (ETSI TS 119 495), not string-matched
    against the certificate text.
 
-## Revocation (OCSP, RFC 6960 / RFC 8954)
+## Revocation (OCSP with CRL fallback)
 
 A certificate can chain to a trusted CA yet have been revoked since issuance, so
-revocation is confirmed on every validation. The extension ships a
-**self-contained OCSP client** — no dependency on the `openssl` command line:
+revocation is confirmed on every validation. Revocation is checked **OCSP first**
+(RFC 6960 / RFC 8954 — timely and low-bandwidth), falling back to a **CRL**
+(RFC 5280) for issuers that publish a CRL distribution point but no responder;
+the first definitive Good/Revoked verdict wins. Both are **self-contained** — no
+dependency on the `openssl` command line:
 
 - It builds a DER OCSP request for the leaf and POSTs it to the responder named
   in the leaf's Authority Information Access extension (through the framework's
@@ -37,6 +40,10 @@ revocation is confirmed on every validation. The extension ships a
   usage (§4.2.2.2).
 - The echoed nonce (when present) must match the one sent, and the matching
   `SingleResponse` must be within its `thisUpdate` / `nextUpdate` window.
+- The CRL fallback downloads the list from the leaf's CRL distribution point,
+  verifies the CRL's signature against the issuing CA, confirms it is current
+  (`thisUpdate` / `nextUpdate`), then checks whether the leaf's serial is listed
+  as revoked.
 
 The check needs the **issuing CA certificate**, resolved from the trust bundle.
 When the issuer cannot be resolved (a self-signed trust anchor, or an issuing CA
@@ -82,6 +89,5 @@ and `psd2_certificate_validated`.
 
 ## Roadmap
 
-OCSP is the primary revocation mechanism. A CRL (RFC 5280) fallback for issuers
-that publish a CRL distribution point but no OCSP responder is planned as a
-follow-up; the CRL distribution point is already decoded by `CertificateFields`.
+OCSP and CRL revocation are both implemented. Certificate transparency (SCT)
+verification is a possible future addition.

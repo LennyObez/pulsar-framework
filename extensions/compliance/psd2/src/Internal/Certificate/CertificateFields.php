@@ -167,6 +167,58 @@ final readonly class CertificateFields
     }
 
     /**
+     * The HTTP(S) CRL distribution point URLs from the CRL Distribution Points
+     * extension (RFC 5280 §4.2.1.13), in document order.
+     *
+     * CRLDistributionPoints ::= SEQUENCE OF DistributionPoint, where each
+     * DistributionPoint's distributionPoint [0] fullName [0] is a GeneralNames
+     * whose uniformResourceIdentifier is a [6] IA5String.
+     *
+     * @return list<string>
+     */
+    public function crlDistributionUrls(): array
+    {
+        $extension = $this->crlDistributionExtension();
+
+        if ($extension === null) {
+            return [];
+        }
+
+        try {
+            $distributionPoints = DerDecoder::decode($extension);
+        } catch (Throwable) {
+            return [];
+        }
+
+        $urls = [];
+
+        foreach ($distributionPoints->children as $distributionPoint) {
+            // DistributionPoint ::= SEQUENCE { distributionPoint [0] ... }
+            $name = $distributionPoint->child(0);
+
+            if ($name === null || !$name->isContextTag(0)) {
+                continue;
+            }
+
+            // distributionPoint [0] DistributionPointName; fullName [0] GeneralNames.
+            $fullName = $name->child(0);
+
+            if ($fullName === null || !$fullName->isContextTag(0)) {
+                continue;
+            }
+
+            foreach ($fullName->children as $generalName) {
+                // uniformResourceIdentifier is GeneralName [6] IMPLICIT IA5String.
+                if ($generalName->isContextTag(6) && $generalName->content !== '') {
+                    $urls[] = $generalName->content;
+                }
+            }
+        }
+
+        return $urls;
+    }
+
+    /**
      * Whether the Extended Key Usage extension asserts the given purpose OID —
      * used to confirm a delegated OCSP responder carries id-kp-OCSPSigning
      * (RFC 6960 §4.2.2.2).

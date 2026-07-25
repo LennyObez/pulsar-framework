@@ -17,6 +17,8 @@ use Pulsar\Extension\Psd2\Contracts\TransactionRiskAnalyzerInterface;
 use Pulsar\Extension\Psd2\Contracts\VelocityTrackerInterface;
 use Pulsar\Extension\Psd2\Exception\Psd2Exception;
 use Pulsar\Extension\Psd2\Internal\Certificate\DefaultCertificateValidator;
+use Pulsar\Extension\Psd2\Internal\Certificate\Revocation\CompositeRevocationChecker;
+use Pulsar\Extension\Psd2\Internal\Certificate\Revocation\CrlRevocationChecker;
 use Pulsar\Extension\Psd2\Internal\Certificate\Revocation\OcspRevocationChecker;
 use Pulsar\Extension\Psd2\Internal\Certificate\Revocation\RevocationCheckerInterface;
 use Pulsar\Extension\Psd2\Internal\Monitoring\InMemoryVelocityTracker;
@@ -156,7 +158,12 @@ final class Psd2ServiceProvider implements ServiceProviderInterface
                     : new HttpClient();
 
                 /** @var HttpClientInterface $httpClient */
-                $revocationChecker = new OcspRevocationChecker($httpClient);
+                // OCSP first (timely, low-bandwidth); CRL as the fallback for
+                // issuers that publish a distribution point but no responder.
+                $revocationChecker = new CompositeRevocationChecker(
+                    new OcspRevocationChecker($httpClient),
+                    new CrlRevocationChecker($httpClient),
+                );
             }
 
             /** @var RevocationCheckerInterface|null $revocationChecker */
