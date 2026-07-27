@@ -6,6 +6,7 @@ namespace Pulsar\Security\AntiSpam;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Security\AntiSpam\TimeTrap\TimeTrapFailurePolicy;
 use Pulsar\Support\Coerce;
 
 use function is_array;
@@ -47,6 +48,9 @@ final readonly class AntiSpamConfig
      * @param int $timeTrapMinSeconds Minimum plausible human fill time in seconds; a validly-signed
      *     stamp submitted faster is the only case the check blocks (everything else fails open)
      * @param string $timeTrapFieldName Hidden field name carrying the signed render timestamp
+     * @param TimeTrapFailurePolicy $timeTrapFailurePolicy What a standalone {@see TimeTrapGuard} does on a too-fast
+     *     submit (silent-accept | hard-reject | score-only). Default score-only fails open; the pipeline check is
+     *     always advisory regardless. The field name and min-seconds above are shared by the standalone gate.
      * @param bool $behaviorEnabled Enable the self-hosted behavioural-signals score-only check (opt-in)
      * @param string $behaviorFieldName Hidden field name carrying the client behavioural blob
      * @param array<string, int|float> $behaviorWeights HeuristicScorer weight overrides (see HeuristicScorer::fromWeights)
@@ -78,6 +82,7 @@ final readonly class AntiSpamConfig
         public bool $timeTrapEnabled = false,
         public int $timeTrapMinSeconds = 3,
         public string $timeTrapFieldName = 'pulsar-form-ts',
+        public TimeTrapFailurePolicy $timeTrapFailurePolicy = TimeTrapFailurePolicy::ScoreOnly,
         public bool $behaviorEnabled = false,
         public string $behaviorFieldName = 'pulsar-bx',
         public array $behaviorWeights = [],
@@ -111,6 +116,7 @@ final readonly class AntiSpamConfig
      *     time_trap_enabled?: bool,
      *     time_trap_min_seconds?: int,
      *     time_trap_field_name?: string,
+     *     time_trap_failure_policy?: string,
      *     behavior_enabled?: bool,
      *     behavior_field_name?: string,
      *     behavior_weights?: array<string, int|float>,
@@ -149,6 +155,9 @@ final readonly class AntiSpamConfig
             timeTrapEnabled: Coerce::strictBool($data['time_trap_enabled'] ?? null),
             timeTrapMinSeconds: Coerce::int($data['time_trap_min_seconds'] ?? null, 3),
             timeTrapFieldName: Coerce::string($data['time_trap_field_name'] ?? null, 'pulsar-form-ts'),
+            timeTrapFailurePolicy: TimeTrapFailurePolicy::tryFrom(
+                Coerce::string($data['time_trap_failure_policy'] ?? null, 'score_only'),
+            ) ?? TimeTrapFailurePolicy::ScoreOnly,
             behaviorEnabled: Coerce::strictBool($data['behavior_enabled'] ?? null),
             behaviorFieldName: Coerce::string($data['behavior_field_name'] ?? null, 'pulsar-bx'),
             behaviorWeights: is_array($behaviorWeights) ? $behaviorWeights : [],

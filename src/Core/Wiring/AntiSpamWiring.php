@@ -73,6 +73,7 @@ use Pulsar\Security\AntiSpam\Risk\Ja4SignalProvider;
 use Pulsar\Security\AntiSpam\Risk\VelocityConfig;
 use Pulsar\Security\AntiSpam\Risk\VelocitySignalProvider;
 use Pulsar\Security\AntiSpam\TimeTrap\TimeTrapCheck;
+use Pulsar\Security\AntiSpam\TimeTrap\TimeTrapGuard;
 use Pulsar\Security\AntiSpam\TimeTrap\TimeTrapRenderer;
 use Pulsar\Security\AntiSpam\TimeTrap\TimeTrapService;
 use Pulsar\Security\AntiSpam\TurnstileVerifier;
@@ -804,11 +805,18 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
         $container->instance(TimeTrapRenderer::class, $renderer);
         TimeTrapRenderer::setGlobalInstance($renderer);
 
-        return new TimeTrapCheck(
+        // Standalone gate (#[Api]): owns the shared timing rule + failure policy,
+        // usable by a form that has no anti-spam pipeline. TimeTrapCheck adapts it
+        // into the pipeline, so the two paths can never apply divergent rules.
+        $guard = new TimeTrapGuard(
             $service,
             $config->timeTrapFieldName,
             $config->timeTrapMinSeconds,
+            $config->timeTrapFailurePolicy,
         );
+        $container->instance(TimeTrapGuard::class, $guard);
+
+        return new TimeTrapCheck($guard);
     }
 
     /**
