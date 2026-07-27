@@ -7,6 +7,7 @@ namespace Pulsar\Tests\Unit\Core\Boot;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function array_merge;
 use function dirname;
 use function file_get_contents;
 use function glob;
@@ -35,8 +36,17 @@ final class ExtensionSandboxDriftTest extends TestCase
 
         $trusted = $this->trustedExtensions($root . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'extensions.php');
 
-        $manifests = glob($root . DIRECTORY_SEPARATOR . 'extensions' . DIRECTORY_SEPARATOR . '*' . DIRECTORY_SEPARATOR . 'pulsar.json');
-        self::assertIsArray($manifests);
+        // Bundled extensions live either flat (extensions/<name>/pulsar.json) or
+        // one group level deep (extensions/compliance/<name>/pulsar.json). Glob
+        // BOTH depths: a single-level glob was blind to the compliance group and
+        // let 7 core-tier extensions fall to the community cap (kernel boot abort)
+        // without failing this guard. Test fixtures live under a further tests/
+        // dir, so neither pattern picks them up.
+        $extensions = $root . DIRECTORY_SEPARATOR . 'extensions' . DIRECTORY_SEPARATOR;
+        $manifests = array_merge(
+            glob($extensions . '*' . DIRECTORY_SEPARATOR . 'pulsar.json') ?: [],
+            glob($extensions . '*' . DIRECTORY_SEPARATOR . '*' . DIRECTORY_SEPARATOR . 'pulsar.json') ?: [],
+        );
         self::assertNotEmpty($manifests, 'expected bundled extension manifests to exist');
 
         foreach ($manifests as $manifestPath) {

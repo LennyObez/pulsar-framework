@@ -1,5 +1,6 @@
 {
   "name": "pulsar/dora",
+  "trust_tier": "core",
   "description": "EU DORA (2022/2554) Digital Operational Resilience Act compliance extension",
   "version": "1.0.0",
   "type": "extension_class",
