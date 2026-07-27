@@ -179,8 +179,14 @@ return [
     // Minimum plausible human fill time; a signed stamp submitted faster is the
     // only case the check blocks.
     'time_trap_min_seconds' => 3,
-    // Hidden field name carrying the signed render timestamp.
+    // Hidden field name carrying the signed render timestamp. Shared by the
+    // @timetrap renderer, the pipeline check, and the standalone TimeTrapGuard.
     'time_trap_field_name' => 'pulsar-form-ts',
+    // What a STANDALONE TimeTrapGuard does on a too-fast submit outside the
+    // pipeline: 'silent_accept' (accept the request, drop the payload, tell the
+    // bot nothing), 'hard_reject' (refuse, e.g. 422), or 'score_only' (advisory,
+    // fail-open — the default, and always the pipeline check's behaviour).
+    'time_trap_failure_policy' => 'score_only',
 ];
 ```
 
@@ -189,6 +195,34 @@ The check requires a configured `PULSAR_MASTER_KEY`; without one it disables its
 ### Rendering and verifying
 
 Add `@timetrap('your-form-id')` (or just `@shield`) inside the form. To bind a stamp to one form so it cannot be replayed against another, pass the same identifier to the renderer and set `AntiSpamContext::$formId` to it at submission. With no `formId` the stamp still enforces the fill-time window; only cross-form replay protection is waived.
+
+### Standalone gate (forms without a pipeline)
+
+A lightweight form that has no `AntiSpamPipeline` — a newsletter opt-in, a one-field contact box — can still adopt the time-trap directly through `TimeTrapGuard` (`#[Api]`), which the anti-spam wiring registers in the container. Render the stamp as usual (`@timetrap('newsletter')`), then gate the submission on the guard's decision:
+
+```php
+use Pulsar\Security\AntiSpam\TimeTrap\TimeTrapDecision;
+use Pulsar\Security\AntiSpam\TimeTrap\TimeTrapGuard;
+
+public function subscribe(ServerRequestInterface $request, TimeTrapGuard $timeTrap): Response
+{
+    $fields = (array) $request->getParsedBody();
+
+    return match ($timeTrap->evaluate($fields, formId: 'newsletter')) {
+        TimeTrapDecision::Reject       => Response::text('Too fast.', 422),
+        TimeTrapDecision::SilentlyDrop => $this->thankYou(),  // show success, drop the payload
+        TimeTrapDecision::Accept       => $this->store($fields),
+    };
+}
+```
+
+The guard shares the configured field name (`TimeTrapGuard::fieldName()`), min-seconds, and signing key with the `@timetrap` renderer and the pipeline `TimeTrapCheck`, so a form is consistent end to end. The **failure policy** (`time_trap_failure_policy`) chooses the action on a genuine too-fast submit:
+
+- `silent_accept` — the state-of-the-art posture for a lead form: return the normal success response but drop the payload (`TimeTrapDecision::SilentlyDrop`), revealing nothing to the bot.
+- `hard_reject` — refuse visibly (`TimeTrapDecision::Reject`), e.g. HTTP 422.
+- `score_only` (default) — never block outside a pipeline (`TimeTrapDecision::Accept`); the signal is advisory, preserving zero-lost-lead. Call `TimeTrapGuard::isTooFast()` if you want the raw signal to log or score yourself.
+
+Every fail-open case (missing, tampered, wrong-form, or stale stamp) returns `Accept` under **all** policies — the policy governs only the one genuine "too fast" case.
 
 ### Security properties
 

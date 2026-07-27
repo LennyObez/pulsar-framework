@@ -39721,6 +39721,7 @@
                         "bool $timeTrapEnabled",
                         "int $timeTrapMinSeconds",
                         "string $timeTrapFieldName",
+                        "Pulsar\\Security\\AntiSpam\\TimeTrap\\TimeTrapFailurePolicy $timeTrapFailurePolicy",
                         "bool $behaviorEnabled",
                         "string $behaviorFieldName",
                         "array $behaviorWeights"
@@ -40466,6 +40467,84 @@
                     ],
                     "return": "Pulsar\\Security\\AntiSpam\\Risk\\VelocityConfig",
                     "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Security\\AntiSpam\\TimeTrap\\TimeTrapDecision": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "cases": {
+                    "params": [],
+                    "return": "array",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Security\\AntiSpam\\TimeTrap\\TimeTrapFailurePolicy": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "cases": {
+                    "params": [],
+                    "return": "array",
+                    "static": true
+                },
+                "from": {
+                    "params": [
+                        "string|int $value"
+                    ],
+                    "return": "static",
+                    "static": true
+                },
+                "tryFrom": {
+                    "params": [
+                        "string|int $value"
+                    ],
+                    "return": "?static",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Security\\AntiSpam\\TimeTrap\\TimeTrapGuard": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "Pulsar\\Security\\AntiSpam\\TimeTrap\\TimeTrapService $service",
+                        "string $fieldName",
+                        "int $minSeconds",
+                        "Pulsar\\Security\\AntiSpam\\TimeTrap\\TimeTrapFailurePolicy $failurePolicy"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "evaluate": {
+                    "params": [
+                        "array $formFields",
+                        "string $formId",
+                        "?int $now"
+                    ],
+                    "return": "Pulsar\\Security\\AntiSpam\\TimeTrap\\TimeTrapDecision",
+                    "static": false
+                },
+                "fieldName": {
+                    "params": [],
+                    "return": "string",
+                    "static": false
+                },
+                "isTooFast": {
+                    "params": [
+                        "array $formFields",
+                        "string $formId",
+                        "?int $now"
+                    ],
+                    "return": "bool",
+                    "static": false
                 }
             },
             "constants": []

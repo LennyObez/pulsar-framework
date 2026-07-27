@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Security\AntiSpam\AntiSpamContext;
 use Pulsar\Security\AntiSpam\TimeTrap\TimeTrapCheck;
+use Pulsar\Security\AntiSpam\TimeTrap\TimeTrapGuard;
 use Pulsar\Security\AntiSpam\TimeTrap\TimeTrapService;
 use Pulsar\Security\AntiSpam\TimeTrap\TimeTrapToken;
 
@@ -30,7 +31,7 @@ final class TimeTrapCheckTest extends TestCase
 
     private function check(TimeTrapService $service): TimeTrapCheck
     {
-        return new TimeTrapCheck($service, self::FIELD, minSeconds: 3);
+        return new TimeTrapCheck(new TimeTrapGuard($service, self::FIELD, minSeconds: 3));
     }
 
     /**
