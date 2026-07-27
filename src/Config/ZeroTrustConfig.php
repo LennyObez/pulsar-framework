@@ -23,8 +23,15 @@ use function is_array;
  * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class ZeroTrustConfig
+final readonly class ZeroTrustConfig implements ReportsUnknownKeys
 {
+    /** Keys read from the `zero_trust` sub-array of config/security.php. */
+    private const array KNOWN_KEYS = [
+        'enabled', 'default_min_confidence', 'continuous_verification_interval_seconds',
+        'device_identity_required', 'step_up', 'retention_policies', 'signal_providers',
+        'trust_score_threshold', 'rules',
+    ];
+
     /**
      * @param bool $enabled Whether zero-trust evaluation is active
      * @param float $defaultMinConfidence Default minimum confidence for policy rules (0.0-1.0)
@@ -36,6 +43,10 @@ final readonly class ZeroTrustConfig
      * @param float $trustScoreThreshold Minimum trust score to allow access (0.0-1.0)
      * @param list<PolicyRule> $rules Policy rules the engine evaluates (deny-by-default: with no rules,
      *        an enabled zero-trust route denies every request)
+     * @param list<string> $unknownKeys Keys present in the raw `zero_trust` array that
+     *        this DTO does not read, including those of the nested `step_up` section.
+     *        Zero-trust is deny-by-default, so a misspelled key here fails closed
+     *        rather than open — but it still silently discards the operator's intent.
      */
     public function __construct(
         public bool $enabled = false,
@@ -47,7 +58,16 @@ final readonly class ZeroTrustConfig
         public array $signalProviders = [],
         public float $trustScoreThreshold = 0.6,
         public array $rules = [],
+        public array $unknownKeys = [],
     ) {}
+
+    /**
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
+    }
 
     /**
      * Build from the raw zero-trust config array.
@@ -82,12 +102,14 @@ final readonly class ZeroTrustConfig
             ? array_values(array_filter($rawRules, is_array(...)))
             : [];
 
+        $stepUp = StepUpConfig::fromArray($stepUpData);
+
         return new self(
             enabled: Coerce::strictBool($data['enabled'] ?? null),
             defaultMinConfidence: Coerce::float($data['default_min_confidence'] ?? null, 0.7),
             continuousVerificationIntervalSeconds: Coerce::strictInt($data['continuous_verification_interval_seconds'] ?? null, 300),
             deviceIdentityRequired: Coerce::strictBool($data['device_identity_required'] ?? null),
-            stepUp: StepUpConfig::fromArray($stepUpData),
+            stepUp: $stepUp,
             retentionPolicies: array_map(
                 static fn(array $item): SignalRetentionPolicy => SignalRetentionPolicy::fromArray($item),
                 $retentionPolicies,
@@ -98,6 +120,10 @@ final readonly class ZeroTrustConfig
                 static fn(array $item): PolicyRule => PolicyRule::fromArray($item),
                 $ruleArrays,
             ),
+            unknownKeys: [
+                ...UnknownKeys::collect($data, self::KNOWN_KEYS),
+                ...UnknownKeys::nested('step_up', $stepUp),
+            ],
         );
     }
 }

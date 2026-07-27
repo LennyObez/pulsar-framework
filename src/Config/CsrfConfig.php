@@ -17,8 +17,14 @@ use function in_array;
  * @api
  */
 #[Api(since: '1.0.0')]
-readonly class CsrfConfig
+readonly class CsrfConfig implements ReportsUnknownKeys
 {
+    /** Keys read from the `csrf` sub-array of config/security.php. */
+    private const array KNOWN_KEYS = [
+        'enabled', 'token_length', 'header_name', 'form_field_name',
+        'trusted_origins', 'origin_validation',
+    ];
+
     /**
      * @param list<string> $trustedOrigins Additional origins accepted beyond the
      *     request's own (e.g. a separate admin domain): ['https://admin.example.com'].
@@ -32,6 +38,10 @@ readonly class CsrfConfig
      *     check. 'required' also rejects the fully-absent case. 'off' disables
      *     Layer 1 entirely — not recommended; the synchronizer token then stands
      *     alone. Note an empty $trustedOrigins no longer disables the layer.
+     * @param list<string> $unknownKeys Keys present in the raw `csrf` array that this
+     *     DTO does not read — reported at boot rather than silently ignored, since a
+     *     misspelled key here leaves a CSRF control at its default instead of the
+     *     value the operator intended.
      */
     public function __construct(
         public bool $enabled,
@@ -40,7 +50,16 @@ readonly class CsrfConfig
         public string $formFieldName,
         public array $trustedOrigins = [],
         public string $originValidation = 'optional',
+        public array $unknownKeys = [],
     ) {}
+
+    /**
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
+    }
 
     /**
      * Build from the raw CSRF config array.
@@ -62,6 +81,7 @@ readonly class CsrfConfig
             formFieldName: Coerce::string($data['form_field_name'] ?? null, '_csrf_token'),
             trustedOrigins: Coerce::listOfString($data['trusted_origins'] ?? null),
             originValidation: $originValidation,
+            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
         );
     }
 }

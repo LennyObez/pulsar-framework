@@ -24,10 +24,25 @@ use function is_string;
  * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class PermissionsPolicyConfig
+final readonly class PermissionsPolicyConfig implements ReportsUnknownKeys
 {
     /**
+     * Keys read from the `headers.permissions_policy` sub-array of
+     * config/security.php. Features beyond this list belong under `additional`,
+     * which is an open map by design — that is what keeps this list closed.
+     */
+    private const array KNOWN_KEYS = [
+        'camera', 'microphone', 'geolocation', 'accelerometer', 'gyroscope',
+        'magnetometer', 'payment', 'usb', 'autoplay', 'fullscreen',
+        'picture_in_picture', 'additional',
+    ];
+
+    /**
      * @param array<string, string> $additional Extra feature => allowlist pairs
+     * @param list<string> $unknownKeys Keys present in the raw `permissions_policy`
+     *     array that this DTO does not read — a browser feature written at the top
+     *     level instead of under `additional` is silently dropped, leaving the
+     *     feature at its default rather than the intended allowlist.
      */
     public function __construct(
         public string $camera = '()',
@@ -42,7 +57,16 @@ final readonly class PermissionsPolicyConfig
         public string $fullscreen = '(self)',
         public string $pictureInPicture = '(self)',
         public array $additional = [],
+        public array $unknownKeys = [],
     ) {}
+
+    /**
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
+    }
 
     #[NoDiscard]
     public function toHeaderValue(): string
@@ -105,6 +129,7 @@ final readonly class PermissionsPolicyConfig
             fullscreen: $data['fullscreen'] ?? '(self)',
             pictureInPicture: $data['picture_in_picture'] ?? '(self)',
             additional: $additional,
+            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
         );
     }
 }

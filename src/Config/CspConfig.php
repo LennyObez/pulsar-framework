@@ -21,10 +21,26 @@ use function str_contains;
  * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class CspConfig
+final readonly class CspConfig implements ReportsUnknownKeys
 {
     /**
+     * Keys read from the `headers.csp` sub-array of config/security.php.
+     * Directives beyond these named properties belong under `custom_directives`,
+     * an open map by design — which is what lets this list stay closed.
+     */
+    private const array KNOWN_KEYS = [
+        'enabled', 'report_only', 'default_src', 'script_src', 'style_src', 'img_src',
+        'font_src', 'connect_src', 'media_src', 'object_src', 'frame_src',
+        'frame_ancestors', 'base_uri', 'form_action', 'upgrade_insecure_requests',
+        'report_uri', 'report_to', 'custom_directives',
+    ];
+
+    /**
      * @param array<string, string> $customDirectives Additional CSP directives not covered by named properties
+     * @param list<string> $unknownKeys Keys present in the raw `csp` array that this DTO
+     *     does not read. A CSP directive misspelled here (`scripts_src`, or a hyphenated
+     *     `script-src` instead of the snake_case key) silently leaves the directive at
+     *     its restrictive default — the policy still holds, but not the one written.
      */
     public function __construct(
         public bool $enabled = true,
@@ -45,7 +61,16 @@ final readonly class CspConfig
         public string $reportUri = '',
         public string $reportTo = '',
         public array $customDirectives = [],
+        public array $unknownKeys = [],
     ) {}
+
+    /**
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
+    }
 
     #[NoDiscard]
     public function toHeaderValue(): string
@@ -167,6 +192,7 @@ final readonly class CspConfig
             reportUri: $reportUri,
             reportTo: $data['report_to'] ?? '',
             customDirectives: $customDirectives,
+            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
         );
     }
 }

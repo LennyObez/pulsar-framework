@@ -7,8 +7,6 @@ namespace Pulsar\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function array_map;
-
 /**
  * Top-level typed configuration DTO for `config/security.php`.
  *
@@ -54,25 +52,6 @@ final readonly class SecurityConfig implements ReportsUnknownKeys
     }
 
     /**
-     * Prefix a nested section's unknown keys with its config path, so
-     * `session` + `driver` reads as `session.driver`. Sections that do not yet
-     * report unknown keys contribute nothing.
-     *
-     * @return list<string>
-     */
-    private static function nested(string $prefix, ?object $child): array
-    {
-        if (!$child instanceof ReportsUnknownKeys) {
-            return [];
-        }
-
-        return array_map(
-            static fn(string $key): string => $prefix . '.' . $key,
-            $child->unknownConfigKeys(),
-        );
-    }
-
-    /**
      * Build from the raw security config array and environment.
      *
      * @param array{
@@ -108,11 +87,12 @@ final readonly class SecurityConfig implements ReportsUnknownKeys
 
         $unknownKeys = [
             ...UnknownKeys::collect($data, self::KNOWN_KEYS),
-            ...self::nested('session', $session),
-            ...self::nested('csrf', $csrf),
-            ...self::nested('headers', $headers),
-            ...self::nested('rate_limiting', $rateLimit),
-            ...self::nested('auth', $auth),
+            ...UnknownKeys::nested('session', $session),
+            ...UnknownKeys::nested('csrf', $csrf),
+            ...UnknownKeys::nested('headers', $headers),
+            ...UnknownKeys::nested('rate_limiting', $rateLimit),
+            ...UnknownKeys::nested('auth', $auth),
+            ...UnknownKeys::nested('zero_trust', $zeroTrust),
         ];
 
         return new self(

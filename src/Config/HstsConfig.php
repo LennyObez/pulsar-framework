@@ -14,8 +14,13 @@ use Pulsar\Api\Api;
  * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class HstsConfig
+final readonly class HstsConfig implements ReportsUnknownKeys
 {
+    /** Keys read from the `headers.hsts` sub-array of config/security.php. */
+    private const array KNOWN_KEYS = [
+        'enabled', 'max_age', 'include_sub_domains', 'preload', 'emitted_at_edge',
+    ];
+
     /**
      * @param bool $emittedAtEdge TLS is terminated and HSTS asserted at the edge
      *        (CDN / reverse proxy), so the application deliberately does NOT emit
@@ -23,6 +28,9 @@ final readonly class HstsConfig
      *        Independent of {@see $enabled}: when true, the security-posture
      *        checks treat HTTPS-enforcement and HSTS as satisfied without the app
      *        emitting the header. Leave false for app-emitted HSTS.
+     * @param list<string> $unknownKeys Keys present in the raw `hsts` array that this
+     *        DTO does not read — `include_subdomains` written without the underscore
+     *        before "domains" silently reverts to the default instead of erroring.
      */
     public function __construct(
         public bool $enabled = true,
@@ -30,7 +38,16 @@ final readonly class HstsConfig
         public bool $includeSubDomains = true,
         public bool $preload = false,
         public bool $emittedAtEdge = false,
+        public array $unknownKeys = [],
     ) {}
+
+    /**
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
+    }
 
     /**
      * Whether HTTPS/HSTS is asserted at all -- by the app emitting the header,
@@ -77,6 +94,7 @@ final readonly class HstsConfig
             includeSubDomains: (bool) ($data['include_sub_domains'] ?? true),
             preload: (bool) ($data['preload'] ?? false),
             emittedAtEdge: (bool) ($data['emitted_at_edge'] ?? false),
+            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
         );
     }
 }
