@@ -75,5 +75,16 @@ return [
         'pulsar/studio' => ['tier' => 'core'],
         'pulsar/subscriptions' => ['tier' => 'core'],
         'pulsar/tickets' => ['tier' => 'core'],
+        // Compliance extensions live nested under extensions/compliance/*. They
+        // are first-party and register services (ContainerWrite) via their
+        // ServiceProviders, so they need core tier like every other bundled
+        // extension. The drift guard globs both depths to keep this complete.
+        'pulsar/data-act' => ['tier' => 'core'],
+        'pulsar/dora' => ['tier' => 'core'],
+        'pulsar/dsa' => ['tier' => 'core'],
+        'pulsar/eidas' => ['tier' => 'core'],
+        'pulsar/fhir' => ['tier' => 'core'],
+        'pulsar/medical-devices' => ['tier' => 'core'],
+        'pulsar/psd2' => ['tier' => 'core'],
     ],
 ];
