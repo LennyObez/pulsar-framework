@@ -8,7 +8,10 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Cache\CacheAllowedClasses;
+use Pulsar\Cache\CachedRoute;
 use Pulsar\Cache\CacheException;
+use Pulsar\Cache\RouteHandler;
+use Pulsar\Cache\RouteHandlerType;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\ConfigRepository;
 use Pulsar\View\ViewConfig;
@@ -235,6 +238,35 @@ final class CacheAllowedClassesTest extends TestCase
             serialize($restored),
             'The cache allowlist must round-trip the real config graph with no __PHP_Incomplete_Class loss.',
         );
+    }
+
+    #[Test]
+    public function scanCoversTheRouteCacheDtosRegardlessOfClassmapOptimization(): void
+    {
+        // Regression guard for the warm-cache boot crash: the route cache
+        // serializes CachedRoute / RouteHandler / RouteHandlerType, but forCache()
+        // is fed only the config blob, so these must come from scan(). Relying on
+        // Composer's classmap — which is empty of PSR-4 classes when the autoloader
+        // is not optimized (dev, and a plain CI `composer install`) — dropped them
+        // from the allowlist, so every warm-cache boot reconstructed routes as
+        // __PHP_Incomplete_Class and aborted. scan() must find them via the
+        // authoritative src/ directory scan, independent of classmap optimization.
+        $repoRoot = dirname(__DIR__, 3);
+        $allowed = CacheAllowedClasses::scan(
+            $repoRoot . DIRECTORY_SEPARATOR . 'vendor',
+            $repoRoot . DIRECTORY_SEPARATOR . 'src',
+        );
+
+        self::assertContains(CachedRoute::class, $allowed);
+        self::assertContains(RouteHandler::class, $allowed);
+        self::assertContains(RouteHandlerType::class, $allowed);
+
+        // The DTOs must reconstruct as real objects under the allowlist, never as
+        // __PHP_Incomplete_Class.
+        $serialized = serialize(new RouteHandler(RouteHandlerType::Invokable, 'App\\Controller'));
+        /** @var mixed $restored */
+        $restored = unserialize($serialized, ['allowed_classes' => $allowed]);
+        self::assertInstanceOf(RouteHandler::class, $restored);
     }
 
     #[Test]
