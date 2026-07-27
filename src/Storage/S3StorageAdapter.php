@@ -7,7 +7,6 @@ namespace Pulsar\Storage;
 use NoDiscard;
 use Override;
 
-use function curl_close;
 use function curl_errno;
 use function curl_error;
 use function curl_exec;
@@ -204,23 +203,24 @@ final class S3StorageAdapter implements StorageAdapterInterface
         /** @phpstan-ignore argument.type (cURL option array types are overly strict in PHPStan stubs) */
         curl_setopt_array($ch, $options);
 
-        try {
-            $responseBody = curl_exec($ch);
+        // No curl_close(): it has been a no-op since PHP 8.0 and is formally
+        // deprecated on PHP 8.5 (the framework's declared target), so calling it
+        // emits E_DEPRECATED on every request -- which lands in the response body
+        // under display_errors=On. The CurlHandle frees itself when $ch goes out
+        // of scope, exactly as CurlMailHttpClient already relies on. The
+        // try/finally existed only to close the handle, so it goes with it.
+        $responseBody = curl_exec($ch);
 
-            if (curl_errno($ch) !== 0) {
-                $error = curl_error($ch);
-                throw StorageException::connectionFailed($error);
-            }
-
-            $statusCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-
-            return [
-                'status' => $statusCode,
-                'body' => is_string($responseBody) ? $responseBody : '',
-            ];
-        } finally {
-            curl_close($ch);
+        if (curl_errno($ch) !== 0) {
+            throw StorageException::connectionFailed(curl_error($ch));
         }
+
+        $statusCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+        return [
+            'status' => $statusCode,
+            'body' => is_string($responseBody) ? $responseBody : '',
+        ];
     }
 
     /**

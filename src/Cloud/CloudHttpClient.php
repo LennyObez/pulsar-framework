@@ -7,7 +7,6 @@ namespace Pulsar\Cloud;
 use CurlHandle;
 use Pulsar\Api\Internal;
 
-use function curl_close;
 use function curl_errno;
 use function curl_error;
 use function curl_exec;
@@ -109,14 +108,15 @@ final readonly class CloudHttpClient implements CloudHttpClientInterface
         $responseBody = curl_exec($ch);
 
         if (curl_errno($ch) !== 0) {
-            $error = curl_error($ch);
-            curl_close($ch);
-
-            throw CloudException::connectionFailed('http', $error);
+            // curl_close() is a no-op since PHP 8.0 and is formally deprecated on
+            // PHP 8.5 (the framework's declared target), so calling it emits
+            // E_DEPRECATED on every request -- which lands in the response body
+            // under display_errors=On. The CurlHandle frees itself when $ch goes
+            // out of scope, exactly as CurlMailHttpClient already relies on.
+            throw CloudException::connectionFailed('http', curl_error($ch));
         }
 
         $statusCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
 
         return new CloudHttpResponse(
             statusCode: $statusCode,
