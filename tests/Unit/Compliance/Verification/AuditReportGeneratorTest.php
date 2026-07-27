@@ -14,6 +14,7 @@ use Pulsar\Compliance\Verification\ComplianceCheckDomain;
 use Pulsar\Compliance\Verification\ConflictReport;
 use Pulsar\Compliance\Verification\RegressionViolation;
 use Pulsar\Compliance\Verification\VerificationReport;
+use Pulsar\Core\Version;
 
 use function count;
 
@@ -37,7 +38,10 @@ final class AuditReportGeneratorTest extends TestCase
         $output = $generator->generate($report);
 
         self::assertSame('pre_audit_compliance_report', $output['report_type']);
-        self::assertSame('1.0.0-rc.11', $output['framework_version']);
+        // Must derive from the single source of truth, never a hardcoded literal
+        // (a compliance artefact auditors read must not announce a stale version).
+        self::assertSame(Version::full(), $output['framework_version']);
+        self::assertNotSame('', $output['framework_version']);
         self::assertArrayHasKey('generated_at', $output);
 
         /** @var list<array<string, string>> $frameworks */

@@ -56,7 +56,7 @@ final readonly class PulsarVersionConfig
             trigger_error(
                 'Extension manifest is missing pulsar.min_version (F3.12). '
                 . 'Declare the minimum framework version your extension targets, '
-                . 'e.g. "pulsar": {"min_version": "1.0.0-rc.11"}. '
+                . 'e.g. "pulsar": {"min_version": "1.0.0"}. '
                 . 'A future release will reject the missing key.',
                 E_USER_DEPRECATED,
             );

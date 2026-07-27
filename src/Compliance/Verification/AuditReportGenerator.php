@@ -9,6 +9,7 @@ use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Compliance\ComplianceFramework;
 use Pulsar\Compliance\ComplianceProfile;
+use Pulsar\Core\Version;
 
 use function array_map;
 
@@ -40,7 +41,7 @@ final readonly class AuditReportGenerator
         return [
             'report_type' => 'pre_audit_compliance_report',
             'generated_at' => $now->format('Y-m-d\TH:i:sP'),
-            'framework_version' => '1.0.0-rc.11',
+            'framework_version' => Version::full(),
             'frameworks' => array_map(
                 static fn(ComplianceFramework $f): array => [
                     'id' => $f->value,
