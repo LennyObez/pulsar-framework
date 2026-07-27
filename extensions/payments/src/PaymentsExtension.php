@@ -12,7 +12,6 @@ use Pulsar\Extension\Payments\Config\PaymentsConfig;
 use Pulsar\Extension\Payments\Features\ProcessWebhook\WebhookController as LegacyWebhookController;
 use Pulsar\Extension\Payments\Http\Controller\Api\PaymentApiController;
 use Pulsar\Extension\Payments\Http\Controller\Api\PricingApiController;
-use Pulsar\Extension\Payments\Http\Controller\Api\SubscriptionApiController;
 use Pulsar\Extension\Payments\Http\Controller\CheckoutController;
 use Pulsar\Extension\Payments\Http\Controller\InvoiceController;
 use Pulsar\Extension\Payments\Http\Controller\SubscriptionController;
@@ -84,8 +83,8 @@ final class PaymentsExtension implements ExtensionInterface, PostBootExtensionIn
         // API routes
         $router->get('/api/v1/payments', [PaymentApiController::class, 'list'], 'payments.api.list');
         $router->get('/api/v1/payments/{id}', [PaymentApiController::class, 'show'], 'payments.api.show');
-        $router->post('/api/v1/subscriptions/verify', [SubscriptionApiController::class, 'verify'], 'payments.api.subscriptions.verify');
-        $router->get('/api/v1/subscriptions/status', [SubscriptionApiController::class, 'status'], 'payments.api.subscriptions.status');
+        // Mobile in-app-purchase subscription verification lives in the dedicated
+        // pulsar/subscriptions extension, which owns /api/v1/subscriptions/*.
         $router->get('/api/v1/pricing', [PricingApiController::class, 'list'], 'payments.api.pricing');
 
         // Cart routes (front-office)

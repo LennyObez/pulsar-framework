@@ -445,6 +445,17 @@ jobs:
 
       - run: composer install --no-interaction --no-progress
 
+      - name: Assert the kernel boots
+        # No-compromise boot gate: a boot regression (an untrusted bundled
+        # extension capped to community, a route collision, a wiring fault) must
+        # fail CI directly. Run bin/pulsar with NO output/error suppression so a
+        # non-zero exit — i.e. Kernel::boot() throwing — fails the job. This is
+        # the guard that the cache-warmup probe below (which pipes through grep)
+        # cannot provide on its own.
+        run: |
+          export PULSAR_MASTER_KEY="$(openssl rand -hex 32)"
+          php bin/pulsar list > /dev/null
+
       - name: Verify cache warmup pipeline
         # F28.4: do not bake a fixed master key into CI yaml. The
         # previous hardcoded `0123...cdef` value was 32 bytes of
