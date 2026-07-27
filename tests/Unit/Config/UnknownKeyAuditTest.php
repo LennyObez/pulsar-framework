@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Config\ConfigManager;
+use Pulsar\Config\Environment;
 use Pulsar\Config\Exception\ConfigException;
 use Pulsar\Config\SecurityConfig;
 use Pulsar\Config\UnknownKeys;
@@ -65,11 +66,70 @@ final class UnknownKeyAuditTest extends TestCase
         // where SessionConfig reads "handler".
         $config = SecurityConfig::fromArray(
             ['session' => ['driver' => 'redis', 'handler' => 'redis']],
-            \Pulsar\Config\Environment::load(null),
+            Environment::load(null),
         );
 
         self::assertContains('session.driver', $config->unknownConfigKeys());
         self::assertNotContains('session.handler', $config->unknownConfigKeys());
+    }
+
+    #[Test]
+    public function aTypoTwoLevelsDeepIsReportedWithItsFullPath(): void
+    {
+        // Before nested reporting reached the leaves, only the top level of each
+        // section was audited: a misspelled CSP directive silently left the policy
+        // at its restrictive default with no signal at all.
+        $config = SecurityConfig::fromArray(
+            ['headers' => ['csp' => ['scripts_src' => "'self'", 'script_src' => "'self'"]]],
+            Environment::load(null),
+        );
+
+        self::assertContains('headers.csp.scripts_src', $config->unknownConfigKeys());
+        self::assertNotContains('headers.csp.script_src', $config->unknownConfigKeys());
+    }
+
+    #[Test]
+    public function zeroTrustTyposAreReportedNowThatTheSectionIsAggregated(): void
+    {
+        // `zero_trust` was built but never folded into the parent's report, so its
+        // unknown keys were computed and then dropped on the floor.
+        $config = SecurityConfig::fromArray(
+            [
+                'zero_trust' => [
+                    'trust_score_treshold' => 0.9,
+                    'step_up' => ['max_attempt' => 3],
+                ],
+            ],
+            Environment::load(null),
+        );
+
+        self::assertContains('zero_trust.trust_score_treshold', $config->unknownConfigKeys());
+        self::assertContains('zero_trust.step_up.max_attempt', $config->unknownConfigKeys());
+    }
+
+    #[Test]
+    public function aGuardTypoIsLabelledByTheGuardName(): void
+    {
+        $config = SecurityConfig::fromArray(
+            ['auth' => ['guards' => [['name' => 'api', 'driver' => 'token', 'drivr' => 'token']]]],
+            Environment::load(null),
+        );
+
+        self::assertContains('auth.guards.api.drivr', $config->unknownConfigKeys());
+    }
+
+    #[Test]
+    public function aLiteralCustomHeaderIsNotReportedAsUnknown(): void
+    {
+        // The `headers` section has an OPEN key space by design — anything that is
+        // not a known sub-config is a literal header to emit. Reporting those would
+        // warn on every legitimate custom header at every boot.
+        $config = SecurityConfig::fromArray(
+            ['headers' => ['X-Robots-Tag' => 'noindex', 'Report-To' => 'default']],
+            Environment::load(null),
+        );
+
+        self::assertSame([], $config->unknownConfigKeys());
     }
 
     #[Test]

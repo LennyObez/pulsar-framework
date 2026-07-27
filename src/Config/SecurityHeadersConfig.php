@@ -22,7 +22,7 @@ use function strcasecmp;
  * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class SecurityHeadersConfig
+final readonly class SecurityHeadersConfig implements ReportsUnknownKeys
 {
     /**
      * Baseline headers always present on every response.
@@ -59,6 +59,15 @@ final readonly class SecurityHeadersConfig
      *     `Strict-Transport-Security` is still emitted only on secure requests
      *     (RFC 6797 §7.2). See {@see shadowedStructuredHeaders()} for the boot
      *     warning raised when a literal shadows an active structured config.
+     * @param list<string> $unknownKeys Unrecognized keys of the NESTED sub-configs
+     *     only (`csp.*`, `hsts.*`, ...), never of this level.
+     *
+     *     This section's own key space is open by design: every key that is not a
+     *     known sub-config is a literal header name to emit, so `X-Robots-Tag` or
+     *     any future header is legitimate here. Collecting unknown keys at this
+     *     level would therefore report each custom header as a typo at every boot —
+     *     a false-positive flood that trains operators to ignore the warning, which
+     *     costs more than the gap it closes.
      */
     public function __construct(
         public array $headers,
@@ -68,7 +77,16 @@ final readonly class SecurityHeadersConfig
         public PermissionsPolicyConfig $permissionsPolicy = new PermissionsPolicyConfig(),
         public NelConfig $nel = new NelConfig(),
         public string $nelEndpointUrl = '',
+        public array $unknownKeys = [],
     ) {}
+
+    /**
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
+    }
 
     /**
      * Return the effective headers: minimum defaults merged with user config,
@@ -267,14 +285,27 @@ final readonly class SecurityHeadersConfig
             $data,
         );
 
+        $csp = CspConfig::fromArray($cspData);
+        $hsts = HstsConfig::fromArray($hstsData);
+        $crossOrigin = CrossOriginConfig::fromArray($crossOriginData);
+        $permissionsPolicy = PermissionsPolicyConfig::fromArray($permissionsPolicyData);
+        $nel = NelConfig::fromArray($nelData);
+
         return new self(
             headers: $headers,
-            csp: CspConfig::fromArray($cspData),
-            hsts: HstsConfig::fromArray($hstsData),
-            crossOrigin: CrossOriginConfig::fromArray($crossOriginData),
-            permissionsPolicy: PermissionsPolicyConfig::fromArray($permissionsPolicyData),
-            nel: NelConfig::fromArray($nelData),
+            csp: $csp,
+            hsts: $hsts,
+            crossOrigin: $crossOrigin,
+            permissionsPolicy: $permissionsPolicy,
+            nel: $nel,
             nelEndpointUrl: $nelEndpointUrl,
+            unknownKeys: [
+                ...UnknownKeys::nested('csp', $csp),
+                ...UnknownKeys::nested('hsts', $hsts),
+                ...UnknownKeys::nested('cross_origin', $crossOrigin),
+                ...UnknownKeys::nested('permissions_policy', $permissionsPolicy),
+                ...UnknownKeys::nested('nel', $nel),
+            ],
         );
     }
 }

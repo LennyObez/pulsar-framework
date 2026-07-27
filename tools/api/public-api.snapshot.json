@@ -8575,7 +8575,8 @@
                         "string $defaultGuard",
                         "array $guards",
                         "Pulsar\\Config\\TwoFactorConfig $twoFactor",
-                        "Pulsar\\Config\\AuthorizationConfig $authorization"
+                        "Pulsar\\Config\\AuthorizationConfig $authorization",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -8586,6 +8587,11 @@
                     ],
                     "return": "Pulsar\\Config\\AuthConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -8598,7 +8604,8 @@
                     "params": [
                         "string $name",
                         "string $driver",
-                        "bool $enabled"
+                        "bool $enabled",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -8609,6 +8616,11 @@
                     ],
                     "return": "Pulsar\\Config\\AuthGuardConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -8620,7 +8632,8 @@
                 "__construct": {
                     "params": [
                         "array $roles",
-                        "array $superRoles"
+                        "array $superRoles",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -8631,6 +8644,11 @@
                     ],
                     "return": "Pulsar\\Config\\AuthorizationConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -9007,7 +9025,8 @@
                     "params": [
                         "string $openerPolicy",
                         "string $embedderPolicy",
-                        "string $resourcePolicy"
+                        "string $resourcePolicy",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -9018,6 +9037,11 @@
                     ],
                     "return": "Pulsar\\Config\\CrossOriginConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -9045,7 +9069,8 @@
                         "bool $upgradeInsecureRequests",
                         "string $reportUri",
                         "string $reportTo",
-                        "array $customDirectives"
+                        "array $customDirectives",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -9066,6 +9091,11 @@
                     "params": [],
                     "return": "string",
                     "static": false
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -9081,7 +9111,8 @@
                         "string $headerName",
                         "string $formFieldName",
                         "array $trustedOrigins",
-                        "string $originValidation"
+                        "string $originValidation",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -9092,6 +9123,11 @@
                     ],
                     "return": "Pulsar\\Config\\CsrfConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -9551,7 +9587,8 @@
                         "int $maxAge",
                         "bool $includeSubDomains",
                         "bool $preload",
-                        "bool $emittedAtEdge"
+                        "bool $emittedAtEdge",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -9571,6 +9608,11 @@
                 "toHeaderValue": {
                     "params": [],
                     "return": "string",
+                    "static": false
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
                     "static": false
                 }
             },
@@ -9817,7 +9859,8 @@
                         "int $maxAge",
                         "bool $includeSubdomains",
                         "float $successFraction",
-                        "float $failureFraction"
+                        "float $failureFraction",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -9839,6 +9882,11 @@
                         "string $endpointUrl"
                     ],
                     "return": "string",
+                    "static": false
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
                     "static": false
                 }
             },
@@ -9958,7 +10006,8 @@
                         "string $autoplay",
                         "string $fullscreen",
                         "string $pictureInPicture",
-                        "array $additional"
+                        "array $additional",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -9973,6 +10022,11 @@
                 "toHeaderValue": {
                     "params": [],
                     "return": "string",
+                    "static": false
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
                     "static": false
                 }
             },
@@ -10062,7 +10116,8 @@
                         "bool $enabled",
                         "int $defaultLimit",
                         "int $defaultWindow",
-                        "string $keyStrategy"
+                        "string $keyStrategy",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -10073,6 +10128,11 @@
                     ],
                     "return": "Pulsar\\Config\\RateLimitConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -10320,7 +10380,8 @@
                         "Pulsar\\Config\\CrossOriginConfig $crossOrigin",
                         "Pulsar\\Config\\PermissionsPolicyConfig $permissionsPolicy",
                         "Pulsar\\Config\\NelConfig $nel",
-                        "string $nelEndpointUrl"
+                        "string $nelEndpointUrl",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -10350,6 +10411,11 @@
                     "static": false
                 },
                 "shadowedStructuredHeaders": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
+                },
+                "unknownConfigKeys": {
                     "params": [],
                     "return": "array",
                     "static": false
@@ -10690,7 +10756,8 @@
                         "int $recoveryCodeBytes",
                         "int $stepUpTimeoutMinutes",
                         "int $recoveryCodeAlgorithmVersion",
-                        "bool $allowInMemory"
+                        "bool $allowInMemory",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -10701,6 +10768,11 @@
                     ],
                     "return": "Pulsar\\Config\\TwoFactorConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -10713,6 +10785,22 @@
                     "params": [
                         "array $data",
                         "array $known"
+                    ],
+                    "return": "array",
+                    "static": true
+                },
+                "nested": {
+                    "params": [
+                        "string $prefix",
+                        "?object $child"
+                    ],
+                    "return": "array",
+                    "static": true
+                },
+                "nestedEach": {
+                    "params": [
+                        "string $prefix",
+                        "array $children"
                     ],
                     "return": "array",
                     "static": true
@@ -11011,7 +11099,8 @@
                         "array $retentionPolicies",
                         "array $signalProviders",
                         "float $trustScoreThreshold",
-                        "array $rules"
+                        "array $rules",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -11022,6 +11111,11 @@
                     ],
                     "return": "Pulsar\\Config\\ZeroTrustConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -49664,7 +49758,8 @@
                         "int $maxAttempts",
                         "int $cooldownSeconds",
                         "int $lockoutSeconds",
-                        "int $windowSeconds"
+                        "int $windowSeconds",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -49675,6 +49770,11 @@
                     ],
                     "return": "Pulsar\\Security\\ZeroTrust\\StepUp\\StepUpConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []

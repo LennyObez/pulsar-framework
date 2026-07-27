@@ -21,8 +21,20 @@ use const JSON_UNESCAPED_SLASHES;
  * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class NelConfig
+final readonly class NelConfig implements ReportsUnknownKeys
 {
+    /** Keys read from the `headers.nel` sub-array of config/security.php. */
+    private const array KNOWN_KEYS = [
+        'enabled', 'report_to', 'max_age', 'include_subdomains',
+        'success_fraction', 'failure_fraction',
+    ];
+
+    /**
+     * @param list<string> $unknownKeys Keys present in the raw `nel` array that this
+     *     DTO does not read. Note NEL spells it `include_subdomains` while HSTS uses
+     *     `include_sub_domains` (per their respective specs) — writing one section's
+     *     spelling in the other is precisely the typo this reporting catches.
+     */
     public function __construct(
         public bool $enabled = false,
         public string $reportTo = 'default',
@@ -30,7 +42,16 @@ final readonly class NelConfig
         public bool $includeSubdomains = false,
         public float $successFraction = 0.0,
         public float $failureFraction = 1.0,
+        public array $unknownKeys = [],
     ) {}
+
+    /**
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
+    }
 
     /**
      * Build the NEL header value as a JSON object.
@@ -95,6 +116,7 @@ final readonly class NelConfig
             includeSubdomains: (bool) ($data['include_subdomains'] ?? false),
             successFraction: Coerce::float($data['success_fraction'] ?? null, 0.0),
             failureFraction: Coerce::float($data['failure_fraction'] ?? null, 1.0),
+            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
         );
     }
 }
