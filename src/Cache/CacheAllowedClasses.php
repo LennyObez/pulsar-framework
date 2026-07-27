@@ -345,17 +345,30 @@ final class CacheAllowedClasses
      */
     private static function discoverCandidates(string $vendorPath, string $srcPath): array
     {
+        // Always scan src/ directly. Every ELIGIBLE_NAMESPACES entry
+        // (Pulsar\Config|Cache|Routing|Http) lives under src/, so the directory
+        // scan is authoritative and — crucially — independent of Composer's
+        // autoloader optimization. Relying on autoload_classmap.php alone was a
+        // trap: a NON-optimized classmap (a plain `composer install` /
+        // `dump-autoload`, as CI and dev use) lists almost no PSR-4 classes, so
+        // framework cache DTOs such as Pulsar\Cache\CachedRoute were dropped from
+        // the allowlist and every warm-cache boot then failed with
+        // __PHP_Incomplete_Class. The classmap is now unioned in only as a
+        // defensive supplement for any eligible class shipped outside src/.
+        $candidates = self::scanDirectory($srcPath);
+
         $classmap = $vendorPath . DIRECTORY_SEPARATOR . 'composer' . DIRECTORY_SEPARATOR . 'autoload_classmap.php';
 
         if (is_file($classmap)) {
             /** @var array<class-string, string> $map */
             $map = require $classmap;
 
-            return self::filterEligibleNamespaces(array_keys($map));
+            foreach (self::filterEligibleNamespaces(array_keys($map)) as $className) {
+                $candidates[] = $className;
+            }
         }
 
-        // Fallback: scan src/ directory for PHP files
-        return self::scanDirectory($srcPath);
+        return array_values(array_unique($candidates));
     }
 
     /**
