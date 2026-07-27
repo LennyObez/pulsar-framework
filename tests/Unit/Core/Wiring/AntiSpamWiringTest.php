@@ -431,6 +431,29 @@ final class AntiSpamWiringTest extends TestCase
     }
 
     #[Test]
+    public function anUncachedMxCheckIsReportedAsACostNotAsAnInertControl(): void
+    {
+        // The MX check is enabled by default and works without a cache — it just
+        // resolves live per submission. Reporting it as an inert security control
+        // fired a false warning on every boot of a default, cache-less install.
+        $container = new Container();
+        $pipeline = new MiddlewarePipeline($container);
+        $logger = new WarningSpyLogger();
+        $container->instance(LoggerInterface::class, $logger);
+
+        $this->wire($container, $pipeline, "'duplicate_detection_enabled' => false, 'reputation_cooldown_enabled' => false");
+
+        self::assertFalse(
+            $logger->hasWarningContaining('it is inert'),
+            'an uncached MX check is not inert and must not be reported as such',
+        );
+        self::assertTrue(
+            $logger->hasRecordContaining('resolve DNS on every submission'),
+            'the real cost of running uncached must still be stated',
+        );
+    }
+
+    #[Test]
     public function disabledCacheDependentFeaturesDoNotWarn(): void
     {
         $container = new Container();
@@ -548,11 +571,31 @@ final class WarningSpyLogger extends AbstractLogger
     /** @var list<string> */
     public array $warnings = [];
 
+    /**
+     * Every record, at any level — lets a test assert on non-warning output too.
+     *
+     * @var list<string>
+     */
+    public array $records = [];
+
     public function log(mixed $level, string|Stringable $message, array $context = []): void
     {
+        $this->records[] = (string) $message;
+
         if ($level === LogLevel::WARNING) {
             $this->warnings[] = (string) $message;
         }
+    }
+
+    public function hasRecordContaining(string $needle): bool
+    {
+        foreach ($this->records as $record) {
+            if (str_contains($record, $needle)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function hasWarningContaining(string $needle): bool

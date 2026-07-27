@@ -171,9 +171,11 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
             $mxCache = null;
 
             if ($emailDomainConfig->mxCheckEnabled && $emailDomainConfig->mxBlock !== EmailDomainSignalMode::Off) {
-                // Optional: the check still runs uncached, but warn loudly so an
-                // enabled cache does not silently go missing.
-                $mxCache = $this->requireTaggedCache($container, $logger, 'Anti-spam MX deliverability caching');
+                // The MX check is NOT cache-dependent: without a cache it still runs,
+                // it just resolves live on every submission. That is a cost note, not
+                // an inert security control, so it must not borrow the warning used
+                // for features that genuinely cannot run (see optionalTaggedCache).
+                $mxCache = $this->optionalTaggedCache($container, $logger);
             }
 
             $checks[] = new EmailDomainCheck(
@@ -884,6 +886,36 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
             . 'Enable the cache so CacheWiring binds the tagged cache.',
             $feature,
         ));
+
+        return null;
+    }
+
+    /**
+     * Resolve the tagged cache for a feature that merely BENEFITS from it.
+     *
+     * MX deliverability resolution works without a cache — it simply performs a
+     * live DNS lookup per submission instead of reusing one for the TTL. Reporting
+     * that as an inert security control would be false, and would fire on every
+     * boot of a default install with no cache configured; a warning that is wrong
+     * and unavoidable is the fastest way to teach operators to ignore warnings.
+     * So this states the actual cost, at info level, and the feature runs on.
+     */
+    private function optionalTaggedCache(
+        ContainerInterface $container,
+        LoggerInterface $logger,
+    ): ?TaggedCacheInterface {
+        if ($container->has(TaggedCacheInterface::class)) {
+            /** @var TaggedCacheInterface $cache */
+            $cache = $container->get(TaggedCacheInterface::class);
+
+            return $cache;
+        }
+
+        $logger->info(
+            'Anti-spam MX deliverability checks will resolve DNS on every submission: '
+            . 'no cache is bound (TaggedCacheInterface), so results cannot be reused. '
+            . 'The check still runs; enable the cache to avoid repeated lookups.',
+        );
 
         return null;
     }
