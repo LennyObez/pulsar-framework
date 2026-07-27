@@ -7,6 +7,7 @@ namespace Pulsar\Extension\Cms\Http\Controller;
 use DateTimeImmutable;
 use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
+use Pulsar\Database\Exception\DatabaseException;
 use Pulsar\Extension\Cms\BlockEditor\BlockRenderer;
 use Pulsar\Extension\Cms\Config\CmsConfig;
 use Pulsar\Extension\Cms\Content\Content;
@@ -20,6 +21,7 @@ use Pulsar\Extension\Cms\FieldRegistry\FieldRegistryRepositoryInterface;
 use Pulsar\Extension\Cms\Http\Middleware\CmsPageCacheMiddleware;
 use Pulsar\Extension\Cms\I18n\HreflangGenerator;
 use Pulsar\Extension\Cms\Internal\Cache\CmsCacheKeys;
+use Pulsar\Extension\Cms\Internal\Persistence\SchemaErrors;
 use Pulsar\Extension\Cms\Internal\Security\CmsKeyManager;
 use Pulsar\Extension\Cms\Navigation\BreadcrumbGeneratorInterface;
 use Pulsar\Extension\Cms\Navigation\MenuRepositoryInterface;
@@ -86,6 +88,39 @@ final readonly class ContentController
     ) {}
 
     public function show(ServerRequestInterface $request): Response
+    {
+        try {
+            return $this->resolve($request);
+        } catch (DatabaseException $e) {
+            if (!SchemaErrors::isMissingTable($e)) {
+                // A genuine database error (an outage, a permission problem, a
+                // malformed query) must stay visible as a 500 — never masked
+                // into a 404 that would hide a real failure.
+                throw $e;
+            }
+
+            // The CMS schema is not installed (a fresh / unmigrated database).
+            // Because the CMS owns the catch-all route, a missing schema must
+            // degrade gracefully instead of turning the homepage AND every
+            // unmatched route into a 500: greet the root with the welcome page,
+            // and return a 404 for anything else.
+            $rawPath = ltrim($request->getUri()->getPath(), '/');
+            $isRoot = $rawPath === '' || $rawPath === $this->config->defaultLocale;
+
+            return $isRoot
+                ? Response::html($this->renderWelcomePage())
+                : $this->respondNotFound($request);
+        }
+    }
+
+    /**
+     * Resolve the response for a content request.
+     *
+     * May touch the CMS schema (redirects, translations, content, blocks); when
+     * that schema is absent {@see show()} maps the resulting DatabaseException to
+     * a graceful fallback rather than a 500.
+     */
+    private function resolve(ServerRequestInterface $request): Response
     {
         $rawPath = ltrim($request->getUri()->getPath(), '/');
 
@@ -399,18 +434,29 @@ final readonly class ContentController
             $menuItems = [];
 
             if ($this->menuRepository !== null) {
-                $menu = $this->menuRepository->findByLocation('primary', $locale);
+                try {
+                    $menu = $this->menuRepository->findByLocation('primary', $locale);
 
-                if ($menu !== null) {
-                    $items = $this->menuRepository->findItemsByMenu($menu->id, $locale);
+                    if ($menu !== null) {
+                        $items = $this->menuRepository->findItemsByMenu($menu->id, $locale);
 
-                    foreach ($items as $item) {
-                        $menuItems[] = [
-                            'label' => $item->label,
-                            'url' => $item->url ?? ($item->contentPath !== null ? '/' . ltrim($item->contentPath, '/') : '#'),
-                            'children' => [],
-                        ];
+                        foreach ($items as $item) {
+                            $menuItems[] = [
+                                'label' => $item->label,
+                                'url' => $item->url ?? ($item->contentPath !== null ? '/' . ltrim($item->contentPath, '/') : '#'),
+                                'children' => [],
+                            ];
+                        }
                     }
+                } catch (DatabaseException $e) {
+                    // Render the 404 without navigation when the CMS schema is
+                    // absent (a fresh / unmigrated database). A genuine DB error
+                    // still surfaces rather than being masked.
+                    if (!SchemaErrors::isMissingTable($e)) {
+                        throw $e;
+                    }
+
+                    $menuItems = [];
                 }
             }
 
