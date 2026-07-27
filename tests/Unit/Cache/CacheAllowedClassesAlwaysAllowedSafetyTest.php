@@ -95,7 +95,7 @@ final class CacheAllowedClassesAlwaysAllowedSafetyTest extends TestCase
         $vendorPath = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'vendor';
         $srcPath = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'src';
 
-        $result = CacheAllowedClasses::scan($vendorPath, $srcPath);
+        $result = CacheAllowedClasses::scan($vendorPath, [$srcPath]);
 
         self::assertContains(ConfigRepository::class, $result);
     }

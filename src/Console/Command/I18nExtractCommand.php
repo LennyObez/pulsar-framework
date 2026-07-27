@@ -10,6 +10,7 @@ use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 use Pulsar\I18n\Extractor\TranslationExtractor;
+use Pulsar\Support\ProjectSourceRoots;
 
 use function dirname;
 use function file_put_contents;
@@ -47,13 +48,16 @@ final class I18nExtractCommand extends Command
     #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
-        $srcDir = $this->projectRoot . DIRECTORY_SEPARATOR . 'src';
+        // Scan the project's PSR-4 source roots (composer.json) rather than an
+        // assumed `src/`: a project mapping "App\\": "app/" has no src/ directory
+        // and previously extracted nothing at all, silently.
+        $sourceRoots = ProjectSourceRoots::discover($this->projectRoot);
         /** @var string $outputPath */
         $outputPath = $input->getOption('output', 'var/i18n/extracted.json');
 
         $output->info('Scanning for translation keys...');
 
-        $result = $this->extractor->extract($srcDir, $this->projectRoot);
+        $result = $this->extractor->extractFrom($sourceRoots, $this->projectRoot);
 
         $absoluteOutput = $this->projectRoot . DIRECTORY_SEPARATOR . $outputPath;
         $dir = dirname($absoluteOutput);

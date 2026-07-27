@@ -603,11 +603,8 @@ final class BuildCommand extends Command
             return null;
         }
 
-        // Derive base path from config path (config/ -> project root)
-        $basePath = $configPath . DIRECTORY_SEPARATOR . '..';
-
         $generator = new PreloadGenerator();
-        $content = $generator->generate($runtime, $basePath, $cacheDir);
+        $content = $generator->generate($runtime, $cacheDir);
 
         $path = 'preload.php';
         $this->atomicWrite($cacheDir . DIRECTORY_SEPARATOR . $path, $content);

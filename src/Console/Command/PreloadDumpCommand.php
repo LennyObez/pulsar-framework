@@ -12,6 +12,7 @@ use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 use Pulsar\Support\AtomicFileWriter;
+use Pulsar\Support\ProjectSourceRoots;
 use Random\RandomException;
 use RuntimeException;
 
@@ -20,6 +21,7 @@ use function count;
 use function dirname;
 use function file_exists;
 use function implode;
+use function in_array;
 use function is_array;
 use function ksort;
 use function realpath;
@@ -119,11 +121,28 @@ final class PreloadDumpCommand extends Command
 
         /** @var array<class-string, string> $classmap */
 
-        // Resolve and validate paths
-        $srcRoot = realpath($this->basePath . DIRECTORY_SEPARATOR . 'src');
+        // Resolve the containment roots. The hot-path namespaces are all Pulsar\*,
+        // so the framework's OWN src/ is the authoritative root — resolved from
+        // this file, because in an installed application it lives under
+        // vendor/pulsar/framework/src rather than <project>/src. The project's
+        // PSR-4 roots (composer.json) are unioned in; assuming a literal `src/`
+        // previously aborted this command outright for a project mapping
+        // "App\\": "app/".
+        $candidateRoots = ProjectSourceRoots::discover($this->basePath);
+        $candidateRoots[] = dirname(__DIR__, 2);
 
-        if ($srcRoot === false) {
-            $output->writeln('  Error: Cannot resolve src/ directory.');
+        $sourceRoots = [];
+
+        foreach ($candidateRoots as $candidate) {
+            $resolved = realpath($candidate);
+
+            if ($resolved !== false && !in_array($resolved, $sourceRoots, true)) {
+                $sourceRoots[] = $resolved;
+            }
+        }
+
+        if ($sourceRoots === []) {
+            $output->writeln('  Error: Cannot resolve any project or framework source root.');
 
             return ExitCode::Error->value;
         }
@@ -153,14 +172,18 @@ final class PreloadDumpCommand extends Command
                 continue;
             }
 
-            if (!str_starts_with($realPath, $srcRoot . DIRECTORY_SEPARATOR)) {
+            if (!self::isWithinAnyRoot($realPath, $sourceRoots)) {
                 if ($strict) {
-                    $output->writeln(sprintf('  Error: %s resolves outside src/: %s', $className, $realPath));
+                    $output->writeln(sprintf(
+                        '  Error: %s resolves outside the source roots: %s',
+                        $className,
+                        $realPath,
+                    ));
 
                     return ExitCode::Error->value;
                 }
 
-                $warnings[] = sprintf('  Skipped %s: outside src/ (%s)', $className, $realPath);
+                $warnings[] = sprintf('  Skipped %s: outside the source roots (%s)', $className, $realPath);
                 $skipped++;
 
                 continue;
@@ -214,6 +237,20 @@ final class PreloadDumpCommand extends Command
     private function isHotPath(string $className): bool
     {
         return array_any(self::HOT_PATH_NAMESPACES, static fn(string $prefix): bool => str_starts_with($className, $prefix));
+    }
+
+    /**
+     * Whether a resolved file lives inside one of the source roots — the
+     * containment guard keeping preload limited to known source trees.
+     *
+     * @param list<string> $roots
+     */
+    private static function isWithinAnyRoot(string $path, array $roots): bool
+    {
+        return array_any(
+            $roots,
+            static fn(string $root): bool => str_starts_with($path, $root . DIRECTORY_SEPARATOR),
+        );
     }
 
     /**

@@ -188,6 +188,47 @@ final class FrameworkCacheTest extends TestCase
     }
 
     #[Test]
+    public function it_warms_a_project_whose_psr4_root_is_not_src(): void
+    {
+        // A project mapping "App\\": "app/" has no src/ directory at all. The warm
+        // previously died inside the allowlist scan with RecursiveDirectoryIterator
+        // "Failed to open directory: .../src", making `pulsar optimize` unusable
+        // outside the scaffolder's exact layout. Source roots now come from the
+        // composer PSR-4 map, and a missing root is skipped rather than fatal.
+        $projectRoot = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'pulsar_app_layout_' . bin2hex(random_bytes(8));
+        mkdir($projectRoot . DIRECTORY_SEPARATOR . 'config', 0o750, true);
+        mkdir($projectRoot . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'composer', 0o750, true);
+        mkdir($projectRoot . DIRECTORY_SEPARATOR . 'app', 0o750, true);
+        $this->writeConfigStubs($projectRoot . DIRECTORY_SEPARATOR . 'config');
+        file_put_contents(
+            $projectRoot . DIRECTORY_SEPARATOR . 'composer.json',
+            '{"autoload": {"psr-4": {"App\\\\": "app/"}}}',
+        );
+
+        try {
+            self::assertDirectoryDoesNotExist($projectRoot . DIRECTORY_SEPARATOR . 'src');
+
+            $cache = new FrameworkCache($projectRoot, $this->masterKey, new HmacService());
+            $configManager = new ConfigManager($projectRoot . DIRECTORY_SEPARATOR . 'config');
+            $configManager->load();
+
+            $result = $cache->warm(
+                $configManager->repository(),
+                [Route::get('/p11', self::class, 'p11.index')],
+                [],
+                'testing',
+                false,
+            );
+
+            self::assertTrue($result['configCached']);
+            self::assertSame(1, $result['routesCached']);
+            self::assertTrue($cache->isWarm());
+        } finally {
+            $this->removeDirectory($projectRoot);
+        }
+    }
+
+    #[Test]
     public function it_warms_with_container_hints(): void
     {
         $cache = new FrameworkCache($this->basePath, $this->masterKey, new HmacService());

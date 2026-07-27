@@ -44,9 +44,26 @@ final class TranslationExtractor
      */
     public function extract(string $directory, string $basePath = ''): ExtractionResult
     {
+        return $this->extractFrom([$directory], $basePath);
+    }
+
+    /**
+     * Extract translation keys from every given directory, merged into one result.
+     *
+     * A project's source roots come from its composer PSR-4 map and there may be
+     * several (or none); a directory that does not exist is skipped rather than
+     * failing, so a layout without a literal `src/` still extracts correctly.
+     *
+     * @param list<string> $directories Directories to scan
+     * @param string $basePath Project root for relative paths
+     */
+    public function extractFrom(array $directories, string $basePath = ''): ExtractionResult
+    {
         $keys = [];
 
-        $this->scanDirectory($directory, $basePath, $keys);
+        foreach ($directories as $directory) {
+            $this->scanDirectory($directory, $basePath, $keys);
+        }
 
         // Sort domains and keys for determinism
         ksort($keys);
@@ -54,6 +71,8 @@ final class TranslationExtractor
         foreach ($keys as &$domainKeys) {
             ksort($domainKeys);
         }
+
+        unset($domainKeys);
 
         return new ExtractionResult($keys);
     }
