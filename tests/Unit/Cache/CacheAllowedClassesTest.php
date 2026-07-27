@@ -59,7 +59,7 @@ final class CacheAllowedClassesTest extends TestCase
         $vendorPath = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'vendor';
         $srcPath = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'src';
 
-        $result = CacheAllowedClasses::scan($vendorPath, $srcPath);
+        $result = CacheAllowedClasses::scan($vendorPath, [$srcPath]);
 
         // Result is a sorted list — verify every entry is from an eligible namespace
         foreach ($result as $class) {
@@ -80,7 +80,7 @@ final class CacheAllowedClassesTest extends TestCase
         $vendorPath = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'vendor';
         $srcPath = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'src';
 
-        $result = CacheAllowedClasses::scan($vendorPath, $srcPath);
+        $result = CacheAllowedClasses::scan($vendorPath, [$srcPath]);
 
         $sorted = $result;
         sort($sorted);
@@ -223,7 +223,7 @@ final class CacheAllowedClassesTest extends TestCase
 
         $allowed = CacheAllowedClasses::forCache(
             $repoRoot . DIRECTORY_SEPARATOR . 'vendor',
-            $repoRoot . DIRECTORY_SEPARATOR . 'src',
+            [$repoRoot . DIRECTORY_SEPARATOR . 'src'],
             $serialized,
         );
 
@@ -254,7 +254,7 @@ final class CacheAllowedClassesTest extends TestCase
         $repoRoot = dirname(__DIR__, 3);
         $allowed = CacheAllowedClasses::scan(
             $repoRoot . DIRECTORY_SEPARATOR . 'vendor',
-            $repoRoot . DIRECTORY_SEPARATOR . 'src',
+            [$repoRoot . DIRECTORY_SEPARATOR . 'src'],
         );
 
         self::assertContains(CachedRoute::class, $allowed);

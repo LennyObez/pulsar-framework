@@ -27664,6 +27664,14 @@
                     ],
                     "return": "Pulsar\\I18n\\Extractor\\ExtractionResult",
                     "static": false
+                },
+                "extractFrom": {
+                    "params": [
+                        "array $directories",
+                        "string $basePath"
+                    ],
+                    "return": "Pulsar\\I18n\\Extractor\\ExtractionResult",
+                    "static": false
                 }
             },
             "constants": []
@@ -57317,6 +57325,7 @@
         "Pulsar\\SupplyChain\\Signing\\SignatureManifestSerializer",
         "Pulsar\\SupplyChain\\Vex\\VexGenerator",
         "Pulsar\\SupplyChain\\Vex\\VexSerializer",
+        "Pulsar\\Support\\ProjectSourceRoots",
         "Pulsar\\View\\Command\\PlaygroundServeCommand",
         "Pulsar\\View\\Command\\PulseDiffCommand",
         "Pulsar\\View\\Command\\ViewCompileCommand",

@@ -13,6 +13,7 @@ use Pulsar\Routing\Route;
 use Pulsar\Security\Crypto\EncryptorInterface;
 use Pulsar\Security\Crypto\HmacInterface;
 use Pulsar\Security\Crypto\KeyProviderInterface;
+use Pulsar\Support\ProjectSourceRoots;
 use Random\RandomException;
 use ReflectionException;
 use SodiumException;
@@ -347,8 +348,12 @@ final class FrameworkCache implements FrameworkCacheInterface
         // stay covered by the scan's Routing/Cache scope. serialize($repository)
         // here matches exactly what ConfigCache::write() serializes.
         $vendorPath = $this->basePath . DIRECTORY_SEPARATOR . 'vendor';
-        $srcPath = $this->basePath . DIRECTORY_SEPARATOR . 'src';
-        $allowedClasses = CacheAllowedClasses::forCache($vendorPath, $srcPath, serialize($repository));
+        // Source roots come from the project's composer PSR-4 map, never an
+        // assumed `src/`: a project mapping "App\\": "app/" has no src/ directory,
+        // which previously failed the warm with a directory-open error. The
+        // framework's own src/ is resolved by CacheAllowedClasses itself.
+        $srcPaths = ProjectSourceRoots::discover($this->basePath);
+        $allowedClasses = CacheAllowedClasses::forCache($vendorPath, $srcPaths, serialize($repository));
         CacheAllowedClasses::save($this->cachePath, $allowedClasses);
 
         // Compute allowed classes hash

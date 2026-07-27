@@ -23,11 +23,13 @@ use function array_is_list;
 use function array_keys;
 use function array_values;
 use function class_exists;
+use function dirname;
 use function enum_exists;
 use function file_get_contents;
 use function file_put_contents;
 use function in_array;
 use function is_array;
+use function is_dir;
 use function is_file;
 use function json_decode;
 use function json_encode;
@@ -84,6 +86,12 @@ final class CacheAllowedClasses
     /**
      * Scan Pulsar source tree to discover all classes eligible for cache deserialization.
      *
+     * The framework's own src/ is always scanned (it owns every eligible
+     * namespace); `$srcPaths` adds the project's roots, which come from its
+     * composer PSR-4 map rather than an assumed `src/` layout. Non-existent
+     * roots are skipped.
+     *
+     * @param list<string> $srcPaths Additional project source roots to union in.
      * @return list<class-string>
      *
      * @throws CacheException When an `ALWAYS_ALLOWED` class fails the
@@ -96,9 +104,9 @@ final class CacheAllowedClasses
      * @throws ReflectionException
      */
     #[NoDiscard]
-    public static function scan(string $vendorPath, string $srcPath): array
+    public static function scan(string $vendorPath, array $srcPaths): array
     {
-        $candidates = self::discoverCandidates($vendorPath, $srcPath);
+        $candidates = self::discoverCandidates($vendorPath, $srcPaths);
 
         // F26.2: ALWAYS_ALLOWED bypassed the eligibility check entirely,
         // so a future PR adding `__wakeup`, `__destruct`, `__serialize`,
@@ -136,6 +144,7 @@ final class CacheAllowedClasses
      * namespace, while the scan keeps a forward-compatible baseline for the
      * other cached artifacts (routes, container hints).
      *
+     * @param list<string> $srcPaths Project source roots (composer PSR-4 map).
      * @return list<class-string>
      *
      * @throws CacheException When an ALWAYS_ALLOWED class or a serialized class
@@ -143,9 +152,9 @@ final class CacheAllowedClasses
      * @throws ReflectionException
      */
     #[NoDiscard]
-    public static function forCache(string $vendorPath, string $srcPath, string ...$serializedBlobs): array
+    public static function forCache(string $vendorPath, array $srcPaths, string ...$serializedBlobs): array
     {
-        $allowed = self::scan($vendorPath, $srcPath);
+        $allowed = self::scan($vendorPath, $srcPaths);
         $seen = array_fill_keys($allowed, true);
 
         foreach ($serializedBlobs as $blob) {
@@ -339,23 +348,42 @@ final class CacheAllowedClasses
     }
 
     /**
-     * Discover candidate classes from Composer's classmap or PSR-4 scan.
+     * Discover candidate classes from the framework's own source tree, the
+     * project's PSR-4 roots, and Composer's classmap.
      *
+     * @param list<string> $srcPaths
      * @return list<class-string>
      */
-    private static function discoverCandidates(string $vendorPath, string $srcPath): array
+    private static function discoverCandidates(string $vendorPath, array $srcPaths): array
     {
-        // Always scan src/ directly. Every ELIGIBLE_NAMESPACES entry
-        // (Pulsar\Config|Cache|Routing|Http) lives under src/, so the directory
-        // scan is authoritative and — crucially — independent of Composer's
-        // autoloader optimization. Relying on autoload_classmap.php alone was a
-        // trap: a NON-optimized classmap (a plain `composer install` /
-        // `dump-autoload`, as CI and dev use) lists almost no PSR-4 classes, so
-        // framework cache DTOs such as Pulsar\Cache\CachedRoute were dropped from
-        // the allowlist and every warm-cache boot then failed with
-        // __PHP_Incomplete_Class. The classmap is now unioned in only as a
-        // defensive supplement for any eligible class shipped outside src/.
-        $candidates = self::scanDirectory($srcPath);
+        // Every ELIGIBLE_NAMESPACES entry (Pulsar\Config|Cache|Routing|Http) is a
+        // FRAMEWORK class, so the authoritative root is the framework's OWN src/,
+        // resolved from this file rather than from the caller's layout. In an
+        // installed application `basePath/src` is the APPLICATION's source dir —
+        // or absent entirely when its PSR-4 root is e.g. `app/` — and contains no
+        // Pulsar\* classes, which silently emptied the allowlist.
+        //
+        // Scanning the directory (rather than trusting autoload_classmap.php) also
+        // keeps this independent of Composer's autoloader optimization: a
+        // NON-optimized classmap (a plain `composer install` / `dump-autoload`, as
+        // CI and dev use) lists almost no PSR-4 classes, so framework cache DTOs
+        // such as Pulsar\Cache\CachedRoute were dropped and every warm-cache boot
+        // then failed with __PHP_Incomplete_Class. The classmap is unioned in only
+        // as a defensive supplement for any eligible class shipped outside src/.
+        $frameworkSrc = dirname(__DIR__);
+        $candidates = self::scanDirectory($frameworkSrc);
+
+        // Every caller-supplied project root (from the composer PSR-4 map) is
+        // unioned in when it exists; a declared-but-absent root is skipped.
+        foreach ($srcPaths as $srcPath) {
+            if ($srcPath === '' || $srcPath === $frameworkSrc) {
+                continue;
+            }
+
+            foreach (self::scanDirectory($srcPath) as $className) {
+                $candidates[] = $className;
+            }
+        }
 
         $classmap = $vendorPath . DIRECTORY_SEPARATOR . 'composer' . DIRECTORY_SEPARATOR . 'autoload_classmap.php';
 
@@ -455,6 +483,13 @@ final class CacheAllowedClasses
      */
     private static function scanDirectory(string $dir): array
     {
+        // A declared-but-absent root must be skipped, not fatal: a project whose
+        // PSR-4 root is not literally `src/` otherwise crashed `pulsar optimize`
+        // with RecursiveDirectoryIterator "Failed to open directory".
+        if (!is_dir($dir)) {
+            return [];
+        }
+
         $classes = [];
         $iterator = new RecursiveIteratorIterator(
             new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS),

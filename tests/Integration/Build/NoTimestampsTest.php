@@ -61,7 +61,7 @@ final class NoTimestampsTest extends TestCase
         $this->createFile($basePath . '/src/Core/Kernel.php', '<?php // stub');
 
         $generator = new PreloadGenerator();
-        $output = $generator->generate(RuntimeType::Fpm, $basePath, $cacheDir);
+        $output = $generator->generate(RuntimeType::Fpm, $cacheDir);
 
         $this->assertNoTimestampPatterns($output, 'preload');
     }
