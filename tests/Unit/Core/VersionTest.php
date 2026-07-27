@@ -17,7 +17,7 @@ final class VersionTest extends TestCase
     #[Test]
     public function fullVersionIncludesPrerelease(): void
     {
-        self::assertSame('1.0.0-rc.11', Version::full());
+        self::assertSame('1.0.0-rc.12', Version::full());
     }
 
     #[Test]
@@ -40,14 +40,38 @@ final class VersionTest extends TestCase
     }
 
     #[Test]
-    public function currentVersionIs100Rc2(): void
+    public function currentVersionIsRc12(): void
     {
         self::assertSame(1, Version::MAJOR);
         self::assertSame(0, Version::MINOR);
         self::assertSame(0, Version::PATCH);
-        self::assertSame('-rc.11', Version::PRERELEASE_SUFFIX);
+        self::assertSame('-rc.12', Version::PRERELEASE_SUFFIX);
         self::assertSame('1.0.0', Version::short());
-        self::assertSame('1.0.0-rc.11', Version::full());
+        self::assertSame('1.0.0-rc.12', Version::full());
+    }
+
+    /**
+     * The generated compile-time fallback (short + PRERELEASE_SUFFIX, used when
+     * Composer's InstalledVersions is unavailable) must equal composer.json's
+     * version. `composer version:sync` generates it; this pins the invariant in
+     * the suite so a manual edit to Version.php's constants — bypassing the
+     * generator — fails CI, not just the standalone version:check gate.
+     */
+    #[Test]
+    public function generatedFallbackConstantsMatchComposerJson(): void
+    {
+        $composerPath = dirname(__DIR__, 3) . '/composer.json';
+        $contents = file_get_contents($composerPath);
+        self::assertNotFalse($contents);
+
+        /** @var array{version: string} $manifest */
+        $manifest = json_decode($contents, true, 512, JSON_THROW_ON_ERROR);
+
+        self::assertSame(
+            $manifest['version'],
+            Version::short() . Version::PRERELEASE_SUFFIX,
+            'Version.php constants drifted from composer.json. Run `composer version:sync`.',
+        );
     }
 
     /**

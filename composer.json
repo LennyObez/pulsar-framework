@@ -1,6 +1,6 @@
 {
   "name": "pulsar/framework",
-  "version": "1.0.0-rc.11",
+  "version": "1.0.0-rc.12",
   "description": "Pulsar HMVC Framework (PHP 8.5)",
   "type": "library",
   "license": "Apache-2.0",
@@ -118,6 +118,8 @@
     "cs:check": "php-cs-fixer fix --dry-run --diff",
     "cs:fix": "php-cs-fixer fix",
     "api:snapshot": "php tools/api/generate-snapshot.php",
+    "version:sync": "php tools/version/sync-version.php",
+    "version:check": "php tools/version/sync-version.php --check",
     "bench": "phpbench run --config=tools/php/phpbench.json --report=default",
     "bench:ci": "phpbench run --config=tools/php/phpbench.json --report=default --progress=none",
     "bench:profiles": "php tools/bench/run.php",
@@ -141,6 +143,7 @@
     "chaos": "php -d opcache.enable_cli=1 -d opcache.memory_consumption=256 -d opcache.jit=off -d opcache.jit_buffer_size=0 vendor/bin/phpunit -c tools/php/phpunit.xml --group chaos",
     "property": "php -d opcache.enable_cli=1 -d opcache.memory_consumption=256 -d opcache.jit=off -d opcache.jit_buffer_size=0 vendor/bin/phpunit -c tools/php/phpunit.xml --group property",
     "qa": [
+      "@version:check",
       "@cs:check",
       "@phpstan",
       "@psalm",
