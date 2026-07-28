@@ -6,6 +6,8 @@ namespace Pulsar\DataProtection;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Config\ReportsUnknownKeys;
+use Pulsar\Config\UnknownKeys;
 
 use function is_array;
 
@@ -17,18 +19,33 @@ use function is_array;
  * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class DataProtectionConfig
+final readonly class DataProtectionConfig implements ReportsUnknownKeys
 {
+    /** Keys read from config/data_protection.php. */
+    private const array KNOWN_KEYS = ['retention', 'purge', 'consent'];
+
     /**
      * @param list<RetentionPolicy> $retention
      * @param PurgeConfig $purge
      * @param ConsentConfig $consent
+     * @param list<string> $unknownKeys Keys present in config/data_protection.php that
+     *     this DTO does not read — a misspelled `retention` silently leaves the purge
+     *     orchestrator with no policies, so GDPR-mandated expiry never runs.
      */
     public function __construct(
         public array $retention = [],
         public PurgeConfig $purge = new PurgeConfig(),
         public ConsentConfig $consent = new ConsentConfig(),
+        public array $unknownKeys = [],
     ) {}
+
+    /**
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
+    }
 
     /**
      * @param array<string, mixed> $data Raw config array from data_protection.php
@@ -58,10 +75,18 @@ final readonly class DataProtectionConfig
         /** @var array<string, mixed> $consentArr */
         $consentArr = is_array($consent) ? $consent : [];
 
+        $purgeConfig = PurgeConfig::fromArray($purgeArr);
+        $consentConfig = ConsentConfig::fromArray($consentArr);
+
         return new self(
             retention: $retention,
-            purge: PurgeConfig::fromArray($purgeArr),
-            consent: ConsentConfig::fromArray($consentArr),
+            purge: $purgeConfig,
+            consent: $consentConfig,
+            unknownKeys: [
+                ...UnknownKeys::collect($data, self::KNOWN_KEYS),
+                ...UnknownKeys::nested('purge', $purgeConfig),
+                ...UnknownKeys::nested('consent', $consentConfig),
+            ],
         );
     }
 }
