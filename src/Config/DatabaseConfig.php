@@ -32,6 +32,9 @@ final readonly class DatabaseConfig implements ReportsUnknownKeys
         'default', 'connections', 'read_write', 'pool', 'query_cache', 'migrations', 'failover', 'monitor',
     ];
 
+    /** Keys read from the `migrations` sub-array, which has no DTO of its own. */
+    private const array KNOWN_MIGRATIONS_KEYS = ['table', 'path'];
+
     /**
      * @param array<string, ConnectionConfig> $connections Keyed by connection name
      */
@@ -106,17 +109,37 @@ final readonly class DatabaseConfig implements ReportsUnknownKeys
         $queryCacheData = $data['query_cache'] ?? [];
         $monitorData = $data['monitor'] ?? [];
 
+        $pool = $poolData !== [] ? PoolConfig::fromArray($poolData) : new PoolConfig();
+        $readWrite = $readWriteData !== [] ? ReadWriteConfig::fromArray($readWriteData) : new ReadWriteConfig();
+        $failover = $failoverData !== [] ? FailoverConfig::fromArray($failoverData) : new FailoverConfig();
+        $queryCache = $queryCacheData !== [] ? QueryCacheConfig::fromArray($queryCacheData) : new QueryCacheConfig();
+        $monitor = $monitorData !== [] ? MonitorConfig::fromArray($monitorData) : new MonitorConfig();
+
         return new self(
             defaultConnection: $defaultConnection,
             connections: $connections,
             migrationsTable: $migrationsTable,
             migrationsPath: $migrationsPath,
-            pool: $poolData !== [] ? PoolConfig::fromArray($poolData) : new PoolConfig(),
-            readWrite: $readWriteData !== [] ? ReadWriteConfig::fromArray($readWriteData) : new ReadWriteConfig(),
-            failover: $failoverData !== [] ? FailoverConfig::fromArray($failoverData) : new FailoverConfig(),
-            queryCache: $queryCacheData !== [] ? QueryCacheConfig::fromArray($queryCacheData) : new QueryCacheConfig(),
-            monitor: $monitorData !== [] ? MonitorConfig::fromArray($monitorData) : new MonitorConfig(),
-            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
+            pool: $pool,
+            readWrite: $readWrite,
+            failover: $failover,
+            queryCache: $queryCache,
+            monitor: $monitor,
+            unknownKeys: [
+                ...UnknownKeys::collect($data, self::KNOWN_KEYS),
+                // Connections are keyed by an operator-chosen name, so the report
+                // echoes it back: connections.mysql.databse names the exact entry.
+                ...UnknownKeys::nestedEach('connections', $connections),
+                ...UnknownKeys::nestedKeys(
+                    'migrations',
+                    UnknownKeys::collect($migrationsData, self::KNOWN_MIGRATIONS_KEYS),
+                ),
+                ...UnknownKeys::nested('pool', $pool),
+                ...UnknownKeys::nested('read_write', $readWrite),
+                ...UnknownKeys::nested('failover', $failover),
+                ...UnknownKeys::nested('query_cache', $queryCache),
+                ...UnknownKeys::nested('monitor', $monitor),
+            ],
         );
     }
 

@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Config\ConfigManager;
+use Pulsar\Config\DatabaseConfig;
 use Pulsar\Config\Environment;
 use Pulsar\Config\Exception\ConfigException;
 use Pulsar\Config\ObservabilityConfig;
@@ -34,6 +35,7 @@ use const DIRECTORY_SEPARATOR;
 #[CoversClass(UnknownKeys::class)]
 #[CoversClass(SecurityConfig::class)]
 #[CoversClass(ObservabilityConfig::class)]
+#[CoversClass(DatabaseConfig::class)]
 #[CoversClass(ResilienceConfig::class)]
 final class UnknownKeyAuditTest extends TestCase
 {
@@ -193,6 +195,28 @@ final class UnknownKeyAuditTest extends TestCase
         self::assertContains('retry.max_attempt', $unknown);
         self::assertContains('circuit_breaker.failure_treshold', $unknown);
         self::assertContains('health_check.timeout_second', $unknown);
+    }
+
+    #[Test]
+    public function aConnectionTypoIsLabelledByTheConnectionName(): void
+    {
+        // connections is keyed by an operator-chosen name, so the report has to echo
+        // that name back — "databse" alone would not say which connection to fix.
+        $config = DatabaseConfig::fromArray(
+            [
+                'connections' => [
+                    'mysql' => ['driver' => 'mysql', 'databse' => 'app'],
+                ],
+                'migrations' => ['tabel' => 'pulsar_migrations'],
+            ],
+            Environment::load(null),
+            null,
+        );
+
+        $unknown = $config->unknownConfigKeys();
+
+        self::assertContains('connections.mysql.databse', $unknown);
+        self::assertContains('migrations.tabel', $unknown);
     }
 
     #[Test]

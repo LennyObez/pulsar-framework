@@ -18,8 +18,19 @@ use const PHP_OS_FAMILY;
  * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class ConnectionConfig
+final readonly class ConnectionConfig implements ReportsUnknownKeys
 {
+    /** Keys read from a single entry of `connections` in config/database.php. */
+    private const array KNOWN_KEYS = [
+        'driver', 'host', 'port', 'database', 'username', 'password',
+        'charset', 'collation', 'options',
+    ];
+
+    /**
+     * @param list<string> $unknownKeys Keys present in this connection's raw array that
+     *     the DTO does not read — a misspelled `database` silently connects to the
+     *     empty default rather than the schema the operator named.
+     */
     public function __construct(
         public string $name,
         public Driver $driver,
@@ -32,7 +43,16 @@ final readonly class ConnectionConfig
         public string $collation,
         /** @var array<string, mixed> */
         public array $options,
+        public array $unknownKeys = [],
     ) {}
+
+    /**
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
+    }
 
     /**
      * Build from a raw config array and environment.
@@ -80,6 +100,7 @@ final readonly class ConnectionConfig
             charset: $data['charset'] ?? 'utf8mb4',
             collation: $data['collation'] ?? 'utf8mb4_unicode_ci',
             options: $data['options'] ?? [],
+            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
         );
     }
 
