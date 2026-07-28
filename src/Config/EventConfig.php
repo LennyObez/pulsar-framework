@@ -51,11 +51,18 @@ final readonly class EventConfig implements ReportsUnknownKeys
             ? $environment->get('EVENT_ENABLED') === 'true'
             : (bool) ($data['enabled'] ?? true);
 
+        $stormProtection = StormProtectionConfig::fromArray($data['storm_protection'] ?? [], $environment);
+        $outbox = OutboxConfig::fromArray($data['outbox'] ?? []);
+
         return new self(
             enabled: $enabled,
-            stormProtection: StormProtectionConfig::fromArray($data['storm_protection'] ?? [], $environment),
-            outbox: OutboxConfig::fromArray($data['outbox'] ?? []),
-            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
+            stormProtection: $stormProtection,
+            outbox: $outbox,
+            unknownKeys: [
+                ...UnknownKeys::collect($data, self::KNOWN_KEYS),
+                ...UnknownKeys::nested('storm_protection', $stormProtection),
+                ...UnknownKeys::nested('outbox', $outbox),
+            ],
         );
     }
 }
