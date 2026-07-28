@@ -9293,7 +9293,8 @@
                         "array $subdomains",
                         "bool $corsAcrossSubdomains",
                         "string $sharedSessionDomain",
-                        "string $scheme"
+                        "string $scheme",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -9323,6 +9324,11 @@
                         "string $scope"
                     ],
                     "return": "?string",
+                    "static": false
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
                     "static": false
                 }
             },
@@ -13948,7 +13954,8 @@
                 "__construct": {
                     "params": [
                         "bool $requireExplicit",
-                        "array $purposes"
+                        "array $purposes",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -13959,6 +13966,11 @@
                     ],
                     "return": "Pulsar\\DataProtection\\ConsentConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -14093,7 +14105,8 @@
                     "params": [
                         "array $retention",
                         "Pulsar\\DataProtection\\PurgeConfig $purge",
-                        "Pulsar\\DataProtection\\ConsentConfig $consent"
+                        "Pulsar\\DataProtection\\ConsentConfig $consent",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -14104,6 +14117,11 @@
                     ],
                     "return": "Pulsar\\DataProtection\\DataProtectionConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -14474,7 +14492,8 @@
                     "params": [
                         "int $batchSize",
                         "bool $auditPurgeOperations",
-                        "bool $dryRun"
+                        "bool $dryRun",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -14485,6 +14504,11 @@
                     ],
                     "return": "Pulsar\\DataProtection\\PurgeConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -33326,7 +33350,8 @@
                     "params": [
                         "bool $enabled",
                         "int $maxEntries",
-                        "int $maxProfiles"
+                        "int $maxProfiles",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -33337,6 +33362,11 @@
                     ],
                     "return": "Pulsar\\Observability\\Profiler\\ProfilerConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -40001,7 +40031,8 @@
                         "Pulsar\\Security\\AntiSpam\\TimeTrap\\TimeTrapFailurePolicy $timeTrapFailurePolicy",
                         "bool $behaviorEnabled",
                         "string $behaviorFieldName",
-                        "array $behaviorWeights"
+                        "array $behaviorWeights",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -40012,6 +40043,11 @@
                     ],
                     "return": "Pulsar\\Security\\AntiSpam\\AntiSpamConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []

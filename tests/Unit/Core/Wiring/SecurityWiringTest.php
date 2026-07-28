@@ -13,6 +13,7 @@ use Psr\Log\LogLevel;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Container\Container;
 use Pulsar\Core\Wiring\SecurityWiring;
+use Pulsar\DataProtection\DataProtectionConfig;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Routing\Router;
@@ -47,6 +48,40 @@ final class SecurityWiringTest extends TestCase
     protected function tearDown(): void
     {
         putenv('PULSAR_MASTER_KEY');
+    }
+
+    #[Test]
+    public function wireLoadsRetentionPoliciesFromDataProtectionConfig(): void
+    {
+        // Regression: config/data_protection.php was never loaded — SecurityWiring
+        // read DataProtectionConfig from the config repository, which nothing
+        // populates, so it always fell back to empty defaults and the operator's
+        // GDPR retention policies were silently never enforced.
+        $container = new Container();
+        $container->instance(Randomizer::class, new Randomizer());
+        $router = new Router();
+        $middleware = new MiddlewarePipeline($container);
+        $middlewareRegistry = new MiddlewareRegistry();
+
+        $configManager = $this->createConfigManager(
+            dataProtectionBody: "'retention' => [['category' => 'user_sessions', 'retention_days' => 90, 'legal_basis' => 'test']]",
+        );
+        $configManager->load();
+
+        $wiring = new SecurityWiring();
+        $wiring->wire($container, $configManager, $middleware, $middlewareRegistry, $router);
+
+        self::assertTrue(
+            $container->has(DataProtectionConfig::class),
+            'config/data_protection.php must be loaded and its DTO registered, not ignored',
+        );
+
+        /** @var DataProtectionConfig $dp */
+        $dp = $container->get(DataProtectionConfig::class);
+
+        self::assertCount(1, $dp->retention, 'the operator retention policy from config must be honored');
+        self::assertSame('user_sessions', $dp->retention[0]->category);
+        self::assertSame(90, $dp->retention[0]->retentionDays);
     }
 
     #[Test]
@@ -397,10 +432,14 @@ final class SecurityWiringTest extends TestCase
         }
     }
 
-    private function createConfigManager(?string $masterKeyHex = null, string $sessionHandler = 'file', string $headersBody = '', ?string $envFileContent = null): ConfigManager
+    private function createConfigManager(?string $masterKeyHex = null, string $sessionHandler = 'file', string $headersBody = '', ?string $envFileContent = null, ?string $dataProtectionBody = null): ConfigManager
     {
         $configPath = sys_get_temp_dir() . '/pulsar_security_wiring_' . bin2hex(random_bytes(4));
         @mkdir($configPath, 0o755, true);
+
+        if ($dataProtectionBody !== null) {
+            file_put_contents($configPath . '/data_protection.php', '<?php return [' . $dataProtectionBody . '];');
+        }
 
         // Set PULSAR_MASTER_KEY env var if provided (use putenv for getenv() compatibility)
         if ($masterKeyHex !== null) {

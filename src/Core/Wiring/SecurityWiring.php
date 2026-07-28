@@ -483,10 +483,14 @@ final readonly class SecurityWiring implements ServiceWiringInterface, Describes
                 $purgers['user_sessions'] = new SessionPurge($container->get(SessionHandlerInterface::class));
             }
 
-            // Build policies from DataProtectionConfig
-            $dpConfig = $repository->has(DataProtectionConfig::class)
-                ? $repository->get(DataProtectionConfig::class)
-                : new DataProtectionConfig();
+            // Build policies from DataProtectionConfig. Loaded from
+            // config/data_protection.php here: nothing registers this DTO in the
+            // config repository, so the old repository lookup always fell through
+            // to empty defaults and the operator's GDPR retention policies were
+            // silently never enforced.
+            $dpConfig = $this->buildDataProtectionConfig($configManager);
+            $container->instance(DataProtectionConfig::class, $dpConfig);
+            $this->reportUnknownConfigKeys($container, 'data_protection', $dpConfig);
 
             /** @var array<string, RetentionPolicyInterface> $policies */
             $policies = [];
@@ -704,6 +708,34 @@ final readonly class SecurityWiring implements ServiceWiringInterface, Describes
         }
 
         return new CompositeKeyProvider($masterKey, $overrides);
+    }
+
+    /**
+     * Load data-protection configuration from config/data_protection.php.
+     *
+     * Mirrors {@see self::buildDomainConfig()}: the file is read here because no
+     * loader registers this DTO in the config repository, so the retention and
+     * purge policies an operator writes are only honored if they are built at the
+     * point they are consumed (the purge orchestrator).
+     */
+    private function buildDataProtectionConfig(ConfigManager $configManager): DataProtectionConfig
+    {
+        $configPath = $configManager->configPath();
+
+        if ($configPath !== null && is_file($configPath . DIRECTORY_SEPARATOR . 'data_protection.php')) {
+            /**
+             * @psalm-suppress UnresolvableInclude
+             * @var mixed $data
+             */
+            $data = require $configPath . DIRECTORY_SEPARATOR . 'data_protection.php';
+
+            if (is_array($data)) {
+                /** @var array<string, mixed> $data */
+                return DataProtectionConfig::fromArray($data);
+            }
+        }
+
+        return new DataProtectionConfig();
     }
 
     /**
