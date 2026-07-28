@@ -6,6 +6,8 @@ namespace Pulsar\Documentation;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Config\ReportsUnknownKeys;
+use Pulsar\Config\UnknownKeys;
 use Pulsar\Support\Coerce;
 
 use function is_array;
@@ -20,15 +22,30 @@ use function is_array;
  * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class DocumentationConfig
+final readonly class DocumentationConfig implements ReportsUnknownKeys
 {
+    /** Keys read from config/documentation.php. */
+    private const array KNOWN_KEYS = ['enabled', 'versions'];
+
     /**
      * @param list<DocVersion> $versions
+     * @param list<string> $unknownKeys Keys present in config/documentation.php that this
+     *     DTO does not read — a misspelled `versions` leaves the version list empty, so
+     *     the resolver middleware is never wired and /docs/{version} stops resolving.
      */
     public function __construct(
         public bool $enabled = false,
         public array $versions = [],
+        public array $unknownKeys = [],
     ) {}
+
+    /**
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
+    }
 
     /**
      * Usable only when enabled with at least one version (the registry's
@@ -64,6 +81,7 @@ final readonly class DocumentationConfig
         return new self(
             enabled: Coerce::strictBool($data['enabled'] ?? null),
             versions: $versions,
+            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
         );
     }
 

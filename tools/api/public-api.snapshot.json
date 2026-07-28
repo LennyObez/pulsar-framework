@@ -10849,6 +10849,30 @@
             },
             "constants": []
         },
+        "Pulsar\\Config\\UnknownKeyReporter": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "describe": {
+                    "params": [
+                        "string $section",
+                        "Pulsar\\Config\\ReportsUnknownKeys $config"
+                    ],
+                    "return": "array",
+                    "static": true
+                },
+                "report": {
+                    "params": [
+                        "Psr\\Log\\LoggerInterface $logger",
+                        "string $section",
+                        "Pulsar\\Config\\ReportsUnknownKeys $config"
+                    ],
+                    "return": "void",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\Config\\UnknownKeys": {
             "since": "1.0.0",
             "methods": [],
@@ -18549,7 +18573,8 @@
                 "__construct": {
                     "params": [
                         "bool $enabled",
-                        "array $versions"
+                        "array $versions",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -18564,6 +18589,11 @@
                 "isUsable": {
                     "params": [],
                     "return": "bool",
+                    "static": false
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
                     "static": false
                 }
             },
@@ -18605,7 +18635,8 @@
                     "params": [
                         "bool $enabled",
                         "string $geoCountryHeader",
-                        "array $functions"
+                        "array $functions",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -18620,6 +18651,11 @@
                 "isUsable": {
                     "params": [],
                     "return": "bool",
+                    "static": false
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
                     "static": false
                 }
             },
@@ -29718,7 +29754,8 @@
             "signatures": {
                 "__construct": {
                     "params": [
-                        "bool $enabled"
+                        "bool $enabled",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -29731,6 +29768,11 @@
                     ],
                     "return": "Pulsar\\Introspection\\IntrospectionConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []

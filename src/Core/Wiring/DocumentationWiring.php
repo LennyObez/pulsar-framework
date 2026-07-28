@@ -7,6 +7,7 @@ namespace Pulsar\Core\Wiring;
 use Pulsar\Api\Internal;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Container\ContainerInterface;
+use Pulsar\Core\Wiring\Internal\ReportsConfigKeys;
 use Pulsar\Documentation\DocumentationConfig;
 use Pulsar\Documentation\DocVersionRegistry;
 use Pulsar\Documentation\DocVersionResolverMiddleware;
@@ -30,6 +31,8 @@ use const DIRECTORY_SEPARATOR;
 #[Internal]
 final readonly class DocumentationWiring implements ServiceWiringInterface
 {
+    use ReportsConfigKeys;
+
     public function wire(
         ContainerInterface $container,
         ConfigManager $configManager,
@@ -39,6 +42,7 @@ final readonly class DocumentationWiring implements ServiceWiringInterface
     ): void {
         $config = $this->loadConfig($configManager);
         $container->instance(DocumentationConfig::class, $config);
+        $this->reportUnknownConfigKeys($container, 'documentation', $config);
 
         if (!$config->isUsable()) {
             return;

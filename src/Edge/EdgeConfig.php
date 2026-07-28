@@ -6,6 +6,8 @@ namespace Pulsar\Edge;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Config\ReportsUnknownKeys;
+use Pulsar\Config\UnknownKeys;
 use Pulsar\Support\Coerce;
 
 use function is_array;
@@ -25,16 +27,31 @@ use function is_array;
  * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class EdgeConfig
+final readonly class EdgeConfig implements ReportsUnknownKeys
 {
+    /** Keys read from config/edge.php. `functions` is derived from ab_tests/geo_redirects, not a key. */
+    private const array KNOWN_KEYS = ['enabled', 'geo_country_header', 'ab_tests', 'geo_redirects'];
+
     /**
      * @param list<EdgeFunctionInterface> $functions Edge functions in evaluation order
+     * @param list<string> $unknownKeys Keys present in config/edge.php that this DTO does
+     *     not read — a misspelled `ab_tests` or `geo_redirects` builds no edge function
+     *     from that block, so the redirect or experiment silently never runs.
      */
     public function __construct(
         public bool $enabled = false,
         public string $geoCountryHeader = 'CF-IPCountry',
         public array $functions = [],
+        public array $unknownKeys = [],
     ) {}
+
+    /**
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
+    }
 
     #[NoDiscard]
     public function isUsable(): bool
@@ -77,6 +94,7 @@ final readonly class EdgeConfig
             enabled: Coerce::strictBool($data['enabled'] ?? null),
             geoCountryHeader: Coerce::string($data['geo_country_header'] ?? null, 'CF-IPCountry'),
             functions: $functions,
+            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
         );
     }
 
