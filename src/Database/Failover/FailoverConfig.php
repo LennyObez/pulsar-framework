@@ -6,6 +6,8 @@ namespace Pulsar\Database\Failover;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Config\ReportsUnknownKeys;
+use Pulsar\Config\UnknownKeys;
 
 /**
  * Configuration for connection failover management.
@@ -16,7 +18,7 @@ use Pulsar\Api\Api;
  * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class FailoverConfig
+final readonly class FailoverConfig implements ReportsUnknownKeys
 {
     /**
      * @param bool $enabled
@@ -25,13 +27,33 @@ final readonly class FailoverConfig
      * @param 'dns'|'callback'|'config-reload' $strategy
      * @param bool $complianceEventsEnabled
      */
+    /** Keys read from the `failover` sub-array of config/database.php. */
+    private const array KNOWN_KEYS = [
+        'enabled', 'failure_threshold', 'retry_interval_seconds', 'strategy',
+        'compliance_events_enabled',
+    ];
+
+    /**
+     * @param list<string> $unknownKeys Keys present in the raw `failover` array that
+     *     this DTO does not read — a misspelled key here is only discovered during
+     *     the outage the failover was configured to survive.
+     */
     public function __construct(
         public bool $enabled = false,
         public int $failureThreshold = 3,
         public int $retryIntervalSeconds = 5,
         public string $strategy = 'dns',
         public bool $complianceEventsEnabled = false,
+        public array $unknownKeys = [],
     ) {}
+
+    /**
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
+    }
 
     /**
      * Build from a raw config array.
@@ -53,6 +75,7 @@ final readonly class FailoverConfig
             retryIntervalSeconds: $data['retry_interval_seconds'] ?? 5,
             strategy: $data['strategy'] ?? 'dns',
             complianceEventsEnabled: (bool) ($data['compliance_events_enabled'] ?? false),
+            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
         );
     }
 }

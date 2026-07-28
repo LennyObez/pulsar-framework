@@ -8983,7 +8983,8 @@
                         "string $password",
                         "string $charset",
                         "string $collation",
-                        "array $options"
+                        "array $options",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -8997,6 +8998,11 @@
                     ],
                     "return": "Pulsar\\Config\\ConnectionConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -14590,7 +14596,8 @@
                         "bool $enabled",
                         "int $defaultTtlSeconds",
                         "array $sensitiveTableNames",
-                        "array $authorizationColumns"
+                        "array $authorizationColumns",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -14601,6 +14608,11 @@
                     ],
                     "return": "Pulsar\\Database\\Cache\\QueryCacheConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -15159,7 +15171,8 @@
                         "int $failureThreshold",
                         "int $retryIntervalSeconds",
                         "string $strategy",
-                        "bool $complianceEventsEnabled"
+                        "bool $complianceEventsEnabled",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -15170,6 +15183,11 @@
                     ],
                     "return": "Pulsar\\Database\\Failover\\FailoverConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -15903,7 +15921,8 @@
                         "bool $logRawBindings",
                         "bool $requireEnvironmentConfirmation",
                         "array $piiColumns",
-                        "bool $enabled"
+                        "bool $enabled",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -15914,6 +15933,11 @@
                     ],
                     "return": "Pulsar\\Database\\Monitor\\MonitorConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -16273,7 +16297,8 @@
                         "int $maxConnections",
                         "int $idleTimeoutSeconds",
                         "int $maxLifetimeSeconds",
-                        "int $healthCheckIntervalSeconds"
+                        "int $healthCheckIntervalSeconds",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -16284,6 +16309,11 @@
                     ],
                     "return": "Pulsar\\Database\\Pool\\PoolConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -16668,7 +16698,8 @@
                         "array $readHosts",
                         "string $writeHost",
                         "string|int $stickyDuration",
-                        "bool $enabled"
+                        "bool $enabled",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -16679,6 +16710,11 @@
                     ],
                     "return": "Pulsar\\Database\\Routing\\ReadWriteConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
