@@ -6,7 +6,7 @@ namespace Pulsar\Support;
 
 use JsonException;
 use NoDiscard;
-use Pulsar\Api\Internal;
+use Pulsar\Api\Api;
 
 use function file_get_contents;
 use function in_array;
@@ -31,8 +31,14 @@ use const JSON_THROW_ON_ERROR;
  * (RecursiveDirectoryIterator "Failed to open directory"). Every mapped root is
  * unioned, resolved against the project root, and filtered to those that exist —
  * a declared-but-absent root is skipped, never fatal.
+ *
+ * Public, like the rest of {@see \Pulsar\Support}: cache warm, preload and
+ * extraction each import it from their own module, and any tool that needs to walk
+ * an application's sources faces the same question. A cross-module utility that is
+ * marked internal is a contradiction the boundary rules correctly reject.
+ * @api
  */
-#[Internal(reason: 'Project layout resolution for cache warm, preload and extraction')]
+#[Api(since: '1.0.0-rc.12')]
 final class ProjectSourceRoots
 {
     /**
