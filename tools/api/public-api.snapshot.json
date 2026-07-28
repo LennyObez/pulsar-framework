@@ -10630,7 +10630,8 @@
                     "params": [
                         "int $maxDepth",
                         "bool $loopDetection",
-                        "int $maxRepeatsPerEvent"
+                        "int $maxRepeatsPerEvent",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -10642,6 +10643,11 @@
                     ],
                     "return": "Pulsar\\Config\\StormProtectionConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -10722,7 +10728,8 @@
                 "__construct": {
                     "params": [
                         "Pulsar\\Tenancy\\TenantDatabaseStrategy $strategy",
-                        "string $prefixTemplate"
+                        "string $prefixTemplate",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -10733,6 +10740,11 @@
                     ],
                     "return": "Pulsar\\Config\\TenantDatabaseConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []

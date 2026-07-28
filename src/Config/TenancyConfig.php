@@ -74,6 +74,8 @@ final readonly class TenancyConfig implements ReportsUnknownKeys
                 $resolverValue,
             ));
 
+        $database = TenantDatabaseConfig::fromArray($data['database'] ?? []);
+
         return new self(
             enabled: $enabled,
             resolver: $resolver,
@@ -81,9 +83,12 @@ final readonly class TenancyConfig implements ReportsUnknownKeys
             subdomainSuffix: $data['subdomain_suffix'] ?? '',
             pathPrefix: $data['path_prefix'] ?? '/t/',
             defaultTenant: $data['default_tenant'] ?? null,
-            database: TenantDatabaseConfig::fromArray($data['database'] ?? []),
+            database: $database,
             tenants: $data['tenants'] ?? [],
-            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
+            unknownKeys: [
+                ...UnknownKeys::collect($data, self::KNOWN_KEYS),
+                ...UnknownKeys::nested('database', $database),
+            ],
         );
     }
 }
