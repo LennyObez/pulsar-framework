@@ -7,6 +7,7 @@ namespace Pulsar\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
+use function is_array;
 use function is_string;
 
 /**
@@ -20,6 +21,17 @@ final readonly class ObservabilityConfig implements ReportsUnknownKeys
 {
     /** Keys recognised in config/observability.php. */
     private const array KNOWN_KEYS = ['logging', 'metrics', 'tracing', 'audit', 'error_tracking'];
+
+    /**
+     * Keys read from the `logging` sub-array. `driver`/`path`/`stream` are the flat
+     * single-channel shape used when no `channels` map is given.
+     */
+    private const array KNOWN_LOGGING_KEYS = [
+        'default_channel', 'level', 'channels', 'compliance', 'driver', 'path', 'stream',
+    ];
+
+    /** Keys read from a single entry of `logging.channels`. */
+    private const array KNOWN_CHANNEL_KEYS = ['driver', 'path', 'stream'];
 
     /**
      * @param list<LoggingChannelConfig> $loggingChannels
@@ -80,8 +92,28 @@ final readonly class ObservabilityConfig implements ReportsUnknownKeys
         $defaultChannel = $environment->get('LOG_CHANNEL') ?? $logging['default_channel'] ?? 'file';
         $level = $environment->get('LOG_LEVEL') ?? $logging['level'] ?? 'info';
 
+        // `logging` and its channels have no DTO of their own -- they are read
+        // inline here -- so their unknown keys are collected here too. A channel
+        // whose `path` is misspelled otherwise falls back to the driver default and
+        // writes somewhere the operator never named.
+        $nestedUnknown = UnknownKeys::nestedKeys(
+            'logging',
+            UnknownKeys::collect($logging, self::KNOWN_LOGGING_KEYS),
+        );
+
         $channelConfigs = [];
         foreach ($logging['channels'] ?? [] as $name => $channelData) {
+            if (is_array($channelData)) {
+                foreach (
+                    UnknownKeys::nestedKeys(
+                        'logging.channels.' . $name,
+                        UnknownKeys::collect($channelData, self::KNOWN_CHANNEL_KEYS),
+                    ) as $unknownChannelKey
+                ) {
+                    $nestedUnknown[] = $unknownChannelKey;
+                }
+            }
+
             $channelConfigs[] = new LoggingChannelConfig(
                 name: $name,
                 driver: $channelData['driver'] ?? 'file',
@@ -111,16 +143,32 @@ final readonly class ObservabilityConfig implements ReportsUnknownKeys
         /** @var array<string, mixed> $auditData */
         $auditData = $data['audit'] ?? [];
 
+        $metrics = MetricsConfig::fromArray($data['metrics'] ?? []);
+        $tracing = TracingConfig::fromArray($data['tracing'] ?? []);
+        $errorTracking = ErrorTrackingConfig::fromArray($data['error_tracking'] ?? []);
+        $audit = AuditConfig::fromArray($auditData, $environment);
+        $complianceLogging = ComplianceLoggingConfig::fromArray($logging['compliance'] ?? []);
+
         return new self(
             defaultLoggingChannel: $defaultChannel,
             loggingLevel: $level,
             loggingChannels: $channelConfigs,
-            metrics: MetricsConfig::fromArray($data['metrics'] ?? []),
-            tracing: TracingConfig::fromArray($data['tracing'] ?? []),
-            errorTracking: ErrorTrackingConfig::fromArray($data['error_tracking'] ?? []),
-            audit: AuditConfig::fromArray($auditData, $environment),
-            complianceLogging: ComplianceLoggingConfig::fromArray($logging['compliance'] ?? []),
-            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
+            metrics: $metrics,
+            tracing: $tracing,
+            errorTracking: $errorTracking,
+            audit: $audit,
+            complianceLogging: $complianceLogging,
+            unknownKeys: [
+                ...UnknownKeys::collect($data, self::KNOWN_KEYS),
+                ...$nestedUnknown,
+                ...UnknownKeys::nested('metrics', $metrics),
+                ...UnknownKeys::nested('tracing', $tracing),
+                ...UnknownKeys::nested('error_tracking', $errorTracking),
+                ...UnknownKeys::nested('audit', $audit),
+                // Compliance logging is read from `logging.compliance`, not a
+                // top-level section, so its path has to say so.
+                ...UnknownKeys::nested('logging.compliance', $complianceLogging),
+            ],
         );
     }
 }

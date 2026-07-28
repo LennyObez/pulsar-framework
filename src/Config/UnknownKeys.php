@@ -73,6 +73,25 @@ final class UnknownKeys
     }
 
     /**
+     * Prefix an already-collected list of keys with a config path.
+     *
+     * For sub-arrays that have no DTO of their own — `metrics.exporters`, a driver
+     * options map — where {@see self::collect()} produced the list directly and only
+     * the path is missing.
+     *
+     * @param string       $prefix The sub-array's path within the section.
+     * @param list<string> $keys   Keys already found unknown at that level.
+     * @return list<string>
+     */
+    public static function nestedKeys(string $prefix, array $keys): array
+    {
+        return array_map(
+            static fn(string $key): string => $prefix . '.' . $key,
+            $keys,
+        );
+    }
+
+    /**
      * Fold a keyed collection of child DTOs — `database.connections.*`,
      * `storage.disks.*`, `queue.drivers.*` — into path-qualified keys such as
      * `connections.mysql.charsett`. The collection key is operator-chosen, so it

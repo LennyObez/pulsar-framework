@@ -20,9 +20,12 @@ use function is_string;
  * @api
  */
 #[Api(since: '1.0.0-rc.11')]
-final readonly class ComplianceLoggingConfig
+final readonly class ComplianceLoggingConfig implements ReportsUnknownKeys
 {
     public const array KNOWN_FRAMEWORKS = ['gdpr', 'hipaa', 'pci-dss', 'sox'];
+
+    /** Keys read from the `logging.compliance` sub-array of config/observability.php. */
+    private const array KNOWN_KEYS = ['enabled', 'frameworks', 'path'];
 
     /** @var list<string> */
     public array $frameworks;
@@ -30,13 +33,24 @@ final readonly class ComplianceLoggingConfig
     /**
      * @param list<string> $frameworks Compliance frameworks to format for;
      *        empty selects every known framework (maximal masking).
+     * @param list<string> $unknownKeys Keys present in the raw `logging.compliance`
+     *        array that this DTO does not read.
      */
     public function __construct(
         public bool $enabled = false,
         array $frameworks = [],
         public string $path = 'var/logs/compliance.log',
+        public array $unknownKeys = [],
     ) {
         $this->frameworks = $frameworks !== [] ? $frameworks : self::KNOWN_FRAMEWORKS;
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
     }
 
     /**
@@ -61,6 +75,7 @@ final readonly class ComplianceLoggingConfig
             enabled: (bool) ($data['enabled'] ?? false),
             frameworks: $frameworks,
             path: $data['path'] ?? 'var/logs/compliance.log',
+            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
         );
     }
 }

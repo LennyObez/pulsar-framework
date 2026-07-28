@@ -15,18 +15,33 @@ use Pulsar\Support\Coerce;
  * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class AuditConfig
+final readonly class AuditConfig implements ReportsUnknownKeys
 {
+    /** Keys read from the `audit` sub-array of config/observability.php. */
+    private const array KNOWN_KEYS = ['enabled', 'log_path', 'events'];
+
     /**
      * @param bool              $enabled    Whether audit logging is enabled
      * @param string            $logPath    File path for audit log output
      * @param list<string>      $events     Which event types to audit
+     * @param list<string> $unknownKeys Keys present in the raw `audit` array that this
+     *        DTO does not read — a misspelled `events` entry key silently narrows what
+     *        is audited, which is the one thing an audit log must not do quietly.
      */
     public function __construct(
         public bool $enabled = true,
         public string $logPath = 'var/logs/audit.jsonl',
         public array $events = [],
+        public array $unknownKeys = [],
     ) {}
+
+    /**
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
+    }
 
     /**
      * Build from the raw audit config array.
@@ -46,6 +61,7 @@ final readonly class AuditConfig
             enabled: (bool) ($data['enabled'] ?? true),
             logPath: $logPathEnv ?? Coerce::string($data['log_path'] ?? null, 'var/logs/audit.jsonl'),
             events: Coerce::listOfString($data['events'] ?? null),
+            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
         );
     }
 }

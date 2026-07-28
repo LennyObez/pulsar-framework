@@ -10,6 +10,8 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\Environment;
 use Pulsar\Config\Exception\ConfigException;
+use Pulsar\Config\ObservabilityConfig;
+use Pulsar\Config\ResilienceConfig;
 use Pulsar\Config\SecurityConfig;
 use Pulsar\Config\UnknownKeys;
 
@@ -31,6 +33,8 @@ use const DIRECTORY_SEPARATOR;
 #[CoversClass(ConfigManager::class)]
 #[CoversClass(UnknownKeys::class)]
 #[CoversClass(SecurityConfig::class)]
+#[CoversClass(ObservabilityConfig::class)]
+#[CoversClass(ResilienceConfig::class)]
 final class UnknownKeyAuditTest extends TestCase
 {
     private string $tempDir;
@@ -130,6 +134,65 @@ final class UnknownKeyAuditTest extends TestCase
         );
 
         self::assertSame([], $config->unknownConfigKeys());
+    }
+
+    #[Test]
+    public function aLogChannelTypoIsReportedWithItsChannelName(): void
+    {
+        // logging and its channels have no DTO: they are read inline, so their keys
+        // were never audited at all. A misspelled `path` silently sends the channel
+        // to the driver default.
+        $config = ObservabilityConfig::fromArray(
+            ['logging' => ['channels' => ['file' => ['driver' => 'file', 'pathh' => 'var/logs/a.log']]]],
+            Environment::load(null),
+        );
+
+        self::assertContains('logging.channels.file.pathh', $config->unknownConfigKeys());
+    }
+
+    #[Test]
+    public function anUnrecognizedMetricsExporterNameIsReported(): void
+    {
+        // `promethius` matches neither exporter branch, so the exporter is simply
+        // never configured — previously with no signal whatsoever.
+        $config = ObservabilityConfig::fromArray(
+            ['metrics' => ['exporters' => ['promethius' => ['enabled' => true]]]],
+            Environment::load(null),
+        );
+
+        self::assertContains('metrics.exporters.promethius', $config->unknownConfigKeys());
+    }
+
+    #[Test]
+    public function complianceLoggingReportsUnderItsRealPath(): void
+    {
+        // It is read from logging.compliance, not a top-level section; the reported
+        // path has to match where the operator actually writes it.
+        $config = ObservabilityConfig::fromArray(
+            ['logging' => ['compliance' => ['enabled' => true, 'framework' => ['gdpr']]]],
+            Environment::load(null),
+        );
+
+        self::assertContains('logging.compliance.framework', $config->unknownConfigKeys());
+    }
+
+    #[Test]
+    public function resilienceSubsectionTyposAreReported(): void
+    {
+        $config = ResilienceConfig::fromArray(
+            [
+                'retry' => ['max_attempt' => 5],
+                'circuit_breaker' => ['failure_treshold' => 3],
+                'health_check' => ['timeout_second' => 2],
+            ],
+            Environment::load(null),
+        );
+
+        $unknown = $config->unknownConfigKeys();
+
+        self::assertContains('retry.max_attempt', $unknown);
+        self::assertContains('circuit_breaker.failure_treshold', $unknown);
+        self::assertContains('health_check.timeout_second', $unknown);
     }
 
     #[Test]
