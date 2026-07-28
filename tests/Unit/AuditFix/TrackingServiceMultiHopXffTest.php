@@ -9,42 +9,40 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Extension\Analytics\Config\AnalyticsConfig;
-use Pulsar\Extension\Analytics\Internal\Service\TrackingService;
-use ReflectionClass;
-use ReflectionMethod;
+use Pulsar\Extension\Analytics\Internal\Security\AnalyticsKeyManager;
+use Pulsar\Extension\Analytics\Internal\Security\VisitorConsentIdentity;
+use Pulsar\Security\Crypto\MasterKey;
+
+use function bin2hex;
+use function random_bytes;
 
 /**
- * Verifies that TrackingService::getClientIp() walks X-Forwarded-For
- * right-to-left to find the first untrusted IP, matching the
- * ClientFingerprintResolver pattern for multi-hop proxy chains.
+ * Verifies that client-IP resolution walks X-Forwarded-For right-to-left to find
+ * the first untrusted IP, matching the ClientFingerprintResolver pattern for
+ * multi-hop proxy chains.
  *
- * Uses reflection to bypass the final class constructors and test
- * the private getClientIp method directly.
+ * The logic lives in {@see VisitorConsentIdentity::clientIp()}, which TrackingService
+ * delegates to. This exercises it directly through its public API: the previous
+ * version reflected into TrackingService's private getClientIp() on an instance
+ * built without a constructor, which broke the moment the method became a
+ * delegation (the readonly $consentIdentity was never initialised) even though
+ * production was correct throughout. Testing the owning class publicly cannot
+ * decay that way.
  */
-#[CoversClass(TrackingService::class)]
+#[CoversClass(VisitorConsentIdentity::class)]
 final class TrackingServiceMultiHopXffTest extends TestCase
 {
-    private function makeServiceWithConfig(AnalyticsConfig $config): TrackingService
+    private function makeServiceWithConfig(AnalyticsConfig $config): VisitorConsentIdentity
     {
-        // Use reflection to create an instance without calling the constructor
-        $refClass = new ReflectionClass(TrackingService::class);
-        $service = $refClass->newInstanceWithoutConstructor();
-
-        // Set the config property directly
-        $configProp = $refClass->getProperty('config');
-        $configProp->setValue($service, $config);
-
-        return $service;
+        return new VisitorConsentIdentity(
+            new AnalyticsKeyManager(MasterKey::fromHex(bin2hex(random_bytes(32)))),
+            $config,
+        );
     }
 
-    private function invokeGetClientIp(TrackingService $service, ServerRequestInterface $request): string
+    private function invokeGetClientIp(VisitorConsentIdentity $identity, ServerRequestInterface $request): string
     {
-        $method = new ReflectionMethod($service, 'getClientIp');
-        $result = $method->invoke($service, $request);
-
-        self::assertIsString($result, 'TrackingService::getClientIp() must return a string');
-
-        return $result;
+        return $identity->clientIp($request);
     }
 
     private function makeRequest(string $remoteAddr, string $xff): ServerRequestInterface
