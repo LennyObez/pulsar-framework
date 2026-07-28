@@ -7,6 +7,7 @@ namespace Pulsar\Core\Wiring;
 use Pulsar\Api\Internal;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Container\ContainerInterface;
+use Pulsar\Core\Wiring\Internal\ReportsConfigKeys;
 use Pulsar\Edge\EdgeConfig;
 use Pulsar\Edge\EdgeFunctionPipeline;
 use Pulsar\Edge\EdgeMiddleware;
@@ -32,6 +33,8 @@ use const DIRECTORY_SEPARATOR;
 #[Internal]
 final readonly class EdgeWiring implements ServiceWiringInterface
 {
+    use ReportsConfigKeys;
+
     public function wire(
         ContainerInterface $container,
         ConfigManager $configManager,
@@ -41,6 +44,7 @@ final readonly class EdgeWiring implements ServiceWiringInterface
     ): void {
         $config = $this->loadConfig($configManager);
         $container->instance(EdgeConfig::class, $config);
+        $this->reportUnknownConfigKeys($container, 'edge', $config);
 
         if (!$config->isUsable()) {
             return;

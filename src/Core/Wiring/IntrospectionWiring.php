@@ -11,6 +11,7 @@ use Pulsar\Config\ConfigManager;
 use Pulsar\Console\Application;
 use Pulsar\Console\Command;
 use Pulsar\Container\ContainerInterface;
+use Pulsar\Core\Wiring\Internal\ReportsConfigKeys;
 use Pulsar\Extensibility\ExtensionRegistry;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
@@ -39,6 +40,8 @@ use const DIRECTORY_SEPARATOR;
 #[Internal]
 final readonly class IntrospectionWiring implements ServiceWiringInterface
 {
+    use ReportsConfigKeys;
+
     public function wire(
         ContainerInterface $container,
         ConfigManager $configManager,
@@ -71,6 +74,7 @@ final readonly class IntrospectionWiring implements ServiceWiringInterface
 
         $config = IntrospectionConfig::fromArray($configData, $environment, $appConfig->mode);
         $container->instance(IntrospectionConfig::class, $config);
+        $this->reportUnknownConfigKeys($container, 'introspection', $config);
 
         if (!$config->enabled) {
             return;

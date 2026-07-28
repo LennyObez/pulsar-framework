@@ -17,7 +17,6 @@ use function array_values;
 use function dirname;
 use function is_array;
 use function is_file;
-use function sprintf;
 
 /**
  * Configuration orchestrator.
@@ -483,8 +482,8 @@ final class ConfigManager implements ConfigManagerInterface
 
             $section = self::sectionLabel($config::class);
 
-            foreach ($config->unknownConfigKeys() as $key) {
-                $descriptions[] = sprintf('config section "%s": unrecognized key "%s" (ignored)', $section, $key);
+            foreach (UnknownKeyReporter::describe($section, $config) as $description) {
+                $descriptions[] = $description;
             }
         }
 
