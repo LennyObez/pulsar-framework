@@ -6,6 +6,8 @@ namespace Pulsar\Mail\Webhook;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Config\ReportsUnknownKeys;
+use Pulsar\Config\UnknownKeys;
 use Pulsar\Support\Coerce;
 
 use function array_filter;
@@ -24,10 +26,20 @@ use function is_string;
  * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class MailWebhookConfig
+final readonly class MailWebhookConfig implements ReportsUnknownKeys
 {
+    /** Keys read from the `webhooks` sub-array of config/mail.php. */
+    private const array KNOWN_KEYS = [
+        'enabled', 'provider', 'secret', 'path', 'replay_window_seconds', 'ip_allowlist',
+    ];
+
     /**
      * @param list<string> $ipAllowlist Source IPs/CIDRs permitted to call the endpoint (empty = no IP restriction)
+     * @param list<string> $unknownKeys Keys present in the raw `webhooks` array that this
+     *     DTO does not read. Two of these are the endpoint's only defences: a misspelled
+     *     `secret` leaves signature verification without a key, and a misspelled
+     *     `ip_allowlist` drops the source restriction — on a route that accepts
+     *     unauthenticated provider callbacks.
      */
     public function __construct(
         public bool $enabled = false,
@@ -36,7 +48,16 @@ final readonly class MailWebhookConfig
         public string $path = '/_pulsar/mail/webhook',
         public int $replayWindowSeconds = 300,
         public array $ipAllowlist = [],
+        public array $unknownKeys = [],
     ) {}
+
+    /**
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
+    }
 
     /**
      * SES uses certificate-based verification rather than a shared secret, so a
@@ -75,6 +96,7 @@ final readonly class MailWebhookConfig
             path: Coerce::string($data['path'] ?? null, '/_pulsar/mail/webhook'),
             replayWindowSeconds: Coerce::int($data['replay_window_seconds'] ?? null, 300),
             ipAllowlist: is_array($ipAllowlist) ? array_values(array_filter($ipAllowlist, is_string(...))) : [],
+            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
         );
     }
 }

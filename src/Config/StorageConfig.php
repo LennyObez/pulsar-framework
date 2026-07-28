@@ -52,7 +52,12 @@ final readonly class StorageConfig implements ReportsUnknownKeys
         return new self(
             default: $environment->get('STORAGE_DISK') ?? $data['default'] ?? 'local',
             disks: $disks,
-            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
+            unknownKeys: [
+                ...UnknownKeys::collect($data, self::KNOWN_KEYS),
+                // Disks are keyed by an operator-chosen name, so the report names the
+                // disk: disks.s3.buckett rather than a bare "buckett".
+                ...UnknownKeys::nestedEach('disks', $disks),
+            ],
         );
     }
 }

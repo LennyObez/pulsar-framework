@@ -92,6 +92,7 @@ final readonly class MailConfig implements ReportsUnknownKeys
         $fromNameEnv = $environment->get('MAIL_FROM_NAME');
         $replyToEnv = $environment->get('MAIL_REPLY_TO');
         $driverOptions = $data['driver_options'] ?? null;
+        $webhookConfig = MailWebhookConfig::fromArray(is_array($webhooks) ? $webhooks : []);
 
         return new self(
             enabled: $enabled,
@@ -103,8 +104,14 @@ final readonly class MailConfig implements ReportsUnknownKeys
             hipaaMode: $hipaaMode,
             auditHashEnabled: $auditHashEnabled,
             driverOptions: is_array($driverOptions) ? $driverOptions : [],
-            webhooks: MailWebhookConfig::fromArray(is_array($webhooks) ? $webhooks : []),
-            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
+            webhooks: $webhookConfig,
+            unknownKeys: [
+                ...UnknownKeys::collect($data, self::KNOWN_KEYS),
+                ...UnknownKeys::nested('webhooks', $webhookConfig),
+                // `driver_options` is deliberately NOT collected: it is an open map of
+                // driver-specific settings (host, port, credentials), so every key in
+                // it is legitimate and auditing it would warn on correct config.
+            ],
         );
     }
 }
