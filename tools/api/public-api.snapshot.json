@@ -20318,6 +20318,23 @@
             },
             "constants": []
         },
+        "Pulsar\\Filesystem\\Exception\\UnsafeWritablePathException": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "insideDocumentRoot": {
+                    "params": [
+                        "string $configKey",
+                        "string $configured",
+                        "string $resolved",
+                        "string $documentRoot"
+                    ],
+                    "return": "Pulsar\\Filesystem\\Exception\\UnsafeWritablePathException",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\Filesystem\\SafeFilesystem": {
             "since": "1.0.0",
             "methods": [],
@@ -52072,6 +52089,20 @@
             },
             "constants": []
         },
+        "Pulsar\\Support\\ProjectSourceRoots": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "discover": {
+                    "params": [
+                        "string $basePath"
+                    ],
+                    "return": "array",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\Support\\QrCodeEncoder": {
             "since": "1.0.0",
             "methods": [],
@@ -57425,7 +57456,6 @@
         "Pulsar\\SupplyChain\\Signing\\SignatureManifestSerializer",
         "Pulsar\\SupplyChain\\Vex\\VexGenerator",
         "Pulsar\\SupplyChain\\Vex\\VexSerializer",
-        "Pulsar\\Support\\ProjectSourceRoots",
         "Pulsar\\View\\Command\\PlaygroundServeCommand",
         "Pulsar\\View\\Command\\PulseDiffCommand",
         "Pulsar\\View\\Command\\ViewCompileCommand",

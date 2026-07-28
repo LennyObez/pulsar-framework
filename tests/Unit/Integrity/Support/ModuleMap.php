@@ -7,6 +7,7 @@ namespace Pulsar\Tests\Unit\Integrity\Support;
 use function in_array;
 use function preg_match;
 use function str_contains;
+use function str_starts_with;
 
 /**
  * Maps fully-qualified class names to their module identity.
@@ -18,7 +19,14 @@ use function str_contains;
  */
 final class ModuleMap
 {
-    /** Classes that are composition roots and exempt from cross-module internal import rules. */
+    /**
+     * Classes that are composition roots and exempt from cross-module internal
+     * import rules.
+     *
+     * Wirings are NOT listed here: `Pulsar\Core\Wiring\*` is exempt by prefix in
+     * {@see self::isCompositionRoot()}, so a newly added wiring is covered the day
+     * it is written. This list is only for roots outside that namespace.
+     */
     private const array COMPOSITION_ROOTS = [
         'Pulsar\Core\Kernel',
         'Pulsar\Core\Boot\BuildArtifactVerifier',
@@ -26,44 +34,12 @@ final class ModuleMap
         'Pulsar\Core\Boot\ExtensionDiscovery',
         'Pulsar\Core\Boot\ExtensionViewPathRegistrar',
         'Pulsar\Core\Boot\ProjectRouteLoader',
-        'Pulsar\Core\Wiring\ServiceWiringInterface',
-        'Pulsar\Core\Wiring\AntiSpamWiring',
-        'Pulsar\Core\Wiring\AssetWiring',
-        'Pulsar\Core\Wiring\AuthWiring',
-        'Pulsar\Core\Wiring\ComplianceLoggingWiring',
-        'Pulsar\Core\Wiring\ConfigWiring',
-        'Pulsar\Core\Wiring\DatabaseWiring',
-        'Pulsar\Core\Wiring\DeployWiring',
-        'Pulsar\Core\Wiring\DiagnosticsWiring',
-        'Pulsar\Core\Wiring\ErrorTrackingWiring',
-        'Pulsar\Core\Wiring\ExceptionHandlerWiring',
-        'Pulsar\Core\Wiring\FailoverWiring',
-        'Pulsar\Core\Wiring\FeatureFlagWiring',
-        'Pulsar\Core\Wiring\IntegrityWiring',
-        'Pulsar\Core\Wiring\I18nWiring',
-        'Pulsar\Core\Wiring\IntrospectionWiring',
-        'Pulsar\Core\Wiring\LoggingWiring',
-        'Pulsar\Core\Wiring\MetricsWiring',
-        'Pulsar\Core\Wiring\QueueWiring',
-        'Pulsar\Core\Wiring\RequestContextWiring',
-        'Pulsar\Core\Wiring\ResilienceWiring',
-        'Pulsar\Core\Wiring\RoutingWiring',
-        'Pulsar\Core\Wiring\RuntimeWiring',
-        'Pulsar\Core\Wiring\SagaWiring',
-        'Pulsar\Core\Wiring\SchedulerWiring',
-        'Pulsar\Core\Wiring\SecurityWiring',
-        'Pulsar\Core\Wiring\SupervisorWiring',
-        'Pulsar\Core\Wiring\TenancyWiring',
-        'Pulsar\Core\Wiring\TracingWiring',
-        'Pulsar\Core\Wiring\WorkflowWiring',
-        'Pulsar\Core\Wiring\MailWiring',
-        'Pulsar\Core\Wiring\NotificationWiring',
-        'Pulsar\Core\Wiring\ViewWiring',
-        'Pulsar\Core\Wiring\DocumentationWiring',
-        'Pulsar\Core\Wiring\EdgeWiring',
-        'Pulsar\Core\Wiring\ProfilerWiring',
         'Pulsar\Console\Application',
         'Pulsar\Console\Command\BuildCommand',
+        // Build-time class enumerator: a preload manifest is a list of concrete
+        // classes to load, so naming them across module lines is the job itself,
+        // not accidental coupling — the same reason BuildCommand is listed.
+        'Pulsar\Build\PreloadGenerator',
         'Pulsar\Extension\Cms\CmsSecurityIntegration',
         'Pulsar\Core\MicroKernel',
     ];
@@ -101,10 +77,18 @@ final class ModuleMap
 
     /**
      * Check if a class is a composition root (exempt from cross-module internal rules).
+     *
+     * Every `Pulsar\Core\Wiring\*` class qualifies by prefix, matching how the
+     * runtime {@see \Pulsar\Container\Internal\BoundaryGuard} exempts them. Listing
+     * wirings one by one here is what let EventWiring and ZeroTrustWiring drift out
+     * of the exemption and fail this rule long after they were written: wiring a
+     * module's internals into the container is the entire purpose of a wiring, so
+     * the exemption belongs to the namespace, not to a hand-maintained roster.
      */
     public static function isCompositionRoot(string $fqcn): bool
     {
-        return in_array($fqcn, self::COMPOSITION_ROOTS, true);
+        return str_starts_with($fqcn, 'Pulsar\\Core\\Wiring\\')
+            || in_array($fqcn, self::COMPOSITION_ROOTS, true);
     }
 
     /**

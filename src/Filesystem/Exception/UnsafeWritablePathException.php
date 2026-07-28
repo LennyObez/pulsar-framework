@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Filesystem\Exception;
 
+use Pulsar\Api\Api;
 use RuntimeException;
 
 use function sprintf;
@@ -12,8 +13,15 @@ use function sprintf;
  * Thrown at boot when a framework-state path (cache, logs, sessions, ...)
  * resolves to a location inside the public document root, where a web request
  * could read it.
+ *
+ * Public because {@see \Pulsar\Filesystem\WritablePathGuard::resolveState()} is
+ * `#[Api]` and declares `@throws` on it: a caller that must catch it — the logger
+ * downgrades to stderr rather than dying — cannot do so against a non-public type.
+ * The class was already documented `@api`; only the attribute the tooling reads
+ * was missing.
  * @api
  */
+#[Api(since: '1.0.0-rc.12')]
 final class UnsafeWritablePathException extends RuntimeException
 {
     public static function insideDocumentRoot(
