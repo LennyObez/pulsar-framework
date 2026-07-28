@@ -13,10 +13,12 @@ use Psr\Log\LogLevel;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\UnknownKeyReporter;
 use Pulsar\Container\Container;
+use Pulsar\Core\Wiring\AntiSpamWiring;
 use Pulsar\Core\Wiring\DocumentationWiring;
 use Pulsar\Core\Wiring\EdgeWiring;
 use Pulsar\Core\Wiring\Internal\ReportsConfigKeys;
 use Pulsar\Core\Wiring\IntrospectionWiring;
+use Pulsar\Core\Wiring\ProfilerWiring;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Routing\Router;
@@ -48,6 +50,8 @@ use const DIRECTORY_SEPARATOR;
 #[CoversClass(EdgeWiring::class)]
 #[CoversClass(DocumentationWiring::class)]
 #[CoversClass(IntrospectionWiring::class)]
+#[CoversClass(AntiSpamWiring::class)]
+#[CoversClass(ProfilerWiring::class)]
 #[CoversClass(UnknownKeyReporter::class)]
 #[CoversClass(ReportsConfigKeys::class)]
 final class WiringConfigKeyReportingTest extends TestCase
@@ -140,6 +144,54 @@ final class WiringConfigKeyReportingTest extends TestCase
         self::assertTrue(
             $spy->has('config section "introspection": unrecognized key "enabledd"'),
             'a typo in config/introspection.php must surface at boot; got: ' . $spy->dump(),
+        );
+    }
+
+    #[Test]
+    public function antiSpamWiringSurfacesAnUnknownKeyAtBoot(): void
+    {
+        // anti-spam has the separator a class name would lose (anti-spam, not
+        // antispam), and its keys are bot defences — a typo silently reverts one.
+        $this->writeConfig('anti-spam.php', "'honeypot_enabled' => true, 'captcha_enabledd' => true");
+
+        $spy = new WarningSpy();
+        $container = new Container();
+        $container->instance(LoggerInterface::class, $spy);
+
+        new AntiSpamWiring()->wire(
+            $container,
+            new ConfigManager(configPath: $this->tempDir),
+            new MiddlewarePipeline($container),
+            new MiddlewareRegistry(),
+            new Router(),
+        );
+
+        self::assertTrue(
+            $spy->has('config section "anti-spam": unrecognized key "captcha_enabledd"'),
+            'a typo in config/anti-spam.php must surface at boot; got: ' . $spy->dump(),
+        );
+    }
+
+    #[Test]
+    public function profilerWiringSurfacesAnUnknownKeyAtBoot(): void
+    {
+        $this->writeConfig('profiler.php', "'enabled' => true, 'max_entrees' => 10");
+
+        $spy = new WarningSpy();
+        $container = new Container();
+        $container->instance(LoggerInterface::class, $spy);
+
+        new ProfilerWiring()->wire(
+            $container,
+            new ConfigManager(configPath: $this->tempDir),
+            new MiddlewarePipeline($container),
+            new MiddlewareRegistry(),
+            new Router(),
+        );
+
+        self::assertTrue(
+            $spy->has('config section "profiler": unrecognized key "max_entrees"'),
+            'a typo in config/profiler.php must surface at boot; got: ' . $spy->dump(),
         );
     }
 

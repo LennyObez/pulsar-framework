@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\DatabaseConfig;
+use Pulsar\Config\DomainConfig;
 use Pulsar\Config\Environment;
 use Pulsar\Config\Exception\ConfigException;
 use Pulsar\Config\MailConfig;
@@ -38,6 +39,7 @@ use const DIRECTORY_SEPARATOR;
 #[CoversClass(SecurityConfig::class)]
 #[CoversClass(ObservabilityConfig::class)]
 #[CoversClass(DatabaseConfig::class)]
+#[CoversClass(DomainConfig::class)]
 #[CoversClass(StorageConfig::class)]
 #[CoversClass(MailConfig::class)]
 #[CoversClass(ResilienceConfig::class)]
@@ -253,6 +255,20 @@ final class UnknownKeyAuditTest extends TestCase
 
         self::assertContains('webhooks.secrett', $unknown);
         self::assertNotContains('driver_options.anything_the_driver_wants', $unknown);
+    }
+
+    #[Test]
+    public function domainConfigReportsAnUnknownKey(): void
+    {
+        // domains is built by SecurityWiring (too heavy to boot in isolation), so
+        // the DTO is pinned here; the wiring's reporter call is covered by the
+        // wiring-contract boot and WiringConfigKeyReportingTest for its siblings.
+        $config = DomainConfig::fromArray(
+            ['default_domain' => 'example.com', 'shared_sesion_domain' => '.example.com'],
+            Environment::load(null),
+        );
+
+        self::assertContains('shared_sesion_domain', $config->unknownConfigKeys());
     }
 
     #[Test]

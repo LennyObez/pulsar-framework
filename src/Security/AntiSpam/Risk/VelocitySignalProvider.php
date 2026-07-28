@@ -44,7 +44,7 @@ final readonly class VelocitySignalProvider implements RiskSignalProviderInterfa
         private ?TrustedProxy $trustedProxy = null,
         ?Closure $clock = null,
     ) {
-        $this->clock = $clock ?? static fn (): int => time();
+        $this->clock = $clock ?? static fn(): int => time();
     }
 
     #[Override]
