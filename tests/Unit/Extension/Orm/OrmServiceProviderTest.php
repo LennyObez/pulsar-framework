@@ -28,6 +28,13 @@ use Pulsar\Extension\Orm\OrmServiceProvider;
 use Pulsar\Security\Crypto\EncryptorInterface;
 use Pulsar\Security\Crypto\KeyProviderInterface;
 
+use function array_unique;
+use function array_values;
+use function class_exists;
+use function count;
+use function interface_exists;
+use function sprintf;
+
 #[CoversClass(OrmServiceProvider::class)]
 final class OrmServiceProviderTest extends TestCase
 {
@@ -51,12 +58,29 @@ final class OrmServiceProviderTest extends TestCase
     }
 
     #[Test]
-    public function providesReturnsExactlyElevenEntries(): void
+    public function providesEntriesAreUniqueAndResolvable(): void
     {
+        // Replaces an assertCount() on a literal — a change-detector that had to be
+        // edited on every new service, was bumped twice without its name following
+        // (it still read "ExactlyEleven" while asserting 14), and never once said
+        // anything about behaviour. What matters is that each advertised id is real
+        // and advertised once; that it matches what register() binds is pinned by
+        // registerBindsAllServicesInContainer.
         $provider = new OrmServiceProvider();
         $provides = $provider->provides();
 
-        self::assertCount(14, $provides);
+        self::assertSame(
+            array_values(array_unique($provides)),
+            $provides,
+            'provides() must not advertise the same service twice',
+        );
+
+        foreach ($provides as $id) {
+            self::assertTrue(
+                class_exists($id) || interface_exists($id),
+                sprintf('provides() advertises "%s", which is not a class or interface', $id),
+            );
+        }
     }
 
     #[Test]
@@ -95,7 +119,11 @@ final class OrmServiceProviderTest extends TestCase
             'config.orm' => ['encryption' => ['enabled' => true]],
             default => null,
         });
-        $container->expects(self::exactly(14))
+        // Derived from provides(), never hardcoded: a literal count is a second,
+        // silent copy of the same contract, and it was the copy that rotted —
+        // TenantScopeApplier was bound without being advertised, and this
+        // expectation failed on the count rather than naming the missing service.
+        $container->expects(self::exactly(count($provider->provides())))
             ->method('bind')
             ->willReturnCallback(function (string $id) use (&$boundIds): void {
                 $boundIds[] = $id;

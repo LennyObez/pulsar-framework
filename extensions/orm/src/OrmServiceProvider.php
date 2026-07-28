@@ -267,6 +267,7 @@ final readonly class OrmServiceProvider implements ServiceProviderInterface
             EntityDehydrator::class,
             TenantColumnResolver::class,
             TenantInsertEnricher::class,
+            TenantScopeApplier::class,
             EncryptedColumnGuard::class,
             AuditingPersister::class,
             TransactionManagerInterface::class,
