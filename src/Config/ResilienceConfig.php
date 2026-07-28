@@ -51,12 +51,21 @@ final readonly class ResilienceConfig implements ReportsUnknownKeys
             ? $environment->get('RESILIENCE_ENABLED') === 'true'
             : (bool) ($data['enabled'] ?? false);
 
+        $retry = RetryConfig::fromArray($data['retry'] ?? []);
+        $circuitBreaker = CircuitBreakerConfig::fromArray($data['circuit_breaker'] ?? []);
+        $healthCheck = HealthCheckConfig::fromArray($data['health_check'] ?? []);
+
         return new self(
             enabled: $enabled,
-            retry: RetryConfig::fromArray($data['retry'] ?? []),
-            circuitBreaker: CircuitBreakerConfig::fromArray($data['circuit_breaker'] ?? []),
-            healthCheck: HealthCheckConfig::fromArray($data['health_check'] ?? []),
-            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
+            retry: $retry,
+            circuitBreaker: $circuitBreaker,
+            healthCheck: $healthCheck,
+            unknownKeys: [
+                ...UnknownKeys::collect($data, self::KNOWN_KEYS),
+                ...UnknownKeys::nested('retry', $retry),
+                ...UnknownKeys::nested('circuit_breaker', $circuitBreaker),
+                ...UnknownKeys::nested('health_check', $healthCheck),
+            ],
         );
     }
 }

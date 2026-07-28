@@ -8550,7 +8550,8 @@
                     "params": [
                         "bool $enabled",
                         "string $logPath",
-                        "array $events"
+                        "array $events",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -8562,6 +8563,11 @@
                     ],
                     "return": "Pulsar\\Config\\AuditConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -8837,7 +8843,8 @@
                         "int $failureThreshold",
                         "int $successThreshold",
                         "int $openTimeoutSeconds",
-                        "int $sampleWindowSeconds"
+                        "int $sampleWindowSeconds",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -8848,6 +8855,11 @@
                     ],
                     "return": "Pulsar\\Config\\CircuitBreakerConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -8860,7 +8872,8 @@
                     "params": [
                         "bool $enabled",
                         "array $frameworks",
-                        "string $path"
+                        "string $path",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -8871,6 +8884,11 @@
                     ],
                     "return": "Pulsar\\Config\\ComplianceLoggingConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -9418,7 +9436,8 @@
                         "bool $enabled",
                         "int $maxGroups",
                         "int $maxRecentEventsPerGroup",
-                        "array $sensitiveFields"
+                        "array $sensitiveFields",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -9429,6 +9448,11 @@
                     ],
                     "return": "Pulsar\\Config\\ErrorTrackingConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -9562,7 +9586,8 @@
                     "params": [
                         "int $intervalSeconds",
                         "int $timeoutSeconds",
-                        "bool $fipsCheck"
+                        "bool $fipsCheck",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -9573,6 +9598,11 @@
                     ],
                     "return": "Pulsar\\Config\\HealthCheckConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -9833,7 +9863,8 @@
                     "params": [
                         "bool $enabled",
                         "bool $exporterEnabled",
-                        "string $exporterEndpoint"
+                        "string $exporterEndpoint",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -9844,6 +9875,11 @@
                     ],
                     "return": "Pulsar\\Config\\MetricsConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -10216,7 +10252,8 @@
                         "int $baseDelayMs",
                         "int $maxDelayMs",
                         "float $multiplier",
-                        "bool $jitter"
+                        "bool $jitter",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -10227,6 +10264,11 @@
                     ],
                     "return": "Pulsar\\Config\\RetryConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -10690,7 +10732,8 @@
                 "__construct": {
                     "params": [
                         "bool $enabled",
-                        "float $samplingRate"
+                        "float $samplingRate",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -10701,6 +10744,11 @@
                     ],
                     "return": "Pulsar\\Config\\TracingConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -10801,6 +10849,14 @@
                     "params": [
                         "string $prefix",
                         "array $children"
+                    ],
+                    "return": "array",
+                    "static": true
+                },
+                "nestedKeys": {
+                    "params": [
+                        "string $prefix",
+                        "array $keys"
                     ],
                     "return": "array",
                     "static": true
