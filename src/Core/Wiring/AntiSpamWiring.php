@@ -13,6 +13,7 @@ use Pulsar\Container\ContainerInterface;
 use Pulsar\Core\Wiring\Contract\DescribesWiring;
 use Pulsar\Core\Wiring\Contract\OptionalBinding;
 use Pulsar\Core\Wiring\Contract\WiringContract;
+use Pulsar\Core\Wiring\Internal\ReportsConfigKeys;
 use Pulsar\Http\Client\HttpClientInterface;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
@@ -101,6 +102,8 @@ use const SODIUM_CRYPTO_AUTH_KEYBYTES;
 #[Internal]
 final readonly class AntiSpamWiring implements ServiceWiringInterface, DescribesWiring
 {
+    use ReportsConfigKeys;
+
     public function describeWiring(): WiringContract
     {
         return new WiringContract(
@@ -147,6 +150,7 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
         // Load config from file if available
         $config = $this->loadConfig($configManager);
         $container->instance(AntiSpamConfig::class, $config);
+        $this->reportUnknownConfigKeys($container, 'anti-spam', $config);
 
         /** @var LoggerInterface $logger */
         $logger = $container->has(LoggerInterface::class)

@@ -6,6 +6,8 @@ namespace Pulsar\Security\AntiSpam;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Config\ReportsUnknownKeys;
+use Pulsar\Config\UnknownKeys;
 use Pulsar\Security\AntiSpam\TimeTrap\TimeTrapFailurePolicy;
 use Pulsar\Support\Coerce;
 
@@ -18,8 +20,21 @@ use function is_array;
  * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class AntiSpamConfig
+final readonly class AntiSpamConfig implements ReportsUnknownKeys
 {
+    /** Keys read from config/anti-spam.php. cooldown_tiers/behavior_weights are open inner maps. */
+    private const array KNOWN_KEYS = [
+        'honeypot_enabled', 'honeypot_field_name', 'duplicate_detection_enabled',
+        'duplicate_window_seconds', 'duplicate_similarity_threshold', 'link_density_enabled',
+        'max_link_density', 'content_quality_enabled', 'min_content_length', 'max_uppercase_ratio',
+        'max_repeated_char_ratio', 'captcha_enabled', 'captcha_provider', 'captcha_site_key',
+        'captcha_secret_key', 'account_age_gate_enabled', 'min_account_age_seconds',
+        'reputation_cooldown_enabled', 'cooldown_tiers', 'short_circuit', 'managed_challenge_bits',
+        'managed_challenge_ttl_seconds', 'managed_challenge_field_name', 'time_trap_enabled',
+        'time_trap_min_seconds', 'time_trap_field_name', 'time_trap_failure_policy',
+        'behavior_enabled', 'behavior_field_name', 'behavior_weights',
+    ];
+
     /**
      * @param bool $honeypotEnabled Enable honeypot field detection
      * @param string $honeypotFieldName Hidden field name used for honeypot
@@ -54,6 +69,11 @@ final readonly class AntiSpamConfig
      * @param bool $behaviorEnabled Enable the self-hosted behavioural-signals score-only check (opt-in)
      * @param string $behaviorFieldName Hidden field name carrying the client behavioural blob
      * @param array<string, int|float> $behaviorWeights HeuristicScorer weight overrides (see HeuristicScorer::fromWeights)
+     * @param list<string> $unknownKeys Keys present in config/anti-spam.php that this DTO
+     *     does not read — several are bot defences, so a typo silently reverts one to
+     *     its default: `captcha_enabled` misspelled leaves the CAPTCHA off, and a
+     *     mistyped `time_trap_failure_policy` falls back to score-only instead of the
+     *     hard reject the operator asked for.
      */
     public function __construct(
         public bool $honeypotEnabled = true,
@@ -86,7 +106,16 @@ final readonly class AntiSpamConfig
         public bool $behaviorEnabled = false,
         public string $behaviorFieldName = 'pulsar-bx',
         public array $behaviorWeights = [],
+        public array $unknownKeys = [],
     ) {}
+
+    /**
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
+    }
 
     /**
      * @param array{
@@ -161,6 +190,7 @@ final readonly class AntiSpamConfig
             behaviorEnabled: Coerce::strictBool($data['behavior_enabled'] ?? null),
             behaviorFieldName: Coerce::string($data['behavior_field_name'] ?? null, 'pulsar-bx'),
             behaviorWeights: is_array($behaviorWeights) ? $behaviorWeights : [],
+            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
         );
     }
 }

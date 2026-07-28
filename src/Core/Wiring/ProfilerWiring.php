@@ -11,6 +11,7 @@ use Pulsar\Cache\Application\Event\CacheHitEvent;
 use Pulsar\Cache\Application\Event\CacheMissEvent;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Container\ContainerInterface;
+use Pulsar\Core\Wiring\Internal\ReportsConfigKeys;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Observability\Profiler\ProfilerConfig;
@@ -34,6 +35,8 @@ use const DIRECTORY_SEPARATOR;
 #[Internal]
 final readonly class ProfilerWiring implements ServiceWiringInterface
 {
+    use ReportsConfigKeys;
+
     public function wire(
         ContainerInterface $container,
         ConfigManager $configManager,
@@ -43,6 +46,7 @@ final readonly class ProfilerWiring implements ServiceWiringInterface
     ): void {
         $config = $this->loadConfig($configManager);
         $container->instance(ProfilerConfig::class, $config);
+        $this->reportUnknownConfigKeys($container, 'profiler', $config);
 
         if (!$config->enabled) {
             return;

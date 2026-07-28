@@ -21,14 +21,22 @@ use function is_string;
  * @api
  */
 #[Api(since: '1.0.0')]
-final readonly class DomainConfig
+final readonly class DomainConfig implements ReportsUnknownKeys
 {
+    /** Keys read from config/domains.php. */
+    private const array KNOWN_KEYS = [
+        'default_domain', 'subdomains', 'cors_across_subdomains', 'shared_session_domain', 'scheme',
+    ];
+
     /**
      * @param string $defaultDomain The primary application domain (e.g., 'example.com')
      * @param array<string, list<string>> $subdomains Map of subdomain prefix to extension scopes
      * @param bool $corsAcrossSubdomains Whether to allow CORS across sibling subdomains
      * @param string $sharedSessionDomain Cookie domain for cross-subdomain sessions (e.g., '.example.com')
      * @param string $scheme URL scheme for generated URLs ('https' or 'http')
+     * @param list<string> $unknownKeys Keys present in config/domains.php that this DTO
+     *     does not read — a misspelled `shared_session_domain` silently drops the
+     *     cross-subdomain session cookie scope, breaking SSO across subdomains.
      */
     public function __construct(
         public string $defaultDomain = 'localhost',
@@ -36,7 +44,16 @@ final readonly class DomainConfig
         public bool $corsAcrossSubdomains = true,
         public string $sharedSessionDomain = '',
         public string $scheme = 'https',
+        public array $unknownKeys = [],
     ) {}
+
+    /**
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
+    }
 
     /**
      * Build from a raw config array.
@@ -83,6 +100,7 @@ final readonly class DomainConfig
             corsAcrossSubdomains: Coerce::strictBool($data['cors_across_subdomains'] ?? null, true),
             sharedSessionDomain: $sessionEnv ?? Coerce::string($data['shared_session_domain'] ?? null),
             scheme: Coerce::string($data['scheme'] ?? null, 'https'),
+            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
         );
     }
 

@@ -23,6 +23,7 @@ use Pulsar\Container\ContainerInterface;
 use Pulsar\Context\RequestContextHolder;
 use Pulsar\Core\Wiring\Contract\DescribesWiring;
 use Pulsar\Core\Wiring\Contract\WiringContract;
+use Pulsar\Core\Wiring\Internal\ReportsConfigKeys;
 use Pulsar\DataProtection\AuditLogPurge;
 use Pulsar\DataProtection\ConsentManagerInterface;
 use Pulsar\DataProtection\DataProtectionConfig;
@@ -106,6 +107,8 @@ use const DIRECTORY_SEPARATOR;
 #[Internal]
 final readonly class SecurityWiring implements ServiceWiringInterface, DescribesWiring
 {
+    use ReportsConfigKeys;
+
     /**
      * The security controls this wiring binds unconditionally on every boot.
      * Declaring them puts them under the wiring-contract gate, which asserts
@@ -513,6 +516,7 @@ final readonly class SecurityWiring implements ServiceWiringInterface, Describes
         // Multi-domain / subdomain routing: zero-cost when no mappings configured
         $domainConfig = $this->buildDomainConfig($configManager);
         $container->instance(DomainConfig::class, $domainConfig);
+        $this->reportUnknownConfigKeys($container, 'domains', $domainConfig);
 
         $domainResolver = new ConfigDomainResolver($domainConfig);
         $container->instance(DomainResolverInterface::class, $domainResolver);
