@@ -9261,7 +9261,8 @@
                         "string $bucket",
                         "string $prefix",
                         "?string $endpoint",
-                        "bool $usePathStyle"
+                        "bool $usePathStyle",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -9273,6 +9274,11 @@
                     ],
                     "return": "Pulsar\\Config\\DiskConfig",
                     "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
                 }
             },
             "constants": []
@@ -31119,7 +31125,8 @@
                         "string $secret",
                         "string $path",
                         "int $replayWindowSeconds",
-                        "array $ipAllowlist"
+                        "array $ipAllowlist",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -31134,6 +31141,11 @@
                 "isUsable": {
                     "params": [],
                     "return": "bool",
+                    "static": false
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
                     "static": false
                 }
             },

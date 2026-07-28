@@ -11,9 +11,11 @@ use Pulsar\Config\ConfigManager;
 use Pulsar\Config\DatabaseConfig;
 use Pulsar\Config\Environment;
 use Pulsar\Config\Exception\ConfigException;
+use Pulsar\Config\MailConfig;
 use Pulsar\Config\ObservabilityConfig;
 use Pulsar\Config\ResilienceConfig;
 use Pulsar\Config\SecurityConfig;
+use Pulsar\Config\StorageConfig;
 use Pulsar\Config\UnknownKeys;
 
 use function array_filter;
@@ -36,6 +38,8 @@ use const DIRECTORY_SEPARATOR;
 #[CoversClass(SecurityConfig::class)]
 #[CoversClass(ObservabilityConfig::class)]
 #[CoversClass(DatabaseConfig::class)]
+#[CoversClass(StorageConfig::class)]
+#[CoversClass(MailConfig::class)]
 #[CoversClass(ResilienceConfig::class)]
 final class UnknownKeyAuditTest extends TestCase
 {
@@ -217,6 +221,38 @@ final class UnknownKeyAuditTest extends TestCase
 
         self::assertContains('connections.mysql.databse', $unknown);
         self::assertContains('migrations.tabel', $unknown);
+    }
+
+    #[Test]
+    public function aDiskTypoIsLabelledByTheDiskName(): void
+    {
+        $config = StorageConfig::fromArray(
+            ['disks' => ['s3' => ['driver' => 's3', 'buckett' => 'assets']]],
+            Environment::load(null),
+        );
+
+        self::assertContains('disks.s3.buckett', $config->unknownConfigKeys());
+    }
+
+    #[Test]
+    public function mailWebhookTyposAreReportedButDriverOptionsAreNot(): void
+    {
+        // `webhooks` is a closed set — `secrett` disarms signature verification on an
+        // endpoint that accepts unauthenticated provider callbacks. `driver_options`
+        // is the opposite: an open map of driver-specific settings, where every key
+        // is legitimate and auditing would warn on correct config.
+        $config = MailConfig::fromArray(
+            [
+                'webhooks' => ['secrett' => 'hunter2'],
+                'driver_options' => ['host' => 'smtp.example.com', 'anything_the_driver_wants' => 1],
+            ],
+            Environment::load(null),
+        );
+
+        $unknown = $config->unknownConfigKeys();
+
+        self::assertContains('webhooks.secrett', $unknown);
+        self::assertNotContains('driver_options.anything_the_driver_wants', $unknown);
     }
 
     #[Test]
