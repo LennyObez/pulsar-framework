@@ -40375,7 +40375,8 @@
                         "bool $mxCheckEnabled",
                         "Pulsar\\Security\\AntiSpam\\EmailDomainSignalMode $mxBlock",
                         "bool $mxFailOpen",
-                        "int $mxCacheTtlSeconds"
+                        "int $mxCacheTtlSeconds",
+                        "array $unknownKeys"
                     ],
                     "return": null,
                     "static": false
@@ -40390,6 +40391,11 @@
                 "hasActiveSignal": {
                     "params": [],
                     "return": "bool",
+                    "static": false
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
                     "static": false
                 }
             },
@@ -57610,6 +57616,7 @@
         "Pulsar\\Security\\AntiSpam\\AiCrawler\\Internal\\CrawlerDnsResolver",
         "Pulsar\\Security\\AntiSpam\\AiCrawler\\Internal\\CrawlerIdentityVerifier",
         "Pulsar\\Security\\AntiSpam\\AiCrawler\\Internal\\SystemCrawlerDnsResolver",
+        "Pulsar\\Security\\AntiSpam\\AntiSpamConfigSet",
         "Pulsar\\Security\\AntiSpam\\AntiSpamPipeline",
         "Pulsar\\Security\\AntiSpam\\Behavior\\BehavioralSignalsCheck",
         "Pulsar\\Security\\AntiSpam\\Behavior\\HeuristicScorer",

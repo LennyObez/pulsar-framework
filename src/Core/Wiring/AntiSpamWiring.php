@@ -8,12 +8,12 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Pulsar\Api\Internal;
 use Pulsar\Cache\Application\TaggedCacheInterface;
+use Pulsar\Config\CallableConfigLoader;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Core\Wiring\Contract\DescribesWiring;
 use Pulsar\Core\Wiring\Contract\OptionalBinding;
 use Pulsar\Core\Wiring\Contract\WiringContract;
-use Pulsar\Core\Wiring\Internal\ReportsConfigKeys;
 use Pulsar\Http\Client\HttpClientInterface;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
@@ -30,6 +30,7 @@ use Pulsar\Security\AntiSpam\AiCrawler\Internal\CrawlerIdentityVerifier;
 use Pulsar\Security\AntiSpam\AiCrawler\Internal\SystemCrawlerDnsResolver;
 use Pulsar\Security\AntiSpam\AntiSpamCheckInterface;
 use Pulsar\Security\AntiSpam\AntiSpamConfig;
+use Pulsar\Security\AntiSpam\AntiSpamConfigSet;
 use Pulsar\Security\AntiSpam\AntiSpamPipeline;
 use Pulsar\Security\AntiSpam\AntiSpamPipelineInterface;
 use Pulsar\Security\AntiSpam\Behavior\BehavioralSignalsCheck;
@@ -86,11 +87,8 @@ use Throwable;
 use function array_unique;
 use function array_values;
 use function dirname;
-use function is_array;
-use function is_file;
 use function sprintf;
 
-use const DIRECTORY_SEPARATOR;
 use const SODIUM_CRYPTO_AUTH_KEYBYTES;
 
 /**
@@ -100,9 +98,23 @@ use const SODIUM_CRYPTO_AUTH_KEYBYTES;
  * Forum ForumAntiAbuseMiddleware via the AntiSpamPipelineInterface binding.
  */
 #[Internal]
-final readonly class AntiSpamWiring implements ServiceWiringInterface, DescribesWiring
+final readonly class AntiSpamWiring implements ServiceWiringInterface, DescribesWiring, ProvidesConfigLoaders
 {
-    use ReportsConfigKeys;
+    /**
+     * Owns config/anti-spam.php: one file with several typed sub-sections. Its
+     * loader builds the whole thing into an {@see AntiSpamConfigSet} in the
+     * ConfigRepository (the single source of truth) — so the file is parsed once,
+     * through the standard config-load path — and wire() distributes the parts.
+     */
+    public function configLoaders(): array
+    {
+        return [
+            'anti-spam' => new CallableConfigLoader(
+                AntiSpamConfigSet::class,
+                static fn(array $data): object => AntiSpamConfigSet::fromArray($data),
+            ),
+        ];
+    }
 
     public function describeWiring(): WiringContract
     {
@@ -147,10 +159,16 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
         MiddlewareRegistry $middlewareRegistry,
         Router $router,
     ): void {
-        // Load config from file if available
-        $config = $this->loadConfig($configManager);
+        // The whole anti-spam.php is parsed once, through the standard config-load
+        // path, into an AntiSpamConfigSet in the repository (see configLoaders());
+        // wire() distributes its typed parts. Unknown keys are reported centrally.
+        $repository = $configManager->repository();
+        $set = $repository->has(AntiSpamConfigSet::class)
+            ? $repository->get(AntiSpamConfigSet::class)
+            : AntiSpamConfigSet::fromArray([]);
+
+        $config = $set->antiSpam;
         $container->instance(AntiSpamConfig::class, $config);
-        $this->reportUnknownConfigKeys($container, 'anti-spam', $config);
 
         /** @var LoggerInterface $logger */
         $logger = $container->has(LoggerInterface::class)
@@ -168,7 +186,7 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
 
         // 1b. E-mail domain check (disposable list + MX deliverability). Runs on
         // every path, JS or not, closing the gap the body-only checks leave.
-        $emailDomainConfig = $this->loadEmailDomainCheckConfig($configManager);
+        $emailDomainConfig = $set->emailDomain;
         $container->instance(EmailDomainCheckConfig::class, $emailDomainConfig);
 
         if ($emailDomainConfig->hasActiveSignal()) {
@@ -285,11 +303,11 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
 
         // AI-crawler defense: global request-level filtering (distinct from the
         // form-spam pipeline above), piped as global middleware when enabled.
-        $this->wireAiCrawlerDefense($container, $middleware, $configManager, $logger);
+        $this->wireAiCrawlerDefense($container, $middleware, $set, $logger);
 
         // Adaptive, risk-based challenge escalation: scores each request and
         // blocks/flags-for-challenge/allows with progressive friction.
-        $this->wireAdaptiveRisk($container, $middleware, $configManager, $logger);
+        $this->wireAdaptiveRisk($container, $middleware, $set, $logger);
     }
 
     /**
@@ -304,22 +322,22 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
     private function wireAdaptiveRisk(
         ContainerInterface $container,
         MiddlewarePipeline $middleware,
-        ConfigManager $configManager,
+        AntiSpamConfigSet $set,
         LoggerInterface $logger,
     ): void {
-        $config = $this->loadAdaptiveRiskConfig($configManager);
+        $config = $set->adaptiveRisk;
         $container->instance(AdaptiveRiskConfig::class, $config);
 
-        $ja4Config = $this->loadJa4Config($configManager);
+        $ja4Config = $set->ja4;
         $container->instance(Ja4Config::class, $ja4Config);
 
-        $privacyPassConfig = $this->loadPrivacyPassConfig($configManager);
+        $privacyPassConfig = $set->privacyPass;
         $container->instance(PrivacyPassConfig::class, $privacyPassConfig);
 
-        $velocityConfig = $this->loadVelocityConfig($configManager);
+        $velocityConfig = $set->velocity;
         $container->instance(VelocityConfig::class, $velocityConfig);
 
-        $datacenterConfig = $this->loadDatacenterIpConfig($configManager);
+        $datacenterConfig = $set->datacenter;
         $container->instance(DatacenterIpConfig::class, $datacenterConfig);
 
         if (!$config->enabled) {
@@ -467,116 +485,6 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
         return $bypass;
     }
 
-    private function loadAdaptiveRiskConfig(ConfigManager $configManager): AdaptiveRiskConfig
-    {
-        $configPath = $configManager->configPath();
-
-        if ($configPath !== null && is_file($configPath . DIRECTORY_SEPARATOR . 'anti-spam.php')) {
-            /**
-             * @psalm-suppress UnresolvableInclude
-             * @var mixed $data
-             */
-            $data = require $configPath . DIRECTORY_SEPARATOR . 'anti-spam.php';
-
-            if (is_array($data) && isset($data['adaptive_risk']) && is_array($data['adaptive_risk'])) {
-                /** @var array<string, mixed> $adaptiveRisk */
-                $adaptiveRisk = $data['adaptive_risk'];
-
-                return AdaptiveRiskConfig::fromArray($adaptiveRisk);
-            }
-        }
-
-        return new AdaptiveRiskConfig();
-    }
-
-    private function loadJa4Config(ConfigManager $configManager): Ja4Config
-    {
-        $configPath = $configManager->configPath();
-
-        if ($configPath !== null && is_file($configPath . DIRECTORY_SEPARATOR . 'anti-spam.php')) {
-            /**
-             * @psalm-suppress UnresolvableInclude
-             * @var mixed $data
-             */
-            $data = require $configPath . DIRECTORY_SEPARATOR . 'anti-spam.php';
-
-            if (is_array($data) && isset($data['ja4']) && is_array($data['ja4'])) {
-                /** @var array<string, mixed> $ja4 */
-                $ja4 = $data['ja4'];
-
-                return Ja4Config::fromArray($ja4);
-            }
-        }
-
-        return new Ja4Config();
-    }
-
-    private function loadVelocityConfig(ConfigManager $configManager): VelocityConfig
-    {
-        $configPath = $configManager->configPath();
-
-        if ($configPath !== null && is_file($configPath . DIRECTORY_SEPARATOR . 'anti-spam.php')) {
-            /**
-             * @psalm-suppress UnresolvableInclude
-             * @var mixed $data
-             */
-            $data = require $configPath . DIRECTORY_SEPARATOR . 'anti-spam.php';
-
-            if (is_array($data) && isset($data['velocity']) && is_array($data['velocity'])) {
-                /** @var array<string, mixed> $velocity */
-                $velocity = $data['velocity'];
-
-                return VelocityConfig::fromArray($velocity);
-            }
-        }
-
-        return new VelocityConfig();
-    }
-
-    private function loadDatacenterIpConfig(ConfigManager $configManager): DatacenterIpConfig
-    {
-        $configPath = $configManager->configPath();
-
-        if ($configPath !== null && is_file($configPath . DIRECTORY_SEPARATOR . 'anti-spam.php')) {
-            /**
-             * @psalm-suppress UnresolvableInclude
-             * @var mixed $data
-             */
-            $data = require $configPath . DIRECTORY_SEPARATOR . 'anti-spam.php';
-
-            if (is_array($data) && isset($data['datacenter']) && is_array($data['datacenter'])) {
-                /** @var array<string, mixed> $datacenter */
-                $datacenter = $data['datacenter'];
-
-                return DatacenterIpConfig::fromArray($datacenter);
-            }
-        }
-
-        return new DatacenterIpConfig();
-    }
-
-    private function loadPrivacyPassConfig(ConfigManager $configManager): PrivacyPassConfig
-    {
-        $configPath = $configManager->configPath();
-
-        if ($configPath !== null && is_file($configPath . DIRECTORY_SEPARATOR . 'anti-spam.php')) {
-            /**
-             * @psalm-suppress UnresolvableInclude
-             * @var mixed $data
-             */
-            $data = require $configPath . DIRECTORY_SEPARATOR . 'anti-spam.php';
-
-            if (is_array($data) && isset($data['privacy_pass']) && is_array($data['privacy_pass'])) {
-                /** @var array<string, mixed> $privacyPass */
-                $privacyPass = $data['privacy_pass'];
-
-                return PrivacyPassConfig::fromArray($privacyPass);
-            }
-        }
-
-        return new PrivacyPassConfig();
-    }
-
     /**
      * Wire the AI-crawler defense: detect known AI training/assistant/search
      * crawlers by User-Agent and allow/block/throttle them per the configured
@@ -587,13 +495,13 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
     private function wireAiCrawlerDefense(
         ContainerInterface $container,
         MiddlewarePipeline $middleware,
-        ConfigManager $configManager,
+        AntiSpamConfigSet $set,
         LoggerInterface $logger,
     ): void {
-        $config = $this->loadAiCrawlerConfig($configManager);
+        $config = $set->aiCrawler;
         $container->instance(AiCrawlerConfig::class, $config);
 
-        $verificationConfig = $this->loadAiCrawlerVerificationConfig($configManager);
+        $verificationConfig = $set->aiCrawlerVerification;
         $container->instance(AiCrawlerVerificationConfig::class, $verificationConfig);
 
         if (!$config->enabled) {
@@ -627,50 +535,6 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
         $container->instance(AiCrawlerMiddleware::class, $aiMiddleware);
 
         $middleware->pipe($aiMiddleware);
-    }
-
-    private function loadAiCrawlerVerificationConfig(ConfigManager $configManager): AiCrawlerVerificationConfig
-    {
-        $configPath = $configManager->configPath();
-
-        if ($configPath !== null && is_file($configPath . DIRECTORY_SEPARATOR . 'anti-spam.php')) {
-            /**
-             * @psalm-suppress UnresolvableInclude
-             * @var mixed $data
-             */
-            $data = require $configPath . DIRECTORY_SEPARATOR . 'anti-spam.php';
-
-            if (is_array($data) && isset($data['ai_crawler_verification']) && is_array($data['ai_crawler_verification'])) {
-                /** @var array<string, mixed> $verification */
-                $verification = $data['ai_crawler_verification'];
-
-                return AiCrawlerVerificationConfig::fromArray($verification);
-            }
-        }
-
-        return new AiCrawlerVerificationConfig();
-    }
-
-    private function loadAiCrawlerConfig(ConfigManager $configManager): AiCrawlerConfig
-    {
-        $configPath = $configManager->configPath();
-
-        if ($configPath !== null && is_file($configPath . DIRECTORY_SEPARATOR . 'anti-spam.php')) {
-            /**
-             * @psalm-suppress UnresolvableInclude
-             * @var mixed $data
-             */
-            $data = require $configPath . DIRECTORY_SEPARATOR . 'anti-spam.php';
-
-            if (is_array($data) && isset($data['ai_crawlers']) && is_array($data['ai_crawlers'])) {
-                /** @var array<string, mixed> $aiCrawlers */
-                $aiCrawlers = $data['ai_crawlers'];
-
-                return AiCrawlerConfig::fromArray($aiCrawlers);
-            }
-        }
-
-        return new AiCrawlerConfig();
     }
 
     /**
@@ -922,46 +786,6 @@ final readonly class AntiSpamWiring implements ServiceWiringInterface, Describes
         );
 
         return null;
-    }
-
-    private function loadConfig(ConfigManager $configManager): AntiSpamConfig
-    {
-        $configPath = $configManager->configPath();
-
-        if ($configPath !== null && is_file($configPath . DIRECTORY_SEPARATOR . 'anti-spam.php')) {
-            /**
-             * @psalm-suppress UnresolvableInclude
-             * @var mixed $data
-             */
-            $data = require $configPath . DIRECTORY_SEPARATOR . 'anti-spam.php';
-
-            if (is_array($data)) {
-                /** @var array<string, mixed> $data */
-                return AntiSpamConfig::fromArray($data);
-            }
-        }
-
-        return new AntiSpamConfig();
-    }
-
-    private function loadEmailDomainCheckConfig(ConfigManager $configManager): EmailDomainCheckConfig
-    {
-        $configPath = $configManager->configPath();
-
-        if ($configPath !== null && is_file($configPath . DIRECTORY_SEPARATOR . 'anti-spam.php')) {
-            /**
-             * @psalm-suppress UnresolvableInclude
-             * @var mixed $data
-             */
-            $data = require $configPath . DIRECTORY_SEPARATOR . 'anti-spam.php';
-
-            if (is_array($data)) {
-                /** @var array<string, mixed> $data */
-                return EmailDomainCheckConfig::fromArray($data);
-            }
-        }
-
-        return new EmailDomainCheckConfig();
     }
 
     /**
