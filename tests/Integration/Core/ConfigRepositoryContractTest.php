@@ -16,6 +16,7 @@ use Pulsar\Config\ConfigManager;
 use Pulsar\Config\ConfigRepository;
 use Pulsar\Config\DatabaseConfig;
 use Pulsar\Config\DeployConfig;
+use Pulsar\Config\DomainConfig;
 use Pulsar\Config\EventConfig;
 use Pulsar\Config\FeatureFlagConfig;
 use Pulsar\Config\I18nConfig;
@@ -34,6 +35,7 @@ use Pulsar\Config\SupervisorConfig;
 use Pulsar\Config\TenancyConfig;
 use Pulsar\Core\Wiring\ConfigLoaderRegistrar;
 use Pulsar\Core\Wiring\WiringList;
+use Pulsar\DataProtection\DataProtectionConfig;
 use Pulsar\Documentation\DocumentationConfig;
 use Pulsar\Edge\EdgeConfig;
 use Pulsar\Observability\Profiler\ProfilerConfig;
@@ -125,6 +127,8 @@ final class ConfigRepositoryContractTest extends TestCase
         'edge' => EdgeConfig::class,
         'documentation' => DocumentationConfig::class,
         'profiler' => ProfilerConfig::class,
+        'data_protection' => DataProtectionConfig::class,
+        'domains' => DomainConfig::class,
         // Optional; no default config/cloud.php ships, so its DTO is only in the
         // repository when a project adds the file. Listed so it is never flagged
         // as an unexpected DTO.
@@ -142,8 +146,6 @@ final class ConfigRepositoryContractTest extends TestCase
         // Direct-read core configs — consumed, but a wiring reads the file itself
         // instead of the repository. Repatriate into the repository (M0-F1).
         'anti-spam' => 'direct-read: AntiSpamWiring builds 9 DTOs from the file — pending repatriation',
-        'data_protection' => 'direct-read: SecurityWiring::buildDataProtectionConfig — pending repatriation',
-        'domains' => 'direct-read: SecurityWiring::buildDomainConfig — pending repatriation',
         'introspection' => 'direct-read: IntrospectionWiring (needs EnvironmentMode) — pending repatriation',
         // Extension-consumed — the owning extension reads the file directly.
         'admin' => 'extension-consumed: pulsar/admin reads it directly',

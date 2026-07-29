@@ -61,6 +61,19 @@ final class ConfigManager implements ConfigManagerInterface
     private array $unknownKeyWarnings = [];
 
     /**
+     * Config-section label per built DTO class. A DTO whose class name does not
+     * lowercase to its config file basename — data_protection
+     * (DataProtectionConfig), features (FeatureFlagConfig), business
+     * (BusinessProfileConfig) — must report unknown keys against its REAL file
+     * name, not a nonexistent one derived from the class. Populated as each DTO is
+     * built from a named config file; {@see self::sectionLabel()} is the fallback
+     * for DTOs not built through a named section here.
+     *
+     * @var array<class-string, string>
+     */
+    private array $sectionByClass = [];
+
+    /**
      * F4.10: extension-registered config loaders. Each entry is
      * `(basename, optional, loader)`. After the framework's
      * hardcoded sections are loaded, `load()` walks this list
@@ -176,6 +189,7 @@ final class ConfigManager implements ConfigManagerInterface
         // env() calls inside config files resolve .env values (ADR-0033).
         Environment::activate($this->environment);
         $this->repository = new ConfigRepository();
+        $this->sectionByClass = [];
 
         // Load app config
         $appData = $this->loadConfigFile('app');
@@ -230,6 +244,7 @@ final class ConfigManager implements ConfigManagerInterface
             $featuresData = $this->loadConfigFile('features');
             $featureFlagConfig = FeatureFlagConfig::fromArray($featuresData, $this->environment);
             $this->repository->set($featureFlagConfig);
+            $this->sectionByClass[$featureFlagConfig::class] = 'features';
         }
 
         // Load scheduler config (optional; only if config/scheduler.php exists)
@@ -342,6 +357,7 @@ final class ConfigManager implements ConfigManagerInterface
             $businessData = $this->loadConfigFile('business');
             $businessConfig = BusinessProfileConfig::fromArray($businessData, $this->environment);
             $this->repository->set($businessConfig);
+            $this->sectionByClass[$businessConfig::class] = 'business';
         }
 
         // Studio config is NOT loaded here; it is loaded directly by Kernel::studioPreboot()
@@ -376,6 +392,7 @@ final class ConfigManager implements ConfigManagerInterface
             $data = $this->loadConfigFile($basename);
             $config = $loader->load($data, $this->environment);
             $this->repository->set($config);
+            $this->sectionByClass[$config::class] = $basename;
         }
 
         // One chokepoint for unknown-key detection across every loaded section
@@ -480,7 +497,7 @@ final class ConfigManager implements ConfigManagerInterface
                 continue;
             }
 
-            $section = self::sectionLabel($config::class);
+            $section = $this->sectionByClass[$config::class] ?? self::sectionLabel($config::class);
 
             foreach (UnknownKeyReporter::describe($section, $config) as $description) {
                 $descriptions[] = $description;
