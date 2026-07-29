@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Config\AppConfig;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\ConfigOverrides;
+use Pulsar\Config\ConfigRepository;
 use Pulsar\Config\Environment;
 use Pulsar\Config\Exception\ConfigException;
 use Pulsar\Config\Exception\MissingConfigException;
@@ -279,7 +280,7 @@ final class ConfigManagerTest extends TestCase
                 return ExtensionConfigStub::class;
             }
 
-            public function load(array $data, Environment $environment): object
+            public function load(array $data, Environment $environment, ConfigRepository $repository): object
             {
                 /** @var bool $enabled */
                 $enabled = $data['enabled'] ?? false;
@@ -315,7 +316,7 @@ final class ConfigManagerTest extends TestCase
                 return ExtensionConfigStub::class;
             }
 
-            public function load(array $data, Environment $environment): object
+            public function load(array $data, Environment $environment, ConfigRepository $repository): object
             {
                 throw new RuntimeException('factory should not be called when file is missing');
             }
@@ -339,7 +340,7 @@ final class ConfigManagerTest extends TestCase
                 return ExtensionConfigStub::class;
             }
 
-            public function load(array $data, Environment $environment): object
+            public function load(array $data, Environment $environment, ConfigRepository $repository): object
             {
                 return new ExtensionConfigStub(false, 0);
             }

@@ -29,9 +29,16 @@ interface ConfigLoaderInterface
     public function configClass(): string;
 
     /**
-     * Load and build a typed config DTO from raw data and environment.
+     * Load and build a typed config DTO from raw data, environment, and the
+     * repository of already-built sections.
+     *
+     * Loaders run AFTER the framework's hardcoded sections, so `$repository`
+     * already holds AppConfig, SecurityConfig, etc. A loader whose DTO depends on
+     * another section (e.g. introspection's default-enabled derives from
+     * AppConfig's resolved EnvironmentMode) reads it from there rather than
+     * re-deriving it and risking divergence.
      *
      * @param array<string, mixed> $data
      */
-    public function load(array $data, Environment $environment): object;
+    public function load(array $data, Environment $environment, ConfigRepository $repository): object;
 }

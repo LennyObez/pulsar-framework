@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Container\Container;
+use Pulsar\Core\Wiring\ConfigLoaderRegistrar;
 use Pulsar\Core\Wiring\IntrospectionWiring;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
@@ -89,7 +90,10 @@ final class IntrospectionWiringTest extends TestCase
         file_put_contents($configPath . '/security.php', '<?php return ["session" => [], "csrf" => [], "headers" => [], "rate_limit" => []];');
         file_put_contents($configPath . '/introspection.php', '<?php return ["enabled" => ' . $enabledStr . '];');
 
-        return new ConfigManager($configPath);
+        $configManager = new ConfigManager($configPath);
+        ConfigLoaderRegistrar::register($configManager, [new IntrospectionWiring()]);
+
+        return $configManager;
     }
 
     private function createConfigManagerWithout(): ConfigManager
@@ -101,6 +105,9 @@ final class IntrospectionWiringTest extends TestCase
         file_put_contents($configPath . '/observability.php', '<?php return ["logging" => ["default_channel" => "file", "level" => "debug", "channels" => []]];');
         file_put_contents($configPath . '/security.php', '<?php return ["session" => [], "csrf" => [], "headers" => [], "rate_limit" => []];');
 
-        return new ConfigManager($configPath);
+        $configManager = new ConfigManager($configPath);
+        ConfigLoaderRegistrar::register($configManager, [new IntrospectionWiring()]);
+
+        return $configManager;
     }
 }

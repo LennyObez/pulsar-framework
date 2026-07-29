@@ -390,7 +390,7 @@ final class ConfigManager implements ConfigManagerInterface
             }
 
             $data = $this->loadConfigFile($basename);
-            $config = $loader->load($data, $this->environment);
+            $config = $loader->load($data, $this->environment, $this->repository);
             $this->repository->set($config);
             $this->sectionByClass[$config::class] = $basename;
         }

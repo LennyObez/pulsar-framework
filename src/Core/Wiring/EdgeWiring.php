@@ -7,7 +7,6 @@ namespace Pulsar\Core\Wiring;
 use Pulsar\Api\Internal;
 use Pulsar\Config\CallableConfigLoader;
 use Pulsar\Config\ConfigManager;
-use Pulsar\Config\Environment;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Edge\EdgeConfig;
 use Pulsar\Edge\EdgeFunctionPipeline;
@@ -39,7 +38,7 @@ final readonly class EdgeWiring implements ServiceWiringInterface, ProvidesConfi
         return [
             'edge' => new CallableConfigLoader(
                 EdgeConfig::class,
-                static fn(array $data, Environment $_environment): object => EdgeConfig::fromArray($data),
+                static fn(array $data): object => EdgeConfig::fromArray($data),
             ),
         ];
     }
