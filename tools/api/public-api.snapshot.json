@@ -19709,6 +19709,13 @@
                     ],
                     "return": "void",
                     "static": false
+                },
+                "setEnabledProducts": {
+                    "params": [
+                        "?array $names"
+                    ],
+                    "return": "void",
+                    "static": false
                 }
             },
             "constants": []
@@ -19753,6 +19760,44 @@
                     ],
                     "return": "void",
                     "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Extensibility\\ExtensionKind": {
+            "since": "1.0.0",
+            "methods": [],
+            "signatures": {
+                "cases": {
+                    "params": [],
+                    "return": "array",
+                    "static": true
+                },
+                "from": {
+                    "params": [
+                        "string|int $value"
+                    ],
+                    "return": "static",
+                    "static": true
+                },
+                "fromManifest": {
+                    "params": [
+                        "mixed $value"
+                    ],
+                    "return": "Pulsar\\Extensibility\\ExtensionKind",
+                    "static": true
+                },
+                "loadsByDefault": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
+                "tryFrom": {
+                    "params": [
+                        "string|int $value"
+                    ],
+                    "return": "?static",
+                    "static": true
                 }
             },
             "constants": []
@@ -19818,7 +19863,8 @@
                         "Pulsar\\Extensibility\\Manifest\\ProvidesConfig $provides",
                         "Pulsar\\Extensibility\\Manifest\\RequiresConfig $requires",
                         "Pulsar\\Extensibility\\TrustTier $requestedTrustTier",
-                        "array $autoload"
+                        "array $autoload",
+                        "Pulsar\\Extensibility\\ExtensionKind $kind"
                     ],
                     "return": null,
                     "static": false

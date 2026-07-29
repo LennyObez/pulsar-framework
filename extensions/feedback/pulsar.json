@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "User feedback collection with admin triage and GitHub integration",
   "trust_tier": "core",
+  "kind": "product",
   "type": "extension_class",
   "namespace": "Pulsar\\Extension\\Feedback",
   "pulsar": {

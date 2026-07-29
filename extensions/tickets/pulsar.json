@@ -3,6 +3,7 @@
   "version": "1.0.0-rc.11",
   "description": "Support ticket management with SLA enforcement, auto-assignment, and admin back-office for regulated domains",
   "trust_tier": "core",
+  "kind": "product",
   "extension_class": "Pulsar\\Extension\\Tickets\\TicketsExtension",
   "pulsar": {
     "min_version": "1.0.0-rc.11"

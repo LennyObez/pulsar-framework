@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extensibility\Exception\ManifestException;
+use Pulsar\Extensibility\ExtensionKind;
 use Pulsar\Extensibility\ExtensionManifest;
 use Pulsar\Extensibility\Manifest\ProvidesConfig;
 use Pulsar\Extensibility\Manifest\PulsarVersionConfig;
@@ -291,6 +292,52 @@ final class ExtensionManifestTest extends TestCase
         ]);
 
         self::assertSame(TrustTier::Community, $manifest->requestedTrustTier);
+    }
+
+    #[Test]
+    public function kindDefaultsToInfrastructureWhenMissing(): void
+    {
+        $manifest = ExtensionManifest::fromArray([
+            'name' => 'test',
+            'version' => '1.0.0',
+            'extension_class' => 'Test',
+            'pulsar' => ['min_version' => '1.0.0-rc.11'],
+        ]);
+
+        self::assertSame(ExtensionKind::Infrastructure, $manifest->kind);
+    }
+
+    #[Test]
+    public function kindParsesProduct(): void
+    {
+        $manifest = ExtensionManifest::fromArray([
+            'name' => 'test',
+            'version' => '1.0.0',
+            'extension_class' => 'Test',
+            'pulsar' => ['min_version' => '1.0.0-rc.11'],
+            'kind' => 'product',
+        ]);
+
+        self::assertSame(ExtensionKind::Product, $manifest->kind);
+        self::assertFalse($manifest->kind->loadsByDefault());
+    }
+
+    #[Test]
+    public function kindDefaultsToInfrastructureForInvalidValue(): void
+    {
+        // A typo must never silently disable an extension: an unrecognized kind
+        // is treated as infrastructure (loads by default), and the drift guard
+        // catches the misclassification.
+        $manifest = ExtensionManifest::fromArray([
+            'name' => 'test',
+            'version' => '1.0.0',
+            'extension_class' => 'Test',
+            'pulsar' => ['min_version' => '1.0.0-rc.11'],
+            'kind' => 'prodct',
+        ]);
+
+        self::assertSame(ExtensionKind::Infrastructure, $manifest->kind);
+        self::assertTrue($manifest->kind->loadsByDefault());
     }
 
     #[Test]

@@ -54,9 +54,14 @@ final class ExtensionDiscovery
 
         $bootstrap = ExtensionBootstrap::create();
 
-        $enabled = self::enabledFilter($configPath);
+        $enabled = self::extensionNameList($configPath, 'enabled');
         if ($enabled !== null) {
             $bootstrap->setEnabledFilter($enabled);
+        }
+
+        $products = self::extensionNameList($configPath, 'enabled_products');
+        if ($products !== null) {
+            $bootstrap->setEnabledProducts($products);
         }
 
         $bootstrap->loadFromPaths([$extensionsDir]);
@@ -65,17 +70,19 @@ final class ExtensionDiscovery
     }
 
     /**
-     * Read `extensions.enabled` from config/app.php as a list of extension names.
+     * Read a `extensions.<key>` list of extension names from config/app.php.
      *
-     * Returns null when the config directory, the app.php file, or the
-     * `extensions.enabled` key is absent — meaning "load everything discovered",
-     * the backward-compatible default. A present-but-non-string entry is dropped
-     * rather than trusted, so a malformed config cannot smuggle a non-name into
-     * the allow-list.
+     * Serves both enable controls: `enabled` (the exclusive allowlist) and
+     * `enabled_products` (the additive product opt-in). Returns null when the
+     * config directory, the app.php file, or the key is absent — meaning "control
+     * not set", the backward-compatible default (for `enabled`, load everything
+     * bar off-by-default products; for `enabled_products`, load no products). A
+     * present-but-non-string entry is dropped rather than trusted, so a malformed
+     * config cannot smuggle a non-name into either list.
      *
      * @return list<string>|null
      */
-    private static function enabledFilter(?string $configPath): ?array
+    private static function extensionNameList(?string $configPath, string $key): ?array
     {
         if ($configPath === null) {
             return null;
@@ -94,15 +101,15 @@ final class ExtensionDiscovery
             return null;
         }
 
-        $enabled = $cfg['extensions']['enabled'] ?? null;
+        $list = $cfg['extensions'][$key] ?? null;
 
-        if (!is_array($enabled)) {
+        if (!is_array($list)) {
             return null;
         }
 
-        // Keep only the string entries; a malformed enabled list (non-strings)
-        // is filtered rather than trusted. array_filter with is_string narrows
-        // the value type, so no mixed value is ever bound.
-        return array_values(array_filter($enabled, 'is_string'));
+        // Keep only the string entries; a malformed list (non-strings) is
+        // filtered rather than trusted. array_filter with is_string narrows the
+        // value type, so no mixed value is ever bound.
+        return array_values(array_filter($list, 'is_string'));
     }
 }

@@ -168,12 +168,21 @@ final readonly class TemplateRegistry
                 \$extensionPaths[] = \$projExt;
             }
 
-            // Filter to extensions.enabled from config/app.php
+            // Apply the extension enable posture from config/app.php: the
+            // optional exclusive allowlist (extensions.enabled) and the additive
+            // product opt-in (extensions.enabled_products). With neither set,
+            // bundled products stay off by default while infrastructure and your
+            // own extensions load.
             \$appCfg = \$basePath . '/config/app.php';
             if (is_file(\$appCfg)) {
                 \$cfg = require \$appCfg;
-                if (is_array(\$cfg) && isset(\$cfg['extensions']['enabled']) && is_array(\$cfg['extensions']['enabled'])) {
-                    \$extensions->setEnabledFilter(\$cfg['extensions']['enabled']);
+                if (is_array(\$cfg) && isset(\$cfg['extensions']) && is_array(\$cfg['extensions'])) {
+                    if (isset(\$cfg['extensions']['enabled']) && is_array(\$cfg['extensions']['enabled'])) {
+                        \$extensions->setEnabledFilter(\$cfg['extensions']['enabled']);
+                    }
+                    if (isset(\$cfg['extensions']['enabled_products']) && is_array(\$cfg['extensions']['enabled_products'])) {
+                        \$extensions->setEnabledProducts(\$cfg['extensions']['enabled_products']);
+                    }
                 }
             }
 
@@ -230,8 +239,13 @@ final readonly class TemplateRegistry
             $appCfg = $basePath . '/config/app.php';
             if (is_file($appCfg)) {
                 $cfg = require $appCfg;
-                if (is_array($cfg) && isset($cfg['extensions']['enabled']) && is_array($cfg['extensions']['enabled'])) {
-                    $extensions->setEnabledFilter($cfg['extensions']['enabled']);
+                if (is_array($cfg) && isset($cfg['extensions']) && is_array($cfg['extensions'])) {
+                    if (isset($cfg['extensions']['enabled']) && is_array($cfg['extensions']['enabled'])) {
+                        $extensions->setEnabledFilter($cfg['extensions']['enabled']);
+                    }
+                    if (isset($cfg['extensions']['enabled_products']) && is_array($cfg['extensions']['enabled_products'])) {
+                        $extensions->setEnabledProducts($cfg['extensions']['enabled_products']);
+                    }
                 }
             }
 
@@ -263,6 +277,15 @@ final readonly class TemplateRegistry
                 'name' => '$appName',
                 'debug' => (bool) (\$_ENV['APP_DEBUG'] ?? true),
 
+                // Bundled application/product extensions (forum, cms, payments,
+                // tickets, messaging, booking, analytics, feedback, devices,
+                // subscriptions, releases, ai-governance, health-status) are OFF
+                // by default — they declare "kind": "product" in pulsar.json.
+                // Framework infrastructure and any extensions you author load
+                // automatically. Turn a product on additively:
+                //   'enabled_products' => ['pulsar/forum'],
+                // Or take full manual control with an exclusive allowlist:
+                //   'enabled' => ['pulsar/auth', 'pulsar/orm', 'pulsar/forum'],
                 'extensions' => [
                     'paths' => [
                         __DIR__ . '/../extensions',

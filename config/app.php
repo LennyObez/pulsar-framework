@@ -74,19 +74,29 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Enabled Extensions
+    | Extensions — enable posture
     |--------------------------------------------------------------------------
     |
-    | When set, only extensions whose names appear in this list will be loaded.
-    | If this key is absent or null, all discovered extensions are loaded
-    | (backward compatible default). Extension names use the format defined
-    | in pulsar.json manifests (e.g., 'pulsar/cms', 'pulsar/forum').
+    | Bundled APPLICATION/PRODUCT extensions (forum, cms, payments, tickets,
+    | messaging, booking, analytics, feedback, devices, subscriptions, releases,
+    | ai-governance, health-status) declare `"kind": "product"` in their
+    | pulsar.json and are present on disk but OFF by default — a regulated app
+    | should not inherit a forum or a beta-signup PII collector it never asked
+    | for. Framework INFRASTRUCTURE and security/compliance extensions, and any
+    | extensions you author yourself, load without ceremony. The infra/product
+    | split is the single source of truth in each manifest's `kind`, drift-guarded
+    | by ExtensionSandboxDriftTest.
     |
-    | Example:
-    |   'extensions' => ['enabled' => ['pulsar/cms', 'pulsar/analytics']],
+    | Turn specific products ON (additive — leaves the rest of the default
+    | posture intact):
+    |   'extensions' => ['enabled_products' => ['pulsar/forum', 'pulsar/cms']],
+    |
+    | Or take full manual control with an EXCLUSIVE allowlist — when set, ONLY
+    | the named extensions load (products, infrastructure, and your own alike):
+    |   'extensions' => ['enabled' => ['pulsar/auth', 'pulsar/orm', 'pulsar/forum']],
     |
     */
-    // 'extensions' => ['enabled' => null],
+    'extensions' => [],
 
     /*
     |--------------------------------------------------------------------------

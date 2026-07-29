@@ -6,42 +6,49 @@ namespace Pulsar\Tests\Unit\Core\Boot;
 
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Extensibility\ExtensionKind;
+use Pulsar\Extensibility\ExtensionManifest;
 
 use function array_merge;
 use function dirname;
-use function file_get_contents;
 use function glob;
 use function in_array;
-use function json_decode;
 use function sprintf;
 
 use const DIRECTORY_SEPARATOR;
 
 /**
- * Guards the completeness AND the trust classification of config/extensions.php
- * against the bundled extensions on disk.
+ * Guards the trust classification AND the enable posture of the bundled
+ * extensions against silent drift, with each bundled manifest's `kind` as the
+ * single runtime source of truth.
  *
- * Two things drift here. Completeness: an extension absent from the trusted list
- * is capped at Community, and a service-registering extension would fail to boot
- * — so every bundled manifest must have an entry. Classification: a framework
- * that ships application/product extensions (forum, cms, payments, ...) must not
- * grant them the same full trust as its own infrastructure. Products run at
- * VERIFIED (least privilege: register/decorate their own services, but no
- * ContainerWrite override, no crypto-key access, no process exec); only
- * infrastructure and security/compliance extensions run at CORE.
+ * Three things drift here:
+ *  - Completeness: an extension absent from config/extensions.php is capped at
+ *    Community and a service-registering extension fails to boot — so every
+ *    bundled manifest must have an entry.
+ *  - Classification (kind): a framework that ships application/products (forum,
+ *    cms, payments, ...) must not load them by default. Products declare
+ *    `"kind": "product"`, which turns them OFF unless opted in via
+ *    extensions.enabled_products. Infrastructure/security extensions load by
+ *    default. If a product manifest forgets its kind it would silently ship
+ *    enabled — so the audited product backstop below forces each product's
+ *    manifest to declare kind=product.
+ *  - Trust tier: products run least-privilege at VERIFIED (register/decorate
+ *    their own services, but no ContainerWrite override, no crypto-key access,
+ *    no process exec); infrastructure/security runs at CORE.
  *
- * This test fails the moment a bundled manifest is added/renamed without an
- * entry, or is set to the wrong tier for its classification. A NEW bundled
- * extension defaults to "must be core" unless it is listed as a product below,
- * which forces a conscious least-privilege decision rather than a silent core
- * grant.
+ * Every bundled manifest must agree with the backstop on BOTH axes: its `kind`
+ * and its config tier. A new bundled extension defaults to infrastructure/core
+ * unless it is listed as a product below, which forces a conscious
+ * least-privilege decision rather than a silent core-and-enabled grant.
  */
 final class ExtensionSandboxDriftTest extends TestCase
 {
     /**
-     * Bundled application/product extensions that run least-privilege at the
-     * VERIFIED tier. Everything else bundled is infrastructure/security and runs
-     * at CORE. Keep this the single source of the split.
+     * Audited application/product extensions: off by default (kind=product) and
+     * least-privilege at the verified tier. Everything else bundled is
+     * infrastructure/security — on by default, core tier. The single
+     * human-audited source of the split; the manifests and config must match it.
      *
      * @var list<string>
      */
@@ -62,7 +69,7 @@ final class ExtensionSandboxDriftTest extends TestCase
     ];
 
     #[Test]
-    public function everyBundledExtensionIsTrustedAtItsClassifiedTier(): void
+    public function everyBundledExtensionIsClassifiedAndTrustedConsistently(): void
     {
         $root = dirname(__DIR__, 4);
 
@@ -75,14 +82,34 @@ final class ExtensionSandboxDriftTest extends TestCase
         // failing this guard. Test fixtures live under a further tests/ dir, so
         // neither pattern picks them up.
         $extensions = $root . DIRECTORY_SEPARATOR . 'extensions' . DIRECTORY_SEPARATOR;
-        $manifests = array_merge(
+        $manifestPaths = array_merge(
             glob($extensions . '*' . DIRECTORY_SEPARATOR . 'pulsar.json') ?: [],
             glob($extensions . '*' . DIRECTORY_SEPARATOR . '*' . DIRECTORY_SEPARATOR . 'pulsar.json') ?: [],
         );
-        self::assertNotEmpty($manifests, 'expected bundled extension manifests to exist');
+        self::assertNotEmpty($manifestPaths, 'expected bundled extension manifests to exist');
 
-        foreach ($manifests as $manifestPath) {
-            $name = $this->manifestName($manifestPath);
+        foreach ($manifestPaths as $manifestPath) {
+            $manifest = ExtensionManifest::fromFile($manifestPath);
+            $name = $manifest->name;
+
+            $isProduct = in_array($name, self::PRODUCT_EXTENSIONS, true);
+            $expectedKind = $isProduct ? ExtensionKind::Product : ExtensionKind::Infrastructure;
+            $expectedTier = $isProduct ? 'verified' : 'core';
+
+            // Kind is the runtime switch: it decides whether the extension loads
+            // by default. A product that forgets kind=product would silently ship
+            // enabled — fail loudly instead.
+            self::assertSame(
+                $expectedKind,
+                $manifest->kind,
+                sprintf(
+                    'Bundled extension "%s" must declare kind "%s" in its pulsar.json. A product (%s) '
+                    . 'declares "kind": "product" so it is off by default; infrastructure omits kind.',
+                    $name,
+                    $expectedKind->value,
+                    $isProduct ? 'off by default' : 'on by default',
+                ),
+            );
 
             self::assertArrayHasKey(
                 $name,
@@ -94,8 +121,6 @@ final class ExtensionSandboxDriftTest extends TestCase
                 ),
             );
 
-            $expectedTier = in_array($name, self::PRODUCT_EXTENSIONS, true) ? 'verified' : 'core';
-
             self::assertSame(
                 $expectedTier,
                 $trusted[$name]['tier'] ?? null,
@@ -104,7 +129,7 @@ final class ExtensionSandboxDriftTest extends TestCase
                     . 'at verified; infrastructure/security runs at core.',
                     $name,
                     $expectedTier,
-                    $expectedTier === 'verified' ? 'product' : 'infrastructure/security',
+                    $isProduct ? 'product' : 'infrastructure/security',
                 ),
             );
         }
@@ -122,20 +147,5 @@ final class ExtensionSandboxDriftTest extends TestCase
 
         /** @var array<string, array{tier?: string}> */
         return $data['trusted_extensions'];
-    }
-
-    private function manifestName(string $manifestPath): string
-    {
-        $raw = file_get_contents($manifestPath);
-        self::assertIsString($raw, sprintf('unable to read %s', $manifestPath));
-
-        $decoded = json_decode($raw, true);
-        self::assertIsArray($decoded, sprintf('invalid JSON in %s', $manifestPath));
-        self::assertArrayHasKey('name', $decoded, sprintf('manifest %s has no name', $manifestPath));
-
-        $name = $decoded['name'];
-        self::assertIsString($name);
-
-        return $name;
     }
 }

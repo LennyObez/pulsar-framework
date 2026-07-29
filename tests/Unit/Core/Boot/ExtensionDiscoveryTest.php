@@ -84,6 +84,54 @@ final class ExtensionDiscoveryTest extends TestCase
     }
 
     #[Test]
+    public function autoDiscoveryTurnsOffBundledProductsByDefault(): void
+    {
+        // A product extension (kind=product) present on disk stays off with no
+        // enable config — the secure default reaches the auto-discovery path, not
+        // only the scaffold entry point.
+        mkdir($this->projectRoot . '/extensions/shop', 0o750, true);
+        $this->writeManifest('shop', 'test/shop', ['kind' => 'product']);
+        $this->writeAppConfig("<?php return ['name' => 'demo'];");
+
+        try {
+            $bootstrap = ExtensionDiscovery::discover($this->configManager());
+
+            self::assertNotNull($bootstrap);
+            $offByDefault = array_filter(
+                $bootstrap->getLoadWarnings(),
+                static fn(string $w): bool => str_contains($w, 'off by default') && str_contains($w, 'test/shop'),
+            );
+            self::assertCount(1, $offByDefault, 'a bundled product must be off by default under auto-discovery');
+        } finally {
+            @unlink($this->projectRoot . '/extensions/shop/pulsar.json');
+            @rmdir($this->projectRoot . '/extensions/shop');
+        }
+    }
+
+    #[Test]
+    public function autoDiscoveryHonorsEnabledProductsFromAppConfig(): void
+    {
+        // extensions.enabled_products opts a product in on the auto-discovery path.
+        mkdir($this->projectRoot . '/extensions/shop', 0o750, true);
+        $this->writeManifest('shop', 'test/shop', ['kind' => 'product']);
+        $this->writeAppConfig("<?php return ['extensions' => ['enabled_products' => ['test/shop']]];");
+
+        try {
+            $bootstrap = ExtensionDiscovery::discover($this->configManager());
+
+            self::assertNotNull($bootstrap);
+            $offByDefault = array_filter(
+                $bootstrap->getLoadWarnings(),
+                static fn(string $w): bool => str_contains($w, 'off by default'),
+            );
+            self::assertCount(0, $offByDefault, 'an opted-in product must not be reported off by default');
+        } finally {
+            @unlink($this->projectRoot . '/extensions/shop/pulsar.json');
+            @rmdir($this->projectRoot . '/extensions/shop');
+        }
+    }
+
+    #[Test]
     public function discoverReturnsNullWhenNoExtensionsDirectoryExists(): void
     {
         @unlink($this->projectRoot . '/extensions/keep/pulsar.json');
@@ -105,7 +153,10 @@ final class ExtensionDiscoveryTest extends TestCase
         file_put_contents($this->projectRoot . '/config/app.php', $php . "\n");
     }
 
-    private function writeManifest(string $dir, string $name): void
+    /**
+     * @param array<string, mixed> $extra Extra manifest keys (e.g. ['kind' => 'product'])
+     */
+    private function writeManifest(string $dir, string $name, array $extra = []): void
     {
         file_put_contents(
             $this->projectRoot . '/extensions/' . $dir . '/pulsar.json',
@@ -114,6 +165,7 @@ final class ExtensionDiscoveryTest extends TestCase
                 'version' => '1.0.0',
                 'extension_class' => 'Pulsar\\NonExistent\\' . $dir . 'Extension',
                 'pulsar' => ['min_version' => '0.1.0'],
+                ...$extra,
             ]),
         );
     }

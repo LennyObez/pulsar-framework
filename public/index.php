@@ -87,7 +87,11 @@ if ($extensionPaths === [] && is_dir($basePath . '/extensions')) {
     $extensionPaths[] = $basePath . '/extensions';
 }
 
-// Read extensions.enabled filter from app config
+// Read the extension enable posture from app config: the optional exclusive
+// allowlist (extensions.enabled) and the additive product opt-in
+// (extensions.enabled_products). With neither set, bundled products stay off by
+// default (manifest kind: product) while infrastructure and the app's own
+// extensions load.
 $appConfigFile = $basePath . '/config/app.php';
 if (is_file($appConfigFile)) {
     /** @var array<string, mixed>|mixed $appConfig */
@@ -95,10 +99,17 @@ if (is_file($appConfigFile)) {
     if (is_array($appConfig)) {
         /** @var array<string, mixed>|mixed $extConfig */
         $extConfig = $appConfig['extensions'] ?? null;
-        if (is_array($extConfig) && isset($extConfig['enabled']) && is_array($extConfig['enabled'])) {
-            /** @var list<string> $enabled */
-            $enabled = $extConfig['enabled'];
-            $extensions->setEnabledFilter($enabled);
+        if (is_array($extConfig)) {
+            if (isset($extConfig['enabled']) && is_array($extConfig['enabled'])) {
+                /** @var list<string> $enabled */
+                $enabled = $extConfig['enabled'];
+                $extensions->setEnabledFilter($enabled);
+            }
+            if (isset($extConfig['enabled_products']) && is_array($extConfig['enabled_products'])) {
+                /** @var list<string> $enabledProducts */
+                $enabledProducts = $extConfig['enabled_products'];
+                $extensions->setEnabledProducts($enabledProducts);
+            }
         }
     }
 }
