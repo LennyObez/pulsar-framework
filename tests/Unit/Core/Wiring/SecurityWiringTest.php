@@ -12,6 +12,7 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Container\Container;
+use Pulsar\Core\Wiring\ConfigLoaderRegistrar;
 use Pulsar\Core\Wiring\SecurityWiring;
 use Pulsar\DataProtection\DataProtectionConfig;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
@@ -461,6 +462,12 @@ final class SecurityWiringTest extends TestCase
             file_put_contents($envFilePath, $envFileContent);
         }
 
-        return new ConfigManager($configPath, $envFilePath);
+        $configManager = new ConfigManager($configPath, $envFilePath);
+        // SecurityWiring owns config/data_protection.php and config/domains.php;
+        // register its loaders so load() builds those DTOs into the repository,
+        // exactly as Kernel does at boot.
+        ConfigLoaderRegistrar::register($configManager, [new SecurityWiring()]);
+
+        return $configManager;
     }
 }

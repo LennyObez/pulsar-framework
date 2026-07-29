@@ -21,6 +21,7 @@ use Pulsar\Core\Wiring\Internal\ReportsConfigKeys;
 use Pulsar\Core\Wiring\IntrospectionWiring;
 use Pulsar\Core\Wiring\ProfilerWiring;
 use Pulsar\Core\Wiring\ProvidesConfigLoaders;
+use Pulsar\Core\Wiring\SecurityWiring;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Routing\Router;
@@ -57,6 +58,8 @@ use const DIRECTORY_SEPARATOR;
 #[CoversClass(IntrospectionWiring::class)]
 #[CoversClass(AntiSpamWiring::class)]
 #[CoversClass(ProfilerWiring::class)]
+#[CoversClass(SecurityWiring::class)]
+#[CoversClass(ConfigManager::class)]
 #[CoversClass(UnknownKeyReporter::class)]
 #[CoversClass(ReportsConfigKeys::class)]
 final class WiringConfigKeyReportingTest extends TestCase
@@ -155,6 +158,19 @@ final class WiringConfigKeyReportingTest extends TestCase
     {
         $configManager = $this->loadThroughRepository(new ProfilerWiring(), 'profiler.php', "'enabled' => true, 'max_entrees' => 10");
         $this->assertSweepSurfaces($configManager, 'config section "profiler": unrecognized key "max_entrees"');
+    }
+
+    #[Test]
+    public function dataProtectionUnknownKeyUsesTheRealFileBasenameNotTheClassName(): void
+    {
+        // Regression: DataProtectionConfig's class name lowercases to
+        // "dataprotection", losing the underscore. The central sweep must label
+        // an unknown key against the REAL file — config/data_protection.php — so an
+        // operator debugging a GDPR retention typo is not misdirected to a
+        // nonexistent config/dataprotection.php. ConfigManager records the loader
+        // basename per DTO class for exactly this.
+        $configManager = $this->loadThroughRepository(new SecurityWiring(), 'data_protection.php', "'retention' => [], 'retenton' => []");
+        $this->assertSweepSurfaces($configManager, 'config section "data_protection": unrecognized key "retenton"');
     }
 
     /**

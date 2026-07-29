@@ -12,6 +12,7 @@ use Pulsar\Cache\Application\CacheManagerInterface;
 use Pulsar\Cache\FrameworkCache;
 use Pulsar\Cache\FrameworkCacheInterface;
 use Pulsar\Config\AppConfig;
+use Pulsar\Config\CallableConfigLoader;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\DeployConfig;
 use Pulsar\Config\DomainConfig;
@@ -23,7 +24,6 @@ use Pulsar\Container\ContainerInterface;
 use Pulsar\Context\RequestContextHolder;
 use Pulsar\Core\Wiring\Contract\DescribesWiring;
 use Pulsar\Core\Wiring\Contract\WiringContract;
-use Pulsar\Core\Wiring\Internal\ReportsConfigKeys;
 use Pulsar\DataProtection\AuditLogPurge;
 use Pulsar\DataProtection\ConsentManagerInterface;
 use Pulsar\DataProtection\DataProtectionConfig;
@@ -98,16 +98,33 @@ use SodiumException;
 
 use function dirname;
 use function is_array;
-use function is_file;
 use function sodium_hex2bin;
 use function sprintf;
 
 use const DIRECTORY_SEPARATOR;
 
 #[Internal]
-final readonly class SecurityWiring implements ServiceWiringInterface, DescribesWiring
+final readonly class SecurityWiring implements ServiceWiringInterface, DescribesWiring, ProvidesConfigLoaders
 {
-    use ReportsConfigKeys;
+    /**
+     * Owns config/data_protection.php and config/domains.php: their loaders build
+     * the DTOs into the ConfigRepository during config load (the single source of
+     * truth), so wire() resolves them from the repository and unknown keys surface
+     * once, centrally, through ConfigManager's post-load sweep.
+     */
+    public function configLoaders(): array
+    {
+        return [
+            'data_protection' => new CallableConfigLoader(
+                DataProtectionConfig::class,
+                static fn(array $data, Environment $_environment): object => DataProtectionConfig::fromArray($data),
+            ),
+            'domains' => new CallableConfigLoader(
+                DomainConfig::class,
+                static fn(array $data, Environment $environment): object => DomainConfig::fromArray($data, $environment),
+            ),
+        ];
+    }
 
     /**
      * The security controls this wiring binds unconditionally on every boot.
@@ -483,14 +500,15 @@ final readonly class SecurityWiring implements ServiceWiringInterface, Describes
                 $purgers['user_sessions'] = new SessionPurge($container->get(SessionHandlerInterface::class));
             }
 
-            // Build policies from DataProtectionConfig. Loaded from
-            // config/data_protection.php here: nothing registers this DTO in the
-            // config repository, so the old repository lookup always fell through
-            // to empty defaults and the operator's GDPR retention policies were
-            // silently never enforced.
-            $dpConfig = $this->buildDataProtectionConfig($configManager);
+            // Build purge policies from DataProtectionConfig, resolved from the
+            // repository (its loader builds it at config load; see
+            // configLoaders()). A default is used when config/data_protection.php
+            // is absent so the orchestrator still wires with empty policies.
+            $repository = $configManager->repository();
+            $dpConfig = $repository->has(DataProtectionConfig::class)
+                ? $repository->get(DataProtectionConfig::class)
+                : new DataProtectionConfig();
             $container->instance(DataProtectionConfig::class, $dpConfig);
-            $this->reportUnknownConfigKeys($container, 'data_protection', $dpConfig);
 
             /** @var array<string, RetentionPolicyInterface> $policies */
             $policies = [];
@@ -517,10 +535,15 @@ final readonly class SecurityWiring implements ServiceWiringInterface, Describes
             $container->instance(DataPurgeOrchestrator::class, $orchestrator);
         }
 
-        // Multi-domain / subdomain routing: zero-cost when no mappings configured
-        $domainConfig = $this->buildDomainConfig($configManager);
+        // Multi-domain / subdomain routing: zero-cost when no mappings configured.
+        // DomainConfig is resolved from the repository (its loader builds it at
+        // config load; see configLoaders()), defaulting when config/domains.php
+        // is absent.
+        $domainRepository = $configManager->repository();
+        $domainConfig = $domainRepository->has(DomainConfig::class)
+            ? $domainRepository->get(DomainConfig::class)
+            : new DomainConfig();
         $container->instance(DomainConfig::class, $domainConfig);
-        $this->reportUnknownConfigKeys($container, 'domains', $domainConfig);
 
         $domainResolver = new ConfigDomainResolver($domainConfig);
         $container->instance(DomainResolverInterface::class, $domainResolver);
@@ -708,57 +731,5 @@ final readonly class SecurityWiring implements ServiceWiringInterface, Describes
         }
 
         return new CompositeKeyProvider($masterKey, $overrides);
-    }
-
-    /**
-     * Load data-protection configuration from config/data_protection.php.
-     *
-     * Mirrors {@see self::buildDomainConfig()}: the file is read here because no
-     * loader registers this DTO in the config repository, so the retention and
-     * purge policies an operator writes are only honored if they are built at the
-     * point they are consumed (the purge orchestrator).
-     */
-    private function buildDataProtectionConfig(ConfigManager $configManager): DataProtectionConfig
-    {
-        $configPath = $configManager->configPath();
-
-        if ($configPath !== null && is_file($configPath . DIRECTORY_SEPARATOR . 'data_protection.php')) {
-            /**
-             * @psalm-suppress UnresolvableInclude
-             * @var mixed $data
-             */
-            $data = require $configPath . DIRECTORY_SEPARATOR . 'data_protection.php';
-
-            if (is_array($data)) {
-                /** @var array<string, mixed> $data */
-                return DataProtectionConfig::fromArray($data);
-            }
-        }
-
-        return new DataProtectionConfig();
-    }
-
-    /**
-     * Load multi-domain configuration from config/domains.php.
-     */
-    private function buildDomainConfig(ConfigManager $configManager): DomainConfig
-    {
-        $configPath = $configManager->configPath();
-        $environment = $configManager->environment();
-
-        if ($configPath !== null && is_file($configPath . DIRECTORY_SEPARATOR . 'domains.php')) {
-            /**
-             * @psalm-suppress UnresolvableInclude
-             * @var mixed $data
-             */
-            $data = require $configPath . DIRECTORY_SEPARATOR . 'domains.php';
-
-            if (is_array($data)) {
-                /** @var array<string, mixed> $data */
-                return DomainConfig::fromArray($data, $environment);
-            }
-        }
-
-        return new DomainConfig();
     }
 }
