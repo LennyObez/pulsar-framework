@@ -37,6 +37,7 @@ use Pulsar\Core\Controller\ControllerResolverInterface;
 use Pulsar\Core\Controller\ReflectionControllerResolver;
 use Pulsar\Core\Event\TerminateEvent;
 use Pulsar\Core\Wiring\AssetWiring;
+use Pulsar\Core\Wiring\ConfigLoaderRegistrar;
 use Pulsar\Core\Wiring\WiringList;
 use Pulsar\ErrorHandling\ExceptionHandler;
 use Pulsar\ErrorHandling\ProductionRenderer;
@@ -290,12 +291,13 @@ final class Kernel implements KernelInterface
         $configStart = hrtime(true);
 
         if ($this->configManager !== null) {
-            if (!$cacheLoaded) {
-                $this->configManager->load();
-            }
-
             // Canonical, order-significant boot wiring list (single source of
-            // truth shared with the wiring-contract harness).
+            // truth shared with the wiring-contract harness). Built BEFORE config
+            // load so a wiring that owns a config section can register its loader:
+            // its DTO is then constructed into the ConfigRepository during load()
+            // — the single source of truth — instead of being read ad-hoc from the
+            // file inside wire(). ConfigManager never imports the DTO
+            // (ProvidesConfigLoaders inverts the dependency).
             $wirings = WiringList::default();
 
             // Asset routes are registered at boot only when not running from a
@@ -303,6 +305,11 @@ final class Kernel implements KernelInterface
             // re-registering them would duplicate routes or hit the locked router.
             if (!$strictRouteCache) {
                 $wirings[] = new AssetWiring();
+            }
+
+            if (!$cacheLoaded) {
+                ConfigLoaderRegistrar::register($this->configManager, $wirings);
+                $this->configManager->load();
             }
 
             foreach ($wirings as $wiring) {

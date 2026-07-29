@@ -32,6 +32,9 @@ use Pulsar\Config\SecurityConfig;
 use Pulsar\Config\StorageConfig;
 use Pulsar\Config\SupervisorConfig;
 use Pulsar\Config\TenancyConfig;
+use Pulsar\Core\Wiring\ConfigLoaderRegistrar;
+use Pulsar\Core\Wiring\WiringList;
+use Pulsar\Edge\EdgeConfig;
 use Pulsar\View\ViewConfig;
 
 use function array_diff;
@@ -65,11 +68,21 @@ use const DIRECTORY_SEPARATOR;
  *  2. every repository-consumed config builds its DTO in a real `load()`, and no
  *     UNEXPECTED DTO appears — so when a known-gap config is repatriated to the
  *     repository, its DTO surfaces here and forces its promotion out of the
- *     ledger (the ledger is self-cleaning, not a place debt can hide forever).
+ *     ledger (a repatriated config cannot silently stay listed as a gap).
  *
- * The known-gaps ledger is the explicit, shrinking M0-F1 worklist. It reaches
- * empty when every consumed config flows through the repository; no GA tag before
- * then. See docs/audit/wiring-audit-2026-07/REMEDIATION-TASKS.md (F1).
+ * Scope, stated honestly:
+ *  - This is the PRODUCER half of the contract: it proves each consumed config's
+ *    DTO is BUILT into the repository by a real boot. It does NOT prove a
+ *    consumer reads it back via `repository()->get()`; a DTO that is built but
+ *    never read would still pass here. Consumer-side wiring (routes dispatch,
+ *    middleware piped, the DTO actually acted upon) is the separate route/
+ *    middleware contract, M0-F2/F4.
+ *  - The known-gaps ledger DOCUMENTS the remaining debt; it does not by itself
+ *    force an INERT entry to be remediated. "Ledger empty before a GA tag" is
+ *    release policy enforced by review, tracked in
+ *    docs/audit/wiring-audit-2026-07/REMEDIATION-TASKS.md (F1) — not by a
+ *    self-failing assertion here (that would just red the suite for known,
+ *    scheduled work).
  */
 #[CoversClass(ConfigManager::class)]
 final class ConfigRepositoryContractTest extends TestCase
@@ -105,6 +118,9 @@ final class ConfigRepositoryContractTest extends TestCase
         'api' => ApiConfig::class,
         'view' => ViewConfig::class,
         'business' => BusinessProfileConfig::class,
+        // Repatriated from the ad-hoc direct-read path into the repository via a
+        // ProvidesConfigLoaders loader (M0-F1 convergence).
+        'edge' => EdgeConfig::class,
         // Optional; no default config/cloud.php ships, so its DTO is only in the
         // repository when a project adds the file. Listed so it is never flagged
         // as an unexpected DTO.
@@ -125,7 +141,6 @@ final class ConfigRepositoryContractTest extends TestCase
         'data_protection' => 'direct-read: SecurityWiring::buildDataProtectionConfig — pending repatriation',
         'documentation' => 'direct-read: DocumentationWiring — pending repatriation',
         'domains' => 'direct-read: SecurityWiring::buildDomainConfig — pending repatriation',
-        'edge' => 'direct-read: EdgeWiring — pending repatriation',
         'introspection' => 'direct-read: IntrospectionWiring (needs EnvironmentMode) — pending repatriation',
         'profiler' => 'direct-read: ProfilerWiring — pending repatriation',
         // Extension-consumed — the owning extension reads the file directly.
@@ -230,6 +245,10 @@ final class ConfigRepositoryContractTest extends TestCase
     private function bootRealConfig(): ConfigRepository
     {
         $configManager = new ConfigManager(configPath: $this->repoRoot() . DIRECTORY_SEPARATOR . 'config');
+        // Register wiring-owned config loaders exactly as Kernel does at boot, so
+        // loader-built DTOs (the converged path) land in the repository. Shared
+        // registrar => the gate can never drift from the real boot.
+        ConfigLoaderRegistrar::register($configManager, WiringList::default());
         $configManager->load();
 
         return $configManager->repository();
