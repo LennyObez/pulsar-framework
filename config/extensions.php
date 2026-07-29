@@ -47,34 +47,40 @@ return [
     |
     */
     'trusted_extensions' => [
+        // Tier reflects trust, not enable-state. INFRASTRUCTURE and
+        // SECURITY/COMPLIANCE extensions run at CORE (full trust). Bundled
+        // APPLICATION/PRODUCT extensions run least-privilege at VERIFIED: they
+        // register and decorate their own services but cannot override a core
+        // binding (ContainerWrite), read the master key, or exec processes. The
+        // split is drift-guarded by ExtensionSandboxDriftTest.
         'pulsar/accessibility' => ['tier' => 'core'],
         'pulsar/admin' => ['tier' => 'core'],
-        'pulsar/ai-governance' => ['tier' => 'core'],
-        'pulsar/analytics' => ['tier' => 'core'],
+        'pulsar/ai-governance' => ['tier' => 'verified'],
+        'pulsar/analytics' => ['tier' => 'verified'],
         'pulsar/auth' => ['tier' => 'core'],
-        'pulsar/booking' => ['tier' => 'core'],
-        'pulsar/cms' => ['tier' => 'core'],
-        'pulsar/devices' => ['tier' => 'core'],
+        'pulsar/booking' => ['tier' => 'verified'],
+        'pulsar/cms' => ['tier' => 'verified'],
+        'pulsar/devices' => ['tier' => 'verified'],
         'pulsar/example' => ['tier' => 'core'],
-        'pulsar/feedback' => ['tier' => 'core'],
+        'pulsar/feedback' => ['tier' => 'verified'],
         'pulsar/form' => ['tier' => 'core'],
-        'pulsar/forum' => ['tier' => 'core'],
+        'pulsar/forum' => ['tier' => 'verified'],
         'pulsar/graphql' => ['tier' => 'core'],
         'pulsar/grpc' => ['tier' => 'core'],
-        'pulsar/health-status' => ['tier' => 'core'],
+        'pulsar/health-status' => ['tier' => 'verified'],
         'pulsar/mcp-server' => ['tier' => 'core'],
-        'pulsar/messaging' => ['tier' => 'core'],
+        'pulsar/messaging' => ['tier' => 'verified'],
         'pulsar/observability' => ['tier' => 'core'],
         'pulsar/observability-export' => ['tier' => 'core'],
         'pulsar/opentelemetry' => ['tier' => 'core'],
         'pulsar/orm' => ['tier' => 'core'],
-        'pulsar/payments' => ['tier' => 'core'],
+        'pulsar/payments' => ['tier' => 'verified'],
         'pulsar/psr7-bridge' => ['tier' => 'core'],
-        'pulsar/releases' => ['tier' => 'core'],
+        'pulsar/releases' => ['tier' => 'verified'],
         'pulsar/social-sso' => ['tier' => 'core'],
         'pulsar/studio' => ['tier' => 'core'],
-        'pulsar/subscriptions' => ['tier' => 'core'],
-        'pulsar/tickets' => ['tier' => 'core'],
+        'pulsar/subscriptions' => ['tier' => 'verified'],
+        'pulsar/tickets' => ['tier' => 'verified'],
         // Compliance extensions live nested under extensions/compliance/*. They
         // are first-party and register services (ContainerWrite) via their
         // ServiceProviders, so they need core tier like every other bundled
