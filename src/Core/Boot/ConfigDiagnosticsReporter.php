@@ -89,16 +89,17 @@ final class ConfigDiagnosticsReporter
             return;
         }
 
-        // A config file whose extension was switched off via extensions.enabled
-        // is a likely mistake: the operator wrote config that is never read.
+        // A config file whose extension is switched off — by the extensions.enabled
+        // allowlist or because it is an off-by-default bundled product — is a
+        // likely mistake: the operator wrote config that is never read.
         foreach ($bootstrap->disabledByConfig() as $extensionName) {
             $basename = self::configBasename($extensionName);
             $file = $configPath . DIRECTORY_SEPARATOR . $basename . '.php';
 
             if (is_file($file)) {
                 $logger->warning(sprintf(
-                    'Config file "config/%s.php" exists but extension "%s" is disabled via '
-                    . 'extensions.enabled, so the file is never read. Enable the extension or remove the config.',
+                    'Config file "config/%s.php" exists but extension "%s" is disabled, so the file is '
+                    . 'never read. Enable it (extensions.enabled or extensions.enabled_products) or remove the config.',
                     $basename,
                     $extensionName,
                 ));

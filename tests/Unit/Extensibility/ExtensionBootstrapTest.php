@@ -731,6 +731,111 @@ final class ExtensionBootstrapTest extends TestCase
         }
     }
 
+    #[Test]
+    public function productsAreOffByDefaultButInfrastructureLoads(): void
+    {
+        // No enable controls set. A bundled infrastructure extension (no kind)
+        // loads; a bundled product (kind=product) is turned off by default and
+        // surfaces as an "off by default" disabled entry, not a silent omission.
+        $tempDir = sys_get_temp_dir() . '/pulsar_test_kind_' . bin2hex(random_bytes(4));
+        $this->writeManifest($tempDir, 'infra', 'test/infra');
+        $this->writeManifest($tempDir, 'product', 'test/product', ['kind' => 'product']);
+
+        try {
+            $this->bootstrap->loadFromPaths([$tempDir]);
+
+            $disabled = $this->bootstrap->disabledByConfig();
+            self::assertContains('test/product', $disabled, 'product must be off by default');
+            self::assertNotContains('test/infra', $disabled, 'infrastructure must load by default');
+
+            $offByDefault = array_filter(
+                $this->bootstrap->getLoadWarnings(),
+                static fn(string $w): bool => str_contains($w, 'off by default'),
+            );
+            self::assertCount(1, $offByDefault, 'expected one off-by-default warning');
+            self::assertStringContainsString('test/product', (string) array_values($offByDefault)[0]);
+        } finally {
+            $this->removeManifestDir($tempDir, ['infra', 'product']);
+        }
+    }
+
+    #[Test]
+    public function enabledProductsOptsInABundledProduct(): void
+    {
+        // setEnabledProducts turns a product on without disturbing the rest of
+        // the default posture: neither the product nor the infra ext is disabled.
+        $tempDir = sys_get_temp_dir() . '/pulsar_test_optin_' . bin2hex(random_bytes(4));
+        $this->writeManifest($tempDir, 'infra', 'test/infra');
+        $this->writeManifest($tempDir, 'product', 'test/product', ['kind' => 'product']);
+
+        try {
+            $this->bootstrap->setEnabledProducts(['test/product']);
+            $this->bootstrap->loadFromPaths([$tempDir]);
+
+            self::assertSame([], $this->bootstrap->disabledByConfig(), 'opted-in product must not be disabled');
+        } finally {
+            $this->removeManifestDir($tempDir, ['infra', 'product']);
+        }
+    }
+
+    #[Test]
+    public function exclusiveAllowlistOverridesKindDefault(): void
+    {
+        // An explicit allowlist takes full control: a product named in it loads
+        // (kind ignored), and an infrastructure ext NOT named in it is dropped —
+        // via the allowlist channel, not the product channel.
+        $tempDir = sys_get_temp_dir() . '/pulsar_test_allow_' . bin2hex(random_bytes(4));
+        $this->writeManifest($tempDir, 'infra', 'test/infra');
+        $this->writeManifest($tempDir, 'product', 'test/product', ['kind' => 'product']);
+
+        try {
+            $this->bootstrap->setEnabledFilter(['test/product']);
+            $this->bootstrap->loadFromPaths([$tempDir]);
+
+            $disabled = $this->bootstrap->disabledByConfig();
+            self::assertContains('test/infra', $disabled, 'infra not in the allowlist must be dropped');
+            self::assertNotContains('test/product', $disabled, 'product in the allowlist must load');
+
+            $byAllowlist = array_filter(
+                $this->bootstrap->getLoadWarnings(),
+                static fn(string $w): bool => str_contains($w, 'extensions.enabled)'),
+            );
+            self::assertCount(1, $byAllowlist, 'expected one disabled-by-allowlist warning');
+        } finally {
+            $this->removeManifestDir($tempDir, ['infra', 'product']);
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $extra Extra manifest keys (e.g. ['kind' => 'product'])
+     */
+    private function writeManifest(string $tempDir, string $subdir, string $name, array $extra = []): void
+    {
+        mkdir($tempDir . '/' . $subdir, 0o755, true);
+        file_put_contents(
+            $tempDir . '/' . $subdir . '/pulsar.json',
+            (string) json_encode([
+                'name' => $name,
+                'version' => '1.0.0',
+                'extension_class' => 'Pulsar\\NonExistent\\' . ucfirst($subdir) . 'Extension',
+                'pulsar' => ['min_version' => '0.1.0'],
+                ...$extra,
+            ]),
+        );
+    }
+
+    /**
+     * @param list<string> $subdirs
+     */
+    private function removeManifestDir(string $tempDir, array $subdirs): void
+    {
+        foreach ($subdirs as $subdir) {
+            @unlink($tempDir . '/' . $subdir . '/pulsar.json');
+            @rmdir($tempDir . '/' . $subdir);
+        }
+        @rmdir($tempDir);
+    }
+
     private function createTestExtension(string $name): ExtensionInterface
     {
         return new class ($name) implements ExtensionInterface {

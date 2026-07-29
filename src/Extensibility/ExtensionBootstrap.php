@@ -20,10 +20,7 @@ use Pulsar\Routing\RouterInterface;
 use ReflectionClass;
 use Throwable;
 
-use function array_filter;
 use function array_keys;
-use function array_map;
-use function array_values;
 use function implode;
 use function in_array;
 use function sprintf;
@@ -65,12 +62,25 @@ final class ExtensionBootstrap
     private array $disabledByFilter = [];
 
     /**
-     * When non-null, only extensions whose names appear in this list are loaded.
-     * When null (default), all discovered extensions are loaded.
+     * When non-null, ONLY extensions whose names appear in this list are loaded
+     * (an exclusive allowlist — the operator's full-manual switch). When null
+     * (default), the kind-based default posture applies: every discovered
+     * extension loads except bundled products, which stay off until opted in via
+     * {@see self::$enabledProducts}.
      *
      * @var list<string>|null
      */
     private ?array $enabledFilter = null;
+
+    /**
+     * Bundled application/product extensions ({@see ExtensionKind::Product}) to
+     * turn ON in the default posture. Additive opt-in, consulted only when no
+     * exclusive {@see self::$enabledFilter} allowlist is set. Null/empty means no
+     * products load by default. Maps to `extensions.enabled_products`.
+     *
+     * @var list<string>|null
+     */
+    private ?array $enabledProducts = null;
 
     public function __construct(
         public readonly ExtensionRegistry $registry,
@@ -99,6 +109,25 @@ final class ExtensionBootstrap
     public function setEnabledFilter(?array $names): void
     {
         $this->enabledFilter = $names;
+    }
+
+    /**
+     * Turn specific bundled product extensions ON in the default posture.
+     *
+     * Bundled application/products (manifest `kind: product`) are off by default
+     * so a regulated app never inherits a forum, CMS, or PII collector it did not
+     * ask for. Naming a product here loads it while leaving the rest of the
+     * default posture (all infrastructure + the app's own extensions) intact.
+     *
+     * Consulted only when no exclusive allowlist is set via
+     * {@see self::setEnabledFilter()}; an allowlist already names everything that
+     * loads, products included. Pass null/[] to load no products by default.
+     *
+     * @param list<string>|null $names Product extension names (e.g., ['pulsar/forum'])
+     */
+    public function setEnabledProducts(?array $names): void
+    {
+        $this->enabledProducts = $names;
     }
 
     /**
@@ -132,33 +161,41 @@ final class ExtensionBootstrap
             $manifests = $this->discoverWithFallback($paths);
         }
 
-        // Apply enabled filter: skip extensions not in the allowed list. An
-        // extension present on disk but absent from extensions.enabled is a
-        // deliberate operator decision, but a silent one is a foot-gun: it
-        // reads identically to a missing extension. Record the exclusions as
-        // warnings so `getLoadWarnings()` and the log show which extensions
-        // were disabled by config versus skipped due to load errors.
+        // Decide which discovered manifests actually load. Two orthogonal
+        // controls, checked in order; an extension turned off either way is a
+        // deliberate decision, but a SILENT one is a foot-gun — it reads
+        // identically to a missing extension — so every exclusion is recorded as
+        // a warning that getLoadWarnings()/disabledByConfig() and the log expose.
         if ($this->enabledFilter !== null) {
-            $enabledFilter = $this->enabledFilter;
-            $excluded = array_values(array_filter(
-                array_map(static fn(ExtensionManifest $m): string => $m->name, $manifests),
-                static fn(string $name): bool => !in_array($name, $enabledFilter, true),
-            ));
-            $manifests = array_values(array_filter(
+            // 1. Exclusive allowlist: ONLY the named extensions load — products,
+            //    infrastructure, and the app's own extensions alike. The
+            //    operator's full-manual switch; kind is not consulted.
+            $allow = $this->enabledFilter;
+            [$manifests, $excluded] = self::partitionManifests(
                 $manifests,
-                static fn(ExtensionManifest $m): bool => in_array($m->name, $enabledFilter, true),
-            ));
-
-            $this->disabledByFilter = $excluded;
-
-            if ($excluded !== []) {
-                $warning = sprintf(
-                    'Extensions present on disk but disabled by config (extensions.enabled): %s',
-                    implode(', ', $excluded),
-                );
-                $this->loadWarnings[] = $warning;
-                $this->logger->info($warning);
-            }
+                static fn(ExtensionManifest $m): bool => in_array($m->name, $allow, true),
+            );
+            $this->recordDisabled(
+                $excluded,
+                'Extensions present on disk but disabled by config (extensions.enabled): %s',
+            );
+        } else {
+            // 2. Default posture: every discovered extension loads EXCEPT bundled
+            //    products (manifest `kind: product`), which stay off until named
+            //    in extensions.enabled_products. A regulated app must not inherit
+            //    a forum or a PII collector it never asked for, while its own
+            //    first-party extensions still load without ceremony.
+            $optIn = $this->enabledProducts ?? [];
+            [$manifests, $excluded] = self::partitionManifests(
+                $manifests,
+                static fn(ExtensionManifest $m): bool =>
+                    $m->kind->loadsByDefault() || in_array($m->name, $optIn, true),
+            );
+            $this->recordDisabled(
+                $excluded,
+                'Bundled product extensions off by default '
+                . '(opt in via extensions.enabled_products): %s',
+            );
         }
 
         // Register PSR-4 autoloading for the discovered extensions before any of
@@ -249,6 +286,50 @@ final class ExtensionBootstrap
         }
 
         return $manifests;
+    }
+
+    /**
+     * Split discovered manifests into those that load and the names of those
+     * excluded, by a keep predicate. Order is preserved.
+     *
+     * @param list<ExtensionManifest> $manifests
+     * @param callable(ExtensionManifest): bool $keep
+     * @return array{0: list<ExtensionManifest>, 1: list<string>}
+     */
+    private static function partitionManifests(array $manifests, callable $keep): array
+    {
+        $kept = [];
+        $excluded = [];
+
+        foreach ($manifests as $manifest) {
+            if ($keep($manifest)) {
+                $kept[] = $manifest;
+            } else {
+                $excluded[] = $manifest->name;
+            }
+        }
+
+        return [$kept, $excluded];
+    }
+
+    /**
+     * Record the names of extensions excluded by an enable control so boot
+     * diagnostics can relate a lingering config/<ext>.php to its off switch. The
+     * message template takes a single %s for the comma-joined names.
+     *
+     * @param list<string> $names
+     */
+    private function recordDisabled(array $names, string $messageTemplate): void
+    {
+        if ($names === []) {
+            return;
+        }
+
+        $this->disabledByFilter = [...$this->disabledByFilter, ...$names];
+
+        $warning = sprintf($messageTemplate, implode(', ', $names));
+        $this->loadWarnings[] = $warning;
+        $this->logger->info($warning);
     }
 
     /**

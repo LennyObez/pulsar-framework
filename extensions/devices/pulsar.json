@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "User device management with API token authentication",
   "trust_tier": "core",
+  "kind": "product",
   "type": "extension_class",
   "namespace": "Pulsar\\Extension\\Devices",
   "pulsar": {

@@ -3,6 +3,7 @@
   "version": "1.0.0-rc.11",
   "description": "First-class CMS extension for regulated domains: content management, taxonomy, navigation, editorial workflow, custom fields, and full-page caching",
   "trust_tier": "core",
+  "kind": "product",
   "extension_class": "Pulsar\\Extension\\Cms\\CmsExtension",
   "pulsar": {
     "min_version": "1.0.0-rc.11"

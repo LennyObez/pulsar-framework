@@ -3,6 +3,7 @@
   "version": "1.0.0-rc.11",
   "description": "Privacy-focused, self-hosted web analytics — page views, sessions, custom events, goals, and multi-site support without cookies",
   "trust_tier": "core",
+  "kind": "product",
   "extension_class": "Pulsar\\Extension\\Analytics\\AnalyticsExtension",
   "pulsar": {
     "min_version": "1.0.0-rc.11"

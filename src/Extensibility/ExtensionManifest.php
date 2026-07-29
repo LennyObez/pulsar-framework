@@ -41,6 +41,7 @@ final readonly class ExtensionManifest
         public RequiresConfig $requires = new RequiresConfig(),
         public TrustTier $requestedTrustTier = TrustTier::Community,
         public array $autoload = [],
+        public ExtensionKind $kind = ExtensionKind::Infrastructure,
     ) {}
 
     /**
@@ -115,6 +116,8 @@ final readonly class ExtensionManifest
         $trustTier = $data['trust_tier'] ?? '';
         /** @var mixed $autoload */
         $autoload = $data['autoload'] ?? [];
+        /** @var mixed $kind */
+        $kind = $data['kind'] ?? null;
 
         return new self(
             name: $name,
@@ -127,6 +130,7 @@ final readonly class ExtensionManifest
             requires: RequiresConfig::fromArray(self::ensureStringKeyed($requires)),
             requestedTrustTier: TrustTier::tryFrom(is_string($trustTier) ? $trustTier : '') ?? TrustTier::Community,
             autoload: self::parseAutoload($autoload, $basePath),
+            kind: ExtensionKind::fromManifest($kind),
         );
     }
 
