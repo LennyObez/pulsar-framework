@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace Pulsar\Core\Wiring;
 
 use Pulsar\Api\Internal;
+use Pulsar\Config\CallableConfigLoader;
 use Pulsar\Config\ConfigManager;
+use Pulsar\Config\Environment;
 use Pulsar\Container\ContainerInterface;
-use Pulsar\Core\Wiring\Internal\ReportsConfigKeys;
 use Pulsar\Edge\EdgeConfig;
 use Pulsar\Edge\EdgeFunctionPipeline;
 use Pulsar\Edge\EdgeMiddleware;
@@ -15,11 +16,6 @@ use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Http\TrustedProxy;
 use Pulsar\Routing\Router;
-
-use function is_array;
-use function is_file;
-
-use const DIRECTORY_SEPARATOR;
 
 /**
  * Wires the edge-function pipeline into the HTTP middleware stack.
@@ -29,11 +25,24 @@ use const DIRECTORY_SEPARATOR;
  * (redirects, blocks, variant assignment) runs at the front of the request,
  * before routing. Edge functions remain usable as standalone building blocks at
  * a real CDN edge; this just runs the same blocks at the origin.
+ *
+ * Owns config/edge.php: its loader builds {@see EdgeConfig} into the
+ * ConfigRepository during config load (the single source of truth), so wire()
+ * resolves it from the repository and unknown-key reporting is handled once,
+ * centrally, by ConfigManager's post-load sweep.
  */
 #[Internal]
-final readonly class EdgeWiring implements ServiceWiringInterface
+final readonly class EdgeWiring implements ServiceWiringInterface, ProvidesConfigLoaders
 {
-    use ReportsConfigKeys;
+    public function configLoaders(): array
+    {
+        return [
+            'edge' => new CallableConfigLoader(
+                EdgeConfig::class,
+                static fn(array $data, Environment $_environment): object => EdgeConfig::fromArray($data),
+            ),
+        ];
+    }
 
     public function wire(
         ContainerInterface $container,
@@ -42,9 +51,11 @@ final readonly class EdgeWiring implements ServiceWiringInterface
         MiddlewareRegistry $middlewareRegistry,
         Router $router,
     ): void {
-        $config = $this->loadConfig($configManager);
+        $repository = $configManager->repository();
+        $config = $repository->has(EdgeConfig::class)
+            ? $repository->get(EdgeConfig::class)
+            : new EdgeConfig();
         $container->instance(EdgeConfig::class, $config);
-        $this->reportUnknownConfigKeys($container, 'edge', $config);
 
         if (!$config->isUsable()) {
             return;
@@ -64,25 +75,5 @@ final readonly class EdgeWiring implements ServiceWiringInterface
         $container->instance(EdgeMiddleware::class, $edgeMiddleware);
 
         $middleware->pipe($edgeMiddleware);
-    }
-
-    private function loadConfig(ConfigManager $configManager): EdgeConfig
-    {
-        $configPath = $configManager->configPath();
-
-        if ($configPath !== null && is_file($configPath . DIRECTORY_SEPARATOR . 'edge.php')) {
-            /**
-             * @psalm-suppress UnresolvableInclude
-             * @var mixed $data
-             */
-            $data = require $configPath . DIRECTORY_SEPARATOR . 'edge.php';
-
-            if (is_array($data)) {
-                /** @var array<string, mixed> $data */
-                return EdgeConfig::fromArray($data);
-            }
-        }
-
-        return new EdgeConfig();
     }
 }

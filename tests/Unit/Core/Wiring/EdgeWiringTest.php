@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Container\Container;
+use Pulsar\Core\Wiring\ConfigLoaderRegistrar;
 use Pulsar\Core\Wiring\EdgeWiring;
 use Pulsar\Edge\EdgeConfig;
 use Pulsar\Edge\EdgeFunctionPipeline;
@@ -86,10 +87,19 @@ final class EdgeWiringTest extends TestCase
     {
         $configPath = sys_get_temp_dir() . '/pulsar_edge_wiring_' . bin2hex(random_bytes(4));
         @mkdir($configPath, 0o755, true);
+        // EdgeConfig now loads through the ConfigRepository (ProvidesConfigLoaders),
+        // exactly as at boot: register the wiring's loader and load(). load()
+        // requires the three mandatory config files, so stub them beside edge.php.
+        file_put_contents($configPath . '/app.php', '<?php return [];');
+        file_put_contents($configPath . '/security.php', '<?php return [];');
+        file_put_contents($configPath . '/observability.php', '<?php return [];');
         file_put_contents($configPath . '/edge.php', "<?php return [$body];");
 
         $configManager = new ConfigManager($configPath);
+        $edgeWiring = new EdgeWiring();
+        ConfigLoaderRegistrar::register($configManager, [$edgeWiring]);
+        $configManager->load();
 
-        new EdgeWiring()->wire($container, $configManager, $pipeline, new MiddlewareRegistry(), new Router());
+        $edgeWiring->wire($container, $configManager, $pipeline, new MiddlewareRegistry(), new Router());
     }
 }

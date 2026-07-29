@@ -14,6 +14,7 @@ use Pulsar\Config\ConfigManager;
 use Pulsar\Config\UnknownKeyReporter;
 use Pulsar\Container\Container;
 use Pulsar\Core\Wiring\AntiSpamWiring;
+use Pulsar\Core\Wiring\ConfigLoaderRegistrar;
 use Pulsar\Core\Wiring\DocumentationWiring;
 use Pulsar\Core\Wiring\EdgeWiring;
 use Pulsar\Core\Wiring\Internal\ReportsConfigKeys;
@@ -24,6 +25,7 @@ use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Routing\Router;
 use Stringable;
 
+use function array_filter;
 use function file_put_contents;
 use function implode;
 use function is_dir;
@@ -38,14 +40,16 @@ use function unlink;
 use const DIRECTORY_SEPARATOR;
 
 /**
- * Behavioral proof that a section built by its own wiring — outside the
- * {@see ConfigManager} sweep — still surfaces an unrecognized key at boot.
+ * Behavioral proof that an unrecognized config key surfaces at boot, whichever
+ * mechanism owns the section.
  *
- * Each test runs the wiring's real `wire()` method against a config file carrying
- * a bogus key and asserts the warning is logged, so the guarantee is the same as
- * for a ConfigManager-owned section: a typo is never silently dropped. Exercising
- * the actual wiring, not a stand-in, is the point — the earlier gap existed
- * precisely because nothing ran this path with a bad key.
+ * Sections still read ad-hoc by their wiring (documentation, introspection,
+ * anti-spam, profiler) surface the typo through the wiring's own reporter; a
+ * section repatriated to the {@see \Pulsar\Config\ConfigRepository} (edge)
+ * surfaces it through {@see ConfigManager}'s central post-load sweep. Same
+ * guarantee either way: a typo is never silently dropped. Exercising the real
+ * path, not a stand-in, is the point — the earlier gap existed precisely because
+ * nothing ran these paths with a bad key.
  */
 #[CoversClass(EdgeWiring::class)]
 #[CoversClass(DocumentationWiring::class)]
@@ -70,25 +74,30 @@ final class WiringConfigKeyReportingTest extends TestCase
     }
 
     #[Test]
-    public function edgeWiringSurfacesAnUnknownKeyAtBoot(): void
+    public function edgeUnknownKeySurfacesViaTheCentralSweepAtLoad(): void
     {
+        // Edge config is now built into the ConfigRepository by its loader
+        // (ProvidesConfigLoaders), so its unknown keys surface through
+        // ConfigManager's central post-load sweep — the same chokepoint as every
+        // repository-owned section — rather than a per-wiring report. Same
+        // guarantee (a typo is never silently dropped), one mechanism.
+        $this->writeConfig('app.php', "'name' => 'T', 'env' => 'local'");
+        $this->writeConfig('security.php', "'session' => ['cookie_name' => 'T']");
+        $this->writeConfig('observability.php', "'logging' => ['default_channel' => 'stderr', 'channels' => ['stderr' => ['driver' => 'stream', 'stream' => 'php://stderr']]]");
         $this->writeConfig('edge.php', "'enabled' => true, 'geo_redirect' => []");
 
-        $spy = new WarningSpy();
-        $container = new Container();
-        $container->instance(LoggerInterface::class, $spy);
+        $configManager = new ConfigManager(configPath: $this->tempDir);
+        ConfigLoaderRegistrar::register($configManager, [new EdgeWiring()]);
+        $configManager->load();
 
-        new EdgeWiring()->wire(
-            $container,
-            new ConfigManager(configPath: $this->tempDir),
-            new MiddlewarePipeline($container),
-            new MiddlewareRegistry(),
-            new Router(),
+        $warnings = $configManager->unknownConfigKeyWarnings();
+        $surfaced = array_filter(
+            $warnings,
+            static fn(string $w): bool => str_contains($w, 'config section "edge": unrecognized key "geo_redirect"'),
         );
-
-        self::assertTrue(
-            $spy->has('config section "edge": unrecognized key "geo_redirect"'),
-            'a typo in config/edge.php must surface at boot; got: ' . $spy->dump(),
+        self::assertNotEmpty(
+            $surfaced,
+            'a typo in config/edge.php must surface via the central sweep; got: ' . implode(' | ', $warnings),
         );
     }
 
