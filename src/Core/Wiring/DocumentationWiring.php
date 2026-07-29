@@ -5,20 +5,16 @@ declare(strict_types=1);
 namespace Pulsar\Core\Wiring;
 
 use Pulsar\Api\Internal;
+use Pulsar\Config\CallableConfigLoader;
 use Pulsar\Config\ConfigManager;
+use Pulsar\Config\Environment;
 use Pulsar\Container\ContainerInterface;
-use Pulsar\Core\Wiring\Internal\ReportsConfigKeys;
 use Pulsar\Documentation\DocumentationConfig;
 use Pulsar\Documentation\DocVersionRegistry;
 use Pulsar\Documentation\DocVersionResolverMiddleware;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Routing\Router;
-
-use function is_array;
-use function is_file;
-
-use const DIRECTORY_SEPARATOR;
 
 /**
  * Wires versioned-documentation resolution.
@@ -27,11 +23,24 @@ use const DIRECTORY_SEPARATOR;
  * the {@see DocVersionRegistry} is populated and the
  * {@see DocVersionResolverMiddleware} is piped globally so /docs/{version}/…
  * requests carry the resolved version as a request attribute.
+ *
+ * Owns config/documentation.php: its loader builds {@see DocumentationConfig}
+ * into the ConfigRepository during config load (the single source of truth), so
+ * wire() resolves it from the repository and unknown-key reporting is handled
+ * once, centrally, by ConfigManager's post-load sweep.
  */
 #[Internal]
-final readonly class DocumentationWiring implements ServiceWiringInterface
+final readonly class DocumentationWiring implements ServiceWiringInterface, ProvidesConfigLoaders
 {
-    use ReportsConfigKeys;
+    public function configLoaders(): array
+    {
+        return [
+            'documentation' => new CallableConfigLoader(
+                DocumentationConfig::class,
+                static fn(array $data, Environment $_environment): object => DocumentationConfig::fromArray($data),
+            ),
+        ];
+    }
 
     public function wire(
         ContainerInterface $container,
@@ -40,9 +49,11 @@ final readonly class DocumentationWiring implements ServiceWiringInterface
         MiddlewareRegistry $middlewareRegistry,
         Router $router,
     ): void {
-        $config = $this->loadConfig($configManager);
+        $repository = $configManager->repository();
+        $config = $repository->has(DocumentationConfig::class)
+            ? $repository->get(DocumentationConfig::class)
+            : new DocumentationConfig();
         $container->instance(DocumentationConfig::class, $config);
-        $this->reportUnknownConfigKeys($container, 'documentation', $config);
 
         if (!$config->isUsable()) {
             return;
@@ -58,25 +69,5 @@ final readonly class DocumentationWiring implements ServiceWiringInterface
         $container->instance(DocVersionResolverMiddleware::class, $resolver);
 
         $middleware->pipe($resolver);
-    }
-
-    private function loadConfig(ConfigManager $configManager): DocumentationConfig
-    {
-        $configPath = $configManager->configPath();
-
-        if ($configPath !== null && is_file($configPath . DIRECTORY_SEPARATOR . 'documentation.php')) {
-            /**
-             * @psalm-suppress UnresolvableInclude
-             * @var mixed $data
-             */
-            $data = require $configPath . DIRECTORY_SEPARATOR . 'documentation.php';
-
-            if (is_array($data)) {
-                /** @var array<string, mixed> $data */
-                return DocumentationConfig::fromArray($data);
-            }
-        }
-
-        return new DocumentationConfig();
     }
 }

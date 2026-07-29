@@ -20,6 +20,7 @@ use Pulsar\Core\Wiring\EdgeWiring;
 use Pulsar\Core\Wiring\Internal\ReportsConfigKeys;
 use Pulsar\Core\Wiring\IntrospectionWiring;
 use Pulsar\Core\Wiring\ProfilerWiring;
+use Pulsar\Core\Wiring\ProvidesConfigLoaders;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Routing\Router;
@@ -76,52 +77,20 @@ final class WiringConfigKeyReportingTest extends TestCase
     #[Test]
     public function edgeUnknownKeySurfacesViaTheCentralSweepAtLoad(): void
     {
-        // Edge config is now built into the ConfigRepository by its loader
-        // (ProvidesConfigLoaders), so its unknown keys surface through
+        // Repatriated sections (edge, documentation, profiler) are built into the
+        // ConfigRepository by their loader, so unknown keys surface through
         // ConfigManager's central post-load sweep — the same chokepoint as every
-        // repository-owned section — rather than a per-wiring report. Same
-        // guarantee (a typo is never silently dropped), one mechanism.
-        $this->writeConfig('app.php', "'name' => 'T', 'env' => 'local'");
-        $this->writeConfig('security.php', "'session' => ['cookie_name' => 'T']");
-        $this->writeConfig('observability.php', "'logging' => ['default_channel' => 'stderr', 'channels' => ['stderr' => ['driver' => 'stream', 'stream' => 'php://stderr']]]");
-        $this->writeConfig('edge.php', "'enabled' => true, 'geo_redirect' => []");
-
-        $configManager = new ConfigManager(configPath: $this->tempDir);
-        ConfigLoaderRegistrar::register($configManager, [new EdgeWiring()]);
-        $configManager->load();
-
-        $warnings = $configManager->unknownConfigKeyWarnings();
-        $surfaced = array_filter(
-            $warnings,
-            static fn(string $w): bool => str_contains($w, 'config section "edge": unrecognized key "geo_redirect"'),
-        );
-        self::assertNotEmpty(
-            $surfaced,
-            'a typo in config/edge.php must surface via the central sweep; got: ' . implode(' | ', $warnings),
-        );
+        // repository-owned section — not a per-wiring report. Same guarantee
+        // (a typo is never silently dropped), one mechanism.
+        $configManager = $this->loadThroughRepository(new EdgeWiring(), 'edge.php', "'enabled' => true, 'geo_redirect' => []");
+        $this->assertSweepSurfaces($configManager, 'config section "edge": unrecognized key "geo_redirect"');
     }
 
     #[Test]
-    public function documentationWiringSurfacesAnUnknownKeyAtBoot(): void
+    public function documentationUnknownKeySurfacesViaTheCentralSweepAtLoad(): void
     {
-        $this->writeConfig('documentation.php', "'enabled' => true, 'verisons' => []");
-
-        $spy = new WarningSpy();
-        $container = new Container();
-        $container->instance(LoggerInterface::class, $spy);
-
-        new DocumentationWiring()->wire(
-            $container,
-            new ConfigManager(configPath: $this->tempDir),
-            new MiddlewarePipeline($container),
-            new MiddlewareRegistry(),
-            new Router(),
-        );
-
-        self::assertTrue(
-            $spy->has('config section "documentation": unrecognized key "verisons"'),
-            'a typo in config/documentation.php must surface at boot; got: ' . $spy->dump(),
-        );
+        $configManager = $this->loadThroughRepository(new DocumentationWiring(), 'documentation.php', "'enabled' => true, 'verisons' => []");
+        $this->assertSweepSurfaces($configManager, 'config section "documentation": unrecognized key "verisons"');
     }
 
     #[Test]
@@ -182,25 +151,39 @@ final class WiringConfigKeyReportingTest extends TestCase
     }
 
     #[Test]
-    public function profilerWiringSurfacesAnUnknownKeyAtBoot(): void
+    public function profilerUnknownKeySurfacesViaTheCentralSweepAtLoad(): void
     {
-        $this->writeConfig('profiler.php', "'enabled' => true, 'max_entrees' => 10");
+        $configManager = $this->loadThroughRepository(new ProfilerWiring(), 'profiler.php', "'enabled' => true, 'max_entrees' => 10");
+        $this->assertSweepSurfaces($configManager, 'config section "profiler": unrecognized key "max_entrees"');
+    }
 
-        $spy = new WarningSpy();
-        $container = new Container();
-        $container->instance(LoggerInterface::class, $spy);
+    /**
+     * Load a repository-owned section through its wiring's loader exactly as
+     * Kernel does at boot (register loaders, then load), so the central post-load
+     * unknown-key sweep has run. The three mandatory config files are stubbed
+     * because load() requires them.
+     */
+    private function loadThroughRepository(ProvidesConfigLoaders $wiring, string $file, string $body): ConfigManager
+    {
+        $this->writeConfig('app.php', "'name' => 'T', 'env' => 'local'");
+        $this->writeConfig('security.php', "'session' => ['cookie_name' => 'T']");
+        $this->writeConfig('observability.php', "'logging' => ['default_channel' => 'stderr', 'channels' => ['stderr' => ['driver' => 'stream', 'stream' => 'php://stderr']]]");
+        $this->writeConfig($file, $body);
 
-        new ProfilerWiring()->wire(
-            $container,
-            new ConfigManager(configPath: $this->tempDir),
-            new MiddlewarePipeline($container),
-            new MiddlewareRegistry(),
-            new Router(),
-        );
+        $configManager = new ConfigManager(configPath: $this->tempDir);
+        ConfigLoaderRegistrar::register($configManager, [$wiring]);
+        $configManager->load();
 
-        self::assertTrue(
-            $spy->has('config section "profiler": unrecognized key "max_entrees"'),
-            'a typo in config/profiler.php must surface at boot; got: ' . $spy->dump(),
+        return $configManager;
+    }
+
+    private function assertSweepSurfaces(ConfigManager $configManager, string $expected): void
+    {
+        $warnings = $configManager->unknownConfigKeyWarnings();
+        $surfaced = array_filter($warnings, static fn(string $w): bool => str_contains($w, $expected));
+        self::assertNotEmpty(
+            $surfaced,
+            $expected . ' must surface via the central sweep; got: ' . implode(' | ', $warnings),
         );
     }
 
