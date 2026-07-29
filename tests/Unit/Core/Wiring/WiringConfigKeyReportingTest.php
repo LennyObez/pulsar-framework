@@ -97,35 +97,13 @@ final class WiringConfigKeyReportingTest extends TestCase
     }
 
     #[Test]
-    public function introspectionWiringSurfacesAnUnknownKeyAtBoot(): void
+    public function introspectionUnknownKeySurfacesViaTheCentralSweepAtLoad(): void
     {
-        // IntrospectionWiring pulls AppConfig and the environment from a loaded
-        // ConfigManager, so this section needs the manager loaded, not merely a
-        // config path — app.php is the minimum for that.
-        $this->writeConfig('app.php', "'name' => 'T', 'env' => 'local'");
-        $this->writeConfig('security.php', "'session' => ['cookie_name' => 'T']");
-        $this->writeConfig('observability.php', "'logging' => ['default_channel' => 'stderr', 'channels' => ['stderr' => ['driver' => 'stream', 'stream' => 'php://stderr']]]");
-        $this->writeConfig('introspection.php', "'enabled' => true, 'enabledd' => false");
-
-        $configManager = new ConfigManager(configPath: $this->tempDir);
-        $configManager->load();
-
-        $spy = new WarningSpy();
-        $container = new Container();
-        $container->instance(LoggerInterface::class, $spy);
-
-        new IntrospectionWiring()->wire(
-            $container,
-            $configManager,
-            new MiddlewarePipeline($container),
-            new MiddlewareRegistry(),
-            new Router(),
-        );
-
-        self::assertTrue(
-            $spy->has('config section "introspection": unrecognized key "enabledd"'),
-            'a typo in config/introspection.php must surface at boot; got: ' . $spy->dump(),
-        );
+        // IntrospectionConfig's default-enabled derives from AppConfig's resolved
+        // EnvironmentMode; its loader reads that from the repository at load, and
+        // unknown keys surface through the central sweep.
+        $configManager = $this->loadThroughRepository(new IntrospectionWiring(), 'introspection.php', "'enabled' => true, 'enabledd' => false");
+        $this->assertSweepSurfaces($configManager, 'config section "introspection": unrecognized key "enabledd"');
     }
 
     #[Test]

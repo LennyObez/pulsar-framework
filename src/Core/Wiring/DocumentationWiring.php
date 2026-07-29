@@ -7,7 +7,6 @@ namespace Pulsar\Core\Wiring;
 use Pulsar\Api\Internal;
 use Pulsar\Config\CallableConfigLoader;
 use Pulsar\Config\ConfigManager;
-use Pulsar\Config\Environment;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Documentation\DocumentationConfig;
 use Pulsar\Documentation\DocVersionRegistry;
@@ -37,7 +36,7 @@ final readonly class DocumentationWiring implements ServiceWiringInterface, Prov
         return [
             'documentation' => new CallableConfigLoader(
                 DocumentationConfig::class,
-                static fn(array $data, Environment $_environment): object => DocumentationConfig::fromArray($data),
+                static fn(array $data): object => DocumentationConfig::fromArray($data),
             ),
         ];
     }

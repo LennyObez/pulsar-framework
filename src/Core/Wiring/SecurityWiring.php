@@ -117,7 +117,7 @@ final readonly class SecurityWiring implements ServiceWiringInterface, Describes
         return [
             'data_protection' => new CallableConfigLoader(
                 DataProtectionConfig::class,
-                static fn(array $data, Environment $_environment): object => DataProtectionConfig::fromArray($data),
+                static fn(array $data): object => DataProtectionConfig::fromArray($data),
             ),
             'domains' => new CallableConfigLoader(
                 DomainConfig::class,

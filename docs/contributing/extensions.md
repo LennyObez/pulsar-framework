@@ -272,6 +272,7 @@ Extensions can provide typed configuration by implementing `ConfigLoaderInterfac
 
 ```php
 use Pulsar\Config\ConfigLoaderInterface;
+use Pulsar\Config\ConfigRepository;
 use Pulsar\Config\Environment;
 
 final class MyFeatureConfigLoader implements ConfigLoaderInterface
@@ -281,8 +282,12 @@ final class MyFeatureConfigLoader implements ConfigLoaderInterface
         return MyFeatureConfig::class;
     }
 
-    public function load(array $data, Environment $environment): object
+    public function load(array $data, Environment $environment, ConfigRepository $repository): object
     {
+        // Loaders run after the framework's own sections, so $repository already
+        // holds AppConfig, SecurityConfig, etc. Read one if your config depends
+        // on it (e.g. $repository->get(AppConfig::class)->mode); otherwise ignore
+        // the extra arguments.
         return MyFeatureConfig::fromArray($data);
     }
 }

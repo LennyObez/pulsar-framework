@@ -11,7 +11,6 @@ use Pulsar\Cache\Application\Event\CacheHitEvent;
 use Pulsar\Cache\Application\Event\CacheMissEvent;
 use Pulsar\Config\CallableConfigLoader;
 use Pulsar\Config\ConfigManager;
-use Pulsar\Config\Environment;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
@@ -41,7 +40,7 @@ final readonly class ProfilerWiring implements ServiceWiringInterface, ProvidesC
         return [
             'profiler' => new CallableConfigLoader(
                 ProfilerConfig::class,
-                static fn(array $data, Environment $_environment): object => ProfilerConfig::fromArray($data),
+                static fn(array $data): object => ProfilerConfig::fromArray($data),
             ),
         ];
     }

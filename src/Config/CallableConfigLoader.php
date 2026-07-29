@@ -21,8 +21,10 @@ use Pulsar\Api\Internal;
 final readonly class CallableConfigLoader implements ConfigLoaderInterface
 {
     /**
-     * @param class-string                                  $configClass
-     * @param Closure(array<string, mixed>, Environment): object $factory
+     * @param class-string                                                       $configClass
+     * @param Closure(array<string, mixed>, Environment, ConfigRepository): object $factory
+     *        A factory may declare fewer parameters (e.g. just the data array)
+     *        when it does not need the environment or repository.
      */
     public function __construct(
         private string $configClass,
@@ -37,8 +39,8 @@ final readonly class CallableConfigLoader implements ConfigLoaderInterface
     /**
      * @param array<string, mixed> $data
      */
-    public function load(array $data, Environment $environment): object
+    public function load(array $data, Environment $environment, ConfigRepository $repository): object
     {
-        return ($this->factory)($data, $environment);
+        return ($this->factory)($data, $environment, $repository);
     }
 }
