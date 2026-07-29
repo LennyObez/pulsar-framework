@@ -8,11 +8,9 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\AbstractLogger;
-use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\UnknownKeyReporter;
-use Pulsar\Container\Container;
 use Pulsar\Core\Wiring\AntiSpamWiring;
 use Pulsar\Core\Wiring\ConfigLoaderRegistrar;
 use Pulsar\Core\Wiring\DocumentationWiring;
@@ -22,9 +20,6 @@ use Pulsar\Core\Wiring\IntrospectionWiring;
 use Pulsar\Core\Wiring\ProfilerWiring;
 use Pulsar\Core\Wiring\ProvidesConfigLoaders;
 use Pulsar\Core\Wiring\SecurityWiring;
-use Pulsar\Http\Middleware\MiddlewarePipeline;
-use Pulsar\Http\Middleware\MiddlewareRegistry;
-use Pulsar\Routing\Router;
 use Stringable;
 
 use function array_filter;
@@ -107,28 +102,15 @@ final class WiringConfigKeyReportingTest extends TestCase
     }
 
     #[Test]
-    public function antiSpamWiringSurfacesAnUnknownKeyAtBoot(): void
+    public function antiSpamUnknownKeySurfacesWithTheRealHyphenatedBasename(): void
     {
-        // anti-spam has the separator a class name would lose (anti-spam, not
-        // antispam), and its keys are bot defences — a typo silently reverts one.
-        $this->writeConfig('anti-spam.php', "'honeypot_enabled' => true, 'captcha_enabledd' => true");
-
-        $spy = new WarningSpy();
-        $container = new Container();
-        $container->instance(LoggerInterface::class, $spy);
-
-        new AntiSpamWiring()->wire(
-            $container,
-            new ConfigManager(configPath: $this->tempDir),
-            new MiddlewarePipeline($container),
-            new MiddlewareRegistry(),
-            new Router(),
-        );
-
-        self::assertTrue(
-            $spy->has('config section "anti-spam": unrecognized key "captcha_enabledd"'),
-            'a typo in config/anti-spam.php must surface at boot; got: ' . $spy->dump(),
-        );
+        // anti-spam has the separator a class name would lose (AntiSpamConfig ->
+        // "antispam"); ConfigManager records the loader basename so the label is
+        // the real file, "anti-spam". Its keys are bot defences — a typo silently
+        // reverts one, so it must surface. The whole file loads through one
+        // AntiSpamConfigSet; unknown keys delegate to the top-level AntiSpamConfig.
+        $configManager = $this->loadThroughRepository(new AntiSpamWiring(), 'anti-spam.php', "'honeypot_enabled' => true, 'captcha_enabledd' => true");
+        $this->assertSweepSurfaces($configManager, 'config section "anti-spam": unrecognized key "captcha_enabledd"');
     }
 
     #[Test]

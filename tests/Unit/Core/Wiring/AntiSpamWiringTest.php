@@ -18,6 +18,7 @@ use Pulsar\Cache\Application\TaggedCacheInterface;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Container\Container;
 use Pulsar\Core\Wiring\AntiSpamWiring;
+use Pulsar\Core\Wiring\ConfigLoaderRegistrar;
 use Pulsar\Http\Client\HttpClientInterface;
 use Pulsar\Http\Client\HttpResponse;
 use Pulsar\Http\HeaderBag;
@@ -555,11 +556,20 @@ final class AntiSpamWiringTest extends TestCase
     {
         $configPath = sys_get_temp_dir() . '/pulsar_antispam_wiring_' . bin2hex(random_bytes(4));
         @mkdir($configPath, 0o755, true);
+        // AntiSpamConfigSet now loads through the ConfigRepository
+        // (ProvidesConfigLoaders), exactly as at boot: register the wiring's loader
+        // and load(). load() requires the three mandatory config files.
+        file_put_contents($configPath . '/app.php', '<?php return [];');
+        file_put_contents($configPath . '/security.php', '<?php return [];');
+        file_put_contents($configPath . '/observability.php', '<?php return [];');
         file_put_contents($configPath . '/anti-spam.php', "<?php return [$antiSpamBody];");
 
         $configManager = new ConfigManager($configPath);
+        $wiring = new AntiSpamWiring();
+        ConfigLoaderRegistrar::register($configManager, [$wiring]);
+        $configManager->load();
 
-        new AntiSpamWiring()->wire($container, $configManager, $pipeline, new MiddlewareRegistry(), new Router());
+        $wiring->wire($container, $configManager, $pipeline, new MiddlewareRegistry(), new Router());
     }
 }
 

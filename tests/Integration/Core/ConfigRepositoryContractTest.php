@@ -13,7 +13,6 @@ use Pulsar\Config\AppConfig;
 use Pulsar\Config\BusinessProfileConfig;
 use Pulsar\Config\CacheConfig;
 use Pulsar\Config\ConfigManager;
-use Pulsar\Config\ConfigRepository;
 use Pulsar\Config\DatabaseConfig;
 use Pulsar\Config\DeployConfig;
 use Pulsar\Config\DomainConfig;
@@ -40,6 +39,7 @@ use Pulsar\Documentation\DocumentationConfig;
 use Pulsar\Edge\EdgeConfig;
 use Pulsar\Introspection\IntrospectionConfig;
 use Pulsar\Observability\Profiler\ProfilerConfig;
+use Pulsar\Security\AntiSpam\AntiSpamConfigSet;
 use Pulsar\View\ViewConfig;
 
 use function array_diff;
@@ -131,6 +131,9 @@ final class ConfigRepositoryContractTest extends TestCase
         'data_protection' => DataProtectionConfig::class,
         'domains' => DomainConfig::class,
         'introspection' => IntrospectionConfig::class,
+        // One file, several typed sub-sections → one AntiSpamConfigSet DTO in the
+        // repository (see AntiSpamConfigSet); AntiSpamWiring distributes the parts.
+        'anti-spam' => AntiSpamConfigSet::class,
         // Optional; no default config/cloud.php ships, so its DTO is only in the
         // repository when a project adds the file. Listed so it is never flagged
         // as an unexpected DTO.
@@ -145,9 +148,6 @@ final class ConfigRepositoryContractTest extends TestCase
      * @var array<string, string>
      */
     private const array KNOWN_GAPS = [
-        // Direct-read core configs — consumed, but a wiring reads the file itself
-        // instead of the repository. Repatriate into the repository (M0-F1).
-        'anti-spam' => 'direct-read: AntiSpamWiring builds 9 DTOs from the file — pending repatriation',
         // Extension-consumed — the owning extension reads the file directly.
         'admin' => 'extension-consumed: pulsar/admin reads it directly',
         'opentelemetry' => 'extension-consumed: pulsar/opentelemetry reads it directly',
@@ -200,7 +200,7 @@ final class ConfigRepositoryContractTest extends TestCase
     #[Test]
     public function consumedConfigsBuildTheirDtoInARealBoot(): void
     {
-        $repository = $this->bootRealConfig();
+        $repository = $this->bootRealConfig()->repository();
         $loaded = array_map(static fn(object $o): string => $o::class, $repository->all());
 
         // Every shipped repository-consumed config builds its DTO.
@@ -229,6 +229,26 @@ final class ConfigRepositoryContractTest extends TestCase
         );
     }
 
+    #[Test]
+    public function theShippedConfigProducesNoUnknownKeyWarnings(): void
+    {
+        // The framework's OWN default config must be clean: a real boot of config/
+        // must not flag a single key as unknown. This catches a DTO whose
+        // KNOWN_KEYS omits a legitimate key its section (or a sibling section
+        // reading the same file) actually ships — which surfaces false-positive
+        // "unrecognized key" warnings on every default install, and in strict mode
+        // aborts boot outright. It also guards against drift as sections gain keys.
+        $warnings = $this->bootRealConfig()->unknownConfigKeyWarnings();
+        sort($warnings);
+
+        self::assertSame(
+            [],
+            $warnings,
+            'The shipped config/ must produce zero unknown-key warnings — a DTO is flagging one of its own '
+            . 'legitimate keys. Got: ' . implode(' | ', $warnings),
+        );
+    }
+
     /**
      * @return list<string>
      */
@@ -247,7 +267,7 @@ final class ConfigRepositoryContractTest extends TestCase
         return in_array($name, $this->shippedConfigBasenames(), true);
     }
 
-    private function bootRealConfig(): ConfigRepository
+    private function bootRealConfig(): ConfigManager
     {
         $configManager = new ConfigManager(configPath: $this->repoRoot() . DIRECTORY_SEPARATOR . 'config');
         // Register wiring-owned config loaders exactly as Kernel does at boot, so
@@ -256,7 +276,7 @@ final class ConfigRepositoryContractTest extends TestCase
         ConfigLoaderRegistrar::register($configManager, WiringList::default());
         $configManager->load();
 
-        return $configManager->repository();
+        return $configManager;
     }
 
     private function repoRoot(): string

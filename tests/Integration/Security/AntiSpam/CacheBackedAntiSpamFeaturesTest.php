@@ -11,6 +11,7 @@ use Pulsar\Config\ConfigManager;
 use Pulsar\Container\Container;
 use Pulsar\Core\Wiring\AntiSpamWiring;
 use Pulsar\Core\Wiring\CacheWiring;
+use Pulsar\Core\Wiring\ConfigLoaderRegistrar;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Routing\Router;
@@ -51,6 +52,9 @@ final class CacheBackedAntiSpamFeaturesTest extends TestCase
         file_put_contents($configPath . '/anti-spam.php', '<?php return ' . var_export($antiSpam, true) . ';');
 
         $configManager = new ConfigManager($configPath);
+        // Register the anti-spam config loader before load(), as the Kernel does,
+        // so AntiSpamConfigSet is built into the repository.
+        ConfigLoaderRegistrar::register($configManager, [new AntiSpamWiring()]);
         $configManager->load();
 
         $container = new Container();

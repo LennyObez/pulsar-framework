@@ -6,6 +6,8 @@ namespace Pulsar\Security\AntiSpam;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Config\ReportsUnknownKeys;
+use Pulsar\Config\UnknownKeys;
 use Pulsar\Support\Coerce;
 
 use function array_values;
@@ -22,8 +24,14 @@ use function is_string;
  * @api
  */
 #[Api(since: '1.0.0-rc.12')]
-final readonly class EmailDomainCheckConfig
+final readonly class EmailDomainCheckConfig implements ReportsUnknownKeys
 {
+    /** The email-domain keys this DTO reads from config/anti-spam.php. */
+    private const array KNOWN_KEYS = [
+        'email_domain_check_enabled', 'disposable_block', 'disposable_list',
+        'mx_check_enabled', 'mx_block', 'mx_fail_open', 'mx_cache_ttl',
+    ];
+
     /**
      * @param bool $enabled Master switch for the check
      * @param EmailDomainSignalMode $disposableBlock How a disposable-domain hit participates
@@ -34,6 +42,7 @@ final readonly class EmailDomainCheckConfig
      * @param EmailDomainSignalMode $mxBlock How an undeliverable-domain result participates
      * @param bool $mxFailOpen Treat an unreachable resolver as deliverable (never block everyone)
      * @param int $mxCacheTtlSeconds TTL for cached positive/negative MX results
+     * @param list<string> $unknownKeys Email-domain keys this DTO does not read (typos)
      */
     public function __construct(
         public bool $enabled = true,
@@ -44,7 +53,16 @@ final readonly class EmailDomainCheckConfig
         public EmailDomainSignalMode $mxBlock = EmailDomainSignalMode::Hard,
         public bool $mxFailOpen = true,
         public int $mxCacheTtlSeconds = 86400,
+        public array $unknownKeys = [],
     ) {}
+
+    /**
+     * @return list<string>
+     */
+    public function unknownConfigKeys(): array
+    {
+        return $this->unknownKeys;
+    }
 
     /**
      * True when at least one signal would actually run, so the wiring can skip
@@ -90,6 +108,7 @@ final readonly class EmailDomainCheckConfig
             ),
             mxFailOpen: Coerce::strictBool($data['mx_fail_open'] ?? null, true),
             mxCacheTtlSeconds: Coerce::int($data['mx_cache_ttl'] ?? null, 86400),
+            unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
         );
     }
 }
