@@ -80,6 +80,26 @@ interface ContainerInterface extends PsrContainerInterface
     public function forgetInstance(string $id): void;
 
     /**
+     * Register a decorator that wraps an existing service.
+     *
+     * The decorator RECEIVES the current service and returns a replacement that
+     * wraps it — it enhances rather than replaces, and cannot discard the
+     * original (the container passes it in). This is the enhance-a-service
+     * operation, distinct from re-binding (override) and from registering a new
+     * service. On the extension-facing scoped container it is gated by the
+     * ServiceDecorate capability (Verified and above), so an audited extension
+     * can wrap a core service without the power to override any binding.
+     *
+     * Declared on the base contract (not only the advanced one) so an extension,
+     * which receives this interface, can decorate through it.
+     *
+     * @param string $id Service identifier to decorate (must already be registered)
+     * @param class-string|callable $decorator Decorator class or factory receiving the inner service
+     * @param int $priority Application order (higher = outermost wrapper)
+     */
+    public function decorate(string $id, string|callable $decorator, int $priority = 0): void;
+
+    /**
      * Set pre-computed constructor resolution hints for autowiring.
      *
      * @param array<class-string, list<array{name: string, type: class-string}>>|null $hints

@@ -312,6 +312,33 @@ final class ScopedContainerProxyTest extends TestCase
         $proxy->bind(LoggerInterface::class, fn() => new NullLogger());
     }
 
+    // --- ServiceDecorate: Verified may wrap a service (original preserved);
+    //     Community may not. ---
+
+    #[Test]
+    public function verifiedCanDecorateAService(): void
+    {
+        $this->container->bind('svc.decorable', fn() => new stdClass());
+        $proxy = $this->proxy(TrustTier::Verified);
+
+        // Decorator receives the inner service and returns a wrapper. The gate
+        // passes (Verified has ServiceDecorate) and the decorator is registered.
+        $proxy->decorate('svc.decorable', static fn(object $inner): object => $inner);
+
+        self::assertTrue($this->container->has('svc.decorable'));
+    }
+
+    #[Test]
+    public function communityCannotDecorateAService(): void
+    {
+        $this->container->bind('svc.decorable', fn() => new stdClass());
+        $proxy = $this->proxy(TrustTier::Community);
+
+        $this->expectException(CapabilityDeniedException::class);
+        $this->expectExceptionMessage('ServiceDecorate');
+        $proxy->decorate('svc.decorable', static fn(object $inner): object => $inner);
+    }
+
     #[Test]
     public function untrustedCannotResolveRestrictedServices(): void
     {

@@ -13,11 +13,11 @@ use Pulsar\Extensibility\ExtensionCapability;
 final class ExtensionCapabilityTest extends TestCase
 {
     #[Test]
-    public function enumHasSeventeenCases(): void
+    public function enumHasEighteenCases(): void
     {
         $cases = ExtensionCapability::cases();
 
-        self::assertCount(17, $cases);
+        self::assertCount(18, $cases);
     }
 
     #[Test]
@@ -27,6 +27,7 @@ final class ExtensionCapabilityTest extends TestCase
             'ContainerRead',
             'ContainerWrite',
             'ServiceRegister',
+            'ServiceDecorate',
             'RouteRegister',
             'RouteRegisterGlobal',
             'MiddlewareRegister',

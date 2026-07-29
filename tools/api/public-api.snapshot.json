@@ -12647,15 +12647,6 @@
                     "return": "void",
                     "static": false
                 },
-                "decorate": {
-                    "params": [
-                        "string $id",
-                        "callable|string $decorator",
-                        "int $priority"
-                    ],
-                    "return": "void",
-                    "static": false
-                },
                 "endRequestScope": {
                     "params": [],
                     "return": "void",
@@ -13028,6 +13019,15 @@
                         "array $params"
                     ],
                     "return": "mixed",
+                    "static": false
+                },
+                "decorate": {
+                    "params": [
+                        "string $id",
+                        "callable|string $decorator",
+                        "int $priority"
+                    ],
+                    "return": "void",
                     "static": false
                 },
                 "forgetInstance": {

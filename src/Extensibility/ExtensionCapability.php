@@ -38,6 +38,16 @@ enum ExtensionCapability
      */
     case ServiceRegister;
 
+    /**
+     * Decorate an existing service: register a wrapper that RECEIVES the current
+     * service and returns a replacement wrapping it. Enhances a service (incl. a
+     * core one) without the power to discard it or bind something unrelated —
+     * strictly less than {@see self::ContainerWrite} (override/replace). Granted
+     * to Verified and above: a decorator can still alter behaviour, so it is not
+     * offered at Community.
+     */
+    case ServiceDecorate;
+
     /** Register routes under the extension's namespace prefix. */
     case RouteRegister;
 

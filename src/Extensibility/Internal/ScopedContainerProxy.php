@@ -86,6 +86,13 @@ final readonly class ScopedContainerProxy implements ContainerInterface
     }
 
     #[Override]
+    public function decorate(string $id, string|callable $decorator, int $priority = 0): void
+    {
+        $this->assertCanDecorate();
+        $this->inner->decorate($id, $decorator, $priority);
+    }
+
+    #[Override]
     public function forgetInstance(string $id): void
     {
         $this->assertCanWrite();
@@ -192,6 +199,24 @@ final readonly class ScopedContainerProxy implements ContainerInterface
         }
 
         throw CapabilityDeniedException::forCapability($this->tier, ExtensionCapability::ServiceRegister);
+    }
+
+    /**
+     * Decorating an existing service (wrapping it, original preserved) is the
+     * ServiceDecorate power — Verified and above. It is strictly less than
+     * ContainerWrite (override/replace), which also satisfies it. Community is
+     * denied: a decorator can still subvert behaviour of a core service.
+     */
+    private function assertCanDecorate(): void
+    {
+        if (
+            $this->hasCapability(ExtensionCapability::ServiceDecorate)
+            || $this->hasCapability(ExtensionCapability::ContainerWrite)
+        ) {
+            return;
+        }
+
+        throw CapabilityDeniedException::forCapability($this->tier, ExtensionCapability::ServiceDecorate);
     }
 
     private function hasCapability(ExtensionCapability $capability): bool

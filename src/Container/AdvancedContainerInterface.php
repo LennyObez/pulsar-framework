@@ -49,14 +49,8 @@ interface AdvancedContainerInterface extends ContainerInterface
      */
     public function getTaggedServiceIds(string $tag): array;
 
-    /**
-     * Register a decorator for a service.
-     *
-     * @param string $id Service identifier to decorate
-     * @param class-string|callable $decorator Decorator class or factory
-     * @param int $priority Application order (higher = outermost wrapper)
-     */
-    public function decorate(string $id, string|callable $decorator, int $priority = 0): void;
+    // decorate() moved to the base ContainerInterface so extensions (which
+    // receive the base contract) can decorate a service; it is inherited here.
 
     /**
      * Begin a contextual binding definition.

@@ -56,6 +56,12 @@ final readonly class ReadOnlyContainer implements ContainerInterface
     }
 
     #[Override]
+    public function decorate(string $id, string|callable $decorator, int $priority = 0): void
+    {
+        throw ReplSafeModeException::operationBlocked('container mutation');
+    }
+
+    #[Override]
     public function forgetInstance(string $id): void
     {
         throw ReplSafeModeException::operationBlocked('container mutation');
