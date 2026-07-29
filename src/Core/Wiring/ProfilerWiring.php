@@ -9,20 +9,16 @@ use Pulsar\Cache\Application\CacheManager;
 use Pulsar\Cache\Application\Event\CacheEvent;
 use Pulsar\Cache\Application\Event\CacheHitEvent;
 use Pulsar\Cache\Application\Event\CacheMissEvent;
+use Pulsar\Config\CallableConfigLoader;
 use Pulsar\Config\ConfigManager;
+use Pulsar\Config\Environment;
 use Pulsar\Container\ContainerInterface;
-use Pulsar\Core\Wiring\Internal\ReportsConfigKeys;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Observability\Profiler\ProfilerConfig;
 use Pulsar\Observability\Profiler\ProfilerMiddleware;
 use Pulsar\Observability\Profiler\RequestProfiler;
 use Pulsar\Routing\Router;
-
-use function is_array;
-use function is_file;
-
-use const DIRECTORY_SEPARATOR;
 
 /**
  * Wires the per-request performance profiler (opt-in, for dev/staging).
@@ -31,11 +27,24 @@ use const DIRECTORY_SEPARATOR;
  * (outermost, so it times the whole stack), and subscribes to cache hit/miss
  * events. Database query timings are recorded automatically: the monitored
  * connection composes a profiler SQL logger when the profiler is bound.
+ *
+ * Owns config/profiler.php: its loader builds {@see ProfilerConfig} into the
+ * ConfigRepository during config load (the single source of truth), so wire()
+ * resolves it from the repository and unknown-key reporting is handled once,
+ * centrally, by ConfigManager's post-load sweep.
  */
 #[Internal]
-final readonly class ProfilerWiring implements ServiceWiringInterface
+final readonly class ProfilerWiring implements ServiceWiringInterface, ProvidesConfigLoaders
 {
-    use ReportsConfigKeys;
+    public function configLoaders(): array
+    {
+        return [
+            'profiler' => new CallableConfigLoader(
+                ProfilerConfig::class,
+                static fn(array $data, Environment $_environment): object => ProfilerConfig::fromArray($data),
+            ),
+        ];
+    }
 
     public function wire(
         ContainerInterface $container,
@@ -44,9 +53,11 @@ final readonly class ProfilerWiring implements ServiceWiringInterface
         MiddlewareRegistry $middlewareRegistry,
         Router $router,
     ): void {
-        $config = $this->loadConfig($configManager);
+        $repository = $configManager->repository();
+        $config = $repository->has(ProfilerConfig::class)
+            ? $repository->get(ProfilerConfig::class)
+            : new ProfilerConfig();
         $container->instance(ProfilerConfig::class, $config);
-        $this->reportUnknownConfigKeys($container, 'profiler', $config);
 
         if (!$config->enabled) {
             return;
@@ -76,25 +87,5 @@ final readonly class ProfilerWiring implements ServiceWiringInterface
         $container->instance(ProfilerMiddleware::class, $profilerMiddleware);
 
         $middleware->pipe($profilerMiddleware);
-    }
-
-    private function loadConfig(ConfigManager $configManager): ProfilerConfig
-    {
-        $configPath = $configManager->configPath();
-
-        if ($configPath !== null && is_file($configPath . DIRECTORY_SEPARATOR . 'profiler.php')) {
-            /**
-             * @psalm-suppress UnresolvableInclude
-             * @var mixed $data
-             */
-            $data = require $configPath . DIRECTORY_SEPARATOR . 'profiler.php';
-
-            if (is_array($data)) {
-                /** @var array<string, mixed> $data */
-                return ProfilerConfig::fromArray($data);
-            }
-        }
-
-        return new ProfilerConfig();
     }
 }

@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Container\Container;
+use Pulsar\Core\Wiring\ConfigLoaderRegistrar;
 use Pulsar\Core\Wiring\ProfilerWiring;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
@@ -60,10 +61,19 @@ final class ProfilerWiringTest extends TestCase
     {
         $configPath = sys_get_temp_dir() . '/pulsar_profiler_wiring_' . bin2hex(random_bytes(4));
         @mkdir($configPath, 0o755, true);
+        // ProfilerConfig now loads through the ConfigRepository
+        // (ProvidesConfigLoaders), exactly as at boot: register the wiring's
+        // loader and load(). load() requires the three mandatory config files.
+        file_put_contents($configPath . '/app.php', '<?php return [];');
+        file_put_contents($configPath . '/security.php', '<?php return [];');
+        file_put_contents($configPath . '/observability.php', '<?php return [];');
         file_put_contents($configPath . '/profiler.php', "<?php return [$body];");
 
         $configManager = new ConfigManager($configPath);
+        $wiring = new ProfilerWiring();
+        ConfigLoaderRegistrar::register($configManager, [$wiring]);
+        $configManager->load();
 
-        new ProfilerWiring()->wire($container, $configManager, $pipeline, new MiddlewareRegistry(), new Router());
+        $wiring->wire($container, $configManager, $pipeline, new MiddlewareRegistry(), new Router());
     }
 }

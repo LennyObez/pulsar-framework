@@ -11,6 +11,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Container\Container;
+use Pulsar\Core\Wiring\ConfigLoaderRegistrar;
 use Pulsar\Core\Wiring\DocumentationWiring;
 use Pulsar\Documentation\DocumentationConfig;
 use Pulsar\Documentation\DocVersion;
@@ -115,10 +116,19 @@ final class DocumentationWiringTest extends TestCase
     {
         $configPath = sys_get_temp_dir() . '/pulsar_docs_wiring_' . bin2hex(random_bytes(4));
         @mkdir($configPath, 0o755, true);
+        // DocumentationConfig now loads through the ConfigRepository
+        // (ProvidesConfigLoaders), exactly as at boot: register the wiring's
+        // loader and load(). load() requires the three mandatory config files.
+        file_put_contents($configPath . '/app.php', '<?php return [];');
+        file_put_contents($configPath . '/security.php', '<?php return [];');
+        file_put_contents($configPath . '/observability.php', '<?php return [];');
         file_put_contents($configPath . '/documentation.php', "<?php return [$body];");
 
         $configManager = new ConfigManager($configPath);
+        $wiring = new DocumentationWiring();
+        ConfigLoaderRegistrar::register($configManager, [$wiring]);
+        $configManager->load();
 
-        new DocumentationWiring()->wire($container, $configManager, $pipeline, new MiddlewareRegistry(), new Router());
+        $wiring->wire($container, $configManager, $pipeline, new MiddlewareRegistry(), new Router());
     }
 }

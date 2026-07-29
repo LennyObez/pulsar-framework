@@ -34,7 +34,9 @@ use Pulsar\Config\SupervisorConfig;
 use Pulsar\Config\TenancyConfig;
 use Pulsar\Core\Wiring\ConfigLoaderRegistrar;
 use Pulsar\Core\Wiring\WiringList;
+use Pulsar\Documentation\DocumentationConfig;
 use Pulsar\Edge\EdgeConfig;
+use Pulsar\Observability\Profiler\ProfilerConfig;
 use Pulsar\View\ViewConfig;
 
 use function array_diff;
@@ -121,6 +123,8 @@ final class ConfigRepositoryContractTest extends TestCase
         // Repatriated from the ad-hoc direct-read path into the repository via a
         // ProvidesConfigLoaders loader (M0-F1 convergence).
         'edge' => EdgeConfig::class,
+        'documentation' => DocumentationConfig::class,
+        'profiler' => ProfilerConfig::class,
         // Optional; no default config/cloud.php ships, so its DTO is only in the
         // repository when a project adds the file. Listed so it is never flagged
         // as an unexpected DTO.
@@ -139,10 +143,8 @@ final class ConfigRepositoryContractTest extends TestCase
         // instead of the repository. Repatriate into the repository (M0-F1).
         'anti-spam' => 'direct-read: AntiSpamWiring builds 9 DTOs from the file — pending repatriation',
         'data_protection' => 'direct-read: SecurityWiring::buildDataProtectionConfig — pending repatriation',
-        'documentation' => 'direct-read: DocumentationWiring — pending repatriation',
         'domains' => 'direct-read: SecurityWiring::buildDomainConfig — pending repatriation',
         'introspection' => 'direct-read: IntrospectionWiring (needs EnvironmentMode) — pending repatriation',
-        'profiler' => 'direct-read: ProfilerWiring — pending repatriation',
         // Extension-consumed — the owning extension reads the file directly.
         'admin' => 'extension-consumed: pulsar/admin reads it directly',
         'opentelemetry' => 'extension-consumed: pulsar/opentelemetry reads it directly',
