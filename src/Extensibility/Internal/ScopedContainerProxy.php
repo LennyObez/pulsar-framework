@@ -67,21 +67,21 @@ final readonly class ScopedContainerProxy implements ContainerInterface
     #[Override]
     public function bind(string $id, callable|string $concrete, BindingType $type = BindingType::Singleton): void
     {
-        $this->assertCanWrite();
+        $this->assertCanRegister($id);
         $this->inner->bind($id, $concrete, $type);
     }
 
     #[Override]
     public function singleton(string $id, callable|string $concrete): void
     {
-        $this->assertCanWrite();
+        $this->assertCanRegister($id);
         $this->inner->singleton($id, $concrete);
     }
 
     #[Override]
     public function instance(string $id, object $instance): void
     {
-        $this->assertCanWrite();
+        $this->assertCanRegister($id);
         $this->inner->instance($id, $instance);
     }
 
@@ -159,6 +159,39 @@ final readonly class ScopedContainerProxy implements ContainerInterface
         if (!$this->hasCapability(ExtensionCapability::ContainerWrite)) {
             throw CapabilityDeniedException::forCapability($this->tier, ExtensionCapability::ContainerWrite);
         }
+    }
+
+    /**
+     * Registering a service the extension provides vs overriding an existing one.
+     *
+     * Rebinding an id that is ALREADY explicitly bound can hijack a core service
+     * (the rc.12 Session/Auth/CsrfGuard override hole), so that override power is
+     * ContainerWrite — Core only. Binding a NEW id — the extension's own service,
+     * or filling an unbound extension point — is the lesser ServiceRegister power
+     * available to Verified and Community. `has()` (PSR-11) is deliberately NOT
+     * used here: it is true for any autowirable class, which would misclassify a
+     * first-time registration as an override; only an EXPLICIT binding or cached
+     * instance counts as "already registered".
+     */
+    private function assertCanRegister(string $id): void
+    {
+        $alreadyRegistered = in_array($id, $this->inner->getBindings(), true)
+            || in_array($id, $this->inner->getInstances(), true);
+
+        if ($alreadyRegistered) {
+            $this->assertCanWrite();
+
+            return;
+        }
+
+        if (
+            $this->hasCapability(ExtensionCapability::ServiceRegister)
+            || $this->hasCapability(ExtensionCapability::ContainerWrite)
+        ) {
+            return;
+        }
+
+        throw CapabilityDeniedException::forCapability($this->tier, ExtensionCapability::ServiceRegister);
     }
 
     private function hasCapability(ExtensionCapability $capability): bool

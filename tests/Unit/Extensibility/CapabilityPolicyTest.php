@@ -35,9 +35,17 @@ final class CapabilityPolicyTest extends TestCase
     }
 
     #[Test]
-    public function verifiedHasAllExceptCryptoKeyAccessAndProcessExec(): void
+    public function verifiedHasAllExceptTheThreeCrownJewels(): void
     {
-        $denied = [ExtensionCapability::CryptoKeyAccess, ExtensionCapability::ProcessExec];
+        // Verified is trusted enough to ship a full-featured extension but must
+        // not hold the three crown jewels: reading the master key, spawning
+        // processes, or OVERRIDING an existing binding (ContainerWrite) — it
+        // registers its own services via ServiceRegister instead.
+        $denied = [
+            ExtensionCapability::CryptoKeyAccess,
+            ExtensionCapability::ProcessExec,
+            ExtensionCapability::ContainerWrite,
+        ];
 
         foreach (ExtensionCapability::cases() as $capability) {
             if (in_array($capability, $denied, true)) {
@@ -57,12 +65,14 @@ final class CapabilityPolicyTest extends TestCase
     #[Test]
     public function communityHasLimitedCapabilities(): void
     {
-        // Community tier explicitly excludes ContainerWrite so that a
-        // community extension cannot silently override core services
-        // (Session, Auth, CsrfGuard...). Community extensions that need to
-        // register services must use RouteRegister/CommandRegister.
+        // Community tier excludes ContainerWrite (overriding an existing binding)
+        // so a community extension can never hijack a core service (Session,
+        // Auth, CsrfGuard...). It CAN register its OWN services via
+        // ServiceRegister — a first-class capability, not a RouteRegister/
+        // CommandRegister workaround — because that cannot override anything.
         $allowed = [
             ExtensionCapability::ContainerRead,
+            ExtensionCapability::ServiceRegister,
             ExtensionCapability::RouteRegister,
             ExtensionCapability::CryptoOperations,
             ExtensionCapability::CommandRegister,
@@ -125,8 +135,9 @@ final class CapabilityPolicyTest extends TestCase
     {
         $granted = $this->policy->grantedCapabilities(TrustTier::Community);
 
-        self::assertCount(5, $granted);
+        self::assertCount(6, $granted);
         self::assertContains(ExtensionCapability::ContainerRead, $granted);
+        self::assertContains(ExtensionCapability::ServiceRegister, $granted);
         self::assertContains(ExtensionCapability::RouteRegister, $granted);
         self::assertContains(ExtensionCapability::CryptoOperations, $granted);
         self::assertContains(ExtensionCapability::CommandRegister, $granted);

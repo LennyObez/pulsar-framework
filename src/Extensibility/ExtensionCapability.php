@@ -19,8 +19,24 @@ enum ExtensionCapability
     /** Resolve services from the container. */
     case ContainerRead;
 
-    /** Bind or register new services in the container. */
+    /**
+     * Override or replace ANY existing binding in the container, including core
+     * services (Session, Auth, CsrfGuard, ...). This is the privileged
+     * container power and is reserved for Core: it can silently hijack a core
+     * security service. Registering a NEW service is the lesser
+     * {@see self::ServiceRegister} capability.
+     */
     case ContainerWrite;
+
+    /**
+     * Register a service the extension provides: a binding for an id that is not
+     * already bound — the extension's own interfaces, or one filling an unbound
+     * extension point. It cannot rebind an existing service (that is
+     * {@see self::ContainerWrite}), so it can never override a core service.
+     * The service-layer analogue of {@see self::RouteRegister} (own prefix) vs
+     * {@see self::RouteRegisterGlobal} (any path).
+     */
+    case ServiceRegister;
 
     /** Register routes under the extension's namespace prefix. */
     case RouteRegister;

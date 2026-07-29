@@ -33,28 +33,46 @@ final readonly class CapabilityPolicy
     public static function defaults(): self
     {
         return new self([
+            // CORE — first-party framework infrastructure (auth, orm, security).
+            // Full trust: every capability, including the crown jewels
+            // (ContainerWrite override, CryptoKeyAccess, ProcessExec).
             TrustTier::Core->value => ExtensionCapability::cases(),
+
+            // VERIFIED — audited first- or third-party, incl. bundled products.
+            // Everything needed to ship a full-featured extension EXCEPT the
+            // three crown jewels: it cannot read the master key
+            // (CryptoKeyAccess), spawn processes (ProcessExec), or OVERRIDE an
+            // existing binding (ContainerWrite) — so it can never hijack a core
+            // security service. It registers its OWN services via ServiceRegister
+            // (kept, being neither excluded below nor a crown jewel).
             TrustTier::Verified->value => array_values(array_filter(
                 ExtensionCapability::cases(),
                 static fn(ExtensionCapability $c): bool => !in_array($c, [
                     ExtensionCapability::CryptoKeyAccess,
                     ExtensionCapability::ProcessExec,
+                    ExtensionCapability::ContainerWrite,
                 ], true),
             )),
-            // Community extensions get read-only container access.
-            // ContainerWrite was removed in 1.0.0-rc.12: it allowed arbitrary
-            // service replacement, letting a community extension silently
-            // override core security services (Session, Auth, CsrfGuard...).
-            // Community extensions that need to register services must now
-            // use RouteRegister or CommandRegister, which go through the
-            // ScopedContainerProxy write-allowlist.
+
+            // COMMUNITY — unaudited third-party. A minimal but genuinely
+            // functional set: resolve services, register its OWN services and
+            // own-prefix routes and commands, do crypto operations, and write
+            // audit entries. ServiceRegister (added here) is what lets a
+            // community extension register its services safely — it cannot
+            // override a core service, so the rc.12 hole (ContainerWrite
+            // hijacking Session/Auth/CsrfGuard) stays closed while the
+            // legitimate need to register services is met first-class rather
+            // than through RouteRegister/CommandRegister workarounds.
             TrustTier::Community->value => [
                 ExtensionCapability::ContainerRead,
+                ExtensionCapability::ServiceRegister,
                 ExtensionCapability::RouteRegister,
                 ExtensionCapability::CryptoOperations,
                 ExtensionCapability::CommandRegister,
                 ExtensionCapability::AuditWrite,
             ],
+
+            // UNTRUSTED — experimental/sandboxed. Read-only container access.
             TrustTier::Untrusted->value => [
                 ExtensionCapability::ContainerRead,
             ],

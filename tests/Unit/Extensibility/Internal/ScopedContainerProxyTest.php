@@ -119,7 +119,7 @@ final class ScopedContainerProxyTest extends TestCase
         $proxy = $this->proxy(TrustTier::Untrusted);
 
         $this->expectException(CapabilityDeniedException::class);
-        $this->expectExceptionMessage('ContainerWrite');
+        $this->expectExceptionMessage('ServiceRegister');
         $proxy->singleton('test.singleton', fn() => new stdClass());
     }
 
@@ -251,7 +251,7 @@ final class ScopedContainerProxyTest extends TestCase
         $proxy = $this->proxy(TrustTier::Untrusted);
 
         $this->expectException(CapabilityDeniedException::class);
-        $this->expectExceptionMessage('ContainerWrite');
+        $this->expectExceptionMessage('ServiceRegister');
         $proxy->bind('test.service', fn() => new stdClass());
     }
 
@@ -261,8 +261,55 @@ final class ScopedContainerProxyTest extends TestCase
         $proxy = $this->proxy(TrustTier::Untrusted);
 
         $this->expectException(CapabilityDeniedException::class);
-        $this->expectExceptionMessage('ContainerWrite');
+        $this->expectExceptionMessage('ServiceRegister');
         $proxy->instance('test.instance', new stdClass());
+    }
+
+    // --- ServiceRegister vs ContainerWrite: register a NEW service is allowed
+    //     for Verified/Community; OVERRIDING an existing (core) service is not. ---
+
+    #[Test]
+    public function verifiedCanRegisterANewOwnService(): void
+    {
+        $proxy = $this->proxy(TrustTier::Verified);
+
+        // 'Pulsar\Extension\Foo\FooService' is not bound in setUp() → a NEW id.
+        $proxy->bind('Pulsar\Extension\Foo\FooService', fn() => new stdClass());
+
+        self::assertTrue($this->container->has('Pulsar\Extension\Foo\FooService'));
+    }
+
+    #[Test]
+    public function communityCanRegisterANewOwnService(): void
+    {
+        $proxy = $this->proxy(TrustTier::Community);
+
+        $proxy->instance('Pulsar\Extension\Bar\BarService', new stdClass());
+
+        self::assertTrue($this->container->has('Pulsar\Extension\Bar\BarService'));
+    }
+
+    #[Test]
+    public function verifiedCannotOverrideAnExistingCoreService(): void
+    {
+        $proxy = $this->proxy(TrustTier::Verified);
+
+        // LoggerInterface is already bound in setUp() → rebinding is an OVERRIDE,
+        // which is ContainerWrite (Core only). Verified must be denied so it can
+        // never hijack a core service.
+        $this->expectException(CapabilityDeniedException::class);
+        $this->expectExceptionMessage('ContainerWrite');
+        $proxy->instance(LoggerInterface::class, new NullLogger());
+    }
+
+    #[Test]
+    public function communityCannotOverrideAnExistingCoreService(): void
+    {
+        $proxy = $this->proxy(TrustTier::Community);
+
+        $this->expectException(CapabilityDeniedException::class);
+        $this->expectExceptionMessage('ContainerWrite');
+        $proxy->bind(LoggerInterface::class, fn() => new NullLogger());
     }
 
     #[Test]
