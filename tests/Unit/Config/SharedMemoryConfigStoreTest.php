@@ -10,6 +10,8 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\ConfigRepository;
 use Pulsar\Config\SharedMemoryConfigStore;
+use Pulsar\Core\Wiring\ConfigLoaderRegistrar;
+use Pulsar\Core\Wiring\WiringList;
 use ReflectionClass;
 use RuntimeException;
 
@@ -127,6 +129,12 @@ final class SharedMemoryConfigStoreTest extends TestCase
     public function deserializationAllowlistCoversTheSerializedConfigGraph(): void
     {
         $manager = new ConfigManager(dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'config');
+        // Register the wiring loaders exactly as the kernel does before load(), so
+        // loader-built config DTOs (edge, openapi, anti-spam, compliance, …) are
+        // part of the serialized graph the guard inspects. Without this the
+        // allowlist silently drifts for every config a wiring loads through
+        // ProvidesConfigLoaders — the exact population most likely to be missed.
+        ConfigLoaderRegistrar::register($manager, WiringList::default());
         $manager->load();
 
         $serialized = serialize($manager->repository());
