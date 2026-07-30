@@ -63,4 +63,29 @@ final class ConfigException extends RuntimeException
             implode("\n  - ", $descriptions),
         ));
     }
+
+    /**
+     * A security-relevant setting is looser than an enabled compliance framework
+     * requires while compliance strict mode is on, so the boot is refused rather
+     * than silently tightened. Names the control, the offending and required
+     * values, and the framework(s) that mandate the stricter setting.
+     *
+     * @param non-empty-string $control    Human-readable control, e.g. 'session idle timeout'.
+     * @param string           $actual     The operator's current value, rendered for display.
+     * @param string           $required   The value the strictest framework demands, rendered.
+     * @param list<string>     $frameworks Framework labels that drove the requirement.
+     */
+    #[NoDiscard]
+    public static function complianceViolation(string $control, string $actual, string $required, array $frameworks): self
+    {
+        return new self(sprintf(
+            'Compliance strict mode: %s is %s but the enabled framework(s) [%s] require %s. '
+            . 'Bring the configuration into compliance, or set compliance.verification.strict_mode = false '
+            . 'to have the framework tighten it automatically with a boot warning instead.',
+            $control,
+            $actual,
+            implode(', ', $frameworks),
+            $required,
+        ));
+    }
 }

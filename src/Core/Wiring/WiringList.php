@@ -34,6 +34,11 @@ final readonly class WiringList
             new I18nWiring(),
             new LoggingWiring(),
             new TracingWiring(),
+            // Resolves the compliance profile and tightens security-relevant config
+            // (e.g. session idle timeout) BEFORE SecurityWiring/AuthWiring build their
+            // services from it; runs after LoggingWiring so a logger is bound for the
+            // tighten-warning path.
+            new ComplianceWiring(),
             new SecurityWiring(),
             new ComplianceLoggingWiring(),
             new MetricsWiring(),

@@ -7133,6 +7133,37 @@
             },
             "constants": []
         },
+        "Pulsar\\Compliance\\ComplianceConfig": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "array $enabledFrameworks",
+                        "bool $verificationEnabled",
+                        "bool $bootCheck",
+                        "int $evidenceInterval",
+                        "bool $strictMode",
+                        "array $unknownKeys"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "fromArray": {
+                    "params": [
+                        "array $data"
+                    ],
+                    "return": "Pulsar\\Compliance\\ComplianceConfig",
+                    "static": true
+                },
+                "unknownConfigKeys": {
+                    "params": [],
+                    "return": "array",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\Compliance\\ComplianceFramework": {
             "since": "1.0.0",
             "methods": [],
@@ -9510,6 +9541,16 @@
             "since": "1.0.0",
             "methods": [],
             "signatures": {
+                "complianceViolation": {
+                    "params": [
+                        "string $control",
+                        "string $actual",
+                        "string $required",
+                        "array $frameworks"
+                    ],
+                    "return": "Pulsar\\Config\\Exception\\ConfigException",
+                    "static": true
+                },
                 "fileNotFound": {
                     "params": [
                         "string $path"
@@ -10425,6 +10466,13 @@
                     "params": [],
                     "return": "array",
                     "static": false
+                },
+                "withSession": {
+                    "params": [
+                        "Pulsar\\Config\\SessionConfig $session"
+                    ],
+                    "return": "Pulsar\\Config\\SecurityConfig",
+                    "static": false
                 }
             },
             "constants": []
@@ -10531,6 +10579,13 @@
                 "unknownConfigKeys": {
                     "params": [],
                     "return": "array",
+                    "static": false
+                },
+                "withIdleTimeout": {
+                    "params": [
+                        "int $idleTimeout"
+                    ],
+                    "return": "Pulsar\\Config\\SessionConfig",
                     "static": false
                 }
             },
@@ -57419,6 +57474,7 @@
         "Pulsar\\Core\\Wiring\\CacheWiring",
         "Pulsar\\Core\\Wiring\\CloudWiring",
         "Pulsar\\Core\\Wiring\\ComplianceLoggingWiring",
+        "Pulsar\\Core\\Wiring\\ComplianceWiring",
         "Pulsar\\Core\\Wiring\\ConfigLoaderRegistrar",
         "Pulsar\\Core\\Wiring\\ConfigWiring",
         "Pulsar\\Core\\Wiring\\DatabaseWiring",

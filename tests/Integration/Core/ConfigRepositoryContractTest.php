@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Api\OpenApi\OpenApiConfig;
 use Pulsar\Cloud\CloudConfig;
+use Pulsar\Compliance\ComplianceConfig;
 use Pulsar\Config\ApiConfig;
 use Pulsar\Config\AppConfig;
 use Pulsar\Config\BusinessProfileConfig;
@@ -136,6 +137,9 @@ final class ConfigRepositoryContractTest extends TestCase
         // repository (see AntiSpamConfigSet); AntiSpamWiring distributes the parts.
         'anti-spam' => AntiSpamConfigSet::class,
         'openapi' => OpenApiConfig::class,
+        // Resolved into the strictest ComplianceProfile and enforced onto
+        // security-relevant config by ComplianceWiring (Tier-1 enforcement epic).
+        'compliance' => ComplianceConfig::class,
         // Optional; no default config/cloud.php ships, so its DTO is only in the
         // repository when a project adds the file. Listed so it is never flagged
         // as an unexpected DTO.
@@ -162,7 +166,6 @@ final class ConfigRepositoryContractTest extends TestCase
         // INERT — shipped and documented, but NO production consumer. Wire a
         // consumer (build DTO + act on it) or build out the half-built feature.
         'broadcasting' => 'INERT: WebSocket/broadcast stack exists but WebSocketConfig is built nowhere',
-        'compliance' => 'INERT: whole Compliance module is an island (Tier-1 critical — full-enforcement epic)',
         'live' => 'INERT: Live reactive-component module not wired/routed; LiveConfig unused',
         'marketplace' => 'INERT: extension-marketplace half-built (registry_url config + discovery API, no HTTP client/CLI — build epic)',
         // Deliberate separate boot paths (not ConfigManager::load()).
