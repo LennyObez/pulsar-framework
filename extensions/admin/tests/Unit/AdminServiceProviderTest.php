@@ -1060,6 +1060,12 @@ final class ScalarCapableContainer implements ContainerInterface
     }
 
     #[Override]
+    public function decorate(string $id, string|callable $decorator, int $priority = 0): void
+    {
+        $this->inner->decorate($id, $decorator, $priority);
+    }
+
+    #[Override]
     public function instance(string $id, object $instance): void
     {
         $this->inner->instance($id, $instance);
