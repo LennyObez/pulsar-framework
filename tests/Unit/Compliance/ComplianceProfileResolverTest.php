@@ -8,12 +8,14 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Compliance\ComplianceConstraints;
 use Pulsar\Compliance\ComplianceFramework;
 use Pulsar\Compliance\ComplianceProfile;
 use Pulsar\Compliance\ComplianceProfileResolver;
 
 #[CoversClass(ComplianceProfileResolver::class)]
 #[CoversClass(ComplianceProfile::class)]
+#[CoversClass(ComplianceConstraints::class)]
 final class ComplianceProfileResolverTest extends TestCase
 {
     private ComplianceProfileResolver $resolver;
@@ -647,5 +649,38 @@ final class ComplianceProfileResolverTest extends TestCase
         );
 
         self::assertFalse($profile->requiresEncryption());
+    }
+
+    #[Test]
+    public function constraintsAreAllFalseWithNoFrameworks(): void
+    {
+        $constraints = $this->resolver->constraints([]);
+
+        self::assertFalse($constraints->sessionIdleTimeout);
+        self::assertFalse($constraints->passwordMinLength);
+        self::assertFalse($constraints->breachNotificationHours);
+        self::assertFalse($constraints->auditRetentionDays);
+        self::assertFalse($constraints->dataRetentionDays);
+    }
+
+    #[Test]
+    public function gdprConstrainsNeitherSessionTimeoutNorPasswordLength(): void
+    {
+        // GDPR implements no HasAccessControl, so it mandates neither a session
+        // idle timeout nor a password floor — the resolver's baseline defaults for
+        // those controls must be reported as UNconstrained so enforcement skips them.
+        $constraints = $this->resolver->constraints([ComplianceFramework::Gdpr]);
+
+        self::assertFalse($constraints->sessionIdleTimeout, 'GDPR does not mandate a session idle timeout');
+        self::assertFalse($constraints->passwordMinLength, 'GDPR does not mandate a password length');
+    }
+
+    #[Test]
+    public function pciDssConstrainsSessionTimeoutAndPasswordLength(): void
+    {
+        $constraints = $this->resolver->constraints([ComplianceFramework::PciDss]);
+
+        self::assertTrue($constraints->sessionIdleTimeout, 'PCI-DSS mandates a session idle timeout');
+        self::assertTrue($constraints->passwordMinLength, 'PCI-DSS mandates a password length');
     }
 }

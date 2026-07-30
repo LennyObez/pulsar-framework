@@ -72,7 +72,8 @@ final readonly class ComplianceWiring implements ServiceWiringInterface, Provide
             : new ComplianceConfig();
 
         /** @var ComplianceConfig $config */
-        $profile = new ComplianceProfileResolver()->resolve($config->enabledFrameworks);
+        $resolver = new ComplianceProfileResolver();
+        $profile = $resolver->resolve($config->enabledFrameworks);
         $container->instance(ComplianceProfile::class, $profile);
 
         // A deployment that enabled no framework opted out of compliance; do not
@@ -81,7 +82,18 @@ final readonly class ComplianceWiring implements ServiceWiringInterface, Provide
             return;
         }
 
-        $this->enforceSessionIdleTimeout($container, $repository, $profile, $config->strictMode);
+        // The profile always carries a value for every numeric control (the
+        // resolver's baseline default), even for controls NO enabled framework
+        // mandates. Enforcing a numeric control on that baseline would tighten (or
+        // fail-close) over a limit none of the operator's frameworks impose, and
+        // misattribute it to them. Gate each numeric control on whether a framework
+        // actually constrains it; the boolean controls self-guard (resolved to
+        // their weakest value when unconstrained).
+        $constraints = $resolver->constraints($config->enabledFrameworks);
+
+        if ($constraints->sessionIdleTimeout) {
+            $this->enforceSessionIdleTimeout($container, $repository, $profile, $config->strictMode);
+        }
     }
 
     /**
