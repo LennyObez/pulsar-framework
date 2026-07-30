@@ -158,13 +158,13 @@ final class ConfigRepositoryContractTest extends TestCase
         // are command-scoped and only needed by their commands.
         'dev' => 'CLI-command config: bin/pulsar reads it into DevConfig for the dev:* commands',
         'repl' => 'CLI-command config: bin/pulsar reads it into ReplConfig for the repl/shell commands',
+        'supply-chain' => 'CLI-command config: bin/pulsar reads it into SupplyChainConfig for the supply-chain:* commands',
         // INERT — shipped and documented, but NO production consumer. Wire a
         // consumer (build DTO + act on it) or build out the half-built feature.
         'broadcasting' => 'INERT: WebSocket/broadcast stack exists but WebSocketConfig is built nowhere',
         'compliance' => 'INERT: whole Compliance module is an island (Tier-1 critical — full-enforcement epic)',
         'live' => 'INERT: Live reactive-component module not wired/routed; LiveConfig unused',
         'marketplace' => 'INERT: extension-marketplace half-built (registry_url config + discovery API, no HTTP client/CLI — build epic)',
-        'supply-chain' => 'INERT: LicenseChecker uses AllowedLicensesConfig with defaults; config/supply-chain.php never read — WIRE',
         // Deliberate separate boot paths (not ConfigManager::load()).
         'studio' => 'separate path: loaded by Kernel::studioPreboot',
         'extensions' => 'not a config DTO: extension trust map, read by ExtensionDiscovery',

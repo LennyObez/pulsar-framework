@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace Pulsar\SupplyChain\License;
 
+use NoDiscard;
 use Pulsar\Api\Api;
+
+use function array_values;
+use function is_array;
 
 /**
  * Configuration for the license allowlist used by LicenseChecker.
@@ -36,5 +40,27 @@ final readonly class AllowedLicensesConfig
             'GPL-2.0-only',
             'GPL-3.0-only',
         ];
+    }
+
+    /**
+     * Build from config/supply-chain.php. A missing or malformed
+     * `allowed_licenses` key falls back to the default allowlist; only
+     * string entries are kept.
+     *
+     * @param array<string, mixed> $data The raw config/supply-chain.php array
+     */
+    #[NoDiscard]
+    public static function fromArray(array $data): self
+    {
+        /** @var mixed $licenses */
+        $licenses = $data['allowed_licenses'] ?? null;
+
+        if (!is_array($licenses)) {
+            return new self();
+        }
+
+        $filtered = array_values(array_filter($licenses, 'is_string'));
+
+        return new self($filtered);
     }
 }
