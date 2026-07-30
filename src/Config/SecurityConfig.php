@@ -52,6 +52,17 @@ final readonly class SecurityConfig implements ReportsUnknownKeys
     }
 
     /**
+     * A copy with a different session config. Used by compliance enforcement to
+     * swap in a session config tightened to the active regulatory profile without
+     * rebuilding the whole aggregate by hand.
+     */
+    #[NoDiscard]
+    public function withSession(SessionConfig $session): self
+    {
+        return clone($this, ['session' => $session]);
+    }
+
+    /**
      * Build from the raw security config array and environment.
      *
      * @param array{

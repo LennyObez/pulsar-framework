@@ -73,6 +73,17 @@ readonly class SessionConfig implements ReportsUnknownKeys
     }
 
     /**
+     * A copy with a different idle timeout (seconds). Used by compliance
+     * enforcement to tighten the timeout to the value the active regulatory
+     * profile requires without rebuilding the whole config by hand.
+     */
+    #[NoDiscard]
+    public function withIdleTimeout(int $idleTimeout): self
+    {
+        return clone($this, ['idleTimeout' => $idleTimeout]);
+    }
+
+    /**
      * Get the effective cookie name, applying the `__Host-` prefix when enabled.
      *
      * The `__Host-` prefix instructs browsers to enforce: Secure flag, Path=/,
