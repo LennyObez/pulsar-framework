@@ -83,6 +83,91 @@ final readonly class ComplianceProfileResolver
     }
 
     /**
+     * Which numeric controls at least one of the given frameworks actually
+     * constrains — i.e. mandates a value, rather than the resolved profile merely
+     * carrying this resolver's baseline default. Enforcement acts on a numeric
+     * control only when its flag here is true; see {@see ComplianceConstraints}.
+     *
+     * @param list<ComplianceFramework> $frameworks
+     */
+    #[NoDiscard]
+    public function constraints(array $frameworks): ComplianceConstraints
+    {
+        $requirements = $this->collectRequirements($frameworks);
+
+        return new ComplianceConstraints(
+            sessionIdleTimeout: $this->accessControlTimeouts($requirements) !== [],
+            passwordMinLength: $this->hasRequirement($requirements, HasAccessControl::class),
+            breachNotificationHours: $this->breachNotificationHours($requirements) !== [],
+            auditRetentionDays: $this->hasRequirement($requirements, HasAuditRequirements::class),
+            dataRetentionDays: $this->hasRequirement($requirements, HasDataRetention::class),
+        );
+    }
+
+    /**
+     * @param list<object> $requirements
+     * @param class-string $interface
+     */
+    private function hasRequirement(array $requirements, string $interface): bool
+    {
+        foreach ($requirements as $req) {
+            if ($req instanceof $interface) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * The session idle timeouts explicitly specified by access-control frameworks
+     * (a framework may implement HasAccessControl yet leave the timeout null).
+     *
+     * @param list<object> $requirements
+     * @return list<int>
+     */
+    private function accessControlTimeouts(array $requirements): array
+    {
+        $values = [];
+
+        foreach ($requirements as $req) {
+            if ($req instanceof HasAccessControl) {
+                $timeout = $req->sessionIdleTimeout();
+
+                if ($timeout !== null) {
+                    $values[] = $timeout;
+                }
+            }
+        }
+
+        return $values;
+    }
+
+    /**
+     * The breach-notification deadlines explicitly specified by incident-reporting
+     * frameworks (a framework may implement HasIncidentReporting yet leave it null).
+     *
+     * @param list<object> $requirements
+     * @return list<int>
+     */
+    private function breachNotificationHours(array $requirements): array
+    {
+        $values = [];
+
+        foreach ($requirements as $req) {
+            if ($req instanceof HasIncidentReporting) {
+                $hours = $req->breachNotificationHours();
+
+                if ($hours !== null) {
+                    $values[] = $hours;
+                }
+            }
+        }
+
+        return $values;
+    }
+
+    /**
      * Build a default profile with baseline security settings.
      */
     private function defaultProfile(): ComplianceProfile
@@ -171,17 +256,7 @@ final readonly class ComplianceProfileResolver
      */
     private function resolveSessionIdleTimeout(array $requirements): int
     {
-        $values = [];
-
-        foreach ($requirements as $req) {
-            if ($req instanceof HasAccessControl) {
-                $timeout = $req->sessionIdleTimeout();
-
-                if ($timeout !== null) {
-                    $values[] = $timeout;
-                }
-            }
-        }
+        $values = $this->accessControlTimeouts($requirements);
 
         if ($values === []) {
             return self::DEFAULT_SESSION_IDLE_TIMEOUT;
@@ -197,17 +272,7 @@ final readonly class ComplianceProfileResolver
      */
     private function resolveBreachNotificationHours(array $requirements): int
     {
-        $values = [];
-
-        foreach ($requirements as $req) {
-            if ($req instanceof HasIncidentReporting) {
-                $hours = $req->breachNotificationHours();
-
-                if ($hours !== null) {
-                    $values[] = $hours;
-                }
-            }
-        }
+        $values = $this->breachNotificationHours($requirements);
 
         if ($values === []) {
             return self::DEFAULT_BREACH_NOTIFICATION_HOURS;

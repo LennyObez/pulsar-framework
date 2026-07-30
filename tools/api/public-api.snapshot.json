@@ -7164,6 +7164,24 @@
             },
             "constants": []
         },
+        "Pulsar\\Compliance\\ComplianceConstraints": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "bool $sessionIdleTimeout",
+                        "bool $passwordMinLength",
+                        "bool $breachNotificationHours",
+                        "bool $auditRetentionDays",
+                        "bool $dataRetentionDays"
+                    ],
+                    "return": null,
+                    "static": false
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\Compliance\\ComplianceFramework": {
             "since": "1.0.0",
             "methods": [],
@@ -7243,6 +7261,13 @@
             "since": "1.0.0",
             "methods": [],
             "signatures": {
+                "constraints": {
+                    "params": [
+                        "array $frameworks"
+                    ],
+                    "return": "Pulsar\\Compliance\\ComplianceConstraints",
+                    "static": false
+                },
                 "resolve": {
                     "params": [
                         "array $frameworks"
