@@ -125,4 +125,81 @@ final class RequiredToolsConfigTest extends TestCase
         self::assertContains('composer audit', $patterns);
         self::assertContains('composer vulnerability', $patterns);
     }
+
+    #[Test]
+    public function fromArrayReadsRequiredPipelineToolsKey(): void
+    {
+        $config = RequiredToolsConfig::fromArray([
+            'required_pipeline_tools' => ['phpstan', 'semgrep'],
+        ]);
+
+        self::assertSame(['phpstan', 'semgrep'], $config->requiredTools);
+    }
+
+    #[Test]
+    public function fromArrayFallsBackToDefaultsWhenToolsMissing(): void
+    {
+        $config = RequiredToolsConfig::fromArray(['unrelated' => true]);
+
+        self::assertContains('phpstan', $config->requiredTools);
+        self::assertContains('deptrac', $config->requiredTools);
+    }
+
+    #[Test]
+    public function fromArrayFallsBackToDefaultsWhenToolsNotAnArray(): void
+    {
+        $config = RequiredToolsConfig::fromArray(['required_pipeline_tools' => 'phpstan']);
+
+        self::assertContains('phpstan', $config->requiredTools);
+        self::assertContains('psalm', $config->requiredTools);
+    }
+
+    #[Test]
+    public function fromArrayDropsNonStringToolEntries(): void
+    {
+        $config = RequiredToolsConfig::fromArray([
+            'required_pipeline_tools' => ['phpstan', 99, 'psalm', ['x']],
+        ]);
+
+        self::assertSame(['phpstan', 'psalm'], $config->requiredTools);
+    }
+
+    #[Test]
+    public function fromArrayUsesDefaultDetectionPatternsWhenAbsent(): void
+    {
+        $config = RequiredToolsConfig::fromArray([
+            'required_pipeline_tools' => ['phpstan'],
+        ]);
+
+        self::assertArrayHasKey('phpstan', $config->detectionPatterns);
+        self::assertContains('phpstan', $config->detectionPatterns['phpstan']);
+    }
+
+    #[Test]
+    public function fromArrayOverridesDetectionPatternsWhenWellFormed(): void
+    {
+        $config = RequiredToolsConfig::fromArray([
+            'required_pipeline_tools' => ['trivy'],
+            'detection_patterns' => ['trivy' => ['trivy fs', 'trivy config']],
+        ]);
+
+        self::assertSame(['trivy' => ['trivy fs', 'trivy config']], $config->detectionPatterns);
+    }
+
+    #[Test]
+    public function fromArrayFiltersMalformedDetectionPatternEntries(): void
+    {
+        $config = RequiredToolsConfig::fromArray([
+            'detection_patterns' => [
+                'trivy' => ['trivy fs', 42, 'trivy config'],
+                7 => ['ignored non-string key'],
+                'bad' => 'not-a-list',
+            ],
+        ]);
+
+        self::assertSame(
+            ['trivy' => ['trivy fs', 'trivy config']],
+            $config->detectionPatterns,
+        );
+    }
 }

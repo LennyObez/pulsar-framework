@@ -51258,6 +51258,13 @@
                     ],
                     "return": null,
                     "static": false
+                },
+                "fromArray": {
+                    "params": [
+                        "array $data"
+                    ],
+                    "return": "Pulsar\\SupplyChain\\License\\AllowedLicensesConfig",
+                    "static": true
                 }
             },
             "constants": []
@@ -51362,6 +51369,13 @@
                     ],
                     "return": null,
                     "static": false
+                },
+                "fromArray": {
+                    "params": [
+                        "array $data"
+                    ],
+                    "return": "Pulsar\\SupplyChain\\Pipeline\\RequiredToolsConfig",
+                    "static": true
                 }
             },
             "constants": []
@@ -51419,6 +51433,95 @@
                         "string $algorithm"
                     ],
                     "return": null,
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\SupplyChain\\Signing\\SigningConfig": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "string $artifactDir",
+                        "string $manifestPath"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "fromArray": {
+                    "params": [
+                        "array $data"
+                    ],
+                    "return": "Pulsar\\SupplyChain\\Signing\\SigningConfig",
+                    "static": true
+                },
+                "resolvedArtifactDir": {
+                    "params": [
+                        "string $projectRoot"
+                    ],
+                    "return": "string",
+                    "static": false
+                },
+                "resolvedManifestPath": {
+                    "params": [
+                        "string $projectRoot"
+                    ],
+                    "return": "string",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\SupplyChain\\SupplyChainConfig": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "Pulsar\\SupplyChain\\License\\AllowedLicensesConfig $licenses",
+                        "Pulsar\\SupplyChain\\Pipeline\\RequiredToolsConfig $pipeline",
+                        "Pulsar\\SupplyChain\\Vex\\VexConfig $vex",
+                        "Pulsar\\SupplyChain\\Signing\\SigningConfig $signing"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "fromArray": {
+                    "params": [
+                        "array $data"
+                    ],
+                    "return": "Pulsar\\SupplyChain\\SupplyChainConfig",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\SupplyChain\\Vex\\VexConfig": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "string $sourceDir",
+                        "string $outputPath"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "fromArray": {
+                    "params": [
+                        "array $data"
+                    ],
+                    "return": "Pulsar\\SupplyChain\\Vex\\VexConfig",
+                    "static": true
+                },
+                "resolvedOutputPath": {
+                    "params": [
+                        "string $projectRoot"
+                    ],
+                    "return": "string",
                     "static": false
                 }
             },

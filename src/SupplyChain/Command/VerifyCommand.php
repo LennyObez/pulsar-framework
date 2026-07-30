@@ -13,6 +13,7 @@ use Pulsar\Console\OutputInterface;
 use Pulsar\SupplyChain\Signing\ArtifactSigner;
 use Pulsar\SupplyChain\Signing\ReleaseSignerService;
 use Pulsar\SupplyChain\Signing\SignatureManifestSerializer;
+use Pulsar\SupplyChain\Signing\SigningConfig;
 use RuntimeException;
 
 use function count;
@@ -31,6 +32,7 @@ final class VerifyCommand extends Command
 {
     public function __construct(
         private readonly string $projectRoot,
+        private readonly SigningConfig $config = new SigningConfig(),
     ) {
         parent::__construct();
     }
@@ -68,8 +70,8 @@ final class VerifyCommand extends Command
             return ExitCode::Error->value;
         }
 
-        $dir = $input->getStringOption('dir', $this->projectRoot . '/dist');
-        $manifestPath = $input->getStringOption('manifest', $this->projectRoot . '/signatures.json');
+        $dir = $input->getStringOption('dir', $this->config->resolvedArtifactDir($this->projectRoot));
+        $manifestPath = $input->getStringOption('manifest', $this->config->resolvedManifestPath($this->projectRoot));
 
         $manifestJson = file_get_contents($manifestPath);
 

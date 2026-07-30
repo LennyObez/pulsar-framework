@@ -182,6 +182,7 @@ use Pulsar\Runtime\RuntimeResolver;
 use Pulsar\Scheduler\JobRegistry;
 use Pulsar\Workflow\Storage\WorkflowStorageInterface;
 use Pulsar\Scheduler\Scheduler;
+use Pulsar\SupplyChain\SupplyChainConfig;
 use Pulsar\Security\Vault\SecretVault;
 use Pulsar\Extensibility\ExtensionBootstrap;
 use Pulsar\Integrity\ManifestBuilder;
@@ -962,14 +963,22 @@ if ($kernel->container()->has(\Pulsar\ImportExport\ImportExportRegistry::class))
   ]);
 }
 
-// Register supply-chain commands (always available; they validate prerequisites at runtime)
+// Register supply-chain commands (always available; they validate prerequisites at runtime).
+// config/supply-chain.php is read once into SupplyChainConfig; each command receives its
+// typed section (license allowlist, required pipeline tools, VEX paths, signing paths) so an
+// operator's policy actually applies instead of the commands running on hard-coded defaults.
+// CLI options still override the config-provided defaults per invocation.
 if (class_exists(\Pulsar\SupplyChain\Command\VexCommand::class)) {
+  $supplyChainFile = $basePath . '/config/supply-chain.php';
+  $supplyChainData = file_exists($supplyChainFile) && is_array($loaded = require $supplyChainFile) ? $loaded : [];
+  $supplyChainConfig = SupplyChainConfig::fromArray($supplyChainData);
+
   $application->addCommands([
-    new \Pulsar\SupplyChain\Command\VexCommand($basePath),
-    new \Pulsar\SupplyChain\Command\AuditPipelineCommand($basePath),
-    new \Pulsar\SupplyChain\Command\LicenseCheckCommand($basePath),
-    new \Pulsar\SupplyChain\Command\SignCommand($basePath),
-    new \Pulsar\SupplyChain\Command\VerifyCommand($basePath),
+    new \Pulsar\SupplyChain\Command\VexCommand($basePath, $supplyChainConfig->vex),
+    new \Pulsar\SupplyChain\Command\AuditPipelineCommand($basePath, $supplyChainConfig->pipeline),
+    new \Pulsar\SupplyChain\Command\LicenseCheckCommand($basePath, $supplyChainConfig->licenses),
+    new \Pulsar\SupplyChain\Command\SignCommand($basePath, $supplyChainConfig->signing),
+    new \Pulsar\SupplyChain\Command\VerifyCommand($basePath, $supplyChainConfig->signing),
   ]);
 }
 

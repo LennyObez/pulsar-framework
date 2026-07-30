@@ -11,6 +11,7 @@ use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 use Pulsar\SupplyChain\Pipeline\PipelineAuditor;
+use Pulsar\SupplyChain\Pipeline\RequiredToolsConfig;
 
 use function count;
 use function sprintf;
@@ -25,6 +26,7 @@ final class AuditPipelineCommand extends Command
 {
     public function __construct(
         private readonly string $projectRoot,
+        private readonly RequiredToolsConfig $config = new RequiredToolsConfig(),
     ) {
         parent::__construct();
     }
@@ -41,7 +43,7 @@ final class AuditPipelineCommand extends Command
     {
         $output->info('Auditing CI/CD pipeline security...');
 
-        $auditor = new PipelineAuditor();
+        $auditor = new PipelineAuditor($this->config);
         $result = $auditor->audit(projectRoot: $this->projectRoot);
 
         if ($result->presentTools !== []) {

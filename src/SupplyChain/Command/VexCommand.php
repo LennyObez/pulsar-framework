@@ -10,6 +10,7 @@ use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
+use Pulsar\SupplyChain\Vex\VexConfig;
 use Pulsar\SupplyChain\Vex\VexGenerator;
 use Pulsar\SupplyChain\Vex\VexSerializer;
 
@@ -27,6 +28,7 @@ final class VexCommand extends Command
 {
     public function __construct(
         private readonly string $projectRoot,
+        private readonly VexConfig $config = new VexConfig(),
     ) {
         parent::__construct();
     }
@@ -43,11 +45,11 @@ final class VexCommand extends Command
     #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
-        $outputPath = $input->getStringOption('output', $this->projectRoot . '/vex.json');
+        $outputPath = $input->getStringOption('output', $this->config->resolvedOutputPath($this->projectRoot));
 
         $output->info('Generating VEX document...');
 
-        $generator = new VexGenerator($this->projectRoot);
+        $generator = new VexGenerator($this->projectRoot, $this->config->sourceDir);
         $document = $generator->generate();
 
         $serializer = new VexSerializer();

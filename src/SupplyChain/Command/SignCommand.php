@@ -13,6 +13,7 @@ use Pulsar\Console\OutputInterface;
 use Pulsar\SupplyChain\Signing\ArtifactSigner;
 use Pulsar\SupplyChain\Signing\ReleaseSignerService;
 use Pulsar\SupplyChain\Signing\SignatureManifestSerializer;
+use Pulsar\SupplyChain\Signing\SigningConfig;
 use RuntimeException;
 
 use function count;
@@ -32,6 +33,7 @@ final class SignCommand extends Command
 {
     public function __construct(
         private readonly string $projectRoot,
+        private readonly SigningConfig $config = new SigningConfig(),
     ) {
         parent::__construct();
     }
@@ -69,8 +71,8 @@ final class SignCommand extends Command
             return ExitCode::Error->value;
         }
 
-        $dir = $input->getStringOption('dir', $this->projectRoot . '/dist');
-        $outputPath = $input->getStringOption('output', $this->projectRoot . '/signatures.json');
+        $dir = $input->getStringOption('dir', $this->config->resolvedArtifactDir($this->projectRoot));
+        $outputPath = $input->getStringOption('output', $this->config->resolvedManifestPath($this->projectRoot));
 
         $output->info(sprintf('Signing artifacts in %s...', $dir));
 

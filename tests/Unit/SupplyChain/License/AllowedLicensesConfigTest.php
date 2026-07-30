@@ -81,4 +81,50 @@ final class AllowedLicensesConfigTest extends TestCase
         self::assertNotContains('BUSL-1.1', $config->allowedLicenses);
         self::assertNotContains('Commercial', $config->allowedLicenses);
     }
+
+    #[Test]
+    public function fromArrayReadsAllowedLicensesKey(): void
+    {
+        $config = AllowedLicensesConfig::fromArray([
+            'allowed_licenses' => ['MIT', 'Proprietary-1.0'],
+        ]);
+
+        self::assertSame(['MIT', 'Proprietary-1.0'], $config->allowedLicenses);
+    }
+
+    #[Test]
+    public function fromArrayFallsBackToDefaultsWhenKeyMissing(): void
+    {
+        $config = AllowedLicensesConfig::fromArray(['unrelated' => true]);
+
+        self::assertContains('MIT', $config->allowedLicenses);
+        self::assertCount(9, $config->allowedLicenses);
+    }
+
+    #[Test]
+    public function fromArrayFallsBackToDefaultsWhenValueNotAnArray(): void
+    {
+        $config = AllowedLicensesConfig::fromArray(['allowed_licenses' => 'MIT']);
+
+        self::assertContains('MIT', $config->allowedLicenses);
+        self::assertCount(9, $config->allowedLicenses);
+    }
+
+    #[Test]
+    public function fromArrayDropsNonStringEntriesAndReindexes(): void
+    {
+        $config = AllowedLicensesConfig::fromArray([
+            'allowed_licenses' => ['MIT', 42, 'ISC', ['nested'], null],
+        ]);
+
+        self::assertSame(['MIT', 'ISC'], $config->allowedLicenses);
+    }
+
+    #[Test]
+    public function fromArrayAcceptsEmptyAllowlist(): void
+    {
+        $config = AllowedLicensesConfig::fromArray(['allowed_licenses' => []]);
+
+        self::assertSame([], $config->allowedLicenses);
+    }
 }

@@ -10,6 +10,7 @@ use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
+use Pulsar\SupplyChain\License\AllowedLicensesConfig;
 use Pulsar\SupplyChain\License\LicenseChecker;
 
 use function count;
@@ -31,6 +32,7 @@ final class LicenseCheckCommand extends Command
 {
     public function __construct(
         private readonly string $projectRoot,
+        private readonly AllowedLicensesConfig $config = new AllowedLicensesConfig(),
     ) {
         parent::__construct();
     }
@@ -63,7 +65,7 @@ final class LicenseCheckCommand extends Command
 
         $output->info('Checking dependency licenses...');
 
-        $checker = new LicenseChecker();
+        $checker = new LicenseChecker($this->config);
         $result = $checker->check($lockData);
 
         $output->writeln(sprintf('Compliant: %d packages', count($result->compliantPackages)));
