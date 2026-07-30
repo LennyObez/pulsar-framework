@@ -192,6 +192,67 @@ final class ComplianceWiringTest extends TestCase
     }
 
     #[Test]
+    public function enablesSessionEncryptionWhenRequiredAndOperatorDisabledIt(): void
+    {
+        // PCI-DSS requires encryption at rest; an operator who disabled session
+        // encryption is looser than the profile and must be tightened to enabled.
+        [$container, $configManager] = $this->bootAndWire(
+            "'session' => ['encryption' => false]",
+            "'enabled_frameworks' => ['pci_dss']",
+        );
+
+        /** @var SecurityConfig $security */
+        $security = $configManager->repository()->get(SecurityConfig::class);
+        self::assertTrue($security->session->encryption, 'encryption at rest must be enabled');
+
+        /** @var SessionConfig $containerSession */
+        $containerSession = $container->get(SessionConfig::class);
+        self::assertTrue($containerSession->encryption);
+    }
+
+    #[Test]
+    public function doesNotChangeEncryptionWhenAlreadyEnabled(): void
+    {
+        // Default session.encryption is already true; enforcement is a no-op and
+        // must never flip a compliant value.
+        [, $configManager] = $this->bootAndWire(
+            "'session' => ['encryption' => true]",
+            "'enabled_frameworks' => ['pci_dss']",
+        );
+
+        /** @var SecurityConfig $security */
+        $security = $configManager->repository()->get(SecurityConfig::class);
+        self::assertTrue($security->session->encryption);
+    }
+
+    #[Test]
+    public function doesNotEnableEncryptionWhenNoFrameworkRequiresIt(): void
+    {
+        // SOC 2 does not require encryption at rest, so an operator who disabled it
+        // stays disabled — compliance never invents a requirement no framework sets.
+        [, $configManager] = $this->bootAndWire(
+            "'session' => ['encryption' => false]",
+            "'enabled_frameworks' => ['soc2']",
+        );
+
+        /** @var SecurityConfig $security */
+        $security = $configManager->repository()->get(SecurityConfig::class);
+        self::assertFalse($security->session->encryption);
+    }
+
+    #[Test]
+    public function strictModeFailsClosedWhenEncryptionAtRestRequiredButDisabled(): void
+    {
+        $this->expectException(ConfigException::class);
+        $this->expectExceptionMessage('encryption at rest');
+
+        $this->bootAndWire(
+            "'session' => ['encryption' => false]",
+            "'enabled_frameworks' => ['pci_dss'], 'verification' => ['strict_mode' => true]",
+        );
+    }
+
+    #[Test]
     public function enforcementAppliesAfterAConfigCacheRoundTrip(): void
     {
         // Production `optimize` serializes the whole ConfigRepository and restores it

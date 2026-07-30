@@ -10606,6 +10606,13 @@
                     "return": "array",
                     "static": false
                 },
+                "withEncryption": {
+                    "params": [
+                        "bool $encryption"
+                    ],
+                    "return": "Pulsar\\Config\\SessionConfig",
+                    "static": false
+                },
                 "withIdleTimeout": {
                     "params": [
                         "int $idleTimeout"
