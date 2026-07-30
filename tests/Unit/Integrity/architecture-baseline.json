@@ -37,6 +37,8 @@
   "Pulsar\\I18n\\Locale\\LocaleNegotiator": "I18nWiring composition root wires locale negotiator",
   "Pulsar\\I18n\\Translator": "I18nWiring composition root wires translator",
   "Pulsar\\Core\\Wiring\\ServiceWiringInterface": "OpenApiWiring composition root implements wiring interface",
+  "Pulsar\\Core\\Wiring\\ProvidesConfigLoaders": "OpenApiWiring composition-root wiring implements the config-loader wiring interface (same category as ServiceWiringInterface) to load config/openapi.php into the repository",
+  "Pulsar\\Config\\CallableConfigLoader": "OpenApiWiring composition-root wiring uses the config-loader helper to declare its ProvidesConfigLoaders loader",
   "Pulsar\\Api\\Resource\\ResourceMetadataCache": "ApiWiring composition root wires resource metadata cache",
   "Pulsar\\Api\\Security\\EntitySerializationGuard": "ApiWiring composition root wires entity serialization guard",
   "Pulsar\\Scheduler\\JobRegistryInterface": "Analytics extension registers scheduled jobs via composition root pattern",

@@ -7,9 +7,11 @@ namespace Pulsar\Api\OpenApi;
 use Pulsar\Api\Internal;
 use Pulsar\Api\OpenApi\Command\ApiRoutesCommand;
 use Pulsar\Api\OpenApi\Command\ApiSpecCommand;
+use Pulsar\Config\CallableConfigLoader;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Core\KernelInterface;
+use Pulsar\Core\Wiring\ProvidesConfigLoaders;
 use Pulsar\Core\Wiring\ServiceWiringInterface;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
@@ -22,10 +24,24 @@ use function rtrim;
  *
  * Only activates Swagger UI routes when the config has `swagger_ui_enabled = true`.
  * The CLI commands are always registered.
+ *
+ * Owns config/openapi.php: its loader builds {@see OpenApiConfig} into the
+ * ConfigRepository during config load (the single source of truth), so wire()
+ * resolves it from the repository instead of always defaulting.
  */
 #[Internal(reason: 'Composition root wiring')]
-final readonly class OpenApiWiring implements ServiceWiringInterface
+final readonly class OpenApiWiring implements ServiceWiringInterface, ProvidesConfigLoaders
 {
+    public function configLoaders(): array
+    {
+        return [
+            'openapi' => new CallableConfigLoader(
+                OpenApiConfig::class,
+                static fn(array $data): object => OpenApiConfig::fromArray($data),
+            ),
+        ];
+    }
+
     public function wire(
         ContainerInterface $container,
         ConfigManager $configManager,

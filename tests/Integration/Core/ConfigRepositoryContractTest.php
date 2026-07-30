@@ -7,6 +7,7 @@ namespace Pulsar\Tests\Integration\Core;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Api\OpenApi\OpenApiConfig;
 use Pulsar\Cloud\CloudConfig;
 use Pulsar\Config\ApiConfig;
 use Pulsar\Config\AppConfig;
@@ -134,6 +135,7 @@ final class ConfigRepositoryContractTest extends TestCase
         // One file, several typed sub-sections → one AntiSpamConfigSet DTO in the
         // repository (see AntiSpamConfigSet); AntiSpamWiring distributes the parts.
         'anti-spam' => AntiSpamConfigSet::class,
+        'openapi' => OpenApiConfig::class,
         // Optional; no default config/cloud.php ships, so its DTO is only in the
         // repository when a project adds the file. Listed so it is never flagged
         // as an unexpected DTO.
@@ -151,16 +153,18 @@ final class ConfigRepositoryContractTest extends TestCase
         // Extension-consumed — the owning extension reads the file directly.
         'admin' => 'extension-consumed: pulsar/admin reads it directly',
         'opentelemetry' => 'extension-consumed: pulsar/opentelemetry reads it directly',
+        // CLI-command config — read directly by bin/pulsar (require config/X.php →
+        // XConfig::fromArray → command factory), not a boot-repository DTO. These
+        // are command-scoped and only needed by their commands.
+        'dev' => 'CLI-command config: bin/pulsar reads it into DevConfig for the dev:* commands',
+        'repl' => 'CLI-command config: bin/pulsar reads it into ReplConfig for the repl/shell commands',
         // INERT — shipped and documented, but NO production consumer. Wire a
-        // consumer (build DTO + act on it) or remove the shipped file.
-        'broadcasting' => 'INERT: BroadcastWiring declares configFile but never reads it',
-        'compliance' => 'INERT: no production consumer (wiring-audit Tier-1 critical)',
-        'dev' => 'INERT: no production consumer',
-        'live' => 'INERT: no production consumer',
-        'marketplace' => 'INERT: no production consumer',
-        'openapi' => 'INERT: only a docblock references the file',
-        'repl' => 'INERT: only comment/error-string references',
-        'supply-chain' => 'INERT: only a docblock references the file',
+        // consumer (build DTO + act on it) or build out the half-built feature.
+        'broadcasting' => 'INERT: WebSocket/broadcast stack exists but WebSocketConfig is built nowhere',
+        'compliance' => 'INERT: whole Compliance module is an island (Tier-1 critical — full-enforcement epic)',
+        'live' => 'INERT: Live reactive-component module not wired/routed; LiveConfig unused',
+        'marketplace' => 'INERT: extension-marketplace half-built (registry_url config + discovery API, no HTTP client/CLI — build epic)',
+        'supply-chain' => 'INERT: LicenseChecker uses AllowedLicensesConfig with defaults; config/supply-chain.php never read — WIRE',
         // Deliberate separate boot paths (not ConfigManager::load()).
         'studio' => 'separate path: loaded by Kernel::studioPreboot',
         'extensions' => 'not a config DTO: extension trust map, read by ExtensionDiscovery',
