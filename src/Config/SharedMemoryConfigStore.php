@@ -147,6 +147,37 @@ final class SharedMemoryConfigStore
         \Pulsar\Security\ZeroTrust\Policy\ClaimRequirement::class,
         \Pulsar\Security\ZeroTrust\Policy\PolicyDecision::class,
         \Pulsar\Security\ZeroTrust\Claim\ClaimSource::class,
+        // Loader-built config graph: sections a wiring loads into the repository
+        // through ProvidesConfigLoaders (not the core ConfigManager::load() set).
+        // These are top-level repository entries at real boot, so a shared-memory
+        // worker must be able to deserialize them and their nested value objects.
+        \Pulsar\Edge\EdgeConfig::class,
+        \Pulsar\Documentation\DocumentationConfig::class,
+        \Pulsar\Observability\Profiler\ProfilerConfig::class,
+        \Pulsar\Introspection\IntrospectionConfig::class,
+        \Pulsar\Config\DomainConfig::class,
+        \Pulsar\Api\OpenApi\OpenApiConfig::class,
+        \Pulsar\Compliance\ComplianceConfig::class,
+        \Pulsar\Compliance\ComplianceFramework::class,
+        // data_protection graph
+        \Pulsar\DataProtection\DataProtectionConfig::class,
+        \Pulsar\DataProtection\RetentionPolicy::class,
+        \Pulsar\DataProtection\PurgeConfig::class,
+        \Pulsar\DataProtection\ConsentConfig::class,
+        // anti-spam graph (one file → AntiSpamConfigSet with typed sub-sections)
+        \Pulsar\Security\AntiSpam\AntiSpamConfigSet::class,
+        \Pulsar\Security\AntiSpam\AntiSpamConfig::class,
+        \Pulsar\Security\AntiSpam\EmailDomainCheckConfig::class,
+        \Pulsar\Security\AntiSpam\EmailDomainSignalMode::class,
+        \Pulsar\Security\AntiSpam\Risk\AdaptiveRiskConfig::class,
+        \Pulsar\Security\AntiSpam\Risk\Ja4Config::class,
+        \Pulsar\Security\AntiSpam\Risk\VelocityConfig::class,
+        \Pulsar\Security\AntiSpam\Risk\DatacenterIpConfig::class,
+        \Pulsar\Security\AntiSpam\PrivacyPass\PrivacyPassConfig::class,
+        \Pulsar\Security\AntiSpam\AiCrawler\AiCrawlerConfig::class,
+        \Pulsar\Security\AntiSpam\AiCrawler\AiCrawlerVerificationConfig::class,
+        \Pulsar\Security\AntiSpam\AiCrawler\AiCrawlerAction::class,
+        \Pulsar\Security\AntiSpam\TimeTrap\TimeTrapFailurePolicy::class,
     ];
 
     private readonly int $shmKey;

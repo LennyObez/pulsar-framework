@@ -56,6 +56,7 @@
   "Pulsar\\Cache\\ConfigCache": "ConfigCacheCommand composition root manages config cache",
   "Pulsar\\Cache\\RouteCache": "RoutesCacheCommand composition root manages route cache",
   "Pulsar\\Security\\AntiSpam\\AccountAgeGate": "AntiSpamWiring composition root wires anti-spam pipeline stages",
+  "Pulsar\\Security\\AntiSpam\\AntiSpamConfigSet": "SharedMemoryConfigStore deserialization allowlist must name every repository DTO class, including internal composites, for safe unserialize()",
   "Pulsar\\Security\\AntiSpam\\AntiSpamPipeline": "AntiSpamWiring composition root wires anti-spam pipeline",
   "Pulsar\\Security\\AntiSpam\\Behavior\\BehavioralSignalsCheck": "AntiSpamWiring composition root wires anti-spam pipeline stages",
   "Pulsar\\Security\\AntiSpam\\Behavior\\HeuristicScorer": "AntiSpamWiring composition root wires anti-spam pipeline stages",
