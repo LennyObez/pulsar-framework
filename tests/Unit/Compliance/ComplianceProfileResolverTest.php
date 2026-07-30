@@ -683,4 +683,33 @@ final class ComplianceProfileResolverTest extends TestCase
         self::assertTrue($constraints->sessionIdleTimeout, 'PCI-DSS mandates a session idle timeout');
         self::assertTrue($constraints->passwordMinLength, 'PCI-DSS mandates a password length');
     }
+
+    #[Test]
+    public function complianceConstraintsDefaultToUnconstrained(): void
+    {
+        // Fail-safe default: a constraints object built without arguments must
+        // report every control as UNconstrained, so a caller that forgets to pass a
+        // flag under-enforces (safe) rather than enforcing a baseline no framework
+        // mandates (the over-enforcement bug these flags exist to prevent).
+        $constraints = new ComplianceConstraints();
+
+        self::assertFalse($constraints->sessionIdleTimeout);
+        self::assertFalse($constraints->passwordMinLength);
+        self::assertFalse($constraints->breachNotificationHours);
+        self::assertFalse($constraints->auditRetentionDays);
+        self::assertFalse($constraints->dataRetentionDays);
+    }
+
+    #[Test]
+    public function soc2RequiresNeitherEncryptionInTransitNorConsentWithdrawalNorBreachRegister(): void
+    {
+        // The negative branch matters as much as the positive one: compliance must
+        // never invent a requirement no enabled framework sets. SOC 2 mandates none
+        // of these three, so the resolved profile must report them false.
+        $profile = $this->resolver->resolve([ComplianceFramework::Soc2]);
+
+        self::assertFalse($profile->encryptionInTransit, 'SOC 2 mandates no encryption in transit');
+        self::assertFalse($profile->consentWithdrawal, 'SOC 2 mandates no consent withdrawal');
+        self::assertFalse($profile->breachRegister, 'SOC 2 mandates no breach register');
+    }
 }

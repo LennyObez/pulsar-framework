@@ -99,15 +99,27 @@ final class ComplianceConfigTest extends TestCase
     {
         $config = ComplianceConfig::fromArray([
             'verification' => [
-                'enabled' => 'yes',           // not a bool
+                'enabled' => 'yes',            // not a bool
+                'boot_check' => 'nope',        // not a bool
                 'evidence_interval' => '7200', // not an int
                 'strict_mode' => 1,            // not a bool
             ],
         ]);
 
         self::assertTrue($config->verificationEnabled);
+        self::assertTrue($config->bootCheck, 'a malformed boot_check must fall back to enabled, not disabled');
         self::assertSame(3600, $config->evidenceInterval);
         self::assertFalse($config->strictMode);
+    }
+
+    #[Test]
+    public function fromArrayDefaultsBootCheckToEnabledWhenAbsent(): void
+    {
+        // Boot-time control verification is on unless the operator turns it off:
+        // an omitted key must never silently disable the check.
+        $config = ComplianceConfig::fromArray(['verification' => ['strict_mode' => false]]);
+
+        self::assertTrue($config->bootCheck);
     }
 
     #[Test]
