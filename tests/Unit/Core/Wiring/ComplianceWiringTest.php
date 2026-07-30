@@ -25,25 +25,33 @@ use Pulsar\Config\SessionConfig;
 use Pulsar\Container\Container;
 use Pulsar\Core\Wiring\ComplianceWiring;
 use Pulsar\Core\Wiring\ConfigLoaderRegistrar;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Routing\Router;
 use Pulsar\Security\Crypto\HmacService;
+use Pulsar\Security\Exception\SecurityException;
+use Pulsar\Security\Session\Handler\ArrayHandler;
+use Pulsar\Security\Session\SessionManager;
+use Pulsar\Security\Session\SessionMetadata;
 use Stringable;
 
 use function bin2hex;
 use function file_put_contents;
 use function implode;
 use function is_dir;
+use function json_encode;
 use function mkdir;
 use function random_bytes;
 use function rmdir;
 use function scandir;
 use function str_contains;
 use function sys_get_temp_dir;
+use function time;
 use function unlink;
 
 use const DIRECTORY_SEPARATOR;
+use const JSON_THROW_ON_ERROR;
 
 #[CoversClass(ComplianceWiring::class)]
 final class ComplianceWiringTest extends TestCase
@@ -250,6 +258,53 @@ final class ComplianceWiringTest extends TestCase
             "'session' => ['encryption' => false]",
             "'enabled_frameworks' => ['pci_dss'], 'verification' => ['strict_mode' => true]",
         );
+    }
+
+    #[Test]
+    public function theTightenedTimeoutIsActuallyEnforcedBySessionManager(): void
+    {
+        // End-to-end runtime proof (not just config state): an operator-loose idle
+        // timeout of 99999 s, tightened by PCI-DSS to 900 s, must make SessionManager
+        // EXPIRE an authenticated session idle for 1000 s — a session that would have
+        // SURVIVED under the operator's un-tightened 99999 s. This proves the
+        // tightening reaches the real consumer and changes behaviour, not just a field.
+        [, $configManager] = $this->bootAndWire(
+            "'session' => ['idle_timeout' => 99999, 'cookie_name' => 'TEST_SESSION']",
+            "'enabled_frameworks' => ['pci_dss']",
+        );
+
+        /** @var SecurityConfig $security */
+        $security = $configManager->repository()->get(SecurityConfig::class);
+        $tightenedSession = $security->session;
+        self::assertSame($this->pciDssIdleTimeout(), $tightenedSession->idleTimeout);
+
+        $handler = new ArrayHandler();
+        $sessionId = bin2hex(random_bytes(32));
+        $metadata = new SessionMetadata(
+            createdAt: time() - 3600,
+            lastActivity: time() - 1000, // idle 1000 s: past the tightened 900, well within 99999
+            ipAddress: '127.0.0.1',
+            userAgent: 'TestAgent',
+        );
+        self::assertTrue($handler->open('', 'TEST_SESSION'));
+        $handler->write($sessionId, json_encode([
+            'data' => ['_pulsar_identity' => ['id' => 'user-123']],
+            '_pulsar_meta' => $metadata->toArray(),
+        ], JSON_THROW_ON_ERROR));
+
+        $manager = new SessionManager($handler, $tightenedSession);
+        $request = new ServerRequest(
+            method: 'GET',
+            uri: '/',
+            headers: ['User-Agent' => 'TestAgent'],
+            serverParams: ['REMOTE_ADDR' => '127.0.0.1'],
+            cookieParams: ['TEST_SESSION' => $sessionId],
+        );
+
+        // Authenticated idle-expired session throws (PCI-DSS 8.2.8 re-auth) — proving
+        // the compliance-tightened timeout, not the operator's value, is in force.
+        $this->expectException(SecurityException::class);
+        $manager->startWithRequest($request);
     }
 
     #[Test]
