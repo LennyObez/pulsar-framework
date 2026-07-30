@@ -7,20 +7,16 @@ namespace Pulsar\Tests\Unit\Core\Wiring;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\AbstractLogger;
-use Psr\Log\LogLevel;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\UnknownKeyReporter;
 use Pulsar\Core\Wiring\AntiSpamWiring;
 use Pulsar\Core\Wiring\ConfigLoaderRegistrar;
 use Pulsar\Core\Wiring\DocumentationWiring;
 use Pulsar\Core\Wiring\EdgeWiring;
-use Pulsar\Core\Wiring\Internal\ReportsConfigKeys;
 use Pulsar\Core\Wiring\IntrospectionWiring;
 use Pulsar\Core\Wiring\ProfilerWiring;
 use Pulsar\Core\Wiring\ProvidesConfigLoaders;
 use Pulsar\Core\Wiring\SecurityWiring;
-use Stringable;
 
 use function array_filter;
 use function file_put_contents;
@@ -56,7 +52,6 @@ use const DIRECTORY_SEPARATOR;
 #[CoversClass(SecurityWiring::class)]
 #[CoversClass(ConfigManager::class)]
 #[CoversClass(UnknownKeyReporter::class)]
-#[CoversClass(ReportsConfigKeys::class)]
 final class WiringConfigKeyReportingTest extends TestCase
 {
     private string $tempDir;
@@ -187,37 +182,5 @@ final class WiringConfigKeyReportingTest extends TestCase
         }
 
         rmdir($dir);
-    }
-}
-
-/**
- * Minimal PSR-3 logger that records warning messages for assertion.
- */
-final class WarningSpy extends AbstractLogger
-{
-    /** @var list<string> */
-    private array $warnings = [];
-
-    public function log(mixed $level, string|Stringable $message, array $context = []): void
-    {
-        if ($level === LogLevel::WARNING) {
-            $this->warnings[] = (string) $message;
-        }
-    }
-
-    public function has(string $needle): bool
-    {
-        foreach ($this->warnings as $warning) {
-            if (str_contains($warning, $needle)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    public function dump(): string
-    {
-        return $this->warnings === [] ? '(no warnings)' : implode(' | ', $this->warnings);
     }
 }
