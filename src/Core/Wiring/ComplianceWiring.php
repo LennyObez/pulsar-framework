@@ -94,6 +94,11 @@ final readonly class ComplianceWiring implements ServiceWiringInterface, Provide
         if ($constraints->sessionIdleTimeout) {
             $this->enforceSessionIdleTimeout($container, $repository, $profile, $config->strictMode);
         }
+
+        // Boolean control: the resolver already resolves encryptionAtRest to true
+        // only when an enabled framework requires it, so it self-guards (no
+        // constraint flag needed).
+        $this->enforceEncryptionAtRest($container, $repository, $profile, $config->strictMode);
     }
 
     /**
@@ -131,12 +136,7 @@ final readonly class ComplianceWiring implements ServiceWiringInterface, Provide
             );
         }
 
-        $tightenedSession = $security->session->withIdleTimeout($required);
-        $tightenedSecurity = $security->withSession($tightenedSession);
-
-        $repository->set($tightenedSecurity);
-        $container->instance(SecurityConfig::class, $tightenedSecurity);
-        $container->instance(SessionConfig::class, $tightenedSession);
+        $this->applyTightenedSession($container, $repository, $security, $security->session->withIdleTimeout($required));
 
         $this->warn($container, sprintf(
             'compliance: session idle timeout tightened from %s to %d s to satisfy the active '
@@ -145,6 +145,68 @@ final readonly class ComplianceWiring implements ServiceWiringInterface, Provide
             $required,
             implode(', ', $this->frameworkLabels($profile)),
         ));
+    }
+
+    /**
+     * Encryption at rest: a boolean capability; compliant only when enabled.
+     * SessionConfig.encryption is consulted at boot only when a master key is
+     * present (SecurityWiring), so tightening the flag is the config-correct
+     * action — the runtime additionally performing encryption depends on the
+     * operator providing PULSAR_MASTER_KEY, which config cannot supply.
+     */
+    private function enforceEncryptionAtRest(
+        ContainerInterface $container,
+        ConfigRepository $repository,
+        ComplianceProfile $profile,
+        bool $strictMode,
+    ): void {
+        if (!$profile->encryptionAtRest || !$repository->has(SecurityConfig::class)) {
+            return;
+        }
+
+        /** @var SecurityConfig $security */
+        $security = $repository->get(SecurityConfig::class);
+
+        if ($security->session->encryption) {
+            return; // already compliant
+        }
+
+        if ($strictMode) {
+            throw ConfigException::complianceViolation(
+                'session encryption at rest (config/security.php session.encryption)',
+                'disabled (false)',
+                'enabled (true)',
+                $this->frameworkLabels($profile),
+            );
+        }
+
+        $this->applyTightenedSession($container, $repository, $security, $security->session->withEncryption(true));
+
+        $this->warn($container, sprintf(
+            'compliance: session encryption at rest enabled to satisfy the active '
+            . 'compliance profile (frameworks: %s).',
+            implode(', ', $this->frameworkLabels($profile)),
+        ));
+    }
+
+    /**
+     * Apply a tightened session config across the repository (the source of truth
+     * SecurityWiring reads) AND the container bindings ConfigWiring pre-registered
+     * from the untightened aggregate, so every consumer — whether it resolves
+     * SecurityConfig from the repository or an autowired SessionConfig from the
+     * container — sees the compliant value.
+     */
+    private function applyTightenedSession(
+        ContainerInterface $container,
+        ConfigRepository $repository,
+        SecurityConfig $security,
+        SessionConfig $tightenedSession,
+    ): void {
+        $tightenedSecurity = $security->withSession($tightenedSession);
+
+        $repository->set($tightenedSecurity);
+        $container->instance(SecurityConfig::class, $tightenedSecurity);
+        $container->instance(SessionConfig::class, $tightenedSession);
     }
 
     /**

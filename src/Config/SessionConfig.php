@@ -84,6 +84,17 @@ readonly class SessionConfig implements ReportsUnknownKeys
     }
 
     /**
+     * A copy with session-payload encryption toggled. Used by compliance
+     * enforcement to require encryption at rest when the active regulatory
+     * profile mandates it.
+     */
+    #[NoDiscard]
+    public function withEncryption(bool $encryption): self
+    {
+        return clone($this, ['encryption' => $encryption]);
+    }
+
+    /**
      * Get the effective cookie name, applying the `__Host-` prefix when enabled.
      *
      * The `__Host-` prefix instructs browsers to enforce: Secure flag, Path=/,
