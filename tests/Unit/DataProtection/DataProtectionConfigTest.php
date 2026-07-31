@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Config\Exception\ConfigException;
 use Pulsar\DataProtection\ConsentConfig;
 use Pulsar\DataProtection\DataProtectionConfig;
 use Pulsar\DataProtection\PurgeConfig;
@@ -108,8 +109,8 @@ final class DataProtectionConfigTest extends TestCase
      * @param array<string, mixed> $input
      */
     #[Test]
-    #[DataProvider('retentionPolicyTypeCoercionProvider')]
-    public function retentionPolicyFromArrayCoercesInvalidTypes(
+    #[DataProvider('retentionPolicyAcceptedValueProvider')]
+    public function retentionPolicyFromArrayAcceptsUsableValues(
         array $input,
         string $expectedCategory,
         int $expectedDays,
@@ -125,34 +126,87 @@ final class DataProtectionConfigTest extends TestCase
     /**
      * @return iterable<string, array{array<string, mixed>, string, int, string}>
      */
-    public static function retentionPolicyTypeCoercionProvider(): iterable
+    public static function retentionPolicyAcceptedValueProvider(): iterable
     {
-        yield 'non-string category' => [
-            ['category' => 42, 'retention_days' => 30, 'legal_basis' => 'test'],
-            '',
+        yield 'plain int' => [
+            ['category' => 'logs', 'retention_days' => 30, 'legal_basis' => 'test'],
+            'logs',
             30,
             'test',
         ];
 
-        yield 'non-int retention_days' => [
-            ['category' => 'logs', 'retention_days' => '30', 'legal_basis' => 'test'],
+        // env() returns every value as a string, so "90" must mean 90 days —
+        // reading it as 0 would silently mean "retain forever".
+        yield 'numeric string from env()' => [
+            ['category' => 'logs', 'retention_days' => '90', 'legal_basis' => 'test'],
             'logs',
-            0,
+            90,
             'test',
         ];
 
-        yield 'non-string legal_basis' => [
+        yield 'explicit zero means indefinite' => [
+            ['category' => 'logs', 'retention_days' => 0],
+            'logs',
+            0,
+            '',
+        ];
+
+        yield 'absent retention_days defaults to indefinite' => [
+            ['category' => 'logs'],
+            'logs',
+            0,
+            '',
+        ];
+
+        yield 'non-string legal_basis falls back (documentation only)' => [
             ['category' => 'logs', 'retention_days' => 30, 'legal_basis' => 99],
             'logs',
             30,
             '',
         ];
+    }
 
-        yield 'all missing' => [
-            [],
-            '',
-            0,
-            '',
+    /**
+     * A malformed retention entry must be REFUSED, never silently defaulted: every
+     * silent fallback here means "retain forever" (0 = indefinite; an unknown
+     * category matches no purger), which turns an operator typo into a
+     * storage-limitation violation for personal data.
+     *
+     * @param array<string, mixed> $input
+     */
+    #[Test]
+    #[DataProvider('retentionPolicyRejectedValueProvider')]
+    public function retentionPolicyFromArrayRefusesMalformedValues(array $input, string $expectedMessageFragment): void
+    {
+        $this->expectException(ConfigException::class);
+        $this->expectExceptionMessageMatches('/' . preg_quote($expectedMessageFragment, '/') . '/');
+
+        (void) RetentionPolicy::fromArray($input);
+    }
+
+    /**
+     * @return iterable<string, array{array<string, mixed>, string}>
+     */
+    public static function retentionPolicyRejectedValueProvider(): iterable
+    {
+        yield 'non-string category' => [
+            ['category' => 42, 'retention_days' => 30],
+            'must name the category',
+        ];
+
+        yield 'missing category' => [
+            ['retention_days' => 30],
+            'must name the category',
+        ];
+
+        yield 'unparseable retention_days' => [
+            ['category' => 'logs', 'retention_days' => 'ninety'],
+            'expected a number of days',
+        ];
+
+        yield 'negative retention_days' => [
+            ['category' => 'logs', 'retention_days' => -1],
+            'negative retention period',
         ];
     }
 

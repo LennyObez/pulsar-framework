@@ -7,6 +7,7 @@ namespace Pulsar\Tests\Unit\DataProtection;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Config\Exception\ConfigException;
 use Pulsar\DataProtection\RetentionPolicy;
 
 #[CoversClass(RetentionPolicy::class)]
@@ -52,26 +53,52 @@ final class RetentionPolicyTest extends TestCase
     }
 
     #[Test]
-    public function fromArrayHandlesMissingFields(): void
+    public function fromArrayRefusesAnEntryWithoutACategory(): void
     {
-        $policy = RetentionPolicy::fromArray([]);
+        // A retention policy with no category is inert: it matches no purger, so
+        // the records it was meant to govern are never purged.
+        $this->expectException(ConfigException::class);
 
-        self::assertSame('', $policy->category);
+        (void) RetentionPolicy::fromArray([]);
+    }
+
+    #[Test]
+    public function fromArrayDefaultsAbsentRetentionDaysToIndefinite(): void
+    {
+        // Absent (unlike malformed) is a documented, deliberate spelling of
+        // "retain indefinitely".
+        $policy = RetentionPolicy::fromArray(['category' => 'audit_logs']);
+
+        self::assertSame('audit_logs', $policy->category);
         self::assertSame(0, $policy->retentionDays);
         self::assertSame('', $policy->legalBasis);
     }
 
     #[Test]
-    public function fromArrayHandlesInvalidTypes(): void
+    public function fromArrayRefusesInvalidTypes(): void
     {
-        $policy = RetentionPolicy::fromArray([
+        // Silently coercing these would produce a policy with a category no purger
+        // matches and 0 days (= indefinite), i.e. data retained forever because of
+        // a typo. The malformed entry is refused instead.
+        $this->expectException(ConfigException::class);
+
+        (void) RetentionPolicy::fromArray([
             'category' => 42,
             'retention_days' => 'not_a_number',
             'legal_basis' => false,
         ]);
+    }
 
-        self::assertSame('', $policy->category);
-        self::assertSame(0, $policy->retentionDays);
-        self::assertSame('', $policy->legalBasis);
+    #[Test]
+    public function fromArrayAcceptsNumericStringsBecauseEnvReturnsStrings(): void
+    {
+        // 'retention_days' => env('RETENTION_DAYS', 90) yields the STRING "90";
+        // reading it as 0 would silently mean indefinite retention.
+        $policy = RetentionPolicy::fromArray([
+            'category' => 'user_sessions',
+            'retention_days' => '90',
+        ]);
+
+        self::assertSame(90, $policy->retentionDays);
     }
 }

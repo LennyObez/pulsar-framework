@@ -6,7 +6,14 @@ namespace Pulsar\DataProtection;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Config\Exception\ConfigException;
 use Pulsar\Support\Coerce;
+
+use function is_float;
+use function is_int;
+use function is_numeric;
+use function is_string;
+use function sprintf;
 
 /**
  * A single data retention policy entry.
@@ -37,14 +44,70 @@ final readonly class RetentionPolicy
     }
 
     /**
+     * Build one entry of config/data_protection.php's `retention` list.
+     *
+     * A malformed value is REFUSED rather than silently defaulted, because every
+     * silent fallback here means "keep this data forever": `retention_days`
+     * defaults to 0 (indefinite) and an unrecognized `category` matches no purger,
+     * so the records are never purged. For personal-data categories that is a
+     * storage-limitation violation (GDPR Art. 5(1)(e)) produced by a typo, and for
+     * audit categories it silently disables the expiry the operator configured.
+     *
+     * Numeric strings are accepted because `env()` returns every value as a string:
+     * `'retention_days' => env('RETENTION_DAYS', 90)` yields "90", which must mean
+     * 90 days — not indefinite retention.
+     *
      * @param array<string, mixed> $data
+     *
+     * @throws ConfigException If `category` is missing/blank, or `retention_days`
+     *                         is present but not a non-negative number.
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
+        $category = Coerce::string($data['category'] ?? null);
+
+        if ($category === '') {
+            throw ConfigException::invalidValue(
+                'data_protection.retention[].category',
+                'a retention policy must name the category it applies to; a blank or '
+                . 'non-string category matches no purger, so the data is never purged',
+            );
+        }
+
+        /** @var mixed $rawDays */
+        $rawDays = $data['retention_days'] ?? null;
+
+        // Absent is legitimate and documented: 0 means indefinite retention.
+        if ($rawDays === null) {
+            return new self(
+                category: $category,
+                retentionDays: 0,
+                legalBasis: Coerce::string($data['legal_basis'] ?? null),
+            );
+        }
+
+        if (!is_int($rawDays) && !(is_string($rawDays) && is_numeric($rawDays)) && !is_float($rawDays)) {
+            throw ConfigException::invalidValue(
+                sprintf('data_protection.retention[%s].retention_days', $category),
+                'expected a number of days (0 = indefinite); a value that cannot be read as a '
+                . 'number would silently become 0 and retain the data forever',
+            );
+        }
+
+        $days = (int) $rawDays;
+
+        if ($days < 0) {
+            throw ConfigException::invalidValue(
+                sprintf('data_protection.retention[%s].retention_days', $category),
+                'a negative retention period is meaningless and would be clamped to 0 '
+                . '(indefinite retention); use 0 explicitly to retain indefinitely',
+            );
+        }
+
         return new self(
-            category: Coerce::string($data['category'] ?? null),
-            retentionDays: Coerce::strictInt($data['retention_days'] ?? null, 0),
+            category: $category,
+            retentionDays: $days,
             legalBasis: Coerce::string($data['legal_basis'] ?? null),
         );
     }
