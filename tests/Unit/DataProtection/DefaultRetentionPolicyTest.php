@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Config\Exception\ConfigException;
 use Pulsar\DataProtection\DefaultRetentionPolicy;
 use Pulsar\DataProtection\RetentionPolicyInterface;
 
@@ -30,35 +31,37 @@ final class DefaultRetentionPolicyTest extends TestCase
     }
 
     #[Test]
-    public function fromArrayHandlesEmptyArray(): void
+    public function fromArrayRefusesAnEntryWithoutACategory(): void
     {
-        $policy = DefaultRetentionPolicy::fromArray([]);
+        // Parsing is shared with RetentionPolicy: a policy with no category matches
+        // no purger, so the records it should govern would never be purged.
+        $this->expectException(ConfigException::class);
 
-        self::assertSame('', $policy->category());
-        self::assertSame(0, $policy->retentionDays());
-        self::assertSame('', $policy->legalBasis());
+        (void) DefaultRetentionPolicy::fromArray([]);
     }
 
     #[Test]
-    public function fromArrayClampsNegativeRetentionDaysToZero(): void
+    public function fromArrayRefusesNegativeRetentionDays(): void
     {
-        $policy = DefaultRetentionPolicy::fromArray([
+        // Clamping -30 to 0 silently turned a nonsensical value into INDEFINITE
+        // retention (0 never expires), which is the opposite of what was written.
+        $this->expectException(ConfigException::class);
+
+        (void) DefaultRetentionPolicy::fromArray([
             'category' => 'test',
             'retention_days' => -30,
         ]);
-
-        self::assertSame(0, $policy->retentionDays());
     }
 
     #[Test]
-    public function fromArrayHandlesNonStringCategory(): void
+    public function fromArrayRefusesNonStringCategory(): void
     {
-        $policy = DefaultRetentionPolicy::fromArray([
+        $this->expectException(ConfigException::class);
+
+        (void) DefaultRetentionPolicy::fromArray([
             'category' => 42,
             'retention_days' => 10,
         ]);
-
-        self::assertSame('', $policy->category());
     }
 
     #[Test]
@@ -73,26 +76,41 @@ final class DefaultRetentionPolicyTest extends TestCase
     }
 
     #[Test]
-    public function fromArrayHandlesNonNumericRetentionDays(): void
+    public function fromArrayRefusesNonNumericRetentionDays(): void
     {
-        $policy = DefaultRetentionPolicy::fromArray([
+        $this->expectException(ConfigException::class);
+
+        (void) DefaultRetentionPolicy::fromArray([
             'category' => 'test',
             'retention_days' => 'not-a-number',
         ]);
-
-        self::assertSame(0, $policy->retentionDays());
     }
 
     #[Test]
-    public function fromArrayHandlesNonStringLegalBasis(): void
+    public function fromArrayAcceptsNumericStringsLikeItsTwin(): void
     {
+        // The two classes read the identical config shape and must agree: env()
+        // hands over "90" as a string, and it means 90 days in both.
         $policy = DefaultRetentionPolicy::fromArray([
+            'category' => 'test',
+            'retention_days' => '90',
+        ]);
+
+        self::assertSame(90, $policy->retentionDays());
+    }
+
+    #[Test]
+    public function fromArrayRefusesNonStringLegalBasis(): void
+    {
+        // The legal basis is what the purge audit trail cites; recording it as an
+        // empty string would document no justification at all.
+        $this->expectException(ConfigException::class);
+
+        (void) DefaultRetentionPolicy::fromArray([
             'category' => 'test',
             'retention_days' => 10,
             'legal_basis' => 123,
         ]);
-
-        self::assertSame('', $policy->legalBasis());
     }
 
     #[Test]

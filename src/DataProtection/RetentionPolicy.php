@@ -22,11 +22,28 @@ use function sprintf;
 #[Api(since: '1.0.0')]
 final readonly class RetentionPolicy
 {
+    /**
+     * This constructor is a validation boundary, so the parameter type stays a
+     * plain `int`: callers hand over values that came from configuration and may
+     * be anything. The guard below is what establishes the invariant — a negative
+     * period is meaningless and would be read downstream as 0, i.e. as INDEFINITE
+     * retention, the exact opposite of what was asked.
+     *
+     * @param int $retentionDays Days to retain; 0 means indefinitely.
+     */
     public function __construct(
         public string $category,
         public int $retentionDays,
         public string $legalBasis = '',
-    ) {}
+    ) {
+        if ($retentionDays < 0) {
+            throw ConfigException::invalidValue(
+                sprintf('data_protection.retention[%s].retention_days', $category),
+                'a negative retention period is meaningless and would be read as 0 '
+                . '(indefinite retention); use 0 explicitly to retain indefinitely',
+            );
+        }
+    }
 
     /**
      * A copy with a different retention period, in days.
@@ -40,6 +57,16 @@ final readonly class RetentionPolicy
     #[NoDiscard]
     public function withRetentionDays(int $retentionDays): self
     {
+        // clone-with bypasses the constructor, so the non-negative invariant has to
+        // be restated here or it could be violated through this door.
+        if ($retentionDays < 0) {
+            throw ConfigException::invalidValue(
+                sprintf('data_protection.retention[%s].retention_days', $this->category),
+                'a negative retention period is meaningless and would be read as 0 '
+                . '(indefinite retention); use 0 explicitly to retain indefinitely',
+            );
+        }
+
         return clone($this, ['retentionDays' => $retentionDays]);
     }
 
@@ -83,7 +110,7 @@ final readonly class RetentionPolicy
             return new self(
                 category: $category,
                 retentionDays: 0,
-                legalBasis: Coerce::string($data['legal_basis'] ?? null),
+                legalBasis: self::legalBasis($data, $category),
             );
         }
 
@@ -108,7 +135,37 @@ final readonly class RetentionPolicy
         return new self(
             category: $category,
             retentionDays: $days,
-            legalBasis: Coerce::string($data['legal_basis'] ?? null),
+            legalBasis: self::legalBasis($data, $category),
         );
+    }
+
+    /**
+     * The legal basis is optional — but when present it must be readable, because
+     * it is what the purge audit trail cites to justify the retention period.
+     * Silently turning a mistyped basis into an empty string would leave a
+     * compliance record that documents nothing.
+     *
+     * @param array<string, mixed> $data
+     *
+     * @throws ConfigException If `legal_basis` is present but not a string.
+     */
+    private static function legalBasis(array $data, string $category): string
+    {
+        /** @var mixed $raw */
+        $raw = $data['legal_basis'] ?? null;
+
+        if ($raw === null) {
+            return '';
+        }
+
+        if (!is_string($raw)) {
+            throw ConfigException::invalidValue(
+                sprintf('data_protection.retention[%s].legal_basis', $category),
+                'expected a string citing the legal basis for this retention period; an '
+                . 'unreadable value would be recorded as no justification at all',
+            );
+        }
+
+        return $raw;
     }
 }
