@@ -234,6 +234,16 @@ deptrac:
         - type: classLike
           value: ^Pulsar\\Extensibility\\Internal\\
 
+    # --- ExtensionCompiler ---
+    # Build-time compilation of the extension graph (manifest loading, dependency
+    # ordering, compiled manifest artifacts). Consumed by Build and the build
+    # console command. Declared as its own layer so those dependencies are
+    # governed by a ruleset instead of being reported as "uncovered".
+    - name: ExtensionCompiler
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\Compiler\\
+
     # =================================================================
     # Feature Tier (21 modules)
     # =================================================================
@@ -1828,6 +1838,7 @@ deptrac:
       - Console_Internal
       - Extensibility
       - Extensibility_Internal
+      - ExtensionCompiler
       - Attribute
       - Attribute_Internal
       - Audit
@@ -1949,6 +1960,7 @@ deptrac:
       - Routing
       - Console
       - Extensibility
+      - ExtensionCompiler
       - Attribute
       - Audit
       - Auth
@@ -2079,6 +2091,9 @@ deptrac:
     Http: *public_deps
     Routing: *public_deps
     Console: *public_deps
+    # Build-time extension-graph compiler: reads manifests (Extensibility) and
+    # coerces raw manifest data (Support); no runtime/feature dependencies.
+    ExtensionCompiler: *public_deps
     # Extensibility public layer accesses its own Internal (ExtensionBootstrap wires ScopedContainerProxy, ScopedRouterProxy, ServiceRestrictionMap)
     Extensibility:
       - CompositionRoot
