@@ -107,7 +107,7 @@ final readonly class ZeroTrustConfig implements ReportsUnknownKeys
         return new self(
             enabled: Coerce::strictBool($data['enabled'] ?? null),
             defaultMinConfidence: Coerce::float($data['default_min_confidence'] ?? null, 0.7),
-            continuousVerificationIntervalSeconds: Coerce::strictInt($data['continuous_verification_interval_seconds'] ?? null, 300),
+            continuousVerificationIntervalSeconds: Coerce::integerLike($data['continuous_verification_interval_seconds'] ?? null, 300),
             deviceIdentityRequired: Coerce::strictBool($data['device_identity_required'] ?? null),
             stepUp: $stepUp,
             retentionPolicies: array_map(

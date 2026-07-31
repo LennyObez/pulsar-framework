@@ -74,7 +74,7 @@ final readonly class PolicyRule
             requirements: array_map(ClaimRequirement::fromArray(...), $requirementArrays),
             onMatch: PolicyDecision::tryFrom(Coerce::string($data['on_match'] ?? null, 'grant')) ?? PolicyDecision::Grant,
             onNoMatch: PolicyDecision::tryFrom(Coerce::string($data['on_no_match'] ?? null, 'deny')) ?? PolicyDecision::Deny,
-            priority: Coerce::strictInt($data['priority'] ?? null, 0),
+            priority: Coerce::integerLike($data['priority'] ?? null, 0),
         );
     }
 }

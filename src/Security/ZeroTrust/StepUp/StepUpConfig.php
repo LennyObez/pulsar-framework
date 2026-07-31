@@ -76,10 +76,10 @@ final readonly class StepUpConfig implements ReportsUnknownKeys
     public static function fromArray(array $data): self
     {
         return new self(
-            maxAttempts: Coerce::strictInt($data['max_attempts'] ?? null, 5),
-            cooldownSeconds: Coerce::strictInt($data['cooldown_seconds'] ?? null, 0),
-            lockoutSeconds: Coerce::strictInt($data['lockout_seconds'] ?? null, 900),
-            windowSeconds: Coerce::strictInt($data['window_seconds'] ?? null, 3600),
+            maxAttempts: Coerce::integerLike($data['max_attempts'] ?? null, 5),
+            cooldownSeconds: Coerce::integerLike($data['cooldown_seconds'] ?? null, 0),
+            lockoutSeconds: Coerce::integerLike($data['lockout_seconds'] ?? null, 900),
+            windowSeconds: Coerce::integerLike($data['window_seconds'] ?? null, 3600),
             unknownKeys: UnknownKeys::collect($data, self::KNOWN_KEYS),
         );
     }

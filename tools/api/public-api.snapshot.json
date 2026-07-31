@@ -51950,6 +51950,14 @@
                     "return": "int",
                     "static": true
                 },
+                "integerLike": {
+                    "params": [
+                        "mixed $value",
+                        "int $default"
+                    ],
+                    "return": "int",
+                    "static": true
+                },
                 "listOfInt": {
                     "params": [
                         "mixed $value",
