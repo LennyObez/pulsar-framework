@@ -1,0 +1,213 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pulsar\Tests\Unit\Core\Wiring;
+
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+use Psr\Log\AbstractLogger;
+use Psr\Log\LoggerInterface;
+use Psr\Log\LogLevel;
+use Pulsar\Compliance\Verification\ComplianceVerificationEngine;
+use Pulsar\Compliance\Verification\VerificationReport;
+use Pulsar\Config\ConfigManager;
+use Pulsar\Config\Exception\ConfigException;
+use Pulsar\Container\Container;
+use Pulsar\Core\Wiring\ComplianceVerificationWiring;
+use Pulsar\Core\Wiring\ComplianceWiring;
+use Pulsar\Core\Wiring\ConfigLoaderRegistrar;
+use Pulsar\Http\Middleware\MiddlewarePipeline;
+use Pulsar\Http\Middleware\MiddlewareRegistry;
+use Pulsar\Routing\Router;
+use Stringable;
+
+use function bin2hex;
+use function file_put_contents;
+use function implode;
+use function is_dir;
+use function mkdir;
+use function random_bytes;
+use function rmdir;
+use function scandir;
+use function str_contains;
+use function sys_get_temp_dir;
+use function unlink;
+
+use const DIRECTORY_SEPARATOR;
+
+#[CoversClass(ComplianceVerificationWiring::class)]
+final class ComplianceVerificationWiringTest extends TestCase
+{
+    private string $configPath = '';
+
+    protected function tearDown(): void
+    {
+        if ($this->configPath !== '' && is_dir($this->configPath)) {
+            $this->cleanDir($this->configPath);
+        }
+    }
+
+    #[Test]
+    public function registersTheEngineSoVerificationCanBeRerunOnDemand(): void
+    {
+        [$container] = $this->boot("'enabled_frameworks' => ['pci_dss']");
+
+        self::assertTrue($container->has(ComplianceVerificationEngine::class));
+    }
+
+    #[Test]
+    public function isInertWhenNoFrameworkIsEnabled(): void
+    {
+        // Opting out of compliance must not produce verification noise.
+        [$container] = $this->boot("'enabled_frameworks' => []");
+
+        self::assertFalse($container->has(ComplianceVerificationEngine::class));
+    }
+
+    #[Test]
+    public function isInertWhenVerificationIsDisabled(): void
+    {
+        [$container] = $this->boot(
+            "'enabled_frameworks' => ['pci_dss'], 'verification' => ['enabled' => false]",
+        );
+
+        self::assertFalse($container->has(ComplianceVerificationEngine::class));
+    }
+
+    #[Test]
+    public function doesNotRunTheBootCheckWhenBootCheckIsOff(): void
+    {
+        // The engine is still available for on-demand runs, but no report is
+        // produced at boot.
+        [$container] = $this->boot(
+            "'enabled_frameworks' => ['pci_dss'], 'verification' => ['boot_check' => false]",
+        );
+
+        self::assertTrue($container->has(ComplianceVerificationEngine::class));
+        self::assertFalse($container->has(VerificationReport::class));
+    }
+
+    #[Test]
+    public function reportsUnsatisfiedControlsAsBootWarnings(): void
+    {
+        // Nothing security-critical is wired in this harness (no master key, so no
+        // SessionEncryption / MasterKey / AuditLogger bindings), so PCI-DSS
+        // requirements the configuration cannot tighten must surface as warnings —
+        // the whole point of verification rather than silent enforcement.
+        $spy = new VerificationWarningSpy();
+
+        [$container] = $this->boot("'enabled_frameworks' => ['pci_dss']", $spy);
+
+        self::assertTrue($container->has(VerificationReport::class));
+        self::assertTrue(
+            $spy->has('boot verification failed'),
+            'unsatisfiable requirements must be reported; got: ' . $spy->dump(),
+        );
+        self::assertTrue($spy->has('pci_dss'), 'the warning must name the active framework');
+    }
+
+    #[Test]
+    public function strictModeRefusesTheBootWhenControlsAreUnsatisfied(): void
+    {
+        $this->expectException(ConfigException::class);
+        $this->expectExceptionMessage('boot-time verification failed');
+
+        $this->boot("'enabled_frameworks' => ['pci_dss'], 'verification' => ['strict_mode' => true]");
+    }
+
+    /**
+     * Boot the compliance config through its loader, run ComplianceWiring (which
+     * registers the profile) and then the verification wiring, exactly as the
+     * kernel orders them.
+     *
+     * @return array{0: Container, 1: ConfigManager}
+     */
+    private function boot(string $complianceBody, ?LoggerInterface $logger = null): array
+    {
+        $this->configPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'pulsar_compliance_verify_' . bin2hex(random_bytes(4));
+        mkdir($this->configPath, 0o755, true);
+
+        $this->write('app.php', '');
+        $this->write('observability.php', '');
+        // two_factor is enabled so the unrelated MFA tightening control is
+        // satisfied and cannot abort the boot before verification runs.
+        $this->write('security.php', "'auth' => ['two_factor' => ['enabled' => true]]");
+        $this->write('compliance.php', $complianceBody);
+
+        $configManager = new ConfigManager($this->configPath);
+        $complianceWiring = new ComplianceWiring();
+        ConfigLoaderRegistrar::register($configManager, [$complianceWiring]);
+        $configManager->load();
+
+        $container = new Container();
+
+        if ($logger !== null) {
+            $container->instance(LoggerInterface::class, $logger);
+        }
+
+        $pipeline = new MiddlewarePipeline($container);
+        $registry = new MiddlewareRegistry();
+        $router = new Router();
+
+        $complianceWiring->wire($container, $configManager, $pipeline, $registry, $router);
+        new ComplianceVerificationWiring()->wire($container, $configManager, $pipeline, $registry, $router);
+
+        return [$container, $configManager];
+    }
+
+    private function write(string $file, string $body): void
+    {
+        file_put_contents($this->configPath . DIRECTORY_SEPARATOR . $file, '<?php return [' . $body . '];');
+    }
+
+    private function cleanDir(string $dir): void
+    {
+        $items = scandir($dir);
+
+        if ($items !== false) {
+            foreach ($items as $item) {
+                if ($item === '.' || $item === '..') {
+                    continue;
+                }
+                $path = $dir . DIRECTORY_SEPARATOR . $item;
+                is_dir($path) ? $this->cleanDir($path) : unlink($path);
+            }
+        }
+
+        rmdir($dir);
+    }
+}
+
+/**
+ * Minimal PSR-3 logger that records warning messages for assertion.
+ */
+final class VerificationWarningSpy extends AbstractLogger
+{
+    /** @var list<string> */
+    private array $warnings = [];
+
+    public function log(mixed $level, string|Stringable $message, array $context = []): void
+    {
+        if ($level === LogLevel::WARNING) {
+            $this->warnings[] = (string) $message;
+        }
+    }
+
+    public function has(string $needle): bool
+    {
+        foreach ($this->warnings as $warning) {
+            if (str_contains($warning, $needle)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function dump(): string
+    {
+        return $this->warnings === [] ? '(no warnings)' : implode(' | ', $this->warnings);
+    }
+}
