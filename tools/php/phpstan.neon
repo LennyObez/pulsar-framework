@@ -1,5 +1,12 @@
 includes:
     - phpstan-baseline.neon
+    # Reports calls to anything marked @deprecated — our own retiring APIs, vendor
+    # libraries, and whatever the bundled PHP stubs know about. PHPStan does NOT
+    # check deprecations without this extension. It complements, and does not
+    # replace, the runtime sweep (`phpunit --display-deprecations`): the engine
+    # itself is the only authority on brand-new core deprecations, while this
+    # catches code the tests never execute.
+    - ../../vendor/phpstan/phpstan-deprecation-rules/rules.neon
 
 services:
     -
@@ -69,6 +76,33 @@ parameters:
     treatPhpDocTypesAsCertain: false
     reportUnmatchedIgnoredErrors: true
     ignoreErrors:
+        # === Deprecated APIs exercised by their OWN tests ===
+        # phpstan-deprecation-rules exists to stop PRODUCTION code from reaching
+        # for a retiring API. A test that covers a deprecated class must, by
+        # definition, call it: we still ship those classes (Psr7Bridge adapters,
+        # LegacyMiddlewareAdapter and TwoFactorManager::verifyCodeWithSecret, all
+        # deprecated in 1.0.0-rc.11), so they must stay under test until they are
+        # actually removed — deleting the tests to silence the rule would be
+        # strictly worse than the warning.
+        #
+        # Listed FILE BY FILE rather than as a blanket `tests/` exclusion, so a new
+        # deprecated-API caller anywhere else still fails the gate, and each entry
+        # disappears naturally when its subject is deleted. src/ carries ZERO
+        # deprecation findings and must stay that way.
+        -
+            message: '#(deprecated class|deprecated method|of deprecated)#'
+            paths:
+                - ../../tests/E2E/Extension/Cms/AdminTwoFactorTest.php
+                - ../../tests/Integration/Auth/TwoFactorFlowTest.php
+                - ../../tests/Unit/Auth/TwoFactor/TwoFactorManagerTest.php
+                - ../../tests/Unit/Extension/Psr7Bridge/Psr15MiddlewareAdapterTest.php
+                - ../../tests/Unit/Extension/Psr7Bridge/Psr7BridgeExtensionTest.php
+                - ../../tests/Unit/Extension/Psr7Bridge/Psr7ToPulsarRequestTest.php
+                - ../../tests/Unit/Extension/Psr7Bridge/Psr7ToPulsarResponseTest.php
+                - ../../tests/Unit/Extension/Psr7Bridge/PulsarToPsr7RequestTest.php
+                - ../../tests/Unit/Extension/Psr7Bridge/PulsarToPsr7ResponseTest.php
+                - ../../tests/Unit/Http/Middleware/LegacyMiddlewareAdapterTest.php
+
         # === Category B: Config-validator boundary pattern (fromArray) ===
         # The framework's typed-config DTOs (~318 classes) follow the validator-
         # at-the-boundary pattern: `fromArray(array<string, mixed> $data): self`
