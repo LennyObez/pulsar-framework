@@ -14259,6 +14259,13 @@
                     "params": [],
                     "return": "array",
                     "static": false
+                },
+                "withRetention": {
+                    "params": [
+                        "array $retention"
+                    ],
+                    "return": "Pulsar\\DataProtection\\DataProtectionConfig",
+                    "static": false
                 }
             },
             "constants": []
@@ -14686,6 +14693,13 @@
                     ],
                     "return": "Pulsar\\DataProtection\\RetentionPolicy",
                     "static": true
+                },
+                "withRetentionDays": {
+                    "params": [
+                        "int $retentionDays"
+                    ],
+                    "return": "Pulsar\\DataProtection\\RetentionPolicy",
+                    "static": false
                 }
             },
             "constants": []

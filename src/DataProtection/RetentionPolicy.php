@@ -22,6 +22,21 @@ final readonly class RetentionPolicy
     ) {}
 
     /**
+     * A copy with a different retention period, in days.
+     *
+     * Used by compliance enforcement to EXTEND a retention period up to what the
+     * active regulatory profile requires. Note that 0 means indefinite retention
+     * (see {@see DefaultRetentionPolicy::isExpired()}), i.e. the strictest possible
+     * setting — callers must never overwrite a 0 with a finite value, which would
+     * start deleting records that were being kept forever.
+     */
+    #[NoDiscard]
+    public function withRetentionDays(int $retentionDays): self
+    {
+        return clone($this, ['retentionDays' => $retentionDays]);
+    }
+
+    /**
      * @param array<string, mixed> $data
      */
     #[NoDiscard]

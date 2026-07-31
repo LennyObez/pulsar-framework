@@ -22,11 +22,13 @@ use Pulsar\Config\SecurityHeadersConfig;
 use Pulsar\Config\SessionConfig;
 use Pulsar\Config\TwoFactorConfig;
 use Pulsar\Container\ContainerInterface;
+use Pulsar\DataProtection\DataProtectionConfig;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Routing\Router;
 
 use function array_map;
+use function array_values;
 use function implode;
 use function sprintf;
 
@@ -53,6 +55,9 @@ use function sprintf;
 #[Internal(reason: 'Composition root wiring')]
 final readonly class ComplianceWiring implements ServiceWiringInterface, ProvidesConfigLoaders
 {
+    /** The retention category in config/data_protection.php that holds audit logs. */
+    private const string AUDIT_LOG_CATEGORY = 'audit_logs';
+
     public function configLoaders(): array
     {
         return [
@@ -100,12 +105,113 @@ final readonly class ComplianceWiring implements ServiceWiringInterface, Provide
             $this->enforceSessionIdleTimeout($container, $repository, $profile, $config->strictMode);
         }
 
+        if ($constraints->auditRetentionDays) {
+            $this->enforceAuditRetention($container, $repository, $profile, $config->strictMode);
+        }
+
         // Boolean controls: the resolver already resolves these to true only when
         // an enabled framework requires them, so they self-guard (no constraint
         // flag needed).
         $this->enforceEncryptionAtRest($container, $repository, $profile, $config->strictMode);
         $this->enforceEncryptionInTransit($container, $repository, $profile, $config->strictMode);
         $this->enforceMfaRequirement($container, $repository, $profile, $config->strictMode);
+    }
+
+    /**
+     * Audit-log retention: a LONGER period is stricter (the record must survive
+     * long enough to be auditable), which inverts the usual direction — and 0 is
+     * not "weakest" here but the STRICTEST value of all: it means indefinite
+     * retention ({@see \Pulsar\DataProtection\DefaultRetentionPolicy::isExpired()}
+     * never expires a 0-day policy). Overwriting a 0 with the profile's finite
+     * requirement would start deleting audit records that were being kept forever,
+     * so a non-positive configured value is left strictly alone.
+     *
+     * The target is the `audit_logs` entry of config/data_protection.php's
+     * retention list, which SecurityWiring turns into the purge policy the
+     * DataPurgeOrchestrator applies. A missing entry is likewise already-strictest:
+     * the orchestrator skips categories it has no policy for, so those records are
+     * never purged at all.
+     */
+    private function enforceAuditRetention(
+        ContainerInterface $container,
+        ConfigRepository $repository,
+        ComplianceProfile $profile,
+        bool $strictMode,
+    ): void {
+        $required = $profile->auditRetentionDays;
+
+        if ($required <= 0 || !$repository->has(DataProtectionConfig::class)) {
+            return;
+        }
+
+        /** @var DataProtectionConfig $dataProtection */
+        $dataProtection = $repository->get(DataProtectionConfig::class);
+
+        $policies = $dataProtection->retention;
+
+        // An operator may declare the category more than once. SecurityWiring
+        // collapses the list into a category-keyed map, so the LAST duplicate wins
+        // — inspecting only the first would let the control pass while the
+        // effective policy is a different, possibly non-compliant entry. Every
+        // violating entry is therefore tightened, which is correct whichever one
+        // the consumer ends up keeping.
+        $violating = [];
+
+        foreach ($policies as $i => $policy) {
+            if ($policy->category !== self::AUDIT_LOG_CATEGORY) {
+                continue;
+            }
+
+            // 0 (and any negative value, which the consumer clamps to 0) means
+            // indefinite retention: strictest of all, never a violation.
+            if ($policy->retentionDays > 0 && $policy->retentionDays < $required) {
+                $violating[] = $i;
+            }
+        }
+
+        // No violating entry — including the case where the category is absent
+        // entirely. A missing policy is NOT a gap to fill: DataPurgeOrchestrator
+        // skips any category it has no policy for, so audit logs are never purged,
+        // which is indefinite retention and already exceeds any finite requirement.
+        // Synthesizing a finite policy here would START deleting records that were
+        // being kept forever — a loosening disguised as enforcement, the same trap
+        // as overwriting a configured 0.
+        if ($violating === []) {
+            return;
+        }
+
+        $shortest = null;
+
+        foreach ($violating as $i) {
+            $days = $policies[$i]->retentionDays;
+            $shortest = $shortest === null ? $days : min($shortest, $days);
+        }
+
+        if ($strictMode) {
+            throw ConfigException::complianceViolation(
+                'audit log retention (config/data_protection.php retention[audit_logs].retention_days)',
+                $shortest . ' days',
+                $required . ' days or more (0 = indefinite also satisfies this)',
+                $this->frameworkLabels($profile),
+            );
+        }
+
+        foreach ($violating as $i) {
+            $policies[$i] = $policies[$i]->withRetentionDays($required);
+        }
+
+        $tightened = $dataProtection->withRetention(array_values($policies));
+
+        $repository->set($tightened);
+        $container->instance(DataProtectionConfig::class, $tightened);
+
+        $this->warn($container, sprintf(
+            'compliance: audit log retention extended from %d to %d days to satisfy the '
+            . 'active compliance profile (frameworks: %s).',
+            $shortest,
+            $required,
+            implode(', ', $this->frameworkLabels($profile)),
+        ));
     }
 
     /**

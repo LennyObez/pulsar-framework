@@ -28,6 +28,9 @@ use Pulsar\Config\TwoFactorConfig;
 use Pulsar\Container\Container;
 use Pulsar\Core\Wiring\ComplianceWiring;
 use Pulsar\Core\Wiring\ConfigLoaderRegistrar;
+use Pulsar\Core\Wiring\SecurityWiring;
+use Pulsar\DataProtection\DataProtectionConfig;
+use Pulsar\DataProtection\RetentionPolicy;
 use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
@@ -461,6 +464,174 @@ final class ComplianceWiringTest extends TestCase
     }
 
     #[Test]
+    public function extendsAuditRetentionThatIsTooShort(): void
+    {
+        $required = new ComplianceProfileResolver()->resolve([ComplianceFramework::PciDss])->auditRetentionDays;
+
+        [$container, $configManager] = $this->bootAndWire(
+            "'session' => ['cookie_name' => 'T']",
+            "'enabled_frameworks' => ['pci_dss']",
+            null,
+            '',
+            "'retention' => [['category' => 'audit_logs', 'retention_days' => 30]]",
+        );
+
+        /** @var DataProtectionConfig $dp */
+        $dp = $configManager->repository()->get(DataProtectionConfig::class);
+        self::assertSame($required, $this->auditRetentionDays($dp));
+
+        /** @var DataProtectionConfig $containerDp */
+        $containerDp = $container->get(DataProtectionConfig::class);
+        self::assertSame($required, $this->auditRetentionDays($containerDp));
+    }
+
+    #[Test]
+    public function neverOverwritesIndefiniteAuditRetention(): void
+    {
+        // THE trap of this control: retention_days = 0 means INDEFINITE retention
+        // (DefaultRetentionPolicy::isExpired never expires it), which is the
+        // STRICTEST possible setting. A naive max(current, required) would replace
+        // it with a finite value and start deleting audit records that were being
+        // kept forever — a catastrophic LOOSENING disguised as enforcement.
+        [, $configManager] = $this->bootAndWire(
+            "'session' => ['cookie_name' => 'T']",
+            "'enabled_frameworks' => ['pci_dss']",
+            null,
+            '',
+            "'retention' => [['category' => 'audit_logs', 'retention_days' => 0]]",
+        );
+
+        /** @var DataProtectionConfig $dp */
+        $dp = $configManager->repository()->get(DataProtectionConfig::class);
+        self::assertSame(0, $this->auditRetentionDays($dp), 'indefinite retention must survive untouched');
+    }
+
+    #[Test]
+    public function doesNotShortenAuditRetentionThatAlreadyExceedsTheRequirement(): void
+    {
+        [, $configManager] = $this->bootAndWire(
+            "'session' => ['cookie_name' => 'T']",
+            "'enabled_frameworks' => ['pci_dss']",
+            null,
+            '',
+            "'retention' => [['category' => 'audit_logs', 'retention_days' => 2555]]",
+        );
+
+        /** @var DataProtectionConfig $dp */
+        $dp = $configManager->repository()->get(DataProtectionConfig::class);
+        self::assertSame(2555, $this->auditRetentionDays($dp), 'compliance must never shorten retention');
+    }
+
+    #[Test]
+    public function doesNotSynthesizeAPolicyWhenTheAuditCategoryIsAbsent(): void
+    {
+        // A MISSING audit_logs policy is not a gap to fill: DataPurgeOrchestrator
+        // skips any category it has no policy for, so audit logs are never purged —
+        // indefinite retention, which already exceeds any finite requirement.
+        // Adding a finite policy here would START deleting records that were kept
+        // forever: the same loosening as overwriting a configured 0.
+        [, $configManager] = $this->bootAndWire(
+            "'session' => ['cookie_name' => 'T']",
+            "'enabled_frameworks' => ['pci_dss']",
+            null,
+            '',
+            "'retention' => [['category' => 'user_sessions', 'retention_days' => 90]]",
+        );
+
+        /** @var DataProtectionConfig $dp */
+        $dp = $configManager->repository()->get(DataProtectionConfig::class);
+        self::assertNull($this->policyFor($dp, 'audit_logs'), 'no purge policy must be invented');
+        // The unrelated category must be untouched.
+        $sessionPolicy = $this->policyFor($dp, 'user_sessions');
+        self::assertNotNull($sessionPolicy);
+        self::assertSame(90, $sessionPolicy->retentionDays);
+    }
+
+    #[Test]
+    public function strictModeAcceptsAnAbsentAuditPolicyAsIndefiniteRetention(): void
+    {
+        // Fail-closed must not fire on a configuration that is STRICTER than the
+        // requirement (never purged), which is what an absent policy means. The
+        // auth section is provided so the unrelated MFA control is satisfied and
+        // only the audit-retention behaviour is under test.
+        [, $configManager] = $this->bootAndWire(
+            "'auth' => ['two_factor' => ['enabled' => true]]",
+            "'enabled_frameworks' => ['pci_dss'], 'verification' => ['strict_mode' => true]",
+            null,
+            '',
+            "'retention' => [['category' => 'user_sessions', 'retention_days' => 90]]",
+        );
+
+        /** @var DataProtectionConfig $dp */
+        $dp = $configManager->repository()->get(DataProtectionConfig::class);
+        self::assertNull($this->policyFor($dp, 'audit_logs'));
+    }
+
+    #[Test]
+    public function tightensEveryDuplicateAuditPolicyBecauseTheConsumerKeepsTheLast(): void
+    {
+        // SecurityWiring collapses the retention list into a category-keyed map, so
+        // a duplicated category is resolved LAST-wins. Inspecting only the first
+        // entry would let a deployment pass the check while purging audit logs on
+        // the second entry's much shorter period.
+        $required = new ComplianceProfileResolver()->resolve([ComplianceFramework::PciDss])->auditRetentionDays;
+
+        [, $configManager] = $this->bootAndWire(
+            "'session' => ['cookie_name' => 'T']",
+            "'enabled_frameworks' => ['pci_dss']",
+            null,
+            '',
+            "'retention' => [['category' => 'audit_logs', 'retention_days' => 0], ['category' => 'audit_logs', 'retention_days' => 30]]",
+        );
+
+        /** @var DataProtectionConfig $dp */
+        $dp = $configManager->repository()->get(DataProtectionConfig::class);
+
+        $auditPolicies = [];
+
+        foreach ($dp->retention as $policy) {
+            if ($policy->category === 'audit_logs') {
+                $auditPolicies[] = $policy->retentionDays;
+            }
+        }
+
+        // The indefinite entry stays indefinite; the short one is extended, so the
+        // effective (last) policy is compliant whichever entry the consumer keeps.
+        self::assertSame([0, $required], $auditPolicies);
+    }
+
+    #[Test]
+    public function strictModeFailsClosedOnTooShortAuditRetention(): void
+    {
+        $this->expectException(ConfigException::class);
+        $this->expectExceptionMessage('audit log retention');
+
+        $this->bootAndWire(
+            "'session' => ['cookie_name' => 'T']",
+            "'enabled_frameworks' => ['pci_dss'], 'verification' => ['strict_mode' => true]",
+            null,
+            '',
+            "'retention' => [['category' => 'audit_logs', 'retention_days' => 30]]",
+        );
+    }
+
+    private function auditRetentionDays(DataProtectionConfig $config): ?int
+    {
+        return $this->policyFor($config, 'audit_logs')?->retentionDays;
+    }
+
+    private function policyFor(DataProtectionConfig $config, string $category): ?RetentionPolicy
+    {
+        foreach ($config->retention as $policy) {
+            if ($policy->category === $category) {
+                return $policy;
+            }
+        }
+
+        return null;
+    }
+
+    #[Test]
     public function theTightenedTimeoutIsActuallyEnforcedBySessionManager(): void
     {
         // End-to-end runtime proof (not just config state): an operator-loose idle
@@ -583,6 +754,7 @@ final class ComplianceWiringTest extends TestCase
         string $complianceBody,
         ?LoggerInterface $logger = null,
         string $appBody = '',
+        ?string $dataProtectionBody = null,
     ): array {
         $this->configPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'pulsar_compliance_wiring_' . bin2hex(random_bytes(4));
         mkdir($this->configPath, 0o755, true);
@@ -592,9 +764,15 @@ final class ComplianceWiringTest extends TestCase
         $this->write('security.php', $securityBody);
         $this->write('compliance.php', $complianceBody);
 
+        if ($dataProtectionBody !== null) {
+            $this->write('data_protection.php', $dataProtectionBody);
+        }
+
         $configManager = new ConfigManager($this->configPath);
         $wiring = new ComplianceWiring();
-        ConfigLoaderRegistrar::register($configManager, [$wiring]);
+        // SecurityWiring owns the data_protection loader; register it alongside so
+        // DataProtectionConfig reaches the repository exactly as it does at boot.
+        ConfigLoaderRegistrar::register($configManager, [$wiring, new SecurityWiring()]);
         $configManager->load();
 
         $container = new Container();
