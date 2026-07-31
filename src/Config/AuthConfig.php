@@ -44,6 +44,16 @@ final readonly class AuthConfig implements ReportsUnknownKeys
     }
 
     /**
+     * A copy with a different two-factor config. Used by compliance enforcement to
+     * enable MFA when the active regulatory profile requires it.
+     */
+    #[NoDiscard]
+    public function withTwoFactor(TwoFactorConfig $twoFactor): self
+    {
+        return clone($this, ['twoFactor' => $twoFactor]);
+    }
+
+    /**
      * Build from a raw auth config array.
      *
      * @param array{

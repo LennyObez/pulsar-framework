@@ -74,6 +74,16 @@ final readonly class SecurityConfig implements ReportsUnknownKeys
     }
 
     /**
+     * A copy with a different auth config. Used by compliance enforcement to
+     * enable MFA when the active regulatory profile requires it.
+     */
+    #[NoDiscard]
+    public function withAuth(?AuthConfig $auth): self
+    {
+        return clone($this, ['auth' => $auth]);
+    }
+
+    /**
      * Build from the raw security config array and environment.
      *
      * @param array{

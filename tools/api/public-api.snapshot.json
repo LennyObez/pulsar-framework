@@ -8654,6 +8654,13 @@
                     "params": [],
                     "return": "array",
                     "static": false
+                },
+                "withTwoFactor": {
+                    "params": [
+                        "Pulsar\\Config\\TwoFactorConfig $twoFactor"
+                    ],
+                    "return": "Pulsar\\Config\\AuthConfig",
+                    "static": false
                 }
             },
             "constants": []
@@ -10499,6 +10506,13 @@
                     "return": "array",
                     "static": false
                 },
+                "withAuth": {
+                    "params": [
+                        "?Pulsar\\Config\\AuthConfig $auth"
+                    ],
+                    "return": "Pulsar\\Config\\SecurityConfig",
+                    "static": false
+                },
                 "withHeaders": {
                     "params": [
                         "Pulsar\\Config\\SecurityHeadersConfig $headers"
@@ -10966,6 +10980,13 @@
                 "unknownConfigKeys": {
                     "params": [],
                     "return": "array",
+                    "static": false
+                },
+                "withEnabled": {
+                    "params": [
+                        "bool $enabled"
+                    ],
+                    "return": "Pulsar\\Config\\TwoFactorConfig",
                     "static": false
                 }
             },
