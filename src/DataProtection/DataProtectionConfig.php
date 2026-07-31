@@ -48,6 +48,20 @@ final readonly class DataProtectionConfig implements ReportsUnknownKeys
     }
 
     /**
+     * A copy with a different retention policy list, preserving the purge and
+     * consent sections and the unknown-key diagnostics. Used by compliance
+     * enforcement to extend a category's retention to what the active regulatory
+     * profile requires.
+     *
+     * @param list<RetentionPolicy> $retention
+     */
+    #[NoDiscard]
+    public function withRetention(array $retention): self
+    {
+        return clone($this, ['retention' => $retention]);
+    }
+
+    /**
      * @param array<string, mixed> $data Raw config array from data_protection.php
      */
     #[NoDiscard]
