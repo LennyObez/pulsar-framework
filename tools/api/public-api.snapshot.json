@@ -9573,6 +9573,13 @@
             "since": "1.0.0",
             "methods": [],
             "signatures": {
+                "complianceVerificationFailed": {
+                    "params": [
+                        "array $failures"
+                    ],
+                    "return": "Pulsar\\Config\\Exception\\ConfigException",
+                    "static": true
+                },
                 "complianceViolation": {
                     "params": [
                         "string $control",
@@ -57569,6 +57576,7 @@
         "Pulsar\\Core\\Wiring\\CacheWiring",
         "Pulsar\\Core\\Wiring\\CloudWiring",
         "Pulsar\\Core\\Wiring\\ComplianceLoggingWiring",
+        "Pulsar\\Core\\Wiring\\ComplianceVerificationWiring",
         "Pulsar\\Core\\Wiring\\ComplianceWiring",
         "Pulsar\\Core\\Wiring\\ConfigLoaderRegistrar",
         "Pulsar\\Core\\Wiring\\ConfigWiring",

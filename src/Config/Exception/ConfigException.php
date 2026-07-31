@@ -8,6 +8,7 @@ use NoDiscard;
 use Pulsar\Api\Api;
 use RuntimeException;
 
+use function count;
 use function implode;
 use function sprintf;
 
@@ -61,6 +62,28 @@ final class ConfigException extends RuntimeException
             . 'Fix the key names, or set config.strict_keys = false (or PULSAR_CONFIG_STRICT=false) '
             . 'to downgrade this to a warning.',
             implode("\n  - ", $descriptions),
+        ));
+    }
+
+    /**
+     * Boot-time compliance verification found controls that are not actually
+     * satisfied at runtime, while compliance strict mode is on. Unlike
+     * {@see self::complianceViolation()} — which reports a config value that could
+     * have been tightened — these are controls no configuration change can fix
+     * from here (a missing master key, an inactive audit chain), so the boot is
+     * refused with the verifier's own findings.
+     *
+     * @param list<string> $failures One rendered line per failed check.
+     */
+    #[NoDiscard]
+    public static function complianceVerificationFailed(array $failures): self
+    {
+        return new self(sprintf(
+            "Compliance strict mode: boot-time verification failed for %d control(s):\n  - %s\n"
+            . 'Resolve the findings above, or set compliance.verification.strict_mode = false '
+            . 'to downgrade them to boot warnings.',
+            count($failures),
+            implode("\n  - ", $failures),
         ));
     }
 

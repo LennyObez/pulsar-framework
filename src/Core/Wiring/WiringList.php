@@ -82,6 +82,11 @@ final readonly class WiringList
             // container (so inert security features are detected) and, when
             // enforcement is enabled in production, aborts boot.
             new SecurityPostureWiring(),
+            // After it, for the same reason: compliance verification reports the
+            // profile requirements that configuration CANNOT tighten (audit
+            // tamper-evidence, encryption actually active, data retention, breach
+            // and consent), judging the fully wired container rather than config.
+            new ComplianceVerificationWiring(),
         ];
     }
 }
