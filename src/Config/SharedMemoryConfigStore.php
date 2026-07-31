@@ -13,7 +13,6 @@ use function extension_loaded;
 use function hash_equals;
 use function hash_hmac;
 use function md5;
-use function shmop_close;
 use function shmop_delete;
 use function shmop_open;
 use function shmop_read;
@@ -236,18 +235,13 @@ final class SharedMemoryConfigStore
             throw new ConfigException('Failed to create shared memory segment');
         }
 
-        try {
-            // Layout: [4-byte length][32-byte HMAC][serialized data]
-            $header = pack('N', $dataLength);
-            $payload = $header . $hmac . $serialized;
-            $written = shmop_write($shm, $payload, 0);
+        // Layout: [4-byte length][32-byte HMAC][serialized data]
+        $header = pack('N', $dataLength);
+        $payload = $header . $hmac . $serialized;
+        $written = shmop_write($shm, $payload, 0);
 
-            if ($written !== strlen($payload)) {
-                throw new ConfigException('Failed to write full payload to shared memory segment');
-            }
-        } finally {
-            /** @psalm-suppress UnusedFunctionCall */
-            shmop_close($shm);
+        if ($written !== strlen($payload)) {
+            throw new ConfigException('Failed to write full payload to shared memory segment');
         }
     }
 
@@ -269,51 +263,46 @@ final class SharedMemoryConfigStore
             return null;
         }
 
-        try {
-            $header = shmop_read($shm, 0, self::HEADER_SIZE);
+        $header = shmop_read($shm, 0, self::HEADER_SIZE);
 
-            if (strlen($header) < self::HEADER_SIZE) {
-                return null;
-            }
-
-            /** @var array{1: int} $unpacked */
-            $unpacked = unpack('N', $header);
-            $dataLength = $unpacked[1];
-
-            if ($dataLength <= 0 || $dataLength > $this->maxSize) {
-                return null;
-            }
-
-            // Read HMAC
-            $storedHmac = shmop_read($shm, self::HEADER_SIZE, self::HMAC_SIZE);
-
-            if (strlen($storedHmac) < self::HMAC_SIZE) {
-                return null;
-            }
-
-            // Read serialized data
-            $serialized = shmop_read($shm, self::HEADER_SIZE + self::HMAC_SIZE, $dataLength);
-
-            // Verify HMAC before deserializing; reject tampered data
-            $expectedHmac = hash_hmac('sha256', $serialized, $this->hmacKey, binary: true);
-
-            if (!hash_equals($expectedHmac, $storedHmac)) {
-                return null;
-            }
-
-            // HMAC verified: data was written by us with the correct key.
-            // Restrict deserialization to the explicit set of config DTO classes
-            // that a ConfigRepository graph contains (see DESERIALIZATION_ALLOWLIST).
-            // This prevents gadget-chain attacks even if the HMAC key is compromised
-            // (defense in depth).
-            /** @var mixed $result */
-            $result = unserialize($serialized, ['allowed_classes' => self::DESERIALIZATION_ALLOWLIST]);
-
-            return $result instanceof ConfigRepository ? $result : null;
-        } finally {
-            /** @psalm-suppress UnusedFunctionCall */
-            shmop_close($shm);
+        if (strlen($header) < self::HEADER_SIZE) {
+            return null;
         }
+
+        /** @var array{1: int} $unpacked */
+        $unpacked = unpack('N', $header);
+        $dataLength = $unpacked[1];
+
+        if ($dataLength <= 0 || $dataLength > $this->maxSize) {
+            return null;
+        }
+
+        // Read HMAC
+        $storedHmac = shmop_read($shm, self::HEADER_SIZE, self::HMAC_SIZE);
+
+        if (strlen($storedHmac) < self::HMAC_SIZE) {
+            return null;
+        }
+
+        // Read serialized data
+        $serialized = shmop_read($shm, self::HEADER_SIZE + self::HMAC_SIZE, $dataLength);
+
+        // Verify HMAC before deserializing; reject tampered data
+        $expectedHmac = hash_hmac('sha256', $serialized, $this->hmacKey, binary: true);
+
+        if (!hash_equals($expectedHmac, $storedHmac)) {
+            return null;
+        }
+
+        // HMAC verified: data was written by us with the correct key.
+        // Restrict deserialization to the explicit set of config DTO classes
+        // that a ConfigRepository graph contains (see DESERIALIZATION_ALLOWLIST).
+        // This prevents gadget-chain attacks even if the HMAC key is compromised
+        // (defense in depth).
+        /** @var mixed $result */
+        $result = unserialize($serialized, ['allowed_classes' => self::DESERIALIZATION_ALLOWLIST]);
+
+        return $result instanceof ConfigRepository ? $result : null;
     }
 
     /**
@@ -327,13 +316,8 @@ final class SharedMemoryConfigStore
             return;
         }
 
-        try {
-            /** @psalm-suppress UnusedFunctionCall */
-            shmop_delete($shm);
-        } finally {
-            /** @psalm-suppress UnusedFunctionCall */
-            shmop_close($shm);
-        }
+        /** @psalm-suppress UnusedFunctionCall */
+        shmop_delete($shm);
     }
 
     /**
@@ -347,9 +331,6 @@ final class SharedMemoryConfigStore
         if ($shm === false) {
             return false;
         }
-
-        /** @psalm-suppress UnusedFunctionCall */
-        shmop_close($shm);
 
         return true;
     }
