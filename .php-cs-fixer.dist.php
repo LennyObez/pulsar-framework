@@ -18,7 +18,10 @@ return (new PhpCsFixer\Config)
     ->setRules([
         '@PER-CS2.0' => true,
         '@PER-CS2.0:risky' => true,
-        '@PHP84Migration' => true,
+        // PHP 8.5 migration ruleset (nests @PHP8x4Migration and every earlier one,
+        // so listing the older sets would be redundant). The un-suffixed
+        // @PHP85Migration/@PHP84Migration aliases are deprecated for removal in 4.0.
+        '@PHP8x5Migration' => true,
         'declare_strict_types' => true,
         'strict_param' => true,
         'array_syntax' => ['syntax' => 'short'],
