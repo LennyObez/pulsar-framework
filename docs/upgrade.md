@@ -180,6 +180,41 @@ vendor/bin/psalm -c tools/php/psalm.xml
 
 PHPStan (level max) and Psalm (error level 1) may flag new issues from stricter typing in 1.0.0.
 
+## Behavioural changes admitted under the critical-defect clause
+
+The RC series freezes the public API, with one stated exception: a critical defect.
+The following change is behavioural rather than additive, and is recorded here
+because it affects an `#[Api]` type.
+
+### `RetentionPolicy::fromArray()` refuses malformed entries (was: silently defaulted)
+
+`data_protection.retention` entries were parsed with silent fallbacks, and every
+one of those fallbacks meant *retain this data forever*:
+
+- `retention_days` accepted only a real integer. Because `env()` returns strings,
+  the ordinary `'retention_days' => env('RETENTION_DAYS', 90)` produced `"90"`,
+  which fell back to `0` — and `0` means indefinite retention. An operator who
+  configured a 90-day period got data kept forever, with no warning anywhere. For
+  personal-data categories that is a storage-limitation violation (GDPR Art.
+  5(1)(e)) caused by a supported configuration idiom.
+- A non-string or missing `category` became `''`, which matches no purger, so those
+  records were never purged either.
+- A negative period was clamped to `0`, i.e. indefinite again.
+
+`fromArray()` now accepts any numeric value (integer, float or numeric string) and
+throws `ConfigException` when a value is *present but unreadable*, when `category`
+is blank, or when the period is negative. An **absent** `retention_days` still
+means `0` = indefinite, which remains the documented, deliberate way to retain
+without expiry.
+
+`DefaultRetentionPolicy::fromArray()` now delegates to the same parser, so the two
+classes can no longer disagree about the same config entry.
+
+**What to do:** nothing, if your `config/data_protection.php` uses integer literals
+or `env()` values that are numeric — those parse as before, or now parse correctly.
+If boot throws, the message names the exact config path and the reason; fix the
+value rather than restoring the old behaviour, which was silently retaining data.
+
 ## Deprecation notices
 
 No formal deprecations exist in 1.0.0-rc.11. The `#[Api]` / `#[Internal]` boundary replaces the informal "probably stable" / "probably internal" convention used in 0.x.

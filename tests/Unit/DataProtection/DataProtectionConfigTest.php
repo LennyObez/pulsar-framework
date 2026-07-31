@@ -158,8 +158,8 @@ final class DataProtectionConfigTest extends TestCase
             '',
         ];
 
-        yield 'non-string legal_basis falls back (documentation only)' => [
-            ['category' => 'logs', 'retention_days' => 30, 'legal_basis' => 99],
+        yield 'absent legal_basis is optional' => [
+            ['category' => 'logs', 'retention_days' => 30],
             'logs',
             30,
             '',
@@ -207,6 +207,11 @@ final class DataProtectionConfigTest extends TestCase
         yield 'negative retention_days' => [
             ['category' => 'logs', 'retention_days' => -1],
             'negative retention period',
+        ];
+
+        yield 'non-string legal_basis' => [
+            ['category' => 'logs', 'retention_days' => 30, 'legal_basis' => 99],
+            'expected a string citing the legal basis',
         ];
     }
 
