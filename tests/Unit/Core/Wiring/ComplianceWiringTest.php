@@ -17,12 +17,14 @@ use Pulsar\Compliance\ComplianceConfig;
 use Pulsar\Compliance\ComplianceFramework;
 use Pulsar\Compliance\ComplianceProfile;
 use Pulsar\Compliance\ComplianceProfileResolver;
+use Pulsar\Config\AuthConfig;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\ConfigRepository;
 use Pulsar\Config\Exception\ConfigException;
 use Pulsar\Config\SecurityConfig;
 use Pulsar\Config\SecurityHeadersConfig;
 use Pulsar\Config\SessionConfig;
+use Pulsar\Config\TwoFactorConfig;
 use Pulsar\Container\Container;
 use Pulsar\Core\Wiring\ComplianceWiring;
 use Pulsar\Core\Wiring\ConfigLoaderRegistrar;
@@ -352,6 +354,108 @@ final class ComplianceWiringTest extends TestCase
 
         $this->bootAndWire(
             "'headers' => ['hsts' => ['enabled' => false]]",
+            "'enabled_frameworks' => ['pci_dss'], 'verification' => ['strict_mode' => true]",
+        );
+    }
+
+    #[Test]
+    public function enablesTwoFactorWhenTheProfileRequiresMfa(): void
+    {
+        // PCI-DSS requires MFA (scope "privileged"); an operator with the auth
+        // section present but 2FA off is looser than the profile.
+        [$container, $configManager] = $this->bootAndWire(
+            "'auth' => ['two_factor' => ['enabled' => false]]",
+            "'enabled_frameworks' => ['pci_dss']",
+        );
+
+        /** @var SecurityConfig $security */
+        $security = $configManager->repository()->get(SecurityConfig::class);
+        self::assertNotNull($security->auth);
+        self::assertTrue($security->auth->twoFactor->enabled);
+
+        // The standalone bindings ConfigWiring pre-registers must be refreshed too,
+        // or an autowired consumer would still read "MFA off".
+        /** @var TwoFactorConfig $containerTwoFactor */
+        $containerTwoFactor = $container->get(TwoFactorConfig::class);
+        self::assertTrue($containerTwoFactor->enabled);
+        /** @var AuthConfig $containerAuth */
+        $containerAuth = $container->get(AuthConfig::class);
+        self::assertTrue($containerAuth->twoFactor->enabled);
+    }
+
+    #[Test]
+    public function doesNotChangeTwoFactorWhenAlreadyEnabled(): void
+    {
+        [, $configManager] = $this->bootAndWire(
+            "'auth' => ['two_factor' => ['enabled' => true]]",
+            "'enabled_frameworks' => ['pci_dss']",
+        );
+
+        /** @var SecurityConfig $security */
+        $security = $configManager->repository()->get(SecurityConfig::class);
+        self::assertNotNull($security->auth);
+        self::assertTrue($security->auth->twoFactor->enabled);
+    }
+
+    #[Test]
+    public function doesNotEnableTwoFactorWhenNoFrameworkRequiresMfa(): void
+    {
+        // GDPR resolves mfaRequirement to 'none', so the control self-guards: an
+        // operator who left 2FA off stays off.
+        [, $configManager] = $this->bootAndWire(
+            "'auth' => ['two_factor' => ['enabled' => false]]",
+            "'enabled_frameworks' => ['gdpr']",
+        );
+
+        /** @var SecurityConfig $security */
+        $security = $configManager->repository()->get(SecurityConfig::class);
+        self::assertNotNull($security->auth);
+        self::assertFalse($security->auth->twoFactor->enabled);
+    }
+
+    #[Test]
+    public function strictModeFailsClosedWhenMfaRequiredButDisabled(): void
+    {
+        $this->expectException(ConfigException::class);
+        $this->expectExceptionMessage('multi-factor authentication');
+
+        $this->bootAndWire(
+            "'auth' => ['two_factor' => ['enabled' => false]]",
+            "'enabled_frameworks' => ['pci_dss'], 'verification' => ['strict_mode' => true]",
+        );
+    }
+
+    #[Test]
+    public function warnsRatherThanInventingConfigWhenNoAuthSectionExists(): void
+    {
+        // config/security.php may legitimately omit `auth` entirely. Synthesizing
+        // one would invent guard configuration the operator never wrote, so the
+        // gap is reported loudly instead of being silently papered over.
+        $spy = new ComplianceWarningSpyLogger();
+
+        [, $configManager] = $this->bootAndWire(
+            "'session' => ['cookie_name' => 'T']", // no 'auth' key at all
+            "'enabled_frameworks' => ['pci_dss']",
+            $spy,
+        );
+
+        /** @var SecurityConfig $security */
+        $security = $configManager->repository()->get(SecurityConfig::class);
+        self::assertNull($security->auth, 'no auth section must be invented');
+        self::assertTrue(
+            $spy->has('no auth section'),
+            'the unenforceable requirement must be reported; got: ' . $spy->dump(),
+        );
+    }
+
+    #[Test]
+    public function strictModeFailsClosedWhenMfaRequiredAndNoAuthSectionExists(): void
+    {
+        $this->expectException(ConfigException::class);
+        $this->expectExceptionMessage('no auth section configured');
+
+        $this->bootAndWire(
+            "'session' => ['cookie_name' => 'T']",
             "'enabled_frameworks' => ['pci_dss'], 'verification' => ['strict_mode' => true]",
         );
     }
