@@ -95,6 +95,17 @@ readonly class SessionConfig implements ReportsUnknownKeys
     }
 
     /**
+     * A copy with the cookie `Secure` flag toggled. Used by compliance enforcement
+     * to require HTTPS-only session cookies when the active regulatory profile
+     * mandates encryption in transit.
+     */
+    #[NoDiscard]
+    public function withCookieSecure(bool $cookieSecure): self
+    {
+        return clone($this, ['cookieSecure' => $cookieSecure]);
+    }
+
+    /**
      * Get the effective cookie name, applying the `__Host-` prefix when enabled.
      *
      * The `__Host-` prefix instructs browsers to enforce: Secure flag, Path=/,

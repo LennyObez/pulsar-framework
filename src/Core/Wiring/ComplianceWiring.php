@@ -10,11 +10,14 @@ use Pulsar\Compliance\ComplianceConfig;
 use Pulsar\Compliance\ComplianceFramework;
 use Pulsar\Compliance\ComplianceProfile;
 use Pulsar\Compliance\ComplianceProfileResolver;
+use Pulsar\Config\AppConfig;
 use Pulsar\Config\CallableConfigLoader;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\ConfigRepository;
+use Pulsar\Config\EnvironmentMode;
 use Pulsar\Config\Exception\ConfigException;
 use Pulsar\Config\SecurityConfig;
+use Pulsar\Config\SecurityHeadersConfig;
 use Pulsar\Config\SessionConfig;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
@@ -95,10 +98,127 @@ final readonly class ComplianceWiring implements ServiceWiringInterface, Provide
             $this->enforceSessionIdleTimeout($container, $repository, $profile, $config->strictMode);
         }
 
-        // Boolean control: the resolver already resolves encryptionAtRest to true
-        // only when an enabled framework requires it, so it self-guards (no
-        // constraint flag needed).
+        // Boolean controls: the resolver already resolves these to true only when
+        // an enabled framework requires them, so they self-guard (no constraint
+        // flag needed).
         $this->enforceEncryptionAtRest($container, $repository, $profile, $config->strictMode);
+        $this->enforceEncryptionInTransit($container, $repository, $profile, $config->strictMode);
+    }
+
+    /**
+     * Encryption in transit maps onto two independent config surfaces, so both are
+     * enforced: the HSTS assertion (headers) and the session cookie's Secure flag.
+     */
+    private function enforceEncryptionInTransit(
+        ContainerInterface $container,
+        ConfigRepository $repository,
+        ComplianceProfile $profile,
+        bool $strictMode,
+    ): void {
+        if (!$profile->encryptionInTransit || !$repository->has(SecurityConfig::class)) {
+            return;
+        }
+
+        $this->enforceHstsAssertion($container, $repository, $profile, $strictMode);
+        $this->enforceSecureSessionCookie($container, $repository, $profile, $strictMode);
+    }
+
+    /**
+     * HSTS: the deployment must assert HTTPS somewhere. Compliant when the
+     * structured config is enabled, when a literal Strict-Transport-Security
+     * header is configured (both resolved by effectiveHstsHeader()), or when the
+     * edge terminates TLS and emits HSTS itself — forcing `enabled` in that last
+     * case would double-emit the header and override an intentional
+     * edge-terminated setup. Safe to enforce in every environment: the middleware
+     * emits HSTS only on secure requests (RFC 6797 §7.2), so over plain http it
+     * changes nothing.
+     */
+    private function enforceHstsAssertion(
+        ContainerInterface $container,
+        ConfigRepository $repository,
+        ComplianceProfile $profile,
+        bool $strictMode,
+    ): void {
+        /** @var SecurityConfig $security */
+        $security = $repository->get(SecurityConfig::class);
+        $headers = $security->headers;
+
+        if ($headers->effectiveHstsHeader() !== null || $headers->hsts->emittedAtEdge) {
+            return; // HTTPS already asserted
+        }
+
+        if ($strictMode) {
+            throw ConfigException::complianceViolation(
+                'HSTS assertion (config/security.php headers.hsts.enabled)',
+                'not asserted (disabled, and not emitted at the edge)',
+                'enabled (or headers.hsts.emitted_at_edge for edge-terminated TLS)',
+                $this->frameworkLabels($profile),
+            );
+        }
+
+        $tightenedHeaders = $headers->withHsts($headers->hsts->withEnabled(true));
+        $tightenedSecurity = $security->withHeaders($tightenedHeaders);
+
+        $repository->set($tightenedSecurity);
+        $container->instance(SecurityConfig::class, $tightenedSecurity);
+        $container->instance(SecurityHeadersConfig::class, $tightenedHeaders);
+
+        $this->warn($container, sprintf(
+            'compliance: HSTS enabled to satisfy the active compliance profile '
+            . '(frameworks: %s). Set headers.hsts.emitted_at_edge if TLS terminates at the edge.',
+            implode(', ', $this->frameworkLabels($profile)),
+        ));
+    }
+
+    /**
+     * Session cookie Secure flag — enforced in PRODUCTION only.
+     *
+     * Outside production the framework deliberately relaxes this flag: a Secure
+     * cookie is never returned over plain http://, which breaks the session (and
+     * every CSRF-protected POST) on a local dev server, and there is no TLS to
+     * protect there anyway. Forcing it would break the application without adding
+     * any security — so the control applies where transport security is real.
+     */
+    private function enforceSecureSessionCookie(
+        ContainerInterface $container,
+        ConfigRepository $repository,
+        ComplianceProfile $profile,
+        bool $strictMode,
+    ): void {
+        if (!$repository->has(AppConfig::class)) {
+            return;
+        }
+
+        /** @var AppConfig $app */
+        $app = $repository->get(AppConfig::class);
+
+        if ($app->mode !== EnvironmentMode::Production) {
+            return;
+        }
+
+        /** @var SecurityConfig $security */
+        $security = $repository->get(SecurityConfig::class);
+
+        if ($security->session->cookieSecure) {
+            return; // already compliant
+        }
+
+        if ($strictMode) {
+            throw ConfigException::complianceViolation(
+                'secure session cookie (config/security.php session.cookie_secure)',
+                'disabled (false)',
+                'enabled (true)',
+                $this->frameworkLabels($profile),
+            );
+        }
+
+        $this->applyTightenedSession($container, $repository, $security, $security->session->withCookieSecure(true));
+
+        $this->warn($container, sprintf(
+            'compliance: session cookie Secure flag enabled to satisfy the active '
+            . 'compliance profile (frameworks: %s).',
+            implode(', ', $this->frameworkLabels($profile)),
+        ));
     }
 
     /**

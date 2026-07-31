@@ -63,6 +63,17 @@ final readonly class SecurityConfig implements ReportsUnknownKeys
     }
 
     /**
+     * A copy with a different security-headers config. Used by compliance
+     * enforcement to assert HTTPS (HSTS) when the active regulatory profile
+     * requires encryption in transit.
+     */
+    #[NoDiscard]
+    public function withHeaders(SecurityHeadersConfig $headers): self
+    {
+        return clone($this, ['headers' => $headers]);
+    }
+
+    /**
      * Build from the raw security config array and environment.
      *
      * @param array{

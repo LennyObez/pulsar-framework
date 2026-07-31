@@ -9729,6 +9729,13 @@
                     "params": [],
                     "return": "array",
                     "static": false
+                },
+                "withEnabled": {
+                    "params": [
+                        "bool $enabled"
+                    ],
+                    "return": "Pulsar\\Config\\HstsConfig",
+                    "static": false
                 }
             },
             "constants": []
@@ -10492,6 +10499,13 @@
                     "return": "array",
                     "static": false
                 },
+                "withHeaders": {
+                    "params": [
+                        "Pulsar\\Config\\SecurityHeadersConfig $headers"
+                    ],
+                    "return": "Pulsar\\Config\\SecurityConfig",
+                    "static": false
+                },
                 "withSession": {
                     "params": [
                         "Pulsar\\Config\\SessionConfig $session"
@@ -10553,6 +10567,13 @@
                     "params": [],
                     "return": "array",
                     "static": false
+                },
+                "withHsts": {
+                    "params": [
+                        "Pulsar\\Config\\HstsConfig $hsts"
+                    ],
+                    "return": "Pulsar\\Config\\SecurityHeadersConfig",
+                    "static": false
                 }
             },
             "constants": []
@@ -10604,6 +10625,13 @@
                 "unknownConfigKeys": {
                     "params": [],
                     "return": "array",
+                    "static": false
+                },
+                "withCookieSecure": {
+                    "params": [
+                        "bool $cookieSecure"
+                    ],
+                    "return": "Pulsar\\Config\\SessionConfig",
                     "static": false
                 },
                 "withEncryption": {

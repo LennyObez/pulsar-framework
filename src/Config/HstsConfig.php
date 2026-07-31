@@ -60,6 +60,17 @@ final readonly class HstsConfig implements ReportsUnknownKeys
         return $this->enabled || $this->emittedAtEdge;
     }
 
+    /**
+     * A copy with HSTS emission toggled. Used by compliance enforcement to assert
+     * HTTPS when the active regulatory profile requires encryption in transit and
+     * the deployment asserts it nowhere else (neither here nor at the edge).
+     */
+    #[NoDiscard]
+    public function withEnabled(bool $enabled): self
+    {
+        return clone($this, ['enabled' => $enabled]);
+    }
+
     #[NoDiscard]
     public function toHeaderValue(): string
     {

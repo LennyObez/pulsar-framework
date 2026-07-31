@@ -89,6 +89,17 @@ final readonly class SecurityHeadersConfig implements ReportsUnknownKeys
     }
 
     /**
+     * A copy with a different HSTS config. Used by compliance enforcement to
+     * assert HTTPS when the active regulatory profile requires encryption in
+     * transit.
+     */
+    #[NoDiscard]
+    public function withHsts(HstsConfig $hsts): self
+    {
+        return clone($this, ['hsts' => $hsts]);
+    }
+
+    /**
      * Return the effective headers: minimum defaults merged with user config,
      * plus CSP and Cross-Origin headers when enabled.
      *

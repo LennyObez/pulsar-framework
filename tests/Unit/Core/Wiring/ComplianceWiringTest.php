@@ -21,6 +21,7 @@ use Pulsar\Config\ConfigManager;
 use Pulsar\Config\ConfigRepository;
 use Pulsar\Config\Exception\ConfigException;
 use Pulsar\Config\SecurityConfig;
+use Pulsar\Config\SecurityHeadersConfig;
 use Pulsar\Config\SessionConfig;
 use Pulsar\Container\Container;
 use Pulsar\Core\Wiring\ComplianceWiring;
@@ -261,6 +262,101 @@ final class ComplianceWiringTest extends TestCase
     }
 
     #[Test]
+    public function enablesHstsWhenHttpsIsAssertedNowhere(): void
+    {
+        // PCI-DSS requires encryption in transit; a deployment that asserts HTTPS
+        // nowhere (HSTS disabled, nothing at the edge) must have HSTS turned on.
+        [$container, $configManager] = $this->bootAndWire(
+            "'headers' => ['hsts' => ['enabled' => false]]",
+            "'enabled_frameworks' => ['pci_dss']",
+        );
+
+        /** @var SecurityConfig $security */
+        $security = $configManager->repository()->get(SecurityConfig::class);
+        self::assertTrue($security->headers->hsts->enabled);
+
+        /** @var SecurityHeadersConfig $containerHeaders */
+        $containerHeaders = $container->get(SecurityHeadersConfig::class);
+        self::assertTrue($containerHeaders->hsts->enabled, 'the standalone headers binding must be refreshed too');
+    }
+
+    #[Test]
+    public function doesNotTouchHstsWhenTlsTerminatesAtTheEdge(): void
+    {
+        // Edge-terminated TLS: the edge emits HSTS, so the origin deliberately
+        // keeps it disabled. Forcing it on would double-emit the header and
+        // override an intentional deployment topology.
+        [, $configManager] = $this->bootAndWire(
+            "'headers' => ['hsts' => ['enabled' => false, 'emitted_at_edge' => true]]",
+            "'enabled_frameworks' => ['pci_dss']",
+        );
+
+        /** @var SecurityConfig $security */
+        $security = $configManager->repository()->get(SecurityConfig::class);
+        self::assertFalse($security->headers->hsts->enabled, 'edge-terminated HSTS must not be overridden');
+    }
+
+    #[Test]
+    public function doesNotEnableHstsWhenNoFrameworkRequiresEncryptionInTransit(): void
+    {
+        // SOC 2 mandates no encryption in transit: an operator's disabled HSTS
+        // must stay disabled — compliance never invents a requirement.
+        [, $configManager] = $this->bootAndWire(
+            "'headers' => ['hsts' => ['enabled' => false]]",
+            "'enabled_frameworks' => ['soc2']",
+        );
+
+        /** @var SecurityConfig $security */
+        $security = $configManager->repository()->get(SecurityConfig::class);
+        self::assertFalse($security->headers->hsts->enabled);
+    }
+
+    #[Test]
+    public function doesNotForceSecureCookieOutsideProduction(): void
+    {
+        // Outside production a Secure cookie is never returned over plain http://,
+        // which would break every session and CSRF-protected POST on a dev server —
+        // and there is no TLS to protect anyway. The control must stay inert there.
+        [, $configManager] = $this->bootAndWire(
+            "'session' => ['cookie_secure' => false]",
+            "'enabled_frameworks' => ['pci_dss']",
+            null,
+            "'name' => 'T', 'env' => 'local'",
+        );
+
+        /** @var SecurityConfig $security */
+        $security = $configManager->repository()->get(SecurityConfig::class);
+        self::assertFalse($security->session->cookieSecure, 'dev sessions must not be broken by compliance');
+    }
+
+    #[Test]
+    public function forcesSecureCookieInProduction(): void
+    {
+        [, $configManager] = $this->bootAndWire(
+            "'session' => ['cookie_secure' => false]",
+            "'enabled_frameworks' => ['pci_dss']",
+            null,
+            "'name' => 'T', 'env' => 'production'",
+        );
+
+        /** @var SecurityConfig $security */
+        $security = $configManager->repository()->get(SecurityConfig::class);
+        self::assertTrue($security->session->cookieSecure);
+    }
+
+    #[Test]
+    public function strictModeFailsClosedWhenHttpsIsAssertedNowhere(): void
+    {
+        $this->expectException(ConfigException::class);
+        $this->expectExceptionMessage('HSTS assertion');
+
+        $this->bootAndWire(
+            "'headers' => ['hsts' => ['enabled' => false]]",
+            "'enabled_frameworks' => ['pci_dss'], 'verification' => ['strict_mode' => true]",
+        );
+    }
+
+    #[Test]
     public function theTightenedTimeoutIsActuallyEnforcedBySessionManager(): void
     {
         // End-to-end runtime proof (not just config state): an operator-loose idle
@@ -378,12 +474,16 @@ final class ComplianceWiringTest extends TestCase
      *
      * @return array{0: Container, 1: ConfigManager}
      */
-    private function bootAndWire(string $securityBody, string $complianceBody, ?LoggerInterface $logger = null): array
-    {
+    private function bootAndWire(
+        string $securityBody,
+        string $complianceBody,
+        ?LoggerInterface $logger = null,
+        string $appBody = '',
+    ): array {
         $this->configPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'pulsar_compliance_wiring_' . bin2hex(random_bytes(4));
         mkdir($this->configPath, 0o755, true);
 
-        $this->write('app.php', '');
+        $this->write('app.php', $appBody);
         $this->write('observability.php', '');
         $this->write('security.php', $securityBody);
         $this->write('compliance.php', $complianceBody);
