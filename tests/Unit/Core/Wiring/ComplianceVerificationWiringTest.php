@@ -117,6 +117,67 @@ final class ComplianceVerificationWiringTest extends TestCase
         $this->boot("'enabled_frameworks' => ['pci_dss'], 'verification' => ['strict_mode' => true]");
     }
 
+    #[Test]
+    public function reportsDatabaseTlsAsMissingForANetworkConnectionWithoutSsl(): void
+    {
+        $spy = new VerificationWarningSpy();
+
+        $this->boot(
+            "'enabled_frameworks' => ['pci_dss']",
+            $spy,
+            "'default' => 'mysql', 'connections' => ['mysql' => ['driver' => 'mysql', 'host' => 'db', 'database' => 'app', 'options' => []]]",
+        );
+
+        self::assertTrue($spy->has('runtime.db_tls'), 'a plaintext network connection must be reported; got: ' . $spy->dump());
+    }
+
+    #[Test]
+    public function acceptsDatabaseTlsWhenSslModeRequiresIt(): void
+    {
+        $spy = new VerificationWarningSpy();
+
+        $this->boot(
+            "'enabled_frameworks' => ['pci_dss']",
+            $spy,
+            "'default' => 'mysql', 'connections' => ['mysql' => ['driver' => 'mysql', 'host' => 'db', 'database' => 'app', 'options' => ['ssl_mode' => 'require']]]",
+        );
+
+        self::assertFalse($spy->has('runtime.db_tls'), 'a TLS-configured connection must not be flagged; got: ' . $spy->dump());
+    }
+
+    #[Test]
+    public function rejectsWeakSslModesThatSilentlyFallBackToPlaintext(): void
+    {
+        // "prefer" lets the driver fall back to an unencrypted connection, so it
+        // must not count as encryption in transit.
+        $spy = new VerificationWarningSpy();
+
+        $this->boot(
+            "'enabled_frameworks' => ['pci_dss']",
+            $spy,
+            "'default' => 'pg', 'connections' => ['pg' => ['driver' => 'pgsql', 'host' => 'db', 'database' => 'app', 'options' => ['sslmode' => 'prefer']]]",
+        );
+
+        self::assertTrue($spy->has('runtime.db_tls'), 'sslmode=prefer must not satisfy the requirement; got: ' . $spy->dump());
+    }
+
+    #[Test]
+    public function doesNotDemandTlsFromSqliteWhichHasNoNetworkTransport(): void
+    {
+        // SQLite is a local file: requiring TLS of it would be meaningless, and
+        // failing it would make compliance strict mode unsatisfiable for every
+        // SQLite deployment.
+        $spy = new VerificationWarningSpy();
+
+        $this->boot(
+            "'enabled_frameworks' => ['pci_dss']",
+            $spy,
+            "'default' => 'sqlite', 'connections' => ['sqlite' => ['driver' => 'sqlite', 'database' => ':memory:', 'options' => []]]",
+        );
+
+        self::assertFalse($spy->has('runtime.db_tls'), 'SQLite must not be flagged for missing TLS; got: ' . $spy->dump());
+    }
+
     /**
      * Boot the compliance config through its loader, run ComplianceWiring (which
      * registers the profile) and then the verification wiring, exactly as the
@@ -124,8 +185,11 @@ final class ComplianceVerificationWiringTest extends TestCase
      *
      * @return array{0: Container, 1: ConfigManager}
      */
-    private function boot(string $complianceBody, ?LoggerInterface $logger = null): array
-    {
+    private function boot(
+        string $complianceBody,
+        ?LoggerInterface $logger = null,
+        ?string $databaseBody = null,
+    ): array {
         $this->configPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'pulsar_compliance_verify_' . bin2hex(random_bytes(4));
         mkdir($this->configPath, 0o755, true);
 
@@ -135,6 +199,10 @@ final class ComplianceVerificationWiringTest extends TestCase
         // satisfied and cannot abort the boot before verification runs.
         $this->write('security.php', "'auth' => ['two_factor' => ['enabled' => true]]");
         $this->write('compliance.php', $complianceBody);
+
+        if ($databaseBody !== null) {
+            $this->write('database.php', $databaseBody);
+        }
 
         $configManager = new ConfigManager($this->configPath);
         $complianceWiring = new ComplianceWiring();
