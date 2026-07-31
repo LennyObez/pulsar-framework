@@ -75,8 +75,8 @@ final readonly class ApiConfig implements ReportsUnknownKeys
         return new self(
             defaultFormat: Coerce::string($data['default_format'] ?? null, 'json'),
             paginationType: Coerce::string($pagination['type'] ?? null, 'offset'),
-            paginationDefaultSize: Coerce::strictInt($pagination['default_size'] ?? null, 25),
-            paginationMaxSize: Coerce::strictInt($pagination['max_size'] ?? null, 100),
+            paginationDefaultSize: Coerce::integerLike($pagination['default_size'] ?? null, 25),
+            paginationMaxSize: Coerce::integerLike($pagination['max_size'] ?? null, 100),
             versioningStrategy: Coerce::string($data['versioning_strategy'] ?? null, 'url'),
             complexityLimits: ComplexityLimits::fromArray($complexityLimitsData),
             entitySerializationBanEnabled: (bool) ($data['entity_serialization_ban'] ?? true),

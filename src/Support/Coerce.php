@@ -15,6 +15,7 @@ use function is_float;
 use function is_int;
 use function is_numeric;
 use function is_string;
+use function preg_match;
 use function strtolower;
 
 /**
@@ -52,10 +53,46 @@ final class Coerce
      * Strict int: only an actual int returns; numeric strings, floats, and
      * everything else fall back to default. Use when the config schema
      * intentionally rejects loose typing.
+     *
+     * Prefer {@see self::integerLike()} for values an operator may supply through
+     * `env()`, which hands every number over as a string: this method silently
+     * discards `"90"` in favour of the default, which for a security limit means
+     * quietly reverting to a value the operator did not choose.
      */
     public static function strictInt(mixed $value, int $default): int
     {
         return is_int($value) ? $value : $default;
+    }
+
+    /**
+     * Integer-like: an actual int, or a string that spells a whole number.
+     * Everything else — floats, booleans, non-numeric strings, null — falls back
+     * to the default.
+     *
+     * This is the correct coercion for a config integer, sitting deliberately
+     * between the other two:
+     *
+     * - {@see self::strictInt()} rejects `"90"`, but `env()` returns EVERY value as
+     *   a string, so the common `'limit' => env('LIMIT', 100)` silently loses the
+     *   operator's setting and reverts to the default.
+     * - {@see self::int()} accepts `"90"` but also truncates `5.5` to `5`. For a
+     *   limit or a timeout that is worse than the default: a mistyped `5.5` becomes
+     *   a drastically different working value instead of the documented fallback.
+     *
+     * A whole-number string is unambiguous and accepted; anything that would
+     * require guessing what the operator meant is not.
+     */
+    public static function integerLike(mixed $value, int $default): int
+    {
+        if (is_int($value)) {
+            return $value;
+        }
+
+        if (is_string($value) && preg_match('/^\s*-?\d+\s*$/', $value) === 1) {
+            return (int) $value;
+        }
+
+        return $default;
     }
 
     /**

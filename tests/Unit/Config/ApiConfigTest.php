@@ -100,13 +100,17 @@ final class ApiConfigTest extends TestCase
             'pagination' => [
                 'type' => 123,
                 'default_size' => 'ten',
+                // A whole-number string is what env() hands over for
+                // 'max_size' => env('API_MAX_PAGE', 100), so it must be honoured —
+                // discarding it would silently restore a page cap the operator
+                // deliberately changed.
                 'max_size' => '200',
             ],
         ]);
 
         self::assertSame('offset', $config->paginationType);
-        self::assertSame(25, $config->paginationDefaultSize);
-        self::assertSame(100, $config->paginationMaxSize);
+        self::assertSame(25, $config->paginationDefaultSize, 'a non-numeric size falls back');
+        self::assertSame(200, $config->paginationMaxSize, 'a numeric string is the operator\'s value');
     }
 
     #[Test]

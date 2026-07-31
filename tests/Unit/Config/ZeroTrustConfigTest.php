@@ -205,10 +205,27 @@ final class ZeroTrustConfigTest extends TestCase
     }
 
     #[Test]
-    public function fromArrayFallsBackOnNonIntInterval(): void
+    public function fromArrayHonoursAWholeNumberStringInterval(): void
     {
+        // env() returns every value as a string, so
+        // 'continuous_verification_interval_seconds' => env('ZT_INTERVAL', 300)
+        // arrives as "120". Discarding it would verify LESS often than the operator
+        // configured — a silent weakening of continuous verification.
         $config = ZeroTrustConfig::fromArray([
             'continuous_verification_interval_seconds' => '120',
+        ]);
+
+        self::assertSame(120, $config->continuousVerificationIntervalSeconds);
+    }
+
+    #[Test]
+    public function fromArrayFallsBackOnAnUnreadableInterval(): void
+    {
+        // Values that would require guessing the operator's intent (a float, a
+        // non-numeric string) still fall back to the documented default rather than
+        // being truncated into a different working value.
+        $config = ZeroTrustConfig::fromArray([
+            'continuous_verification_interval_seconds' => '2.5 minutes',
         ]);
 
         self::assertSame(300, $config->continuousVerificationIntervalSeconds);
