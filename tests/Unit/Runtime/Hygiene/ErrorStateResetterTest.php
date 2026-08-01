@@ -11,6 +11,7 @@ use Pulsar\Runtime\Hygiene\ErrorStateResetter;
 use Throwable;
 
 use function error_get_last;
+use function ob_end_clean;
 use function ob_get_level;
 use function ob_start;
 use function set_error_handler;
@@ -83,8 +84,10 @@ final class ErrorStateResetterTest extends TestCase
 
         $this->resetter->reset();
 
-        // Reset clears all buffers down to 0
-        self::assertSame(0, ob_get_level());
+        // Reset unwinds to the level the host held when the resetter was built,
+        // which is what "between requests" means for a worker: the request's
+        // buffers go, the host's stay.
+        self::assertSame($this->obLevelBefore, ob_get_level());
     }
 
     #[Test]
@@ -97,6 +100,41 @@ final class ErrorStateResetterTest extends TestCase
         $this->resetter->reset();
 
         self::assertNull(error_get_last());
-        self::assertSame(0, ob_get_level());
+        self::assertSame($this->obLevelBefore, ob_get_level());
+    }
+
+    /**
+     * A worker started with `output_buffering` on holds a buffer before it serves
+     * anything. Unwinding past it would leave later requests unbuffered against
+     * the operator's php.ini.
+     */
+    #[Test]
+    public function it_preserves_the_buffer_the_host_already_held(): void
+    {
+        ob_start();
+        $hostLevel = ob_get_level();
+
+        // Built at the composition root, i.e. now — after the host's buffer exists.
+        $resetter = new ErrorStateResetter();
+
+        ob_start();
+        ob_start();
+        $resetter->reset();
+
+        self::assertSame($hostLevel, ob_get_level());
+
+        ob_end_clean();
+    }
+
+    #[Test]
+    public function it_honours_an_explicit_baseline(): void
+    {
+        $resetter = new ErrorStateResetter(baseBufferLevel: $this->obLevelBefore);
+
+        ob_start();
+        ob_start();
+        $resetter->reset();
+
+        self::assertSame($this->obLevelBefore, ob_get_level());
     }
 }

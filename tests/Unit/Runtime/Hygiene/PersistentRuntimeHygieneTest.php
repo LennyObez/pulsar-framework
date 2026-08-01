@@ -120,10 +120,15 @@ final class PersistentRuntimeHygieneTest extends TestCase
     public function it_clears_output_buffers(): void
     {
         ob_start();
+        ob_start();
 
         $this->applyHygiene();
 
-        self::assertSame(0, ob_get_level());
+        self::assertSame(
+            $this->obLevelBefore,
+            ob_get_level(),
+            'Buffers opened during the request go; the level the host owned stays.',
+        );
     }
 
     #[Test]
@@ -152,7 +157,7 @@ final class PersistentRuntimeHygieneTest extends TestCase
         self::assertArrayNotHasKey('REQUEST_URI', $_SERVER);
         self::assertArrayNotHasKey('HTTP_HOST', $_SERVER);
         self::assertNull(error_get_last());
-        self::assertSame(0, ob_get_level());
+        self::assertSame($this->obLevelBefore, ob_get_level());
     }
 
     #[Test]
