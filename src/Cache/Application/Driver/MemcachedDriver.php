@@ -6,10 +6,12 @@ namespace Pulsar\Cache\Application\Driver;
 
 use Memcached;
 use Pulsar\Api\Internal;
+use Pulsar\Support\Coerce;
 use Throwable;
 
 use function array_fill_keys;
 use function array_keys;
+use function is_array;
 use function is_string;
 use function time;
 
@@ -52,17 +54,20 @@ final class MemcachedDriver extends AbstractCacheDriver implements GenerationCle
             return [];
         }
 
+        // getMulti() is typed as mixed upstream: it answers with a key => value map,
+        // or false when the whole fetch failed. Anything else means the driver is not
+        // the extension it claims to be, and reading offsets off it would be silent
+        // nulls for every key — a cache that always misses rather than one that errors.
         $values = $this->memcached->getMulti($keys);
 
-        if ($values === false) {
+        if (!is_array($values)) {
             return array_fill_keys($keys, null);
         }
 
         $result = [];
 
         foreach ($keys as $key) {
-            $value = $values[$key] ?? null;
-            $result[$key] = is_string($value) ? $value : null;
+            $result[$key] = Coerce::nullableString($values[$key] ?? null);
         }
 
         return $result;

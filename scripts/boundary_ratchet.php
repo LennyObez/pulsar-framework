@@ -16,6 +16,10 @@ declare(strict_types=1);
  *   php scripts/boundary_ratchet.php --json               # JSON output
  */
 
+use Pulsar\Tooling\Support\JsonDocument;
+
+require_once dirname(__DIR__) . '/vendor/autoload.php';
+
 if (PHP_SAPI !== 'cli') {
     exit(1);
 }
@@ -24,56 +28,85 @@ $rootDir = dirname(__DIR__);
 $baselinePath = 'tools/php/boundary-baseline.json';
 $absoluteBaselinePath = $rootDir . '/' . $baselinePath;
 
+// $argv only exists when register_argc_argv is on — always true under the CLI
+// SAPI, but reading it unguarded would silently drop every flag if it were not.
+/** @var list<string> $arguments */
+$arguments = array_values(array_filter($argv ?? [], 'is_string'));
+
 // Parse CLI arguments
-$jsonOutput = in_array('--json', $argv, true);
+$jsonOutput = in_array('--json', $arguments, true);
 $baseRef = 'HEAD~1';
 
-foreach ($argv as $arg) {
+foreach ($arguments as $arg) {
     if (str_starts_with($arg, '--base=')) {
         $baseRef = substr($arg, strlen('--base='));
     }
 }
 
+/**
+ * Index baseline entries by "file|import".
+ *
+ * Every field is required: an entry that lost its `file` would key on
+ * "|SomeImport" and make this ratchet treat an unrelated violation as already
+ * accepted, which is the one failure mode a ratchet must not have.
+ *
+ * @return array<string, array{file: string, import: string, rule: string}>
+ */
+$indexViolations = static function (JsonDocument $document): array {
+    $indexed = [];
+
+    foreach ($document->children('violations') as $violation) {
+        $entry = [
+            'file' => $violation->string('file'),
+            'import' => $violation->string('import'),
+            'rule' => $violation->stringOr('rule', 'unspecified'),
+        ];
+
+        $indexed[$entry['file'] . '|' . $entry['import']] = $entry;
+    }
+
+    return $indexed;
+};
+
 // Load current baseline
-$currentViolations = [];
-if (file_exists($absoluteBaselinePath)) {
-    $data = json_decode(
-        (string) file_get_contents($absoluteBaselinePath),
-        true,
-        512,
-        JSON_THROW_ON_ERROR,
-    );
-    $currentViolations = $data['violations'] ?? [];
-}
+$currentKeys = file_exists($absoluteBaselinePath)
+    ? $indexViolations(JsonDocument::fromFile($absoluteBaselinePath))
+    : [];
 
-// Load previous baseline from git
-$previousViolations = [];
-$command = sprintf(
-    'git -C %s show %s:%s 2>/dev/null',
-    escapeshellarg($rootDir),
-    escapeshellarg($baseRef),
-    escapeshellarg($baselinePath),
-);
-$output = [];
-exec($command, $output, $exitCode);
-
-if ($exitCode === 0) {
-    $previousJson = implode("\n", $output);
-    $previousData = json_decode($previousJson, true, 512, JSON_THROW_ON_ERROR);
-    $previousViolations = $previousData['violations'] ?? [];
-}
-
-// Build keyed sets for comparison
-$currentKeys = [];
-foreach ($currentViolations as $v) {
-    $key = $v['file'] . '|' . $v['import'];
-    $currentKeys[$key] = $v;
-}
-
+// Load previous baseline from git.
+//
+// The argument-array form of proc_open never spawns a shell, so $baseRef — a
+// CLI-supplied value — cannot be interpreted as a command, and no escaping is
+// needed. This replaces an exec() whose `2>/dev/null` redirection is Unix-only:
+// on Windows the whole command failed, the previous baseline read as empty, and
+// the ratchet reported every accepted violation as newly added. A gate that
+// answers wrongly off-CI is worse than one that is only run on CI.
+// nosemgrep: php.lang.security.exec-use.exec-use
 $previousKeys = [];
-foreach ($previousViolations as $v) {
-    $key = $v['file'] . '|' . $v['import'];
-    $previousKeys[$key] = $v;
+$descriptors = [
+    1 => ['pipe', 'w'],
+    2 => ['pipe', 'w'],
+];
+$pipes = [];
+$process = proc_open(
+    ['git', '-C', $rootDir, 'show', "{$baseRef}:{$baselinePath}"],
+    $descriptors,
+    $pipes,
+);
+
+if (is_resource($process)) {
+    $previousJson = stream_get_contents($pipes[1]);
+    fclose($pipes[1]);
+    fclose($pipes[2]);
+    $exitCode = proc_close($process);
+
+    if ($exitCode === 0 && is_string($previousJson) && trim($previousJson) !== '') {
+        $previousKeys = $indexViolations(
+            JsonDocument::fromString($previousJson, "{$baseRef}:{$baselinePath}"),
+        );
+    } elseif (!$jsonOutput) {
+        fwrite(STDERR, "Note: no baseline at {$baseRef}:{$baselinePath}; treating it as empty.\n");
+    }
 }
 
 // Find new violations (in current but not in previous)

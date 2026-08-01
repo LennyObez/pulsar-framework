@@ -21,9 +21,29 @@ declare(strict_types=1);
 
 $options = getopt('', ['threshold:', 'output:', 'base-path:', 'dry-run']);
 
-$threshold = (int) ($options['threshold'] ?? 80);
-$outputPath = $options['output'] ?? 'var/cache/preload.php';
-$basePath = realpath($options['base-path'] ?? '.') ?: '.';
+if ($options === false) {
+    fwrite(STDERR, "Could not parse command-line options.
+");
+
+    exit(1);
+}
+
+/**
+ * getopt() yields false for a valueless flag and a list when an option repeats,
+ * so a raw value is not a string and would reach realpath()/file_put_contents()
+ * as one.
+ *
+ * @param array<string, list<string>|string|false> $options
+ */
+$stringOption = static function (array $options, string $name, string $default): string {
+    $value = $options[$name] ?? null;
+
+    return is_string($value) ? $value : $default;
+};
+
+$threshold = (int) $stringOption($options, 'threshold', '80');
+$outputPath = $stringOption($options, 'output', 'var/cache/preload.php');
+$basePath = realpath($stringOption($options, 'base-path', '.')) ?: '.';
 $dryRun = isset($options['dry-run']);
 
 if (!function_exists('opcache_get_status')) {
@@ -33,12 +53,13 @@ if (!function_exists('opcache_get_status')) {
     $classes = generateFromStaticAnalysis($basePath, $threshold);
 } else {
     $status = opcache_get_status(true);
+    $scriptHits = $status === false ? [] : opcacheScriptHits($status);
 
-    if ($status === false || !isset($status['scripts']) || $status['scripts'] === []) {
+    if ($scriptHits === []) {
         fwrite(STDERR, "OPcache has no cached scripts. Falling back to static analysis.\n\n");
         $classes = generateFromStaticAnalysis($basePath, $threshold);
     } else {
-        $classes = generateFromOpcacheStatus($status, $basePath, $threshold);
+        $classes = generateFromOpcacheStatus($scriptHits, $basePath, $threshold);
     }
 }
 
@@ -73,20 +94,53 @@ fprintf(STDOUT, "Written to %s\n", $outputPath);
 // --- Functions ---
 
 /**
- * @param array{scripts: array<string, array{hits: int, timestamp: int}>} $status
+ * Hit counts per cached script path, extracted from opcache_get_status().
+ *
+ * opcache_get_status() returns a plain array, so nothing about the nested shape is
+ * guaranteed and every field has to be checked rather than asserted. Entries whose
+ * hit count is not an integer are skipped: a preload list is generated once and then
+ * trusted for the life of a deployment, so deriving it from unvalidated input means
+ * preloading the wrong files and never finding out.
+ *
+ * @param array<mixed> $status
+ * @return array<string, int> Absolute script path => hit count
+ */
+function opcacheScriptHits(array $status): array
+{
+    $scripts = $status['scripts'] ?? null;
+
+    if (!is_array($scripts)) {
+        return [];
+    }
+
+    $hits = [];
+
+    /** @var mixed $script */
+    foreach ($scripts as $path => $script) {
+        if (!is_string($path) || !is_array($script) || !isset($script['hits']) || !is_int($script['hits'])) {
+            continue;
+        }
+
+        $hits[$path] = $script['hits'];
+    }
+
+    return $hits;
+}
+
+/**
+ * @param array<string, int> $scripts Script path => hit count
  * @return list<string>
  */
-function generateFromOpcacheStatus(array $status, string $basePath, int $threshold): array
+function generateFromOpcacheStatus(array $scripts, string $basePath, int $threshold): array
 {
-    $scripts = $status['scripts'];
     $totalHits = 0;
     $maxHits = 0;
 
-    foreach ($scripts as $script) {
-        $totalHits += $script['hits'];
+    foreach ($scripts as $scriptHits) {
+        $totalHits += $scriptHits;
 
-        if ($script['hits'] > $maxHits) {
-            $maxHits = $script['hits'];
+        if ($scriptHits > $maxHits) {
+            $maxHits = $scriptHits;
         }
     }
 
@@ -97,8 +151,8 @@ function generateFromOpcacheStatus(array $status, string $basePath, int $thresho
     $hotFiles = [];
     $hitThreshold = (int) ($maxHits * ($threshold / 100.0));
 
-    foreach ($scripts as $path => $script) {
-        if ($script['hits'] < $hitThreshold) {
+    foreach ($scripts as $path => $scriptHits) {
+        if ($scriptHits < $hitThreshold) {
             continue;
         }
 
@@ -149,11 +203,19 @@ function generateFromStaticAnalysis(string $basePath, int $threshold): array
     );
 
     foreach ($iterator as $file) {
-        if ($file->getExtension() !== 'php') {
+        // The iterator is typed as yielding mixed; narrow it rather than assert it.
+        if (!$file instanceof SplFileInfo || $file->getExtension() !== 'php') {
             continue;
         }
 
-        $relativePath = str_replace($srcDir . DIRECTORY_SEPARATOR, '', $file->getRealPath());
+        $realPath = $file->getRealPath();
+
+        // getRealPath() returns false for a path that vanished mid-walk.
+        if ($realPath === false) {
+            continue;
+        }
+
+        $relativePath = str_replace($srcDir . DIRECTORY_SEPARATOR, '', $realPath);
 
         // Include files in hot-path directories
         foreach ($hotPaths as $hotPath) {
@@ -164,7 +226,7 @@ function generateFromStaticAnalysis(string $basePath, int $threshold): array
                     continue 2;
                 }
 
-                $files[] = $file->getRealPath();
+                $files[] = $realPath;
 
                 continue 2;
             }

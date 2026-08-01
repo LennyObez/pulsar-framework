@@ -79,7 +79,13 @@ function findPhpFiles(string $dir): array
         new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS),
     );
 
+    // RecursiveIteratorIterator is typed as yielding mixed. An instanceof check
+    // narrows it honestly, where an inline @var would only assert it.
     foreach ($iterator as $file) {
+        if (!$file instanceof SplFileInfo) {
+            continue;
+        }
+
         if ($file->isFile() && $file->getExtension() === 'php') {
             $files[] = $file->getPathname();
         }

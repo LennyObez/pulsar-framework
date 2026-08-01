@@ -221,9 +221,10 @@ final readonly class ApiSnapshotBuilder
             new RecursiveDirectoryIterator($this->sourceDirectory),
         );
 
-        /** @var SplFileInfo $file */
         foreach ($iterator as $file) {
-            if ($file->getExtension() !== 'php') {
+            // Narrowed with instanceof rather than an inline @var: the iterator is
+            // typed as yielding mixed, and asserting a type is not checking it.
+            if (!$file instanceof SplFileInfo || $file->getExtension() !== 'php') {
                 continue;
             }
 

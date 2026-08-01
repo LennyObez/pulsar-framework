@@ -83,14 +83,14 @@ final readonly class ImagickImageProcessor implements ImageProcessorInterface
         $tempFile = tempnam(sys_get_temp_dir(), 'pulsar_img_');
 
         if ($tempFile === false) {
-            $imagick->destroy();
+            $imagick->clear();
 
             throw CmsException::invalidImageFile();
         }
 
         $outputPath = $tempFile . '.' . $format;
         $imagick->writeImage($outputPath);
-        $imagick->destroy();
+        $imagick->clear();
 
         return $outputPath;
     }
@@ -110,7 +110,7 @@ final readonly class ImagickImageProcessor implements ImageProcessorInterface
         $imagick->setImageCompressionQuality($this->config->webpQuality);
 
         $blob = $imagick->getImageBlob();
-        $imagick->destroy();
+        $imagick->clear();
 
         return 'data:image/webp;base64,' . base64_encode($blob);
     }
@@ -148,14 +148,14 @@ final readonly class ImagickImageProcessor implements ImageProcessorInterface
         $tempFile = tempnam(sys_get_temp_dir(), 'pulsar_exif_');
 
         if ($tempFile === false) {
-            $imagick->destroy();
+            $imagick->clear();
 
             throw CmsException::invalidImageFile();
         }
 
         $outputPath = $tempFile . '.' . $format;
         $imagick->writeImage($outputPath);
-        $imagick->destroy();
+        $imagick->clear();
 
         return $outputPath;
     }
@@ -167,7 +167,7 @@ final readonly class ImagickImageProcessor implements ImageProcessorInterface
     {
         $imagick = new Imagick($sourcePath);
         $profiles = $imagick->getImageProfiles('icc', true);
-        $imagick->destroy();
+        $imagick->clear();
 
         return isset($profiles['icc']);
     }
@@ -179,7 +179,7 @@ final readonly class ImagickImageProcessor implements ImageProcessorInterface
     {
         $imagick = new Imagick($sourcePath);
         $colorspace = $imagick->getImageColorspace();
-        $imagick->destroy();
+        $imagick->clear();
 
         return $colorspace === Imagick::COLORSPACE_CMYK;
     }

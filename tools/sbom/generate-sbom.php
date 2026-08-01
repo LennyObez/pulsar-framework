@@ -18,10 +18,6 @@ declare(strict_types=1);
 
 use Pulsar\SupplyChain\SbomGenerator;
 
-use const JSON_PRETTY_PRINT;
-use const JSON_THROW_ON_ERROR;
-use const JSON_UNESCAPED_SLASHES;
-
 require_once dirname(__DIR__, 2) . '/vendor/autoload.php';
 
 (static function (array $argv): void {
@@ -60,6 +56,7 @@ require_once dirname(__DIR__, 2) . '/vendor/autoload.php';
 
     file_put_contents($outputPath, $json . "\n");
 
-    $count = count($sbom['components'] ?? []);
+    $components = $sbom['components'] ?? [];
+    $count = is_array($components) ? count($components) : 0;
     fprintf(STDOUT, "SBOM generated: %s (%d components)\n", $outputPath, $count);
-})($argv);
+})($argv ?? []);

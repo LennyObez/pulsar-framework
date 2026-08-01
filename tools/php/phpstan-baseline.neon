@@ -62,30 +62,9 @@ parameters:
 			count: 1
 			path: ../../tests/Unit/Auth/Identity/IdentityTest.php
 
-		# === Category B: PsySH (psy/psysh) is a SUGGESTED dependency ===
-		# class_exists() guards every Psy\* call at the source — PHPStan cannot
-		# see the runtime check and flags the static reference. Making psysh
-		# required would defeat the "optional REPL" contract.
-		-
-			message: '#^PHPDoc tag @var for variable \$(configClass|shellClass) contains unknown class Psy\\(Configuration|Shell)\.$#'
-			identifier: class.notFound
-			count: 2
-			path: ../../src/Console/Repl/ShellCommand.php
-
-		-
-			message: '#^Call to method (setScopeVariables|addInput|run)\(\) on an unknown class Psy\\Shell\.$#'
-			identifier: class.notFound
-			count: 3
-			path: ../../src/Console/Repl/ShellCommand.php
-
-		-
-			message: '#^PHPDoc tag @var for variable \$(configClass|shellClass) contains unknown class Psy\\(Configuration|Shell)\.$#'
-			identifier: class.notFound
-			count: 2
-			path: ../../src/Console/Repl/ReplCommand.php
-
-		-
-			message: '#^Call to method (setScopeVariables|addInput|run)\(\) on an unknown class Psy\\Shell\.$#'
-			identifier: class.notFound
-			count: 3
-			path: ../../src/Console/Repl/ReplCommand.php
+		# The four PsySH entries that used to live here are gone: they suppressed
+		# `class.notFound` on Psy\Configuration and Psy\Shell in the two REPL
+		# commands, purely because tools/php/stubs/PsySH.php existed on disk but had
+		# never been wired into phpstan.neon's scanFiles. Wiring it made the classes
+		# known and the suppressions unnecessary — the REPL is now genuinely analysed
+		# instead of exempted, and psy/psysh stays a suggested dependency.

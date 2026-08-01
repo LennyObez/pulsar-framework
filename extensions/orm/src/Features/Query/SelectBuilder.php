@@ -143,6 +143,13 @@ final class SelectBuilder implements EntityQueryBuilderInterface
 
     /**
      * Add a raw JOIN clause.
+     *
+     * The callback receives the JoinOnBuilder to declare the ON conditions on.
+     * Documenting it is not cosmetic: without the callable's shape, every call
+     * site's closure parameter analyses as mixed, so `$on->on(...)` inside it is
+     * unchecked and a typo in the method name would only surface at runtime.
+     *
+     * @param callable(JoinOnBuilder): mixed $onCallback
      */
     public function join(string $table, string $alias, string $type, callable $onCallback): self
     {
@@ -172,6 +179,8 @@ final class SelectBuilder implements EntityQueryBuilderInterface
 
     /**
      * Add an INNER JOIN.
+     *
+     * @param callable(JoinOnBuilder): mixed $onCallback
      */
     public function innerJoin(string $table, string $alias, callable $onCallback): self
     {
@@ -180,6 +189,8 @@ final class SelectBuilder implements EntityQueryBuilderInterface
 
     /**
      * Add a LEFT JOIN.
+     *
+     * @param callable(JoinOnBuilder): mixed $onCallback
      */
     public function leftJoin(string $table, string $alias, callable $onCallback): self
     {

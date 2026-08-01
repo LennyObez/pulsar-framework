@@ -62,8 +62,13 @@ $opcacheMemoryKb = null;
 
 if (function_exists('opcache_get_status')) {
     $opcacheStatus = opcache_get_status(false);
-    if (is_array($opcacheStatus) && isset($opcacheStatus['memory_usage']['used_memory'])) {
-        $opcacheMemoryKb = (int) ($opcacheStatus['memory_usage']['used_memory'] / 1024);
+    $memoryUsage = is_array($opcacheStatus) ? ($opcacheStatus['memory_usage'] ?? null) : null;
+    $usedMemory = is_array($memoryUsage) ? ($memoryUsage['used_memory'] ?? null) : null;
+
+    // isset() proves the key is there, not that it holds a number: opcache_get_status()
+    // is typed as array<mixed> and a non-numeric value would divide as 0 silently.
+    if (is_int($usedMemory) || is_float($usedMemory)) {
+        $opcacheMemoryKb = (int) ($usedMemory / 1024);
     }
 }
 

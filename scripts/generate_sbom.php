@@ -3,202 +3,114 @@
 declare(strict_types=1);
 
 /**
- * Generate a CycloneDX SBOM (Software Bill of Materials) from composer.lock.
- *
- * Outputs a CycloneDX 1.5 JSON file containing all dependencies,
- * their versions, licenses, and package URLs.
+ * Generate a CycloneDX 1.5 SBOM (Software Bill of Materials).
  *
  * Usage:
  *   php scripts/generate_sbom.php [output-path]
  *
  * Default output: sbom.json in the project root.
+ *
+ * This is the documented entry point (docs/compliance-ccf.md); the CI provenance
+ * workflow calls tools/sbom/generate-sbom.php. Both now run the same code.
+ *
+ * They did not. This script used to carry its own 200-line CycloneDX builder that
+ * read composer.lock by hand, while the framework already owned
+ * {@see \Pulsar\SupplyChain\SbomGenerator} — reachable only through the other
+ * entry point. Two independent implementations of one artefact is not redundancy,
+ * it is a supply-chain hazard: the SBOM a human generates from the documentation
+ * and the SBOM CI attests differ, and nothing compares them. The duplicate also
+ * omitted the JavaScript dependency tree entirely, so the documented command
+ * produced a materially incomplete bill of materials, and its unchecked
+ * `(string) $package['name']` casts would have written the literal text "Array"
+ * into a component name rather than failing.
  */
 
-$projectRoot = dirname(__DIR__);
-$lockFile = $projectRoot . '/composer.lock';
-$outputPath = $argv[1] ?? $projectRoot . '/sbom.json';
+use Pulsar\SupplyChain\SbomGenerator;
 
-if (!file_exists($lockFile)) {
-    fwrite(STDERR, "composer.lock not found at: {$lockFile}\n");
-    exit(1);
-}
-
-$lockData = json_decode(file_get_contents($lockFile), true, 512, JSON_THROW_ON_ERROR);
-
-/** @var list<array<string, mixed>> $packages */
-$packages = $lockData['packages'] ?? [];
-/** @var list<array<string, mixed>> $devPackages */
-$devPackages = $lockData['packages-dev'] ?? [];
-
-$composerJson = json_decode(file_get_contents($projectRoot . '/composer.json'), true, 512, JSON_THROW_ON_ERROR);
-
-$components = [];
-
-// Add PHP platform dependency
-$phpRequirement = $composerJson['require']['php'] ?? '^8.5';
-$components[] = [
-    'type' => 'platform',
-    'name' => 'php',
-    'version' => $phpRequirement,
-    'scope' => 'required',
-    'description' => 'PHP runtime',
-];
-
-// Add required extensions as platform dependencies
-foreach ($composerJson['require'] ?? [] as $dep => $constraint) {
-    if (str_starts_with($dep, 'ext-')) {
-        $components[] = [
-            'type' => 'platform',
-            'name' => $dep,
-            'version' => $constraint,
-            'scope' => 'required',
-            'description' => 'PHP extension: ' . substr($dep, 4),
-        ];
-    }
-}
-
-foreach ($packages as $package) {
-    $components[] = buildComponent($package, 'required');
-}
-
-foreach ($devPackages as $package) {
-    $components[] = buildComponent($package, 'optional');
-}
-
-$sbom = [
-    'bomFormat' => 'CycloneDX',
-    'specVersion' => '1.5',
-    'serialNumber' => 'urn:uuid:' . generateUuidV4(),
-    'version' => 1,
-    'metadata' => [
-        'timestamp' => date('c'),
-        'tools' => [
-            'components' => [
-                [
-                    'type' => 'application',
-                    'name' => 'pulsar-sbom-generator',
-                    'version' => '1.0.0',
-                ],
-            ],
-        ],
-        'component' => [
-            'type' => 'framework',
-            'name' => 'pulsar/framework',
-            'version' => getFrameworkVersion($projectRoot),
-            'purl' => 'pkg:composer/pulsar/framework',
-        ],
-    ],
-    'components' => $components,
-];
-
-$json = json_encode($sbom, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
-
-file_put_contents($outputPath, $json . "\n");
-
-echo "SBOM generated: {$outputPath}\n";
-echo "Components: " . count($components) . " (" . count($packages) . " required, " . count($devPackages) . " dev)\n";
-
-exit(0);
-
-// --- Helper functions ---
+require_once dirname(__DIR__) . '/vendor/autoload.php';
 
 /**
- * @param array<string, mixed> $package
+ * Read a JSON object, failing loudly rather than handing null to the generator.
+ *
+ * Deliberately not Pulsar\Tooling\Support\JsonDocument, which the sibling dev
+ * scripts use: that class lives under autoload-dev, and this command is documented
+ * for compliance operators (docs/compliance-ccf.md, DORA Art.28 / NIS2 Art.21(d)).
+ * Running it against a production checkout installed with --no-dev must work, so it
+ * cannot reach for a dev-only class. SbomGenerator itself is in src/ and is fine.
+ *
  * @return array<string, mixed>
  */
-function buildComponent(array $package, string $scope): array
-{
-    $name = (string) ($package['name'] ?? 'unknown');
-    $version = (string) ($package['version'] ?? 'unknown');
+$readJsonObject = static function (string $path): array {
+    $contents = file_get_contents($path);
 
-    $component = [
-        'type' => 'library',
-        'name' => $name,
-        'version' => $version,
-        'purl' => 'pkg:composer/' . $name . '@' . $version,
-        'scope' => $scope,
-    ];
+    if ($contents === false) {
+        fwrite(STDERR, "Cannot read {$path}\n");
 
-    // Extract licenses
-    $licenses = [];
-    if (isset($package['license']) && is_array($package['license'])) {
-        foreach ($package['license'] as $license) {
-            $licenses[] = ['license' => ['id' => (string) $license]];
+        exit(1);
+    }
+
+    /** @var mixed $decoded */
+    $decoded = json_decode($contents, true, 512, JSON_THROW_ON_ERROR);
+
+    if (!is_array($decoded)) {
+        fwrite(STDERR, "{$path} did not decode to a JSON object\n");
+
+        exit(1);
+    }
+
+    $object = [];
+
+    /** @var mixed $value */
+    foreach ($decoded as $key => $value) {
+        if (is_string($key)) {
+            $object[$key] = $value;
         }
     }
 
-    if ($licenses !== []) {
-        $component['licenses'] = $licenses;
+    return $object;
+};
+
+(static function (array $arguments) use ($readJsonObject): void {
+    $projectRoot = dirname(__DIR__);
+
+    // $arguments[0] is the script itself; the first positional argument is the
+    // output path, per the documented usage.
+    $outputPath = $projectRoot . '/sbom.json';
+
+    foreach (array_slice($arguments, 1) as $argument) {
+        if (is_string($argument) && !str_starts_with($argument, '-')) {
+            $outputPath = $argument;
+
+            break;
+        }
     }
 
-    // Extract description
-    if (isset($package['description']) && is_string($package['description'])) {
-        $component['description'] = $package['description'];
+    $composerJsonPath = $projectRoot . '/composer.json';
+    $composerLockPath = $projectRoot . '/composer.lock';
+    $pnpmLockPath = $projectRoot . '/pnpm-lock.yaml';
+
+    if (!is_file($composerLockPath)) {
+        fwrite(STDERR, "composer.lock not found at: {$composerLockPath}\n");
+
+        exit(1);
     }
 
-    // Extract hashes from dist
-    if (isset($package['dist']['shasum']) && is_string($package['dist']['shasum']) && $package['dist']['shasum'] !== '') {
-        $component['hashes'] = [
-            ['alg' => 'SHA-1', 'content' => $package['dist']['shasum']],
-        ];
-    }
+    $composerJson = is_file($composerJsonPath)
+        ? $readJsonObject($composerJsonPath)
+        : null;
 
-    return $component;
-}
+    $composerLock = $readJsonObject($composerLockPath);
 
-function getFrameworkVersion(string $projectRoot): string
-{
-    $versionFile = $projectRoot . '/src/Core/Version.php';
+    $pnpmLockContents = is_file($pnpmLockPath)
+        ? (string) file_get_contents($pnpmLockPath)
+        : '';
 
-    if (!file_exists($versionFile)) {
-        return 'unknown';
-    }
+    $sbom = new SbomGenerator()->generate($composerJson, $composerLock, $pnpmLockContents);
 
-    $content = file_get_contents($versionFile);
+    $json = json_encode($sbom, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
 
-    if ($content === false) {
-        return 'unknown';
-    }
+    file_put_contents($outputPath, $json . "\n");
 
-    // Parse MAJOR, MINOR, PATCH constants and optional PRERELEASE_SUFFIX
-    $major = $minor = $patch = null;
-    $suffix = '';
-
-    if (preg_match('/const\s+int\s+MAJOR\s*=\s*(\d+)/', $content, $m)) {
-        $major = $m[1];
-    }
-
-    if (preg_match('/const\s+int\s+MINOR\s*=\s*(\d+)/', $content, $m)) {
-        $minor = $m[1];
-    }
-
-    if (preg_match('/const\s+int\s+PATCH\s*=\s*(\d+)/', $content, $m)) {
-        $patch = $m[1];
-    }
-
-    if (preg_match("/const\s+string\s+PRERELEASE_SUFFIX\s*=\s*'([^']*)'/", $content, $m)) {
-        $suffix = $m[1];
-    }
-
-    if ($major !== null && $minor !== null && $patch !== null) {
-        return $major . '.' . $minor . '.' . $patch . $suffix;
-    }
-
-    return 'unknown';
-}
-
-function generateUuidV4(): string
-{
-    $data = random_bytes(16);
-    $data[6] = chr(ord($data[6]) & 0x0F | 0x40);
-    $data[8] = chr(ord($data[8]) & 0x3F | 0x80);
-
-    return sprintf(
-        '%s-%s-%s-%s-%s',
-        bin2hex(substr($data, 0, 4)),
-        bin2hex(substr($data, 4, 2)),
-        bin2hex(substr($data, 6, 2)),
-        bin2hex(substr($data, 8, 2)),
-        bin2hex(substr($data, 10, 6)),
-    );
-}
+    $components = $sbom['components'] ?? [];
+    fprintf(STDOUT, "SBOM generated: %s (%d components)\n", $outputPath, is_array($components) ? count($components) : 0);
+})($argv ?? []);

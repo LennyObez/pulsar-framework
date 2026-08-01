@@ -21,7 +21,11 @@ declare(strict_types=1);
  *   php tools/ci/assert-extensions.php redis memcached apcu igbinary zstd brotli
  */
 
-$expected = array_slice($argv, 1);
+// $argv only exists with register_argc_argv, always on under CLI — but reading it
+// unguarded would make this gate assert "no extensions expected" and pass silently.
+/** @var list<string> $arguments */
+$arguments = array_values(array_filter($argv ?? [], 'is_string'));
+$expected = array_slice($arguments, 1);
 
 if ($expected === []) {
     fwrite(STDERR, "usage: php tools/ci/assert-extensions.php <ext> [<ext> ...]\n");

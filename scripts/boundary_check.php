@@ -61,25 +61,56 @@ final class BoundaryAnalyzer
     /** @var array<string, true> Indexed set of #[Internal] class FQCNs */
     private array $internalClasses = [];
 
-    /** @var array<string, true> Reflection cache for classes not in snapshot */
+    /**
+     * Reflection cache for classes absent from the snapshot.
+     *
+     * Tri-state per class: true = carries #[Api], false = does not, null = could
+     * not be resolved at all. `null` is a cached answer rather than a miss, which
+     * is why lookups use array_key_exists() and not isset().
+     *
+     * @var array<string, bool|null>
+     */
     private array $reflectionCache = [];
 
     public function __construct(string $snapshotPath)
     {
-        if (file_exists($snapshotPath)) {
-            $data = json_decode(
-                (string) file_get_contents($snapshotPath),
-                true,
-                512,
-                JSON_THROW_ON_ERROR,
-            );
+        if (!file_exists($snapshotPath)) {
+            return;
+        }
 
-            foreach (array_keys($data['api_classes'] ?? []) as $fqcn) {
-                $this->apiClasses[$fqcn] = true;
+        /** @var mixed $data */
+        $data = json_decode(
+            (string) file_get_contents($snapshotPath),
+            true,
+            512,
+            JSON_THROW_ON_ERROR,
+        );
+
+        if (!is_array($data)) {
+            return;
+        }
+
+        // The snapshot is the authority on what is public: silently treating a
+        // malformed one as "no #[Api] classes at all" would make every boundary
+        // violation look permitted, so each section is checked before it is read.
+        $apiClasses = $data['api_classes'] ?? [];
+
+        if (is_array($apiClasses)) {
+            foreach (array_keys($apiClasses) as $fqcn) {
+                if (is_string($fqcn)) {
+                    $this->apiClasses[$fqcn] = true;
+                }
             }
+        }
 
-            foreach ($data['internal_classes'] ?? [] as $fqcn) {
-                $this->internalClasses[$fqcn] = true;
+        $internalClasses = $data['internal_classes'] ?? [];
+
+        if (is_array($internalClasses)) {
+            /** @var mixed $fqcn */
+            foreach ($internalClasses as $fqcn) {
+                if (is_string($fqcn)) {
+                    $this->internalClasses[$fqcn] = true;
+                }
             }
         }
     }
@@ -585,24 +616,31 @@ if (PHP_SAPI !== 'cli') {
 }
 
 // Only run CLI when this script is the main entry point
-$scriptFile = realpath($_SERVER['SCRIPT_FILENAME'] ?? '');
+$scriptFilename = $_SERVER['SCRIPT_FILENAME'] ?? '';
+$scriptFile = realpath(is_string($scriptFilename) ? $scriptFilename : '');
 $thisFile = realpath(__FILE__);
 if ($scriptFile !== false && $thisFile !== false && $scriptFile !== $thisFile) {
     return;
 }
+
+// $argv only exists when register_argc_argv is enabled. It always is under the
+// CLI SAPI, but the analyser cannot know that, and reading a possibly-undefined
+// global here would make every flag silently unparsed if it ever were not.
+/** @var list<string> $arguments */
+$arguments = array_values(array_filter($argv ?? [], 'is_string'));
 
 $rootDir = dirname(__DIR__);
 $snapshotPath = $rootDir . '/tools/api/public-api.snapshot.json';
 $baselinePath = $rootDir . '/tools/php/boundary-baseline.json';
 
 // Parse CLI arguments
-$jsonOutput = in_array('--json', $argv, true);
-$strict = in_array('--strict', $argv, true);
-$generateBaseline = in_array('--generate-baseline', $argv, true);
+$jsonOutput = in_array('--json', $arguments, true);
+$strict = in_array('--strict', $arguments, true);
+$generateBaseline = in_array('--generate-baseline', $arguments, true);
 $diffBase = null;
 $hasDiffBase = false;
 
-foreach ($argv as $arg) {
+foreach ($arguments as $arg) {
     if (str_starts_with($arg, '--diff-base=')) {
         $diffBase = substr($arg, strlen('--diff-base='));
         $hasDiffBase = true;
@@ -655,8 +693,24 @@ if ($diffBase !== null) {
 // Load baseline
 $baseline = [];
 if (!$generateBaseline && file_exists($baselinePath)) {
+    /** @var mixed $data */
     $data = json_decode((string) file_get_contents($baselinePath), true, 512, JSON_THROW_ON_ERROR);
-    foreach ($data['violations'] ?? [] as $entry) {
+    $baselineViolations = is_array($data) ? ($data['violations'] ?? []) : [];
+
+    if (!is_array($baselineViolations)) {
+        $baselineViolations = [];
+    }
+
+    /** @var mixed $entry */
+    foreach ($baselineViolations as $entry) {
+        // A baseline entry missing either half would key on an empty string and
+        // silently exempt an unrelated violation, so both must be present.
+        if (!is_array($entry) || !isset($entry['file'], $entry['import'])
+            || !is_string($entry['file']) || !is_string($entry['import'])
+        ) {
+            continue;
+        }
+
         $key = $entry['file'] . '|' . $entry['import'];
         $baseline[$key] = true;
     }

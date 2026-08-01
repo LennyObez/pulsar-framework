@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Cache\Application\Lock;
 
 use Pulsar\Api\Internal;
+use Pulsar\Support\ApcuReply;
 use Pulsar\Cache\Application\Exception\LockAcquisitionException;
 use Random\Engine\Secure;
 use Random\Randomizer;
@@ -78,7 +79,7 @@ final readonly class ApcuLock implements LockInterface
             return false;
         }
 
-        return apcu_delete($handle->resource);
+        return ApcuReply::deleted(apcu_delete($handle->resource));
     }
 
     public function refresh(LockHandle $handle, int $ttlSeconds = 30): bool
@@ -95,6 +96,6 @@ final readonly class ApcuLock implements LockInterface
         // APCu does not provide a CAS primitive, so a narrow TOCTOU window
         // exists between the fetch above and this store. This is acceptable
         // for single-server deployments where the race is negligibly small.
-        return apcu_store($handle->resource, $handle->token, $ttlSeconds);
+        return ApcuReply::stored(apcu_store($handle->resource, $handle->token, $ttlSeconds));
     }
 }

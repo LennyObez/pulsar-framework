@@ -122,8 +122,16 @@ final class MemoryProfileBench
             $container->bind("service.$i", fn() => new \stdClass());
         }
 
+        // Consume each resolution: discarding it lets the engine treat the loop as
+        // dead, and a benchmark that can be optimised away measures nothing.
+        $resolved = 0;
+
         for ($i = 0; $i < 100; $i++) {
-            $container->get("service.$i");
+            $resolved += $container->get("service.$i") instanceof \stdClass ? 1 : 0;
+        }
+
+        if ($resolved !== 100) {
+            throw new \RuntimeException("Container resolved {$resolved} of 100 services");
         }
 
         $after = memory_get_usage(true);
@@ -242,8 +250,16 @@ final class MemoryProfileBench
             );
         }
 
-        // Prevent DCE
-        if ($responses === []) {
+        // Prevent DCE. Comparing against [] cannot serve: the analyser proves the
+        // list non-empty, so the guard was already dead code. Touching each response
+        // is a check it cannot fold away.
+        $bytes = 0;
+
+        foreach ($responses as $response) {
+            $bytes += $response->getBody()->getSize() ?? 0;
+        }
+
+        if ($bytes === 0) {
             throw new \RuntimeException('Unexpected empty result');
         }
     }
@@ -266,9 +282,15 @@ final class MemoryProfileBench
         $router->match(Method::GET, '/api/v1/users/42/posts/25');
 
         $container = new Container();
+        $resolved = 0;
+
         for ($i = 0; $i < 20; $i++) {
             $container->bind("svc.$i", fn() => new \stdClass());
-            $container->get("svc.$i");
+            $resolved += $container->get("svc.$i") instanceof \stdClass ? 1 : 0;
+        }
+
+        if ($resolved !== 20) {
+            throw new \RuntimeException("Container resolved {$resolved} of 20 services");
         }
 
         $response = Response::json(['status' => 'ok', 'data' => range(1, 50)]);
