@@ -265,11 +265,3 @@ final class FieldTest extends TestCase
         self::assertSame('Email cannot be empty', $def->rules[0]->message);
     }
 }
-
-/** @internal */
-enum TestStatus: string
-{
-    case Active = 'active';
-    case Inactive = 'inactive';
-    case Pending = 'pending';
-}
