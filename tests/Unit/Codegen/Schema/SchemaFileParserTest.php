@@ -210,7 +210,9 @@ final class SchemaFileParserTest extends TestCase
     #[Test]
     public function rejectsPathOutsideAllowedRoot(): void
     {
-        $tempFile = sys_get_temp_dir() . '/pulsar-codegen-rejected.pulsar.json';
+        // Unique per process: a literal path would be shared by every parallel
+        // test worker, so one worker's cleanup would delete another's fixture.
+        $tempFile = sys_get_temp_dir() . '/pulsar-codegen-rejected-' . bin2hex(random_bytes(8)) . '.pulsar.json';
         file_put_contents($tempFile, '{"entities":{}}');
 
         try {
@@ -235,7 +237,7 @@ final class SchemaFileParserTest extends TestCase
     #[Test]
     public function acceptsPulsarJsonInsideAllowedRoot(): void
     {
-        $dir = sys_get_temp_dir() . '/pulsar-codegen-accept';
+        $dir = sys_get_temp_dir() . '/pulsar-codegen-accept-' . bin2hex(random_bytes(8));
         $fs = new \Symfony\Component\Filesystem\Filesystem();
         $fs->mkdir($dir, 0o775);
         $file = $dir . '/sample.pulsar.json';

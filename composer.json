@@ -42,6 +42,7 @@
     "psr/simple-cache": "^3.0"
   },
   "require-dev": {
+    "brianium/paratest": "^7.22",
     "deptrac/deptrac": "^4.6",
     "friendsofphp/php-cs-fixer": "^3.0",
     "giorgiosironi/eris": "^1.0",
@@ -92,7 +93,7 @@
       "Pulsar\\Tooling\\PsalmPlugin\\": "tools/php/psalm-plugin/",
       "Pulsar\\Extension\\OpenTelemetry\\Tests\\": "extensions/opentelemetry/tests/",
       "Pulsar\\Extension\\Observability\\Tests\\": "extensions/observability/tests/",
-      "Pulsar\\Extension\\OpenTelemetry\\Export\\JsonLines\\Tests\\": "extensions/observability-export/tests/",
+      "Pulsar\\Extension\\ObservabilityExportTests\\": "extensions/observability-export/tests/",
       "Pulsar\\Extension\\Grpc\\Tests\\": "extensions/grpc/tests/",
       "Pulsar\\Extension\\Accessibility\\Tests\\": "extensions/accessibility/tests/",
       "Pulsar\\Extension\\AiGovernance\\Tests\\": "extensions/ai-governance/tests/",
@@ -113,6 +114,8 @@
   ],
   "scripts": {
     "test": "php -d opcache.enable_cli=1 -d opcache.memory_consumption=256 -d opcache.jit=off -d opcache.jit_buffer_size=0 vendor/bin/phpunit -c tools/php/phpunit.xml",
+    "test:parallel": "php -d memory_limit=2G vendor/bin/paratest -c tools/php/phpunit.xml --runner=WrapperRunner -p6",
+    "test:all": "php -d memory_limit=2G vendor/bin/paratest -c tools/php/phpunit.xml --runner=WrapperRunner -p6 --testsuite Unit",
     "test:coverage": "php -d opcache.enable_cli=1 -d opcache.memory_consumption=256 -d opcache.jit=off -d opcache.jit_buffer_size=0 vendor/bin/phpunit -c tools/php/phpunit.xml --coverage-clover coverage/clover.xml --coverage-html coverage/html",
     "phpstan": "php -d memory_limit=1G vendor/bin/phpstan analyse -c tools/php/phpstan.neon",
     "psalm": "psalm -c tools/php/psalm.xml",
@@ -132,6 +135,8 @@
       "@boundary:deptrac",
       "@boundary:custom"
     ],
+    "autoload:check": "php tools/ci/assert-psr4-compliance.php",
+    "coverage:floor": "php tools/ci/assert-coverage-threshold.php",
     "extension:coverage": "php scripts/check_extension_coverage.php",
     "compliance:check": "php scripts/check_compliance_claims.php",
     "wiring:check": "php scripts/wiring_check.php",
@@ -145,6 +150,7 @@
     "property": "php -d opcache.enable_cli=1 -d opcache.memory_consumption=256 -d opcache.jit=off -d opcache.jit_buffer_size=0 vendor/bin/phpunit -c tools/php/phpunit.xml --group property",
     "qa": [
       "@version:check",
+      "@autoload:check",
       "@cs:check",
       "@phpstan",
       "@psalm",

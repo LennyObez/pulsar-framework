@@ -8,7 +8,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\OpenTelemetry\Internal\Export\BatchExporter;
-use Pulsar\Extension\OpenTelemetry\Internal\Transport\OtlpTransportInterface;
 use Pulsar\Extension\OpenTelemetry\Internal\Transport\TransportResult;
 
 use function implode;
@@ -244,34 +243,5 @@ final class BatchExporterTest extends TestCase
             maxBatchSize: $maxBatchSize,
             maxQueueSize: $maxQueueSize,
         );
-    }
-}
-
-/**
- * Test double that records all send() calls without real I/O.
- */
-final class StubTransport implements OtlpTransportInterface
-{
-    /** @var list<string> */
-    public array $sentPayloads = [];
-
-    /** @var list<string> */
-    public array $sentPaths = [];
-
-    public function __construct(
-        private readonly TransportResult $result = new TransportResult(
-            success: true,
-            httpStatus: 200,
-            errorMessage: '',
-            retryable: false,
-        ),
-    ) {}
-
-    public function send(string $path, string $protobufPayload): TransportResult
-    {
-        $this->sentPaths[] = $path;
-        $this->sentPayloads[] = $protobufPayload;
-
-        return $this->result;
     }
 }

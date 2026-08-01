@@ -83,6 +83,16 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: bash tools/ci/check-pr-size.sh
 
+      # PSR-4 conformance is a correctness gate, not style: composer's optimized
+      # classmap hides a namespace/path mismatch (the class still resolves), and
+      # `--strict-psr` only WARNS while still exiting 0. A mismatch that works on
+      # case-insensitive Windows or macOS fails to autoload on this Linux runner,
+      # and a class declared in a sibling's file is unreachable the moment nothing
+      # has included that file — the same fragility that broke 66 tests under
+      # parallel execution.
+      - name: PSR-4 autoload conformance
+        run: composer autoload:check
+
       - name: Boundary enforcement (Deptrac)
         run: composer boundary:deptrac
 
@@ -193,6 +203,23 @@ jobs:
       # and the job still passes. Fail loudly instead.
       - name: Assert the optional-extension contract
         run: php tools/ci/assert-extensions.php redis memcached apcu igbinary zstd brotli
+
+      # Fast, no-coverage parallel run FIRST: it fails in minutes instead of after
+      # the full path-coverage pass, and it is the only thing that guards test
+      # isolation. A helper class declared inside a sibling test file, or a fixture
+      # written to a literal temp path, works under sequential execution and breaks
+      # here — which is exactly how 66 such errors were found. Coverage stays on the
+      # sequential run below: merging PATH coverage across workers is far less
+      # exercised, and wrong numbers in a threshold gate are worse than a slow gate.
+      - name: Run all tests in parallel (isolation guard, no coverage)
+        env:
+          XDEBUG_MODE: 'off'
+        run: |
+          php -d memory_limit=2G \
+              vendor/bin/paratest \
+                -c tools/php/phpunit.xml \
+                --runner=WrapperRunner \
+                --processes=$(nproc)
 
       - name: Run all tests with line + branch + path coverage
         env:
