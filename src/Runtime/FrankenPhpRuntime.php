@@ -22,6 +22,8 @@ use Pulsar\Runtime\Worker\WorkerInfo;
 use Throwable;
 
 use function function_exists;
+use function header;
+use function headers_send;
 use function sprintf;
 
 use const PHP_OS_FAMILY;
@@ -34,7 +36,7 @@ use const PHP_OS_FAMILY;
  * the RequestSandbox for isolation.
  */
 #[Internal]
-final class FrankenPhpRuntime implements ReloadableRuntimeInterface
+final class FrankenPhpRuntime implements ReloadableRuntimeInterface, SupportsEarlyHints
 {
     private RuntimeStatus $status = RuntimeStatus::Stopped;
     private readonly WorkerContext $workerContext;
@@ -183,17 +185,39 @@ final class FrankenPhpRuntime implements ReloadableRuntimeInterface
     }
 
     /**
-     * Send early hints (103) via FrankenPHP's native API.
+     * Send Link headers as a 103 interim response.
      *
-     * @param array<string, string> $headers Headers to send as early hints
+     * This used to call `frankenphp_early_hints()`, a function FrankenPHP does not
+     * have and never had: its extension declares eleven functions and that is not
+     * one of them. Guarded by function_exists(), the call was therefore a permanent
+     * no-op — HTTP 103 never shipped, and nothing reported it, because a silent
+     * no-op is indistinguishable from a working optimisation nobody measured.
      *
-     * @codeCoverageIgnore Requires FrankenPHP runtime
+     * The supported mechanism is headers_send(): it flushes the headers accumulated
+     * so far with the given status, so setting the Link headers and flushing at 103
+     * produces the interim response. PHP keeps building the real one afterwards.
+     *
+     * The parameter shape changed with it. It used to take `array<string, string>`
+     * while the only producer, EarlyHints::toLinkHeaders(), returns a list of Link
+     * header *values* — a mismatch that could not have worked either, and further
+     * evidence the two ends were never connected.
+     *
+     * @param list<string> $linkHeaderValues
+     *
+     * @codeCoverageIgnore Requires the FrankenPHP runtime
      */
-    public function earlyHints(array $headers): void
+    #[Override]
+    public function earlyHints(array $linkHeaderValues): void
     {
-        if (function_exists('frankenphp_early_hints')) {
-            frankenphp_early_hints($headers);
+        if ($linkHeaderValues === [] || !function_exists('headers_send')) {
+            return;
         }
+
+        foreach ($linkHeaderValues as $value) {
+            header('Link: ' . $value, false);
+        }
+
+        headers_send(ResponseStatus::EarlyHints->value);
     }
 
     /**
