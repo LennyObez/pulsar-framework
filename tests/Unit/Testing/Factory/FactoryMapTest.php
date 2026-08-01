@@ -30,7 +30,7 @@ final class FactoryMapTest extends TestCase
         $map = new FactoryMap();
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('No factory registered');
+        $this->expectExceptionMessageIsOrContains('No factory registered');
 
         $map->resolve(RuntimeException::class);
     }
