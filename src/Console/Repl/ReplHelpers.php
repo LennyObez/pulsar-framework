@@ -11,6 +11,7 @@ use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Row;
 use Pulsar\Routing\Route;
 use Pulsar\Routing\RouterInterface;
+use Pulsar\Support\ReflectionTypeName;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionMethod;
@@ -327,7 +328,7 @@ final readonly class ReplHelpers
 
                 foreach ($method->getParameters() as $param) {
                     $type = $param->getType();
-                    $paramStr = $type !== null ? (string) $type . ' $' . $param->getName() : '$' . $param->getName();
+                    $paramStr = $type !== null ? ReflectionTypeName::of($type) . ' $' . $param->getName() : '$' . $param->getName();
 
                     if ($param->isOptional() && $param->isDefaultValueAvailable()) {
                         $paramStr .= ' = ' . var_export($param->getDefaultValue(), true);
@@ -337,7 +338,7 @@ final readonly class ReplHelpers
                 }
 
                 $returnType = $method->getReturnType();
-                $returnStr = $returnType !== null ? ': ' . (string) $returnType : '';
+                $returnStr = $returnType !== null ? ': ' . ReflectionTypeName::of($returnType) : '';
 
                 $lines[] = sprintf(
                     '  %s(%s)%s',
@@ -371,7 +372,7 @@ final readonly class ReplHelpers
 
         foreach ($method->getParameters() as $param) {
             $type = $param->getType();
-            $paramStr = $type !== null ? (string) $type . ' $' . $param->getName() : '$' . $param->getName();
+            $paramStr = $type !== null ? ReflectionTypeName::of($type) . ' $' . $param->getName() : '$' . $param->getName();
 
             if ($param->isOptional() && $param->isDefaultValueAvailable()) {
                 $paramStr .= ' = ' . var_export($param->getDefaultValue(), true);
@@ -381,7 +382,7 @@ final readonly class ReplHelpers
         }
 
         $returnType = $method->getReturnType();
-        $returnStr = $returnType !== null ? ': ' . (string) $returnType : '';
+        $returnStr = $returnType !== null ? ': ' . ReflectionTypeName::of($returnType) : '';
 
         $lines[] = sprintf('  Signature: %s(%s)%s', $methodName, implode(', ', $params), $returnStr);
 

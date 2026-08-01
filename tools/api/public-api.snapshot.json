@@ -54256,6 +54256,20 @@
             },
             "constants": []
         },
+        "Pulsar\\Support\\ReflectionTypeName": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "of": {
+                    "params": [
+                        "?ReflectionType $type"
+                    ],
+                    "return": "string",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\Support\\SqliteWalFactory": {
             "since": "1.0.0",
             "methods": [],

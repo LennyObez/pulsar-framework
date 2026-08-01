@@ -6,6 +6,7 @@ namespace Pulsar\Tooling\Api;
 
 use Pulsar\Api\Api;
 use Pulsar\Api\Internal;
+use Pulsar\Support\ReflectionTypeName;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use ReflectionClass;
@@ -159,14 +160,14 @@ final readonly class ApiSnapshotBuilder
 
             foreach ($method->getParameters() as $param) {
                 $paramType = $param->getType();
-                $params[] = ($paramType !== null ? (string) $paramType . ' ' : '') . '$' . $param->getName();
+                $params[] = ($paramType !== null ? ReflectionTypeName::of($paramType) . ' ' : '') . '$' . $param->getName();
             }
 
             $returnType = $method->getReturnType();
 
             $signature = [
                 'params' => $params,
-                'return' => $returnType !== null ? (string) $returnType : null,
+                'return' => $returnType !== null ? ReflectionTypeName::of($returnType) : null,
                 'static' => $method->isStatic(),
             ];
 

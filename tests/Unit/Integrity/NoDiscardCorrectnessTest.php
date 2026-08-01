@@ -8,6 +8,7 @@ use NoDiscard;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Support\ReflectionTypeName;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use ReflectionClass;
@@ -162,7 +163,7 @@ final class NoDiscardCorrectnessTest extends TestCase
                 $returnType = $methodRef->getReturnType();
                 $typeName = $returnType instanceof ReflectionNamedType
                     ? $returnType->getName()
-                    : ($returnType !== null ? (string) $returnType : 'mixed');
+                    : ($returnType !== null ? ReflectionTypeName::of($returnType) : 'mixed');
 
                 $methods[] = [
                     'class' => $className,

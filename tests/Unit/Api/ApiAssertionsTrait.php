@@ -8,6 +8,7 @@ use NoDiscard;
 use Override;
 use Pulsar\Api\Api;
 use Pulsar\Api\Internal;
+use Pulsar\Support\ReflectionTypeName;
 use ReflectionClass;
 use ReflectionEnum;
 use ReflectionEnumUnitCase;
@@ -88,7 +89,7 @@ trait ApiAssertionsTrait
             );
             self::assertSame(
                 $expectedType,
-                (string) $paramType,
+                ReflectionTypeName::of($paramType),
                 sprintf('%s::%s() parameter #%d must be %s', $class, $method, $i, $expectedType),
             );
         }
@@ -100,7 +101,7 @@ trait ApiAssertionsTrait
         );
         self::assertSame(
             $returnType,
-            (string) $returnTypeRef,
+            ReflectionTypeName::of($returnTypeRef),
             sprintf('%s::%s() return type must be %s', $class, $method, $returnType),
         );
     }
