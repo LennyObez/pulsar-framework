@@ -24,8 +24,10 @@ use Pulsar\Extension\Orm\Domain\LikePattern;
 use Pulsar\Extension\Orm\Domain\SortDirection;
 use Pulsar\Extension\Orm\Features\Query\DeleteBuilder;
 use Pulsar\Extension\Orm\Features\Query\InsertBuilder;
+use Pulsar\Extension\Orm\Features\Query\JoinOnBuilder;
 use Pulsar\Extension\Orm\Features\Query\SelectBuilder;
 use Pulsar\Extension\Orm\Features\Query\UpdateBuilder;
+use RuntimeException;
 
 /**
  * Benchmarks for ORM query builder SQL generation.
@@ -127,9 +129,15 @@ final class QueryBuilderBench
     {
         $builder = new SelectBuilder($this->connection);
         $builder->from('bench_entities', 't0');
-        $builder->innerJoin('profiles', 'p', static fn($on) => $on->on('t0.id', '=', 'p.user_id'));
+        $builder->innerJoin('profiles', 'p', static fn(JoinOnBuilder $on): JoinOnBuilder => $on->on('t0.id', '=', 'p.user_id'));
         $builder->where('status', 'active');
-        $builder->toSql();
+        // toSql() answers with the statement AND its bindings, so the emptiness
+        // check has to look inside rather than compare the compound to ''.
+        $compiled = $builder->toSql();
+
+        if ($compiled['sql'] === '') {
+            throw new RuntimeException('SelectBuilder produced no SQL');
+        }
     }
 
     /**
@@ -226,17 +234,17 @@ final class NullConnection implements ConnectionInterface
 
     public function prepare(string $sql): Statement
     {
-        throw new \RuntimeException('Not implemented in benchmark stub');
+        throw new RuntimeException('Not implemented in benchmark stub');
     }
 
     public function beginTransaction(): Transaction
     {
-        throw new \RuntimeException('Not implemented in benchmark stub');
+        throw new RuntimeException('Not implemented in benchmark stub');
     }
 
     public function transaction(callable $callback): mixed
     {
-        throw new \RuntimeException('Not implemented in benchmark stub');
+        throw new RuntimeException('Not implemented in benchmark stub');
     }
 
     public function lastInsertId(): string
@@ -267,13 +275,38 @@ final class NullConnection implements ConnectionInterface
  */
 final class NullHydrator implements EntityHydratorInterface
 {
+    /**
+     * Always builds a BenchEntity, whatever class was asked for: the point is to
+     * measure the query path with hydration cost removed, not to hydrate.
+     *
+     * The interface promises `@return T` for `class-string<T>`, and returning a
+     * fixed class breaks that promise, so the requested class is asserted instead
+     * of ignored — a benchmark that silently hydrated the wrong entity would report
+     * a time for work it never did.
+     *
+     * @template T of object
+     * @param class-string<T> $entityClass
+     * @return T
+     */
     public function hydrate(string $entityClass, Row $row): object
     {
-        return new BenchEntity();
+        $entity = new BenchEntity();
+
+        if (!$entity instanceof $entityClass) {
+            throw new RuntimeException("NullHydrator only hydrates BenchEntity, got {$entityClass}");
+        }
+
+        return $entity;
     }
 
+    /**
+     * @template T of object
+     * @param class-string<T> $entityClass
+     * @param list<Row> $rows
+     * @return list<T>
+     */
     public function hydrateAll(string $entityClass, array $rows): array
     {
-        return array_map(fn() => new BenchEntity(), $rows);
+        return array_map(fn(Row $row): object => $this->hydrate($entityClass, $row), $rows);
     }
 }

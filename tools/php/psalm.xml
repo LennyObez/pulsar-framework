@@ -62,21 +62,55 @@
         </ignoreFiles>
     </projectFiles>
 
+    <!--
+        Extension signatures come from jetbrains/phpstorm-stubs, which tracks the
+        extensions upstream, and never from files we write: the hand-written copies
+        that used to live in stubs/ had drifted (Redis::sRem was typed `int` where
+        phpredis returns `int|false`, Redis::exists `int` where it returns
+        `Redis|int|bool`, close()/quit() were missing), and a stub that is merely
+        plausible makes the analyser confidently wrong.
+
+        Psalm does ship curated stubs of its own for redis/memcached/amqp/apcu in
+        vendor/vimeo/psalm/stubs/extensions/ — but it only loads them when the
+        extension is actually present in the analysing PHP. None of these are
+        installed here or in CI, so relying on that left Psalm with no declaration at
+        all: dropping these four entries produced 148 UndefinedClass errors and a
+        cascade of Mixed* findings behind them. They are listed explicitly for that
+        reason, and the upstream path is what makes them trustworthy rather than the
+        listing itself.
+
+        The remaining entries are hand-written because nothing upstream exists to
+        copy: suggested composer packages that are not installed, a runtime that
+        publishes no stubs, or — for gRPC — an upstream stub that is provably wrong.
+    -->
     <stubs>
-        <file name="stubs/Redis.php"/>
-        <file name="stubs/Memcached.php"/>
-        <file name="stubs/PsySH.php"/>
-        <file name="stubs/Amqp.php"/>
-        <file name="stubs/AwsSqs.php"/>
-        <file name="stubs/GooglePubSub.php"/>
+        <file name="../../vendor/jetbrains/phpstorm-stubs/redis/Redis.php"/>
+        <file name="../../vendor/jetbrains/phpstorm-stubs/memcached/memcached.php"/>
+        <file name="../../vendor/jetbrains/phpstorm-stubs/amqp/amqp.php"/>
+        <file name="../../vendor/jetbrains/phpstorm-stubs/apcu/apcu.php"/>
+        <file name="../../vendor/jetbrains/phpstorm-stubs/imagick/imagick.php"/>
+        <file name="../../vendor/jetbrains/phpstorm-stubs/igbinary/igbinary.php"/>
+        <file name="../../vendor/jetbrains/phpstorm-stubs/zstd/zstd.php"/>
+        <file name="../../vendor/jetbrains/phpstorm-stubs/brotli/brotli.php"/>
+        <file name="../../vendor/jetbrains/phpstorm-stubs/frankenphp/frankenphp.php"/>
+        <!-- Replaces phpstorm-stubs' gRPC stub outright: two of its declarations are wrong
+             against the extension's C source. See the file for the arginfo it cites. -->
         <file name="stubs/Grpc.php"/>
-        <file name="stubs/RoadRunner.php"/>
-        <file name="stubs/Psr7.php"/>
-        <file name="stubs/Imagick.php"/>
-        <file name="stubs/Compression.php"/>
+        <file name="stubs/AwsSqs.php"/>
         <file name="stubs/FrankenPhp.php"/>
-        <file name="stubs/Igbinary.php"/>
-        <file name="stubs/Apcu.php"/>
+        <file name="stubs/GooglePubSub.php"/>
+        <file name="stubs/PsySH.php"/>
+        <file name="stubs/RoadRunner.php"/>
+        <!--
+            Not a stub for something missing: psr/http-message is a hard dependency,
+            so ServerRequestInterface already exists. This re-declares it with
+            `array<array-key, mixed>` returns where PSR-7 says bare `array`, which
+            stops every member access degrading to mixed. PHPStan does not load it —
+            it needs no such refinement, and its stubFiles mechanism would analyse
+            the partial re-declaration on its own and fail to resolve the parent
+            RequestInterface this file does not restate.
+        -->
+        <file name="stubs/Psr7.php"/>
     </stubs>
 
     <plugins>

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Pulsar\Cache\Application\Driver;
 
 use Pulsar\Api\Internal;
+use Pulsar\Support\Coerce;
+use Pulsar\Support\RedisReply;
 use Redis;
 use Throwable;
 
@@ -53,8 +55,7 @@ final class RedisDriver extends AbstractCacheDriver implements PrefixClearableIn
         $result = [];
 
         foreach ($keys as $i => $key) {
-            $value = $values[$i] ?? false;
-            $result[$key] = is_string($value) ? $value : null;
+            $result[$key] = Coerce::nullableString($values[$i] ?? null);
         }
 
         return $result;
@@ -71,10 +72,10 @@ final class RedisDriver extends AbstractCacheDriver implements PrefixClearableIn
         }
 
         if ($ttl !== null) {
-            return $this->redis->setex($key, $ttl, $value);
+            return RedisReply::success($this->redis->setex($key, $ttl, $value));
         }
 
-        return $this->redis->set($key, $value);
+        return RedisReply::success($this->redis->set($key, $value));
     }
 
     public function add(string $key, string $value, ?int $ttlSeconds): bool
@@ -110,6 +111,13 @@ final class RedisDriver extends AbstractCacheDriver implements PrefixClearableIn
 
         $pipe = $this->redis->pipeline();
 
+        // pipeline() answers false when it cannot be opened. Calling setex() on that
+        // false is a fatal on a non-object — a crash the previous hand-written stub
+        // hid by declaring the return as `self`.
+        if (!$pipe instanceof Redis) {
+            return false;
+        }
+
         foreach ($values as $key => $value) {
             if ($ttl !== null) {
                 $pipe->setex($key, $ttl, $value);
@@ -124,7 +132,7 @@ final class RedisDriver extends AbstractCacheDriver implements PrefixClearableIn
             return false;
         }
 
-        return array_all($results, static fn(mixed $result): bool => $result !== false);
+        return array_all(RedisReply::items($results), static fn(mixed $result): bool => $result !== false);
     }
 
     public function delete(string $key): bool
@@ -147,12 +155,12 @@ final class RedisDriver extends AbstractCacheDriver implements PrefixClearableIn
 
     public function has(string $key): bool
     {
-        return (bool) $this->redis->exists($key);
+        return RedisReply::count($this->redis->exists($key)) > 0;
     }
 
     public function clear(): bool
     {
-        return $this->redis->flushDB();
+        return RedisReply::success($this->redis->flushDB());
     }
 
     /**
@@ -166,9 +174,12 @@ final class RedisDriver extends AbstractCacheDriver implements PrefixClearableIn
         $iterator = null;
 
         do {
-            $keys = $this->redis->scan($iterator, $prefix . '*', 1000);
+            // SCAN yields mixed entries; UNLINK needs strings, and passing a
+            // non-string through would be a TypeError mid-sweep, leaving the rest
+            // of the prefix un-deleted.
+            $keys = RedisReply::strings($this->redis->scan($iterator, $prefix . '*', 1000));
 
-            if (is_array($keys) && $keys !== []) {
+            if ($keys !== []) {
                 $this->redis->unlink(...$keys);
             }
         } while ($iterator !== 0 && $iterator !== null && $iterator !== '0');
@@ -179,7 +190,7 @@ final class RedisDriver extends AbstractCacheDriver implements PrefixClearableIn
     public function increment(string $key, int $step = 1): int|false
     {
         try {
-            return $this->redis->incrBy($key, $step);
+            return RedisReply::intOrFalse($this->redis->incrBy($key, $step));
         } catch (Throwable) {
             return false;
         }
@@ -188,7 +199,7 @@ final class RedisDriver extends AbstractCacheDriver implements PrefixClearableIn
     public function decrement(string $key, int $step = 1): int|false
     {
         try {
-            return $this->redis->decrBy($key, $step);
+            return RedisReply::intOrFalse($this->redis->decrBy($key, $step));
         } catch (Throwable) {
             return false;
         }

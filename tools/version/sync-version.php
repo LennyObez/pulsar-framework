@@ -48,22 +48,33 @@ if ($source === false) {
     exit(1);
 }
 
-$updated = $source;
-$updated = preg_replace('/public const int MAJOR = \d+;/', "public const int MAJOR = {$major};", $updated);
-$updated = preg_replace('/public const int MINOR = \d+;/', "public const int MINOR = {$minor};", $updated);
-$updated = preg_replace('/public const int PATCH = \d+;/', "public const int PATCH = {$patch};", $updated);
-$updated = preg_replace(
-    "/public const string PRERELEASE_SUFFIX = '[^']*';/",
-    "public const string PRERELEASE_SUFFIX = '{$suffix}';",
-    $updated,
-);
+// preg_replace() returns null when its pattern fails to compile, and the chain
+// fed each result straight into the next call as $subject. Under strict_types
+// that null is a TypeError from a deeper frame, so the single is_string() check
+// after the last step could never report the step that actually broke. Checking
+// each replacement names the failure where it happens.
+$replacements = [
+    '/public const int MAJOR = \d+;/' => "public const int MAJOR = {$major};",
+    '/public const int MINOR = \d+;/' => "public const int MINOR = {$minor};",
+    '/public const int PATCH = \d+;/' => "public const int PATCH = {$patch};",
+    "/public const string PRERELEASE_SUFFIX = '[^']*';/" => "public const string PRERELEASE_SUFFIX = '{$suffix}';",
+];
 
-if (!is_string($updated)) {
-    fwrite(STDERR, "Failed to rewrite version constants\n");
-    exit(1);
+$updated = $source;
+
+foreach ($replacements as $pattern => $replacement) {
+    $result = preg_replace($pattern, $replacement, $updated);
+
+    if (!is_string($result)) {
+        fwrite(STDERR, "Failed to rewrite version constants (pattern: {$pattern})\n");
+
+        exit(1);
+    }
+
+    $updated = $result;
 }
 
-$check = in_array('--check', $argv, true);
+$check = in_array('--check', $argv ?? [], true);
 
 if ($check) {
     if ($updated !== $source) {

@@ -49,17 +49,74 @@ parameters:
         - ../../extensions/studio/src
         - ../../extensions/subscriptions/src
         - ../../tests
+        # First-party code that enforces quality must itself be analysed. These
+        # three trees held the boundary / compliance-claims / extension-coverage /
+        # wiring gates, the PSR-4 and coverage gates, the API-snapshot builder, the
+        # custom PHPStan rules, the Psalm plugin, the SBOM generator and every
+        # benchmark — and they were the only unchecked PHP in the repository. A
+        # silent bug in a gate does not fail the build, it stops protecting it,
+        # which is worse than a bug in a feature. Verified with a deliberate-error
+        # probe: before this, PHPStan never reported it.
+        - ../../tools
+        - ../../scripts
+        - ../../benchmarks
     excludePaths:
-        - ../../vendor
+        # Declaration files, not code: the bodies exist only to satisfy the parser,
+        # so analysing them yields nothing but ~77 unused-parameter reports. They
+        # are loaded through scanFiles/stubFiles below instead.
+        - ../../tools/php/stubs
     bootstrapFiles:
         - ../../scripts/boundary_check.php
+    # Symbols that are genuinely absent from the analysis environment, so every
+    # caller was previously analysed blind. Only 6 of the 14 stub files on disk
+    # were ever listed here while psalm.xml loaded all 14, so the two analysers
+    # held different pictures of the same codebase.
+    #
+    # Extension signatures come from jetbrains/phpstorm-stubs, not from files we
+    # write. Eight hand-written stubs used to live in stubs/ and they had drifted:
+    # Redis::sRem() was declared `int` where the extension returns `int|false`,
+    # Redis::exists() `int` where it returns `Redis|int|bool`, and close()/quit()
+    # were missing outright. A stub that is merely plausible is worse than none —
+    # it makes the analyser confidently wrong, and nothing detects the drift.
+    # phpstorm-stubs tracks the extensions upstream and is already a declared dev
+    # dependency, so it is the authority for anything it covers.
     scanFiles:
+        - ../../vendor/jetbrains/phpstorm-stubs/amqp/amqp.php
+        - ../../vendor/jetbrains/phpstorm-stubs/apcu/apcu.php
+        - ../../vendor/jetbrains/phpstorm-stubs/brotli/brotli.php
+        - ../../vendor/jetbrains/phpstorm-stubs/frankenphp/frankenphp.php
+        - ../../vendor/jetbrains/phpstorm-stubs/igbinary/igbinary.php
+        - ../../vendor/jetbrains/phpstorm-stubs/imagick/imagick.php
+        - ../../vendor/jetbrains/phpstorm-stubs/memcached/memcached.php
+        - ../../vendor/jetbrains/phpstorm-stubs/redis/Redis.php
+        - ../../vendor/jetbrains/phpstorm-stubs/zstd/zstd.php
+        # Hand-written only where nothing upstream exists to copy: these are
+        # suggested composer packages that are not installed (AWS SQS, Google
+        # Cloud Pub/Sub, PsySH, the RoadRunner worker classes) or a runtime that
+        # ships no stubs at all (FrankenPHP's frankenphp_* functions).
         - stubs/AwsSqs.php
-        - stubs/GooglePubSub.php
         - stubs/Grpc.php
+        - stubs/FrankenPhp.php
+        - stubs/GooglePubSub.php
+        - stubs/PsySH.php
         - stubs/RoadRunner.php
-        - stubs/Igbinary.php
-        - stubs/Compression.php
+    # stubs/Grpc.php REPLACES phpstorm-stubs' gRPC stub rather than adding to it, which
+    # is why the upstream path is absent above. Two of upstream's declarations are
+    # provably wrong against the extension's C source — Server::requestCall()'s arity
+    # and ServerCredentials::createSsl()'s nullability — and following them would mean
+    # editing correct code to match an incorrect description. PHPStan's stubFiles does
+    # not win over a scanFiles declaration of the same class, so the replacement has to
+    # be exclusive rather than layered. AnalyzerStubsTest asserts the two are never
+    # both loaded.
+    # stubs/Psr7.php is deliberately NOT loaded here, and it is the one stub that
+    # must not be. psr/http-message is a hard dependency, so PSR-7's interfaces
+    # already exist: the file is not a stub for something missing, it is a Psalm
+    # `<stubs>` override that re-declares ServerRequestInterface's deliberately
+    # loose `: array` returns as `array<array-key, mixed>` to stop Psalm's
+    # MixedArrayAccess flooding every member access — as its own docblock states.
+    # PHPStan needs no such refinement, and loading it through stubFiles makes
+    # PHPStan analyse the partial re-declaration on its own terms, where it cannot
+    # resolve the parent RequestInterface it does not restate.
     # F1.10: at level=max, `treatPhpDocTypesAsCertain: false`
     # tells PHPStan to treat PHPDoc type declarations as
     # advisory rather than authoritative. We intentionally

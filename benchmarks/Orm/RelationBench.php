@@ -23,6 +23,7 @@ use Pulsar\Extension\Orm\Domain\RelationType;
 use Pulsar\Extension\Orm\Features\Relation\BatchLoader;
 use Pulsar\Extension\Orm\Features\Relation\RelationLoader;
 use Pulsar\Extension\Orm\Features\Relation\WithCountLoader;
+use RuntimeException;
 
 /**
  * Benchmarks for ORM relation loading strategies.
@@ -172,7 +173,11 @@ final class RelationBench
     {
         $plan1 = FetchPlan::with(['posts', 'comments', 'tags']);
         $plan2 = FetchPlan::with(['author', 'category']);
-        $plan1->merge($plan2);
+
+        // merge() is pure and returns a new plan; dropping it measured nothing.
+        if ($plan1->merge($plan2) === $plan1) {
+            throw new RuntimeException('merge() must not return the receiver');
+        }
     }
 
     /**
@@ -183,10 +188,16 @@ final class RelationBench
     #[Assert('mode(variant.time.avg) < 10 microseconds')]
     public function benchNestedFetchPlan(): void
     {
-        FetchPlan::withNested([
+        $nested = FetchPlan::withNested([
             'posts' => FetchPlan::with(['comments', 'tags']),
             'profile' => null,
         ]);
+
+        // Consume the plan without a tautological instanceof: the return type already
+        // guarantees the class, so only its contents can say the call did anything.
+        if ($nested->isEmpty()) {
+            throw new RuntimeException('withNested() produced an empty plan');
+        }
     }
 
     /**
@@ -227,7 +238,7 @@ final class RelationBench
                 return match ($entityClass) {
                     BenchUser::class => $this->userMeta,
                     BenchPost::class => $this->postMeta,
-                    default => throw new \RuntimeException("Unknown: $entityClass"),
+                    default => throw new RuntimeException("Unknown: $entityClass"),
                 };
             }
 
@@ -241,9 +252,19 @@ final class RelationBench
     private function createHydrator(): EntityHydratorInterface
     {
         return new class implements EntityHydratorInterface {
+            /**
+             * The interface promises `@return T` for a `class-string<T>`, so the
+             * match arms are checked against the class that was asked for rather
+             * than trusted to line up — a benchmark that hydrated the wrong entity
+             * would report a timing for work it never did.
+             *
+             * @template T of object
+             * @param class-string<T> $entityClass
+             * @return T
+             */
             public function hydrate(string $entityClass, Row $row): object
             {
-                return match ($entityClass) {
+                return $this->asRequested($entityClass, match ($entityClass) {
                     BenchPost::class => new BenchPost(
                         $row->getInt('id'),
                         $row->getInt('author_id'),
@@ -253,13 +274,40 @@ final class RelationBench
                         $row->getInt('id'),
                         $row->getString('name'),
                     ),
-                    default => throw new \RuntimeException("Unknown: $entityClass"),
-                };
+                    default => throw new RuntimeException("Unknown: $entityClass"),
+                });
             }
 
+            /**
+             * Check the built entity against the class that was asked for.
+             *
+             * Separate from hydrate() because the check has to happen where the
+             * class is still generic: inside hydrate(), the match arms narrow
+             * $entityClass to two literals, which makes `instanceof $entityClass`
+             * provably true and therefore no longer evidence of anything.
+             *
+             * @template T of object
+             * @param class-string<T> $entityClass
+             * @return T
+             */
+            private function asRequested(string $entityClass, object $entity): object
+            {
+                if (!$entity instanceof $entityClass) {
+                    throw new RuntimeException("Hydrated the wrong entity for {$entityClass}");
+                }
+
+                return $entity;
+            }
+
+            /**
+             * @template T of object
+             * @param class-string<T> $entityClass
+             * @param list<Row> $rows
+             * @return list<T>
+             */
             public function hydrateAll(string $entityClass, array $rows): array
             {
-                return array_map(fn(Row $r) => $this->hydrate($entityClass, $r), $rows);
+                return array_map(fn(Row $r): object => $this->hydrate($entityClass, $r), $rows);
             }
         };
     }
@@ -310,17 +358,17 @@ final class PreloadedConnection implements \Pulsar\Database\ConnectionInterface
 
     public function prepare(string $sql): \Pulsar\Database\Statement
     {
-        throw new \RuntimeException('Not implemented');
+        throw new RuntimeException('Not implemented');
     }
 
     public function beginTransaction(): \Pulsar\Database\Transaction
     {
-        throw new \RuntimeException('Not implemented');
+        throw new RuntimeException('Not implemented');
     }
 
     public function transaction(callable $callback): mixed
     {
-        throw new \RuntimeException('Not implemented');
+        throw new RuntimeException('Not implemented');
     }
 
     public function lastInsertId(): string

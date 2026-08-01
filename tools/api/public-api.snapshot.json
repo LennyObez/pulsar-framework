@@ -53317,6 +53317,34 @@
             },
             "constants": []
         },
+        "Pulsar\\Support\\ApcuReply": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "deleted": {
+                    "params": [
+                        "array|bool $reply"
+                    ],
+                    "return": "bool",
+                    "static": true
+                },
+                "present": {
+                    "params": [
+                        "array|bool $reply"
+                    ],
+                    "return": "bool",
+                    "static": true
+                },
+                "stored": {
+                    "params": [
+                        "array|bool $reply"
+                    ],
+                    "return": "bool",
+                    "static": true
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\Support\\Arr": {
             "since": "1.0.0",
             "methods": [],
@@ -54175,6 +54203,55 @@
                     ],
                     "return": "string",
                     "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Support\\RedisReply": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "count": {
+                    "params": [
+                        "Redis|int|bool $reply"
+                    ],
+                    "return": "int",
+                    "static": true
+                },
+                "intOrFalse": {
+                    "params": [
+                        "Redis|int|false $reply"
+                    ],
+                    "return": "int|false",
+                    "static": true
+                },
+                "items": {
+                    "params": [
+                        "Redis|array|false $reply"
+                    ],
+                    "return": "array",
+                    "static": true
+                },
+                "stringOrFalse": {
+                    "params": [
+                        "mixed $reply"
+                    ],
+                    "return": "string|false",
+                    "static": true
+                },
+                "strings": {
+                    "params": [
+                        "Redis|array|false $reply"
+                    ],
+                    "return": "array",
+                    "static": true
+                },
+                "success": {
+                    "params": [
+                        "Redis|string|bool $reply"
+                    ],
+                    "return": "bool",
+                    "static": true
                 }
             },
             "constants": []

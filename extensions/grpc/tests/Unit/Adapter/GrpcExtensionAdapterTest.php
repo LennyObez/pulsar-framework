@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Grpc\Adapter\GrpcExtensionAdapter;
 use Pulsar\Extension\Grpc\Adapter\GrpcRequestHandler;
+use Pulsar\Extension\Grpc\Exception\GrpcException;
 use Pulsar\Extension\Grpc\Interceptor\InterceptorResult;
 use ReflectionMethod;
 use RuntimeException;
@@ -68,10 +69,35 @@ final class GrpcExtensionAdapterTest extends TestCase
         $adapter = new GrpcExtensionAdapter(
             certChain: 'cert-data',
             privateKey: 'key-data',
-            rootCert: 'ca-data',
         );
 
         self::assertSame('grpc_extension', $adapter->name());
+    }
+
+    /**
+     * A client-CA bundle is refused rather than accepted and ignored.
+     *
+     * ext-grpc's ServerCredentials::createSsl() calls
+     * grpc_ssl_server_credentials_create_ex() with a hardcoded
+     * GRPC_SSL_DONT_REQUEST_CLIENT_CERTIFICATE — unconditionally, whatever root
+     * certificates it is handed (src/php/ext/grpc/server_credentials.c). So the
+     * server never asks a client to identify itself, and a configured CA bundle can
+     * never produce mutual TLS. This test exists because the alternative is the
+     * dangerous one: serving unauthenticated callers while the operator believes the
+     * control they configured is enforcing something. It is the same reason
+     * dispatch() refuses to treat the transport peer address as an identity.
+     */
+    #[Test]
+    public function constructor_refuses_a_client_ca_because_the_extension_cannot_request_client_certificates(): void
+    {
+        $this->expectException(GrpcException::class);
+        $this->expectExceptionMessage('GRPC_SSL_DONT_REQUEST_CLIENT_CERTIFICATE');
+
+        new GrpcExtensionAdapter(
+            certChain: 'cert-data',
+            privateKey: 'key-data',
+            rootCert: 'ca-data',
+        );
     }
 
     #[Test]

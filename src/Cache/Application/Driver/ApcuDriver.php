@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace Pulsar\Cache\Application\Driver;
 
-use APCuIterator;
+use APCUIterator;
 use Pulsar\Api\Internal;
+use Pulsar\Support\ApcuReply;
 use Throwable;
 
 use function apcu_add;
@@ -54,7 +55,7 @@ final class ApcuDriver extends AbstractCacheDriver implements PrefixClearableInt
             return true;
         }
 
-        return apcu_store($key, $value, $ttl ?? 0);
+        return ApcuReply::stored(apcu_store($key, $value, $ttl ?? 0));
     }
 
     public function add(string $key, string $value, ?int $ttlSeconds): bool
@@ -62,11 +63,11 @@ final class ApcuDriver extends AbstractCacheDriver implements PrefixClearableInt
         $ttl = $this->normalizeTtl($ttlSeconds);
 
         if ($this->isExpiredTtl($ttl)) {
-            return !apcu_exists($key);
+            return !ApcuReply::present(apcu_exists($key));
         }
 
         // apcu_add stores only if the key is absent — atomic in shared memory.
-        return apcu_add($key, $value, $ttl ?? 0);
+        return ApcuReply::stored(apcu_add($key, $value, $ttl ?? 0));
     }
 
     public function delete(string $key): bool
@@ -78,7 +79,7 @@ final class ApcuDriver extends AbstractCacheDriver implements PrefixClearableInt
 
     public function has(string $key): bool
     {
-        return apcu_exists($key);
+        return ApcuReply::present(apcu_exists($key));
     }
 
     public function clear(): bool
@@ -93,7 +94,7 @@ final class ApcuDriver extends AbstractCacheDriver implements PrefixClearableInt
      */
     public function clearByPrefix(string $prefix): bool
     {
-        $iterator = new APCuIterator('/^' . preg_quote($prefix, '/') . '/');
+        $iterator = new APCUIterator('/^' . preg_quote($prefix, '/') . '/');
 
         return apcu_delete($iterator) !== false;
     }

@@ -95,8 +95,8 @@ final readonly class PdfThumbnailGenerator
             $tempFile = tempnam(sys_get_temp_dir(), 'pulsar_pdf_thumb_');
 
             if ($tempFile === false) {
-                $imagick->destroy();
-                $background->destroy();
+                $imagick->clear();
+                $background->clear();
 
                 return null;
             }
@@ -104,8 +104,8 @@ final readonly class PdfThumbnailGenerator
             $outputPath = $tempFile . '.jpg';
             $background->writeImage($outputPath);
 
-            $imagick->destroy();
-            $background->destroy();
+            $imagick->clear();
+            $background->clear();
 
             // Clean up the extensionless temp file
             if ($tempFile !== $outputPath) {

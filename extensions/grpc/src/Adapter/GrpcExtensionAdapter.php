@@ -35,13 +35,36 @@ final class GrpcExtensionAdapter implements GrpcTransportAdapterInterface
     /**
      * @param string $certChain  PEM-encoded server certificate chain (for TLS)
      * @param string $privateKey PEM-encoded server private key (for TLS)
-     * @param string $rootCert   PEM-encoded root CA certificate (for mTLS)
+     * @param string $rootCert   Client-CA bundle. REJECTED, see below: the grpc PHP
+     *                           extension cannot request a client certificate, so
+     *                           this can never produce mutual TLS
      */
     public function __construct(
         private readonly string $certChain = '',
         private readonly string $privateKey = '',
-        private readonly string $rootCert = '',
-    ) {}
+        string $rootCert = '',
+    ) {
+        // The docblock used to describe $rootCert as "for mTLS". It cannot be.
+        // ext-grpc's ServerCredentials::createSsl() calls
+        // grpc_ssl_server_credentials_create_ex() with a hardcoded
+        // GRPC_SSL_DONT_REQUEST_CLIENT_CERTIFICATE, unconditionally and regardless
+        // of the root certificates handed to it, so the server never asks a client
+        // to identify itself and the CA bundle is never consulted. Accepting the
+        // configuration would serve unauthenticated callers while the operator
+        // believed mutual TLS was in force — a silent downgrade of exactly the
+        // control they configured. Refused at construction, which is boot time, so
+        // it cannot be discovered in production.
+        if ($rootCert !== '') {
+            throw GrpcException::invalidConfiguration(
+                'grpc.tls.ca_path is set, which asks this transport for mutual TLS, but the grpc PHP '
+                . 'extension cannot request or verify a client certificate: ServerCredentials::createSsl() '
+                . 'always passes GRPC_SSL_DONT_REQUEST_CLIENT_CERTIFICATE, whatever CA bundle it is given. '
+                . "Set grpc.adapter to 'roadrunner' to keep mutual TLS — that adapter terminates it in the "
+                . 'proxy and feeds the verified identity through MtlsIdentityMapper — or clear '
+                . 'grpc.tls.ca_path to serve one-way TLS knowingly.',
+            );
+        }
+    }
 
     #[Override]
     public function listen(string $host, int $port, GrpcRequestHandler $handler): void
@@ -55,15 +78,32 @@ final class GrpcExtensionAdapter implements GrpcTransportAdapterInterface
         $address = $host . ':' . $port;
 
         if ($this->hasTlsCredentials()) {
-            $rootCert = $this->rootCert !== '' ? $this->rootCert : null;
-            $credentials = ServerCredentials::createSsl(
-                $rootCert ?? '',
-                [['cert_chain' => $this->certChain, 'private_key' => $this->privateKey]],
-                $this->rootCert !== '',
-            );
-            $server->addHttp2Port($address, $credentials);
+            // ext-grpc parses createSsl() as "s!ss": a nullable client-CA bundle,
+            // then the private key, then the certificate chain — in that order. The
+            // previous call passed a grpc-core style array of key/cert pairs plus a
+            // client-auth boolean, a signature the PHP extension has never had, so
+            // under strict_types this raised a TypeError before anything bound. The
+            // CA argument is null because the constructor refuses one outright.
+            $credentials = ServerCredentials::createSsl(null, $this->privateKey, $this->certChain);
+
+            // Credentials belong to addSecureHttp2Port(); addHttp2Port() takes an
+            // address and nothing else. The old call passed credentials to the plain
+            // variant, which would have bound a cleartext port had it been reached.
+            $boundPort = $server->addSecureHttp2Port($address, $credentials);
         } else {
-            $server->addHttp2Port($address, ServerCredentials::createInsecure());
+            // ServerCredentials::createInsecure() does not exist — the extension
+            // declares no such factory. An insecure listener simply omits them.
+            $boundPort = $server->addHttp2Port($address);
+        }
+
+        // Both calls answer with the bound port, or 0 when the bind failed. The
+        // result was discarded, so a port already in use or an unusable certificate
+        // produced a server that started and then answered nothing at all.
+        if ($boundPort === 0) {
+            throw GrpcException::serverStartFailed(
+                'Could not bind the gRPC server to ' . $address
+                . ' (port already in use, or the TLS material was rejected).',
+            );
         }
 
         $server->start();

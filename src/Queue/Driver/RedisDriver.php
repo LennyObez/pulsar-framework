@@ -11,6 +11,7 @@ use Pulsar\Queue\Exception\QueueException;
 use Pulsar\Queue\JobRecord;
 use Pulsar\Queue\JobRecordStatus;
 use Pulsar\Queue\QueueDriverInterface;
+use Pulsar\Support\RedisReply;
 use Random\Engine\Secure;
 use Random\Randomizer;
 use Redis;
@@ -93,10 +94,10 @@ final class RedisDriver implements QueueDriverInterface
 
         $this->migrateDelayedJobs($redis, $queue, $now);
 
-        $jobData = $redis->rPopLPush(
+        $jobData = RedisReply::stringOrFalse($redis->rPopLPush(
             $this->key($queue),
             $this->key($queue, 'processing'),
-        );
+        ));
 
         if ($jobData === false) {
             return null;
@@ -139,7 +140,7 @@ final class RedisDriver implements QueueDriverInterface
 
         $this->removeFromProcessingById($redis, $jobId);
 
-        $allQueues = $redis->sMembers($this->config->prefix . 'queues');
+        $allQueues = RedisReply::strings($redis->sMembers($this->config->prefix . 'queues'));
 
         foreach ($allQueues as $queueName) {
             $redis->hDel($this->key($queueName, 'meta'), $jobId);
@@ -153,11 +154,11 @@ final class RedisDriver implements QueueDriverInterface
 
         $this->removeFromProcessingById($redis, $jobId);
 
-        $allQueues = $redis->sMembers($this->config->prefix . 'queues');
+        $allQueues = RedisReply::strings($redis->sMembers($this->config->prefix . 'queues'));
 
         foreach ($allQueues as $queueName) {
             $metaKey = $this->key($queueName, 'meta');
-            $raw = $redis->hGet($metaKey, $jobId);
+            $raw = RedisReply::stringOrFalse($redis->hGet($metaKey, $jobId));
 
             if ($raw === false) {
                 continue;
@@ -180,7 +181,7 @@ final class RedisDriver implements QueueDriverInterface
     {
         $redis = $this->connection();
 
-        return (int) $redis->lLen($this->key($queue));
+        return RedisReply::count($redis->lLen($this->key($queue)));
     }
 
     #[Override]
@@ -188,8 +189,8 @@ final class RedisDriver implements QueueDriverInterface
     {
         $redis = $this->connection();
 
-        $size = (int) $redis->lLen($this->key($queue));
-        $delayed = $redis->zCard($this->key($queue, 'delayed'));
+        $size = RedisReply::count($redis->lLen($this->key($queue)));
+        $delayed = RedisReply::count($redis->zCard($this->key($queue, 'delayed')));
         $total = $size + $delayed;
 
         $redis->del(
@@ -213,15 +214,15 @@ final class RedisDriver implements QueueDriverInterface
     {
         $redis = $this->connection();
 
-        $allQueues = $redis->sMembers($this->config->prefix . 'queues');
+        $allQueues = RedisReply::strings($redis->sMembers($this->config->prefix . 'queues'));
         $records = [];
 
         foreach ($allQueues as $queueName) {
-            $allMeta = $redis->hGetAll($this->key($queueName, 'meta'));
+            $allMeta = RedisReply::strings($redis->hGetAll($this->key($queueName, 'meta')));
 
-            foreach ($allMeta as $raw) {
+            foreach ($allMeta as $encoded) {
                 /** @var array{id: string, queue: string, job_class: string, payload: string, attempts: int, status: string, created_at: int, available_at: int} $data */
-                $data = json_decode($raw, true, flags: JSON_THROW_ON_ERROR);
+                $data = json_decode($encoded, true, flags: JSON_THROW_ON_ERROR);
 
                 if ($data['status'] === $status->value) {
                     $records[] = new JobRecord(
@@ -324,7 +325,7 @@ final class RedisDriver implements QueueDriverInterface
 
     private function removeFromProcessingById(Redis $redis, string $jobId): void
     {
-        $allQueues = $redis->sMembers($this->config->prefix . 'queues');
+        $allQueues = RedisReply::strings($redis->sMembers($this->config->prefix . 'queues'));
 
         foreach ($allQueues as $queueName) {
             $processingKey = $this->key($queueName, 'processing');

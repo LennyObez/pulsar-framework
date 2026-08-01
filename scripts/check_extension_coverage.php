@@ -19,11 +19,24 @@ $extensionsDir = $root . '/extensions';
 // Supports both flat (extensions/foo/) and grouped (extensions/compliance/foo/) layouts.
 $extensions = [];
 
+/**
+ * @return list<string>
+ */
 function discoverExtensions(string $baseDir, string $prefix = ''): array
 {
     $found = [];
+    $entries = scandir($baseDir);
 
-    foreach (scandir($baseDir) as $entry) {
+    // scandir() returns false on an unreadable directory. Iterating that used to
+    // be a silent no-op, which this gate would report as "no extensions here" —
+    // exactly the answer that makes a missing extension look intentional.
+    if ($entries === false) {
+        fwrite(STDERR, "Cannot read directory: {$baseDir}\n");
+
+        exit(1);
+    }
+
+    foreach ($entries as $entry) {
         if ($entry === '.' || $entry === '..') {
             continue;
         }

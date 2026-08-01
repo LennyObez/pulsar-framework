@@ -20,6 +20,7 @@ $basePath = dirname(__DIR__, 2);
 require $basePath . '/vendor/autoload.php';
 
 use Pulsar\Support\AtomicFileWriter;
+use Pulsar\Tooling\Support\JsonDocument;
 
 $outputPath = $basePath . '/var/bench/results.json';
 
@@ -38,8 +39,19 @@ if (!file_exists($profilesFile)) {
     exit(1);
 }
 
-/** @var array<string, array{description: string, ini: array<string, string>, preload: bool}> $profiles */
-$profiles = json_decode(file_get_contents($profilesFile), true, 512, JSON_THROW_ON_ERROR);
+// Validated rather than asserted with an inline @var: the profile matrix drives
+// which php -d flags each worker runs under, so a profile whose `ini` decoded to
+// something other than a string map would silently benchmark the wrong settings
+// and report the result under the profile's name anyway.
+/** @var array<string, array{ini: array<string, string>, preload: bool}> $profiles */
+$profiles = [];
+
+foreach (JsonDocument::fromFile($profilesFile)->documents() as $profileName => $profileDocument) {
+    $profiles[$profileName] = [
+        'ini' => $profileDocument->stringMap('ini'),
+        'preload' => $profileDocument->boolOr('preload', false),
+    ];
+}
 
 // Detect PHP binary
 $phpBinary = PHP_BINARY;

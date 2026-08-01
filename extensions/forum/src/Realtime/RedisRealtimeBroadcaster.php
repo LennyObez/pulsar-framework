@@ -6,6 +6,7 @@ namespace Pulsar\Extension\Forum\Realtime;
 
 use Override;
 use Pulsar\Api\Internal;
+use Pulsar\Support\RedisReply;
 use Redis;
 
 use function array_unique;
@@ -78,22 +79,11 @@ final class RedisRealtimeBroadcaster implements RealtimeBroadcasterInterface
         $this->redis->zRemRangeByScore($key, '-inf', (string) $cutoff);
 
         // Return active user IDs
-        $members = $this->redis->zRangeByScore($key, (string) ($cutoff + 1), '+inf');
+        $members = RedisReply::strings($this->redis->zRangeByScore($key, (string) ($cutoff + 1), '+inf'));
 
-        if ($members === false) {
-            return [];
-        }
-
-        /** @var list<string> $result */
-        $result = [];
-
-        foreach ($members as $member) {
-            if (is_string($member)) {
-                $result[] = $member;
-            }
-        }
-
-        return array_values(array_unique($result));
+        // RedisReply::strings() already filters the reply to its string entries, so
+        // re-walking it here would only re-implement that.
+        return array_values(array_unique($members));
     }
 
     /**
