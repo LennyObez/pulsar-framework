@@ -22803,6 +22803,23 @@
             },
             "constants": []
         },
+        "Pulsar\\Http\\Http3\\EarlyHintsInterface": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "isEmpty": {
+                    "params": [],
+                    "return": "bool",
+                    "static": false
+                },
+                "send": {
+                    "params": [],
+                    "return": "void",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
         "Pulsar\\Http\\Http3\\FetchPriority": {
             "since": "1.0.0",
             "methods": [],
@@ -24260,6 +24277,28 @@
                         "int $gzipLevel",
                         "int $brotliQuality",
                         "int $zstdLevel"
+                    ],
+                    "return": null,
+                    "static": false
+                },
+                "process": {
+                    "params": [
+                        "Psr\\Http\\Message\\ServerRequestInterface $request",
+                        "Psr\\Http\\Server\\RequestHandlerInterface $handler"
+                    ],
+                    "return": "Psr\\Http\\Message\\ResponseInterface",
+                    "static": false
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Http\\Middleware\\EarlyHintsMiddleware": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "__construct": {
+                    "params": [
+                        "Pulsar\\Http\\Http3\\EarlyHintsInterface $hints"
                     ],
                     "return": null,
                     "static": false
@@ -39314,6 +39353,20 @@
                     ],
                     "return": "?static",
                     "static": true
+                }
+            },
+            "constants": []
+        },
+        "Pulsar\\Runtime\\SupportsEarlyHints": {
+            "since": "1.0.0-rc.12",
+            "methods": [],
+            "signatures": {
+                "earlyHints": {
+                    "params": [
+                        "array $linkHeaderValues"
+                    ],
+                    "return": "void",
+                    "static": false
                 }
             },
             "constants": []
@@ -55343,6 +55396,16 @@
                     "static": true,
                     "inherited_from": "PHPUnit\\Framework\\Assert"
                 },
+                "assertFileEqualsFileIgnoringWhitespace": {
+                    "params": [
+                        "string $expected",
+                        "string $actual",
+                        "string $message"
+                    ],
+                    "return": "void",
+                    "static": true,
+                    "inherited_from": "PHPUnit\\Framework\\Assert"
+                },
                 "assertFileEqualsIgnoringCase": {
                     "params": [
                         "string $expected",
@@ -55429,6 +55492,16 @@
                     "inherited_from": "PHPUnit\\Framework\\Assert"
                 },
                 "assertFileNotEqualsCanonicalizing": {
+                    "params": [
+                        "string $expected",
+                        "string $actual",
+                        "string $message"
+                    ],
+                    "return": "void",
+                    "static": true,
+                    "inherited_from": "PHPUnit\\Framework\\Assert"
+                },
+                "assertFileNotEqualsFileIgnoringWhitespace": {
                     "params": [
                         "string $expected",
                         "string $actual",
@@ -56153,7 +56226,27 @@
                     "static": true,
                     "inherited_from": "PHPUnit\\Framework\\Assert"
                 },
+                "assertStringEqualsFileIgnoringWhitespace": {
+                    "params": [
+                        "string $expectedFile",
+                        "string $actualString",
+                        "string $message"
+                    ],
+                    "return": "void",
+                    "static": true,
+                    "inherited_from": "PHPUnit\\Framework\\Assert"
+                },
                 "assertStringEqualsStringIgnoringLineEndings": {
+                    "params": [
+                        "string $expected",
+                        "string $actual",
+                        "string $message"
+                    ],
+                    "return": "void",
+                    "static": true,
+                    "inherited_from": "PHPUnit\\Framework\\Assert"
+                },
+                "assertStringEqualsStringIgnoringWhitespace": {
                     "params": [
                         "string $expected",
                         "string $actual",
@@ -56233,6 +56326,26 @@
                     "static": true,
                     "inherited_from": "PHPUnit\\Framework\\Assert"
                 },
+                "assertStringNotEqualsFileIgnoringWhitespace": {
+                    "params": [
+                        "string $expectedFile",
+                        "string $actualString",
+                        "string $message"
+                    ],
+                    "return": "void",
+                    "static": true,
+                    "inherited_from": "PHPUnit\\Framework\\Assert"
+                },
+                "assertStringNotEqualsStringIgnoringWhitespace": {
+                    "params": [
+                        "string $expected",
+                        "string $actual",
+                        "string $message"
+                    ],
+                    "return": "void",
+                    "static": true,
+                    "inherited_from": "PHPUnit\\Framework\\Assert"
+                },
                 "assertStringStartsNotWith": {
                     "params": [
                         "string $prefix",
@@ -56282,7 +56395,27 @@
                     "static": true,
                     "inherited_from": "PHPUnit\\Framework\\Assert"
                 },
+                "assertXmlFileEqualsXmlFileConsideringComments": {
+                    "params": [
+                        "string $expectedFile",
+                        "string $actualFile",
+                        "string $message"
+                    ],
+                    "return": "void",
+                    "static": true,
+                    "inherited_from": "PHPUnit\\Framework\\Assert"
+                },
                 "assertXmlFileNotEqualsXmlFile": {
+                    "params": [
+                        "string $expectedFile",
+                        "string $actualFile",
+                        "string $message"
+                    ],
+                    "return": "void",
+                    "static": true,
+                    "inherited_from": "PHPUnit\\Framework\\Assert"
+                },
+                "assertXmlFileNotEqualsXmlFileConsideringComments": {
                     "params": [
                         "string $expectedFile",
                         "string $actualFile",
@@ -56302,7 +56435,27 @@
                     "static": true,
                     "inherited_from": "PHPUnit\\Framework\\Assert"
                 },
+                "assertXmlStringEqualsXmlFileConsideringComments": {
+                    "params": [
+                        "string $expectedFile",
+                        "string $actualXml",
+                        "string $message"
+                    ],
+                    "return": "void",
+                    "static": true,
+                    "inherited_from": "PHPUnit\\Framework\\Assert"
+                },
                 "assertXmlStringEqualsXmlString": {
+                    "params": [
+                        "string $expectedXml",
+                        "string $actualXml",
+                        "string $message"
+                    ],
+                    "return": "void",
+                    "static": true,
+                    "inherited_from": "PHPUnit\\Framework\\Assert"
+                },
+                "assertXmlStringEqualsXmlStringConsideringComments": {
                     "params": [
                         "string $expectedXml",
                         "string $actualXml",
@@ -56322,7 +56475,27 @@
                     "static": true,
                     "inherited_from": "PHPUnit\\Framework\\Assert"
                 },
+                "assertXmlStringNotEqualsXmlFileConsideringComments": {
+                    "params": [
+                        "string $expectedFile",
+                        "string $actualXml",
+                        "string $message"
+                    ],
+                    "return": "void",
+                    "static": true,
+                    "inherited_from": "PHPUnit\\Framework\\Assert"
+                },
                 "assertXmlStringNotEqualsXmlString": {
+                    "params": [
+                        "string $expectedXml",
+                        "string $actualXml",
+                        "string $message"
+                    ],
+                    "return": "void",
+                    "static": true,
+                    "inherited_from": "PHPUnit\\Framework\\Assert"
+                },
+                "assertXmlStringNotEqualsXmlStringConsideringComments": {
                     "params": [
                         "string $expectedXml",
                         "string $actualXml",
@@ -56960,6 +57133,14 @@
                     "static": false,
                     "inherited_from": "PHPUnit\\Framework\\TestCase"
                 },
+                "setEmptyDataProviderSkipMessage": {
+                    "params": [
+                        "string $message"
+                    ],
+                    "return": "void",
+                    "static": false,
+                    "inherited_from": "PHPUnit\\Framework\\TestCase"
+                },
                 "setGroups": {
                     "params": [
                         "array $groups"
@@ -56995,6 +57176,14 @@
                 "setRunTestInSeparateProcess": {
                     "params": [
                         "bool $runTestInSeparateProcess"
+                    ],
+                    "return": "void",
+                    "static": false,
+                    "inherited_from": "PHPUnit\\Framework\\TestCase"
+                },
+                "setThrowableFromDeferredIssue": {
+                    "params": [
+                        "Throwable $throwable"
                     ],
                     "return": "void",
                     "static": false,
@@ -57046,6 +57235,14 @@
                         "string $string"
                     ],
                     "return": "PHPUnit\\Framework\\Constraint\\StringEqualsStringIgnoringLineEndings",
+                    "static": true,
+                    "inherited_from": "PHPUnit\\Framework\\Assert"
+                },
+                "stringEqualsStringIgnoringWhitespace": {
+                    "params": [
+                        "string $string"
+                    ],
+                    "return": "PHPUnit\\Framework\\Constraint\\StringEqualsStringIgnoringWhitespace",
                     "static": true,
                     "inherited_from": "PHPUnit\\Framework\\Assert"
                 },
@@ -58985,6 +59182,16 @@
                     "static": true,
                     "inherited_from": "PHPUnit\\Framework\\Assert"
                 },
+                "assertFileEqualsFileIgnoringWhitespace": {
+                    "params": [
+                        "string $expected",
+                        "string $actual",
+                        "string $message"
+                    ],
+                    "return": "void",
+                    "static": true,
+                    "inherited_from": "PHPUnit\\Framework\\Assert"
+                },
                 "assertFileEqualsIgnoringCase": {
                     "params": [
                         "string $expected",
@@ -59071,6 +59278,16 @@
                     "inherited_from": "PHPUnit\\Framework\\Assert"
                 },
                 "assertFileNotEqualsCanonicalizing": {
+                    "params": [
+                        "string $expected",
+                        "string $actual",
+                        "string $message"
+                    ],
+                    "return": "void",
+                    "static": true,
+                    "inherited_from": "PHPUnit\\Framework\\Assert"
+                },
+                "assertFileNotEqualsFileIgnoringWhitespace": {
                     "params": [
                         "string $expected",
                         "string $actual",
@@ -59795,7 +60012,27 @@
                     "static": true,
                     "inherited_from": "PHPUnit\\Framework\\Assert"
                 },
+                "assertStringEqualsFileIgnoringWhitespace": {
+                    "params": [
+                        "string $expectedFile",
+                        "string $actualString",
+                        "string $message"
+                    ],
+                    "return": "void",
+                    "static": true,
+                    "inherited_from": "PHPUnit\\Framework\\Assert"
+                },
                 "assertStringEqualsStringIgnoringLineEndings": {
+                    "params": [
+                        "string $expected",
+                        "string $actual",
+                        "string $message"
+                    ],
+                    "return": "void",
+                    "static": true,
+                    "inherited_from": "PHPUnit\\Framework\\Assert"
+                },
+                "assertStringEqualsStringIgnoringWhitespace": {
                     "params": [
                         "string $expected",
                         "string $actual",
@@ -59875,6 +60112,26 @@
                     "static": true,
                     "inherited_from": "PHPUnit\\Framework\\Assert"
                 },
+                "assertStringNotEqualsFileIgnoringWhitespace": {
+                    "params": [
+                        "string $expectedFile",
+                        "string $actualString",
+                        "string $message"
+                    ],
+                    "return": "void",
+                    "static": true,
+                    "inherited_from": "PHPUnit\\Framework\\Assert"
+                },
+                "assertStringNotEqualsStringIgnoringWhitespace": {
+                    "params": [
+                        "string $expected",
+                        "string $actual",
+                        "string $message"
+                    ],
+                    "return": "void",
+                    "static": true,
+                    "inherited_from": "PHPUnit\\Framework\\Assert"
+                },
                 "assertStringStartsNotWith": {
                     "params": [
                         "string $prefix",
@@ -59924,7 +60181,27 @@
                     "static": true,
                     "inherited_from": "PHPUnit\\Framework\\Assert"
                 },
+                "assertXmlFileEqualsXmlFileConsideringComments": {
+                    "params": [
+                        "string $expectedFile",
+                        "string $actualFile",
+                        "string $message"
+                    ],
+                    "return": "void",
+                    "static": true,
+                    "inherited_from": "PHPUnit\\Framework\\Assert"
+                },
                 "assertXmlFileNotEqualsXmlFile": {
+                    "params": [
+                        "string $expectedFile",
+                        "string $actualFile",
+                        "string $message"
+                    ],
+                    "return": "void",
+                    "static": true,
+                    "inherited_from": "PHPUnit\\Framework\\Assert"
+                },
+                "assertXmlFileNotEqualsXmlFileConsideringComments": {
                     "params": [
                         "string $expectedFile",
                         "string $actualFile",
@@ -59944,7 +60221,27 @@
                     "static": true,
                     "inherited_from": "PHPUnit\\Framework\\Assert"
                 },
+                "assertXmlStringEqualsXmlFileConsideringComments": {
+                    "params": [
+                        "string $expectedFile",
+                        "string $actualXml",
+                        "string $message"
+                    ],
+                    "return": "void",
+                    "static": true,
+                    "inherited_from": "PHPUnit\\Framework\\Assert"
+                },
                 "assertXmlStringEqualsXmlString": {
+                    "params": [
+                        "string $expectedXml",
+                        "string $actualXml",
+                        "string $message"
+                    ],
+                    "return": "void",
+                    "static": true,
+                    "inherited_from": "PHPUnit\\Framework\\Assert"
+                },
+                "assertXmlStringEqualsXmlStringConsideringComments": {
                     "params": [
                         "string $expectedXml",
                         "string $actualXml",
@@ -59964,7 +60261,27 @@
                     "static": true,
                     "inherited_from": "PHPUnit\\Framework\\Assert"
                 },
+                "assertXmlStringNotEqualsXmlFileConsideringComments": {
+                    "params": [
+                        "string $expectedFile",
+                        "string $actualXml",
+                        "string $message"
+                    ],
+                    "return": "void",
+                    "static": true,
+                    "inherited_from": "PHPUnit\\Framework\\Assert"
+                },
                 "assertXmlStringNotEqualsXmlString": {
+                    "params": [
+                        "string $expectedXml",
+                        "string $actualXml",
+                        "string $message"
+                    ],
+                    "return": "void",
+                    "static": true,
+                    "inherited_from": "PHPUnit\\Framework\\Assert"
+                },
+                "assertXmlStringNotEqualsXmlStringConsideringComments": {
                     "params": [
                         "string $expectedXml",
                         "string $actualXml",
@@ -60602,6 +60919,14 @@
                     "static": false,
                     "inherited_from": "PHPUnit\\Framework\\TestCase"
                 },
+                "setEmptyDataProviderSkipMessage": {
+                    "params": [
+                        "string $message"
+                    ],
+                    "return": "void",
+                    "static": false,
+                    "inherited_from": "PHPUnit\\Framework\\TestCase"
+                },
                 "setGroups": {
                     "params": [
                         "array $groups"
@@ -60637,6 +60962,14 @@
                 "setRunTestInSeparateProcess": {
                     "params": [
                         "bool $runTestInSeparateProcess"
+                    ],
+                    "return": "void",
+                    "static": false,
+                    "inherited_from": "PHPUnit\\Framework\\TestCase"
+                },
+                "setThrowableFromDeferredIssue": {
+                    "params": [
+                        "Throwable $throwable"
                     ],
                     "return": "void",
                     "static": false,
@@ -60688,6 +61021,14 @@
                         "string $string"
                     ],
                     "return": "PHPUnit\\Framework\\Constraint\\StringEqualsStringIgnoringLineEndings",
+                    "static": true,
+                    "inherited_from": "PHPUnit\\Framework\\Assert"
+                },
+                "stringEqualsStringIgnoringWhitespace": {
+                    "params": [
+                        "string $string"
+                    ],
+                    "return": "PHPUnit\\Framework\\Constraint\\StringEqualsStringIgnoringWhitespace",
                     "static": true,
                     "inherited_from": "PHPUnit\\Framework\\Assert"
                 },
@@ -64165,6 +64506,7 @@
         "Pulsar\\Core\\Wiring\\DeployWiring",
         "Pulsar\\Core\\Wiring\\DiagnosticsWiring",
         "Pulsar\\Core\\Wiring\\DocumentationWiring",
+        "Pulsar\\Core\\Wiring\\EarlyHintsWiring",
         "Pulsar\\Core\\Wiring\\EdgeWiring",
         "Pulsar\\Core\\Wiring\\ErrorTrackingWiring",
         "Pulsar\\Core\\Wiring\\EventWiring",

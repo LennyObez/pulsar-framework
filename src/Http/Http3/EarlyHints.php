@@ -6,27 +6,35 @@ namespace Pulsar\Http\Http3;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Http\ResponseStatus;
 
 use function array_map;
 use function count;
+use function function_exists;
+use function header;
+use function headers_send;
 use function implode;
 use function sprintf;
 
 /**
  * HTTP 103 Early Hints support for preloading critical resources.
  *
- * Generates Link headers that can be sent as a 103 Early Hints response
- * before the final response is ready. This allows browsers to start
- * fetching CSS, JS, and fonts while the server processes the request.
+ * Generates Link headers so a browser can start fetching CSS, JS and fonts while
+ * the server is still building the response.
  *
- * Works with both nginx + QUIC (HTTP/3) and traditional HTTP/2 setups.
- * For nginx, use fastcgi_early_hints to proxy these headers.
+ * A 103 is an *interim* response: the connection stays open and the real response
+ * follows on the same request. Only a SAPI that can flush headers independently of
+ * a body can do that, and today FrankenPHP's `headers_send()` is the only one — the
+ * FastCGI protocol carries exactly one response per request, so PHP-FPM cannot emit
+ * an interim status at all, whatever the front server supports. {@see self::send()}
+ * degrades accordingly instead of pretending.
  *
  * @see https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/103
+ * @see https://frankenphp.dev/docs/early-hints/
  * @api
  */
 #[Api(since: '1.0.0')]
-final class EarlyHints
+final class EarlyHints implements EarlyHintsInterface
 {
     /** @var list<LinkHint> */
     private array $hints = [];
@@ -148,10 +156,19 @@ final class EarlyHints
     }
 
     /**
-     * Send the 103 Early Hints response using PHP's header() function.
+     * Emit the hints, as a 103 interim response where the SAPI can do that.
      *
-     * This MUST be called before any output and before the final response headers.
-     * Works with PHP-FPM behind nginx (requires fastcgi_early_hints on).
+     * Must be called before any output and before the final response headers.
+     *
+     * On FrankenPHP the queued Link headers are flushed as a real 103 and the header
+     * state resets, so the final response is unaffected. Everywhere else the hints
+     * stay queued and ride on the final response, where a browser still honours
+     * `Link: rel=preload` — later than a 103 would allow, but correct, and the page
+     * is never held back by a hint that could not be sent.
+     *
+     * What this deliberately does not do is pass 103 to header(). That never produces
+     * an interim response on any SAPI; it sets the *final* status to 103, which is not
+     * a status a client can be served.
      */
     public function send(): void
     {
@@ -160,7 +177,11 @@ final class EarlyHints
         }
 
         foreach ($this->toLinkHeaders() as $linkValue) {
-            header(sprintf('Link: %s', $linkValue), false, 103);
+            header(sprintf('Link: %s', $linkValue), false);
+        }
+
+        if (function_exists('headers_send')) {
+            headers_send(ResponseStatus::EarlyHints->value);
         }
     }
 

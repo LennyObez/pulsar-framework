@@ -322,6 +322,35 @@ By default, the persistent runtime only binds to loopback addresses (`127.0.0.1`
 - It should sit behind a reverse proxy in production
 - The address may be accessible on the network
 
+## Early Hints (HTTP 103)
+
+A 103 lets the browser start fetching your stylesheet while PHP is still building the page. Register the hints your shell needs and the framework puts the middleware on the pipeline:
+
+```php
+use Pulsar\Http\Http3\EarlyHints;
+
+$hints = new EarlyHints();
+$hints->preloadStylesheet('/assets/app.css');
+$hints->preloadFont('/assets/fonts/inter.woff2');
+
+$container->instance(EarlyHints::class, $hints);
+```
+
+Nothing is added to the pipeline when no hint set is registered, so applications that do not want this pay nothing for it. Bind `EarlyHintsInterface` instead if your hints vary by request.
+
+Hints are sent only for `GET` navigations — a `fetch()` (`Sec-Fetch-Dest: empty`) renders no document and can preload nothing — and only after canonical-path redirection has been decided, so nothing is spent on a request about to be 301'd.
+
+### What your server has to support
+
+A 103 is an _interim_ response: the connection stays open and the real response follows on the same request.
+
+| Runtime                       | Result                                                                       |
+| ----------------------------- | ---------------------------------------------------------------------------- |
+| FrankenPHP                    | A real 103, via `headers_send()` — the only PHP SAPI that can emit one today |
+| PHP-FPM, and every other SAPI | The `Link` headers ride on the final response                                |
+
+The fallback is not a failure: a browser still honours `Link: rel=preload` on the final response. It arrives later than a 103 would, and that is the whole difference. The FastCGI protocol carries exactly one response per request, so PHP-FPM cannot send an interim status whatever the front server supports — no nginx or Apache directive changes that.
+
 ## CLI commands
 
 ### `runtime:serve`

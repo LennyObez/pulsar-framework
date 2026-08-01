@@ -30,6 +30,12 @@ final readonly class WiringList
             new ConfigWiring(),
             // Early: pipes the canonicalization middleware OUTERMOST (before the
             // locale-prefix strip) so it sees the full, un-rewritten request path.
+            // Before RoutingWiring, precisely so its prepend() lands *behind* the
+            // canonicalization middleware that RoutingWiring prepends next. Two
+            // reasons, and they agree: RoutingWiring documents CanonicalPathMiddleware
+            // as structurally outermost, and hints spent on a request that is about to
+            // be 301'd are hints the browser throws away.
+            new EarlyHintsWiring(),
             new RoutingWiring(),
             new I18nWiring(),
             new LoggingWiring(),
