@@ -91,19 +91,3 @@ final class FactoryTest extends TestCase
         self::assertSame('admin', $admin->make()['role']);
     }
 }
-
-/**
- * @internal Test-only factory
- */
-final class UserFactory extends Factory
-{
-    /** @return array<string, mixed> */
-    protected function definition(): array
-    {
-        return [
-            'name' => 'John Doe',
-            'email' => 'john@test.com',
-            'role' => 'user',
-        ];
-    }
-}
