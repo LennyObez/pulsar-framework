@@ -16,6 +16,10 @@ export default tseslint.config(
       'build/**',
       '*.config.js',
       '*.config.ts',
+      // Local agent tooling: gitignored, so CI never lints it. Without this,
+      // `pnpm lint` fails on a developer's machine and passes in CI — the two
+      // must report the same thing or neither is trusted.
+      '.claude/**',
     ],
   },
   {

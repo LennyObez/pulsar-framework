@@ -9,6 +9,7 @@ use RuntimeException;
 
 use function array_is_list;
 use function is_array;
+use function is_bool;
 use function is_file;
 use function is_float;
 use function is_int;

@@ -23,7 +23,7 @@ $measuredIterations = 1000;
 // Cold boot measurement
 $bootStart = hrtime(true);
 $kernel = new Kernel();
-$kernel->router()->get('/bench', fn () => Response::text('ok'));
+$kernel->router()->get('/bench', fn() => Response::text('ok'));
 $kernel->boot();
 $bootUs = (int) ((hrtime(true) - $bootStart) / 1_000);
 
@@ -79,7 +79,7 @@ $warmBootTimings = [];
 for ($w = 0; $w < 5; $w++) {
     $wStart = hrtime(true);
     $wKernel = new Kernel();
-    $wKernel->router()->get('/bench', fn () => Response::text('ok'));
+    $wKernel->router()->get('/bench', fn() => Response::text('ok'));
     $wKernel->boot();
     $warmBootTimings[] = (int) ((hrtime(true) - $wStart) / 1_000);
     unset($wKernel);

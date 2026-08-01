@@ -678,7 +678,7 @@ if ($diffBase !== null) {
         if ($exitCode === 0 && is_string($stdout)) {
             $changedFiles = array_values(array_filter(
                 explode("\n", trim($stdout)),
-                static fn (string $f): bool => $f !== '' && str_ends_with($f, '.php'),
+                static fn(string $f): bool => $f !== '' && str_ends_with($f, '.php'),
             ));
         } else {
             fwrite(STDERR, "Warning: Could not resolve diff-base '$diffBase'. Running full scan.\n");
@@ -782,7 +782,7 @@ if ($generateBaseline) {
     $baselineData = [
         'generated' => date('c'),
         'violations' => array_map(
-            static fn (array $v): array => [
+            static fn(array $v): array => [
                 'file' => $v['file'],
                 'import' => $v['import'],
                 'rule' => $v['rule'],
@@ -819,8 +819,8 @@ if ($generateBaseline) {
 }
 
 // Count by severity
-$errors = array_filter($allViolations, static fn (array $v): bool => $v['severity'] === 'error');
-$warnings = array_filter($allViolations, static fn (array $v): bool => $v['severity'] === 'warning');
+$errors = array_filter($allViolations, static fn(array $v): bool => $v['severity'] === 'error');
+$warnings = array_filter($allViolations, static fn(array $v): bool => $v['severity'] === 'warning');
 $errorCount = count($errors);
 $warningCount = count($warnings);
 

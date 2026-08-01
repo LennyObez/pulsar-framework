@@ -9,8 +9,8 @@ use Psalm\Plugin\EventHandler\Event\AfterClassLikeVisitEvent;
 use Psalm\Storage\ClassLikeStorage;
 
 use function in_array;
-use function str_ends_with;
 use function str_contains;
+use function str_ends_with;
 use function str_starts_with;
 
 /**
@@ -115,6 +115,33 @@ final class ContainerResolutionDetector implements AfterClassLikeVisitInterface
         }
     }
 
+    /**
+     * Entry points a runner discovers by reflection, so no call site ever names them.
+     *
+     * Psalm's findUnusedCode reasons from call sites, which is right for library code
+     * and wrong for anything a runner instantiates from the filesystem. PHPUnit is
+     * handled by psalm/plugin-phpunit; these are the equivalents it does not know:
+     *
+     *   - PHPBench subjects. benchmarks/ declares classes whose methods carry
+     *     #[Subject]; phpbench finds them by scanning the directory. Reporting them
+     *     as dead invites deleting a performance gate to satisfy an analyser.
+     *   - Analyser extensions of our own. tools/php/psalm-plugin's entry point is
+     *     named in psalm.xml's <pluginClass>, and tools/php/phpstan's rules in
+     *     phpstan.neon's services — configuration, which Psalm does not read as a
+     *     reference.
+     */
+    private static function isReflectionDiscoveredEntryPoint(ClassLikeStorage $storage): bool
+    {
+        $fqcn = $storage->name;
+
+        if (str_starts_with($fqcn, 'Pulsar\\Benchmark\\')) {
+            return true;
+        }
+
+        return str_starts_with($fqcn, 'Pulsar\\Tooling\\PsalmPlugin\\')
+            || str_starts_with($fqcn, 'Pulsar\\PHPStan\\');
+    }
+
     private static function matchesRule(ClassLikeStorage $storage): bool
     {
         // R1: PHP attribute (#[Attribute(...)])
@@ -134,6 +161,11 @@ final class ContainerResolutionDetector implements AfterClassLikeVisitInterface
 
         // R4: tagged with Pulsar's #[Api] or #[Internal] framework attribute
         if (self::hasFrameworkApiAttribute($storage)) {
+            return true;
+        }
+
+        // R4b: reached by a runner through reflection rather than by any call site
+        if (self::isReflectionDiscoveredEntryPoint($storage)) {
             return true;
         }
 

@@ -22,8 +22,8 @@ declare(strict_types=1);
 $options = getopt('', ['threshold:', 'output:', 'base-path:', 'dry-run']);
 
 if ($options === false) {
-    fwrite(STDERR, "Could not parse command-line options.
-");
+    fwrite(STDERR, 'Could not parse command-line options.
+');
 
     exit(1);
 }
