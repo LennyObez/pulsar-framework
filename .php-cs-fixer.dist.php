@@ -7,6 +7,14 @@ $finder = PhpCsFixer\Finder::create()
     ->in(__DIR__ . '/tests')
     ->in(__DIR__ . '/config')
     ->in(__DIR__ . '/extensions')
+    // These three were outside the finder entirely, so the framework's own tooling
+    // and benchmarks had never been held to PER-CS while everything they check was.
+    ->in(__DIR__ . '/tools')
+    ->in(__DIR__ . '/scripts')
+    ->in(__DIR__ . '/benchmarks')
+    // Declaration files: their shape mirrors the extensions they describe, and
+    // reformatting them would obscure the diff against upstream.
+    ->exclude('php/stubs')
     ->exclude('cache')
     ->exclude('Unit/Integrity/Fixture')
     ->exclude('dev')

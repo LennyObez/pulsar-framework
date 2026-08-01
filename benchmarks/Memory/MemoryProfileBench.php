@@ -11,8 +11,6 @@ use PhpBench\Attributes\Revs;
 use PhpBench\Attributes\Subject;
 use PhpBench\Attributes\Warmup;
 use Pulsar\Container\Container;
-use Pulsar\Database\Driver;
-use Pulsar\Database\Result;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Orm\Contracts\MetadataRegistryInterface;
 use Pulsar\Extension\Orm\Domain\ColumnMetadata;
@@ -22,6 +20,8 @@ use Pulsar\Extension\Orm\Features\Hydration\EntityHydrator;
 use Pulsar\Http\Message\Response;
 use Pulsar\Http\Method;
 use Pulsar\Routing\Router;
+use RuntimeException;
+use stdClass;
 
 use function memory_get_peak_usage;
 use function memory_get_usage;
@@ -77,7 +77,7 @@ final class MemoryProfileBench
 
         // Assert < 512 KB for 200 routes
         if ($delta > 524_288) {
-            throw new \RuntimeException(
+            throw new RuntimeException(
                 "Route registration consumed {$delta} bytes (> 512 KB budget for 200 routes)",
             );
         }
@@ -101,7 +101,7 @@ final class MemoryProfileBench
 
         // Assert < 256 KB for 100 route matches
         if ($delta > 262_144) {
-            throw new \RuntimeException(
+            throw new RuntimeException(
                 "Route matching consumed {$delta} bytes (> 256 KB budget for 100 matches)",
             );
         }
@@ -119,7 +119,7 @@ final class MemoryProfileBench
         $container = new Container();
 
         for ($i = 0; $i < 100; $i++) {
-            $container->bind("service.$i", fn() => new \stdClass());
+            $container->bind("service.$i", fn() => new stdClass());
         }
 
         // Consume each resolution: discarding it lets the engine treat the loop as
@@ -127,11 +127,11 @@ final class MemoryProfileBench
         $resolved = 0;
 
         for ($i = 0; $i < 100; $i++) {
-            $resolved += $container->get("service.$i") instanceof \stdClass ? 1 : 0;
+            $resolved += $container->get("service.$i") instanceof stdClass ? 1 : 0;
         }
 
         if ($resolved !== 100) {
-            throw new \RuntimeException("Container resolved {$resolved} of 100 services");
+            throw new RuntimeException("Container resolved {$resolved} of 100 services");
         }
 
         $after = memory_get_usage(true);
@@ -139,7 +139,7 @@ final class MemoryProfileBench
 
         // Assert < 256 KB for 100 bindings + resolutions
         if ($delta > 262_144) {
-            throw new \RuntimeException(
+            throw new RuntimeException(
                 "Container resolution consumed {$delta} bytes (> 256 KB budget for 100 services)",
             );
         }
@@ -207,14 +207,14 @@ final class MemoryProfileBench
 
         // Assert < 1 MB for 1000 entities
         if ($delta > 1_048_576) {
-            throw new \RuntimeException(
+            throw new RuntimeException(
                 "Entity hydration consumed {$delta} bytes (> 1 MB budget for 1000 entities)",
             );
         }
 
         // Prevent dead-code elimination
         if ($entities === []) {
-            throw new \RuntimeException('Unexpected empty result');
+            throw new RuntimeException('Unexpected empty result');
         }
     }
 
@@ -245,7 +245,7 @@ final class MemoryProfileBench
 
         // Assert < 512 KB for 100 JSON responses
         if ($delta > 524_288) {
-            throw new \RuntimeException(
+            throw new RuntimeException(
                 "JSON response construction consumed {$delta} bytes (> 512 KB budget for 100 responses)",
             );
         }
@@ -260,7 +260,7 @@ final class MemoryProfileBench
         }
 
         if ($bytes === 0) {
-            throw new \RuntimeException('Unexpected empty result');
+            throw new RuntimeException('Unexpected empty result');
         }
     }
 
@@ -285,12 +285,12 @@ final class MemoryProfileBench
         $resolved = 0;
 
         for ($i = 0; $i < 20; $i++) {
-            $container->bind("svc.$i", fn() => new \stdClass());
-            $resolved += $container->get("svc.$i") instanceof \stdClass ? 1 : 0;
+            $container->bind("svc.$i", fn() => new stdClass());
+            $resolved += $container->get("svc.$i") instanceof stdClass ? 1 : 0;
         }
 
         if ($resolved !== 20) {
-            throw new \RuntimeException("Container resolved {$resolved} of 20 services");
+            throw new RuntimeException("Container resolved {$resolved} of 20 services");
         }
 
         $response = Response::json(['status' => 'ok', 'data' => range(1, 50)]);
@@ -301,7 +301,7 @@ final class MemoryProfileBench
 
         // Full request cycle should stay under 2 MB peak growth
         if ($delta > 2_097_152) {
-            throw new \RuntimeException(
+            throw new RuntimeException(
                 "Full cycle peak growth: {$delta} bytes (> 2 MB budget)",
             );
         }

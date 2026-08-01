@@ -24,7 +24,9 @@
   function decode(value) {
     try {
       return value ? atob(value) : '';
-    } catch (e) {
+    } catch {
+      // A malformed payload decodes to nothing rather than throwing at the
+      // caller: the cloak degrades to an empty address, never a broken page.
       return '';
     }
   }

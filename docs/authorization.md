@@ -380,11 +380,11 @@ When provided, authorization denials are logged as `AuditEvent::Authorization` w
 
 The Kernel registers these middleware aliases:
 
-| Alias       | Middleware                | Purpose                                        |
-| ----------- | ------------------------- | ---------------------------------------------- |
-| `auth`      | `AuthorizationMiddleware` | Authentication + permission checks             |
-| `2fa`       | `TwoFactorMiddleware`     | Blocks pending 2FA status                      |
-| `zerotrust` | `ZeroTrustMiddleware`     | Deny-by-default signal/policy gate (opt-in)    |
+| Alias       | Middleware                | Purpose                                     |
+| ----------- | ------------------------- | ------------------------------------------- |
+| `auth`      | `AuthorizationMiddleware` | Authentication + permission checks          |
+| `2fa`       | `TwoFactorMiddleware`     | Blocks pending 2FA status                   |
+| `zerotrust` | `ZeroTrustMiddleware`     | Deny-by-default signal/policy gate (opt-in) |
 
 The `zerotrust` alias is registered only when `security.zero_trust.enabled` is
 true (see [Zero-trust access control](#zero-trust-access-control)); it is never

@@ -163,5 +163,5 @@ if ($failed) {
     exit(1);
 }
 
-echo "OK: All " . count($extensions) . " extensions covered by PHPStan, Psalm, and composer.json autoload.\n";
+echo 'OK: All ' . count($extensions) . " extensions covered by PHPStan, Psalm, and composer.json autoload.\n";
 exit(0);

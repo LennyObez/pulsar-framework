@@ -153,5 +153,5 @@ if ($missing !== []) {
     exit(1);
 }
 
-echo "OK: All " . $found . " compliance capability references verified in codebase.\n";
+echo 'OK: All ' . $found . " compliance capability references verified in codebase.\n";
 exit(0);

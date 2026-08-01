@@ -189,7 +189,7 @@ because it affects an `#[Api]` type.
 ### `RetentionPolicy::fromArray()` refuses malformed entries (was: silently defaulted)
 
 `data_protection.retention` entries were parsed with silent fallbacks, and every
-one of those fallbacks meant *retain this data forever*:
+one of those fallbacks meant _retain this data forever_:
 
 - `retention_days` accepted only a real integer. Because `env()` returns strings,
   the ordinary `'retention_days' => env('RETENTION_DAYS', 90)` produced `"90"`,
@@ -202,7 +202,7 @@ one of those fallbacks meant *retain this data forever*:
 - A negative period was clamped to `0`, i.e. indefinite again.
 
 `fromArray()` now accepts any numeric value (integer, float or numeric string) and
-throws `ConfigException` when a value is *present but unreadable*, when `category`
+throws `ConfigException` when a value is _present but unreadable_, when `category`
 is blank, or when the period is negative. An **absent** `retention_days` still
 means `0` = indefinite, which remains the documented, deliberate way to retain
 without expiry.
