@@ -55,8 +55,7 @@ final class RuntimeReloadCommand extends Command
             return ExitCode::Error->value;
         }
 
-        /** @psalm-suppress UndefinedConstant */
-        $sigusr1 = (int) SIGUSR1;
+        $sigusr1 = SIGUSR1;
         $sent = posix_kill($pid, $sigusr1);
 
         if (!$sent) {

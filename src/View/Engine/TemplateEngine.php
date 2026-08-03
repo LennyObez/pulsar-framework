@@ -163,7 +163,6 @@ final readonly class TemplateEngine implements TemplateEngineInterface
         ob_start();
 
         try {
-            /** @psalm-suppress UnresolvableInclude */
             include $_path_;
         } catch (Throwable $e) {
             ob_end_clean();

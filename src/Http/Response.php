@@ -32,7 +32,6 @@ final readonly class Response
     /**
      * Return a new response with the given body.
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement: Psalm does not yet infer clone() return type
      */
     #[NoDiscard]
     public function withBody(string $body): self
@@ -43,7 +42,6 @@ final readonly class Response
     /**
      * Return a new response with the given status.
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     #[NoDiscard]
     public function withStatus(ResponseStatus $status): self
@@ -56,7 +54,6 @@ final readonly class Response
      *
      * @param string|list<string> $value
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     #[NoDiscard]
     public function withHeader(string $name, string|array $value): self
@@ -67,7 +64,6 @@ final readonly class Response
     /**
      * Return a new response with an added header value.
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     #[NoDiscard]
     public function withAddedHeader(string $name, string $value): self
@@ -78,7 +74,6 @@ final readonly class Response
     /**
      * Return a new response without the given header.
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     #[NoDiscard]
     public function withoutHeader(string $name): self
@@ -89,7 +84,6 @@ final readonly class Response
     /**
      * Return a new response with the given protocol version.
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     #[NoDiscard]
     public function withProtocolVersion(string $version): self

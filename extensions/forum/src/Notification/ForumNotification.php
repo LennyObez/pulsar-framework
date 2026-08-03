@@ -70,7 +70,6 @@ final readonly class ForumNotification
     /**
      * Mark this notification as read.
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     public function markRead(): self
     {

@@ -64,7 +64,6 @@ final readonly class BetaSignup
     /**
      * Record that an invitation has been sent to this signup.
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     public function invite(string $tokenHash): self
     {

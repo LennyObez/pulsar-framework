@@ -1,5 +1,18 @@
-# Auto-detect text files and normalize line endings
-* text=auto
+# Auto-detect text files and normalize line endings.
+#
+# `eol=lf` pins the WORKING TREE to LF as well, not just the stored blobs, which
+# is what stops "LF will be replaced by CRLF the next time Git touches it": that
+# warning is the conversion announcing itself, so the fix is to remove the
+# conversion rather than reverse it.
+#
+# Not CRLF, deliberately. 364 PHP files carry heredocs, and a heredoc takes the
+# file's own line endings into the string — under CRLF every one of them would
+# silently emit \r\n in generated HTML, SQL and mail, and every test asserting
+# "\n" would break. LF also makes a Windows checkout byte-identical to CI.
+#
+# This overrides core.autocrlf, so it holds for every clone without anyone
+# having to configure their machine.
+* text=auto eol=lf
 
 # Ensure shell scripts use LF (required for bash/sh)
 *.sh text eol=lf

@@ -51,7 +51,6 @@ final class ProjectRouteLoader
 
             if (is_file($routeFile)) {
                 /**
-                 * @psalm-suppress UnresolvableInclude
                  * @var mixed $result
                  */
                 $result = (static function () use ($routeFile, $router, $container): mixed {
@@ -59,7 +58,6 @@ final class ProjectRouteLoader
                     // through PHP's scope inheritance; Psalm cannot trace through
                     // include so we bind them here and unset() after to mark them used.
                     /**
-                     * @psalm-suppress UnresolvableInclude
                      * @var mixed $loaded
                      */
                     $loaded = require $routeFile;

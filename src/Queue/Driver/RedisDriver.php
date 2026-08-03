@@ -319,7 +319,6 @@ final class RedisDriver implements QueueDriverInterface
         $delayedKey = $this->key($queue, 'delayed');
         $queueKey = $this->key($queue);
 
-        /** @psalm-suppress MixedMethodCall: Redis::eval() is the standard API for server-side Lua */
         $redis->eval(self::MIGRATE_LUA, [$delayedKey, $queueKey, (string) $now], 2);
     }
 

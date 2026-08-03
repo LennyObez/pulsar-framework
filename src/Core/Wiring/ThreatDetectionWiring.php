@@ -167,7 +167,6 @@ final readonly class ThreatDetectionWiring implements ServiceWiringInterface, De
         }
 
         /**
-         * @psalm-suppress UnresolvableInclude
          * @var mixed $data
          */
         $data = require $file;

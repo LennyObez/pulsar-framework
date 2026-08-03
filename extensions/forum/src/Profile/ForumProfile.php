@@ -77,7 +77,6 @@ final readonly class ForumProfile
     /**
      * Add reputation points (positive or negative).
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     public function addReputation(int $points): self
     {
@@ -90,7 +89,6 @@ final readonly class ForumProfile
     /**
      * Increment the post count.
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     public function incrementPostCount(): self
     {
@@ -103,7 +101,6 @@ final readonly class ForumProfile
     /**
      * Increment the thread count.
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     public function incrementThreadCount(): self
     {
@@ -117,7 +114,6 @@ final readonly class ForumProfile
      * Ban the user from the forum.
      *
      * @throws ForumException If the user is already banned
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     public function ban(string $reason, ?DateTimeImmutable $expiresAt = null): self
     {
@@ -137,7 +133,6 @@ final readonly class ForumProfile
     /**
      * Remove the ban from the user.
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     public function unban(): self
     {

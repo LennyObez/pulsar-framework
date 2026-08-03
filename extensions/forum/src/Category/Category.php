@@ -65,7 +65,6 @@ final readonly class Category
     /**
      * Move category under a different parent.
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     public function reparent(?string $parentId): self
     {
@@ -78,7 +77,6 @@ final readonly class Category
     /**
      * Update the sibling sort order.
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     public function reorder(int $sortOrder): self
     {
@@ -91,7 +89,6 @@ final readonly class Category
     /**
      * Lock the category to prevent new thread creation.
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     public function lock(): self
     {
@@ -104,7 +101,6 @@ final readonly class Category
     /**
      * Unlock the category to allow new thread creation.
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     public function unlock(): self
     {
@@ -117,7 +113,6 @@ final readonly class Category
     /**
      * Update the URL slug.
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     public function changeSlug(string $slug): self
     {

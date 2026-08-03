@@ -187,7 +187,6 @@ final class MigrationRepository
     public function load(string $filePath): MigrationInterface
     {
         /**
-         * @psalm-suppress UnresolvableInclude Migration file paths are validated at runtime via discover()
          */
         $migration = require $filePath;
 

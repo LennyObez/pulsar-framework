@@ -73,7 +73,6 @@ final class McpServerExtension implements ExtensionInterface, PreBootExtensionIn
         $configData = [];
         if ($configPath !== null && is_file($configPath . DIRECTORY_SEPARATOR . 'mcp.php')) {
             /**
-             * @psalm-suppress UnresolvableInclude
              * @var mixed $loaded
              */
             $loaded = require $configPath . DIRECTORY_SEPARATOR . 'mcp.php';

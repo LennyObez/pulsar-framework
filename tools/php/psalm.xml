@@ -19,23 +19,29 @@
     whole of Psalm's strictness: a dozen orthogonal switches sit
     beside it. Every one was tried and counted rather than assumed.
 
-    Enabled here because the codebase already satisfies them, so
-    they cost nothing and stop the first regression:
+    Enabled because the codebase already satisfied them, so they cost
+    nothing and stop the first regression:
       ensureOverrideAttribute, strictBinaryOperands,
       sealAllMethods, sealAllProperties,
       findUnusedIssueHandlerSuppression  -> 0 errors each
 
+    findUnusedPsalmSuppress is ON, and its debt is PAID: it reported
+    150 suppressions that no longer suppressed anything, all removed.
+    One of them was load-bearing in the worst way — it hid a console
+    command whose loop could never exit — and fifteen (int) casts on
+    SIG* constants existed only because ext-pcntl was unstubbed, so
+    the analyser could not see they were already ints.
+
     Measured and NOT yet enabled, with the exact debt each carries:
       ensureArrayIntOffsetsExist         -> 267 errors
       ensureArrayStringOffsetsExist      -> 219 errors
-      findUnusedPsalmSuppress            -> 136 stale suppressions
 
-    These are real findings, not noise, and each is a campaign of its
-    own. Turning them on before the debt is paid makes `composer qa`
-    red for everyone, and a gate that is always red is a gate nobody
-    reads. They go on as their campaigns land — the counts above are
-    the definition of done, and they are here so the debt cannot be
-    quietly forgotten.
+    These are real findings, not noise, and paying them means giving
+    486 array accesses a proved-present offset — array shapes, not
+    casts. Turning them on first makes `composer qa` red for everyone,
+    and a gate that is always red is a gate nobody reads. The counts
+    above are the definition of done, and they are written here so the
+    debt cannot be quietly forgotten.
 
     Deliberately NOT enabled, because they would make things worse:
       disableSuppressAll  - the policy above depends on precise,
@@ -57,6 +63,7 @@
     findUnusedBaselineEntry="true"
     findUnusedCode="true"
     findUnusedIssueHandlerSuppression="true"
+    findUnusedPsalmSuppress="true"
     ensureOverrideAttribute="true"
     strictBinaryOperands="true"
     sealAllMethods="true"
@@ -134,6 +141,14 @@
         <file name="../../vendor/jetbrains/phpstorm-stubs/zstd/zstd.php"/>
         <file name="../../vendor/jetbrains/phpstorm-stubs/brotli/brotli.php"/>
         <file name="../../vendor/jetbrains/phpstorm-stubs/frankenphp/frankenphp.php"/>
+        <!-- ext-pcntl is POSIX-only: PHP has no Windows build of it, so a developer
+             machine can never have it and the analysers there would treat every
+             signal constant as undefined and every pcntl_*() argument as mixed. The
+             framework registers signal handlers in its worker lifecycle, so that is
+             a real analysis gap on the platform where the code actually runs.
+             pcntl_c.php carries the SIG* constants; pcntl.php the functions. -->
+        <file name="../../vendor/jetbrains/phpstorm-stubs/pcntl/pcntl.php"/>
+        <file name="../../vendor/jetbrains/phpstorm-stubs/pcntl/pcntl_c.php"/>
         <!-- Replaces phpstorm-stubs' gRPC stub outright: two of its declarations are wrong
              against the extension's C source. See the file for the arginfo it cites. -->
         <file name="stubs/Grpc.php"/>

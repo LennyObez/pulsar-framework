@@ -135,7 +135,6 @@ final readonly class ProgressiveStreamingEngine
         }, $_threshold_);
 
         try {
-            /** @psalm-suppress UnresolvableInclude */
             include $_path_;
         } catch (Throwable $e) {
             ob_end_clean();
@@ -200,7 +199,6 @@ final readonly class ProgressiveStreamingEngine
         ob_start();
 
         try {
-            /** @psalm-suppress UnresolvableInclude */
             include $_path_;
         } catch (Throwable $e) {
             ob_end_clean();

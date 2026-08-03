@@ -41,31 +41,25 @@ final readonly class RequestContext
         $this->timestamp = $timestamp ?? new DateTimeImmutable();
     }
 
-    /** @psalm-suppress MoreSpecificReturnType */
     #[NoDiscard]
     public function withActor(string $actor): self
     {
-        /** @psalm-suppress LessSpecificReturnStatement */
         return clone($this, ['actor' => $actor]);
     }
 
-    /** @psalm-suppress MoreSpecificReturnType */
     #[NoDiscard]
     public function withTenantId(string $tenantId): self
     {
-        /** @psalm-suppress LessSpecificReturnStatement */
         return clone($this, ['tenantId' => $tenantId]);
     }
 
     /**
      * @param array<string, mixed> $attributes
      *
-     * @psalm-suppress MoreSpecificReturnType
      */
     #[NoDiscard]
     public function withAttributes(array $attributes): self
     {
-        /** @psalm-suppress LessSpecificReturnStatement */
         return clone($this, ['attributes' => $attributes]);
     }
 

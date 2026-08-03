@@ -170,7 +170,6 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
 
             if ($configPath !== null && is_file($configPath . DIRECTORY_SEPARATOR . 'cms.php')) {
                 /**
-                 * @psalm-suppress UnresolvableInclude
                  * @var mixed $cmsData
                  */
                 $cmsData = require $configPath . DIRECTORY_SEPARATOR . 'cms.php';

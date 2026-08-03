@@ -81,7 +81,6 @@ final readonly class HttpClientConfig
     /**
      * Return a new config with the given timeout.
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     #[NoDiscard]
     public function withTimeout(float $timeout): self
@@ -92,7 +91,6 @@ final readonly class HttpClientConfig
     /**
      * Return a new config with the given retry settings.
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     #[NoDiscard]
     public function withRetries(int $retries, float $delay = 1.0): self
@@ -103,7 +101,6 @@ final readonly class HttpClientConfig
     /**
      * Return a new config with the given base URL.
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     #[NoDiscard]
     public function withBaseUrl(string $baseUrl): self
@@ -114,7 +111,6 @@ final readonly class HttpClientConfig
     /**
      * Return a new config with SSRF protection toggled.
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     #[NoDiscard]
     public function withSsrfProtection(bool $enabled): self

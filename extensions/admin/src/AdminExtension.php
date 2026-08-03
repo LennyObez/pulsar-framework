@@ -83,7 +83,6 @@ final readonly class AdminExtension implements ExtensionInterface, PreBootExtens
 
             if ($configPath !== null && is_file($configPath . DIRECTORY_SEPARATOR . 'admin.php')) {
                 /**
-                 * @psalm-suppress UnresolvableInclude
                  *
                  * @var mixed $adminData
                  */
