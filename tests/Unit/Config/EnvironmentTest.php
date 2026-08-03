@@ -292,4 +292,46 @@ final class EnvironmentTest extends TestCase
             putenv('PULSAR_CASE_PROBE');
         }
     }
+
+    /**
+     * A numerically named environment variable must not stop the kernel booting.
+     *
+     * PHP array keys are int|string, so `1=x` in the environment reaches key
+     * normalisation as an int and used to raise a TypeError inside
+     * Environment::load() — during ConfigManager boot, so nothing started at all.
+     * Fifty-seven tests failed at once the first time one appeared in a worker, and
+     * every analyser had been told the keys were strings by an annotation on getenv().
+     */
+    #[Test]
+    public function aNumericallyNamedVariableDoesNotBreakLoading(): void
+    {
+        putenv('1=folds-to-int');
+        putenv('-1=also-folds');
+        putenv('007=does-not-fold');
+        putenv('PULSAR_NUMERIC_PROBE=still-here');
+
+        try {
+            $env = Environment::load();
+
+            self::assertNull($env->get('1'), 'a canonical decimal key cannot be stored as a string');
+            self::assertNull($env->get('-1'), 'negatives fold too');
+
+            // The predicate is the engine's, not an approximation of it: PHP keeps "007"
+            // a string key because it is not the canonical form of 7. Dropping it would
+            // discard a usable variable, so the check has to be exact rather than
+            // "looks numeric".
+            self::assertSame('does-not-fold', $env->get('007'), 'a non-canonical form is kept');
+
+            self::assertSame(
+                'still-here',
+                $env->get('PULSAR_NUMERIC_PROBE'),
+                'and the rest of the environment is untouched',
+            );
+        } finally {
+            putenv('1');
+            putenv('-1');
+            putenv('007');
+            putenv('PULSAR_NUMERIC_PROBE');
+        }
+    }
 }

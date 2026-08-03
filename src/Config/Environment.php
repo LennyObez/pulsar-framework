@@ -11,8 +11,10 @@ use Pulsar\Config\Exception\ConfigException;
 use function array_filter;
 use function array_key_exists;
 use function in_array;
+use function is_array;
 use function is_file;
 use function is_readable;
+use function is_string;
 use function preg_replace;
 use function rtrim;
 use function str_starts_with;
@@ -34,7 +36,7 @@ final class Environment
     /**
      * Merged environment variables (OS + file, OS wins).
      *
-     * @var array<string, string>
+     * @var array<array-key, string>
      */
     private array $variables;
 
@@ -47,7 +49,7 @@ final class Environment
     private static ?self $active = null;
 
     /**
-     * @param array<string, string> $variables
+     * @param array<array-key, string> $variables
      */
     private function __construct(array $variables)
     {
@@ -188,11 +190,11 @@ final class Environment
     }
 
     /**
-     * @param array<string, string> $vars
+     * @param array<array-key, string> $vars
      * @param list<string> $prefixAllowlist
      * @param list<string> $literalAllowlist
      *
-     * @return array<string, string>
+     * @return array<array-key, string>
      */
     private static function applyAllowlist(array $vars, array $prefixAllowlist, array $literalAllowlist): array
     {
@@ -206,7 +208,9 @@ final class Environment
 
         return array_filter(
             $vars,
-            static function (string $key) use ($prefixAllowlist, $literalAllowlist): bool {
+            static function (int|string $key) use ($prefixAllowlist, $literalAllowlist): bool {
+                $key = (string) $key;
+
                 if (in_array($key, $literalAllowlist, true)) {
                     return true;
                 }
@@ -335,7 +339,7 @@ final class Environment
     /**
      * Get all environment variables.
      *
-     * @return array<string, string>
+     * @return array<array-key, string>
      */
     public function all(): array
     {
@@ -345,14 +349,19 @@ final class Environment
     /**
      * Read OS-level environment variables.
      *
-     * @return array<string, string>
+     * @return array<array-key, string> Not array<string, string>, however much the
+     *                                  analysers' getenv() stub claims otherwise: a
+     *                                  numerically named variable becomes an int key,
+     *                                  and PHP offers no way to keep it a string.
+     *                                  {@see normalizeKeys()} is what makes it one.
      */
     private static function readOsVars(): array
     {
-        /** @var array<string, string> $env */
         $env = getenv();
 
-        return $env;
+        // Narrowed by inspection rather than by an annotation. getenv() returns
+        // string|false for a single lookup, and only the no-argument form gives an array.
+        return is_array($env) ? $env : [];
     }
 
     /**
@@ -382,9 +391,9 @@ final class Environment
      * Canonicalise every key in a variable map for the host platform, so that
      * storage and {@see get()}/{@see has()}/{@see require()} agree on casing.
      *
-     * @param array<string, string> $vars
+     * @param array<array-key, string> $vars Int keys are expected, not defensive: see below
      *
-     * @return array<string, string>
+     * @return array<array-key, string>
      */
     private static function normalizeKeys(array $vars): array
     {
@@ -395,7 +404,43 @@ final class Environment
         $normalized = [];
 
         foreach ($vars as $key => $value) {
-            $normalized[strtoupper($key)] = $value;
+            // A numerically named variable (`1=x` in the OS, or a test that putenv()s
+            // one) reaches PHP as an int key, and strtoupper() raised a TypeError on it.
+            // Inside Environment::load() during ConfigManager boot, that stopped the
+            // kernel starting over an entry nobody asked for: 57 tests died at once the
+            // first time one appeared in a worker.
+            //
+            // It is dropped rather than cast, and that is the whole point. Casting only
+            // moves the problem: PHP folds a decimal string key straight back to an int,
+            // so `$normalized[(string) 1]` is `$normalized[1]` and the int would travel
+            // on into applyAllowlist(), whose callback is typed `string $key`. A key
+            // "1" simply cannot exist in a PHP array.
+            //
+            // Nothing of value is lost. Environment exists to expose configuration, and
+            // `1` is not a name any config key takes; keeping it would trade a crash for
+            // a type lie running the length of the class.
+            if (!is_string($key)) {
+                continue;
+            }
+
+            $canonical = strtoupper($key);
+
+            // PHP folds a key back to an int if — and only if — it is the canonical
+            // decimal form of one, which is exactly what this comparison tests: "1" and
+            // "-1" fold, while "007", "1.5" and "APP_ENV" do not. Writing such a key
+            // would silently produce an int one, so no cast can save it and the declared
+            // array<string, string> would be a wish rather than a fact.
+            //
+            // Refusing here is what makes that type true for the whole class, including
+            // the $variables property and applyAllowlist()'s `string $key` callback.
+            // Nothing usable is lost: `1` is not a name a configuration key takes, so an
+            // entry like it is an accident or an attack, and neither deserves to stop the
+            // kernel booting — which is what it did, 57 tests at once.
+            if ((string) (int) $canonical === $canonical) {
+                continue;
+            }
+
+            $normalized[$canonical] = $value;
         }
 
         return $normalized;
@@ -431,7 +476,7 @@ final class Environment
      * `vlucas/phpdotenv` and pass the resulting array through
      * `Environment::loadFiltered()` for the same allowlist guarantees.
      *
-     * @return array<string, string>
+     * @return array<array-key, string>
      */
     private static function parseEnvFile(string $path): array
     {
