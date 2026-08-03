@@ -38,6 +38,7 @@ use function in_array;
 use function is_int;
 use function is_string;
 use function sprintf;
+use function str_starts_with;
 use function strtolower;
 
 /**
@@ -178,7 +179,7 @@ final readonly class ComplianceVerificationWiring implements ServiceWiringInterf
         $database = $repository->get(DatabaseConfig::class);
 
         foreach ($database->connections as $connection) {
-            if ($connection->driver === Driver::SQLite) {
+            if ($connection->driver === Driver::SQLite || self::isLocalIpcConnection($connection)) {
                 continue;
             }
 
@@ -188,6 +189,32 @@ final readonly class ComplianceVerificationWiring implements ServiceWiringInterf
         }
 
         return true;
+    }
+
+    /**
+     * Whether the connection reaches the server through local inter-process
+     * communication rather than a network, in which case there is no transport to
+     * encrypt — demanding TLS of it would be as meaningless as demanding it of
+     * SQLite, and under compliance strict mode would make the boot unsatisfiable.
+     *
+     * A path-like host is the portable spelling: libpq treats `host=/var/run/
+     * postgresql` as a socket directory, and an empty host lets the client library
+     * fall back to its default socket. A Windows named pipe (`\\.\pipe\...`) is
+     * likewise local IPC.
+     *
+     * Loopback TCP (`127.0.0.1`, `::1`, and the driver-dependent `localhost`) is
+     * deliberately NOT exempted: it is a real TCP connection, and which of socket
+     * or TCP `localhost` selects depends on the client library. Reporting it is the
+     * conservative choice, and it only fails a boot when the operator opted into
+     * strict mode.
+     */
+    private static function isLocalIpcConnection(ConnectionConfig $connection): bool
+    {
+        $host = $connection->host;
+
+        return $host === ''
+            || str_starts_with($host, '/')
+            || str_starts_with($host, '\\\\');
     }
 
     /**
