@@ -90,7 +90,12 @@ final readonly class McpRedactionPipeline implements McpRedactionPipelineInterfa
         $secrets = [];
 
         foreach ($environment->all() as $key => $value) {
-            $upperKey = strtoupper($key);
+            // The cast is meaningful here, unlike at an array write: this builds a string
+            // to match against, and PHP hands an int key for a numerically named variable.
+            // Environment used to declare its keys as strings, which hid that from both
+            // analysers — and from this loop, which would have died the same way the
+            // kernel did.
+            $upperKey = strtoupper((string) $key);
 
             foreach ($secretPatterns as $pattern) {
                 if (str_contains($upperKey, $pattern) && $value !== '') {
