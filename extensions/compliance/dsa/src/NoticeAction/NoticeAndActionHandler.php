@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Dsa\NoticeAction;
 
 use DateTimeImmutable;
+use InvalidArgumentException;
 use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Extension\Dsa\ContentModeration\ModerationDecision;
 use Pulsar\Extension\Dsa\ContentModeration\ModerationLog;
 use Pulsar\Extension\Dsa\TrustedFlagger\TrustedFlaggerRegistry;
+
+use function sprintf;
 
 /**
  * Notice-and-action mechanism per DSA Article 16.
@@ -63,11 +66,30 @@ final readonly class NoticeAndActionHandler
      *
      * Per Art. 16(6), the provider must inform the notifying party of
      * its decision and provide information about redress possibilities.
+     *
+     * The notice is not decoration on this call: a decision is only an answer to a
+     * notice if it concerns the content that was notified. Recording a mismatched
+     * pair moderates content nobody reported while leaving the reported content up,
+     * and the log would show a diligent assessment of the wrong thing — the failure
+     * mode Art. 16 exists to prevent. The parameter went unread until Psalm was
+     * allowed to look at this extension for the first time.
+     *
+     * @throws InvalidArgumentException when the decision concerns other content
      */
     public function actOnNotice(
         IllegalContentNotice $notice,
         ModerationDecision $decision,
     ): void {
+        if ($decision->contentId !== $notice->contentId) {
+            throw new InvalidArgumentException(sprintf(
+                'Decision %s concerns content %s, but notice %s reported content %s.',
+                $decision->id,
+                $decision->contentId,
+                $notice->id,
+                $notice->contentId,
+            ));
+        }
+
         $this->moderationLog->record($decision);
     }
 

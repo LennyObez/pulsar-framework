@@ -12,6 +12,40 @@
     (incident 2026-04-28). Either suppress at the call site with
     a precise `@psalm-suppress UnusedMethod reason: ...` tag, or
     restructure the code so the dead path is genuinely removed.
+
+    STRICTNESS SWITCHES — measured, not guessed (2026-07-26)
+
+    errorLevel="1" is the strictest level, but the level is not the
+    whole of Psalm's strictness: a dozen orthogonal switches sit
+    beside it. Every one was tried and counted rather than assumed.
+
+    Enabled here because the codebase already satisfies them, so
+    they cost nothing and stop the first regression:
+      ensureOverrideAttribute, strictBinaryOperands,
+      sealAllMethods, sealAllProperties,
+      findUnusedIssueHandlerSuppression  -> 0 errors each
+
+    Measured and NOT yet enabled, with the exact debt each carries:
+      ensureArrayIntOffsetsExist         -> 267 errors
+      ensureArrayStringOffsetsExist      -> 219 errors
+      findUnusedPsalmSuppress            -> 136 stale suppressions
+
+    These are real findings, not noise, and each is a campaign of its
+    own. Turning them on before the debt is paid makes `composer qa`
+    red for everyone, and a gate that is always red is a gate nobody
+    reads. They go on as their campaigns land — the counts above are
+    the definition of done, and they are here so the debt cannot be
+    quietly forgotten.
+
+    Deliberately NOT enabled, because they would make things worse:
+      disableSuppressAll  - the policy above depends on precise,
+                            justified suppressions being possible.
+      disableVarParsing   - inline @var is what narrows container
+                            get() returns; discarding it yields less
+                            precise types, not more.
+    Note that many remaining switches (allowStringToStandInForClass,
+    hideExternalErrors, ignoreInternalFunction*) are permissive knobs:
+    enabling them loosens the analysis. They stay off.
 -->
 <psalm
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -22,6 +56,11 @@
     cacheDirectory="../../.psalm-cache"
     findUnusedBaselineEntry="true"
     findUnusedCode="true"
+    findUnusedIssueHandlerSuppression="true"
+    ensureOverrideAttribute="true"
+    strictBinaryOperands="true"
+    sealAllMethods="true"
+    sealAllProperties="true"
 >
     <projectFiles>
         <directory name="../../src"/>
@@ -31,7 +70,9 @@
         <directory name="../../extensions/analytics/src"/>
         <directory name="../../extensions/auth/src"/>
         <directory name="../../extensions/cms/src"/>
+        <directory name="../../extensions/compliance/data-act/src"/>
         <directory name="../../extensions/compliance/dora/src"/>
+        <directory name="../../extensions/compliance/dsa/src"/>
         <directory name="../../extensions/compliance/eidas/src"/>
         <directory name="../../extensions/compliance/fhir/src"/>
         <directory name="../../extensions/compliance/medical-devices/src"/>

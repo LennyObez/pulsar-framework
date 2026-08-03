@@ -55,6 +55,11 @@ final class AppealHandlerTest extends TestCase
         self::assertSame('pending_review', $result['status']);
         self::assertSame('2026-03-15T14:30:00+00:00', $result['submitted_at']);
         self::assertSame('remove', $result['original_decision']);
+
+        // Art. 20(1): an appeal is its grounds and its author. The handler took both
+        // and returned neither, and this test passed them without ever looking.
+        self::assertSame('I disagree with this decision', $result['reason']);
+        self::assertSame('user-42', $result['submitted_by']);
     }
 
     #[Test]

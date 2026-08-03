@@ -34,6 +34,8 @@ final readonly class AppealHandler
      *     appeal_id: string,
      *     decision_id: string,
      *     status: string,
+     *     reason: string,
+     *     submitted_by: string,
      *     submitted_at: string,
      *     original_decision: string
      * }|null Null if the referenced decision does not exist
@@ -52,10 +54,15 @@ final readonly class AppealHandler
             return null;
         }
 
+        // The grounds and the complainant are the substance of an appeal under
+        // Art. 20(1): the record existed without either, so a submitted appeal could
+        // not be reviewed on its merits or attributed to anyone.
         return [
             'appeal_id' => $appealId,
             'decision_id' => $decisionId,
             'status' => 'pending_review',
+            'reason' => $reason,
+            'submitted_by' => $submittedBy,
             'submitted_at' => $submittedAt->format('Y-m-d\TH:i:sP'),
             'original_decision' => $original->decision,
         ];
