@@ -47,7 +47,7 @@ final class TypeRegistryTest extends TestCase
         $registry = new TypeRegistry();
 
         $this->expectException(QueueException::class);
-        $this->expectExceptionMessage('not registered in the type allowlist');
+        $this->expectExceptionMessageIsOrContains('not registered in the type allowlist');
 
         $registry->assertAllowed('App\\Jobs\\Malicious');
     }

@@ -69,7 +69,7 @@ final class SignedIdempotencyEnvelopeTest extends TestCase
         self::assertNotFalse($tampered);
 
         $this->expectException(IdempotencyException::class);
-        $this->expectExceptionMessage('signature mismatch');
+        $this->expectExceptionMessageIsOrContains('signature mismatch');
 
         (void) $this->envelope->open('idem-key-3', $tampered);
     }
@@ -83,7 +83,7 @@ final class SignedIdempotencyEnvelopeTest extends TestCase
         $sealedForA = $this->envelope->seal('idem-key-A', '{"intent":"a"}');
 
         $this->expectException(IdempotencyException::class);
-        $this->expectExceptionMessage('signature mismatch');
+        $this->expectExceptionMessageIsOrContains('signature mismatch');
 
         (void) $this->envelope->open('idem-key-B', $sealedForA);
     }
@@ -102,7 +102,7 @@ final class SignedIdempotencyEnvelopeTest extends TestCase
         self::assertNotFalse($tampered);
 
         $this->expectException(IdempotencyException::class);
-        $this->expectExceptionMessage('signature mismatch');
+        $this->expectExceptionMessageIsOrContains('signature mismatch');
 
         (void) $this->envelope->open('idem-key-4', $tampered);
     }
@@ -118,7 +118,7 @@ final class SignedIdempotencyEnvelopeTest extends TestCase
         self::assertNotFalse($tampered);
 
         $this->expectException(IdempotencyException::class);
-        $this->expectExceptionMessage('schema version');
+        $this->expectExceptionMessageIsOrContains('schema version');
 
         (void) $this->envelope->open('idem-key-5', $tampered);
     }
@@ -135,7 +135,7 @@ final class SignedIdempotencyEnvelopeTest extends TestCase
         self::assertNotFalse($tampered);
 
         $this->expectException(IdempotencyException::class);
-        $this->expectExceptionMessage('key id mismatch');
+        $this->expectExceptionMessageIsOrContains('key id mismatch');
 
         (void) $this->envelope->open('idem-key-6', $tampered);
     }
@@ -144,7 +144,7 @@ final class SignedIdempotencyEnvelopeTest extends TestCase
     public function openRejectsMalformedEnvelope(): void
     {
         $this->expectException(IdempotencyException::class);
-        $this->expectExceptionMessage('not a JSON object');
+        $this->expectExceptionMessageIsOrContains('not a JSON object');
 
         (void) $this->envelope->open('idem-key-7', '"just-a-string"');
     }
@@ -159,7 +159,7 @@ final class SignedIdempotencyEnvelopeTest extends TestCase
         $sealedByOther = $other->seal('idem-key-8', 'payload');
 
         $this->expectException(IdempotencyException::class);
-        $this->expectExceptionMessage('key id mismatch');
+        $this->expectExceptionMessageIsOrContains('key id mismatch');
 
         (void) $this->envelope->open('idem-key-8', $sealedByOther);
     }
@@ -175,7 +175,7 @@ final class SignedIdempotencyEnvelopeTest extends TestCase
         self::assertNotFalse($tampered);
 
         $this->expectException(IdempotencyException::class);
-        $this->expectExceptionMessage('not valid base64');
+        $this->expectExceptionMessageIsOrContains('not valid base64');
 
         (void) $this->envelope->open('idem-key-9', $tampered);
     }

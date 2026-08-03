@@ -70,7 +70,7 @@ final class SecretVaultTest extends TestCase
         $vault = SecretVault::create($this->masterKey, $this->vaultPath);
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('not found');
+        $this->expectExceptionMessageIsOrContains('not found');
 
         $vault->get('NONEXISTENT');
     }

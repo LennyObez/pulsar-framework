@@ -140,7 +140,7 @@ final class PostTest extends TestCase
         );
 
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('Edit window has expired');
+        $this->expectExceptionMessageIsOrContains('Edit window has expired');
         $post->edit('new', '<p>new</p>', 'user-1');
     }
 

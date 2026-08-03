@@ -47,7 +47,7 @@ final class PolicyValueObjectTest extends TestCase
     public function claimRequirementRejectsEmptyName(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('must not be empty');
+        $this->expectExceptionMessageIsOrContains('must not be empty');
 
         new ClaimRequirement(claimName: '');
     }
@@ -56,7 +56,7 @@ final class PolicyValueObjectTest extends TestCase
     public function claimRequirementRejectsNegativeConfidence(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('between 0.0 and 1.0');
+        $this->expectExceptionMessageIsOrContains('between 0.0 and 1.0');
 
         new ClaimRequirement(claimName: 'test', minConfidence: -0.1);
     }
@@ -65,7 +65,7 @@ final class PolicyValueObjectTest extends TestCase
     public function claimRequirementRejectsConfidenceAboveOne(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('between 0.0 and 1.0');
+        $this->expectExceptionMessageIsOrContains('between 0.0 and 1.0');
 
         new ClaimRequirement(claimName: 'test', minConfidence: 1.01);
     }

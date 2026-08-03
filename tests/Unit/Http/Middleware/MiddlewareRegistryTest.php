@@ -59,7 +59,7 @@ final class MiddlewareRegistryTest extends TestCase
         $registry = new MiddlewareRegistry();
 
         $this->expectException(MiddlewareNotFoundException::class);
-        $this->expectExceptionMessage('Middleware reference "auth-typo" could not be resolved');
+        $this->expectExceptionMessageIsOrContains('Middleware reference "auth-typo" could not be resolved');
 
         $registry->resolve('auth-typo');
     }
@@ -124,7 +124,7 @@ final class MiddlewareRegistryTest extends TestCase
         $registry->alias('b', 'a'); // @phpstan-ignore argument.type (intentional: testing cycle detection with non-class-string)
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Circular middleware reference detected: "a"');
+        $this->expectExceptionMessageIsOrContains('Circular middleware reference detected: "a"');
         $registry->resolve('a');
     }
 
@@ -138,7 +138,7 @@ final class MiddlewareRegistryTest extends TestCase
         $registry->group('web', ['x']); // @phpstan-ignore argument.type (intentional: testing cycle detection)
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Circular middleware reference detected');
+        $this->expectExceptionMessageIsOrContains('Circular middleware reference detected');
         $registry->resolve('web');
     }
 

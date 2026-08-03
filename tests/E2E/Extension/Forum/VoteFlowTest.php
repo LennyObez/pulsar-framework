@@ -140,7 +140,7 @@ final class VoteFlowTest extends TestCase
         );
 
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('cannot vote on your own');
+        $this->expectExceptionMessageIsOrContains('cannot vote on your own');
 
         $stack->voteService->castThreadVote(
             userId: 'user-alice',
@@ -174,7 +174,7 @@ final class VoteFlowTest extends TestCase
         );
 
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('already voted');
+        $this->expectExceptionMessageIsOrContains('already voted');
 
         // Second vote should fail
         $stack->voteService->castThreadVote(
@@ -253,7 +253,7 @@ final class VoteFlowTest extends TestCase
 
         // Bob has no reputation (new user) — cannot downvote
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('reputation');
+        $this->expectExceptionMessageIsOrContains('reputation');
 
         $stack->voteService->castThreadVote(
             userId: 'user-bob',

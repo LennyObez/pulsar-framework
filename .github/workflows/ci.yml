@@ -30,8 +30,13 @@ jobs:
       - name: Cache Composer dependencies
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: vendor
-          key: composer-${{ hashFiles('composer.lock') }}
+          # The isolated analyser tree (vendor-bin/, bamarni/composer-bin-plugin) is
+          # cached alongside the root one, and its lock is part of the key: without
+          # it a Psalm version change would silently reuse the old cache entry.
+          path: |
+            vendor
+            vendor-bin/*/vendor
+          key: composer-${{ hashFiles('composer.lock', 'vendor-bin/*/composer.lock') }}
           restore-keys: composer-
 
       - run: composer install --no-interaction --no-progress
@@ -192,8 +197,13 @@ jobs:
       - name: Cache Composer dependencies
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: vendor
-          key: composer-${{ hashFiles('composer.lock') }}
+          # The isolated analyser tree (vendor-bin/, bamarni/composer-bin-plugin) is
+          # cached alongside the root one, and its lock is part of the key: without
+          # it a Psalm version change would silently reuse the old cache entry.
+          path: |
+            vendor
+            vendor-bin/*/vendor
+          key: composer-${{ hashFiles('composer.lock', 'vendor-bin/*/composer.lock') }}
           restore-keys: composer-
 
       - run: composer install --no-interaction --no-progress
@@ -301,8 +311,13 @@ jobs:
       - name: Cache Composer dependencies
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: vendor
-          key: composer-${{ hashFiles('composer.lock') }}
+          # The isolated analyser tree (vendor-bin/, bamarni/composer-bin-plugin) is
+          # cached alongside the root one, and its lock is part of the key: without
+          # it a Psalm version change would silently reuse the old cache entry.
+          path: |
+            vendor
+            vendor-bin/*/vendor
+          key: composer-${{ hashFiles('composer.lock', 'vendor-bin/*/composer.lock') }}
           restore-keys: composer-
 
       - run: composer install --no-interaction --no-progress
@@ -375,8 +390,13 @@ jobs:
       - name: Cache Composer dependencies
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: vendor
-          key: composer-${{ hashFiles('composer.lock') }}
+          # The isolated analyser tree (vendor-bin/, bamarni/composer-bin-plugin) is
+          # cached alongside the root one, and its lock is part of the key: without
+          # it a Psalm version change would silently reuse the old cache entry.
+          path: |
+            vendor
+            vendor-bin/*/vendor
+          key: composer-${{ hashFiles('composer.lock', 'vendor-bin/*/composer.lock') }}
           restore-keys: composer-
 
       - run: composer install --no-interaction --no-progress
@@ -414,8 +434,13 @@ jobs:
       - name: Cache Composer dependencies
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: vendor
-          key: composer-${{ hashFiles('composer.lock') }}
+          # The isolated analyser tree (vendor-bin/, bamarni/composer-bin-plugin) is
+          # cached alongside the root one, and its lock is part of the key: without
+          # it a Psalm version change would silently reuse the old cache entry.
+          path: |
+            vendor
+            vendor-bin/*/vendor
+          key: composer-${{ hashFiles('composer.lock', 'vendor-bin/*/composer.lock') }}
           restore-keys: composer-
 
       - run: composer install --no-interaction --no-progress
@@ -466,8 +491,13 @@ jobs:
       - name: Cache Composer dependencies
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: vendor
-          key: composer-${{ hashFiles('composer.lock') }}
+          # The isolated analyser tree (vendor-bin/, bamarni/composer-bin-plugin) is
+          # cached alongside the root one, and its lock is part of the key: without
+          # it a Psalm version change would silently reuse the old cache entry.
+          path: |
+            vendor
+            vendor-bin/*/vendor
+          key: composer-${{ hashFiles('composer.lock', 'vendor-bin/*/composer.lock') }}
           restore-keys: composer-
 
       - run: composer install --no-interaction --no-progress

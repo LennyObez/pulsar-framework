@@ -65,7 +65,7 @@ final class EventFakeTest extends TestCase
     public function assert_dispatched_fails_when_event_missing(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Expected event [stdClass] to be dispatched');
+        $this->expectExceptionMessageIsOrContains('Expected event [stdClass] to be dispatched');
 
         $this->fake->assertDispatched(stdClass::class);
     }
@@ -85,7 +85,7 @@ final class EventFakeTest extends TestCase
         $this->fake->dispatch(new stdClass());
 
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Expected 3 dispatch(es)');
+        $this->expectExceptionMessageIsOrContains('Expected 3 dispatch(es)');
 
         $this->fake->assertDispatched(stdClass::class, 3);
     }
@@ -113,7 +113,7 @@ final class EventFakeTest extends TestCase
         $this->fake->dispatch(new stdClass());
 
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('NOT to be dispatched');
+        $this->expectExceptionMessageIsOrContains('NOT to be dispatched');
 
         $this->fake->assertNotDispatched(stdClass::class);
     }
@@ -130,7 +130,7 @@ final class EventFakeTest extends TestCase
         $this->fake->dispatch(new stdClass());
 
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Expected no events');
+        $this->expectExceptionMessageIsOrContains('Expected no events');
 
         $this->fake->assertNothingDispatched();
     }

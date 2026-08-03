@@ -58,7 +58,7 @@ final class RevisionRetentionPolicyFromArrayTest extends TestCase
     public function constructThrowsForNegativeValues(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('non-negative');
+        $this->expectExceptionMessageIsOrContains('non-negative');
 
         new RevisionRetentionPolicy(maxRevisionsPerContent: -1);
     }

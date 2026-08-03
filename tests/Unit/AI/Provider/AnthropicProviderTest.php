@@ -43,7 +43,7 @@ final class AnthropicProviderTest extends TestCase
         $provider = new AnthropicProvider(apiKey: 'test-key');
 
         $this->expectException(AiException::class);
-        $this->expectExceptionMessage('does not support embeddings');
+        $this->expectExceptionMessageIsOrContains('does not support embeddings');
 
         $provider->embed(['test']);
     }

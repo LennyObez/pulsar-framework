@@ -93,7 +93,7 @@ final class CommentServiceTest extends TestCase
         $this->contentRepo->method('findById')->willReturn(null);
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('Content not found');
+        $this->expectExceptionMessageIsOrContains('Content not found');
 
         $this->service->submit(
             contentId: 'nonexistent',
@@ -166,7 +166,7 @@ final class CommentServiceTest extends TestCase
         $this->commentRepo->method('findById')->willReturn(null);
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('Comment not found');
+        $this->expectExceptionMessageIsOrContains('Comment not found');
 
         $this->service->approve('nonexistent', 'moderator-01', 'test');
     }
@@ -196,7 +196,7 @@ final class CommentServiceTest extends TestCase
         $this->commentRepo->method('findById')->willReturn(null);
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('Comment not found');
+        $this->expectExceptionMessageIsOrContains('Comment not found');
 
         $this->service->edit('nonexistent', 'new body');
     }

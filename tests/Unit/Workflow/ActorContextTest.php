@@ -57,7 +57,7 @@ final class ActorContextTest extends TestCase
     public function test_empty_subject_id_throws(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('subjectId must not be empty');
+        $this->expectExceptionMessageIsOrContains('subjectId must not be empty');
 
         new ActorContext(subjectId: '');
     }

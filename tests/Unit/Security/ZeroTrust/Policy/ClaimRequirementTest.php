@@ -41,7 +41,7 @@ final class ClaimRequirementTest extends TestCase
     public function rejects_empty_name(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('must not be empty');
+        $this->expectExceptionMessageIsOrContains('must not be empty');
 
         new ClaimRequirement(claimName: '');
     }
@@ -51,7 +51,7 @@ final class ClaimRequirementTest extends TestCase
     public function rejects_out_of_range_confidence(float $confidence): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('minConfidence');
+        $this->expectExceptionMessageIsOrContains('minConfidence');
 
         new ClaimRequirement(claimName: 'test', minConfidence: $confidence);
     }

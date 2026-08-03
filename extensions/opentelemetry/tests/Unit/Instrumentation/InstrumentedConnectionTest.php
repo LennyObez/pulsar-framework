@@ -90,7 +90,7 @@ final class InstrumentedConnectionTest extends TestCase
         );
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Connection lost');
+        $this->expectExceptionMessageIsOrContains('Connection lost');
 
         try {
             $connection->query('SELECT * FROM broken');

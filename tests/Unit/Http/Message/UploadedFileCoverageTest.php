@@ -27,7 +27,7 @@ final class UploadedFileCoverageTest extends TestCase
         $uploaded = new UploadedFile(Stream::create('data'), 4, UPLOAD_ERR_OK);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('does not exist or is not writable');
+        $this->expectExceptionMessageIsOrContains('does not exist or is not writable');
 
         $uploaded->moveTo('/nonexistent/directory/file.txt');
     }

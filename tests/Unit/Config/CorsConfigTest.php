@@ -103,7 +103,7 @@ final class CorsConfigTest extends TestCase
     public function fromArrayThrowsForWildcardWithCredentials(): void
     {
         $this->expectException(ConfigException::class);
-        $this->expectExceptionMessage('allowedOrigins cannot be ["*"]');
+        $this->expectExceptionMessageIsOrContains('allowedOrigins cannot be ["*"]');
 
         (void) CorsConfig::fromArray([
             'enabled' => true,

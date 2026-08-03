@@ -105,7 +105,7 @@ final class DeployCheckTest extends TestCase
         $deployCheck = new DeployCheck();
 
         $this->expectException(DeployException::class);
-        $this->expectExceptionMessage('Invalid deployment environment "banana"');
+        $this->expectExceptionMessageIsOrContains('Invalid deployment environment "banana"');
 
         $deployCheck->run('banana');
     }

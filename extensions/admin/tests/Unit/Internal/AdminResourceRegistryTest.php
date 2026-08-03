@@ -72,7 +72,7 @@ final class AdminResourceRegistryTest extends TestCase
         $registry = new AdminResourceRegistry();
 
         $this->expectException(ResourceNotFoundException::class);
-        $this->expectExceptionMessage('"nonexistent" not found');
+        $this->expectExceptionMessageIsOrContains('"nonexistent" not found');
 
         $registry->get('nonexistent');
     }
@@ -84,7 +84,7 @@ final class AdminResourceRegistryTest extends TestCase
         $registry->register($this->createNamedResource('users'));
 
         $this->expectException(AdminException::class);
-        $this->expectExceptionMessage('already registered');
+        $this->expectExceptionMessageIsOrContains('already registered');
 
         $registry->register($this->createNamedResource('users'));
     }

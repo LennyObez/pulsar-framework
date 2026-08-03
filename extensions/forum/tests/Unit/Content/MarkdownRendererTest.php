@@ -48,7 +48,7 @@ final class MarkdownRendererTest extends TestCase
         $renderer = new MarkdownRenderer();
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Cannot add two delimiter processors');
+        $this->expectExceptionMessageIsOrContains('Cannot add two delimiter processors');
 
         $renderer->render('Hello world');
     }

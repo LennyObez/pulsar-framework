@@ -99,7 +99,7 @@ final class EvidenceExporterTest extends TestCase
         );
 
         $this->expectException(StudioException::class);
-        $this->expectExceptionMessage('Cannot export: events are encrypted at rest');
+        $this->expectExceptionMessageIsOrContains('Cannot export: events are encrypted at rest');
 
         $exporter->export();
     }

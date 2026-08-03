@@ -132,7 +132,7 @@ final class FunnelServiceTest extends TestCase
         $this->connection->method('execute')->willReturn(0);
 
         $this->expectException(AnalyticsException::class);
-        $this->expectExceptionMessage('not found');
+        $this->expectExceptionMessageIsOrContains('not found');
 
         $this->service->delete('nonexistent');
     }

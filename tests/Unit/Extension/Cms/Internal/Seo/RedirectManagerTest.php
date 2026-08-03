@@ -145,7 +145,7 @@ final class RedirectManagerTest extends TestCase
     public function createBlocksDangerousTargetUrls(string $url): void
     {
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('Open redirect blocked');
+        $this->expectExceptionMessageIsOrContains('Open redirect blocked');
 
         $this->manager->create('/old', $url, 301, 'user-1', 'Test');
     }

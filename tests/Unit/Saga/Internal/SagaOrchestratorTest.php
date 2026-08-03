@@ -207,7 +207,7 @@ final class SagaOrchestratorTest extends TestCase
         $emptyDefinition = new SagaDefinition(name: 'empty', steps: []);
 
         $this->expectException(SagaException::class);
-        $this->expectExceptionMessage('no steps defined');
+        $this->expectExceptionMessageIsOrContains('no steps defined');
 
         $this->orchestrator()->execute($emptyDefinition, []);
     }
@@ -593,8 +593,8 @@ final class SagaOrchestratorTest extends TestCase
         );
 
         $this->expectException(CompensationFailedException::class);
-        $this->expectExceptionMessage('charge');
-        $this->expectExceptionMessage('Compensation fail');
+        $this->expectExceptionMessageIsOrContains('charge');
+        $this->expectExceptionMessageIsOrContains('Compensation fail');
 
         $this->orchestrator()->execute($definition, []);
     }
@@ -975,7 +975,7 @@ final class SagaOrchestratorTest extends TestCase
         $this->storage->method('findById')->willReturn($completed);
 
         $this->expectException(SagaException::class);
-        $this->expectExceptionMessage('running');
+        $this->expectExceptionMessageIsOrContains('running');
 
         $this->orchestrator()->resume('saga-done', SagaDefinitionBuilder::create('t')
             ->step('s')->forward(stdClass::class)->build());
@@ -999,7 +999,7 @@ final class SagaOrchestratorTest extends TestCase
         $this->storage->method('findById')->willReturn($failed);
 
         $this->expectException(SagaException::class);
-        $this->expectExceptionMessage('running');
+        $this->expectExceptionMessageIsOrContains('running');
 
         $this->orchestrator()->resume('saga-fail', SagaDefinitionBuilder::create('t')
             ->step('s')->forward(stdClass::class)->build());
@@ -1011,7 +1011,7 @@ final class SagaOrchestratorTest extends TestCase
         $this->storage->method('findById')->willReturn(null);
 
         $this->expectException(SagaException::class);
-        $this->expectExceptionMessage('not found');
+        $this->expectExceptionMessageIsOrContains('not found');
 
         $this->orchestrator()->resume('nonexistent', SagaDefinitionBuilder::create('t')
             ->step('s')->forward(stdClass::class)->build());
@@ -1067,7 +1067,7 @@ final class SagaOrchestratorTest extends TestCase
         $this->storage->method('findById')->willReturn($completed);
 
         $this->expectException(SagaException::class);
-        $this->expectExceptionMessage('running');
+        $this->expectExceptionMessageIsOrContains('running');
 
         $this->orchestrator()->compensate('saga-done', SagaDefinitionBuilder::create('t')
             ->step('s')->forward(stdClass::class)->build());
@@ -1091,7 +1091,7 @@ final class SagaOrchestratorTest extends TestCase
         $this->storage->method('findById')->willReturn($compensating);
 
         $this->expectException(SagaException::class);
-        $this->expectExceptionMessage('running');
+        $this->expectExceptionMessageIsOrContains('running');
 
         $this->orchestrator()->compensate('saga-comp', SagaDefinitionBuilder::create('t')
             ->step('s')->forward(stdClass::class)->build());
@@ -1134,7 +1134,7 @@ final class SagaOrchestratorTest extends TestCase
         $this->storage->method('findById')->willReturn(null);
 
         $this->expectException(SagaException::class);
-        $this->expectExceptionMessage('not found');
+        $this->expectExceptionMessageIsOrContains('not found');
 
         $this->orchestrator()->compensate('missing', SagaDefinitionBuilder::create('t')
             ->step('s')->forward(stdClass::class)->build());

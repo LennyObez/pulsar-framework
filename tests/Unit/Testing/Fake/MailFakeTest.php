@@ -72,7 +72,7 @@ final class MailFakeTest extends TestCase
     public function assert_sent_fails_when_mailable_missing(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Expected mailable');
+        $this->expectExceptionMessageIsOrContains('Expected mailable');
 
         $this->fake->assertSent(TestMailable::class);
     }
@@ -100,7 +100,7 @@ final class MailFakeTest extends TestCase
         $this->fake->send($this->createTestMailable('alice@example.com', 'Hello'));
 
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('bob@example.com');
+        $this->expectExceptionMessageIsOrContains('bob@example.com');
 
         $this->fake->assertSentTo('bob@example.com', TestMailable::class);
     }
@@ -134,7 +134,7 @@ final class MailFakeTest extends TestCase
         $this->fake->send($this->createTestMailable('test@test.com', 'Test'));
 
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Expected no mail to be sent');
+        $this->expectExceptionMessageIsOrContains('Expected no mail to be sent');
 
         $this->fake->assertNothingSent();
     }

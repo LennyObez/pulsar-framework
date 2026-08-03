@@ -65,6 +65,15 @@ parameters:
         # so analysing them yields nothing but ~77 unused-parameter reports. They
         # are loaded through scanFiles/stubFiles below instead.
         - ../../tools/php/stubs
+    # The Psalm plugin in tools/php/psalm-plugin/ is first-party code PHPStan
+    # analyses, but Psalm itself now lives in its own dependency tree
+    # (vendor-bin/psalm/, bamarni/composer-bin-plugin) and is therefore invisible to
+    # the root autoloader. Scanning registers its symbols without analysing them:
+    # without this, every Psalm\Plugin reference reads as an unknown class and the
+    # plugin silently stops being type-checked — 99 errors, and the plugin is the
+    # thing that decides what Psalm considers dead code.
+    scanDirectories:
+        - ../../vendor-bin/psalm/vendor/vimeo/psalm/src
     bootstrapFiles:
         - ../../scripts/boundary_check.php
     # Symbols that are genuinely absent from the analysis environment, so every
@@ -90,13 +99,13 @@ parameters:
         - ../../vendor/jetbrains/phpstorm-stubs/memcached/memcached.php
         - ../../vendor/jetbrains/phpstorm-stubs/redis/Redis.php
         - ../../vendor/jetbrains/phpstorm-stubs/zstd/zstd.php
-        # Hand-written only where nothing upstream exists to copy: these are
-        # suggested composer packages that are not installed (AWS SQS, Google
-        # Cloud Pub/Sub, PsySH, the RoadRunner worker classes) or a runtime that
-        # ships no stubs at all (FrankenPHP's frankenphp_* functions).
+        # Hand-written only where nothing upstream exists to copy: suggested
+        # composer packages that are not installed (AWS SQS, Google Cloud Pub/Sub,
+        # PsySH, the RoadRunner worker classes). FrankenPHP is no longer among them:
+        # the one function we hand-declared, frankenphp_early_hints(), does not
+        # exist in the runtime at all — see FrankenPhpRuntime::earlyHints().
         - stubs/AwsSqs.php
         - stubs/Grpc.php
-        - stubs/FrankenPhp.php
         - stubs/GooglePubSub.php
         - stubs/PsySH.php
         - stubs/RoadRunner.php

@@ -204,7 +204,7 @@ final class ExtensionBootstrapTest extends TestCase
     public function bootThrowsIfNotRegistered(): void
     {
         $this->expectException(ExtensionException::class);
-        $this->expectExceptionMessage('must be registered before booting');
+        $this->expectExceptionMessageIsOrContains('must be registered before booting');
 
         $this->bootstrap->boot($this->container, $this->router);
     }

@@ -119,7 +119,7 @@ final class ScopedContainerProxyTest extends TestCase
         $proxy = $this->proxy(TrustTier::Untrusted);
 
         $this->expectException(CapabilityDeniedException::class);
-        $this->expectExceptionMessage('ServiceRegister');
+        $this->expectExceptionMessageIsOrContains('ServiceRegister');
         $proxy->singleton('test.singleton', fn() => new stdClass());
     }
 
@@ -149,7 +149,7 @@ final class ScopedContainerProxyTest extends TestCase
         $proxy = $this->proxy(TrustTier::Verified);
 
         $this->expectException(CapabilityDeniedException::class);
-        $this->expectExceptionMessage('CryptoKeyAccess');
+        $this->expectExceptionMessageIsOrContains('CryptoKeyAccess');
 
         $_ = $proxy->get('Pulsar\Security\Crypto\MasterKey');
     }
@@ -197,7 +197,7 @@ final class ScopedContainerProxyTest extends TestCase
         $proxy = $this->proxy(TrustTier::Community);
 
         $this->expectException(CapabilityDeniedException::class);
-        $this->expectExceptionMessage('DatabaseRaw');
+        $this->expectExceptionMessageIsOrContains('DatabaseRaw');
         $_ = $proxy->get('Pulsar\Database\ConnectionInterface');
     }
 
@@ -207,7 +207,7 @@ final class ScopedContainerProxyTest extends TestCase
         $proxy = $this->proxy(TrustTier::Community);
 
         $this->expectException(CapabilityDeniedException::class);
-        $this->expectExceptionMessage('AuditSinkAccess');
+        $this->expectExceptionMessageIsOrContains('AuditSinkAccess');
         $_ = $proxy->get('Pulsar\Audit\AuditSinkInterface');
     }
 
@@ -231,7 +231,7 @@ final class ScopedContainerProxyTest extends TestCase
         $proxy = $this->proxy(TrustTier::Community);
 
         $this->expectException(CapabilityDeniedException::class);
-        $this->expectExceptionMessage('not classified');
+        $this->expectExceptionMessageIsOrContains('not classified');
         $_ = $proxy->get('Custom\Unknown\Service');
     }
 
@@ -251,7 +251,7 @@ final class ScopedContainerProxyTest extends TestCase
         $proxy = $this->proxy(TrustTier::Untrusted);
 
         $this->expectException(CapabilityDeniedException::class);
-        $this->expectExceptionMessage('ServiceRegister');
+        $this->expectExceptionMessageIsOrContains('ServiceRegister');
         $proxy->bind('test.service', fn() => new stdClass());
     }
 
@@ -261,7 +261,7 @@ final class ScopedContainerProxyTest extends TestCase
         $proxy = $this->proxy(TrustTier::Untrusted);
 
         $this->expectException(CapabilityDeniedException::class);
-        $this->expectExceptionMessage('ServiceRegister');
+        $this->expectExceptionMessageIsOrContains('ServiceRegister');
         $proxy->instance('test.instance', new stdClass());
     }
 
@@ -298,7 +298,7 @@ final class ScopedContainerProxyTest extends TestCase
         // which is ContainerWrite (Core only). Verified must be denied so it can
         // never hijack a core service.
         $this->expectException(CapabilityDeniedException::class);
-        $this->expectExceptionMessage('ContainerWrite');
+        $this->expectExceptionMessageIsOrContains('ContainerWrite');
         $proxy->instance(LoggerInterface::class, new NullLogger());
     }
 
@@ -308,7 +308,7 @@ final class ScopedContainerProxyTest extends TestCase
         $proxy = $this->proxy(TrustTier::Community);
 
         $this->expectException(CapabilityDeniedException::class);
-        $this->expectExceptionMessage('ContainerWrite');
+        $this->expectExceptionMessageIsOrContains('ContainerWrite');
         $proxy->bind(LoggerInterface::class, fn() => new NullLogger());
     }
 
@@ -335,7 +335,7 @@ final class ScopedContainerProxyTest extends TestCase
         $proxy = $this->proxy(TrustTier::Community);
 
         $this->expectException(CapabilityDeniedException::class);
-        $this->expectExceptionMessage('ServiceDecorate');
+        $this->expectExceptionMessageIsOrContains('ServiceDecorate');
         $proxy->decorate('svc.decorable', static fn(object $inner): object => $inner);
     }
 
@@ -355,7 +355,7 @@ final class ScopedContainerProxyTest extends TestCase
         $proxy = $this->proxy(TrustTier::Untrusted);
 
         $this->expectException(CapabilityDeniedException::class);
-        $this->expectExceptionMessage('not classified');
+        $this->expectExceptionMessageIsOrContains('not classified');
         $_ = $proxy->get('Custom\Service');
     }
 
@@ -410,7 +410,7 @@ final class ScopedContainerProxyTest extends TestCase
         $proxy = $this->proxy(TrustTier::Untrusted);
 
         $this->expectException(CapabilityDeniedException::class);
-        $this->expectExceptionMessage('ContainerWrite');
+        $this->expectExceptionMessageIsOrContains('ContainerWrite');
         $proxy->forgetInstance('test.forget');
     }
 
@@ -430,7 +430,7 @@ final class ScopedContainerProxyTest extends TestCase
         $proxy = $this->proxy(TrustTier::Untrusted);
 
         $this->expectException(CapabilityDeniedException::class);
-        $this->expectExceptionMessage('ContainerWrite');
+        $this->expectExceptionMessageIsOrContains('ContainerWrite');
         $proxy->setResolutionHints(null);
     }
 
@@ -456,7 +456,7 @@ final class ScopedContainerProxyTest extends TestCase
         );
 
         $this->expectException(CapabilityDeniedException::class);
-        $this->expectExceptionMessage('ContainerRead');
+        $this->expectExceptionMessageIsOrContains('ContainerRead');
         $_ = $proxy->getBindings();
     }
 
@@ -481,7 +481,7 @@ final class ScopedContainerProxyTest extends TestCase
         );
 
         $this->expectException(CapabilityDeniedException::class);
-        $this->expectExceptionMessage('ContainerRead');
+        $this->expectExceptionMessageIsOrContains('ContainerRead');
         $_ = $proxy->getInstances();
     }
 }

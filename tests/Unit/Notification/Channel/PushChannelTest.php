@@ -88,7 +88,7 @@ final class PushChannelTest extends TestCase
         };
 
         $this->expectException(NotificationException::class);
-        $this->expectExceptionMessage('No push device token');
+        $this->expectExceptionMessageIsOrContains('No push device token');
         $channel->send($notifiable, $notification);
     }
 
@@ -212,7 +212,7 @@ final class PushChannelTest extends TestCase
         };
 
         $this->expectException(NotificationException::class);
-        $this->expectExceptionMessage('FCM project ID is malformed');
+        $this->expectExceptionMessageIsOrContains('FCM project ID is malformed');
         $channel->send($notifiable, $notification);
     }
 

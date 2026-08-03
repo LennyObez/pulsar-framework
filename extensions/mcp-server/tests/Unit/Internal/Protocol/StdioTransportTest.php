@@ -27,7 +27,7 @@ final class StdioTransportTest extends TestCase
         $oversized = str_repeat('A', StdioTransport::MAX_MESSAGE_SIZE + 1);
 
         $this->expectException(\Pulsar\Extension\McpServer\Exception\McpException::class);
-        $this->expectExceptionMessage('exceeds maximum size');
+        $this->expectExceptionMessageIsOrContains('exceeds maximum size');
 
         $transport->writeLine($oversized);
     }

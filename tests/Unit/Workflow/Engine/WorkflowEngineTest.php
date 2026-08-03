@@ -205,7 +205,7 @@ final class WorkflowEngineTest extends TestCase
         $instance = $this->createInstance('draft', 1);
 
         $this->expectException(WorkflowException::class);
-        $this->expectExceptionMessage('not valid');
+        $this->expectExceptionMessageIsOrContains('not valid');
 
         $engine->apply($instance, $definition, 'nonexistent', $actor);
     }
@@ -232,7 +232,7 @@ final class WorkflowEngineTest extends TestCase
         $instance = $this->createInstance('done', 3);
 
         $this->expectException(WorkflowException::class);
-        $this->expectExceptionMessage('final state');
+        $this->expectExceptionMessageIsOrContains('final state');
 
         $engine->apply($instance, $definition, 'submit', $actor);
     }
@@ -256,7 +256,7 @@ final class WorkflowEngineTest extends TestCase
         $instance = $this->createInstance('draft', 1);
 
         $this->expectException(WorkflowException::class);
-        $this->expectExceptionMessage('blocked by guard');
+        $this->expectExceptionMessageIsOrContains('blocked by guard');
 
         $engine->apply($instance, $definition, 'approve', $actor);
     }

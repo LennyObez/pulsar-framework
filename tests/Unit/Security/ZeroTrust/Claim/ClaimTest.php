@@ -66,7 +66,7 @@ final class ClaimTest extends TestCase
     public function rejectsNegativeConfidence(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Claim confidence must be between 0.0 and 1.0');
+        $this->expectExceptionMessageIsOrContains('Claim confidence must be between 0.0 and 1.0');
 
         new Claim(
             name: 'test.claim',
@@ -81,7 +81,7 @@ final class ClaimTest extends TestCase
     public function rejectsConfidenceAboveOne(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Claim confidence must be between 0.0 and 1.0');
+        $this->expectExceptionMessageIsOrContains('Claim confidence must be between 0.0 and 1.0');
 
         new Claim(
             name: 'test.claim',
@@ -96,7 +96,7 @@ final class ClaimTest extends TestCase
     public function rejectsEmptyName(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Claim name must not be empty');
+        $this->expectExceptionMessageIsOrContains('Claim name must not be empty');
 
         new Claim(
             name: '',

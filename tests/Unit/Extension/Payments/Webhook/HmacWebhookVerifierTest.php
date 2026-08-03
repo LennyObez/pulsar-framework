@@ -50,7 +50,7 @@ final class HmacWebhookVerifierTest extends TestCase
         $header = sprintf('t=%d,v1=%s', $timestamp, str_repeat('0', 64));
 
         $this->expectException(WebhookException::class);
-        $this->expectExceptionMessage('signature verification failed');
+        $this->expectExceptionMessageIsOrContains('signature verification failed');
 
         $this->verifier->verify($payload, $header, self::SECRET, 300);
     }
@@ -65,7 +65,7 @@ final class HmacWebhookVerifierTest extends TestCase
         $header = sprintf('t=%d,v1=%s', $timestamp, 'invalid_hex_signature');
 
         $this->expectException(WebhookException::class);
-        $this->expectExceptionMessage('non-hex v1 signature');
+        $this->expectExceptionMessageIsOrContains('non-hex v1 signature');
 
         $this->verifier->verify('{}', $header, self::SECRET, 300);
     }
@@ -79,7 +79,7 @@ final class HmacWebhookVerifierTest extends TestCase
         $header = sprintf('t=%d,v1=%s', $timestamp, $signature);
 
         $this->expectException(WebhookException::class);
-        $this->expectExceptionMessage('too old');
+        $this->expectExceptionMessageIsOrContains('too old');
 
         $this->verifier->verify($payload, $header, self::SECRET, 300);
     }
@@ -88,7 +88,7 @@ final class HmacWebhookVerifierTest extends TestCase
     public function malformedHeaderEmptyThrows(): void
     {
         $this->expectException(WebhookException::class);
-        $this->expectExceptionMessage('empty header');
+        $this->expectExceptionMessageIsOrContains('empty header');
 
         $this->verifier->verify('body', '', self::SECRET, 300);
     }
@@ -97,7 +97,7 @@ final class HmacWebhookVerifierTest extends TestCase
     public function malformedHeaderMissingTimestampThrows(): void
     {
         $this->expectException(WebhookException::class);
-        $this->expectExceptionMessage('missing timestamp');
+        $this->expectExceptionMessageIsOrContains('missing timestamp');
 
         $this->verifier->verify('body', 'v1=abc123', self::SECRET, 300);
     }
@@ -106,7 +106,7 @@ final class HmacWebhookVerifierTest extends TestCase
     public function malformedHeaderNoSignaturesThrows(): void
     {
         $this->expectException(WebhookException::class);
-        $this->expectExceptionMessage('no v1 signatures');
+        $this->expectExceptionMessageIsOrContains('no v1 signatures');
 
         $this->verifier->verify('body', 't=1700000000', self::SECRET, 300);
     }
@@ -140,7 +140,7 @@ final class HmacWebhookVerifierTest extends TestCase
         $header = sprintf('t=%d,v1=%s,v1=%s', $timestamp, str_repeat('0', 64), str_repeat('1', 64));
 
         $this->expectException(WebhookException::class);
-        $this->expectExceptionMessage('signature verification failed');
+        $this->expectExceptionMessageIsOrContains('signature verification failed');
 
         $this->verifier->verify($payload, $header, self::SECRET, 300);
     }

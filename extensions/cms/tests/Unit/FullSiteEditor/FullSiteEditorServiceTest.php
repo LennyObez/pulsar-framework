@@ -52,7 +52,7 @@ final class FullSiteEditorServiceTest extends TestCase
         $this->partRepo->method('findBySlug')->willReturn($existing);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('already exists');
+        $this->expectExceptionMessageIsOrContains('already exists');
 
         $this->service->createTemplatePart('header', TemplatePartArea::Header, 'Duplicate');
     }
@@ -61,7 +61,7 @@ final class FullSiteEditorServiceTest extends TestCase
     public function createTemplatePartRejectsEmptySlug(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('cannot be empty');
+        $this->expectExceptionMessageIsOrContains('cannot be empty');
 
         $this->service->createTemplatePart('', TemplatePartArea::Header, 'No Slug');
     }
@@ -93,7 +93,7 @@ final class FullSiteEditorServiceTest extends TestCase
         $this->partRepo->method('findById')->willReturn(null);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('not found');
+        $this->expectExceptionMessageIsOrContains('not found');
 
         $this->service->updateTemplatePart('nonexistent', '[]');
     }

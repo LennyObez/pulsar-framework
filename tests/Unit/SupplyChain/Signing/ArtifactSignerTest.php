@@ -128,7 +128,7 @@ final class ArtifactSignerTest extends TestCase
     public function signThrowsForNonexistentFile(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('does not exist');
+        $this->expectExceptionMessageIsOrContains('does not exist');
 
         (void) $this->signer->sign('/nonexistent/path/artifact.phar', $this->secretKey);
     }
@@ -137,7 +137,7 @@ final class ArtifactSignerTest extends TestCase
     public function verifyThrowsForNonexistentFile(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('does not exist');
+        $this->expectExceptionMessageIsOrContains('does not exist');
 
         $this->signer->verify('/nonexistent/path/artifact.phar', 'sig', $this->publicKey);
     }
@@ -146,7 +146,7 @@ final class ArtifactSignerTest extends TestCase
     public function signThrowsForPathTraversal(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Path traversal');
+        $this->expectExceptionMessageIsOrContains('Path traversal');
 
         (void) $this->signer->sign('/some/path/../../../etc/passwd', $this->secretKey);
     }
@@ -155,7 +155,7 @@ final class ArtifactSignerTest extends TestCase
     public function verifyThrowsForPathTraversal(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Path traversal');
+        $this->expectExceptionMessageIsOrContains('Path traversal');
 
         $this->signer->verify('/some/path/../../etc/passwd', 'sig', $this->publicKey);
     }
@@ -166,7 +166,7 @@ final class ArtifactSignerTest extends TestCase
         $file = $this->createTempFile('test');
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Invalid secret key length');
+        $this->expectExceptionMessageIsOrContains('Invalid secret key length');
 
         (void) $this->signer->sign($file, 'too-short-key');
     }
@@ -177,7 +177,7 @@ final class ArtifactSignerTest extends TestCase
         $file = $this->createTempFile('test');
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Invalid public key length');
+        $this->expectExceptionMessageIsOrContains('Invalid public key length');
 
         $this->signer->verify($file, 'sig', 'too-short-key');
     }

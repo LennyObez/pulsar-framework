@@ -70,7 +70,7 @@ final class ContainerAdvancedTest extends TestCase
         $container = new Container();
 
         $this->expectException(ContainerException::class);
-        $this->expectExceptionMessage('Cannot tag unregistered service');
+        $this->expectExceptionMessageIsOrContains('Cannot tag unregistered service');
 
         $container->tag('nonexistent', 'my_tag');
     }
@@ -112,7 +112,7 @@ final class ContainerAdvancedTest extends TestCase
         $container = new Container();
 
         $this->expectException(ContainerException::class);
-        $this->expectExceptionMessage('Cannot decorate unregistered service');
+        $this->expectExceptionMessageIsOrContains('Cannot decorate unregistered service');
 
         $container->decorate('nonexistent', fn($inner, $c) => $inner);
     }

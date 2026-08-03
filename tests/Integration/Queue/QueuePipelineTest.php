@@ -117,7 +117,7 @@ final class QueuePipelineTest extends TestCase
         $manager = new QueueManager($config);
 
         $this->expectException(QueueException::class);
-        $this->expectExceptionMessage('serialize');
+        $this->expectExceptionMessageIsOrContains('serialize');
 
         $manager->dispatch('NonExistent\\Job\\Class', '{}');
     }

@@ -65,7 +65,7 @@ final class DisputeTest extends TestCase
         $dispute = $this->createDispute(DisputeStatus::Won);
 
         $this->expectException(PaymentException::class);
-        $this->expectExceptionMessage('Invalid Dispute transition');
+        $this->expectExceptionMessageIsOrContains('Invalid Dispute transition');
 
         (void) $dispute->transitionTo(DisputeStatus::Open);
     }

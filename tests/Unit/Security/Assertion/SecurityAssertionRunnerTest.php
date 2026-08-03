@@ -60,7 +60,7 @@ final class SecurityAssertionRunnerTest extends TestCase
         );
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('debug_mode');
+        $this->expectExceptionMessageIsOrContains('debug_mode');
 
         $runner->assertAll();
     }
@@ -77,7 +77,7 @@ final class SecurityAssertionRunnerTest extends TestCase
         );
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('https_enforced');
+        $this->expectExceptionMessageIsOrContains('https_enforced');
 
         $runner->assertAll();
     }
@@ -96,7 +96,7 @@ final class SecurityAssertionRunnerTest extends TestCase
         );
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('https_enforced');
+        $this->expectExceptionMessageIsOrContains('https_enforced');
 
         $runner->assertAll();
     }
@@ -134,7 +134,7 @@ final class SecurityAssertionRunnerTest extends TestCase
         );
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('hsts_max_age');
+        $this->expectExceptionMessageIsOrContains('hsts_max_age');
 
         $runner->assertAll();
     }
@@ -153,7 +153,7 @@ final class SecurityAssertionRunnerTest extends TestCase
         );
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('master_key_present');
+        $this->expectExceptionMessageIsOrContains('master_key_present');
 
         $runner->assertAll();
     }
@@ -170,7 +170,7 @@ final class SecurityAssertionRunnerTest extends TestCase
         );
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('session_encryption');
+        $this->expectExceptionMessageIsOrContains('session_encryption');
 
         $runner->assertAll();
     }

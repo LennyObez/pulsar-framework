@@ -172,7 +172,7 @@ final class CacheFakeTest extends TestCase
     public function assert_has_fails_when_key_missing(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Expected cache to contain key [missing]');
+        $this->expectExceptionMessageIsOrContains('Expected cache to contain key [missing]');
 
         $this->fake->assertHas('missing');
     }
@@ -197,7 +197,7 @@ final class CacheFakeTest extends TestCase
         $this->fake->set('key', 'hello', null);
 
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Expected cache key [key] to have value');
+        $this->expectExceptionMessageIsOrContains('Expected cache key [key] to have value');
 
         $this->fake->assertValue('key', 'world');
     }
@@ -222,7 +222,7 @@ final class CacheFakeTest extends TestCase
         $this->fake->set('key', 'value', null);
 
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Expected cache to be empty');
+        $this->expectExceptionMessageIsOrContains('Expected cache to be empty');
 
         $this->fake->assertEmpty();
     }

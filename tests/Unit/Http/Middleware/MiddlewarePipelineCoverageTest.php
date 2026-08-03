@@ -52,7 +52,7 @@ final class MiddlewarePipelineCoverageTest extends TestCase
         $pipeline = new MiddlewarePipeline();
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('No fallback handler set');
+        $this->expectExceptionMessageIsOrContains('No fallback handler set');
 
         $pipeline->handle($this->createRequest());
     }

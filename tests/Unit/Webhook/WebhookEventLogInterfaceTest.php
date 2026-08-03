@@ -100,7 +100,7 @@ final class WebhookEventLogInterfaceTest extends TestCase
         $log->claim('evt-001', $now, 300);
 
         $this->expectException(WebhookException::class);
-        $this->expectExceptionMessage('currently being processed');
+        $this->expectExceptionMessageIsOrContains('currently being processed');
         $log->claim('evt-001', $now, 300);
     }
 

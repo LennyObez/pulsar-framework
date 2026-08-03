@@ -66,7 +66,7 @@ final class HmacWebhookVerifierComprehensiveTest extends TestCase
         $header = sprintf('t=%d,v1=%s', $timestamp, $sig);
 
         $this->expectException(WebhookException::class);
-        $this->expectExceptionMessage('too old');
+        $this->expectExceptionMessageIsOrContains('too old');
 
         $this->verifier->verify($payload, $header, self::SECRET, 300);
     }
@@ -93,7 +93,7 @@ final class HmacWebhookVerifierComprehensiveTest extends TestCase
         $header = sprintf('t=%d,v1=%s', $timestamp, $sig);
 
         $this->expectException(WebhookException::class);
-        $this->expectExceptionMessage('too old');
+        $this->expectExceptionMessageIsOrContains('too old');
 
         $this->verifier->verify($payload, $header, self::SECRET, 300);
     }
@@ -155,7 +155,7 @@ final class HmacWebhookVerifierComprehensiveTest extends TestCase
         $header = sprintf('t=%d,v1=%s', $timestamp, $sig);
 
         $this->expectException(WebhookException::class);
-        $this->expectExceptionMessage('signature verification failed');
+        $this->expectExceptionMessageIsOrContains('signature verification failed');
 
         $this->verifier->verify($payload, $header, 'completely_wrong_secret', 300);
     }
@@ -166,7 +166,7 @@ final class HmacWebhookVerifierComprehensiveTest extends TestCase
     public function headerWithInvalidTimestampFormat(): void
     {
         $this->expectException(WebhookException::class);
-        $this->expectExceptionMessage('invalid timestamp');
+        $this->expectExceptionMessageIsOrContains('invalid timestamp');
 
         $this->verifier->verify('body', 't=abc,v1=sig', self::SECRET, 300);
     }
@@ -175,7 +175,7 @@ final class HmacWebhookVerifierComprehensiveTest extends TestCase
     public function headerWithNegativeTimestamp(): void
     {
         $this->expectException(WebhookException::class);
-        $this->expectExceptionMessage('invalid timestamp');
+        $this->expectExceptionMessageIsOrContains('invalid timestamp');
 
         $this->verifier->verify('body', 't=-1,v1=sig', self::SECRET, 300);
     }
@@ -184,7 +184,7 @@ final class HmacWebhookVerifierComprehensiveTest extends TestCase
     public function headerWithEmptyTimestampValue(): void
     {
         $this->expectException(WebhookException::class);
-        $this->expectExceptionMessage('invalid timestamp');
+        $this->expectExceptionMessageIsOrContains('invalid timestamp');
 
         $this->verifier->verify('body', 't=,v1=sig', self::SECRET, 300);
     }
@@ -194,7 +194,7 @@ final class HmacWebhookVerifierComprehensiveTest extends TestCase
     {
         // v1= with empty value should be skipped, leaving no signatures
         $this->expectException(WebhookException::class);
-        $this->expectExceptionMessage('no v1 signatures');
+        $this->expectExceptionMessageIsOrContains('no v1 signatures');
 
         $this->verifier->verify('body', 't=1700000000,v1=', self::SECRET, 300);
     }
@@ -203,7 +203,7 @@ final class HmacWebhookVerifierComprehensiveTest extends TestCase
     public function headerWithOnlyUnknownPrefixes(): void
     {
         $this->expectException(WebhookException::class);
-        $this->expectExceptionMessage('missing timestamp');
+        $this->expectExceptionMessageIsOrContains('missing timestamp');
 
         $this->verifier->verify('body', 'v2=abc,v3=def', self::SECRET, 300);
     }
@@ -212,7 +212,7 @@ final class HmacWebhookVerifierComprehensiveTest extends TestCase
     public function headerWithTimestampButOnlyUnknownSignatureVersions(): void
     {
         $this->expectException(WebhookException::class);
-        $this->expectExceptionMessage('no v1 signatures');
+        $this->expectExceptionMessageIsOrContains('no v1 signatures');
 
         $this->verifier->verify('body', 't=1700000000,v2=sig', self::SECRET, 300);
     }
@@ -243,7 +243,7 @@ final class HmacWebhookVerifierComprehensiveTest extends TestCase
         $header = sprintf('t=%d,v1=%s', $timestamp, $sig);
 
         $this->expectException(WebhookException::class);
-        $this->expectExceptionMessage('signature verification failed');
+        $this->expectExceptionMessageIsOrContains('signature verification failed');
 
         $this->verifier->verify('{"amount":999999}', $header, self::SECRET, 300);
     }
@@ -329,7 +329,7 @@ final class HmacWebhookVerifierComprehensiveTest extends TestCase
         $header = sprintf('t=%d,v1=%s', $timestamp, $almostCorrect);
 
         $this->expectException(WebhookException::class);
-        $this->expectExceptionMessage('signature verification failed');
+        $this->expectExceptionMessageIsOrContains('signature verification failed');
 
         $this->verifier->verify($payload, $header, self::SECRET, 300);
     }
@@ -340,7 +340,7 @@ final class HmacWebhookVerifierComprehensiveTest extends TestCase
     public function headerWithTimestampContainingDecimal(): void
     {
         $this->expectException(WebhookException::class);
-        $this->expectExceptionMessage('invalid timestamp');
+        $this->expectExceptionMessageIsOrContains('invalid timestamp');
 
         $this->verifier->verify('body', 't=1700000000.5,v1=sig', self::SECRET, 300);
     }
@@ -372,7 +372,7 @@ final class HmacWebhookVerifierComprehensiveTest extends TestCase
 
         // Age = abs(NOW - 9999999999) which is huge, beyond any tolerance
         $this->expectException(WebhookException::class);
-        $this->expectExceptionMessage('too old');
+        $this->expectExceptionMessageIsOrContains('too old');
 
         $this->verifier->verify($payload, $header, self::SECRET, 300);
     }

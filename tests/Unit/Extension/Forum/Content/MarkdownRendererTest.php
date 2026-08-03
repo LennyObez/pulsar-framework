@@ -47,7 +47,7 @@ final class MarkdownRendererTest extends TestCase
     public function renderThrowsDueToDoubleRegisteredExtensions(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Cannot add two delimiter processors');
+        $this->expectExceptionMessageIsOrContains('Cannot add two delimiter processors');
 
         $this->renderer->render('any content');
     }

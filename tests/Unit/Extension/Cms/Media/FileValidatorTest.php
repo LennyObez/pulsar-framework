@@ -162,7 +162,7 @@ final class FileValidatorTest extends TestCase
         $path = $this->createMinimalJpeg();
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('exceeds maximum');
+        $this->expectExceptionMessageIsOrContains('exceeds maximum');
         // Fake a file size > 50MB (default maxUploadSize)
         $this->validator->validate($path, 'photo.jpg', 'image/jpeg', 60_000_000);
     }
@@ -181,7 +181,7 @@ final class FileValidatorTest extends TestCase
         unset($img);
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('dimensions');
+        $this->expectExceptionMessageIsOrContains('dimensions');
         $validator->validate($path, 'big.jpg', 'image/jpeg', (int) filesize($path));
     }
 
@@ -199,7 +199,7 @@ final class FileValidatorTest extends TestCase
         unset($img);
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('pixel count');
+        $this->expectExceptionMessageIsOrContains('pixel count');
         $validator->validate($path, 'bomb.jpg', 'image/jpeg', (int) filesize($path));
     }
 
@@ -217,7 +217,7 @@ final class FileValidatorTest extends TestCase
         file_put_contents($path, '<?php echo "hacked"; ?>', FILE_APPEND);
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('PHP');
+        $this->expectExceptionMessageIsOrContains('PHP');
         $this->validator->validate($path, 'evil.jpg', 'image/jpeg', (int) filesize($path));
     }
 

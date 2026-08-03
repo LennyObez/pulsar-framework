@@ -75,7 +75,7 @@ final class PostReportTest extends TestCase
         $report = PostReport::create('r-1', 'p-1', 'u-1', 'Spam');
 
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('Invalid status transition');
+        $this->expectExceptionMessageIsOrContains('Invalid status transition');
         $report->review(ReportStatus::Actioned, 'mod-1');
     }
 

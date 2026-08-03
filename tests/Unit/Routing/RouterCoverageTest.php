@@ -309,7 +309,7 @@ final class RouterCoverageTest extends TestCase
         $router = new Router();
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Route "nonexistent" not found');
+        $this->expectExceptionMessageIsOrContains('Route "nonexistent" not found');
 
         $router->url('nonexistent');
     }

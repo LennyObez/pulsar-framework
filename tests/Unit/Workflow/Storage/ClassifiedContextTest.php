@@ -53,7 +53,7 @@ final class ClassifiedContextTest extends TestCase
         $context = new ClassifiedContext();
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('does not exist');
+        $this->expectExceptionMessageIsOrContains('does not exist');
 
         $context->get('nonexistent');
     }
@@ -274,7 +274,7 @@ final class ClassifiedContextTest extends TestCase
             ->set('secret', 'value', ClassificationLevel::Restricted);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Failed to encrypt workflow context field "secret"');
+        $this->expectExceptionMessageIsOrContains('Failed to encrypt workflow context field "secret"');
 
         $context->serialize($encryptor);
     }
@@ -292,7 +292,7 @@ final class ClassifiedContextTest extends TestCase
         ];
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Failed to decrypt workflow context field "secret"');
+        $this->expectExceptionMessageIsOrContains('Failed to decrypt workflow context field "secret"');
 
         ClassifiedContext::fromSerialized($data, $encryptor);
     }

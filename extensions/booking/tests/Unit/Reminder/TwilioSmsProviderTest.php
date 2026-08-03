@@ -46,7 +46,7 @@ final class TwilioSmsProviderTest extends TestCase
         $this->httpClient->method('post')->willReturn($response);
 
         $this->expectException(BookingException::class);
-        $this->expectExceptionMessage('twilio');
+        $this->expectExceptionMessageIsOrContains('twilio');
 
         $this->provider->send('+15559999999', 'Test message');
     }
@@ -57,7 +57,7 @@ final class TwilioSmsProviderTest extends TestCase
         $this->httpClient->method('post')->willReturn($response);
 
         $this->expectException(BookingException::class);
-        $this->expectExceptionMessage('HTTP 500');
+        $this->expectExceptionMessageIsOrContains('HTTP 500');
 
         $this->provider->send('+15559999999', 'Test message');
     }

@@ -144,7 +144,7 @@ final class WebhookProcessorTest extends TestCase
         $handler = $this->createStub(WebhookHandlerInterface::class);
 
         $this->expectException(WebhookException::class);
-        $this->expectExceptionMessage('Webhook secret cannot be empty');
+        $this->expectExceptionMessageIsOrContains('Webhook secret cannot be empty');
 
         new WebhookProcessor(
             verifier: new HmacWebhookVerifier($this->now),
@@ -160,7 +160,7 @@ final class WebhookProcessorTest extends TestCase
         $verifier = new HmacWebhookVerifier($this->now);
 
         $this->expectException(WebhookException::class);
-        $this->expectExceptionMessage('Webhook secret cannot be empty');
+        $this->expectExceptionMessageIsOrContains('Webhook secret cannot be empty');
 
         $verifier->verify('payload', 't=1,v1=deadbeef', '', 300);
     }
@@ -351,7 +351,7 @@ final class WebhookProcessorTest extends TestCase
         $handler = $this->createStub(WebhookHandlerInterface::class);
 
         $this->expectException(WebhookException::class);
-        $this->expectExceptionMessage('maxBodyBytes');
+        $this->expectExceptionMessageIsOrContains('maxBodyBytes');
 
         new WebhookProcessor(
             verifier: new HmacWebhookVerifier($this->now),
@@ -368,7 +368,7 @@ final class WebhookProcessorTest extends TestCase
         $handler = $this->createStub(WebhookHandlerInterface::class);
 
         $this->expectException(WebhookException::class);
-        $this->expectExceptionMessage('toleranceSeconds');
+        $this->expectExceptionMessageIsOrContains('toleranceSeconds');
 
         new WebhookProcessor(
             verifier: new HmacWebhookVerifier($this->now),
@@ -385,7 +385,7 @@ final class WebhookProcessorTest extends TestCase
         $handler = $this->createStub(WebhookHandlerInterface::class);
 
         $this->expectException(WebhookException::class);
-        $this->expectExceptionMessage('deduplicationTtlSeconds');
+        $this->expectExceptionMessageIsOrContains('deduplicationTtlSeconds');
 
         new WebhookProcessor(
             verifier: new HmacWebhookVerifier($this->now),

@@ -503,7 +503,7 @@ final class WorkflowEngineTest extends TestCase
     public function apply_throws_when_transition_undefined(): void
     {
         $this->expectException(WorkflowException::class);
-        $this->expectExceptionMessage('not valid');
+        $this->expectExceptionMessageIsOrContains('not valid');
 
         $this->engine()->apply(
             $this->instance('draft', 1),
@@ -530,7 +530,7 @@ final class WorkflowEngineTest extends TestCase
     public function apply_throws_when_in_final_state(): void
     {
         $this->expectException(WorkflowException::class);
-        $this->expectExceptionMessage('final state');
+        $this->expectExceptionMessageIsOrContains('final state');
 
         $this->engine()->apply(
             $this->instance('done', 3),
@@ -558,7 +558,7 @@ final class WorkflowEngineTest extends TestCase
             ->build();
 
         $this->expectException(WorkflowException::class);
-        $this->expectExceptionMessage('blocked by guard');
+        $this->expectExceptionMessageIsOrContains('blocked by guard');
 
         $this->engine()->apply($this->instance('draft', 1), $definition, 'approve', new ActorContext(subjectId: 'u'));
     }
@@ -633,7 +633,7 @@ final class WorkflowEngineTest extends TestCase
             ->build();
 
         $this->expectException(WorkflowException::class);
-        $this->expectExceptionMessage('blocked by guard');
+        $this->expectExceptionMessageIsOrContains('blocked by guard');
 
         $this->engine(guardResolver: $guardResolver)->apply(
             $this->instance('draft', 1),

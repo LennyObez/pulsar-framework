@@ -51,7 +51,7 @@ final class FormCsrfManagerTest extends TestCase
         $manager = new FormCsrfManager($session, $this->defaultConfig());
 
         $this->expectException(CsrfException::class);
-        $this->expectExceptionMessage('missing');
+        $this->expectExceptionMessageIsOrContains('missing');
         $manager->validate('', 'login');
     }
 
@@ -62,7 +62,7 @@ final class FormCsrfManagerTest extends TestCase
         $manager = new FormCsrfManager($session, $this->defaultConfig());
 
         $this->expectException(CsrfException::class);
-        $this->expectExceptionMessage('invalid');
+        $this->expectExceptionMessageIsOrContains('invalid');
         $manager->validate('fake-token', 'login');
     }
 
@@ -103,7 +103,7 @@ final class FormCsrfManagerTest extends TestCase
         sleep(1);
 
         $this->expectException(CsrfException::class);
-        $this->expectExceptionMessage('expired');
+        $this->expectExceptionMessageIsOrContains('expired');
         $manager->validate($token, 'login', '/login');
     }
 

@@ -120,7 +120,7 @@ final class VoteServiceTest extends TestCase
 
         // Act & Assert
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('already voted');
+        $this->expectExceptionMessageIsOrContains('already voted');
 
         $service->castThreadVote('voter-1', 'thread-1', VoteDirection::Up);
     }
@@ -143,7 +143,7 @@ final class VoteServiceTest extends TestCase
 
         // Act & Assert
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('already voted');
+        $this->expectExceptionMessageIsOrContains('already voted');
 
         $service->castPostVote('voter-1', 'post-1', VoteDirection::Up);
     }
@@ -166,7 +166,7 @@ final class VoteServiceTest extends TestCase
 
         // Act & Assert
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('already voted');
+        $this->expectExceptionMessageIsOrContains('already voted');
 
         $service->castThreadVote('voter-1', 'thread-1', VoteDirection::Up);
     }
@@ -189,7 +189,7 @@ final class VoteServiceTest extends TestCase
 
         // Act & Assert
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('already voted');
+        $this->expectExceptionMessageIsOrContains('already voted');
 
         $service->castPostVote('voter-1', 'post-1', VoteDirection::Up);
     }

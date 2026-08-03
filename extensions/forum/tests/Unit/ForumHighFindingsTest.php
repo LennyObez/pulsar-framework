@@ -963,7 +963,7 @@ final class ForumHighFindingsTest extends TestCase
         );
 
         $this->expectException(\Pulsar\Extension\Forum\Exception\ForumException::class);
-        $this->expectExceptionMessage('without identifying actor');
+        $this->expectExceptionMessageIsOrContains('without identifying actor');
 
         $service->deletePost('post-1', '');
     }
@@ -990,7 +990,7 @@ final class ForumHighFindingsTest extends TestCase
         );
 
         $this->expectException(\Pulsar\Extension\Forum\Exception\ForumException::class);
-        $this->expectExceptionMessage('non-author');
+        $this->expectExceptionMessageIsOrContains('non-author');
 
         $service->deletePost('post-1', 'random-other-user');
     }

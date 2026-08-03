@@ -58,7 +58,7 @@ final class RunAnalysisToolTest extends TestCase
     public function executeRejectsInvalidAnalyzer(): void
     {
         $this->expectException(McpException::class);
-        $this->expectExceptionMessage('analyzer must be');
+        $this->expectExceptionMessageIsOrContains('analyzer must be');
 
         $this->tool->execute(['analyzer' => 'invalid']);
     }

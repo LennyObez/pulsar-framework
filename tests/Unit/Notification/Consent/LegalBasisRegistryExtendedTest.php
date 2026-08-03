@@ -80,7 +80,7 @@ final class LegalBasisRegistryExtendedTest extends TestCase
         $registry->registerType(FakeMissingBasisNotif::class);
 
         $this->expectException(ConfigException::class);
-        $this->expectExceptionMessage(FakeMissingBasisNotif::class);
+        $this->expectExceptionMessageIsOrContains(FakeMissingBasisNotif::class);
 
         $registry->validate();
     }
@@ -95,7 +95,7 @@ final class LegalBasisRegistryExtendedTest extends TestCase
         // FakeNotifB has no mapping
 
         $this->expectException(ConfigException::class);
-        $this->expectExceptionMessage('FakeNotifB');
+        $this->expectExceptionMessageIsOrContains('FakeNotifB');
 
         $registry->validate();
     }

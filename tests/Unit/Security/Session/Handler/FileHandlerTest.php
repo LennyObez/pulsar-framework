@@ -169,7 +169,7 @@ final class FileHandlerTest extends TestCase
     public function listSessionsThrowsNotSupported(): void
     {
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('does not support session listing');
+        $this->expectExceptionMessageIsOrContains('does not support session listing');
 
         $this->handler->listSessions('aabb0011');
     }
@@ -178,7 +178,7 @@ final class FileHandlerTest extends TestCase
     public function revokeSessionThrowsNotSupported(): void
     {
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('does not support session revocation');
+        $this->expectExceptionMessageIsOrContains('does not support session revocation');
 
         $this->handler->revokeSession('aabb0011');
     }
@@ -187,7 +187,7 @@ final class FileHandlerTest extends TestCase
     public function getActiveSessionsThrowsNotSupported(): void
     {
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('does not support concurrency control');
+        $this->expectExceptionMessageIsOrContains('does not support concurrency control');
 
         $this->handler->getActiveSessions('aabb0011');
     }
@@ -237,7 +237,7 @@ final class FileHandlerTest extends TestCase
     public function readRejectsInvalidSessionId(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid session ID format');
+        $this->expectExceptionMessageIsOrContains('Invalid session ID format');
 
         $this->handler->read('../../etc/passwd');
     }
@@ -246,7 +246,7 @@ final class FileHandlerTest extends TestCase
     public function writeRejectsInvalidSessionId(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid session ID format');
+        $this->expectExceptionMessageIsOrContains('Invalid session ID format');
 
         $this->handler->write('../traversal', 'data');
     }
@@ -255,7 +255,7 @@ final class FileHandlerTest extends TestCase
     public function destroyRejectsInvalidSessionId(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid session ID format');
+        $this->expectExceptionMessageIsOrContains('Invalid session ID format');
 
         $this->handler->destroy('session; rm -rf /');
     }
@@ -265,7 +265,7 @@ final class FileHandlerTest extends TestCase
     public function sessionIdValidationRejectsUnsafeInput(string $id): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid session ID format');
+        $this->expectExceptionMessageIsOrContains('Invalid session ID format');
 
         $this->handler->read($id);
     }

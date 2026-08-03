@@ -134,7 +134,7 @@ final class LocalStorageAdapterTest extends TestCase
     public function getThrowsObjectNotFoundForMissingKey(): void
     {
         $this->expectException(StorageException::class);
-        $this->expectExceptionMessage('Storage object not found: "missing.txt"');
+        $this->expectExceptionMessageIsOrContains('Storage object not found: "missing.txt"');
 
         $_ = $this->adapter->get('missing.txt');
     }
@@ -143,7 +143,7 @@ final class LocalStorageAdapterTest extends TestCase
     public function pathTraversalWithDoubleDotIsRejected(): void
     {
         $this->expectException(StorageException::class);
-        $this->expectExceptionMessage('path traversal not allowed');
+        $this->expectExceptionMessageIsOrContains('path traversal not allowed');
 
         $this->adapter->put('../escape.txt', 'malicious');
     }
@@ -152,7 +152,7 @@ final class LocalStorageAdapterTest extends TestCase
     public function pathTraversalInMiddleOfKeyIsRejected(): void
     {
         $this->expectException(StorageException::class);
-        $this->expectExceptionMessage('path traversal not allowed');
+        $this->expectExceptionMessageIsOrContains('path traversal not allowed');
 
         $_ = $this->adapter->get('subdir/../../etc/passwd');
     }
@@ -161,7 +161,7 @@ final class LocalStorageAdapterTest extends TestCase
     public function keyStartingWithSlashIsRejected(): void
     {
         $this->expectException(StorageException::class);
-        $this->expectExceptionMessage('key must not start with a directory separator');
+        $this->expectExceptionMessageIsOrContains('key must not start with a directory separator');
 
         $this->adapter->put('/absolute/path.txt', 'data');
     }
@@ -170,7 +170,7 @@ final class LocalStorageAdapterTest extends TestCase
     public function keyStartingWithBackslashIsRejected(): void
     {
         $this->expectException(StorageException::class);
-        $this->expectExceptionMessage('key must not start with a directory separator');
+        $this->expectExceptionMessageIsOrContains('key must not start with a directory separator');
 
         $this->adapter->put('\\absolute\\path.txt', 'data');
     }
@@ -179,7 +179,7 @@ final class LocalStorageAdapterTest extends TestCase
     public function emptyKeyIsRejected(): void
     {
         $this->expectException(StorageException::class);
-        $this->expectExceptionMessage('key must not be empty');
+        $this->expectExceptionMessageIsOrContains('key must not be empty');
 
         $this->adapter->put('', 'data');
     }
@@ -224,7 +224,7 @@ final class LocalStorageAdapterTest extends TestCase
         }
 
         $this->expectException(StorageException::class);
-        $this->expectExceptionMessage('symlink escapes storage base path');
+        $this->expectExceptionMessageIsOrContains('symlink escapes storage base path');
 
         $_ = $this->adapter->get('link/secret.txt');
     }

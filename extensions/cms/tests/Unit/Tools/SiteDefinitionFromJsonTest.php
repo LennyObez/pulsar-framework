@@ -56,7 +56,7 @@ final class SiteDefinitionFromJsonTest extends TestCase
     public function fromJsonThrowsForInvalidJson(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid JSON');
+        $this->expectExceptionMessageIsOrContains('Invalid JSON');
 
         SiteDefinition::fromJson('{invalid');
     }
@@ -65,7 +65,7 @@ final class SiteDefinitionFromJsonTest extends TestCase
     public function fromJsonThrowsForMissingRequiredKeys(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Missing required keys');
+        $this->expectExceptionMessageIsOrContains('Missing required keys');
 
         SiteDefinition::fromJson(json_encode(['foo' => 'bar'], JSON_THROW_ON_ERROR));
     }
@@ -74,7 +74,7 @@ final class SiteDefinitionFromJsonTest extends TestCase
     public function fromJsonThrowsForUnsupportedVersion(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Unsupported site definition version');
+        $this->expectExceptionMessageIsOrContains('Unsupported site definition version');
 
         SiteDefinition::fromJson(json_encode([
             'version' => '2.0',
@@ -86,7 +86,7 @@ final class SiteDefinitionFromJsonTest extends TestCase
     public function fromJsonThrowsForNonObjectSite(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('"site" key must be an object');
+        $this->expectExceptionMessageIsOrContains('"site" key must be an object');
 
         SiteDefinition::fromJson(json_encode([
             'version' => '1.0',

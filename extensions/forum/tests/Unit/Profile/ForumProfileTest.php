@@ -104,7 +104,7 @@ final class ForumProfileTest extends TestCase
         $banned = $profile->ban('First ban');
 
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('banned');
+        $this->expectExceptionMessageIsOrContains('banned');
         $banned->ban('Second ban');
     }
 

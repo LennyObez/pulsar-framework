@@ -28,7 +28,7 @@ final class MsgpackSerializerTest extends TestCase
         }
 
         $this->expectException(QueueException::class);
-        $this->expectExceptionMessage('msgpack extension is not loaded');
+        $this->expectExceptionMessageIsOrContains('msgpack extension is not loaded');
 
         new MsgpackSerializer(
             typeRegistry: new TypeRegistry(),
@@ -148,7 +148,7 @@ final class MsgpackSerializerTest extends TestCase
             $hostile = msgpack_pack(['_value' => (object) ['x' => 1]]);
 
             $this->expectException(QueueException::class);
-            $this->expectExceptionMessage('must be pure data');
+            $this->expectExceptionMessageIsOrContains('must be pure data');
 
             $serializer->deserialize($hostile, 'App\\Job\\TestJob');
         } finally {

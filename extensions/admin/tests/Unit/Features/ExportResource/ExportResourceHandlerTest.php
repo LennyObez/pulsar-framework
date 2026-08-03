@@ -143,7 +143,7 @@ final class ExportResourceHandlerTest extends TestCase
         );
 
         $this->expectException(AdminException::class);
-        $this->expectExceptionMessage('Export not supported');
+        $this->expectExceptionMessageIsOrContains('Export not supported');
 
         $this->handler->execute($request);
     }
@@ -160,7 +160,7 @@ final class ExportResourceHandlerTest extends TestCase
         );
 
         $this->expectException(AdminException::class);
-        $this->expectExceptionMessage('No exportable fields');
+        $this->expectExceptionMessageIsOrContains('No exportable fields');
 
         $this->handler->execute($request);
     }

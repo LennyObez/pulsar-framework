@@ -310,7 +310,7 @@ final class MiddlewarePipelineTest extends TestCase
         $pipeline->pipe($nonExistent);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('could not be resolved');
+        $this->expectExceptionMessageIsOrContains('could not be resolved');
 
         $pipeline->dispatch($this->createRequest(), fn() => Response::text('ok'));
     }

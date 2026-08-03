@@ -216,7 +216,7 @@ final class FailoverManagerTest extends TestCase
         $manager = $this->createManager();
 
         $this->expectException(DatabaseException::class);
-        $this->expectExceptionMessage('Strategy "test" could not resolve a failover target');
+        $this->expectExceptionMessageIsOrContains('Strategy "test" could not resolve a failover target');
 
         $manager->executeFailover();
     }

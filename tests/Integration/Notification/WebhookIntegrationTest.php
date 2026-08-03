@@ -108,7 +108,7 @@ final class WebhookIntegrationTest extends TestCase
         };
 
         $this->expectException(NotificationException::class);
-        $this->expectExceptionMessage('private IPv4');
+        $this->expectExceptionMessageIsOrContains('private IPv4');
 
         $channel->send($notifiable, $notification);
     }
@@ -138,7 +138,7 @@ final class WebhookIntegrationTest extends TestCase
         };
 
         $this->expectException(NotificationException::class);
-        $this->expectExceptionMessage('blocked address');
+        $this->expectExceptionMessageIsOrContains('blocked address');
 
         $channel->send($notifiable, $notification);
     }
@@ -197,7 +197,7 @@ final class WebhookIntegrationTest extends TestCase
         };
 
         $this->expectException(NotificationException::class);
-        $this->expectExceptionMessage('delivery failed');
+        $this->expectExceptionMessageIsOrContains('delivery failed');
 
         $channel->send($notifiable, $notification);
     }
@@ -224,7 +224,7 @@ final class WebhookIntegrationTest extends TestCase
         };
 
         $this->expectException(NotificationException::class);
-        $this->expectExceptionMessage('No webhook URL configured');
+        $this->expectExceptionMessageIsOrContains('No webhook URL configured');
 
         $channel->send($notifiable, $notification);
     }

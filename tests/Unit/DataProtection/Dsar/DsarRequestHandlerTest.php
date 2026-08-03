@@ -143,7 +143,7 @@ final class DsarRequestHandlerTest extends TestCase
         );
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('DSAR request not found');
+        $this->expectExceptionMessageIsOrContains('DSAR request not found');
 
         $handler->process('nonexistent-id');
     }

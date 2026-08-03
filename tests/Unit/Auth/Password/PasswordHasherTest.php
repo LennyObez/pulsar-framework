@@ -81,7 +81,7 @@ final class PasswordHasherTest extends TestCase
     public function rejectsMemoryCostBelowFloor(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('memory_cost must be at least');
+        $this->expectExceptionMessageIsOrContains('memory_cost must be at least');
 
         new PasswordHasher(memoryCost: 1024);
     }
@@ -90,7 +90,7 @@ final class PasswordHasherTest extends TestCase
     public function rejectsTimeCostBelowFloor(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('time_cost must be at least');
+        $this->expectExceptionMessageIsOrContains('time_cost must be at least');
 
         new PasswordHasher(timeCost: 1);
     }

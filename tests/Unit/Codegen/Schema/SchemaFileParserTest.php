@@ -198,7 +198,7 @@ final class SchemaFileParserTest extends TestCase
         $parser = new SchemaFileParser();
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('only .pulsar.json files are accepted');
+        $this->expectExceptionMessageIsOrContains('only .pulsar.json files are accepted');
 
         (void) $parser->parseFile(__DIR__ . '/fixture.json');
     }
@@ -222,7 +222,7 @@ final class SchemaFileParserTest extends TestCase
             );
 
             $this->expectException(RuntimeException::class);
-            $this->expectExceptionMessage('outside the allowed root');
+            $this->expectExceptionMessageIsOrContains('outside the allowed root');
 
             (void) $parser->parseFile($tempFile);
         } finally {

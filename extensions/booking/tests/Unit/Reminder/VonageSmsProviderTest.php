@@ -46,7 +46,7 @@ final class VonageSmsProviderTest extends TestCase
         $this->httpClient->method('post')->willReturn($response);
 
         $this->expectException(BookingException::class);
-        $this->expectExceptionMessage('vonage');
+        $this->expectExceptionMessageIsOrContains('vonage');
 
         $this->provider->send('+15559999999', 'Test message');
     }
@@ -58,7 +58,7 @@ final class VonageSmsProviderTest extends TestCase
         $this->httpClient->method('post')->willReturn($response);
 
         $this->expectException(BookingException::class);
-        $this->expectExceptionMessage('Invalid credentials');
+        $this->expectExceptionMessageIsOrContains('Invalid credentials');
 
         $this->provider->send('+15559999999', 'Test message');
     }

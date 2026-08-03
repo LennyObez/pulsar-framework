@@ -56,7 +56,7 @@ final class BillingPortalServiceTest extends TestCase
         $this->repository->method('getSubscription')->willReturn(null);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Subscription not found');
+        $this->expectExceptionMessageIsOrContains('Subscription not found');
 
         $this->service->cancelSubscription('cust-1', 'sub-nonexistent');
     }
@@ -88,7 +88,7 @@ final class BillingPortalServiceTest extends TestCase
         $this->repository->method('getSubscription')->willReturn($sub);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Subscription not found');
+        $this->expectExceptionMessageIsOrContains('Subscription not found');
 
         $this->service->cancelSubscription('cust-1', 'sub-1');
     }

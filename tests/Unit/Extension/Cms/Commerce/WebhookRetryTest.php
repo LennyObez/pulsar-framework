@@ -238,7 +238,7 @@ final class WebhookRetryTest extends TestCase
         ]);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('DB down');
+        $this->expectExceptionMessageIsOrContains('DB down');
 
         $handler->handle($payload, 'valid-sig');
     }
@@ -264,7 +264,7 @@ final class WebhookRetryTest extends TestCase
         );
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('Invalid webhook signature');
+        $this->expectExceptionMessageIsOrContains('Invalid webhook signature');
 
         $handler->handle('{}', 'bad-sig');
     }

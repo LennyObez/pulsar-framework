@@ -149,7 +149,7 @@ final class SchemaApiControllerTest extends TestCase
         ]);
 
         $this->expectException(AdminException::class);
-        $this->expectExceptionMessage('reason of at least 5 characters');
+        $this->expectExceptionMessageIsOrContains('reason of at least 5 characters');
 
         $this->controller->create($request);
     }
@@ -160,7 +160,7 @@ final class SchemaApiControllerTest extends TestCase
         $request = $this->makeJsonRequest('DELETE', bodyData: ['reason' => 'xy']);
 
         $this->expectException(AdminException::class);
-        $this->expectExceptionMessage('reason of at least 5 characters');
+        $this->expectExceptionMessageIsOrContains('reason of at least 5 characters');
 
         $this->controller->dropTable($request, 'test_tbl');
     }
@@ -314,7 +314,7 @@ final class SchemaApiControllerTest extends TestCase
         ]);
 
         $this->expectException(AdminException::class);
-        $this->expectExceptionMessage('reason of at least 5 characters');
+        $this->expectExceptionMessageIsOrContains('reason of at least 5 characters');
 
         $this->controller->renameTable($request, 'old_tbl');
     }
@@ -343,7 +343,7 @@ final class SchemaApiControllerTest extends TestCase
         $request = $this->makeJsonRequest('DELETE', bodyData: ['reason' => 'no']);
 
         $this->expectException(AdminException::class);
-        $this->expectExceptionMessage('reason of at least 5 characters');
+        $this->expectExceptionMessageIsOrContains('reason of at least 5 characters');
 
         $this->controller->dropColumn($request, 'test_tbl', 'old_col');
     }
@@ -371,7 +371,7 @@ final class SchemaApiControllerTest extends TestCase
         $request = $this->makeJsonRequest('DELETE', bodyData: ['reason' => 'ab']);
 
         $this->expectException(AdminException::class);
-        $this->expectExceptionMessage('reason of at least 5 characters');
+        $this->expectExceptionMessageIsOrContains('reason of at least 5 characters');
 
         $this->controller->dropIndex($request, 'test_tbl', 'idx_old');
     }

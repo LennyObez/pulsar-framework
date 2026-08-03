@@ -36,7 +36,7 @@ final class RequestContextHolderTest extends TestCase
         $holder = new RequestContextHolder();
 
         $this->expectException(ContextException::class);
-        $this->expectExceptionMessage('not available');
+        $this->expectExceptionMessageIsOrContains('not available');
 
         (void) $holder->get();
     }

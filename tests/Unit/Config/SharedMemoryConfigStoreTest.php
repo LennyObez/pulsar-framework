@@ -50,7 +50,7 @@ final class SharedMemoryConfigStoreTest extends TestCase
         }
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('ext-shmop is required');
+        $this->expectExceptionMessageIsOrContains('ext-shmop is required');
 
         new SharedMemoryConfigStore(hmacKey: self::VALID_KEY);
     }
@@ -63,7 +63,7 @@ final class SharedMemoryConfigStoreTest extends TestCase
         }
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('HMAC key must not be empty');
+        $this->expectExceptionMessageIsOrContains('HMAC key must not be empty');
 
         new SharedMemoryConfigStore(hmacKey: '');
     }
@@ -76,7 +76,7 @@ final class SharedMemoryConfigStoreTest extends TestCase
         }
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('HMAC key must be at least 32 bytes');
+        $this->expectExceptionMessageIsOrContains('HMAC key must be at least 32 bytes');
 
         // 31 bytes: one short of the HMAC-SHA256 minimum.
         new SharedMemoryConfigStore(hmacKey: 'short-key-0123456789abcdefghij');

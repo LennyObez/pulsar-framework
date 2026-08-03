@@ -42,7 +42,7 @@ final class ImportExportRegistryTest extends TestCase
         $this->registry->register($this->createProviderStub('cms'));
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('already registered');
+        $this->expectExceptionMessageIsOrContains('already registered');
 
         $this->registry->register($this->createProviderStub('cms'));
     }
@@ -159,7 +159,7 @@ final class ImportExportRegistryTest extends TestCase
     public function importToThrowsForUnknownProvider(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('not registered');
+        $this->expectExceptionMessageIsOrContains('not registered');
 
         $this->registry->importTo('nonexistent', new ImportRequest(content: '{}'));
     }

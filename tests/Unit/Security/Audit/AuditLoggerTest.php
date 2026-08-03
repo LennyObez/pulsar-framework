@@ -265,7 +265,7 @@ final class AuditLoggerTest extends TestCase
         $logger = new AuditLogger($sink, $this->auditKey);
 
         $this->expectException(AuditActorMissingException::class);
-        $this->expectExceptionMessage('"startup"');
+        $this->expectExceptionMessageIsOrContains('"startup"');
 
         $logger->log(
             event: AuditEvent::SystemEvent,
@@ -391,7 +391,7 @@ final class AuditLoggerTest extends TestCase
         $sink->method('chainState')->willReturn(AuditChainState::Corrupted);
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('Audit chain integrity check failed');
+        $this->expectExceptionMessageIsOrContains('Audit chain integrity check failed');
 
         new AuditLogger($sink, $this->auditKey);
     }

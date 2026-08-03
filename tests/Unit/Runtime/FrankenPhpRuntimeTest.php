@@ -127,7 +127,7 @@ final class FrankenPhpRuntimeTest extends TestCase
     public function start_throws_when_frankenphp_not_available(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('frankenphp');
+        $this->expectExceptionMessageIsOrContains('frankenphp');
 
         $this->runtime->start();
     }

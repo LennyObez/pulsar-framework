@@ -102,7 +102,7 @@ final class CreatePaymentIntentHandlerTest extends TestCase
         $handler->execute(new CreatePaymentIntentRequest(Money::of(5000, Currency::USD), 'idem-key-mismatch'));
 
         $this->expectException(IdempotencyException::class);
-        $this->expectExceptionMessage('different parameters');
+        $this->expectExceptionMessageIsOrContains('different parameters');
 
         $handler->execute(new CreatePaymentIntentRequest(Money::of(6000, Currency::USD), 'idem-key-mismatch'));
     }
@@ -113,7 +113,7 @@ final class CreatePaymentIntentHandlerTest extends TestCase
         $handler = $this->createHandler();
 
         $this->expectException(IdempotencyException::class);
-        $this->expectExceptionMessage('Invalid idempotency key');
+        $this->expectExceptionMessageIsOrContains('Invalid idempotency key');
 
         $handler->execute(new CreatePaymentIntentRequest(Money::of(1000, Currency::USD), ''));
     }
@@ -124,7 +124,7 @@ final class CreatePaymentIntentHandlerTest extends TestCase
         $handler = $this->createHandler();
 
         $this->expectException(IdempotencyException::class);
-        $this->expectExceptionMessage('invalid characters');
+        $this->expectExceptionMessageIsOrContains('invalid characters');
 
         $handler->execute(new CreatePaymentIntentRequest(Money::of(1000, Currency::USD), 'key with spaces'));
     }

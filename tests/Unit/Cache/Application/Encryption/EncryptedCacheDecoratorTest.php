@@ -93,7 +93,7 @@ final class EncryptedCacheDecoratorTest extends TestCase
     public function incrementThrowsUnsupportedCapabilityException(): void
     {
         $this->expectException(UnsupportedCapabilityException::class);
-        $this->expectExceptionMessage('increment/decrement');
+        $this->expectExceptionMessageIsOrContains('increment/decrement');
 
         $this->decorator->increment('counter');
     }
@@ -102,7 +102,7 @@ final class EncryptedCacheDecoratorTest extends TestCase
     public function decrementThrowsUnsupportedCapabilityException(): void
     {
         $this->expectException(UnsupportedCapabilityException::class);
-        $this->expectExceptionMessage('increment/decrement');
+        $this->expectExceptionMessageIsOrContains('increment/decrement');
 
         $this->decorator->decrement('counter');
     }

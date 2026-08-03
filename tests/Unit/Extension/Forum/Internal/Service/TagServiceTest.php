@@ -87,7 +87,7 @@ final class TagServiceTest extends TestCase
         $service = $this->makeService();
 
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('Tag not found');
+        $this->expectExceptionMessageIsOrContains('Tag not found');
 
         $service->attachTags('thread-1', ['missing']);
     }
@@ -115,7 +115,7 @@ final class TagServiceTest extends TestCase
         $service = $this->makeService();
 
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage('Tag not found');
+        $this->expectExceptionMessageIsOrContains('Tag not found');
 
         $service->detachTags('thread-1', ['missing']);
     }

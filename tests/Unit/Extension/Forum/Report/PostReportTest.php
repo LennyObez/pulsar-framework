@@ -68,7 +68,7 @@ final class PostReportTest extends TestCase
     {
         $report = PostReport::create(id: 'r-001', postId: 'p-001', reporterId: 'u-001', reason: 'Spam');
         $this->expectException(ForumException::class);
-        $this->expectExceptionMessage("Invalid status transition from 'pending' to 'actioned'");
+        $this->expectExceptionMessageIsOrContains("Invalid status transition from 'pending' to 'actioned'");
         $report->review(ReportStatus::Actioned, 'mod-001');
     }
 

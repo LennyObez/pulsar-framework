@@ -55,7 +55,7 @@ final class RunFormatterToolTest extends TestCase
     public function executeRejectsInvalidType(): void
     {
         $this->expectException(McpException::class);
-        $this->expectExceptionMessage('type must be');
+        $this->expectExceptionMessageIsOrContains('type must be');
 
         $this->tool->execute(['type' => 'ruby']);
     }

@@ -344,7 +344,7 @@ final class CommentModerationIntegrationTest extends TestCase
         $this->commentRepo->save($expired);
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('Edit window has expired');
+        $this->expectExceptionMessageIsOrContains('Edit window has expired');
 
         $this->commentService->edit('comment-expired', '<p>New text</p>');
     }
@@ -372,7 +372,7 @@ final class CommentModerationIntegrationTest extends TestCase
     public function submitToNonexistentContentThrows(): void
     {
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('Content not found');
+        $this->expectExceptionMessageIsOrContains('Content not found');
 
         $this->commentService->submit(
             contentId: 'nonexistent',

@@ -159,7 +159,7 @@ final class FileFlagStorageCoverageTest extends TestCase
         $storage = new FileFlagStorage($this->tempFile);
 
         $this->expectException(FeatureFlagException::class);
-        $this->expectExceptionMessage('Invalid JSON');
+        $this->expectExceptionMessageIsOrContains('Invalid JSON');
 
         $storage->all();
     }
@@ -172,7 +172,7 @@ final class FileFlagStorageCoverageTest extends TestCase
         $storage = new FileFlagStorage($this->tempFile);
 
         $this->expectException(FeatureFlagException::class);
-        $this->expectExceptionMessage('Expected JSON object');
+        $this->expectExceptionMessageIsOrContains('Expected JSON object');
 
         $storage->all();
     }

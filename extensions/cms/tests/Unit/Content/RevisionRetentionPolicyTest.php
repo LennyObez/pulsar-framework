@@ -54,7 +54,7 @@ final class RevisionRetentionPolicyTest extends TestCase
     public function negative_max_revisions_throws(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('non-negative');
+        $this->expectExceptionMessageIsOrContains('non-negative');
 
         new RevisionRetentionPolicy(maxRevisionsPerContent: -1);
     }

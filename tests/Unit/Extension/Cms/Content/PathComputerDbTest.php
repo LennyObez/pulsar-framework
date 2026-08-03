@@ -98,7 +98,7 @@ final class PathComputerDbTest extends TestCase
         $db = $this->createStub(ConnectionInterface::class);
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('Circular parent reference');
+        $this->expectExceptionMessageIsOrContains('Circular parent reference');
 
         $this->computer->validateParentAssignment('c1', 'c1', 10, $db);
     }
@@ -115,7 +115,7 @@ final class PathComputerDbTest extends TestCase
         );
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('Maximum hierarchy depth');
+        $this->expectExceptionMessageIsOrContains('Maximum hierarchy depth');
 
         $this->computer->validateParentAssignment('c1', 'c2', 10, $db);
     }

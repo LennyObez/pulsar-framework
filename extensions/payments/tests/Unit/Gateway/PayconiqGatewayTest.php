@@ -64,7 +64,7 @@ final class PayconiqGatewayTest extends TestCase
     public function createIntentRejectsNonEurCurrency(): void
     {
         $this->expectException(PaymentProviderException::class);
-        $this->expectExceptionMessage('Payconiq only supports EUR');
+        $this->expectExceptionMessageIsOrContains('Payconiq only supports EUR');
 
         $this->gateway->createIntent(Money::of(1000, Currency::USD), 'key');
     }
@@ -76,7 +76,7 @@ final class PayconiqGatewayTest extends TestCase
         $gateway = new PayconiqGateway($config, $this->clock);
 
         $this->expectException(PaymentProviderException::class);
-        $this->expectExceptionMessage('merchant ID');
+        $this->expectExceptionMessageIsOrContains('merchant ID');
 
         $gateway->createIntent(Money::of(1000, Currency::EUR), 'key');
     }
@@ -88,7 +88,7 @@ final class PayconiqGatewayTest extends TestCase
         $gateway = new PayconiqGateway($config, $this->clock);
 
         $this->expectException(PaymentProviderException::class);
-        $this->expectExceptionMessage('API key');
+        $this->expectExceptionMessageIsOrContains('API key');
 
         $gateway->createIntent(Money::of(1000, Currency::EUR), 'key');
     }
@@ -128,7 +128,7 @@ final class PayconiqGatewayTest extends TestCase
     public function getIntentThrowsNotFound(): void
     {
         $this->expectException(PaymentException::class);
-        $this->expectExceptionMessage('not found');
+        $this->expectExceptionMessageIsOrContains('not found');
 
         $this->gateway->getIntent('nonexistent');
     }

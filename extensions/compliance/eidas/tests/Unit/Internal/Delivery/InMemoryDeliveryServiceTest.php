@@ -48,7 +48,7 @@ final class InMemoryDeliveryServiceTest extends TestCase
         $service = new InMemoryDeliveryService();
 
         $this->expectException(EidasException::class);
-        $this->expectExceptionMessage('Receipt not found');
+        $this->expectExceptionMessageIsOrContains('Receipt not found');
 
         $service->confirmDelivery('nonexistent');
     }

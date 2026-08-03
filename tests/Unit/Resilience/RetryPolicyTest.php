@@ -187,7 +187,7 @@ final class RetryPolicyTest extends TestCase
         // loop entirely, leaving $lastException null and triggering a fatal
         // null-dereference in the "all attempts exhausted" branch.
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('RetryPolicy requires maxAttempts >= 1');
+        $this->expectExceptionMessageIsOrContains('RetryPolicy requires maxAttempts >= 1');
 
         new RetryPolicy(
             maxAttempts: $maxAttempts,

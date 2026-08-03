@@ -67,7 +67,7 @@ final class SmsChannelTest extends TestCase
         $channel = new SmsChannel($gateway);
 
         $this->expectException(NotificationException::class);
-        $this->expectExceptionMessage('delivery failed');
+        $this->expectExceptionMessageIsOrContains('delivery failed');
 
         $channel->send($notifiable, $notification);
     }

@@ -202,7 +202,7 @@ final class CspConfigTest extends TestCase
     public function fromArrayRejectsReportUriWithDirectiveSeparator(): void
     {
         $this->expectException(ConfigException::class);
-        $this->expectExceptionMessage('report_uri');
+        $this->expectExceptionMessageIsOrContains('report_uri');
 
         (void) CspConfig::fromArray([
             'report_uri' => 'https://a.example; default-src *',
@@ -213,7 +213,7 @@ final class CspConfigTest extends TestCase
     public function fromArrayRejectsCustomDirectiveValueWithSeparator(): void
     {
         $this->expectException(ConfigException::class);
-        $this->expectExceptionMessage('custom_directives');
+        $this->expectExceptionMessageIsOrContains('custom_directives');
 
         (void) CspConfig::fromArray([
             'custom_directives' => ['worker-src' => "'self'; default-src *"],
@@ -224,7 +224,7 @@ final class CspConfigTest extends TestCase
     public function fromArrayRejectsCustomDirectiveNameWithSeparator(): void
     {
         $this->expectException(ConfigException::class);
-        $this->expectExceptionMessage('custom_directives');
+        $this->expectExceptionMessageIsOrContains('custom_directives');
 
         (void) CspConfig::fromArray([
             'custom_directives' => ["worker-src 'self'; default-src" => '*'],

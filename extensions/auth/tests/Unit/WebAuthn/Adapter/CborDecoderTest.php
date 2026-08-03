@@ -223,7 +223,7 @@ final class CborDecoderTest extends TestCase
     public function decodeThrowsOnEmptyInput(): void
     {
         $this->expectException(WebAuthnException::class);
-        $this->expectExceptionMessage('unexpected end of data');
+        $this->expectExceptionMessageIsOrContains('unexpected end of data');
 
         CborDecoder::decode('');
     }
@@ -241,7 +241,7 @@ final class CborDecoderTest extends TestCase
     public function decodeThrowsOnUnsupportedMajorType(): void
     {
         $this->expectException(WebAuthnException::class);
-        $this->expectExceptionMessage('unsupported major type');
+        $this->expectExceptionMessageIsOrContains('unsupported major type');
 
         // Major type 6 (tag) is not supported
         CborDecoder::decode("\xC0\x01");
@@ -251,7 +251,7 @@ final class CborDecoderTest extends TestCase
     public function decodeThrowsOnUnsupportedSimpleValue(): void
     {
         $this->expectException(WebAuthnException::class);
-        $this->expectExceptionMessage('unsupported simple value');
+        $this->expectExceptionMessageIsOrContains('unsupported simple value');
 
         // Simple value 0 (major type 7, additional info 0): undefined
         CborDecoder::decode("\xE0");
@@ -261,7 +261,7 @@ final class CborDecoderTest extends TestCase
     public function decodeThrowsOnInvalidAdditionalInfoForInteger(): void
     {
         $this->expectException(WebAuthnException::class);
-        $this->expectExceptionMessage('invalid additional info');
+        $this->expectExceptionMessageIsOrContains('invalid additional info');
 
         // Major type 0, additional info 28 (reserved)
         CborDecoder::decode("\x1C");
@@ -271,7 +271,7 @@ final class CborDecoderTest extends TestCase
     public function decodeThrowsOnTruncatedUint8(): void
     {
         $this->expectException(WebAuthnException::class);
-        $this->expectExceptionMessage('unexpected end of data');
+        $this->expectExceptionMessageIsOrContains('unexpected end of data');
 
         // Claims uint8 (additional info 24) but no byte follows
         CborDecoder::decode("\x18");

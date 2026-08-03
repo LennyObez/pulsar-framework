@@ -80,7 +80,7 @@ final class ContentTranslationTest extends TestCase
     public function createWithInvalidSlugThrowsCmsException(): void
     {
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('Invalid slug');
+        $this->expectExceptionMessageIsOrContains('Invalid slug');
 
         ContentTranslation::create(
             id: 'tr-003',

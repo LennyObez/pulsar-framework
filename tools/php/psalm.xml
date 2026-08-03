@@ -97,7 +97,6 @@
              against the extension's C source. See the file for the arginfo it cites. -->
         <file name="stubs/Grpc.php"/>
         <file name="stubs/AwsSqs.php"/>
-        <file name="stubs/FrankenPhp.php"/>
         <file name="stubs/GooglePubSub.php"/>
         <file name="stubs/PsySH.php"/>
         <file name="stubs/RoadRunner.php"/>

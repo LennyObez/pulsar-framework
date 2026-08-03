@@ -218,7 +218,7 @@ final class CacheIntegrityTest extends TestCase
         symlink($realFile, $symlink);
 
         $this->expectException(CacheException::class);
-        $this->expectExceptionMessage('symlink');
+        $this->expectExceptionMessageIsOrContains('symlink');
 
         $this->integrity->validateFile($symlink);
     }
@@ -233,7 +233,7 @@ final class CacheIntegrityTest extends TestCase
         symlink($realDir, $symlinkDir);
 
         $this->expectException(CacheException::class);
-        $this->expectExceptionMessage('symlink');
+        $this->expectExceptionMessageIsOrContains('symlink');
 
         $this->integrity->validateDirectory($symlinkDir);
     }
@@ -242,7 +242,7 @@ final class CacheIntegrityTest extends TestCase
     public function validateFileRejectsNonExistentFile(): void
     {
         $this->expectException(CacheException::class);
-        $this->expectExceptionMessage('not a regular file');
+        $this->expectExceptionMessageIsOrContains('not a regular file');
 
         $this->integrity->validateFile($this->tempDir . DIRECTORY_SEPARATOR . 'nonexistent.bin');
     }
@@ -254,7 +254,7 @@ final class CacheIntegrityTest extends TestCase
         file_put_contents($file, 'data');
 
         $this->expectException(CacheException::class);
-        $this->expectExceptionMessage('not a directory');
+        $this->expectExceptionMessageIsOrContains('not a directory');
 
         $this->integrity->validateDirectory($file);
     }
@@ -415,7 +415,7 @@ final class CacheIntegrityTest extends TestCase
     public function validateDirectoryRejectsNonExistentDirectory(): void
     {
         $this->expectException(CacheException::class);
-        $this->expectExceptionMessage('not a directory');
+        $this->expectExceptionMessageIsOrContains('not a directory');
 
         $this->integrity->validateDirectory($this->tempDir . DIRECTORY_SEPARATOR . 'nonexistent');
     }

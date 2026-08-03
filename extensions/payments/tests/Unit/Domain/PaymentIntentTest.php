@@ -70,7 +70,7 @@ final class PaymentIntentTest extends TestCase
     public function invalidTransitionFromCreatedToDisputedThrows(): void
     {
         $this->expectException(PaymentException::class);
-        $this->expectExceptionMessage('Invalid');
+        $this->expectExceptionMessageIsOrContains('Invalid');
         (void) $this->createIntent()->transitionTo(PaymentIntentStatus::Disputed);
     }
 

@@ -241,7 +241,7 @@ final class SubprocessRunnerTest extends TestCase
         );
 
         $this->expectException(LogicException::class);
-        $this->expectExceptionMessage('same instance');
+        $this->expectExceptionMessageIsOrContains('same instance');
 
         $runner1->assertSameInstance($runner2);
     }

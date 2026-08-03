@@ -434,7 +434,7 @@ final class ServerRequestTest extends TestCase
         $request = new ServerRequest();
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Parsed body must be array, object, or null.');
+        $this->expectExceptionMessageIsOrContains('Parsed body must be array, object, or null.');
         /** @var array<mixed>|object|null $invalidBody Intentionally passing a string to test rejection */
         $invalidBody = json_decode('"invalid string"');
         $_ = $request->withParsedBody($invalidBody);

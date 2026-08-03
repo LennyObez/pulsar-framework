@@ -124,7 +124,7 @@ final class CommentTest extends TestCase
             ->moderate(ModerationStatus::Approved);
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage("Invalid status transition from 'approved' to 'rejected'");
+        $this->expectExceptionMessageIsOrContains("Invalid status transition from 'approved' to 'rejected'");
 
         $comment->moderate(ModerationStatus::Rejected);
     }
@@ -165,7 +165,7 @@ final class CommentTest extends TestCase
         );
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('Edit window has expired');
+        $this->expectExceptionMessageIsOrContains('Edit window has expired');
 
         $comment->edit('new body');
     }

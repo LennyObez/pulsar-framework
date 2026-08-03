@@ -101,7 +101,7 @@ final class TenancyConfigTest extends TestCase
         $environment = Environment::load();
 
         $this->expectException(TenancyException::class);
-        $this->expectExceptionMessage('Unknown resolver strategy "redis"');
+        $this->expectExceptionMessageIsOrContains('Unknown resolver strategy "redis"');
 
         (void) TenancyConfig::fromArray(['resolver' => 'redis'], $environment);
     }

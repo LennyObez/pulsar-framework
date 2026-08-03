@@ -112,7 +112,7 @@ final class ComplianceVerificationWiringTest extends TestCase
     public function strictModeRefusesTheBootWhenControlsAreUnsatisfied(): void
     {
         $this->expectException(ConfigException::class);
-        $this->expectExceptionMessage('boot-time verification failed');
+        $this->expectExceptionMessageIsOrContains('boot-time verification failed');
 
         $this->boot("'enabled_frameworks' => ['pci_dss'], 'verification' => ['strict_mode' => true]");
     }
@@ -159,6 +159,54 @@ final class ComplianceVerificationWiringTest extends TestCase
         );
 
         self::assertTrue($spy->has('runtime.db_tls'), 'sslmode=prefer must not satisfy the requirement; got: ' . $spy->dump());
+    }
+
+    #[Test]
+    public function doesNotDemandTlsFromAUnixSocketConnection(): void
+    {
+        // A path-like host is a Unix socket (libpq reads host=/var/run/postgresql
+        // as a socket directory): local IPC, no transport to encrypt. Failing it
+        // would make strict mode unsatisfiable for the very common
+        // app-and-database-on-one-host deployment.
+        $spy = new VerificationWarningSpy();
+
+        $this->boot(
+            "'enabled_frameworks' => ['pci_dss']",
+            $spy,
+            "'default' => 'pg', 'connections' => ['pg' => ['driver' => 'pgsql', 'host' => '/var/run/postgresql', 'database' => 'app', 'options' => []]]",
+        );
+
+        self::assertFalse($spy->has('runtime.db_tls'), 'a Unix-socket connection must not be flagged; got: ' . $spy->dump());
+    }
+
+    #[Test]
+    public function doesNotDemandTlsWhenTheHostIsEmptyAndTheDriverDefaultsToItsSocket(): void
+    {
+        $spy = new VerificationWarningSpy();
+
+        $this->boot(
+            "'enabled_frameworks' => ['pci_dss']",
+            $spy,
+            "'default' => 'mysql', 'connections' => ['mysql' => ['driver' => 'mysql', 'host' => '', 'database' => 'app', 'options' => []]]",
+        );
+
+        self::assertFalse($spy->has('runtime.db_tls'), 'an empty host means the default socket; got: ' . $spy->dump());
+    }
+
+    #[Test]
+    public function stillReportsLoopbackTcpWhichIsARealNetworkConnection(): void
+    {
+        // 127.0.0.1 is TCP, not IPC. Exempting it would turn the check into a
+        // rubber stamp; reporting it only fails a boot under opt-in strict mode.
+        $spy = new VerificationWarningSpy();
+
+        $this->boot(
+            "'enabled_frameworks' => ['pci_dss']",
+            $spy,
+            "'default' => 'mysql', 'connections' => ['mysql' => ['driver' => 'mysql', 'host' => '127.0.0.1', 'database' => 'app', 'options' => []]]",
+        );
+
+        self::assertTrue($spy->has('runtime.db_tls'), 'loopback TCP must still be reported; got: ' . $spy->dump());
     }
 
     #[Test]

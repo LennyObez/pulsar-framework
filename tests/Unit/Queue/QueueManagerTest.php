@@ -199,7 +199,7 @@ final class QueueManagerTest extends TestCase
         $manager = new QueueManager($config);
 
         $this->expectException(QueueException::class);
-        $this->expectExceptionMessage('not configured');
+        $this->expectExceptionMessageIsOrContains('not configured');
 
         $manager->driver();
     }

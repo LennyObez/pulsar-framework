@@ -105,7 +105,7 @@ final class PaymentGatewayTest extends TestCase
         $gateway->createIntent(Money::of(5000, Currency::USD), 'idem-key-mismatch');
 
         $this->expectException(IdempotencyException::class);
-        $this->expectExceptionMessage('different parameters');
+        $this->expectExceptionMessageIsOrContains('different parameters');
 
         // Same key, different amount
         $gateway->createIntent(Money::of(6000, Currency::USD), 'idem-key-mismatch');
@@ -117,7 +117,7 @@ final class PaymentGatewayTest extends TestCase
         $gateway = $this->createGateway();
 
         $this->expectException(IdempotencyException::class);
-        $this->expectExceptionMessage('Invalid idempotency key');
+        $this->expectExceptionMessageIsOrContains('Invalid idempotency key');
 
         $gateway->createIntent(Money::of(1000, Currency::USD), '');
     }
@@ -128,7 +128,7 @@ final class PaymentGatewayTest extends TestCase
         $gateway = $this->createGateway();
 
         $this->expectException(IdempotencyException::class);
-        $this->expectExceptionMessage('invalid characters');
+        $this->expectExceptionMessageIsOrContains('invalid characters');
 
         $gateway->createIntent(Money::of(1000, Currency::USD), 'key with spaces');
     }

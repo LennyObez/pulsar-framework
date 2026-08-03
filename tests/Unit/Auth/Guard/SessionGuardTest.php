@@ -225,7 +225,7 @@ final class SessionGuardTest extends TestCase
         $guard = new SessionGuard($session);
 
         $this->expectException(LogicException::class);
-        $this->expectExceptionMessage('SessionGuard::storeIdentity expected');
+        $this->expectExceptionMessageIsOrContains('SessionGuard::storeIdentity expected');
 
         $guard->updateIdentity(new AnonymousIdentity());
     }

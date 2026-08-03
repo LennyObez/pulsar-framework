@@ -189,7 +189,7 @@ final class MaintenanceModeTest extends TestCase
     public function constructor_rejects_path_with_traversal(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('traversal');
+        $this->expectExceptionMessageIsOrContains('traversal');
 
         new MaintenanceMode('/some/../path');
     }

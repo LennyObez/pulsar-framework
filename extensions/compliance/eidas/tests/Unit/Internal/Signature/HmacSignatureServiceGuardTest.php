@@ -20,7 +20,7 @@ final class HmacSignatureServiceGuardTest extends TestCase
         );
 
         $this->expectException(EidasException::class);
-        $this->expectExceptionMessage('not permitted outside testing');
+        $this->expectExceptionMessageIsOrContains('not permitted outside testing');
 
         $service->sign('data', 'key_001');
     }
@@ -42,7 +42,7 @@ final class HmacSignatureServiceGuardTest extends TestCase
         );
 
         $this->expectException(EidasException::class);
-        $this->expectExceptionMessage('not permitted outside testing');
+        $this->expectExceptionMessageIsOrContains('not permitted outside testing');
 
         $prodService->verify('data', $signature);
     }

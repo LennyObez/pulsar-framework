@@ -37,7 +37,7 @@ final class SystemContextTest extends TestCase
         $system->enter('first');
 
         $this->expectException(LogicException::class);
-        $this->expectExceptionMessage('System context is already active');
+        $this->expectExceptionMessageIsOrContains('System context is already active');
 
         $system->enter('second');
     }
@@ -48,7 +48,7 @@ final class SystemContextTest extends TestCase
         $system = new SystemContext();
 
         $this->expectException(LogicException::class);
-        $this->expectExceptionMessage('System context is not active');
+        $this->expectExceptionMessageIsOrContains('System context is not active');
 
         $system->exit();
     }

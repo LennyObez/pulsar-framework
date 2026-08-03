@@ -58,7 +58,7 @@ final class TrialManagerTest extends TestCase
     public function startTrialRejectsExceedingMaxDays(): void
     {
         $this->expectException(PaymentException::class);
-        $this->expectExceptionMessage('exceeds maximum');
+        $this->expectExceptionMessageIsOrContains('exceeds maximum');
 
         $this->trialManager->startTrial(
             customerId: 'cust-1',
@@ -74,7 +74,7 @@ final class TrialManagerTest extends TestCase
     public function startTrialRejectsZeroDays(): void
     {
         $this->expectException(PaymentException::class);
-        $this->expectExceptionMessage('must be positive');
+        $this->expectExceptionMessageIsOrContains('must be positive');
 
         $this->trialManager->startTrial(
             customerId: 'cust-1',
@@ -117,7 +117,7 @@ final class TrialManagerTest extends TestCase
         $manager = new TrialManager($repository, new NullLogger(), $config);
 
         $this->expectException(PaymentException::class);
-        $this->expectExceptionMessage('already used a trial');
+        $this->expectExceptionMessageIsOrContains('already used a trial');
 
         $manager->startTrial('cust-1', 'plan-pro', BillingCycle::Monthly, Money::of(2999, Currency::USD), 'stripe', 14);
     }

@@ -64,7 +64,7 @@ final class AuditActorTest extends TestCase
     public function constructorRejectsEmptyId(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('non-empty');
+        $this->expectExceptionMessageIsOrContains('non-empty');
 
         new AuditActor(AuditActorKind::User, '');
     }

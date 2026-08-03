@@ -70,7 +70,7 @@ final class NullProviderTest extends PaymentProviderContractTestCase
         $provider = new NullProvider($this->clock);
 
         $this->expectException(PaymentException::class);
-        $this->expectExceptionMessage('not found');
+        $this->expectExceptionMessageIsOrContains('not found');
 
         $provider->getIntent('nonexistent');
     }

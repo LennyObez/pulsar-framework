@@ -72,7 +72,7 @@ final class MessagingServiceTest extends TestCase
         $service = new MessagingService($conversationRepo, $messageRepo);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('exactly 2 participants');
+        $this->expectExceptionMessageIsOrContains('exactly 2 participants');
 
         $service->createConversation(ConversationType::Direct, ['alice', 'bob', 'charlie']);
     }
@@ -85,7 +85,7 @@ final class MessagingServiceTest extends TestCase
         $service = new MessagingService($conversationRepo, $messageRepo);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('at least 2');
+        $this->expectExceptionMessageIsOrContains('at least 2');
 
         $service->createConversation(ConversationType::Group, ['alice']);
     }
@@ -145,7 +145,7 @@ final class MessagingServiceTest extends TestCase
         $service = new MessagingService($conversationRepo, $messageRepo);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('not found');
+        $this->expectExceptionMessageIsOrContains('not found');
 
         $service->sendMessage('nonexistent', 'alice', 'data', 'nonce');
     }
@@ -169,7 +169,7 @@ final class MessagingServiceTest extends TestCase
         $service = new MessagingService($conversationRepo, $messageRepo);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('not a participant');
+        $this->expectExceptionMessageIsOrContains('not a participant');
 
         $service->sendMessage('conv-1', 'charlie', 'data', 'nonce');
     }

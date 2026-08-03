@@ -151,7 +151,7 @@ final class BoundaryGuardTest extends TestCase
         // Resolving an \Internal\ class from a different module throws
         $inner->method('get')->willReturn(new stdClass());
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Boundary violation');
+        $this->expectExceptionMessageIsOrContains('Boundary violation');
         (void) $guard->get('Pulsar\\Auth\\Internal\\TokenHasher');
     }
 }

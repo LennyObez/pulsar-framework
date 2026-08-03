@@ -197,7 +197,7 @@ final class PrivilegeEscalationTest extends TestCase
             });
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Permission denied');
+        $this->expectExceptionMessageIsOrContains('Permission denied');
 
         $controller->enroll($request);
     }

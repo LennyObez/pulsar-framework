@@ -50,7 +50,7 @@ final class ManifestLoaderEdgeTest extends TestCase
         $loader = new ManifestLoader();
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('not found');
+        $this->expectExceptionMessageIsOrContains('not found');
 
         (void) $loader->load($this->tempDir . '/nonexistent.php');
     }
@@ -63,7 +63,7 @@ final class ManifestLoaderEdgeTest extends TestCase
         $loader = new ManifestLoader();
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('did not return an array');
+        $this->expectExceptionMessageIsOrContains('did not return an array');
 
         (void) $loader->load($path);
     }

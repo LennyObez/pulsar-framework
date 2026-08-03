@@ -68,7 +68,7 @@ final class BookingServiceTest extends TestCase
     public function testRequestAppointmentTooSoonThrows(): void
     {
         $this->expectException(BookingException::class);
-        $this->expectExceptionMessage('at least 2 hours');
+        $this->expectExceptionMessageIsOrContains('at least 2 hours');
 
         $this->service->requestAppointment(
             serviceId: 'svc-001',
@@ -83,7 +83,7 @@ final class BookingServiceTest extends TestCase
     public function testRequestAppointmentTooFarAheadThrows(): void
     {
         $this->expectException(BookingException::class);
-        $this->expectExceptionMessage('more than 90 days');
+        $this->expectExceptionMessageIsOrContains('more than 90 days');
 
         $this->service->requestAppointment(
             serviceId: 'svc-001',
@@ -127,7 +127,7 @@ final class BookingServiceTest extends TestCase
         $this->repository->method('findById')->willReturn($appointment);
 
         $this->expectException(BookingException::class);
-        $this->expectExceptionMessage('at least 4 hours');
+        $this->expectExceptionMessageIsOrContains('at least 4 hours');
 
         $this->service->cancel('apt-001');
     }
@@ -171,7 +171,7 @@ final class BookingServiceTest extends TestCase
         $this->repository->method('findById')->willReturn(null);
 
         $this->expectException(BookingException::class);
-        $this->expectExceptionMessage('not found');
+        $this->expectExceptionMessageIsOrContains('not found');
 
         $this->service->confirm('nonexistent');
     }

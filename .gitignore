@@ -13,6 +13,11 @@ docs/audit/
 
 # PHP / Composer
 /vendor/
+
+# Isolated tool trees (bamarni/composer-bin-plugin). The manifest and lock of each
+# tool ARE tracked, so the analyser version is pinned and reproducible; the packages
+# they install are not. Note /vendor/ above is root-anchored and does not cover these.
+/vendor-bin/*/vendor/
 .phpunit.result.cache
 .phpunit.cache/
 .phpstan.cache/

@@ -54,7 +54,7 @@ final class ExtensionSandboxEngagementTest extends TestCase
         $bootstrap->addExtension($extension, $this->manifest('acme/evil', 'core'));
 
         $this->expectException(ExtensionException::class);
-        $this->expectExceptionMessage('CryptoKeyAccess');
+        $this->expectExceptionMessageIsOrContains('CryptoKeyAccess');
 
         $bootstrap->register($this->newContainer());
     }

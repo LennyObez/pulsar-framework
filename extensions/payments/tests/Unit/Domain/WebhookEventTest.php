@@ -39,7 +39,7 @@ final class WebhookEventTest extends TestCase
     public function fromArrayThrowsOnMissingId(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('WebhookEvent.id missing');
+        $this->expectExceptionMessageIsOrContains('WebhookEvent.id missing');
 
         (void) WebhookEvent::fromArray(['type' => 'charge.failed']);
     }
@@ -54,7 +54,7 @@ final class WebhookEventTest extends TestCase
     public function fromArrayThrowsOnNonArrayData(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('WebhookEvent.data is not an array');
+        $this->expectExceptionMessageIsOrContains('WebhookEvent.data is not an array');
 
         (void) WebhookEvent::fromArray([
             'id' => 'evt_x',

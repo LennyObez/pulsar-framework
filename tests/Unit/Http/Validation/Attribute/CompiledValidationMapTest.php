@@ -43,7 +43,7 @@ final class CompiledValidationMapTest extends TestCase
     public function constructor_rejects_path_traversal(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('traversal');
+        $this->expectExceptionMessageIsOrContains('traversal');
 
         new CompiledValidationMap('../etc/passwd.php');
     }

@@ -153,7 +153,7 @@ final class ProcessAppleWebhookJobTest extends TestCase
         );
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Failed to process Apple webhook: DID_FAIL_TO_RENEW');
+        $this->expectExceptionMessageIsOrContains('Failed to process Apple webhook: DID_FAIL_TO_RENEW');
 
         $job->handle($context);
     }

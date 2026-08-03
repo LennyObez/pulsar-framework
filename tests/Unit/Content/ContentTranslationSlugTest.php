@@ -107,7 +107,7 @@ final class ContentTranslationSlugTest extends TestCase
     public function createThrowsForInvalidSlug(): void
     {
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('Invalid slug format');
+        $this->expectExceptionMessageIsOrContains('Invalid slug format');
 
         ContentTranslation::create(
             id: '01900000-0000-7000-8000-000000000001',

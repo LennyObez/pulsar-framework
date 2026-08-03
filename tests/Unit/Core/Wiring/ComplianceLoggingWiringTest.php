@@ -84,7 +84,7 @@ final class ComplianceLoggingWiringTest extends TestCase
         $container->instance(DeferredSinkInterface::class, new DeferredSink());
 
         $this->expectException(ConfigException::class);
-        $this->expectExceptionMessage('master key');
+        $this->expectExceptionMessageIsOrContains('master key');
 
         $this->wire($container, "'compliance' => ['enabled' => true]");
     }
@@ -97,7 +97,7 @@ final class ComplianceLoggingWiringTest extends TestCase
         $container->instance(DeferredSinkInterface::class, new DeferredSink());
 
         $this->expectException(ConfigException::class);
-        $this->expectExceptionMessage('unknown compliance framework');
+        $this->expectExceptionMessageIsOrContains('unknown compliance framework');
 
         $this->wire($container, "'compliance' => ['enabled' => true, 'frameworks' => ['soc2']]");
     }

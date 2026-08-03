@@ -168,7 +168,7 @@ final class ThemeInstallIntegrationTest extends TestCase
         $manager->activate($theme->id, 'user-001');
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('Cannot delete active theme');
+        $this->expectExceptionMessageIsOrContains('Cannot delete active theme');
         $manager->delete($theme->id, 'user-001', 'test');
     }
 
@@ -181,7 +181,7 @@ final class ThemeInstallIntegrationTest extends TestCase
         $manager = $this->createManager(requireSigned: true, trustedKeys: []);
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('Provenance verification failed');
+        $this->expectExceptionMessageIsOrContains('Provenance verification failed');
         $manager->install($archivePath, 'user-001');
     }
 
@@ -257,7 +257,7 @@ final class ThemeInstallIntegrationTest extends TestCase
         $manager = $this->createManager(requireSigned: false);
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('theme.json');
+        $this->expectExceptionMessageIsOrContains('theme.json');
         $manager->install($zipPath, 'user-001');
     }
 

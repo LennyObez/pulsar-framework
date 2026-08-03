@@ -87,7 +87,7 @@ final class SubresourceIntegrityHasherTest extends TestCase
         $hasher = new SubresourceIntegrityHasher();
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Cannot read file for SRI hash');
+        $this->expectExceptionMessageIsOrContains('Cannot read file for SRI hash');
 
         // Assign to suppress #[NoDiscard] -- exception is expected before return
         $_ = $hasher->hashFile('/nonexistent/path/to/file.js');

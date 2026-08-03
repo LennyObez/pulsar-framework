@@ -114,7 +114,7 @@ final class EvidenceArchiveTest extends TestCase
     public function fromJsonRejectsInvalidJson(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid JSON');
+        $this->expectExceptionMessageIsOrContains('Invalid JSON');
 
         (void) EvidenceArchive::fromJson('not json {{{');
     }
@@ -123,7 +123,7 @@ final class EvidenceArchiveTest extends TestCase
     public function fromJsonRejectsMissingEvents(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('missing required keys');
+        $this->expectExceptionMessageIsOrContains('missing required keys');
 
         (void) EvidenceArchive::fromJson(json_encode([
             'chain' => [],

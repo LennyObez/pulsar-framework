@@ -138,7 +138,7 @@ final class QrCodeEncoderPropertyTest extends TestCase
         $hugeData = str_repeat('X', 300);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Data too large for QR code');
+        $this->expectExceptionMessageIsOrContains('Data too large for QR code');
 
         $this->encoder->encode($hugeData);
     }

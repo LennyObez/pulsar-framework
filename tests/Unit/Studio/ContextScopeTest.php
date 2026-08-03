@@ -206,7 +206,7 @@ final class ContextScopeTest extends TestCase
         });
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Test exception');
+        $this->expectExceptionMessageIsOrContains('Test exception');
 
         try {
             throw new RuntimeException('Test exception');

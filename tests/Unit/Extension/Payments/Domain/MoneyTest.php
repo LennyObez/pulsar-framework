@@ -36,7 +36,7 @@ final class MoneyTest extends TestCase
     public function ofRejectsNegativeAmount(): void
     {
         $this->expectException(MoneyException::class);
-        $this->expectExceptionMessage('non-negative');
+        $this->expectExceptionMessageIsOrContains('non-negative');
 
         (void) Money::of(-1, Currency::USD);
     }
@@ -70,7 +70,7 @@ final class MoneyTest extends TestCase
         $b = Money::of(100, Currency::EUR);
 
         $this->expectException(MoneyException::class);
-        $this->expectExceptionMessage('Currency mismatch');
+        $this->expectExceptionMessageIsOrContains('Currency mismatch');
 
         (void) $a->add($b);
     }
@@ -93,7 +93,7 @@ final class MoneyTest extends TestCase
         $b = Money::of(50, Currency::GBP);
 
         $this->expectException(MoneyException::class);
-        $this->expectExceptionMessage('Currency mismatch');
+        $this->expectExceptionMessageIsOrContains('Currency mismatch');
 
         (void) $a->subtract($b);
     }
@@ -105,7 +105,7 @@ final class MoneyTest extends TestCase
         $b = Money::of(200, Currency::USD);
 
         $this->expectException(MoneyException::class);
-        $this->expectExceptionMessage('non-negative');
+        $this->expectExceptionMessageIsOrContains('non-negative');
 
         (void) $a->subtract($b);
     }
@@ -136,7 +136,7 @@ final class MoneyTest extends TestCase
         $money = Money::of(100, Currency::USD);
 
         $this->expectException(MoneyException::class);
-        $this->expectExceptionMessage('non-negative');
+        $this->expectExceptionMessageIsOrContains('non-negative');
 
         (void) $money->multiply(-1);
     }
@@ -172,7 +172,7 @@ final class MoneyTest extends TestCase
         $money = Money::of(100, Currency::USD);
 
         $this->expectException(MoneyException::class);
-        $this->expectExceptionMessage('non-negative');
+        $this->expectExceptionMessageIsOrContains('non-negative');
 
         (void) $money->percentage(-100);
     }
@@ -213,7 +213,7 @@ final class MoneyTest extends TestCase
         $money = Money::of(100, Currency::USD);
 
         $this->expectException(MoneyException::class);
-        $this->expectExceptionMessage('positive');
+        $this->expectExceptionMessageIsOrContains('positive');
 
         (void) $money->allocate(0);
     }
@@ -309,7 +309,7 @@ final class MoneyTest extends TestCase
         $b = Money::of(1, Currency::USD);
 
         $this->expectException(MoneyException::class);
-        $this->expectExceptionMessage('overflow');
+        $this->expectExceptionMessageIsOrContains('overflow');
 
         (void) $a->add($b);
     }
@@ -332,7 +332,7 @@ final class MoneyTest extends TestCase
         $a = Money::of(PHP_INT_MAX, Currency::USD);
 
         $this->expectException(MoneyException::class);
-        $this->expectExceptionMessage('overflow');
+        $this->expectExceptionMessageIsOrContains('overflow');
 
         (void) $a->multiply(2);
     }
@@ -358,7 +358,7 @@ final class MoneyTest extends TestCase
         $a = Money::of(PHP_INT_MAX, Currency::USD);
 
         $this->expectException(MoneyException::class);
-        $this->expectExceptionMessage('overflow');
+        $this->expectExceptionMessageIsOrContains('overflow');
 
         (void) $a->percentage(20000); // 200% — would multiply, then divide
     }

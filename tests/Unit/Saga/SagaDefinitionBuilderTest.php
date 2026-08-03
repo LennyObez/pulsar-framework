@@ -159,7 +159,7 @@ final class SagaDefinitionBuilderTest extends TestCase
     public function test_build_no_steps_throws(): void
     {
         $this->expectException(SagaException::class);
-        $this->expectExceptionMessage('has no steps defined');
+        $this->expectExceptionMessageIsOrContains('has no steps defined');
 
         (void) SagaDefinitionBuilder::create('empty')->build();
     }

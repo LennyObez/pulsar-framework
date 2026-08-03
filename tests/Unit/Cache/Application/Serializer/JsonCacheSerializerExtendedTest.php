@@ -62,7 +62,7 @@ final class JsonCacheSerializerExtendedTest extends TestCase
     public function serializeObjectThrowsCacheException(): void
     {
         $this->expectException(CacheException::class);
-        $this->expectExceptionMessage('JSON');
+        $this->expectExceptionMessageIsOrContains('JSON');
 
         $this->serializer->serialize(new stdClass());
     }

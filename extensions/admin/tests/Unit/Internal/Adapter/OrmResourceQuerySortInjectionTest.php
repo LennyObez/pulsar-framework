@@ -59,7 +59,7 @@ final class OrmResourceQuerySortInjectionTest extends TestCase
         $query = new OrmResourceQuery($connection);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid SQL identifier');
+        $this->expectExceptionMessageIsOrContains('Invalid SQL identifier');
         $query->list($resource);
     }
 

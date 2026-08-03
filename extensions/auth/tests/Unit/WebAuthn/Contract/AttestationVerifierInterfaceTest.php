@@ -65,7 +65,7 @@ final class AttestationVerifierInterfaceTest extends TestCase
         );
 
         $this->expectException(WebAuthnException::class);
-        $this->expectExceptionMessage('android-key');
+        $this->expectExceptionMessageIsOrContains('android-key');
 
         $stub->verify('android-key', 'obj', 'json');
     }

@@ -116,7 +116,7 @@ final class HealthServiceTest extends TestCase
     public function invokeUnknownMethodThrows(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Unknown method: Watch');
+        $this->expectExceptionMessageIsOrContains('Unknown method: Watch');
 
         $this->service->invoke('Watch', '{}');
     }

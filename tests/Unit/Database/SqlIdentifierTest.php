@@ -40,7 +40,7 @@ final class SqlIdentifierTest extends TestCase
     public function validate_rejects_invalid_identifiers(string $identifier): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid SQL identifier');
+        $this->expectExceptionMessageIsOrContains('Invalid SQL identifier');
 
         SqlIdentifier::validate($identifier);
     }

@@ -138,7 +138,7 @@ final class EncryptorCipherSuiteTest extends TestCase
         $encryptor = Encryptor::fromMasterKey($this->masterKey);
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('Serialization');
+        $this->expectExceptionMessageIsOrContains('Serialization');
 
         $encryptor->__unserialize([]);
     }

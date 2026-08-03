@@ -61,7 +61,7 @@ final class ExtensionGraphCompilerTest extends TestCase
         $compiler = new ExtensionGraphCompiler();
 
         $this->expectException(DependencyException::class);
-        $this->expectExceptionMessage('Circular dependency');
+        $this->expectExceptionMessageIsOrContains('Circular dependency');
 
         $compiler->compile($manifests);
     }
@@ -83,7 +83,7 @@ final class ExtensionGraphCompilerTest extends TestCase
         $compiler = new ExtensionGraphCompiler();
 
         $this->expectException(DependencyException::class);
-        $this->expectExceptionMessage('vendor/ext-missing');
+        $this->expectExceptionMessageIsOrContains('vendor/ext-missing');
 
         $compiler->compile($manifests);
     }

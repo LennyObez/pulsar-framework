@@ -18,7 +18,7 @@ final class HttpProtobufTransportTest extends TestCase
     public function constructorRejectsInvalidScheme(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('scheme must be http or https');
+        $this->expectExceptionMessageIsOrContains('scheme must be http or https');
 
         new HttpProtobufTransport('ftp://collector.example.com:4318');
     }

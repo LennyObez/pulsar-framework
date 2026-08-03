@@ -17,7 +17,7 @@ final class ProvidesConfigEdgeTest extends TestCase
     public function fromArrayThrowsWhenServicesIsNotArray(): void
     {
         $this->expectException(ManifestException::class);
-        $this->expectExceptionMessage('provides.services');
+        $this->expectExceptionMessageIsOrContains('provides.services');
 
         $_ = ProvidesConfig::fromArray(['services' => 'not-array']);
     }
@@ -26,7 +26,7 @@ final class ProvidesConfigEdgeTest extends TestCase
     public function fromArrayThrowsWhenCommandsIsNotArray(): void
     {
         $this->expectException(ManifestException::class);
-        $this->expectExceptionMessage('provides.commands');
+        $this->expectExceptionMessageIsOrContains('provides.commands');
 
         $_ = ProvidesConfig::fromArray(['commands' => 42]);
     }
@@ -35,7 +35,7 @@ final class ProvidesConfigEdgeTest extends TestCase
     public function fromArrayThrowsWhenMiddlewareIsNotArray(): void
     {
         $this->expectException(ManifestException::class);
-        $this->expectExceptionMessage('provides.middleware');
+        $this->expectExceptionMessageIsOrContains('provides.middleware');
 
         $_ = ProvidesConfig::fromArray(['middleware' => true]);
     }

@@ -90,7 +90,7 @@ final class ShamirSecretSharingTest extends TestCase
     public function testThresholdLessThan2Throws(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Threshold must be at least 2');
+        $this->expectExceptionMessageIsOrContains('Threshold must be at least 2');
 
         $this->sss->split('secret', 3, 1);
     }
@@ -98,7 +98,7 @@ final class ShamirSecretSharingTest extends TestCase
     public function testTotalSharesLessThanThresholdThrows(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Total shares must be >= threshold');
+        $this->expectExceptionMessageIsOrContains('Total shares must be >= threshold');
 
         $this->sss->split('secret', 2, 3);
     }
@@ -106,7 +106,7 @@ final class ShamirSecretSharingTest extends TestCase
     public function testTooManySharesThrows(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Maximum 255 shares');
+        $this->expectExceptionMessageIsOrContains('Maximum 255 shares');
 
         $this->sss->split('secret', 256, 2);
     }
@@ -114,7 +114,7 @@ final class ShamirSecretSharingTest extends TestCase
     public function testReconstructWithTooFewSharesThrows(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('At least 2 shares');
+        $this->expectExceptionMessageIsOrContains('At least 2 shares');
 
         $this->sss->reconstruct([1 => 'share']);
     }

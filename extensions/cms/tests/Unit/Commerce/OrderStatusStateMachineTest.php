@@ -85,7 +85,7 @@ final class OrderStatusStateMachineTest extends TestCase
     public function transition_throws_for_invalid_transition(): void
     {
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage("Invalid status transition from 'cart' to 'confirmed'");
+        $this->expectExceptionMessageIsOrContains("Invalid status transition from 'cart' to 'confirmed'");
 
         OrderStatusStateMachine::transition(OrderStatus::Cart, OrderStatus::Confirmed);
     }

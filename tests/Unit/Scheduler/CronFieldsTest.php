@@ -42,7 +42,7 @@ final class CronFieldsTest extends TestCase
     public function parseWithWrongNumberOfFieldsThrowsSchedulerException(): void
     {
         $this->expectException(SchedulerException::class);
-        $this->expectExceptionMessage('expected 5 fields, got 3');
+        $this->expectExceptionMessageIsOrContains('expected 5 fields, got 3');
 
         $_ = CronFields::parse('* * *');
     }
@@ -51,7 +51,7 @@ final class CronFieldsTest extends TestCase
     public function parseWithTooManyFieldsThrowsSchedulerException(): void
     {
         $this->expectException(SchedulerException::class);
-        $this->expectExceptionMessage('expected 5 fields, got 6');
+        $this->expectExceptionMessageIsOrContains('expected 5 fields, got 6');
 
         $_ = CronFields::parse('* * * * * *');
     }

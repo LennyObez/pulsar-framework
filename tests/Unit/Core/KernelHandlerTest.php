@@ -304,7 +304,7 @@ final class KernelHandlerTest extends TestCase
         $kernel->boot();
 
         $this->expectException(LogicException::class);
-        $this->expectExceptionMessage('addMiddleware() cannot be called after the kernel has booted');
+        $this->expectExceptionMessageIsOrContains('addMiddleware() cannot be called after the kernel has booted');
 
         $kernel->addMiddleware(new HandlerPassthroughMiddleware());
     }

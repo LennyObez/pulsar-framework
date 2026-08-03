@@ -155,7 +155,7 @@ final class FilterCompilerTest extends TestCase
         );
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('exactly 2 values');
+        $this->expectExceptionMessageIsOrContains('exactly 2 values');
 
         $this->compiler->compile($group);
     }
@@ -229,7 +229,7 @@ final class FilterCompilerTest extends TestCase
         );
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid column name');
+        $this->expectExceptionMessageIsOrContains('Invalid column name');
 
         $this->compiler->compile($group);
     }
@@ -244,7 +244,7 @@ final class FilterCompilerTest extends TestCase
         );
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid column name');
+        $this->expectExceptionMessageIsOrContains('Invalid column name');
 
         $this->compiler->compile($group);
     }
@@ -275,7 +275,7 @@ final class FilterCompilerTest extends TestCase
         $group = new FilterGroup(conditions: $conditions);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('exceeds maximum');
+        $this->expectExceptionMessageIsOrContains('exceeds maximum');
 
         $this->compiler->compile($group);
     }

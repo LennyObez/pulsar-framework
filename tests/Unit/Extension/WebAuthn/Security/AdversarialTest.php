@@ -85,7 +85,7 @@ final class AdversarialTest extends TestCase
         ], JSON_THROW_ON_ERROR);
 
         $this->expectException(WebAuthnException::class);
-        $this->expectExceptionMessage('invalid or expired');
+        $this->expectExceptionMessageIsOrContains('invalid or expired');
         $ceremony->verify($credentialJson, $options->challenge);
     }
 
@@ -122,7 +122,7 @@ final class AdversarialTest extends TestCase
         ], JSON_THROW_ON_ERROR);
 
         $this->expectException(WebAuthnException::class);
-        $this->expectExceptionMessage('invalid or expired');
+        $this->expectExceptionMessageIsOrContains('invalid or expired');
         $ceremony->verify($credentialJson, $options->challenge);
     }
 
@@ -157,7 +157,7 @@ final class AdversarialTest extends TestCase
         ], JSON_THROW_ON_ERROR);
 
         $this->expectException(WebAuthnException::class);
-        $this->expectExceptionMessage('Origin mismatch');
+        $this->expectExceptionMessageIsOrContains('Origin mismatch');
         $ceremony->verify($credentialJson, $options->challenge);
     }
 
@@ -192,7 +192,7 @@ final class AdversarialTest extends TestCase
         ], JSON_THROW_ON_ERROR);
 
         $this->expectException(WebAuthnException::class);
-        $this->expectExceptionMessage('Origin mismatch');
+        $this->expectExceptionMessageIsOrContains('Origin mismatch');
         $ceremony->verify($credentialJson, $options->challenge);
     }
 
@@ -232,7 +232,7 @@ final class AdversarialTest extends TestCase
         ], JSON_THROW_ON_ERROR);
 
         $this->expectException(WebAuthnException::class);
-        $this->expectExceptionMessage('RP ID hash mismatch');
+        $this->expectExceptionMessageIsOrContains('RP ID hash mismatch');
         $ceremony->verify($credentialJson, $options->challenge);
     }
 
@@ -272,7 +272,7 @@ final class AdversarialTest extends TestCase
         ], JSON_THROW_ON_ERROR);
 
         $this->expectException(WebAuthnException::class);
-        $this->expectExceptionMessage('User presence flag not set');
+        $this->expectExceptionMessageIsOrContains('User presence flag not set');
         $ceremony->verify($credentialJson, $options->challenge);
     }
 
@@ -308,7 +308,7 @@ final class AdversarialTest extends TestCase
         ], JSON_THROW_ON_ERROR);
 
         $this->expectException(WebAuthnException::class);
-        $this->expectExceptionMessage('User verification required but not performed');
+        $this->expectExceptionMessageIsOrContains('User verification required but not performed');
         $ceremony->verify($credentialJson, $options->challenge);
     }
 
@@ -377,7 +377,7 @@ final class AdversarialTest extends TestCase
         ], JSON_THROW_ON_ERROR);
 
         $this->expectException(WebAuthnException::class);
-        $this->expectExceptionMessage('clone detected');
+        $this->expectExceptionMessageIsOrContains('clone detected');
         $ceremony->verify($credentialJson, $options->challenge);
     }
 
@@ -440,7 +440,7 @@ final class AdversarialTest extends TestCase
         ], JSON_THROW_ON_ERROR);
 
         $this->expectException(WebAuthnException::class);
-        $this->expectExceptionMessage('clone detected');
+        $this->expectExceptionMessageIsOrContains('clone detected');
         $ceremony->verify($credentialJson, $options->challenge);
     }
 
@@ -483,7 +483,7 @@ final class AdversarialTest extends TestCase
         ], JSON_THROW_ON_ERROR);
 
         $this->expectException(WebAuthnException::class);
-        $this->expectExceptionMessage('does not belong to the expected user');
+        $this->expectExceptionMessageIsOrContains('does not belong to the expected user');
         $ceremony->verify($credentialJson, $options->challenge, 'user-b');
     }
 
@@ -497,7 +497,7 @@ final class AdversarialTest extends TestCase
         $verifier = new AttestationVerifier(['none']); // Only 'none' allowed
 
         $this->expectException(WebAuthnException::class);
-        $this->expectExceptionMessage('not allowed by policy');
+        $this->expectExceptionMessageIsOrContains('not allowed by policy');
         $verifier->verify('packed', 'fake-attestation-object', 'fake-client-data');
     }
 
@@ -507,7 +507,7 @@ final class AdversarialTest extends TestCase
         $verifier = new AttestationVerifier(['none', 'packed']);
 
         $this->expectException(WebAuthnException::class);
-        $this->expectExceptionMessage('not allowed by policy');
+        $this->expectExceptionMessageIsOrContains('not allowed by policy');
         $verifier->verify('android-key', 'fake-attestation-object', 'fake-client-data');
     }
 
@@ -555,7 +555,7 @@ final class AdversarialTest extends TestCase
         ], JSON_THROW_ON_ERROR);
 
         $this->expectException(WebAuthnException::class);
-        $this->expectExceptionMessage("Expected type 'webauthn.create'");
+        $this->expectExceptionMessageIsOrContains("Expected type 'webauthn.create'");
         $ceremony->verify($credentialJson, $options->challenge);
     }
 
@@ -591,7 +591,7 @@ final class AdversarialTest extends TestCase
         ], JSON_THROW_ON_ERROR);
 
         $this->expectException(WebAuthnException::class);
-        $this->expectExceptionMessage("Expected type 'webauthn.get'");
+        $this->expectExceptionMessageIsOrContains("Expected type 'webauthn.get'");
         $ceremony->verify($credentialJson, $options->challenge);
     }
 
@@ -658,7 +658,7 @@ final class AdversarialTest extends TestCase
         ], JSON_THROW_ON_ERROR);
 
         $this->expectException(WebAuthnException::class);
-        $this->expectExceptionMessage('User handle does not match credential owner');
+        $this->expectExceptionMessageIsOrContains('User handle does not match credential owner');
         $ceremony->verify($credentialJson, $options->challenge);
     }
 
@@ -695,7 +695,7 @@ final class AdversarialTest extends TestCase
         ], JSON_THROW_ON_ERROR);
 
         $this->expectException(WebAuthnException::class);
-        $this->expectExceptionMessage('too short');
+        $this->expectExceptionMessageIsOrContains('too short');
         $ceremony->verify($credentialJson, $options->challenge);
     }
 
@@ -717,7 +717,7 @@ final class AdversarialTest extends TestCase
         $truncated = chr(0x58) . chr(0xFF) . 'abc';
 
         $this->expectException(WebAuthnException::class);
-        $this->expectExceptionMessage('unexpected end of data');
+        $this->expectExceptionMessageIsOrContains('unexpected end of data');
         CborDecoder::decode($truncated);
     }
 
@@ -799,7 +799,7 @@ final class AdversarialTest extends TestCase
         ], JSON_THROW_ON_ERROR);
 
         $this->expectException(WebAuthnException::class);
-        $this->expectExceptionMessage('not registered');
+        $this->expectExceptionMessageIsOrContains('not registered');
         $ceremony->verify($credentialJson, $options->challenge);
     }
 

@@ -53,7 +53,7 @@ final class NotificationFakeTest extends TestCase
     public function assert_sent_fails_when_missing(): void
     {
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Expected notification');
+        $this->expectExceptionMessageIsOrContains('Expected notification');
 
         $this->fake->assertSent(TestNotification::class);
     }
@@ -82,7 +82,7 @@ final class NotificationFakeTest extends TestCase
         $other = new TestNotifiable('user-2');
 
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('user-2');
+        $this->expectExceptionMessageIsOrContains('user-2');
 
         $this->fake->assertSentTo($other, TestNotification::class);
     }
@@ -116,7 +116,7 @@ final class NotificationFakeTest extends TestCase
         $this->fake->send($this->notifiable, new TestNotification());
 
         $this->expectException(AssertionFailedError::class);
-        $this->expectExceptionMessage('Expected no notifications');
+        $this->expectExceptionMessageIsOrContains('Expected no notifications');
 
         $this->fake->assertNothingSent();
     }

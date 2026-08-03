@@ -50,7 +50,7 @@ final class DatabaseChannelTest extends TestCase
         $channel = new DatabaseChannel($store);
 
         $this->expectException(NotificationException::class);
-        $this->expectExceptionMessage('delivery failed');
+        $this->expectExceptionMessageIsOrContains('delivery failed');
 
         $channel->send($notifiable, $notification);
     }

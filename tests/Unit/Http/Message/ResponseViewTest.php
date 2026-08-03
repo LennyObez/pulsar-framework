@@ -158,7 +158,7 @@ final class ResponseViewTest extends TestCase
     {
         // Assert
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('No TemplateEngineInterface has been configured');
+        $this->expectExceptionMessageIsOrContains('No TemplateEngineInterface has been configured');
 
         // Act
         (void) Response::view('welcome');

@@ -65,7 +65,7 @@ final class PaymentIntentTest extends TestCase
         $intent = $this->createIntent(PaymentIntentStatus::Cancelled);
 
         $this->expectException(PaymentException::class);
-        $this->expectExceptionMessage('Invalid PaymentIntent transition');
+        $this->expectExceptionMessageIsOrContains('Invalid PaymentIntent transition');
 
         (void) $intent->transitionTo(PaymentIntentStatus::Captured);
     }

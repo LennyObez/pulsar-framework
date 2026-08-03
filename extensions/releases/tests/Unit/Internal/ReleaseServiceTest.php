@@ -70,7 +70,7 @@ final class ReleaseServiceTest extends TestCase
     public function signupForBetaRejectsInvalidEmail(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid email');
+        $this->expectExceptionMessageIsOrContains('Invalid email');
 
         $this->service->signupForBeta('not-an-email', DeviceType::Ios, []);
     }
@@ -82,7 +82,7 @@ final class ReleaseServiceTest extends TestCase
         $this->betaRepo->method('findByEmail')->willReturn($existing);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('already registered');
+        $this->expectExceptionMessageIsOrContains('already registered');
 
         $this->service->signupForBeta('user@test.com', DeviceType::Both, []);
     }
@@ -94,7 +94,7 @@ final class ReleaseServiceTest extends TestCase
         $this->betaRepo->method('countByEmailToday')->willReturn(3);
 
         $this->expectException(OverflowException::class);
-        $this->expectExceptionMessage('Rate limit exceeded');
+        $this->expectExceptionMessageIsOrContains('Rate limit exceeded');
 
         $this->service->signupForBeta('new@example.com', DeviceType::Android, []);
     }
@@ -123,7 +123,7 @@ final class ReleaseServiceTest extends TestCase
     public function createReleaseRejectsEmptyVersion(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Version must be between');
+        $this->expectExceptionMessageIsOrContains('Version must be between');
 
         $this->service->createRelease('', ReleasePlatform::Web, new DateTimeImmutable(), 'Notes', '1.0');
     }
@@ -132,7 +132,7 @@ final class ReleaseServiceTest extends TestCase
     public function createReleaseRejectsTooLongVersion(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Version must be between');
+        $this->expectExceptionMessageIsOrContains('Version must be between');
 
         $this->service->createRelease(str_repeat('v', 33), ReleasePlatform::Web, new DateTimeImmutable(), 'Notes', '1.0');
     }
@@ -141,7 +141,7 @@ final class ReleaseServiceTest extends TestCase
     public function createReleaseRejectsEmptyNotes(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Release notes must be between');
+        $this->expectExceptionMessageIsOrContains('Release notes must be between');
 
         $this->service->createRelease('1.0', ReleasePlatform::Web, new DateTimeImmutable(), '', '1.0');
     }
@@ -150,7 +150,7 @@ final class ReleaseServiceTest extends TestCase
     public function createReleaseRejectsTooLongNotes(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Release notes must be between');
+        $this->expectExceptionMessageIsOrContains('Release notes must be between');
 
         $this->service->createRelease('1.0', ReleasePlatform::Web, new DateTimeImmutable(), str_repeat('n', 50001), '1.0');
     }

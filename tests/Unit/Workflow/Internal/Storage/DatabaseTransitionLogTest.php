@@ -293,8 +293,8 @@ final class DatabaseTransitionLogTest extends TestCase
         $this->connection->method('query')->willReturn(new Result([]));
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('no transitions found');
-        $this->expectExceptionMessage('inst-missing');
+        $this->expectExceptionMessageIsOrContains('no transitions found');
+        $this->expectExceptionMessageIsOrContains('inst-missing');
 
         $this->log()->reconstructState('inst-missing');
     }

@@ -61,7 +61,7 @@ final class StudioModuleRegistryTest extends TestCase
         $module = $this->createModule('Invalid Module!', '/invalid', 1);
 
         $this->expectException(StudioException::class);
-        $this->expectExceptionMessage('Invalid Studio module ID');
+        $this->expectExceptionMessageIsOrContains('Invalid Studio module ID');
 
         $registry->register($module);
     }
@@ -76,7 +76,7 @@ final class StudioModuleRegistryTest extends TestCase
         $registry->register($module1);
 
         $this->expectException(StudioException::class);
-        $this->expectExceptionMessage('Duplicate Studio module ID');
+        $this->expectExceptionMessageIsOrContains('Duplicate Studio module ID');
 
         $registry->register($module2);
     }
@@ -91,7 +91,7 @@ final class StudioModuleRegistryTest extends TestCase
         $registry->register($module1);
 
         $this->expectException(StudioException::class);
-        $this->expectExceptionMessage('route prefix');
+        $this->expectExceptionMessageIsOrContains('route prefix');
 
         $registry->register($module2);
     }

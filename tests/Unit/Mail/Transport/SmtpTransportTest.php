@@ -397,7 +397,7 @@ final class SmtpTransportTest extends TestCase
         $transport = new SmtpTransport($config);
 
         $this->expectException(MailException::class);
-        $this->expectExceptionMessage('Cannot authenticate over unencrypted connection');
+        $this->expectExceptionMessageIsOrContains('Cannot authenticate over unencrypted connection');
 
         $this->callPrivateMethod($transport, 'authenticate');
     }
@@ -413,7 +413,7 @@ final class SmtpTransportTest extends TestCase
         $transport = new SmtpTransport($config);
 
         $this->expectException(MailException::class);
-        $this->expectExceptionMessage('Cannot authenticate over unencrypted connection');
+        $this->expectExceptionMessageIsOrContains('Cannot authenticate over unencrypted connection');
 
         $this->callPrivateMethod($transport, 'authenticate');
     }
@@ -434,7 +434,7 @@ final class SmtpTransportTest extends TestCase
         $transport = new SmtpTransport($config);
 
         $this->expectException(MailException::class);
-        $this->expectExceptionMessage('Cannot authenticate over unencrypted connection');
+        $this->expectExceptionMessageIsOrContains('Cannot authenticate over unencrypted connection');
 
         $this->callPrivateMethod($transport, 'authenticate');
     }

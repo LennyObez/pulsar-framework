@@ -127,7 +127,7 @@ final class RevisionServiceTest extends TestCase
     public function restoreRevisionThrowsWhenRevisionNotFound(): void
     {
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('not found');
+        $this->expectExceptionMessageIsOrContains('not found');
 
         $this->service->restoreRevision('nonexistent', 'author-01', 'restore reason');
     }
@@ -138,7 +138,7 @@ final class RevisionServiceTest extends TestCase
         $revision = $this->service->createRevision('c1', 'en', 'a1', null, 'T', 's', 'B', null, null, null);
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('Translation not found');
+        $this->expectExceptionMessageIsOrContains('Translation not found');
 
         $this->service->restoreRevision($revision->id, 'author-01', 'restore reason');
     }
@@ -207,7 +207,7 @@ final class RevisionServiceTest extends TestCase
         $rev1 = $this->service->createRevision('c1', 'en', 'a1', null, 'T', 's', 'B', null, null, null);
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('not found');
+        $this->expectExceptionMessageIsOrContains('not found');
 
         $this->service->computeDiff($rev1->id, 'nonexistent');
     }

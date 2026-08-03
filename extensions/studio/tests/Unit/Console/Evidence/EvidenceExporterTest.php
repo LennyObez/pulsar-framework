@@ -45,7 +45,7 @@ final class EvidenceExporterTest extends TestCase
         );
 
         $this->expectException(StudioException::class);
-        $this->expectExceptionMessage('Cannot export');
+        $this->expectExceptionMessageIsOrContains('Cannot export');
 
         $exporter->export();
     }

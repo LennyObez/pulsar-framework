@@ -72,7 +72,7 @@ final class PublishingWorkflowTest extends TestCase
 
         // Published -> Draft is not a valid transition
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage("Invalid status transition from 'published' to 'draft'");
+        $this->expectExceptionMessageIsOrContains("Invalid status transition from 'published' to 'draft'");
 
         $published->restore();
     }

@@ -87,8 +87,8 @@ final class ReflectionControllerResolverTest extends TestCase
         $this->expectException(RoutingException::class);
         // The error names the controller, the unresolved dependency and the
         // parameter — not an opaque "no binding found".
-        $this->expectExceptionMessage(NeedsInterfaceController::class);
-        $this->expectExceptionMessage(ServiceInterface::class);
+        $this->expectExceptionMessageIsOrContains(NeedsInterfaceController::class);
+        $this->expectExceptionMessageIsOrContains(ServiceInterface::class);
 
         $this->resolver()->resolve(NeedsInterfaceController::class);
     }
@@ -106,7 +106,7 @@ final class ReflectionControllerResolverTest extends TestCase
     public function throwsForNonInstantiableType(): void
     {
         $this->expectException(RoutingException::class);
-        $this->expectExceptionMessage('not instantiable');
+        $this->expectExceptionMessageIsOrContains('not instantiable');
 
         $this->resolver()->resolve(AbstractController::class);
     }

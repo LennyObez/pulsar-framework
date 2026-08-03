@@ -48,7 +48,7 @@ final class TenantDatabaseConfigTest extends TestCase
     public function invalidStrategyThrowsTenancyException(): void
     {
         $this->expectException(TenancyException::class);
-        $this->expectExceptionMessage('Unknown database strategy "sharded"');
+        $this->expectExceptionMessageIsOrContains('Unknown database strategy "sharded"');
 
         (void) TenantDatabaseConfig::fromArray(['strategy' => 'sharded']);
     }

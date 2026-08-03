@@ -147,7 +147,7 @@ final class ProcessGoogleWebhookJobTest extends TestCase
         );
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Failed to process Google webhook: SUBSCRIPTION_REVOKED');
+        $this->expectExceptionMessageIsOrContains('Failed to process Google webhook: SUBSCRIPTION_REVOKED');
 
         $job->handle($context);
     }

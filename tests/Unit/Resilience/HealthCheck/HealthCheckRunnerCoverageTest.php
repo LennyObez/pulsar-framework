@@ -108,7 +108,7 @@ final class HealthCheckRunnerCoverageTest extends TestCase
         $runner = new HealthCheckRunner();
 
         $this->expectException(ResilienceException::class);
-        $this->expectExceptionMessage('not registered');
+        $this->expectExceptionMessageIsOrContains('not registered');
 
         $runner->run('unknown');
     }

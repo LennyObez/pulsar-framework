@@ -37,7 +37,7 @@ final class GrpcServerTest extends TestCase
         $server = new GrpcServer($config, $registry, $adapter, $pipeline);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('no services registered');
+        $this->expectExceptionMessageIsOrContains('no services registered');
 
         $server->start();
     }
@@ -57,7 +57,7 @@ final class GrpcServerTest extends TestCase
         $server = new GrpcServer($config, $registry, $adapter, $pipeline);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('not available');
+        $this->expectExceptionMessageIsOrContains('not available');
 
         $server->start();
     }

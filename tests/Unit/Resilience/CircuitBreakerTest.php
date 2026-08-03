@@ -80,7 +80,7 @@ final class CircuitBreakerTest extends TestCase
         self::assertSame(CircuitBreakerState::Open, $breaker->state());
 
         $this->expectException(ResilienceException::class);
-        $this->expectExceptionMessage('Circuit breaker "my-service" is open');
+        $this->expectExceptionMessageIsOrContains('Circuit breaker "my-service" is open');
 
         $breaker->execute(fn(): string => 'should not run');
     }

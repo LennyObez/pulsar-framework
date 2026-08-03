@@ -101,7 +101,7 @@ final class BulkActionHandlerTest extends TestCase
         );
 
         $this->expectException(AdminException::class);
-        $this->expectExceptionMessage('Bulk actions not supported');
+        $this->expectExceptionMessageIsOrContains('Bulk actions not supported');
 
         $this->handler->execute($request);
     }

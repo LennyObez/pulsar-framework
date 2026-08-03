@@ -306,7 +306,7 @@ final class RegistrationCeremonyTest extends TestCase
         );
 
         $this->expectException(WebAuthnException::class);
-        $this->expectExceptionMessage('Invalid client data JSON');
+        $this->expectExceptionMessageIsOrContains('Invalid client data JSON');
 
         $this->ceremony->verify($credential, 'expected-challenge');
     }
@@ -326,7 +326,7 @@ final class RegistrationCeremonyTest extends TestCase
         );
 
         $this->expectException(WebAuthnException::class);
-        $this->expectExceptionMessage("Expected type 'webauthn.create'");
+        $this->expectExceptionMessageIsOrContains("Expected type 'webauthn.create'");
 
         $this->ceremony->verify($credential, 'test-challenge');
     }
@@ -346,7 +346,7 @@ final class RegistrationCeremonyTest extends TestCase
         );
 
         $this->expectException(WebAuthnException::class);
-        $this->expectExceptionMessage('challenge');
+        $this->expectExceptionMessageIsOrContains('challenge');
 
         $this->ceremony->verify($credential, 'expected-challenge');
     }
@@ -367,7 +367,7 @@ final class RegistrationCeremonyTest extends TestCase
         );
 
         $this->expectException(WebAuthnException::class);
-        $this->expectExceptionMessage('Origin mismatch');
+        $this->expectExceptionMessageIsOrContains('Origin mismatch');
 
         $this->ceremony->verify($credential, $challenge);
     }
@@ -391,7 +391,7 @@ final class RegistrationCeremonyTest extends TestCase
         );
 
         $this->expectException(WebAuthnException::class);
-        $this->expectExceptionMessage('Authenticator data too short');
+        $this->expectExceptionMessageIsOrContains('Authenticator data too short');
 
         $this->ceremony->verify($credential, $challenge);
     }
@@ -417,7 +417,7 @@ final class RegistrationCeremonyTest extends TestCase
         );
 
         $this->expectException(WebAuthnException::class);
-        $this->expectExceptionMessage('RP ID hash mismatch');
+        $this->expectExceptionMessageIsOrContains('RP ID hash mismatch');
 
         $this->ceremony->verify($credential, $challenge);
     }
@@ -444,7 +444,7 @@ final class RegistrationCeremonyTest extends TestCase
         );
 
         $this->expectException(WebAuthnException::class);
-        $this->expectExceptionMessage('User presence flag not set');
+        $this->expectExceptionMessageIsOrContains('User presence flag not set');
 
         $this->ceremony->verify($credential, $challenge);
     }
@@ -486,7 +486,7 @@ final class RegistrationCeremonyTest extends TestCase
         );
 
         $this->expectException(WebAuthnException::class);
-        $this->expectExceptionMessage('User verification required but not performed');
+        $this->expectExceptionMessageIsOrContains('User verification required but not performed');
 
         $ceremony->verify($credential, $challenge);
     }
@@ -513,7 +513,7 @@ final class RegistrationCeremonyTest extends TestCase
         );
 
         $this->expectException(WebAuthnException::class);
-        $this->expectExceptionMessage('Attested credential data flag not set');
+        $this->expectExceptionMessageIsOrContains('Attested credential data flag not set');
 
         $this->ceremony->verify($credential, $challenge);
     }

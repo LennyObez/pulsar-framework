@@ -209,7 +209,7 @@ final class WhereHasTest extends TestCase
         $registry = $this->createStub(MetadataRegistryInterface::class);
 
         $this->expectException(QueryBuilderException::class);
-        $this->expectExceptionMessage('whereHas requires entity-aware query');
+        $this->expectExceptionMessageIsOrContains('whereHas requires entity-aware query');
 
         $builder->whereHas('posts', $registry);
     }
@@ -224,7 +224,7 @@ final class WhereHasTest extends TestCase
         $builder->forEntity(UserEntity::class, $userMeta, $this->createStub(EntityHydratorInterface::class));
 
         $this->expectException(QueryBuilderException::class);
-        $this->expectExceptionMessage('Unknown relation "nonexistent"');
+        $this->expectExceptionMessageIsOrContains('Unknown relation "nonexistent"');
 
         $builder->whereHas('nonexistent', $registry);
     }
@@ -346,7 +346,7 @@ final class WhereHasTest extends TestCase
         $builder->forEntity(CommentEntity::class, $commentMetaWithRelation, $this->createStub(EntityHydratorInterface::class));
 
         $this->expectException(QueryBuilderException::class);
-        $this->expectExceptionMessage('whereHas does not support relation type "morph_to"');
+        $this->expectExceptionMessageIsOrContains('whereHas does not support relation type "morph_to"');
 
         $builder->whereHas('commentable', $registry);
     }

@@ -123,7 +123,7 @@ final class TicketTest extends TestCase
         $ticket = $this->createOpenTicket();
 
         $this->expectException(TicketException::class);
-        $this->expectExceptionMessage("Invalid status transition from 'open' to 'reopened'");
+        $this->expectExceptionMessageIsOrContains("Invalid status transition from 'open' to 'reopened'");
 
         $ticket->changeStatus(TicketStatus::Reopened);
     }

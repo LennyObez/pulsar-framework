@@ -25,7 +25,7 @@ final class ConsentEnforcingDataGovernanceTest extends TestCase
         $governance = new ConsentEnforcingDataGovernance($inner);
 
         $this->expectException(AiGovernanceException::class);
-        $this->expectExceptionMessage('consent is required');
+        $this->expectExceptionMessageIsOrContains('consent is required');
 
         $governance->recordProvenance($this->provenance(consentObtained: false));
     }

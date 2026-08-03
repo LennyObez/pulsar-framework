@@ -314,7 +314,7 @@ final class SchemaManagerTest extends TestCase
         $pdo->method('exec')->willThrowException(new PDOException('Database error'));
 
         $this->expectException(StudioException::class);
-        $this->expectExceptionMessage('Studio schema error:');
+        $this->expectExceptionMessageIsOrContains('Studio schema error:');
 
         SchemaManager::ensureSchema($pdo);
     }

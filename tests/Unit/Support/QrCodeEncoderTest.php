@@ -162,7 +162,7 @@ final class QrCodeEncoderTest extends TestCase
     public function dataTooLargeThrowsException(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Data too large for QR code');
+        $this->expectExceptionMessageIsOrContains('Data too large for QR code');
 
         // Version 10 supports a maximum of ~174 bytes in byte mode with EC level M
         // Use a string large enough to exceed this

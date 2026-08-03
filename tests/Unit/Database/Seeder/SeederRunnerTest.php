@@ -145,7 +145,7 @@ final class SeederRunnerTest extends TestCase
         $runner = new SeederRunner($connection, $this->tempDir);
 
         $this->expectException(DatabaseException::class);
-        $this->expectExceptionMessage('not found');
+        $this->expectExceptionMessageIsOrContains('not found');
 
         $runner->runByName('NonExistentSeeder');
     }
@@ -177,7 +177,7 @@ final class SeederRunnerTest extends TestCase
         $runner = new SeederRunner($connection, $this->tempDir);
 
         $this->expectException(DatabaseException::class);
-        $this->expectExceptionMessage('Invalid seeder');
+        $this->expectExceptionMessageIsOrContains('Invalid seeder');
 
         $runner->runAll();
     }

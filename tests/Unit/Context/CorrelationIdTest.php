@@ -68,7 +68,7 @@ final class CorrelationIdTest extends TestCase
     public function constructorRejectsInvalidLength(): void
     {
         $this->expectException(ContextException::class);
-        $this->expectExceptionMessage('Invalid correlation ID');
+        $this->expectExceptionMessageIsOrContains('Invalid correlation ID');
 
         new CorrelationId('abc');
     }

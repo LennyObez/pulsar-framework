@@ -38,7 +38,7 @@ final class FencedExecutorExtendedTest extends TestCase
         $handle = new LockHandle('expired-resource', 'token-123', microtime(true), 30);
 
         $this->expectException(FenceTokenMismatchException::class);
-        $this->expectExceptionMessage('expired-resource');
+        $this->expectExceptionMessageIsOrContains('expired-resource');
 
         $executor->execute($handle, static fn(): string => 'should not execute');
     }

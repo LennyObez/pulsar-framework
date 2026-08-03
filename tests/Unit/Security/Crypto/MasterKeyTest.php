@@ -36,7 +36,7 @@ final class MasterKeyTest extends TestCase
     public function fromHexThrowsForInvalidLength(): void
     {
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('expected');
+        $this->expectExceptionMessageIsOrContains('expected');
 
         $_ = MasterKey::fromHex(sodium_bin2hex(random_bytes(16))); // 16 bytes, need 32
     }
@@ -92,7 +92,7 @@ final class MasterKeyTest extends TestCase
         $masterKey = MasterKey::fromHex($this->validHex);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('KDF context must be exactly 8 bytes, got 2');
+        $this->expectExceptionMessageIsOrContains('KDF context must be exactly 8 bytes, got 2');
 
         $masterKey->deriveSubKey(1, 'ab');
     }
@@ -103,7 +103,7 @@ final class MasterKeyTest extends TestCase
         $masterKey = MasterKey::fromHex($this->validHex);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('KDF context must be exactly 8 bytes, got 27');
+        $this->expectExceptionMessageIsOrContains('KDF context must be exactly 8 bytes, got 27');
 
         $masterKey->deriveSubKey(1, 'this_is_a_very_long_context');
     }
@@ -122,7 +122,7 @@ final class MasterKeyTest extends TestCase
     public function fromEnvironmentThrowsWhenMissing(): void
     {
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('PULSAR_MASTER_KEY');
+        $this->expectExceptionMessageIsOrContains('PULSAR_MASTER_KEY');
 
         $_ = MasterKey::fromEnvironment('');
     }
@@ -235,7 +235,7 @@ final class MasterKeyTest extends TestCase
         $masterKey = MasterKey::fromHex($this->validHex);
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('Serialization');
+        $this->expectExceptionMessageIsOrContains('Serialization');
 
         serialize($masterKey);
     }
@@ -246,7 +246,7 @@ final class MasterKeyTest extends TestCase
         $shortPrevious = sodium_bin2hex(random_bytes(16));
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('previous key');
+        $this->expectExceptionMessageIsOrContains('previous key');
 
         $_ = MasterKey::fromHex($this->validHex, $shortPrevious);
     }
@@ -279,7 +279,7 @@ final class MasterKeyTest extends TestCase
         $masterKey = MasterKey::fromHex($this->validHex);
 
         $this->expectException(SecurityException::class);
-        $this->expectExceptionMessage('Serialization of MasterKey is forbidden');
+        $this->expectExceptionMessageIsOrContains('Serialization of MasterKey is forbidden');
 
         $masterKey->__unserialize([]);
     }
@@ -290,7 +290,7 @@ final class MasterKeyTest extends TestCase
         $masterKey = MasterKey::fromHex($this->validHex);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('exactly 8 bytes');
+        $this->expectExceptionMessageIsOrContains('exactly 8 bytes');
 
         $masterKey->deriveSubKey(1, 'toolong_ctx');
     }

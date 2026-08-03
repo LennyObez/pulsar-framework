@@ -216,7 +216,7 @@ final class DbContentRepositoryTest extends TestCase
         $repo = new DbContentRepository($db, null);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid UUID');
+        $this->expectExceptionMessageIsOrContains('Invalid UUID');
 
         $repo->findByIds(['not-a-uuid']);
     }
@@ -269,7 +269,7 @@ final class DbContentRepositoryTest extends TestCase
         );
 
         $this->expectException(CmsException::class);
-        $this->expectExceptionMessage('Concurrency conflict');
+        $this->expectExceptionMessageIsOrContains('Concurrency conflict');
 
         $repo->save($content);
     }

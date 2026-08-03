@@ -211,7 +211,7 @@ final class SessionConfigTest extends TestCase
         $env = Environment::load();
 
         $this->expectException(ConfigException::class);
-        $this->expectExceptionMessage('cookie_host_prefix');
+        $this->expectExceptionMessageIsOrContains('cookie_host_prefix');
 
         (void) SessionConfig::fromArray([
             'cookie_host_prefix' => true,
@@ -225,7 +225,7 @@ final class SessionConfigTest extends TestCase
         $env = Environment::load();
 
         $this->expectException(ConfigException::class);
-        $this->expectExceptionMessage('cookie_host_prefix');
+        $this->expectExceptionMessageIsOrContains('cookie_host_prefix');
 
         (void) SessionConfig::fromArray([
             'cookie_host_prefix' => true,
@@ -240,7 +240,7 @@ final class SessionConfigTest extends TestCase
         $env = Environment::load();
 
         $this->expectException(ConfigException::class);
-        $this->expectExceptionMessage('cookie_host_prefix');
+        $this->expectExceptionMessageIsOrContains('cookie_host_prefix');
 
         (void) SessionConfig::fromArray([
             'cookie_host_prefix' => true,

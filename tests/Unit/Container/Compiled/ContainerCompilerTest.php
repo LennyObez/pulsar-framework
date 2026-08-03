@@ -131,7 +131,7 @@ final class ContainerCompilerTest extends TestCase
         ];
 
         $this->expectException(ContainerException::class);
-        $this->expectExceptionMessage('Invalid class name');
+        $this->expectExceptionMessageIsOrContains('Invalid class name');
 
         ContainerCompiler::compile($definitions);
     }

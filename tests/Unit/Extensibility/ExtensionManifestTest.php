@@ -45,7 +45,7 @@ final class ExtensionManifestTest extends TestCase
     public function fromArrayThrowsOnMissingName(): void
     {
         $this->expectException(ManifestException::class);
-        $this->expectExceptionMessage('Missing required field "name"');
+        $this->expectExceptionMessageIsOrContains('Missing required field "name"');
 
         $_ = ExtensionManifest::fromArray([
             'version' => '1.0.0',
@@ -58,7 +58,7 @@ final class ExtensionManifestTest extends TestCase
     public function fromArrayThrowsOnMissingVersion(): void
     {
         $this->expectException(ManifestException::class);
-        $this->expectExceptionMessage('Missing required field "version"');
+        $this->expectExceptionMessageIsOrContains('Missing required field "version"');
 
         $_ = ExtensionManifest::fromArray([
             'name' => 'test',
@@ -71,7 +71,7 @@ final class ExtensionManifestTest extends TestCase
     public function fromArrayThrowsOnMissingExtensionClass(): void
     {
         $this->expectException(ManifestException::class);
-        $this->expectExceptionMessage('Missing required field "extension_class"');
+        $this->expectExceptionMessageIsOrContains('Missing required field "extension_class"');
 
         $_ = ExtensionManifest::fromArray([
             'name' => 'test',
@@ -83,7 +83,7 @@ final class ExtensionManifestTest extends TestCase
     public function fromArrayThrowsOnInvalidVersion(): void
     {
         $this->expectException(ManifestException::class);
-        $this->expectExceptionMessage('Invalid version format');
+        $this->expectExceptionMessageIsOrContains('Invalid version format');
 
         $_ = ExtensionManifest::fromArray([
             'name' => 'test',

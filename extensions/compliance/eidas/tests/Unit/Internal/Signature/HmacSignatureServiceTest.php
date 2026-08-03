@@ -32,7 +32,7 @@ final class HmacSignatureServiceTest extends TestCase
         $service = new HmacSignatureService(keys: [], appEnv: 'testing');
 
         $this->expectException(EidasException::class);
-        $this->expectExceptionMessage('Unknown signer key');
+        $this->expectExceptionMessageIsOrContains('Unknown signer key');
 
         $service->sign('data', 'nonexistent');
     }

@@ -181,7 +181,7 @@ final class JobRegistryTest extends TestCase
         $registry->register($job);
 
         $this->expectException(SchedulerException::class);
-        $this->expectExceptionMessage('A job named "duplicate-job" is already registered');
+        $this->expectExceptionMessageIsOrContains('A job named "duplicate-job" is already registered');
 
         $duplicate = new CallbackJob(
             name: 'duplicate-job',
@@ -197,7 +197,7 @@ final class JobRegistryTest extends TestCase
         $registry = new JobRegistry();
 
         $this->expectException(SchedulerException::class);
-        $this->expectExceptionMessage('Scheduled job not found: "nonexistent"');
+        $this->expectExceptionMessageIsOrContains('Scheduled job not found: "nonexistent"');
 
         $_ = $registry->get('nonexistent');
     }

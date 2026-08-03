@@ -59,7 +59,7 @@ final class SchemaBuilderTest extends TestCase
     public function buildFromInputRejectsMissingType(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage("'type' is required");
+        $this->expectExceptionMessageIsOrContains("'type' is required");
 
         $this->builder->buildFromInput(['label' => 'Test', 'fields' => []]);
     }
@@ -68,7 +68,7 @@ final class SchemaBuilderTest extends TestCase
     public function buildFromInputRejectsMissingLabel(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage("'label' is required");
+        $this->expectExceptionMessageIsOrContains("'label' is required");
 
         $this->builder->buildFromInput(['type' => 'test_type', 'fields' => []]);
     }
@@ -103,7 +103,7 @@ final class SchemaBuilderTest extends TestCase
     public function buildFromInputRejectsDuplicateFieldKeys(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Duplicate field key');
+        $this->expectExceptionMessageIsOrContains('Duplicate field key');
 
         $this->builder->buildFromInput([
             'type' => 'test_type',
@@ -119,7 +119,7 @@ final class SchemaBuilderTest extends TestCase
     public function buildFromInputRejectsInvalidFieldType(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid field type');
+        $this->expectExceptionMessageIsOrContains('Invalid field type');
 
         $this->builder->buildFromInput([
             'type' => 'test_type',
@@ -157,7 +157,7 @@ final class SchemaBuilderTest extends TestCase
         $this->registry->method('get')->willReturn($existing);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('already exists');
+        $this->expectExceptionMessageIsOrContains('already exists');
 
         $this->builder->buildAndRegister([
             'type' => 'article',
@@ -172,7 +172,7 @@ final class SchemaBuilderTest extends TestCase
         $this->registry->method('get')->willReturn(null);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('not found');
+        $this->expectExceptionMessageIsOrContains('not found');
 
         $this->builder->updateSchema('nonexistent', ['label' => 'New', 'fields' => []]);
     }

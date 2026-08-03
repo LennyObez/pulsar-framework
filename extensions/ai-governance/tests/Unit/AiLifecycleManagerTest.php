@@ -71,7 +71,7 @@ final class AiLifecycleManagerTest extends TestCase
         $this->manager->addDeploymentGate($gate);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('safety-check: Model safety score below threshold');
+        $this->expectExceptionMessageIsOrContains('safety-check: Model safety score below threshold');
         $this->manager->deploy('m1');
     }
 
@@ -94,14 +94,14 @@ final class AiLifecycleManagerTest extends TestCase
         $this->manager->addDeploymentGate($gate2);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('gate-a: Failure A; gate-b: Failure B');
+        $this->expectExceptionMessageIsOrContains('gate-a: Failure A; gate-b: Failure B');
         $this->manager->deploy('m1');
     }
 
     public function testDeployThrowsForUnknownModel(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('not found');
+        $this->expectExceptionMessageIsOrContains('not found');
         $this->manager->deploy('nonexistent');
     }
 
@@ -176,14 +176,14 @@ final class AiLifecycleManagerTest extends TestCase
         $this->registry->register($model);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('expected "production"');
+        $this->expectExceptionMessageIsOrContains('expected "production"');
         $this->manager->rollback('m1');
     }
 
     public function testRollbackThrowsForUnknownModel(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('not found');
+        $this->expectExceptionMessageIsOrContains('not found');
         $this->manager->rollback('nonexistent');
     }
 

@@ -26,7 +26,7 @@ final class CacheKeyValidatorExtendedTest extends TestCase
     public function validateRejectsEmptyKey(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('must not be empty');
+        $this->expectExceptionMessageIsOrContains('must not be empty');
 
         CacheKeyValidator::validate('');
     }
@@ -37,7 +37,7 @@ final class CacheKeyValidatorExtendedTest extends TestCase
         $longKey = str_repeat('a', 251);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('must not exceed');
+        $this->expectExceptionMessageIsOrContains('must not exceed');
 
         CacheKeyValidator::validate($longKey);
     }
@@ -57,7 +57,7 @@ final class CacheKeyValidatorExtendedTest extends TestCase
     public function validateRejectsReservedCharacters(string $char): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('reserved characters');
+        $this->expectExceptionMessageIsOrContains('reserved characters');
 
         CacheKeyValidator::validate('key' . $char . 'part');
     }
@@ -89,7 +89,7 @@ final class CacheKeyValidatorExtendedTest extends TestCase
     public function validateMultipleRejectsNonStringKey(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('must be a string');
+        $this->expectExceptionMessageIsOrContains('must be a string');
 
         CacheKeyValidator::validateMultiple(['valid', 42]);
     }

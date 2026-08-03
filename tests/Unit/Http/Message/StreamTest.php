@@ -188,7 +188,7 @@ final class StreamTest extends TestCase
         $stream->detach();
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Stream is detached');
+        $this->expectExceptionMessageIsOrContains('Stream is detached');
 
         (void) $stream->tell();
     }
@@ -200,7 +200,7 @@ final class StreamTest extends TestCase
         $stream->detach();
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Stream is detached');
+        $this->expectExceptionMessageIsOrContains('Stream is detached');
 
         (void) $stream->read(1);
     }
@@ -212,7 +212,7 @@ final class StreamTest extends TestCase
         $stream->detach();
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Stream is detached');
+        $this->expectExceptionMessageIsOrContains('Stream is detached');
 
         $stream->write('x');
     }
@@ -224,7 +224,7 @@ final class StreamTest extends TestCase
         $stream->detach();
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Stream is detached');
+        $this->expectExceptionMessageIsOrContains('Stream is detached');
 
         $stream->seek(0);
     }
@@ -236,7 +236,7 @@ final class StreamTest extends TestCase
         $stream->detach();
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Stream is detached');
+        $this->expectExceptionMessageIsOrContains('Stream is detached');
 
         (void) $stream->getContents();
     }
@@ -251,7 +251,7 @@ final class StreamTest extends TestCase
             $stream = Stream::fromFile($tmpFile, 'w');
 
             $this->expectException(RuntimeException::class);
-            $this->expectExceptionMessage('Stream is not readable');
+            $this->expectExceptionMessageIsOrContains('Stream is not readable');
 
             (void) $stream->read(1);
         } finally {
@@ -269,7 +269,7 @@ final class StreamTest extends TestCase
             $stream = Stream::fromFile($tmpFile, 'r');
 
             $this->expectException(RuntimeException::class);
-            $this->expectExceptionMessage('Stream is not writable');
+            $this->expectExceptionMessageIsOrContains('Stream is not writable');
 
             $stream->write('data');
         } finally {
@@ -333,7 +333,7 @@ final class StreamTest extends TestCase
     public function constructorRejectsNonResource(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Stream requires a valid PHP resource');
+        $this->expectExceptionMessageIsOrContains('Stream requires a valid PHP resource');
 
         new Stream('not a resource');
     }
@@ -350,7 +350,7 @@ final class StreamTest extends TestCase
         self::assertFalse($stream->isSeekable());
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Stream is not seekable');
+        $this->expectExceptionMessageIsOrContains('Stream is not seekable');
 
         $stream->seek(0);
     }
@@ -365,7 +365,7 @@ final class StreamTest extends TestCase
             $stream = Stream::fromFile($tmpFile, 'w');
 
             $this->expectException(RuntimeException::class);
-            $this->expectExceptionMessage('Stream is not readable');
+            $this->expectExceptionMessageIsOrContains('Stream is not readable');
 
             (void) $stream->getContents();
         } finally {

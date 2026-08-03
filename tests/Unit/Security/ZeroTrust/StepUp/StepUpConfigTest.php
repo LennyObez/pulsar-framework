@@ -44,7 +44,7 @@ final class StepUpConfigTest extends TestCase
     public function rejects_zero_max_attempts(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('maxAttempts');
+        $this->expectExceptionMessageIsOrContains('maxAttempts');
 
         new StepUpConfig(maxAttempts: 0);
     }
@@ -61,7 +61,7 @@ final class StepUpConfigTest extends TestCase
     public function rejects_negative_cooldown(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('cooldownSeconds');
+        $this->expectExceptionMessageIsOrContains('cooldownSeconds');
 
         new StepUpConfig(cooldownSeconds: -1);
     }
@@ -70,7 +70,7 @@ final class StepUpConfigTest extends TestCase
     public function rejects_negative_lockout(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('lockoutSeconds');
+        $this->expectExceptionMessageIsOrContains('lockoutSeconds');
 
         new StepUpConfig(lockoutSeconds: -1);
     }
@@ -79,7 +79,7 @@ final class StepUpConfigTest extends TestCase
     public function rejects_zero_window(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('windowSeconds');
+        $this->expectExceptionMessageIsOrContains('windowSeconds');
 
         new StepUpConfig(windowSeconds: 0);
     }

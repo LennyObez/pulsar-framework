@@ -47,7 +47,7 @@ final class BulkheadLimiterTest extends TestCase
         $limiter = new BulkheadLimiter(resource: 'api-gateway', maxConcurrent: 1);
 
         $this->expectException(ResilienceException::class);
-        $this->expectExceptionMessage('Bulkhead for "api-gateway" is full');
+        $this->expectExceptionMessageIsOrContains('Bulkhead for "api-gateway" is full');
 
         $limiter->execute(function () use ($limiter): void {
             // While one execution is active, a second should be rejected
@@ -77,7 +77,7 @@ final class BulkheadLimiterTest extends TestCase
         $limiter = new BulkheadLimiter(resource: 'db', maxConcurrent: 5);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('db error');
+        $this->expectExceptionMessageIsOrContains('db error');
 
         $limiter->execute(function (): never {
             throw new RuntimeException('db error');

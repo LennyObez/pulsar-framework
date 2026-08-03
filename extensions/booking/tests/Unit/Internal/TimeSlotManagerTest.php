@@ -75,7 +75,7 @@ final class TimeSlotManagerTest extends TestCase
         $this->connection->method('query')->willReturn($result);
 
         $this->expectException(BookingException::class);
-        $this->expectExceptionMessage('not available');
+        $this->expectExceptionMessageIsOrContains('not available');
 
         $this->manager->block('slot-001', 'apt-new');
     }
@@ -87,7 +87,7 @@ final class TimeSlotManagerTest extends TestCase
         $this->connection->method('query')->willReturn($result);
 
         $this->expectException(BookingException::class);
-        $this->expectExceptionMessage('not available');
+        $this->expectExceptionMessageIsOrContains('not available');
 
         $this->manager->block('nonexistent', 'apt-001');
     }

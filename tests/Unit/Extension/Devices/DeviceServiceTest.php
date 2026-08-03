@@ -57,7 +57,7 @@ final class DeviceServiceTest extends TestCase
         $this->repo->method('countByUser')->willReturn(3);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Device limit reached');
+        $this->expectExceptionMessageIsOrContains('Device limit reached');
 
         $this->service->register('user-001', 'New Device', Platform::Android, '1.0.0');
     }
@@ -68,7 +68,7 @@ final class DeviceServiceTest extends TestCase
         $this->repo->method('countByUser')->willReturn(5);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Device limit reached');
+        $this->expectExceptionMessageIsOrContains('Device limit reached');
 
         $this->service->register('user-001', 'New Device', Platform::Web, '1.0.0');
     }
@@ -93,7 +93,7 @@ final class DeviceServiceTest extends TestCase
         $this->repo->method('findById')->willReturn(null);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('not found');
+        $this->expectExceptionMessageIsOrContains('not found');
 
         $this->service->remove('missing-device', 'user-001');
     }
@@ -105,7 +105,7 @@ final class DeviceServiceTest extends TestCase
         $this->repo->method('findById')->willReturn($device);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('not found or does not belong');
+        $this->expectExceptionMessageIsOrContains('not found or does not belong');
 
         $this->service->remove('device-001', 'user-001');
     }
@@ -132,7 +132,7 @@ final class DeviceServiceTest extends TestCase
         $this->repo->method('findById')->willReturn($device);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('not found or does not belong');
+        $this->expectExceptionMessageIsOrContains('not found or does not belong');
 
         $this->service->rotateToken('device-001', 'user-001');
     }
