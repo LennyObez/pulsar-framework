@@ -126,13 +126,21 @@ final class CachedBootTest extends TestCase
         $this->writeMinimalConfigs($configPath);
 
         // An operator override (FPM pool env / systemd) must win.
-        $this->withEnv('PULSAR_BASE_PATH', '/explicit/operator/root');
+        //
+        // A real, writable directory rather than an invented absolute path. What this
+        // asserts is that the override survives boot, and any path proves that — but
+        // `/explicit/operator/root` cannot be created under a POSIX filesystem root, so
+        // the logger spent the test failing to make var/logs beneath it. Windows read
+        // the same string as drive-relative and quietly obliged, which is why it only
+        // showed up the first time the suite ran on Linux.
+        $override = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'pulsar_operator_root';
+        $this->withEnv('PULSAR_BASE_PATH', $override);
         $this->withEnv('APP_ENV', 'local');
 
         $kernel = new Kernel(configManager: new ConfigManager(configPath: $configPath));
         $kernel->boot();
 
-        self::assertSame('/explicit/operator/root', getenv('PULSAR_BASE_PATH'));
+        self::assertSame($override, getenv('PULSAR_BASE_PATH'));
     }
 
     #[Test]
