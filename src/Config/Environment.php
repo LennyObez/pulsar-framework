@@ -11,7 +11,6 @@ use Pulsar\Config\Exception\ConfigException;
 use function array_filter;
 use function array_key_exists;
 use function in_array;
-use function is_array;
 use function is_file;
 use function is_readable;
 use function is_string;
@@ -357,11 +356,10 @@ final class Environment
      */
     private static function readOsVars(): array
     {
-        $env = getenv();
-
-        // Narrowed by inspection rather than by an annotation. getenv() returns
-        // string|false for a single lookup, and only the no-argument form gives an array.
-        return is_array($env) ? $env : [];
+        // No narrowing needed: string|false is what getenv() returns for a *named*
+        // lookup, while the no-argument form always yields the whole environment as an
+        // array. Testing for it made Psalm contradict its own stub instead.
+        return getenv();
     }
 
     /**
